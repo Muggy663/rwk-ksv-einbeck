@@ -184,11 +184,11 @@ export default function AdminTeamsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-primary">Mannschaftsverwaltung</h1>
-        <div className="flex items-center gap-2"> {/* Reduced gap */}
+      <div className="flex flex-wrap justify-between items-center gap-4">
+        <h1 className="text-2xl font-semibold text-primary w-full sm:w-auto">Mannschaftsverwaltung</h1>
+        <div className="flex flex-wrap items-center gap-2"> {/* Reduced gap */}
           <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
-            <SelectTrigger className="w-[200px] sm:w-[220px]" aria-label="Saison auswählen">
+            <SelectTrigger className="w-full sm:w-[200px]" aria-label="Saison auswählen">
               <SelectValue placeholder="Saison wählen" />
             </SelectTrigger>
             <SelectContent>
@@ -196,7 +196,7 @@ export default function AdminTeamsPage() {
             </SelectContent>
           </Select>
           <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={!selectedSeasonId || availableLeaguesForSeason.length === 0}>
-            <SelectTrigger className="w-[200px] sm:w-[220px]" aria-label="Liga auswählen">
+            <SelectTrigger className="w-full sm:w-[200px]" aria-label="Liga auswählen">
               <SelectValue placeholder="Liga wählen" />
             </SelectTrigger>
             <SelectContent>
@@ -206,7 +206,7 @@ export default function AdminTeamsPage() {
               }
             </SelectContent>
           </Select>
-          <Button onClick={handleAddNew} disabled={!selectedLeagueId} className="whitespace-nowrap">
+          <Button onClick={handleAddNew} disabled={!selectedLeagueId} className="whitespace-nowrap w-full sm:w-auto">
             <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft
           </Button>
         </div>
