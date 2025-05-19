@@ -56,7 +56,8 @@ export default function AdminClubsPage() {
     setIsLoading(true);
     try {
       const clubsCollectionRef = collection(db, CLUBS_COLLECTION);
-      const q = query(clubsCollectionRef, orderBy("name", "asc"));
+      // Sort by clubNumber ascending, then by name ascending as a secondary sort
+      const q = query(clubsCollectionRef, orderBy("clubNumber", "asc"), orderBy("name", "asc"));
       const querySnapshot = await getDocs(q);
       const fetchedClubs: Club[] = [];
       querySnapshot.forEach((doc) => {
@@ -161,12 +162,14 @@ export default function AdminClubsPage() {
       let duplicateQuery;
 
       if (formMode === 'edit' && currentClub?.id) {
+        // Check if another document with the same name exists
         duplicateQuery = query(
           clubsCollectionRef,
           where("name", "==", clubDataToSave.name),
           where(documentId(), "!=", currentClub.id) 
         );
       } else {
+        // Check if any document with the same name exists
         duplicateQuery = query(
           clubsCollectionRef,
           where("name", "==", clubDataToSave.name)
@@ -234,18 +237,18 @@ export default function AdminClubsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Vereinsnr.</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Kürzel</TableHead>
-                  <TableHead>Vereinsnr.</TableHead>
                   <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {clubs.map((club) => (
                   <TableRow key={club.id}>
+                    <TableCell>{club.clubNumber || '-'}</TableCell>
                     <TableCell>{club.name}</TableCell>
                     <TableCell>{club.shortName || '-'}</TableCell>
-                    <TableCell>{club.clubNumber || '-'}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(club)} aria-label="Verein bearbeiten">
                         <Edit className="h-4 w-4" />
@@ -293,6 +296,16 @@ export default function AdminClubsPage() {
             {currentClub && (
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="clubNumber" className="text-right">Vereinsnr.</Label>
+                  <Input
+                    id="clubNumber"
+                    value={currentClub.clubNumber || ''}
+                    onChange={(e) => handleFormInputChange('clubNumber', e.target.value)}
+                    className="col-span-3"
+                    placeholder="Format: 08-XXX"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="name" className="text-right">Name</Label>
                   <Input
                     id="name"
@@ -309,16 +322,6 @@ export default function AdminClubsPage() {
                     value={currentClub.shortName || ''}
                     onChange={(e) => handleFormInputChange('shortName', e.target.value)}
                     className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="clubNumber" className="text-right">Vereinsnr.</Label>
-                  <Input
-                    id="clubNumber"
-                    value={currentClub.clubNumber || ''}
-                    onChange={(e) => handleFormInputChange('clubNumber', e.target.value)}
-                    className="col-span-3"
-                    placeholder="Format: 08-XXX"
                   />
                 </div>
               </div>
@@ -360,3 +363,4 @@ export default function AdminClubsPage() {
     </div>
   );
 }
+
