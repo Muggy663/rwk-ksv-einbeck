@@ -77,20 +77,27 @@ export default function AdminClubsPage() {
   };
 
   const handleDelete = async (clubId: string) => {
+    console.log("handleDelete called for clubId:", clubId);
     if (!window.confirm("Sind Sie sicher, dass Sie diesen Verein löschen möchten? Dies kann nicht rückgängig gemacht werden.")) {
+      console.log("Deletion cancelled by user.");
       return;
     }
+    
+    setIsLoading(true); 
     try {
+      console.log(`Attempting to delete club ${clubId} from Firestore.`);
       await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
+      console.log(`Club ${clubId} successfully deleted from Firestore.`);
       toast({ title: "Verein gelöscht", description: "Der Verein wurde erfolgreich entfernt." });
-      fetchClubs(); // Refresh list
+      await fetchClubs(); // Refresh list (this will set isLoading to false in its finally block)
     } catch (error) {
-      console.error("Error deleting club: ", error);
+      console.error("Error deleting club: ", clubId, error);
       toast({
         title: "Fehler beim Löschen",
         description: (error as Error).message || "Der Verein konnte nicht gelöscht werden.",
         variant: "destructive",
       });
+      setIsLoading(false); // Explicitly set loading to false in case of error during delete
     }
   };
 
@@ -104,11 +111,9 @@ export default function AdminClubsPage() {
     const clubDataToSave: Omit<Club, 'id'> = {
       name: currentClub.name,
       shortName: currentClub.shortName || '',
-      // contactName und contactEmail sind in der Club-Typdefinition optional und nicht im Formular.
-      // Falls sie benötigt werden, müssen sie zum Formular und hier hinzugefügt werden.
     };
 
-    setIsLoading(true); // Show loading indicator during save
+    setIsLoading(true); 
     try {
       if (formMode === 'new') {
         await addDoc(collection(db, CLUBS_COLLECTION), clubDataToSave);
@@ -119,7 +124,7 @@ export default function AdminClubsPage() {
       }
       setIsFormOpen(false);
       setCurrentClub(null);
-      fetchClubs(); // Refresh list
+      await fetchClubs(); 
     } catch (error) {
       console.error("Error saving club: ", error);
       const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
@@ -129,7 +134,7 @@ export default function AdminClubsPage() {
         variant: "destructive",
       });
     } finally {
-        setIsLoading(false); // Hide loading indicator
+        setIsLoading(false); 
     }
   };
 
@@ -152,7 +157,7 @@ export default function AdminClubsPage() {
           <CardDescription>Übersicht aller angelegten Vereine. Hier können Sie Vereine bearbeiten oder löschen.</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading && !isFormOpen ? ( // Show loader only when fetching, not when form is open and another load might be happening
+          {isLoading && !isFormOpen ? ( 
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
@@ -200,7 +205,7 @@ export default function AdminClubsPage() {
                 {formMode === 'new' ? 'Erstellen Sie einen neuen Verein.' : `Bearbeiten Sie die Details für ${currentClub?.name || 'den Verein'}.`}
               </DialogDescription>
             </DialogHeader>
-            {currentClub && ( // Ensure currentClub is not null before rendering form inputs
+            {currentClub && ( 
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="name" className="text-right">Name</Label>
@@ -225,7 +230,7 @@ export default function AdminClubsPage() {
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentClub(null); }}>Abbrechen</Button>
-              <Button type="submit" disabled={isLoading && isFormOpen}> {/* Disable save button while saving */}
+              <Button type="submit" disabled={isLoading && isFormOpen}> 
                 {(isLoading && isFormOpen) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Speichern
               </Button>
