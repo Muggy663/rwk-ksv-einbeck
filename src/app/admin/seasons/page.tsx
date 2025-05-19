@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 // Dummy data for now
 const initialSeasons = [
@@ -35,6 +36,7 @@ const initialSeasons = [
 type Season = typeof initialSeasons[0];
 
 export default function AdminSeasonsPage() {
+  const router = useRouter(); // Initialize router
   const [seasons, setSeasons] = useState<Season[]>(initialSeasons);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentSeason, setCurrentSeason] = useState<Partial<Season> | null>(null);
@@ -78,6 +80,9 @@ export default function AdminSeasonsPage() {
     }
   };
 
+  const navigateToLeagues = (seasonId: string) => {
+    router.push(`/admin/leagues?seasonId=${seasonId}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -90,7 +95,7 @@ export default function AdminSeasonsPage() {
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle>Vorhandene Saisons</CardTitle>
-          <CardDescription>Übersicht aller angelegten Wettkampfsaisons.</CardDescription>
+          <CardDescription>Übersicht aller angelegten Wettkampfsaisons. Verwalten Sie von hier aus die zugehörigen Ligen.</CardDescription>
         </CardHeader>
         <CardContent>
           {seasons.length > 0 ? (
@@ -112,13 +117,13 @@ export default function AdminSeasonsPage() {
                     <TableCell>{season.name}</TableCell>
                     <TableCell>{season.status}</TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => alert(`Ligen für ${season.name} anzeigen (TODO)`)}>
-                        <Eye className="mr-1 h-4 w-4" /> Ligen
+                      <Button variant="outline" size="sm" onClick={() => navigateToLeagues(season.id)}>
+                        <Eye className="mr-1 h-4 w-4" /> Ligen verwalten
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(season)}>
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(season)} aria-label="Saison bearbeiten">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(season.id)} className="text-destructive hover:text-destructive/80">
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(season.id)} className="text-destructive hover:text-destructive/80" aria-label="Saison löschen">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -160,7 +165,7 @@ export default function AdminSeasonsPage() {
                     value={currentSeason.type || 'KK'} 
                     onValueChange={(value) => handleFormInputChange('type', value)}
                 >
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger id="type" className="col-span-3">
                     <SelectValue placeholder="Disziplin wählen" />
                   </SelectTrigger>
                   <SelectContent>
@@ -175,7 +180,7 @@ export default function AdminSeasonsPage() {
                     value={currentSeason.status || 'Geplant'} 
                     onValueChange={(value) => handleFormInputChange('status', value)}
                 >
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger id="status" className="col-span-3">
                     <SelectValue placeholder="Status wählen" />
                   </SelectTrigger>
                   <SelectContent>

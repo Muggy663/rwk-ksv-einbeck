@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Eye } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -29,24 +29,35 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useSearchParams, useRouter } from 'next/navigation'; // Import useRouter and useSearchParams
 
 // Dummy data
 const dummySeasons = [
-  { id: 's2025kk', name: 'RWK 2025 Kleinkaliber' },
-  { id: 's2025ld', name: 'RWK 2025 Luftdruck' },
+  { id: 's2025kk', name: 'RWK 2025 Kleinkaliber', type: 'KK', year: 2025 },
+  { id: 's2025ld', name: 'RWK 2025 Luftdruck', type: 'LD', year: 2025 },
+  { id: 's2024kk', name: 'RWK 2024 Kleinkaliber', type: 'KK', year: 2024 },
 ];
 
 const initialLeagues = [
   { id: 'l_kol_kk25', seasonId: 's2025kk', name: 'Kreisoberliga', shortName: 'KOL', type: 'KK', order: 1 },
   { id: 'l_kl_kk25', seasonId: 's2025kk', name: 'Kreisliga', shortName: 'KL', type: 'KK', order: 2 },
+  { id: 'l_1kl_kk25', seasonId: 's2025kk', name: '1. Kreisklasse', shortName: '1.KK', type: 'KK', order: 3 },
+  { id: 'l_2kl_kk25', seasonId: 's2025kk', name: '2. Kreisklasse', shortName: '2.KK', type: 'KK', order: 4 },
   { id: 'l_lg_a_ld25', seasonId: 's2025ld', name: 'Luftgewehr Auflage A', shortName: 'LG A', type: 'LD', order: 1 },
 ];
 
 type League = typeof initialLeagues[0];
+type Season = typeof dummySeasons[0];
 
 export default function AdminLeaguesPage() {
-  const [selectedSeasonId, setSelectedSeasonId] = useState<string>(dummySeasons[0]?.id || '');
-  const [leagues, setLeagues] = useState<League[]>(initialLeagues);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const querySeasonId = searchParams.get('seasonId');
+
+  const [allSeasons] = useState<Season[]>(dummySeasons); // In a real app, fetch this
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
+  
+  const [leagues, setLeagues] = useState<League[]>(initialLeagues); // All leagues, later fetched
   const [filteredLeagues, setFilteredLeagues] = useState<League[]>([]);
   
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -54,6 +65,17 @@ export default function AdminLeaguesPage() {
   const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
 
   useEffect(() => {
+    // Set initial selected season from query param or first available
+    if (querySeasonId && allSeasons.some(s => s.id === querySeasonId)) {
+      setSelectedSeasonId(querySeasonId);
+    } else if (allSeasons.length > 0) {
+      setSelectedSeasonId(allSeasons[0].id);
+    }
+  }, [querySeasonId, allSeasons]);
+
+  useEffect(() => {
+    // Filter leagues when selectedSeasonId changes
+    // TODO: In a real app, fetch leagues for the selectedSeasonId
     if (selectedSeasonId) {
       setFilteredLeagues(leagues.filter(l => l.seasonId === selectedSeasonId).sort((a,b) => (a.order || 0) - (b.order || 0)));
     } else {
@@ -63,11 +85,19 @@ export default function AdminLeaguesPage() {
   
   const handleAddNew = () => {
     if (!selectedSeasonId) {
+        // This should ideally not happen if a season is always selected
         alert("Bitte zuerst eine Saison auswählen.");
         return;
     }
+    const seasonType = allSeasons.find(s => s.id === selectedSeasonId)?.type || 'KK';
     setFormMode('new');
-    setCurrentLeague({ seasonId: selectedSeasonId, name: '', shortName: '', type: dummySeasons.find(s=>s.id === selectedSeasonId)?.name.includes('KK') ? 'KK' : 'LD', order: (filteredLeagues.length + 1) * 10 });
+    setCurrentLeague({ 
+      seasonId: selectedSeasonId, 
+      name: '', 
+      shortName: '', 
+      type: seasonType, 
+      order: (filteredLeagues.length + 1) * 10 
+    });
     setIsFormOpen(true);
   };
 
@@ -86,7 +116,7 @@ export default function AdminLeaguesPage() {
   const handleSubmit = () => {
     // TODO: Implement actual save/update logic to Firestore
     if (formMode === 'new' && currentLeague && currentLeague.name) {
-      const newLeagueToAdd = { ...currentLeague, id: `l_${currentLeague.name.replace(/\s+/g, '_').toLowerCase()}_${Math.random().toString(36).substr(2,5)}` } as League;
+      const newLeagueToAdd = { ...currentLeague, id: `l_${currentLeague.name?.replace(/\s+/g, '_').toLowerCase()}_${Math.random().toString(36).substr(2,5)}` } as League;
       setLeagues(prev => [...prev, newLeagueToAdd]);
       console.log("Neue Liga (simuliert):", newLeagueToAdd);
     } else if (formMode === 'edit' && currentLeague?.id && currentLeague.name) {
@@ -103,6 +133,11 @@ export default function AdminLeaguesPage() {
     }
   };
 
+  const navigateToTeams = (leagueId: string) => {
+    router.push(`/admin/teams?seasonId=${selectedSeasonId}&leagueId=${leagueId}`);
+  };
+
+  const selectedSeasonName = allSeasons.find(s => s.id === selectedSeasonId)?.name || 'ausgewählte Saison';
 
   return (
     <div className="space-y-6">
@@ -110,11 +145,11 @@ export default function AdminLeaguesPage() {
         <h1 className="text-2xl font-semibold text-primary">Ligenverwaltung</h1>
         <div className="flex items-center gap-4">
           <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
-            <SelectTrigger className="w-[250px]">
+            <SelectTrigger className="w-[250px]" aria-label="Saison auswählen">
               <SelectValue placeholder="Saison wählen" />
             </SelectTrigger>
             <SelectContent>
-              {dummySeasons.map(season => (
+              {allSeasons.map(season => (
                 <SelectItem key={season.id} value={season.id}>{season.name}</SelectItem>
               ))}
             </SelectContent>
@@ -126,9 +161,9 @@ export default function AdminLeaguesPage() {
       </div>
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>Ligen für {dummySeasons.find(s => s.id === selectedSeasonId)?.name || 'ausgewählte Saison'}</CardTitle>
+          <CardTitle>Ligen für {selectedSeasonName}</CardTitle>
           <CardDescription>
-            Verwalten Sie hier die Ligen für die ausgewählte Saison.
+            Verwalten Sie hier die Ligen für die ausgewählte Saison. Klicken Sie auf 'Teams', um die Mannschaften einer Liga zu bearbeiten.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -151,10 +186,13 @@ export default function AdminLeaguesPage() {
                     <TableCell>{league.type}</TableCell>
                     <TableCell>{league.order}</TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(league)}>
+                      <Button variant="outline" size="sm" onClick={() => navigateToTeams(league.id)} disabled={!selectedSeasonId}>
+                        <Eye className="mr-1 h-4 w-4" /> Teams
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(league)} aria-label="Liga bearbeiten">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(league.id)} className="text-destructive hover:text-destructive/80">
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(league.id)} className="text-destructive hover:text-destructive/80" aria-label="Liga löschen">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -164,7 +202,7 @@ export default function AdminLeaguesPage() {
             </Table>
           ) : (
              <div className="p-8 text-center text-muted-foreground bg-secondary/30 rounded-md">
-              <p className="text-lg">{selectedSeasonId ? 'Keine Ligen für diese Saison angelegt.' : 'Bitte wählen Sie zuerst eine Saison aus.'}</p>
+              <p className="text-lg">{selectedSeasonId ? `Keine Ligen für ${selectedSeasonName} angelegt.` : 'Bitte wählen Sie zuerst eine Saison aus.'}</p>
             </div>
           )}
         </CardContent>
@@ -175,11 +213,15 @@ export default function AdminLeaguesPage() {
           <DialogHeader>
             <DialogTitle>{formMode === 'new' ? 'Neue Liga anlegen' : 'Liga bearbeiten'}</DialogTitle>
             <DialogDescription>
-              {formMode === 'new' ? 'Erstellen Sie eine neue Liga für die Saison.' : `Bearbeiten Sie die Details für ${currentLeague?.name}.`}
+              {formMode === 'new' ? `Erstellen Sie eine neue Liga für ${selectedSeasonName}.` : `Bearbeiten Sie die Details für ${currentLeague?.name}.`}
             </DialogDescription>
           </DialogHeader>
           {currentLeague && (
             <div className="grid gap-4 py-4">
+               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="seasonDisplay" className="text-right">Saison</Label>
+                <Input id="seasonDisplay" value={selectedSeasonName} disabled className="col-span-3 bg-muted/50" />
+              </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name" className="text-right">Name</Label>
                 <Input id="name" value={currentLeague.name || ''} onChange={(e) => handleFormInputChange('name', e.target.value)} className="col-span-3" />
