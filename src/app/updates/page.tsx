@@ -7,45 +7,50 @@ import type { ChangelogEntry } from '@/types/updates';
 // Changelog entries using MAJOR.MINOR.PATCH
 const changelogEntries: ChangelogEntry[] = [
   {
-    version: '0.1.0',
+    version: '0.1.1',
     date: '19. Mai 2025',
-    title: 'Admin-Bereich: Datenbankintegration & UI-Verbesserungen',
+    title: 'Korrekturen in Admin-Bereich (Mannschaften & Schützen)',
     descriptionPoints: [
-      'Admin Clubs: Vollständige Firestore-Anbindung für CRUD-Operationen, inkl. Duplikatsprüfung und Vereinsnummer.',
-      'Admin Seasons: Vollständige Firestore-Anbindung für CRUD-Operationen, inkl. Duplikatsprüfung.',
-      'Admin Leagues: Vollständige Firestore-Anbindung für CRUD-Operationen, inkl. Saison-Zuordnung und Duplikatsprüfung.',
-      'Admin Teams: Firestore-Anbindung für Laden von Saisons, Ligen, Vereinen. Schützenzuordnung zu Teams implementiert (max. 3 Schützen pro Team). UI-Anpassungen.',
-      'Admin Shooters: Firestore-Anbindung für CRUD-Operationen. Verbesserte UI für Dialoge und Kontextanzeige. Direkte Mannschaftszuordnung beim Neuanlegen (max. 3 Schützen pro Team).',
-      'Versionsschema auf MAJOR.MINOR.PATCH umgestellt.',
+      'Admin Teams: Fehler behoben, der "No document to update" verursachte, wenn verwaiste Schützen-IDs im Team-Dokument vorhanden waren.',
+      'Admin Teams: Zähler für ausgewählte Schützen im "Mannschaft bearbeiten"-Dialog korrigiert, um nur tatsächlich verfügbare Schützen zu berücksichtigen.',
+      'Admin Shooters: UI-Verbesserungen im Dialog und Anzeige der Mannschaftszugehörigkeit.',
+      'Allgemeine Stabilitätsverbesserungen in den Admin-Datenverwaltungsseiten.',
     ],
   },
   {
-    version: '0.0.7', // Example of previous patch before re-versioning
-    date: '19. Mai 2025', // Retaining for historical context, actual date might be different
-    title: 'Regel "Maximal 3 Schützen pro Mannschaft" & Zählerkorrektur',
+    version: '0.1.0',
+    date: '19. Mai 2025',
+    title: 'Einführung Admin-Grundfunktionen & Versionierungsschema-Anpassung',
     descriptionPoints: [
-      'Admin Teams & Admin Shooters: Begrenzung auf maximal 3 Schützen pro Mannschaft implementiert.',
-      'Admin Teams: Korrektur des Zählers für ausgewählte Schützen im Dialog.',
+      'Admin Clubs: Vollständige Firestore-Anbindung (CRUD), Duplikatsprüfung, Vereinsnummer-Verwaltung und Sortierung implementiert.',
+      'Admin Seasons: Vollständige Firestore-Anbindung (CRUD) und Duplikatsprüfung.',
+      'Admin Leagues: Vollständige Firestore-Anbindung (CRUD), Saison-Zuordnung und Duplikatsprüfung.',
+      'Admin Teams: Firestore-Anbindung für Laden von Saisons, Ligen, Vereinen. Schützenzuordnung zu Teams implementiert (max. 3 Schützen pro Team, Fehlerbehandlung für verwaiste Schützen-IDs). UI-Anpassungen.',
+      'Admin Shooters: Firestore-Anbindung für CRUD-Operationen. Verbesserte UI für Dialoge und Kontextanzeige. Direkte Mannschaftszuordnung beim Neuanlegen (max. 3 Schützen pro Team).',
+      'Versionierungsschema auf MAJOR.MINOR.PATCH (SemVer) umgestellt.',
+      'Diverse UI-Layout-Korrekturen und Verbesserungen der Stabilität im Admin-Bereich.',
+    ],
+  },
+  {
+    version: '0.0.2.0', // Beibehalten für Historie, obwohl Schema jetzt 3-stellig
+    date: '19. Mai 2025',
+    title: 'Regel "Maximal 3 Schützen pro Mannschaft" implementiert',
+    descriptionPoints: [
+      'Admin Teams & Admin Shooters: Begrenzung auf maximal 3 Schützen pro Mannschaft implementiert und Zähler korrigiert.',
     ],
   },
    {
-    version: '0.0.6',
+    version: '0.0.1.0', // Beibehalten für Historie
     date: '19. Mai 2025',
-    title: 'Admin-Bereich: Datenbankanbindung und UI-Verbesserungen (Fortsetzung)',
+    title: 'Admin-Bereich: Datenbankanbindung Vereine & Basisnavigation',
     descriptionPoints: [
-      'Admin Clubs: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen.',
-      'Admin Clubs: Prüfung auf doppelte Vereinsnamen und Hinzufügen der Vereinsnummer implementiert.',
-      'Admin Clubs: Sortierung nach Vereinsnummer und UI-Korrekturen für Löschdialog.',
-      'Admin Seasons: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen von Saisons.',
-      'Admin Leagues: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen von Ligen, inklusive Saison-Zuordnung.',
-      'Admin Teams: Firestore-Anbindung für Laden von Saisons und Ligen in Auswahl-Dropdowns. UI-Anpassung der Mannschaftstabelle.',
-      'Admin Shooters: UI-Verbesserungen im Dialog und Anzeige der Mannschaftszugehörigkeit.',
-      'Diverse Fehlerbehebungen und Verbesserungen der Stabilität im Admin-Bereich.',
+      'Admin Clubs: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen, inkl. Duplikatsprüfung und Vereinsnummer.',
+      'Admin-Navigation verbessert für intuitiveren Workflow zwischen Saisons, Ligen und Teams.',
     ],
   },
   {
-    version: '0.0.3', // Adjusted from 0.0.0.3
-    date: '02. August 2024', // Kept original date for context
+    version: '0.0.0.3',
+    date: '19. Mai 2025',
     title: 'Verbesserungen Admin-Bereich & Ergebniserfassung (UI)',
     descriptionPoints: [
       'Admin-Bereich: Intuitivere Navigation und Filteransätze implementiert.',
@@ -56,8 +61,8 @@ const changelogEntries: ChangelogEntry[] = [
     ],
   },
   {
-    version: '0.0.2', // Adjusted from 0.0.0.2
-    date: '01. August 2024', // Kept original date for context
+    version: '0.0.0.2',
+    date: '19. Mai 2025',
     title: 'Datenbankanbindung RWK-Tabellen & Erweiterungen',
     descriptionPoints: [
       'RWK-Tabellen laden Daten dynamisch aus Firestore.',
@@ -67,8 +72,8 @@ const changelogEntries: ChangelogEntry[] = [
     ],
   },
   {
-    version: '0.0.1', // Adjusted from 0.0.0.1
-    date: '31. Juli 2024', // Kept original date for context
+    version: '0.0.0.1',
+    date: '19. Mai 2025',
     title: 'Initiales Setup & Kernfunktionen',
     descriptionPoints: [
       'Grundlegende Projektstruktur mit Next.js und TypeScript.',
