@@ -37,7 +37,7 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
     const season = { id: seasonSnap.id, ...seasonSnap.data() } as Season;
 
     // Fetch leagues for this season
-    const leaguesColRef = collection(db, "leagues");
+    const leaguesColRef = collection(db, "rwk_leagues"); // Updated collection name
     const qLeagues = query(leaguesColRef, where("seasonId", "==", seasonId));
     const leaguesSnapshot = await getDocs(qLeagues);
     const leagueDisplays: LeagueDisplay[] = [];
@@ -47,15 +47,14 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
       const teamDisplays: TeamDisplay[] = [];
 
       // Fetch teams for this league and season
-      const teamsColRef = collection(db, "teams");
+      const teamsColRef = collection(db, "rwk_teams"); // Updated collection name
       const qTeams = query(teamsColRef, where("leagueId", "==", league.id), where("seasonId", "==", seasonId));
       const teamsSnapshot = await getDocs(qTeams);
 
       for (const teamDoc of teamsSnapshot.docs) {
-        const teamData = teamDoc.data() as Omit<Team, 'id'>; // Raw data from Firestore
+        const teamData = teamDoc.data() as Omit<Team, 'id'>;
         const team: Team = { id: teamDoc.id, ...teamData };
 
-        // Fetch club name
         let clubName = "Unbekannter Verein";
         if (team.clubId) {
           const clubDocRef = doc(db, "clubs", team.clubId);
@@ -65,25 +64,22 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
           }
         }
 
-        // Fetch shooter results for this team
         const shooterResultsDisplay: ShooterDisplayResults[] = [];
         if (team.shooterIds && team.shooterIds.length > 0) {
           for (const shooterId of team.shooterIds) {
-            const shooterDocRef = doc(db, "shooters", shooterId);
+            const shooterDocRef = doc(db, "rwk_shooters", shooterId); // Updated collection name
             const shooterSnap = await getDoc(shooterDocRef);
             const shooterName = shooterSnap.exists() ? `${(shooterSnap.data() as Shooter).firstName} ${(shooterSnap.data() as Shooter).lastName}` : "Unbekannter Schütze";
 
-            const shooterResultDocRef = doc(db, "teams", team.id, "shooterResults", shooterId);
+            // Path to shooter's results in subcollection
+            const shooterResultDocRef = doc(db, "rwk_teams", team.id, "shooterResults", shooterId);
             const shooterResultSnap = await getDoc(shooterResultDocRef);
             
             let results: { [key: string]: number | null } = {};
-            let firestoreShooterRoundResults: Partial<ShooterRoundResults> = {};
-
             if (shooterResultSnap.exists()) {
-                 firestoreShooterRoundResults = shooterResultSnap.data() as ShooterRoundResults;
-                 results = firestoreShooterRoundResults.results || {};
+                 results = (shooterResultSnap.data() as ShooterRoundResults).results || {};
             } else {
-                // Fill with nulls if no results doc exists
+                // Fill with nulls if no results doc exists for this shooter in this team
                 for (let i = 1; i <= NUM_ROUNDS; i++) {
                     results[`dg${i}`] = null;
                 }
@@ -92,7 +88,7 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
             let totalScore = 0;
             let roundsCount = 0;
             Object.values(results).forEach(score => {
-              if (score !== null) {
+              if (score !== null && typeof score === 'number') {
                 totalScore += score;
                 roundsCount++;
               }
@@ -100,7 +96,7 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
             const average = roundsCount > 0 ? totalScore / roundsCount : 0;
 
             shooterResultsDisplay.push({
-              id: shooterResultSnap.id || shooterId, // Use shooterId as fallback if snap doesn't exist
+              id: shooterResultSnap.id || shooterId,
               shooterId: shooterId,
               teamId: team.id,
               leagueId: league.id,
@@ -112,7 +108,6 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
           }
         }
         
-        // Calculate team's total score from its roundResults
         let teamTotalScore = 0;
         if (team.roundResults) {
             Object.values(team.roundResults).forEach(score => {
@@ -122,18 +117,15 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
             });
         }
 
-
         teamDisplays.push({
-          ...team, // Spread raw team data first
-          id: team.id, // Ensure id is from team.id
+          ...team,
+          id: team.id,
           clubName: clubName,
           shootersResults: shooterResultsDisplay,
-          totalScore: teamTotalScore, // Calculated from team.roundResults
-          // Rank will be calculated later
+          totalScore: teamTotalScore,
         });
       }
       
-      // Calculate ranks for teams within the league
       teamDisplays.sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
       teamDisplays.forEach((team, index) => {
         team.rank = index + 1;
@@ -141,15 +133,13 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
 
       leagueDisplays.push({ ...league, teams: teamDisplays });
     }
-    // Sort leagues by name (optional, or by a predefined order if needed)
     leagueDisplays.sort((a, b) => a.name.localeCompare(b.name));
-
 
     return { ...season, leagues: leagueDisplays };
 
   } catch (error) {
     console.error("Error fetching season data:", error);
-    throw error; // Re-throw to be caught by calling useEffect
+    throw error;
   }
 }
 
@@ -193,24 +183,11 @@ export default function RwkTabellenPage() {
             <Skeleton className="h-6 w-1/4 rounded-md" />
             <Skeleton className="h-4 w-1/2 rounded-md mt-1" />
           </CardHeader>
-          <CardContent className="pt-6"> {/* Adjusted padding */}
+          <CardContent className="pt-6">
              <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
                 <p className="text-lg">Lade Tabellendaten...</p>
              </div>
-            {/* Keep skeleton for accordion structure if preferred while loading actual structure */}
-            {/* <Accordion type="multiple" className="w-full">
-              {[1, 2, 3, 4].map(i => (
-                <AccordionItem value={`loader-league-${i}`} key={i} className="border-b-0 mb-4">
-                  <AccordionTrigger className="bg-secondary/50 hover:bg-secondary/70 px-4 py-3 rounded-t-md">
-                     <Skeleton className="h-5 w-1/2 rounded-md" />
-                  </AccordionTrigger>
-                  <AccordionContent className="pt-0 bg-card border border-t-0 rounded-b-md p-4">
-                    <Skeleton className="h-40 w-full rounded-md" />
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion> */}
           </CardContent>
         </Card>
       </div>
@@ -233,6 +210,7 @@ export default function RwkTabellenPage() {
           </CardHeader>
           <CardContent className="text-destructive-foreground bg-destructive/10 p-6">
             <p>Es gab ein Problem beim Abrufen der Daten von der Datenbank.</p>
+            <p className="text-sm mt-2">Stellen Sie sicher, dass die Firestore Sicherheitsregeln korrekt konfiguriert sind und die Collection-Namen übereinstimmen.</p>
             <p className="text-sm mt-2">Fehlermeldung: {error.message}</p>
             <p className="text-sm mt-2">Bitte versuchen Sie es später erneut oder kontaktieren Sie den Administrator.</p>
           </CardContent>
@@ -252,8 +230,9 @@ export default function RwkTabellenPage() {
           <CardHeader>
             <CardTitle>Keine Saisondaten verfügbar</CardTitle>
           </CardHeader>
-          <CardContent className="p-6"> {/* Adjusted padding */}
+          <CardContent className="p-6">
             <p className="text-muted-foreground">Für die ausgewählte Saison (ID: {TARGET_SEASON_ID}) konnten keine Daten gefunden werden oder es sind keine Ligen vorhanden.</p>
+             <p className="text-muted-foreground mt-2">Überprüfen Sie, ob die Saison-ID korrekt ist und ob Daten in Firestore existieren.</p>
           </CardContent>
         </Card>
       </div>
@@ -269,7 +248,7 @@ export default function RwkTabellenPage() {
 
       {selectedSeason.leagues.length === 0 && (
          <Card className="shadow-lg">
-            <CardContent className="text-center py-12 p-6"> {/* Adjusted padding */}
+            <CardContent className="text-center py-12 p-6">
                 <p className="text-lg text-muted-foreground">Keine Ligen für diese Saison ({selectedSeason.name}) gefunden.</p>
             </CardContent>
         </Card>
@@ -328,7 +307,7 @@ export default function RwkTabellenPage() {
                         {team.shootersResults && team.shootersResults.length > 0 && openTeamDetails[team.id] && (
                            <TableRow id={`team-details-${team.id}`} className="bg-muted/10 hover:bg-muted/20">
                              <>
-                              <TableCell colSpan={3 + NUM_ROUNDS + 1} className="p-0"> {/* Adjusted colSpan */}
+                              <TableCell colSpan={3 + NUM_ROUNDS + 1} className="p-0"> {/* Adjusted colSpan (Rank, Team, 5xDG, Total, Expand Icon) = 3 + NUM_ROUNDS + 1 */}
                                 <div className="p-4 space-y-3">
                                   <h4 className="text-md font-semibold text-accent-foreground">Einzelergebnisse für {team.name}</h4>
                                   <Table className="bg-background rounded-md shadow-sm">
