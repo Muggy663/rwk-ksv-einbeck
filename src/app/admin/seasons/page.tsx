@@ -1,9 +1,10 @@
+
 // src/app/admin/seasons/page.tsx
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Eye } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Eye, Loader2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -19,32 +20,76 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation';
+import type { Season, UIDisciplineSelection } from '@/types/rwk';
+import { db } from '@/lib/firebase/config';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, documentId } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
-// Dummy data for now
-const initialSeasons = [
-  { id: 's2025kk', year: 2025, type: 'KK', name: 'RWK 2025 Kleinkaliber', status: 'Geplant' },
-  { id: 's2025ld', year: 2025, type: 'LD', name: 'RWK 2025 Luftdruck', status: 'Geplant' },
-  { id: 's2024kk', year: 2024, type: 'KK', name: 'RWK 2024 Kleinkaliber', status: 'Abgeschlossen' },
-];
+const SEASONS_COLLECTION = "seasons";
 
-type Season = typeof initialSeasons[0];
+const getSeasonName = (year: number, type: UIDisciplineSelection): string => {
+  const typeName = type === 'KK' ? 'Kleinkaliber' : 'Luftdruck';
+  return `RWK ${year} ${typeName}`;
+};
 
 export default function AdminSeasonsPage() {
-  const router = useRouter(); // Initialize router
-  const [seasons, setSeasons] = useState<Season[]>(initialSeasons);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentSeason, setCurrentSeason] = useState<Partial<Season> | null>(null);
+  const [currentSeason, setCurrentSeason] = useState<Partial<Season> & { id?: string } | null>(null);
   const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
+  
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [seasonToDelete, setSeasonToDelete] = useState<Season | null>(null);
+
+  const fetchSeasons = async () => {
+    setIsLoading(true);
+    try {
+      const seasonsCollectionRef = collection(db, SEASONS_COLLECTION);
+      const q = query(seasonsCollectionRef, orderBy("competitionYear", "desc"), orderBy("type", "asc"));
+      const querySnapshot = await getDocs(q);
+      const fetchedSeasons: Season[] = [];
+      querySnapshot.forEach((doc) => {
+        fetchedSeasons.push({ id: doc.id, ...doc.data() } as Season);
+      });
+      setSeasons(fetchedSeasons);
+    } catch (error) {
+      console.error("Error fetching seasons: ", error);
+      toast({
+        title: "Fehler beim Laden der Saisons",
+        description: (error as Error).message || "Ein unbekannter Fehler ist aufgetreten.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSeasons();
+  }, []);
 
   const handleAddNew = () => {
     setFormMode('new');
-    setCurrentSeason({ year: new Date().getFullYear() + 1, type: 'KK', status: 'Geplant' });
+    setCurrentSeason({ competitionYear: new Date().getFullYear() + 1, type: 'KK', status: 'Geplant' });
     setIsFormOpen(true);
   };
 
@@ -54,30 +99,110 @@ export default function AdminSeasonsPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (seasonId: string) => {
-    // TODO: Implement actual delete logic with confirmation
-    setSeasons(prev => prev.filter(s => s.id !== seasonId));
-    console.log(`Saison ${seasonId} zum Löschen markiert.`);
+  const handleDeleteConfirmation = (season: Season) => {
+    setSeasonToDelete(season);
+    setIsAlertOpen(true);
   };
 
-  const handleSubmit = () => {
-    // TODO: Implement actual save/update logic to Firestore
-    if (formMode === 'new' && currentSeason) {
-      const newSeasonToAdd = { ...currentSeason, id: `s${currentSeason.year}${currentSeason.type?.toLowerCase()}_${Math.random().toString(36).substr(2, 5)}`, name: `RWK ${currentSeason.year} ${currentSeason.type === 'KK' ? 'Kleinkaliber' : 'Luftdruck'}` } as Season;
-      setSeasons(prev => [...prev, newSeasonToAdd]);
-      console.log("Neue Saison (simuliert):", newSeasonToAdd);
-    } else if (formMode === 'edit' && currentSeason?.id) {
-      setSeasons(prev => prev.map(s => s.id === currentSeason.id ? {...s, ...currentSeason, name: `RWK ${currentSeason.year} ${currentSeason.type === 'KK' ? 'Kleinkaliber' : 'Luftdruck'}`} as Season : s));
-      console.log("Saison bearbeitet (simuliert):", currentSeason);
+  const handleDeleteSeason = async () => {
+    if (!seasonToDelete || !seasonToDelete.id) {
+      toast({ title: "Fehler", description: "Keine Saison zum Löschen ausgewählt.", variant: "destructive" });
+      setIsAlertOpen(false);
+      return;
     }
-    setIsFormOpen(false);
-    setCurrentSeason(null);
+    
+    setIsLoading(true); 
+    try {
+      await deleteDoc(doc(db, SEASONS_COLLECTION, seasonToDelete.id));
+      toast({ title: "Saison gelöscht", description: `"${seasonToDelete.name}" wurde erfolgreich entfernt.` });
+      fetchSeasons(); 
+    } catch (error) {
+      console.error("Error deleting season: ", error);
+      toast({
+        title: "Fehler beim Löschen",
+        description: (error as Error).message || `Die Saison "${seasonToDelete.name}" konnte nicht gelöscht werden.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      setIsAlertOpen(false);
+      setSeasonToDelete(null);
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!currentSeason || !currentSeason.competitionYear || !currentSeason.type || !currentSeason.status) {
+      toast({ title: "Ungültige Eingabe", description: "Bitte alle Felder ausfüllen.", variant: "destructive" });
+      return;
+    }
+
+    const seasonName = getSeasonName(currentSeason.competitionYear, currentSeason.type);
+    const seasonDataToSave: Omit<Season, 'id'> = {
+      competitionYear: currentSeason.competitionYear,
+      type: currentSeason.type,
+      status: currentSeason.status,
+      name: seasonName,
+    };
+
+    setIsLoading(true);
+    try {
+      const seasonsCollectionRef = collection(db, SEASONS_COLLECTION);
+      let duplicateQuery;
+
+      const baseDuplicateConditions = [
+        where("competitionYear", "==", seasonDataToSave.competitionYear),
+        where("type", "==", seasonDataToSave.type)
+      ];
+
+      if (formMode === 'edit' && currentSeason?.id) {
+        duplicateQuery = query(seasonsCollectionRef, ...baseDuplicateConditions, where(documentId(), "!=", currentSeason.id));
+      } else {
+        duplicateQuery = query(seasonsCollectionRef, ...baseDuplicateConditions);
+      }
+      
+      const duplicateSnapshot = await getDocs(duplicateQuery);
+      if (!duplicateSnapshot.empty) {
+        toast({
+          title: "Doppelte Saison",
+          description: `Eine Saison für ${seasonDataToSave.competitionYear} ${seasonDataToSave.type} existiert bereits.`,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return; 
+      }
+
+      if (formMode === 'new') {
+        await addDoc(collection(db, SEASONS_COLLECTION), seasonDataToSave);
+        toast({ title: "Saison erstellt", description: `${seasonDataToSave.name} wurde erfolgreich angelegt.` });
+      } else if (formMode === 'edit' && currentSeason.id) {
+        await updateDoc(doc(db, SEASONS_COLLECTION, currentSeason.id), seasonDataToSave);
+        toast({ title: "Saison aktualisiert", description: `${seasonDataToSave.name} wurde erfolgreich aktualisiert.` });
+      }
+      setIsFormOpen(false);
+      setCurrentSeason(null);
+      await fetchSeasons();
+    } catch (error) {
+      console.error("Error saving season: ", error);
+      const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
+      toast({
+        title: `Fehler beim ${action}`,
+        description: (error as Error).message || `Die Saison konnte nicht ${action} werden.`,
+        variant: "destructive",
+      });
+    } finally {
+        setIsLoading(false);
+    }
   };
   
-  const handleFormInputChange = (field: keyof Season, value: string | number) => {
-    if (currentSeason) {
-        setCurrentSeason(prev => ({ ...prev, [field]: value } as Partial<Season>));
-    }
+  const handleFormInputChange = (field: keyof Pick<Season, 'competitionYear' | 'type' | 'status'>, value: string | number) => {
+    setCurrentSeason(prev => {
+      if (!prev) return null;
+      if (field === 'competitionYear') {
+        return { ...prev, [field]: parseInt(value as string, 10) };
+      }
+      return { ...prev, [field]: value as UIDisciplineSelection | Season['status'] };
+    });
   };
 
   const navigateToLeagues = (seasonId: string) => {
@@ -88,7 +213,7 @@ export default function AdminSeasonsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-primary">Saisonverwaltung</h1>
-        <Button onClick={handleAddNew}>
+        <Button onClick={handleAddNew} variant="default">
           <PlusCircle className="mr-2 h-5 w-5" /> Neue Saison anlegen
         </Button>
       </div>
@@ -98,7 +223,11 @@ export default function AdminSeasonsPage() {
           <CardDescription>Übersicht aller angelegten Wettkampfsaisons. Verwalten Sie von hier aus die zugehörigen Ligen.</CardDescription>
         </CardHeader>
         <CardContent>
-          {seasons.length > 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center py-10">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+          ) : seasons.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -112,7 +241,7 @@ export default function AdminSeasonsPage() {
               <TableBody>
                 {seasons.map((season) => (
                   <TableRow key={season.id}>
-                    <TableCell>{season.year}</TableCell>
+                    <TableCell>{season.competitionYear}</TableCell>
                     <TableCell>{season.type}</TableCell>
                     <TableCell>{season.name}</TableCell>
                     <TableCell>{season.status}</TableCell>
@@ -123,7 +252,7 @@ export default function AdminSeasonsPage() {
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(season)} aria-label="Saison bearbeiten">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(season.id)} className="text-destructive hover:text-destructive/80" aria-label="Saison löschen">
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteConfirmation(season)} className="text-destructive hover:text-destructive/80" aria-label="Saison löschen">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -134,70 +263,105 @@ export default function AdminSeasonsPage() {
           ) : (
             <div className="p-8 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <p className="text-lg">Noch keine Saisons angelegt.</p>
+              <p className="text-sm">Klicken Sie auf "Neue Saison anlegen", um zu beginnen.</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setCurrentSeason(null); }}>
         <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{formMode === 'new' ? 'Neue Saison anlegen' : 'Saison bearbeiten'}</DialogTitle>
-            <DialogDescription>
-              {formMode === 'new' ? 'Erstellen Sie ein neues Wettkampfjahr mit Disziplin.' : `Bearbeiten Sie die Details für ${currentSeason?.name}.`}
-            </DialogDescription>
-          </DialogHeader>
-          {currentSeason && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="year" className="text-right">Jahr</Label>
-                <Input 
-                    id="year" 
-                    type="number" 
-                    value={currentSeason.year || ''} 
-                    onChange={(e) => handleFormInputChange('year', parseInt(e.target.value))}
-                    className="col-span-3" 
-                />
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>{formMode === 'new' ? 'Neue Saison anlegen' : 'Saison bearbeiten'}</DialogTitle>
+              <DialogDescription>
+                {formMode === 'new' ? 'Erstellen Sie ein neues Wettkampfjahr mit Disziplin.' : `Bearbeiten Sie die Details für ${currentSeason?.name || 'die Saison'}.`}
+              </DialogDescription>
+            </DialogHeader>
+            {currentSeason && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="year" className="text-right">Jahr</Label>
+                  <Input 
+                      id="year" 
+                      type="number" 
+                      value={currentSeason.competitionYear || ''} 
+                      onChange={(e) => handleFormInputChange('competitionYear', e.target.value)}
+                      className="col-span-3" 
+                      required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="type" className="text-right">Disziplin</Label>
+                  <Select 
+                      value={currentSeason.type || 'KK'} 
+                      onValueChange={(value: UIDisciplineSelection) => handleFormInputChange('type', value)}
+                      required
+                  >
+                    <SelectTrigger id="type" className="col-span-3">
+                      <SelectValue placeholder="Disziplin wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="KK">Kleinkaliber (KK)</SelectItem>
+                      <SelectItem value="LD">Luftdruck (LG/LP)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">Status</Label>
+                  <Select 
+                      value={currentSeason.status || 'Geplant'} 
+                      onValueChange={(value: Season['status']) => handleFormInputChange('status', value)}
+                      required
+                  >
+                    <SelectTrigger id="status" className="col-span-3">
+                      <SelectValue placeholder="Status wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Geplant">Geplant</SelectItem>
+                      <SelectItem value="Laufend">Laufend</SelectItem>
+                      <SelectItem value="Abgeschlossen">Abgeschlossen</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="type" className="text-right">Disziplin</Label>
-                <Select 
-                    value={currentSeason.type || 'KK'} 
-                    onValueChange={(value) => handleFormInputChange('type', value)}
-                >
-                  <SelectTrigger id="type" className="col-span-3">
-                    <SelectValue placeholder="Disziplin wählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="KK">Kleinkaliber (KK)</SelectItem>
-                    <SelectItem value="LD">Luftdruck (LG/LP)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">Status</Label>
-                <Select 
-                    value={currentSeason.status || 'Geplant'} 
-                    onValueChange={(value) => handleFormInputChange('status', value)}
-                >
-                  <SelectTrigger id="status" className="col-span-3">
-                    <SelectValue placeholder="Status wählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Geplant">Geplant</SelectItem>
-                    <SelectItem value="Laufend">Laufend</SelectItem>
-                    <SelectItem value="Abgeschlossen">Abgeschlossen</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>Abbrechen</Button>
-            <Button type="submit" onClick={handleSubmit}>Speichern</Button>
-          </DialogFooter>
+            )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentSeason(null); }}>Abbrechen</Button>
+              <Button type="submit" disabled={isLoading && isFormOpen}>
+                {(isLoading && isFormOpen) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Speichern
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
+
+      {seasonToDelete && (
+        <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Saison löschen bestätigen</AlertDialogTitle>
+              <AlertDialogDescription>
+                Möchten Sie die Saison "{seasonToDelete.name}" wirklich endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden und kann Auswirkungen auf zugehörige Ligen und Ergebnisse haben.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => { setIsAlertOpen(false); setSeasonToDelete(null); }}>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteSeason}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={isLoading && isAlertOpen} 
+              >
+                {(isLoading && isAlertOpen) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Endgültig löschen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }
+
+    
