@@ -37,7 +37,7 @@ const NUM_ROUNDS = 5;
 const TEAM_SIZE_FOR_SCORING = 3;
 const EXCLUDED_TEAM_NAME = "SV Dörrigsen Einzel";
 
-const AVAILABLE_YEARS: number[] = [2025]; // Nur noch 2025
+const AVAILABLE_YEARS: number[] = [2025];
 const AVAILABLE_UI_DISCIPLINES: { value: UIDisciplineSelection, label: string }[] = [
   { value: 'KK', label: 'Kleinkaliber (KK)' },
   { value: 'LD', label: 'Luftdruck (LG/LP)' },
@@ -186,8 +186,11 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig): Promi
           const scoresForRound = allTeamYearScores.filter(s => s.durchgang === r);
           const distinctShootersInRound = Array.from(new Set(scoresForRound.map(s => s.shooterId)));
 
-          if (distinctShootersInRound.length === TEAM_SIZE_FOR_SCORING) {
+          if (distinctShootersInRound.length >= TEAM_SIZE_FOR_SCORING) { // Use >= to allow for more than 3 if needed, logic for selection of 3 will be elsewhere
              teamRoundResults[roundKey] = scoresForRound
+              // Consider if you need to sort and take top 3 here, or if the count check is enough for "complete"
+              .sort((a,b) => b.totalRinge - a.totalRinge)
+              .slice(0, TEAM_SIZE_FOR_SCORING)
               .reduce((sum, score) => sum + score.totalRinge, 0);
           } else {
             teamRoundResults[roundKey] = null;
@@ -313,13 +316,13 @@ export default function RwkTabellenPage() {
   const [selectedCompetition, setSelectedCompetition] = useState<CompetitionDisplayConfig>({
     year: AVAILABLE_YEARS[0],
     discipline: AVAILABLE_UI_DISCIPLINES[0].value,
-    displayName: "" // Wird im useEffect gesetzt
+    displayName: "" 
   });
   const [activeTab, setActiveTab] = useState<"mannschaften" | "einzelschützen">("mannschaften");
   
   const [teamData, setTeamData] = useState<AggregatedCompetitionData | null>(null);
   const [individualData, setIndividualData] = useState<IndividualShooterDisplayData[]>([]);
-  const [bestMaleShooter, setBestMaleShooter] = useState<IndividualShooterDisplayData | null>(null);
+  const [bestShooter, setBestShooter] = useState<IndividualShooterDisplayData | null>(null);
   const [bestFemaleShooter, setBestFemaleShooter] = useState<IndividualShooterDisplayData | null>(null);
   
   const [loading, setLoading] = useState<boolean>(true);
@@ -332,14 +335,14 @@ export default function RwkTabellenPage() {
       setError(null);
       setTeamData(null);
       setIndividualData([]);
-      setBestMaleShooter(null);
+      setBestShooter(null);
       setBestFemaleShooter(null);
 
       const currentDisciplineLabel = AVAILABLE_UI_DISCIPLINES.find(d => d.value === selectedCompetition.discipline)?.label || selectedCompetition.discipline;
       const dynamicDisplayName = `RWK ${selectedCompetition.year} ${currentDisciplineLabel}`;
       
-      setSelectedCompetition(prev => ({...prev, displayName: dynamicDisplayName})); // displayName wird für interne Logik gesetzt
-      setPageTitle(dynamicDisplayName); // Seitentitel wird hier gesetzt
+      setSelectedCompetition(prev => ({...prev, displayName: dynamicDisplayName}));
+      setPageTitle(dynamicDisplayName); 
 
       try {
         if (activeTab === "mannschaften") {
@@ -354,12 +357,12 @@ export default function RwkTabellenPage() {
           setIndividualData(individuals);
           if (individuals.length > 0) {
             // Beste/r Schütze/Dame ermitteln
-            const males = individuals.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'male' || s.shooterGender.toLowerCase() === 'm'));
+            // Bester Schütze (insgesamt)
+            setBestShooter(individuals[0]); // Da bereits nach Gesamtscore sortiert
+
+            // Beste Dame
             const females = individuals.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'female' || s.shooterGender.toLowerCase() === 'w'));
-            
-            // Annahme: individuals sind bereits nach totalScore absteigend sortiert
-            setBestMaleShooter(males.length > 0 ? males[0] : null);
-            setBestFemaleShooter(females.length > 0 ? females[0] : null);
+            setBestFemaleShooter(females.length > 0 ? females[0] : null); // females ist auch bereits sortiert
           }
           console.log("Individual data successfully loaded:", individuals);
         }
@@ -371,7 +374,7 @@ export default function RwkTabellenPage() {
       }
     };
     loadData();
-  }, [selectedCompetition.year, selectedCompetition.discipline, activeTab]); // displayName aus Abhängigkeiten entfernt
+  }, [selectedCompetition.year, selectedCompetition.discipline, activeTab]);
 
   const handleYearChange = (yearString: string) => {
     const year = parseInt(yearString, 10);
@@ -495,7 +498,7 @@ export default function RwkTabellenPage() {
                               <TableRow className="hover:bg-secondary/20 transition-colors">
                                 <>
                                   <TableCell className="text-center font-medium">{team.rank}</TableCell>
-                                  <TableCell className="font-medium text-foreground">{team.name /* Keine Klammern mit Vereinsname mehr */}</TableCell>
+                                  <TableCell className="font-medium text-foreground">{team.name}</TableCell>
                                   {[...Array(NUM_ROUNDS)].map((_, i) => (
                                     <TableCell key={`dg${i + 1}-${team.id}`} className="text-center">{team.roundResults?.[`dg${i + 1}`] ?? '-'}</TableCell>
                                   ))}
@@ -512,9 +515,8 @@ export default function RwkTabellenPage() {
                               </TableRow>
                               {team.shootersResults && team.shootersResults.length > 0 && openTeamDetails[team.id] && (
                                  <TableRow id={`team-details-${team.id}`} className="bg-muted/5 hover:bg-muted/10 transition-colors">
-                                   <TableCell colSpan={NUM_ROUNDS + 6 /* +1 wegen neuer Schnittspalte */} className="p-0"> {/* colSpan angepasst */}
+                                   <TableCell colSpan={NUM_ROUNDS + 6} className="p-0">
                                       <div className="px-2 py-1 md:px-4 md:py-2 bg-secondary/10">
-                                        {/* Keine explizite Überschrift hier */}
                                         <Table>
                                           <TableHeader><TableRow className="border-b-0 bg-transparent">
                                             <>
@@ -564,17 +566,17 @@ export default function RwkTabellenPage() {
           {!loading && !error && individualData.length > 0 && (
             <div className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
-                {bestMaleShooter && (
+                {bestShooter && (
                   <Card className="shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-lg font-medium text-primary">Bester Herr</CardTitle>
+                      <CardTitle className="text-lg font-medium text-primary">Bester Schütze</CardTitle>
                       <Trophy className="h-5 w-5 text-amber-500" />
                     </CardHeader>
                     <CardContent>
-                      <p className="text-2xl font-bold">{bestMaleShooter.shooterName}</p>
-                      <p className="text-sm text-muted-foreground">{bestMaleShooter.teamName}</p>
-                      <p className="text-lg">Gesamt: <span className="font-semibold">{bestMaleShooter.totalScore}</span> Ringe</p>
-                      <p className="text-sm">Schnitt: {bestMaleShooter.averageScore?.toFixed(2)} ({bestMaleShooter.roundsShot} DG)</p>
+                      <p className="text-2xl font-bold">{bestShooter.shooterName}</p>
+                      <p className="text-sm text-muted-foreground">{bestShooter.teamName}</p>
+                      <p className="text-lg">Gesamt: <span className="font-semibold">{bestShooter.totalScore}</span> Ringe</p>
+                      <p className="text-sm">Schnitt: {bestShooter.averageScore?.toFixed(2)} ({bestShooter.roundsShot} DG)</p>
                     </CardContent>
                   </Card>
                 )}
@@ -592,7 +594,7 @@ export default function RwkTabellenPage() {
                     </CardContent>
                   </Card>
                 )}
-                {!bestMaleShooter && !loading && <Card className="shadow-lg"><CardContent className="pt-6 text-muted-foreground">Kein bester Herr ermittelt.</CardContent></Card>}
+                {!bestShooter && !loading && <Card className="shadow-lg"><CardContent className="pt-6 text-muted-foreground">Kein bester Schütze ermittelt.</CardContent></Card>}
                 {!bestFemaleShooter && !loading && <Card className="shadow-lg"><CardContent className="pt-6 text-muted-foreground">Keine beste Dame ermittelt.</CardContent></Card>}
               </div>
 

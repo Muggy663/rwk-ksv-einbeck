@@ -6,30 +6,39 @@ import type { ChangelogEntry } from '@/types/updates';
 
 const changelogEntries: ChangelogEntry[] = [
   {
+    version: '0.0.0.2',
+    date: '01. August 2024', // Approximate date for recent changes
+    title: 'Datenbankanbindung RWK-Tabellen & Erweiterungen',
+    descriptionPoints: [
+      'RWK-Tabellen laden Daten dynamisch aus Firestore.',
+      'Auswahl für Wettkampfjahr (aktuell 2025) und Disziplin (Kleinkaliber, Luftdruck) hinzugefügt.',
+      'Dynamische Seitenüberschrift für RWK-Tabellen (z.B. "RWK 2025 Kleinkaliber (KK)").',
+      'Separate Tab-Ansichten für Mannschafts- und Einzelschützenranglisten implementiert.',
+      'Hervorhebung "Bester Schütze" (höchster Gesamtscore) und "Beste Dame" (höchster Gesamtscore weiblich).',
+      'Mannschaft "SV Dörrigsen Einzel" wird in Tabellenansicht herausgefiltert.',
+      'Mannschaftsergebnis pro Durchgang wird nur bei Ergebnissen von 3 Schützen berechnet.',
+      'Durchschnittsberechnung für Mannschaftsergebnisse hinzugefügt.',
+      'Anzeige der Einzelschützen in der Mannschaftstabelle dezenter gestaltet.',
+      'Case-insensitive Überprüfung für `shooterGender` bei Ermittlung "Beste Dame".',
+    ],
+  },
+  {
     version: '0.0.0.1',
     date: '31. Juli 2024',
     title: 'Initiales Setup & Kernfunktionen',
     descriptionPoints: [
       'Grundlegende Projektstruktur mit Next.js und TypeScript erstellt.',
       'Firebase Authentifizierung und Konfiguration eingerichtet.',
-      'Erste Version der RWK-Tabellen Seite mit Dummy-Daten und Ligastruktur (KOL, KL, 1.KK, 2.KK).',
+      'Erste Version der RWK-Tabellen Seite mit Dummy-Daten und Ligastruktur.',
       'Basis für den Admin-Bereich mit Layout und Navigation implementiert.',
       'Logo des KSV Einbeck in die Startseite und Kopfzeile integriert.',
       'Git-Repository für die Versionskontrolle initialisiert und mit Remote verbunden.',
       'System für Versionsnummerierung und Changelog eingeführt.',
       'Korrektur von Hydration- und Parsing-Fehlern.',
+      'Firebase Sicherheitsregeln angepasst für Datenabruf.',
     ],
   },
   // Zukünftige Einträge können hier hinzugefügt werden
-  // {
-  //   version: '0.0.0.2',
-  //   date: 'TT. Monat JJJJ',
-  //   title: 'Nächstes großes Update',
-  //   descriptionPoints: [
-  //     'Punkt 1',
-  //     'Punkt 2',
-  //   ],
-  // }
 ];
 
 export default function UpdatesPage() {
