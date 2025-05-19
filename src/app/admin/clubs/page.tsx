@@ -1,9 +1,9 @@
 // src/app/admin/clubs/page.tsx
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -22,25 +22,51 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { Club } from '@/types/rwk';
+import { db } from '@/lib/firebase/config';
+import { collection, getDocs, addDoc, doc, setDoc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
-// Dummy data for now
-const initialClubs = [
-  { id: 'c_naensen', name: 'SC Naensen', shortName: 'SCN', contactName: 'Max Mustermann', contactEmail: 'max@naensen.de' },
-  { id: 'c_einbeck', name: 'Einbecker Schützengilde', shortName: 'ESGi', contactName: 'Erika Musterfrau', contactEmail: 'erika@esgi.de' },
-  { id: 'c_doerrigsen', name: 'SV Dörrigsen', shortName: 'SVD', contactName: '', contactEmail: '' },
-];
-
-type Club = typeof initialClubs[0];
+const CLUBS_COLLECTION = "clubs"; // Name der Firestore Collection für Vereine
 
 export default function AdminClubsPage() {
-  const [clubs, setClubs] = useState<Club[]>(initialClubs);
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentClub, setCurrentClub] = useState<Partial<Club> | null>(null);
   const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
+  const { toast } = useToast();
+
+  const fetchClubs = async () => {
+    setIsLoading(true);
+    try {
+      const clubsCollectionRef = collection(db, CLUBS_COLLECTION);
+      const q = query(clubsCollectionRef, orderBy("name", "asc")); // Sortiere nach Name
+      const querySnapshot = await getDocs(q);
+      const fetchedClubs: Club[] = [];
+      querySnapshot.forEach((doc) => {
+        fetchedClubs.push({ id: doc.id, ...doc.data() } as Club);
+      });
+      setClubs(fetchedClubs);
+    } catch (error) {
+      console.error("Error fetching clubs: ", error);
+      toast({
+        title: "Fehler beim Laden der Vereine",
+        description: (error as Error).message || "Ein unbekannter Fehler ist aufgetreten.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClubs();
+  }, []);
 
   const handleAddNew = () => {
     setFormMode('new');
-    setCurrentClub({ name: '', shortName: '' });
+    setCurrentClub({ name: '', shortName: '', contactName: '', contactEmail: '' });
     setIsFormOpen(true);
   };
 
@@ -50,27 +76,65 @@ export default function AdminClubsPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (clubId: string) => {
-    // TODO: Implement actual delete logic
-    setClubs(prev => prev.filter(c => c.id !== clubId));
-    console.log(`Verein ${clubId} zum Löschen markiert.`);
+  const handleDelete = async (clubId: string, clubName?: string) => {
+    if (!window.confirm(`Sind Sie sicher, dass Sie den Verein "${clubName || clubId}" unwiderruflich löschen möchten?`)) {
+      return;
+    }
+    try {
+      await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
+      toast({
+        title: "Verein gelöscht",
+        description: `Der Verein "${clubName || clubId}" wurde erfolgreich gelöscht.`,
+      });
+      fetchClubs(); // Daten neu laden, um die Liste zu aktualisieren
+    } catch (error) {
+      console.error("Error deleting club: ", error);
+      toast({
+        title: "Fehler beim Löschen",
+        description: (error as Error).message || "Der Verein konnte nicht gelöscht werden.",
+        variant: "destructive",
+      });
+    }
   };
   
-  const handleSubmit = () => {
-    // TODO: Implement actual save/update logic to Firestore
-    if (formMode === 'new' && currentClub && currentClub.name) {
-      const newClubToAdd = { ...currentClub, id: `c_${currentClub.name.replace(/\s+/g, '_').toLowerCase()}_${Math.random().toString(36).substr(2,5)}` } as Club;
-      setClubs(prev => [...prev, newClubToAdd]);
-      console.log("Neuer Verein (simuliert):", newClubToAdd);
-    } else if (formMode === 'edit' && currentClub?.id && currentClub.name) {
-      setClubs(prev => prev.map(c => c.id === currentClub.id ? {...c, ...currentClub} as Club : c));
-      console.log("Verein bearbeitet (simuliert):", currentClub);
+  const handleSubmit = async () => {
+    if (!currentClub || !currentClub.name) {
+      toast({ title: "Fehlende Eingabe", description: "Der Name des Vereins darf nicht leer sein.", variant: "destructive" });
+      return;
     }
-    setIsFormOpen(false);
-    setCurrentClub(null);
+
+    // Daten für Firestore vorbereiten (ohne ID bei 'new', wenn Firestore sie generieren soll, oder mit ID bei 'edit')
+    const clubDataToSave: Omit<Club, 'id'> = {
+        name: currentClub.name,
+        shortName: currentClub.shortName || '',
+        contactName: currentClub.contactName || '',
+        contactEmail: currentClub.contactEmail || '',
+    };
+
+    try {
+      if (formMode === 'new') {
+        // Eigene ID generieren oder Firestore überlassen. Hier eigene ID-Logik beibehalten:
+        const newId = `c_${currentClub.name.replace(/\s+/g, '_').toLowerCase()}_${Math.random().toString(36).substring(2, 5)}`;
+        await setDoc(doc(db, CLUBS_COLLECTION, newId), clubDataToSave);
+        toast({ title: "Verein erstellt", description: `Der Verein "${currentClub.name}" wurde erfolgreich angelegt.` });
+      } else if (formMode === 'edit' && currentClub.id) {
+        await updateDoc(doc(db, CLUBS_COLLECTION, currentClub.id), clubDataToSave);
+        toast({ title: "Verein aktualisiert", description: `Der Verein "${currentClub.name}" wurde erfolgreich aktualisiert.` });
+      }
+      setIsFormOpen(false);
+      setCurrentClub(null);
+      fetchClubs(); // Daten neu laden
+    } catch (error) {
+      console.error("Error saving club: ", error);
+      toast({
+        title: "Fehler beim Speichern",
+        description: (error as Error).message || "Der Verein konnte nicht gespeichert werden.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleFormInputChange = (field: keyof Club, value: string) => {
+  const handleFormInputChange = (field: keyof Omit<Club, 'id'>, value: string) => {
     if (currentClub) {
         setCurrentClub(prev => ({ ...prev, [field]: value } as Partial<Club>));
     }
@@ -90,7 +154,11 @@ export default function AdminClubsPage() {
           <CardDescription>Verwalten Sie hier alle Schützenvereine.</CardDescription>
         </CardHeader>
         <CardContent>
-           {clubs.length > 0 ? (
+           {isLoading ? (
+             <div className="flex justify-center items-center py-10">
+               <Loader2 className="h-12 w-12 animate-spin text-primary" />
+             </div>
+           ) : clubs.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -105,14 +173,14 @@ export default function AdminClubsPage() {
                 {clubs.map((club) => (
                   <TableRow key={club.id}>
                     <TableCell>{club.name}</TableCell>
-                    <TableCell>{club.shortName}</TableCell>
+                    <TableCell>{club.shortName || '-'}</TableCell>
                     <TableCell>{club.contactName || '-'}</TableCell>
                     <TableCell>{club.contactEmail || '-'}</TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(club)}>
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(club)} aria-label="Verein bearbeiten">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(club.id)} className="text-destructive hover:text-destructive/80">
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(club.id, club.name)} className="text-destructive hover:text-destructive/80" aria-label="Verein löschen">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -123,6 +191,7 @@ export default function AdminClubsPage() {
           ) : (
             <div className="p-8 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <p className="text-lg">Noch keine Vereine angelegt.</p>
+              <p className="text-sm">Legen Sie den ersten Verein über den Button oben rechts an.</p>
             </div>
           )}
         </CardContent>
