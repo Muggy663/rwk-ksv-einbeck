@@ -35,7 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Club } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, where, documentId } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, where, documentId, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 const CLUBS_COLLECTION = "clubs";
@@ -56,8 +56,10 @@ export default function AdminClubsPage() {
     setIsLoading(true);
     try {
       const clubsCollectionRef = collection(db, CLUBS_COLLECTION);
-      // Sort by clubNumber ascending, then by name ascending as a secondary sort
-      const q = query(clubsCollectionRef, orderBy("clubNumber", "asc"), orderBy("name", "asc"));
+      // Temporarily sort only by name to ensure clubs without 'clubNumber' field are shown.
+      // Once clubNumber is consistently populated, we can revert to:
+      // const q = query(clubsCollectionRef, orderBy("clubNumber", "asc"), orderBy("name", "asc"));
+      const q = query(clubsCollectionRef, orderBy("name", "asc"));
       const querySnapshot = await getDocs(q);
       const fetchedClubs: Club[] = [];
       querySnapshot.forEach((doc) => {
@@ -98,6 +100,7 @@ export default function AdminClubsPage() {
       toast({ title: "Fehler", description: "Vereinsdaten unvollständig, Löschdialog kann nicht geöffnet werden.", variant: "destructive"});
       return;
     }
+    console.log(`Löschen-Button geklickt für Verein ID: ${club.id}, Name: ${club.name}`);
     setClubToDelete(club);
     setIsAlertOpen(true);
   };
@@ -114,7 +117,7 @@ export default function AdminClubsPage() {
     const clubName = clubToDelete.name;
     console.log(`--- handleDeleteClub: Attempting to delete club: ${clubName} (ID: ${clubId}) ---`);
     
-    setIsLoading(true);
+    setIsLoading(true); // Use a specific loading state for the alert action if needed
     try {
       console.log(`--- handleDeleteClub: Calling deleteDoc for ${clubId} ---`);
       await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
@@ -257,7 +260,6 @@ export default function AdminClubsPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          console.log(`Löschen-Button geklickt für Verein ID: ${club.id}, Name: ${club.name}`);
                           if (club.id) {
                             handleDeleteConfirmation(club);
                           } else {
