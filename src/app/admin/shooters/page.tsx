@@ -122,7 +122,7 @@ export default function AdminShootersPage() {
         setSelectedClubIdFilter(queryClubIdFromParams);
       }
 
-      const shootersSnapshot = await getDocs(query(collection(db, SHOOTERS_COLLECTION), orderBy("name", "asc")));
+      const shootersSnapshot = await getDocs(query(collection(db, SHOOTERS_COLLECTION), orderBy("lastName", "asc"), orderBy("firstName", "asc")));
       const fetchedShooters: Shooter[] = shootersSnapshot.docs.map(docData => ({ id: docData.id, ...docData.data() } as Shooter));
       setShooters(fetchedShooters);
       console.log(">>> shooters/fetchClubsAndShooters: Shooters fetched:", fetchedShooters.length);
@@ -193,18 +193,23 @@ export default function AdminShootersPage() {
       return;
     }
     setFormMode('new');
-    const initialClubId = selectedClubIdFilter !== ALL_CLUBS_FILTER_VALUE 
-      ? selectedClubIdFilter 
-      : (queryClubIdFromParams || (allClubs.length > 0 ? allClubs[0].id : ''));
+    
+    let resolvedInitialClubId = '';
+    if (selectedClubIdFilter !== ALL_CLUBS_FILTER_VALUE) {
+        resolvedInitialClubId = selectedClubIdFilter;
+    } else if (queryClubIdFromParams) {
+        resolvedInitialClubId = queryClubIdFromParams;
+    }
       
     setCurrentShooter({ 
       firstName: '', 
       lastName: '', 
-      clubId: initialClubId, 
+      clubId: resolvedInitialClubId, // Will be '' if no filter/param, showing placeholder
       gender: 'male',
       teamIds: queryTeamId ? [queryTeamId] : [] 
     });
     setSelectedTeamIdsInForm(queryTeamId ? [queryTeamId] : []);
+    setTeamsOfSelectedClubInDialog([]);
     setIsFormOpen(true);
   };
 
@@ -215,7 +220,7 @@ export default function AdminShootersPage() {
     setFormMode('edit');
     setCurrentShooter(shooter);
     setSelectedTeamIdsInForm(shooter.teamIds || []); 
-    setTeamsOfSelectedClubInDialog([]); 
+    setTeamsOfSelectedClubInDialog([]); // Teams are not editable here, only for new shooters
     setIsFormOpen(true);
   };
 
@@ -274,13 +279,17 @@ export default function AdminShootersPage() {
     }
     
     const combinedName = `${currentShooter.firstName.trim()} ${currentShooter.lastName.trim()}`;
+    
+    // Ensure teamIds is always an array, defaulting to empty if not set (especially for edit mode if it was undefined)
+    const finalTeamIds = formMode === 'new' ? selectedTeamIdsInForm : (currentShooter.teamIds || []);
+
     const shooterDataToSave: Omit<Shooter, 'id'> = {
       firstName: currentShooter.firstName.trim(),
       lastName: currentShooter.lastName.trim(),
       name: combinedName,
       clubId: currentShooter.clubId,
       gender: currentShooter.gender || 'male',
-      teamIds: formMode === 'new' ? selectedTeamIdsInForm : (currentShooter.teamIds || []), 
+      teamIds: finalTeamIds, 
     };
     console.log(">>> shooters/handleSubmit: Shooter data to save:", shooterDataToSave);
 
@@ -313,7 +322,8 @@ export default function AdminShootersPage() {
         const newShooterRef = doc(collection(db, SHOOTERS_COLLECTION));
         batch.set(newShooterRef, shooterDataToSave); 
         
-        selectedTeamIdsInForm.forEach(teamId => {
+        // Update teams with the new shooter ID
+        finalTeamIds.forEach(teamId => {
           const teamDocRef = doc(db, TEAMS_COLLECTION, teamId);
           batch.update(teamDocRef, { shooterIds: arrayUnion(newShooterRef.id) });
           console.log(`>>> shooters/handleSubmit (new): Adding shooter ${newShooterRef.id} to team ${teamId}`);
@@ -321,8 +331,11 @@ export default function AdminShootersPage() {
         toast({ title: "Schütze erstellt", description: `${shooterDataToSave.name} wurde erfolgreich angelegt.` });
 
       } else if (formMode === 'edit' && currentShooter.id) {
+        // For edit mode, teamIds are not directly managed here.
+        // Only firstName, lastName, name, clubId, gender are editable.
+        // Team associations are managed via the Teams admin page.
         const shooterDocRef = doc(db, SHOOTERS_COLLECTION, currentShooter.id);
-        const { teamIds, ...editableShooterData } = shooterDataToSave; 
+        const { teamIds, ...editableShooterData } = shooterDataToSave; // Exclude teamIds from direct update here
         batch.update(shooterDocRef, editableShooterData); 
         toast({ title: "Schütze aktualisiert", description: `${shooterDataToSave.name} wurde erfolgreich aktualisiert.` });
       }
@@ -349,8 +362,10 @@ export default function AdminShootersPage() {
      setCurrentShooter(prev => {
         if (!prev) return null;
         const updatedShooter = { ...prev, [field]: value };
+        // If clubId changes in 'new' mode, reset selected teams as they belong to the old club
         if (field === 'clubId' && formMode === 'new' && prev.clubId !== value) {
             setSelectedTeamIdsInForm([]); 
+            // teamsOfSelectedClubInDialog will be refetched by useEffect
         }
         return updatedShooter;
      });
@@ -370,13 +385,12 @@ export default function AdminShootersPage() {
     const teamIds = shooter.teamIds || [];
     if (teamIds.length === 0) return '-';
     
+    // If contextTeamName is available and the shooter is in that team
     if (contextTeamName && queryTeamId && teamIds.includes(queryTeamId)) {
         const otherTeamCount = teamIds.filter(id => id !== queryTeamId).length;
         return otherTeamCount > 0 ? `${contextTeamName} (+${otherTeamCount} weitere)` : contextTeamName;
     }
-    // Wenn kein Kontext, aber nur ein Team, versuchen den Namen zu laden (vereinfacht für jetzt)
-    // Diese Logik müsste erweitert werden, um Team-Namen effizient zu laden, falls viele Schützen angezeigt werden.
-    // Für den Moment: Zeige die Anzahl an.
+    // If no specific context or shooter not in context team, just show count
     return `${teamIds.length} Mannschaft(en) zugeordnet`; 
   };
 
@@ -424,7 +438,8 @@ export default function AdminShootersPage() {
              <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead>Nachname</TableHead>
+                  <TableHead>Vorname</TableHead>
                   <TableHead>Verein</TableHead>
                   <TableHead>Geschlecht</TableHead>
                   <TableHead>Mannschaften (Info)</TableHead>
@@ -434,7 +449,8 @@ export default function AdminShootersPage() {
               <TableBody>
                 {filteredShooters.map((shooter) => (
                   <TableRow key={shooter.id}>
-                    <TableCell>{shooter.name}</TableCell>
+                    <TableCell>{shooter.lastName}</TableCell>
+                    <TableCell>{shooter.firstName}</TableCell>
                     <TableCell>{getClubName(shooter.clubId)}</TableCell>
                     <TableCell>{shooter.gender === 'male' ? 'Männlich' : (shooter.gender === 'female' ? 'Weiblich' : 'N/A')}</TableCell>
                     <TableCell className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
@@ -470,19 +486,19 @@ export default function AdminShootersPage() {
                         : 'Bearbeiten Sie die Daten des Schützen.'
                     }
                     {formMode === 'new' && contextTeamName && 
-                        ` Der Schütze wird initial der Mannschaft "${contextTeamName}" zugeordnet, falls ausgewählt.`
+                        ` Der Schütze wird initial der Mannschaft "${contextTeamName}" zugeordnet, falls diese unten ausgewählt wird und zum gewählten Verein passt.`
                     }
                 </DialogDescription>
             </DialogHeader>
             {currentShooter && (
-                <div className="grid gap-4 py-4"> {/* Adjusted from gap-y-4 to gap-4 for consistency */}
-                  <div className="space-y-1.5">
-                      <Label htmlFor="firstName">Vorname</Label>
-                      <Input id="firstName" value={currentShooter.firstName || ''} onChange={(e) => handleFormInputChange('firstName', e.target.value)} required />
-                  </div>
+                <div className="grid gap-y-4 py-4">
                   <div className="space-y-1.5">
                       <Label htmlFor="lastName">Nachname</Label>
                       <Input id="lastName" value={currentShooter.lastName || ''} onChange={(e) => handleFormInputChange('lastName', e.target.value)} required />
+                  </div>
+                  <div className="space-y-1.5">
+                      <Label htmlFor="firstName">Vorname</Label>
+                      <Input id="firstName" value={currentShooter.firstName || ''} onChange={(e) => handleFormInputChange('firstName', e.target.value)} required />
                   </div>
                   <div className="space-y-1.5">
                       <Label htmlFor="clubIdForm">Verein</Label>
@@ -490,7 +506,7 @@ export default function AdminShootersPage() {
                           value={currentShooter.clubId || ''} 
                           onValueChange={(value) => handleFormInputChange('clubId', value)}
                           required
-                          disabled={allClubs.length === 0 || (formMode === 'edit' && !!currentShooter.clubId)}
+                          disabled={allClubs.length === 0 || (formMode === 'edit' && !!currentShooter.clubId && !currentShooter.id)} // Allow changing club if new, or if editing an existing one
                       >
                           <SelectTrigger id="clubIdForm" aria-label="Verein auswählen">
                               <SelectValue placeholder={allClubs.length === 0 ? "Keine Vereine" : "Verein wählen"}/>
@@ -499,6 +515,7 @@ export default function AdminShootersPage() {
                               {allClubs.map(club => <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>)}
                           </SelectContent>
                       </Select>
+                      {formMode === 'edit' && <p className="text-xs text-muted-foreground mt-1">Die Vereinszuordnung kann für bestehende Schützen hier nicht geändert werden. Legen Sie ggf. einen neuen Schützen an.</p>}
                   </div>
                   <div className="space-y-1.5">
                       <Label htmlFor="gender">Geschlecht</Label>
@@ -536,9 +553,9 @@ export default function AdminShootersPage() {
                             </ScrollArea>
                         ) : (
                             <p className="text-sm text-muted-foreground">
-                                {teamsOfSelectedClubInDialog.length === 0 && !isLoadingTeamsForDialog 
-                                    ? "Keine Mannschaften für diesen Verein gefunden oder Verein noch nicht ausgewählt."
-                                    : "Lade Mannschaften..."}
+                                {currentShooter.clubId && !isLoadingTeamsForDialog 
+                                    ? "Keine Mannschaften für diesen Verein gefunden."
+                                    : "Bitte zuerst einen Verein auswählen, um Mannschaften anzuzeigen."}
                             </p>
                         )}
                     </div>
@@ -590,3 +607,4 @@ export default function AdminShootersPage() {
   );
 }
 
+    
