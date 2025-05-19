@@ -35,7 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Club } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, where, documentId } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 const CLUBS_COLLECTION = "clubs";
@@ -92,6 +92,11 @@ export default function AdminClubsPage() {
   };
 
   const handleDeleteConfirmation = (club: Club) => {
+    if (!club || !club.id) {
+      console.error("handleDeleteConfirmation: Club oder Club-ID fehlt.", club);
+      toast({ title: "Fehler", description: "Vereinsdaten unvollständig, Löschdialog kann nicht geöffnet werden.", variant: "destructive"});
+      return;
+    }
     setClubToDelete(club);
     setIsAlertOpen(true);
   };
@@ -108,7 +113,7 @@ export default function AdminClubsPage() {
     const clubName = clubToDelete.name;
     console.log(`--- handleDeleteClub: Attempting to delete club: ${clubName} (ID: ${clubId}) ---`);
     
-    setIsLoading(true);
+    setIsLoading(true); // Verwende allgemeinen isLoading-Status oder einen spezifischen für Löschen
     try {
       console.log(`--- handleDeleteClub: Calling deleteDoc for ${clubId} ---`);
       await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
@@ -120,10 +125,8 @@ export default function AdminClubsPage() {
         description: `"${clubName}" wurde erfolgreich entfernt.`,
       });
       console.log(`--- handleDeleteClub: SUCCESS toast call for ${clubId} has been made. ---`);
-
-      console.log(`--- handleDeleteClub: About to call fetchClubs() for ${clubId}. ---`);
+      
       await fetchClubs(); // Refresh the list
-      console.log(`--- handleDeleteClub: fetchClubs() completed for ${clubId}. ---`);
     } catch (error) {
       console.error("--- handleDeleteClub: Error during delete operation: ---", clubId, error);
       toast({
@@ -141,24 +144,56 @@ export default function AdminClubsPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!currentClub || !currentClub.name) {
+    if (!currentClub || !currentClub.name || currentClub.name.trim() === '') {
       toast({ title: "Ungültige Eingabe", description: "Der Vereinsname darf nicht leer sein.", variant: "destructive" });
       return;
     }
 
     const clubDataToSave: Omit<Club, 'id'> = {
-      name: currentClub.name,
-      shortName: currentClub.shortName || '',
+      name: currentClub.name.trim(), // Namen trimmen
+      shortName: currentClub.shortName?.trim() || '', // Kürzel trimmen
     };
 
     setIsLoading(true);
     try {
+      // --- BEGIN DUPLICATE CHECK ---
+      const clubsCollectionRef = collection(db, CLUBS_COLLECTION);
+      let duplicateQuery;
+
+      if (formMode === 'edit' && currentClub?.id) {
+        // Beim Bearbeiten: Prüfe, ob ein ANDERER Verein diesen Namen hat
+        duplicateQuery = query(
+          clubsCollectionRef,
+          where("name", "==", clubDataToSave.name),
+          where(documentId(), "!=", currentClub.id) // Schließt das aktuell bearbeitete Dokument von der Prüfung aus
+        );
+      } else {
+        // Beim Neuanlegen: Prüfe, ob irgendein Verein diesen Namen hat
+        duplicateQuery = query(
+          clubsCollectionRef,
+          where("name", "==", clubDataToSave.name)
+        );
+      }
+
+      const duplicateSnapshot = await getDocs(duplicateQuery);
+
+      if (!duplicateSnapshot.empty) {
+        toast({
+          title: "Doppelter Vereinsname",
+          description: `Ein Verein mit dem Namen "${clubDataToSave.name}" existiert bereits.`,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return; // Stoppt den Speichervorgang
+      }
+      // --- END DUPLICATE CHECK ---
+
       if (formMode === 'new') {
         await addDoc(collection(db, CLUBS_COLLECTION), clubDataToSave);
-        toast({ title: "Verein erstellt", description: `${currentClub.name} wurde erfolgreich angelegt.` });
+        toast({ title: "Verein erstellt", description: `${clubDataToSave.name} wurde erfolgreich angelegt.` });
       } else if (formMode === 'edit' && currentClub.id) {
         await updateDoc(doc(db, CLUBS_COLLECTION, currentClub.id), clubDataToSave);
-        toast({ title: "Verein aktualisiert", description: `${currentClub.name} wurde erfolgreich aktualisiert.` });
+        toast({ title: "Verein aktualisiert", description: `${clubDataToSave.name} wurde erfolgreich aktualisiert.` });
       }
       setIsFormOpen(false);
       setCurrentClub(null);
@@ -300,13 +335,13 @@ export default function AdminClubsPage() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setClubToDelete(null)}>Abbrechen</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => { setIsAlertOpen(false); setClubToDelete(null); }}>Abbrechen</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteClub}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                disabled={isLoading}
+                disabled={isLoading && isAlertOpen} // Deaktiviere Button, wenn isLoading und Alert offen ist
               >
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {(isLoading && isAlertOpen) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Endgültig löschen
               </AlertDialogAction>
             </AlertDialogFooter>
