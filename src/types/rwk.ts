@@ -1,17 +1,18 @@
 
 // src/types/rwk.ts
 
-// Diese Typen repräsentieren die Werte, wie sie in Firestore gespeichert sind
-export type FirestoreCompetitionDiscipline = 'KK' | 'LG' | 'LP' | 'SP';
+// Diese Typen repräsentieren die spezifischen Disziplinen, wie sie im League.type gespeichert sein sollten
+export type FirestoreLeagueSpecificDiscipline = 'KKG' | 'KKP' | 'LG' | 'LP' | 'SP';
 
 // Diese Typen repräsentieren die Auswahlmöglichkeiten im UI-Dropdown für die Hauptfilterung
-// und werden auch für die interne Logik der Ligatypen verwendet.
-export type UIDisciplineSelection = 'KK' | 'LD' | 'SP';
+// und werden auch für die interne Logik der Ligatypen verwendet, wenn allgemeiner gefiltert wird.
+// UIDisciplineSelection wird jetzt auch für die League.type verwendet, wenn es die spezifische Disziplin ist.
+export type UIDisciplineSelection = 'KK' | 'LD' | 'SP' | FirestoreLeagueSpecificDiscipline;
 
 
 export interface CompetitionDisplayConfig {
   year: number;
-  discipline: UIDisciplineSelection; // UI relevante Auswahl
+  discipline: UIDisciplineSelection; // UI relevante Auswahl (KK, LD, SP)
   displayName: string;
 }
 
@@ -19,7 +20,7 @@ export interface Season {
   id: string;
   competitionYear: number;
   name: string;
-  type: UIDisciplineSelection; // 'KK', 'LD' oder 'SP' (wird vom Admin bei Saisonerstellung festgelegt)
+  type: 'KK' | 'LD' | 'SP'; // Hauptkategorie der Saison (KK für alle KK-Arten, LD für alle Luftdruck)
   status: 'Geplant' | 'Laufend' | 'Abgeschlossen';
 }
 
@@ -28,7 +29,8 @@ export interface League {
   name: string;
   shortName?: string;
   competitionYear: number;
-  type: UIDisciplineSelection; // Sollte mit Season.type übereinstimmen oder eine spezifischere Unterteilung sein, die aber zur Season.type passt
+  // type sollte die spezifische Disziplin sein, z.B. KKG, KKP, LG, LP, SP
+  type: FirestoreLeagueSpecificDiscipline;
   order?: number;
   seasonId: string; // Referenz zur Saison
 }
@@ -59,24 +61,25 @@ export interface Team {
   shooterIds?: string[];
 }
 
+// Repräsentiert einen einzelnen Ergebnis-Eintrag in der DB
 export interface ScoreEntry {
   id?: string;
   competitionYear: number;
   durchgang: number;
   leagueId: string;
-  leagueName?: string;
+  leagueName?: string; // Denormalisiert
   teamId: string;
-  teamName?: string;
-  clubId?: string;
-  clubName?: string;
+  teamName?: string; // Denormalisiert
+  clubId?: string; // Denormalisiert
+  clubName?: string; // Denormalisiert
   shooterId: string;
-  shooterName?: string;
-  shooterGender?: 'male' | 'female' | string;
+  shooterName?: string; // Denormalisiert
+  shooterGender?: 'male' | 'female' | string; // Denormalisiert
   totalRinge: number;
-  scoreInputType: 'regular' | 'pre' | 'post';
+  scoreInputType: 'regular' | 'pre' | 'post'; // Art der Ergebniseingabe
   enteredByUserId?: string;
   enteredByUserName?: string;
-  entryTimestamp?: any;
+  entryTimestamp?: any; // Firestore Timestamp
 }
 
 
@@ -85,7 +88,7 @@ export interface ScoreEntry {
 export interface ShooterDisplayResults {
   shooterId: string;
   shooterName: string;
-  results: { [roundKey: string]: number | null };
+  results: { [roundKey: string]: number | null }; // z.B. { dg1: 280, dg2: 285 }
   average: number | null;
   total: number | null;
   roundsShot: number;
@@ -98,13 +101,14 @@ export interface TeamDisplay extends Omit<Team, 'shooterIds'> {
   clubName: string;
   rank?: number;
   shootersResults: ShooterDisplayResults[];
-  roundResults: { [key: string]: number | null };
+  roundResults: { [key: string]: number | null }; // Mannschaftsergebnis pro Durchgang
   totalScore: number;
   averageScore: number | null;
   numScoredRounds: number;
 }
 
-export interface LeagueDisplay extends League {
+export interface LeagueDisplay extends Omit<League, 'type'> {
+  type: FirestoreLeagueSpecificDiscipline; // Stellt sicher, dass es der spezifische Typ ist
   teams: TeamDisplay[];
 }
 
@@ -144,6 +148,7 @@ export interface PendingScoreEntry {
 
 // Für die Validierung bei der Schützenzuordnung
 export type TeamValidationInfo = Team & {
-    leagueType?: UIDisciplineSelection;
+    leagueType?: FirestoreLeagueSpecificDiscipline; // Sollte der spezifische Typ sein
     leagueCompetitionYear?: number;
+    currentShooterCount?: number; // Wird dynamisch hinzugefügt
 };
