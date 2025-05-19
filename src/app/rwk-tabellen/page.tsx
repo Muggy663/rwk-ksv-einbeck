@@ -17,128 +17,167 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ChevronDown, TableIcon, Loader2, AlertTriangle, InfoIcon } from 'lucide-react';
-import type { Season, League, Team, Club, Shooter, ShooterRoundResults, SeasonDisplay, LeagueDisplay, TeamDisplay, ShooterDisplayResults } from '@/types/rwk';
+import type { SeasonDisplay, League, LeagueDisplay, Team, TeamDisplay, Club, Shooter, ScoreEntry, ShooterDisplayResults } from '@/types/rwk';
 import { Skeleton } from '@/components/ui/skeleton';
 import { db } from '@/lib/firebase/config';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 const NUM_ROUNDS = 5;
-const TARGET_SEASON_ID = 's2025'; // Hardcoded for now, expected to be "RWK 2025 KK"
+const TARGET_COMPETITION_YEAR = 2025; // Festes Wettkampfjahr
+const SEASON_DISPLAY_NAME = `RWK ${TARGET_COMPETITION_YEAR} KK`; // Angezeigter Name
 
-async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> {
+async function fetchCompetitionData(year: number): Promise<SeasonDisplay | null> {
   try {
-    const seasonDocRef = doc(db, "seasons", seasonId);
-    const seasonSnap = await getDoc(seasonDocRef);
+    console.log(`Fetching data for competition year: ${year}`);
 
-    if (!seasonSnap.exists()) {
-      console.error(`Season document with ID '${seasonId}' not found in 'seasons' collection.`);
-      return null;
-    }
-    const season = { id: seasonSnap.id, ...seasonSnap.data() } as Season;
-    console.log(`Season '${season.name}' (ID: ${season.id}) found.`);
-
-    // Fetch leagues for this season
+    // 1. Ligen für das Wettkampfjahr laden
     const leaguesColRef = collection(db, "rwk_leagues");
-    const qLeagues = query(leaguesColRef, where("seasonId", "==", seasonId));
+    const qLeagues = query(leaguesColRef, where("competitionYear", "==", year), orderBy("order", "asc"));
     const leaguesSnapshot = await getDocs(qLeagues);
     const leagueDisplays: LeagueDisplay[] = [];
 
     if (leaguesSnapshot.empty) {
-        console.warn(`No leagues found with seasonId '${seasonId}' in 'rwk_leagues' collection.`);
+      console.warn(`No leagues found for competitionYear '${year}' in 'rwk_leagues'.`);
+      // Gebe eine minimale SeasonDisplay-Struktur zurück, um die "Keine Ligen"-Nachricht anzuzeigen
+      return {
+        id: year.toString(),
+        name: SEASON_DISPLAY_NAME,
+        year: year,
+        leagues: [],
+      };
     }
+    console.log(`Found ${leaguesSnapshot.docs.length} leagues for year ${year}.`);
 
     for (const leagueDoc of leaguesSnapshot.docs) {
-      const league = { id: leagueDoc.id, ...leagueDoc.data() } as League;
+      const leagueData = leagueDoc.data() as Omit<League, 'id'>;
+      const league: League = { id: leagueDoc.id, ...leagueData };
       const teamDisplays: TeamDisplay[] = [];
-      console.log(`Fetching teams for league '${league.name}' (ID: ${league.id})...`);
+      console.log(`Fetching teams for league '${league.name}' (ID: ${league.id}).`);
 
-      // Fetch teams for this league and season
+      // 2. Mannschaften für jede Liga laden
       const teamsColRef = collection(db, "rwk_teams");
-      const qTeams = query(teamsColRef, where("leagueId", "==", league.id), where("seasonId", "==", seasonId));
+      const qTeams = query(teamsColRef, where("leagueId", "==", league.id), where("competitionYear", "==", year));
       const teamsSnapshot = await getDocs(qTeams);
-      
+
       if (teamsSnapshot.empty) {
-        console.warn(`No teams found for leagueId '${league.id}' and seasonId '${seasonId}' in 'rwk_teams' collection.`);
+        console.warn(`No teams found for leagueId '${league.id}' and competitionYear '${year}'.`);
       }
 
       for (const teamDoc of teamsSnapshot.docs) {
         const teamData = teamDoc.data() as Omit<Team, 'id'>;
         const team: Team = { id: teamDoc.id, ...teamData };
-
-        let clubName = "Unbekannter Verein";
+        let clubName = "Unbek. Verein";
         if (team.clubId) {
-          const clubDocRef = doc(db, "clubs", team.clubId);
-          const clubSnap = await getDoc(clubDocRef);
-          if (clubSnap.exists()) {
-            clubName = (clubSnap.data() as Club).name;
-          } else {
-            console.warn(`Club with ID '${team.clubId}' for team '${team.name}' not found.`);
+          try {
+            const clubDocRef = doc(db, "clubs", team.clubId);
+            const clubSnap = await getDoc(clubDocRef);
+            if (clubSnap.exists()) {
+              clubName = (clubSnap.data() as Club).name || clubName;
+            } else {
+              console.warn(`Club with ID '${team.clubId}' for team '${team.name}' not found.`);
+            }
+          } catch (clubError) {
+            console.error(`Error fetching club ${team.clubId}:`, clubError);
           }
+        } else {
+          // Falls clubId nicht im Team-Dokument ist, aber teamName den Vereinsnamen enthält
+          clubName = team.name.split(" - ")[0] || team.name; // Einfache Heuristik
         }
 
+
+        // 3. Schützen und deren Einzelergebnisse aus rwk_scores laden
         const shooterResultsDisplay: ShooterDisplayResults[] = [];
-        if (team.shooterIds && team.shooterIds.length > 0) {
-          for (const shooterId of team.shooterIds) {
+        const teamRoundResults: { [key: string]: number | null } = {};
+        for (let i = 1; i <= NUM_ROUNDS; i++) teamRoundResults[`dg${i}`] = 0;
+
+
+        // Annahme: Wir müssen zuerst die Schützen-IDs für das Team ermitteln
+        // Entweder aus team.shooterIds (falls vorhanden) oder alle Schützen aus rwk_shooters mit dieser teamId
+        let currentTeamShooterIds: string[] = team.shooterIds || [];
+        if (!team.shooterIds || team.shooterIds.length === 0) {
+            // Fallback: Schützen aus rwk_shooters laden, die zu diesem Team gehören
+            const shootersColRef = collection(db, "rwk_shooters");
+            const qShootersInTeam = query(shootersColRef, where("teamId", "==", team.id), where("competitionYear", "==", year));
+            const teamShootersSnap = await getDocs(qShootersInTeam);
+            currentTeamShooterIds = teamShootersSnap.docs.map(d => d.id);
+            if (teamShootersSnap.empty) {
+                console.warn(`No shooters found in 'rwk_shooters' for teamId '${team.id}' and year '${year}'.`);
+            }
+        }
+
+        const allShooterScoresForTeam: ScoreEntry[] = [];
+        const scoresColRef = collection(db, "rwk_scores");
+        const qScores = query(scoresColRef, 
+            where("teamId", "==", team.id), 
+            where("competitionYear", "==", year)
+        );
+        const scoresSnapshot = await getDocs(qScores);
+        scoresSnapshot.forEach(scoreDoc => {
+            allShooterScoresForTeam.push({ id: scoreDoc.id, ...scoreDoc.data() } as ScoreEntry);
+        });
+        if (scoresSnapshot.empty) {
+          console.warn(`No scores found in 'rwk_scores' for teamId '${team.id}' and year '${year}'.`);
+        }
+
+
+        for (const shooterId of currentTeamShooterIds) {
+          let shooterName = "Unbek. Schütze";
+          try {
             const shooterDocRef = doc(db, "rwk_shooters", shooterId);
             const shooterSnap = await getDoc(shooterDocRef);
-            const shooterName = shooterSnap.exists() ? `${(shooterSnap.data() as Shooter).firstName} ${(shooterSnap.data() as Shooter).lastName}` : "Unbekannter Schütze";
-            if (!shooterSnap.exists()) {
-                 console.warn(`Shooter with ID '${shooterId}' for team '${team.name}' not found in 'rwk_shooters'.`);
-            }
-
-            const shooterResultDocRef = doc(db, "rwk_teams", team.id, "shooterResults", shooterId);
-            const shooterResultSnap = await getDoc(shooterResultDocRef);
-            
-            let results: { [key: string]: number | null } = {};
-            if (shooterResultSnap.exists()) {
-                 results = (shooterResultSnap.data() as ShooterRoundResults).results || {};
+            if (shooterSnap.exists()) {
+              shooterName = (shooterSnap.data() as Shooter).name || shooterName;
             } else {
-                console.warn(`No shooterResults found for shooter ID '${shooterId}' in team '${team.id}'. Filling with nulls.`);
-                for (let i = 1; i <= NUM_ROUNDS; i++) {
-                    results[`dg${i}`] = null;
-                }
+              console.warn(`Shooter with ID '${shooterId}' for team '${team.name}' not found in 'rwk_shooters'.`);
             }
-            
-            let totalScore = 0;
-            let roundsCount = 0;
-            Object.values(results).forEach(score => {
-              if (score !== null && typeof score === 'number') {
-                totalScore += score;
+          } catch (shooterError) {
+            console.error(`Error fetching shooter ${shooterId}:`, shooterError);
+          }
+
+          const individualResults: { [key: string]: number | null } = {};
+          for (let i = 1; i <= NUM_ROUNDS; i++) individualResults[`dg${i}`] = null;
+          
+          let totalIndividualScore = 0;
+          let roundsCount = 0;
+
+          const shooterScoresThisTeam = allShooterScoresForTeam.filter(s => s.shooterId === shooterId);
+
+          shooterScoresThisTeam.forEach(score => {
+            if (score.durchgang >= 1 && score.durchgang <= NUM_ROUNDS) {
+              const roundKey = `dg${score.durchgang}`;
+              individualResults[roundKey] = (individualResults[roundKey] || 0) + score.totalRinge; // Falls ein Schütze mehrere Einträge pro DG hat? Eher nicht.
+              
+              // Mannschaftsergebnis aktualisieren
+              teamRoundResults[roundKey] = (teamRoundResults[roundKey] || 0) + score.totalRinge;
+
+              if (score.totalRinge !== null) {
+                totalIndividualScore += score.totalRinge;
                 roundsCount++;
               }
-            });
-            const average = roundsCount > 0 ? totalScore / roundsCount : 0;
-
-            shooterResultsDisplay.push({
-              id: shooterResultSnap.id || shooterId,
-              shooterId: shooterId,
-              teamId: team.id,
-              leagueId: league.id,
-              seasonId: season.id,
-              shooterName: shooterName,
-              results: results,
-              average: average,
-            });
-          }
+            }
+          });
+          
+          shooterResultsDisplay.push({
+            shooterId: shooterId,
+            shooterName: shooterName,
+            results: individualResults,
+            average: roundsCount > 0 ? totalIndividualScore / roundsCount : 0,
+            teamId: team.id,
+            leagueId: league.id,
+            competitionYear: year,
+          });
         }
         
         let teamTotalScore = 0;
-        if (team.roundResults) {
-            Object.values(team.roundResults).forEach(score => {
-                if (typeof score === 'number') {
-                    teamTotalScore += score;
-                }
-            });
-        } else {
-            console.warn(`Team '${team.name}' (ID: ${team.id}) has no 'roundResults' field.`);
-        }
-
+        Object.values(teamRoundResults).forEach(score => {
+          if (score !== null) teamTotalScore += score;
+        });
 
         teamDisplays.push({
           ...team,
-          id: team.id,
           clubName: clubName,
           shootersResults: shooterResultsDisplay,
+          roundResults: teamRoundResults,
           totalScore: teamTotalScore,
         });
       }
@@ -150,22 +189,24 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
 
       leagueDisplays.push({ ...league, teams: teamDisplays });
     }
-    leagueDisplays.sort((a, b) => a.name.localeCompare(b.name));
+    // Ligen sind bereits durch orderBy("order") sortiert
 
-    return { ...season, leagues: leagueDisplays };
+    return {
+      id: year.toString(),
+      name: SEASON_DISPLAY_NAME,
+      year: year,
+      leagues: leagueDisplays
+    };
 
   } catch (error) {
-    console.error("Error fetching season data from Firestore:", error);
-    // Ensure a null is returned or error is re-thrown to be caught by caller
-    // Depending on how the calling useEffect handles it, this might be sufficient
-    // to set the error state in the component.
-    throw error; // Re-throw so the component's catch block can handle it.
+    console.error("Error fetching competition data from Firestore:", error);
+    throw error; 
   }
 }
 
 
 export default function RwkTabellenPage() {
-  const [selectedSeason, setSelectedSeason] = useState<SeasonDisplay | null>(null);
+  const [competitionData, setCompetitionData] = useState<SeasonDisplay | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [openTeamDetails, setOpenTeamDetails] = useState<Record<string, boolean>>({});
@@ -175,13 +216,14 @@ export default function RwkTabellenPage() {
       setLoading(true);
       setError(null);
       try {
-        console.log(`Attempting to fetch data for season ID: ${TARGET_SEASON_ID}`);
-        const seasonData = await fetchSeasonData(TARGET_SEASON_ID);
-        setSelectedSeason(seasonData);
-        if (seasonData) {
-          console.log("Season data successfully loaded and processed:", seasonData);
+        console.log(`Attempting to fetch data for competition year: ${TARGET_COMPETITION_YEAR}`);
+        const data = await fetchCompetitionData(TARGET_COMPETITION_YEAR);
+        setCompetitionData(data);
+        if (data) {
+          console.log("Competition data successfully loaded and processed:", data);
         } else {
-          console.warn("fetchSeasonData returned null, indicating season was not found.");
+          // This case should ideally be handled by fetchCompetitionData returning a minimal structure or throwing
+          console.warn("fetchCompetitionData returned null.");
         }
       } catch (err) {
         console.error("Failed to load RWK data in useEffect:", err);
@@ -236,66 +278,67 @@ export default function RwkTabellenPage() {
           </CardHeader>
           <CardContent className="text-destructive-foreground bg-destructive/10 p-6">
             <p>Es gab ein Problem beim Abrufen der Daten von der Datenbank.</p>
-            <p className="text-sm mt-2">Stellen Sie sicher, dass die Firestore Sicherheitsregeln korrekt konfiguriert sind und die Collection-Namen übereinstimmen.</p>
-            <p className="text-sm mt-2">Fehlermeldung: {error.message}</p>
-            <p className="text-sm mt-2">Bitte versuchen Sie es später erneut oder kontaktieren Sie den Administrator. Überprüfen Sie auch die Browser-Konsole auf detailliertere Fehlermeldungen von Firebase.</p>
+            <p className="text-sm mt-2">Fehlermeldung: {error.message}. Überprüfen Sie die Browser-Konsole für detailliertere Fehlermeldungen von Firebase und die Firestore-Sicherheitsregeln.</p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  if (!selectedSeason) {
+  if (!competitionData) {
+     // Sollte idealerweise nicht passieren, wenn fetchCompetitionData immer eine Struktur oder Fehler liefert
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-3">
           <InfoIcon className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold text-primary">Keine Saisondaten</h1>
+          <h1 className="text-3xl font-bold text-primary">Keine Daten</h1>
         </div>
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Saison nicht gefunden</CardTitle>
+            <CardTitle>Keine Wettkampfdaten gefunden</CardTitle>
           </CardHeader>
           <CardContent className="p-6 text-muted-foreground">
             <p>
-              Das Saison-Dokument mit der ID <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">{TARGET_SEASON_ID}</code> wurde nicht in der Firestore-Collection <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">seasons</code> gefunden.
+              Für das Wettkampfjahr <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">{TARGET_COMPETITION_YEAR}</code> konnten keine Daten geladen werden.
             </p>
-            <p className="mt-2">
-              Bitte überprüfen Sie Folgendes:
-            </p>
-            <ul className="list-disc list-inside mt-1 space-y-1">
-              <li>Ist die Saison-ID <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">{TARGET_SEASON_ID}</code> korrekt?</li>
-              <li>Existiert ein Dokument mit genau dieser ID in der <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">seasons</code> Collection in Ihrer Firestore-Datenbank?</li>
-              <li>Sind Ihre Firestore-Sicherheitsregeln so konfiguriert, dass Lesezugriff auf die <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">seasons</code> Collection erlaubt ist?</li>
-            </ul>
-            <p className="mt-3">Ohne ein gültiges Saison-Dokument können keine weiteren Daten (Ligen, Mannschaften, Ergebnisse) geladen werden.</p>
+             <p className="mt-2">Bitte überprüfen Sie die Konsolenausgaben auf spezifische Fehler beim Datenabruf.</p>
           </CardContent>
         </Card>
       </div>
     );
   }
+  
+  // Fall, dass Ligen-Array leer ist (Saison-Objekt aber existiert)
+  if (competitionData && competitionData.leagues.length === 0) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center space-x-3">
+          <TableIcon className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold text-primary">{competitionData.name}</h1>
+        </div>
+        <Card className="shadow-lg">
+            <CardHeader>
+                <CardTitle className="text-accent">Keine Ligen</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center py-12 p-6">
+                <p className="text-lg text-muted-foreground">Für das Wettkampfjahr {TARGET_COMPETITION_YEAR} wurden keine Ligen in der Collection <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">rwk_leagues</code> gefunden, die das Feld <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">competitionYear: {TARGET_COMPETITION_YEAR}</code> enthalten.</p>
+                <p className="text-muted-foreground mt-2">Bitte überprüfen Sie Ihre Daten in Firestore.</p>
+            </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
 
   return (
     <div className="space-y-8">
       <div className="flex items-center space-x-3">
         <TableIcon className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold text-primary">RWK Tabellen - {selectedSeason.name}</h1>
+        <h1 className="text-3xl font-bold text-primary">{competitionData.name}</h1>
       </div>
 
-      {selectedSeason.leagues.length === 0 && (
-         <Card className="shadow-lg">
-            <CardHeader>
-                <CardTitle className="text-accent">Keine Ligen</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center py-12 p-6">
-                <p className="text-lg text-muted-foreground">Für die Saison "{selectedSeason.name}" wurden keine Ligen in der Collection <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">rwk_leagues</code> gefunden, die auf die Saison-ID <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">{selectedSeason.id}</code> verweisen.</p>
-                <p className="text-muted-foreground mt-2">Bitte überprüfen Sie, ob Ligadokumente mit dem Feld <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">seasonId: "{selectedSeason.id}"</code> existieren.</p>
-            </CardContent>
-        </Card>
-      )}
-
-      <Accordion type="multiple" defaultValue={selectedSeason.leagues.map(l => l.id)} className="w-full space-y-4">
-        {selectedSeason.leagues.map((league) => (
+      <Accordion type="multiple" defaultValue={competitionData.leagues.map(l => l.id)} className="w-full space-y-4">
+        {competitionData.leagues.map((league) => (
           <AccordionItem value={league.id} key={league.id} className="border bg-card shadow-lg rounded-lg overflow-hidden">
             <AccordionTrigger className="bg-accent/10 hover:bg-accent/20 px-6 py-4 text-xl font-semibold text-accent data-[state=open]:border-b">
               {league.name} {league.shortName && `(${league.shortName})`}
@@ -317,7 +360,7 @@ export default function RwkTabellenPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {league.teams.sort((a,b) => (a.rank || 999) - (b.rank || 999)).map((team, index) => ( // Sort by rank
+                    {league.teams.sort((a,b) => (a.rank || 999) - (b.rank || 999)).map((team, index) => ( 
                       <React.Fragment key={team.id}>
                         <TableRow className="hover:bg-secondary/20 transition-colors">
                           <React.Fragment>
@@ -325,7 +368,7 @@ export default function RwkTabellenPage() {
                             <TableCell className="font-medium text-foreground">{team.name} <span className="text-xs text-muted-foreground">({team.clubName || 'N/A'})</span></TableCell>
                             {[...Array(NUM_ROUNDS)].map((_, i) => (
                               <TableCell key={`dg${i + 1}-${team.id}`} className="text-center">
-                                {team.roundResults?.[`dg${i + 1}` as keyof Team['roundResults']] ?? '-'}
+                                {team.roundResults?.[`dg${i + 1}`] ?? '-'}
                               </TableCell>
                             ))}
                             <TableCell className="text-center font-semibold text-primary">{team.totalScore ?? '-'}</TableCell>
@@ -347,7 +390,7 @@ export default function RwkTabellenPage() {
                         {team.shootersResults && team.shootersResults.length > 0 && openTeamDetails[team.id] && (
                            <TableRow id={`team-details-${team.id}`} className="bg-muted/10 hover:bg-muted/20">
                              <React.Fragment>
-                              <TableCell colSpan={3 + NUM_ROUNDS + 1} className="p-0">
+                              <TableCell colSpan={3 + NUM_ROUNDS + 1} className="p-0"> {/* +1 für Clubname, +1 für Gesamt, +1 für Expander */}
                                 <div className="p-4 space-y-3">
                                   <h4 className="text-md font-semibold text-accent-foreground">Einzelergebnisse für {team.name}</h4>
                                   <Table className="bg-background rounded-md shadow-sm">
@@ -363,13 +406,13 @@ export default function RwkTabellenPage() {
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                      {team.shootersResults.sort((a,b) => (a.shooterName || '').localeCompare(b.shooterName || '')).map(shooterRes => ( // Sort shooters by name
+                                      {team.shootersResults.sort((a,b) => (a.shooterName || '').localeCompare(b.shooterName || '')).map(shooterRes => (
                                         <TableRow key={shooterRes.shooterId}>
                                           <React.Fragment>
                                             <TableCell className="font-medium">{shooterRes.shooterName || shooterRes.shooterId}</TableCell>
                                             {[...Array(NUM_ROUNDS)].map((_, i) => (
                                                <TableCell key={`shooter-dg${i + 1}-${shooterRes.shooterId}`} className="text-center">
-                                                {shooterRes.results?.[`dg${i + 1}` as keyof typeof shooterRes.results] ?? '-'}
+                                                {shooterRes.results?.[`dg${i + 1}`] ?? '-'}
                                                </TableCell>
                                             ))}
                                             <TableCell className="text-center font-semibold text-primary">
@@ -391,7 +434,7 @@ export default function RwkTabellenPage() {
                 </Table>
               </div>
               {league.teams.length === 0 && (
-                <p className="p-4 text-center text-muted-foreground">Keine Mannschaften in dieser Liga für die Saison {selectedSeason.name} vorhanden.</p>
+                <p className="p-4 text-center text-muted-foreground">Keine Mannschaften in dieser Liga für das Wettkampfjahr {TARGET_COMPETITION_YEAR} vorhanden.</p>
               )}
             </AccordionContent>
           </AccordionItem>
@@ -400,4 +443,3 @@ export default function RwkTabellenPage() {
     </div>
   );
 }
-
