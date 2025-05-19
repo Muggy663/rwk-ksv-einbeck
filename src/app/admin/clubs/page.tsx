@@ -21,6 +21,16 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Club } from '@/types/rwk';
@@ -36,6 +46,10 @@ export default function AdminClubsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentClub, setCurrentClub] = useState<Partial<Club> & { id?: string } | null>(null);
   const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
+  
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [clubToDelete, setClubToDelete] = useState<Club | null>(null);
+
   const { toast } = useToast();
 
   const fetchClubs = async () => {
@@ -77,46 +91,51 @@ export default function AdminClubsPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (clubId: string) => {
-    if (!clubId) {
-      console.error("--- handleDelete: handleDelete called with undefined or empty clubId! ---");
-      toast({ title: "Fehler", description: "Keine Vereins-ID zum Löschen übergeben.", variant: "destructive" });
+  const handleDeleteConfirmation = (club: Club) => {
+    setClubToDelete(club);
+    setIsAlertOpen(true);
+  };
+
+  const handleDeleteClub = async () => {
+    if (!clubToDelete || !clubToDelete.id) {
+      toast({ title: "Fehler", description: "Kein Verein zum Löschen ausgewählt.", variant: "destructive" });
+      setIsAlertOpen(false);
+      setClubToDelete(null);
       return;
     }
 
-    const clubNameToDelete = clubs.find(c => c.id === clubId)?.name || clubId;
-    console.log(`--- handleDelete: Attempting to delete club: ${clubNameToDelete} (ID: ${clubId}) ---`);
-
-    // Temporarily bypassed window.confirm for testing
-    // console.log(`Direkter Löschversuch für Verein "${clubNameToDelete}" (ID: ${clubId}) - KEINE BESTÄTIGUNG.`);
-    // toast({ title: "Lösche Verein...", description: `Versuche "${clubNameToDelete}" direkt zu löschen.`, variant: "default"});
-
+    const clubId = clubToDelete.id;
+    const clubName = clubToDelete.name;
+    console.log(`--- handleDeleteClub: Attempting to delete club: ${clubName} (ID: ${clubId}) ---`);
+    
     setIsLoading(true);
     try {
-      console.log(`--- handleDelete: Calling deleteDoc for ${clubId} ---`);
+      console.log(`--- handleDeleteClub: Calling deleteDoc for ${clubId} ---`);
       await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
-      console.log(`--- handleDelete: deleteDoc successful for ${clubId}. ---`);
+      console.log(`--- handleDeleteClub: deleteDoc successful for ${clubId}. ---`);
 
-      console.log(`--- handleDelete: About to call SUCCESS toast for ${clubId}. ---`);
+      console.log(`--- handleDeleteClub: About to call SUCCESS toast for ${clubId}. ---`);
       toast({
-        title: "Verein gelöscht", // Slightly changed title
-        description: `"${clubNameToDelete}" wurde erfolgreich entfernt.`,
+        title: "Verein gelöscht",
+        description: `"${clubName}" wurde erfolgreich entfernt.`,
       });
-      console.log(`--- handleDelete: SUCCESS toast call for ${clubId} has been made. ---`);
+      console.log(`--- handleDeleteClub: SUCCESS toast call for ${clubId} has been made. ---`);
 
-      console.log(`--- handleDelete: About to call fetchClubs() for ${clubId}. ---`);
-      await fetchClubs();
-      console.log(`--- handleDelete: fetchClubs() completed for ${clubId}. ---`);
+      console.log(`--- handleDeleteClub: About to call fetchClubs() for ${clubId}. ---`);
+      await fetchClubs(); // Refresh the list
+      console.log(`--- handleDeleteClub: fetchClubs() completed for ${clubId}. ---`);
     } catch (error) {
-      console.error("--- handleDelete: Error during delete operation: ---", clubId, error);
+      console.error("--- handleDeleteClub: Error during delete operation: ---", clubId, error);
       toast({
         title: "Fehler beim Löschen",
-        description: (error as Error).message || `Der Verein "${clubNameToDelete}" konnte nicht gelöscht werden.`,
+        description: (error as Error).message || `Der Verein "${clubName}" konnte nicht gelöscht werden.`,
         variant: "destructive",
       });
     } finally {
-      console.log(`--- handleDelete: Finally block. Setting isLoading to false for ${clubId}. ---`);
+      console.log(`--- handleDeleteClub: Finally block. Setting isLoading to false for ${clubId}. ---`);
       setIsLoading(false);
+      setIsAlertOpen(false);
+      setClubToDelete(null);
     }
   };
 
@@ -161,7 +180,6 @@ export default function AdminClubsPage() {
     setCurrentClub(prev => prev ? ({ ...prev, [field]: value }) : null);
   };
 
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -176,7 +194,7 @@ export default function AdminClubsPage() {
           <CardDescription>Übersicht aller angelegten Vereine. Hier können Sie Vereine bearbeiten oder löschen.</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading && !isFormOpen ? (
+          {isLoading && !isFormOpen && !isAlertOpen ? (
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
@@ -204,7 +222,7 @@ export default function AdminClubsPage() {
                         onClick={() => {
                           console.log(`Löschen-Button geklickt für Verein ID: ${club.id}, Name: ${club.name}`);
                           if (club.id) {
-                            handleDelete(club.id);
+                            handleDeleteConfirmation(club);
                           } else {
                             console.error("FEHLER: club.id ist undefined beim Klick auf Löschen-Button für Club:", club);
                             toast({ title: "Fehler", description: "Vereins-ID nicht gefunden, Löschen nicht möglich.", variant: "destructive"});
@@ -271,6 +289,30 @@ export default function AdminClubsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {clubToDelete && (
+        <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Verein löschen bestätigen</AlertDialogTitle>
+              <AlertDialogDescription>
+                Möchten Sie den Verein "{clubToDelete.name}" wirklich endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setClubToDelete(null)}>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteClub}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={isLoading}
+              >
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Endgültig löschen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }
