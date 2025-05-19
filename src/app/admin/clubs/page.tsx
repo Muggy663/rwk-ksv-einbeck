@@ -78,35 +78,45 @@ export default function AdminClubsPage() {
   };
 
   const handleDelete = async (clubId: string) => {
-    console.log("--- handleDelete Invoked (window.confirm umgangen) --- Club ID:", clubId);
     if (!clubId) {
-      console.error("handleDelete called with undefined or empty clubId!");
+      console.error("--- handleDelete: handleDelete called with undefined or empty clubId! ---");
       toast({ title: "Fehler", description: "Keine Vereins-ID zum Löschen übergeben.", variant: "destructive" });
       return;
     }
 
     const clubNameToDelete = clubs.find(c => c.id === clubId)?.name || clubId;
-    
-    // TEMPORÄR: window.confirm umgangen für Testzwecke
-    console.log(`Direkter Löschversuch für Verein "${clubNameToDelete}" (ID: ${clubId}) - KEINE BESTÄTIGUNG.`);
-    toast({ title: "Lösche Verein...", description: `Versuche "${clubNameToDelete}" direkt zu löschen.`, variant: "default"});
+    console.log(`--- handleDelete: Attempting to delete club: ${clubNameToDelete} (ID: ${clubId}) ---`);
 
+    // Temporarily bypassed window.confirm for testing
+    // console.log(`Direkter Löschversuch für Verein "${clubNameToDelete}" (ID: ${clubId}) - KEINE BESTÄTIGUNG.`);
+    // toast({ title: "Lösche Verein...", description: `Versuche "${clubNameToDelete}" direkt zu löschen.`, variant: "default"});
 
-    setIsLoading(true); 
+    setIsLoading(true);
     try {
+      console.log(`--- handleDelete: Calling deleteDoc for ${clubId} ---`);
       await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
-      console.log(`Club "${clubNameToDelete}" (ID: ${clubId}) successfully deleted from Firestore (ohne confirm).`);
-      toast({ title: "Verein gelöscht", description: `Der Verein "${clubNameToDelete}" wurde erfolgreich entfernt.` });
-      await fetchClubs(); 
+      console.log(`--- handleDelete: deleteDoc successful for ${clubId}. ---`);
+
+      console.log(`--- handleDelete: About to call SUCCESS toast for ${clubId}. ---`);
+      toast({
+        title: "Verein gelöscht", // Slightly changed title
+        description: `"${clubNameToDelete}" wurde erfolgreich entfernt.`,
+      });
+      console.log(`--- handleDelete: SUCCESS toast call for ${clubId} has been made. ---`);
+
+      console.log(`--- handleDelete: About to call fetchClubs() for ${clubId}. ---`);
+      await fetchClubs();
+      console.log(`--- handleDelete: fetchClubs() completed for ${clubId}. ---`);
     } catch (error) {
-      console.error("Error deleting club (ohne confirm): ", clubId, error);
+      console.error("--- handleDelete: Error during delete operation: ---", clubId, error);
       toast({
         title: "Fehler beim Löschen",
         description: (error as Error).message || `Der Verein "${clubNameToDelete}" konnte nicht gelöscht werden.`,
         variant: "destructive",
       });
     } finally {
-        setIsLoading(false);
+      console.log(`--- handleDelete: Finally block. Setting isLoading to false for ${clubId}. ---`);
+      setIsLoading(false);
     }
   };
 
@@ -122,7 +132,7 @@ export default function AdminClubsPage() {
       shortName: currentClub.shortName || '',
     };
 
-    setIsLoading(true); 
+    setIsLoading(true);
     try {
       if (formMode === 'new') {
         await addDoc(collection(db, CLUBS_COLLECTION), clubDataToSave);
@@ -133,7 +143,7 @@ export default function AdminClubsPage() {
       }
       setIsFormOpen(false);
       setCurrentClub(null);
-      await fetchClubs(); 
+      await fetchClubs();
     } catch (error) {
       console.error("Error saving club: ", error);
       const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
@@ -143,7 +153,7 @@ export default function AdminClubsPage() {
         variant: "destructive",
       });
     } finally {
-        setIsLoading(false); 
+        setIsLoading(false);
     }
   };
 
@@ -166,7 +176,7 @@ export default function AdminClubsPage() {
           <CardDescription>Übersicht aller angelegten Vereine. Hier können Sie Vereine bearbeiten oder löschen.</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading && !isFormOpen ? ( 
+          {isLoading && !isFormOpen ? (
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
@@ -188,9 +198,9 @@ export default function AdminClubsPage() {
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(club)} aria-label="Verein bearbeiten">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => {
                           console.log(`Löschen-Button geklickt für Verein ID: ${club.id}, Name: ${club.name}`);
                           if (club.id) {
@@ -199,8 +209,8 @@ export default function AdminClubsPage() {
                             console.error("FEHLER: club.id ist undefined beim Klick auf Löschen-Button für Club:", club);
                             toast({ title: "Fehler", description: "Vereins-ID nicht gefunden, Löschen nicht möglich.", variant: "destructive"});
                           }
-                        }} 
-                        className="text-destructive hover:text-destructive/80" 
+                        }}
+                        className="text-destructive hover:text-destructive/80"
                         aria-label="Verein löschen"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -228,7 +238,7 @@ export default function AdminClubsPage() {
                 {formMode === 'new' ? 'Erstellen Sie einen neuen Verein.' : `Bearbeiten Sie die Details für ${currentClub?.name || 'den Verein'}.`}
               </DialogDescription>
             </DialogHeader>
-            {currentClub && ( 
+            {currentClub && (
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="name" className="text-right">Name</Label>
@@ -253,7 +263,7 @@ export default function AdminClubsPage() {
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentClub(null); }}>Abbrechen</Button>
-              <Button type="submit" disabled={isLoading && isFormOpen}> 
+              <Button type="submit" disabled={isLoading && isFormOpen}>
                 {(isLoading && isFormOpen) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Speichern
               </Button>
