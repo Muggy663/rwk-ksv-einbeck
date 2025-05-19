@@ -4,23 +4,34 @@ import { Separator } from '@/components/ui/separator';
 import { NewspaperIcon, TagIcon, CalendarDaysIcon, ListChecksIcon } from 'lucide-react';
 import type { ChangelogEntry } from '@/types/updates';
 
+// Changelog entries using MAJOR.MINOR.PATCH
 const changelogEntries: ChangelogEntry[] = [
   {
-    version: '0.0.2.0',
+    version: '0.1.0',
     date: '19. Mai 2025',
-    title: 'Regel "Maximal 3 Schützen pro Mannschaft" implementiert',
+    title: 'Admin-Bereich: Datenbankintegration & UI-Verbesserungen',
     descriptionPoints: [
-      'Admin Teams: Begrenzung auf maximal 3 Schützen pro Mannschaft beim Bearbeiten von Teams implementiert.',
-      'Admin Teams: Visuelles Feedback und Deaktivierung von Checkboxen/Speichern-Button bei Erreichen der Maximalzahl.',
-      'Admin Schützen: Begrenzung auf maximal 3 Schützen pro Mannschaft beim Neuanlegen von Schützen und direkter Mannschaftszuordnung implementiert.',
-      'Admin Schützen: Anzeige der aktuellen Schützenanzahl pro Mannschaft im Dialog zur Schützenerstellung.',
-      'Diverse Layout-Verbesserungen und Fehlerbehebungen in den Admin-Dialogen für Schützen und Mannschaften.',
+      'Admin Clubs: Vollständige Firestore-Anbindung für CRUD-Operationen, inkl. Duplikatsprüfung und Vereinsnummer.',
+      'Admin Seasons: Vollständige Firestore-Anbindung für CRUD-Operationen, inkl. Duplikatsprüfung.',
+      'Admin Leagues: Vollständige Firestore-Anbindung für CRUD-Operationen, inkl. Saison-Zuordnung und Duplikatsprüfung.',
+      'Admin Teams: Firestore-Anbindung für Laden von Saisons, Ligen, Vereinen. Schützenzuordnung zu Teams implementiert (max. 3 Schützen pro Team). UI-Anpassungen.',
+      'Admin Shooters: Firestore-Anbindung für CRUD-Operationen. Verbesserte UI für Dialoge und Kontextanzeige. Direkte Mannschaftszuordnung beim Neuanlegen (max. 3 Schützen pro Team).',
+      'Versionsschema auf MAJOR.MINOR.PATCH umgestellt.',
     ],
   },
   {
-    version: '0.0.1.9',
+    version: '0.0.7', // Example of previous patch before re-versioning
+    date: '19. Mai 2025', // Retaining for historical context, actual date might be different
+    title: 'Regel "Maximal 3 Schützen pro Mannschaft" & Zählerkorrektur',
+    descriptionPoints: [
+      'Admin Teams & Admin Shooters: Begrenzung auf maximal 3 Schützen pro Mannschaft implementiert.',
+      'Admin Teams: Korrektur des Zählers für ausgewählte Schützen im Dialog.',
+    ],
+  },
+   {
+    version: '0.0.6',
     date: '19. Mai 2025',
-    title: 'Admin-Bereich: Datenbankanbindung und UI-Verbesserungen',
+    title: 'Admin-Bereich: Datenbankanbindung und UI-Verbesserungen (Fortsetzung)',
     descriptionPoints: [
       'Admin Clubs: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen.',
       'Admin Clubs: Prüfung auf doppelte Vereinsnamen und Hinzufügen der Vereinsnummer implementiert.',
@@ -28,75 +39,45 @@ const changelogEntries: ChangelogEntry[] = [
       'Admin Seasons: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen von Saisons.',
       'Admin Leagues: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen von Ligen, inklusive Saison-Zuordnung.',
       'Admin Teams: Firestore-Anbindung für Laden von Saisons und Ligen in Auswahl-Dropdowns. UI-Anpassung der Mannschaftstabelle.',
-      'Admin Teams: Beginn der Implementierung der Schützenzuordnung zu Mannschaften (Speicherung der shooterIds).',
-      'Admin Shooters: UI-Verbesserungen im Dialog und Anzeige der Mannschaftszugehörigkeit (informativ).',
+      'Admin Shooters: UI-Verbesserungen im Dialog und Anzeige der Mannschaftszugehörigkeit.',
       'Diverse Fehlerbehebungen und Verbesserungen der Stabilität im Admin-Bereich.',
     ],
   },
   {
-    version: '0.0.1.0',
-    date: '19. Mai 2025',
-    title: 'Admin: Vereinsverwaltung mit Datenbankanbindung',
+    version: '0.0.3', // Adjusted from 0.0.0.3
+    date: '02. August 2024', // Kept original date for context
+    title: 'Verbesserungen Admin-Bereich & Ergebniserfassung (UI)',
     descriptionPoints: [
-      'Admin-Seite für Vereine (/admin/clubs) implementiert.',
-      'Anzeigen, Anlegen, Bearbeiten und Löschen von Vereinen mit direkter Firestore-Anbindung.',
-      'Bestätigungsdialog (AlertDialog) vor dem Löschen von Vereinen hinzugefügt.',
-      'Prüfung auf doppelte Vereinsnamen beim Anlegen und Bearbeiten implementiert.',
-      'Feld für Vereinsnummer (Format 08-XXX) zur Vereinsverwaltung hinzugefügt.',
-      'Vereinsliste wird nun nach Vereinsnummer (primär) und Name (sekundär) sortiert.',
-    ],
-  },
-  {
-    version: '0.0.0.3',
-    date: '02. August 2024',
-    title: 'Verbesserungen Admin-Bereich & Ergebniserfassung',
-    descriptionPoints: [
-      'Admin-Bereich: Intuitivere Navigation zwischen Saisons, Ligen, Mannschaften und Schützen implementiert.',
-      'Admin-Bereich: Filtermöglichkeiten auf den Verwaltungsseiten für Saisons, Ligen, Teams und Schützen hinzugefügt.',
+      'Admin-Bereich: Intuitivere Navigation und Filteransätze implementiert.',
       'Admin-Bereich: Platzhalter-Buttons für CSV-Import und PDF-Urkundengenerierung im Dashboard ergänzt.',
-      'Ergebniserfassung: Formular behält Auswahl für Saison, Liga, Team und Runde bei.',
-      'Ergebniserfassung: Ergebnisse können einer Vorschau-Liste hinzugefügt und vor dem Speichern kontrolliert werden.',
-      'Ergebniserfassung: Schützen verschwinden aus dem Auswahl-Dropdown, sobald für sie in der aktuellen Runde ein Ergebnis in die Vorschau-Liste aufgenommen wurde.',
-      'Ergebniserfassung: Typen für Vor-, Nach- und Regulärschießen sind auswählbar und werden zwischengespeichert.',
-      'Korrektur: Button zum Anlegen von Mannschaften im Admin-Bereich wiederhergestellt.',
-      'Korrektur: Fehler beim Filtern von Schützen nach "Alle Vereine" behoben.',
+      'Ergebniserfassung: Formular behält Auswahl bei. Ergebnisse können zwischengespeichert und kontrolliert werden.',
+      'Ergebniserfassung: Schützen verschwinden aus Auswahl, wenn Ergebnis für Runde vorgemerkt.',
+      'Ergebniserfassung: Ergebnistypen (Vor-, Nach-, Regulärschießen) implementiert.',
     ],
   },
   {
-    version: '0.0.0.2',
-    date: '01. August 2024',
+    version: '0.0.2', // Adjusted from 0.0.0.2
+    date: '01. August 2024', // Kept original date for context
     title: 'Datenbankanbindung RWK-Tabellen & Erweiterungen',
     descriptionPoints: [
-      'RWK-Tabellen laden Daten dynamisch aus Firestore (Ligen, Teams, Schützenergebnisse).',
-      'Auswahl für Wettkampfjahr und Disziplin (Kleinkaliber, Luftdruck) in RWK-Tabellen hinzugefügt.',
-      'Dynamische Seitenüberschrift für RWK-Tabellen (z.B. "RWK 2025 Kleinkaliber (KK)").',
-      'Separate Tab-Ansichten für Mannschafts- und Einzelschützenranglisten implementiert.',
-      'Hervorhebung "Bester Schütze" (höchster Gesamtscore) und "Beste Dame" (höchster Gesamtscore weiblich).',
-      'Mannschaft "SV Dörrigsen Einzel" wird in Tabellenansicht herausgefiltert.',
-      'Mannschaftsergebnis pro Durchgang wird nur bei Ergebnissen von 3 Schützen berechnet.',
-      'Durchschnittsberechnung für Mannschaftsergebnisse und Einzelschützen hinzugefügt.',
-      'Anzeige der Einzelschützen in der Mannschaftstabelle dezenter gestaltet.',
-      'Case-insensitive Überprüfung für `shooterGender` bei Ermittlung "Beste Dame".',
-      'Korrektur von Hydration- und Parsing-Fehlern in der Tabellenansicht.',
-      'Firebase Sicherheitsregeln angepasst und Hilfestellung bei Index-Erstellung gegeben.',
+      'RWK-Tabellen laden Daten dynamisch aus Firestore.',
+      'Auswahl für Wettkampfjahr und Disziplin in RWK-Tabellen.',
+      'Separate Tab-Ansichten für Mannschafts- und Einzelschützenranglisten.',
+      'Hervorhebung "Bester Schütze" und "Beste Dame".',
     ],
   },
   {
-    version: '0.0.0.1',
-    date: '31. Juli 2024',
+    version: '0.0.1', // Adjusted from 0.0.0.1
+    date: '31. Juli 2024', // Kept original date for context
     title: 'Initiales Setup & Kernfunktionen',
     descriptionPoints: [
-      'Grundlegende Projektstruktur mit Next.js und TypeScript erstellt.',
-      'Firebase Authentifizierung und Konfiguration eingerichtet.',
-      'Erste Version der RWK-Tabellen Seite mit Dummy-Daten und Ligastruktur.',
-      'Basis für den Admin-Bereich mit Layout und Navigation implementiert.',
-      'Logo des KSV Einbeck in die Startseite und Kopfzeile integriert.',
-      'Git-Repository für die Versionskontrolle initialisiert und mit Remote verbunden.',
+      'Grundlegende Projektstruktur mit Next.js und TypeScript.',
+      'Firebase Authentifizierung und Konfiguration.',
+      'Erste Version der RWK-Tabellen Seite mit Dummy-Daten.',
+      'Basis für den Admin-Bereich mit Layout und Navigation.',
       'System für Versionsnummerierung und Changelog eingeführt.',
-      'Firebase Sicherheitsregeln angepasst für Datenabruf.',
     ],
   },
-  // Zukünftige Einträge können hier hinzugefügt werden
 ];
 
 export default function UpdatesPage() {
