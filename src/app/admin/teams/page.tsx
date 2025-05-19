@@ -129,7 +129,7 @@ export default function AdminTeamsPage() {
       }
     };
     fetchInitialData();
-  }, [querySeasonId, toast]);
+  }, [querySeasonId, toast]); // Removed queryLeagueId as it's handled by the next useEffect
 
   useEffect(() => {
     console.log("AdminTeamsPage: selectedSeasonId or allLeagues changed. Current selectedSeasonId:", selectedSeasonId);
@@ -215,7 +215,7 @@ export default function AdminTeamsPage() {
       leagueId: selectedLeagueId, 
       competitionYear: currentSeason.competitionYear, 
       name: '', 
-      clubId: allClubs[0].id 
+      clubId: allClubs.length > 0 ? allClubs[0].id : '' // Pre-select first club or handle empty
     });
     setIsFormOpen(true);
   };
@@ -263,11 +263,13 @@ export default function AdminTeamsPage() {
       return;
     }
 
-    const teamDataToSave: Omit<Team, 'id' | 'shooterIds'> = { 
+    // Ensure shooterIds is an empty array if not present, to avoid Firestore errors with 'undefined'
+    const teamDataToSave: Omit<Team, 'id'> = { 
       name: currentTeam.name.trim(),
       clubId: currentTeam.clubId,
       leagueId: currentTeam.leagueId,
       competitionYear: currentTeam.competitionYear,
+      shooterIds: currentTeam.shooterIds || [], // Ensure shooterIds is an array
     };
     
     setIsLoadingForm(true);
@@ -303,7 +305,10 @@ export default function AdminTeamsPage() {
         await addDoc(teamsCollectionRef, teamDataToSave);
         toast({ title: "Mannschaft erstellt", description: `"${teamDataToSave.name}" wurde erfolgreich angelegt.` });
       } else if (formMode === 'edit' && currentTeam.id) {
-        await updateDoc(doc(db, TEAMS_COLLECTION, currentTeam.id), teamDataToSave);
+        // Make sure not to overwrite shooterIds if it's not being edited in this form
+        const { shooterIds, ...editableTeamData } = teamDataToSave;
+        const dataToUpdate = currentTeam.shooterIds ? teamDataToSave : editableTeamData;
+        await updateDoc(doc(db, TEAMS_COLLECTION, currentTeam.id), dataToUpdate);
         toast({ title: "Mannschaft aktualisiert", description: `"${teamDataToSave.name}" wurde erfolgreich aktualisiert.` });
       }
       setIsFormOpen(false);
@@ -321,15 +326,19 @@ export default function AdminTeamsPage() {
   const handleFormInputChange = (field: keyof Pick<Team, 'name' | 'clubId'>, value: string) => {
     setCurrentTeam(prev => {
         if (!prev) return null;
+        // Only allow name and clubId to be changed through this specific handler
+        // leagueId and competitionYear come from the selected context
         const updatedTeam = { ...prev, [field]: value };
-        return updatedTeam as Partial<Team>;
+        return updatedTeam as Partial<Team>; // Cast as Partial as other fields might be missing during creation
     });
   };
   
   const navigateToShooters = (teamId: string) => {
     const team = teams.find(t => t.id === teamId);
-    if (team) {
+    if (team && selectedSeasonId && selectedLeagueId) { // ensure context is available
       router.push(`/admin/shooters?clubId=${team.clubId}&teamId=${teamId}&seasonId=${selectedSeasonId}&leagueId=${selectedLeagueId}`);
+    } else {
+        toast({title: "Fehler", description: "Kontext für Navigation zu Schützen nicht vollständig.", variant: "destructive"})
     }
   };
 
@@ -390,7 +399,6 @@ export default function AdminTeamsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  {/* Entfernte Spalte für Vereinsname */}
                   <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
@@ -398,7 +406,6 @@ export default function AdminTeamsPage() {
                 {teams.map((team) => (
                   <TableRow key={team.id}>
                     <TableCell>{team.name}</TableCell>
-                    {/* Entfernte Zelle für Vereinsname */}
                     <TableCell className="text-right space-x-2">
                        <Button variant="outline" size="sm" onClick={() => navigateToShooters(team.id)}>
                         <Users className="mr-1 h-4 w-4" /> Schützen
@@ -469,6 +476,14 @@ export default function AdminTeamsPage() {
                       </SelectContent>
                   </Select>
                 </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="leagueDisplay" className="text-right">Liga</Label>
+                    <Input id="leagueDisplay" value={selectedLeague?.name || ''} disabled className="col-span-3 bg-muted/50" />
+                </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="seasonDisplay" className="text-right">Saison</Label>
+                    <Input id="seasonDisplay" value={selectedSeason?.name || ''} disabled className="col-span-3 bg-muted/50" />
+                </div>
               </div>
             )}
             <DialogFooter>
@@ -508,3 +523,6 @@ export default function AdminTeamsPage() {
     </div>
   );
 }
+
+
+    
