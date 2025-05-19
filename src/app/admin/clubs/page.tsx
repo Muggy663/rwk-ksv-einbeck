@@ -78,7 +78,7 @@ export default function AdminClubsPage() {
   };
 
   const handleDelete = async (clubId: string) => {
-    console.log("--- handleDelete Invoked --- Club ID:", clubId);
+    console.log("--- handleDelete Invoked (window.confirm umgangen) --- Club ID:", clubId);
     if (!clubId) {
       console.error("handleDelete called with undefined or empty clubId!");
       toast({ title: "Fehler", description: "Keine Vereins-ID zum Löschen übergeben.", variant: "destructive" });
@@ -86,28 +86,27 @@ export default function AdminClubsPage() {
     }
 
     const clubNameToDelete = clubs.find(c => c.id === clubId)?.name || clubId;
-    const confirmed = window.confirm(`Sind Sie sicher, dass Sie den Verein "${clubNameToDelete}" löschen möchten? Dies kann nicht rückgängig gemacht werden.`);
     
-    if (!confirmed) {
-      console.log("Löschvorgang vom Benutzer abgebrochen für Verein:", clubNameToDelete);
-      return;
-    }
+    // TEMPORÄR: window.confirm umgangen für Testzwecke
+    console.log(`Direkter Löschversuch für Verein "${clubNameToDelete}" (ID: ${clubId}) - KEINE BESTÄTIGUNG.`);
+    toast({ title: "Lösche Verein...", description: `Versuche "${clubNameToDelete}" direkt zu löschen.`, variant: "default"});
 
-    console.log(`Bestätigung erhalten. Versuche Verein "${clubNameToDelete}" (ID: ${clubId}) zu löschen...`);
+
     setIsLoading(true); 
     try {
       await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
-      console.log(`Club "${clubNameToDelete}" (ID: ${clubId}) successfully deleted from Firestore.`);
+      console.log(`Club "${clubNameToDelete}" (ID: ${clubId}) successfully deleted from Firestore (ohne confirm).`);
       toast({ title: "Verein gelöscht", description: `Der Verein "${clubNameToDelete}" wurde erfolgreich entfernt.` });
       await fetchClubs(); 
     } catch (error) {
-      console.error("Error deleting club: ", clubId, error);
+      console.error("Error deleting club (ohne confirm): ", clubId, error);
       toast({
         title: "Fehler beim Löschen",
         description: (error as Error).message || `Der Verein "${clubNameToDelete}" konnte nicht gelöscht werden.`,
         variant: "destructive",
       });
-      setIsLoading(false); 
+    } finally {
+        setIsLoading(false);
     }
   };
 
