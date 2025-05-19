@@ -6,20 +6,38 @@ import type { ChangelogEntry } from '@/types/updates';
 
 const changelogEntries: ChangelogEntry[] = [
   {
+    version: '0.0.0.3',
+    date: '01. August 2024', // Approximate date
+    title: 'Verbesserungen Admin-Bereich & Ergebniserfassung',
+    descriptionPoints: [
+      'Admin-Bereich: Intuitivere Navigation zwischen Saisons, Ligen, Mannschaften und Schützen implementiert.',
+      'Admin-Bereich: Filtermöglichkeiten auf den Verwaltungsseiten für Saisons, Ligen, Teams und Schützen hinzugefügt.',
+      'Admin-Bereich: Platzhalter-Buttons für CSV-Import und PDF-Urkundengenerierung im Dashboard ergänzt.',
+      'Ergebniserfassung: Formular behält Auswahl für Saison, Liga, Team und Runde bei.',
+      'Ergebniserfassung: Ergebnisse können einer Vorschau-Liste hinzugefügt und vor dem Speichern kontrolliert werden.',
+      'Ergebniserfassung: Schützen verschwinden aus dem Auswahl-Dropdown, sobald für sie in der aktuellen Runde ein Ergebnis in die Vorschau-Liste aufgenommen wurde.',
+      'Ergebniserfassung: Typen für Vor-, Nach- und Regulärschießen sind auswählbar und werden zwischengespeichert.',
+      'Korrektur: Button zum Anlegen von Mannschaften im Admin-Bereich wiederhergestellt.',
+      'Korrektur: Fehler beim Filtern von Schützen nach "Alle Vereine" behoben.',
+    ],
+  },
+  {
     version: '0.0.0.2',
     date: '01. August 2024', // Approximate date for recent changes
     title: 'Datenbankanbindung RWK-Tabellen & Erweiterungen',
     descriptionPoints: [
-      'RWK-Tabellen laden Daten dynamisch aus Firestore.',
-      'Auswahl für Wettkampfjahr (aktuell 2025) und Disziplin (Kleinkaliber, Luftdruck) hinzugefügt.',
+      'RWK-Tabellen laden Daten dynamisch aus Firestore (Ligen, Teams, Schützenergebnisse).',
+      'Auswahl für Wettkampfjahr (aktuell nur 2025) und Disziplin (Kleinkaliber, Luftdruck) in RWK-Tabellen hinzugefügt.',
       'Dynamische Seitenüberschrift für RWK-Tabellen (z.B. "RWK 2025 Kleinkaliber (KK)").',
       'Separate Tab-Ansichten für Mannschafts- und Einzelschützenranglisten implementiert.',
       'Hervorhebung "Bester Schütze" (höchster Gesamtscore) und "Beste Dame" (höchster Gesamtscore weiblich).',
       'Mannschaft "SV Dörrigsen Einzel" wird in Tabellenansicht herausgefiltert.',
       'Mannschaftsergebnis pro Durchgang wird nur bei Ergebnissen von 3 Schützen berechnet.',
-      'Durchschnittsberechnung für Mannschaftsergebnisse hinzugefügt.',
+      'Durchschnittsberechnung für Mannschaftsergebnisse und Einzelschützen hinzugefügt.',
       'Anzeige der Einzelschützen in der Mannschaftstabelle dezenter gestaltet.',
       'Case-insensitive Überprüfung für `shooterGender` bei Ermittlung "Beste Dame".',
+      'Korrektur von Hydration- und Parsing-Fehlern in der Tabellenansicht.',
+      'Firebase Sicherheitsregeln angepasst und Hilfestellung bei Index-Erstellung gegeben.',
     ],
   },
   {
@@ -34,7 +52,6 @@ const changelogEntries: ChangelogEntry[] = [
       'Logo des KSV Einbeck in die Startseite und Kopfzeile integriert.',
       'Git-Repository für die Versionskontrolle initialisiert und mit Remote verbunden.',
       'System für Versionsnummerierung und Changelog eingeführt.',
-      'Korrektur von Hydration- und Parsing-Fehlern.',
       'Firebase Sicherheitsregeln angepasst für Datenabruf.',
     ],
   },

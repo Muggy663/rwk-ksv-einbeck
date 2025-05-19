@@ -1,7 +1,7 @@
 // src/components/layout/SiteFooter.tsx
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.0.0.2"; // Updated version
+  const version = "0.0.0.3"; // Updated version
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">
