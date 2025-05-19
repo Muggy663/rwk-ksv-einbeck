@@ -10,12 +10,12 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center space-x-2">
           <Image 
-            src="https://placehold.co/120x40.png?text=KSV+Einbeck" 
-            alt="KSV Einbeck Logo" 
-            width={120} 
+            src="/images/KSV_Einbeck_Abzeichen.png" 
+            alt="KSV Einbeck Abzeichen" 
+            width={40} 
             height={40}
             className="rounded-md"
-            data-ai-hint="club logo"
+            data-ai-hint="club emblem"
           />
           <span className="hidden font-bold sm:inline-block text-lg">RWK Einbeck</span>
         </Link>
