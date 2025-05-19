@@ -6,8 +6,22 @@ import type { ChangelogEntry } from '@/types/updates';
 
 const changelogEntries: ChangelogEntry[] = [
   {
+    version: '0.0.1.9',
+    date: '19. Mai 2025',
+    title: 'Admin-Bereich: Datenbankanbindung und UI-Verbesserungen',
+    descriptionPoints: [
+      'Admin Clubs: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen.',
+      'Admin Clubs: Prüfung auf doppelte Vereinsnamen und Hinzufügen der Vereinsnummer implementiert.',
+      'Admin Clubs: Sortierung nach Vereinsnummer und UI-Korrekturen für Löschdialog.',
+      'Admin Seasons: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen von Saisons.',
+      'Admin Leagues: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen von Ligen, inklusive Saison-Zuordnung.',
+      'Admin Teams: Firestore-Anbindung für Laden von Saisons und Ligen in Auswahl-Dropdowns. UI-Anpassung der Mannschaftstabelle.',
+      'Diverse Fehlerbehebungen und Verbesserungen der Stabilität im Admin-Bereich.',
+    ],
+  },
+  {
     version: '0.0.1.0',
-    date: '19. Mai 2025', // Korrigiertes Datum
+    date: '19. Mai 2025',
     title: 'Admin: Vereinsverwaltung mit Datenbankanbindung',
     descriptionPoints: [
       'Admin-Seite für Vereine (/admin/clubs) implementiert.',
@@ -20,7 +34,7 @@ const changelogEntries: ChangelogEntry[] = [
   },
   {
     version: '0.0.0.3',
-    date: '02. August 2024', 
+    date: '02. August 2024',
     title: 'Verbesserungen Admin-Bereich & Ergebniserfassung',
     descriptionPoints: [
       'Admin-Bereich: Intuitivere Navigation zwischen Saisons, Ligen, Mannschaften und Schützen implementiert.',
@@ -36,7 +50,7 @@ const changelogEntries: ChangelogEntry[] = [
   },
   {
     version: '0.0.0.2',
-    date: '01. August 2024', 
+    date: '01. August 2024',
     title: 'Datenbankanbindung RWK-Tabellen & Erweiterungen',
     descriptionPoints: [
       'RWK-Tabellen laden Daten dynamisch aus Firestore (Ligen, Teams, Schützenergebnisse).',
