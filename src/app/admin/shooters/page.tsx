@@ -202,7 +202,7 @@ export default function AdminShootersPage() {
       name: `${currentShooter.firstName.trim()} ${currentShooter.lastName.trim()}`,
       clubId: currentShooter.clubId,
       gender: currentShooter.gender || 'male',
-      teamIds: currentShooter.teamIds || [],
+      teamIds: currentShooter.teamIds || [], // Ensure teamIds is always an array
     };
 
     setIsLoading(true);
@@ -266,10 +266,12 @@ export default function AdminShootersPage() {
 
   const getTeamInfoForShooter = (teamIds?: string[]): string => {
     if (!teamIds || teamIds.length === 0) return '-';
+    
     if (queryTeamId && teamIds.includes(queryTeamId) && contextTeamName) {
         return teamIds.length > 1 ? `${contextTeamName} (+${teamIds.length -1} weitere)`: contextTeamName;
     }
-    return `${teamIds.length} Team(s) zugeordnet`;
+    // Fallback if no context team or shooter not in context team, but has other teams
+    return `${teamIds.length} Team(s) zugeordnet`; 
   };
 
   const selectedClubNameForTitle = selectedClubIdFilter !== ALL_CLUBS_FILTER_VALUE 
@@ -303,7 +305,7 @@ export default function AdminShootersPage() {
           </CardTitle>
           <CardDescription>
             Verwalten Sie hier alle Schützen.
-            {contextTeamName ? ` (Aktueller Kontext: Team ${contextTeamName})` : (queryTeamId ? ` (Aktueller Kontext: Team ID ${queryTeamId})` : '')}
+            {contextTeamName ? ` (Aktueller Kontext: Team "${contextTeamName}")` : (queryTeamId ? ` (Aktueller Kontext: Team ID ${queryTeamId})` : '')}
             {allClubs.length === 0 && !isLoading && <span className="text-destructive block mt-1"> Hinweis: Keine Vereine angelegt. Bitte zuerst Vereine erstellen.</span>}
           </CardDescription>
         </CardHeader>
