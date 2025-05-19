@@ -7,6 +7,19 @@ import type { ChangelogEntry } from '@/types/updates';
 // Changelog entries using MAJOR.MINOR.PATCH
 const changelogEntries: ChangelogEntry[] = [
   {
+    version: '0.1.2',
+    date: '19. Mai 2025',
+    title: 'Verfeinerungen Admin-Bereich & RWK-Tabellen Filterung',
+    descriptionPoints: [
+      'RWK-Tabellen: Anzeige filtert nun korrekt nach Saisons mit Status "Laufend".',
+      'Admin-Bereich: Korrektur der Zähler für Schützenzuordnung in Mannschaften.',
+      'Admin-Bereich: Regel "Ein Schütze pro Disziplinkategorie/Jahr" in Mannschafts- und Schützenverwaltung implementiert.',
+      'Admin-Bereich: Layout-Verbesserungen in Dialogen (Schützenverwaltung).',
+      'Admin-Bereich: Ergebniserfassungsseite lädt Stammdaten (Saisons, Ligen, etc.) aus Firestore und speichert Ergebnisse.',
+      'Diverse Fehlerbehebungen und Stabilitätsverbesserungen im Admin-Panel.',
+    ],
+  },
+  {
     version: '0.1.1',
     date: '19. Mai 2025',
     title: 'Korrekturen in Admin-Bereich (Mannschaften & Schützen)',
@@ -29,23 +42,6 @@ const changelogEntries: ChangelogEntry[] = [
       'Admin Shooters: Firestore-Anbindung für CRUD-Operationen. Verbesserte UI für Dialoge und Kontextanzeige. Direkte Mannschaftszuordnung beim Neuanlegen (max. 3 Schützen pro Team).',
       'Versionierungsschema auf MAJOR.MINOR.PATCH (SemVer) umgestellt.',
       'Diverse UI-Layout-Korrekturen und Verbesserungen der Stabilität im Admin-Bereich.',
-    ],
-  },
-  {
-    version: '0.0.2.0', // Beibehalten für Historie, obwohl Schema jetzt 3-stellig
-    date: '19. Mai 2025',
-    title: 'Regel "Maximal 3 Schützen pro Mannschaft" implementiert',
-    descriptionPoints: [
-      'Admin Teams & Admin Shooters: Begrenzung auf maximal 3 Schützen pro Mannschaft implementiert und Zähler korrigiert.',
-    ],
-  },
-   {
-    version: '0.0.1.0', // Beibehalten für Historie
-    date: '19. Mai 2025',
-    title: 'Admin-Bereich: Datenbankanbindung Vereine & Basisnavigation',
-    descriptionPoints: [
-      'Admin Clubs: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen, inkl. Duplikatsprüfung und Vereinsnummer.',
-      'Admin-Navigation verbessert für intuitiveren Workflow zwischen Saisons, Ligen und Teams.',
     ],
   },
   {
