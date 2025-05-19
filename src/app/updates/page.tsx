@@ -6,6 +6,18 @@ import type { ChangelogEntry } from '@/types/updates';
 
 const changelogEntries: ChangelogEntry[] = [
   {
+    version: '0.0.2.0',
+    date: '19. Mai 2025', // Assuming today's date for this update
+    title: 'Regel "Maximal 3 Schützen pro Mannschaft" implementiert',
+    descriptionPoints: [
+      'Admin Teams: Begrenzung auf maximal 3 Schützen pro Mannschaft beim Bearbeiten von Teams implementiert.',
+      'Admin Teams: Visuelles Feedback und Deaktivierung von Checkboxen/Speichern-Button bei Erreichen der Maximalzahl.',
+      'Admin Schützen: Begrenzung auf maximal 3 Schützen pro Mannschaft beim Neuanlegen von Schützen und direkter Mannschaftszuordnung implementiert.',
+      'Admin Schützen: Anzeige der aktuellen Schützenanzahl pro Mannschaft im Dialog zur Schützenerstellung.',
+      'Diverse Layout-Verbesserungen und Fehlerbehebungen in den Admin-Dialogen für Schützen und Mannschaften.',
+    ],
+  },
+  {
     version: '0.0.1.9',
     date: '19. Mai 2025',
     title: 'Admin-Bereich: Datenbankanbindung und UI-Verbesserungen',
@@ -16,6 +28,8 @@ const changelogEntries: ChangelogEntry[] = [
       'Admin Seasons: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen von Saisons.',
       'Admin Leagues: Vollständige Firestore-Anbindung für Anlegen, Lesen, Bearbeiten, Löschen von Ligen, inklusive Saison-Zuordnung.',
       'Admin Teams: Firestore-Anbindung für Laden von Saisons und Ligen in Auswahl-Dropdowns. UI-Anpassung der Mannschaftstabelle.',
+      'Admin Teams: Beginn der Implementierung der Schützenzuordnung zu Mannschaften (Speicherung der shooterIds).',
+      'Admin Shooters: UI-Verbesserungen im Dialog und Anzeige der Mannschaftszugehörigkeit (informativ).',
       'Diverse Fehlerbehebungen und Verbesserungen der Stabilität im Admin-Bereich.',
     ],
   },
