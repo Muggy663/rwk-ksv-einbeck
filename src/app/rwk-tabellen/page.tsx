@@ -1,3 +1,4 @@
+
 // src/app/rwk-tabellen/page.tsx
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
@@ -137,18 +138,17 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig): Promi
 
         for (const shooterId of uniqueShooterIdsInTeamScores) {
           let shooterName = "Unbek. Schütze";
-          try {
-            const shooterDocRef = doc(db, "rwk_shooters", shooterId);
-            const shooterSnap = await getDoc(shooterDocRef);
-            if (shooterSnap.exists()) {
-                const shooterData = shooterSnap.data() as Shooter;
-                shooterName = shooterData.name || `${shooterData.firstName} ${shooterData.lastName}`.trim() || shooterName;
-            } else {
-              const scoreWithName = allTeamYearScores.find(s => s.shooterId === shooterId && s.shooterName);
-              if (scoreWithName) shooterName = scoreWithName.shooterName!;
-              else console.warn(`Shooter with ID '${shooterId}' for team '${team.name}' not found in rwk_shooters.`);
-            }
-          } catch (shooterError) { console.error(`Error fetching shooter ${shooterId}:`, shooterError); }
+          // Prefer fetching shooter name from rwk_shooters if available, fallback to score.shooterName
+          const shooterDocRef = doc(db, "rwk_shooters", shooterId);
+          const shooterSnap = await getDoc(shooterDocRef);
+          if (shooterSnap.exists()) {
+              const shooterData = shooterSnap.data() as Shooter;
+              shooterName = shooterData.name || `${shooterData.firstName} ${shooterData.lastName}`.trim() || shooterName;
+          } else {
+            const scoreWithName = allTeamYearScores.find(s => s.shooterId === shooterId && s.shooterName);
+            if (scoreWithName) shooterName = scoreWithName.shooterName!;
+            else console.warn(`Shooter with ID '${shooterId}' for team '${team.name}' not found in rwk_shooters.`);
+          }
           
           const individualResults: { [key: string]: number | null } = {};
           for (let r = 1; r <= NUM_ROUNDS; r++) individualResults[`dg${r}`] = null;
@@ -181,20 +181,20 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig): Promi
           });
         }
         
+        // Calculate team round results based on the top TEAM_SIZE_FOR_SCORING shooters per round
         for (let r = 1; r <= NUM_ROUNDS; r++) {
-          const roundKey = `dg${r}`;
-          const scoresForRound = allTeamYearScores.filter(s => s.durchgang === r);
-          const distinctShootersInRound = Array.from(new Set(scoresForRound.map(s => s.shooterId)));
-
-          if (distinctShootersInRound.length >= TEAM_SIZE_FOR_SCORING) { // Use >= to allow for more than 3 if needed, logic for selection of 3 will be elsewhere
-             teamRoundResults[roundKey] = scoresForRound
-              // Consider if you need to sort and take top 3 here, or if the count check is enough for "complete"
-              .sort((a,b) => b.totalRinge - a.totalRinge)
-              .slice(0, TEAM_SIZE_FOR_SCORING)
-              .reduce((sum, score) => sum + score.totalRinge, 0);
-          } else {
-            teamRoundResults[roundKey] = null;
-          }
+            const roundKey = `dg${r}`;
+            // Get all scores for the current round and team
+            const scoresForRoundFromTeam = allTeamYearScores.filter(s => s.durchgang === r);
+            
+            if (scoresForRoundFromTeam.length >= TEAM_SIZE_FOR_SCORING) {
+                teamRoundResults[roundKey] = scoresForRoundFromTeam
+                    .sort((a, b) => b.totalRinge - a.totalRinge) // Sort descending by score
+                    .slice(0, TEAM_SIZE_FOR_SCORING)            // Take top N shooters
+                    .reduce((sum, score) => sum + score.totalRinge, 0); // Sum their scores
+            } else {
+                teamRoundResults[roundKey] = null; // Not enough shooters for a team score
+            }
         }
         
         let teamTotalScore = 0;
@@ -260,9 +260,9 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig): Pro
       if (!shootersMap.has(score.shooterId)) {
         shootersMap.set(score.shooterId, {
           shooterId: score.shooterId,
-          shooterName: score.shooterName || "Unbek. Schütze",
+          shooterName: score.shooterName || "Unbek. Schütze", // Fallback
           shooterGender: score.shooterGender,
-          teamName: score.teamName || "Unbek. Team",
+          teamName: score.teamName || "Unbek. Team", // Fallback
           results: {},
           totalScore: 0,
           averageScore: null,
@@ -271,9 +271,14 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig): Pro
       }
 
       const shooterData = shootersMap.get(score.shooterId)!;
+      // Populate shooterName and teamName if not already set (e.g. from a previous score entry for same shooter)
+      if (shooterData.shooterName === "Unbek. Schütze" && score.shooterName) shooterData.shooterName = score.shooterName;
+      if (shooterData.teamName === "Unbek. Team" && score.teamName) shooterData.teamName = score.teamName;
+
+
       if (score.durchgang >= 1 && score.durchgang <= NUM_ROUNDS) {
         const roundKey = `dg${score.durchgang}`;
-        shooterData.results[roundKey] = (shooterData.results[roundKey] || 0) + score.totalRinge;
+        shooterData.results[roundKey] = (shooterData.results[roundKey] || 0) + score.totalRinge; // Sum if multiple entries for same round (should not happen ideally)
         if (score.totalRinge !== null) { 
           shooterData.totalScore += score.totalRinge;
         }
@@ -286,7 +291,7 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig): Pro
             const roundKey = `dg${r}`;
             if (shooterData.results[roundKey] !== undefined && shooterData.results[roundKey] !== null) {
                 roundsShotCount++;
-            } else {
+            } else { // Ensure all dgX fields exist, even if null
                 shooterData.results[roundKey] = null;
             }
         }
@@ -316,13 +321,13 @@ export default function RwkTabellenPage() {
   const [selectedCompetition, setSelectedCompetition] = useState<CompetitionDisplayConfig>({
     year: AVAILABLE_YEARS[0],
     discipline: AVAILABLE_UI_DISCIPLINES[0].value,
-    displayName: "" 
+    displayName: `RWK ${AVAILABLE_YEARS[0]} ${AVAILABLE_UI_DISCIPLINES.find(d => d.value === AVAILABLE_UI_DISCIPLINES[0].value)?.label || AVAILABLE_UI_DISCIPLINES[0].value}` 
   });
   const [activeTab, setActiveTab] = useState<"mannschaften" | "einzelschützen">("mannschaften");
   
   const [teamData, setTeamData] = useState<AggregatedCompetitionData | null>(null);
   const [individualData, setIndividualData] = useState<IndividualShooterDisplayData[]>([]);
-  const [bestShooter, setBestShooter] = useState<IndividualShooterDisplayData | null>(null);
+  const [bestOverallShooter, setBestOverallShooter] = useState<IndividualShooterDisplayData | null>(null);
   const [bestFemaleShooter, setBestFemaleShooter] = useState<IndividualShooterDisplayData | null>(null);
   
   const [loading, setLoading] = useState<boolean>(true);
@@ -335,34 +340,33 @@ export default function RwkTabellenPage() {
       setError(null);
       setTeamData(null);
       setIndividualData([]);
-      setBestShooter(null);
+      setBestOverallShooter(null);
       setBestFemaleShooter(null);
 
       const currentDisciplineLabel = AVAILABLE_UI_DISCIPLINES.find(d => d.value === selectedCompetition.discipline)?.label || selectedCompetition.discipline;
       const dynamicDisplayName = `RWK ${selectedCompetition.year} ${currentDisciplineLabel}`;
       
-      setSelectedCompetition(prev => ({...prev, displayName: dynamicDisplayName}));
+      // Update config with displayName for current selection
+      const currentConfig = { ...selectedCompetition, displayName: dynamicDisplayName };
+      setSelectedCompetition(currentConfig); // Update state to reflect current displayName
       setPageTitle(dynamicDisplayName); 
 
       try {
         if (activeTab === "mannschaften") {
           console.log(`Attempting to fetch TEAM data for: ${dynamicDisplayName}`);
-          const data = await fetchCompetitionTeamData(selectedCompetition);
+          const data = await fetchCompetitionTeamData(currentConfig);
           setTeamData(data);
           if (data) console.log("Team data successfully loaded:", data);
           else console.warn("fetchCompetitionTeamData returned null.");
         } else if (activeTab === "einzelschützen") {
           console.log(`Attempting to fetch INDIVIDUAL data for: ${dynamicDisplayName}`);
-          const individuals = await fetchIndividualShooterData(selectedCompetition);
+          const individuals = await fetchIndividualShooterData(currentConfig);
           setIndividualData(individuals);
           if (individuals.length > 0) {
-            // Beste/r Schütze/Dame ermitteln
-            // Bester Schütze (insgesamt)
-            setBestShooter(individuals[0]); // Da bereits nach Gesamtscore sortiert
+            setBestOverallShooter(individuals[0]); 
 
-            // Beste Dame
             const females = individuals.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'female' || s.shooterGender.toLowerCase() === 'w'));
-            setBestFemaleShooter(females.length > 0 ? females[0] : null); // females ist auch bereits sortiert
+            setBestFemaleShooter(females.length > 0 ? females[0] : null);
           }
           console.log("Individual data successfully loaded:", individuals);
         }
@@ -374,15 +378,16 @@ export default function RwkTabellenPage() {
       }
     };
     loadData();
-  }, [selectedCompetition.year, selectedCompetition.discipline, activeTab]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCompetition.year, selectedCompetition.discipline, activeTab]); // selectedCompetition.displayName removed from deps
 
   const handleYearChange = (yearString: string) => {
     const year = parseInt(yearString, 10);
-    setSelectedCompetition(prev => ({...prev, year}));
+    setSelectedCompetition(prev => ({...prev, year, discipline: prev.discipline})); // Keep current discipline
   };
 
   const handleDisciplineChange = (discipline: UIDisciplineSelection) => {
-    setSelectedCompetition(prev => ({...prev, discipline }));
+    setSelectedCompetition(prev => ({...prev, discipline, year: prev.year })); // Keep current year
   };
 
   const toggleTeamDetails = (teamId: string) => {
@@ -483,20 +488,20 @@ export default function RwkTabellenPage() {
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader><TableRow className="bg-muted/50">
-                          <>
+                          <React.Fragment>
                             <TableHead className="w-[40px] text-center">#</TableHead>
                             <TableHead>Mannschaft</TableHead>
                             {[...Array(NUM_ROUNDS)].map((_, i) => (<TableHead key={`dg${i + 1}`} className="text-center">DG {i + 1}</TableHead>))}
                             <TableHead className="text-center font-semibold">Gesamt</TableHead>
                             <TableHead className="text-center font-semibold">Schnitt</TableHead>
                             <TableHead className="w-[50px]"></TableHead>
-                          </>
+                          </React.Fragment>
                         </TableRow></TableHeader>
                         <TableBody>
                           {league.teams.sort((a,b) => (a.rank || 999) - (b.rank || 999)).map((team) => ( 
                             <React.Fragment key={team.id}>
                               <TableRow className="hover:bg-secondary/20 transition-colors">
-                                <>
+                                <React.Fragment>
                                   <TableCell className="text-center font-medium">{team.rank}</TableCell>
                                   <TableCell className="font-medium text-foreground">{team.name}</TableCell>
                                   {[...Array(NUM_ROUNDS)].map((_, i) => (
@@ -511,30 +516,30 @@ export default function RwkTabellenPage() {
                                       </button>
                                     ) : null}
                                   </TableCell>
-                                </>
+                                </React.Fragment>
                               </TableRow>
                               {team.shootersResults && team.shootersResults.length > 0 && openTeamDetails[team.id] && (
                                  <TableRow id={`team-details-${team.id}`} className="bg-muted/5 hover:bg-muted/10 transition-colors">
-                                   <TableCell colSpan={NUM_ROUNDS + 6} className="p-0">
+                                   <TableCell colSpan={NUM_ROUNDS + 6} className="p-0"> {/* Adjusted colSpan */}
                                       <div className="px-2 py-1 md:px-4 md:py-2 bg-secondary/10">
                                         <Table>
                                           <TableHeader><TableRow className="border-b-0 bg-transparent">
-                                            <>
+                                            <React.Fragment>
                                               <TableHead className="text-foreground/80 font-normal pl-2">Schütze</TableHead>
                                               {[...Array(NUM_ROUNDS)].map((_, i) => (<TableHead key={`shooter-dg${i + 1}`} className="text-center text-foreground/80 font-normal">DG {i + 1}</TableHead>))}
                                               <TableHead className="text-center font-semibold text-foreground/80">Gesamt</TableHead>
                                               <TableHead className="text-center font-semibold text-foreground/80 pr-2">Schnitt</TableHead>
-                                            </>
+                                            </React.Fragment>
                                           </TableRow></TableHeader>
                                           <TableBody>
                                             {team.shootersResults.map(shooterRes => (
                                               <TableRow key={shooterRes.shooterId} className="border-b-0 hover:bg-accent/5">
-                                                <>
+                                                <React.Fragment>
                                                   <TableCell className="font-medium pl-2">{shooterRes.shooterName || shooterRes.shooterId}</TableCell>
                                                   {[...Array(NUM_ROUNDS)].map((_, i) => (<TableCell key={`shooter-dg${i + 1}-${shooterRes.shooterId}`} className="text-center">{shooterRes.results?.[`dg${i + 1}`] ?? '-'}</TableCell>))}
                                                   <TableCell className="text-center font-medium">{shooterRes.total ?? '-'}</TableCell>
                                                   <TableCell className="text-center font-semibold text-primary pr-2">{shooterRes.average != null ? shooterRes.average.toFixed(2) : '-'}</TableCell>
-                                                </>
+                                                </React.Fragment>
                                               </TableRow>
                                             ))}
                                           </TableBody>
@@ -566,17 +571,17 @@ export default function RwkTabellenPage() {
           {!loading && !error && individualData.length > 0 && (
             <div className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
-                {bestShooter && (
+                {bestOverallShooter && (
                   <Card className="shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-lg font-medium text-primary">Bester Schütze</CardTitle>
                       <Trophy className="h-5 w-5 text-amber-500" />
                     </CardHeader>
                     <CardContent>
-                      <p className="text-2xl font-bold">{bestShooter.shooterName}</p>
-                      <p className="text-sm text-muted-foreground">{bestShooter.teamName}</p>
-                      <p className="text-lg">Gesamt: <span className="font-semibold">{bestShooter.totalScore}</span> Ringe</p>
-                      <p className="text-sm">Schnitt: {bestShooter.averageScore?.toFixed(2)} ({bestShooter.roundsShot} DG)</p>
+                      <p className="text-2xl font-bold">{bestOverallShooter.shooterName}</p>
+                      <p className="text-sm text-muted-foreground">{bestOverallShooter.teamName}</p>
+                      <p className="text-lg">Gesamt: <span className="font-semibold">{bestOverallShooter.totalScore}</span> Ringe</p>
+                      <p className="text-sm">Schnitt: {bestOverallShooter.averageScore?.toFixed(2)} ({bestOverallShooter.roundsShot} DG)</p>
                     </CardContent>
                   </Card>
                 )}
@@ -594,7 +599,7 @@ export default function RwkTabellenPage() {
                     </CardContent>
                   </Card>
                 )}
-                {!bestShooter && !loading && <Card className="shadow-lg"><CardContent className="pt-6 text-muted-foreground">Kein bester Schütze ermittelt.</CardContent></Card>}
+                {!bestOverallShooter && !loading && <Card className="shadow-lg"><CardContent className="pt-6 text-muted-foreground">Kein bester Schütze ermittelt.</CardContent></Card>}
                 {!bestFemaleShooter && !loading && <Card className="shadow-lg"><CardContent className="pt-6 text-muted-foreground">Keine beste Dame ermittelt.</CardContent></Card>}
               </div>
 
@@ -607,26 +612,26 @@ export default function RwkTabellenPage() {
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader><TableRow className="bg-muted/50">
-                        <>
+                        <React.Fragment>
                           <TableHead className="w-[40px] text-center">#</TableHead>
                           <TableHead>Name</TableHead>
                           <TableHead>Verein/Team</TableHead>
                           {[...Array(NUM_ROUNDS)].map((_, i) => (<TableHead key={`ind-dg${i + 1}`} className="text-center">DG {i + 1}</TableHead>))}
                           <TableHead className="text-center font-semibold">Gesamt</TableHead>
                           <TableHead className="text-center font-semibold">Schnitt</TableHead>
-                        </>
+                        </React.Fragment>
                       </TableRow></TableHeader>
                       <TableBody>
                         {individualData.map(shooter => (
                           <TableRow key={shooter.shooterId} className="hover:bg-secondary/20 transition-colors">
-                            <>
+                            <React.Fragment>
                               <TableCell className="text-center font-medium">{shooter.rank}</TableCell>
                               <TableCell className="font-medium text-foreground">{shooter.shooterName}</TableCell>
                               <TableCell className="text-sm text-muted-foreground">{shooter.teamName}</TableCell>
                               {[...Array(NUM_ROUNDS)].map((_, i) => (<TableCell key={`ind-dg${i + 1}-${shooter.shooterId}`} className="text-center">{shooter.results?.[`dg${i + 1}`] ?? '-'}</TableCell>))}
                               <TableCell className="text-center font-semibold text-primary">{shooter.totalScore}</TableCell>
                               <TableCell className="text-center font-medium text-muted-foreground">{shooter.averageScore != null ? shooter.averageScore.toFixed(2) : '-'}</TableCell>
-                            </>
+                            </React.Fragment>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -641,3 +646,4 @@ export default function RwkTabellenPage() {
     </div>
   );
 }
+
