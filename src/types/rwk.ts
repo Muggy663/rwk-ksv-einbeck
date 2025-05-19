@@ -1,10 +1,12 @@
+
 // src/types/rwk.ts
 
 // Diese Typen repräsentieren die Werte, wie sie in Firestore gespeichert sind
 export type FirestoreCompetitionDiscipline = 'KK' | 'LG' | 'LP' | 'SP';
 
-// Diese Typen repräsentieren die Auswahlmöglichkeiten im UI-Dropdown
-export type UIDisciplineSelection = 'KK' | 'LD'; // LD für Luftdruck (LG/LP)
+// Diese Typen repräsentieren die Auswahlmöglichkeiten im UI-Dropdown für die Hauptfilterung
+// und werden auch für die interne Logik der Ligatypen verwendet.
+export type UIDisciplineSelection = 'KK' | 'LD' | 'SP';
 
 
 export interface CompetitionDisplayConfig {
@@ -17,7 +19,7 @@ export interface Season {
   id: string;
   competitionYear: number;
   name: string;
-  type: UIDisciplineSelection; // 'KK' oder 'LD' für die UI Unterscheidung
+  type: UIDisciplineSelection; // 'KK', 'LD' oder 'SP' (wird vom Admin bei Saisonerstellung festgelegt)
   status: 'Geplant' | 'Laufend' | 'Abgeschlossen';
 }
 
@@ -26,7 +28,7 @@ export interface League {
   name: string;
   shortName?: string;
   competitionYear: number;
-  type: UIDisciplineSelection; // Geändert von FirestoreCompetitionDiscipline
+  type: UIDisciplineSelection; // Sollte mit Season.type übereinstimmen oder eine spezifischere Unterteilung sein, die aber zur Season.type passt
   order?: number;
   seasonId: string; // Referenz zur Saison
 }
@@ -45,7 +47,7 @@ export interface Shooter {
   name: string; // Kombinierter Name, wird generiert oder gespeichert
   clubId: string;
   gender?: 'male' | 'female' | string;
-  teamIds?: string[];
+  teamIds?: string[]; // Array von Team-IDs, denen der Schütze angehört
 }
 
 export interface Team {
@@ -92,7 +94,7 @@ export interface ShooterDisplayResults {
   competitionYear?: number;
 }
 
-export interface TeamDisplay extends Omit<Team, 'shooterIds'> { // shooterIds ist hier nicht direkt nötig für die Anzeige
+export interface TeamDisplay extends Omit<Team, 'shooterIds'> {
   clubName: string;
   rank?: number;
   shootersResults: ShooterDisplayResults[];
@@ -139,3 +141,9 @@ export interface PendingScoreEntry {
   scoreInputType: 'regular' | 'pre' | 'post';
   competitionYear: number;
 }
+
+// Für die Validierung bei der Schützenzuordnung
+export type TeamValidationInfo = Team & {
+    leagueType?: UIDisciplineSelection;
+    leagueCompetitionYear?: number;
+};
