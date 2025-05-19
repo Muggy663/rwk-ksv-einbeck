@@ -1,14 +1,30 @@
-
 // src/types/rwk.ts
 
 // Diese Typen repräsentieren die spezifischen Disziplinen, wie sie im League.type gespeichert sein sollten
-export type FirestoreLeagueSpecificDiscipline = 'KKG' | 'KKP' | 'LG' | 'LP' | 'SP';
+export type FirestoreLeagueSpecificDiscipline =
+  | 'KKG' // Kleinkaliber Gewehr
+  | 'KKP' // Kleinkaliber Pistole
+  | 'LG'  // Luftgewehr (Freihand)
+  | 'LGA' // Luftgewehr Auflage
+  | 'LP'  // Luftpistole (Freihand)
+  | 'LPA' // Luftpistole Auflage
+  | 'SP'; // Sportpistole
+
+export const GEWEHR_DISCIPLINES: FirestoreLeagueSpecificDiscipline[] = ['KKG', 'LG', 'LGA'];
+export const PISTOL_DISCIPLINES: FirestoreLeagueSpecificDiscipline[] = ['KKP', 'LP', 'LPA', 'SP'];
 
 // Diese Typen repräsentieren die Auswahlmöglichkeiten im UI-Dropdown für die Hauptfilterung
-// und werden auch für die interne Logik der Ligatypen verwendet, wenn allgemeiner gefiltert wird.
-// UIDisciplineSelection wird jetzt auch für die League.type verwendet, wenn es die spezifische Disziplin ist.
-export type UIDisciplineSelection = 'KK' | 'LD' | 'SP' | FirestoreLeagueSpecificDiscipline;
+export type UIDisciplineSelection = 'KK' | 'LD' | 'SP'; // Kleinkaliber, Luftdruck, Sportpistole (grob)
 
+export const leagueDisciplineOptions: { value: FirestoreLeagueSpecificDiscipline; label: string }[] = [
+  { value: 'KKG', label: 'KK-Gewehr' },
+  { value: 'KKP', label: 'KK-Pistole' },
+  { value: 'LG', label: 'Luftgewehr (Freihand)' },
+  { value: 'LGA', label: 'Luftgewehr Auflage' },
+  { value: 'LP', label: 'Luftpistole (Freihand)' },
+  { value: 'LPA', label: 'Luftpistole Auflage' },
+  { value: 'SP', label: 'Sportpistole' },
+];
 
 export interface CompetitionDisplayConfig {
   year: number;
@@ -20,7 +36,7 @@ export interface Season {
   id: string;
   competitionYear: number;
   name: string;
-  type: 'KK' | 'LD' | 'SP'; // Hauptkategorie der Saison (KK für alle KK-Arten, LD für alle Luftdruck)
+  type: UIDisciplineSelection; // Hauptkategorie der Saison (KK, LD, SP)
   status: 'Geplant' | 'Laufend' | 'Abgeschlossen';
 }
 
@@ -29,8 +45,7 @@ export interface League {
   name: string;
   shortName?: string;
   competitionYear: number;
-  // type sollte die spezifische Disziplin sein, z.B. KKG, KKP, LG, LP, SP
-  type: FirestoreLeagueSpecificDiscipline;
+  type: FirestoreLeagueSpecificDiscipline; // Jetzt spezifisch!
   order?: number;
   seasonId: string; // Referenz zur Saison
 }
@@ -68,6 +83,7 @@ export interface ScoreEntry {
   durchgang: number;
   leagueId: string;
   leagueName?: string; // Denormalisiert
+  leagueType?: FirestoreLeagueSpecificDiscipline; // Denormalisiert, spezifischer Typ
   teamId: string;
   teamName?: string; // Denormalisiert
   clubId?: string; // Denormalisiert
@@ -108,7 +124,7 @@ export interface TeamDisplay extends Omit<Team, 'shooterIds'> {
 }
 
 export interface LeagueDisplay extends Omit<League, 'type'> {
-  type: FirestoreLeagueSpecificDiscipline; // Stellt sicher, dass es der spezifische Typ ist
+  type: FirestoreLeagueSpecificDiscipline;
   teams: TeamDisplay[];
 }
 
@@ -148,7 +164,7 @@ export interface PendingScoreEntry {
 
 // Für die Validierung bei der Schützenzuordnung
 export type TeamValidationInfo = Team & {
-    leagueType?: FirestoreLeagueSpecificDiscipline; // Sollte der spezifische Typ sein
+    leagueType?: FirestoreLeagueSpecificDiscipline;
     leagueCompetitionYear?: number;
-    currentShooterCount?: number; // Wird dynamisch hinzugefügt
+    currentShooterCount?: number;
 };

@@ -1,7 +1,6 @@
-
 // src/app/admin/leagues/page.tsx
 "use client";
-import React, { useState, useEffect, FormEvent, useMemo } from 'react';
+import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Loader2, Eye } from 'lucide-react';
@@ -41,7 +40,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSearchParams, useRouter } from 'next/navigation';
-import type { Season, League, UIDisciplineSelection } from '@/types/rwk';
+import type { Season, League, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
+import { leagueDisciplineOptions } from '@/types/rwk'; // Import options
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, documentId } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -59,9 +59,9 @@ export default function AdminLeaguesPage() {
   const [allSeasons, setAllSeasons] = useState<Season[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
   
-  const [leagues, setLeagues] = useState<League[]>([]); // Ligen für die ausgewählte Saison
+  const [leagues, setLeagues] = useState<League[]>([]);
   
-  const [isLoadingData, setIsLoadingData] = useState(true); // Für initiales Laden von Saisons
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [isLoadingLeagues, setIsLoadingLeagues] = useState(false);
   const [isLoadingForm, setIsLoadingForm] = useState(false);
   const [isLoadingDelete, setIsLoadingDelete] = useState(false);
@@ -73,51 +73,52 @@ export default function AdminLeaguesPage() {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [leagueToDelete, setLeagueToDelete] = useState<League | null>(null);
 
-  // Fetch all seasons for the dropdown
-  useEffect(() => {
-    const fetchSeasons = async () => {
-      console.log(">>> leagues/fetchSeasons: Fetching seasons...");
-      setIsLoadingData(true);
-      try {
-        const seasonsSnapshot = await getDocs(query(collection(db, SEASONS_COLLECTION), orderBy("competitionYear", "desc")));
-        const fetchedSeasons: Season[] = seasonsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Season));
-        setAllSeasons(fetchedSeasons);
-        console.log(">>> leagues/fetchSeasons: Seasons fetched:", fetchedSeasons.length);
+  const fetchSeasons = useCallback(async () => {
+    console.log(">>> leagues/fetchSeasons: Fetching seasons...");
+    setIsLoadingData(true);
+    try {
+      const seasonsSnapshot = await getDocs(query(collection(db, SEASONS_COLLECTION), orderBy("competitionYear", "desc")));
+      const fetchedSeasons: Season[] = seasonsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Season));
+      setAllSeasons(fetchedSeasons);
+      console.log(">>> leagues/fetchSeasons: Seasons fetched:", fetchedSeasons.length);
 
-        if (fetchedSeasons.length > 0) {
-          if (querySeasonId && fetchedSeasons.some(s => s.id === querySeasonId)) {
-            setSelectedSeasonId(querySeasonId);
-          } else {
-            setSelectedSeasonId(fetchedSeasons[0].id); // Select first season by default
-          }
+      if (fetchedSeasons.length > 0) {
+        if (querySeasonId && fetchedSeasons.some(s => s.id === querySeasonId)) {
+          setSelectedSeasonId(querySeasonId);
+        } else if (fetchedSeasons[0]?.id) {
+          setSelectedSeasonId(fetchedSeasons[0].id); 
         } else {
-            setSelectedSeasonId('');
-            toast({ title: "Keine Saisons gefunden", description: "Bitte zuerst Saisons anlegen.", variant: "destructive" });
+          setSelectedSeasonId('');
         }
-      } catch (error) {
-        console.error(">>> leagues/fetchSeasons: Error fetching seasons: ", error);
-        toast({ title: "Fehler beim Laden der Saisons", description: (error as Error).message, variant: "destructive" });
-      } finally {
-        setIsLoadingData(false);
-        console.log(">>> leagues/fetchSeasons: Finished. isLoadingData:", false);
+      } else {
+        setSelectedSeasonId('');
+        toast({ title: "Keine Saisons gefunden", description: "Bitte zuerst Saisons anlegen.", variant: "destructive" });
       }
-    };
-    fetchSeasons();
+    } catch (error) {
+      console.error(">>> leagues/fetchSeasons: Error fetching seasons: ", error);
+      toast({ title: "Fehler beim Laden der Saisons", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setIsLoadingData(false);
+      console.log(">>> leagues/fetchSeasons: Finished. isLoadingData:", false);
+    }
   }, [querySeasonId, toast]);
 
-  // Fetch leagues for the selected season
-  const fetchLeagues = useMemo(() => async () => {
-    if (!selectedSeasonId) {
+  useEffect(() => {
+    fetchSeasons();
+  }, [fetchSeasons]);
+
+  const fetchLeaguesForSeason = useCallback(async (seasonId: string) => {
+    if (!seasonId) {
       setLeagues([]);
       console.log(">>> leagues/fetchLeagues: No season selected, clearing leagues.");
       return;
     }
-    console.log(`>>> leagues/fetchLeagues: Fetching leagues for seasonId ${selectedSeasonId}`);
+    console.log(`>>> leagues/fetchLeagues: Fetching leagues for seasonId ${seasonId}`);
     setIsLoadingLeagues(true);
     try {
       const q = query(
         collection(db, LEAGUES_COLLECTION),
-        where("seasonId", "==", selectedSeasonId),
+        where("seasonId", "==", seasonId),
         orderBy("order", "asc")
       );
       const querySnapshot = await getDocs(q);
@@ -125,18 +126,22 @@ export default function AdminLeaguesPage() {
       setLeagues(fetchedLeagues);
       console.log(">>> leagues/fetchLeagues: Leagues fetched:", fetchedLeagues.length);
     } catch (error) {
-      console.error(`>>> leagues/fetchLeagues: Error fetching leagues for season ${selectedSeasonId}: `, error);
+      console.error(`>>> leagues/fetchLeagues: Error fetching leagues for season ${seasonId}: `, error);
       toast({ title: "Fehler beim Laden der Ligen", description: (error as Error).message, variant: "destructive" });
       setLeagues([]);
     } finally {
       setIsLoadingLeagues(false);
       console.log(">>> leagues/fetchLeagues: Finished. isLoadingLeagues:", false);
     }
-  }, [selectedSeasonId, toast]);
+  }, [toast]);
 
   useEffect(() => {
-    fetchLeagues();
-  }, [fetchLeagues]);
+    if (selectedSeasonId) {
+      fetchLeaguesForSeason(selectedSeasonId);
+    } else {
+      setLeagues([]);
+    }
+  }, [selectedSeasonId, fetchLeaguesForSeason]);
   
   const handleAddNew = () => {
     if (!selectedSeasonId) {
@@ -154,7 +159,7 @@ export default function AdminLeaguesPage() {
       seasonId: selectedSeasonId, 
       name: '', 
       shortName: '', 
-      type: selectedSeasonData.type as UIDisciplineSelection, // Assuming Season.type matches UIDisciplineSelection
+      type: leagueDisciplineOptions[0].value, // Default to first specific discipline
       competitionYear: selectedSeasonData.competitionYear,
       order: (leagues.length + 1) * 10 
     });
@@ -185,7 +190,7 @@ export default function AdminLeaguesPage() {
       await deleteDoc(doc(db, LEAGUES_COLLECTION, leagueToDelete.id));
       console.log(`>>> leagues/handleDeleteLeague: League ${leagueToDelete.id} successfully deleted from Firestore.`);
       toast({ title: "Liga gelöscht", description: `"${leagueToDelete.name}" wurde erfolgreich entfernt.` });
-      fetchLeagues(); 
+      if (selectedSeasonId) fetchLeaguesForSeason(selectedSeasonId); 
     } catch (error) {
       console.error(`>>> leagues/handleDeleteLeague: Error deleting league ${leagueToDelete.id}: `, error);
       toast({ title: "Fehler beim Löschen", description: (error as Error).message, variant: "destructive" });
@@ -214,14 +219,13 @@ export default function AdminLeaguesPage() {
         return;
     }
 
-    // Ensure type and competitionYear are from the selected season, not potentially stale from currentLeague if editing
     const leagueDataToSave: Omit<League, 'id'> = {
       name: currentLeague.name.trim(),
       shortName: currentLeague.shortName?.trim() || '',
       order: currentLeague.order || 0,
       seasonId: selectedSeasonData.id,
       competitionYear: selectedSeasonData.competitionYear,
-      type: selectedSeasonData.type as UIDisciplineSelection, // Cast, as Season.type is UIDisciplineSelection
+      type: currentLeague.type as FirestoreLeagueSpecificDiscipline, // Ensured by form
     };
     console.log(">>> leagues/handleSubmit: League data to save:", leagueDataToSave);
 
@@ -262,13 +266,13 @@ export default function AdminLeaguesPage() {
         toast({ title: "Liga erstellt", description: `"${leagueDataToSave.name}" wurde erfolgreich angelegt.` });
       } else if (formMode === 'edit' && currentLeague.id) {
         console.log(`>>> leagues/handleSubmit: Attempting to update league document ${currentLeague.id}...`);
-        await updateDoc(doc(db, LEAGUES_COLLECTION, currentLeague.id), leagueDataToSave);
+        await updateDoc(doc(db, LEAGUES_COLLECTION, currentLeague.id), leagueDataToSave as Partial<League>);
         console.log(`>>> leagues/handleSubmit: League document ${currentLeague.id} updated.`);
         toast({ title: "Liga aktualisiert", description: `"${leagueDataToSave.name}" wurde erfolgreich aktualisiert.` });
       }
       setIsFormOpen(false);
       setCurrentLeague(null);
-      await fetchLeagues(); // Refresh league list
+      if(selectedSeasonId) await fetchLeaguesForSeason(selectedSeasonId);
     } catch (error) {
       console.error(">>> leagues/handleSubmit: Error saving league: ", error);
       const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
@@ -279,10 +283,12 @@ export default function AdminLeaguesPage() {
     }
   };
 
-  const handleFormInputChange = (field: keyof Pick<League, 'name' | 'shortName' | 'order'>, value: string | number) => {
+  const handleFormInputChange = (field: keyof Pick<League, 'name' | 'shortName' | 'order' | 'type'>, value: string | number) => {
     setCurrentLeague(prev => {
         if (!prev) return null;
-        // Only update these specific fields, seasonId, type, competitionYear come from context or initial load
+        if (field === 'type') {
+          return { ...prev, [field]: value as FirestoreLeagueSpecificDiscipline };
+        }
         return { ...prev, [field]: value };
     });
   };
@@ -292,13 +298,22 @@ export default function AdminLeaguesPage() {
   };
 
   const selectedSeasonName = allSeasons.find(s => s.id === selectedSeasonId)?.name || (isLoadingData ? 'Lade...' : 'Keine Saison ausgewählt');
+  const selectedSeasonForDialog = allSeasons.find(s => s.id === currentLeague?.seasonId);
+
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h1 className="text-2xl font-semibold text-primary w-full sm:w-auto">Ligenverwaltung</h1>
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={isLoadingData || allSeasons.length === 0}>
+          <Select 
+            value={selectedSeasonId} 
+            onValueChange={(value) => {
+              setSelectedSeasonId(value);
+              router.push(`/admin/leagues?seasonId=${value}`, { scroll: false });
+            }} 
+            disabled={isLoadingData || allSeasons.length === 0}
+          >
             <SelectTrigger className="w-full sm:w-[250px]" aria-label="Saison auswählen">
               <SelectValue placeholder={isLoadingData ? "Lade Saisons..." : (allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen")} />
             </SelectTrigger>
@@ -343,7 +358,7 @@ export default function AdminLeaguesPage() {
                   <TableRow key={league.id}>
                     <TableCell>{league.name}</TableCell>
                     <TableCell>{league.shortName}</TableCell>
-                    <TableCell>{league.type}</TableCell>
+                    <TableCell>{leagueDisciplineOptions.find(opt => opt.value === league.type)?.label || league.type}</TableCell>
                     <TableCell>{league.order}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button variant="outline" size="sm" onClick={() => navigateToTeams(league.id)} disabled={!selectedSeasonId}>
@@ -376,7 +391,7 @@ export default function AdminLeaguesPage() {
       </Card>
 
       <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setCurrentLeague(null); }}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-md">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>{formMode === 'new' ? 'Neue Liga anlegen' : 'Liga bearbeiten'}</DialogTitle>
@@ -384,49 +399,59 @@ export default function AdminLeaguesPage() {
                 {formMode === 'new' ? `Erstellen Sie eine neue Liga für ${selectedSeasonName}.` : `Bearbeiten Sie die Details für ${currentLeague?.name || 'die Liga'}.`}
               </DialogDescription>
             </DialogHeader>
-            {currentLeague && ( // currentLeague should be set before opening the form
+            {currentLeague && (
               <div className="grid gap-4 py-4">
-                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="seasonDisplay" className="text-right">Saison</Label>
-                  <Input id="seasonDisplay" value={selectedSeasonName} disabled className="col-span-3 bg-muted/50" />
+                <div className="space-y-1.5">
+                  <Label htmlFor="seasonDisplay">Saison</Label>
+                  <Input id="seasonDisplay" value={selectedSeasonForDialog?.name || selectedSeasonName} disabled className="bg-muted/50" />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">Name</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="leagueType">Typ der Liga</Label>
+                   <Select
+                    value={currentLeague.type || ''}
+                    onValueChange={(value) => handleFormInputChange('type', value as FirestoreLeagueSpecificDiscipline)}
+                    required
+                  >
+                    <SelectTrigger id="leagueType">
+                      <SelectValue placeholder="Spezifischen Ligatyp wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {leagueDisciplineOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="name">Name</Label>
                   <Input 
                     id="name" 
                     value={currentLeague.name || ''} 
                     onChange={(e) => handleFormInputChange('name', e.target.value)} 
-                    className="col-span-3" 
                     required
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="shortName" className="text-right">Kürzel</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="shortName">Kürzel</Label>
                   <Input 
                     id="shortName" 
                     value={currentLeague.shortName || ''} 
                     onChange={(e) => handleFormInputChange('shortName', e.target.value)} 
-                    className="col-span-3" 
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="order" className="text-right">Reihenf.</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="order">Reihenfolge</Label>
                   <Input 
                     id="order" 
                     type="number" 
                     value={currentLeague.order || 0} 
                     onChange={(e) => handleFormInputChange('order', parseInt(e.target.value, 10) || 0)} 
-                    className="col-span-3" 
                     required
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="typeDisplay" className="text-right">Typ</Label>
-                  <Input id="typeDisplay" value={currentLeague.type || ''} disabled className="col-span-3 bg-muted/50" title="Wird von der Saison übernommen"/>
-                </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="yearDisplay" className="text-right">Jahr</Label>
-                  <Input id="yearDisplay" value={currentLeague.competitionYear?.toString() || ''} disabled className="col-span-3 bg-muted/50" title="Wird von der Saison übernommen"/>
+                 <div className="space-y-1.5">
+                  <Label htmlFor="yearDisplay">Wettkampfjahr</Label>
+                  <Input id="yearDisplay" value={currentLeague.competitionYear?.toString() || ''} disabled className="bg-muted/50" title="Wird von der Saison übernommen"/>
                 </div>
               </div>
             )}
@@ -467,5 +492,3 @@ export default function AdminLeaguesPage() {
     </div>
   );
 }
-
-    
