@@ -1,3 +1,4 @@
+
 // src/app/admin/clubs/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent } from 'react';
@@ -77,27 +78,36 @@ export default function AdminClubsPage() {
   };
 
   const handleDelete = async (clubId: string) => {
-    console.log("handleDelete called for clubId:", clubId);
-    if (!window.confirm("Sind Sie sicher, dass Sie diesen Verein löschen möchten? Dies kann nicht rückgängig gemacht werden.")) {
-      console.log("Deletion cancelled by user.");
+    console.log("--- handleDelete Invoked --- Club ID:", clubId);
+    if (!clubId) {
+      console.error("handleDelete called with undefined or empty clubId!");
+      toast({ title: "Fehler", description: "Keine Vereins-ID zum Löschen übergeben.", variant: "destructive" });
       return;
     }
+
+    const clubNameToDelete = clubs.find(c => c.id === clubId)?.name || clubId;
+    const confirmed = window.confirm(`Sind Sie sicher, dass Sie den Verein "${clubNameToDelete}" löschen möchten? Dies kann nicht rückgängig gemacht werden.`);
     
+    if (!confirmed) {
+      console.log("Löschvorgang vom Benutzer abgebrochen für Verein:", clubNameToDelete);
+      return;
+    }
+
+    console.log(`Bestätigung erhalten. Versuche Verein "${clubNameToDelete}" (ID: ${clubId}) zu löschen...`);
     setIsLoading(true); 
     try {
-      console.log(`Attempting to delete club ${clubId} from Firestore.`);
       await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
-      console.log(`Club ${clubId} successfully deleted from Firestore.`);
-      toast({ title: "Verein gelöscht", description: "Der Verein wurde erfolgreich entfernt." });
-      await fetchClubs(); // Refresh list (this will set isLoading to false in its finally block)
+      console.log(`Club "${clubNameToDelete}" (ID: ${clubId}) successfully deleted from Firestore.`);
+      toast({ title: "Verein gelöscht", description: `Der Verein "${clubNameToDelete}" wurde erfolgreich entfernt.` });
+      await fetchClubs(); 
     } catch (error) {
       console.error("Error deleting club: ", clubId, error);
       toast({
         title: "Fehler beim Löschen",
-        description: (error as Error).message || "Der Verein konnte nicht gelöscht werden.",
+        description: (error as Error).message || `Der Verein "${clubNameToDelete}" konnte nicht gelöscht werden.`,
         variant: "destructive",
       });
-      setIsLoading(false); // Explicitly set loading to false in case of error during delete
+      setIsLoading(false); 
     }
   };
 
@@ -179,7 +189,21 @@ export default function AdminClubsPage() {
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(club)} aria-label="Verein bearbeiten">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(club.id)} className="text-destructive hover:text-destructive/80" aria-label="Verein löschen">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => {
+                          console.log(`Löschen-Button geklickt für Verein ID: ${club.id}, Name: ${club.name}`);
+                          if (club.id) {
+                            handleDelete(club.id);
+                          } else {
+                            console.error("FEHLER: club.id ist undefined beim Klick auf Löschen-Button für Club:", club);
+                            toast({ title: "Fehler", description: "Vereins-ID nicht gefunden, Löschen nicht möglich.", variant: "destructive"});
+                          }
+                        }} 
+                        className="text-destructive hover:text-destructive/80" 
+                        aria-label="Verein löschen"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
