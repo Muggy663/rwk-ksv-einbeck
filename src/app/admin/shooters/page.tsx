@@ -122,7 +122,7 @@ export default function AdminShootersPage() {
         setSelectedClubIdFilter(queryClubIdFromParams);
       }
 
-      const shootersSnapshot = await getDocs(query(collection(db, SHOOTERS_COLLECTION), orderBy("lastName", "asc"), orderBy("firstName", "asc")));
+      const shootersSnapshot = await getDocs(query(collection(db, SHOOTERS_COLLECTION), orderBy("name", "asc")));
       const fetchedShooters: Shooter[] = shootersSnapshot.docs.map(docData => ({ id: docData.id, ...docData.data() } as Shooter));
       setShooters(fetchedShooters);
       console.log(">>> shooters/fetchClubsAndShooters: Shooters fetched:", fetchedShooters.length);
@@ -202,7 +202,7 @@ export default function AdminShootersPage() {
       lastName: '', 
       clubId: initialClubId, 
       gender: 'male',
-      teamIds: queryTeamId ? [queryTeamId] : [] // Wichtig für beidseitige Verknüpfung
+      teamIds: queryTeamId ? [queryTeamId] : [] 
     });
     setSelectedTeamIdsInForm(queryTeamId ? [queryTeamId] : []);
     setIsFormOpen(true);
@@ -214,7 +214,6 @@ export default function AdminShootersPage() {
     }
     setFormMode('edit');
     setCurrentShooter(shooter);
-    // Im Edit-Modus werden teamIds nicht direkt hier bearbeitet. Dies bleibt für die Mannschaftsverwaltung.
     setSelectedTeamIdsInForm(shooter.teamIds || []); 
     setTeamsOfSelectedClubInDialog([]); 
     setIsFormOpen(true);
@@ -239,7 +238,6 @@ export default function AdminShootersPage() {
       const batch = writeBatch(db);
       const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterIdToDelete);
 
-      // Entferne den Schützen aus allen Teams, denen er zugeordnet war
       if (shooterToDelete.teamIds && shooterToDelete.teamIds.length > 0) {
         console.log(`>>> shooters/handleDeleteShooter: Removing shooter ${shooterIdToDelete} from ${shooterToDelete.teamIds.length} teams.`);
         shooterToDelete.teamIds.forEach(teamId => {
@@ -254,7 +252,6 @@ export default function AdminShootersPage() {
       await batch.commit();
       console.log(`>>> shooters/handleDeleteShooter: Batch committed. Shooter ${shooterIdToDelete} deleted and team associations removed.`);
       toast({ title: "Schütze gelöscht", description: `${shooterToDelete.firstName} ${shooterToDelete.lastName} wurde erfolgreich entfernt.` });
-      // Neuladen der Daten
       await fetchClubsAndShooters(); 
     } catch (error) {
       console.error(">>> shooters/handleDeleteShooter: Error deleting shooter: ", error);
@@ -276,13 +273,14 @@ export default function AdminShootersPage() {
       return;
     }
     
+    const combinedName = `${currentShooter.firstName.trim()} ${currentShooter.lastName.trim()}`;
     const shooterDataToSave: Omit<Shooter, 'id'> = {
       firstName: currentShooter.firstName.trim(),
       lastName: currentShooter.lastName.trim(),
-      name: `${currentShooter.firstName.trim()} ${currentShooter.lastName.trim()}`, // Name wird hier generiert
+      name: combinedName,
       clubId: currentShooter.clubId,
       gender: currentShooter.gender || 'male',
-      teamIds: formMode === 'new' ? selectedTeamIdsInForm : (currentShooter.teamIds || []), // Nur im new mode Teams setzen
+      teamIds: formMode === 'new' ? selectedTeamIdsInForm : (currentShooter.teamIds || []), 
     };
     console.log(">>> shooters/handleSubmit: Shooter data to save:", shooterDataToSave);
 
@@ -291,7 +289,7 @@ export default function AdminShootersPage() {
     try {
       const shootersCollectionRef = collection(db, SHOOTERS_COLLECTION);
       const q = query(shootersCollectionRef, 
-        where("name", "==", shooterDataToSave.name), // Prüfen auf generierten Namen
+        where("name", "==", shooterDataToSave.name), 
         where("clubId", "==", shooterDataToSave.clubId)
       );
       const querySnapshot = await getDocs(q);
@@ -312,11 +310,9 @@ export default function AdminShootersPage() {
       }
 
       if (formMode === 'new') {
-        const newShooterRef = doc(collection(db, SHOOTERS_COLLECTION)); // ID vorab generieren
-        // 'id' wird nicht explizit gespeichert, Firestore weist sie zu. 'shooterId' kann als Feld gespeichert werden, wenn gewünscht.
+        const newShooterRef = doc(collection(db, SHOOTERS_COLLECTION));
         batch.set(newShooterRef, shooterDataToSave); 
         
-        // Aktualisiere die `shooterIds` in den zugehörigen Teams
         selectedTeamIdsInForm.forEach(teamId => {
           const teamDocRef = doc(db, TEAMS_COLLECTION, teamId);
           batch.update(teamDocRef, { shooterIds: arrayUnion(newShooterRef.id) });
@@ -326,7 +322,6 @@ export default function AdminShootersPage() {
 
       } else if (formMode === 'edit' && currentShooter.id) {
         const shooterDocRef = doc(db, SHOOTERS_COLLECTION, currentShooter.id);
-        // Im Edit-Modus werden 'teamIds' NICHT über dieses Formular geändert. Das geschieht in der Team-Verwaltung.
         const { teamIds, ...editableShooterData } = shooterDataToSave; 
         batch.update(shooterDocRef, editableShooterData); 
         toast({ title: "Schütze aktualisiert", description: `${shooterDataToSave.name} wurde erfolgreich aktualisiert.` });
@@ -337,9 +332,9 @@ export default function AdminShootersPage() {
       console.log(">>> shooters/handleSubmit: Batch committed.");
       setIsFormOpen(false);
       setCurrentShooter(null);
-      setSelectedTeamIdsInForm([]); // Reset selected teams
-      setTeamsOfSelectedClubInDialog([]); // Reset available teams in dialog
-      await fetchClubsAndShooters(); // Neuladen der Daten
+      setSelectedTeamIdsInForm([]); 
+      setTeamsOfSelectedClubInDialog([]); 
+      await fetchClubsAndShooters(); 
     } catch (error) {
       console.error(">>> shooters/handleSubmit: Error saving shooter: ", error);
       const action = formMode === 'new' ? 'Erstellen' : 'Aktualisieren';
@@ -354,10 +349,8 @@ export default function AdminShootersPage() {
      setCurrentShooter(prev => {
         if (!prev) return null;
         const updatedShooter = { ...prev, [field]: value };
-        // Wenn im "new" Modus der Verein geändert wird, resette die Team-Auswahl und lade Teams neu
         if (field === 'clubId' && formMode === 'new' && prev.clubId !== value) {
             setSelectedTeamIdsInForm([]); 
-            // fetchTeamsForNewShooterDialog wird durch useEffect auf currentShooter.clubId getriggert
         }
         return updatedShooter;
      });
@@ -381,13 +374,14 @@ export default function AdminShootersPage() {
         const otherTeamCount = teamIds.filter(id => id !== queryTeamId).length;
         return otherTeamCount > 0 ? `${contextTeamName} (+${otherTeamCount} weitere)` : contextTeamName;
     }
-    // Fallback, wenn kein direkter Kontext oder Schütze nicht im Kontext-Team ist
+    // Wenn kein Kontext, aber nur ein Team, versuchen den Namen zu laden (vereinfacht für jetzt)
+    // Diese Logik müsste erweitert werden, um Team-Namen effizient zu laden, falls viele Schützen angezeigt werden.
+    // Für den Moment: Zeige die Anzahl an.
     return `${teamIds.length} Mannschaft(en) zugeordnet`; 
   };
 
-  const selectedClubNameForTitle = selectedClubIdFilter !== ALL_CLUBS_FILTER_VALUE 
-    ? allClubs.find(c => c.id === selectedClubIdFilter)?.name 
-    : 'aller Vereine';
+  const selectedClubObject = allClubs.find(c => c.id === selectedClubIdFilter);
+  const selectedClubNameForTitle = selectedClubObject ? selectedClubObject.name : 'aller Vereine';
   
 
   return (
@@ -481,24 +475,24 @@ export default function AdminShootersPage() {
                 </DialogDescription>
             </DialogHeader>
             {currentShooter && (
-                <div className="grid gap-y-4 py-4"> 
-                  <div className="grid grid-cols-4 items-center gap-x-4">
-                      <Label htmlFor="firstName" className="text-right col-span-1">Vorname</Label>
-                      <Input id="firstName" value={currentShooter.firstName || ''} onChange={(e) => handleFormInputChange('firstName', e.target.value)} className="col-span-3" required />
+                <div className="grid gap-4 py-4"> {/* Adjusted from gap-y-4 to gap-4 for consistency */}
+                  <div className="space-y-1.5">
+                      <Label htmlFor="firstName">Vorname</Label>
+                      <Input id="firstName" value={currentShooter.firstName || ''} onChange={(e) => handleFormInputChange('firstName', e.target.value)} required />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-x-4">
-                      <Label htmlFor="lastName" className="text-right col-span-1">Nachname</Label>
-                      <Input id="lastName" value={currentShooter.lastName || ''} onChange={(e) => handleFormInputChange('lastName', e.target.value)} className="col-span-3" required />
+                  <div className="space-y-1.5">
+                      <Label htmlFor="lastName">Nachname</Label>
+                      <Input id="lastName" value={currentShooter.lastName || ''} onChange={(e) => handleFormInputChange('lastName', e.target.value)} required />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-x-4">
-                      <Label htmlFor="clubIdForm" className="text-right col-span-1">Verein</Label>
+                  <div className="space-y-1.5">
+                      <Label htmlFor="clubIdForm">Verein</Label>
                       <Select 
                           value={currentShooter.clubId || ''} 
                           onValueChange={(value) => handleFormInputChange('clubId', value)}
                           required
                           disabled={allClubs.length === 0 || (formMode === 'edit' && !!currentShooter.clubId)}
                       >
-                          <SelectTrigger id="clubIdForm" className="col-span-3" aria-label="Verein auswählen">
+                          <SelectTrigger id="clubIdForm" aria-label="Verein auswählen">
                               <SelectValue placeholder={allClubs.length === 0 ? "Keine Vereine" : "Verein wählen"}/>
                           </SelectTrigger>
                           <SelectContent>
@@ -506,12 +500,11 @@ export default function AdminShootersPage() {
                           </SelectContent>
                       </Select>
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-x-4">
-                      <Label htmlFor="gender" className="text-right col-span-1">Geschlecht</Label>
+                  <div className="space-y-1.5">
+                      <Label htmlFor="gender">Geschlecht</Label>
                       <Select 
                           value={currentShooter.gender || 'male'} 
                           onValueChange={(value) => handleFormInputChange('gender', value as 'male' | 'female')}
-                          className="col-span-3"
                       >
                           <SelectTrigger id="gender" aria-label="Geschlecht auswählen">
                               <SelectValue placeholder="Geschlecht wählen"/>
@@ -524,7 +517,7 @@ export default function AdminShootersPage() {
                   </div>
 
                   {formMode === 'new' && currentShooter.clubId && (
-                    <div className="col-span-4 space-y-2 mt-2 p-3 border rounded-md bg-muted/30">
+                    <div className="space-y-2 mt-3 p-3 border rounded-md bg-muted/30">
                         <Label>Mannschaften für "{allClubs.find(c => c.id === currentShooter.clubId)?.name}" zuordnen (optional)</Label>
                         {isLoadingTeamsForDialog ? (
                             <div className="flex items-center"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Lade Mannschaften...</div>
@@ -552,7 +545,7 @@ export default function AdminShootersPage() {
                   )}
 
                   {formMode === 'edit' && (
-                      <div className="col-span-4 text-xs text-muted-foreground p-2 rounded-md bg-secondary/30 mt-2">
+                      <div className="text-xs text-muted-foreground p-2 rounded-md bg-secondary/30 mt-3">
                           Aktuelle Mannschafts-Zuordnungen: {getTeamInfoForShooter(currentShooter as Shooter)}. 
                           Die Zuordnung zu Mannschaften erfolgt primär über die Mannschaftsverwaltung.
                       </div>
