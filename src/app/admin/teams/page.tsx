@@ -47,7 +47,7 @@ import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, o
 import { useToast } from '@/hooks/use-toast';
 
 const SEASONS_COLLECTION = "seasons";
-const LEAGUES_COLLECTION = "rwk_leagues"; // Korrigierter Collection-Name
+const LEAGUES_COLLECTION = "rwk_leagues";
 const CLUBS_COLLECTION = "clubs";
 const TEAMS_COLLECTION = "rwk_teams";
 
@@ -60,14 +60,14 @@ export default function AdminTeamsPage() {
   const { toast } = useToast();
 
   const [allSeasons, setAllSeasons] = useState<Season[]>([]);
-  const [allLeagues, setAllLeagues] = useState<League[]>([]); // Wird jetzt alle Ligen halten
+  const [allLeagues, setAllLeagues] = useState<League[]>([]);
   const [allClubs, setAllClubs] = useState<Club[]>([]);
 
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
-  const [availableLeaguesForSeason, setAvailableLeaguesForSeason] = useState<League[]>([]); // Gefilterte Ligen für die Saison
+  const [availableLeaguesForSeason, setAvailableLeaguesForSeason] = useState<League[]>([]);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string>('');
   
-  const [teams, setTeams] = useState<Team[]>([]); // Mannschaften für die ausgewählte Liga/Saison
+  const [teams, setTeams] = useState<Team[]>([]);
   
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
@@ -99,8 +99,11 @@ export default function AdminTeamsPage() {
         console.log("AdminTeamsPage: Fetching all leagues...");
         const leaguesSnapshot = await getDocs(query(collection(db, LEAGUES_COLLECTION), orderBy("name", "asc")));
         const fetchedLeagues: League[] = leaguesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as League));
-        setAllLeagues(fetchedLeagues); // Alle Ligen laden
+        setAllLeagues(fetchedLeagues);
         console.log("AdminTeamsPage: All leagues fetched:", fetchedLeagues.length);
+        fetchedLeagues.forEach(league => {
+          console.log(`AdminTeamsPage: League details - ID: ${league.id}, Name: ${league.name}, SeasonID: ${league.seasonId}`);
+        });
 
         console.log("AdminTeamsPage: Fetching clubs...");
         const clubsSnapshot = await getDocs(query(collection(db, CLUBS_COLLECTION), orderBy("name", "asc")));
@@ -113,7 +116,7 @@ export default function AdminTeamsPage() {
         } else if (fetchedSeasons.length > 0) {
           setSelectedSeasonId(fetchedSeasons[0].id);
         } else {
-          setSelectedSeasonId(''); // Keine Saisons, also nichts auswählen
+          setSelectedSeasonId('');
         }
         console.log("AdminTeamsPage: Initial selectedSeasonId set to:", selectedSeasonId);
 
@@ -126,9 +129,8 @@ export default function AdminTeamsPage() {
       }
     };
     fetchInitialData();
-  }, [querySeasonId, toast]); // querySeasonId Abhängigkeit hinzugefügt
+  }, [querySeasonId, toast]);
 
-  // Effekt zum Filtern der Ligen basierend auf der ausgewählten Saison
   useEffect(() => {
     console.log("AdminTeamsPage: selectedSeasonId or allLeagues changed. Current selectedSeasonId:", selectedSeasonId);
     if (selectedSeasonId && allLeagues.length > 0) {
@@ -136,21 +138,21 @@ export default function AdminTeamsPage() {
         .filter(l => l.seasonId === selectedSeasonId)
         .sort((a, b) => (a.order || 0) - (b.order || 0));
       setAvailableLeaguesForSeason(leaguesForSeason);
-      console.log("AdminTeamsPage: Available leagues for season:", leaguesForSeason.length);
+      console.log(`AdminTeamsPage: Available leagues for season ${selectedSeasonId}:`, leaguesForSeason.length, leaguesForSeason);
       
       if (queryLeagueId && leaguesForSeason.some(l => l.id === queryLeagueId)) {
         setSelectedLeagueId(queryLeagueId);
       } else if (leaguesForSeason.length > 0) {
         setSelectedLeagueId(leaguesForSeason[0].id);
       } else {
-        setSelectedLeagueId(''); // Keine Ligen für diese Saison
+        setSelectedLeagueId('');
       }
     } else {
       setAvailableLeaguesForSeason([]);
       setSelectedLeagueId('');
     }
     console.log("AdminTeamsPage: Current selectedLeagueId set to:", selectedLeagueId);
-  }, [selectedSeasonId, allLeagues, queryLeagueId]); // queryLeagueId Abhängigkeit hinzugefügt
+  }, [selectedSeasonId, allLeagues, queryLeagueId]);
 
   const fetchTeams = useMemo(() => async () => {
     if (!selectedLeagueId || !selectedSeasonId) {
@@ -213,7 +215,7 @@ export default function AdminTeamsPage() {
       leagueId: selectedLeagueId, 
       competitionYear: currentSeason.competitionYear, 
       name: '', 
-      clubId: allClubs[0].id // Wähle ersten Verein als Standard
+      clubId: allClubs[0].id 
     });
     setIsFormOpen(true);
   };
@@ -221,7 +223,6 @@ export default function AdminTeamsPage() {
   const handleEdit = (team: Team) => {
     if (allClubs.length === 0) {
         toast({ title: "Keine Vereine", description: "Vereinsauswahl nicht möglich. Bitte Vereine anlegen.", variant: "destructive" });
-        // Optional: Form nicht öffnen oder clubId-Feld deaktivieren
     }
     setFormMode('edit');
     setCurrentTeam(team);
@@ -262,7 +263,7 @@ export default function AdminTeamsPage() {
       return;
     }
 
-    const teamDataToSave: Omit<Team, 'id' | 'shooterIds'> = { // shooterIds wird hier nicht direkt gespeichert
+    const teamDataToSave: Omit<Team, 'id' | 'shooterIds'> = { 
       name: currentTeam.name.trim(),
       clubId: currentTeam.clubId,
       leagueId: currentTeam.leagueId,
@@ -320,7 +321,6 @@ export default function AdminTeamsPage() {
   const handleFormInputChange = (field: keyof Pick<Team, 'name' | 'clubId'>, value: string) => {
     setCurrentTeam(prev => {
         if (!prev) return null;
-        // Sicherstellen, dass competitionYear und leagueId nicht überschrieben werden, wenn sie nicht explizit geändert werden
         const updatedTeam = { ...prev, [field]: value };
         return updatedTeam as Partial<Team>;
     });
@@ -390,7 +390,7 @@ export default function AdminTeamsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Verein</TableHead>
+                  {/* Entfernte Spalte für Vereinsname */}
                   <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
@@ -398,7 +398,7 @@ export default function AdminTeamsPage() {
                 {teams.map((team) => (
                   <TableRow key={team.id}>
                     <TableCell>{team.name}</TableCell>
-                    <TableCell>{allClubs.find(c => c.id === team.clubId)?.name || 'N/A'}</TableCell>
+                    {/* Entfernte Zelle für Vereinsname */}
                     <TableCell className="text-right space-x-2">
                        <Button variant="outline" size="sm" onClick={() => navigateToShooters(team.id)}>
                         <Users className="mr-1 h-4 w-4" /> Schützen
@@ -423,6 +423,9 @@ export default function AdminTeamsPage() {
                  (allClubs.length === 0 ? 'Bitte zuerst Vereine anlegen, um Mannschaften erstellen zu können.' :
                  `Keine Mannschaften für ${selectedLeagueName} in Saison ${selectedSeasonName} angelegt.`)))}
               </p>
+               {!isLoadingData && selectedSeasonId && selectedLeagueId && allClubs.length > 0 && teams.length === 0 && (
+                <p className="text-sm mt-1">Klicken Sie auf "Neue Mannschaft", um zu beginnen.</p>
+              )}
             </div>
           )}
         </CardContent>
@@ -446,6 +449,7 @@ export default function AdminTeamsPage() {
                     value={currentTeam.name || ''} 
                     onChange={(e) => handleFormInputChange('name', e.target.value)} 
                     className="col-span-3" 
+                    placeholder="z.B. Verein XY I"
                     required 
                   />
                 </div>
@@ -465,7 +469,6 @@ export default function AdminTeamsPage() {
                       </SelectContent>
                   </Select>
                 </div>
-                  {/* leagueId und competitionYear werden nicht direkt im Formular geändert, sondern vom Kontext übernommen */}
               </div>
             )}
             <DialogFooter>
@@ -505,4 +508,3 @@ export default function AdminTeamsPage() {
     </div>
   );
 }
-
