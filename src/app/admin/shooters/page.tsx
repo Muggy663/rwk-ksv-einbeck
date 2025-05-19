@@ -67,8 +67,8 @@ export default function AdminShootersPage() {
   const [filteredShooters, setFilteredShooters] = useState<Shooter[]>([]);
   const [contextTeamName, setContextTeamName] = useState<string | null>(null);
   
-  const [isLoading, setIsLoading] = useState(true); // General loading for the page (shooters list)
-  const [isFormLoading, setIsFormLoading] = useState(false); // Specific loading for form submission
+  const [isLoading, setIsLoading] = useState(true); 
+  const [isFormLoading, setIsFormLoading] = useState(false); 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentShooter, setCurrentShooter] = useState<Partial<Shooter> & { id?: string } | null>(null);
   const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
@@ -78,8 +78,7 @@ export default function AdminShootersPage() {
 
   const [selectedClubIdFilter, setSelectedClubIdFilter] = useState<string>(ALL_CLUBS_FILTER_VALUE);
 
-  // For the form dialog
-  const [teamsOfSelectedClub, setTeamsOfSelectedClub] = useState<Team[]>([]);
+  const [teamsOfSelectedClubInDialog, setTeamsOfSelectedClubInDialog] = useState<Team[]>([]);
   const [isLoadingTeamsForDialog, setIsLoadingTeamsForDialog] = useState(false);
   const [selectedTeamIdsInForm, setSelectedTeamIdsInForm] = useState<string[]>([]);
 
@@ -152,20 +151,19 @@ export default function AdminShootersPage() {
     }
   }, [selectedClubIdFilter, shooters]);
 
-  // Fetch teams for the selected club in the dialog form (only for 'new' mode)
   useEffect(() => {
     const fetchTeamsForNewShooterDialog = async () => {
       if (isFormOpen && formMode === 'new' && currentShooter?.clubId) {
         setIsLoadingTeamsForDialog(true);
-        setTeamsOfSelectedClub([]); // Clear previous teams
+        setTeamsOfSelectedClubInDialog([]); 
         try {
           console.log(`>>> shooters/dialog: Fetching teams for clubId ${currentShooter.clubId}`);
           const teamsQuery = query(collection(db, TEAMS_COLLECTION), where("clubId", "==", currentShooter.clubId), orderBy("name", "asc"));
           const snapshot = await getDocs(teamsQuery);
           const fetchedTeams = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Team));
-          setTeamsOfSelectedClub(fetchedTeams);
+          setTeamsOfSelectedClubInDialog(fetchedTeams);
           console.log(`>>> shooters/dialog: Fetched ${fetchedTeams.length} teams for club ${currentShooter.clubId}.`);
-          // Pre-select team if queryTeamId matches a fetched team
+          
           if (queryTeamId && fetchedTeams.some(t => t.id === queryTeamId)) {
             setSelectedTeamIdsInForm([queryTeamId]);
           } else {
@@ -178,9 +176,8 @@ export default function AdminShootersPage() {
           setIsLoadingTeamsForDialog(false);
         }
       } else {
-        // Clear teams if not in 'new' mode, dialog not open, or no clubId
-        setTeamsOfSelectedClub([]);
-        if (formMode !== 'edit') { // Preserve selectedTeamIdsInForm if editing (though not directly used for update here)
+        setTeamsOfSelectedClubInDialog([]);
+        if (formMode !== 'edit') { 
             setSelectedTeamIdsInForm([]);
         }
       }
@@ -205,9 +202,9 @@ export default function AdminShootersPage() {
       lastName: '', 
       clubId: initialClubId, 
       gender: 'male',
-      teamIds: [] 
+      teamIds: queryTeamId ? [queryTeamId] : [] // Pre-fill teamIds if queryTeamId exists
     });
-    // setSelectedTeamIdsInForm will be set by the useEffect when clubId is defined and teams are fetched
+    // setSelectedTeamIdsInForm wird durch den useEffect gesetzt, wenn der clubId des currentShooter sich ändert
     setIsFormOpen(true);
   };
 
@@ -217,8 +214,8 @@ export default function AdminShootersPage() {
     }
     setFormMode('edit');
     setCurrentShooter(shooter);
-    setSelectedTeamIdsInForm(shooter.teamIds || []); // For display/info in edit mode
-    setTeamsOfSelectedClub([]); // No team selection list in edit mode for shooter
+    setSelectedTeamIdsInForm(shooter.teamIds || []); 
+    setTeamsOfSelectedClubInDialog([]); 
     setIsFormOpen(true);
   };
 
@@ -234,7 +231,7 @@ export default function AdminShootersPage() {
       return;
     }
     
-    setIsFormLoading(true); // Use formLoading for delete operation as well
+    setIsFormLoading(true); 
     try {
       const batch = writeBatch(db);
       const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterToDelete.id);
@@ -268,23 +265,19 @@ export default function AdminShootersPage() {
       return;
     }
     
-    const shooterName = `${currentShooter.firstName.trim()} ${currentShooter.lastName.trim()}`;
-    const finalTeamIds = formMode === 'new' ? selectedTeamIdsInForm : (currentShooter.teamIds || []);
-
-    const shooterDataToSave: Omit<Shooter, 'id' | 'name'> & { name: string } = {
+    const shooterDataToSave: Omit<Shooter, 'id'> = {
       firstName: currentShooter.firstName.trim(),
       lastName: currentShooter.lastName.trim(),
-      name: shooterName,
+      name: `${currentShooter.firstName.trim()} ${currentShooter.lastName.trim()}`,
       clubId: currentShooter.clubId,
       gender: currentShooter.gender || 'male',
-      teamIds: finalTeamIds, // This will be empty for edit mode if not pre-filled
+      teamIds: formMode === 'new' ? selectedTeamIdsInForm : (currentShooter.teamIds || []),
     };
 
     setIsFormLoading(true);
     const batch = writeBatch(db);
     try {
       const shootersCollectionRef = collection(db, SHOOTERS_COLLECTION);
-      // Check for duplicates
       const q = query(shootersCollectionRef, 
         where("name", "==", shooterDataToSave.name),
         where("clubId", "==", shooterDataToSave.clubId)
@@ -307,10 +300,8 @@ export default function AdminShootersPage() {
 
       if (formMode === 'new') {
         const newShooterRef = doc(collection(db, SHOOTERS_COLLECTION));
-        // Save shooter with its new ID and the selected teamIds
         batch.set(newShooterRef, { ...shooterDataToSave, id: newShooterRef.id }); 
         
-        // Update each selected team to include this new shooter
         selectedTeamIdsInForm.forEach(teamId => {
           const teamDocRef = doc(db, TEAMS_COLLECTION, teamId);
           batch.update(teamDocRef, { shooterIds: arrayUnion(newShooterRef.id) });
@@ -319,10 +310,7 @@ export default function AdminShootersPage() {
 
       } else if (formMode === 'edit' && currentShooter.id) {
         const shooterDocRef = doc(db, SHOOTERS_COLLECTION, currentShooter.id);
-        // IMPORTANT: In edit mode on the shooter's page, we DO NOT update team assignments.
-        // Team assignments (joining/leaving teams) are managed on the Team Admin page.
-        // So, we explicitly exclude `teamIds` from the update data here to prevent accidental changes.
-        const { teamIds, ...editableShooterData } = shooterDataToSave; 
+        const { teamIds, ...editableShooterData } = shooterDataToSave; // teamIds should not be edited here
         batch.update(shooterDocRef, editableShooterData); 
         toast({ title: "Schütze aktualisiert", description: `${shooterDataToSave.name} wurde erfolgreich aktualisiert.` });
       }
@@ -331,7 +319,7 @@ export default function AdminShootersPage() {
       setIsFormOpen(false);
       setCurrentShooter(null);
       setSelectedTeamIdsInForm([]);
-      setTeamsOfSelectedClub([]);
+      setTeamsOfSelectedClubInDialog([]);
       fetchClubsAndShooters(); 
     } catch (error) {
       console.error(">>> shooters/handleSubmit: Error saving shooter: ", error);
@@ -345,10 +333,8 @@ export default function AdminShootersPage() {
      setCurrentShooter(prev => {
         if (!prev) return null;
         const updatedShooter = { ...prev, [field]: value };
-        // If club is changed in 'new' mode, trigger refetch of teams for that club
         if (field === 'clubId' && formMode === 'new' && prev.clubId !== value) {
-            // This state change will trigger the useEffect for fetching teams
-            setSelectedTeamIdsInForm([]); // Reset team selection
+            setSelectedTeamIdsInForm([]); 
         }
         return updatedShooter;
      });
@@ -368,13 +354,14 @@ export default function AdminShootersPage() {
     const teamIds = shooter.teamIds || [];
     if (teamIds.length === 0) return '-';
     
+    console.log(`getTeamInfoForShooter: shooter ${shooter.name}, teamIds: ${teamIds.join(',')}, queryTeamId: ${queryTeamId}, contextTeamName: ${contextTeamName}`);
+
     if (contextTeamName && queryTeamId && teamIds.includes(queryTeamId)) {
         const otherTeamCount = teamIds.filter(id => id !== queryTeamId).length;
         return otherTeamCount > 0 ? `${contextTeamName} (+${otherTeamCount} weitere)` : contextTeamName;
     }
     return `${teamIds.length} Mannschaft(en) zugeordnet`; 
   };
-
 
   const selectedClubNameForTitle = selectedClubIdFilter !== ALL_CLUBS_FILTER_VALUE 
     ? allClubs.find(c => c.id === selectedClubIdFilter)?.name 
@@ -407,7 +394,7 @@ export default function AdminShootersPage() {
           </CardTitle>
           <CardDescription>
             Verwalten Sie hier alle Schützen.
-            {contextTeamName ? ` (Aktueller Kontext: Mannschaft "${contextTeamName}")` : (queryTeamId && !contextTeamName ? ` (Kontext: Mannschaft ID ${queryTeamId} - Name lädt...)` : '')}
+            {contextTeamName ? ` (Kontext: Mannschaft "${contextTeamName}")` : (queryTeamId && !contextTeamName ? ` (Kontext: Mannschaft ID ${queryTeamId} - Name lädt...)` : '')}
             {allClubs.length === 0 && !isLoading && <span className="text-destructive block mt-1"> Hinweis: Keine Vereine angelegt. Bitte zuerst Vereine erstellen.</span>}
           </CardDescription>
         </CardHeader>
@@ -431,7 +418,7 @@ export default function AdminShootersPage() {
               <TableBody>
                 {filteredShooters.map((shooter) => (
                   <TableRow key={shooter.id}>
-                    <TableCell>{shooter.firstName} {shooter.lastName}</TableCell>
+                    <TableCell>{shooter.name}</TableCell>
                     <TableCell>{getClubName(shooter.clubId)}</TableCell>
                     <TableCell>{shooter.gender === 'male' ? 'Männlich' : (shooter.gender === 'female' ? 'Weiblich' : 'N/A')}</TableCell>
                     <TableCell className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
@@ -456,17 +443,18 @@ export default function AdminShootersPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) { setCurrentShooter(null); setTeamsOfSelectedClub([]); setSelectedTeamIdsInForm([]); } }}>
+      <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) { setCurrentShooter(null); setTeamsOfSelectedClubInDialog([]); setSelectedTeamIdsInForm([]); } }}>
         <DialogContent className="sm:max-w-lg"> 
           <form onSubmit={handleSubmit}>
             <DialogHeader>
                 <DialogTitle>{formMode === 'new' ? 'Neuen Schützen anlegen' : 'Schütze bearbeiten'}</DialogTitle>
                 <DialogDescription>
-                    {formMode === 'new' && contextTeamName 
-                        ? `Schütze wird initial der Mannschaft "${contextTeamName}" zugeordnet, weitere können unten ausgewählt werden.` 
-                        : (formMode === 'new' 
-                            ? 'Tragen Sie die Daten des Schützen ein und wählen Sie optional Mannschaften aus.'
-                            : 'Bearbeiten Sie die Daten des Schützen. Mannschaftszuordnungen erfolgen über die Mannschaftsverwaltung.')
+                    {formMode === 'new' 
+                        ? 'Tragen Sie die Daten des Schützen ein und wählen Sie optional Mannschaften aus.'
+                        : 'Bearbeiten Sie die Daten des Schützen. Mannschaftszuordnungen erfolgen über die Mannschaftsverwaltung.'
+                    }
+                    {formMode === 'new' && contextTeamName && 
+                        ` Der Schütze wird initial der Mannschaft "${contextTeamName}" zugeordnet.`
                     }
                 </DialogDescription>
             </DialogHeader>
@@ -486,7 +474,7 @@ export default function AdminShootersPage() {
                           value={currentShooter.clubId || ''} 
                           onValueChange={(value) => handleFormInputChange('clubId', value)}
                           required
-                          disabled={allClubs.length === 0 || formMode === 'edit'}
+                          disabled={allClubs.length === 0 || (formMode === 'edit' && !!currentShooter.clubId)}
                       >
                           <SelectTrigger id="clubIdForm" className="col-span-3" aria-label="Verein auswählen">
                               <SelectValue placeholder={allClubs.length === 0 ? "Keine Vereine" : "Verein wählen"}/>
@@ -517,9 +505,9 @@ export default function AdminShootersPage() {
                         <Label>Mannschaften für "{allClubs.find(c => c.id === currentShooter.clubId)?.name}" zuordnen (optional)</Label>
                         {isLoadingTeamsForDialog ? (
                             <div className="flex items-center"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Lade Mannschaften...</div>
-                        ) : teamsOfSelectedClub.length > 0 ? (
+                        ) : teamsOfSelectedClubInDialog.length > 0 ? (
                             <ScrollArea className="h-32">
-                                {teamsOfSelectedClub.map(team => (
+                                {teamsOfSelectedClubInDialog.map(team => (
                                     <div key={team.id} className="flex items-center space-x-2 py-1">
                                         <Checkbox
                                             id={`team-assign-${team.id}`}
@@ -545,7 +533,7 @@ export default function AdminShootersPage() {
                 </div>
             )}
             <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentShooter(null); setTeamsOfSelectedClub([]); setSelectedTeamIdsInForm([]);}}>Abbrechen</Button>
+                <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentShooter(null); setTeamsOfSelectedClubInDialog([]); setSelectedTeamIdsInForm([]);}}>Abbrechen</Button>
                 <Button type="submit" disabled={isFormLoading || (formMode === 'new' && isLoadingTeamsForDialog)}>
                     {(isFormLoading || (formMode === 'new' && isLoadingTeamsForDialog)) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Speichern
@@ -581,4 +569,3 @@ export default function AdminShootersPage() {
     </div>
   );
 }
-
