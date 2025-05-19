@@ -7,7 +7,7 @@ import type { ChangelogEntry } from '@/types/updates';
 const changelogEntries: ChangelogEntry[] = [
   {
     version: '0.0.0.3',
-    date: '01. August 2024', // Approximate date
+    date: '02. August 2024', 
     title: 'Verbesserungen Admin-Bereich & Ergebniserfassung',
     descriptionPoints: [
       'Admin-Bereich: Intuitivere Navigation zwischen Saisons, Ligen, Mannschaften und Schützen implementiert.',
@@ -23,7 +23,7 @@ const changelogEntries: ChangelogEntry[] = [
   },
   {
     version: '0.0.0.2',
-    date: '01. August 2024', // Approximate date for recent changes
+    date: '01. August 2024', 
     title: 'Datenbankanbindung RWK-Tabellen & Erweiterungen',
     descriptionPoints: [
       'RWK-Tabellen laden Daten dynamisch aus Firestore (Ligen, Teams, Schützenergebnisse).',
