@@ -81,7 +81,7 @@ export default function AdminClubsPage() {
 
   const handleAddNew = () => {
     setFormMode('new');
-    setCurrentClub({ name: '', shortName: '' });
+    setCurrentClub({ name: '', shortName: '', clubNumber: '' });
     setIsFormOpen(true);
   };
 
@@ -113,7 +113,7 @@ export default function AdminClubsPage() {
     const clubName = clubToDelete.name;
     console.log(`--- handleDeleteClub: Attempting to delete club: ${clubName} (ID: ${clubId}) ---`);
     
-    setIsLoading(true); // Verwende allgemeinen isLoading-Status oder einen spezifischen für Löschen
+    setIsLoading(true);
     try {
       console.log(`--- handleDeleteClub: Calling deleteDoc for ${clubId} ---`);
       await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
@@ -150,25 +150,23 @@ export default function AdminClubsPage() {
     }
 
     const clubDataToSave: Omit<Club, 'id'> = {
-      name: currentClub.name.trim(), // Namen trimmen
-      shortName: currentClub.shortName?.trim() || '', // Kürzel trimmen
+      name: currentClub.name.trim(),
+      shortName: currentClub.shortName?.trim() || '',
+      clubNumber: currentClub.clubNumber?.trim() || '',
     };
 
     setIsLoading(true);
     try {
-      // --- BEGIN DUPLICATE CHECK ---
       const clubsCollectionRef = collection(db, CLUBS_COLLECTION);
       let duplicateQuery;
 
       if (formMode === 'edit' && currentClub?.id) {
-        // Beim Bearbeiten: Prüfe, ob ein ANDERER Verein diesen Namen hat
         duplicateQuery = query(
           clubsCollectionRef,
           where("name", "==", clubDataToSave.name),
-          where(documentId(), "!=", currentClub.id) // Schließt das aktuell bearbeitete Dokument von der Prüfung aus
+          where(documentId(), "!=", currentClub.id) 
         );
       } else {
-        // Beim Neuanlegen: Prüfe, ob irgendein Verein diesen Namen hat
         duplicateQuery = query(
           clubsCollectionRef,
           where("name", "==", clubDataToSave.name)
@@ -184,9 +182,8 @@ export default function AdminClubsPage() {
           variant: "destructive",
         });
         setIsLoading(false);
-        return; // Stoppt den Speichervorgang
+        return; 
       }
-      // --- END DUPLICATE CHECK ---
 
       if (formMode === 'new') {
         await addDoc(collection(db, CLUBS_COLLECTION), clubDataToSave);
@@ -211,7 +208,7 @@ export default function AdminClubsPage() {
     }
   };
 
-  const handleFormInputChange = (field: keyof Pick<Club, 'name' | 'shortName'>, value: string) => {
+  const handleFormInputChange = (field: keyof Pick<Club, 'name' | 'shortName' | 'clubNumber'>, value: string) => {
     setCurrentClub(prev => prev ? ({ ...prev, [field]: value }) : null);
   };
 
@@ -239,6 +236,7 @@ export default function AdminClubsPage() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Kürzel</TableHead>
+                  <TableHead>Vereinsnr.</TableHead>
                   <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
@@ -247,6 +245,7 @@ export default function AdminClubsPage() {
                   <TableRow key={club.id}>
                     <TableCell>{club.name}</TableCell>
                     <TableCell>{club.shortName || '-'}</TableCell>
+                    <TableCell>{club.clubNumber || '-'}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(club)} aria-label="Verein bearbeiten">
                         <Edit className="h-4 w-4" />
@@ -312,6 +311,16 @@ export default function AdminClubsPage() {
                     className="col-span-3"
                   />
                 </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="clubNumber" className="text-right">Vereinsnr.</Label>
+                  <Input
+                    id="clubNumber"
+                    value={currentClub.clubNumber || ''}
+                    onChange={(e) => handleFormInputChange('clubNumber', e.target.value)}
+                    className="col-span-3"
+                    placeholder="Format: 08-XXX"
+                  />
+                </div>
               </div>
             )}
             <DialogFooter>
@@ -339,7 +348,7 @@ export default function AdminClubsPage() {
               <AlertDialogAction
                 onClick={handleDeleteClub}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                disabled={isLoading && isAlertOpen} // Deaktiviere Button, wenn isLoading und Alert offen ist
+                disabled={isLoading && isAlertOpen} 
               >
                 {(isLoading && isAlertOpen) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Endgültig löschen
