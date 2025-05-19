@@ -16,14 +16,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronDown, TableIcon, Loader2, AlertTriangle } from 'lucide-react';
+import { ChevronDown, TableIcon, Loader2, AlertTriangle, InfoIcon } from 'lucide-react';
 import type { Season, League, Team, Club, Shooter, ShooterRoundResults, SeasonDisplay, LeagueDisplay, TeamDisplay, ShooterDisplayResults } from '@/types/rwk';
 import { Skeleton } from '@/components/ui/skeleton';
 import { db } from '@/lib/firebase/config';
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 
 const NUM_ROUNDS = 5;
-const TARGET_SEASON_ID = 's2025'; // Hardcoded for now, "RWK 2025 KK"
+const TARGET_SEASON_ID = 's2025'; // Hardcoded for now, expected to be "RWK 2025 KK"
 
 async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> {
   try {
@@ -31,25 +31,35 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
     const seasonSnap = await getDoc(seasonDocRef);
 
     if (!seasonSnap.exists()) {
-      console.error(`Season with ID ${seasonId} not found.`);
+      console.error(`Season document with ID '${seasonId}' not found in 'seasons' collection.`);
       return null;
     }
     const season = { id: seasonSnap.id, ...seasonSnap.data() } as Season;
+    console.log(`Season '${season.name}' (ID: ${season.id}) found.`);
 
     // Fetch leagues for this season
-    const leaguesColRef = collection(db, "rwk_leagues"); // Updated collection name
+    const leaguesColRef = collection(db, "rwk_leagues");
     const qLeagues = query(leaguesColRef, where("seasonId", "==", seasonId));
     const leaguesSnapshot = await getDocs(qLeagues);
     const leagueDisplays: LeagueDisplay[] = [];
 
+    if (leaguesSnapshot.empty) {
+        console.warn(`No leagues found with seasonId '${seasonId}' in 'rwk_leagues' collection.`);
+    }
+
     for (const leagueDoc of leaguesSnapshot.docs) {
       const league = { id: leagueDoc.id, ...leagueDoc.data() } as League;
       const teamDisplays: TeamDisplay[] = [];
+      console.log(`Fetching teams for league '${league.name}' (ID: ${league.id})...`);
 
       // Fetch teams for this league and season
-      const teamsColRef = collection(db, "rwk_teams"); // Updated collection name
+      const teamsColRef = collection(db, "rwk_teams");
       const qTeams = query(teamsColRef, where("leagueId", "==", league.id), where("seasonId", "==", seasonId));
       const teamsSnapshot = await getDocs(qTeams);
+      
+      if (teamsSnapshot.empty) {
+        console.warn(`No teams found for leagueId '${league.id}' and seasonId '${seasonId}' in 'rwk_teams' collection.`);
+      }
 
       for (const teamDoc of teamsSnapshot.docs) {
         const teamData = teamDoc.data() as Omit<Team, 'id'>;
@@ -61,17 +71,21 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
           const clubSnap = await getDoc(clubDocRef);
           if (clubSnap.exists()) {
             clubName = (clubSnap.data() as Club).name;
+          } else {
+            console.warn(`Club with ID '${team.clubId}' for team '${team.name}' not found.`);
           }
         }
 
         const shooterResultsDisplay: ShooterDisplayResults[] = [];
         if (team.shooterIds && team.shooterIds.length > 0) {
           for (const shooterId of team.shooterIds) {
-            const shooterDocRef = doc(db, "rwk_shooters", shooterId); // Updated collection name
+            const shooterDocRef = doc(db, "rwk_shooters", shooterId);
             const shooterSnap = await getDoc(shooterDocRef);
             const shooterName = shooterSnap.exists() ? `${(shooterSnap.data() as Shooter).firstName} ${(shooterSnap.data() as Shooter).lastName}` : "Unbekannter Schütze";
+            if (!shooterSnap.exists()) {
+                 console.warn(`Shooter with ID '${shooterId}' for team '${team.name}' not found in 'rwk_shooters'.`);
+            }
 
-            // Path to shooter's results in subcollection
             const shooterResultDocRef = doc(db, "rwk_teams", team.id, "shooterResults", shooterId);
             const shooterResultSnap = await getDoc(shooterResultDocRef);
             
@@ -79,7 +93,7 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
             if (shooterResultSnap.exists()) {
                  results = (shooterResultSnap.data() as ShooterRoundResults).results || {};
             } else {
-                // Fill with nulls if no results doc exists for this shooter in this team
+                console.warn(`No shooterResults found for shooter ID '${shooterId}' in team '${team.id}'. Filling with nulls.`);
                 for (let i = 1; i <= NUM_ROUNDS; i++) {
                     results[`dg${i}`] = null;
                 }
@@ -115,7 +129,10 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
                     teamTotalScore += score;
                 }
             });
+        } else {
+            console.warn(`Team '${team.name}' (ID: ${team.id}) has no 'roundResults' field.`);
         }
+
 
         teamDisplays.push({
           ...team,
@@ -138,8 +155,11 @@ async function fetchSeasonData(seasonId: string): Promise<SeasonDisplay | null> 
     return { ...season, leagues: leagueDisplays };
 
   } catch (error) {
-    console.error("Error fetching season data:", error);
-    throw error;
+    console.error("Error fetching season data from Firestore:", error);
+    // Ensure a null is returned or error is re-thrown to be caught by caller
+    // Depending on how the calling useEffect handles it, this might be sufficient
+    // to set the error state in the component.
+    throw error; // Re-throw so the component's catch block can handle it.
   }
 }
 
@@ -155,11 +175,17 @@ export default function RwkTabellenPage() {
       setLoading(true);
       setError(null);
       try {
+        console.log(`Attempting to fetch data for season ID: ${TARGET_SEASON_ID}`);
         const seasonData = await fetchSeasonData(TARGET_SEASON_ID);
         setSelectedSeason(seasonData);
+        if (seasonData) {
+          console.log("Season data successfully loaded and processed:", seasonData);
+        } else {
+          console.warn("fetchSeasonData returned null, indicating season was not found.");
+        }
       } catch (err) {
+        console.error("Failed to load RWK data in useEffect:", err);
         setError(err as Error);
-        console.error("Failed to load RWK data:", err);
       } finally {
         setLoading(false);
       }
@@ -212,7 +238,7 @@ export default function RwkTabellenPage() {
             <p>Es gab ein Problem beim Abrufen der Daten von der Datenbank.</p>
             <p className="text-sm mt-2">Stellen Sie sicher, dass die Firestore Sicherheitsregeln korrekt konfiguriert sind und die Collection-Namen übereinstimmen.</p>
             <p className="text-sm mt-2">Fehlermeldung: {error.message}</p>
-            <p className="text-sm mt-2">Bitte versuchen Sie es später erneut oder kontaktieren Sie den Administrator.</p>
+            <p className="text-sm mt-2">Bitte versuchen Sie es später erneut oder kontaktieren Sie den Administrator. Überprüfen Sie auch die Browser-Konsole auf detailliertere Fehlermeldungen von Firebase.</p>
           </CardContent>
         </Card>
       </div>
@@ -223,16 +249,26 @@ export default function RwkTabellenPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-3">
-          <TableIcon className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold text-primary">RWK Tabellen</h1>
+          <InfoIcon className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold text-primary">Keine Saisondaten</h1>
         </div>
-        <Card>
+        <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Keine Saisondaten verfügbar</CardTitle>
+            <CardTitle>Saison nicht gefunden</CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <p className="text-muted-foreground">Für die ausgewählte Saison (ID: {TARGET_SEASON_ID}) konnten keine Daten gefunden werden oder es sind keine Ligen vorhanden.</p>
-             <p className="text-muted-foreground mt-2">Überprüfen Sie, ob die Saison-ID korrekt ist und ob Daten in Firestore existieren.</p>
+          <CardContent className="p-6 text-muted-foreground">
+            <p>
+              Das Saison-Dokument mit der ID <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">{TARGET_SEASON_ID}</code> wurde nicht in der Firestore-Collection <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">seasons</code> gefunden.
+            </p>
+            <p className="mt-2">
+              Bitte überprüfen Sie Folgendes:
+            </p>
+            <ul className="list-disc list-inside mt-1 space-y-1">
+              <li>Ist die Saison-ID <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">{TARGET_SEASON_ID}</code> korrekt?</li>
+              <li>Existiert ein Dokument mit genau dieser ID in der <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">seasons</code> Collection in Ihrer Firestore-Datenbank?</li>
+              <li>Sind Ihre Firestore-Sicherheitsregeln so konfiguriert, dass Lesezugriff auf die <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">seasons</code> Collection erlaubt ist?</li>
+            </ul>
+            <p className="mt-3">Ohne ein gültiges Saison-Dokument können keine weiteren Daten (Ligen, Mannschaften, Ergebnisse) geladen werden.</p>
           </CardContent>
         </Card>
       </div>
@@ -248,8 +284,12 @@ export default function RwkTabellenPage() {
 
       {selectedSeason.leagues.length === 0 && (
          <Card className="shadow-lg">
+            <CardHeader>
+                <CardTitle className="text-accent">Keine Ligen</CardTitle>
+            </CardHeader>
             <CardContent className="text-center py-12 p-6">
-                <p className="text-lg text-muted-foreground">Keine Ligen für diese Saison ({selectedSeason.name}) gefunden.</p>
+                <p className="text-lg text-muted-foreground">Für die Saison "{selectedSeason.name}" wurden keine Ligen in der Collection <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">rwk_leagues</code> gefunden, die auf die Saison-ID <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">{selectedSeason.id}</code> verweisen.</p>
+                <p className="text-muted-foreground mt-2">Bitte überprüfen Sie, ob Ligadokumente mit dem Feld <code className="font-mono bg-muted px-1 py-0.5 rounded-sm">seasonId: "{selectedSeason.id}"</code> existieren.</p>
             </CardContent>
         </Card>
       )}
@@ -265,7 +305,7 @@ export default function RwkTabellenPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
-                      <>
+                      <React.Fragment>
                         <TableHead className="w-[40px] text-center">#</TableHead>
                         <TableHead>Mannschaft</TableHead>
                         {[...Array(NUM_ROUNDS)].map((_, i) => (
@@ -273,16 +313,16 @@ export default function RwkTabellenPage() {
                         ))}
                         <TableHead className="text-center font-semibold">Gesamt</TableHead>
                         <TableHead className="w-[50px]"></TableHead>{/* For expand icon */}
-                      </>
+                      </React.Fragment>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {league.teams.sort((a,b) => (a.rank || 99) - (b.rank || 99)).map((team, index) => (
+                    {league.teams.sort((a,b) => (a.rank || 999) - (b.rank || 999)).map((team, index) => ( // Sort by rank
                       <React.Fragment key={team.id}>
                         <TableRow className="hover:bg-secondary/20 transition-colors">
-                          <>
+                          <React.Fragment>
                             <TableCell className="text-center font-medium">{team.rank || index + 1}</TableCell>
-                            <TableCell className="font-medium text-foreground">{team.name} <span className="text-xs text-muted-foreground">({team.clubName})</span></TableCell>
+                            <TableCell className="font-medium text-foreground">{team.name} <span className="text-xs text-muted-foreground">({team.clubName || 'N/A'})</span></TableCell>
                             {[...Array(NUM_ROUNDS)].map((_, i) => (
                               <TableCell key={`dg${i + 1}-${team.id}`} className="text-center">
                                 {team.roundResults?.[`dg${i + 1}` as keyof Team['roundResults']] ?? '-'}
@@ -302,30 +342,30 @@ export default function RwkTabellenPage() {
                                 </button>
                               ) : null}
                             </TableCell>
-                          </>
+                          </React.Fragment>
                         </TableRow>
                         {team.shootersResults && team.shootersResults.length > 0 && openTeamDetails[team.id] && (
                            <TableRow id={`team-details-${team.id}`} className="bg-muted/10 hover:bg-muted/20">
-                             <>
-                              <TableCell colSpan={3 + NUM_ROUNDS + 1} className="p-0"> {/* Adjusted colSpan (Rank, Team, 5xDG, Total, Expand Icon) = 3 + NUM_ROUNDS + 1 */}
+                             <React.Fragment>
+                              <TableCell colSpan={3 + NUM_ROUNDS + 1} className="p-0">
                                 <div className="p-4 space-y-3">
                                   <h4 className="text-md font-semibold text-accent-foreground">Einzelergebnisse für {team.name}</h4>
                                   <Table className="bg-background rounded-md shadow-sm">
                                     <TableHeader>
                                       <TableRow className="bg-secondary/30">
-                                        <>
+                                        <React.Fragment>
                                           <TableHead>Schütze</TableHead>
                                           {[...Array(NUM_ROUNDS)].map((_, i) => (
                                             <TableHead key={`shooter-dg${i + 1}`} className="text-center">DG {i + 1}</TableHead>
                                           ))}
                                           <TableHead className="text-center font-semibold">Schnitt</TableHead>
-                                        </>
+                                        </React.Fragment>
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                      {team.shootersResults.map(shooterRes => (
+                                      {team.shootersResults.sort((a,b) => (a.shooterName || '').localeCompare(b.shooterName || '')).map(shooterRes => ( // Sort shooters by name
                                         <TableRow key={shooterRes.shooterId}>
-                                          <>
+                                          <React.Fragment>
                                             <TableCell className="font-medium">{shooterRes.shooterName || shooterRes.shooterId}</TableCell>
                                             {[...Array(NUM_ROUNDS)].map((_, i) => (
                                                <TableCell key={`shooter-dg${i + 1}-${shooterRes.shooterId}`} className="text-center">
@@ -333,16 +373,16 @@ export default function RwkTabellenPage() {
                                                </TableCell>
                                             ))}
                                             <TableCell className="text-center font-semibold text-primary">
-                                              {shooterRes.average?.toFixed(2) || '-'}
+                                              {shooterRes.average != null ? shooterRes.average.toFixed(2) : '-'}
                                             </TableCell>
-                                          </>
+                                          </React.Fragment>
                                         </TableRow>
                                       ))}
                                     </TableBody>
                                   </Table>
                                 </div>
                               </TableCell>
-                            </>
+                            </React.Fragment>
                           </TableRow>
                         )}
                       </React.Fragment>
@@ -360,3 +400,4 @@ export default function RwkTabellenPage() {
     </div>
   );
 }
+
