@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Users, Trophy, ListChecks, BarChart3, Settings } from 'lucide-react';
+import { Users, Trophy, ListChecks, BarChart3, FileUp, Award, Settings } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   return (
@@ -63,17 +63,43 @@ export default function AdminDashboardPage() {
             </Link>
           </CardContent>
         </Card>
-        
-        {/* Placeholder for future admin sections */}
-         <Card className="shadow-lg hover:shadow-xl transition-shadow md:col-span-2 lg:col-span-3 opacity-50">
+
+        <Card className="shadow-lg hover:shadow-xl transition-shadow opacity-50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Statistiken (Demnächst)</CardTitle>
+            <CardTitle className="text-lg font-medium">Datenwerkzeuge</CardTitle>
+            <FileUp className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Importieren und Exportieren von Daten.
+            </CardDescription>
+            <Button className="w-full" disabled>CSV Import (Demnächst)</Button>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-shadow opacity-50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Saisonabschluss</CardTitle>
+            <Award className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Urkunden und Auswertungen generieren.
+            </CardDescription>
+            <Button className="w-full" disabled>Urkunden (PDF - Demnächst)</Button>
+          </CardContent>
+        </Card>
+        
+         <Card className="shadow-lg hover:shadow-xl transition-shadow opacity-50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Statistiken</CardTitle>
             <BarChart3 className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <CardDescription>
-              Auswertungen und Statistiken zu den Wettkämpfen.
+              Auswertungen und Statistiken (Demnächst).
             </CardDescription>
+             <Button className="w-full" disabled>Statistiken anzeigen</Button>
           </CardContent>
         </Card>
       </div>
