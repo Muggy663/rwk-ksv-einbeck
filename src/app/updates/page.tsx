@@ -6,6 +6,20 @@ import type { ChangelogEntry } from '@/types/updates';
 
 const changelogEntries: ChangelogEntry[] = [
   {
+    version: '0.0.1.0',
+    date: '03. August 2024',
+    title: 'Admin: Vereinsverwaltung mit Datenbankanbindung',
+    descriptionPoints: [
+      'Admin-Seite für Vereine (/admin/clubs) implementiert.',
+      'Anzeigen, Anlegen, Bearbeiten und Löschen von Vereinen mit direkter Firestore-Anbindung.',
+      'Bestätigungsdialog (AlertDialog) vor dem Löschen von Vereinen hinzugefügt.',
+      'Prüfung auf doppelte Vereinsnamen beim Anlegen und Bearbeiten implementiert.',
+      'Feld für Vereinsnummer (Format 08-XXX) zur Vereinsverwaltung hinzugefügt.',
+      'Vereinsliste wird nun nach Vereinsnummer (primär) und Name (sekundär) sortiert.',
+      'Kleinere UI-Verbesserungen und Fehlerbehebungen im Löschprozess für Vereine.',
+    ],
+  },
+  {
     version: '0.0.0.3',
     date: '02. August 2024', 
     title: 'Verbesserungen Admin-Bereich & Ergebniserfassung',
@@ -27,7 +41,7 @@ const changelogEntries: ChangelogEntry[] = [
     title: 'Datenbankanbindung RWK-Tabellen & Erweiterungen',
     descriptionPoints: [
       'RWK-Tabellen laden Daten dynamisch aus Firestore (Ligen, Teams, Schützenergebnisse).',
-      'Auswahl für Wettkampfjahr (aktuell nur 2025) und Disziplin (Kleinkaliber, Luftdruck) in RWK-Tabellen hinzugefügt.',
+      'Auswahl für Wettkampfjahr und Disziplin (Kleinkaliber, Luftdruck) in RWK-Tabellen hinzugefügt.',
       'Dynamische Seitenüberschrift für RWK-Tabellen (z.B. "RWK 2025 Kleinkaliber (KK)").',
       'Separate Tab-Ansichten für Mannschafts- und Einzelschützenranglisten implementiert.',
       'Hervorhebung "Bester Schütze" (höchster Gesamtscore) und "Beste Dame" (höchster Gesamtscore weiblich).',
