@@ -7,7 +7,7 @@ import type { ChangelogEntry } from '@/types/updates';
 const changelogEntries: ChangelogEntry[] = [
   {
     version: '0.0.1.0',
-    date: '03. August 2024',
+    date: '03. August 2024', // Angepasstes Datum
     title: 'Admin: Vereinsverwaltung mit Datenbankanbindung',
     descriptionPoints: [
       'Admin-Seite für Vereine (/admin/clubs) implementiert.',
@@ -16,7 +16,6 @@ const changelogEntries: ChangelogEntry[] = [
       'Prüfung auf doppelte Vereinsnamen beim Anlegen und Bearbeiten implementiert.',
       'Feld für Vereinsnummer (Format 08-XXX) zur Vereinsverwaltung hinzugefügt.',
       'Vereinsliste wird nun nach Vereinsnummer (primär) und Name (sekundär) sortiert.',
-      'Kleinere UI-Verbesserungen und Fehlerbehebungen im Löschprozess für Vereine.',
     ],
   },
   {
