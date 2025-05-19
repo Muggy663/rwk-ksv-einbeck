@@ -53,6 +53,7 @@ const LEAGUES_COLLECTION = "rwk_leagues";
 const CLUBS_COLLECTION = "clubs";
 const TEAMS_COLLECTION = "rwk_teams";
 const SHOOTERS_COLLECTION = "rwk_shooters";
+const MAX_SHOOTERS_PER_TEAM = 3;
 
 export default function AdminTeamsPage() {
   const router = useRouter();
@@ -63,16 +64,16 @@ export default function AdminTeamsPage() {
   const { toast } = useToast();
 
   const [allSeasons, setAllSeasons] = useState<Season[]>([]);
-  const [allLeagues, setAllLeagues] = useState<League[]>([]); // Alle Ligen, ungefiltert
+  const [allLeagues, setAllLeagues] = useState<League[]>([]);
   const [allClubs, setAllClubs] = useState<Club[]>([]);
   const [availableClubShooters, setAvailableClubShooters] = useState<Shooter[]>([]);
   const [isLoadingShootersForDialog, setIsLoadingShootersForDialog] = useState(false);
 
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
-  const [availableLeaguesForSeason, setAvailableLeaguesForSeason] = useState<League[]>([]); // Gefilterte Ligen
+  const [availableLeaguesForSeason, setAvailableLeaguesForSeason] = useState<League[]>([]);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string>('');
   
-  const [teams, setTeams] = useState<Team[]>([]); // Mannschaften für die ausgewählte Liga & Saison
+  const [teams, setTeams] = useState<Team[]>([]);
   
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
@@ -103,7 +104,7 @@ export default function AdminTeamsPage() {
         const leaguesSnapshot = await getDocs(query(collection(db, LEAGUES_COLLECTION), orderBy("name", "asc")));
         const fetchedLeagues: League[] = leaguesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as League));
         setAllLeagues(fetchedLeagues);
-        fetchedLeagues.forEach(league => {
+         fetchedLeagues.forEach(league => {
            console.log(`>>> teams/fetchInitialData: League Detail - ID: ${league.id}, Name: ${league.name}, SeasonID: ${league.seasonId}`);
         });
         console.log(">>> teams/fetchInitialData: All leagues fetched:", fetchedLeagues.length);
@@ -258,7 +259,7 @@ export default function AdminTeamsPage() {
   };
 
   const handleEdit = (team: Team) => {
-    if (allClubs.length === 0) {
+    if (allClubs.length === 0 && !team.clubId) {
         toast({ title: "Keine Vereine", description: "Vereinsauswahl nicht möglich. Bitte Vereine anlegen.", variant: "destructive" });
     }
     setFormMode('edit');
@@ -329,6 +330,11 @@ export default function AdminTeamsPage() {
       return;
     }
 
+    if (selectedShooterIdsInForm.length > MAX_SHOOTERS_PER_TEAM) {
+      toast({ title: "Zu viele Schützen", description: `Eine Mannschaft darf maximal ${MAX_SHOOTERS_PER_TEAM} Schützen haben. Aktuell ausgewählt: ${selectedShooterIdsInForm.length}.`, variant: "destructive" });
+      return;
+    }
+
     const teamDataToSave: Omit<Team, 'id'> = { 
       name: currentTeam.name.trim(),
       clubId: currentTeam.clubId,
@@ -382,10 +388,10 @@ export default function AdminTeamsPage() {
       if (formMode === 'new') {
         const newTeamRef = doc(collection(db, TEAMS_COLLECTION)); 
         teamIdForShooterUpdates = newTeamRef.id;
-        batch.set(newTeamRef, teamDataToSave); // teamDataToSave includes selectedShooterIdsInForm
+        batch.set(newTeamRef, teamDataToSave); 
         console.log(`>>> teams/handleSubmit: NEW team to be created with ID ${teamIdForShooterUpdates}.`);
 
-        shootersToAdd.forEach(shooterId => { // For new teams, all selected shooters are "to add"
+        shootersToAdd.forEach(shooterId => { 
           const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
           batch.update(shooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
            console.log(`>>> teams/handleSubmit: Adding team ${teamIdForShooterUpdates} to shooter ${shooterId}'s teamIds.`);
@@ -438,7 +444,7 @@ export default function AdminTeamsPage() {
         const updatedTeam = { ...prev, [field]: value };
         if (field === 'clubId' && prev.clubId !== value) {
             setSelectedShooterIdsInForm([]); 
-            setOriginalShooterIds( formMode === 'edit' && prev.shooterIds ? prev.shooterIds : []); // Preserve original if editing, reset if new
+            setOriginalShooterIds( formMode === 'edit' && prev.shooterIds ? prev.shooterIds : []); 
             setAvailableClubShooters([]); 
             console.log(">>> teams/handleFormInputChange: Club changed, reset selected/available shooters. Original shooters (if edit):", originalShooterIds);
         }
@@ -447,9 +453,24 @@ export default function AdminTeamsPage() {
   };
 
   const handleShooterSelectionChange = (shooterId: string, checked: boolean) => {
-    setSelectedShooterIdsInForm(prev => 
-      checked ? [...prev, shooterId] : prev.filter(id => id !== shooterId)
-    );
+    setSelectedShooterIdsInForm(prevSelectedIds => {
+      let newSelectedIds;
+      if (checked) {
+        if (prevSelectedIds.length < MAX_SHOOTERS_PER_TEAM) {
+          newSelectedIds = [...prevSelectedIds, shooterId];
+        } else {
+          toast({
+            title: "Maximale Schützenzahl erreicht",
+            description: `Eine Mannschaft darf nicht mehr als ${MAX_SHOOTERS_PER_TEAM} Schützen haben.`,
+            variant: "destructive",
+          });
+          return prevSelectedIds; // Verhindere das Hinzufügen
+        }
+      } else {
+        newSelectedIds = prevSelectedIds.filter(id => id !== shooterId);
+      }
+      return newSelectedIds;
+    });
   };
   
   const navigateToShootersAdmin = (clubIdOfTeam: string, teamId?: string) => {
@@ -522,6 +543,7 @@ export default function AdminTeamsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  {/* <TableHead>Verein</TableHead> entfernt */}
                   <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
@@ -529,6 +551,7 @@ export default function AdminTeamsPage() {
                 {teams.map((team) => (
                   <TableRow key={team.id}>
                     <TableCell>{team.name}</TableCell>
+                    {/* <TableCell>{allClubs.find(c => c.id === team.clubId)?.name || 'Unbekannt'}</TableCell> entfernt */}
                     <TableCell className="text-right space-x-2">
                        <Button variant="outline" size="sm" onClick={() => navigateToShootersAdmin(team.clubId, team.id)} disabled={!team.clubId}>
                         <Users className="mr-1 h-4 w-4" /> Schützen ({team.shooterIds?.length || 0})
@@ -562,7 +585,7 @@ export default function AdminTeamsPage() {
       </Card>
 
       <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) {setCurrentTeam(null); setSelectedShooterIdsInForm([]); setOriginalShooterIds([]); setAvailableClubShooters([]);} }}>
-        <DialogContent className="sm:max-w-lg"> {/* Increased width for better layout */}
+        <DialogContent className="sm:max-w-lg">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>{formMode === 'new' ? 'Neue Mannschaft anlegen' : 'Mannschaft bearbeiten'}</DialogTitle>
@@ -571,8 +594,7 @@ export default function AdminTeamsPage() {
               </DialogDescription>
             </DialogHeader>
             {currentTeam && (
-              <div className="grid gap-6 py-4"> {/* Main grid for form sections */}
-                {/* Section for Name and Club */}
+              <div className="grid gap-6 py-4">
                 <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="teamName">Name der Mannschaft</Label>
@@ -602,9 +624,13 @@ export default function AdminTeamsPage() {
                   </div>
                 </div>
                 
-                {/* Section for Shooters */}
                 <div className="space-y-2">
-                  <Label>Schützen für diese Mannschaft auswählen</Label>
+                  <div className="flex justify-between items-center">
+                    <Label>Schützen für diese Mannschaft auswählen</Label>
+                    <span className="text-sm text-muted-foreground">
+                      {selectedShooterIdsInForm.length} / {MAX_SHOOTERS_PER_TEAM} ausgewählt
+                    </span>
+                  </div>
                   {isLoadingShootersForDialog ? (
                      <div className="flex items-center justify-center p-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="ml-2">Lade Schützen...</p></div>
                   ) : availableClubShooters.length > 0 ? (
@@ -616,6 +642,7 @@ export default function AdminTeamsPage() {
                             id={`shooter-${shooter.id}`}
                             checked={selectedShooterIdsInForm.includes(shooter.id)}
                             onCheckedChange={(checked) => handleShooterSelectionChange(shooter.id, !!checked)}
+                            disabled={!selectedShooterIdsInForm.includes(shooter.id) && selectedShooterIdsInForm.length >= MAX_SHOOTERS_PER_TEAM}
                           />
                           <Label htmlFor={`shooter-${shooter.id}`} className="font-normal cursor-pointer flex-grow">
                             {shooter.name || `${shooter.firstName} ${shooter.lastName}`}
@@ -634,7 +661,6 @@ export default function AdminTeamsPage() {
                   )}
                 </div>
                 
-                {/* Section for League and Season (disabled display) */}
                 <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2 mt-2">
                     <div className="space-y-1.5">
                         <Label htmlFor="leagueDisplay">Liga</Label>
@@ -649,7 +675,7 @@ export default function AdminTeamsPage() {
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentTeam(null); setSelectedShooterIdsInForm([]); setOriginalShooterIds([]); setAvailableClubShooters([]);}}>Abbrechen</Button>
-              <Button type="submit" disabled={isLoadingForm || (allClubs.length === 0 && !currentTeam?.clubId )}>
+              <Button type="submit" disabled={isLoadingForm || (allClubs.length === 0 && !currentTeam?.clubId ) || selectedShooterIdsInForm.length > MAX_SHOOTERS_PER_TEAM}>
                  {isLoadingForm && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Speichern
               </Button>
