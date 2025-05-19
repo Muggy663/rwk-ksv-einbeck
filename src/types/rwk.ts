@@ -13,9 +13,6 @@ export type FirestoreLeagueSpecificDiscipline =
 export const GEWEHR_DISCIPLINES: FirestoreLeagueSpecificDiscipline[] = ['KKG', 'LG', 'LGA'];
 export const PISTOL_DISCIPLINES: FirestoreLeagueSpecificDiscipline[] = ['KKP', 'LP', 'LPA', 'SP'];
 
-// Diese Typen repräsentieren die Auswahlmöglichkeiten im UI-Dropdown für die Hauptfilterung
-export type UIDisciplineSelection = 'KK' | 'LD' | 'SP'; // Kleinkaliber, Luftdruck, Sportpistole (grob)
-
 export const leagueDisciplineOptions: { value: FirestoreLeagueSpecificDiscipline; label: string }[] = [
   { value: 'KKG', label: 'KK-Gewehr' },
   { value: 'KKP', label: 'KK-Pistole' },
@@ -26,17 +23,27 @@ export const leagueDisciplineOptions: { value: FirestoreLeagueSpecificDiscipline
   { value: 'SP', label: 'Sportpistole' },
 ];
 
+// Diese Typen repräsentieren die Auswahlmöglichkeiten im UI-Dropdown für die Hauptfilterung der RWK-Tabellen
+export type UIDisciplineSelection = 'KK' | 'LD' | 'SP'; // Kleinkaliber (alle KK-Arten), Luftdruck (alle LD-Arten), Sportpistole (als Überbegriff)
+
+export const uiDisciplineFilterOptions: { value: UIDisciplineSelection, label: string, firestoreTypes: FirestoreLeagueSpecificDiscipline[] }[] = [
+  { value: 'KK', label: 'Kleinkaliber', firestoreTypes: ['KKG', 'KKP'] },
+  { value: 'LD', label: 'Luftdruck', firestoreTypes: ['LG', 'LGA', 'LP', 'LPA'] },
+  { value: 'SP', label: 'Sportpistole', firestoreTypes: ['SP'] }, // Annahme: SP ist eigenständig
+];
+
+
 export interface CompetitionDisplayConfig {
   year: number;
-  discipline: UIDisciplineSelection; // UI relevante Auswahl (KK, LD, SP)
+  discipline: UIDisciplineSelection;
   displayName: string;
 }
 
 export interface Season {
   id: string;
   competitionYear: number;
-  name: string;
-  type: UIDisciplineSelection; // Hauptkategorie der Saison (KK, LD, SP)
+  name: string; // z.B. "RWK 2025 Kleinkaliber" - wird dynamisch generiert
+  type: UIDisciplineSelection; // Grobfilter: 'KK', 'LD'
   status: 'Geplant' | 'Laufend' | 'Abgeschlossen';
 }
 
@@ -45,7 +52,7 @@ export interface League {
   name: string;
   shortName?: string;
   competitionYear: number;
-  type: FirestoreLeagueSpecificDiscipline; // Jetzt spezifisch!
+  type: FirestoreLeagueSpecificDiscipline; // Spezifischer Typ wie KKG, LGA etc.
   order?: number;
   seasonId: string; // Referenz zur Saison
 }
@@ -82,20 +89,20 @@ export interface ScoreEntry {
   competitionYear: number;
   durchgang: number;
   leagueId: string;
-  leagueName?: string; // Denormalisiert
-  leagueType?: FirestoreLeagueSpecificDiscipline; // Denormalisiert, spezifischer Typ
+  leagueName?: string;
+  leagueType?: FirestoreLeagueSpecificDiscipline;
   teamId: string;
-  teamName?: string; // Denormalisiert
-  clubId?: string; // Denormalisiert
-  clubName?: string; // Denormalisiert
+  teamName?: string;
+  clubId?: string;
+  clubName?: string;
   shooterId: string;
-  shooterName?: string; // Denormalisiert
-  shooterGender?: 'male' | 'female' | string; // Denormalisiert
+  shooterName?: string;
+  shooterGender?: 'male' | 'female' | string;
   totalRinge: number;
-  scoreInputType: 'regular' | 'pre' | 'post'; // Art der Ergebniseingabe
+  scoreInputType: 'regular' | 'pre' | 'post';
   enteredByUserId?: string;
   enteredByUserName?: string;
-  entryTimestamp?: any; // Firestore Timestamp
+  entryTimestamp?: any;
 }
 
 
@@ -104,7 +111,7 @@ export interface ScoreEntry {
 export interface ShooterDisplayResults {
   shooterId: string;
   shooterName: string;
-  results: { [roundKey: string]: number | null }; // z.B. { dg1: 280, dg2: 285 }
+  results: { [roundKey: string]: number | null };
   average: number | null;
   total: number | null;
   roundsShot: number;
@@ -117,19 +124,19 @@ export interface TeamDisplay extends Omit<Team, 'shooterIds'> {
   clubName: string;
   rank?: number;
   shootersResults: ShooterDisplayResults[];
-  roundResults: { [key: string]: number | null }; // Mannschaftsergebnis pro Durchgang
+  roundResults: { [key: string]: number | null };
   totalScore: number;
   averageScore: number | null;
   numScoredRounds: number;
 }
 
 export interface LeagueDisplay extends Omit<League, 'type'> {
-  type: FirestoreLeagueSpecificDiscipline;
+  type: FirestoreLeagueSpecificDiscipline; // Hier spezifisch
   teams: TeamDisplay[];
 }
 
 export interface AggregatedCompetitionData {
-  id: string; // z.B. "2025-KK"
+  id: string;
   config: CompetitionDisplayConfig;
   leagues: LeagueDisplay[];
 }
@@ -138,7 +145,7 @@ export interface IndividualShooterDisplayData {
   shooterId: string;
   shooterName: string;
   shooterGender?: 'male' | 'female' | string;
-  teamName: string; // Oder Vereinsname, je nach Kontext
+  teamName: string;
   results: { [roundKey: string]: number | null };
   totalScore: number;
   averageScore: number | null;
@@ -148,7 +155,7 @@ export interface IndividualShooterDisplayData {
 
 export interface PendingScoreEntry {
   tempId: string;
-  seasonId: string;
+  seasonId: string; // ID der Saison, nicht das Jahr
   seasonName?: string;
   leagueId: string;
   leagueName?: string;
@@ -159,10 +166,9 @@ export interface PendingScoreEntry {
   durchgang: number;
   totalRinge: number;
   scoreInputType: 'regular' | 'pre' | 'post';
-  competitionYear: number;
+  competitionYear: number; // Das Wettkampfjahr
 }
 
-// Für die Validierung bei der Schützenzuordnung
 export type TeamValidationInfo = Team & {
     leagueType?: FirestoreLeagueSpecificDiscipline;
     leagueCompetitionYear?: number;

@@ -1,6 +1,6 @@
 // src/app/admin/shooters/page.tsx
 "use client";
-import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, FormEvent, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
@@ -37,13 +37,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSearchParams, useRouter } from 'next/navigation';
 import type { Shooter, Club, Team, League, TeamValidationInfo, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
-import { GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES } from '@/types/rwk'; // Import categories
+import { GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES, leagueDisciplineOptions } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, documentId, getDoc as getFirestoreDoc, writeBatch, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -51,7 +51,7 @@ import { useToast } from '@/hooks/use-toast';
 const SHOOTERS_COLLECTION = "rwk_shooters";
 const CLUBS_COLLECTION = "clubs";
 const TEAMS_COLLECTION = "rwk_teams";
-const LEAGUES_COLLECTION = "rwk_leagues";
+const LEAGUES_COLLECTION = "rwk_leagues"; // Added to fetch league types
 const ALL_CLUBS_FILTER_VALUE = "__ALL_CLUBS__";
 const MAX_SHOOTERS_PER_TEAM = 3;
 
@@ -64,7 +64,7 @@ export default function AdminShootersPage() {
   const { toast } = useToast();
 
   const [allClubs, setAllClubs] = useState<Club[]>([]);
-  const [allLeaguesForValidation, setAllLeaguesForValidation] = useState<League[]>([]); // For team assignment validation
+  const [allLeaguesForValidation, setAllLeaguesForValidation] = useState<League[]>([]);
   const [shooters, setShooters] = useState<Shooter[]>([]);
   const [filteredShooters, setFilteredShooters] = useState<Shooter[]>([]);
 
@@ -82,7 +82,6 @@ export default function AdminShootersPage() {
 
   const [selectedClubIdFilter, setSelectedClubIdFilter] = useState<string>(ALL_CLUBS_FILTER_VALUE);
 
-  // For "New Shooter" dialog - teams of the selected club
   const [teamsOfSelectedClubInDialog, setTeamsOfSelectedClubInDialog] = useState<TeamValidationInfo[]>([]);
   const [isLoadingTeamsForDialog, setIsLoadingTeamsForDialog] = useState(false);
   const [selectedTeamIdsInForm, setSelectedTeamIdsInForm] = useState<string[]>([]);
@@ -91,7 +90,7 @@ export default function AdminShootersPage() {
     const fetchContextTeamName = async () => {
       if (queryTeamId) {
         setIsContextTeamNameLoading(true);
-        setContextTeamName(null);
+        setContextTeamName(null); // Reset while loading
         try {
           const teamDocRef = doc(db, TEAMS_COLLECTION, queryTeamId);
           const teamSnap = await getFirestoreDoc(teamDocRef);
@@ -99,7 +98,7 @@ export default function AdminShootersPage() {
             const teamName = (teamSnap.data() as Team).name;
             setContextTeamName(teamName);
           } else {
-            setContextTeamName(null);
+            setContextTeamName(null); // Team not found
             toast({title: "Team nicht gefunden", description: `Kontext-Team mit ID ${queryTeamId} konnte nicht geladen werden.`, variant: "warning"})
           }
         } catch (error) {
@@ -109,7 +108,7 @@ export default function AdminShootersPage() {
           setIsContextTeamNameLoading(false);
         }
       } else {
-        setContextTeamName(null);
+        setContextTeamName(null); // No teamId in query
         setIsContextTeamNameLoading(false);
       }
     };
@@ -118,13 +117,14 @@ export default function AdminShootersPage() {
 
   const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
-    console.log("AdminShootersPage: Fetching initial data (clubs, shooters, leagues for validation)...");
+    console.log("AdminShootersPage: Fetching initial data (clubs, shooters, leagues)...");
     try {
       const clubsSnapshot = await getDocs(query(collection(db, CLUBS_COLLECTION), orderBy("name", "asc")));
       const fetchedClubs: Club[] = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Club));
       setAllClubs(fetchedClubs);
       console.log("AdminShootersPage: Clubs fetched:", fetchedClubs.length);
 
+      // Fetch all leagues to get their types for validation
       const leaguesSnapshot = await getDocs(query(collection(db, LEAGUES_COLLECTION), orderBy("name", "asc")));
       const fetchedLeagues: League[] = leaguesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as League));
       setAllLeaguesForValidation(fetchedLeagues);
@@ -134,6 +134,7 @@ export default function AdminShootersPage() {
       if (queryClubIdFromParams && fetchedClubs.some(c => c.id === queryClubIdFromParams)) {
         initialClubFilter = queryClubIdFromParams;
       } else if (queryTeamId && !queryClubIdFromParams) {
+        // If coming from a team context, try to pre-filter by the team's club
         const teamDocRef = doc(db, TEAMS_COLLECTION, queryTeamId);
         const teamSnap = await getFirestoreDoc(teamDocRef);
         if (teamSnap.exists() && teamSnap.data()?.clubId) {
@@ -163,6 +164,7 @@ export default function AdminShootersPage() {
   }, [fetchInitialData]);
 
   useEffect(() => {
+    // This effect filters shooters based on the selectedClubIdFilter
     if (selectedClubIdFilter === ALL_CLUBS_FILTER_VALUE) {
       setFilteredShooters(shooters);
     } else {
@@ -171,11 +173,12 @@ export default function AdminShootersPage() {
     }
   }, [selectedClubIdFilter, shooters]);
 
- useEffect(() => {
+  // Effect to fetch teams for the "New Shooter" dialog when clubId changes in the form
+  useEffect(() => {
     const fetchTeamsForNewShooterDialog = async () => {
       if (isFormOpen && formMode === 'new' && currentShooter?.clubId && allLeaguesForValidation.length > 0) {
         setIsLoadingTeamsForDialog(true);
-        setTeamsOfSelectedClubInDialog([]);
+        setTeamsOfSelectedClubInDialog([]); // Reset previous teams
         console.log("AdminShootersPage: DIALOG (NEW) - Fetching teams for clubId:", currentShooter.clubId);
         try {
           const teamsQuery = query(collection(db, TEAMS_COLLECTION), where("clubId", "==", currentShooter.clubId), orderBy("name", "asc"));
@@ -188,8 +191,8 @@ export default function AdminShootersPage() {
             return {
               id: d.id,
               ...teamData,
-              currentShooterCount: (teamData.shooterIds || []).length,
-              leagueType: leagueInfo?.type,
+              currentShooterCount: (teamData.shooterIds || []).length, // Get current shooter count
+              leagueType: leagueInfo?.type, // Get specific league type (KKG, LGA etc.)
               leagueCompetitionYear: leagueInfo?.competitionYear
             } as TeamValidationInfo;
           });
@@ -197,12 +200,14 @@ export default function AdminShootersPage() {
           setTeamsOfSelectedClubInDialog(fetchedTeams);
           console.log("AdminShootersPage: DIALOG (NEW) - Teams for dialog:", fetchedTeams.map(t => ({name: t.name, count: t.currentShooterCount, id: t.id, leagueType: t.leagueType, year: t.leagueCompetitionYear })));
 
+          // Pre-select context team if available and not full
           if (queryTeamId && fetchedTeams.some(t => t.id === queryTeamId)) {
             const contextTeam = fetchedTeams.find(t => t.id === queryTeamId);
             if (contextTeam && (contextTeam.currentShooterCount || 0) < MAX_SHOOTERS_PER_TEAM) {
                  setSelectedTeamIdsInForm([queryTeamId]);
                  console.log("AdminShootersPage: DIALOG (NEW) - Context team pre-selected:", queryTeamId);
             } else if (contextTeam) {
+                 // Context team is full, don't pre-select and inform user
                  toast({title: "Mannschaft voll", description: `Die Kontext-Mannschaft "${contextTeam.name}" hat bereits die maximale Anzahl von ${MAX_SHOOTERS_PER_TEAM} Schützen.`, variant: "warning", duration: 5000});
                  setSelectedTeamIdsInForm([]);
             } else {
@@ -211,6 +216,7 @@ export default function AdminShootersPage() {
           } else {
              setSelectedTeamIdsInForm([]);
           }
+
         } catch (error) {
           console.error("AdminShootersPage: DIALOG (NEW) - Error fetching teams for club:", error);
           toast({ title: "Fehler", description: "Mannschaften für Vereinsauswahl konnten nicht geladen werden.", variant: "destructive" });
@@ -218,8 +224,8 @@ export default function AdminShootersPage() {
           setIsLoadingTeamsForDialog(false);
         }
       } else {
-        setTeamsOfSelectedClubInDialog([]);
-        if (formMode !== 'edit') { 
+        setTeamsOfSelectedClubInDialog([]); // Clear teams if no club selected or not in 'new' mode
+        if (formMode !== 'edit') { // Don't clear selection if just switching to edit mode
             setSelectedTeamIdsInForm([]);
         }
       }
@@ -246,27 +252,25 @@ export default function AdminShootersPage() {
     setCurrentShooter({
       firstName: '',
       lastName: '',
-      clubId: resolvedInitialClubId,
+      clubId: resolvedInitialClubId, // Standardmäßig keinen Verein vorauswählen, außer Filter ist aktiv
       gender: 'male',
-      teamIds: queryTeamId ? [queryTeamId] : [], // Pre-select context team if available
+      teamIds: [], // Initial leer, wird durch Checkboxen befüllt
     });
-    setTeamsOfSelectedClubInDialog([]); 
-    if(queryTeamId) {
-        setSelectedTeamIdsInForm([queryTeamId]);
-    } else {
-        setSelectedTeamIdsInForm([]);
-    }
+    setTeamsOfSelectedClubInDialog([]); // Wird durch useEffect getriggert, wenn clubId gesetzt wird
+    setSelectedTeamIdsInForm([]); // Team-Auswahl zurücksetzen
     setIsFormOpen(true);
   };
 
   const handleEdit = (shooter: Shooter) => {
      if (allClubs.length === 0 && !shooter.clubId) {
       toast({ title: "Keine Vereine", description: "Vereinsauswahl nicht möglich. Bitte Vereine anlegen.", variant: "destructive"});
+      // return; // Allow opening to see info text
     }
     setFormMode('edit');
     setCurrentShooter(shooter);
-    setSelectedTeamIdsInForm(shooter.teamIds || []); 
-    setTeamsOfSelectedClubInDialog([]); 
+    // Team IDs are not edited here, this dialog is for shooter's personal data
+    setSelectedTeamIdsInForm(shooter.teamIds || []); // Nur zur Info, nicht zur Bearbeitung
+    setTeamsOfSelectedClubInDialog([]); // Keine Mannschaftsauswahl im Edit-Modus
     setIsFormOpen(true);
   };
 
@@ -288,9 +292,11 @@ export default function AdminShootersPage() {
       const batch = writeBatch(db);
       const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterIdToDelete);
 
+      // Get current team assignments of the shooter
       const shooterData = (await getFirestoreDoc(shooterDocRef)).data() as Shooter | undefined;
       const teamsToUpdateFromShooterDoc = shooterData?.teamIds || [];
 
+      // Remove shooter from all their assigned teams
       if (teamsToUpdateFromShooterDoc.length > 0) {
         teamsToUpdateFromShooterDoc.forEach(teamId => {
           const teamDocRef = doc(db, TEAMS_COLLECTION, teamId);
@@ -298,10 +304,11 @@ export default function AdminShootersPage() {
         });
       }
 
+      // Delete the shooter document
       batch.delete(shooterDocRef);
       await batch.commit();
       toast({ title: "Schütze gelöscht", description: `${shooterToDelete.firstName} ${shooterToDelete.lastName} wurde erfolgreich entfernt.` });
-      fetchInitialData(); 
+      fetchInitialData(); // Refresh the main shooter list
     } catch (error) {
       console.error("AdminShootersPage: handleDeleteShooter - Error deleting shooter: ", error);
       toast({ title: "Fehler beim Löschen", description: (error as Error).message, variant: "destructive" });
@@ -323,6 +330,7 @@ export default function AdminShootersPage() {
     setIsFormLoading(true);
     
     try {
+      // Duplicate check
       const shootersCollectionRef = collection(db, SHOOTERS_COLLECTION);
       let duplicateQuery = query(shootersCollectionRef,
         where("name", "==", combinedName),
@@ -345,9 +353,8 @@ export default function AdminShootersPage() {
       const batch = writeBatch(db);
 
       if (formMode === 'new') {
+        const assignedTeamsPerYearAndCategory: Record<string, { gewehrCount: number, pistolCount: number }> = {};
         const actualTeamIdsForShooter: string[] = [];
-        const assignedGewehrDisciplines: Record<number, boolean> = {}; // { year: true }
-        const assignedPistolDisciplines: Record<number, boolean> = {}; // { year: true }
 
         for (const teamId of selectedTeamIdsInForm) {
             const teamInfo = teamsOfSelectedClubInDialog.find(t => t.id === teamId);
@@ -363,22 +370,25 @@ export default function AdminShootersPage() {
             
             const year = teamInfo.leagueCompetitionYear;
             const leagueType = teamInfo.leagueType;
-            const isGewehrType = GEWEHR_DISCIPLINES.includes(leagueType);
-            const isPistoleType = PISTOL_DISCIPLINES.includes(leagueType);
+            const yearCategoryKey = `${year}`;
 
-            if (isGewehrType) {
-                if (assignedGewehrDisciplines[year]) {
-                    toast({ title: "Konflikt Gewehrdisziplin", description: `Schütze kann nicht mehreren Gewehr-Mannschaften in Saison ${year} zugewiesen werden.`, variant: "destructive", duration: 7000 });
-                    setIsFormLoading(false); return;
-                }
-                assignedGewehrDisciplines[year] = true;
+            if (!assignedTeamsPerYearAndCategory[yearCategoryKey]) {
+                assignedTeamsPerYearAndCategory[yearCategoryKey] = { gewehrCount: 0, pistolCount: 0 };
             }
-            if (isPistoleType) {
-                 if (assignedPistolDisciplines[year]) {
-                    toast({ title: "Konflikt Pistolendisziplin", description: `Schütze kann nicht mehreren Pistolen-Mannschaften in Saison ${year} zugewiesen werden.`, variant: "destructive", duration: 7000 });
-                    setIsFormLoading(false); return;
-                }
-                assignedPistolDisciplines[year] = true;
+
+            let categoryConflict = false;
+            if (GEWEHR_DISCIPLINES.includes(leagueType)) {
+                if (assignedTeamsPerYearAndCategory[yearCategoryKey].gewehrCount >= 1) categoryConflict = true;
+                else assignedTeamsPerYearAndCategory[yearCategoryKey].gewehrCount++;
+            } else if (PISTOL_DISCIPLINES.includes(leagueType)) {
+                if (assignedTeamsPerYearAndCategory[yearCategoryKey].pistolCount >= 1) categoryConflict = true;
+                else assignedTeamsPerYearAndCategory[yearCategoryKey].pistolCount++;
+            }
+
+            if (categoryConflict) {
+                 const categoryName = GEWEHR_DISCIPLINES.includes(leagueType) ? "Gewehr" : "Pistolen";
+                 toast({ title: `Konflikt ${categoryName}disziplin`, description: `Schütze kann nicht mehreren ${categoryName}-Mannschaften in Saison ${year} zugewiesen werden.`, variant: "destructive", duration: 7000 });
+                 setIsFormLoading(false); return;
             }
             actualTeamIdsForShooter.push(teamId);
         }
@@ -395,6 +405,7 @@ export default function AdminShootersPage() {
         };
         batch.set(newShooterRef, shooterDataToSave);
 
+        // Update team documents
         for (const teamId of actualTeamIdsForShooter) {
           const teamDocRef = doc(db, TEAMS_COLLECTION, teamId);
           batch.update(teamDocRef, { shooterIds: arrayUnion(newShooterRef.id) });
@@ -403,26 +414,30 @@ export default function AdminShootersPage() {
 
       } else if (formMode === 'edit' && currentShooter.id) {
         const shooterDocRef = doc(db, SHOOTERS_COLLECTION, currentShooter.id);
-        const originalShooterDoc = shooters.find(s => s.id === currentShooter.id);
+        const originalShooterDoc = shooters.find(s => s.id === currentShooter.id); // Get original for comparison
         
-        const dataForUpdate: Partial<Shooter> = {
+        const dataForUpdate: Partial<Shooter> = { // Use Partial for update
             firstName: currentShooter.firstName.trim(),
             lastName: currentShooter.lastName.trim(),
             name: combinedName,
             clubId: currentShooter.clubId as string,
             gender: currentShooter.gender || 'male',
+            // teamIds are NOT updated here. This is done via team management.
         };
 
+        // Handle club change: If clubId changed, shooter should be removed from all previous teams.
         if (originalShooterDoc && originalShooterDoc.clubId !== currentShooter.clubId) {
+            // Remove shooter from all their old teams
             if(originalShooterDoc.teamIds && originalShooterDoc.teamIds.length > 0) {
                 originalShooterDoc.teamIds.forEach(oldTeamId => {
                     const teamDocRef = doc(db, TEAMS_COLLECTION, oldTeamId);
                     batch.update(teamDocRef, { shooterIds: arrayRemove(currentShooter.id as string) });
                 });
             }
-            dataForUpdate.teamIds = []; 
-            toast({ title: "Vereinswechsel", description: `Mannschaftszugehörigkeiten für ${combinedName} wurden aufgrund des Vereinswechsels zurückgesetzt.`, variant: "info", duration: 7000 });
+            dataForUpdate.teamIds = []; // Reset teamIds for the shooter
+            toast({ title: "Vereinswechsel", description: `Mannschaftszugehörigkeiten für ${combinedName} wurden aufgrund des Vereinswechsels zurückgesetzt. Bitte über Mannschaftsverwaltung neu zuordnen.`, variant: "info", duration: 7000 });
         }
+
         batch.update(shooterDocRef, dataForUpdate);
         toast({ title: "Schütze aktualisiert", description: `${combinedName} wurde erfolgreich aktualisiert.` });
       }
@@ -432,7 +447,7 @@ export default function AdminShootersPage() {
       setCurrentShooter(null);
       setSelectedTeamIdsInForm([]);
       setTeamsOfSelectedClubInDialog([]);
-      fetchInitialData();
+      fetchInitialData(); // Refresh main list
     } catch (error) {
       console.error("AdminShootersPage: handleSubmit - Error saving shooter: ", error);
       const action = formMode === 'new' ? 'Erstellen' : 'Aktualisieren';
@@ -446,53 +461,58 @@ export default function AdminShootersPage() {
      setCurrentShooter(prev => {
         if (!prev) return null;
         const updatedShooter = { ...prev, [field]: value };
+        // If clubId changes, reset team selections and trigger refetch for teams of new club
         if (field === 'clubId' && prev.clubId !== value) {
-            // Reset team selections if club changes
             setSelectedTeamIdsInForm([]);
-            setTeamsOfSelectedClubInDialog([]); // Will trigger refetch for new club
+            setTeamsOfSelectedClubInDialog([]); // This will trigger the useEffect to fetch new teams
         }
         return updatedShooter;
      });
   };
 
+  // Handles selection of teams in the "New Shooter" dialog
   const handleTeamSelectionChangeInForm = (teamId: string, checked: boolean) => {
     console.log("AdminShootersPage: DIALOG (NEW) - Team selection change. TeamId:", teamId, "Checked:", checked);
     const team = teamsOfSelectedClubInDialog.find(t => t.id === teamId);
+
+    // Rule: Max 3 shooters per team
     if (checked && team && (team.currentShooterCount || 0) >= MAX_SHOOTERS_PER_TEAM && !selectedTeamIdsInForm.includes(teamId) ) {
         toast({
             title: "Mannschaft voll",
             description: `Die Mannschaft "${team.name}" hat bereits die maximale Anzahl von ${MAX_SHOOTERS_PER_TEAM} Schützen.`,
             variant: "destructive"
         });
-        return;
+        return; // Prevent selection
     }
 
-    // Additional validation for "one team per discipline category per year"
+    // Rule: Shooter only in one team per discipline category per year
     if (checked) {
         const teamInfo = teamsOfSelectedClubInDialog.find(t => t.id === teamId);
-        if (!teamInfo || !teamInfo.leagueCompetitionYear || !teamInfo.leagueType) return;
+        if (!teamInfo || !teamInfo.leagueCompetitionYear || !teamInfo.leagueType) {
+            console.warn("AdminShootersPage: DIALOG (NEW) - Missing league info for teamId:", teamId);
+            return;
+        }
 
         const year = teamInfo.leagueCompetitionYear;
-        const leagueType = teamInfo.leagueType;
-        const isGewehrType = GEWEHR_DISCIPLINES.includes(leagueType);
-        const isPistoleType = PISTOL_DISCIPLINES.includes(leagueType);
+        const newTeamLeagueType = teamInfo.leagueType;
+        let gewehrAssignmentsInYear = 0;
+        let pistolAssignmentsInYear = 0;
 
-        let gewehrConflict = false;
-        let pistolConflict = false;
-
+        // Check current selections
         selectedTeamIdsInForm.forEach(existingTeamId => {
             const existingTeamInfo = teamsOfSelectedClubInDialog.find(t => t.id === existingTeamId);
             if (existingTeamInfo && existingTeamInfo.leagueCompetitionYear === year) {
-                if (isGewehrType && existingTeamInfo.leagueType && GEWEHR_DISCIPLINES.includes(existingTeamInfo.leagueType)) gewehrConflict = true;
-                if (isPistoleType && existingTeamInfo.leagueType && PISTOL_DISCIPLINES.includes(existingTeamInfo.leagueType)) pistolConflict = true;
+                if (existingTeamInfo.leagueType && GEWEHR_DISCIPLINES.includes(existingTeamInfo.leagueType)) gewehrAssignmentsInYear++;
+                if (existingTeamInfo.leagueType && PISTOL_DISCIPLINES.includes(existingTeamInfo.leagueType)) pistolAssignmentsInYear++;
             }
         });
         
-        if (gewehrConflict && isGewehrType) {
+        // Check if adding the new team violates the rule
+        if (GEWEHR_DISCIPLINES.includes(newTeamLeagueType) && gewehrAssignmentsInYear >= 1) {
              toast({ title: "Konflikt Gewehrdisziplin", description: `Schütze kann nicht mehreren Gewehr-Mannschaften in Saison ${year} zugewiesen werden. Bitte eine Auswahl entfernen.`, variant: "destructive", duration: 7000 });
              return;
         }
-        if (pistolConflict && isPistoleType) {
+        if (PISTOL_DISCIPLINES.includes(newTeamLeagueType) && pistolAssignmentsInYear >= 1) {
             toast({ title: "Konflikt Pistolendisziplin", description: `Schütze kann nicht mehreren Pistolen-Mannschaften in Saison ${year} zugewiesen werden. Bitte eine Auswahl entfernen.`, variant: "destructive", duration: 7000 });
             return;
         }
@@ -511,22 +531,26 @@ export default function AdminShootersPage() {
     const teamIds = shooter.teamIds || [];
 
     if (queryTeamId && isContextTeamNameLoading) {
-        return "Lädt Team-Info...";
+        return "Lädt Mannschafts-Info...";
     }
 
-    if (queryTeamId && contextTeamName) { 
+    if (queryTeamId && contextTeamName) { // Context from team page
         if (teamIds.includes(queryTeamId)) {
             const otherTeamCount = teamIds.filter(id => id !== queryTeamId).length;
             return otherTeamCount > 0 ? `${contextTeamName} (+${otherTeamCount} weitere)` : contextTeamName;
         } else {
+            // This case should ideally not happen if data is consistent (shooter opened in context of a team they are not in)
             if (teamIds.length === 0) return '-';
-            if (teamIds.length === 1) return `1 andere Mannschaft`; // Consider fetching name if only one other
+            if (teamIds.length === 1) return `1 andere Mannschaft`; 
             return `${teamIds.length} andere Mannschaften`;
         }
     }
 
+    // No specific team context from URL query params
     if (teamIds.length === 0) return '-';
-    if (teamIds.length === 1) return "1 Mannschaft zugeordnet"; // Consider fetching name here too
+    // If we want to show the name of the single team, we'd need to fetch team names here (N+1 potential)
+    // For now, just showing count for simplicity on this overview page.
+    if (teamIds.length === 1) return "1 Mannschaft zugeordnet"; 
     return `${teamIds.length} Mannschaften zugeordnet`;
   };
 
@@ -542,7 +566,6 @@ export default function AdminShootersPage() {
             value={selectedClubIdFilter} 
             onValueChange={(value) => {
               setSelectedClubIdFilter(value);
-              // Reset team context if filter changes
               if(queryTeamId || queryClubIdFromParams) router.push('/admin/shooters', {scroll: false});
             }}
             disabled={allClubs.length === 0 && isLoading}
@@ -567,7 +590,7 @@ export default function AdminShootersPage() {
           </CardTitle>
           <CardDescription>
             Verwalten Sie hier alle Schützen.
-            {queryTeamId && isContextTeamNameLoading && ` (Lade Kontext-Team Namen...)`}
+            {queryTeamId && isContextTeamNameLoading && ` (Lade Kontext-Mannschaft Namen...)`}
             {queryTeamId && contextTeamName && ` (Aktueller Kontext: Mannschaft "${contextTeamName}")`}
             {queryTeamId && !contextTeamName && !isContextTeamNameLoading && ` (Kontext-Mannschaft ID ${queryTeamId} nicht gefunden)`}
             {allClubs.length === 0 && !isLoading && <span className="text-destructive block mt-1"> Hinweis: Keine Vereine angelegt. Bitte zuerst Vereine erstellen.</span>}
@@ -680,8 +703,8 @@ export default function AdminShootersPage() {
 
                 {formMode === 'new' && currentShooter.clubId && (
                   <div className="space-y-2 mt-3 p-3 border rounded-md bg-muted/30">
-                    <Label>Mannschaften für "{allClubs.find(c => c.id === currentShooter.clubId)?.name}" zuordnen</Label>
-                    <p className="text-xs text-muted-foreground">Max. 1 Gewehr- & 1 Pistolen-Team pro Jahr. Max {MAX_SHOOTERS_PER_TEAM} Schützen pro Team.</p>
+                    <Label>Mannschaften für "{allClubs.find(c => c.id === currentShooter.clubId)?.name}" zuordnen (max. 1 Gewehr & 1 Pistole pro Jahr)</Label>
+                     <p className="text-xs text-muted-foreground">Max. {MAX_SHOOTERS_PER_TEAM} Schützen pro Team.</p>
                     {isLoadingTeamsForDialog ? (
                       <div className="flex items-center"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Lade Mannschaften...</div>
                     ) : teamsOfSelectedClubInDialog.length > 0 ? (
@@ -689,7 +712,8 @@ export default function AdminShootersPage() {
                         {teamsOfSelectedClubInDialog.map(team => {
                           const isFull = (team.currentShooterCount || 0) >= MAX_SHOOTERS_PER_TEAM;
                           const isDisabledByMax = isFull && !selectedTeamIdsInForm.includes(team.id);
-                          const leagueTypeLabel = leagueDisciplineOptions.find(opt => opt.value === team.leagueType)?.label || team.leagueType;
+                          const leagueTypeInfo = leagueDisciplineOptions.find(opt => opt.value === team.leagueType);
+                          const leagueTypeLabel = leagueTypeInfo?.label || team.leagueType || 'Unbek. Typ';
                           return (
                             <div key={team.id} className="flex items-center space-x-2 py-1">
                               <Checkbox
@@ -700,7 +724,7 @@ export default function AdminShootersPage() {
                               />
                               <Label htmlFor={`team-assign-${team.id}`} className={`font-normal ${isDisabledByMax ? 'text-muted-foreground line-through cursor-not-allowed' : 'cursor-pointer'}`}>
                                 {team.name}
-                                <span className='text-xs text-muted-foreground'> ({(team.currentShooterCount || 0)}/{MAX_SHOOTERS_PER_TEAM})</span>
+                                <span className='text-xs text-muted-foreground'> ({team.currentShooterCount || 0}/{MAX_SHOOTERS_PER_TEAM})</span>
                                 {team.leagueType && team.leagueCompetitionYear && <span className='text-xs text-muted-foreground ml-1'>({leagueTypeLabel} {team.leagueCompetitionYear})</span>}
                                 {isFull && !selectedTeamIdsInForm.includes(team.id) && <span className="text-xs text-destructive ml-1">(Voll)</span>}
                               </Label>
