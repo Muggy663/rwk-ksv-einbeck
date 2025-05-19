@@ -204,6 +204,7 @@ export default function AdminShootersPage() {
       gender: 'male',
       teamIds: queryTeamId ? [queryTeamId] : []
     });
+    setSelectedTeamIdsInForm(queryTeamId ? [queryTeamId] : []);
     setIsFormOpen(true);
   };
 
@@ -270,7 +271,7 @@ export default function AdminShootersPage() {
       name: `${currentShooter.firstName.trim()} ${currentShooter.lastName.trim()}`,
       clubId: currentShooter.clubId,
       gender: currentShooter.gender || 'male',
-      teamIds: selectedTeamIdsInForm, // In new mode, this comes from the form; in edit mode, it's not changed here.
+      teamIds: formMode === 'new' ? selectedTeamIdsInForm : (currentShooter.teamIds || []),
     };
 
     setIsFormLoading(true);
@@ -299,7 +300,6 @@ export default function AdminShootersPage() {
 
       if (formMode === 'new') {
         const newShooterRef = doc(collection(db, SHOOTERS_COLLECTION));
-        // For new shooter, save all fields including teamIds from the form
         batch.set(newShooterRef, { ...shooterDataToSave, id: newShooterRef.id }); 
         
         selectedTeamIdsInForm.forEach(teamId => {
@@ -310,7 +310,8 @@ export default function AdminShootersPage() {
 
       } else if (formMode === 'edit' && currentShooter.id) {
         const shooterDocRef = doc(db, SHOOTERS_COLLECTION, currentShooter.id);
-        // For edit mode, only update core shooter data, teamIds are managed via team admin page
+        // For edit mode, teamIds are not directly edited here. This might need to change based on exact requirements.
+        // For now, only core shooter data is updated. Team assignments are primarily through team admin.
         const { teamIds, ...editableShooterData } = shooterDataToSave; 
         batch.update(shooterDocRef, editableShooterData); 
         toast({ title: "Schütze aktualisiert", description: `${shooterDataToSave.name} wurde erfolgreich aktualisiert.` });
@@ -451,24 +452,24 @@ export default function AdminShootersPage() {
                 <DialogDescription>
                     {formMode === 'new' 
                         ? 'Tragen Sie die Daten des Schützen ein und wählen Sie optional Mannschaften aus.'
-                        : 'Bearbeiten Sie die Daten des Schützen. Mannschaftszuordnungen erfolgen über die Mannschaftsverwaltung.'
+                        : 'Bearbeiten Sie die Daten des Schützen.'
                     }
                     {formMode === 'new' && contextTeamName && 
-                        ` Der Schütze wird initial der Mannschaft "${contextTeamName}" zugeordnet.`
+                        ` Der Schütze wird initial der Mannschaft "${contextTeamName}" zugeordnet, falls ausgewählt.`
                     }
                 </DialogDescription>
             </DialogHeader>
             {currentShooter && (
-                <div className="grid gap-4 py-4"> {/* Main container for form rows with vertical gap */}
-                  <div className="grid grid-cols-4 items-center gap-4"> {/* Row for Vorname */}
+                <div className="grid gap-y-4 py-4"> 
+                  <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="firstName" className="text-right col-span-1">Vorname</Label>
                       <Input id="firstName" value={currentShooter.firstName || ''} onChange={(e) => handleFormInputChange('firstName', e.target.value)} className="col-span-3" required />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4"> {/* Row for Nachname */}
+                  <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="lastName" className="text-right col-span-1">Nachname</Label>
                       <Input id="lastName" value={currentShooter.lastName || ''} onChange={(e) => handleFormInputChange('lastName', e.target.value)} className="col-span-3" required />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4"> {/* Row for Verein */}
+                  <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="clubIdForm" className="text-right col-span-1">Verein</Label>
                       <Select 
                           value={currentShooter.clubId || ''} 
@@ -484,7 +485,7 @@ export default function AdminShootersPage() {
                           </SelectContent>
                       </Select>
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4"> {/* Row for Geschlecht */}
+                  <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="gender" className="text-right col-span-1">Geschlecht</Label>
                       <Select 
                           value={currentShooter.gender || 'male'} 
@@ -501,7 +502,7 @@ export default function AdminShootersPage() {
                   </div>
 
                   {formMode === 'new' && currentShooter.clubId && (
-                    <div className="col-span-4 space-y-2 mt-2 p-3 border rounded-md bg-muted/30">
+                    <div className="col-span-4 space-y-2 mt-2 p-3 border rounded-md bg-muted/30"> {/* Ensure this spans full width if intended, or adjust main grid for dialog */}
                         <Label>Mannschaften für "{allClubs.find(c => c.id === currentShooter.clubId)?.name}" zuordnen (optional)</Label>
                         {isLoadingTeamsForDialog ? (
                             <div className="flex items-center"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Lade Mannschaften...</div>
