@@ -7,7 +7,7 @@ import type { ChangelogEntry } from '@/types/updates';
 const changelogEntries: ChangelogEntry[] = [
   {
     version: '0.0.2.0',
-    date: '19. Mai 2025', // Assuming today's date for this update
+    date: '19. Mai 2025',
     title: 'Regel "Maximal 3 Schützen pro Mannschaft" implementiert',
     descriptionPoints: [
       'Admin Teams: Begrenzung auf maximal 3 Schützen pro Mannschaft beim Bearbeiten von Teams implementiert.',
