@@ -1,8 +1,9 @@
 // src/app/admin/clubs/page.tsx
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -11,69 +12,46 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Team } from '@/types/rwk'; // Team-Typ wird benötigt
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type { Club } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
-// Typ für die angezeigten, extrahierten Vereinsnamen
-interface ExtractedClub {
-  id: string; // Kann der normalisierte Name sein
-  name: string;
-}
-
-const TEAMS_COLLECTION = "rwk_teams";
-
-// Hilfsfunktion zum Extrahieren des Vereinsnamens aus dem Teamnamen
-// Dies ist eine einfache Implementierung und muss ggf. robuster gestaltet werden
-const extractClubNameFromTeamName = (teamName: string): string => {
-  if (!teamName) return "Unbekannter Verein";
-  // Entfernt gängige Mannschaftszusätze wie römische Ziffern, "Einzel", "LG", "KK" etc.
-  // und trimmt das Ergebnis.
-  let name = teamName.replace(/\s+(?:[IVXLCDM]+|[Ee]inzel|[Ll][Gg]|[Kk][Kk]|[Ss][Pp])(?:$|\s+.*)/, "").trim();
-  // Fallback, falls nach dem Ersetzen nichts übrig bleibt oder der Name sehr kurz ist.
-  return name.length > 2 ? name : teamName;
-};
+const CLUBS_COLLECTION = "clubs";
 
 export default function AdminClubsPage() {
-  const [extractedClubs, setExtractedClubs] = useState<ExtractedClub[]>([]);
+  const [clubs, setClubs] = useState<Club[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [currentClub, setCurrentClub] = useState<Partial<Club> & { id?: string } | null>(null);
+  const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
   const { toast } = useToast();
 
-  const fetchImplicitClubs = async () => {
+  const fetchClubs = async () => {
     setIsLoading(true);
     try {
-      const teamsCollectionRef = collection(db, TEAMS_COLLECTION);
-      // Optional: Nach competitionYear filtern, falls relevant, oder alle Teams laden
-      // const q = query(teamsCollectionRef, orderBy("name", "asc"));
-      const q = query(teamsCollectionRef, orderBy("competitionYear", "desc"), orderBy("name", "asc"));
-
+      const clubsCollectionRef = collection(db, CLUBS_COLLECTION);
+      const q = query(clubsCollectionRef, orderBy("name", "asc"));
       const querySnapshot = await getDocs(q);
-      const teamNames: string[] = [];
+      const fetchedClubs: Club[] = [];
       querySnapshot.forEach((doc) => {
-        const teamData = doc.data() as Team;
-        if (teamData.name) {
-          teamNames.push(teamData.name);
-        }
+        fetchedClubs.push({ id: doc.id, ...doc.data() } as Club);
       });
-
-      const uniqueClubNames = new Set<string>();
-      teamNames.forEach(teamName => {
-        uniqueClubNames.add(extractClubNameFromTeamName(teamName));
-      });
-
-      const fetchedClubs: ExtractedClub[] = Array.from(uniqueClubNames)
-        .map(name => ({
-          id: name.toLowerCase().replace(/\s+/g, '_'), // Einfache ID-Generierung
-          name: name,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-
-      setExtractedClubs(fetchedClubs);
+      setClubs(fetchedClubs);
     } catch (error) {
-      console.error("Error fetching implicit clubs from teams: ", error);
+      console.error("Error fetching clubs: ", error);
       toast({
-        title: "Fehler beim Laden der Vereinsliste",
+        title: "Fehler beim Laden der Vereine",
         description: (error as Error).message || "Ein unbekannter Fehler ist aufgetreten.",
         variant: "destructive",
       });
@@ -83,57 +61,178 @@ export default function AdminClubsPage() {
   };
 
   useEffect(() => {
-    fetchImplicitClubs();
+    fetchClubs();
   }, []);
+
+  const handleAddNew = () => {
+    setFormMode('new');
+    setCurrentClub({ name: '', shortName: '' });
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (club: Club) => {
+    setFormMode('edit');
+    setCurrentClub(club);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (clubId: string) => {
+    if (!window.confirm("Sind Sie sicher, dass Sie diesen Verein löschen möchten? Dies kann nicht rückgängig gemacht werden.")) {
+      return;
+    }
+    try {
+      await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
+      toast({ title: "Verein gelöscht", description: "Der Verein wurde erfolgreich entfernt." });
+      fetchClubs(); // Refresh list
+    } catch (error) {
+      console.error("Error deleting club: ", error);
+      toast({
+        title: "Fehler beim Löschen",
+        description: (error as Error).message || "Der Verein konnte nicht gelöscht werden.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!currentClub || !currentClub.name) {
+      toast({ title: "Ungültige Eingabe", description: "Der Vereinsname darf nicht leer sein.", variant: "destructive" });
+      return;
+    }
+
+    const clubDataToSave: Omit<Club, 'id'> = {
+      name: currentClub.name,
+      shortName: currentClub.shortName || '',
+      // contactName und contactEmail sind in der Club-Typdefinition optional und nicht im Formular.
+      // Falls sie benötigt werden, müssen sie zum Formular und hier hinzugefügt werden.
+    };
+
+    setIsLoading(true); // Show loading indicator during save
+    try {
+      if (formMode === 'new') {
+        await addDoc(collection(db, CLUBS_COLLECTION), clubDataToSave);
+        toast({ title: "Verein erstellt", description: `${currentClub.name} wurde erfolgreich angelegt.` });
+      } else if (formMode === 'edit' && currentClub.id) {
+        await updateDoc(doc(db, CLUBS_COLLECTION, currentClub.id), clubDataToSave);
+        toast({ title: "Verein aktualisiert", description: `${currentClub.name} wurde erfolgreich aktualisiert.` });
+      }
+      setIsFormOpen(false);
+      setCurrentClub(null);
+      fetchClubs(); // Refresh list
+    } catch (error) {
+      console.error("Error saving club: ", error);
+      const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
+      toast({
+        title: `Fehler beim ${action}`,
+        description: (error as Error).message || `Der Verein konnte nicht ${action} werden.`,
+        variant: "destructive",
+      });
+    } finally {
+        setIsLoading(false); // Hide loading indicator
+    }
+  };
+
+  const handleFormInputChange = (field: keyof Pick<Club, 'name' | 'shortName'>, value: string) => {
+    setCurrentClub(prev => prev ? ({ ...prev, [field]: value }) : null);
+  };
 
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-primary">Übersicht der Vereine (aus Teams)</h1>
-        {/* Button zum Anlegen wurde entfernt, da Vereine implizit aus Teams entstehen */}
+        <h1 className="text-2xl font-semibold text-primary">Vereinsverwaltung</h1>
+        <Button onClick={handleAddNew} variant="default">
+          <PlusCircle className="mr-2 h-5 w-5" /> Neuen Verein anlegen
+        </Button>
       </div>
-       <Card className="shadow-md">
+      <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>Implizit vorhandene Vereine</CardTitle>
-          <CardDescription>
-            Diese Liste zeigt eindeutige Vereinsnamen, die aus den Namen der angelegten Mannschaften
-            in der `rwk_teams`-Collection extrahiert wurden. Eine direkte Bearbeitung oder das Anlegen
-            neuer Vereine ist auf dieser Seite nicht möglich. Neue "Vereine" entstehen implizit,
-            wenn Sie eine Mannschaft mit einem neuen Vereinsnamen-Teil anlegen.
-          </CardDescription>
+          <CardTitle>Vorhandene Vereine</CardTitle>
+          <CardDescription>Übersicht aller angelegten Vereine. Hier können Sie Vereine bearbeiten oder löschen.</CardDescription>
         </CardHeader>
         <CardContent>
-           {isLoading ? (
-             <div className="flex justify-center items-center py-10">
-               <Loader2 className="h-12 w-12 animate-spin text-primary" />
-             </div>
-           ) : extractedClubs.length > 0 ? (
+          {isLoading && !isFormOpen ? ( // Show loader only when fetching, not when form is open and another load might be happening
+            <div className="flex justify-center items-center py-10">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+          ) : clubs.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Extrahierter Vereinsname</TableHead>
-                  {/* Weitere Spalten (wie Kürzel, Kontakt) sind hier nicht verfügbar */}
+                  <TableHead>Name</TableHead>
+                  <TableHead>Kürzel</TableHead>
+                  <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {extractedClubs.map((club) => (
+                {clubs.map((club) => (
                   <TableRow key={club.id}>
                     <TableCell>{club.name}</TableCell>
-                    {/* Aktionen (Bearbeiten, Löschen) wurden entfernt */}
+                    <TableCell>{club.shortName || '-'}</TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(club)} aria-label="Verein bearbeiten">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(club.id)} className="text-destructive hover:text-destructive/80" aria-label="Verein löschen">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           ) : (
             <div className="p-8 text-center text-muted-foreground bg-secondary/30 rounded-md">
-              <p className="text-lg">Keine Teams gefunden, aus denen Vereinsnamen extrahiert werden konnten, oder keine Vereinsnamen konnten extrahiert werden.</p>
-              <p className="text-sm">Legen Sie Mannschaften in der Mannschaftsverwaltung an.</p>
+              <p className="text-lg">Noch keine Vereine angelegt.</p>
+              <p className="text-sm">Klicken Sie auf "Neuen Verein anlegen", um zu beginnen.</p>
             </div>
           )}
         </CardContent>
       </Card>
-      {/* Der Dialog zum Anlegen/Bearbeiten von Vereinen wurde entfernt. */}
+
+      <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setCurrentClub(null); }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>{formMode === 'new' ? 'Neuen Verein anlegen' : 'Verein bearbeiten'}</DialogTitle>
+              <DialogDescription>
+                {formMode === 'new' ? 'Erstellen Sie einen neuen Verein.' : `Bearbeiten Sie die Details für ${currentClub?.name || 'den Verein'}.`}
+              </DialogDescription>
+            </DialogHeader>
+            {currentClub && ( // Ensure currentClub is not null before rendering form inputs
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">Name</Label>
+                  <Input
+                    id="name"
+                    value={currentClub.name || ''}
+                    onChange={(e) => handleFormInputChange('name', e.target.value)}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="shortName" className="text-right">Kürzel</Label>
+                  <Input
+                    id="shortName"
+                    value={currentClub.shortName || ''}
+                    onChange={(e) => handleFormInputChange('shortName', e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentClub(null); }}>Abbrechen</Button>
+              <Button type="submit" disabled={isLoading && isFormOpen}> {/* Disable save button while saving */}
+                {(isLoading && isFormOpen) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Speichern
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
