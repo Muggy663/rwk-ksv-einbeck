@@ -24,22 +24,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronDown, TableIcon, Loader2, AlertTriangle, InfoIcon, User, Users, Trophy, Medal } from 'lucide-react';
+import { ChevronDown, TableIcon, Loader2, AlertTriangle, User, Users, Trophy, Medal } from 'lucide-react';
 import type {
   League, LeagueDisplay, Team, TeamDisplay, Club, Shooter, ScoreEntry, ShooterDisplayResults,
   CompetitionDisplayConfig, CompetitionDiscipline, AggregatedCompetitionData, IndividualShooterDisplayData
 } from '@/types/rwk';
 import { Skeleton } from '@/components/ui/skeleton';
 import { db } from '@/lib/firebase/config';
-import { collection, doc, getDoc, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
-import { Button } from '@/components/ui/button';
-
+import { collection, doc, getDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 const NUM_ROUNDS = 5;
 const TEAM_SIZE_FOR_SCORING = 3;
+const EXCLUDED_TEAM_NAME = "SV Dörrigsen Einzel";
 
-// Verfügbare Wettkampfjahre und Disziplinen (könnte auch dynamisch geladen werden)
-const AVAILABLE_YEARS: number[] = [2026, 2025, 2024, 2023]; // Beispiel
+const AVAILABLE_YEARS: number[] = [2026, 2025, 2024, 2023];
 const AVAILABLE_DISCIPLINES: { value: CompetitionDiscipline, label: string }[] = [
   { value: 'KK', label: 'Kleinkaliber (KK)' },
   { value: 'LG', label: 'Luftgewehr (LG)' },
@@ -54,7 +52,7 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig): Promi
     const leaguesColRef = collection(db, "rwk_leagues");
     const qLeagues = query(leaguesColRef,
       where("competitionYear", "==", config.year),
-      where("type", "==", config.discipline), // Filter nach Disziplin
+      where("type", "==", config.discipline),
       orderBy("order", "asc")
     );
     const leaguesSnapshot = await getDocs(qLeagues);
@@ -72,21 +70,20 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig): Promi
 
     for (const leagueDoc of leaguesSnapshot.docs) {
       const leagueData = leagueDoc.data() as Omit<League, 'id' | 'teams'>;
-      const league: League = { id: leagueDoc.id, ...leagueData, teams: [] };
+      const league: League = { id: leagueDoc.id, ...leagueData, teams: [], competitionYear: config.year };
       let teamDisplays: TeamDisplay[] = [];
 
       const teamsColRef = collection(db, "rwk_teams");
       const qTeams = query(teamsColRef,
         where("leagueId", "==", league.id),
         where("competitionYear", "==", config.year)
-        // Annahme: Teams sind bereits nach Disziplin durch die Liga-Auswahl gefiltert
       );
       const teamsSnapshot = await getDocs(qTeams);
 
       for (const teamDoc of teamsSnapshot.docs) {
         const teamData = teamDoc.data() as Omit<Team, 'id' | 'shootersResults' | 'roundResults' | 'totalScore' | 'averageScore' | 'numScoredRounds'>;
         
-        if (teamData.name === "SV Dörrigsen Einzel") {
+        if (teamData.name === EXCLUDED_TEAM_NAME) {
           console.log(`Filtering out team: ${teamData.name}`);
           continue;
         }
@@ -109,17 +106,22 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig): Promi
             if (clubSnap.exists()) clubName = (clubSnap.data() as Club).name || clubName;
             else console.warn(`Club with ID '${team.clubId}' for team '${team.name}' not found.`);
           } catch (clubError) { console.error(`Error fetching club ${team.clubId}:`, clubError); }
+        } else {
+          // Try to extract club name from team name if no clubId
+           const clubNameMatch = team.name?.match(/^([^\sI]+(?:\s+[^\sI]+)*)/); // Try to get part before Roman numeral
+           clubName = clubNameMatch ? clubNameMatch[1].trim() : team.name || "Unbek. Verein";
         }
+
 
         const shooterResultsDisplay: ShooterDisplayResults[] = [];
         const teamRoundResults: { [key: string]: number | null } = {};
         for (let r = 1; r <= NUM_ROUNDS; r++) teamRoundResults[`dg${r}`] = null;
 
         const scoresColRef = collection(db, "rwk_scores");
-        const qScoresForTeamYear = query(scoresColRef,
+         const qScoresForTeamYear = query(scoresColRef,
             where("teamId", "==", team.id),
             where("competitionYear", "==", config.year),
-            where("leagueId", "==", league.id) // sicherstellen, dass Scores zur Liga passen
+            where("leagueId", "==", league.id) 
         );
         const teamYearScoresSnapshot = await getDocs(qScoresForTeamYear);
         const allTeamYearScores: ScoreEntry[] = teamYearScoresSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
@@ -131,11 +133,13 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig): Promi
           try {
             const shooterDocRef = doc(db, "rwk_shooters", shooterId);
             const shooterSnap = await getDoc(shooterDocRef);
-            if (shooterSnap.exists()) shooterName = (shooterSnap.data() as Shooter).name || shooterName;
-            else {
+            if (shooterSnap.exists()) {
+                const shooterData = shooterSnap.data() as Shooter;
+                shooterName = shooterData.name || `${shooterData.firstName} ${shooterData.lastName}`.trim() || shooterName;
+            } else {
               const scoreWithName = allTeamYearScores.find(s => s.shooterId === shooterId && s.shooterName);
               if (scoreWithName) shooterName = scoreWithName.shooterName!;
-              else console.warn(`Shooter with ID '${shooterId}' for team '${team.name}' not found.`);
+              else console.warn(`Shooter with ID '${shooterId}' for team '${team.name}' not found in rwk_shooters.`);
             }
           } catch (shooterError) { console.error(`Error fetching shooter ${shooterId}:`, shooterError); }
           
@@ -169,17 +173,20 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig): Promi
             competitionYear: config.year,
           });
         }
-
+        
         for (let r = 1; r <= NUM_ROUNDS; r++) {
           const roundKey = `dg${r}`;
           const scoresForRound = allTeamYearScores.filter(s => s.durchgang === r);
-          const uniqueShootersInRound = Array.from(new Set(scoresForRound.map(s => s.shooterId)));
+          const distinctShootersInRound = Array.from(new Set(scoresForRound.map(s => s.shooterId)));
 
-          if (uniqueShootersInRound.length === TEAM_SIZE_FOR_SCORING) {
-            teamRoundResults[roundKey] = scoresForRound.reduce((sum, score) => sum + score.totalRinge, 0);
+          if (distinctShootersInRound.length === TEAM_SIZE_FOR_SCORING) {
+             teamRoundResults[roundKey] = scoresForRound
+              .sort((a, b) => b.totalRinge - a.totalRinge) // Sort by score desc
+              .slice(0, TEAM_SIZE_FOR_SCORING) // Take top N scores
+              .reduce((sum, score) => sum + score.totalRinge, 0);
           } else {
-            if (uniqueShootersInRound.length > 0) {
-              console.log(`Team ${team.name} has results from ${uniqueShootersInRound.length} distinct shooters for round ${r}. Need ${TEAM_SIZE_FOR_SCORING}. Setting round result to null.`);
+            if (scoresForRound.length > 0) { // Only log if there are *some* scores but not enough shooters
+              console.log(`Team ${team.name} has results from ${distinctShootersInRound.length} distinct shooters for round ${r}. Need ${TEAM_SIZE_FOR_SCORING}. Setting round result to null.`);
             }
             teamRoundResults[roundKey] = null;
           }
@@ -197,7 +204,7 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig): Promi
         teamDisplays.push({
           ...team,
           clubName: clubName,
-          shootersResults: shooterResultsDisplay.sort((a, b) => a.shooterName.localeCompare(b.shooterName)),
+          shootersResults: shooterResultsDisplay.sort((a, b) => (b.total || 0) - (a.total || 0) || a.shooterName.localeCompare(b.shooterName)),
           roundResults: teamRoundResults,
           totalScore: teamTotalScore,
           averageScore: numScoredRounds > 0 ? parseFloat((teamTotalScore / numScoredRounds).toFixed(2)) : null,
@@ -222,7 +229,6 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig): Pro
     console.log(`Fetching individual shooter data for: ${config.displayName}`);
     const scoresColRef = collection(db, "rwk_scores");
     
-    // 1. Relevante Ligen für Jahr und Disziplin finden
     const leaguesCol = collection(db, "rwk_leagues");
     const qLeagues = query(leaguesCol, where("competitionYear", "==", config.year), where("type", "==", config.discipline));
     const leaguesSnap = await getDocs(qLeagues);
@@ -234,7 +240,7 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig): Pro
 
     const qScores = query(scoresColRef,
       where("competitionYear", "==", config.year),
-      where("leagueId", "in", relevantLeagueIds) // Nur Scores aus Ligen der gewählten Disziplin
+      where("leagueId", "in", relevantLeagueIds) 
     );
     const scoresSnapshot = await getDocs(qScores);
     const allScores: ScoreEntry[] = scoresSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
@@ -247,7 +253,7 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig): Pro
           shooterId: score.shooterId,
           shooterName: score.shooterName || "Unbek. Schütze",
           shooterGender: score.shooterGender,
-          teamName: score.teamName || "Unbek. Team",
+          teamName: score.teamName || "Unbek. Team", // Team name from score entry
           results: {},
           totalScore: 0,
           averageScore: null,
@@ -259,21 +265,21 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig): Pro
       if (score.durchgang >= 1 && score.durchgang <= NUM_ROUNDS) {
         const roundKey = `dg${score.durchgang}`;
         shooterData.results[roundKey] = (shooterData.results[roundKey] || 0) + score.totalRinge;
-        if (score.totalRinge !== null) { // Nur zählen, wenn es ein Ergebnis gibt
+        if (score.totalRinge !== null) { 
           shooterData.totalScore += score.totalRinge;
-          // Nur Runden zählen, für die explizit ein Ergebnis eingetragen wurde (nicht nur 0)
-          // Um das richtig zu machen, müssten wir wissen, ob eine Runde "geschossen" wurde.
-          // Fürs Erste zählen wir jede Runde mit einem Score-Eintrag.
         }
       }
     });
     
-    // Runden zählen und Durchschnitt berechnen
      shootersMap.forEach(shooterData => {
         let roundsShotCount = 0;
         for (let r = 1; r <= NUM_ROUNDS; r++) {
-            if (shooterData.results[`dg${r}`] !== undefined && shooterData.results[`dg${r}`] !== null) {
+            const roundKey = `dg${r}`;
+            if (shooterData.results[roundKey] !== undefined && shooterData.results[roundKey] !== null) {
                 roundsShotCount++;
+            } else {
+                 // Ensure all dg keys exist, even if null, for consistent table rendering
+                shooterData.results[roundKey] = null;
             }
         }
         shooterData.roundsShot = roundsShotCount;
@@ -281,7 +287,6 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig): Pro
             shooterData.averageScore = parseFloat((shooterData.totalScore / shooterData.roundsShot).toFixed(2));
         }
     });
-
 
     const rankedShooters = Array.from(shootersMap.values())
       .sort((a, b) => (b.totalScore ?? 0) - (a.totalScore ?? 0) || (b.averageScore ?? 0) - (a.averageScore ?? 0));
@@ -300,9 +305,9 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig): Pro
 
 export default function RwkTabellenPage() {
   const [selectedCompetition, setSelectedCompetition] = useState<CompetitionDisplayConfig>({
-    year: AVAILABLE_YEARS[0], // Default zum neuesten Jahr
-    discipline: AVAILABLE_DISCIPLINES[0].value, // Default zur ersten Disziplin
-    displayName: `RWK ${AVAILABLE_YEARS[0]} ${AVAILABLE_DISCIPLINES[0].value}`
+    year: AVAILABLE_YEARS[0],
+    discipline: AVAILABLE_DISCIPLINES[0].value,
+    displayName: `RWK ${AVAILABLE_YEARS[0]} ${AVAILABLE_DISCIPLINES[0].label}`
   });
   const [activeTab, setActiveTab] = useState<"mannschaften" | "einzelschützen">("mannschaften");
   
@@ -319,26 +324,34 @@ export default function RwkTabellenPage() {
     const loadData = async () => {
       setLoading(true);
       setError(null);
-      setTeamData(null); // Reset data on config change
+      setTeamData(null);
       setIndividualData([]);
       setBestShooter(null);
       setBestFemaleShooter(null);
 
+      const currentDisciplineLabel = AVAILABLE_DISCIPLINES.find(d => d.value === selectedCompetition.discipline)?.label || selectedCompetition.discipline;
+      const dynamicDisplayName = `RWK ${selectedCompetition.year} ${currentDisciplineLabel}`;
+      // Update display name in state if it changed
+      if (selectedCompetition.displayName !== dynamicDisplayName) {
+        setSelectedCompetition(prev => ({...prev, displayName: dynamicDisplayName}));
+      }
+
+
       try {
         if (activeTab === "mannschaften") {
-          console.log(`Attempting to fetch TEAM data for: ${selectedCompetition.displayName}`);
+          console.log(`Attempting to fetch TEAM data for: ${dynamicDisplayName}`);
           const data = await fetchCompetitionTeamData(selectedCompetition);
           setTeamData(data);
           if (data) console.log("Team data successfully loaded:", data);
           else console.warn("fetchCompetitionTeamData returned null.");
         } else if (activeTab === "einzelschützen") {
-          console.log(`Attempting to fetch INDIVIDUAL data for: ${selectedCompetition.displayName}`);
+          console.log(`Attempting to fetch INDIVIDUAL data for: ${dynamicDisplayName}`);
           const individuals = await fetchIndividualShooterData(selectedCompetition);
           setIndividualData(individuals);
           if (individuals.length > 0) {
-            setBestShooter(individuals[0]); // Erster in der sortierten Liste
-            const females = individuals.filter(s => s.shooterGender === 'female' || s.shooterGender === 'w'); // 'w' für weiblich
-            setBestFemaleShooter(females.length > 0 ? females[0] : null); // Erste Dame in der sortierten Liste
+            setBestShooter(individuals[0]); 
+            const females = individuals.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'female' || s.shooterGender.toLowerCase() === 'w'));
+            setBestFemaleShooter(females.length > 0 ? females[0] : null);
           }
           console.log("Individual data successfully loaded:", individuals);
         }
@@ -354,19 +367,25 @@ export default function RwkTabellenPage() {
 
   const handleYearChange = (yearString: string) => {
     const year = parseInt(yearString, 10);
-    setSelectedCompetition(prev => ({
-      ...prev,
-      year,
-      displayName: `RWK ${year} ${prev.discipline}`
-    }));
+    setSelectedCompetition(prev => {
+       const disciplineLabel = AVAILABLE_DISCIPLINES.find(d => d.value === prev.discipline)?.label || prev.discipline;
+      return {
+        ...prev,
+        year,
+        displayName: `RWK ${year} ${disciplineLabel}`
+      }
+    });
   };
 
   const handleDisciplineChange = (discipline: CompetitionDiscipline) => {
-    setSelectedCompetition(prev => ({
-      ...prev,
-      discipline,
-      displayName: `RWK ${prev.year} ${discipline}`
-    }));
+    setSelectedCompetition(prev => {
+      const disciplineLabel = AVAILABLE_DISCIPLINES.find(d => d.value === discipline)?.label || discipline;
+      return {
+        ...prev,
+        discipline,
+        displayName: `RWK ${prev.year} ${disciplineLabel}`
+      }
+    });
   };
 
   const toggleTeamDetails = (teamId: string) => {
@@ -405,7 +424,7 @@ export default function RwkTabellenPage() {
           <CardHeader><CardTitle className="text-destructive flex items-center"><AlertTriangle className="mr-2 h-5 w-5" />Daten konnten nicht geladen werden</CardTitle></CardHeader>
           <CardContent className="text-destructive-foreground bg-destructive/10 p-6">
             <p>Es gab ein Problem beim Abrufen der Daten für {selectedCompetition.displayName}. Fehlermeldung: {error.message}.</p>
-            <p className="text-sm mt-2">Überprüfen Sie die Browser-Konsole für Details und die Firestore-Sicherheitsregeln.</p>
+            <p className="text-sm mt-2">Überprüfen Sie die Browser-Konsole für Details und die Firestore-Sicherheitsregeln, insbesondere ob Indizes fehlen (siehe Konsolen-Warnungen).</p>
           </CardContent>
         </Card>
       </div>
@@ -467,12 +486,14 @@ export default function RwkTabellenPage() {
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader><TableRow className="bg-muted/50">
-                          <TableHead className="w-[40px] text-center">#</TableHead>
-                          <TableHead>Mannschaft</TableHead>
-                          {[...Array(NUM_ROUNDS)].map((_, i) => (<TableHead key={`dg${i + 1}`} className="text-center">DG {i + 1}</TableHead>))}
-                          <TableHead className="text-center font-semibold">Gesamt</TableHead>
-                          <TableHead className="text-center font-semibold">Schnitt</TableHead>
-                          <TableHead className="w-[50px]"></TableHead>
+                          <>
+                            <TableHead className="w-[40px] text-center">#</TableHead>
+                            <TableHead>Mannschaft</TableHead>
+                            {[...Array(NUM_ROUNDS)].map((_, i) => (<TableHead key={`dg${i + 1}`} className="text-center">DG {i + 1}</TableHead>))}
+                            <TableHead className="text-center font-semibold">Gesamt</TableHead>
+                            <TableHead className="text-center font-semibold">Schnitt</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
+                          </>
                         </TableRow></TableHeader>
                         <TableBody>
                           {league.teams.sort((a,b) => (a.rank || 999) - (b.rank || 999)).map((team) => ( 
@@ -498,19 +519,23 @@ export default function RwkTabellenPage() {
                               {team.shootersResults && team.shootersResults.length > 0 && openTeamDetails[team.id] && (
                                  <TableRow id={`team-details-${team.id}`} className="bg-muted/5 hover:bg-muted/10 transition-colors">
                                    <TableCell colSpan={NUM_ROUNDS + 5} className="p-0">
-                                      <div className="px-4 py-2 bg-secondary/10"> {/* Subtiler Hintergrund für den Schützenbereich */}
+                                      <div className="px-2 py-1 md:px-4 md:py-2 bg-secondary/10">
                                         <Table>
                                           <TableHeader><TableRow className="border-b-0 bg-transparent">
-                                            <TableHead className="text-foreground/80 font-normal">Schütze</TableHead>
-                                            {[...Array(NUM_ROUNDS)].map((_, i) => (<TableHead key={`shooter-dg${i + 1}`} className="text-center text-foreground/80 font-normal">DG {i + 1}</TableHead>))}
-                                            <TableHead className="text-center font-semibold text-foreground/80">Schnitt</TableHead>
+                                            <>
+                                              <TableHead className="text-foreground/80 font-normal pl-2">Schütze</TableHead>
+                                              {[...Array(NUM_ROUNDS)].map((_, i) => (<TableHead key={`shooter-dg${i + 1}`} className="text-center text-foreground/80 font-normal">DG {i + 1}</TableHead>))}
+                                              <TableHead className="text-center font-semibold text-foreground/80 pr-2">Schnitt</TableHead>
+                                            </>
                                           </TableRow></TableHeader>
                                           <TableBody>
                                             {team.shootersResults.map(shooterRes => (
                                               <TableRow key={shooterRes.shooterId} className="border-b-0 hover:bg-accent/5">
-                                                <TableCell className="font-medium">{shooterRes.shooterName || shooterRes.shooterId}</TableCell>
-                                                {[...Array(NUM_ROUNDS)].map((_, i) => (<TableCell key={`shooter-dg${i + 1}-${shooterRes.shooterId}`} className="text-center">{shooterRes.results?.[`dg${i + 1}`] ?? '-'}</TableCell>))}
-                                                <TableCell className="text-center font-semibold text-primary">{shooterRes.average != null ? shooterRes.average.toFixed(2) : '-'}</TableCell>
+                                                <>
+                                                  <TableCell className="font-medium pl-2">{shooterRes.shooterName || shooterRes.shooterId}</TableCell>
+                                                  {[...Array(NUM_ROUNDS)].map((_, i) => (<TableCell key={`shooter-dg${i + 1}-${shooterRes.shooterId}`} className="text-center">{shooterRes.results?.[`dg${i + 1}`] ?? '-'}</TableCell>))}
+                                                  <TableCell className="text-center font-semibold text-primary pr-2">{shooterRes.average != null ? shooterRes.average.toFixed(2) : '-'}</TableCell>
+                                                </>
                                               </TableRow>
                                             ))}
                                           </TableBody>
@@ -581,22 +606,26 @@ export default function RwkTabellenPage() {
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader><TableRow className="bg-muted/50">
-                        <TableHead className="w-[40px] text-center">#</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Verein/Team</TableHead>
-                        {[...Array(NUM_ROUNDS)].map((_, i) => (<TableHead key={`ind-dg${i + 1}`} className="text-center">DG {i + 1}</TableHead>))}
-                        <TableHead className="text-center font-semibold">Gesamt</TableHead>
-                        <TableHead className="text-center font-semibold">Schnitt</TableHead>
+                        <>
+                          <TableHead className="w-[40px] text-center">#</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Verein/Team</TableHead>
+                          {[...Array(NUM_ROUNDS)].map((_, i) => (<TableHead key={`ind-dg${i + 1}`} className="text-center">DG {i + 1}</TableHead>))}
+                          <TableHead className="text-center font-semibold">Gesamt</TableHead>
+                          <TableHead className="text-center font-semibold">Schnitt</TableHead>
+                        </>
                       </TableRow></TableHeader>
                       <TableBody>
                         {individualData.map(shooter => (
                           <TableRow key={shooter.shooterId} className="hover:bg-secondary/20 transition-colors">
-                            <TableCell className="text-center font-medium">{shooter.rank}</TableCell>
-                            <TableCell className="font-medium text-foreground">{shooter.shooterName}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">{shooter.teamName}</TableCell>
-                            {[...Array(NUM_ROUNDS)].map((_, i) => (<TableCell key={`ind-dg${i + 1}-${shooter.shooterId}`} className="text-center">{shooter.results?.[`dg${i + 1}`] ?? '-'}</TableCell>))}
-                            <TableCell className="text-center font-semibold text-primary">{shooter.totalScore}</TableCell>
-                            <TableCell className="text-center font-medium text-muted-foreground">{shooter.averageScore != null ? shooter.averageScore.toFixed(2) : '-'}</TableCell>
+                            <>
+                              <TableCell className="text-center font-medium">{shooter.rank}</TableCell>
+                              <TableCell className="font-medium text-foreground">{shooter.shooterName}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground">{shooter.teamName}</TableCell>
+                              {[...Array(NUM_ROUNDS)].map((_, i) => (<TableCell key={`ind-dg${i + 1}-${shooter.shooterId}`} className="text-center">{shooter.results?.[`dg${i + 1}`] ?? '-'}</TableCell>))}
+                              <TableCell className="text-center font-semibold text-primary">{shooter.totalScore}</TableCell>
+                              <TableCell className="text-center font-medium text-muted-foreground">{shooter.averageScore != null ? shooter.averageScore.toFixed(2) : '-'}</TableCell>
+                            </>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -611,10 +640,3 @@ export default function RwkTabellenPage() {
     </div>
   );
 }
-
-// Helper: Extrahiert eine Zahl aus einem String, wenn der String eine Zahl enthält
-const extractNumber = (str: string | undefined | null): number | null => {
-  if (!str) return null;
-  const match = str.match(/\d+/);
-  return match ? parseInt(match[0], 10) : null;
-};
