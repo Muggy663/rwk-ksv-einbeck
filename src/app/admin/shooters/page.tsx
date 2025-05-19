@@ -54,11 +54,12 @@ type Shooter = Omit<typeof initialShooters[0], 'teamIds'> & { teamIds?: string[]
 type Club = typeof dummyClubs[0];
 type Team = typeof dummyTeams[0];
 
+const ALL_CLUBS_FILTER_VALUE = "__ALL_CLUBS__";
+
 
 export default function AdminShootersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Query params can be used to pre-filter, e.g., by teamId
   const queryTeamId = searchParams.get('teamId'); 
   const queryClubId = searchParams.get('clubId'); 
 
@@ -66,7 +67,7 @@ export default function AdminShootersPage() {
   const [allClubs] = useState<Club[]>(dummyClubs);
   // const [allTeams] = useState<Team[]>(dummyTeams); // If needed for team selection in form
 
-  const [selectedClubId, setSelectedClubId] = useState<string>('');
+  const [selectedClubId, setSelectedClubId] = useState<string>(ALL_CLUBS_FILTER_VALUE);
   // const [selectedTeamIdForFilter, setSelectedTeamIdForFilter] = useState<string>('');
 
 
@@ -78,35 +79,30 @@ export default function AdminShootersPage() {
   const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
   
   useEffect(() => {
-    // Pre-select club if queryClubId is present
     if (queryClubId && allClubs.some(c => c.id === queryClubId)) {
       setSelectedClubId(queryClubId);
+    } else {
+        setSelectedClubId(ALL_CLUBS_FILTER_VALUE);
     }
-     // TODO: Pre-select team for filter if queryTeamId is present
-     // This would require fetching teams based on season/league first if not passed
-  }, [queryClubId, allClubs, queryTeamId]);
+  }, [queryClubId, allClubs]);
   
   useEffect(() => {
-    // TODO: Implement more sophisticated filtering if teamId is also used
-    // For now, simple club filter
     let tempFiltered = shooters;
-    if (selectedClubId) {
+    if (selectedClubId && selectedClubId !== ALL_CLUBS_FILTER_VALUE) {
       tempFiltered = tempFiltered.filter(s => s.clubId === selectedClubId);
     }
-    // if (selectedTeamIdForFilter) { // If filtering by team
-    //   tempFiltered = tempFiltered.filter(s => s.teamIds?.includes(selectedTeamIdForFilter));
-    // }
     setFilteredShooters(tempFiltered);
-  }, [selectedClubId, shooters /*, selectedTeamIdForFilter */]);
+  }, [selectedClubId, shooters]);
 
   const handleAddNew = () => {
     setFormMode('new');
+    const initialClub = selectedClubId !== ALL_CLUBS_FILTER_VALUE ? selectedClubId : (allClubs.length > 0 ? allClubs[0].id : '');
     setCurrentShooter({ 
       firstName: '', 
       lastName: '', 
-      clubId: selectedClubId || (allClubs.length > 0 ? allClubs[0].id : ''), 
+      clubId: initialClub, 
       gender: 'male',
-      teamIds: queryTeamId ? [queryTeamId] : [] // Pre-assign to team if coming from team page
+      teamIds: queryTeamId ? [queryTeamId] : [] 
     });
     setIsFormOpen(true);
   };
@@ -147,6 +143,12 @@ export default function AdminShootersPage() {
     return teamIds.map(tid => dummyTeams.find(t => t.id === tid)?.name || tid).join(', ');
   };
 
+  const selectedClubNameForTitle = selectedClubId !== ALL_CLUBS_FILTER_VALUE 
+    ? allClubs.find(c => c.id === selectedClubId)?.name 
+    : 'aller Vereine';
+  
+  const teamNameForTitle = queryTeamId ? dummyTeams.find(t => t.id === queryTeamId)?.name : null;
+
 
   return (
     <div className="space-y-6">
@@ -158,12 +160,10 @@ export default function AdminShootersPage() {
               <SelectValue placeholder="Verein filtern" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Alle Vereine</SelectItem>
+              <SelectItem value={ALL_CLUBS_FILTER_VALUE}>Alle Vereine</SelectItem>
               {allClubs.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          {/* TODO: Add Team Filter if necessary, requires season/league context first */}
-          {/* <Select value={selectedTeamIdForFilter} onValueChange={setSelectedTeamIdForFilter} disabled={!selectedClubId}>...</Select> */}
           <Button onClick={handleAddNew}>
             <PlusCircle className="mr-2 h-5 w-5" /> Neuen Schützen anlegen
           </Button>
@@ -172,8 +172,8 @@ export default function AdminShootersPage() {
        <Card className="shadow-md">
         <CardHeader>
           <CardTitle>
-            Schützen {selectedClubId ? `für ${allClubs.find(c=>c.id === selectedClubId)?.name}` : 'aller Vereine'}
-            {queryTeamId ? ` (Vorauswahl für Team: ${dummyTeams.find(t=>t.id === queryTeamId)?.name || queryTeamId})` : ''}
+            Schützen {selectedClubNameForTitle}
+            {teamNameForTitle ? ` (Vorauswahl für Team: ${teamNameForTitle})` : ''}
           </CardTitle>
           <CardDescription>
             Verwalten Sie hier alle Schützen.
@@ -212,7 +212,7 @@ export default function AdminShootersPage() {
             </Table>
           ) : (
             <div className="p-8 text-center text-muted-foreground bg-secondary/30 rounded-md">
-              <p className="text-lg">{selectedClubId ? 'Keine Schützen für diesen Filter gefunden.' : 'Keine Schützen angelegt.'}</p>
+              <p className="text-lg">{selectedClubId !== ALL_CLUBS_FILTER_VALUE ? 'Keine Schützen für diesen Filter gefunden.' : 'Keine Schützen angelegt oder für Filter verfügbar.'}</p>
             </div>
           )}
         </CardContent>
@@ -223,7 +223,7 @@ export default function AdminShootersPage() {
           <DialogHeader>
             <DialogTitle>{formMode === 'new' ? 'Neuen Schützen anlegen' : 'Schütze bearbeiten'}</DialogTitle>
              <DialogDescription>
-                {queryTeamId && formMode === 'new' ? `Schütze wird Team "${dummyTeams.find(t=>t.id === queryTeamId)?.name || queryTeamId}" zugeordnet.` : ''}
+                {queryTeamId && formMode === 'new' && teamNameForTitle ? `Schütze wird Team "${teamNameForTitle}" zugeordnet.` : ''}
              </DialogDescription>
           </DialogHeader>
           {currentShooter && (
@@ -260,10 +260,6 @@ export default function AdminShootersPage() {
                     </SelectContent>
                 </Select>
               </div>
-              {/* TODO: Teamzuweisung - komplexer, da ein Schütze in mehreren Teams sein kann.
-                  Könnte eine Multi-Select Komponente oder eine separate Verwaltungsansicht erfordern.
-                  Fürs Erste: Wenn queryTeamId da ist, wird es in `teamIds` gesetzt.
-              */}
                <p className="col-span-4 text-xs text-muted-foreground p-2 rounded-md bg-secondary/30">
                 Aktuelle Dummy-Teamzuweisungen: {getTeamNamesForShooter(currentShooter.teamIds)}
                </p>

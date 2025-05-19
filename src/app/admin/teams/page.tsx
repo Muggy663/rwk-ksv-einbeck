@@ -176,9 +176,7 @@ export default function AdminTeamsPage() {
   };
   
   const navigateToShooters = (teamId: string) => {
-    // TODO: Implement navigation to shooter management for this team
-    alert(`Schützenverwaltung für Team ${teamId} öffnen (TODO). SeasonId: ${selectedSeasonId}, LeagueId: ${selectedLeagueId}`);
-    // router.push(`/admin/shooters?seasonId=${selectedSeasonId}&leagueId=${selectedLeagueId}&teamId=${teamId}`);
+    router.push(`/admin/shooters?clubId=${filteredTeams.find(t=>t.id === teamId)?.clubId}&teamId=${teamId}`);
   };
 
   const selectedSeasonName = allSeasons.find(s => s.id === selectedSeasonId)?.name || 'Saison';
