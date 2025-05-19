@@ -1,3 +1,4 @@
+
 // src/app/admin/teams/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent, useMemo } from 'react';
@@ -66,8 +67,7 @@ export default function AdminTeamsPage() {
   const [allLeagues, setAllLeagues] = useState<League[]>([]);
   const [allClubs, setAllClubs] = useState<Club[]>([]);
   
-  type ShooterWithTeamInfo = Shooter & { isAlreadyInAnotherTeamInLeague?: boolean };
-  const [availableClubShooters, setAvailableClubShooters] = useState<ShooterWithTeamInfo[]>([]);
+  const [availableClubShooters, setAvailableClubShooters] = useState<Shooter[]>([]);
   const [isLoadingShootersForDialog, setIsLoadingShootersForDialog] = useState(false);
 
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
@@ -83,7 +83,7 @@ export default function AdminTeamsPage() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentTeam, setCurrentTeam] = useState<Partial<Team> & { id?: string } | null>(null);
-  const [originalShooterIds, setOriginalShooterIds] = useState<string[]>([]);
+  const [persistedShooterIdsForTeam, setPersistedShooterIdsForTeam] = useState<string[]>([]);
   const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
   const [selectedShooterIdsInForm, setSelectedShooterIdsInForm] = useState<string[]>([]);
 
@@ -93,43 +93,48 @@ export default function AdminTeamsPage() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      console.log(">>> teams/fetchInitialData: Fetching initial data...");
+      console.log("AdminTeamsPage: fetchInitialData called");
       setIsLoadingData(true);
       try {
+        console.log("AdminTeamsPage: Fetching seasons...");
         const seasonsSnapshot = await getDocs(query(collection(db, SEASONS_COLLECTION), orderBy("competitionYear", "desc")));
         const fetchedSeasons: Season[] = seasonsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Season));
         setAllSeasons(fetchedSeasons);
-        console.log(">>> teams/fetchInitialData: Seasons fetched:", fetchedSeasons.length);
+        console.log("AdminTeamsPage: Seasons fetched:", fetchedSeasons.length);
         if (fetchedSeasons.length === 0) toast({ title: "Keine Saisons gefunden", description: "Bitte zuerst Saisons anlegen.", variant: "destructive" });
 
+        console.log("AdminTeamsPage: Fetching all leagues...");
         const leaguesSnapshot = await getDocs(query(collection(db, LEAGUES_COLLECTION), orderBy("name", "asc")));
         const fetchedLeagues: League[] = leaguesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as League));
         setAllLeagues(fetchedLeagues);
         fetchedLeagues.forEach(league => {
-           console.log(`>>> teams/fetchInitialData: League Detail - ID: ${league.id}, Name: ${league.name}, SeasonID: ${league.seasonId}`);
+           console.log(`AdminTeamsPage: League Detail - ID: ${league.id}, Name: ${league.name}, SeasonID: ${league.seasonId}`);
         });
-        console.log(">>> teams/fetchInitialData: All leagues fetched:", fetchedLeagues.length);
+        console.log("AdminTeamsPage: All leagues fetched:", fetchedLeagues.length);
 
+        console.log("AdminTeamsPage: Fetching clubs...");
         const clubsSnapshot = await getDocs(query(collection(db, CLUBS_COLLECTION), orderBy("name", "asc")));
         const fetchedClubs: Club[] = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Club));
         setAllClubs(fetchedClubs);
-        console.log(">>> teams/fetchInitialData: Clubs fetched:", fetchedClubs.length);
+        console.log("AdminTeamsPage: Clubs fetched:", fetchedClubs.length);
 
         if (querySeasonId && fetchedSeasons.some(s => s.id === querySeasonId)) {
           setSelectedSeasonId(querySeasonId);
+           console.log("AdminTeamsPage: Initial selectedSeasonId set from query param:", querySeasonId);
         } else if (fetchedSeasons.length > 0) {
           setSelectedSeasonId(fetchedSeasons[0].id);
+          console.log("AdminTeamsPage: Initial selectedSeasonId set to first fetched season:", fetchedSeasons[0].id);
         } else {
           setSelectedSeasonId('');
+          console.log("AdminTeamsPage: No seasons fetched, selectedSeasonId set to empty.");
         }
-        console.log(">>> teams/fetchInitialData: Initial selectedSeasonId:", selectedSeasonId);
 
       } catch (error) {
-        console.error(">>> teams/fetchInitialData: Error fetching initial data: ", error);
+        console.error("AdminTeamsPage: Error fetching initial data: ", error);
         toast({ title: "Fehler beim Laden der Basisdaten", description: (error as Error).message, variant: "destructive" });
       } finally {
         setIsLoadingData(false);
-        console.log(">>> teams/fetchInitialData: Finished. isLoadingData:", false);
+        console.log("AdminTeamsPage: fetchInitialData finished. isLoadingData:", false);
       }
     };
     fetchInitialData();
@@ -137,13 +142,13 @@ export default function AdminTeamsPage() {
   }, [toast]); 
 
   useEffect(() => {
-    console.log(">>> teams/useEffect[selectedSeasonId, allLeagues]: Filtering leagues. Selected seasonId:", selectedSeasonId);
+    console.log("AdminTeamsPage: selectedSeasonId or allLeagues changed. Current selectedSeasonId:", selectedSeasonId);
     if (selectedSeasonId && allLeagues.length > 0) {
       const leaguesForSeason = allLeagues
         .filter(l => l.seasonId === selectedSeasonId)
         .sort((a, b) => (a.order || 0) - (b.order || 0));
       setAvailableLeaguesForSeason(leaguesForSeason);
-      console.log(`>>> teams/useEffect[selectedSeasonId, allLeagues]: Available leagues for season ${selectedSeasonId}: ${leaguesForSeason.length}`);
+      console.log(`AdminTeamsPage: Available leagues for season ${selectedSeasonId}: ${leaguesForSeason.length}`);
       
       if (queryLeagueId && leaguesForSeason.some(l => l.id === queryLeagueId)) {
         setSelectedLeagueId(queryLeagueId);
@@ -156,23 +161,23 @@ export default function AdminTeamsPage() {
       setAvailableLeaguesForSeason([]);
       setSelectedLeagueId('');
     }
-    console.log(">>> teams/useEffect[selectedSeasonId, allLeagues]: Current selectedLeagueId:", selectedLeagueId);
+     console.log("AdminTeamsPage: Current selectedLeagueId set to:", selectedLeagueId);
   }, [selectedSeasonId, allLeagues, queryLeagueId]);
 
   const fetchTeams = useMemo(() => async () => {
     if (!selectedLeagueId || !selectedSeasonId) {
       setTeams([]);
-      console.log(">>> teams/fetchTeams: No league or season selected, clearing teams.");
+      console.log("AdminTeamsPage: fetchTeams - No league or season selected, clearing teams.");
       return;
     }
     const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
     if (!currentSeason) {
       setTeams([]);
-      console.warn(">>> teams/fetchTeams: Current season not found for ID:", selectedSeasonId);
+      console.warn("AdminTeamsPage: fetchTeams - Current season not found for ID:", selectedSeasonId);
       return;
     }
 
-    console.log(`>>> teams/fetchTeams: Fetching teams for league ${selectedLeagueId} and year ${currentSeason.competitionYear}`);
+    console.log(`AdminTeamsPage: fetchTeams - Fetching teams for league ${selectedLeagueId} and year ${currentSeason.competitionYear}`);
     setIsLoadingTeams(true);
     try {
       const q = query(
@@ -184,14 +189,14 @@ export default function AdminTeamsPage() {
       const querySnapshot = await getDocs(q);
       const fetchedTeams: Team[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), shooterIds: (doc.data().shooterIds || []) } as Team));
       setTeams(fetchedTeams);
-      console.log(">>> teams/fetchTeams: Teams fetched:", fetchedTeams.length);
+      console.log("AdminTeamsPage: fetchTeams - Teams fetched:", fetchedTeams.length);
     } catch (error) {
-      console.error(">>> teams/fetchTeams: Error fetching teams: ", error);
+      console.error("AdminTeamsPage: fetchTeams - Error fetching teams: ", error);
       toast({ title: "Fehler beim Laden der Mannschaften", description: (error as Error).message, variant: "destructive" });
       setTeams([]);
     } finally {
       setIsLoadingTeams(false);
-      console.log(">>> teams/fetchTeams: Finished. isLoadingTeams:", false);
+      console.log("AdminTeamsPage: fetchTeams - Finished. isLoadingTeams:", false);
     }
   }, [selectedLeagueId, selectedSeasonId, allSeasons, toast]);
 
@@ -202,7 +207,7 @@ export default function AdminTeamsPage() {
   useEffect(() => {
     const fetchShootersForClub = async () => {
       if (isFormOpen && currentTeam?.clubId && selectedLeagueId) {
-        console.log(`>>> teams/fetchShootersForClub: Fetching shooters for clubId ${currentTeam.clubId}`);
+        console.log(`AdminTeamsPage: fetchShootersForClub - Fetching shooters for clubId ${currentTeam.clubId}`);
         setIsLoadingShootersForDialog(true);
         try {
           const shootersQuery = query(
@@ -212,47 +217,32 @@ export default function AdminTeamsPage() {
             orderBy("firstName", "asc")
           );
           const snapshot = await getDocs(shootersQuery);
-          let fetchedShooters: ShooterWithTeamInfo[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShooterWithTeamInfo));
-          
-          // // --- Beginn der Logik, um Schützen zu identifizieren, die bereits in anderen Teams dieser Liga sind ---
-          // const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
-          // if (currentSeason) {
-          //   const otherTeamsInLeagueQuery = query(
-          //     collection(db, TEAMS_COLLECTION),
-          //     where("leagueId", "==", selectedLeagueId),
-          //     where("competitionYear", "==", currentSeason.competitionYear),
-          //     where(documentId(), "!=", currentTeam?.id || '---') // Schließt das aktuell bearbeitete Team aus
-          //   );
-          //   const otherTeamsSnapshot = await getDocs(otherTeamsInLeagueQuery);
-          //   const shooterIdsInOtherTeams = new Set<string>();
-          //   otherTeamsSnapshot.forEach(teamDoc => {
-          //     const teamData = teamDoc.data() as Team;
-          //     (teamData.shooterIds || []).forEach(id => shooterIdsInOtherTeams.add(id));
-          //   });
-
-          //   fetchedShooters = fetchedShooters.map(shooter => ({
-          //     ...shooter,
-          //     isAlreadyInAnotherTeamInLeague: shooterIdsInOtherTeams.has(shooter.id)
-          //   }));
-          // }
-          // // --- Ende der Logik ---
-
-
+          const fetchedShooters: Shooter[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Shooter));
           setAvailableClubShooters(fetchedShooters);
-          console.log(`>>> teams/fetchShootersForClub: Fetched ${fetchedShooters.length} shooters for club ${currentTeam.clubId}`);
+          console.log(`AdminTeamsPage: fetchShootersForClub - Fetched ${fetchedShooters.length} shooters for club ${currentTeam.clubId}`);
+          
+          // Initialize selectedShooterIdsInForm based on fetchedShooters and persistedShooterIdsForTeam
+          const initialSelection = (persistedShooterIdsForTeam || []).filter(id => 
+            fetchedShooters.some(s => s.id === id)
+          );
+          setSelectedShooterIdsInForm(initialSelection);
+          console.log(`AdminTeamsPage: fetchShootersForClub - Initial selected shooters in form set:`, initialSelection);
+
         } catch (error) {
-          console.error(">>> teams/fetchShootersForClub: Error fetching shooters for club:", error);
+          console.error("AdminTeamsPage: fetchShootersForClub - Error fetching shooters for club:", error);
           toast({ title: "Fehler beim Laden der Schützen", description: (error as Error).message, variant: "destructive" });
           setAvailableClubShooters([]);
+          setSelectedShooterIdsInForm([]);
         } finally {
           setIsLoadingShootersForDialog(false);
         }
       } else {
         setAvailableClubShooters([]);
+        setSelectedShooterIdsInForm([]);
       }
     };
     fetchShootersForClub();
-  }, [isFormOpen, currentTeam?.clubId, selectedLeagueId, selectedSeasonId, allSeasons, toast]);
+  }, [isFormOpen, currentTeam?.clubId, selectedLeagueId, toast, persistedShooterIdsForTeam]); // Added persistedShooterIdsForTeam
 
 
   const handleAddNew = () => {
@@ -279,9 +269,9 @@ export default function AdminTeamsPage() {
       shooterIds: [] 
     });
     setSelectedShooterIdsInForm([]); 
-    setOriginalShooterIds([]);
+    setPersistedShooterIdsForTeam([]);
     setIsFormOpen(true);
-    console.log(">>> teams/handleAddNew: Opening form for new team.");
+    console.log("AdminTeamsPage: handleAddNew - Opening form for new team.");
   };
 
   const handleEdit = (team: Team) => {
@@ -290,17 +280,18 @@ export default function AdminTeamsPage() {
     }
     setFormMode('edit');
     setCurrentTeam(team);
-    const currentShooterIds = team.shooterIds || [];
-    setSelectedShooterIdsInForm(currentShooterIds); 
-    setOriginalShooterIds(currentShooterIds);
+    const currentTeamShooterIds = team.shooterIds || [];
+    setPersistedShooterIdsForTeam(currentTeamShooterIds); 
+    // setSelectedShooterIdsInForm will be set by the useEffect when availableClubShooters are loaded
+    setSelectedShooterIdsInForm([]); // Initialize as empty, will be populated by useEffect
     setIsFormOpen(true);
-    console.log(">>> teams/handleEdit: Opening form to edit team:", team.id, "Current shooters:", currentShooterIds);
+    console.log("AdminTeamsPage: handleEdit - Opening form to edit team:", team.id, "Persisted shooters:", currentTeamShooterIds);
   };
 
   const handleDeleteConfirmation = (team: Team) => {
     setTeamToDelete(team);
     setIsAlertOpen(true);
-    console.log(">>> teams/handleDeleteConfirmation: Marked team for deletion:", team.id);
+    console.log("AdminTeamsPage: handleDeleteConfirmation - Marked team for deletion:", team.id);
   };
 
   const handleDeleteTeam = async () => {
@@ -311,7 +302,7 @@ export default function AdminTeamsPage() {
     }
     
     const teamIdToDelete = teamToDelete.id;
-    console.log(`>>> teams/handleDeleteTeam: Attempting to delete team ${teamIdToDelete}`);
+    console.log(`AdminTeamsPage: handleDeleteTeam - Attempting to delete team ${teamIdToDelete}`);
     setIsLoadingDelete(true); 
     try {
       const batch = writeBatch(db);
@@ -322,37 +313,37 @@ export default function AdminTeamsPage() {
       const shooterIdsInDeletedTeam = teamData?.shooterIds || [];
 
       if (shooterIdsInDeletedTeam.length > 0) {
-        console.log(`>>> teams/handleDeleteTeam: Removing team ${teamIdToDelete} from ${shooterIdsInDeletedTeam.length} shooters' teamIds arrays.`);
+        console.log(`AdminTeamsPage: handleDeleteTeam - Removing team ${teamIdToDelete} from ${shooterIdsInDeletedTeam.length} shooters' teamIds arrays.`);
         shooterIdsInDeletedTeam.forEach(shooterId => {
           const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
           batch.update(shooterDocRef, { teamIds: arrayRemove(teamIdToDelete) });
         });
       }
       batch.delete(teamDocRef);
-      console.log(`>>> teams/handleDeleteTeam: Scheduled deletion of team document ${teamIdToDelete} and updates to shooters.`);
+      console.log(`AdminTeamsPage: handleDeleteTeam - Scheduled deletion of team document ${teamIdToDelete} and updates to shooters.`);
       
       await batch.commit();
-      console.log(`>>> teams/handleDeleteTeam: Batch committed. Team ${teamIdToDelete} deleted and shooter associations removed.`);
+      console.log(`AdminTeamsPage: handleDeleteTeam - Batch committed. Team ${teamIdToDelete} deleted and shooter associations removed.`);
 
       toast({ title: "Mannschaft gelöscht", description: `"${teamToDelete.name}" wurde erfolgreich entfernt.` });
       fetchTeams(); 
     } catch (error) {
-      console.error(`>>> teams/handleDeleteTeam: Error deleting team ${teamToDelete.id}: `, error);
+      console.error(`AdminTeamsPage: handleDeleteTeam - Error deleting team ${teamToDelete.id}: `, error);
       toast({ title: "Fehler beim Löschen", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingDelete(false);
       setIsAlertOpen(false);
       setTeamToDelete(null);
-      console.log(">>> teams/handleDeleteTeam: Finished for team", teamToDelete?.id);
+      console.log("AdminTeamsPage: handleDeleteTeam - Finished for team", teamToDelete?.id);
     }
   };
   
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log(">>> teams/handleSubmit: Form submitted.");
+    console.log("AdminTeamsPage: handleSubmit - Form submitted.");
     if (!currentTeam || !currentTeam.name?.trim() || !currentTeam.clubId || !currentTeam.leagueId || currentTeam.competitionYear === undefined) {
       toast({ title: "Ungültige Eingabe", description: "Bitte alle erforderlichen Felder ausfüllen.", variant: "destructive" });
-      console.warn(">>> teams/handleSubmit: Invalid form input.", currentTeam);
+      console.warn("AdminTeamsPage: handleSubmit - Invalid form input.", currentTeam);
       return;
     }
 
@@ -368,9 +359,9 @@ export default function AdminTeamsPage() {
       competitionYear: currentTeam.competitionYear,
       shooterIds: selectedShooterIdsInForm, 
     };
-    console.log(">>> teams/handleSubmit: Team data to save:", teamDataToSave);
-    console.log(">>> teams/handleSubmit: Original Shooter IDs:", originalShooterIds);
-    console.log(">>> teams/handleSubmit: Selected Shooter IDs in Form:", selectedShooterIdsInForm);
+    console.log("AdminTeamsPage: handleSubmit - Team data to save:", teamDataToSave);
+    console.log("AdminTeamsPage: handleSubmit - Persisted Shooter IDs for diff:", persistedShooterIdsForTeam);
+    console.log("AdminTeamsPage: handleSubmit - Selected Shooter IDs in Form:", selectedShooterIdsInForm);
     
     setIsLoadingForm(true);
 
@@ -397,7 +388,7 @@ export default function AdminTeamsPage() {
           description: `Eine Mannschaft mit dem Namen "${teamDataToSave.name}" existiert bereits in dieser Liga und Saison.`,
           variant: "destructive",
         });
-        console.warn(">>> teams/handleSubmit: Duplicate team name found.");
+        console.warn("AdminTeamsPage: handleSubmit - Duplicate team name found.");
         setIsLoadingForm(false);
         return; 
       }
@@ -405,22 +396,22 @@ export default function AdminTeamsPage() {
       const batch = writeBatch(db);
       let teamIdForShooterUpdates: string;
       
-      const shootersToAdd = selectedShooterIdsInForm.filter(id => !originalShooterIds.includes(id));
-      const shootersToRemove = originalShooterIds.filter(id => !selectedShooterIdsInForm.includes(id));
-      console.log(">>> teams/handleSubmit: Shooters to ADD to their teamIds array:", shootersToAdd);
-      console.log(">>> teams/handleSubmit: Shooters to REMOVE from their teamIds array:", shootersToRemove);
+      const shootersToAdd = selectedShooterIdsInForm.filter(id => !persistedShooterIdsForTeam.includes(id));
+      const shootersToRemove = persistedShooterIdsForTeam.filter(id => !selectedShooterIdsInForm.includes(id));
+      console.log("AdminTeamsPage: handleSubmit - Shooters to ADD to their teamIds array:", shootersToAdd);
+      console.log("AdminTeamsPage: handleSubmit - Shooters to REMOVE from their teamIds array:", shootersToRemove);
 
 
       if (formMode === 'new') {
         const newTeamRef = doc(collection(db, TEAMS_COLLECTION)); 
         teamIdForShooterUpdates = newTeamRef.id;
         batch.set(newTeamRef, teamDataToSave); 
-        console.log(`>>> teams/handleSubmit: NEW team to be created with ID ${teamIdForShooterUpdates}.`);
+        console.log(`AdminTeamsPage: handleSubmit - NEW team to be created with ID ${teamIdForShooterUpdates}.`);
 
         shootersToAdd.forEach(shooterId => { 
           const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
           batch.update(shooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
-           console.log(`>>> teams/handleSubmit: Adding team ${teamIdForShooterUpdates} to shooter ${shooterId}'s teamIds.`);
+           console.log(`AdminTeamsPage: handleSubmit - Adding team ${teamIdForShooterUpdates} to shooter ${shooterId}'s teamIds.`);
         });
         toast({ title: "Mannschaft erstellt", description: `"${teamDataToSave.name}" wurde erfolgreich angelegt.` });
 
@@ -428,39 +419,39 @@ export default function AdminTeamsPage() {
         teamIdForShooterUpdates = currentTeam.id;
         const teamDocRef = doc(db, TEAMS_COLLECTION, teamIdForShooterUpdates);
         batch.update(teamDocRef, teamDataToSave); 
-        console.log(`>>> teams/handleSubmit: EDIT team ${teamIdForShooterUpdates}.`);
+        console.log(`AdminTeamsPage: handleSubmit - EDIT team ${teamIdForShooterUpdates}.`);
 
         shootersToAdd.forEach(shooterId => {
           const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
           batch.update(shooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
-          console.log(`>>> teams/handleSubmit: Adding team ${teamIdForShooterUpdates} to shooter ${shooterId}'s teamIds.`);
+          console.log(`AdminTeamsPage: handleSubmit - Adding team ${teamIdForShooterUpdates} to shooter ${shooterId}'s teamIds.`);
         });
         shootersToRemove.forEach(shooterId => {
           const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
           batch.update(shooterDocRef, { teamIds: arrayRemove(teamIdForShooterUpdates) });
-          console.log(`>>> teams/handleSubmit: Removing team ${teamIdForShooterUpdates} from shooter ${shooterId}'s teamIds.`);
+          console.log(`AdminTeamsPage: handleSubmit - Removing team ${teamIdForShooterUpdates} from shooter ${shooterId}'s teamIds.`);
         });
         toast({ title: "Mannschaft aktualisiert", description: `"${teamDataToSave.name}" wurde erfolgreich aktualisiert.` });
       } else {
-        throw new Error("Invalid form mode or missing team ID for edit.");
+        throw new Error("AdminTeamsPage: handleSubmit - Invalid form mode or missing team ID for edit.");
       }
       
-      console.log(">>> teams/handleSubmit: Committing batch...");
+      console.log("AdminTeamsPage: handleSubmit - Committing batch...");
       await batch.commit();
-      console.log(">>> teams/handleSubmit: Batch committed successfully.");
+      console.log("AdminTeamsPage: handleSubmit - Batch committed successfully.");
 
       setIsFormOpen(false);
       setCurrentTeam(null);
       setSelectedShooterIdsInForm([]); 
-      setOriginalShooterIds([]);
+      setPersistedShooterIdsForTeam([]);
       fetchTeams();
     } catch (error) {
-      console.error(">>> teams/handleSubmit: Error saving team or updating shooters: ", error);
+      console.error("AdminTeamsPage: handleSubmit - Error saving team or updating shooters: ", error);
       const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
       toast({ title: `Fehler beim ${action}`, description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingForm(false);
-      console.log(">>> teams/handleSubmit: Finished.");
+      console.log("AdminTeamsPage: handleSubmit - Finished.");
     }
   };
 
@@ -469,10 +460,13 @@ export default function AdminTeamsPage() {
         if (!prev) return null;
         const updatedTeam = { ...prev, [field]: value };
         if (field === 'clubId' && prev.clubId !== value) {
+            // If club changes, reset selected shooters as they might not belong to the new club.
+            // persistedShooterIdsForTeam should also be reset or re-evaluated if we allow changing club for an existing team.
+            // For now, we primarily handle shooter selection when a club is set and shooters are loaded.
             setSelectedShooterIdsInForm([]); 
-            setOriginalShooterIds( formMode === 'edit' && prev.shooterIds ? prev.shooterIds : []); 
+            // setPersistedShooterIdsForTeam([]); // This might be too aggressive if club change is part of edit.
             setAvailableClubShooters([]); 
-            console.log(">>> teams/handleFormInputChange: Club changed, reset selected/available shooters. Original shooters (if edit):", originalShooterIds);
+            console.log("AdminTeamsPage: handleFormInputChange - Club changed, reset selected/available shooters.");
         }
         return updatedTeam as Partial<Team>; 
     });
@@ -501,7 +495,7 @@ export default function AdminTeamsPage() {
   
   const navigateToShootersAdmin = (clubIdOfTeam: string, teamId?: string) => {
     if (!clubIdOfTeam) {
-        console.error("navigateToShootersAdmin: clubId is missing for team.");
+        console.error("AdminTeamsPage: navigateToShootersAdmin - clubId is missing for team.");
         toast({title: "Fehler", description: "Vereins-ID der Mannschaft nicht gefunden.", variant: "destructive"});
         return;
     }
@@ -608,7 +602,7 @@ export default function AdminTeamsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) {setCurrentTeam(null); setSelectedShooterIdsInForm([]); setOriginalShooterIds([]); setAvailableClubShooters([]);} }}>
+      <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) {setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAvailableClubShooters([]);} }}>
         <DialogContent className="sm:max-w-lg">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
@@ -618,7 +612,7 @@ export default function AdminTeamsPage() {
               </DialogDescription>
             </DialogHeader>
             {currentTeam && (
-              <div className="grid gap-6 py-4">
+              <div className="space-y-6 py-4">
                 <div className="grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="teamName">Name der Mannschaft</Label>
@@ -669,13 +663,11 @@ export default function AdminTeamsPage() {
                             disabled={
                                 !selectedShooterIdsInForm.includes(shooter.id) && 
                                 selectedShooterIdsInForm.length >= MAX_SHOOTERS_PER_TEAM
-                                // || shooter.isAlreadyInAnotherTeamInLeague // Zukünftige Erweiterung
                             }
                           />
-                          <Label htmlFor={`shooter-${shooter.id}`} className={`font-normal cursor-pointer flex-grow ${shooter.isAlreadyInAnotherTeamInLeague ? 'text-muted-foreground line-through' : ''}`}>
+                          <Label htmlFor={`shooter-${shooter.id}`} className={`font-normal cursor-pointer flex-grow`}>
                             {shooter.name || `${shooter.firstName} ${shooter.lastName}`}
                             <span className="text-xs text-muted-foreground ml-2">(Schnitt Vorjahr: folgt)</span>
-                             {/* {shooter.isAlreadyInAnotherTeamInLeague && <span className="text-xs text-destructive ml-2">(bereits in anderer Mannschaft dieser Liga)</span>} */}
                           </Label>
                         </div>
                       ))}
@@ -684,7 +676,7 @@ export default function AdminTeamsPage() {
                   ) : (
                     <p className="text-sm text-muted-foreground p-2">
                       {currentTeam?.clubId ? 
-                        `Keine Schützen für den Verein '${allClubs.find(c => c.id === currentTeam?.clubId)?.name || 'ausgewählten Verein'}' gefunden.` : 
+                        `Keine Schützen für den Verein '${allClubs.find(c => c.id === currentTeam?.clubId)?.name || 'ausgewählten Verein'}' gefunden oder bereits alle zugeordnet.` : 
                         'Bitte zuerst einen Verein auswählen, um Schützen laden zu können.'}
                     </p>
                   )}
@@ -703,7 +695,7 @@ export default function AdminTeamsPage() {
               </div>
             )}
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentTeam(null); setSelectedShooterIdsInForm([]); setOriginalShooterIds([]); setAvailableClubShooters([]);}}>Abbrechen</Button>
+              <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAvailableClubShooters([]);}}>Abbrechen</Button>
               <Button 
                 type="submit" 
                 disabled={
@@ -746,3 +738,5 @@ export default function AdminTeamsPage() {
     </div>
   );
 }
+
+
