@@ -7,12 +7,12 @@ export default function HomePage() {
     <div className="space-y-8">
       <section className="text-center py-8">
         <Image 
-          src="/images/KSV_Einbeck_Abzeichen.png" 
-          alt="KSV Einbeck Abzeichen"
+          src="/images/logo.png" 
+          alt="KSV Einbeck Logo"
           width={150}
           height={150}
           className="mx-auto mb-6 rounded-lg shadow-md"
-          data-ai-hint="club emblem"
+          data-ai-hint="club logo"
         />
         <h1 className="text-4xl font-bold tracking-tight text-primary">
           Willkommen beim Rundenwettkampf
