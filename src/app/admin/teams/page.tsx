@@ -1,9 +1,9 @@
 // src/app/admin/teams/page.tsx
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Users } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Users, Loader2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -27,39 +27,28 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSearchParams, useRouter } from 'next/navigation';
+import type { Season, League, Club, Team } from '@/types/rwk';
+import { db } from '@/lib/firebase/config';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, documentId, writeBatch } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
-// Dummy data
-const dummySeasons = [
-  { id: 's2025kk', name: 'RWK 2025 Kleinkaliber', type: 'KK', year: 2025 },
-  { id: 's2025ld', name: 'RWK 2025 Luftdruck', type: 'LD', year: 2025 },
-  { id: 's2024kk', name: 'RWK 2024 Kleinkaliber', type: 'KK', year: 2024 },
-];
-const dummyLeagues = [ // Leagues for ALL seasons for simplicity in dummy data
-  { id: 'l_kol_kk25', seasonId: 's2025kk', name: 'Kreisoberliga (KK 2025)', type: 'KK'},
-  { id: 'l_kl_kk25', seasonId: 's2025kk', name: 'Kreisliga (KK 2025)', type: 'KK'},
-  { id: 'l_lg_a_ld25', seasonId: 's2025ld', name: 'Luftgewehr Auflage A (LD 2025)', type: 'LD'},
-  { id: 'l_kol_kk24', seasonId: 's2024kk', name: 'Kreisoberliga (KK 2024)', type: 'KK'},
-];
-const dummyClubs = [
-  { id: 'c_naensen', name: 'SC Naensen' },
-  { id: 'c_einbeck', name: 'Einbecker SGi' },
-  { id: 'c_doerrigsen', name: 'SV Dörrigsen'},
-];
-
-const initialTeams = [
-  { id: 't_naensen1_kol_kk25', name: 'SC Naensen I', leagueId: 'l_kol_kk25', clubId: 'c_naensen', competitionYear: 2025 },
-  { id: 't_esgi1_kol_kk25', name: 'Einbecker SGi I', leagueId: 'l_kol_kk25', clubId: 'c_einbeck', competitionYear: 2025 },
-  { id: 't_naensen_lg_a_ld25', name: 'SC Naensen LG', leagueId: 'l_lg_a_ld25', clubId: 'c_naensen', competitionYear: 2025 },
-  { id: 't_doer_kol_kk24', name: 'SV Dörrigsen I', leagueId: 'l_kol_kk24', clubId: 'c_doerrigsen', competitionYear: 2024 },
-];
-
-type Team = typeof initialTeams[0];
-type Season = typeof dummySeasons[0];
-type League = typeof dummyLeagues[0];
-type Club = typeof dummyClubs[0];
+const SEASONS_COLLECTION = "seasons";
+const LEAGUES_COLLECTION = "rwk_leagues";
+const CLUBS_COLLECTION = "clubs";
+const TEAMS_COLLECTION = "rwk_teams";
 
 export default function AdminTeamsPage() {
   const router = useRouter();
@@ -67,36 +56,65 @@ export default function AdminTeamsPage() {
   const querySeasonId = searchParams.get('seasonId');
   const queryLeagueId = searchParams.get('leagueId');
 
-  const [allSeasons] = useState<Season[]>(dummySeasons);
-  const [allLeagues] = useState<League[]>(dummyLeagues);
-  const [allClubs] = useState<Club[]>(dummyClubs);
+  const { toast } = useToast();
+
+  const [allSeasons, setAllSeasons] = useState<Season[]>([]);
+  const [allLeagues, setAllLeagues] = useState<League[]>([]); // Store all leagues
+  const [allClubs, setAllClubs] = useState<Club[]>([]);
 
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
   const [availableLeaguesForSeason, setAvailableLeaguesForSeason] = useState<League[]>([]);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string>('');
   
-  const [teams, setTeams] = useState<Team[]>(initialTeams); // All teams, later fetched
-  const [filteredTeams, setFilteredTeams] = useState<Team[]>([]);
-
+  const [teams, setTeams] = useState<Team[]>([]);
+  
+  const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentTeam, setCurrentTeam] = useState<Partial<Team> | null>(null);
+  const [currentTeam, setCurrentTeam] = useState<Partial<Team> & { id?: string } | null>(null);
   const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
 
-  // Effect to set initial season and league from query params or defaults
-  useEffect(() => {
-    if (querySeasonId && allSeasons.some(s => s.id === querySeasonId)) {
-      setSelectedSeasonId(querySeasonId);
-    } else if (allSeasons.length > 0) {
-      setSelectedSeasonId(allSeasons[0].id);
-    }
-  }, [querySeasonId, allSeasons]);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
 
+  // Fetch initial data (seasons, all leagues, clubs)
   useEffect(() => {
-    // Update available leagues when selectedSeasonId changes
+    const fetchInitialData = async () => {
+      setIsLoading(true);
+      try {
+        const seasonsSnapshot = await getDocs(query(collection(db, SEASONS_COLLECTION), orderBy("competitionYear", "desc")));
+        const fetchedSeasons: Season[] = seasonsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Season));
+        setAllSeasons(fetchedSeasons);
+
+        const leaguesSnapshot = await getDocs(query(collection(db, LEAGUES_COLLECTION), orderBy("name", "asc")));
+        const fetchedLeagues: League[] = leaguesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as League));
+        setAllLeagues(fetchedLeagues);
+
+        const clubsSnapshot = await getDocs(query(collection(db, CLUBS_COLLECTION), orderBy("name", "asc")));
+        const fetchedClubs: Club[] = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Club));
+        setAllClubs(fetchedClubs);
+
+        if (querySeasonId && fetchedSeasons.some(s => s.id === querySeasonId)) {
+          setSelectedSeasonId(querySeasonId);
+        } else if (fetchedSeasons.length > 0) {
+          setSelectedSeasonId(fetchedSeasons[0].id);
+        }
+
+      } catch (error) {
+        console.error("Error fetching initial data for teams admin: ", error);
+        toast({ title: "Fehler beim Laden der Basisdaten", description: (error as Error).message, variant: "destructive" });
+      } finally {
+        setIsLoading(false); // Set to false after all initial fetches are done or attempted
+      }
+    };
+    fetchInitialData();
+  }, [querySeasonId, toast]); // querySeasonId dependency to re-evaluate if it changes
+
+  // Effect to update available leagues when selectedSeasonId changes
+  useEffect(() => {
     if (selectedSeasonId) {
-      const leaguesForSeason = allLeagues.filter(l => l.seasonId === selectedSeasonId);
+      const leaguesForSeason = allLeagues.filter(l => l.seasonId === selectedSeasonId).sort((a, b) => (a.order || 0) - (b.order || 0));
       setAvailableLeaguesForSeason(leaguesForSeason);
-      // Try to set league from query param if it belongs to current season, else first available or none
+      
       if (queryLeagueId && leaguesForSeason.some(l => l.id === queryLeagueId)) {
         setSelectedLeagueId(queryLeagueId);
       } else if (leaguesForSeason.length > 0) {
@@ -110,34 +128,58 @@ export default function AdminTeamsPage() {
     }
   }, [selectedSeasonId, allLeagues, queryLeagueId]);
 
+  // Fetch teams when selectedLeagueId or selectedSeasonId changes
+  const fetchTeams = useMemo(() => async () => {
+    if (!selectedLeagueId || !selectedSeasonId) {
+      setTeams([]);
+      return;
+    }
+    const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
+    if (!currentSeason) {
+      setTeams([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const q = query(
+        collection(db, TEAMS_COLLECTION),
+        where("leagueId", "==", selectedLeagueId),
+        where("competitionYear", "==", currentSeason.competitionYear),
+        orderBy("name", "asc")
+      );
+      const querySnapshot = await getDocs(q);
+      const fetchedTeams: Team[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
+      setTeams(fetchedTeams);
+    } catch (error) {
+      console.error("Error fetching teams: ", error);
+      toast({ title: "Fehler beim Laden der Mannschaften", description: (error as Error).message, variant: "destructive" });
+      setTeams([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedLeagueId, selectedSeasonId, allSeasons, toast]);
 
   useEffect(() => {
-    // Filter teams when selectedLeagueId or selectedSeasonId (via competitionYear) changes
-    // TODO: In a real app, fetch teams for the selectedLeagueId and season's year
-    if (selectedLeagueId && selectedSeasonId) {
-      const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
-      if (currentSeason) {
-        setFilteredTeams(teams.filter(t => t.leagueId === selectedLeagueId && t.competitionYear === currentSeason.year));
-      } else {
-        setFilteredTeams([]);
-      }
-    } else {
-      setFilteredTeams([]);
-    }
-  }, [selectedLeagueId, selectedSeasonId, teams, allSeasons]);
+    fetchTeams();
+  }, [fetchTeams]);
+
 
   const handleAddNew = () => {
     if (!selectedLeagueId || !selectedSeasonId) {
-        alert("Bitte zuerst eine Saison und Liga auswählen.");
-        return;
+      toast({ title: "Auswahl erforderlich", description: "Bitte zuerst eine Saison und Liga auswählen.", variant: "destructive" });
+      return;
     }
     const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
-    if (!currentSeason) return;
+    if (!currentSeason) {
+      toast({ title: "Fehler", description: "Saisondaten nicht gefunden.", variant: "destructive" });
+      return;
+    }
 
     setFormMode('new');
     setCurrentTeam({ 
       leagueId: selectedLeagueId, 
-      competitionYear: currentSeason.year, 
+      competitionYear: currentSeason.competitionYear, 
       name: '', 
       clubId: allClubs.length > 0 ? allClubs[0].id : '' 
     });
@@ -150,44 +192,125 @@ export default function AdminTeamsPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (teamId: string) => {
-    setTeams(prev => prev.filter(t => t.id !== teamId));
-    console.log(`Mannschaft ${teamId} zum Löschen markiert.`);
+  const handleDeleteConfirmation = (team: Team) => {
+    setTeamToDelete(team);
+    setIsAlertOpen(true);
+  };
+
+  const handleDeleteTeam = async () => {
+    if (!teamToDelete || !teamToDelete.id) {
+      toast({ title: "Fehler", description: "Keine Mannschaft zum Löschen ausgewählt.", variant: "destructive" });
+      setIsAlertOpen(false);
+      return;
+    }
+    
+    // Use a specific loading state for the alert if it's different from the main page loading
+    const originalIsLoading = isLoading;
+    setIsLoading(true); 
+    try {
+      await deleteDoc(doc(db, TEAMS_COLLECTION, teamToDelete.id));
+      toast({ title: "Mannschaft gelöscht", description: `"${teamToDelete.name}" wurde erfolgreich entfernt.` });
+      fetchTeams(); // Refresh the list
+    } catch (error) {
+      console.error("Error deleting team: ", error);
+      toast({ title: "Fehler beim Löschen", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setIsLoading(originalIsLoading); // Restore original loading state or set to false
+      setIsAlertOpen(false);
+      setTeamToDelete(null);
+    }
   };
   
-  const handleSubmit = () => {
-    // TODO: Implement actual save/update logic to Firestore
-    if (formMode === 'new' && currentTeam && currentTeam.name && currentTeam.clubId) {
-      const newTeam = { ...currentTeam, id: `t_${currentTeam.name?.replace(/\s+/g, '_').toLowerCase()}_${Math.random().toString(36).substr(2,5)}` } as Team;
-      setTeams(prev => [...prev, newTeam]);
-      console.log("Neue Mannschaft (simuliert):", newTeam);
-    } else if (formMode === 'edit' && currentTeam?.id && currentTeam.name && currentTeam.clubId) {
-      setTeams(prev => prev.map(t => t.id === currentTeam.id ? {...t, ...currentTeam} as Team : t));
-      console.log("Mannschaft bearbeitet (simuliert):", currentTeam);
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!currentTeam || !currentTeam.name?.trim() || !currentTeam.clubId || !currentTeam.leagueId || currentTeam.competitionYear === undefined) {
+      toast({ title: "Ungültige Eingabe", description: "Bitte alle erforderlichen Felder ausfüllen.", variant: "destructive" });
+      return;
     }
-    setIsFormOpen(false);
-    setCurrentTeam(null);
+
+    const teamDataToSave: Omit<Team, 'id'> = {
+      name: currentTeam.name.trim(),
+      clubId: currentTeam.clubId,
+      leagueId: currentTeam.leagueId,
+      competitionYear: currentTeam.competitionYear,
+    };
+    
+    // Use a specific loading state for the form submission
+    const originalIsLoading = isLoading;
+    setIsLoading(true);
+
+    try {
+      const teamsCollectionRef = collection(db, TEAMS_COLLECTION);
+      let duplicateQuery;
+
+      // Check for duplicates: same name in the same league and competition year
+      const baseDuplicateConditions = [
+        where("name", "==", teamDataToSave.name),
+        where("leagueId", "==", teamDataToSave.leagueId),
+        where("competitionYear", "==", teamDataToSave.competitionYear)
+      ];
+
+      if (formMode === 'edit' && currentTeam?.id) {
+        duplicateQuery = query(teamsCollectionRef, ...baseDuplicateConditions, where(documentId(), "!=", currentTeam.id));
+      } else {
+        duplicateQuery = query(teamsCollectionRef, ...baseDuplicateConditions);
+      }
+      
+      const duplicateSnapshot = await getDocs(duplicateQuery);
+      if (!duplicateSnapshot.empty) {
+        toast({
+          title: "Doppelter Mannschaftsname",
+          description: `Eine Mannschaft mit dem Namen "${teamDataToSave.name}" existiert bereits in dieser Liga und Saison.`,
+          variant: "destructive",
+        });
+        setIsLoading(originalIsLoading);
+        return; 
+      }
+
+      if (formMode === 'new') {
+        await addDoc(teamsCollectionRef, teamDataToSave);
+        toast({ title: "Mannschaft erstellt", description: `"${teamDataToSave.name}" wurde erfolgreich angelegt.` });
+      } else if (formMode === 'edit' && currentTeam.id) {
+        await updateDoc(doc(db, TEAMS_COLLECTION, currentTeam.id), teamDataToSave);
+        toast({ title: "Mannschaft aktualisiert", description: `"${teamDataToSave.name}" wurde erfolgreich aktualisiert.` });
+      }
+      setIsFormOpen(false);
+      setCurrentTeam(null);
+      fetchTeams();
+    } catch (error) {
+      console.error("Error saving team: ", error);
+      const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
+      toast({ title: `Fehler beim ${action}`, description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setIsLoading(originalIsLoading);
+    }
   };
 
   const handleFormInputChange = (field: keyof Team, value: string | number) => {
-    if (currentTeam) {
-        setCurrentTeam(prev => ({ ...prev, [field]: value } as Partial<Team>));
-    }
+    setCurrentTeam(prev => prev ? ({ ...prev, [field]: value } as Partial<Team>) : null);
   };
   
   const navigateToShooters = (teamId: string) => {
-    router.push(`/admin/shooters?clubId=${filteredTeams.find(t=>t.id === teamId)?.clubId}&teamId=${teamId}`);
+    const team = teams.find(t => t.id === teamId);
+    if (team) {
+      router.push(`/admin/shooters?clubId=${team.clubId}&teamId=${teamId}&seasonId=${selectedSeasonId}&leagueId=${selectedLeagueId}`);
+    }
   };
 
-  const selectedSeasonName = allSeasons.find(s => s.id === selectedSeasonId)?.name || 'Saison';
-  const selectedLeagueName = availableLeaguesForSeason.find(l=>l.id===selectedLeagueId)?.name || 'Liga';
+  const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId);
+  const selectedLeague = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
+  const selectedSeasonName = selectedSeason?.name || 'Saison';
+  const selectedLeagueName = selectedLeague?.name || 'Liga';
+
+  const isLoadingFilters = !allSeasons.length || !allClubs.length || !allLeagues.length;
+
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h1 className="text-2xl font-semibold text-primary w-full sm:w-auto">Mannschaftsverwaltung</h1>
-        <div className="flex flex-wrap items-center gap-2"> {/* Reduced gap */}
-          <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={isLoadingFilters}>
             <SelectTrigger className="w-full sm:w-[200px]" aria-label="Saison auswählen">
               <SelectValue placeholder="Saison wählen" />
             </SelectTrigger>
@@ -195,18 +318,18 @@ export default function AdminTeamsPage() {
               {allSeasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={!selectedSeasonId || availableLeaguesForSeason.length === 0}>
+          <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={isLoadingFilters || !selectedSeasonId || availableLeaguesForSeason.length === 0}>
             <SelectTrigger className="w-full sm:w-[200px]" aria-label="Liga auswählen">
               <SelectValue placeholder="Liga wählen" />
             </SelectTrigger>
             <SelectContent>
               {availableLeaguesForSeason.length > 0 ? 
                 availableLeaguesForSeason.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>) :
-                <SelectItem value="no-league" disabled>Keine Ligen für Saison</SelectItem>
+                <SelectItem value="no-league" disabled>{selectedSeasonId ? 'Keine Ligen für Saison' : 'Saison wählen'}</SelectItem>
               }
             </SelectContent>
           </Select>
-          <Button onClick={handleAddNew} disabled={!selectedLeagueId} className="whitespace-nowrap w-full sm:w-auto">
+          <Button onClick={handleAddNew} disabled={isLoadingFilters || !selectedLeagueId} className="whitespace-nowrap w-full sm:w-auto">
             <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft
           </Button>
         </div>
@@ -219,7 +342,11 @@ export default function AdminTeamsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-           {filteredTeams.length > 0 ? (
+           {isLoading && teams.length === 0 ? (
+            <div className="flex justify-center items-center py-10">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+           ) : teams.length > 0 ? (
              <Table>
               <TableHeader>
                 <TableRow>
@@ -229,7 +356,7 @@ export default function AdminTeamsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTeams.map((team) => (
+                {teams.map((team) => (
                   <TableRow key={team.id}>
                     <TableCell>{team.name}</TableCell>
                     <TableCell>{allClubs.find(c => c.id === team.clubId)?.name || 'N/A'}</TableCell>
@@ -240,7 +367,7 @@ export default function AdminTeamsPage() {
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(team)} aria-label="Mannschaft bearbeiten">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(team.id)} className="text-destructive hover:text-destructive/80" aria-label="Mannschaft löschen">
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteConfirmation(team)} className="text-destructive hover:text-destructive/80" aria-label="Mannschaft löschen">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -251,50 +378,90 @@ export default function AdminTeamsPage() {
           ) : (
             <div className="p-8 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <p className="text-lg">
-                {selectedLeagueId ? `Keine Mannschaften für ${selectedLeagueName} in ${selectedSeasonName} angelegt.` : 
-                (selectedSeasonId ? 'Bitte wählen Sie eine Liga aus.' : 'Bitte wählen Sie zuerst Saison und Liga aus.')}
+                {isLoadingFilters ? 'Lade Filterdaten...' : 
+                 (!selectedSeasonId ? 'Bitte wählen Sie eine Saison aus.' : 
+                 (!selectedLeagueId ? 'Bitte wählen Sie eine Liga aus.' : 
+                 `Keine Mannschaften für ${selectedLeagueName} in Saison ${selectedSeasonName} angelegt.`))}
               </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+      <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setCurrentTeam(null); }}>
         <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{formMode === 'new' ? 'Neue Mannschaft anlegen' : 'Mannschaft bearbeiten'}</DialogTitle>
-             <DialogDescription>
-              Für Liga: {selectedLeagueName} ({selectedSeasonName})
-            </DialogDescription>
-          </DialogHeader>
-          {currentTeam && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">Name</Label>
-                <Input id="name" value={currentTeam.name || ''} onChange={(e) => handleFormInputChange('name', e.target.value)} className="col-span-3" />
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>{formMode === 'new' ? 'Neue Mannschaft anlegen' : 'Mannschaft bearbeiten'}</DialogTitle>
+              <DialogDescription>
+                Für Liga: {selectedLeagueName} (Saison: {selectedSeasonName})
+              </DialogDescription>
+            </DialogHeader>
+            {currentTeam && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="teamName" className="text-right">Name</Label>
+                  <Input 
+                    id="teamName" 
+                    value={currentTeam.name || ''} 
+                    onChange={(e) => handleFormInputChange('name', e.target.value)} 
+                    className="col-span-3" 
+                    required 
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="clubId" className="text-right">Verein</Label>
+                  <Select 
+                    value={currentTeam.clubId || ''} 
+                    onValueChange={(value) => handleFormInputChange('clubId', value)}
+                    required
+                  >
+                      <SelectTrigger id="clubId" className="col-span-3" aria-label="Verein auswählen">
+                          <SelectValue placeholder="Verein wählen"/>
+                      </SelectTrigger>
+                      <SelectContent>
+                          {allClubs.map(club => <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>)}
+                      </SelectContent>
+                  </Select>
+                </div>
+                  <Input type="hidden" value={currentTeam.leagueId || ''} />
+                  <Input type="hidden" value={currentTeam.competitionYear || 0} />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="clubId" className="text-right">Verein</Label>
-                <Select value={currentTeam.clubId || ''} onValueChange={(value) => handleFormInputChange('clubId', value)}>
-                    <SelectTrigger id="clubId" className="col-span-3" aria-label="Verein auswählen">
-                        <SelectValue placeholder="Verein wählen"/>
-                    </SelectTrigger>
-                    <SelectContent>
-                        {allClubs.map(club => <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-              </div>
-               {/* Liga und Saison (competitionYear) werden automatisch von der Auswahl übernommen und sind im currentTeam Objekt */}
-                <Input type="hidden" value={currentTeam.leagueId || ''} />
-                <Input type="hidden" value={currentTeam.competitionYear || 0} />
-            </div>
-          )}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>Abbrechen</Button>
-            <Button type="submit" onClick={handleSubmit}>Speichern</Button>
-          </DialogFooter>
+            )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentTeam(null); }}>Abbrechen</Button>
+              <Button type="submit" disabled={isLoading && isFormOpen}>
+                 {(isLoading && isFormOpen) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Speichern
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
+
+      {teamToDelete && (
+        <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Mannschaft löschen bestätigen</AlertDialogTitle>
+              <AlertDialogDescription>
+                Möchten Sie die Mannschaft "{teamToDelete.name}" wirklich endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => { setIsAlertOpen(false); setTeamToDelete(null); }}>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteTeam}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={isLoading && isAlertOpen}
+              >
+                {(isLoading && isAlertOpen) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Endgültig löschen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }

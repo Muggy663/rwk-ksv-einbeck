@@ -15,73 +15,67 @@ export interface CompetitionDisplayConfig {
 
 export interface Season {
   id: string;
-  competitionYear: number; // Ersetzt year und type für die eindeutige Identifizierung der Wettkampfperiode
-  name: string; // z.B. "RWK 2025 Kleinkaliber"
+  competitionYear: number;
+  name: string; 
+  type: UIDisciplineSelection; // 'KK' oder 'LD' für die UI Unterscheidung
   status: 'Geplant' | 'Laufend' | 'Abgeschlossen';
-  // UIDiscipline repräsentiert, ob es eine KK oder LD Saison ist (für die UI-Filterung)
-  // Dieses Feld könnte auch direkt im Dokument gespeichert werden oder aus dem Namen/Typ abgeleitet werden.
-  // Vorerst wird angenommen, dass es Teil des Saison-Objekts ist, das von Firestore kommt.
-  uiDiscipline: UIDisciplineSelection;
+  // uiDiscipline wurde durch 'type' ersetzt für Konsistenz
 }
 
 export interface League {
   id: string;
   name: string;
   shortName?: string;
-  competitionYear: number; // z.B. 2025
-  type: FirestoreCompetitionDiscipline; // 'KK', 'LG', 'LP', 'SP' -> Wichtig für Firestore-Abfragen
+  competitionYear: number; 
+  type: FirestoreCompetitionDiscipline; 
   order?: number;
-  // seasonId wurde durch competitionYear ersetzt/ergänzt
+  seasonId: string; // Referenz zur Saison
 }
 
 export interface Club {
-  id: string; // Wird client- oder serverseitig generiert
+  id: string; 
   name: string;
   shortName?: string;
-  clubNumber?: string; // Format: 08-XXX
-  contactName?: string;
-  contactEmail?: string;
+  clubNumber?: string; 
 }
 
 export interface Shooter {
   id: string;
-  name?: string; // Wird aus firstName und lastName generiert
+  name?: string; 
   firstName?: string;
   lastName?: string;
-  clubId?: string; // Referenz zum Verein
-  gender?: 'male' | 'female' | string; // string für Flexibilität
-  teamIds?: string[]; // In welchen Teams ist der Schütze gemeldet für eine best. Saison/Disziplin
-  // competitionYear?: number; // Wenn Schützen pro Saison verwaltet werden
+  clubId?: string; 
+  gender?: 'male' | 'female' | string; 
+  teamIds?: string[]; 
 }
 
 export interface Team {
   id: string;
   name: string;
-  clubId?: string; // Kann optional sein, wenn Vereine nicht streng geführt werden
+  clubId: string; 
   leagueId: string;
-  competitionYear: number;
+  competitionYear: number; // Wichtig für die Zuordnung zur korrekten Saisoninstanz
   shooterIds?: string[];
 }
 
-// Dieser Typ repräsentiert einen einzelnen Ergebnis-Eintrag, wie er in rwk_scores gespeichert ist
 export interface ScoreEntry {
-  id?: string; // Firestore-Dokument-ID
+  id?: string; 
   competitionYear: number;
-  durchgang: number; // Runde, z.B. 1, 2, 3, 4, 5
+  durchgang: number; 
   leagueId: string;
-  leagueName?: string; // Denormalisiert für einfachere Anzeige
+  leagueName?: string; 
   teamId: string;
-  teamName?: string; // Denormalisiert
+  teamName?: string; 
   clubId?: string;
-  clubName?: string; // Denormalisiert
+  clubName?: string; 
   shooterId: string;
-  shooterName?: string; // Denormalisiert
-  shooterGender?: 'male' | 'female' | string; // Für "Beste Dame" etc.
+  shooterName?: string; 
+  shooterGender?: 'male' | 'female' | string; 
   totalRinge: number;
-  scoreInputType: 'regular' | 'pre' | 'post'; // Regulär, Vor-, Nachschießen
+  scoreInputType: 'regular' | 'pre' | 'post'; 
   enteredByUserId?: string;
   enteredByUserName?: string;
-  entryTimestamp?: any; // Firestore Timestamp
+  entryTimestamp?: any; 
 }
 
 
@@ -90,27 +84,26 @@ export interface ScoreEntry {
 export interface ShooterDisplayResults {
   shooterId: string;
   shooterName: string;
-  results: { [roundKey: string]: number | null }; // z.B. { dg1: 280, dg2: 275, ... }
+  results: { [roundKey: string]: number | null }; 
   average: number | null;
   total: number | null;
   roundsShot: number;
-  // Optional: Referenzen, falls benötigt
   teamId?: string;
   leagueId?: string;
   competitionYear?: number;
 }
 
 export interface TeamDisplay extends Team {
-  clubName: string; // Wird versucht aus clubId zu laden oder aus team.name zu extrahieren
+  clubName: string; 
   rank?: number;
-  shootersResults: ShooterDisplayResults[]; // Individuelle Ergebnisse der Schützen dieses Teams
-  roundResults: { [key: string]: number | null }; // Mannschaftsergebnisse pro Durchgang, z.B. { dg1: 850, dg2: 840 }
-  totalScore: number; // Gesamt Mannschaftspunkte
-  averageScore: number | null; // Durchschnitt der Mannschaftspunkte pro gewertetem Durchgang
-  numScoredRounds: number; // Anzahl der Durchgänge, für die ein Mannschaftsergebnis vorliegt
+  shootersResults: ShooterDisplayResults[]; 
+  roundResults: { [key: string]: number | null }; 
+  totalScore: number; 
+  averageScore: number | null; 
+  numScoredRounds: number; 
 }
 
-export interface LeagueDisplay extends League {
+export interface LeagueDisplay extends Omit<League, 'seasonId'> { // seasonId wird nicht direkt in der Anzeige benötigt
   teams: TeamDisplay[];
 }
 
@@ -120,13 +113,12 @@ export interface AggregatedCompetitionData {
   leagues: LeagueDisplay[];
 }
 
-// Für die Einzelschützen-Rangliste
 export interface IndividualShooterDisplayData {
   shooterId: string;
   shooterName: string;
   shooterGender?: 'male' | 'female' | string;
-  teamName: string; // In welchem Team/Verein hat der Schütze geschossen (aus Score-Daten)
-  results: { [roundKey: string]: number | null }; // { dg1: 95, dg2: 92, ... }
+  teamName: string; 
+  results: { [roundKey: string]: number | null }; 
   totalScore: number;
   averageScore: number | null;
   roundsShot: number;
@@ -135,7 +127,7 @@ export interface IndividualShooterDisplayData {
 
 export interface PendingScoreEntry {
   tempId: string;
-  seasonId: string; // Wird im Formular ausgewählt, aber competitionYear ist für DB relevant
+  seasonId: string; 
   seasonName?: string;
   leagueId: string;
   leagueName?: string;
