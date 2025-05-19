@@ -84,11 +84,11 @@ export default function AdminShootersPage() {
           if (teamSnap.exists()) {
             setContextTeamName((teamSnap.data() as Team).name);
           } else {
-            setContextTeamName(`Team ID: ${queryTeamId}`);
+            setContextTeamName(null); // Team nicht gefunden
           }
         } catch (error) {
           console.error("Error fetching context team name: ", error);
-          setContextTeamName(`Team ID: ${queryTeamId}`);
+          setContextTeamName(null);
         }
       } else {
         setContextTeamName(null);
@@ -98,7 +98,7 @@ export default function AdminShootersPage() {
   }, [queryTeamId]);
 
   useEffect(() => {
-    const fetchClubs = async () => {
+    const fetchClubsAndShooters = async () => {
       setIsLoading(true);
       try {
         const clubsSnapshot = await getDocs(query(collection(db, CLUBS_COLLECTION), orderBy("name", "asc")));
@@ -107,33 +107,21 @@ export default function AdminShootersPage() {
         if (queryClubIdFromParams && fetchedClubs.some(c => c.id === queryClubIdFromParams)) {
           setSelectedClubIdFilter(queryClubIdFromParams);
         }
+
+        const shootersSnapshot = await getDocs(query(collection(db, SHOOTERS_COLLECTION), orderBy("lastName", "asc"), orderBy("firstName", "asc")));
+        const fetchedShooters: Shooter[] = shootersSnapshot.docs.map(docData => ({ id: docData.id, ...docData.data() } as Shooter));
+        setShooters(fetchedShooters);
+
       } catch (error) {
-        console.error("Error fetching clubs: ", error);
-        toast({ title: "Fehler beim Laden der Vereine", description: (error as Error).message, variant: "destructive" });
+        console.error("Error fetching initial data for shooters page: ", error);
+        toast({ title: "Fehler beim Laden der Daten", description: (error as Error).message, variant: "destructive" });
       } finally {
-        // Loading will be set to false after shooters are also fetched
+        setIsLoading(false);
       }
     };
-    fetchClubs();
+    fetchClubsAndShooters();
   }, [queryClubIdFromParams, toast]);
 
-  const fetchShooters = async () => {
-    setIsLoading(true);
-    try {
-      const shootersSnapshot = await getDocs(query(collection(db, SHOOTERS_COLLECTION), orderBy("lastName", "asc"), orderBy("firstName", "asc")));
-      const fetchedShooters: Shooter[] = shootersSnapshot.docs.map(docData => ({ id: docData.id, ...docData.data() } as Shooter));
-      setShooters(fetchedShooters);
-    } catch (error) {
-      console.error("Error fetching shooters: ", error);
-      toast({ title: "Fehler beim Laden der Schützen", description: (error as Error).message, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchShooters();
-  }, []);
 
   useEffect(() => {
     if (selectedClubIdFilter === ALL_CLUBS_FILTER_VALUE) {
@@ -187,7 +175,10 @@ export default function AdminShootersPage() {
     try {
       await deleteDoc(doc(db, SHOOTERS_COLLECTION, shooterToDelete.id));
       toast({ title: "Schütze gelöscht", description: `${shooterToDelete.firstName} ${shooterToDelete.lastName} wurde erfolgreich entfernt.` });
-      fetchShooters(); 
+      // Refetch shooters after delete
+      const shootersSnapshot = await getDocs(query(collection(db, SHOOTERS_COLLECTION), orderBy("lastName", "asc"), orderBy("firstName", "asc")));
+      const fetchedShooters: Shooter[] = shootersSnapshot.docs.map(docData => ({ id: docData.id, ...docData.data() } as Shooter));
+      setShooters(fetchedShooters);
     } catch (error) {
       console.error("Error deleting shooter: ", error);
       toast({ title: "Fehler beim Löschen", description: (error as Error).message, variant: "destructive" });
@@ -253,7 +244,10 @@ export default function AdminShootersPage() {
       }
       setIsFormOpen(false);
       setCurrentShooter(null);
-      fetchShooters();
+      // Refetch shooters after add/edit
+      const shootersSnapshot = await getDocs(query(collection(db, SHOOTERS_COLLECTION), orderBy("lastName", "asc"), orderBy("firstName", "asc")));
+      const fetchedShooters: Shooter[] = shootersSnapshot.docs.map(docData => ({ id: docData.id, ...docData.data() } as Shooter));
+      setShooters(fetchedShooters);
     } catch (error) {
       console.error("Error saving shooter: ", error);
       toast({ title: `Fehler beim ${formMode === 'new' ? 'Erstellen' : 'Aktualisieren'}`, description: (error as Error).message, variant: "destructive" });
@@ -272,8 +266,6 @@ export default function AdminShootersPage() {
 
   const getTeamInfoForShooter = (teamIds?: string[]): string => {
     if (!teamIds || teamIds.length === 0) return '-';
-    // For simplicity, not fetching all team names here to display.
-    // This could be enhanced if needed by fetching team data.
     if (queryTeamId && teamIds.includes(queryTeamId) && contextTeamName) {
         return teamIds.length > 1 ? `${contextTeamName} (+${teamIds.length -1} weitere)`: contextTeamName;
     }
@@ -307,11 +299,11 @@ export default function AdminShootersPage() {
        <Card className="shadow-md">
         <CardHeader>
           <CardTitle>
-            Schützen {selectedClubNameForTitle}
-            {contextTeamName ? ` (Kontext: ${contextTeamName})` : ''}
+            Schützen für {selectedClubNameForTitle}
           </CardTitle>
           <CardDescription>
             Verwalten Sie hier alle Schützen.
+            {contextTeamName ? ` (Aktueller Kontext: Team ${contextTeamName})` : (queryTeamId ? ` (Aktueller Kontext: Team ID ${queryTeamId})` : '')}
             {allClubs.length === 0 && !isLoading && <span className="text-destructive block mt-1"> Hinweis: Keine Vereine angelegt. Bitte zuerst Vereine erstellen.</span>}
           </CardDescription>
         </CardHeader>
@@ -354,31 +346,32 @@ export default function AdminShootersPage() {
           ) : (
             <div className="p-8 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <p className="text-lg">{selectedClubIdFilter !== ALL_CLUBS_FILTER_VALUE ? 'Keine Schützen für diesen Verein gefunden.' : 'Keine Schützen angelegt.'}</p>
+               {allClubs.length > 0 && <p className="text-sm">Klicken Sie auf "Neuen Schützen anlegen", um zu beginnen.</p>}
             </div>
           )}
         </CardContent>
       </Card>
 
       <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setCurrentShooter(null); }}>
-        <DialogContent className="sm:max-w-[480px]"> {/* Increased width for better layout */}
+        <DialogContent className="sm:max-w-lg"> {/* Increased width slightly */}
           <form onSubmit={handleSubmit}>
             <DialogHeader>
                 <DialogTitle>{formMode === 'new' ? 'Neuen Schützen anlegen' : 'Schütze bearbeiten'}</DialogTitle>
                 <DialogDescription>
-                    {queryTeamId && formMode === 'new' && contextTeamName ? `Schütze wird initial Team "${contextTeamName}" zugeordnet.` : 'Tragen Sie die Daten des Schützen ein.'}
+                    {formMode === 'new' && queryTeamId && contextTeamName ? `Schütze wird initial Team "${contextTeamName}" zugeordnet.` : 'Tragen Sie die Daten des Schützen ein.'}
                 </DialogDescription>
             </DialogHeader>
             {currentShooter && (
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
+                <div className="grid gap-y-4 py-4"> {/* Main vertical gap for form rows */}
+                  <div className="grid grid-cols-4 items-center gap-x-4"> {/* Row for firstName */}
                       <Label htmlFor="firstName" className="text-right col-span-1">Vorname</Label>
                       <Input id="firstName" value={currentShooter.firstName || ''} onChange={(e) => handleFormInputChange('firstName', e.target.value)} className="col-span-3" required />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
+                  <div className="grid grid-cols-4 items-center gap-x-4"> {/* Row for lastName */}
                       <Label htmlFor="lastName" className="text-right col-span-1">Nachname</Label>
                       <Input id="lastName" value={currentShooter.lastName || ''} onChange={(e) => handleFormInputChange('lastName', e.target.value)} className="col-span-3" required />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
+                  <div className="grid grid-cols-4 items-center gap-x-4"> {/* Row for clubId */}
                       <Label htmlFor="clubIdForm" className="text-right col-span-1">Verein</Label>
                       <Select 
                           value={currentShooter.clubId || ''} 
@@ -394,7 +387,7 @@ export default function AdminShootersPage() {
                           </SelectContent>
                       </Select>
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
+                  <div className="grid grid-cols-4 items-center gap-x-4"> {/* Row for gender */}
                       <Label htmlFor="gender" className="text-right col-span-1">Geschlecht</Label>
                       <Select 
                           value={currentShooter.gender || 'male'} 
@@ -409,9 +402,9 @@ export default function AdminShootersPage() {
                           </SelectContent>
                       </Select>
                   </div>
-                  {currentShooter.teamIds && currentShooter.teamIds.length > 0 && (
-                      <div className="col-span-4 text-xs text-muted-foreground p-2 rounded-md bg-secondary/30">
-                          Aktuelle Team-Zuordnungen (Info): {getTeamInfoForShooter(currentShooter.teamIds)}
+                  {currentShooter.teamIds && currentShooter.teamIds.length > 0 && formMode === 'edit' && (
+                      <div className="col-span-4 text-xs text-muted-foreground p-2 rounded-md bg-secondary/30 mt-2">
+                          Aktuelle Team-Zuordnungen (Info): {getTeamInfoForShooter(currentShooter.teamIds)}. Die Zuordnung zu Teams erfolgt über die Mannschaftsverwaltung.
                       </div>
                   )}
                 </div>
