@@ -7,7 +7,7 @@ import type { ChangelogEntry } from '@/types/updates';
 const changelogEntries: ChangelogEntry[] = [
   {
     version: '0.0.1.0',
-    date: '03. August 2024', // Angepasstes Datum
+    date: '19. Mai 2025', // Korrigiertes Datum
     title: 'Admin: Vereinsverwaltung mit Datenbankanbindung',
     descriptionPoints: [
       'Admin-Seite für Vereine (/admin/clubs) implementiert.',
