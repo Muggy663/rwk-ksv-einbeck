@@ -1,3 +1,4 @@
+
 // src/app/admin/teams/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent, useMemo } from 'react';
@@ -59,7 +60,7 @@ export default function AdminTeamsPage() {
   const { toast } = useToast();
 
   const [allSeasons, setAllSeasons] = useState<Season[]>([]);
-  const [allLeagues, setAllLeagues] = useState<League[]>([]); // Store all leagues
+  const [allLeagues, setAllLeagues] = useState<League[]>([]);
   const [allClubs, setAllClubs] = useState<Club[]>([]);
 
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
@@ -68,7 +69,11 @@ export default function AdminTeamsPage() {
   
   const [teams, setTeams] = useState<Team[]>([]);
   
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(true); // For initial data load
+  const [isLoadingTeams, setIsLoadingTeams] = useState(false); // For loading teams list
+  const [isLoadingForm, setIsLoadingForm] = useState(false); // For form submission
+  const [isLoadingDelete, setIsLoadingDelete] = useState(false); // For delete operation
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentTeam, setCurrentTeam] = useState<Partial<Team> & { id?: string } | null>(null);
   const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
@@ -76,44 +81,53 @@ export default function AdminTeamsPage() {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
 
-  // Fetch initial data (seasons, all leagues, clubs)
   useEffect(() => {
     const fetchInitialData = async () => {
-      setIsLoading(true);
+      console.log("AdminTeamsPage: fetchInitialData called");
+      setIsLoadingData(true);
       try {
+        console.log("AdminTeamsPage: Fetching seasons...");
         const seasonsSnapshot = await getDocs(query(collection(db, SEASONS_COLLECTION), orderBy("competitionYear", "desc")));
         const fetchedSeasons: Season[] = seasonsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Season));
         setAllSeasons(fetchedSeasons);
+        console.log("AdminTeamsPage: Seasons fetched:", fetchedSeasons.length);
 
+        console.log("AdminTeamsPage: Fetching leagues...");
         const leaguesSnapshot = await getDocs(query(collection(db, LEAGUES_COLLECTION), orderBy("name", "asc")));
         const fetchedLeagues: League[] = leaguesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as League));
         setAllLeagues(fetchedLeagues);
+        console.log("AdminTeamsPage: Leagues fetched:", fetchedLeagues.length);
 
+        console.log("AdminTeamsPage: Fetching clubs...");
         const clubsSnapshot = await getDocs(query(collection(db, CLUBS_COLLECTION), orderBy("name", "asc")));
         const fetchedClubs: Club[] = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Club));
         setAllClubs(fetchedClubs);
+        console.log("AdminTeamsPage: Clubs fetched:", fetchedClubs.length);
 
         if (querySeasonId && fetchedSeasons.some(s => s.id === querySeasonId)) {
           setSelectedSeasonId(querySeasonId);
         } else if (fetchedSeasons.length > 0) {
           setSelectedSeasonId(fetchedSeasons[0].id);
         }
+        console.log("AdminTeamsPage: Initial selectedSeasonId:", selectedSeasonId);
 
       } catch (error) {
-        console.error("Error fetching initial data for teams admin: ", error);
+        console.error("AdminTeamsPage: Error fetching initial data for teams admin: ", error);
         toast({ title: "Fehler beim Laden der Basisdaten", description: (error as Error).message, variant: "destructive" });
       } finally {
-        setIsLoading(false); // Set to false after all initial fetches are done or attempted
+        setIsLoadingData(false);
+        console.log("AdminTeamsPage: fetchInitialData finished. isLoadingData:", false);
       }
     };
     fetchInitialData();
-  }, [querySeasonId, toast]); // querySeasonId dependency to re-evaluate if it changes
+  }, [querySeasonId, toast]);
 
-  // Effect to update available leagues when selectedSeasonId changes
   useEffect(() => {
+    console.log("AdminTeamsPage: selectedSeasonId or allLeagues changed. Current selectedSeasonId:", selectedSeasonId);
     if (selectedSeasonId) {
       const leaguesForSeason = allLeagues.filter(l => l.seasonId === selectedSeasonId).sort((a, b) => (a.order || 0) - (b.order || 0));
       setAvailableLeaguesForSeason(leaguesForSeason);
+      console.log("AdminTeamsPage: Available leagues for season:", leaguesForSeason.length);
       
       if (queryLeagueId && leaguesForSeason.some(l => l.id === queryLeagueId)) {
         setSelectedLeagueId(queryLeagueId);
@@ -126,21 +140,24 @@ export default function AdminTeamsPage() {
       setAvailableLeaguesForSeason([]);
       setSelectedLeagueId('');
     }
+    console.log("AdminTeamsPage: Current selectedLeagueId:", selectedLeagueId);
   }, [selectedSeasonId, allLeagues, queryLeagueId]);
 
-  // Fetch teams when selectedLeagueId or selectedSeasonId changes
   const fetchTeams = useMemo(() => async () => {
     if (!selectedLeagueId || !selectedSeasonId) {
       setTeams([]);
+      console.log("AdminTeamsPage: fetchTeams - No league or season selected, clearing teams.");
       return;
     }
     const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
     if (!currentSeason) {
       setTeams([]);
+      console.warn("AdminTeamsPage: fetchTeams - Current season not found for ID:", selectedSeasonId);
       return;
     }
 
-    setIsLoading(true);
+    console.log(`AdminTeamsPage: Fetching teams for league ${selectedLeagueId} and year ${currentSeason.competitionYear}`);
+    setIsLoadingTeams(true);
     try {
       const q = query(
         collection(db, TEAMS_COLLECTION),
@@ -151,12 +168,14 @@ export default function AdminTeamsPage() {
       const querySnapshot = await getDocs(q);
       const fetchedTeams: Team[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       setTeams(fetchedTeams);
+      console.log("AdminTeamsPage: Teams fetched:", fetchedTeams.length);
     } catch (error) {
-      console.error("Error fetching teams: ", error);
+      console.error("AdminTeamsPage: Error fetching teams: ", error);
       toast({ title: "Fehler beim Laden der Mannschaften", description: (error as Error).message, variant: "destructive" });
       setTeams([]);
     } finally {
-      setIsLoading(false);
+      setIsLoadingTeams(false);
+      console.log("AdminTeamsPage: fetchTeams finished. isLoadingTeams:", false);
     }
   }, [selectedLeagueId, selectedSeasonId, allSeasons, toast]);
 
@@ -204,18 +223,16 @@ export default function AdminTeamsPage() {
       return;
     }
     
-    // Use a specific loading state for the alert if it's different from the main page loading
-    const originalIsLoading = isLoading;
-    setIsLoading(true); 
+    setIsLoadingDelete(true); 
     try {
       await deleteDoc(doc(db, TEAMS_COLLECTION, teamToDelete.id));
       toast({ title: "Mannschaft gelöscht", description: `"${teamToDelete.name}" wurde erfolgreich entfernt.` });
-      fetchTeams(); // Refresh the list
+      fetchTeams(); 
     } catch (error) {
       console.error("Error deleting team: ", error);
       toast({ title: "Fehler beim Löschen", description: (error as Error).message, variant: "destructive" });
     } finally {
-      setIsLoading(originalIsLoading); // Restore original loading state or set to false
+      setIsLoadingDelete(false);
       setIsAlertOpen(false);
       setTeamToDelete(null);
     }
@@ -235,15 +252,12 @@ export default function AdminTeamsPage() {
       competitionYear: currentTeam.competitionYear,
     };
     
-    // Use a specific loading state for the form submission
-    const originalIsLoading = isLoading;
-    setIsLoading(true);
+    setIsLoadingForm(true);
 
     try {
       const teamsCollectionRef = collection(db, TEAMS_COLLECTION);
       let duplicateQuery;
 
-      // Check for duplicates: same name in the same league and competition year
       const baseDuplicateConditions = [
         where("name", "==", teamDataToSave.name),
         where("leagueId", "==", teamDataToSave.leagueId),
@@ -263,7 +277,7 @@ export default function AdminTeamsPage() {
           description: `Eine Mannschaft mit dem Namen "${teamDataToSave.name}" existiert bereits in dieser Liga und Saison.`,
           variant: "destructive",
         });
-        setIsLoading(originalIsLoading);
+        setIsLoadingForm(false);
         return; 
       }
 
@@ -282,7 +296,7 @@ export default function AdminTeamsPage() {
       const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
       toast({ title: `Fehler beim ${action}`, description: (error as Error).message, variant: "destructive" });
     } finally {
-      setIsLoading(originalIsLoading);
+      setIsLoadingForm(false);
     }
   };
 
@@ -302,34 +316,31 @@ export default function AdminTeamsPage() {
   const selectedSeasonName = selectedSeason?.name || 'Saison';
   const selectedLeagueName = selectedLeague?.name || 'Liga';
 
-  const isLoadingFilters = !allSeasons.length || !allClubs.length || !allLeagues.length;
-
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h1 className="text-2xl font-semibold text-primary w-full sm:w-auto">Mannschaftsverwaltung</h1>
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={isLoadingFilters}>
+          <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={isLoadingData}>
             <SelectTrigger className="w-full sm:w-[200px]" aria-label="Saison auswählen">
-              <SelectValue placeholder="Saison wählen" />
+              <SelectValue placeholder={isLoadingData ? "Lade Saisons..." : "Saison wählen"} />
             </SelectTrigger>
             <SelectContent>
               {allSeasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={isLoadingFilters || !selectedSeasonId || availableLeaguesForSeason.length === 0}>
+          <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={isLoadingData || !selectedSeasonId || availableLeaguesForSeason.length === 0}>
             <SelectTrigger className="w-full sm:w-[200px]" aria-label="Liga auswählen">
-              <SelectValue placeholder="Liga wählen" />
+              <SelectValue placeholder={isLoadingData ? "Lade Ligen..." : "Liga wählen"} />
             </SelectTrigger>
             <SelectContent>
               {availableLeaguesForSeason.length > 0 ? 
                 availableLeaguesForSeason.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>) :
-                <SelectItem value="no-league" disabled>{selectedSeasonId ? 'Keine Ligen für Saison' : 'Saison wählen'}</SelectItem>
+                <SelectItem value="no-league" disabled>{isLoadingData ? "Lade..." : (selectedSeasonId ? 'Keine Ligen für Saison' : 'Saison wählen')}</SelectItem>
               }
             </SelectContent>
           </Select>
-          <Button onClick={handleAddNew} disabled={isLoadingFilters || !selectedLeagueId} className="whitespace-nowrap w-full sm:w-auto">
+          <Button onClick={handleAddNew} disabled={isLoadingData || !selectedLeagueId} className="whitespace-nowrap w-full sm:w-auto">
             <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft
           </Button>
         </div>
@@ -342,9 +353,10 @@ export default function AdminTeamsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-           {isLoading && teams.length === 0 ? (
+           {isLoadingTeams ? (
             <div className="flex justify-center items-center py-10">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <p className="ml-3">Lade Mannschaften...</p>
             </div>
            ) : teams.length > 0 ? (
              <Table>
@@ -378,7 +390,7 @@ export default function AdminTeamsPage() {
           ) : (
             <div className="p-8 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <p className="text-lg">
-                {isLoadingFilters ? 'Lade Filterdaten...' : 
+                {isLoadingData ? 'Lade Filterdaten...' : 
                  (!selectedSeasonId ? 'Bitte wählen Sie eine Saison aus.' : 
                  (!selectedLeagueId ? 'Bitte wählen Sie eine Liga aus.' : 
                  `Keine Mannschaften für ${selectedLeagueName} in Saison ${selectedSeasonName} angelegt.`))}
@@ -430,8 +442,8 @@ export default function AdminTeamsPage() {
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentTeam(null); }}>Abbrechen</Button>
-              <Button type="submit" disabled={isLoading && isFormOpen}>
-                 {(isLoading && isFormOpen) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={isLoadingForm}>
+                 {isLoadingForm && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Speichern
               </Button>
             </DialogFooter>
@@ -453,9 +465,9 @@ export default function AdminTeamsPage() {
               <AlertDialogAction
                 onClick={handleDeleteTeam}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                disabled={isLoading && isAlertOpen}
+                disabled={isLoadingDelete}
               >
-                {(isLoading && isAlertOpen) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoadingDelete && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Endgültig löschen
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -465,3 +477,4 @@ export default function AdminTeamsPage() {
     </div>
   );
 }
+

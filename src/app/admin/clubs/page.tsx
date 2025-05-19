@@ -56,10 +56,7 @@ export default function AdminClubsPage() {
     setIsLoading(true);
     try {
       const clubsCollectionRef = collection(db, CLUBS_COLLECTION);
-      // Temporarily sort only by name to ensure clubs without 'clubNumber' field are shown.
-      // Once clubNumber is consistently populated, we can revert to:
-      // const q = query(clubsCollectionRef, orderBy("clubNumber", "asc"), orderBy("name", "asc"));
-      const q = query(clubsCollectionRef, orderBy("name", "asc"));
+      const q = query(clubsCollectionRef, orderBy("clubNumber", "asc"), orderBy("name", "asc"));
       const querySnapshot = await getDocs(q);
       const fetchedClubs: Club[] = [];
       querySnapshot.forEach((doc) => {
@@ -117,7 +114,7 @@ export default function AdminClubsPage() {
     const clubName = clubToDelete.name;
     console.log(`--- handleDeleteClub: Attempting to delete club: ${clubName} (ID: ${clubId}) ---`);
     
-    setIsLoading(true); // Use a specific loading state for the alert action if needed
+    setIsLoading(true); 
     try {
       console.log(`--- handleDeleteClub: Calling deleteDoc for ${clubId} ---`);
       await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
@@ -130,7 +127,7 @@ export default function AdminClubsPage() {
       });
       console.log(`--- handleDeleteClub: SUCCESS toast call for ${clubId} has been made. ---`);
       
-      await fetchClubs(); // Refresh the list
+      await fetchClubs(); 
     } catch (error) {
       console.error("--- handleDeleteClub: Error during delete operation: ---", clubId, error);
       toast({
@@ -165,14 +162,12 @@ export default function AdminClubsPage() {
       let duplicateQuery;
 
       if (formMode === 'edit' && currentClub?.id) {
-        // Check if another document with the same name exists
         duplicateQuery = query(
           clubsCollectionRef,
           where("name", "==", clubDataToSave.name),
           where(documentId(), "!=", currentClub.id) 
         );
       } else {
-        // Check if any document with the same name exists
         duplicateQuery = query(
           clubsCollectionRef,
           where("name", "==", clubDataToSave.name)
