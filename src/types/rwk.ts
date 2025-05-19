@@ -26,7 +26,7 @@ export interface League {
   name: string;
   shortName?: string;
   competitionYear: number;
-  type: FirestoreCompetitionDiscipline; // KK, LG, LP, SP
+  type: UIDisciplineSelection; // Geändert von FirestoreCompetitionDiscipline
   order?: number;
   seasonId: string; // Referenz zur Saison
 }
@@ -40,13 +40,12 @@ export interface Club {
 
 export interface Shooter {
   id: string;
-  firstName?: string; // Neu für detailliertere Eingabe
-  lastName?: string;  // Neu für detailliertere Eingabe
+  firstName?: string;
+  lastName?: string;
   name: string; // Kombinierter Name, wird generiert oder gespeichert
-  clubId: string; // Geändert zu Pflichtfeld
-  gender?: 'male' | 'female' | string; // 'male' oder 'female' bevorzugt
+  clubId: string;
+  gender?: 'male' | 'female' | string;
   teamIds?: string[];
-  // competitionYear?: number; // Ist eher bei ScoreEntry relevant
 }
 
 export interface Team {
@@ -66,7 +65,7 @@ export interface ScoreEntry {
   leagueName?: string;
   teamId: string;
   teamName?: string;
-  clubId?: string; // Kann nützlich sein für manche Abfragen
+  clubId?: string;
   clubName?: string;
   shooterId: string;
   shooterName?: string;
@@ -88,12 +87,12 @@ export interface ShooterDisplayResults {
   average: number | null;
   total: number | null;
   roundsShot: number;
-  teamId?: string; // Optional, für Kontext
-  leagueId?: string; // Optional, für Kontext
-  competitionYear?: number; // Optional, für Kontext
+  teamId?: string;
+  leagueId?: string;
+  competitionYear?: number;
 }
 
-export interface TeamDisplay extends Team {
+export interface TeamDisplay extends Omit<Team, 'shooterIds'> { // shooterIds ist hier nicht direkt nötig für die Anzeige
   clubName: string;
   rank?: number;
   shootersResults: ShooterDisplayResults[];
@@ -103,7 +102,7 @@ export interface TeamDisplay extends Team {
   numScoredRounds: number;
 }
 
-export interface LeagueDisplay extends League { // Erbt jetzt direkt von League
+export interface LeagueDisplay extends League {
   teams: TeamDisplay[];
 }
 
@@ -126,7 +125,7 @@ export interface IndividualShooterDisplayData {
 }
 
 export interface PendingScoreEntry {
-  tempId: string; // Für clientseitige Identifizierung vor dem Speichern
+  tempId: string;
   seasonId: string;
   seasonName?: string;
   leagueId: string;
@@ -139,5 +138,4 @@ export interface PendingScoreEntry {
   totalRinge: number;
   scoreInputType: 'regular' | 'pre' | 'post';
   competitionYear: number;
-  // Optional: clubId und clubName könnten hier auch nützlich sein
 }
