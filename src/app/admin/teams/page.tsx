@@ -47,7 +47,7 @@ import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, o
 import { useToast } from '@/hooks/use-toast';
 
 const SEASONS_COLLECTION = "seasons";
-const LEAGUES_COLLECTION = "rwk_leagues";
+const LEAGUES_COLLECTION = "rwk_leagues"; // Korrigierter Collection-Name
 const CLUBS_COLLECTION = "clubs";
 const TEAMS_COLLECTION = "rwk_teams";
 
@@ -60,19 +60,19 @@ export default function AdminTeamsPage() {
   const { toast } = useToast();
 
   const [allSeasons, setAllSeasons] = useState<Season[]>([]);
-  const [allLeagues, setAllLeagues] = useState<League[]>([]);
+  const [allLeagues, setAllLeagues] = useState<League[]>([]); // Wird jetzt alle Ligen halten
   const [allClubs, setAllClubs] = useState<Club[]>([]);
 
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
-  const [availableLeaguesForSeason, setAvailableLeaguesForSeason] = useState<League[]>([]);
+  const [availableLeaguesForSeason, setAvailableLeaguesForSeason] = useState<League[]>([]); // Gefilterte Ligen für die Saison
   const [selectedLeagueId, setSelectedLeagueId] = useState<string>('');
   
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]); // Mannschaften für die ausgewählte Liga/Saison
   
-  const [isLoadingData, setIsLoadingData] = useState(true); // For initial data load
-  const [isLoadingTeams, setIsLoadingTeams] = useState(false); // For loading teams list
-  const [isLoadingForm, setIsLoadingForm] = useState(false); // For form submission
-  const [isLoadingDelete, setIsLoadingDelete] = useState(false); // For delete operation
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isLoadingTeams, setIsLoadingTeams] = useState(false);
+  const [isLoadingForm, setIsLoadingForm] = useState(false);
+  const [isLoadingDelete, setIsLoadingDelete] = useState(false);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentTeam, setCurrentTeam] = useState<Partial<Team> & { id?: string } | null>(null);
@@ -92,11 +92,15 @@ export default function AdminTeamsPage() {
         setAllSeasons(fetchedSeasons);
         console.log("AdminTeamsPage: Seasons fetched:", fetchedSeasons.length);
 
-        console.log("AdminTeamsPage: Fetching leagues...");
+        if (fetchedSeasons.length === 0) {
+          toast({ title: "Keine Saisons gefunden", description: "Bitte zuerst Saisons anlegen.", variant: "destructive" });
+        }
+
+        console.log("AdminTeamsPage: Fetching all leagues...");
         const leaguesSnapshot = await getDocs(query(collection(db, LEAGUES_COLLECTION), orderBy("name", "asc")));
         const fetchedLeagues: League[] = leaguesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as League));
-        setAllLeagues(fetchedLeagues);
-        console.log("AdminTeamsPage: Leagues fetched:", fetchedLeagues.length);
+        setAllLeagues(fetchedLeagues); // Alle Ligen laden
+        console.log("AdminTeamsPage: All leagues fetched:", fetchedLeagues.length);
 
         console.log("AdminTeamsPage: Fetching clubs...");
         const clubsSnapshot = await getDocs(query(collection(db, CLUBS_COLLECTION), orderBy("name", "asc")));
@@ -108,8 +112,10 @@ export default function AdminTeamsPage() {
           setSelectedSeasonId(querySeasonId);
         } else if (fetchedSeasons.length > 0) {
           setSelectedSeasonId(fetchedSeasons[0].id);
+        } else {
+          setSelectedSeasonId(''); // Keine Saisons, also nichts auswählen
         }
-        console.log("AdminTeamsPage: Initial selectedSeasonId:", selectedSeasonId);
+        console.log("AdminTeamsPage: Initial selectedSeasonId set to:", selectedSeasonId);
 
       } catch (error) {
         console.error("AdminTeamsPage: Error fetching initial data for teams admin: ", error);
@@ -120,12 +126,15 @@ export default function AdminTeamsPage() {
       }
     };
     fetchInitialData();
-  }, [querySeasonId, toast]);
+  }, [querySeasonId, toast]); // querySeasonId Abhängigkeit hinzugefügt
 
+  // Effekt zum Filtern der Ligen basierend auf der ausgewählten Saison
   useEffect(() => {
     console.log("AdminTeamsPage: selectedSeasonId or allLeagues changed. Current selectedSeasonId:", selectedSeasonId);
-    if (selectedSeasonId) {
-      const leaguesForSeason = allLeagues.filter(l => l.seasonId === selectedSeasonId).sort((a, b) => (a.order || 0) - (b.order || 0));
+    if (selectedSeasonId && allLeagues.length > 0) {
+      const leaguesForSeason = allLeagues
+        .filter(l => l.seasonId === selectedSeasonId)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
       setAvailableLeaguesForSeason(leaguesForSeason);
       console.log("AdminTeamsPage: Available leagues for season:", leaguesForSeason.length);
       
@@ -134,14 +143,14 @@ export default function AdminTeamsPage() {
       } else if (leaguesForSeason.length > 0) {
         setSelectedLeagueId(leaguesForSeason[0].id);
       } else {
-        setSelectedLeagueId('');
+        setSelectedLeagueId(''); // Keine Ligen für diese Saison
       }
     } else {
       setAvailableLeaguesForSeason([]);
       setSelectedLeagueId('');
     }
-    console.log("AdminTeamsPage: Current selectedLeagueId:", selectedLeagueId);
-  }, [selectedSeasonId, allLeagues, queryLeagueId]);
+    console.log("AdminTeamsPage: Current selectedLeagueId set to:", selectedLeagueId);
+  }, [selectedSeasonId, allLeagues, queryLeagueId]); // queryLeagueId Abhängigkeit hinzugefügt
 
   const fetchTeams = useMemo(() => async () => {
     if (!selectedLeagueId || !selectedSeasonId) {
@@ -194,18 +203,26 @@ export default function AdminTeamsPage() {
       toast({ title: "Fehler", description: "Saisondaten nicht gefunden.", variant: "destructive" });
       return;
     }
+    if (allClubs.length === 0) {
+      toast({ title: "Keine Vereine", description: "Bitte zuerst Vereine in der Vereinsverwaltung anlegen.", variant: "destructive" });
+      return;
+    }
 
     setFormMode('new');
     setCurrentTeam({ 
       leagueId: selectedLeagueId, 
       competitionYear: currentSeason.competitionYear, 
       name: '', 
-      clubId: allClubs.length > 0 ? allClubs[0].id : '' 
+      clubId: allClubs[0].id // Wähle ersten Verein als Standard
     });
     setIsFormOpen(true);
   };
 
   const handleEdit = (team: Team) => {
+    if (allClubs.length === 0) {
+        toast({ title: "Keine Vereine", description: "Vereinsauswahl nicht möglich. Bitte Vereine anlegen.", variant: "destructive" });
+        // Optional: Form nicht öffnen oder clubId-Feld deaktivieren
+    }
     setFormMode('edit');
     setCurrentTeam(team);
     setIsFormOpen(true);
@@ -245,7 +262,7 @@ export default function AdminTeamsPage() {
       return;
     }
 
-    const teamDataToSave: Omit<Team, 'id'> = {
+    const teamDataToSave: Omit<Team, 'id' | 'shooterIds'> = { // shooterIds wird hier nicht direkt gespeichert
       name: currentTeam.name.trim(),
       clubId: currentTeam.clubId,
       leagueId: currentTeam.leagueId,
@@ -300,8 +317,13 @@ export default function AdminTeamsPage() {
     }
   };
 
-  const handleFormInputChange = (field: keyof Team, value: string | number) => {
-    setCurrentTeam(prev => prev ? ({ ...prev, [field]: value } as Partial<Team>) : null);
+  const handleFormInputChange = (field: keyof Pick<Team, 'name' | 'clubId'>, value: string) => {
+    setCurrentTeam(prev => {
+        if (!prev) return null;
+        // Sicherstellen, dass competitionYear und leagueId nicht überschrieben werden, wenn sie nicht explizit geändert werden
+        const updatedTeam = { ...prev, [field]: value };
+        return updatedTeam as Partial<Team>;
+    });
   };
   
   const navigateToShooters = (teamId: string) => {
@@ -313,25 +335,29 @@ export default function AdminTeamsPage() {
 
   const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId);
   const selectedLeague = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
-  const selectedSeasonName = selectedSeason?.name || 'Saison';
-  const selectedLeagueName = selectedLeague?.name || 'Liga';
+  const selectedSeasonName = selectedSeason?.name || (isLoadingData ? 'Lade...' : 'Saison');
+  const selectedLeagueName = selectedLeague?.name || (isLoadingData ? 'Lade...' : (selectedSeasonId ? 'Liga' : ''));
+
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h1 className="text-2xl font-semibold text-primary w-full sm:w-auto">Mannschaftsverwaltung</h1>
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={isLoadingData}>
+          <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={isLoadingData || allSeasons.length === 0}>
             <SelectTrigger className="w-full sm:w-[200px]" aria-label="Saison auswählen">
-              <SelectValue placeholder={isLoadingData ? "Lade Saisons..." : "Saison wählen"} />
+              <SelectValue placeholder={isLoadingData ? "Lade Saisons..." : (allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen")} />
             </SelectTrigger>
             <SelectContent>
-              {allSeasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+              {allSeasons.length > 0 ? 
+                allSeasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>) :
+                <SelectItem value="no-season" disabled>Keine Saisons verfügbar</SelectItem>
+              }
             </SelectContent>
           </Select>
           <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={isLoadingData || !selectedSeasonId || availableLeaguesForSeason.length === 0}>
             <SelectTrigger className="w-full sm:w-[200px]" aria-label="Liga auswählen">
-              <SelectValue placeholder={isLoadingData ? "Lade Ligen..." : "Liga wählen"} />
+              <SelectValue placeholder={isLoadingData ? "Lade Ligen..." : (!selectedSeasonId ? "Saison wählen" : (availableLeaguesForSeason.length === 0 ? "Keine Ligen" : "Liga wählen"))} />
             </SelectTrigger>
             <SelectContent>
               {availableLeaguesForSeason.length > 0 ? 
@@ -340,7 +366,7 @@ export default function AdminTeamsPage() {
               }
             </SelectContent>
           </Select>
-          <Button onClick={handleAddNew} disabled={isLoadingData || !selectedLeagueId} className="whitespace-nowrap w-full sm:w-auto">
+          <Button onClick={handleAddNew} disabled={isLoadingData || !selectedLeagueId || allClubs.length === 0} className="whitespace-nowrap w-full sm:w-auto">
             <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft
           </Button>
         </div>
@@ -350,6 +376,7 @@ export default function AdminTeamsPage() {
           <CardTitle>Mannschaften in {selectedLeagueName} ({selectedSeasonName})</CardTitle>
           <CardDescription>
             Verwalten Sie hier die Mannschaften für die ausgewählte Liga und Saison.
+            {allClubs.length === 0 && !isLoadingData && <span className="text-destructive block mt-1"> Hinweis: Keine Vereine angelegt. Bitte zuerst Vereine erstellen.</span>}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -393,7 +420,8 @@ export default function AdminTeamsPage() {
                 {isLoadingData ? 'Lade Filterdaten...' : 
                  (!selectedSeasonId ? 'Bitte wählen Sie eine Saison aus.' : 
                  (!selectedLeagueId ? 'Bitte wählen Sie eine Liga aus.' : 
-                 `Keine Mannschaften für ${selectedLeagueName} in Saison ${selectedSeasonName} angelegt.`))}
+                 (allClubs.length === 0 ? 'Bitte zuerst Vereine anlegen, um Mannschaften erstellen zu können.' :
+                 `Keine Mannschaften für ${selectedLeagueName} in Saison ${selectedSeasonName} angelegt.`)))}
               </p>
             </div>
           )}
@@ -406,7 +434,7 @@ export default function AdminTeamsPage() {
             <DialogHeader>
               <DialogTitle>{formMode === 'new' ? 'Neue Mannschaft anlegen' : 'Mannschaft bearbeiten'}</DialogTitle>
               <DialogDescription>
-                Für Liga: {selectedLeagueName} (Saison: {selectedSeasonName})
+                Für Liga: {selectedLeague?.name || 'Unbekannte Liga'} (Saison: {selectedSeason?.name || 'Unbekannte Saison'})
               </DialogDescription>
             </DialogHeader>
             {currentTeam && (
@@ -427,22 +455,22 @@ export default function AdminTeamsPage() {
                     value={currentTeam.clubId || ''} 
                     onValueChange={(value) => handleFormInputChange('clubId', value)}
                     required
+                    disabled={allClubs.length === 0}
                   >
                       <SelectTrigger id="clubId" className="col-span-3" aria-label="Verein auswählen">
-                          <SelectValue placeholder="Verein wählen"/>
+                          <SelectValue placeholder={allClubs.length === 0 ? "Keine Vereine verfügbar" : "Verein wählen"}/>
                       </SelectTrigger>
                       <SelectContent>
                           {allClubs.map(club => <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>)}
                       </SelectContent>
                   </Select>
                 </div>
-                  <Input type="hidden" value={currentTeam.leagueId || ''} />
-                  <Input type="hidden" value={currentTeam.competitionYear || 0} />
+                  {/* leagueId und competitionYear werden nicht direkt im Formular geändert, sondern vom Kontext übernommen */}
               </div>
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentTeam(null); }}>Abbrechen</Button>
-              <Button type="submit" disabled={isLoadingForm}>
+              <Button type="submit" disabled={isLoadingForm || allClubs.length === 0}>
                  {isLoadingForm && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Speichern
               </Button>
