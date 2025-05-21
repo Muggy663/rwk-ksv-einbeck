@@ -1,18 +1,16 @@
 // src/app/verein/layout.tsx
 "use client";
-import React, { type ReactNode, useEffect, useState, createContext, useContext, useCallback } from 'react';
+import React, { type ReactNode, useEffect, createContext, useContext, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, AlertTriangle, ShieldAlert } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth'; // Use the main Auth hook
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { db } from '@/lib/firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
-import type { UserPermission, VereinContextType } from '@/types/rwk'; // VereinContextType importieren
+import type { UserPermission, VereinContextType } from '@/types/rwk';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const USER_PERMISSIONS_COLLECTION = "user_permissions";
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";
 
 // Context erstellen
@@ -32,112 +30,49 @@ interface VereinLayoutProps {
 }
 
 export default function VereinLayout({ children }: VereinLayoutProps) {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { 
+    user, 
+    loading: authLoading, 
+    signOut, 
+    userAppPermissions, // Get app-specific permissions from AuthContext
+    loadingAppPermissions, // Get app-specific permissions loading state
+    appPermissionsError // Get app-specific permissions error state
+  } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  const [userPermission, setUserPermission] = useState<UserPermission | null>(null);
-  const [loadingPermissions, setLoadingPermissions] = useState<boolean>(true);
-  const [permissionError, setPermissionError] = useState<string | null>(null);
+  // Local state for permission error specific to this layout's validation logic
+  const [layoutPermissionError, setLayoutPermissionError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log("VereinLayout DEBUG: useEffect for permissions triggered. Auth loading:", authLoading, "User UID:", user?.uid);
-
-    if (authLoading) {
-      console.log("VereinLayout DEBUG: Auth is loading, setting loadingPermissions to true.");
-      setLoadingPermissions(true);
-      return;
-    }
-
-    if (!user) {
-      // Dieser Redirect wird nun vom AuthProvider oder einer höheren Ebene erwartet.
-      // Hier setzen wir nur den Fehler oder leeren die Permissions, wenn kein User da ist nach dem Laden.
-      console.log("VereinLayout DEBUG: No user, redirecting to login by MainNav/AuthProvider.");
-      // router.push('/login'); // Sollte nicht mehr hier sein, um Render-Loop zu vermeiden
-      setLoadingPermissions(false);
-      setUserPermission(null);
-      setPermissionError("Benutzer nicht angemeldet."); // Oder eine generischere Meldung
-      return;
-    }
-    
-    // Super-Admin sollte hier nicht sein, wird durch MainNav umgeleitet.
-    // Falls doch, keine VV-Permissions laden.
-    if (user.email === ADMIN_EMAIL) {
-        console.log("VereinLayout DEBUG: Super-Admin detected, skipping VV permission loading.");
-        setLoadingPermissions(false);
-        setUserPermission(null); 
-        // Setze keinen Fehler, da Admins hier nicht sein sollten oder es spezielle Ansichten geben könnte.
-        // Alternativ: Redirect zum Admin-Panel, aber das sollte schon in MainNav passieren.
-        // setPermissionError("Admin-Benutzer im Vereinsbereich.");
+    // This effect now primarily validates the permissions obtained from AuthContext
+    if (!authLoading && !loadingAppPermissions) {
+      if (!user) {
+        // This should ideally be handled by a higher-level redirect (e.g. in MainNav or page itself)
+        // For robustness, we can still redirect if user becomes null after initial load.
+        router.push('/login');
         return;
-    }
-
-    setLoadingPermissions(true);
-    setPermissionError(null);
-    setUserPermission(null);
-
-    const fetchPermissions = async () => {
-      if (!user?.uid) {
-        console.warn("VereinLayout DEBUG: User object or UID is null/undefined when trying to fetch permissions.");
-        setPermissionError("Benutzer-ID nicht verfügbar, um Berechtigungen zu laden.");
-        setLoadingPermissions(false);
+      }
+      if (user.email === ADMIN_EMAIL) {
+        // Super-Admin should not be in /verein layout
+        router.push('/admin');
         return;
       }
 
-      console.log(`VereinLayout DEBUG: Fetching permissions for UID: ${user.uid}`);
-      try {
-        const permDocRef = doc(db, USER_PERMISSIONS_COLLECTION, user.uid);
-        const docSnap = await getDoc(permDocRef);
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          console.log("VereinLayout DEBUG: Raw permission data from Firestore:", JSON.stringify(data));
-          
-          const permissionDataFromDb: UserPermission = {
-            uid: user.uid,
-            email: data.email || user.email || "N/A",
-            displayName: data.displayName || user.displayName || null,
-            role: data.role || null,
-            clubIds: Array.isArray(data.clubIds) ? data.clubIds.filter(id => typeof id === 'string' && id.trim() !== '') : null,
-            lastUpdated: data.lastUpdated || null,
-          };
-          console.log("VereinLayout DEBUG: Parsed UserPermission object:", JSON.stringify(permissionDataFromDb));
-
-          const allowedRoles: Array<UserPermission['role']> = ['vereinsvertreter', 'mannschaftsfuehrer'];
-
-          if (permissionDataFromDb.role && allowedRoles.includes(permissionDataFromDb.role)) {
-            if (permissionDataFromDb.clubIds && permissionDataFromDb.clubIds.length > 0) {
-              console.log("VereinLayout DEBUG: Valid Vereinsvertreter/Mannschaftsführer permissions found.");
-              setUserPermission(permissionDataFromDb);
-              setPermissionError(null);
-            } else {
-              console.warn("VereinLayout DEBUG: Role is valid, but no clubIds assigned or clubIds array is empty. ClubIds:", permissionDataFromDb.clubIds);
-              setPermissionError(`Benutzerrolle '${permissionDataFromDb.role}' ist gültig, aber keine Vereine zugewiesen.`);
-              setUserPermission(null);
-            }
-          } else {
-            console.warn(`VereinLayout DEBUG: Role is not 'vereinsvertreter' or 'mannschaftsfuehrer'. Role: ${permissionDataFromDb.role}`);
-            setPermissionError(`Keine gültige Vereinsvertreter- oder Mannschaftsführer-Berechtigung für diesen Benutzer gefunden. Rolle ist nicht korrekt.`);
-            setUserPermission(null);
-          }
-        } else {
-          console.warn(`VereinLayout DEBUG: No permission document found for UID: ${user.uid}`);
-          setPermissionError("Keine Berechtigungen für diesen Benutzer in Firestore gefunden. Bitte kontaktieren Sie den Administrator.");
-          setUserPermission(null);
-        }
-      } catch (error) {
-        console.error("VereinLayout DEBUG: Error fetching user permissions:", error);
-        setPermissionError(`Fehler beim Laden der Benutzerberechtigungen: ${(error as Error).message}`);
-        setUserPermission(null);
-      } finally {
-        console.log("VereinLayout DEBUG: Finished fetching permissions. LoadingPermissions set to false.");
-        setLoadingPermissions(false);
+      if (appPermissionsError) {
+        setLayoutPermissionError(appPermissionsError);
+      } else if (!userAppPermissions) {
+        setLayoutPermissionError("Benutzerberechtigungen konnten nicht initialisiert werden.");
+      } else if (userAppPermissions.role !== 'vereinsvertreter' && userAppPermissions.role !== 'mannschaftsfuehrer') {
+        setLayoutPermissionError(`Keine gültige Vereins-Rolle ('${userAppPermissions.role}') für diesen Benutzer gefunden.`);
+      } else if (!userAppPermissions.clubIds || userAppPermissions.clubIds.length === 0) {
+        setLayoutPermissionError("Ihrem Konto sind keine Vereine zugewiesen. Bitte kontaktieren Sie den Administrator.");
+      } else {
+        setLayoutPermissionError(null); // Clear any previous error
       }
-    };
+    }
+  }, [user, authLoading, userAppPermissions, loadingAppPermissions, appPermissionsError, router]);
 
-    fetchPermissions();
-
-  }, [user, authLoading, router]);
 
   const vereinNavItems = [
     { href: '/verein/dashboard', label: 'Übersicht', icon: LayoutDashboard },
@@ -147,80 +82,84 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
   ];
 
   const contextValue: VereinContextType = {
-    userPermission,
-    loadingPermissions,
-    permissionError,
+    userPermission: userAppPermissions, // Pass down the permissions from AuthContext
+    loadingPermissions: loadingAppPermissions,
+    // Use layoutPermissionError which combines appPermissionsError and local validation
+    permissionError: layoutPermissionError || appPermissionsError, 
   };
-
-  if (authLoading) {
+  
+  if (authLoading || loadingAppPermissions) {
     return (
       <div className="flex min-h-screen justify-center items-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3">Lade Benutzerdaten...</p>
+        <p className="ml-3">Lade Benutzer- & Berechtigungsdaten...</p>
       </div>
     );
   }
 
-  // Wenn kein Benutzer nach dem Laden des Auth-Status vorhanden ist (z.B. ausgeloggt), zeige Login-Aufforderung oder nichts.
-  // Dieser Fall sollte idealerweise durch einen Redirect auf der Seitenebene oder im AuthProvider gehandhabt werden.
-  if (!user && !authLoading) {
+  if (!user) { // Should be caught by useEffect redirect, but as a fallback
     return (
         <div className="container mx-auto px-4 py-12 text-center">
             <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
             <h1 className="text-xl font-semibold text-destructive">Nicht angemeldet</h1>
-            <p className="text-muted-foreground">Bitte melden Sie sich an, um diesen Bereich zu nutzen.</p>
-            <Button onClick={() => router.push('/login')} className="mt-4">Zum Login</Button>
+            <p className="text-muted-foreground">Weiterleitung zum Login...</p>
         </div>
     );
   }
   
-  // Wenn der Benutzer der Super-Admin ist, sollte er hier eigentlich nicht sein.
-  // Die Hauptnavigation sollte ihn zum Admin-Panel leiten.
-  // Zeige eine Meldung oder leite um, falls er doch hier landet.
-  if (user && user.email === ADMIN_EMAIL && !authLoading) {
-    return (
+  if (user.email === ADMIN_EMAIL) { // Should be caught by useEffect redirect
+     return (
         <div className="container mx-auto px-4 py-12 text-center">
             <ShieldAlert className="mx-auto h-12 w-12 text-amber-500 mb-4" />
             <h1 className="text-xl font-semibold text-amber-600">Admin-Bereich</h1>
-            <p className="text-muted-foreground">Super-Admins sollten das <Link href="/admin" className="text-primary hover:underline">Admin Panel</Link> verwenden.</p>
+            <p className="text-muted-foreground">Weiterleitung zum Admin Panel...</p>
         </div>
     );
   }
 
-
-  // Rendere Kinder nur, wenn Permissions geladen wurden und kein Fehler aufgetreten ist
-  // ODER wenn Permissions noch laden und kein Fehler da ist.
-  // Der eigentliche Content-Schutz basierend auf permissionError geschieht dann in den Kind-Seiten.
-  const renderContent = () => {
-    if (loadingPermissions) {
+  // Display error if permissions are invalid for VV/MF access
+  if (layoutPermissionError || appPermissionsError) {
       return (
-        <div className="flex min-h-screen justify-center items-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="ml-3">Lade Berechtigungen...</p>
-        </div>
+          <div className="flex min-h-screen">
+              <aside className="w-60 bg-background border-r p-4 shadow-md hidden md:block">
+                 <div className="flex items-center space-x-2 mb-6"><Building className="h-7 w-7 text-destructive" /><h2 className="text-xl font-semibold text-destructive">Vereinsbereich</h2></div>
+                 <Separator className="my-6" />
+                 <Button variant="outline" onClick={() => router.push('/')} className="w-full mb-2"><ArrowLeft className="mr-2 h-4 w-4" /> Zur Startseite</Button>
+                 {user && <Button variant="outline" onClick={signOut} className="w-full text-destructive hover:text-destructive/80 hover:bg-destructive/10"><LogOut className="mr-2 h-4 w-4"/> Logout</Button>}
+              </aside>
+              <main className="flex-1 p-8 flex flex-col justify-center items-center text-center">
+                  <Card className="w-full max-w-lg border-destructive bg-destructive/5">
+                    <CardHeader>
+                      <CardTitle className="text-destructive flex items-center gap-2">
+                        <AlertTriangle className="h-6 w-6" />
+                        Zugriffsproblem im Vereinsbereich
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-destructive-foreground">
+                      <p>{layoutPermissionError || appPermissionsError}</p>
+                      <p className="text-sm mt-2">Bitte kontaktieren Sie den Administrator, um Ihre Berechtigungen zu überprüfen oder zu korrigieren.</p>
+                    </CardContent>
+                  </Card>
+              </main>
+          </div>
       );
-    }
-    // Wenn ein Fehler beim Laden der Berechtigungen aufgetreten ist, zeige ihn hier.
-    if (permissionError) {
-        return (
-            <div className="flex min-h-screen">
-                <aside className="w-60 bg-background border-r p-4 shadow-md hidden md:block">
-                   <div className="flex items-center space-x-2 mb-6"><Building className="h-7 w-7 text-destructive" /><h2 className="text-xl font-semibold text-destructive">Vereinsbereich</h2></div>
-                   <Separator className="my-6" />
-                   <Button variant="outline" onClick={() => router.push('/')} className="w-full mb-2"><ArrowLeft className="mr-2 h-4 w-4" /> Zur Startseite</Button>
-                   {user && <Button variant="outline" onClick={signOut} className="w-full text-destructive hover:text-destructive/80 hover:bg-destructive/10"><LogOut className="mr-2 h-4 w-4"/> Logout</Button>}
-                </aside>
-                <main className="flex-1 p-8 flex flex-col justify-center items-center text-center">
-                    <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
-                    <h1 className="text-2xl font-semibold text-destructive mb-2">Zugriffsproblem im Dashboard</h1>
-                    <p className="text-muted-foreground">{permissionError}</p>
-                    <p className="text-sm text-muted-foreground mt-2">Bitte kontaktieren Sie den Administrator, um diese Zuweisung vorzunehmen oder zu korrigieren.</p>
-                </main>
-            </div>
-        );
-    }
-    // Wenn Berechtigungen geladen und kein Fehler -> zeige Navigation und Kinder
+  }
+  // Only render children if permissions are valid
+  if (!userAppPermissions || (!userAppPermissions.clubIds || userAppPermissions.clubIds.length === 0)) {
+    // This case should be covered by layoutPermissionError above, but as a fallback
     return (
+      <div className="flex min-h-screen justify-center items-center">
+         <Card className="w-full max-w-lg border-amber-500 bg-amber-50/50">
+            <CardHeader><CardTitle className="text-amber-700">Fehlende Vereinszuweisung</CardTitle></CardHeader>
+            <CardContent><p>Ihrem Konto sind keine Vereine zugewiesen. Bitte kontaktieren Sie den Administrator.</p></CardContent>
+         </Card>
+      </div>
+    );
+  }
+
+
+  return (
+    <VereinContext.Provider value={contextValue}>
       <div className="flex min-h-[calc(100vh-theme(spacing.16))]">
         <aside className="w-60 bg-background border-r p-4 shadow-md hidden md:block">
           <div className="flex items-center space-x-2 mb-6">
@@ -253,15 +192,19 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
           }
         </aside>
         <main className="flex-1 p-6 lg:p-8 bg-muted/20 overflow-y-auto">
-          {children}
+          { React.Children.map(children, child => {
+              if (React.isValidElement(child)) {
+                // Pass userPermission and loadingPermissions to child pages
+                return React.cloneElement(child as React.ReactElement<any>, { 
+                    userPermission: userAppPermissions, 
+                    loadingPermissions: loadingAppPermissions 
+                });
+              }
+              return child;
+            })
+          }
         </main>
       </div>
-    );
-  };
-
-  return (
-    <VereinContext.Provider value={contextValue}>
-      {renderContent()}
     </VereinContext.Provider>
   );
 }

@@ -1,6 +1,6 @@
 // src/app/admin/support-tickets/page.tsx
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Table,
@@ -10,45 +10,90 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, MessagesSquare, AlertTriangle } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Loader2, MessagesSquare, AlertTriangle, Eye } from 'lucide-react';
 import type { SupportTicket } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, Timestamp, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 const SUPPORT_TICKETS_COLLECTION = "support_tickets";
+type TicketStatus = SupportTicket['status'];
 
 export default function AdminSupportTicketsPage() {
   const { toast } = useToast();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null); // Store ticket ID being updated
+
+  const fetchTickets = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const ticketsQuery = query(collection(db, SUPPORT_TICKETS_COLLECTION), orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(ticketsQuery);
+      const fetchedTickets: SupportTicket[] = [];
+      querySnapshot.forEach((docSnap) => {
+        fetchedTickets.push({ id: docSnap.id, ...docSnap.data() } as SupportTicket);
+      });
+      setTickets(fetchedTickets);
+    } catch (error) {
+      console.error("Error fetching support tickets: ", error);
+      toast({
+        title: "Fehler beim Laden der Tickets",
+        description: (error as Error).message || "Ein unbekannter Fehler ist aufgetreten.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    const fetchTickets = async () => {
-      setIsLoading(true);
-      try {
-        const ticketsQuery = query(collection(db, SUPPORT_TICKETS_COLLECTION), orderBy("timestamp", "desc"));
-        const querySnapshot = await getDocs(ticketsQuery);
-        const fetchedTickets: SupportTicket[] = [];
-        querySnapshot.forEach((doc) => {
-          fetchedTickets.push({ id: doc.id, ...doc.data() } as SupportTicket);
-        });
-        setTickets(fetchedTickets);
-      } catch (error) {
-        console.error("Error fetching support tickets: ", error);
-        toast({
-          title: "Fehler beim Laden der Tickets",
-          description: (error as Error).message || "Ein unbekannter Fehler ist aufgetreten.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchTickets();
-  }, [toast]);
+  }, [fetchTickets]);
+
+  const handleShowDetails = (ticket: SupportTicket) => {
+    setSelectedTicket(ticket);
+    setIsModalOpen(true);
+  };
+
+  const handleStatusChange = async (ticketId: string, newStatus: TicketStatus) => {
+    if (!ticketId) return;
+    setIsUpdatingStatus(ticketId);
+    try {
+      const ticketDocRef = doc(db, SUPPORT_TICKETS_COLLECTION, ticketId);
+      await updateDoc(ticketDocRef, { status: newStatus });
+      toast({
+        title: "Status aktualisiert",
+        description: `Der Status des Tickets wurde auf "${newStatus}" geändert.`,
+      });
+      // Optimistic update or refetch
+      setTickets(prevTickets => 
+        prevTickets.map(t => t.id === ticketId ? { ...t, status: newStatus } : t)
+      );
+    } catch (error) {
+      console.error("Error updating ticket status:", error);
+      toast({
+        title: "Fehler beim Statusupdate",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingStatus(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -62,7 +107,7 @@ export default function AdminSupportTicketsPage() {
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle>Eingegangene Tickets</CardTitle>
-          <CardDescription>Hier sehen Sie alle von Benutzern gesendeten Anfragen.</CardDescription>
+          <CardDescription>Hier sehen Sie alle von Benutzern gesendeten Anfragen und können deren Status verwalten.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -75,12 +120,12 @@ export default function AdminSupportTicketsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Datum</TableHead>
+                    <TableHead className="w-[150px]">Datum</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>E-Mail</TableHead>
                     <TableHead>Betreff</TableHead>
-                    <TableHead>Status</TableHead>
-                    {/* <TableHead className="text-right">Aktionen</TableHead> */}
+                    <TableHead className="w-[180px]">Status</TableHead>
+                    <TableHead className="text-right w-[100px]">Aktion</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -92,10 +137,29 @@ export default function AdminSupportTicketsPage() {
                       <TableCell>{ticket.name}</TableCell>
                       <TableCell>{ticket.email}</TableCell>
                       <TableCell className="max-w-xs truncate" title={ticket.subject}>{ticket.subject}</TableCell>
-                      <TableCell>{ticket.status || 'neu'}</TableCell>
-                      {/* <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">Details</Button>
-                      </TableCell> */}
+                      <TableCell>
+                        <Select
+                          value={ticket.status || 'neu'}
+                          onValueChange={(newStatus) => handleStatusChange(ticket.id!, newStatus as TicketStatus)}
+                          disabled={isUpdatingStatus === ticket.id}
+                        >
+                          <SelectTrigger className="h-9 text-xs">
+                            <SelectValue placeholder="Status wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="neu">Neu</SelectItem>
+                            <SelectItem value="in Bearbeitung">In Bearbeitung</SelectItem>
+                            <SelectItem value="gelesen">Gelesen</SelectItem>
+                            <SelectItem value="geschlossen">Geschlossen</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {isUpdatingStatus === ticket.id && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="outline" size="sm" onClick={() => handleShowDetails(ticket)}>
+                          <Eye className="mr-1 h-4 w-4" /> Details
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -109,12 +173,25 @@ export default function AdminSupportTicketsPage() {
           )}
         </CardContent>
       </Card>
-       <Card className="mt-6 shadow-sm border-amber-500 bg-amber-50/50">
-          <CardHeader><CardTitle className="text-amber-700 text-base">Hinweis</CardTitle></CardHeader>
-          <CardContent className="text-sm text-amber-800">
-            <p>Dies ist eine einfache Anzeige der Support-Tickets. Funktionen wie das Ändern des Status oder das direkte Antworten auf Tickets sind in dieser Version noch nicht implementiert.</p>
-          </CardContent>
-        </Card>
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          {selectedTicket && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl text-primary">{selectedTicket.subject}</DialogTitle>
+                <DialogDescription>
+                  Von: {selectedTicket.name} ({selectedTicket.email}) <br />
+                  Gesendet am: {selectedTicket.timestamp ? format((selectedTicket.timestamp as Timestamp).toDate(), 'dd.MM.yyyy HH:mm', { locale: de }) : '-'}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4 whitespace-pre-wrap text-sm text-muted-foreground bg-muted/50 p-4 rounded-md max-h-[60vh] overflow-y-auto">
+                {selectedTicket.message}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

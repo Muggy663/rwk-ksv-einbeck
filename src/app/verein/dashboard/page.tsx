@@ -5,14 +5,21 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Users, UserCircle, ListChecks, Building, AlertTriangle, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { getDoc, doc, collection, getDocs, query, where } from 'firebase/firestore'; // Added collection, getDocs, query, where
+import { getDoc, doc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import type { Club, UserPermission } from '@/types/rwk';
-import { useVereinAuth } from '@/app/verein/layout'; 
+import { useVereinAuth } from '@/app/verein/layout'; // Use the context hook from VereinLayout
 
 const CLUBS_COLLECTION = "clubs";
 
-export default function VereinDashboardPage() {
+// Define a type for the props that this page component will receive
+interface VereinDashboardPageProps {
+  userPermission?: UserPermission | null; // Made optional as it comes from context now
+  loadingPermissions?: boolean; // Made optional
+}
+
+export default function VereinDashboardPage(props: VereinDashboardPageProps) {
+  // Get permission data from context provided by VereinLayout
   const { userPermission, loadingPermissions, permissionError } = useVereinAuth();
 
   const [assignedClubsInfo, setAssignedClubsInfo] = useState<{ id: string, name: string }[]>([]);
@@ -20,7 +27,7 @@ export default function VereinDashboardPage() {
   const [clubNamesError, setClubNamesError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log("VereinDashboard DEBUG: Props from context - loadingPermissions:", loadingPermissions, "userPermission:", userPermission, "permissionError (from layout):", permissionError);
+    console.log("VereinDashboard DEBUG: Context values - loadingPermissions:", loadingPermissions, "userPermission:", userPermission, "permissionError (from layout):", permissionError);
 
     if (loadingPermissions) {
       setIsLoadingClubNames(true);
@@ -28,7 +35,7 @@ export default function VereinDashboardPage() {
     }
     // If layout already determined a permission error, reflect it.
     if (permissionError) {
-        setClubNamesError(permissionError); // Use the error message from layout
+        setClubNamesError(permissionError);
         setIsLoadingClubNames(false);
         setAssignedClubsInfo([]);
         return;
@@ -36,20 +43,19 @@ export default function VereinDashboardPage() {
 
     const fetchClubNames = async () => {
       if (!userPermission || !userPermission.clubIds || userPermission.clubIds.length === 0) {
-        console.log("VereinDashboard DEBUG: No clubIds in userPermission or userPermission is null.");
         setAssignedClubsInfo([]);
         setIsLoadingClubNames(false);
-        if (userPermission && (!userPermission.clubIds || userPermission.clubIds.length === 0)) {
-          setClubNamesError("Ihrem Konto sind keine Vereine zugewiesen. Bitte kontaktieren Sie den Administrator.");
-        } else if (!userPermission && !loadingPermissions) { // Should be caught by layout's error handling
-          setClubNamesError("Keine Berechtigungsdaten für diesen Benutzer gefunden.");
+        if (!loadingPermissions && userPermission && (!userPermission.clubIds || userPermission.clubIds.length === 0) && userPermission.role === 'vereinsvertreter') {
+          // Only show this specific error if role is correct but no clubs
+          setClubNamesError("Ihrem Konto sind als Vereinsvertreter keine Vereine zugewiesen. Bitte kontaktieren Sie den Administrator.");
+        } else if (!loadingPermissions && !userPermission && !permissionError) {
+          setClubNamesError("Keine Berechtigungsdaten für Anzeige vorhanden.");
         }
         return;
       }
 
       setIsLoadingClubNames(true);
       setClubNamesError(null);
-      console.log("VereinDashboard DEBUG: Fetching club names for clubIds:", userPermission.clubIds);
       
       try {
         const validClubIds = userPermission.clubIds.filter(id => typeof id === 'string' && id.trim() !== '');
@@ -60,8 +66,6 @@ export default function VereinDashboardPage() {
           return;
         }
         
-        // Fetch multiple club documents. Consider 'in' query if many clubs.
-        // For 1-3 clubs, individual getDoc is fine.
         const fetchedClubsPromises = validClubIds.map(id => getDoc(doc(db, CLUBS_COLLECTION, id)));
         const clubDocsSnaps = await Promise.all(fetchedClubsPromises);
         
@@ -72,7 +76,6 @@ export default function VereinDashboardPage() {
             name: (docSnap.data() as Club).name || "Unbekannter Verein"
           }));
         
-        console.log("VereinDashboard DEBUG: Fetched club names:", fetchedClubs);
         setAssignedClubsInfo(fetchedClubs);
 
         if (fetchedClubs.length === 0 && validClubIds.length > 0) {
@@ -88,20 +91,13 @@ export default function VereinDashboardPage() {
       }
     };
 
-    // Only fetch if permissions are loaded and no error from layout
     if (!loadingPermissions && userPermission && !permissionError) {
       fetchClubNames();
-    } else if (!loadingPermissions && !userPermission && !permissionError) {
-      // This case should be handled by the layout's permission error display,
-      // but as a fallback for the dashboard itself.
-      setClubNamesError("Keine Berechtigungsdaten für Anzeige vorhanden.");
-      setAssignedClubsInfo([]);
-      setIsLoadingClubNames(false);
     }
   }, [userPermission, loadingPermissions, permissionError]);
 
 
-  if (loadingPermissions) { // Use loadingPermissions from context
+  if (loadingPermissions) {
     return (
       <div className="flex justify-center items-center py-12">
         <Loader2 className="h-12 w-12 animate-spin text-primary mr-3" />
@@ -110,8 +106,6 @@ export default function VereinDashboardPage() {
     );
   }
 
-  // If layout determined an error, this component might not even render its main content
-  // due to layout's error handling. But if it does, it can show its own error state.
   if (permissionError) { 
      return (
       <div className="space-y-6 p-4 md:p-6">
@@ -127,7 +121,6 @@ export default function VereinDashboardPage() {
     );
   }
   
-  // If permissions are loaded, but club name fetching is in progress
   if (isLoadingClubNames) {
      return (
       <div className="flex justify-center items-center py-12">
@@ -136,6 +129,12 @@ export default function VereinDashboardPage() {
       </div>
     );
   }
+  
+  const roleDisplay = userPermission?.role === 'vereinsvertreter' 
+    ? 'Vereinsvertreter' 
+    : userPermission?.role === 'mannschaftsfuehrer' 
+    ? 'Mannschaftsführer' 
+    : 'Unbekannte Rolle';
 
   return (
     <div className="space-y-6">
@@ -143,8 +142,13 @@ export default function VereinDashboardPage() {
         <div>
           <h1 className="text-3xl font-bold text-primary">Vereins-Dashboard</h1>
           <p className="text-muted-foreground">
-            Willkommen, {userPermission?.displayName || userPermission?.email || 'Vereinsvertreter'}!
+            Willkommen, {userPermission?.displayName || userPermission?.email || 'Benutzer'}!
           </p>
+          {userPermission?.role && (
+            <p className="text-sm text-accent font-medium mt-1">
+              Ihre Rolle: {roleDisplay}
+            </p>
+          )}
           {assignedClubsInfo.length > 0 && (
             <div className="mt-1">
               <span className="text-muted-foreground">Zugewiesene Vereine: </span>
@@ -155,13 +159,13 @@ export default function VereinDashboardPage() {
               ))}
             </div>
           )}
-           {clubNamesError && ( // Show specific club name loading errors
+           {clubNamesError && !permissionError && ( // Show specific club name loading errors if no general permission error
              <p className="text-destructive text-sm mt-1">{clubNamesError}</p>
            )}
-           {assignedClubsInfo.length === 0 && !isLoadingClubNames && !clubNamesError && userPermission?.clubIds && userPermission.clubIds.length > 0 && (
-             <p className="text-amber-600 text-sm mt-1">Die zugewiesenen Vereine konnten nicht geladen werden oder existieren nicht.</p>
-           )}
-           {assignedClubsInfo.length === 0 && !isLoadingClubNames && !clubNamesError && (!userPermission?.clubIds || userPermission.clubIds.length === 0) && (
+           {/* Specific message if no clubs assigned for a valid role */}
+           {userPermission && (userPermission.role === 'vereinsvertreter' || userPermission.role === 'mannschaftsfuehrer') && 
+            (!userPermission.clubIds || userPermission.clubIds.length === 0) && 
+            !loadingPermissions && !permissionError && !clubNamesError && (
              <p className="text-amber-600 text-sm mt-1">Ihrem Konto sind aktuell keine Vereine zugewiesen. Bitte kontaktieren Sie den Administrator.</p>
            )}
         </div>
@@ -219,7 +223,12 @@ export default function VereinDashboardPage() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>Dies ist Ihr persönlicher Verwaltungsbereich für Ihre zugewiesenen Vereine.</p>
-          <p>Die Zuweisung von Mannschaften zu spezifischen Ligen (z.B. Kreisoberliga) erfolgt durch den Super-Admin.</p>
+          {userPermission?.role === 'mannschaftsfuehrer' && 
+            <p>Als Mannschaftsführer können Sie Ergebnisse eintragen. Die Verwaltung von Mannschaften und Schützen obliegt dem Vereinsvertreter oder Super-Admin.</p>
+          }
+          {userPermission?.role === 'vereinsvertreter' &&
+             <p>Die Zuweisung von Mannschaften zu spezifischen Ligen (z.B. Kreisoberliga) erfolgt durch den Super-Admin.</p>
+          }
            <p>Wenn Sie Ihre Vereine nicht verwalten können oder falsche Vereine zugewiesen sind, kontaktieren Sie bitte den Administrator.</p>
         </CardContent>
       </Card>
