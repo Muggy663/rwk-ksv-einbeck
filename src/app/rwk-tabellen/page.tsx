@@ -1,6 +1,5 @@
-
 // src/app/rwk-tabellen/page.tsx
-"use client";
+"use client"; // Mark this as a Client Component
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -32,9 +31,9 @@ import { ChevronDown, ChevronRight, TableIcon, Loader2, AlertTriangle, User, Use
 import type {
   Season,
   League, Team, Club, Shooter, ScoreEntry,
-  CompetitionDisplayConfig, FirestoreLeagueSpecificDiscipline, UIDisciplineSelection, AggregatedCompetitionData, IndividualShooterDisplayData, LeagueDisplay, TeamDisplay, ShooterDisplayResults
+  CompetitionDisplayConfig, UIDisciplineSelection, AggregatedCompetitionData, IndividualShooterDisplayData, LeagueDisplay, TeamDisplay, ShooterDisplayResults, FirestoreLeagueSpecificDiscipline
 } from '@/types/rwk';
-import { uiDisciplineFilterOptions, AVAILABLE_UI_DISCIPLINES, getUIDisciplineValueFromSpecificType } from '@/types/rwk';
+import { uiDisciplineFilterOptions, AVAILABLE_UI_DISCIPLINES } from '@/types/rwk';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { db } from '@/lib/firebase/config';
@@ -44,18 +43,19 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 const TEAM_SIZE_FOR_SCORING = 3;
-const EXCLUDED_TEAM_NAME = "SV Dörrigsen Einzel";
+const EXCLUDED_TEAM_NAME = "SV Dörrigsen Einzel"; // Mannschaft, die nicht in der Tabelle erscheinen soll
 
 async function fetchAvailableYearsFromSeasons(): Promise<number[]> {
   console.log("RWK-TABLE: fetchAvailableYearsFromSeasons called");
   try {
     const seasonsColRef = collection(db, "seasons");
+    // Sortiere nach competitionYear absteigend, um das neueste Jahr zuerst zu haben
     const qSeasons = query(seasonsColRef, orderBy("competitionYear", "desc"));
     const seasonsSnapshot = await getDocs(qSeasons);
     
     if (seasonsSnapshot.empty) {
-      console.warn("RWK-TABLE: No seasons found to determine available years.");
-      return [new Date().getFullYear()];
+      console.warn("RWK-TABLE: No seasons found in DB to determine available years.");
+      return [new Date().getFullYear()]; // Fallback zum aktuellen Jahr
     }
     
     const years = new Set<number>();
@@ -65,14 +65,16 @@ async function fetchAvailableYearsFromSeasons(): Promise<number[]> {
         years.add(seasonData.competitionYear);
       }
     });
+    // Stelle sicher, dass die Jahre absteigend sortiert sind
     const sortedYears = Array.from(years).sort((a, b) => b - a); 
     console.log("RWK-TABLE: Available years from DB (sorted desc):", sortedYears);
     return sortedYears.length > 0 ? sortedYears : [new Date().getFullYear()];
   } catch (error) {
     console.error("RWK-TABLE: Error fetching available years from seasons:", error);
-    return [new Date().getFullYear()];
+    return [new Date().getFullYear()]; // Fallback im Fehlerfall
   }
 }
+
 
 async function fetchCompetitionTeamData(config: CompetitionDisplayConfig, numRoundsForCompetition: number): Promise<AggregatedCompetitionData | null> {
   console.log(`RWK-TABLE: fetchCompetitionTeamData for year ${config.year}, UI discipline ${config.discipline}`);
@@ -80,8 +82,8 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig, numRou
     const seasonsColRef = collection(db, "seasons");
     const qSeasons = query(seasonsColRef,
       where("competitionYear", "==", config.year),
-      where("type", "==", config.discipline),
-      where("status", "==", "Laufend")
+      where("type", "==", config.discipline), // 'KK', 'LD', 'SP'
+      where("status", "==", "Laufend") // Nur laufende Saisons
     );
     const seasonsSnapshot = await getDocs(qSeasons);
     console.log(`RWK-TABLE: Found ${seasonsSnapshot.docs.length} 'Laufend' season(s) matching criteria:`, seasonsSnapshot.docs.map(d => d.id));
@@ -102,13 +104,13 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig, numRou
     console.log(`RWK-TABLE: Querying leagues with Firestore types: ${firestoreDisciplinesToQuery.join(', ')} for season IDs: ${laufendeSeasonIds.join(', ')}`);
 
     const leaguesColRef = collection(db, "rwk_leagues");
-    if (laufendeSeasonIds.length === 0) { // Should not happen if seasonsSnapshot was not empty
+    if (laufendeSeasonIds.length === 0) { 
         return { id: `${config.year}-${config.discipline}`, config, leagues: [] };
     }
 
     const qLeagues = query(leaguesColRef,
         where("seasonId", "in", laufendeSeasonIds),
-        where("type", "in", firestoreDisciplinesToQuery),
+        where("type", "in", firestoreDisciplinesToQuery), // Filtert nach spezifischen Disziplinen
         orderBy("order", "asc")
     );
     const leaguesSnapshot = await getDocs(qLeagues);
@@ -131,7 +133,7 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig, numRou
         shortName: leagueData.shortName,
         seasonId: leagueData.seasonId,
         competitionYear: leagueData.competitionYear,
-        type: leagueData.type, // This is UIDisciplineSelection 'KK', 'LD', 'SP'
+        type: leagueData.type as FirestoreLeagueSpecificDiscipline, // Sicherstellen, dass der spezifische Typ verwendet wird
         order: leagueData.order,
         teams: [],
       };
@@ -140,7 +142,7 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig, numRou
       const teamsColRef = collection(db, "rwk_teams");
       const qTeams = query(teamsColRef,
         where("leagueId", "==", league.id),
-        where("competitionYear", "==", config.year)
+        where("competitionYear", "==", config.year) // Sicherstellen, dass Teams zum ausgewählten Wettkampfjahr passen
       );
       const teamsSnapshot = await getDocs(qTeams);
 
@@ -149,7 +151,7 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig, numRou
         
         if (teamData.name === EXCLUDED_TEAM_NAME) {
           console.log(`RWK-TABLE: Filtering out team: ${teamData.name}`);
-          continue;
+          continue; // Überspringe diese Mannschaft
         }
 
         let clubName = "Unbek. Verein";
@@ -175,20 +177,21 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig, numRou
           name: teamData.name,
           clubId: teamData.clubId,
           leagueId: teamData.leagueId,
-          seasonId: teamData.seasonId,
-          competitionYear: teamData.competitionYear,
+          seasonId: teamData.seasonId, // wird von Firestore-Daten übernommen
+          competitionYear: teamData.competitionYear, // wird von Firestore-Daten übernommen
           shooterIds: teamData.shooterIds || [],
           captainName: teamData.captainName,
           captainEmail: teamData.captainEmail,
           captainPhone: teamData.captainPhone,
           clubName: clubName,
           shootersResults: [],
-          roundResults: {},
+          roundResults: {}, // Wird initial leer sein und dann befüllt
           totalScore: 0,
           averageScore: null,
           numScoredRounds: 0
         };
         
+        // Lade Schützen-Stammdaten und Ergebnisse
         const shooterIdsForTeam = teamData.shooterIds || [];
         const shooterResultsMap = new Map<string, ShooterDisplayResults>();
 
@@ -225,9 +228,11 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig, numRou
            shooterResultsMap.set(shooterId, sResults);
         }
         
+        // Lade alle Ergebnisse für das aktuelle Team und Jahr
         const scoresQuery = query(collection(db, "rwk_scores"),
           where("teamId", "==", team.id),
           where("competitionYear", "==", team.competitionYear),
+          // orderBy("durchgang") // Sortierung kann clientseitig erfolgen, wenn nötig
         );
         const teamScoresSnap = await getDocs(scoresQuery);
         
@@ -238,11 +243,12 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig, numRou
             if (score.durchgang >= 1 && score.durchgang <= numRoundsForCompetition) {
               const roundKey = `dg${score.durchgang}`;
               const ringe = typeof score.totalRinge === 'number' ? score.totalRinge : 0;
-              sr.results[roundKey] = ringe; 
+              sr.results[roundKey] = ringe; // Speichere das Ergebnis für den Durchgang
             }
           }
         });
         
+        // Berechne Gesamt und Schnitt für jeden Schützen
         shooterResultsMap.forEach(sr => {
             let currentTotal = 0;
             let roundsShotCount = 0;
@@ -254,37 +260,45 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig, numRou
             });
             sr.total = currentTotal;
             sr.roundsShot = roundsShotCount;
-            if (sr.roundsShot > 0 && sr.total !== null) {
+            if (sr.roundsShot > 0 && sr.total !== null) { // Check, dass total nicht null ist
                 sr.average = parseFloat((sr.total / sr.roundsShot).toFixed(2));
             }
             team.shootersResults.push(sr);
         });
 
+        // Sortiere Schützen innerhalb des Teams nach Gesamtleistung
         team.shootersResults.sort((a, b) => (b.total ?? 0) - (a.total ?? 0) || a.shooterName.localeCompare(b.shooterName) );
 
+
+        // Berechne Mannschaftsergebnisse pro Durchgang
         for (let r = 1; r <= numRoundsForCompetition; r++) {
           const roundKey = `dg${r}`;
+          // Nimm die Ergebnisse aller Schützen dieses Teams für diesen Durchgang
           const scoresForRoundFromShooters = team.shootersResults
             .map(sr => sr.results[roundKey])
-            .filter(scoreVal => scoreVal !== null && typeof scoreVal === 'number' && scoreVal >= 0) as number[];
+            .filter(scoreVal => scoreVal !== null && typeof scoreVal === 'number' && scoreVal >= 0) as number[]; // Nur gültige Zahlenwerte
           
-          scoresForRoundFromShooters.sort((a, b) => b - a);
+          scoresForRoundFromShooters.sort((a, b) => b - a); // Sortiere absteigend
 
+          // Wenn genügend Schützen Ergebnisse haben (TEAM_SIZE_FOR_SCORING)
           if (scoresForRoundFromShooters.length >= TEAM_SIZE_FOR_SCORING) {
             team.roundResults[roundKey] = scoresForRoundFromShooters
-              .slice(0, TEAM_SIZE_FOR_SCORING)
+              .slice(0, TEAM_SIZE_FOR_SCORING) // Nimm die besten N
               .reduce((sum, scoreVal) => sum + scoreVal, 0);
           } else {
+            // Wenn nicht genügend Schützen Ergebnisse haben, aber mindestens einer, wird das Ergebnis 0 gesetzt (oder wie auch immer die Regel ist)
+            // Wenn kein Schütze ein Ergebnis hat, bleibt es null.
             team.roundResults[roundKey] = (scoresForRoundFromShooters.length > 0 && scoresForRoundFromShooters.length < TEAM_SIZE_FOR_SCORING) ? 0 : null;
           }
         }
 
+        // Berechne Gesamtscore und Durchschnitt für das Team
         let teamTotalScore = 0;
         let numScoredRoundsForAvg = 0;
         Object.values(team.roundResults).forEach(scoreVal => {
           if (scoreVal !== null && typeof scoreVal === 'number') {
             teamTotalScore += scoreVal;
-            if(scoreVal > 0) numScoredRoundsForAvg++;
+            if(scoreVal > 0) numScoredRoundsForAvg++; // Zähle nur Runden mit >0 Ergebnis für den Schnitt
           }
         });
         team.totalScore = teamTotalScore;
@@ -294,8 +308,9 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig, numRou
         teamDisplays.push(team);
       }
       
+      // Sortiere Teams innerhalb der Liga nach Gesamtscore, dann Schnitt, dann Name
       teamDisplays.sort((a, b) => (b.totalScore ?? 0) - (a.totalScore ?? 0) || (b.averageScore ?? 0) - (a.averageScore ?? 0) || a.clubName.localeCompare(b.clubName) || a.name.localeCompare(b.name) );
-      teamDisplays.forEach((team, index) => { team.rank = index + 1; });
+      teamDisplays.forEach((team, index) => { team.rank = index + 1; }); // Rangzuweisung
       league.teams = teamDisplays;
       fetchedLeaguesData.push(league);
     }
@@ -303,17 +318,18 @@ async function fetchCompetitionTeamData(config: CompetitionDisplayConfig, numRou
     return { id: `${config.year}-${config.discipline}`, config, leagues: fetchedLeaguesData };
   } catch (error) {
     console.error("RWK-TABLE: Error fetching team data:", error);
-    throw error;
+    throw error; // Fehler weiterwerfen, damit er im aufrufenden Code behandelt werden kann
   }
 }
 
 async function fetchIndividualShooterData(config: CompetitionDisplayConfig, numRoundsForCompetition: number): Promise<IndividualShooterDisplayData[]> {
   console.log(`RWK-TABLE: fetchIndividualShooterData for year ${config.year}, UI discipline ${config.discipline}`);
   try {
+    // 1. Finde die 'Laufenden' Saisons, die zum config.year und config.discipline passen
     const seasonsColRef = collection(db, "seasons");
     const qSeasons = query(seasonsColRef,
       where("competitionYear", "==", config.year),
-      where("type", "==", config.discipline),
+      where("type", "==", config.discipline), // 'KK', 'LD', 'SP'
       where("status", "==", "Laufend")
     );
     const seasonsSnapshot = await getDocs(qSeasons);
@@ -324,6 +340,7 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig, numR
     }
     const laufendeSeasonIds = seasonsSnapshot.docs.map(s => s.id);
 
+    // 2. Finde die spezifischen Firestore-Disziplintypen für die UI-Disziplin
     const selectedUIDiscOption = uiDisciplineFilterOptions.find(opt => opt.value === config.discipline);
     const firestoreDisciplinesToQuery: FirestoreLeagueSpecificDiscipline[] = selectedUIDiscOption ? selectedUIDiscOption.firestoreTypes : [];
     
@@ -332,8 +349,9 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig, numR
         return [];
     }
 
+    // 3. Finde alle Ligen, die zu diesen laufenden Saisons und spezifischen Disziplinen gehören
     const leaguesColRef = collection(db, "rwk_leagues");
-     if (laufendeSeasonIds.length === 0) return [];
+     if (laufendeSeasonIds.length === 0) return []; // Sollte nicht passieren
     const qLeaguesForDiscipline = query(leaguesColRef,
         where("seasonId", "in", laufendeSeasonIds),
         where("type", "in", firestoreDisciplinesToQuery)
@@ -346,50 +364,55 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig, numR
     const relevantLeagueIds = leaguesSnap.docs.map(lDoc => lDoc.id);
     if (relevantLeagueIds.length === 0) return [];
 
+    // 4. Lade alle Scores für das config.year und die relevanten leagueIds
     const scoresColRef = collection(db, "rwk_scores");
-    const qScoresConstraints: any[] = [
-        where("competitionYear", "==", config.year),
-        orderBy("shooterId"), 
-        orderBy("durchgang")
-    ];
-
-    const MAX_IN_FILTER_ITEMS = 30;
+    // Firestore 'in'-Abfragen sind auf maximal 30 Elemente pro Array beschränkt.
+    // Wenn relevantLeagueIds mehr als 30 Elemente hat, müssen wir die Abfrage aufteilen.
+    const MAX_IN_FILTER_ITEMS = 30; 
     let allScores: ScoreEntry[] = [];
 
     if (relevantLeagueIds.length <= MAX_IN_FILTER_ITEMS) {
-        qScoresConstraints.unshift(where("leagueId", "in", relevantLeagueIds));
-        const scoresSnapshot = await getDocs(query(scoresColRef, ...qScoresConstraints));
-        allScores = scoresSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
+        const scoresQuery = query(scoresColRef,
+            where("competitionYear", "==", config.year),
+            where("leagueId", "in", relevantLeagueIds), // Filtere nach den relevanten Ligen
+            orderBy("shooterId"), 
+            orderBy("durchgang")
+        );
+        const scoresSnapshot = await getDocs(scoresQuery);
+        scoresSnapshot.docs.forEach(d => allScores.push({ id: d.id, ...d.data() } as ScoreEntry));
     } else {
+        // Chunking für leagueIds, falls es mehr als 30 sind
         console.warn(`RWK-TABLE: Chunking league IDs for individual scores query as count (${relevantLeagueIds.length}) exceeds ${MAX_IN_FILTER_ITEMS}.`);
         for (let i = 0; i < relevantLeagueIds.length; i += MAX_IN_FILTER_ITEMS) {
             const chunk = relevantLeagueIds.slice(i, i + MAX_IN_FILTER_ITEMS);
-            const chunkQueryConstraints = [
-                where("leagueId", "in", chunk),
+            const scoresQuery = query(scoresColRef,
                 where("competitionYear", "==", config.year),
+                where("leagueId", "in", chunk),
                 orderBy("shooterId"),
                 orderBy("durchgang")
-            ];
-            const scoresSnapshot = await getDocs(query(scoresColRef, ...chunkQueryConstraints));
+            );
+            const scoresSnapshot = await getDocs(scoresQuery);
             scoresSnapshot.docs.forEach(d => allScores.push({ id: d.id, ...d.data() } as ScoreEntry));
         }
     }
     
+    // 5. Aggregiere die Scores pro Schütze
     const shootersMap = new Map<string, IndividualShooterDisplayData>();
 
     for (const score of allScores) {
-      if (score.teamName === EXCLUDED_TEAM_NAME) continue;
+      if (score.teamName === EXCLUDED_TEAM_NAME) continue; // Überspringe Ergebnisse von "SV Dörrigsen Einzel"
 
       if (!shootersMap.has(score.shooterId)) {
+        // Initialisiere Ergebnisse für alle Durchgänge mit null
         const initialResults: { [key: string]: number | null } = {};
         for (let r = 1; r <= numRoundsForCompetition; r++) {
           initialResults[`dg${r}`] = null;
         }
         shootersMap.set(score.shooterId, {
           shooterId: score.shooterId,
-          shooterName: score.shooterName || "Unbek. Schütze",
-          shooterGender: score.shooterGender || 'unknown',
-          teamName: score.teamName || "Unbek. Team",
+          shooterName: score.shooterName || "Unbek. Schütze", // Fallback
+          shooterGender: score.shooterGender || 'unknown', // Fallback
+          teamName: score.teamName || "Unbek. Team", // Fallback
           results: initialResults,
           totalScore: 0,
           averageScore: null,
@@ -398,24 +421,30 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig, numR
       }
 
       const shooterData = shootersMap.get(score.shooterId)!;
+      // Stelle sicher, dass Name und Teamname aktuell sind (falls in späteren Scores vorhanden)
       if ((!shooterData.shooterName || shooterData.shooterName === "Unbek. Schütze") && score.shooterName) shooterData.shooterName = score.shooterName;
       if ((!shooterData.teamName || shooterData.teamName === "Unbek. Team") && score.teamName) shooterData.teamName = score.teamName;
       
+      // Aggregiere Geschlecht: 'female' hat Vorrang, wenn es einmal vorkommt
       const currentScoreGender = score.shooterGender?.toLowerCase();
       if (currentScoreGender === 'female' || currentScoreGender === 'w') {
           shooterData.shooterGender = 'female';
       } else if ((currentScoreGender === 'male' || currentScoreGender === 'm') && shooterData.shooterGender !== 'female') { 
+          // Nur auf 'male' setzen, wenn es nicht schon 'female' ist
           shooterData.shooterGender = 'male';
-      } else if (shooterData.shooterGender === 'unknown' && score.shooterGender) {
+      } else if (shooterData.shooterGender === 'unknown' && score.shooterGender) { // Wenn bisher unbekannt, nimm den ersten Wert
            shooterData.shooterGender = score.shooterGender;
       }
 
+
+      // Setze das Ergebnis für den spezifischen Durchgang
       if (score.durchgang >= 1 && score.durchgang <= numRoundsForCompetition && score.totalRinge !== null && typeof score.totalRinge === 'number') {
         const roundKey = `dg${score.durchgang}`;
         shooterData.results[roundKey] = score.totalRinge;
       }
     }
 
+    // 6. Berechne Gesamtscore und Durchschnitt für jeden Schützen
     shootersMap.forEach(shooterData => {
       let currentTotal = 0;
       let roundsShotCount = 0;
@@ -432,17 +461,21 @@ async function fetchIndividualShooterData(config: CompetitionDisplayConfig, numR
       }
     });
 
+    // 7. Erstelle Rangliste
     const rankedShooters = Array.from(shootersMap.values())
-      .sort((a, b) => (b.totalScore ?? 0) - (a.totalScore ?? 0) || (b.averageScore ?? 0) - (a.averageScore ?? 0) || a.shooterName.localeCompare(b.shooterName));
+      .sort((a, b) => (b.totalScore ?? 0) - (a.totalScore ?? 0) || (b.averageScore ?? 0) - (a.averageScore ?? 0) || a.shooterName.localeCompare(b.shooterName)); // Sortiere nach Gesamt, dann Schnitt, dann Name
     
+    // Rangnummer zuweisen
     rankedShooters.forEach((shooter, index) => { shooter.rank = index + 1; });
     return rankedShooters;
   } catch (error) {
     console.error("RWK-TABLE: Error fetching individual shooter data:", error);
-    throw error;
+    throw error; // Fehler weiterwerfen
   }
 }
 
+
+// Sub-Komponente für die Anzeige der Einzelschützen eines Teams
 const TeamShootersTable: React.FC<{ shootersResults: ShooterDisplayResults[], numRounds: number }> = ({ shootersResults, numRounds }) => {
   if (!shootersResults || shootersResults.length === 0) {
     return <p className="p-3 text-sm text-center text-muted-foreground bg-muted/10">Keine Schützen für dieses Team erfasst oder Ergebnisse vorhanden.</p>;
@@ -481,6 +514,7 @@ const TeamShootersTable: React.FC<{ shootersResults: ShooterDisplayResults[], nu
   );
 };
 
+// Sub-Komponente für den Modal-Inhalt (Schützen-Detailansicht)
 const ShooterDetailModalContent: React.FC<{ shooterData: IndividualShooterDisplayData | null, numRounds: number }> = ({ shooterData, numRounds }) => {
   if (!shooterData) return null;
 
@@ -489,7 +523,7 @@ const ShooterDetailModalContent: React.FC<{ shooterData: IndividualShooterDispla
     const scoreValue = shooterData.results[`dg${i}`];
     chartData.push({
       name: `DG ${i}`,
-      Ringe: typeof scoreValue === 'number' ? scoreValue : null, // Use null for missing data for chart
+      Ringe: typeof scoreValue === 'number' ? scoreValue : null, // Verwende null für Diagramm, falls kein Wert
     });
   }
 
@@ -525,6 +559,7 @@ const ShooterDetailModalContent: React.FC<{ shooterData: IndividualShooterDispla
             </TableBody>
           </Table>
         </div>
+        {/* Nur Diagramm anzeigen, wenn es Daten gibt */}
         {chartData.some(d => d.Ringe !== null && d.Ringe > 0) && (
           <div>
             <h3 className="text-lg font-semibold mb-3 text-accent-foreground">Leistungsdiagramm</h3>
@@ -533,7 +568,7 @@ const ShooterDetailModalContent: React.FC<{ shooterData: IndividualShooterDispla
                 <LineChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                  <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} domain={['dataMin - 10', 'auto']} allowDecimals={false} />
+                  <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} domain={['dataMin - 5', 'dataMax + 5']} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'hsl(var(--background))',
@@ -541,7 +576,7 @@ const ShooterDetailModalContent: React.FC<{ shooterData: IndividualShooterDispla
                       borderRadius: 'var(--radius)',
                     }}
                     labelStyle={{ color: 'hsl(var(--foreground))' }}
-                    formatter={(value: any) => value === null ? "-" : value} // Handle null for display
+                    formatter={(value: any) => value === null ? "-" : value} // Handle null für Anzeige
                   />
                   <Legend wrapperStyle={{ fontSize: '12px' }} />
                   <Line type="monotone" dataKey="Ringe" stroke="hsl(var(--primary))" strokeWidth={2} name="Ringe" dot={{ r: 4, fill: 'hsl(var(--primary))' }} activeDot={{ r: 6 }} connectNulls={false} />
@@ -576,13 +611,14 @@ export default function RwkTabellenPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [currentNumRoundsState, setCurrentNumRoundsState] = useState<number>(5); 
-  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
-  const [expandedTeamIds, setExpandedTeamIds] = useState<string[]>([]);
+  const [currentNumRoundsState, setCurrentNumRoundsState] = useState<number>(5); // Default 5 für KK
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]); // Für Ligen
+  const [expandedTeamIds, setExpandedTeamIds] = useState<string[]>([]); // Für Teams
 
   const [isShooterDetailModalOpen, setIsShooterDetailModalOpen] = useState(false);
   const [selectedShooterForDetail, setSelectedShooterForDetail] = useState<IndividualShooterDisplayData | null>(null);
 
+  // Lade verfügbare Jahre beim ersten Rendern und initialisiere Auswahl
   useEffect(() => {
     console.log("RWK-TABLE: Initializing component, fetching available years...");
     setLoading(true);
@@ -603,15 +639,15 @@ export default function RwkTabellenPage() {
       } else if (dbYears.includes(currentActualYear)) {
         initialYear = currentActualYear;
       } else if (dbYears.length > 0) {
-        initialYear = dbYears[0]; 
+        initialYear = dbYears[0]; // Nimm das neueste verfügbare Jahr
       } else {
-        initialYear = currentActualYear; 
+        initialYear = currentActualYear; // Fallback, wenn keine Jahre in DB
       }
 
       const initialDiscipline: UIDisciplineSelection = 
         paramDiscipline && AVAILABLE_UI_DISCIPLINES.some(d => d.value === paramDiscipline)
         ? paramDiscipline
-        : AVAILABLE_UI_DISCIPLINES[0]?.value || 'KK'; 
+        : AVAILABLE_UI_DISCIPLINES[0]?.value || 'KK'; // Fallback zur ersten Disziplin
       
       const disciplineLabelObj = AVAILABLE_UI_DISCIPLINES.find(d => d.value === initialDiscipline);
       const disciplineLabel = disciplineLabelObj ? disciplineLabelObj.label.replace(/\s*\(.*\)\s*$/, '') : initialDiscipline;
@@ -625,19 +661,22 @@ export default function RwkTabellenPage() {
       setSelectedCompetition(newSelectedCompetition);
 
       if (paramLeagueId) {
+        // Wir müssen sicherstellen, dass openAccordionItems als Array gesetzt wird
         setOpenAccordionItems([paramLeagueId]);
       }
     }).catch(err => {
         console.error("RWK-TABLE: Error in initial year/discipline setup:", err);
         setError("Fehler beim Initialisieren der Jahresauswahl.");
+        // Setze einen Fallback, falls fetchAvailableYearsFromSeasons fehlschlägt
         const fallbackYear = new Date().getFullYear();
         const fallbackDiscipline = AVAILABLE_UI_DISCIPLINES[0]?.value || 'KK';
         const fallbackLabel = AVAILABLE_UI_DISCIPLINES.find(d => d.value === fallbackDiscipline)?.label.replace(/\s*\(.*\)\s*$/, '') || fallbackDiscipline;
         setSelectedCompetition({ year: fallbackYear, discipline: fallbackDiscipline, displayName: `RWK ${fallbackYear} ${fallbackLabel}` });
     });
-  }, [searchParams]);
+  }, []); // Nur einmal beim Mounten ausführen (searchParams sollte hier nicht als Abhängigkeit sein, wenn es nur initial gelesen wird)
 
 
+  // Lade Daten, wenn sich selectedCompetition oder activeTab ändert
   useEffect(() => {
     if (!selectedCompetition) {
       setLoading(false);
@@ -650,58 +689,29 @@ export default function RwkTabellenPage() {
       setError(null);
       setPageTitle(selectedCompetition.displayName); 
 
-      let numRoundsForCurrentCompetition = 5; 
-      try {
-          const seasonsSnapForRounds = await getDocs(query(collection(db, "seasons"), 
-            where("competitionYear", "==", selectedCompetition.year),
-            where("type", "==", selectedCompetition.discipline), 
-            where("status", "==", "Laufend"),
-            limit(1) 
-          ));
-
-          if (!seasonsSnapForRounds.empty) {
-              const firstSeasonDoc = seasonsSnapForRounds.docs[0].data() as Season;
-              // Determine rounds based on the specific league type (requires fetching a league)
-              // This is a simplification; ideally, numRounds is a property of the season or league type.
-              // For now, we'll try to get it from the first league of this season/discipline type.
-              const leagueForRoundsQuery = query(collection(db, "rwk_leagues"), where("seasonId", "==", seasonsSnapForRounds.docs[0].id), limit(1));
-              const leagueSnap = await getDocs(leagueForRoundsQuery);
-              if(!leagueSnap.empty){
-                  const leagueData = leagueSnap.docs[0].data() as League;
-                  const specificLeagueType = leagueData.type as FirestoreLeagueSpecificDiscipline; // Cast to specific
-                  if (['LG', 'LGA', 'LP', 'LPA'].includes(specificLeagueType)) {
-                      numRoundsForCurrentCompetition = 4;
-                  }
-              } else {
-                // Fallback if no leagues found for the season to determine rounds
-                if (selectedCompetition.discipline === 'LD') numRoundsForCurrentCompetition = 4;
-              }
-              console.log(`RWK-TABLE: Determined rounds for ${selectedCompetition.displayName}. Rounds: ${numRoundsForCurrentCompetition}`);
-          } else {
-            if(selectedCompetition.discipline === 'LD') numRoundsForCurrentCompetition = 4;
-            else numRoundsForCurrentCompetition = 5;
-            console.warn(`RWK-TABLE: No 'Laufend' season found for ${selectedCompetition.year}/${selectedCompetition.discipline} to determine rounds via Season.type, defaulting. Rounds: ${numRoundsForCurrentCompetition}`);
-          }
-        } catch (e) {
-          console.error("RWK-TABLE: Error determining number of rounds:", e);
-          if(selectedCompetition.discipline === 'LD') numRoundsForCurrentCompetition = 4;
-          else numRoundsForCurrentCompetition = 5;
-        }
+      // Bestimme Anzahl der Runden basierend auf der UI Disziplin
+      let numRoundsForCurrentCompetition = 5; // Default für KK
+      if (selectedCompetition.discipline === 'LD') { // 'LD' für Luftdruck
+        numRoundsForCurrentCompetition = 4;
+      } else if (selectedCompetition.discipline === 'SP') { // 'SP' für Sportpistole
+        numRoundsForCurrentCompetition = 3; // Beispiel, passe dies an
+      }
       setCurrentNumRoundsState(numRoundsForCurrentCompetition);
-      console.log("RWK-TABLE: final numRoundsForCompetition", numRoundsForCurrentCompetition);
+      console.log("RWK-TABLE: numRoundsForCompetition set to", numRoundsForCurrentCompetition);
 
       try {
         if (activeTab === "mannschaften") {
-          setIndividualData([]);
+          setIndividualData([]); // Lösche alte Einzeldaten
           const data = await fetchCompetitionTeamData(selectedCompetition, numRoundsForCurrentCompetition);
           setTeamData(data);
           console.log(`RWK-TABLE: Team data successfully loaded for ${selectedCompetition.displayName}:`, data?.leagues?.length || 0, "leagues");
         } else if (activeTab === "einzelschützen") {
-          setTeamData(null); 
+          setTeamData(null); // Lösche alte Teamdaten
           const individuals = await fetchIndividualShooterData(selectedCompetition, numRoundsForCurrentCompetition);
           setIndividualData(individuals);
           console.log(`RWK-TABLE: Individual data successfully loaded for ${selectedCompetition.displayName}:`, individuals.length, "shooters");
 
+          // Finde besten männlichen und weibliche Schützen
           if (individuals.length > 0) {
             const males = individuals.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'male' || s.shooterGender.toLowerCase() === 'm'));
             setTopMaleShooter(males.length > 0 ? males.sort((a,b) => (b.totalScore ?? 0) - (a.totalScore ?? 0) || (b.averageScore ?? 0) - (a.averageScore ?? 0) )[0] : null);
@@ -725,8 +735,9 @@ export default function RwkTabellenPage() {
     };
 
     loadData();
-  }, [selectedCompetition, activeTab]);
+  }, [selectedCompetition, activeTab]); // Abhängig von selectedCompetition und activeTab
 
+  // Handler für Änderungen im Jahres-Dropdown
   const handleYearChange = (yearString: string) => {
     const year = parseInt(yearString, 10);
     if (selectedCompetition?.year === year || !selectedCompetition) return;
@@ -735,12 +746,14 @@ export default function RwkTabellenPage() {
     const currentDiscLabel = currentDiscLabelObj ? currentDiscLabelObj.label.replace(/\s*\(.*\)\s*$/, '') : selectedCompetition.discipline;
     const newDisplayName = `RWK ${year} ${currentDiscLabel}`;
       
+    // URL aktualisieren, aber league-Parameter entfernen
     router.push(`/rwk-tabellen?year=${year}&discipline=${selectedCompetition.discipline}`, { scroll: false });
-    setOpenAccordionItems([]);
-    setExpandedTeamIds([]);
+    setOpenAccordionItems([]); // Schließe alle Ligen beim Jahreswechsel
+    setExpandedTeamIds([]); // Schließe alle Teamdetails
     setSelectedCompetition({...selectedCompetition, year, displayName: newDisplayName});
   };
 
+  // Handler für Änderungen im Disziplin-Dropdown
   const handleDisciplineChange = (discipline: UIDisciplineSelection) => {
      if (selectedCompetition?.discipline === discipline || !selectedCompetition) return;
 
@@ -748,19 +761,24 @@ export default function RwkTabellenPage() {
      const currentDiscLabel = currentDiscLabelObj ? currentDiscLabelObj.label.replace(/\s*\(.*\)\s*$/, '') : discipline;
      const newDisplayName = `RWK ${selectedCompetition.year} ${currentDiscLabel}`;
 
+     // URL aktualisieren, aber league-Parameter entfernen
      router.push(`/rwk-tabellen?year=${selectedCompetition.year}&discipline=${discipline}`, { scroll: false });
-     setOpenAccordionItems([]);
-     setExpandedTeamIds([]);
+     setOpenAccordionItems([]); // Schließe alle Ligen beim Disziplinwechsel
+     setExpandedTeamIds([]); // Schließe alle Teamdetails
      setSelectedCompetition({...selectedCompetition, discipline, displayName: newDisplayName });
   };
   
+  // Handler für das Öffnen/Schließen von Accordion-Items (Ligen)
   const handleAccordionValueChange = (value: string[]) => {
     setOpenAccordionItems(value);
-    if (searchParams.has('league') && selectedCompetition) {
+    // Wenn der Benutzer manuell ein Accordion öffnet/schließt, entfernen wir den league-Parameter aus der URL,
+    // um Verwirrung zu vermeiden, falls die URL noch eine spezifische Liga enthält.
+    if (searchParams.get('league') && selectedCompetition) {
         router.push(`/rwk-tabellen?year=${selectedCompetition.year}&discipline=${selectedCompetition.discipline}`, { scroll: false });
     }
   };
 
+  // Handler für das Öffnen/Schließen von Team-Details
   const toggleTeamExpansion = (teamId: string) => {
     setExpandedTeamIds(prev => 
       prev.includes(teamId) ? prev.filter(id => id !== teamId) : [...prev, teamId]
@@ -772,7 +790,8 @@ export default function RwkTabellenPage() {
     setIsShooterDetailModalOpen(true);
   };
 
-  const renderLoadingSkeleton = (forTab: "mannschaften" | "einzelschützen") => (
+  // Memoized Loading Skeleton für bessere Performance
+  const renderLoadingSkeleton = useCallback((forTab: "mannschaften" | "einzelschützen") => (
     <div className="space-y-6">
       <div className="flex items-center space-x-3">
         <Skeleton className="h-8 w-8 rounded-md" />
@@ -791,12 +810,14 @@ export default function RwkTabellenPage() {
         </CardContent>
       </Card>
     </div>
-  );
+  ), [pageTitle]); // pageTitle als Abhängigkeit, falls es sich ändert
 
+  // Initialisierungs-Ladezustand, bevor selectedCompetition gesetzt ist
   if (!selectedCompetition || (loading && (!teamData && individualData.length === 0))) {
      return renderLoadingSkeleton(activeTab); 
   }
 
+  // Fehlerbehandlung
   if (error && !loading) { 
     return (
       <div className="space-y-6">
@@ -869,20 +890,25 @@ export default function RwkTabellenPage() {
               <CardContent className="text-center py-12 p-6">
                  <AlertTriangle className="mx-auto h-10 w-10 mb-3 text-primary/70" />
                 <p className="text-lg text-muted-foreground">
-                    Für {pageTitle} wurden keine Ligen mit Status "Laufend" gefunden, oder es sind keine Ergebnisse vorhanden.
+                    Für {selectedCompetition?.displayName || pageTitle} wurden keine Ligen mit Status "Laufend" gefunden, oder es sind keine Ergebnisse vorhanden.
                 </p>
                  <p className="text-sm mt-1">Bitte überprüfen Sie den Status der Saison in der <Link href="/admin/seasons" className="underline hover:text-primary">Saisonverwaltung</Link>.</p>
               </CardContent>
             </Card>
           )}
           {!loading && !error && teamData && teamData.leagues.length > 0 && (
-            <Accordion type="multiple" value={openAccordionItems} onValueChange={handleAccordionValueChange} className="w-full space-y-4">
+            <Accordion 
+              type="multiple" 
+              value={openAccordionItems} 
+              onValueChange={handleAccordionValueChange} 
+              className="w-full space-y-4"
+            >
               {teamData.leagues.map((league) => (
                 <AccordionItem value={league.id} key={league.id} className="border bg-card shadow-lg rounded-lg overflow-hidden">
                   <AccordionTrigger className="bg-accent/10 hover:bg-accent/20 px-6 py-4 text-xl font-semibold text-accent data-[state=open]:border-b">
                     {league.name} {league.shortName && `(${league.shortName})`}
                   </AccordionTrigger>
-                  <AccordionContent className="pt-0">
+                  <AccordionContent className="pt-0"> {/* AccordionContent für Liga */}
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
@@ -918,7 +944,7 @@ export default function RwkTabellenPage() {
                               </TableRow>
                               {expandedTeamIds.includes(team.id) && (
                                 <TableRow className="bg-background/5 hover:bg-background/10">
-                                  <TableCell colSpan={6 + currentNumRoundsState} className="p-0 border-t-0">
+                                  <TableCell colSpan={6 + currentNumRoundsState} className="p-0 border-t-0"> {/* colSpan angepasst */}
                                     <TeamShootersTable shootersResults={team.shootersResults} numRounds={currentNumRoundsState} />
                                   </TableCell>
                                 </TableRow>
@@ -1043,3 +1069,4 @@ export default function RwkTabellenPage() {
     </div>
   );
 }
+```
