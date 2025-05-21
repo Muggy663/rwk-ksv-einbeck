@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { 
+  LayoutDashboard,
   Users, 
   Trophy, 
   ListChecks, 
   Settings, 
   UserCog, 
-  FileText, 
+  // FileText, // Not directly used, BookOpenCheck is used
   MessagesSquare, 
   FileUp, 
   Award, 
@@ -16,17 +17,17 @@ import {
   ShieldQuestion, 
   GitPullRequestClosed, 
   BookOpenCheck,
-  LayoutDashboard, // Added for completeness, often used in dashboards
-  ShieldCheck    // Explicitly for the error
+  ShieldCheck,    // Explicitly adding as it was the source of the error
+  Edit3 // For "Ergebnisse bearbeiten" card
 } from 'lucide-react';
-import { cn } from '@/lib/utils'; // Added missing cn import
+import { cn } from '@/lib/utils';
 
 export default function AdminDashboardPage() {
   const agendaPunkte = [
     { text: "Firestore Sicherheitsregeln vollständig implementieren und testen (basierend auf user_permissions).", status: "Als Nächstes", icon: ShieldQuestion },
-    { text: "Client-seitige Nutzung der user_permissions für Vereinsvertreter abschließen (Vereinsauswahl bei >1 Verein, Datenfilterung).", status: "In Arbeit", icon: Settings },
+    { text: "Client-seitige Nutzung der user_permissions für Vereinsvertreter abschließen (Vereinsauswahl bei >1 Verein, Datenfilterung).", status: "Als Nächstes", icon: Settings },
     { text: "Benutzerverwaltung durch Super-Admin (UI-Verbesserungen): Auflisten/Bearbeiten von user_permissions.", status: "Offen", icon: UserCog },
-    { text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag).", status: "Offen", icon: UserCog },
+    { text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag).", status: "Offen", icon: Users },
     { text: "Captcha auf der Login-Seite integrieren.", status: "Zukunft", icon: ShieldCheck },
     { text: "Anzeige \"Mannschaften (Info)\" verfeinern: Name des einen Teams anzeigen.", status: "Offen", icon: Users },
     { text: "Platzhalter \"Schnitt Vorjahr\" in Team-Dialogen mit echter Funktionalität versehen.", status: "Zukunft", icon: BarChart3 },
@@ -35,7 +36,7 @@ export default function AdminDashboardPage() {
     { text: "Automatischer Saisonabschluss / Auf- und Abstieg.", status: "Zukunft", icon: Trophy },
     { text: "CSV-Import für Stammdaten.", status: "Zukunft", icon: FileUp },
     { text: "Urkundengenerierung (PDF).", status: "Zukunft", icon: Award },
-    { text: "PDF-Generierung für Liga-Meldebögen/Ergebnislisten.", status: "Zukunft", icon: FileText },
+    { text: "PDF-Generierung für Liga-Meldebögen/Ergebnislisten.", status: "Zukunft", icon: FileUp }, // Re-using FileUp, could be FileText
     { text: "Handbuch-Seite (/handbuch) mit Markdown-Rendering-Bibliothek verbessern für einfachere Wartung.", status: "Offen", icon: BookOpenCheck },
   ];
 
@@ -105,7 +106,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Rollen und Vereinszuweisungen für Benutzer verwalten.
+              Rollen und Vereinszuweisungen für Benutzer verwalten. (Basis implementiert)
             </CardDescription>
             <Link href="/admin/user-management" passHref>
               <Button className="w-full" variant="outline">Benutzer verwalten</Button>
@@ -120,7 +121,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-             Eingegangene Support-Tickets einsehen.
+             Eingegangene Support-Tickets einsehen. (Basis implementiert)
             </CardDescription>
             <Link href="/admin/support-tickets" passHref>
               <Button className="w-full" variant="outline">Tickets anzeigen</Button>
