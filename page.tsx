@@ -2,8 +2,23 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Users, Trophy, ListChecks, Settings, UserCog, FileText, MessagesSquare, FileUp, Award, BarChart3, ShieldQuestion, GitPullRequestClosed, BookOpenCheckIcon } from 'lucide-react';
-import { cn } from '@/lib/utils'; // <<< HIER WURDE DER IMPORT HINZUGEFÜGT
+import { 
+  Users, 
+  Trophy, 
+  ListChecks, 
+  Settings, 
+  UserCog, 
+  FileText, 
+  MessagesSquare, 
+  FileUp, 
+  Award, 
+  BarChart3, 
+  ShieldQuestion, 
+  GitPullRequestClosed, 
+  BookOpenCheck, // Corrected from BookOpenCheckIcon
+  ShieldCheck   // Added missing ShieldCheck
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function AdminDashboardPage() {
   const agendaPunkte = [
@@ -11,16 +26,16 @@ export default function AdminDashboardPage() {
     { text: "Client-seitige Nutzung der user_permissions für Vereinsvertreter abschließen (Vereinsauswahl bei >1 Verein, Datenfilterung).", status: "In Arbeit", icon: Settings },
     { text: "Benutzerverwaltung durch Super-Admin (UI-Verbesserungen): Auflisten/Bearbeiten von user_permissions.", status: "Offen", icon: UserCog },
     { text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag via Firestore-Workaround).", status: "Offen", icon: UserCog },
-    { text: "Captcha auf der Login-Seite integrieren.", status: "Zukunft", icon: ShieldCheck }, // Korrigiertes Icon für Konsistenz
-    { text: "Anzeige 'Mannschaften (Info)' verfeinern: Name des einen Teams anzeigen.", status: "Offen", icon: Users },
-    { text: "Platzhalter 'Schnitt Vorjahr' in Team-Dialogen mit echter Funktionalität versehen.", status: "Zukunft", icon: BarChart3 },
+    { text: "Captcha auf der Login-Seite integrieren.", status: "Zukunft", icon: ShieldCheck },
+    { text: "Anzeige \"Mannschaften (Info)\" verfeinern: Name des einen Teams anzeigen.", status: "Offen", icon: Users },
+    { text: "Platzhalter \"Schnitt Vorjahr\" in Team-Dialogen mit echter Funktionalität versehen.", status: "Zukunft", icon: BarChart3 },
     { text: "Ergebniserfassung (Details): Audit-Trail für Ergebnisänderungen durch Admin.", status: "Zukunft", icon: ListChecks },
+    { text: "Erfassung/Anzeige von Mannschaftsführer-Kontaktdaten (Grundlage implementiert, Anzeige in Tabellen/PDFs fehlt noch).", status: "In Arbeit", icon: Users },
     { text: "Automatischer Saisonabschluss / Auf- und Abstieg.", status: "Zukunft", icon: Trophy },
     { text: "CSV-Import für Stammdaten.", status: "Zukunft", icon: FileUp },
     { text: "Urkundengenerierung (PDF).", status: "Zukunft", icon: Award },
     { text: "PDF-Generierung für Liga-Meldebögen/Ergebnislisten.", status: "Zukunft", icon: FileText },
-    { text: "Handbuch-Seite (/handbuch) mit Markdown-Rendering-Bibliothek verbessern für einfachere Wartung.", status: "Offen", icon: BookOpenCheckIcon },
-    { text: "Erfassung/Anzeige von Mannschaftsführer-Kontaktdaten (Grundlage implementiert, Anzeige in Tabellen/PDFs fehlt noch).", status: "In Arbeit", icon: Users },
+    { text: "Handbuch-Seite (/handbuch) mit Markdown-Rendering-Bibliothek verbessern für einfachere Wartung.", status: "Offen", icon: BookOpenCheck },
   ];
 
   return (
@@ -89,7 +104,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Rollen und Vereinszuweisungen für Benutzer verwalten (aktuell über `user_permissions` in Firestore).
+              Rollen und Vereinszuweisungen für Benutzer verwalten.
             </CardDescription>
             <Link href="/admin/user-management" passHref>
               <Button className="w-full" variant="outline">Benutzer verwalten</Button>
