@@ -2,24 +2,24 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Users, Trophy, ListChecks, Settings, CheckCircle, UserCog, FileText, MessagesSquare, FileUp, Award, BarChart3, ShieldQuestion, GitPullRequestClosed } from 'lucide-react';
+import { Users, Trophy, ListChecks, Settings, UserCog, FileText, MessagesSquare, FileUp, Award, BarChart3, ShieldQuestion, GitPullRequestClosed, BookOpenCheckIcon } from 'lucide-react';
+import { cn } from '@/lib/utils'; // <<< HIER WIRD DER IMPORT HINZUGEFÜGT
 
 export default function AdminDashboardPage() {
   const agendaPunkte = [
-    { text: "Firestore Sicherheitsregeln vollständig implementieren und testen (basierend auf user_permissions).", status: "Als Nächstes" },
-    { text: "Benutzerverwaltung durch Super-Admin (UI-Verbesserungen): Auflisten/Bearbeiten von user_permissions.", status: "Offen" },
-    { text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag, die sich aber ggf. schon eingeloggt haben).", status: "Offen" },
-    { text: "Client-seitige Nutzung der user_permissions für Vereinsvertreter/Mannschaftsführer abschließen (Sicherstellen, dass der Vereinskontext überall korrekt angewendet wird).", status: "In Arbeit" },
-    { text: "Captcha auf der Login-Seite integrieren.", status: "Offen" },
-    { text: "Anzeige 'Mannschaften (Info)' verfeinern: Name des einen Teams anzeigen, wenn Schütze nur einem Team zugeordnet (ohne Kontext).", status: "Offen" },
-    { text: "Platzhalter 'Schnitt Vorjahr' in Team-Dialogen mit echter Funktionalität versehen.", status: "Offen" },
-    { text: "Ergebniserfassung (Details): Audit-Trail für Ergebnisänderungen (wer hat wann was geändert).", status: "Offen" },
-    { text: "Automatischer Saisonabschluss / Auf- und Abstieg (fortgeschritten).", status: "Zukunft" },
-    { text: "CSV-Import für Stammdaten (fortgeschritten).", status: "Zukunft" },
-    { text: "Urkundengenerierung (PDF, fortgeschritten).", status: "Zukunft" },
-    { text: "PDF-Generierung für Liga-Meldebögen/Ergebnislisten.", status: "Zukunft" },
-    { text: "Schützen-Detailansicht mit Diagramm (Grundlage implementiert, Verfeinerung möglich).", status: "In Arbeit" },
-    { text: "Erfassung von Mannschaftsführer-Kontaktdaten (Grundlage implementiert).", status: "In Arbeit" },
+    { text: "Firestore Sicherheitsregeln vollständig implementieren und testen (basierend auf user_permissions).", status: "Als Nächstes", icon: ShieldQuestion },
+    { text: "Client-seitige Nutzung der user_permissions für Vereinsvertreter abschließen (Vereinsauswahl bei >1 Verein, Datenfilterung).", status: "In Arbeit", icon: Settings },
+    { text: "Benutzerverwaltung durch Super-Admin (UI-Verbesserungen): Auflisten/Bearbeiten von user_permissions.", status: "Offen", icon: UserCog },
+    { text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag via Firestore-Workaround).", status: "Offen", icon: UserCog },
+    { text: "Captcha auf der Login-Seite integrieren.", status: "Zukunft", icon: ShieldCheck },
+    { text: "Anzeige 'Mannschaften (Info)' verfeinern: Name des einen Teams anzeigen.", status: "Offen", icon: Users },
+    { text: "Platzhalter 'Schnitt Vorjahr' in Team-Dialogen mit echter Funktionalität versehen.", status: "Zukunft", icon: BarChart3 },
+    { text: "Ergebniserfassung (Details): Audit-Trail für Ergebnisänderungen durch Admin.", status: "Zukunft", icon: ListChecks },
+    { text: "Automatischer Saisonabschluss / Auf- und Abstieg.", status: "Zukunft", icon: Trophy },
+    { text: "CSV-Import für Stammdaten.", status: "Zukunft", icon: FileUp },
+    { text: "Urkundengenerierung (PDF).", status: "Zukunft", icon: Award },
+    { text: "PDF-Generierung für Liga-Meldebögen/Ergebnislisten.", status: "Zukunft", icon: FileText },
+    { text: "Handbuch-Seite (/handbuch) mit Markdown-Rendering-Bibliothek verbessern für einfachere Wartung.", status: "Offen", icon: BookOpenCheckIcon },
   ];
 
   return (
@@ -123,9 +123,39 @@ export default function AdminDashboardPage() {
             <Button className="w-full" disabled>Statistiken anzeigen (Demnächst)</Button>
           </CardContent>
         </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-shadow md:col-span-2 lg:col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Datenwerkzeuge</CardTitle>
+            <Settings className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Import- und Exportfunktionen.
+            </CardDescription>
+            <div className="space-y-2">
+                <Button className="w-full" variant="outline" disabled><FileUp className="mr-2 h-4 w-4" /> CSV Import (Demnächst)</Button>
+            </div>
+          </CardContent>
+        </Card>
+         <Card className="shadow-lg hover:shadow-xl transition-shadow md:col-span-2 lg:col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Saisonabschluss</CardTitle>
+            <Award className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Werkzeuge für das Saisonende.
+            </CardDescription>
+            <div className="space-y-2">
+                 <Button className="w-full" variant="outline" disabled><FileText className="mr-2 h-4 w-4" /> PDF Liga-Meldebögen (Demnächst)</Button>
+                 <Button className="w-full" variant="outline" disabled><Award className="mr-2 h-4 w-4" /> Urkunden generieren (Demnächst)</Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300">
+      <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300 lg:col-span-3">
         <CardHeader>
           <CardTitle className="text-xl text-accent flex items-center">
             <GitPullRequestClosed className="mr-3 h-6 w-6" />
@@ -136,12 +166,14 @@ export default function AdminDashboardPage() {
         <CardContent>
           <ul className="space-y-2 text-sm text-muted-foreground list-none pl-1">
             {agendaPunkte.map((point, index) => (
-              <li key={index} className="flex items-start">
-                {point.status === "Als Nächstes" && <ShieldQuestion className="h-4 w-4 mr-2 mt-0.5 text-destructive flex-shrink-0" title="Nächste Priorität"/>}
-                {point.status === "In Arbeit" && <Settings className="h-4 w-4 mr-2 mt-0.5 text-amber-500 flex-shrink-0" title="In Arbeit"/>}
-                {point.status === "Offen" && <FileText className="h-4 w-4 mr-2 mt-0.5 text-primary/70 flex-shrink-0" title="Offen"/>}
-                {point.status === "Zukunft" && <Award className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground/70 flex-shrink-0" title="Zukunft"/>}
-                <span className={cn(point.status === "Als Nächstes" && "font-semibold text-destructive/90")}>{point.text}</span>
+              <li key={index} className="flex items-start py-1">
+                <point.icon className={cn("h-4 w-4 mr-3 mt-0.5 flex-shrink-0", 
+                  point.status === "Als Nächstes" && "text-destructive",
+                  point.status === "In Arbeit" && "text-amber-500",
+                  point.status === "Offen" && "text-primary/80",
+                  point.status === "Zukunft" && "text-muted-foreground/70"
+                )} title={point.status} />
+                <span className={cn(point.status === "Als Nächstes" && "font-semibold text-foreground")}>{point.text}</span>
               </li>
             ))}
           </ul>
