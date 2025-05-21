@@ -17,26 +17,26 @@ import {
   GitPullRequestClosed, 
   BookOpenCheck,
   ShieldCheck,
-  Edit3 // Added for "Ergebnisse bearbeiten" card
+  Edit3 
 } from 'lucide-react';
-import { cn } from '@/lib/utils'; // Added cn import
+import { cn } from '@/lib/utils';
 
 export default function AdminDashboardPage() {
   const agendaPunkte = [
     { text: "Firestore Sicherheitsregeln vollständig implementieren und testen (basierend auf user_permissions).", status: "Als Nächstes", icon: ShieldQuestion },
-    { text: "Client-seitige Nutzung der user_permissions für Vereinsvertreter abschließen (Vereinsauswahl bei >1 Verein, Datenfilterung).", status: "Als Nächstes", icon: Settings },
+    { text: "Client-seitige Nutzung der user_permissions für Vereinsvertreter abschließen (ersetzt VV_CLUB_ASSIGNMENTS Map).", status: "In Arbeit", icon: Settings },
     { text: "Benutzerverwaltung durch Super-Admin (UI-Verbesserungen): Auflisten/Bearbeiten von user_permissions.", status: "Offen", icon: UserCog },
     { text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag).", status: "Offen", icon: Users },
-    { text: "Captcha auf der Login-Seite integrieren.", status: "Zukunft", icon: ShieldCheck },
-    { text: "Anzeige \"Mannschaften (Info)\" verfeinern: Name des einen Teams anzeigen.", status: "Offen", icon: Users },
-    { text: "Platzhalter \"Schnitt Vorjahr\" in Team-Dialogen mit echter Funktionalität versehen.", status: "Zukunft", icon: BarChart3 },
+    { text: "Startseite: 'Letzte Änderungen'-Einträge zur RWK-Tabelle verlinken (Teil 1: Links erstellt, Teil 2: RWK-Tabellen-Seite muss Parameter verarbeiten).", status: "In Arbeit", icon: ListChecks },
+    { text: "Passwortänderung beim ersten Login für neue Benutzer erzwingen (App-interne Logik).", status: "Offen", icon: ShieldCheck },
+    { text: "Captcha auf der Login-Seite integrieren (Platzhalter vorhanden).", status: "Zukunft", icon: ShieldCheck },
+    { text: "Anzeige \"Mannschaften (Info)\" verfeinern: Name des einen Teams anzeigen, wenn nur ein Team zugeordnet.", status: "Offen", icon: Users },
+    { text: "Platzhalter \"Schnitt Vorjahr\" in den Team-Dialogen mit echter Funktionalität versehen.", status: "Zukunft", icon: BarChart3 },
     { text: "Ergebniserfassung (Details): Audit-Trail für Ergebnisänderungen durch Admin.", status: "Zukunft", icon: ListChecks },
-    { text: "Erfassung/Anzeige von Mannschaftsführer-Kontaktdaten (Grundlage implementiert, Anzeige in Tabellen/PDFs fehlt noch).", status: "In Arbeit", icon: Users },
+    { text: "PDF-Generierung für Liga-Meldebögen/Ergebnislisten (Platzhalter).", status: "Zukunft", icon: FileUp },
     { text: "Automatischer Saisonabschluss / Auf- und Abstieg.", status: "Zukunft", icon: Trophy },
-    { text: "CSV-Import für Stammdaten.", status: "Zukunft", icon: FileUp },
-    { text: "Urkundengenerierung (PDF).", status: "Zukunft", icon: Award },
-    { text: "PDF-Generierung für Liga-Meldebögen/Ergebnislisten.", status: "Zukunft", icon: FileUp },
-    { text: "Handbuch-Seite (/handbuch) mit Markdown-Rendering-Bibliothek verbessern für einfachere Wartung.", status: "Offen", icon: BookOpenCheck },
+    { text: "Urkundengenerierung (PDF) (Platzhalter).", status: "Zukunft", icon: Award },
+    { text: "Handbuch-Seite (/handbuch) mit Markdown-Rendering-Bibliothek verbessern.", status: "Offen", icon: BookOpenCheck },
   ];
 
   return (
@@ -56,7 +56,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Saisons, Ligen und zugehörige Daten verwalten.
+              Saisons und zugehörige Ligen verwalten.
             </CardDescription>
             <div className="grid grid-cols-2 gap-2">
                 <Link href="/admin/seasons" passHref><Button className="w-full">Saisons</Button></Link>
@@ -93,7 +93,7 @@ export default function AdminDashboardPage() {
             </CardDescription>
             <div className="grid grid-cols-2 gap-2">
                 <Link href="/admin/results" passHref><Button className="w-full">Erfassen</Button></Link>
-                <Link href="/admin/edit-results" passHref><Button variant="outline" className="w-full">Bearbeiten</Button></Link> {/* Edit3 icon is implicitly handled by Button if needed */}
+                <Link href="/admin/edit-results" passHref><Button variant="outline" className="w-full">Bearbeiten</Button></Link>
             </div>
           </CardContent>
         </Card>
@@ -105,7 +105,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Rollen und Vereinszuweisungen für Benutzer verwalten. (Basis implementiert)
+              Rollen und Vereinszuweisungen für Benutzer verwalten. (Manuelle UID-Eingabe)
             </CardDescription>
             <Link href="/admin/user-management" passHref>
               <Button className="w-full" variant="outline">Benutzer verwalten</Button>
@@ -120,7 +120,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-             Eingegangene Support-Tickets einsehen. (Basis implementiert)
+             Eingegangene Support-Tickets einsehen.
             </CardDescription>
             <Link href="/admin/support-tickets" passHref>
               <Button className="w-full" variant="outline">Tickets anzeigen</Button>
@@ -130,14 +130,18 @@ export default function AdminDashboardPage() {
         
          <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Statistiken</CardTitle>
-            <BarChart3 className="h-6 w-6 text-muted-foreground" />
+            <CardTitle className="text-lg font-medium">Datenwerkzeuge</CardTitle>
+            <FileUp className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Übersicht über App-Nutzung und Daten. (Platzhalter)
+              Importieren von Daten und Generierung von Dokumenten.
             </CardDescription>
-            <Button className="w-full" disabled>Statistiken anzeigen (Demnächst)</Button>
+            <div className="space-y-2">
+              <Button className="w-full" disabled>CSV Import (Demnächst)</Button>
+              <Button className="w-full" disabled>PDF Liga-Meldebögen (Demnächst)</Button>
+              <Button className="w-full" disabled>PDF Urkunden (Demnächst)</Button>
+            </div>
           </CardContent>
         </Card>
       </div>

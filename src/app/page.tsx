@@ -2,11 +2,12 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link'; // Import Link
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ListChecks, Loader2, Info } from 'lucide-react';
 import type { LeagueUpdateEntry, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
-import { uiDisciplineFilterOptions } from '@/types/rwk';
+import { uiDisciplineFilterOptions } from '@/types/rwk'; // Import für Mapping
 import { db } from '@/lib/firebase/config';
 import { collection, query, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -14,15 +15,16 @@ import { de } from 'date-fns/locale';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
+// Hilfsfunktion, um von FirestoreLeagueSpecificDiscipline auf den UIDisciplineSelection Wert zu kommen
+const getUIDisciplineValueFromSpecificType = (specificType?: FirestoreLeagueSpecificDiscipline): string => {
+  if (!specificType) return ''; // Fallback
+  const uiOption = uiDisciplineFilterOptions.find(opt => opt.firestoreTypes.includes(specificType));
+  return uiOption ? uiOption.value : ''; // Gibt 'KK', 'LD' etc. zurück oder Fallback
+};
+
 export default function HomePage() {
   const [updates, setUpdates] = useState<LeagueUpdateEntry[]>([]);
   const [loadingUpdates, setLoadingUpdates] = useState<boolean>(true);
-
-  const getUIDisciplineLabel = (specificType?: FirestoreLeagueSpecificDiscipline): string => {
-    if (!specificType) return 'Unbek. Disziplin';
-    const uiOption = uiDisciplineFilterOptions.find(opt => opt.firestoreTypes.includes(specificType));
-    return uiOption ? uiOption.label.replace(/\s*\(.*\)\s*$/, '') : specificType;
-  };
 
   useEffect(() => {
     const fetchUpdates = async () => {
@@ -90,18 +92,25 @@ export default function HomePage() {
               </div>
             ) : updates.length > 0 ? (
               <ul className="space-y-4">
-                {updates.map((update) => (
-                  <li key={update.id} className="p-4 bg-muted/50 rounded-md shadow-sm hover:bg-muted/70 transition-colors">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                      <p className="text-md font-medium text-foreground">
-                        Ergebnisse in der Liga <strong className="text-primary">{update.leagueName} {getUIDisciplineLabel(update.leagueType)}</strong> ({update.competitionYear}) hinzugefügt.
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1 sm:mt-0">
-                        {update.timestamp ? format((update.timestamp as Timestamp).toDate(), 'dd. MMMM yyyy, HH:mm', { locale: de }) : '-'} Uhr
-                      </p>
-                    </div>
-                  </li>
-                ))}
+                {updates.map((update) => {
+                  const uiDiscValue = getUIDisciplineValueFromSpecificType(update.leagueType);
+                  const linkHref = `/rwk-tabellen?year=${update.competitionYear}&discipline=${uiDiscValue}&league=${update.leagueId}`;
+                  
+                  return (
+                    <li key={update.id} className="p-4 bg-muted/50 rounded-md shadow-sm hover:bg-muted/70 transition-colors">
+                      <Link href={linkHref} className="block hover:text-primary">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                          <p className="text-md font-medium text-foreground">
+                            Ergebnisse in der Liga <strong className="text-primary">{update.leagueName} {uiDiscValue ? `(${uiDiscValue})` : ''}</strong> ({update.competitionYear}) hinzugefügt.
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1 sm:mt-0">
+                            {update.timestamp ? format((update.timestamp as Timestamp).toDate(), 'dd. MMMM yyyy, HH:mm', { locale: de }) : '-'} Uhr
+                          </p>
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <div className="text-center py-8 text-muted-foreground">

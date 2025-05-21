@@ -7,74 +7,86 @@ import type { ChangelogEntry } from '@/types/updates';
 // Changelog entries using MAJOR.MINOR.PATCH
 const changelogEntries: ChangelogEntry[] = [
   {
-    version: '0.2.3a',
-    date: '20. Mai 2025', // Assuming today's date for the hotfix
-    title: 'Hotfix: Build-Fehler und Favicon-Anpassung',
+    version: '0.2.4',
+    date: '20. Mai 2025',
+    title: 'Verbesserungen RWK-Tabellen & Stabilität',
     descriptionPoints: [
-      'Behebung eines Vercel Build-Fehlers ("cn is not defined") in der Admin-Dashboard-Seite durch Hinzufügen des fehlenden Imports.',
-      'Favicon-Konfiguration in src/app/layout.tsx präzisiert, um die korrekte Anzeige des Lesezeichensymbols sicherzustellen.',
-      'Aktualisierung der Agenda im Admin-Dashboard.',
+      'Fehler "Unexpected eof" in der RWK-Tabellenseite behoben.',
+      'Layout und Funktionalität für das Aufklappen der Teamdetails (Anzeige der Einzelschützen) in den RWK-Mannschaftstabellen korrigiert und stabilisiert.',
+      'Chevron-Icon für das Auf-/Einklappen der Teamdetails zeigt nun korrekt die Richtung an (Rechts/Runter).',
+      'Allgemeine Code-Bereinigungen und Behebung kleinerer Fehler bei der Code-Generierung.',
+    ],
+  },
+  {
+    version: '0.2.3a',
+    date: '20. Mai 2025', 
+    title: 'Hotfix: Vercel Build-Fehler und Favicon',
+    descriptionPoints: [
+      'Behebung eines Vercel Build-Fehlers ("cn is not defined" und Icon-Import-Fehler) in der Admin-Dashboard-Seite durch Hinzufügen der fehlenden Imports.',
+      'Favicon-Konfiguration in src/app/layout.tsx präzisiert.',
+      'Handbuch-Seite: Admin-spezifischer Inhalt wird nun nur noch für eingeloggte Super-Admins angezeigt.',
+      'Admin-Dashboard-Agenda aktualisiert.',
     ],
   },
   {
     version: '0.2.3',
     date: '20. Mai 2025',
-    title: 'Rollenbasierte UI für Vereinsvertreter & Mannschaftsführer',
+    title: 'VV/MF Rollenunterscheidung & Layout-Zugriff',
     descriptionPoints: [
-      'Unterscheidung zwischen Vereinsvertreter (VV) und Mannschaftsführer (MF) in der Benutzeroberfläche für Vereinsseiten (/app/verein/mannschaften, /app/verein/schuetzen) implementiert.',
-      'Bearbeitungs- und Anlegefunktionen auf diesen Seiten sind nun nur noch für Benutzer mit der Rolle "vereinsvertreter" sichtbar und nutzbar.',
-      'Korrektur im Vereins-Layout, sodass Mannschaftsführer korrekt auf das Vereins-Dashboard zugreifen können, ohne eine Fehlermeldung bezüglich fehlender VV-Berechtigungen zu erhalten.',
-      'Handbuch und Admin-Dashboard-Agenda aktualisiert, um den Fortschritt und die neue Rollenlogik widerzuspiegeln.',
+      'Korrektur im Vereins-Layout, sodass Mannschaftsführer korrekt auf das Vereins-Dashboard zugreifen können.',
+      'UI-Anpassungen in den Vereins-Seiten (Mannschaften, Schützen), um Bearbeitungsfunktionen nur für Vereinsvertreter anzuzeigen.',
     ],
   },
   {
     version: '0.2.2',
     date: '20. Mai 2025',
-    title: 'Dynamische Jahresauswahl & Impressum implementiert',
+    title: 'RWK Tabellen Jahresauswahl & Impressum',
     descriptionPoints: [
       'RWK-Tabellen (/rwk-tabellen): Jahresauswahl wird jetzt dynamisch aus den in Firestore vorhandenen Saisons generiert.',
-      'RWK-Tabellen: Das aktuelle Kalenderjahr wird als Standard im Jahres-Dropdown vorausgewählt, falls dafür Saisons mit Status "Laufend" existieren; ansonsten das neueste verfügbare Jahr mit laufenden Saisons.',
+      'RWK-Tabellen: Das aktuelle Kalenderjahr wird als Standard im Jahres-Dropdown vorausgewählt (falls "laufende" Saisons dafür existieren), ansonsten das neueste verfügbare Jahr.',
       'RWK-Tabellen: Es werden nur noch Saisons mit dem Status "Laufend" berücksichtigt und angezeigt.',
       'Impressumsseite (/impressum) mit den bereitgestellten Inhalten erstellt und im Footer verlinkt.',
-      'Favicon-Konfiguration in layout.tsx hinzugefügt.',
     ],
   },
   {
     version: '0.2.1',
-    date: '20. Mai 2025',
-    title: 'Fehlerbehebungen Admin-Teamseite & Vorbereitung VV-Rechtesystem',
+    date: '20. Mai 2025', 
+    title: 'Fehlerbehebungen Admin Team-Dialog & VV-Rechtebasis',
     descriptionPoints: [
-      'Behebung eines persistenten Fehlers ("SelectItem value cannot be empty") auf der Admin-Teamseite (/admin/teams) durch Entfernen der Liga-Auswahl im Dialog und Absicherung der Filter-Dropdowns.',
-      'Struktur für Vereinsvertreter-Seiten (/app/verein/...) angelegt und Basis-Layout für VV-Bereich erstellt.',
-      'Logik zur Nutzung der `user_permissions`-Collection (anstelle der `VV_CLUB_ASSIGNMENTS`-Map) für das VV-Dashboard und die VV-Mannschaftsseite implementiert, inklusive Vereinsauswahl bei mehreren zugewiesenen Vereinen.',
+      'Hartnäckigen "SelectItem value cannot be empty" Fehler auf der Admin-Teamseite im Liga-Zuweisungsdialog behoben.',
+      'Liga-Zuweisung im Admin-Team-Dialog wiederhergestellt und stabilisiert.',
+      'Grundlage für Vereinsvertreter-Seiten (Mannschaften, Schützen, Ergebnisse) zur Nutzung der `user_permissions`-Collection (Firestore) anstelle der temporären Map gelegt.',
+      'Vereinsvertreter-Seiten: Implementierung der Vereinsauswahl, falls VV mehreren Vereinen zugeordnet ist.',
     ],
   },
   {
     version: '0.2.0',
-    date: '20. Mai 2025', // Updated date
-    title: 'Benutzerverwaltung (Basis) & Vorbereitung für Custom Claims',
+    date: '20. Mai 2025',
+    title: 'Benutzerverwaltung Basis & Vorbereitung erweiterte Rechte',
     descriptionPoints: [
-      'Seite /admin/user-management überarbeitet: Super-Admin kann Rolle und bis zu 3 Vereine für Benutzer (identifiziert durch UID) direkt in Firestore (`user_permissions`-Collection) speichern (ohne Cloud Function für diesen Schreibvorgang).',
+      'Admin-Seite `/admin/user-management` überarbeitet: Super-Admin weist Rolle und bis zu 3 Vereine über UID zu (Speicherung in Firestore `user_permissions`).',
       'Anleitung für manuelle Benutzeranlage in Firebase Auth und Rechtevergabe in der App auf der Benutzerverwaltungs-Seite hinzugefügt.',
-      'Platzhalter für "Statistiken" im Admin-Dashboard hinzugefügt.',
-      'Fortschritt bezüglich des Wechsels zum Firebase "Blaze" Plan und der (noch nicht clientseitig genutzten) Cloud Function für Custom Claims in /admin/user-management dokumentiert.',
+      'Cloud Function `setUserRoleAndClub` (und verwandte) für zukünftige Custom Claims erfolgreich deployed (Blaze Plan Voraussetzung).',
+      'Admin-Dashboard um Platzhalter für "Statistiken" und "Agenda" erweitert.',
     ],
   },
   {
     version: '0.1.9',
-    date: '20. Mai 2025', // Updated date
-    title: 'Verbesserung Ergebniserfassung UX',
+    date: '20. Mai 2025',
+    title: 'UX Verbesserung Ergebniserfassung',
     descriptionPoints: [
       'Ergebniserfassungsseiten (Admin & Verein): Vorgemerkte Ergebnisse (`pendingScores`) bleiben nun auch bei einem Wechsel der Mannschaft in der Eingabeliste erhalten.',
+      'Changelog-Datum für frühere Einträge korrigiert.',
     ],
   },
   {
     version: '0.1.8',
     date: '20. Mai 2025',
-    title: 'Regeldurchsetzung Schützenzuordnung für VV',
+    title: 'Regeldurchsetzung Schützenzuordnung VV & Korrekturen',
     descriptionPoints: [
-      'Regel "Ein Schütze pro Saison/Disziplinkategorie nur in einem Team" beim Neuanlegen von Schützen durch Vereinsvertreter (/app/verein/schuetzen) implementiert.',
-      'UI-Anpassung: Beim Auswählen einer Mannschaft im Dialog werden andere Teams derselben Kategorie/Jahr für die Auswahl deaktiviert.',
+      'Regel "Ein Schütze pro Saison/Disziplinkategorie nur in einem Team" beim Neuanlegen von Schützen durch Vereinsvertreter implementiert.',
+      'Korrektur der Geschlechterfilterung in der Einzelrangliste ("Bester Schütze" vs. "Beste Dame").',
+      'Schützen verschwinden nun auch nach Speichern und Neuladen korrekt aus dem Dropdown der Ergebniserfassung.',
     ],
   },
   {
@@ -82,25 +94,26 @@ const changelogEntries: ChangelogEntry[] = [
     date: '20. Mai 2025',
     title: 'VV-Funktionen auf Firestore user_permissions umgestellt',
     descriptionPoints: [
-      'Vereinsvertreter-Seiten (Dashboard, Mannschaften, Schützen, Ergebnisse) nutzen nun die `user_permissions`-Collection aus Firestore zur Rechteprüfung und Vereinszuweisung (ersetzt die temporäre `VV_CLUB_ASSIGNMENTS`-Map).',
-      'Implementierung einer Vereinsauswahl für VVs, wenn ihnen mehrere Vereine zugewiesen sind.',
-      'Fehlerbehebungen und Korrekturen in den VV-Seiten zur Datenanzeige und -verwaltung im Kontext des zugewiesenen/ausgewählten Vereins.',
+      'Vereinsvertreter-Seiten (Dashboard, Basis für Mannschaften, Schützen, Ergebnisse) nutzen nun die `user_permissions`-Collection aus Firestore zur Rechteprüfung und Vereinszuweisung.',
+      'Implementierung einer Vereinsauswahl für VVs, wenn ihnen mehrere Vereine zugewiesen sind (Basis).',
+      '"Letzte Änderungen"-Feed: Gruppierung pro Liga und Tag implementiert, um Informationsflut zu reduzieren.',
     ],
   },
    {
     version: '0.1.6',
     date: '20. Mai 2025',
-    title: '"Letzte Änderungen"-Feed auf Startseite implementiert',
+    title: '"Letzte Änderungen"-Feed & Support-Tickets',
     descriptionPoints: [
-      'Neue Firestore-Collection `league_updates` speichert Informationen über neu hinzugefügte Ergebnisse.',
-      'Ergebniserfassung (Admin & Verein) erstellt/aktualisiert Einträge in `league_updates`, gruppiert pro Liga und Tag.',
-      'Startseite (`/`) zeigt die letzten Einträge aus `league_updates` an, inklusive des Disziplintyps der Liga und des Wettkampfjahres.',
+      'Neue Firestore-Collection `league_updates` für den "Letzte Änderungen"-Feed erstellt.',
+      'Ergebniserfassung (Admin & Verein) erstellt/aktualisiert Einträge in `league_updates`.',
+      'Startseite (`/`) zeigt die letzten Einträge aus `league_updates`, inklusive Disziplintyp und Jahr.',
+      'Support-Seite: Formular speichert Anfragen nun in Firestore (`support_tickets`). Admin-Ansicht für Tickets erstellt.',
     ],
   },
    {
     version: '0.1.5',
     date: '20. Mai 2025',
-    title: 'Ergebnisbearbeitung & Ranglisten-Anzeige verfeinert',
+    title: 'Ergebnisbearbeitung Admin & Ranglisten-Anzeige verfeinert',
     descriptionPoints: [
       'Admin Edit Results (/admin/edit-results): Vollständige Implementierung der Bearbeitungsfunktion für Ergebnisse (Ringzahl, Ergebnistyp) inklusive Speicherung der Änderungshistorie und Löschfunktion.',
       'RWK Tabellen: Anzeige für "Bester Schütze" (bester männlicher Teilnehmer) und "Beste Dame" (beste weibliche Teilnehmerin) getrennt und korrekt implementiert.',
@@ -114,8 +127,7 @@ const changelogEntries: ChangelogEntry[] = [
     title: 'Verbesserungen Ergebniserfassung & Einzelrangliste',
     descriptionPoints: [
       'Ergebniserfassung: Korrekte Speicherung von Schützen-, Team- und Liganamen in der `rwk_scores`-Datenbank sichergestellt.',
-      'Ergebniserfassung: Schützen werden nun auch nach dem Neuladen der Seite korrekt aus dem Dropdown entfernt, wenn für den gewählten Durchgang bereits ein Ergebnis in der Datenbank existiert (`existingScoresForTeamAndRound`).',
-      'RWK Tabellen: Korrektur der Geschlechter-Aggregierung für die zuverlässige Ermittlung der "Besten Dame".',
+      'Ergebniserfassung: Schützen werden nun auch nach dem Neuladen der Seite korrekt aus dem Dropdown entfernt, wenn für den gewählten Durchgang bereits ein Ergebnis in der Datenbank existiert.',
     ],
   },
   {
@@ -124,17 +136,17 @@ const changelogEntries: ChangelogEntry[] = [
     title: 'Implementierung Ergebniserfassung (Speichern) & -bearbeitung (Basis)',
     descriptionPoints: [
       'Admin Results (/admin/results): Ergebnisse können erfasst und in Firestore (rwk_scores) gespeichert werden.',
-      'Admin Edit Results (/admin/edit-results): Neue Seite zum Suchen und (Basis-)Bearbeiten von erfassten Ergebnissen hinzugefügt.',
-      'Logik für "Letzte Änderungen"-Feed vorbereitet (Speichern von league_updates).',
+      'Admin Edit Results (/admin/edit-results): Seite zum Suchen und (Basis-)Bearbeiten von erfassten Ergebnissen hinzugefügt.',
+      'Logik für "Letzte Änderungen"-Feed vorbereitet.',
     ],
   },
   {
-    version: '0.1.2', // War vorher fälschlicherweise 0.2.2
+    version: '0.1.2', 
     date: '20. Mai 2025',
     title: 'Dynamische Jahresauswahl RWK-Tabellen & Impressum',
     descriptionPoints: [
-      'RWK-Tabellen (/rwk-tabellen): Jahresauswahl wird jetzt dynamisch aus den in Firestore vorhandenen Saisons generiert (nur Jahre mit angelegten Saisons).',
-      'RWK-Tabellen: Das aktuelle Kalenderjahr wird als Standard im Jahres-Dropdown vorausgewählt, falls dafür Saisons mit Status "Laufend" existieren; ansonsten das neueste verfügbare Jahr mit laufenden Saisons.',
+      'RWK-Tabellen (/rwk-tabellen): Jahresauswahl wird jetzt dynamisch aus den in Firestore vorhandenen Saisons generiert.',
+      'RWK-Tabellen: Das aktuelle Kalenderjahr wird als Standard im Jahres-Dropdown vorausgewählt (falls "laufende" Saisons dafür existieren).',
       'RWK-Tabellen: Es werden nur noch Saisons mit dem Status "Laufend" berücksichtigt und angezeigt.',
       'Impressumsseite (/impressum) mit den bereitgestellten Inhalten erstellt und im Footer verlinkt.',
     ],
@@ -142,13 +154,12 @@ const changelogEntries: ChangelogEntry[] = [
   {
     version: '0.1.1',
     date: '20. Mai 2025',
-    title: 'Korrektur Schützenzuordnung Zähler & Datenintegrität',
+    title: 'Korrektur Schützenzuordnung & Datenintegrität',
     descriptionPoints: [
-      'Behebung von "No document to update"-Fehlern bei der Mannschaftsbearbeitung durch Prüfung auf Existenz von Schützen.',
+      'Behebung von "No document to update"-Fehlern bei der Mannschaftsbearbeitung.',
       'Korrektur des Zählers für ausgewählte Schützen im Mannschafts-Bearbeiten-Dialog.',
-      'Sicherstellung der Datenkonsistenz bei der Zuordnung von Schützen zu Teams (beidseitige Verknüpfung in `shooter.teamIds` und `team.shooterIds`).',
-      'Regel "Maximal 3 Schützen pro Team" auf Admin- und VV-Teamseiten und beim Neuanlegen von Schützen implementiert und korrigiert.',
-      'Regel "Ein Schütze pro Saison/Disziplinkategorie nur in einem Team" auf Admin-Teamseite implementiert.',
+      'Sicherstellung der Datenkonsistenz bei der Zuordnung von Schützen zu Teams (beidseitige Verknüpfung).',
+      'Regel "Maximal 3 Schützen pro Team" und "Ein Schütze pro Saison/Disziplinkategorie nur in einem Team" implementiert und korrigiert.',
     ],
   },
   {
@@ -157,15 +168,12 @@ const changelogEntries: ChangelogEntry[] = [
     title: 'Umstellung Versionierung & Admin Stammdaten mit DB-Anbindung',
     descriptionPoints: [
       'Versionierung auf MAJOR.MINOR.PATCH umgestellt.',
-      'Admin Vereinsverwaltung (/admin/clubs): CRUD-Funktionen mit Firestore-Anbindung, Duplikatsprüfung, Vereinsnummer.',
-      'Admin Saisonverwaltung (/admin/seasons): CRUD-Funktionen mit Firestore-Anbindung, Status.',
-      'Admin Ligaverwaltung (/admin/leagues): CRUD-Funktionen, Zuordnung zu Saisons, spezifische Disziplintypen.',
-      'Admin Mannschaftsverwaltung (/admin/teams): Datenbankanbindung, Zuordnung zu Liga/Saison/Verein, Schützenzuweisung (Basis).',
-      'Admin Schützenverwaltung (/admin/shooters): Datenbankanbindung, Zuordnung zu Verein, Regeln für Teamzuordnung (Basis), Layout-Korrekturen.',
-      'Basis für Vereinsvertreter-Bereich geschaffen (Layouts, Navigation, erste Seiten).',
-      'Diverse UI-Korrekturen und Fehlerbehebungen (SelectItem-Fehler, Endlosschleifen).',
-      'Git-Initialisierung und .gitignore-Setup.',
-      'Anpassung des Logos und Firebase-Konfiguration auf Umgebungsvariablen umgestellt.',
+      'Admin Vereinsverwaltung (/admin/clubs): CRUD-Funktionen mit Firestore-Anbindung.',
+      'Admin Saisonverwaltung (/admin/seasons): CRUD-Funktionen mit Firestore-Anbindung.',
+      'Admin Ligaverwaltung (/admin/leagues): CRUD-Funktionen, Zuordnung zu Saisons.',
+      'Admin Mannschaftsverwaltung (/admin/teams): Datenbankanbindung, Zuordnung.',
+      'Admin Schützenverwaltung (/admin/shooters): Datenbankanbindung, Zuordnung.',
+      'Basis für Vereinsvertreter-Bereich geschaffen.',
     ],
   },
 ];
