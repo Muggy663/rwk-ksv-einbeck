@@ -2,19 +2,18 @@
 import type { Timestamp } from 'firebase/firestore';
 
 export type FirestoreLeagueSpecificDiscipline =
-  | 'KKG' // Kleinkaliber Gewehr
-  | 'KKP' // Kleinkaliber Pistole
-  | 'LG'  // Luftgewehr (Freihand)
-  | 'LGA' // Luftgewehr Auflage
-  | 'LP'  // Luftpistole (Freihand)
-  | 'LPA' // Luftpistole Auflage
-  | 'SP'; // Sportpistole (als eigenständige Disziplin, falls noch benötigt)
+  | 'KKG'  // Kleinkaliber Gewehr
+  | 'KKP'  // Kleinkaliber Pistole
+  | 'LG'   // Luftgewehr (Freihand)
+  | 'LGA'  // Luftgewehr Auflage
+  | 'LP'   // Luftpistole (Freihand)
+  | 'LPA'; // Luftpistole Auflage
 
 export const GEWEHR_DISCIPLINES: FirestoreLeagueSpecificDiscipline[] = ['KKG', 'LG', 'LGA'];
-export const PISTOL_DISCIPLINES: FirestoreLeagueSpecificDiscipline[] = ['KKP', 'LP', 'LPA', 'SP'];
+export const PISTOL_DISCIPLINES: FirestoreLeagueSpecificDiscipline[] = ['KKP', 'LP', 'LPA']; // SP wurde entfernt
 export const MAX_SHOOTERS_PER_TEAM = 3;
 
-export function getDisciplineCategory(leagueType?: FirestoreLeagueSpecificDiscipline): 'Gewehr' | 'Pistole' | null {
+export function getDisciplineCategory(leagueType?: FirestoreLeagueSpecificDiscipline | null): 'Gewehr' | 'Pistole' | null {
   if (!leagueType) return null;
   if (GEWEHR_DISCIPLINES.includes(leagueType)) return 'Gewehr';
   if (PISTOL_DISCIPLINES.includes(leagueType)) return 'Pistole';
@@ -28,18 +27,14 @@ export const leagueDisciplineOptions: { value: FirestoreLeagueSpecificDiscipline
   { value: 'LGA', label: 'Luftgewehr Auflage' },
   { value: 'LP', label: 'Luftpistole (Freihand)' },
   { value: 'LPA', label: 'Luftpistole Auflage' },
-  { value: 'SP', label: 'Sportpistole' },
 ];
 
-export type UIDisciplineSelection = 'KK' | 'LD' | 'SP';
+export type UIDisciplineSelection = 'KK' | 'LD'; // SP wurde entfernt
 
 export const uiDisciplineFilterOptions: { value: UIDisciplineSelection, label: string, firestoreTypes: FirestoreLeagueSpecificDiscipline[] }[] = [
-  { value: 'KK', label: 'Kleinkaliber', firestoreTypes: ['KKG', 'KKP'] },
-  { value: 'LD', label: 'Luftdruck', firestoreTypes: ['LGA', 'LG', 'LPA', 'LP'] },
-  // SP wurde entfernt, falls es nicht mehr benötigt wird. Wenn doch, hier wieder hinzufügen:
-  // { value: 'SP', label: 'Sportpistole', firestoreTypes: ['SP'] },
+  { value: 'KK', label: 'Kleinkaliber (KK)', firestoreTypes: ['KKG', 'KKP'] },
+  { value: 'LD', label: 'Luftdruck (LG/LP)', firestoreTypes: ['LG', 'LGA', 'LP', 'LPA'] },
 ];
-
 
 export interface CompetitionDisplayConfig {
   year: number;
@@ -47,11 +42,20 @@ export interface CompetitionDisplayConfig {
   displayName: string;
 }
 
+const currentActualYear = new Date().getFullYear();
+export const AVAILABLE_YEARS: number[] = [currentActualYear, currentActualYear - 1, currentActualYear - 2, currentActualYear + 1].sort((a,b) => a - b); // Sortiert aufsteigend, Default wird separat gesetzt
+
+
+export const AVAILABLE_UI_DISCIPLINES: { value: UIDisciplineSelection; label: string }[] = [
+  { value: 'KK', label: 'Kleinkaliber (KK)' },
+  { value: 'LD', label: 'Luftdruck (LG/LP)' },
+];
+
 export interface Season {
   id: string;
   competitionYear: number;
   name: string;
-  type: UIDisciplineSelection; // 'KK' oder 'LD' oder 'SP' (für die Saison-Hauptkategorie)
+  type: UIDisciplineSelection;
   status: 'Geplant' | 'Laufend' | 'Abgeschlossen';
 }
 
@@ -60,7 +64,7 @@ export interface League {
   name: string;
   shortName?: string;
   competitionYear: number;
-  type: FirestoreLeagueSpecificDiscipline; // Spezifischer Typ für Validierung
+  type: FirestoreLeagueSpecificDiscipline;
   order?: number;
   seasonId: string;
 }
@@ -76,7 +80,7 @@ export interface Shooter {
   id: string;
   firstName?: string;
   lastName?: string;
-  name: string; // Kombinierter Name
+  name: string;
   clubId: string;
   gender?: 'male' | 'female' | string;
   teamIds?: string[];
@@ -86,10 +90,13 @@ export interface Team {
   id: string;
   name: string;
   clubId: string;
-  leagueId?: string | null; // Kann initial leer sein, wenn VV anlegt
-  seasonId?: string; // Zugehörigkeit zur Saison, in der es angelegt wurde
+  leagueId?: string | null;
+  seasonId: string;
   competitionYear: number;
   shooterIds?: string[];
+  captainName?: string;
+  captainEmail?: string;
+  captainPhone?: string;
 }
 
 export interface ScoreEntry {
@@ -101,7 +108,7 @@ export interface ScoreEntry {
   leagueType: FirestoreLeagueSpecificDiscipline;
   teamId: string;
   teamName?: string;
-  clubId: string; // Club ID des Teams, für das der Score ist
+  clubId: string;
   shooterId: string;
   shooterName?: string;
   shooterGender?: Shooter['gender'];
@@ -129,7 +136,7 @@ export interface ShooterDisplayResults {
   competitionYear?: number;
 }
 
-export interface TeamDisplay extends Omit<Team, 'shooterIds'> {
+export interface TeamDisplay extends Team {
   clubName: string;
   rank?: number;
   shootersResults: ShooterDisplayResults[];
@@ -167,10 +174,10 @@ export interface PendingScoreEntry {
   seasonName?: string;
   leagueId: string;
   leagueName?: string;
-  leagueType?: FirestoreLeagueSpecificDiscipline;
+  leagueType: FirestoreLeagueSpecificDiscipline;
   teamId: string;
   teamName?: string;
-  clubId?: string;
+  clubId: string;
   shooterId: string;
   shooterName?: string;
   shooterGender?: Shooter['gender'];
@@ -208,18 +215,18 @@ export interface SupportTicket {
 }
 
 export interface UserPermission {
-  uid: string; // User-ID, die auch die Dokument-ID in user_permissions ist
-  email: string;
-  displayName?: string | null;
-  role: 'vereinsvertreter' | null;
-  clubIds: string[] | null; // Array mit bis zu 3 Club-IDs
+  uid: string; // UID des Benutzers (Dokument-ID in user_permissions)
+  email: string; // E-Mail des Benutzers
+  displayName?: string | null; // Anzeigename des Benutzers
+  role: 'vereinsvertreter' | 'mannschaftsfuehrer' | null;
+  clubIds: string[] | null; // Array von Club-IDs, denen der Benutzer zugeordnet ist
   lastUpdated?: Timestamp;
 }
 
-// Context type for VereinLayout
 export interface VereinContextType {
   userPermission: UserPermission | null;
   loadingPermissions: boolean;
   permissionError: string | null;
-  assignedClubIds: string[] | null; // For convenience, derived from userPermission
+  assignedClubIds: string[] | null; // Abgeleitet von userPermission.clubIds
+  // assignedClubNames: Array<{id: string, name: string}>; // Wird jetzt in den Komponenten selbst geladen
 }

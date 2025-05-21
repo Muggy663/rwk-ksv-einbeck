@@ -1,3 +1,4 @@
+// src/app/layout.tsx
 import type { Metadata } from 'next';
 import './globals.css'; // Ensure globals.css is imported
 import { AuthProvider } from '@/components/auth/AuthProvider';

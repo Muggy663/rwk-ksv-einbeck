@@ -24,7 +24,6 @@ export default function HomePage() {
     return uiOption ? uiOption.label.replace(/\s*\(.*\)\s*$/, '') : specificType;
   };
 
-
   useEffect(() => {
     const fetchUpdates = async () => {
       setLoadingUpdates(true);
