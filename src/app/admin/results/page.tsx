@@ -8,18 +8,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckSquare, Save, PlusCircle, Trash2, Send, Loader2, AlertTriangle } from 'lucide-react';
-import type { Season, League, Team, Shooter, PendingScoreEntry, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
+import { CheckSquare, Save, PlusCircle, Trash2, Loader2, AlertTriangle } from 'lucide-react';
+import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, FirestoreLeagueSpecificDiscipline, Club, LeagueUpdateEntry } from '@/types/rwk';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, documentId, addDoc, updateDoc, Timestamp } from 'firebase/firestore';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
 const TEAMS_COLLECTION = "rwk_teams";
 const SHOOTERS_COLLECTION = "rwk_shooters";
 const SCORES_COLLECTION = "rwk_scores";
+const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
 export default function AdminResultsPage() {
   const { user } = useAuth();
@@ -37,9 +38,9 @@ export default function AdminResultsPage() {
   const [availableTeamsForLeague, setAvailableTeamsForLeague] = useState<Team[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   
-  const [allShootersFromDB, setAllShootersFromDB] = useState<Shooter[]>([]); // Alle Schützen aus der DB
-  const [shootersOfSelectedTeam, setShootersOfSelectedTeam] = useState<Shooter[]>([]); // Schützen des ausgewählten Teams
-  const [availableShootersForDropdown, setAvailableShootersForDropdown] = useState<Shooter[]>([]); // Gefiltert für Dropdown
+  const [allShootersFromDB, setAllShootersFromDB] = useState<Shooter[]>([]);
+  const [shootersOfSelectedTeam, setShootersOfSelectedTeam] = useState<Shooter[]>([]);
+  const [availableShootersForDropdown, setAvailableShootersForDropdown] = useState<Shooter[]>([]);
   const [selectedShooterId, setSelectedShooterId] = useState<string>('');
   
   const [selectedRound, setSelectedRound] = useState<string>('');
@@ -47,11 +48,15 @@ export default function AdminResultsPage() {
   const [score, setScore] = useState<string>('');
 
   const [pendingScores, setPendingScores] = useState<PendingScoreEntry[]>([]);
+  const [justSavedScoreIdentifiers, setJustSavedScoreIdentifiers] = useState<{ shooterId: string; durchgang: number }[]>([]);
+  const [existingScoresForTeamAndRound, setExistingScoresForTeamAndRound] = useState<ScoreEntry[]>([]);
+
 
   const [isLoadingMasterData, setIsLoadingMasterData] = useState(true);
   const [isLoadingLeagues, setIsLoadingLeagues] = useState(false);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
   const [isLoadingShooters, setIsLoadingShooters] = useState(false);
+  const [isLoadingExistingScores, setIsLoadingExistingScores] = useState(false);
   const [isSubmittingScores, setIsSubmittingScores] = useState(false);
 
   const fetchMasterData = useCallback(async () => {
@@ -67,9 +72,8 @@ export default function AdminResultsPage() {
       if (running.length === 1 && !selectedSeasonId) {
         setSelectedSeasonId(running[0].id);
       } else if (running.length === 0 && !selectedSeasonId) {
-        setSelectedSeasonId(''); // Ensure no season is selected if none are running initially
+        setSelectedSeasonId('');
       }
-
 
       const leaguesSnapshot = await getDocs(query(collection(db, LEAGUES_COLLECTION), orderBy("name", "asc")));
       setAllLeagues(leaguesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as League)));
@@ -89,23 +93,47 @@ export default function AdminResultsPage() {
     } finally {
       setIsLoadingMasterData(false);
     }
-  }, [toast, selectedSeasonId]); // Added selectedSeasonId to ensure it's considered if it changes externally
+  }, [toast, selectedSeasonId]); 
 
   useEffect(() => {
     fetchMasterData();
   }, [fetchMasterData]);
 
   useEffect(() => {
+    setSelectedLeagueId('');
+    // setPendingScores([]); // Keep pending scores if they are for a different context, but usually it's better to clear
+    setJustSavedScoreIdentifiers([]);
+    setExistingScoresForTeamAndRound([]);
+  }, [selectedSeasonId]);
+
+  useEffect(() => {
+    setSelectedTeamId('');
+    // setPendingScores([]); // Keep pending scores when league changes
+    setJustSavedScoreIdentifiers([]);
+    setExistingScoresForTeamAndRound([]);
+  }, [selectedLeagueId]);
+  
+  useEffect(() => {
+    setSelectedShooterId('');
+    // Do NOT clear pendingScores when team changes, they might be for this team
+    setJustSavedScoreIdentifiers([]);
+    setExistingScoresForTeamAndRound([]);
+  }, [selectedTeamId]);
+
+  useEffect(() => {
+    setSelectedShooterId(''); 
+    setScore('');
+    setExistingScoresForTeamAndRound([]); // Clear existing scores when round changes
+    // Keep justSavedIdentifiers if only round changes, might be adding more scores for same team
+  }, [selectedRound]);
+
+
+  useEffect(() => {
     if (selectedSeasonId && allLeagues.length > 0) {
-      console.log(`AdminResultsPage: Season changed to ${selectedSeasonId}. Filtering leagues.`);
       setIsLoadingLeagues(true);
-      const leaguesForSeason = allLeagues.filter(l => l.seasonId === selectedSeasonId);
+      const leaguesForSeason = allLeagues.filter(l => l.seasonId === selectedSeasonId).sort((a,b) => (a.order || 0) - (b.order || 0));
       setAvailableLeaguesForSeason(leaguesForSeason);
-      setSelectedLeagueId(''); 
-      setAvailableTeamsForLeague([]);
-      setSelectedTeamId(''); 
       setIsLoadingLeagues(false);
-      console.log(`AdminResultsPage: Found ${leaguesForSeason.length} leagues for season ${selectedSeasonId}.`);
     } else {
       setAvailableLeaguesForSeason([]);
     }
@@ -114,15 +142,10 @@ export default function AdminResultsPage() {
   useEffect(() => {
     const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId);
     if (selectedLeagueId && selectedSeason && allTeams.length > 0) {
-      console.log(`AdminResultsPage: League changed to ${selectedLeagueId}. Filtering teams for year ${selectedSeason.competitionYear}.`);
       setIsLoadingTeams(true);
       const teamsForLeague = allTeams.filter(t => t.leagueId === selectedLeagueId && t.competitionYear === selectedSeason.competitionYear);
       setAvailableTeamsForLeague(teamsForLeague);
-      setSelectedTeamId(''); 
-      setShootersOfSelectedTeam([]);
-      setSelectedShooterId('');
       setIsLoadingTeams(false);
-      console.log(`AdminResultsPage: Found ${teamsForLeague.length} teams for league ${selectedLeagueId}.`);
     } else {
       setAvailableTeamsForLeague([]);
     }
@@ -130,35 +153,82 @@ export default function AdminResultsPage() {
   
   useEffect(() => {
     if (selectedTeamId && allShootersFromDB.length > 0) {
-      console.log(`AdminResultsPage: Team changed to ${selectedTeamId}. Filtering shooters.`);
       setIsLoadingShooters(true);
       const currentTeamData = availableTeamsForLeague.find(t => t.id === selectedTeamId);
       const shooterIdsInTeam = currentTeamData?.shooterIds || [];
-      const shooters = allShootersFromDB.filter(sh => shooterIdsInTeam.includes(sh.id));
-      setShootersOfSelectedTeam(shooters);
-      setSelectedShooterId('');
+      if (shooterIdsInTeam.length > 0) {
+        const shooters = allShootersFromDB.filter(sh => shooterIdsInTeam.includes(sh.id));
+        setShootersOfSelectedTeam(shooters);
+      } else {
+        setShootersOfSelectedTeam([]);
+      }
       setIsLoadingShooters(false);
-      console.log(`AdminResultsPage: Found ${shooters.length} shooters for team ${selectedTeamId}.`);
     } else {
       setShootersOfSelectedTeam([]);
     }
   }, [selectedTeamId, allShootersFromDB, availableTeamsForLeague]);
 
+  useEffect(() => {
+    const fetchExistingScores = async () => {
+      const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
+      if (!selectedTeamId || !currentSeason?.competitionYear || !selectedRound) {
+        setExistingScoresForTeamAndRound([]);
+        return;
+      }
+      setIsLoadingExistingScores(true);
+      try {
+        const scoresQuery = query(
+          collection(db, SCORES_COLLECTION),
+          where("teamId", "==", selectedTeamId),
+          where("competitionYear", "==", currentSeason.competitionYear),
+          where("durchgang", "==", parseInt(selectedRound, 10))
+        );
+        const snapshot = await getDocs(scoresQuery);
+        const fetchedScores = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
+        setExistingScoresForTeamAndRound(fetchedScores);
+        console.log(`AdminResultsPage: Fetched ${fetchedScores.length} existing scores for team ${selectedTeamId}, round ${selectedRound}.`);
+      } catch (error) {
+        console.error("AdminResultsPage: Error fetching existing scores: ", error);
+        toast({ title: "Fehler beim Laden existierender Ergebnisse", description: (error as Error).message, variant: "destructive" });
+        setExistingScoresForTeamAndRound([]);
+      } finally {
+        setIsLoadingExistingScores(false);
+      }
+    };
+    if (selectedTeamId && selectedSeasonId && selectedRound) {
+        fetchExistingScores();
+    } else {
+        setExistingScoresForTeamAndRound([]);
+    }
+  }, [selectedTeamId, selectedSeasonId, selectedRound, allSeasons, toast]);
+
+
    useEffect(() => {
     if (selectedTeamId && selectedRound && shootersOfSelectedTeam.length > 0) {
-      const shootersAlreadyScoredInPendingThisRound = pendingScores
-        .filter(ps => ps.teamId === selectedTeamId && ps.shooterId && ps.durchgang === parseInt(selectedRound))
-        .map(ps => ps.shooterId);
+      const parsedRound = parseInt(selectedRound, 10);
       
-      const filtered = shootersOfSelectedTeam.filter(sh => !shootersAlreadyScoredInPendingThisRound.includes(sh.id));
+      const shootersInPendingThisRound = pendingScores
+        .filter(ps => ps.teamId === selectedTeamId && ps.durchgang === parsedRound)
+        .map(ps => ps.shooterId);
+
+      const shootersInJustSavedThisRound = justSavedScoreIdentifiers
+        .filter(js => js.durchgang === parsedRound) 
+        .map(js => js.shooterId);
+      
+      const shootersInExistingScoresThisRound = existingScoresForTeamAndRound 
+        .filter(es => es.durchgang === parsedRound)
+        .map(es => es.shooterId);
+      
+      const filtered = shootersOfSelectedTeam.filter(sh => 
+        !shootersInPendingThisRound.includes(sh.id) &&
+        !shootersInJustSavedThisRound.includes(sh.id) &&
+        !shootersInExistingScoresThisRound.includes(sh.id)
+      );
       setAvailableShootersForDropdown(filtered);
-    } else if (selectedTeamId && shootersOfSelectedTeam.length > 0) {
-      setAvailableShootersForDropdown(shootersOfSelectedTeam); // show all if no round selected
-    }
-     else {
+    } else {
       setAvailableShootersForDropdown([]);
     }
-  }, [selectedTeamId, selectedRound, shootersOfSelectedTeam, pendingScores]);
+  }, [selectedTeamId, selectedRound, shootersOfSelectedTeam, pendingScores, justSavedScoreIdentifiers, existingScoresForTeamAndRound]);
 
 
   const handleAddToList = () => {
@@ -171,25 +241,49 @@ export default function AdminResultsPage() {
       return;
     }
     const scoreVal = parseInt(score);
-    if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > 600) {
-      toast({ title: "Ungültiges Ergebnis", description: "Bitte eine gültige Ringzahl eingeben.", variant: "destructive" });
-      return;
-    }
-
+    
     const season = allSeasons.find(s => s.id === selectedSeasonId);
     const league = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
     const team = availableTeamsForLeague.find(t => t.id === selectedTeamId);
     const shooter = allShootersFromDB.find(sh => sh.id === selectedShooterId);
 
     if (!season || !league || !team || !shooter) {
-      toast({ title: "Fehler", description: "Ausgewählte Daten konnten nicht vollständig geladen werden.", variant: "destructive" });
+      toast({ title: "Fehler", description: "Ausgewählte Daten konnten nicht vollständig geladen werden. Bitte Auswahl überprüfen.", variant: "destructive" });
+      return;
+    }
+
+    const leagueSpecificType = league.type as FirestoreLeagueSpecificDiscipline;
+    let maxPossibleScore = 300; // Default for KK
+    if (['LG', 'LGA', 'LP', 'LPA'].includes(leagueSpecificType)) {
+        maxPossibleScore = 400;
+    }
+
+    if (isNaN(scoreVal) || scoreVal < 0 ) {
+      toast({ title: "Ungültiges Ergebnis", description: `Bitte eine gültige, nicht-negative Ringzahl eingeben.`, variant: "destructive" });
+      return;
+    }
+    if (scoreVal > maxPossibleScore) {
+      toast({ title: "Ungültiges Ergebnis", description: `Die Ringzahl darf für diese Disziplin maximal ${maxPossibleScore} betragen.`, variant: "destructive" });
       return;
     }
     
-    const alreadyPending = pendingScores.find(ps => ps.teamId === selectedTeamId && ps.shooterId === selectedShooterId && ps.durchgang === parseInt(selectedRound));
+    const parsedRound = parseInt(selectedRound, 10);
+    const alreadyPending = pendingScores.find(ps => ps.teamId === selectedTeamId && ps.shooterId === selectedShooterId && ps.durchgang === parsedRound);
     if (alreadyPending) {
         toast({ title: "Bereits vorgemerkt", description: `${shooter.name} hat bereits ein Ergebnis für DG ${selectedRound} in der Liste.`, variant: "warning"});
         return;
+    }
+    
+    const alreadySavedThisSession = justSavedScoreIdentifiers.find(js => js.shooterId === selectedShooterId && js.durchgang === parsedRound);
+    if (alreadySavedThisSession) {
+      toast({ title: "Bereits gespeichert (Sitzung)", description: `${shooter.name} hat bereits ein Ergebnis für DG ${selectedRound} in dieser Sitzung gespeichert.`, variant: "warning"});
+      return;
+    }
+
+    const alreadyInDB = existingScoresForTeamAndRound.find(es => es.shooterId === selectedShooterId && es.durchgang === parsedRound);
+     if (alreadyInDB) {
+      toast({ title: "Bereits in DB vorhanden", description: `${shooter.name} hat bereits ein Ergebnis für DG ${selectedRound} in der Datenbank.`, variant: "warning"});
+      return;
     }
 
     const newPendingEntry: PendingScoreEntry = {
@@ -198,25 +292,24 @@ export default function AdminResultsPage() {
       seasonName: season.name,
       leagueId: selectedLeagueId,
       leagueName: league.name,
+      leagueType: league.type,
       teamId: selectedTeamId,
       teamName: team.name,
+      clubId: team.clubId,
       shooterId: selectedShooterId,
       shooterName: shooter.name,
       shooterGender: shooter.gender,
-      durchgang: parseInt(selectedRound),
+      durchgang: parsedRound,
       totalRinge: scoreVal,
       scoreInputType: resultType,
       competitionYear: season.competitionYear,
-      leagueType: league.type as FirestoreLeagueSpecificDiscipline,
-      clubId: team.clubId,
-      // clubName: // TODO
     };
 
     setPendingScores(prev => [...prev, newPendingEntry]);
     toast({ title: "Ergebnis hinzugefügt", description: `${shooter.name} - Runde ${selectedRound}: ${scoreVal} Ringe zur Liste hinzugefügt.` });
     
-    setSelectedShooterId('');
-    setScore('');
+    setSelectedShooterId(''); 
+    setScore(''); 
   };
 
   const handleRemoveFromList = (tempId: string) => {
@@ -235,22 +328,108 @@ export default function AdminResultsPage() {
     }
     setIsSubmittingScores(true);
     const batch = writeBatch(db);
+    const newlySavedIdentifiers: { shooterId: string; durchgang: number }[] = [];
+    
+    const leagueUpdatesToProcess = new Map<string, { leagueId: string, leagueName: string, leagueType: FirestoreLeagueSpecificDiscipline, competitionYear: number }>();
+
+    pendingScores.forEach(entry => {
+      const key = `${entry.leagueId}_${entry.competitionYear}`;
+      if (!leagueUpdatesToProcess.has(key) && entry.leagueType) {
+        leagueUpdatesToProcess.set(key, {
+          leagueId: entry.leagueId,
+          leagueName: entry.leagueName || "Unbek. Liga",
+          leagueType: entry.leagueType,
+          competitionYear: entry.competitionYear
+        });
+      }
+    });
+
 
     try {
-        pendingScores.forEach(entry => {
-            const { tempId, seasonName, leagueName, teamName, shooterName, ...dataToSave } = entry; // remove transient fields
-            const scoreDocRef = doc(collection(db, SCORES_COLLECTION)); // Auto-generate ID
+        pendingScores.forEach((entry) => {
+            const { tempId, ...dataToSave } = entry;
+            const scoreDocRef = doc(collection(db, SCORES_COLLECTION)); 
+            
+            const scoreDataForDb: Omit<ScoreEntry, 'id' | 'entryTimestamp' | 'enteredByUserId' | 'enteredByUserName'> = {
+                seasonId: dataToSave.seasonId,
+                seasonName: dataToSave.seasonName || "N/A",
+                leagueId: dataToSave.leagueId,
+                leagueName: dataToSave.leagueName || "N/A",
+                leagueType: dataToSave.leagueType as FirestoreLeagueSpecificDiscipline, 
+                teamId: dataToSave.teamId,
+                teamName: dataToSave.teamName || "N/A",
+                clubId: dataToSave.clubId || "N/A",
+                shooterId: dataToSave.shooterId,
+                shooterName: dataToSave.shooterName || "N/A",
+                shooterGender: dataToSave.shooterGender || "unknown",
+                durchgang: dataToSave.durchgang,
+                totalRinge: dataToSave.totalRinge,
+                scoreInputType: dataToSave.scoreInputType,
+                competitionYear: dataToSave.competitionYear,
+            };
+            
             batch.set(scoreDocRef, {
-                ...dataToSave,
+                ...scoreDataForDb,
                 enteredByUserId: user.uid,
-                enteredByUserName: user.email || user.displayName || "Unbekannt",
+                enteredByUserName: user.displayName || user.email || "Unbekannt",
                 entryTimestamp: serverTimestamp()
             });
+            newlySavedIdentifiers.push({ shooterId: entry.shooterId, durchgang: entry.durchgang });
         });
+
+        for (const updateInfo of leagueUpdatesToProcess.values()) {
+            const today = new Date();
+            const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+
+            const q = query(
+                collection(db, LEAGUE_UPDATES_COLLECTION),
+                where("leagueId", "==", updateInfo.leagueId),
+                where("competitionYear", "==", updateInfo.competitionYear),
+                where("timestamp", ">=", Timestamp.fromDate(startOfDay)),
+                where("timestamp", "<=", Timestamp.fromDate(endOfDay))
+            );
+            const existingUpdatesSnapshot = await getDocs(q);
+
+            if (!existingUpdatesSnapshot.empty) {
+                const existingUpdateDocRef = existingUpdatesSnapshot.docs[0].ref;
+                batch.update(existingUpdateDocRef, { timestamp: serverTimestamp() });
+                console.log("AdminResultsPage: Updated existing league update entry for leagueId", updateInfo.leagueId);
+            } else {
+                const leagueUpdateData: Omit<LeagueUpdateEntry, 'id'> = {
+                    leagueId: updateInfo.leagueId,
+                    leagueName: updateInfo.leagueName,
+                    leagueType: updateInfo.leagueType, 
+                    competitionYear: updateInfo.competitionYear,
+                    timestamp: serverTimestamp(),
+                    action: 'results_added',
+                };
+                const leagueUpdateDocRef = doc(collection(db, LEAGUE_UPDATES_COLLECTION));
+                batch.set(leagueUpdateDocRef, leagueUpdateData);
+                console.log("AdminResultsPage: Added new league update entry for leagueId", updateInfo.leagueId);
+            }
+        }
 
         await batch.commit();
         toast({ title: "Ergebnisse gespeichert", description: `${pendingScores.length} Ergebnisse wurden erfolgreich in der Datenbank gespeichert.` });
         setPendingScores([]);
+        setJustSavedScoreIdentifiers(prev => [...prev, ...newlySavedIdentifiers]);
+        
+        const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
+        if (selectedTeamId && currentSeason?.competitionYear && selectedRound) {
+            setIsLoadingExistingScores(true);
+            const scoresQuery = query(
+              collection(db, SCORES_COLLECTION),
+              where("teamId", "==", selectedTeamId),
+              where("competitionYear", "==", currentSeason.competitionYear),
+              where("durchgang", "==", parseInt(selectedRound, 10))
+            );
+            const snapshot = await getDocs(scoresQuery);
+            const fetchedScores = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
+            setExistingScoresForTeamAndRound(fetchedScores); 
+            setIsLoadingExistingScores(false);
+        }
+
     } catch (error) {
         console.error("Error saving scores to Firestore: ", error);
         toast({ title: "Fehler beim Speichern", description: (error as Error).message, variant: "destructive" });
@@ -260,9 +439,16 @@ export default function AdminResultsPage() {
   };
 
   const selectedSeasonObject = allSeasons.find(s => s.id === selectedSeasonId);
-  const selectedLeagueName = availableLeaguesForSeason.find(l => l.id === selectedLeagueId)?.name;
-  const selectedTeamName = availableTeamsForLeague.find(t => t.id === selectedTeamId)?.name;
-  const numRoundsForSelect = selectedSeasonObject?.type === 'SP' ? 7 : 5;
+  const selectedLeagueObject = availableLeaguesForSeason.find(l => l.id === selectedLeagueId); 
+  const selectedTeamObject = availableTeamsForLeague.find(t => t.id === selectedTeamId);
+
+  let numRoundsForSelect = 5; // Default KK
+  if (selectedLeagueObject) {
+    const lgLpTypes: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
+    if (lgLpTypes.includes(selectedLeagueObject.type)) {
+      numRoundsForSelect = 4; // 4 Durchgänge für Luftdruck
+    }
+  }
 
 
   if (isLoadingMasterData) {
@@ -310,7 +496,11 @@ export default function AdminResultsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-2">
               <Label htmlFor="season">Saison (nur laufende)</Label>
-              <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={availableRunningSeasons.length === 0}>
+              <Select 
+                value={selectedSeasonId} 
+                onValueChange={(value) => setSelectedSeasonId(value)} 
+                disabled={availableRunningSeasons.length === 0}
+              >
                 <SelectTrigger id="season"><SelectValue placeholder="Saison wählen" /></SelectTrigger>
                 <SelectContent>
                   {availableRunningSeasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -319,7 +509,11 @@ export default function AdminResultsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="league">Liga</Label>
-              <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={!selectedSeasonId || isLoadingLeagues}>
+              <Select 
+                value={selectedLeagueId} 
+                onValueChange={(value) => setSelectedLeagueId(value)} 
+                disabled={!selectedSeasonId || isLoadingLeagues}
+              >
                 <SelectTrigger id="league">
                     <SelectValue placeholder={isLoadingLeagues ? "Lade Ligen..." : (availableLeaguesForSeason.length === 0 && selectedSeasonId ? "Keine Ligen für Saison" : "Liga wählen")} />
                 </SelectTrigger>
@@ -330,7 +524,11 @@ export default function AdminResultsPage() {
             </div>
              <div className="space-y-2">
               <Label htmlFor="team">Mannschaft</Label>
-              <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={!selectedLeagueId || isLoadingTeams}>
+              <Select 
+                value={selectedTeamId} 
+                onValueChange={(value) => setSelectedTeamId(value)} 
+                disabled={!selectedLeagueId || isLoadingTeams}
+              >
                 <SelectTrigger id="team">
                     <SelectValue placeholder={isLoadingTeams ? "Lade Mannschaften..." : (availableTeamsForLeague.length === 0 && selectedLeagueId ? "Keine Teams für Liga" : "Mannschaft wählen")} />
                 </SelectTrigger>
@@ -341,7 +539,11 @@ export default function AdminResultsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="round">Durchgang</Label>
-              <Select value={selectedRound} onValueChange={setSelectedRound} disabled={!selectedTeamId}>
+              <Select 
+                value={selectedRound} 
+                onValueChange={(value) => { setSelectedRound(value);}} 
+                disabled={!selectedTeamId}
+              >
                 <SelectTrigger id="round"><SelectValue placeholder="Durchgang wählen" /></SelectTrigger>
                 <SelectContent>
                   {[...Array(numRoundsForSelect)].map((_, i) => (
@@ -355,12 +557,12 @@ export default function AdminResultsPage() {
               <Select 
                 value={selectedShooterId} 
                 onValueChange={setSelectedShooterId} 
-                disabled={!selectedRound || isLoadingShooters || (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound)}
+                disabled={!selectedRound || isLoadingShooters || isLoadingExistingScores || (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound)}
               >
                 <SelectTrigger id="shooter">
                   <SelectValue 
                     placeholder={
-                        isLoadingShooters ? "Lade Schützen..." : 
+                        isLoadingShooters || isLoadingExistingScores ? "Lade Schützen/Ergebnisse..." : 
                         (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound ? "Alle Schützen erfasst/keine" : "Schütze wählen")} 
                   />
                 </SelectTrigger>
@@ -401,7 +603,7 @@ export default function AdminResultsPage() {
           </div>
           
           <div className="flex justify-end pt-4">
-            <Button onClick={handleAddToList} disabled={!selectedShooterId || !selectedRound || !score || isSubmittingScores}>
+            <Button onClick={handleAddToList} disabled={!selectedShooterId || !selectedRound || !score || isSubmittingScores || isLoadingExistingScores}>
                 <PlusCircle className="mr-2 h-5 w-5" /> Zur Liste hinzufügen
             </Button>
           </div>
@@ -413,7 +615,7 @@ export default function AdminResultsPage() {
           <CardHeader>
             <CardTitle>Vorgemerkte Ergebnisse ({pendingScores.length})</CardTitle>
             <CardDescription>
-              Auswahl: {selectedSeasonObject?.name || '-'} &gt; {selectedLeagueName || '-'} &gt; {selectedTeamName || '-'}
+              Saison: {selectedSeasonObject?.name || '-'} | Liga: {selectedLeagueObject?.name || '-'} | Mannschaft: {selectedTeamObject?.name || '-'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -456,10 +658,9 @@ export default function AdminResultsPage() {
          <div className="mt-8 p-6 text-center text-muted-foreground bg-secondary/30 rounded-md">
             <CheckSquare className="mx-auto h-10 w-10 mb-3 text-primary/70" />
             <p className="text-base">Noch keine Ergebnisse zur Speicherung vorgemerkt.</p>
+            <p className="text-sm mt-1">Füllen Sie das Formular oben aus und klicken Sie auf "Zur Liste hinzufügen".</p>
           </div>
        )}
     </div>
   );
 }
-
-    

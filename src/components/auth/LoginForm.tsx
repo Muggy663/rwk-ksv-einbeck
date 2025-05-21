@@ -76,6 +76,11 @@ export function LoginForm() {
               />
               {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
             </div>
+            
+            <div className="pt-2 text-sm text-muted-foreground">
+              (Captcha-Platzhalter - Funktion folgt)
+            </div>
+
             {authError && !formError && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />

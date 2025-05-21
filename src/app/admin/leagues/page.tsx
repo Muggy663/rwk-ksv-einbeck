@@ -41,7 +41,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSearchParams, useRouter } from 'next/navigation';
 import type { Season, League, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
-import { leagueDisciplineOptions } from '@/types/rwk'; // Import options
+import { leagueDisciplineOptions } from '@/types/rwk'; 
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, documentId } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -159,7 +159,7 @@ export default function AdminLeaguesPage() {
       seasonId: selectedSeasonId, 
       name: '', 
       shortName: '', 
-      type: leagueDisciplineOptions[0].value, // Default to first specific discipline
+      type: leagueDisciplineOptions[0]?.value || 'KKG', // Default to first specific discipline or KKG if empty
       competitionYear: selectedSeasonData.competitionYear,
       order: (leagues.length + 1) * 10 
     });
@@ -225,7 +225,7 @@ export default function AdminLeaguesPage() {
       order: currentLeague.order || 0,
       seasonId: selectedSeasonData.id,
       competitionYear: selectedSeasonData.competitionYear,
-      type: currentLeague.type as FirestoreLeagueSpecificDiscipline, // Ensured by form
+      type: currentLeague.type as FirestoreLeagueSpecificDiscipline, 
     };
     console.log(">>> leagues/handleSubmit: League data to save:", leagueDataToSave);
 

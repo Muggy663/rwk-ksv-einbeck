@@ -1,14 +1,13 @@
 // src/components/layout/MainNav.tsx
 "use client";
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Home, Table, Newspaper, HardHat, LogIn, LogOut, UserCircle, ShieldCheck } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Home, Table, Newspaper, HardHat, LogIn, LogOut, UserCircle, ShieldCheck, Building, HelpCircle } from 'lucide-react'; // Changed MessageSquareQuestion to HelpCircle
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 
-// Hardcoded admin email for now
-const ADMIN_EMAIL = "admin@rwk-einbeck.de"; // Replace with your actual admin email or logic
+const ADMIN_EMAIL = "admin@rwk-einbeck.de";
 
 interface NavItem {
   href: string;
@@ -17,29 +16,42 @@ interface NavItem {
   authRequired?: boolean;
   hideWhenAuthed?: boolean;
   adminOnly?: boolean;
+  vereinOnly?: boolean;
 }
 
 export function MainNav() {
   const pathname = usePathname();
   const { user, signOut, loading } = useAuth();
+  const router = useRouter(); 
 
-  const isAdmin = user && user.email === ADMIN_EMAIL;
+  const isSuperAdmin = user && user.email === ADMIN_EMAIL;
+  const isVereinsVertreter = user && user.email !== ADMIN_EMAIL;
 
   const navItems: NavItem[] = [
     { href: '/', label: 'Startseite', icon: Home },
     { href: '/rwk-tabellen', label: 'RWK Tabellen', icon: Table },
     { href: '/updates', label: 'Updates', icon: Newspaper },
     { href: '/km', label: 'KM', icon: HardHat },
-    { href: '/admin', label: 'Admin', icon: ShieldCheck, adminOnly: true },
+    { href: '/support', label: 'Support', icon: HelpCircle }, // Changed to HelpCircle
+    { href: '/admin', label: 'Admin Panel', icon: ShieldCheck, adminOnly: true },
+    { href: '/verein/dashboard', label: 'Mein Verein', icon: Building, vereinOnly: true },
     { href: '/login', label: 'Login', icon: LogIn, hideWhenAuthed: true },
   ];
 
   return (
-    <nav className="flex items-center space-x-2 lg:space-x-4">
+    <nav className="flex items-center space-x-1 lg:space-x-2">
       {navItems.map((item) => {
-        if (item.hideWhenAuthed && user && !item.adminOnly) return null; // Hide login if user is logged in, unless it's an admin only link meant for logged in admins
-        if (item.authRequired && !user) return null;
-        if (item.adminOnly && !isAdmin) return null; // Only show admin links to admins
+        if (!user && loading && (item.adminOnly || item.vereinOnly || item.authRequired)) return null;
+        if (user && item.hideWhenAuthed) return null;
+        if (!user && item.authRequired && !loading) return null;
+        if (item.adminOnly && !isSuperAdmin) return null;
+        if (item.vereinOnly && !isVereinsVertreter) return null;
+        
+        // Hide "Mein Verein" if user is super admin
+        if (item.vereinOnly && isSuperAdmin) return null;
+        // Hide "Admin Panel" if user is VV (and not super admin)
+        if (item.adminOnly && isVereinsVertreter) return null;
+
 
         return (
           <Link
@@ -47,10 +59,10 @@ export function MainNav() {
             href={item.href}
             className={cn(
               "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1.5 p-2 rounded-md",
-              pathname.startsWith(item.href) && item.href !== '/' || pathname === item.href ? 'text-primary bg-accent/20' : 'text-muted-foreground',
-              "max-md:p-1.5" // Smaller padding on smaller screens
+              (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))) ? 'text-primary bg-accent/20' : 'text-muted-foreground',
+              "max-md:p-1.5"
             )}
-            title={item.label} // Tooltip for icon-only view
+            title={item.label}
           >
             <item.icon className="h-5 w-5" />
             <span className="hidden md:inline">{item.label}</span>
@@ -59,13 +71,13 @@ export function MainNav() {
       })}
       {user && (
         <div className="flex items-center gap-2">
-           <span className="text-sm text-muted-foreground hidden md:inline max-w-[100px] truncate" title={user.email || undefined}>{user.email}</span>
-           <UserCircle className="h-6 w-6 text-muted-foreground md:hidden" title={user.email || undefined} />
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={signOut} 
-            disabled={loading} 
+           {user.email && <span className="text-sm text-muted-foreground hidden md:inline max-w-[100px] truncate" title={user.email}>{user.email}</span>}
+           {user.email && <UserCircle className="h-6 w-6 text-muted-foreground md:hidden" title={user.email} />}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            disabled={loading}
             className="flex items-center gap-1.5 p-2 rounded-md text-muted-foreground hover:text-primary max-md:p-1.5"
             title="Logout"
           >

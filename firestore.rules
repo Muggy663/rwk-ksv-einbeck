@@ -1,0 +1,118 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // === Hilfsfunktionen ===
+    function isSuperAdmin() {
+      return request.auth != null && request.auth.token.email == 'admin@rwk-einbeck.de';
+    }
+
+    function isVereinsvertreter() {
+      // Ein VV muss eine Rolle 'vereinsvertreter' und eine zugewiesene clubId im Token haben
+      return request.auth != null && 
+             request.auth.token.role == 'vereinsvertreter' && 
+             request.auth.token.clubId != null;
+    }
+
+    // Prüft, ob der anfragende Benutzer der "Besitzer" der Ressource ist
+    // (basierend auf der clubId der Ressource)
+    function isResourceOwner(resourceClubId) {
+      return request.auth.token.clubId == resourceClubId;
+    }
+
+    // Prüft beim Erstellen/Aktualisieren, ob die Aktion für den eigenen Club des VV ist
+    // (request.resource.data enthält die Daten, die geschrieben werden sollen)
+    function isWritingForOwnClub(incomingClubId) {
+      return request.auth.token.clubId == incomingClubId;
+    }
+
+    // === Regeln für Collections ===
+
+    // System-Level Daten: Nur Super-Admin darf schreiben
+    match /seasons/{season} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /clubs/{club} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /rwk_leagues/{league} {
+      allow read: if true;
+      allow write: if isSuperAdmin(); // Ligazuweisungen etc. macht der Super-Admin
+    }
+
+    // Nachrichten (Beispiel, falls Admin-Only)
+    match /newsItems/{newsItem} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // Club-spezifische Daten: SuperAdmin ODER der zugewiesene Vereinsvertreter
+    match /rwk_teams/{teamId} {
+      allow read: if true; // Öffentlich lesbar oder if request.auth != null; für angemeldete Benutzer
+
+      // Erstellen: SuperAdmin oder VV für seinen eigenen Club
+      allow create: if isSuperAdmin() || 
+                       (isVereinsvertreter() && isWritingForOwnClub(request.resource.data.clubId));
+      
+      // Aktualisieren: SuperAdmin oder VV, wenn er der Besitzer des Teams ist 
+      // UND die clubId nicht zu einem fremden Club geändert wird.
+      allow update: if isSuperAdmin() || 
+                       (isVereinsvertreter() && 
+                        isResourceOwner(resource.data.clubId) && 
+                        isWritingForOwnClub(request.resource.data.clubId));
+                        
+      // Löschen: SuperAdmin oder VV, wenn er der Besitzer des Teams ist
+      allow delete: if isSuperAdmin() || 
+                       (isVereinsvertreter() && isResourceOwner(resource.data.clubId));
+    }
+
+    match /rwk_shooters/{shooterId} {
+      allow read: if true; // Öffentlich lesbar oder if request.auth != null;
+
+      // Erstellen: SuperAdmin oder VV für Schützen seines eigenen Clubs
+      allow create: if isSuperAdmin() ||
+                       (isVereinsvertreter() && isWritingForOwnClub(request.resource.data.clubId));
+
+      // Aktualisieren: SuperAdmin oder VV für Schützen seines Clubs, wenn clubId konsistent bleibt
+      allow update: if isSuperAdmin() ||
+                       (isVereinsvertreter() &&
+                        isResourceOwner(resource.data.clubId) &&
+                        isWritingForOwnClub(request.resource.data.clubId));
+
+      // Löschen: SuperAdmin oder VV für Schützen seines Clubs
+      allow delete: if isSuperAdmin() ||
+                       (isVereinsvertreter() && isResourceOwner(resource.data.clubId));
+    }
+
+    // RWK Ergebnisse (Scores)
+    match /rwk_scores/{scoreId} {
+      allow read: if true; // Ergebnisse sind öffentlich lesbar
+
+      // Erstellen: SuperAdmin oder VV für ein Team seines Clubs
+      // Das `request.resource.data.clubId` bezieht sich auf die clubId des Teams, für das das Ergebnis eingetragen wird.
+      allow create: if isSuperAdmin() ||
+                       (isVereinsvertreter() && isWritingForOwnClub(request.resource.data.clubId));
+      
+      // Ergebnisse bearbeiten/löschen: Nur SuperAdmin
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Liga-Updates (Feed auf der Startseite)
+    match /league_updates/{updateId} {
+      allow read: if true;
+      // Kann von SuperAdmin oder VV (beim Eintragen von Ergebnissen) erstellt werden.
+      allow write: if request.auth != null; 
+    }
+
+    // Zukünftige Collection für Benutzerrollen/Claim-Management durch Super-Admin (Beispiel)
+    // match /user_management_data/{userId} {
+    //   allow read, write: if isSuperAdmin();
+    // }
+  }
+}
