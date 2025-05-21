@@ -15,17 +15,18 @@ import {
   BarChart3, 
   ShieldQuestion, 
   GitPullRequestClosed, 
-  BookOpenCheck, // Corrected from BookOpenCheckIcon
-  ShieldCheck   // Added missing ShieldCheck
+  BookOpenCheck,
+  LayoutDashboard, // Added for completeness, often used in dashboards
+  ShieldCheck    // Explicitly for the error
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'; // Added missing cn import
 
 export default function AdminDashboardPage() {
   const agendaPunkte = [
     { text: "Firestore Sicherheitsregeln vollständig implementieren und testen (basierend auf user_permissions).", status: "Als Nächstes", icon: ShieldQuestion },
     { text: "Client-seitige Nutzung der user_permissions für Vereinsvertreter abschließen (Vereinsauswahl bei >1 Verein, Datenfilterung).", status: "In Arbeit", icon: Settings },
     { text: "Benutzerverwaltung durch Super-Admin (UI-Verbesserungen): Auflisten/Bearbeiten von user_permissions.", status: "Offen", icon: UserCog },
-    { text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag via Firestore-Workaround).", status: "Offen", icon: UserCog },
+    { text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag).", status: "Offen", icon: UserCog },
     { text: "Captcha auf der Login-Seite integrieren.", status: "Zukunft", icon: ShieldCheck },
     { text: "Anzeige \"Mannschaften (Info)\" verfeinern: Name des einen Teams anzeigen.", status: "Offen", icon: Users },
     { text: "Platzhalter \"Schnitt Vorjahr\" in Team-Dialogen mit echter Funktionalität versehen.", status: "Zukunft", icon: BarChart3 },
