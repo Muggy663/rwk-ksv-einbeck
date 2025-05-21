@@ -43,7 +43,6 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useAuth } from '@/hooks/use-auth';
 import { useVereinAuth } from '@/app/verein/layout'; 
 import type { Season, League, Club, Team, Shooter, TeamValidationInfo, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
 import { MAX_SHOOTERS_PER_TEAM, getDisciplineCategory, leagueDisciplineOptions } from '@/types/rwk';
@@ -61,7 +60,7 @@ const TEAMS_COLLECTION = "rwk_teams";
 const SHOOTERS_COLLECTION = "rwk_shooters";
 
 export default function VereinMannschaftenPage() {
-  const { user } = useAuth(); // Für 'user.uid' bei Aktionen
+  const { user, loading: authLoading } = useVereinAuth(); // Verwende 'user' vom Context für UID
   const { userPermission, loadingPermissions, permissionError } = useVereinAuth();
   const { toast } = useToast();
 
@@ -70,7 +69,7 @@ export default function VereinMannschaftenPage() {
   const [assignedClubsForSelect, setAssignedClubsForSelect] = useState<Array<{ id: string; name: string }>>([]);
   
   const [allSeasons, setAllSeasons] = useState<Season[]>([]);
-  const [allLeagues, setAllLeagues] = useState<League[]>([]);
+  const [allLeagues, setAllLeagues] = useState<League[]>([]); // Alle Ligen für Namensanzeige
   
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
   const [leaguesForFilterDropdown, setLeaguesForFilterDropdown] = useState<League[]>([]);
@@ -82,11 +81,11 @@ export default function VereinMannschaftenPage() {
   const [availableClubShooters, setAvailableClubShooters] = useState<Shooter[]>([]);
   const [allTeamsForYearValidation, setAllTeamsForYearValidation] = useState<TeamValidationInfo[]>([]);
   
-  const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
+  const [isLoadingInitialData, setIsLoadingInitialData] = useState(true); // Für Saisons, Ligen, Vereine
   const [isLoadingAssignedClubDetails, setIsLoadingAssignedClubDetails] = useState(false);
-  const [isLoadingTeams, setIsLoadingTeams] = useState(false);
+  const [isLoadingTeams, setIsLoadingTeams] = useState(false); // Für Teams des aktiven Vereins
   const [isLoadingShootersForDialog, setIsLoadingShootersForDialog] = useState(false);
-  const [isLoadingValidationData, setIsLoadingValidationData] = useState(false);
+  const [isLoadingValidationData, setIsLoadingValidationData] = useState(false); // Für TeamsForYearValidation
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [isDeletingTeam, setIsDeletingTeam] = useState(false);
 
@@ -98,42 +97,39 @@ export default function VereinMannschaftenPage() {
   
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
 
+  // Effekt zur Ermittlung des aktiven Vereins basierend auf userPermission
   useEffect(() => {
-    if (!loadingPermissions && userPermission?.clubIds) {
+    if (loadingPermissions) {
       setIsLoadingAssignedClubDetails(true);
-      const clubIdsToFetch = userPermission.clubIds.filter(id => id && id.trim() !== "");
-      if (clubIdsToFetch.length === 0) {
-        setAssignedClubsForSelect([]);
-        setActiveClubId(null);
-        setActiveClubName(null);
-        setIsLoadingAssignedClubDetails(false);
-        return;
-      }
-      
+      return;
+    }
+    if (permissionError) {
+      setIsLoadingAssignedClubDetails(false);
+      return;
+    }
+
+    if (userPermission && userPermission.clubIds && userPermission.clubIds.length > 0) {
+      setIsLoadingAssignedClubDetails(true);
       const fetchClubNames = async () => {
         try {
-          const clubPromises = clubIdsToFetch.map(id => getFirestoreDoc(doc(db, CLUBS_COLLECTION, id)));
+          const clubPromises = userPermission.clubIds!.map(id => getFirestoreDoc(doc(db, CLUBS_COLLECTION, id)));
           const clubSnaps = await Promise.all(clubPromises);
-          const clubs = clubSnaps
+          const clubsData = clubSnaps
             .filter(snap => snap.exists())
             .map(snap => ({ id: snap.id, name: (snap.data() as Club).name || "Unbek. Verein" }));
-          setAssignedClubsForSelect(clubs);
+          
+          setAssignedClubsForSelect(clubsData);
 
-          if (clubs.length > 0) {
-            if (clubs.length === 1) {
-              setActiveClubId(clubs[0].id);
-              setActiveClubName(clubs[0].name);
-            } else if (activeClubId) {
-              const currentActive = clubs.find(c => c.id === activeClubId);
-              setActiveClubName(currentActive?.name || null);
-            } else {
-              // Mehrere Vereine, aber keiner aktiv ausgewählt
-              setActiveClubId(null); 
-              setActiveClubName(null);
-            }
-          } else {
-            setActiveClubId(null);
-            setActiveClubName(null);
+          if (clubsData.length === 1) {
+            setActiveClubId(clubsData[0].id);
+            setActiveClubName(clubsData[0].name);
+          } else if (clubsData.length > 1 && !activeClubId && clubsData[0]?.id) {
+            // Optional: Standardmäßig ersten Verein auswählen, wenn mehrere vorhanden und keiner aktiv
+            // setActiveClubId(clubsData[0].id); 
+            // setActiveClubName(clubsData[0].name);
+          } else if (activeClubId) {
+            const currentActive = clubsData.find(c => c.id === activeClubId);
+            setActiveClubName(currentActive?.name || null);
           }
         } catch (err) {
           console.error("VereinMannschaftenPage: Error fetching assigned club names:", err);
@@ -143,30 +139,17 @@ export default function VereinMannschaftenPage() {
         }
       };
       fetchClubNames();
-    } else if (!loadingPermissions) {
-      // Keine clubIds oder kein userPermission
+    } else {
       setAssignedClubsForSelect([]);
       setActiveClubId(null);
       setActiveClubName(null);
+      setIsLoadingAssignedClubDetails(false);
     }
-  }, [userPermission, loadingPermissions, activeClubId, toast]);
+  }, [userPermission, loadingPermissions, permissionError, activeClubId, toast]);
 
+  // Effekt zum Laden globaler Daten (Saisons, alle Ligen)
   useEffect(() => {
     const fetchGlobalData = async () => {
-      if (!activeClubId && assignedClubsForSelect.length > 1 && !loadingPermissions) {
-        setIsLoadingInitialData(false);
-        setAllSeasons([]);
-        setAllLeagues([]);
-        return;
-      }
-      if (!activeClubId && assignedClubsForSelect.length === 0 && !loadingPermissions && !isLoadingAssignedClubDetails) {
-         setIsLoadingInitialData(false);
-         setAllSeasons([]);
-         setAllLeagues([]);
-         return;
-      }
-
-
       setIsLoadingInitialData(true);
       try {
         const seasonsSnapshotPromise = getDocs(query(collection(db, SEASONS_COLLECTION), orderBy("competitionYear", "desc")));
@@ -186,16 +169,10 @@ export default function VereinMannschaftenPage() {
         setIsLoadingInitialData(false);
       }
     };
-     if(userPermission && (activeClubId || (userPermission.clubIds && userPermission.clubIds.length === 1))){
-        fetchGlobalData();
-    } else if (!loadingPermissions && !isLoadingAssignedClubDetails) {
-        // Fall, wenn VV mehrere Vereine hat, aber noch keinen ausgewählt hat oder keine Vereine zugewiesen sind
-        setAllSeasons([]);
-        setAllLeagues([]);
-        setIsLoadingInitialData(false);
-    }
-  }, [userPermission, toast, activeClubId, assignedClubsForSelect, loadingPermissions, isLoadingAssignedClubDetails]);
+    fetchGlobalData();
+  }, [toast]);
 
+  // Effekt zum Filtern der Ligen für das Dropdown, basierend auf activeClubId und selectedSeasonId
   useEffect(() => {
     if (selectedSeasonId && allLeagues.length > 0 && activeClubId) {
       const season = allSeasons.find(s => s.id === selectedSeasonId);
@@ -203,26 +180,27 @@ export default function VereinMannschaftenPage() {
         setLeaguesForFilterDropdown([]);
         return;
       }
-      
+      // Finde Teams des activeClubId in dieser Saison, um deren Ligen zu bekommen
       const teamsOfClubInSeasonQuery = query(
         collection(db, TEAMS_COLLECTION),
         where("clubId", "==", activeClubId),
         where("competitionYear", "==", season.competitionYear),
-        where("leagueId", "!=", null) 
+        // Nur Teams, die einer Liga zugewiesen sind
+        // where("leagueId", "!=", null) // Könnte man hinzufügen, wenn man nur zugewiesene anzeigen will
       );
       getDocs(teamsOfClubInSeasonQuery).then(teamsSnapshot => {
-        const leagueIdsInUse = new Set(teamsSnapshot.docs.map(d => (d.data() as Team).leagueId));
-        const filtered = allLeagues.filter(l => l.seasonId === selectedSeasonId && leagueIdsInUse.has(l.id));
+        const leagueIdsInUseByClub = new Set(teamsSnapshot.docs.map(d => (d.data() as Team).leagueId).filter(id => id));
+        const filtered = allLeagues.filter(l => l.seasonId === selectedSeasonId && leagueIdsInUseByClub.has(l.id));
         setLeaguesForFilterDropdown(filtered.sort((a, b) => (a.order || 0) - (b.order || 0)));
       }).catch(error => {
         console.error("VereinMannschaftenPage: Error fetching teams to determine leagues for filter:", error);
         setLeaguesForFilterDropdown([]);
       });
-
     } else {
       setLeaguesForFilterDropdown([]);
     }
   }, [selectedSeasonId, allLeagues, allSeasons, activeClubId]);
+
 
   const fetchTeamsForClubAndSeason = useCallback(async () => {
     if (!activeClubId || !selectedSeasonId) {
@@ -269,11 +247,11 @@ export default function VereinMannschaftenPage() {
       setFilteredTeams(teamsOfActiveClubAndSeason.filter(team => team.leagueId === selectedLeagueIdFilter));
     }
   }, [selectedLeagueIdFilter, teamsOfActiveClubAndSeason]);
-
+  
   const { id: ctId, clubId: ctClubIdDialog, competitionYear: ctCompYearDialog } = currentTeam || {};
 
   const fetchShootersAndValidationDataForDialog = useCallback(async () => {
-    const clubIdForDialog = formMode === 'new' ? activeClubId : ctClubIdDialog;
+    const clubIdForDialog = formMode === 'new' ? activeClubId : ctClubIdDialog; // ctClubIdDialog ist die clubId des zu bearbeitenden Teams
     const compYearForDialog = formMode === 'new' 
         ? (allSeasons.find(s => s.id === selectedSeasonId)?.competitionYear) 
         : ctCompYearDialog;
@@ -290,6 +268,7 @@ export default function VereinMannschaftenPage() {
     setIsLoadingValidationData(true);
     try {
       const shootersQuery = query(collection(db, SHOOTERS_COLLECTION), where("clubId", "==", clubIdForDialog), orderBy("name", "asc"));
+      // Lade alle Teams des Jahres für die Validierung, unabhängig vom Verein
       const teamsForYearQuery = query(collection(db, TEAMS_COLLECTION), where("competitionYear", "==", compYearForDialog));
       
       const [shootersSnapshot, teamsForYearSnapshot] = await Promise.all([
@@ -310,11 +289,12 @@ export default function VereinMannschaftenPage() {
           ...teamData, 
           shooterIds: teamData.shooterIds || [],
           leagueType: teamData.leagueId ? leagueMap[teamData.leagueId] : undefined,
-          leagueCompetitionYear: teamData.competitionYear,
+          leagueCompetitionYear: teamData.competitionYear, // Dies ist das Wettkampfjahr des Teams
           currentShooterCount: (teamData.shooterIds || []).length,
         };
       });
       setAllTeamsForYearValidation(teamsForValidation);
+
     } catch (error) {
       console.error("VereinMannschaftenPage: DIALOG - Error fetching shooters/validation data:", error);
       toast({ title: "Fehler", description: "Schützen oder Validierungsdaten für Dialog konnten nicht geladen werden.", variant: "destructive" });
@@ -330,12 +310,13 @@ export default function VereinMannschaftenPage() {
     }
   }, [isFormOpen, formMode, activeClubId, selectedSeasonId, ctClubIdDialog, ctCompYearDialog, fetchShootersAndValidationDataForDialog]);
 
-  useEffect(() => {
-    if (isFormOpen && formMode === 'edit' && ctId && !isLoadingShootersForDialog && !isLoadingValidationData) {
+ useEffect(() => {
+    if (isFormOpen && formMode === 'edit' && ctId && !isLoadingShootersForDialog && !isLoadingValidationData && availableClubShooters.length > 0) {
         const currentTeamDataFromState = teamsOfActiveClubAndSeason.find(t => t.id === ctId);
         const persistedIdsFromDB = currentTeamDataFromState?.shooterIds || [];
         setPersistedShooterIdsForTeam(persistedIdsFromDB);
         
+        // Nur IDs von Schützen übernehmen, die auch im Verein des Teams sind (availableClubShooters)
         const validInitialShooterIds = persistedIdsFromDB.filter(shooterId =>
             availableClubShooters.some(shooter => shooter.id === shooterId)
         );
@@ -345,6 +326,7 @@ export default function VereinMannschaftenPage() {
         setPersistedShooterIdsForTeam([]);
     }
   }, [isFormOpen, formMode, ctId, teamsOfActiveClubAndSeason, isLoadingShootersForDialog, isLoadingValidationData, availableClubShooters]);
+
 
   const handleAddNewTeam = () => {
     if (!activeClubId || !selectedSeasonId) { 
@@ -356,12 +338,12 @@ export default function VereinMannschaftenPage() {
     }
     setFormMode('new');
     setCurrentTeam({ 
-      clubId: activeClubId,
+      clubId: activeClubId, // Wird vom VV übernommen
       competitionYear: currentSeasonData.competitionYear,
       seasonId: selectedSeasonId, 
       name: '', 
       shooterIds: [],
-      leagueId: null, 
+      leagueId: null, // VV weist keine Liga zu
       captainName: '',
       captainEmail: '',
       captainPhone: '',
@@ -432,23 +414,28 @@ export default function VereinMannschaftenPage() {
     
     setIsSubmittingForm(true);
     
+    // Für VV: leagueId wird beim Anlegen NICHT gesetzt, bleibt null oder wie es war beim Bearbeiten.
+    // Nur Super-Admin kann leagueId über seine eigene Admin-Seite zuweisen.
     const teamDataToSave: Omit<Team, 'id'> & { id?: string } = { 
       name: currentTeam.name.trim(),
-      clubId: activeClubId,
+      clubId: activeClubId, // clubId ist immer der des aktiven Vereins des VV
       seasonId: currentTeam.seasonId || selectedSeasonId,
       competitionYear: currentTeam.competitionYear,
-      leagueId: currentTeam.leagueId || null, 
+      leagueId: formMode === 'edit' ? (currentTeam.leagueId || null) : null, // Bei neu leer, bei edit behalten
       shooterIds: selectedShooterIdsInForm,
       captainName: currentTeam.captainName?.trim() || '',
       captainEmail: currentTeam.captainEmail?.trim() || '',
       captainPhone: currentTeam.captainPhone?.trim() || '',
     };
     
+    // Validierung der Schützenzuordnung (1 Schütze pro Disziplinkategorie/Jahr)
+    // Diese Validierung greift nur, wenn das Team bereits einer Liga (und damit einem Typ) zugeordnet ist.
     const currentTeamLeagueInfo = allLeagues.find(l => l.id === teamDataToSave.leagueId);
     const categoryOfCurrentTeamForValidation = getDisciplineCategory(currentTeamLeagueInfo?.type);
     
     if (teamDataToSave.leagueId && categoryOfCurrentTeamForValidation && teamDataToSave.competitionYear !== undefined) {
         for (const shooterId of selectedShooterIdsInForm) {
+          // Prüfe nur für Schützen, die neu zu diesem Team hinzugefügt werden.
           const isNewAssignmentToThisTeam = formMode === 'new' || !persistedShooterIdsForTeam.includes(shooterId);
           if (isNewAssignmentToThisTeam) { 
             const shooterInfo = availableClubShooters.find(s => s.id === shooterId);
@@ -456,6 +443,7 @@ export default function VereinMannschaftenPage() {
 
             let conflictFound = false;
             for (const existingTeamId of (shooterInfo.teamIds || [])) {
+              // Überspringe das aktuell bearbeitete Team selbst
               if (formMode === 'edit' && currentTeam.id && existingTeamId === currentTeam.id) continue; 
               
               const teamValidationEntry = allTeamsForYearValidation.find(t => t.id === existingTeamId);
@@ -479,6 +467,7 @@ export default function VereinMannschaftenPage() {
     
     try {
       const teamsCollectionRef = collection(db, TEAMS_COLLECTION);
+      // Duplikatsprüfung: Name + clubId + competitionYear (leagueId wird nicht geprüft, da VV sie nicht setzt)
       let duplicateQuery;
       const baseDuplicateConditions: any[] = [
         where("name", "==", teamDataToSave.name),
@@ -487,16 +476,13 @@ export default function VereinMannschaftenPage() {
       ];
       
       if (formMode === 'edit' && currentTeam.id) {
-        // Für Edit-Modus kann leagueId null sein, wenn sie entfernt wird
-        if (teamDataToSave.leagueId) baseDuplicateConditions.push(where("leagueId", "==", teamDataToSave.leagueId));
         duplicateQuery = query(teamsCollectionRef, ...baseDuplicateConditions, where(documentId(), "!=", currentTeam.id));
-      } else { // New mode
-        // Für neue Teams ist leagueId null, nicht in Duplikatsprüfung
+      } else { 
         duplicateQuery = query(teamsCollectionRef, ...baseDuplicateConditions);
       }
       const duplicateSnapshot = await getDocs(duplicateQuery);
       if (!duplicateSnapshot.empty) {
-        toast({ title: "Doppelter Mannschaftsname", description: `Eine Mannschaft mit diesem Namen existiert bereits für diesen Verein und dieses Wettkampfjahr ${teamDataToSave.leagueId ? 'und diese Liga (falls zugewiesen)' : ''}.`, variant: "destructive", duration: 7000});
+        toast({ title: "Doppelter Mannschaftsname", description: `Eine Mannschaft mit diesem Namen existiert bereits für diesen Verein und dieses Wettkampfjahr.`, variant: "destructive", duration: 7000});
         setIsSubmittingForm(false); return; 
       }
 
@@ -506,7 +492,7 @@ export default function VereinMannschaftenPage() {
       const originalShooterIds = formMode === 'edit' ? persistedShooterIdsForTeam : [];
       const shootersToAdd = selectedShooterIdsInForm.filter(id => !originalShooterIds.includes(id));
       const shootersToRemove = originalShooterIds.filter(id => !selectedShooterIdsInForm.includes(id) && availableClubShooters.some(s => s.id === id));
-      
+            
       if (formMode === 'new') {
         const newTeamRef = doc(collection(db, TEAMS_COLLECTION)); 
         teamIdForShooterUpdates = newTeamRef.id;
@@ -568,17 +554,14 @@ export default function VereinMannschaftenPage() {
 
     if (isChecked) { 
       if (selectedShooterIdsInForm.length >= MAX_SHOOTERS_PER_TEAM) {
-          toast({ title: "Maximale Schützenzahl erreicht", variant: "warning" });
+          toast({ title: "Maximale Schützenzahl erreicht", description: `Es dürfen maximal ${MAX_SHOOTERS_PER_TEAM} Schützen ausgewählt werden.`, variant: "warning" });
           return; 
       }
-      // Nur prüfen, wenn das Team einer Liga mit einem Typ zugeordnet ist (also nicht null oder undefined)
       if (categoryOfCurrentTeam && currentTeamData.competitionYear !== undefined) {
           const shooterBeingChecked = availableClubShooters.find(s => s.id === shooterId);
-          // Nur für neue Zuweisungen prüfen (Schütze war nicht vorher schon im Team)
-          if (shooterBeingChecked && shooterBeingChecked.id && !persistedShooterIdsForTeam.includes(shooterId)) { 
+          if (shooterBeingChecked?.id && !persistedShooterIdsForTeam.includes(shooterId)) { 
               let conflictFound = false;
               for (const existingTeamId of (shooterBeingChecked.teamIds || [])) {
-                  // Nicht mit sich selbst vergleichen, falls Edit-Modus
                   if (formMode === 'edit' && currentTeamData.id && existingTeamId === currentTeamData.id) continue; 
                   
                   const teamValidationEntry = allTeamsForYearValidation.find(t => t.id === existingTeamId);
@@ -597,7 +580,9 @@ export default function VereinMannschaftenPage() {
       }
     } 
     setSelectedShooterIdsInForm(prevSelectedIds =>
-      isChecked ? [...prevSelectedIds, shooterId] : prevSelectedIds.filter(id => id !== shooterId)
+      isChecked 
+        ? (prevSelectedIds.length < MAX_SHOOTERS_PER_TEAM ? [...prevSelectedIds, shooterId] : prevSelectedIds)
+        : prevSelectedIds.filter(id => id !== shooterId)
     );
   };
 
@@ -607,7 +592,7 @@ export default function VereinMannschaftenPage() {
   };
 
   if (loadingPermissions || isLoadingAssignedClubDetails) { 
-    return <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <p className="ml-2">Lade Berechtigungen & Vereinsdetails...</p></div>;
+    return <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <p className="ml-2">Lade Benutzer- & Vereinsdaten...</p></div>;
   }
   if (permissionError) {
     return <div className="p-6"><Card className="border-destructive"><CardHeader><CardTitle className="text-destructive flex items-center"><AlertTriangle className="mr-2 h-5 w-5" /> Zugriffsproblem</CardTitle></CardHeader><CardContent><p>{permissionError}</p></CardContent></Card></div>;
@@ -615,6 +600,8 @@ export default function VereinMannschaftenPage() {
   if (!userPermission?.clubIds || userPermission.clubIds.length === 0) {
     return <div className="p-6"><Card className="border-amber-500"><CardHeader><CardTitle className="text-amber-700 flex items-center"><AlertTriangle className="mr-2 h-5 w-5" /> Kein Verein zugewiesen</CardTitle></CardHeader><CardContent><p>Ihrem Konto ist kein Verein zugewiesen. Bitte kontaktieren Sie den Administrator.</p></CardContent></Card></div>;
   }
+  
+  const showClubSelector = assignedClubsForSelect.length > 1;
 
   return (
     <div className="space-y-6">
@@ -623,14 +610,14 @@ export default function VereinMannschaftenPage() {
         {activeClubName && <p className="text-muted-foreground text-lg">Aktiver Verein: <span className="font-semibold text-primary">{activeClubName}</span></p>}
       </div>
 
-      {userPermission && userPermission.clubIds && userPermission.clubIds.length > 1 && (
+      {showClubSelector && (
          <Card className="shadow-sm bg-muted/30 mb-6">
             <CardContent className="p-4">
                 <Label htmlFor="vv-active-club-select" className="mb-1.5 block text-sm font-medium">Verein für Verwaltung auswählen:</Label>
                 <Select
                     value={activeClubId || ""}
                     onValueChange={(value) => {
-                        if(value === "SELECT_CLUB_PLACEHOLDER") {
+                        if(value === "SELECT_CLUB_PLACEHOLDER_VV_TEAMS") {
                             setActiveClubId(null);
                             setActiveClubName(null);
                         } else {
@@ -648,7 +635,7 @@ export default function VereinMannschaftenPage() {
                         <SelectValue placeholder="Bitte Verein wählen..." />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="SELECT_CLUB_PLACEHOLDER" disabled={!activeClubId}>- Verein wählen -</SelectItem>
+                        <SelectItem value="SELECT_CLUB_PLACEHOLDER_VV_TEAMS" disabled={!activeClubId}>- Verein wählen -</SelectItem>
                         {assignedClubsForSelect.map(club => (
                             <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
                         ))}
@@ -668,7 +655,7 @@ export default function VereinMannschaftenPage() {
                     <SelectValue placeholder={isLoadingInitialData ? "Lade Saisons..." : (allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen")} />
                   </SelectTrigger>
                   <SelectContent>
-                     <SelectItem value="" disabled={!!selectedSeasonId}>- Saison wählen -</SelectItem>
+                     <SelectItem value="NO_SEASON_SELECTED_VV_TEAMS" disabled={!!selectedSeasonId}>- Saison wählen -</SelectItem>
                     {allSeasons.filter(s => s && typeof s.id === 'string' && s.id.trim() !== "").map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                     {allSeasons.filter(s => s.id && typeof s.id === 'string' && s.id.trim() !== "").length === 0 && !isLoadingInitialData &&
                       <SelectItem value="NO_SEASONS_VV_TEAMS_PLACEHOLDER" disabled>Keine Saisons verfügbar</SelectItem>
@@ -683,7 +670,7 @@ export default function VereinMannschaftenPage() {
                         <SelectValue placeholder="Alle Ligen des Vereins anzeigen" />
                     </SelectTrigger>
                     <SelectContent>
-                       <SelectItem value="">Alle Ligen</SelectItem>
+                       <SelectItem value="ALL_LEAGUES_FILTER_VV_TEAMS" disabled={!selectedLeagueIdFilter}>Alle Ligen</SelectItem>
                         {leaguesForFilterDropdown.filter(l => l && typeof l.id === 'string' && l.id.trim() !== "").map(l => (
                              <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
                         ))}
@@ -693,9 +680,11 @@ export default function VereinMannschaftenPage() {
                     </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleAddNewTeam} disabled={!activeClubId || !selectedSeasonId || isLoadingTeams} className="w-full sm:w-auto whitespace-nowrap mt-2 sm:mt-0 self-end">
-                <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft
-              </Button>
+              {userPermission?.role === 'vereinsvertreter' && (
+                <Button onClick={handleAddNewTeam} disabled={!activeClubId || !selectedSeasonId || isLoadingTeams} className="w-full sm:w-auto whitespace-nowrap mt-2 sm:mt-0 self-end">
+                    <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft
+                </Button>
+              )}
           </div>
 
           <Card className="shadow-md mt-6">
@@ -710,7 +699,9 @@ export default function VereinMannschaftenPage() {
                  <div className="p-6 text-center text-muted-foreground"><p>Bitte wählen Sie zuerst eine Saison aus.</p></div>
               ) : filteredTeams.length > 0 ? (
                 <Table>
-                  <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Liga</TableHead><TableHead>Jahr</TableHead><TableHead className="text-center">Schützen</TableHead><TableHead className="text-right">Aktionen</TableHead></TableRow></TableHeader>
+                  <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Liga</TableHead><TableHead>Jahr</TableHead><TableHead className="text-center">Schützen</TableHead>
+                  {userPermission?.role === 'vereinsvertreter' && <TableHead className="text-right">Aktionen</TableHead>}
+                  </TableRow></TableHeader>
                   <TableBody>
                     {filteredTeams.map((team) => (
                       <TableRow key={team.id}>
@@ -718,23 +709,25 @@ export default function VereinMannschaftenPage() {
                         <TableCell>{getLeagueName(team.leagueId)}</TableCell>
                         <TableCell>{team.competitionYear}</TableCell>
                         <TableCell className="text-center">{team.shooterIds?.length || 0} / {MAX_SHOOTERS_PER_TEAM}</TableCell>
-                        <TableCell className="text-right space-x-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleEditTeam(team)} aria-label="Mannschaft bearbeiten"><Edit className="h-4 w-4" /></Button>
-                           <AlertDialog open={isDeletingTeam && teamToDelete?.id === team.id} onOpenChange={open => {if(!open)setTeamToDelete(null)}}>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" onClick={() => handleDeleteConfirmation(team)} aria-label="Mannschaft löschen"><Trash2 className="h-4 w-4" /></Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader><AlertDialogTitle>Mannschaft löschen?</AlertDialogTitle><AlertDialogDescription>Möchten Sie "{teamToDelete?.name}" wirklich löschen? Dies entfernt auch die Zuordnung der Schützen zu dieser Mannschaft.</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel onClick={() => setTeamToDelete(null)}>Abbrechen</AlertDialogCancel>
-                                  <AlertDialogAction onClick={handleDeleteTeam} disabled={isDeletingTeam} className="bg-destructive hover:bg-destructive/90">
-                                    {isDeletingTeam && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Löschen
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                        </TableCell>
+                        {userPermission?.role === 'vereinsvertreter' && (
+                            <TableCell className="text-right space-x-1">
+                                <Button variant="ghost" size="icon" onClick={() => handleEditTeam(team)} aria-label="Mannschaft bearbeiten"><Edit className="h-4 w-4" /></Button>
+                                <AlertDialog open={isDeletingTeam && teamToDelete?.id === team.id} onOpenChange={open => {if(!open)setTeamToDelete(null)}}>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" onClick={() => handleDeleteConfirmation(team)} aria-label="Mannschaft löschen"><Trash2 className="h-4 w-4" /></Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader><AlertDialogTitle>Mannschaft löschen?</AlertDialogTitle><AlertDialogDescription>Möchten Sie "{teamToDelete?.name}" wirklich löschen? Dies entfernt auch die Zuordnung der Schützen zu dieser Mannschaft.</AlertDialogDescription></AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel onClick={() => setTeamToDelete(null)}>Abbrechen</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDeleteTeam} disabled={isDeletingTeam} className="bg-destructive hover:bg-destructive/90">
+                                            {isDeletingTeam && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Löschen
+                                        </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -742,7 +735,7 @@ export default function VereinMannschaftenPage() {
               ) : (
                 <div className="p-6 text-center text-muted-foreground bg-secondary/30 rounded-md">
                   <p>{`Keine Mannschaften für ${activeClubName || 'diesen Verein'} in der ausgewählten Saison ${selectedLeagueIdFilter ? 'und Liga' : ''} gefunden.`}</p>
-                  {activeClubId && selectedSeasonId && <p className="text-sm mt-1">Klicken Sie auf "Neue Mannschaft", um eine anzulegen.</p>}
+                  {activeClubId && selectedSeasonId && userPermission?.role === 'vereinsvertreter' && <p className="text-sm mt-1">Klicken Sie auf "Neue Mannschaft", um eine anzulegen.</p>}
                 </div>
               )}
             </CardContent>
@@ -751,7 +744,7 @@ export default function VereinMannschaftenPage() {
       ) : (
         <div className="p-6 text-center text-muted-foreground bg-secondary/30 rounded-md">
           <AlertTriangle className="mx-auto h-10 w-10 mb-3 text-primary/70" />
-          {userPermission && userPermission.clubIds && userPermission.clubIds.length > 1 ? (
+          {assignedClubsForSelect.length > 1 ? (
              <p>Bitte wählen Sie oben einen Verein aus, für den Sie Mannschaften verwalten möchten.</p>
           ) : (
             <p>Es ist kein aktiver Verein für die Verwaltung ausgewählt oder verfügbar.</p>
@@ -759,8 +752,9 @@ export default function VereinMannschaftenPage() {
         </div>
       )}
 
+      {/* Dialog for New/Edit Team */}
       <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) {setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAvailableClubShooters([]);} setIsFormOpen(open); }}>
-        <DialogContent className="sm:max-w-2xl"> {/* Increased width for more content */}
+        <DialogContent className="sm:max-w-2xl"> {/* Increased width */}
           <form onSubmit={handleSubmitTeamForm}>
             <DialogHeader>
               <DialogTitle>{formMode === 'new' ? 'Neue Mannschaft anlegen' : 'Mannschaft bearbeiten'}</DialogTitle>
@@ -776,7 +770,7 @@ export default function VereinMannschaftenPage() {
                         Bitte kennzeichnen Sie Ihre leistungsstärkste Mannschaft mit "I", die zweitstärkste mit "II" usw. Dies hilft bei der korrekten Ligaeinteilung.
                     </AlertDescription>
                 </Alert>
-
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <Label htmlFor="teamNameFormDialogVerein">Name der Mannschaft</Label>
@@ -827,11 +821,9 @@ export default function VereinMannschaftenPage() {
                         const categoryOfCurrentTeam = currentTeamSpecificLeagueType ? getDisciplineCategory(currentTeamSpecificLeagueType) : null;
 
                         if (!isSelected && categoryOfCurrentTeam && currentTeamCompYearForValidation !== undefined) {
-                           // Nur für neue Zuweisungen prüfen (Schütze war nicht vorher schon im aktuellen Team)
                            if (!persistedShooterIdsForTeam.includes(shooter.id)) { 
                                 let assignedToSameCategoryInYear = false;
                                 (shooter.teamIds || []).forEach(assignedTeamId => {
-                                    // Nicht mit sich selbst vergleichen, falls Edit-Modus und es das aktuell bearbeitete Team ist.
                                     if (formMode === 'edit' && currentTeam?.id === assignedTeamId) return; 
                                     
                                     const assignedTeamInfo = allTeamsForYearValidation.find(t => t.id === assignedTeamId);

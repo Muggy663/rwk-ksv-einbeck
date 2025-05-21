@@ -2,7 +2,7 @@
 "use client";
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Table, Newspaper, HardHat, LogIn, LogOut, UserCircle, ShieldCheck, Building, HelpCircle } from 'lucide-react'; // Changed MessageSquareQuestion to HelpCircle
+import { Home, Table, Newspaper, HardHat, LogIn, LogOut, UserCircle, ShieldCheck, Building, HelpCircle, BookOpenCheckIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -21,8 +21,8 @@ interface NavItem {
 
 export function MainNav() {
   const pathname = usePathname();
-  const { user, signOut, loading } = useAuth();
-  const router = useRouter(); 
+  const { user, signOut, loading } = useAuth(); // Ensure 'loading' is destructured
+  const router = useRouter();
 
   const isSuperAdmin = user && user.email === ADMIN_EMAIL;
   const isVereinsVertreter = user && user.email !== ADMIN_EMAIL;
@@ -32,7 +32,8 @@ export function MainNav() {
     { href: '/rwk-tabellen', label: 'RWK Tabellen', icon: Table },
     { href: '/updates', label: 'Updates', icon: Newspaper },
     { href: '/km', label: 'KM', icon: HardHat },
-    { href: '/support', label: 'Support', icon: HelpCircle }, // Changed to HelpCircle
+    { href: '/handbuch', label: 'Handbuch', icon: BookOpenCheckIcon },
+    { href: '/support', label: 'Support', icon: HelpCircle },
     { href: '/admin', label: 'Admin Panel', icon: ShieldCheck, adminOnly: true },
     { href: '/verein/dashboard', label: 'Mein Verein', icon: Building, vereinOnly: true },
     { href: '/login', label: 'Login', icon: LogIn, hideWhenAuthed: true },
@@ -41,17 +42,16 @@ export function MainNav() {
   return (
     <nav className="flex items-center space-x-1 lg:space-x-2">
       {navItems.map((item) => {
-        if (!user && loading && (item.adminOnly || item.vereinOnly || item.authRequired)) return null;
+        // Use 'loading' consistently
+        if (loading && (item.adminOnly || item.vereinOnly || item.authRequired)) return null;
         if (user && item.hideWhenAuthed) return null;
-        if (!user && item.authRequired && !loading) return null;
+        if (!user && item.authRequired && !loading) return null; 
         if (item.adminOnly && !isSuperAdmin) return null;
         if (item.vereinOnly && !isVereinsVertreter) return null;
         
-        // Hide "Mein Verein" if user is super admin
+        // Prevent VVs from seeing Admin Panel and Admins from seeing "Mein Verein" directly
         if (item.vereinOnly && isSuperAdmin) return null;
-        // Hide "Admin Panel" if user is VV (and not super admin)
         if (item.adminOnly && isVereinsVertreter) return null;
-
 
         return (
           <Link
@@ -77,7 +77,7 @@ export function MainNav() {
             variant="ghost"
             size="sm"
             onClick={signOut}
-            disabled={loading}
+            disabled={loading} // Use 'loading'
             className="flex items-center gap-1.5 p-2 rounded-md text-muted-foreground hover:text-primary max-md:p-1.5"
             title="Logout"
           >
