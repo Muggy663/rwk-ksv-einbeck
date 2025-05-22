@@ -1,7 +1,7 @@
 // src/app/updates/page.tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { NewspaperIcon, TagIcon, CalendarDaysIcon, ListChecksIcon } from 'lucide-react';
+import { Newspaper, Tag, CalendarDays, ListChecks } from 'lucide-react'; // Korrigierte Icon-Namen
 import type { ChangelogEntry } from '@/types/updates';
 
 // Changelog entries using MAJOR.MINOR.PATCH
@@ -9,101 +9,98 @@ const changelogEntries: ChangelogEntry[] = [
   {
     version: '0.3.0',
     date: '22. Mai 2025',
-    title: 'Verbesserung RWK-Tabellen & Stabilität',
+    title: 'RWK Tabellen Optimierung & Vorbereitung nächste Schritte',
     descriptionPoints: [
-      'RWK-Tabellen: Die Seite verarbeitet nun URL-Parameter, um direkt eine spezifische Liga anzuzeigen (z.B. bei Klick auf Links von der Startseite).',
-      'RWK-Tabellen: Ligen-Akkordeons sind jetzt standardmäßig geöffnet für eine bessere Übersicht.',
-      'RWK-Tabellen: Einzelschützen in der aufgeklappten Mannschafts-Detailansicht sind jetzt klickbar und öffnen den Statistik-Dialog.',
-      'Diverse Fehlerbehebungen im Zusammenhang mit der Seiten-Struktur und Komponenten-Importen, die zu Build-Fehlern oder Laufzeitfehlern führten.',
-      'Handbuch und Admin-Agenda aktualisiert.',
+      'RWK Tabellen: Ligen-Akkordeons sind nun standardmäßig geöffnet für bessere Übersicht.',
+      'RWK Tabellen: Einzelschützen in der aufgeklappten Mannschafts-Detailansicht sind jetzt klickbar und öffnen den Statistik-Dialog.',
+      'RWK Tabellen: Fehlerhafte Anzeige von Standardjahren und Filterung nach "Laufend"-Status korrigiert.',
+      'RWK Tabellen: Verarbeitung von URL-Query-Parametern (von Startseiten-Feed) implementiert, um Ligen direkt anzuzeigen (Zielseite muss noch angepasst werden, um Parameter zu nutzen).',
+      'Handbuch: Umfassend aktualisiert (Rollen, VV-Funktionen, technische Begriffe reduziert).',
+      'Admin-Dashboard: Agenda aktualisiert und für zukünftige Versionen strukturiert.',
+      'Diverse Fehlerbehebungen (z.B. EOF-Fehler, Import-Fehler, Layout-Korrekturen).',
     ],
   },
   {
     version: '0.2.6a',
     date: '22. Mai 2025',
-    title: 'Hotfix: Build-Fehler & Handbuch-Anzeige',
+    title: 'Hotfix: Handbuch Syntax & Admin-Icon Fehler',
     descriptionPoints: [
-      'Behebung eines Build-Fehlers auf Vercel (`cn is not defined` und Icon-Importe in `/admin/page.tsx`).',
-      'Korrektur der Handbuch-Seite (`/app/handbuch/page.tsx`) zur korrekten, bedingten Anzeige von Admin-Inhalten und Behebung von Parsing-Fehlern.',
-      'Favicon-Konfiguration in `layout.tsx` präzisiert.',
+        'Behebung eines Syntaxfehlers in der Handbuch-Seite, der den Vercel-Build blockierte.',
+        'Korrektur fehlender Icon-Importe auf der Admin-Dashboard-Seite.',
+        'Favicon-Konfiguration in Root-Layout präzisiert.',
     ],
   },
   {
     version: '0.2.5',
-    date: '22. Mai 2025', // Korrigiertes Datum
-    title: 'Verfeinerung Firestore-Regeln & Rollen-UI für VV/MF',
+    date: '22. Mai 2025',
+    title: 'Firestore Sicherheitsregeln & VV UI-Rechte',
     descriptionPoints: [
-      'Firestore-Sicherheitsregeln überarbeitet und syntaktisch korrigiert, um Zugriffsrechte für Super-Admin, Vereinsvertreter und Mannschaftsführer basierend auf der `user_permissions`-Collection besser zu definieren.',
+      'Firestore-Sicherheitsregeln implementiert und veröffentlicht, um Zugriffsrechte für Super-Admin, Vereinsvertreter und Mannschaftsführer zu definieren (basierend auf user_permissions).',
       'Benutzeroberfläche für Vereinsvertreter und Mannschaftsführer angepasst: Bearbeitungs-Buttons für Mannschaften und Schützen sind nun nur für Nutzer mit der Rolle "vereinsvertreter" sichtbar.',
-      'Zugriff auf das Vereins-Dashboard für Nutzer mit Rolle "mannschaftsfuehrer" korrigiert.',
-      'Handbuch und Agenda im Admin-Panel aktualisiert, um die neue Rollenlogik und die nächsten Schritte widerzuspiegeln.',
+      'Zugriff auf das Vereins-Dashboard für Mannschaftsführer korrigiert.',
     ],
   },
   {
     version: '0.2.4',
     date: '22. Mai 2025',
-    title: 'Zentralisierung Benutzerberechtigungen & UI-Fixes',
+    title: 'Zentralisierung der Benutzerberechtigungs-Logik',
     descriptionPoints: [
-      'Benutzerberechtigungen (Rolle, Vereinszuweisung) werden nun zentral im `AuthProvider` geladen und über einen Context (`VereinContext`) an die Vereinsvertreter-Seiten weitergegeben.',
-      'Die `VV_CLUB_ASSIGNMENTS`-Map wurde aus den Vereinsvertreter-Seiten entfernt.',
-      'Anzeige der Benutzerrolle im Vereins-Dashboard implementiert.',
-      'Diverse Fehlerbehebungen im `VereinLayout` bezüglich der Hook-Reihenfolge und der Prop-Weitergabe.',
-      'Import-Fehler für `AlertDialog`-Komponenten auf verschiedenen Seiten behoben.',
-      'Layout-Korrekturen in den Dialogen der Vereinsvertreter-Schützenverwaltung.',
-      'Korrektur der Jahresauswahl-Logik in den RWK-Tabellen.',
+      'Die Logik zum Laden von Benutzerberechtigungen (`user_permissions` aus Firestore) wurde im `AuthProvider` zentralisiert.',
+      'Das `VereinLayout` und die Vereinsvertreter-Seiten beziehen Berechtigungen nun über den `AuthContext`.',
+      'Die temporäre `VV_CLUB_ASSIGNMENTS`-Map wurde aus allen Vereinsvertreter-Seiten entfernt.',
+      'Anzeige der Benutzerrolle im VV-Dashboard implementiert.',
+      'Behebung von "Order of Hooks"-Fehlern im `VereinLayout`.',
     ],
   },
-  {
+    {
     version: '0.2.3a',
-    date: '21. Mai 2025',
-    title: 'Hotfix: Vercel Build & Favicon',
+    date: '22. Mai 2025',
+    title: 'Hotfix: Vercel Build & Favicon (Admin Dashboard)',
     descriptionPoints: [
       'Behebung eines Vercel Build-Fehlers ("cn is not defined" und Icon-Import-Fehler) in der Admin-Dashboard-Seite.',
       'Favicon-Konfiguration in `layout.tsx` präzisiert.',
-      'Handbuch-Seite: Admin-Abschnitt nur für Super-Admin sichtbar gemacht; diverse Parsing-Fehler behoben.',
     ],
   },
   {
     version: '0.2.2',
     date: '21. Mai 2025',
-    title: 'RWK Tabellen Jahresauswahl & Impressum',
+    title: 'RWK Tabellen Jahresauswahl, Impressum & VV-Berechtigungsbasis',
     descriptionPoints: [
-      'RWK-Tabellen: Jahresauswahl wird jetzt dynamisch aus den in Firestore vorhandenen Saisons generiert. Standardmäßig wird das aktuellste Jahr mit "Laufenden" Saisons ausgewählt (oder das letzte verfügbare Jahr).',
-      'Filterung der RWK-Tabellen, sodass nur Saisons mit Status "Laufend" angezeigt werden.',
+      'RWK-Tabellen: Jahresauswahl wird jetzt dynamisch aus den in Firestore vorhandenen Saisons generiert. Standardmäßig wird das aktuellste Jahr mit "Laufenden" Saisons ausgewählt.',
+      'RWK-Tabellen: Filterung, sodass nur Saisons mit Status "Laufend" angezeigt werden.',
       'Impressumsseite (`/impressum`) mit Inhalten gefüllt und im Footer verlinkt.',
+      'Vorbereitung für Vereinsvertreter: Umstellung auf `user_permissions`-Collection in Firestore (Admin-Seite kann eine `clubId` zuweisen).',
+      'Vereinsvertreter-Layout und -Dashboard lesen testweise `user_permissions`.',
     ],
   },
-  {
+   {
     version: '0.2.1',
     date: '21. Mai 2025',
-    title: 'VV-Seiten auf user_permissions umgestellt (Basis)',
+    title: 'Admin-Team-Management & Fehlerbehebungen',
     descriptionPoints: [
-      'Vereinsvertreter-Seiten (Dashboard, Mannschaften, Schützen, Ergebnisse) nutzen die `user_permissions`-Collection in Firestore zur Rechteprüfung und Vereinszuweisung (Einzel-Club-Modell).',
-      'Entfernung der temporären `VV_CLUB_ASSIGNMENTS`-Map.',
-      'Diverse Fehlerbehebungen im Zusammenhang mit `SelectItem`-Komponenten und Importen.',
-      'Anpassung der `firestore.rules` für `user_permissions`.',
+      'Admin-Teamseite: Ligazuweisung im Dialog wiederhergestellt und Fehler mit `SelectItem`-Werten behoben.',
+      'Diverse `SelectItem`-Fehler auf verschiedenen Admin- und VV-Seiten korrigiert.',
     ],
   },
   {
     version: '0.2.0',
-    date: '20. Mai 2025', 
-    title: 'Benutzerverwaltung (Admin UI) & Vorbereitung für Custom Claims',
+    date: '21. Mai 2025', 
+    title: 'Benutzerverwaltung (Admin UI für user_permissions) & Vorbereitung VV-Rollen',
     descriptionPoints: [
-      'Admin-Seite `/admin/user-management` überarbeitet: UID-basierte Zuweisung von Rolle/Verein(en) in `user_permissions` (Firestore-Direktschreibvorgang, keine Cloud Function mehr für diesen Teil). Möglichkeit, bis zu 3 Vereine zuzuweisen.',
-      'Platzhalter für Cloud Function-basierte Benutzererstellung durch Admin (noch nicht aktiv).',
+      'Admin-Seite `/admin/user-management` implementiert: UID-basierte Zuweisung von Rolle und bis zu 3 Vereinen in `user_permissions` (Firestore-Direktschreibvorgang).',
       'Admin-Dashboard um Platzhalter für "Statistiken" und aktualisierte Agenda erweitert.',
-      'Support-Ticket-System: Formular speichert Tickets in Firestore, Admin-Ansicht `/admin/support-tickets` zeigt diese an und erlaubt Statusänderung.',
+      'Vorbereitung für Vereinsvertreter/Mannschaftsführer-Rollen in Typen und Admin-UI.',
     ],
   },
   {
     version: '0.1.9',
     date: '20. Mai 2025',
-    title: 'Verbesserung Ergebniserfassung & Startseiten-Feed',
+    title: 'Verbesserung Ergebniserfassung & Feed-Gruppierung',
     descriptionPoints: [
-      'Ergebniserfassungsseiten: Vorgemerkte Ergebnisse bleiben bei Teamwechsel erhalten.',
-      'Feed "Letzte Änderungen" auf Startseite gruppiert Einträge nun pro Liga, Tag und Disziplin, um Duplikate zu vermeiden.',
-       'Validierung von Ringzahlen (max. 300/400) beim Erfassen und Bearbeiten von Ergebnissen.',
-      'Disziplin "SP" aus Typdefinitionen und Auswahl entfernt.',
+      'Ergebniserfassungsseiten (Admin & VV): Vorgemerkte Ergebnisse bleiben bei Teamwechsel erhalten.',
+      'Feed "Letzte Änderungen" auf Startseite gruppiert Einträge nun pro Liga und Tag (mit Zeitstempel der letzten Aktualisierung).',
+      'Validierung von Ringzahlen (max. 300/400) beim Erfassen und Bearbeiten von Ergebnissen (Basis).',
+      'Support-Ticket-System: Formular speichert Tickets in Firestore, Admin-Ansicht zeigt diese an.',
     ],
   },
   {
@@ -111,18 +108,17 @@ const changelogEntries: ChangelogEntry[] = [
     date: '20. Mai 2025',
     title: 'Regelkonsistenz & Fehlerbehebungen',
     descriptionPoints: [
-      'Regel "Ein Schütze pro Saison/Disziplinkategorie nur in einem Team" auch beim Neuanlegen von Schützen durch Vereinsvertreter implementiert.',
-      'Diverse Fehlerbehebungen in Admin- und Vereinsvertreter-Seiten (Zähler, `SelectItem`-Werte, Endlosschleifen, Layout-Probleme).',
-      'Korrektur der Geschlechterfilterung in der Einzelrangliste.',
+      'Regel "Ein Schütze pro Saison/Disziplinkategorie nur in einem Team" auch beim Neuanlegen von Schützen durch Vereinsvertreter und Admins implementiert.',
+      'Fehlerbehebungen in Admin- und Vereinsvertreter-Seiten (Zähler, `SelectItem`-Werte, Layout-Probleme).',
       'Schützen verschwinden nach Speichern von Ergebnissen korrekt aus dem Dropdown in der Ergebniserfassung.',
     ],
   },
-    {
+  {
     version: '0.1.7',
     date: '20. Mai 2025',
     title: 'VV-Funktionen auf user_permissions umgestellt (Einzelverein)',
     descriptionPoints: [
-      'Vereinsvertreter-Seiten (Dashboard, Mannschaften, Schützen, Ergebnisse) nutzen die `user_permissions`-Collection in Firestore zur Rechteprüfung und Vereinszuweisung (Einzel-Club-Modell).',
+      'Vereinsvertreter-Seiten (Dashboard, Mannschaften, Schützen, Ergebnisse) nutzen die `user_permissions`-Collection in Firestore zur Rechteprüfung und Vereinszuweisung (vorerst Einzel-Club-Modell).',
       'Entfernung der temporären `VV_CLUB_ASSIGNMENTS`-Map.',
       'Korrektur diverser `SelectItem`-Fehler und Import-Fehler.',
     ],
@@ -147,7 +143,7 @@ const changelogEntries: ChangelogEntry[] = [
       'Validierung von Ringzahlen (max. 300/400) bei Ergebniserfassung und -bearbeitung.',
     ],
   },
-   {
+  {
     version: '0.1.4',
     date: '20. Mai 2025',
     title: 'Ergebniserfassung: Namensspeicherung & UI-Verbesserung',
@@ -184,29 +180,7 @@ const changelogEntries: ChangelogEntry[] = [
       'Admin-Mannschaftsverwaltung: Ligazuweisung und erweiterte Filter implementiert.',
       'Regel "Maximal 3 Schützen pro Mannschaft" in Admin- und VV-Seiten durchgesetzt.',
       'Vorbereitung für Rolle "Mannschaftsführer" in Typen und Admin-Benutzerverwaltung.',
-       'Vereinsverwaltung mit CRUD und Validierung implementiert.',
-    ],
-  },
-  {
-    version: '0.0.2a',
-    date: '20. Mai 2025',
-    title: 'Hotfix: Vercel Build & Favicon',
-    descriptionPoints: [
-      'Behebung von Build-Fehlern auf Vercel (Icon-Importe, `cn is not defined`).',
-      'Favicon-Konfiguration in `layout.tsx` präzisiert.',
-      'Handbuch-Seite: Admin-Abschnitt nur für Super-Admin sichtbar gemacht.',
-    ],
-  },
-  {
-    version: '0.0.1.9',
-    date: '20. Mai 2025',
-    title: 'Admin-Bereich: Stammdaten-CRUD & Regeln (Basis)',
-    descriptionPoints: [
-      'Admin-Seiten für Vereine, Saisons, Ligen mit DB-Anbindung (Anlegen, Lesen, Bearbeiten, Löschen).',
-      'Admin-Seite für Mannschaften: DB-Anbindung, Schützenzuweisung (max. 3 Regel).',
-      'Admin-Seite für Schützen: DB-Anbindung, Regel "1 Schütze pro Disziplin/Jahr".',
-      'Agenda im Admin-Dashboard aktualisiert.',
-      'Hinweis zur Mannschaftsstärke in Dialogen hinzugefügt.',
+      'Vereinsverwaltung mit CRUD und Validierung implementiert.',
     ],
   },
 ];
@@ -214,9 +188,9 @@ const changelogEntries: ChangelogEntry[] = [
 
 export default function UpdatesPage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 container mx-auto px-4 py-8">
       <div className="flex items-center space-x-3 mb-8">
-        <NewspaperIcon className="h-10 w-10 text-primary" />
+        <Newspaper className="h-10 w-10 text-primary" /> {/* Korrigiertes Icon */}
         <div>
           <h1 className="text-4xl font-bold text-primary">Updates & Changelog</h1>
           <p className="text-lg text-muted-foreground">
@@ -240,11 +214,11 @@ export default function UpdatesPage() {
               <CardHeader className="pb-4">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                   <CardTitle className="text-3xl text-accent flex items-center">
-                    <TagIcon className="mr-3 h-7 w-7" />
+                    <Tag className="mr-3 h-7 w-7" /> {/* Korrigiertes Icon */}
                     Version {entry.version}
                   </CardTitle>
                   <div className="text-sm text-muted-foreground flex items-center">
-                    <CalendarDaysIcon className="mr-2 h-5 w-5" />
+                    <CalendarDays className="mr-2 h-5 w-5" /> {/* Korrigiertes Icon */}
                     <span>{entry.date}</span>
                   </div>
                 </div>
@@ -253,7 +227,7 @@ export default function UpdatesPage() {
               <Separator />
               <CardContent className="pt-6">
                 <div className="flex items-start space-x-3">
-                  <ListChecksIcon className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+                  <ListChecks className="h-6 w-6 text-primary mt-1 flex-shrink-0" /> {/* Korrigiertes Icon */}
                   <ul className="space-y-2 list-inside text-foreground/90">
                     {entry.descriptionPoints.map((point, idx) => (
                       <li key={idx} className="leading-relaxed">

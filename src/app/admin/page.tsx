@@ -3,46 +3,92 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { 
-  LayoutDashboard,
-  Users, 
-  Trophy, 
-  ListChecks, 
-  Settings, 
-  UserCog, 
-  MessagesSquare, 
-  FileUp, 
-  Award, 
-  BarChart3, 
-  ShieldQuestion, 
-  GitPullRequestClosed, 
-  BookOpenCheck,
-  ShieldCheck,
-  Edit3, 
-  InfoIcon,
-  CheckCircle, // Für erledigte Punkte
-  Loader2, // Für in Arbeit
-  AlertCircle // Für offene Punkte
+  LayoutDashboard, Users, Trophy, ListChecks, Edit3, Settings, 
+  UserCog, MessagesSquare, FileUp, Award, BarChart3, 
+  ShieldQuestion, GitPullRequestClosed, BookOpenCheck, CheckCircle, Loader2, AlertCircle, InfoIcon 
 } from 'lucide-react';
-import { cn } from '@/lib/utils'; // Sicherstellen, dass cn importiert ist
+import { cn } from '@/lib/utils';
 
 export default function AdminDashboardPage() {
-  const agendaPunkte = [
-    { text: "RWK-Tabellen: URL-Parameter verarbeiten & Liga direkt öffnen (z.B. von Startseite).", status: "Erledigt", icon: CheckCircle, iconColor: "text-green-500" },
-    { text: "Handbuch aktualisiert (Admin-Abschnitt bedingt anzeigen, technische Begriffe reduziert).", status: "Erledigt", icon: CheckCircle, iconColor: "text-green-500" },
-    { text: "Firestore Sicherheitsregeln vollständig implementieren und testen (basierend auf user_permissions).", status: "Als Nächstes", icon: ShieldQuestion, iconColor: "text-destructive" },
-    { text: "Client-seitige Nutzung der user_permissions für Vereinsvertreter abschließen (letzte Feinheiten für alle VV-Seiten).", status: "In Arbeit", icon: Loader2, iconColor: "text-amber-500", className:"animate-spin" },
-    { text: "Benutzerverwaltung durch Super-Admin (UI-Verbesserungen): Auflisten/Bearbeiten von user_permissions.", status: "Offen", icon: UserCog, iconColor: "text-primary/80" },
-    { text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag).", status: "Offen", icon: Users, iconColor: "text-primary/80" },
-    { text: "Icons hervorheben/ändern (Navigation, Dashboard) - Wunsch des Präsidenten.", status: "Offen", icon: InfoIcon, iconColor: "text-primary/80" },
-    { text: "Passwortänderung beim ersten Login für neue Benutzer erzwingen (App-interne Logik).", status: "Offen", icon: ShieldCheck, iconColor: "text-primary/80" },
-    { text: "Captcha auf der Login-Seite integrieren (Platzhalter vorhanden).", status: "Zukunft", icon: ShieldCheck, iconColor: "text-muted-foreground/70" },
-    { text: "Anzeige \"Mannschaften (Info)\" verfeinern: Name des einen Teams anzeigen, wenn nur ein Team zugeordnet.", status: "Offen", icon: Users, iconColor: "text-primary/80" },
-    { text: "Platzhalter \"Schnitt Vorjahr\" in den Team-Dialogen mit echter Funktionalität versehen.", status: "Zukunft", icon: BarChart3, iconColor: "text-muted-foreground/70" },
-    { text: "Ergebniserfassung (Details): Audit-Trail für Ergebnisänderungen durch Admin.", status: "Zukunft", icon: ListChecks, iconColor: "text-muted-foreground/70" },
-    { text: "PDF-Generierung für Liga-Meldebögen/Ergebnislisten.", status: "Zukunft", icon: FileUp, iconColor: "text-muted-foreground/70" },
-    { text: "Automatischer Saisonabschluss / Auf- und Abstieg.", status: "Zukunft", icon: Trophy, iconColor: "text-muted-foreground/70" },
-    { text: "Urkundengenerierung (PDF).", status: "Zukunft", icon: Award, iconColor: "text-muted-foreground/70" },
+  const agendaItems = [
+    { 
+      text: "RWK-Tabellen: Verarbeitung von URL-Parametern & direkte Liga-Anzeige implementiert. Standardmäßig geöffnete Ligen, klickbare Schützen in Teamdetails.", 
+      status: "Erledigt", icon: CheckCircle, iconColor: "text-green-500" 
+    },
+    { 
+      text: "Handbuch: Aktualisiert (Rollen, VV-Funktionen, RWK-Tabellen-UX, technische Begriffe reduziert). Bedingte Anzeige für Admin-Abschnitt.", 
+      status: "Erledigt", icon: CheckCircle, iconColor: "text-green-500" 
+    },
+    {
+      text: "Benutzerverwaltung: Admin kann Rolle ('vereinsvertreter', 'mannschaftsfuehrer') und Vereine (bis zu 3) für Benutzer in 'user_permissions' (Firestore) festlegen. Basis-UI vorhanden.",
+      status: "Erledigt (Basis)", icon: CheckCircle, iconColor: "text-green-500"
+    },
+    {
+      text: "Vereinsvertreter-Bereich: Seiten (Dashboard, Mannschaften, Schützen, Ergebnisse) nutzen 'user_permissions' für Rechte und Vereinskontext. Auswahl bei mehreren Vereinen implementiert.",
+      status: "Erledigt (Basis)", icon: CheckCircle, iconColor: "text-green-500"
+    },
+    {
+      text: "Rollenbasierte UI: Vereinsvertreter sehen Bearbeitungsfunktionen, Mannschaftsführer nicht (auf Mannschafts-/Schützen-VV-Seiten).",
+      status: "Erledigt", icon: CheckCircle, iconColor: "text-green-500"
+    },
+    {
+      text: "Support-Ticket-System: Formular speichert Tickets in Firestore; Admin-Ansicht zeigt Tickets an.",
+      status: "Erledigt", icon: CheckCircle, iconColor: "text-green-500"
+    },
+    { 
+      text: "Nächster Fokus: Version 0.4.0", 
+      status: "Info", icon: InfoIcon, iconColor: "text-blue-500", isHeader: true 
+    },
+    { 
+      text: "Firestore Sicherheitsregeln abschließend verfeinern und gründlich testen (basierend auf 'user_permissions' und Rollen).", 
+      status: "Als Nächstes", icon: ShieldQuestion, iconColor: "text-destructive" 
+    },
+    {
+      text: "RWK-Ordnung: Eigene Seite erstellen und in Navigation einbinden.",
+      status: "Offen", icon: BookOpenCheck, iconColor: "text-primary/80"
+    },
+    { 
+      text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne 'user_permissions'-Eintrag).", 
+      status: "Offen", icon: Users, iconColor: "text-primary/80" 
+    },
+    { 
+      text: "Nächster Fokus: Version 0.5.0 (oder später)", 
+      status: "Info", icon: InfoIcon, iconColor: "text-blue-500", isHeader: true 
+    },
+    { 
+      text: "Captcha auf der Login-Seite integrieren.", 
+      status: "Zukunft", icon: ShieldCheck, iconColor: "text-muted-foreground/70" 
+    },
+    { 
+      text: "Anzeige 'Mannschaften (Info)' verfeinern: Name des einen Teams anzeigen, wenn Schütze nur einem Team zugeordnet (ohne Seitenkontext).", 
+      status: "Zukunft", icon: Users, iconColor: "text-muted-foreground/70" 
+    },
+    { 
+      text: "Platzhalter 'Schnitt Vorjahr' in den Team-Dialogen mit echter Funktionalität versehen.", 
+      status: "Zukunft", icon: BarChart3, iconColor: "text-muted-foreground/70" 
+    },
+    { 
+      text: "Ergebniserfassung (Details): Audit-Trail für Ergebnisänderungen durch Admin.", 
+      status: "Zukunft", icon: ListChecks, iconColor: "text-muted-foreground/70" 
+    },
+    { 
+      text: "PDF-Generierung (Gesamtlisten, Durchgangslisten, Urkunden).", 
+      status: "Zukunft", icon: FileUp, iconColor: "text-muted-foreground/70" 
+    },
+     { 
+      text: "PDF-Generierung für Liga-Meldebögen.", 
+      status: "Zukunft", icon: FileUp, iconColor: "text-muted-foreground/70" 
+    },
+    { 
+      text: "Automatischer Saisonabschluss / Auf- und Abstieg.", 
+      status: "Zukunft", icon: Trophy, iconColor: "text-muted-foreground/70" 
+    },
+    { 
+      text: "CSV Import für Stammdaten (Vereine, Schützen).", 
+      status: "Zukunft", icon: FileUp, iconColor: "text-muted-foreground/70" 
+    },
   ];
+
 
   return (
     <div className="space-y-6">
@@ -61,7 +107,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Saisons und zugehörige Ligen verwalten.
+              Saisons, Ligen und zugehörige Daten verwalten.
             </CardDescription>
             <div className="grid grid-cols-2 gap-2">
                 <Link href="/admin/seasons" passHref><Button className="w-full">Saisons</Button></Link>
@@ -110,7 +156,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Benutzerrollen und Vereinszuweisungen verwalten. (Manuelle UID-Eingabe)
+              Benutzer anlegen, Rollen und Vereinszuweisungen verwalten. (UID-basiert)
             </CardDescription>
             <Link href="/admin/user-management" passHref>
               <Button className="w-full" variant="outline">Benutzer verwalten</Button>
@@ -125,7 +171,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-             Eingegangene Support-Tickets einsehen und bearbeiten.
+             Eingegangene Support-Tickets einsehen und Status ändern.
             </CardDescription>
             <Link href="/admin/support-tickets" passHref>
               <Button className="w-full" variant="outline">Tickets anzeigen</Button>
@@ -135,31 +181,17 @@ export default function AdminDashboardPage() {
         
          <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Datenwerkzeuge</CardTitle>
-            <FileUp className="h-6 w-6 text-muted-foreground" />
+            <CardTitle className="text-lg font-medium">Einstellungen</CardTitle> {/* Geändert von Datenwerkzeuge */}
+            <Settings className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Importieren von Daten und Generierung von Dokumenten.
+              Allgemeine App-Einstellungen (zukünftig).
             </CardDescription>
-            <div className="space-y-2">
+             <div className="space-y-2">
               <Button className="w-full" disabled>CSV Import (Demnächst)</Button>
-              <Button className="w-full" disabled>PDF Liga-Meldebögen (Demnächst)</Button>
-              <Button className="w-full" disabled>PDF Urkunden (Demnächst)</Button>
+              <Button className="w-full" disabled>PDF Generierung (Demnächst)</Button>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg hover:shadow-xl transition-shadow md:col-span-2 lg:col-span-3">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Statistiken (Beispiel)</CardTitle>
-            <BarChart3 className="h-6 w-6 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="mb-4">
-              Dieser Bereich könnte zukünftig Nutzungsstatistiken oder andere interessante Metriken anzeigen.
-            </CardDescription>
-            <p className="text-sm text-muted-foreground">Aktuell ein Platzhalter. Die genauesten Nutzungsdaten finden Sie in Ihrer Firebase Konsole.</p>
           </CardContent>
         </Card>
       </div>
@@ -168,16 +200,22 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle className="text-xl text-accent flex items-center">
             <GitPullRequestClosed className="mr-3 h-6 w-6" />
-            Nächste Schritte / Offene Punkte
+            Roadmap / Offene Punkte
           </CardTitle>
-          <CardDescription>Eine Übersicht der geplanten Erweiterungen und zu erledigenden Aufgaben.</CardDescription>
+          <CardDescription>Eine Übersicht der geplanten Erweiterungen und zu erledigenden Aufgaben, strukturiert nach Versionen.</CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm text-muted-foreground list-none pl-1">
-            {agendaPunkte.map((point, index) => (
-              <li key={index} className="flex items-start py-1">
-                <point.icon className={cn("h-4 w-4 mr-3 mt-0.5 flex-shrink-0", point.iconColor, point.className)} title={point.status} />
-                <span className={cn(point.status === "Als Nächstes" && "font-semibold text-foreground")}>{point.text}</span>
+            {agendaItems.map((item, index) => (
+              <li key={index} className={cn("flex items-start py-1.5", item.isHeader && "mt-3 pt-3 border-t")}>
+                {item.isHeader ? (
+                  <span className={cn("font-semibold text-lg block w-full", item.iconColor)}>{item.text}</span>
+                ) : (
+                  <>
+                    <item.icon className={cn("h-4 w-4 mr-3 mt-0.5 flex-shrink-0", item.iconColor, item.status === "In Arbeit" && "animate-spin")} title={item.status} />
+                    <span className={cn(item.status === "Als Nächstes" && "font-semibold text-foreground")}>{item.text}</span>
+                  </>
+                )}
               </li>
             ))}
           </ul>
