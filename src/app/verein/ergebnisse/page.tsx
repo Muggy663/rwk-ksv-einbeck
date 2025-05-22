@@ -1,6 +1,6 @@
-// src/app/verein/ergebnisse/page.tsx
+// /app/verein/ergebnisse/page.tsx
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -9,11 +9,11 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckSquare, Save, PlusCircle, Trash2, Loader2, AlertTriangle } from 'lucide-react';
-import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, FirestoreLeagueSpecificDiscipline, Club, LeagueUpdateEntry, UserPermission } from '@/types/rwk';
+import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, FirestoreLeagueSpecificDiscipline, Club, LeagueUpdateEntry } from '@/types/rwk';
 import { useVereinAuth } from '@/app/verein/layout';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, documentId, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, documentId, getDoc as getFirestoreDoc, Timestamp } from 'firebase/firestore';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -24,18 +24,18 @@ const CLUBS_COLLECTION = "clubs";
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
 export default function VereinErgebnissePage() {
-  const { userPermission, loadingPermissions: authLoading, permissionError } = useVereinAuth();
+  const { userPermission, loadingPermissions, permissionError, assignedClubId } = useVereinAuth();
   const { toast } = useToast();
 
-  const [activeClubIdForEntry, setActiveClubIdForEntry] = useState<string>('');
-  const [assignedClubsForSelect, setAssignedClubsForSelect] = useState<Array<{ id: string; name: string }>>([]);
-  const [activeClubName, setActiveClubName] = useState<string | null>(null);
-
+  const [activeClubIdForEntry, setActiveClubIdForEntry] = useState<string | null>(null);
+  const [activeClubNameForEntry, setActiveClubNameForEntry] = useState<string | null>(null);
+  
   const [allSeasons, setAllSeasons] = useState<Season[]>([]);
   const [availableRunningSeasons, setAvailableRunningSeasons] = useState<Season[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
 
-  const [leaguesForActiveClubAndSeason, setLeaguesForActiveClubAndSeason] = useState<League[]>([]);
+  const [allLeagues, setAllLeagues] = useState<League[]>([]); // Alle Ligen für die Saison
+  const [leaguesForActiveClubAndSeason, setLeaguesForActiveClubAndSeason] = useState<League[]>([]); // Ligen, in denen der activeClubIdForEntry Teams hat
   const [selectedLeagueId, setSelectedLeagueId] = useState<string>('');
 
   const [allTeamsInSelectedLeague, setAllTeamsInSelectedLeague] = useState<Team[]>([]);
@@ -55,323 +55,357 @@ export default function VereinErgebnissePage() {
   const [existingScoresForTeamAndRound, setExistingScoresForTeamAndRound] = useState<ScoreEntry[]>([]);
 
   const [isLoadingPageData, setIsLoadingPageData] = useState(true);
-  const [isLoadingAssignedClubDetails, setIsLoadingAssignedClubDetails] = useState(false);
   const [isLoadingLeagues, setIsLoadingLeagues] = useState(false);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
   const [isLoadingShooters, setIsLoadingShooters] = useState(false);
   const [isLoadingExistingScores, setIsLoadingExistingScores] = useState(false);
   const [isSubmittingScores, setIsSubmittingScores] = useState(false);
 
+  // Effect to set activeClubIdForEntry based on assignedClubId from context
   useEffect(() => {
-    if (authLoading) return;
-
-    if (userPermission && userPermission.clubIds && userPermission.clubIds.length > 0) {
-      setIsLoadingAssignedClubDetails(true);
-      const fetchClubDetails = async () => {
-        try {
-          const clubPromises = userPermission.clubIds!.map(id => getDoc(doc(db, CLUBS_COLLECTION, id)));
-          const clubSnaps = await Promise.all(clubPromises);
-          const clubsData = clubSnaps
-            .filter(snap => snap.exists())
-            .map(snap => ({ id: snap.id, name: (snap.data() as Club).name || "Unbek. Verein" }));
-          setAssignedClubsForSelect(clubsData);
-          if (clubsData.length === 1) {
-            setActiveClubIdForEntry(clubsData[0].id);
-            setActiveClubName(clubsData[0].name);
-          } else if (clubsData.length === 0) {
-             toast({ title: "Fehler Vereinszuweisung", description: "Ihrem Konto sind keine gültigen Vereine für die Ergebniserfassung zugewiesen.", variant: "destructive" });
+    console.log("VER_ERGEBNISSE DEBUG: Effect for activeClubIdForEntry. loadingPermissions:", loadingPermissions, "assignedClubId from context:", assignedClubId);
+    if (!loadingPermissions) {
+      if (assignedClubId && typeof assignedClubId === 'string' && assignedClubId.trim() !== '') {
+        setActiveClubIdForEntry(assignedClubId);
+        console.log("VER_ERGEBNISSE DEBUG: activeClubIdForEntry SET to:", assignedClubId);
+        // Fetch club name for display
+        const fetchClubName = async () => {
+          try {
+            const clubDocRef = doc(db, CLUBS_COLLECTION, assignedClubId);
+            const clubSnap = await getFirestoreDoc(clubDocRef); // Korrekter Funktionsname
+            if (clubSnap.exists()) {
+              setActiveClubNameForEntry(clubSnap.data().name);
+            } else {
+              setActiveClubNameForEntry("Unbek. Verein (ID nicht gefunden)");
+              console.warn("VER_ERGEBNISSE DEBUG: Club with ID", assignedClubId, "not found in Firestore.");
+            }
+          } catch (e) {
+            console.error("VER_ERGEBNISSE DEBUG: Error fetching club name:", e);
+            setActiveClubNameForEntry("Fehler beim Laden des Vereinsnamens");
           }
-        } catch (error) {
-          console.error("Error fetching assigned club details for VV results:", error);
-          toast({ title: "Fehler", description: "Vereinsdetails konnten nicht geladen werden.", variant: "destructive" });
-        } finally {
-          setIsLoadingAssignedClubDetails(false);
-        }
-      };
-      fetchClubDetails();
-    } else if (!authLoading && (!userPermission || !userPermission.clubIds || userPermission.clubIds.length === 0)) {
-      // Fehler wird bereits im Layout behandelt, aber hier zur Sicherheit
-      toast({ title: "Keine Vereinszuweisung", description: "Ihrem Konto ist kein Verein für die Ergebniserfassung zugewiesen.", variant: "destructive" });
+        };
+        fetchClubName();
+      } else {
+        console.warn("VER_ERGEBNISSE DEBUG: No valid assignedClubId from context. Setting activeClubForEntry to null.");
+        setActiveClubIdForEntry(null);
+        setActiveClubNameForEntry(null);
+      }
     }
-  }, [userPermission, authLoading, toast]);
+  }, [assignedClubId, loadingPermissions]);
 
+
+  // Fetch initial global data (Seasons, all Shooters)
   const fetchInitialPageData = useCallback(async () => {
-    if (!activeClubIdForEntry && assignedClubsForSelect.length > 1) {
+    if (loadingPermissions) { // Wait for permissions to be resolved
+      console.log("VER_ERGEBNISSE DEBUG: fetchInitialPageData - Waiting for permissions.");
+      setIsLoadingPageData(true); 
+      return; 
+    }
+    if (!activeClubIdForEntry && !userPermission?.isSuperAdmin) { // isSuperAdmin ist hier nicht direkt verfügbar, aber als Beispiel
+      console.log("VER_ERGEBNISSE DEBUG: fetchInitialPageData - No activeClubIdForEntry, aborting. User:", userPermission?.email);
       setIsLoadingPageData(false);
+      setAllSeasons([]);
+      setAvailableRunningSeasons([]);
+      setAllLeagues([]);
+      setAllShootersFromDB([]);
       return;
     }
+    console.log("VER_ERGEBNISSE DEBUG: fetchInitialPageData triggered. ActiveClubForEntry:", activeClubIdForEntry);
     setIsLoadingPageData(true);
     try {
       const seasonsSnapshotPromise = getDocs(query(collection(db, SEASONS_COLLECTION), orderBy("competitionYear", "desc")));
-      const shootersSnapshotPromise = getDocs(query(collection(db, SHOOTERS_COLLECTION), orderBy("name", "asc")));
-      const [seasonsSnapshot, shootersSnapshot] = await Promise.all([seasonsSnapshotPromise, shootersSnapshotPromise]);
-      
-      const fetchedSeasons = seasonsSnapshot.docs.map(sDoc => ({ id: sDoc.id, ...sDoc.data() } as Season));
-      setAllSeasons(fetchedSeasons);
-      const running = fetchedSeasons.filter(s => s.status === 'Laufend');
-      setAvailableRunningSeasons(running);
-      if (running.length === 1 && !selectedSeasonId) setSelectedSeasonId(running[0].id);
+      // Lade ALLE Ligen einmalig, um später filtern zu können
+      const allLeaguesSnapshotPromise = getDocs(query(collection(db, LEAGUES_COLLECTION), orderBy("name", "asc")));
+      const shootersSnapshotPromise = getDocs(query(collection(db, SHOOTERS_COLLECTION), orderBy("name", "asc"))); // Lade alle Schützen für Dropdowns
 
-      setAllShootersFromDB(shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Shooter)));
+      const [seasonsSnapshot, allLeaguesSnapshot, shootersSnapshot] = await Promise.all([
+          seasonsSnapshotPromise, allLeaguesSnapshotPromise, shootersSnapshotPromise
+      ]);
+      
+      const fetchedSeasons = seasonsSnapshot.docs.map(sDoc => ({ id: sDoc.id, ...sDoc.data() } as Season)).filter(s => s.id);
+      setAllSeasons(fetchedSeasons);
+      const runningSeasons = fetchedSeasons.filter(s => s.status === 'Laufend');
+      setAvailableRunningSeasons(runningSeasons);
+      console.log("VER_ERGEBNISSE DEBUG: Seasons fetched:", fetchedSeasons.length, "Running:", runningSeasons.length);
+      if (runningSeasons.length === 1 && !selectedSeasonId) {
+        setSelectedSeasonId(runningSeasons[0].id);
+      }
+
+      const fetchedAllLeagues = allLeaguesSnapshot.docs.map(lDoc => ({ id: lDoc.id, ...lDoc.data() } as League)).filter(l => l.id);
+      setAllLeagues(fetchedAllLeagues);
+      console.log("VER_ERGEBNISSE DEBUG: All leagues fetched:", fetchedAllLeagues.length);
+      
+      const fetchedAllShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Shooter)).filter(s => s.id);
+      setAllShootersFromDB(fetchedAllShooters);
+      console.log("VER_ERGEBNISSE DEBUG: All shooters fetched:", fetchedAllShooters.length);
+
     } catch (error) {
-      console.error("VereinErgebnissePage: Error fetching initial page data (seasons/shooters): ", error);
-      toast({ title: "Fehler beim Laden der Basisdaten", description: (error as Error).message, variant: "destructive" });
+      console.error("VER_ERGEBNISSE DEBUG: Error fetching initial page data:", error);
+      toast({ title: "Fehler Basisdaten", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingPageData(false);
+      console.log("VER_ERGEBNISSE DEBUG: fetchInitialPageData finished.");
     }
-  }, [toast, selectedSeasonId, activeClubIdForEntry, assignedClubsForSelect.length]);
+  }, [activeClubIdForEntry, loadingPermissions, toast, selectedSeasonId, userPermission?.email]); // userPermission.email als Teil der Abhängigkeit
 
-  useEffect(() => {
-    if (activeClubIdForEntry || (userPermission?.clubIds && userPermission.clubIds.length === 1 && !authLoading)) {
-        fetchInitialPageData();
-    } else if (userPermission?.clubIds && userPermission.clubIds.length > 1 && !activeClubIdForEntry && !authLoading) {
-        setAllSeasons([]);
-        setAvailableRunningSeasons([]);
-        setAllShootersFromDB([]);
-        setIsLoadingPageData(false);
+  useEffect(() => { 
+    if (!loadingPermissions && (activeClubIdForEntry || userPermission?.email === 'admin@rwk-einbeck.de' )) { // Admin kann immer laden
+        fetchInitialPageData(); 
     }
-  }, [activeClubIdForEntry, userPermission, authLoading, fetchInitialPageData]);
+  }, [fetchInitialPageData, loadingPermissions, activeClubIdForEntry, userPermission?.email]);
 
+
+  // Effect to load leagues for the selected season in which the activeClubIdForEntry has teams
   useEffect(() => {
     const loadLeaguesForSeasonAndClub = async () => {
-      if (!selectedSeasonId || !activeClubIdForEntry) {
-        setLeaguesForActiveClubAndSeason([]);
-        setSelectedLeagueId('');
+      console.log("VER_ERGEBNISSE DEBUG: loadLeaguesForSeasonAndClub - selectedSeasonId:", selectedSeasonId, "activeClubIdForEntry:", activeClubIdForEntry);
+      if (!selectedSeasonId || !activeClubIdForEntry || allLeagues.length === 0) {
+        setLeaguesForActiveClubAndSeason([]); 
+        setSelectedLeagueId(''); 
+        console.log("VER_ERGEBNISSE DEBUG: loadLeaguesForSeasonAndClub - Pre-conditions not met or allLeagues empty.");
         return;
       }
       setIsLoadingLeagues(true);
       const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
       if (!currentSeason) {
-        setLeaguesForActiveClubAndSeason([]);
-        setSelectedLeagueId('');
-        setIsLoadingLeagues(false);
+        setLeaguesForActiveClubAndSeason([]); 
+        setSelectedLeagueId(''); 
+        setIsLoadingLeagues(false); 
+        console.warn("VER_ERGEBNISSE DEBUG: loadLeaguesForSeasonAndClub - Current season not found.");
         return;
       }
-
       try {
-        const teamsOfClubQuery = query(
-          collection(db, TEAMS_COLLECTION),
-          where("clubId", "in", userPermission?.clubIds || [activeClubIdForEntry]), // Berücksichtige alle zugewiesenen Clubs
-          where("competitionYear", "==", currentSeason.competitionYear)
+        const teamsOfThisClubQuery = query(collection(db, TEAMS_COLLECTION), 
+            where("clubId", "==", activeClubIdForEntry), 
+            where("competitionYear", "==", currentSeason.competitionYear)
         );
-        const teamsOfClubSnapshot = await getDocs(teamsOfClubQuery);
-        const leagueIdsOfClubTeams = teamsOfClubSnapshot.docs
-          .map(teamDoc => (teamDoc.data() as Team).leagueId)
-          .filter(leagueId => leagueId) as string[];
+        const teamsSnap = await getDocs(teamsOfThisClubQuery);
+        const leagueIdsOfClubTeams = Array.from(new Set(teamsSnap.docs.map(d => (d.data() as Team).leagueId).filter(id => !!id))) as string[];
+        console.log("VER_ERGEBNISSE DEBUG: loadLeaguesForSeasonAndClub - League IDs of club's teams:", leagueIdsOfClubTeams);
 
         if (leagueIdsOfClubTeams.length === 0) {
-          setLeaguesForActiveClubAndSeason([]);
-          setIsLoadingLeagues(false);
+          setLeaguesForActiveClubAndSeason([]); 
+          setIsLoadingLeagues(false); 
+          console.log("VER_ERGEBNISSE DEBUG: loadLeaguesForSeasonAndClub - No leagues found for this club in this season.");
           return;
         }
         
-        const uniqueLeagueIds = Array.from(new Set(leagueIdsOfClubTeams));
-        const MAX_IN_QUERIES = 30;
-        const leagueChunks: string[][] = [];
-        for (let i = 0; i < uniqueLeagueIds.length; i += MAX_IN_QUERIES) {
-            leagueChunks.push(uniqueLeagueIds.slice(i, i + MAX_IN_QUERIES));
-        }
-
-        const fetchedLeagues: League[] = [];
-        for (const chunk of leagueChunks) {
-            if (chunk.length > 0) {
-                const leaguesQuery = query(
-                    collection(db, LEAGUES_COLLECTION),
-                    where(documentId(), "in", chunk),
-                    where("seasonId", "==", selectedSeasonId),
-                    orderBy("order", "asc")
-                );
-                const leaguesSnapshot = await getDocs(leaguesQuery);
-                leaguesSnapshot.forEach(leagueDoc => fetchedLeagues.push({ id: leagueDoc.id, ...leagueDoc.data() } as League));
-            }
-        }
-        setLeaguesForActiveClubAndSeason(fetchedLeagues);
+        const filteredLeagues = allLeagues.filter(l => 
+            leagueIdsOfClubTeams.includes(l.id) && l.seasonId === selectedSeasonId
+        ).sort((a,b) => (a.order || 0) - (b.order || 0));
+        
+        setLeaguesForActiveClubAndSeason(filteredLeagues.filter(l => l.id));
+        console.log("VER_ERGEBNISSE DEBUG: loadLeaguesForSeasonAndClub - Filtered leagues for VV:", filteredLeagues.length);
       } catch (error) {
-        console.error("VereinErgebnissePage: Error fetching leagues:", error);
-        toast({ title: "Fehler beim Laden der Ligen", description: (error as Error).message, variant: "destructive" });
+        console.error("VER_ERGEBNISSE DEBUG: Error fetching leagues for VV:", error);
+        toast({ title: "Fehler Ligenladen", description: (error as Error).message, variant: "destructive" });
         setLeaguesForActiveClubAndSeason([]);
       } finally {
-        setIsLoadingLeagues(false);
+        setIsLoadingLeagues(false); 
         setSelectedLeagueId('');
       }
     };
+    if (selectedSeasonId && activeClubIdForEntry) loadLeaguesForSeasonAndClub(); else setLeaguesForActiveClubAndSeason([]);
+  }, [selectedSeasonId, activeClubIdForEntry, allSeasons, allLeagues, toast]);
 
-    if (selectedSeasonId && activeClubIdForEntry && userPermission?.clubIds) {
-      loadLeaguesForSeasonAndClub();
-    } else {
-      setLeaguesForActiveClubAndSeason([]);
-    }
-  }, [selectedSeasonId, activeClubIdForEntry, userPermission, allSeasons, toast]);
 
+  // Effect to load all teams in the selected league (for VV, to select own or opponent team)
   useEffect(() => {
     const loadTeamsInLeague = async () => {
+      console.log("VER_ERGEBNISSE DEBUG: loadTeamsInLeague - selectedLeagueId:", selectedLeagueId, "selectedSeasonId:", selectedSeasonId);
       if (!selectedLeagueId || !selectedSeasonId) {
-        setAllTeamsInSelectedLeague([]);
-        setSelectedTeamId('');
+        setAllTeamsInSelectedLeague([]); 
+        setSelectedTeamId(''); 
         return;
       }
       setIsLoadingTeams(true);
       const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
-      if (!currentSeason) {
-         setAllTeamsInSelectedLeague([]);
-         setSelectedTeamId('');
-         setIsLoadingTeams(false);
-         return;
+      if (!currentSeason) { 
+          setAllTeamsInSelectedLeague([]); 
+          setSelectedTeamId(''); 
+          setIsLoadingTeams(false); 
+          console.warn("VER_ERGEBNISSE DEBUG: loadTeamsInLeague - Current season not found for team loading.");
+          return; 
       }
       try {
-        const q = query(
-          collection(db, TEAMS_COLLECTION),
-          where("leagueId", "==", selectedLeagueId),
-          where("competitionYear", "==", currentSeason.competitionYear),
-          orderBy("name", "asc")
+        const q = query(collection(db, TEAMS_COLLECTION), 
+            where("leagueId", "==", selectedLeagueId), 
+            where("competitionYear", "==", currentSeason.competitionYear), 
+            orderBy("name", "asc")
         );
         const snapshot = await getDocs(q);
-        setAllTeamsInSelectedLeague(snapshot.docs.map(teamDoc => ({ id: teamDoc.id, ...teamDoc.data() } as Team)));
+        setAllTeamsInSelectedLeague(snapshot.docs.map(teamDoc => ({ id: teamDoc.id, ...teamDoc.data() } as Team)).filter(t => t.id));
+        console.log("VER_ERGEBNISSE DEBUG: loadTeamsInLeague - Teams in league fetched:", snapshot.docs.length);
       } catch (error) {
-        console.error("VereinErgebnissePage: Error fetching teams in league:", error);
-        toast({ title: "Fehler beim Laden der Mannschaften", description: (error as Error).message, variant: "destructive" });
+        console.error("VER_ERGEBNISSE DEBUG: Error fetching teams in league:", error);
+        toast({ title: "Fehler Teamladen", description: (error as Error).message, variant: "destructive" });
         setAllTeamsInSelectedLeague([]);
       } finally {
-        setIsLoadingTeams(false);
+        setIsLoadingTeams(false); 
         setSelectedTeamId('');
       }
     };
-    if (selectedLeagueId && selectedSeasonId && activeClubIdForEntry) {
-      loadTeamsInLeague();
-    } else {
-        setAllTeamsInSelectedLeague([]);
-    }
+    if (selectedLeagueId && selectedSeasonId && activeClubIdForEntry) loadTeamsInLeague(); else setAllTeamsInSelectedLeague([]);
   }, [selectedLeagueId, selectedSeasonId, allSeasons, activeClubIdForEntry, toast]);
   
+
+  // Effect to load shooters for the selected team
   useEffect(() => {
     const loadShootersForTeam = async () => {
-        if (!selectedTeamId) {
-            setShootersOfSelectedTeam([]);
-            return;
+        console.log("VER_ERGEBNISSE DEBUG: loadShootersForTeam - selectedTeamId:", selectedTeamId);
+        if (!selectedTeamId) { 
+            setShootersOfSelectedTeam([]); 
+            setSelectedShooterId('');
+            return; 
         }
         setIsLoadingShooters(true);
         try {
             const teamData = allTeamsInSelectedLeague.find(t => t.id === selectedTeamId);
             if (teamData && teamData.shooterIds && teamData.shooterIds.length > 0) {
-                const shootersForTeam = allShootersFromDB
-                    .filter(shooter => teamData.shooterIds!.includes(shooter.id))
-                    .sort((a, b) => a.name.localeCompare(b.name));
-                setShootersOfSelectedTeam(shootersForTeam);
+                const validShooterIds = teamData.shooterIds.filter(id => id && typeof id === 'string' && id.trim() !== "");
+                console.log("VER_ERGEBNISSE DEBUG: loadShootersForTeam - Valid shooter IDs from team data:", validShooterIds);
+                if (validShooterIds.length > 0) {
+                    // Filter from allShootersFromDB instead of making new DB call
+                    const shootersForTeam = allShootersFromDB
+                        .filter(shooter => validShooterIds.includes(shooter.id))
+                        .sort((a, b) => a.name.localeCompare(b.name));
+                    setShootersOfSelectedTeam(shootersForTeam);
+                    console.log("VER_ERGEBNISSE DEBUG: loadShootersForTeam - Shooters for team set from allShootersFromDB:", shootersForTeam.length);
+                } else {
+                     setShootersOfSelectedTeam([]);
+                     console.log("VER_ERGEBNISSE DEBUG: loadShootersForTeam - No valid shooter IDs in team data.");
+                }
             } else {
                 setShootersOfSelectedTeam([]);
+                 console.log("VER_ERGEBNISSE DEBUG: loadShootersForTeam - No teamData or no shooterIds in teamData.");
             }
         } catch (error) {
-            console.error("VereinErgebnissePage: Error fetching shooters for team:", error);
-            toast({ title: "Fehler beim Laden der Schützen", description: (error as Error).message, variant: "destructive" });
+            console.error("VER_ERGEBNISSE DEBUG: Error fetching shooters for team:", error);
+            toast({ title: "Fehler Schützenladen", description: (error as Error).message, variant: "destructive" });
             setShootersOfSelectedTeam([]);
         } finally {
             setIsLoadingShooters(false);
+            setSelectedShooterId('');
         }
     };
-    if (selectedTeamId && allShootersFromDB.length > 0 && activeClubIdForEntry) {
-        loadShootersForTeam();
-    } else {
-        setShootersOfSelectedTeam([]);
-    }
+    if (selectedTeamId && allShootersFromDB.length > 0 && activeClubIdForEntry) loadShootersForTeam(); else setShootersOfSelectedTeam([]);
   }, [selectedTeamId, allTeamsInSelectedLeague, allShootersFromDB, activeClubIdForEntry, toast]);
 
+
+  // Effect to load existing scores for the selected team and round
   useEffect(() => {
     const fetchExistingScores = async () => {
+      console.log("VER_ERGEBNISSE DEBUG: fetchExistingScores - selectedTeamId:", selectedTeamId, "selectedSeasonId:", selectedSeasonId, "selectedRound:", selectedRound);
       const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
       if (!selectedTeamId || !currentSeason?.competitionYear || !selectedRound) {
-        setExistingScoresForTeamAndRound([]);
+        setExistingScoresForTeamAndRound([]); 
         return;
       }
       setIsLoadingExistingScores(true);
       try {
-        const scoresQuery = query(
-          collection(db, SCORES_COLLECTION),
-          where("teamId", "==", selectedTeamId),
-          where("competitionYear", "==", currentSeason.competitionYear),
-          where("durchgang", "==", parseInt(selectedRound, 10))
+        const scoresQuery = query(collection(db, SCORES_COLLECTION), 
+            where("teamId", "==", selectedTeamId), 
+            where("competitionYear", "==", currentSeason.competitionYear), 
+            where("durchgang", "==", parseInt(selectedRound, 10))
         );
         const snapshot = await getDocs(scoresQuery);
-        setExistingScoresForTeamAndRound(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry)));
+        const fetchedScores = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
+        setExistingScoresForTeamAndRound(fetchedScores);
+        console.log("VER_ERGEBNISSE DEBUG: Fetched", fetchedScores.length, "existing scores for team", selectedTeamId, "round", selectedRound);
       } catch (error) {
-        console.error("VereinErgebnissePage: Error fetching existing scores: ", error);
-        toast({ title: "Fehler beim Laden existierender Ergebnisse", description: (error as Error).message, variant: "destructive" });
+        console.error("VER_ERGEBNISSE DEBUG: Error fetching existing scores: ", error);
+        toast({ title: "Fehler Lade Ex. Ergebnisse", description: (error as Error).message, variant: "destructive" });
         setExistingScoresForTeamAndRound([]);
       } finally {
         setIsLoadingExistingScores(false);
       }
     };
-    if (selectedTeamId && selectedSeasonId && selectedRound && activeClubIdForEntry) {
-        fetchExistingScores();
-    } else {
-        setExistingScoresForTeamAndRound([]);
-         if(selectedTeamId && selectedSeasonId && !selectedRound) {
-          setJustSavedScoreIdentifiers([]);
-        }
+    if (selectedTeamId && selectedSeasonId && selectedRound && activeClubIdForEntry) fetchExistingScores(); else {
+      setExistingScoresForTeamAndRound([]);
+      // Reset justSaved if round changes, to allow re-entry for new round
+      if(selectedTeamId && selectedSeasonId && !selectedRound) setJustSavedScoreIdentifiers([]);
     }
   }, [selectedTeamId, selectedSeasonId, selectedRound, allSeasons, activeClubIdForEntry, toast]);
 
+
+  // Effect to update available shooters for dropdown (excluding those already in pending or saved)
    useEffect(() => {
+    console.log("VER_ERGEBNISSE DEBUG: Effect for availableShootersForDropdown. selectedTeamId:", selectedTeamId, "selectedRound:", selectedRound, "shootersOfSelectedTeam len:", shootersOfSelectedTeam.length);
     if (selectedTeamId && selectedRound && shootersOfSelectedTeam.length > 0) {
       const parsedRound = parseInt(selectedRound, 10);
-      const shootersInPendingThisRound = pendingScores.filter(ps => ps.teamId === selectedTeamId && ps.durchgang === parsedRound).map(ps => ps.shooterId);
-      const shootersInJustSavedThisRound = justSavedScoreIdentifiers.filter(js => js.durchgang === parsedRound && js.shooterId && shootersOfSelectedTeam.find(s => s.id === js.shooterId)).map(js => js.shooterId);
-      const shootersInExistingScoresThisRound = existingScoresForTeamAndRound.filter(es => es.durchgang === parsedRound).map(es => es.shooterId);
+      
+      const shootersInPendingThisRound = pendingScores
+        .filter(ps => ps.teamId === selectedTeamId && ps.durchgang === parsedRound)
+        .map(ps => ps.shooterId);
+        console.log("VER_ERGEBNISSE DEBUG: Shooters in pending for this round:", shootersInPendingThisRound);
+
+      const shootersInJustSavedThisRound = justSavedScoreIdentifiers
+        .filter(js => js.durchgang === parsedRound && shootersOfSelectedTeam.some(s => s.id === js.shooterId)) 
+        .map(js => js.shooterId);
+        console.log("VER_ERGEBNISSE DEBUG: Shooters in justSaved for this round:", shootersInJustSavedThisRound);
+      
+      const shootersInExistingScoresThisRound = existingScoresForTeamAndRound 
+        .filter(es => es.durchgang === parsedRound)
+        .map(es => es.shooterId);
+        console.log("VER_ERGEBNISSE DEBUG: Shooters in existing scores for this round:", shootersInExistingScoresThisRound);
       
       const filtered = shootersOfSelectedTeam.filter(sh => 
+        sh.id && 
         !shootersInPendingThisRound.includes(sh.id) &&
         !shootersInJustSavedThisRound.includes(sh.id) &&
         !shootersInExistingScoresThisRound.includes(sh.id)
       );
       setAvailableShootersForDropdown(filtered);
+      console.log("VER_ERGEBNISSE DEBUG: Available shooters for dropdown:", filtered.map(s => s.name));
     } else {
       setAvailableShootersForDropdown([]);
+      console.log("VER_ERGEBNISSE DEBUG: Clearing available shooters for dropdown.");
     }
   }, [selectedTeamId, selectedRound, shootersOfSelectedTeam, pendingScores, justSavedScoreIdentifiers, existingScoresForTeamAndRound]);
 
-  useEffect(() => { setSelectedLeagueId('');}, [selectedSeasonId, activeClubIdForEntry]);
-  useEffect(() => { setSelectedTeamId('');}, [selectedLeagueId, activeClubIdForEntry]);
-  useEffect(() => { setSelectedShooterId(''); setSelectedRound(''); /* setPendingScores([]); behalten wir bei Teamwechsel */ setJustSavedScoreIdentifiers([]); }, [selectedTeamId, activeClubIdForEntry]);
-  useEffect(() => { setSelectedShooterId(''); setScore(''); }, [selectedRound, activeClubIdForEntry]);
+  // Reset dependent states when higher-level selections change
+  useEffect(() => { setSelectedLeagueId(''); setSelectedTeamId(''); setSelectedShooterId(''); setSelectedRound(''); setPendingScores([]); setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]);}, [selectedSeasonId, activeClubIdForEntry]);
+  useEffect(() => { setSelectedTeamId(''); setSelectedShooterId(''); setSelectedRound(''); /* Keep pendingScores */ setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]);}, [selectedLeagueId]);
+  useEffect(() => { setSelectedShooterId(''); setSelectedRound(''); /* Keep pendingScores */ setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]);}, [selectedTeamId]);
+  useEffect(() => { setSelectedShooterId(''); setScore(''); /* Keep pendingScores, Keep justSaved */ setExistingScoresForTeamAndRound([]);}, [selectedRound]); // Keep justSaved for current team if only round changes
 
   const handleAddToList = () => {
+    console.log("VER_ERGEBNISSE DEBUG: handleAddToList called.");
     if (!userPermission?.uid) { 
-      toast({ title: "Fehler", description: "Benutzer nicht identifiziert.", variant: "destructive" });
-      return;
+      toast({ title: "Fehler", description: "Benutzer nicht identifiziert.", variant: "destructive" }); return;
     }
     if (!selectedShooterId || !selectedRound || !score || !selectedSeasonId || !selectedLeagueId || !selectedTeamId || !activeClubIdForEntry ) {
-      toast({ title: "Fehlende Eingabe", description: "Bitte alle Felder ausfüllen und einen Verein für die Erfassung wählen.", variant: "destructive" });
-      return;
+      toast({ title: "Fehlende Eingabe", description: "Bitte alle Felder (Saison, Liga, Mannschaft, Durchgang, Schütze, Ergebnis) ausfüllen.", variant: "destructive" }); return;
     }
     const scoreVal = parseInt(score);
     
     const season = allSeasons.find(s => s.id === selectedSeasonId);
-    const league = leaguesForActiveClubAndSeason.find(l => l.id === selectedLeagueId);
-    const team = allTeamsInSelectedLeague.find(t => t.id === selectedTeamId);
+    const league = allLeagues.find(l => l.id === selectedLeagueId); // Ligen des VV
+    const team = allTeamsInSelectedLeague.find(t => t.id === selectedTeamId); // Alle Teams der Liga
     const shooter = allShootersFromDB.find(sh => sh.id === selectedShooterId);
 
     if (!season || !league || !team || !shooter) {
-      toast({ title: "Datenfehler", description: "Ausgewählte Daten (Saison, Liga, Team, Schütze) nicht vollständig geladen.", variant: "destructive" });
+      toast({ title: "Datenfehler", description: "Ausgewählte Daten konnten nicht vollständig geladen werden. Bitte Auswahl überprüfen.", variant: "destructive" }); 
+      console.error("VER_ERGEBNISSE DEBUG: AddToList - Missing data:", {season, league, team, shooter});
       return;
     }
     
     const leagueSpecificType = league.type as FirestoreLeagueSpecificDiscipline;
     let maxPossibleScore = 300; 
-    const lgLpTypes: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
-    if (lgLpTypes.includes(leagueSpecificType)) {
+    const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
+    if (fourHundredPointDisciplines.includes(leagueSpecificType)) {
         maxPossibleScore = 400;
     }
     
     if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) {
-      toast({ title: "Ungültiges Ergebnis", description: `Bitte eine gültige Ringzahl (0-${maxPossibleScore}) eingeben.`, variant: "destructive" });
-      return;
+      toast({ title: "Ungültiges Ergebnis", description: `Bitte eine gültige Ringzahl (0-${maxPossibleScore}) eingeben.`, variant: "destructive" }); return;
     }
     
     const parsedRound = parseInt(selectedRound, 10);
     if (pendingScores.some(ps => ps.shooterId === selectedShooterId && ps.durchgang === parsedRound && ps.teamId === selectedTeamId) || 
         justSavedScoreIdentifiers.some(js => js.shooterId === selectedShooterId && js.durchgang === parsedRound) ||
         existingScoresForTeamAndRound.some(es => es.shooterId === selectedShooterId && es.durchgang === parsedRound)) {
-      toast({ title: "Ergebnis existiert bereits", description: `${shooter.name} hat bereits ein Ergebnis für DG ${selectedRound} bei dieser Mannschaft.`, variant: "warning"});
-      return;
+      toast({ title: "Ergebnis existiert bereits", description: `${shooter.name} hat bereits ein Ergebnis für DG ${selectedRound} in dieser Mannschaft.`, variant: "warning"}); return;
     }
 
     const newPendingEntry: PendingScoreEntry = {
@@ -380,10 +414,10 @@ export default function VereinErgebnissePage() {
       seasonName: season.name,
       leagueId: selectedLeagueId, 
       leagueName: league.name, 
-      leagueType: league.type,
+      leagueType: league.type, // spezifischer Typ
       teamId: selectedTeamId, 
       teamName: team.name, 
-      clubId: team.clubId, 
+      clubId: team.clubId!, // ClubId des Teams, für das das Ergebnis ist
       shooterId: selectedShooterId, 
       shooterName: shooter.name, 
       shooterGender: shooter.gender,
@@ -392,63 +426,68 @@ export default function VereinErgebnissePage() {
       scoreInputType: resultType, 
       competitionYear: season.competitionYear,
     };
-
     setPendingScores(prev => [...prev, newPendingEntry]);
-    toast({ title: "Ergebnis hinzugefügt", description: `${shooter.name} - DG ${selectedRound}: ${scoreVal} Ringe für ${team.name} zur Liste.` });
-    setSelectedShooterId(''); setScore(''); 
+    toast({ title: "Ergebnis hinzugefügt", description: `${shooter.name} - DG ${selectedRound}: ${scoreVal} Ringe zur Liste hinzugefügt.` });
+    setSelectedShooterId(''); 
+    setScore(''); 
+    console.log("VER_ERGEBNISSE DEBUG: Added to pending scores:", newPendingEntry);
   };
 
   const handleRemoveFromList = (tempId: string) => {
     setPendingScores(prev => prev.filter(p => p.tempId !== tempId));
-    toast({ title: "Eintrag entfernt", variant: "destructive" });
+    toast({ title: "Eintrag entfernt", description: "Ergebnis aus der Liste entfernt.", variant: "destructive" });
   };
 
   const handleFinalSave = async () => {
+    console.log("VER_ERGEBNISSE DEBUG: handleFinalSave called.");
     if (!userPermission?.uid) { 
       toast({ title: "Fehler", description: "Benutzer nicht identifiziert.", variant: "destructive" }); return;
     }
     if (pendingScores.length === 0) {
-      toast({ title: "Keine Ergebnisse zum Speichern.", variant: "destructive" }); return;
+      toast({ title: "Keine Ergebnisse", description: "Es gibt keine Ergebnisse zum Speichern.", variant: "destructive" }); return;
     }
     setIsSubmittingScores(true);
     const batch = writeBatch(db);
     const newlySavedIdentifiers: { shooterId: string; durchgang: number }[] = [];
     
+    // Group pending scores by league to create/update league_updates entries
     const leagueUpdatesToProcess = new Map<string, { leagueId: string, leagueName: string, leagueType: FirestoreLeagueSpecificDiscipline, competitionYear: number }>();
 
     pendingScores.forEach(entry => {
       const key = `${entry.leagueId}_${entry.competitionYear}`;
       if (!leagueUpdatesToProcess.has(key) && entry.leagueType && entry.leagueName && entry.competitionYear) {
-        leagueUpdatesToProcess.set(key, {
-          leagueId: entry.leagueId,
-          leagueName: entry.leagueName,
-          leagueType: entry.leagueType,
-          competitionYear: entry.competitionYear
+        leagueUpdatesToProcess.set(key, { 
+            leagueId: entry.leagueId, 
+            leagueName: entry.leagueName, 
+            leagueType: entry.leagueType, 
+            competitionYear: entry.competitionYear 
         });
       }
     });
 
     try {
       pendingScores.forEach((entry) => {
-        const { tempId, ...dataToSave } = entry;
+        const { tempId, ...dataToSave } = entry; // remove tempId
         const scoreDocRef = doc(collection(db, SCORES_COLLECTION)); 
+        
         const scoreDataForDb: Omit<ScoreEntry, 'id' | 'entryTimestamp' | 'enteredByUserId' | 'enteredByUserName'> = {
-            seasonId: dataToSave.seasonId, 
-            seasonName: dataToSave.seasonName || "N/A",
-            leagueId: dataToSave.leagueId, 
-            leagueName: dataToSave.leagueName || "N/A", 
-            leagueType: dataToSave.leagueType!, 
-            teamId: dataToSave.teamId, 
-            teamName: dataToSave.teamName || "N/A", 
-            clubId: dataToSave.clubId!, 
-            shooterId: dataToSave.shooterId, 
-            shooterName: dataToSave.shooterName || "N/A", 
-            shooterGender: dataToSave.shooterGender || "unknown",
-            durchgang: dataToSave.durchgang, 
+            seasonId: dataToSave.seasonId,
+            seasonName: dataToSave.seasonName,
+            leagueId: dataToSave.leagueId,
+            leagueName: dataToSave.leagueName,
+            leagueType: dataToSave.leagueType, // spezifischer Typ
+            teamId: dataToSave.teamId,
+            teamName: dataToSave.teamName,
+            clubId: dataToSave.clubId, // Wichtig: clubId des Teams
+            shooterId: dataToSave.shooterId,
+            shooterName: dataToSave.shooterName,
+            shooterGender: dataToSave.shooterGender,
+            durchgang: dataToSave.durchgang,
             totalRinge: dataToSave.totalRinge,
-            scoreInputType: dataToSave.scoreInputType, 
+            scoreInputType: dataToSave.scoreInputType,
             competitionYear: dataToSave.competitionYear,
         };
+        
         batch.set(scoreDocRef, {
             ...scoreDataForDb,
             enteredByUserId: userPermission.uid,
@@ -458,6 +497,7 @@ export default function VereinErgebnissePage() {
         newlySavedIdentifiers.push({ shooterId: entry.shooterId, durchgang: entry.durchgang });
       });
 
+      // Process league updates
       for (const updateInfo of leagueUpdatesToProcess.values()) {
         const today = new Date();
         const startOfDay = Timestamp.fromDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
@@ -473,27 +513,32 @@ export default function VereinErgebnissePage() {
         const existingUpdatesSnapshot = await getDocs(q);
 
         if (!existingUpdatesSnapshot.empty) {
+            // Update existing entry for today
             const existingUpdateDocRef = existingUpdatesSnapshot.docs[0].ref;
             batch.update(existingUpdateDocRef, { timestamp: serverTimestamp() });
+             console.log("VER_ERGEBNISSE DEBUG: Updated existing league update entry for leagueId", updateInfo.leagueId);
         } else {
+            // Create new entry
             const leagueUpdateData: Omit<LeagueUpdateEntry, 'id'> = {
                 leagueId: updateInfo.leagueId,
                 leagueName: updateInfo.leagueName,
                 leagueType: updateInfo.leagueType, 
                 competitionYear: updateInfo.competitionYear,
                 timestamp: serverTimestamp(),
-                action: 'results_added',
+                action: 'results_added', // Or a more generic 'updated'
             };
             const leagueUpdateDocRef = doc(collection(db, LEAGUE_UPDATES_COLLECTION));
             batch.set(leagueUpdateDocRef, leagueUpdateData);
+            console.log("VER_ERGEBNISSE DEBUG: Added new league update entry for leagueId", updateInfo.leagueId);
         }
       }
 
       await batch.commit();
-      toast({ title: "Ergebnisse gespeichert", description: `${pendingScores.length} Ergebnisse wurden erfolgreich gespeichert.` });
+      toast({ title: "Ergebnisse gespeichert", description: `${pendingScores.length} Ergebnisse wurden erfolgreich in der Datenbank gespeichert.` });
       setPendingScores([]);
-      setJustSavedScoreIdentifiers(prev => [...prev, ...newlySavedIdentifiers]);
+      setJustSavedScoreIdentifiers(prev => [...prev, ...newlySavedIdentifiers]); // Add to existing justSaved for this session
       
+      // Refetch existing scores for the current team/round to update the UI immediately
       const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
       if (selectedTeamId && currentSeason?.competitionYear && selectedRound) {
           setIsLoadingExistingScores(true);
@@ -504,78 +549,63 @@ export default function VereinErgebnissePage() {
             where("durchgang", "==", parseInt(selectedRound, 10))
           );
           const snapshot = await getDocs(scoresQuery);
-          setExistingScoresForTeamAndRound(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry)));
+          setExistingScoresForTeamAndRound(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry))); 
           setIsLoadingExistingScores(false);
       }
 
-    } catch (error) {
-      console.error("Error saving scores to Firestore: ", error);
-      toast({ title: "Fehler beim Speichern", description: (error as Error).message, variant: "destructive" });
+    } catch (error: any) { // Typ für error expliziter machen
+        console.error("VER_ERGEBNISSE DEBUG: Error saving scores to Firestore: ", error);
+        toast({ title: "Fehler beim Speichern", description: error.message || "Unbekannter Fehler", variant: "destructive" });
     } finally {
-      setIsSubmittingScores(false);
+        setIsSubmittingScores(false);
     }
   };
 
   const selectedLeagueObject = leaguesForActiveClubAndSeason.find(l => l.id === selectedLeagueId);
-  let numRoundsForSelect = 5; 
+  let numRoundsForSelect = 5; // Default KK
   if (selectedLeagueObject) {
-    const lgLpTypes: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
-    if (lgLpTypes.includes(selectedLeagueObject.type)) {
-      numRoundsForSelect = 4; 
+    const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
+    if (fourHundredPointDisciplines.includes(selectedLeagueObject.type)) {
+      numRoundsForSelect = 4; // 4 Durchgänge für Luftdruck
     }
   }
 
-  if (authLoading || (!activeClubIdForEntry && assignedClubsForSelect.length > 1 && !isLoadingAssignedClubDetails)) {
-    return (
-      <div className="space-y-6">
-        {authLoading && <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary mr-3" /><p>Lade Benutzerdaten...</p></div>}
-        {!authLoading && permissionError && <Card className="border-destructive"><CardHeader><CardTitle className="text-destructive flex items-center"><AlertTriangle className="mr-2 h-5 w-5" /> Zugriffsproblem</CardTitle></CardHeader><CardContent><p>{permissionError}</p></CardContent></Card>}
-        {!authLoading && !permissionError && userPermission?.clubIds && userPermission.clubIds.length > 1 && !activeClubIdForEntry && !isLoadingAssignedClubDetails && (
-          <Card className="shadow-md">
-            <CardHeader><CardTitle>Verein für Ergebniserfassung auswählen</CardTitle><CardDescription>Bitte wählen Sie den Verein aus, für dessen Ligen/Mannschaften Sie Ergebnisse erfassen möchten.</CardDescription></CardHeader>
-            <CardContent>
-              <Select onValueChange={(value) => {
-                setActiveClubIdForEntry(value);
-                const club = assignedClubsForSelect.find(c => c.id === value);
-                setActiveClubName(club?.name || null);
-              }}>
-                <SelectTrigger className="w-full sm:w-[300px]">
-                  <SelectValue placeholder="Verein für Erfassung wählen..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {assignedClubsForSelect.map(club => (
-                    <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    );
-  }
-  
-  if (!authLoading && !permissionError && (!userPermission?.clubIds || userPermission.clubIds.length === 0)) {
-     return (
-      <div className="space-y-6 p-4 md:p-6">
-        <Card className="border-amber-500">
-          <CardHeader><CardTitle className="text-amber-700 flex items-center"><AlertTriangle className="mr-2 h-5 w-5" /> Kein Verein zugewiesen</CardTitle></CardHeader>
-          <CardContent><p>Ihrem Konto ist kein Verein für die Ergebniserfassung zugewiesen. Bitte kontaktieren Sie den Administrator.</p></CardContent>
-        </Card>
-      </div>
-    );
-  }
-  
-  if (isLoadingPageData && activeClubIdForEntry) {
-     return <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary mr-3" /><p>Lade Seitendaten...</p></div>;
-  }
 
-  if (availableRunningSeasons.length === 0 && !isLoadingPageData && activeClubIdForEntry) {
+  if (loadingPermissions || isLoadingPageData) {
+    return <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary mr-3" /><p>Lade Benutzer- und Seitendaten...</p></div>;
+  }
+  if (permissionError) {
+    return <div className="p-6"><Card className="border-destructive bg-destructive/5"><CardHeader><CardTitle className="text-destructive flex items-center"><AlertTriangle className="mr-2 h-5 w-5" /> {permissionError}</CardTitle></CardHeader><CardContent><p>Bitte kontaktieren Sie den Administrator.</p></CardContent></Card></div>;
+  }
+  if (!userPermission || !activeClubIdForEntry) { // Prüft, ob der aktive Club für die Erfassung gesetzt ist
+     return (
+        <div className="p-6">
+            <Card className="border-amber-500 bg-amber-50/50">
+                <CardHeader><CardTitle className="text-amber-700 flex items-center gap-2"><AlertTriangle />Vereinskontext fehlt</CardTitle></CardHeader>
+                <CardContent>
+                    <p>Ihrem Konto ist kein Verein für die Ergebniserfassung zugewiesen oder der Verein konnte nicht geladen werden.</p>
+                    <p className="text-xs mt-1">Zugewiesene Club ID vom Context: {assignedClubId || "Nicht vorhanden"}</p>
+                    <p className="text-xs mt-1">Aktiver Club ID für Erfassung: {activeClubIdForEntry || "Nicht gesetzt"}</p>
+                </CardContent>
+            </Card>
+        </div>
+     );
+  }
+  
+  if (availableRunningSeasons.length === 0 && !isLoadingPageData) {
     return (
       <div className="space-y-6">
-         <div className="flex justify-between items-center"><h1 className="text-2xl font-semibold text-primary">Ergebniserfassung {activeClubName ? `(${activeClubName})` : ''}</h1></div>
-        <Card className="shadow-md border-amber-500"><CardHeader><CardTitle className="text-amber-600 flex items-center"><AlertTriangle className="mr-2 h-5 w-5" />Keine laufenden Saisons</CardTitle></CardHeader>
-            <CardContent><p>Aktuell sind keine Saisons mit dem Status "Laufend" für die Ergebniserfassung verfügbar.</p></CardContent>
+         <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-semibold text-primary">Ergebniserfassung {activeClubNameForEntry ? `(${activeClubNameForEntry})` : ''}</h1>
+        </div>
+        <Card className="shadow-md border-amber-500">
+            <CardHeader>
+                <CardTitle className="text-amber-600 flex items-center"><AlertTriangle className="mr-2 h-5 w-5" />Keine laufenden Saisons</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p>Aktuell sind keine Saisons mit dem Status "Laufend" für die Ergebniserfassung verfügbar.</p>
+                <p>Bitte überprüfen Sie die Saisonverwaltung oder bitten Sie den Administrator, eine laufende Saison anzulegen.</p>
+            </CardContent>
         </Card>
       </div>
     );
@@ -584,118 +614,83 @@ export default function VereinErgebnissePage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-primary">Ergebniserfassung {activeClubName ? `(${activeClubName})` : ''}</h1>
+        <h1 className="text-2xl font-semibold text-primary">Ergebniserfassung {activeClubNameForEntry ? `(für ${activeClubNameForEntry})` : ''}</h1>
       </div>
       
-      {userPermission?.clubIds && userPermission.clubIds.length > 1 && (
-         <Card className="shadow-sm bg-muted/30">
-            <CardContent className="p-4">
-                 <Label htmlFor="vv-active-club-select-ergebnisse">Für welchen Verein Ergebnisse erfassen?</Label>
-                 <Select 
-                    value={activeClubIdForEntry} 
-                    onValueChange={(value) => {
-                        setActiveClubIdForEntry(value);
-                        const club = assignedClubsForSelect.find(c => c.id === value);
-                        setActiveClubName(club?.name || null);
-                        // Reset dependent states
-                        setSelectedSeasonId('');
-                        setLeaguesForActiveClubAndSeason([]);
-                        setAllTeamsInSelectedLeague([]);
-                        setShootersOfSelectedTeam([]);
-                        setAvailableShootersForDropdown([]);
-                        setPendingScores([]);
-                        setJustSavedScoreIdentifiers([]);
-                        setExistingScoresForTeamAndRound([]);
-                    }}
-                >
-                    <SelectTrigger id="vv-active-club-select-ergebnisse" className="w-full sm:w-[300px] mt-1">
-                        <SelectValue placeholder="Verein für Erfassung wählen..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {assignedClubsForSelect.map(club => (
-                            <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </CardContent>
-         </Card>
-      )}
-
       <Card className="shadow-md">
         <CardHeader><CardTitle>Einzelergebnis zur Liste hinzufügen</CardTitle><CardDescription>Wählen Sie Parameter und fügen Sie Ergebnisse hinzu.</CardDescription></CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Saison Auswahl */}
             <div className="space-y-2">
-              <Label htmlFor="vv-er-season">Saison (laufend)</Label>
-              <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={isLoadingPageData || availableRunningSeasons.length === 0 || !activeClubIdForEntry}>
-                <SelectTrigger id="vv-er-season"><SelectValue placeholder={isLoadingPageData ? "Lade Saisons..." : (availableRunningSeasons.length === 0 ? "Keine Saisons" : "Saison wählen")} /></SelectTrigger>
+              <Label htmlFor="vver-season">Saison (laufend)</Label>
+              <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={isLoadingPageData || availableRunningSeasons.length === 0}>
+                <SelectTrigger id="vver-season"><SelectValue placeholder={isLoadingPageData ? "Lade Saisons..." : (availableRunningSeasons.length === 0 ? "Keine Saisons" : "Saison wählen")} /></SelectTrigger>
                 <SelectContent>{availableRunningSeasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            {/* Liga Auswahl */}
             <div className="space-y-2">
-              <Label htmlFor="vv-er-league">Liga</Label>
-              <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={!selectedSeasonId || isLoadingLeagues || leaguesForActiveClubAndSeason.length === 0 || !activeClubIdForEntry}>
-                <SelectTrigger id="vv-er-league"><SelectValue placeholder={isLoadingLeagues ? "Lade Ligen..." : (leaguesForActiveClubAndSeason.length === 0 && selectedSeasonId ? "Keine Ligen für Verein/Saison" : "Liga wählen")} /></SelectTrigger>
+              <Label htmlFor="vver-league">Liga (Ihres Vereins)</Label>
+              <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={!selectedSeasonId || isLoadingLeagues || leaguesForActiveClubAndSeason.length === 0}>
+                <SelectTrigger id="vver-league"><SelectValue placeholder={isLoadingLeagues ? "Lade Ligen..." : (leaguesForActiveClubAndSeason.length === 0 && selectedSeasonId ? "Keine Ligen für Verein/Saison" : "Liga wählen")} /></SelectTrigger>
                 <SelectContent>{leaguesForActiveClubAndSeason.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-             <div className="space-y-2">
-              <Label htmlFor="vv-er-team">Mannschaft</Label>
-              <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={!selectedLeagueId || isLoadingTeams || allTeamsInSelectedLeague.length === 0 || !activeClubIdForEntry}>
-                <SelectTrigger id="vv-er-team"><SelectValue placeholder={isLoadingTeams ? "Lade Teams..." : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId ? "Keine Teams für Liga" : "Mannschaft wählen")} /></SelectTrigger>
+            {/* Mannschaft Auswahl */}
+            <div className="space-y-2">
+              <Label htmlFor="vver-team">Mannschaft (Eigene oder Gegner)</Label>
+              <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={!selectedLeagueId || isLoadingTeams || allTeamsInSelectedLeague.length === 0}>
+                <SelectTrigger id="vver-team"><SelectValue placeholder={isLoadingTeams ? "Lade Teams..." : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId ? "Keine Teams für Liga" : "Mannschaft wählen")} /></SelectTrigger>
                 <SelectContent>{allTeamsInSelectedLeague.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            {/* Durchgang Auswahl */}
             <div className="space-y-2">
-              <Label htmlFor="vv-er-round">Durchgang</Label>
-              <Select value={selectedRound} onValueChange={(value) => { setSelectedRound(value);}} disabled={!selectedTeamId || !activeClubIdForEntry}>
-                <SelectTrigger id="vv-er-round"><SelectValue placeholder="Durchgang wählen" /></SelectTrigger>
+              <Label htmlFor="vver-round">Durchgang</Label>
+              <Select value={selectedRound} onValueChange={(value) => { setSelectedRound(value);}} disabled={!selectedTeamId}>
+                <SelectTrigger id="vver-round"><SelectValue placeholder="Durchgang wählen" /></SelectTrigger>
                 <SelectContent>{[...Array(numRoundsForSelect)].map((_, i) => (<SelectItem key={i + 1} value={(i + 1).toString()}>Durchgang {i + 1}</SelectItem>))}</SelectContent>
               </Select>
             </div>
+            {/* Schütze Auswahl */}
             <div className="space-y-2">
-              <Label htmlFor="vv-er-shooter">Schütze</Label>
-              <Select value={selectedShooterId} onValueChange={setSelectedShooterId} disabled={!selectedRound || isLoadingShooters || isLoadingExistingScores || (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound) || !activeClubIdForEntry}>
-                <SelectTrigger id="vv-er-shooter"><SelectValue placeholder={isLoadingShooters || isLoadingExistingScores ? "Lade Schützen..." : (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound ? "Alle erfasst/keine" : "Schütze wählen")} /></SelectTrigger>
+              <Label htmlFor="vver-shooter">Schütze</Label>
+              <Select value={selectedShooterId} onValueChange={setSelectedShooterId} disabled={!selectedRound || isLoadingShooters || isLoadingExistingScores || (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound)}>
+                <SelectTrigger id="vver-shooter"><SelectValue placeholder={isLoadingShooters || isLoadingExistingScores ? "Lade Schützen..." : (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound ? "Alle erfasst/keine" : "Schütze wählen")} /></SelectTrigger>
                 <SelectContent>{availableShootersForDropdown.map(sh => <SelectItem key={sh.id} value={sh.id}>{sh.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            {/* Ergebnis Eingabe */}
             <div className="space-y-2">
-              <Label htmlFor="vv-er-score">Ergebnis (Ringe)</Label>
-              <Input id="vv-er-score" type="number" value={score} onChange={(e) => setScore(e.target.value)} placeholder="z.B. 285" disabled={!selectedShooterId || !activeClubIdForEntry} />
+              <Label htmlFor="vver-score">Ergebnis (Ringe)</Label>
+              <Input id="vver-score" type="number" value={score} onChange={(e) => setScore(e.target.value)} placeholder="z.B. 285" disabled={!selectedShooterId} />
             </div>
           </div>
+          {/* Ergebnistyp Auswahl */}
           <div className="space-y-3 pt-2">
             <Label>Ergebnistyp</Label>
-            <RadioGroup value={resultType} onValueChange={(value) => setResultType(value as "regular" | "pre" | "post")} className="flex space-x-4" disabled={!activeClubIdForEntry}>
-              <div className="flex items-center space-x-2">
-                 <RadioGroupItem value="regular" id="vv-er-r-regular" />
-                 <Label htmlFor="vv-er-r-regular">Regulär</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                 <RadioGroupItem value="pre" id="vv-er-r-pre" />
-                 <Label htmlFor="vv-er-r-pre">Vorschießen</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                 <RadioGroupItem value="post" id="vv-er-r-post" />
-                 <Label htmlFor="vv-er-r-post">Nachschießen</Label>
-              </div>
+            <RadioGroup value={resultType} onValueChange={(value) => setResultType(value as "regular" | "pre" | "post")} className="flex space-x-4">
+              <div className="flex items-center space-x-2"><RadioGroupItem value="regular" id="vver-r-regular" /><Label htmlFor="vver-r-regular">Regulär</Label></div>
+              <div className="flex items-center space-x-2"><RadioGroupItem value="pre" id="vver-r-pre" /><Label htmlFor="vver-r-pre">Vorschießen</Label></div>
+              <div className="flex items-center space-x-2"><RadioGroupItem value="post" id="vver-r-post" /><Label htmlFor="vver-r-post">Nachschießen</Label></div>
             </RadioGroup>
           </div>
+          {/* Button zum Hinzufügen */}
           <div className="flex justify-end pt-4">
-            <Button onClick={handleAddToList} disabled={!selectedShooterId || !selectedRound || !score || isSubmittingScores || isLoadingExistingScores || !activeClubIdForEntry}><PlusCircle className="mr-2 h-5 w-5" /> Zur Liste hinzufügen</Button>
+            <Button onClick={handleAddToList} disabled={!selectedShooterId || !selectedRound || !score || isSubmittingScores || isLoadingExistingScores}><PlusCircle className="mr-2 h-5 w-5" /> Zur Liste hinzufügen</Button>
           </div>
         </CardContent>
       </Card>
 
-      {pendingScores.length > 0 && activeClubIdForEntry && (
+      {/* Tabelle für vorgemerkte Ergebnisse */}
+      {pendingScores.length > 0 && (
         <Card className="shadow-md mt-6">
-          <CardHeader>
-            <CardTitle>Vorgemerkte Ergebnisse ({pendingScores.length})</CardTitle>
+          <CardHeader><CardTitle>Vorgemerkte Ergebnisse ({pendingScores.length})</CardTitle>
             <CardDescription>
-                Saison: {allSeasons.find(s=>s.id === selectedSeasonId)?.name || '-'} | 
-                Liga: {leaguesForActiveClubAndSeason.find(l=>l.id===selectedLeagueId)?.name || '-'} | 
-                Mannschaft: {allTeamsInSelectedLeague.find(t=>t.id===selectedTeamId)?.name || '-'}
+              Saison: {allSeasons.find(s=>s.id === selectedSeasonId)?.name || '-'} | 
+              Liga: {allLeagues.find(l=>l.id===selectedLeagueId)?.name || '-'} | 
+              Mannschaft: {allTeamsInSelectedLeague.find(t=>t.id===selectedTeamId)?.name || '-'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -706,20 +701,10 @@ export default function VereinErgebnissePage() {
           </CardContent>
         </Card>
       )}
-      {pendingScores.length === 0 && !isLoadingPageData && activeClubIdForEntry && (
-         <div className="mt-8 p-6 text-center text-muted-foreground bg-secondary/30 rounded-md">
-            <CheckSquare className="mx-auto h-10 w-10 mb-3 text-primary/70" />
-            <p className="text-base">Noch keine Ergebnisse zur Speicherung vorgemerkt.</p>
-         </div>
+      {/* Meldung, wenn keine Ergebnisse vorgemerkt */}
+      {pendingScores.length === 0 && !isLoadingPageData && activeClubIdForEntry && availableRunningSeasons.length > 0 && (
+         <div className="mt-8 p-6 text-center text-muted-foreground bg-secondary/30 rounded-md"><CheckSquare className="mx-auto h-10 w-10 mb-3 text-primary/70" /><p className="text-base">Noch keine Ergebnisse zur Speicherung vorgemerkt.</p></div>
       )}
-       {!activeClubIdForEntry && userPermission?.clubIds && userPermission.clubIds.length > 1 && !isLoadingAssignedClubDetails && !isLoadingPageData && (
-         <div className="mt-8 p-6 text-center text-muted-foreground bg-secondary/30 rounded-md">
-            <AlertTriangle className="mx-auto h-10 w-10 mb-3 text-primary/70" />
-            <p className="text-base">Bitte wählen Sie oben einen Verein aus, um Ergebnisse zu erfassen.</p>
-          </div>
-       )}
     </div>
   );
 }
-
-    

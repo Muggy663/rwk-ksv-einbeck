@@ -11,10 +11,9 @@ export type FirestoreLeagueSpecificDiscipline =
   | 'LPA'; // Luftpistole Auflage
 
 export const GEWEHR_DISCIPLINES: FirestoreLeagueSpecificDiscipline[] = ['KKG', 'LG', 'LGA'];
-export const PISTOL_DISCIPLINES: FirestoreLeagueSpecificDiscipline[] = ['KKP', 'LP', 'LPA']; // SP wurde entfernt
+export const PISTOL_DISCIPLINES: FirestoreLeagueSpecificDiscipline[] = ['KKP', 'LP', 'LPA'];
 export const MAX_SHOOTERS_PER_TEAM = 3;
 
-// Hilfsfunktion zur Kategorisierung
 export function getDisciplineCategory(leagueType?: FirestoreLeagueSpecificDiscipline | null): 'Gewehr' | 'Pistole' | null {
   if (!leagueType) return null;
   if (GEWEHR_DISCIPLINES.includes(leagueType)) return 'Gewehr';
@@ -22,8 +21,7 @@ export function getDisciplineCategory(leagueType?: FirestoreLeagueSpecificDiscip
   return null;
 }
 
-// Optionen für UI-Dropdowns zur Auswahl spezifischer Ligatypen (z.B. beim Anlegen einer Liga)
-export const leagueDisciplineOptions: { value: FirestoreLeagueSpecificDiscipline; label: string }[] = [
+export const leagueDisciplineOptions: Array<{ value: FirestoreLeagueSpecificDiscipline; label: string }> = [
   { value: 'KKG', label: 'KK-Gewehr' },
   { value: 'KKP', label: 'KK-Pistole' },
   { value: 'LG', label: 'Luftgewehr (Freihand)' },
@@ -32,39 +30,31 @@ export const leagueDisciplineOptions: { value: FirestoreLeagueSpecificDiscipline
   { value: 'LPA', label: 'Luftpistole Auflage' },
 ];
 
-// Übergeordnete UI-Filteroptionen für Disziplinen (z.B. in RWK-Tabellen)
+// Übergeordnete UI-Filteroptionen für Disziplinen
 export type UIDisciplineSelection = 'KK' | 'LD';
 
-export const uiDisciplineFilterOptions: { value: UIDisciplineSelection, label: string, firestoreTypes: FirestoreLeagueSpecificDiscipline[] }[] = [
+export const uiDisciplineFilterOptions: Array<{ value: UIDisciplineSelection, label: string, firestoreTypes: FirestoreLeagueSpecificDiscipline[] }> = [
   { value: 'KK', label: 'Kleinkaliber (KK)', firestoreTypes: ['KKG', 'KKP'] },
   { value: 'LD', label: 'Luftdruck (LG/LP)', firestoreTypes: ['LG', 'LGA', 'LP', 'LPA'] },
 ];
 
-// Hilfsfunktion, um von spezifischem Typ auf UI-Auswahlwert zu kommen
 export function getUIDisciplineValueFromSpecificType(specificType?: FirestoreLeagueSpecificDiscipline): UIDisciplineSelection | '' {
   if (!specificType) return '';
   const option = uiDisciplineFilterOptions.find(opt => opt.firestoreTypes.includes(specificType));
   return option ? option.value : '';
 }
 
-
-// Konfiguration für die Anzeige von Wettkämpfen (Jahr und UI-Disziplin)
 export interface CompetitionDisplayConfig {
   year: number;
   discipline: UIDisciplineSelection;
   displayName: string;
 }
 
-export const AVAILABLE_UI_DISCIPLINES: { value: UIDisciplineSelection; label: string }[] = [
-  { value: 'KK', label: 'Kleinkaliber (KK)' },
-  { value: 'LD', label: 'Luftdruck (LG/LP)' },
-];
-
 export interface Season {
   id: string;
   competitionYear: number;
   name: string;
-  type: UIDisciplineSelection; // 'KK' oder 'LD' - Hauptkategorie der Saison
+  type: UIDisciplineSelection;
   status: 'Geplant' | 'Laufend' | 'Abgeschlossen';
 }
 
@@ -100,7 +90,7 @@ export interface Team {
   name: string;
   clubId: string;
   leagueId?: string | null;
-  seasonId: string;
+  seasonId?: string;
   competitionYear: number;
   shooterIds?: string[];
   captainName?: string;
@@ -176,21 +166,21 @@ export interface IndividualShooterDisplayData {
   averageScore: number | null;
   roundsShot: number;
   rank?: number;
-  competitionYear?: number; // Hinzugefügt für Kontext im Modal
+  competitionYear?: number;
 }
 
 export interface PendingScoreEntry {
   tempId: string;
   seasonId: string;
-  seasonName?: string;
+  seasonName: string;
   leagueId: string;
-  leagueName?: string;
+  leagueName: string;
   leagueType: FirestoreLeagueSpecificDiscipline;
   teamId: string;
-  teamName?: string;
+  teamName: string;
   clubId: string;
   shooterId: string;
-  shooterName?: string;
+  shooterName: string;
   shooterGender?: Shooter['gender'];
   durchgang: number;
   totalRinge: number;
@@ -226,17 +216,17 @@ export interface SupportTicket {
 }
 
 export interface UserPermission {
-  uid: string; // Ist die Dokument-ID in Firestore, hier für Typisierung
+  uid: string; // User-ID aus Firebase Auth, dient als Dokument-ID
   email: string;
   displayName?: string | null;
   role: 'vereinsvertreter' | 'mannschaftsfuehrer' | null;
-  clubIds: string[] | null; // Array von Club-IDs
+  clubId: string | null; // Nur noch eine clubId
   lastUpdated?: Timestamp;
-  forcePasswordChange?: boolean; // Für späteres Feature
 }
 
 export interface VereinContextType {
   userPermission: UserPermission | null;
   loadingPermissions: boolean;
   permissionError: string | null;
+  assignedClubId: string | null; // Geändert von assignedClubIdArray
 }

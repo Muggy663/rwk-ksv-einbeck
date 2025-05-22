@@ -2,25 +2,18 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link'; // Import Link
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ListChecks, Loader2, Info } from 'lucide-react';
 import type { LeagueUpdateEntry, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
-import { uiDisciplineFilterOptions } from '@/types/rwk'; // Import für Mapping
+import { getUIDisciplineValueFromSpecificType, uiDisciplineFilterOptions } from '@/types/rwk'; // Import uiDisciplineFilterOptions
 import { db } from '@/lib/firebase/config';
-import { collection, query, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, limit as firestoreLimit, getDocs, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
-
-// Hilfsfunktion, um von FirestoreLeagueSpecificDiscipline auf den UIDisciplineSelection Wert zu kommen
-const getUIDisciplineValueFromSpecificType = (specificType?: FirestoreLeagueSpecificDiscipline): string => {
-  if (!specificType) return ''; // Fallback
-  const uiOption = uiDisciplineFilterOptions.find(opt => opt.firestoreTypes.includes(specificType));
-  return uiOption ? uiOption.value : ''; // Gibt 'KK', 'LD' etc. zurück oder Fallback
-};
 
 export default function HomePage() {
   const [updates, setUpdates] = useState<LeagueUpdateEntry[]>([]);
@@ -33,12 +26,17 @@ export default function HomePage() {
         const updatesQuery = query(
           collection(db, LEAGUE_UPDATES_COLLECTION),
           orderBy("timestamp", "desc"),
-          limit(7)
+          firestoreLimit(7)
         );
         const querySnapshot = await getDocs(updatesQuery);
         const fetchedUpdates: LeagueUpdateEntry[] = [];
         querySnapshot.forEach((doc) => {
-          fetchedUpdates.push({ id: doc.id, ...doc.data() } as LeagueUpdateEntry);
+          const data = doc.data();
+          fetchedUpdates.push({ 
+            id: doc.id, 
+            ...data,
+            leagueType: data.leagueType as FirestoreLeagueSpecificDiscipline 
+          } as LeagueUpdateEntry);
         });
         setUpdates(fetchedUpdates);
       } catch (error) {
@@ -93,15 +91,20 @@ export default function HomePage() {
             ) : updates.length > 0 ? (
               <ul className="space-y-4">
                 {updates.map((update) => {
-                  const uiDiscValue = getUIDisciplineValueFromSpecificType(update.leagueType);
-                  const linkHref = `/rwk-tabellen?year=${update.competitionYear}&discipline=${uiDiscValue}&league=${update.leagueId}`;
+                  const uiDiscValueForLink = getUIDisciplineValueFromSpecificType(update.leagueType);
+                  const disciplineOption = uiDisciplineFilterOptions.find(opt => opt.firestoreTypes.includes(update.leagueType));
+                  const uiDiscDisplayLabel = disciplineOption ? disciplineOption.label.replace(/\s*\(.*\)\s*$/, '').trim() : update.leagueType;
+                  
+                  const linkHref = uiDiscValueForLink 
+                    ? `/rwk-tabellen?year=${update.competitionYear}&discipline=${uiDiscValueForLink}&league=${update.leagueId}`
+                    : `/rwk-tabellen?year=${update.competitionYear}&league=${update.leagueId}`;
                   
                   return (
                     <li key={update.id} className="p-4 bg-muted/50 rounded-md shadow-sm hover:bg-muted/70 transition-colors">
                       <Link href={linkHref} className="block hover:text-primary">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                           <p className="text-md font-medium text-foreground">
-                            Ergebnisse in der Liga <strong className="text-primary">{update.leagueName} {uiDiscValue ? `(${uiDiscValue})` : ''}</strong> ({update.competitionYear}) hinzugefügt.
+                            Ergebnisse in der Liga <strong className="text-primary">{update.leagueName} {uiDiscDisplayLabel ? `(${uiDiscDisplayLabel})` : ''}</strong> ({update.competitionYear}) hinzugefügt.
                           </p>
                           <p className="text-xs text-muted-foreground mt-1 sm:mt-0">
                             {update.timestamp ? format((update.timestamp as Timestamp).toDate(), 'dd. MMMM yyyy, HH:mm', { locale: de }) : '-'} Uhr

@@ -10,10 +10,7 @@ export const metadata: Metadata = {
   title: 'RWK Einbeck App',
   description: 'Rundenwettkämpfe des Kreisschützenverbandes Einbeck',
   icons: {
-    icon: '/favicon.ico', // Standard-Favicon im /public Ordner
-    // Du kannst hier weitere Icons für andere Zwecke hinzufügen:
-    // apple: '/apple-touch-icon.png',
-    // shortcut: '/favicon-16x16.png',
+    icon: '/favicon.ico',
   },
 };
 

@@ -17,7 +17,8 @@ import {
   GitPullRequestClosed, 
   BookOpenCheck,
   ShieldCheck,
-  Edit3 
+  Edit3, // Fehlendes Icon für Ergebnisse bearbeiten
+  InfoIcon // Für Hinweise
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,7 @@ export default function AdminDashboardPage() {
     { text: "Benutzerverwaltung durch Super-Admin (UI-Verbesserungen): Auflisten/Bearbeiten von user_permissions.", status: "Offen", icon: UserCog },
     { text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag).", status: "Offen", icon: Users },
     { text: "Startseite: 'Letzte Änderungen'-Einträge zur RWK-Tabelle verlinken (Teil 1: Links erstellt, Teil 2: RWK-Tabellen-Seite muss Parameter verarbeiten).", status: "In Arbeit", icon: ListChecks },
+    { text: "Icons hervorheben/ändern (Navigation, Dashboard) - Wunsch des Präsidenten.", status: "Offen", icon: InfoIcon },
     { text: "Passwortänderung beim ersten Login für neue Benutzer erzwingen (App-interne Logik).", status: "Offen", icon: ShieldCheck },
     { text: "Captcha auf der Login-Seite integrieren (Platzhalter vorhanden).", status: "Zukunft", icon: ShieldCheck },
     { text: "Anzeige \"Mannschaften (Info)\" verfeinern: Name des einen Teams anzeigen, wenn nur ein Team zugeordnet.", status: "Offen", icon: Users },
@@ -36,7 +38,7 @@ export default function AdminDashboardPage() {
     { text: "PDF-Generierung für Liga-Meldebögen/Ergebnislisten (Platzhalter).", status: "Zukunft", icon: FileUp },
     { text: "Automatischer Saisonabschluss / Auf- und Abstieg.", status: "Zukunft", icon: Trophy },
     { text: "Urkundengenerierung (PDF) (Platzhalter).", status: "Zukunft", icon: Award },
-    { text: "Handbuch-Seite (/handbuch) mit Markdown-Rendering-Bibliothek verbessern.", status: "Offen", icon: BookOpenCheck },
+    { text: "Handbuch-Seite (/handbuch) mit Markdown-Rendering-Bibliothek verbessern (aktuell JSX).", status: "Offen", icon: BookOpenCheck },
   ];
 
   return (
@@ -85,7 +87,7 @@ export default function AdminDashboardPage() {
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium text-accent">Ergebnisse</CardTitle>
-            <ListChecks className="h-6 w-6 text-muted-foreground" />
+            <ListChecks className="h-6 w-6 text-muted-foreground" /> {/* Oder Edit3 für Bearbeiten */}
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
@@ -105,7 +107,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Rollen und Vereinszuweisungen für Benutzer verwalten. (Manuelle UID-Eingabe)
+              Benutzerrollen und Vereinszuweisungen verwalten.
             </CardDescription>
             <Link href="/admin/user-management" passHref>
               <Button className="w-full" variant="outline">Benutzer verwalten</Button>
@@ -120,7 +122,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-             Eingegangene Support-Tickets einsehen.
+             Eingegangene Support-Tickets einsehen und bearbeiten.
             </CardDescription>
             <Link href="/admin/support-tickets" passHref>
               <Button className="w-full" variant="outline">Tickets anzeigen</Button>
@@ -142,6 +144,19 @@ export default function AdminDashboardPage() {
               <Button className="w-full" disabled>PDF Liga-Meldebögen (Demnächst)</Button>
               <Button className="w-full" disabled>PDF Urkunden (Demnächst)</Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-shadow md:col-span-2 lg:col-span-3">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Statistiken (Beispiel)</CardTitle>
+            <BarChart3 className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Dieser Bereich könnte zukünftig Nutzungsstatistiken oder andere interessante Metriken anzeigen.
+            </CardDescription>
+            <p className="text-sm text-muted-foreground">Aktuell ein Platzhalter. Die genauesten Nutzungsdaten finden Sie in Ihrer Firebase Konsole.</p>
           </CardContent>
         </Card>
       </div>
@@ -169,7 +184,7 @@ export default function AdminDashboardPage() {
             ))}
           </ul>
            <p className="mt-4 text-xs text-muted-foreground">
-            Letzte Aktualisierung der Agenda: 20. Mai 2025
+            Letzte Aktualisierung der Agenda: 22. Mai 2025
           </p>
         </CardContent>
       </Card>
