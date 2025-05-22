@@ -21,7 +21,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch RWK Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) App.
+            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 22. Mai 2025)
           </p>
         </div>
       </div>
@@ -76,6 +76,7 @@ export default function HandbuchPage() {
                         <li><a href="#letzte-aenderungen-startseite" className="text-primary hover:underline">Letzte Änderungen (Startseite)</a></li>
                         <li><a href="#updates--changelog" className="text-primary hover:underline">Updates & Changelog</a></li>
                         <li><a href="#impressum" className="text-primary hover:underline">Impressum</a></li>
+                         <li><a href="#rwk-ordnung" className="text-primary hover:underline">RWK-Ordnung</a></li>
                     </ul>
                 </li>
                 <li><a href="#support" className="text-primary hover:underline">6. Support</a>
@@ -100,9 +101,9 @@ export default function HandbuchPage() {
             <CardContent>
                 <ul className="list-disc pl-5 space-y-1">
                     <li><strong>Super-Administratoren:</strong> Verantwortlich für die Gesamtverwaltung der Anwendung, Anlage von Saisons, Ligen, Vereinen, Zuweisung von Mannschaften zu Ligen und die Verwaltung von Benutzerrechten.</li>
-                    <li><strong>Vereinsvertreter:</strong> Verantwortlich für die Verwaltung der Mannschaften und Schützen ihres zugewiesenen Vereins sowie die Erfassung von Ergebnissen. Sie können Mannschaften und Schützen für ihren Verein anlegen und bearbeiten.</li>
-                    <li><strong>Mannschaftsführer:</strong> Primär verantwortlich für die Erfassung von Ergebnissen für die Ligen, an denen Mannschaften ihres zugewiesenen Vereins teilnehmen. Können Stammdaten ihres Vereins einsehen, aber nicht bearbeiten.</li>
-                    <li><strong>Öffentlichkeit/Schützen:</strong> Können Tabellen, Ergebnisse und aktuelle Informationen einsehen.</li>
+                    <li><strong>Vereinsvertreter:</strong> Verantwortlich für die Verwaltung der Mannschaften und Schützen ihres/ihrer zugewiesenen Vereins/e sowie die Erfassung von Ergebnissen. Sie können Mannschaften und Schützen für ihren Verein anlegen und bearbeiten.</li>
+                    <li><strong>Mannschaftsführer:</strong> Primär verantwortlich für die Erfassung von Ergebnissen für die Ligen, an denen Mannschaften ihrer zugewiesenen Vereine teilnehmen. Können Stammdaten ihres Vereins einsehen, aber nicht bearbeiten (kein Anlegen/Ändern von Mannschaften oder Schützen).</li>
+                    <li><strong>Öffentlichkeit/Schützen:</strong> Können Tabellen, Ergebnisse, die RWK-Ordnung und aktuelle Informationen einsehen.</li>
                 </ul>
             </CardContent>
         </Card>
@@ -115,15 +116,15 @@ export default function HandbuchPage() {
         <Card>
             <CardHeader><CardTitle id="login" className="text-xl text-accent scroll-mt-24">Login</CardTitle></CardHeader>
             <CardContent>
-                <p>Der Login erfolgt über die Login-Seite mit E-Mail und Passwort. Ein Captcha ist als zukünftige Sicherheitsmaßnahme geplant.</p>
+                <p>Der Login erfolgt über die Login-Seite mit E-Mail und Passwort. Ein Captcha ist als zukünftige Sicherheitsmaßnahme geplant (siehe Admin-Agenda).</p>
             </CardContent>
         </Card>
         <Card>
             <CardHeader><CardTitle id="benutzerkonten-rollen" className="text-xl text-accent scroll-mt-24">Benutzerkonten & Rollen</CardTitle></CardHeader>
             <CardContent>
                 <p>
-                    Benutzerkonten für Vereinsvertreter und Mannschaftsführer werden **ausschließlich vom Super-Administrator manuell in der Firebase Konsole (Bereich "Authentication") angelegt** (E-Mail, initiales Passwort). Es ist keine Selbstregistrierung durch Benutzer vorgesehen.
-                    Anschließend weist der Super-Administrator dem Benutzer über das Admin-Panel der App (unter "Benutzerverwaltung") eine **Rolle** ("vereinsvertreter" oder "mannschaftsfuehrer") und den zugehörigen **Verein** (aktuell genau einen, bis zu drei sind technisch vorbereitet) zu. Diese Berechtigungen werden in der Datenbank gespeichert (`user_permissions`-Collection).
+                    Benutzerkonten (für Vereinsvertreter, Mannschaftsführer) werden <strong>ausschließlich vom Super-Administrator manuell in der Firebase Konsole (Bereich "Authentication") angelegt</strong> (E-Mail, initiales Passwort). Es ist keine Selbstregistrierung durch Benutzer vorgesehen.
+                    Anschließend weist der Super-Administrator dem Benutzer über das Admin-Panel der App (unter "Benutzerverwaltung") eine <strong>Rolle</strong> ("vereinsvertreter" oder "mannschaftsfuehrer") und den zugehörigen <strong>Verein</strong> (aktuell genau einen) zu. Diese Berechtigungen werden in einer speziellen Datenbanktabelle (`user_permissions`) gespeichert.
                 </p>
                 <ul className="list-disc pl-5 space-y-1 mt-2">
                     <li>Ein <strong>Vereinsvertreter</strong> hat erweiterte Rechte zur Verwaltung von Mannschaften und Schützen seines Vereins.</li>
@@ -139,10 +140,11 @@ export default function HandbuchPage() {
       {isSuperAdmin && ( 
         <section id="fuer-super-administratoren" className="space-y-4 scroll-mt-20">
           <h2 className="text-3xl font-semibold text-primary border-b pb-2">3. Für Super-Administratoren</h2>
+          <p className="text-muted-foreground">(Dieser Abschnitt ist nur im Handbuch sichtbar, wenn der Super-Admin eingeloggt ist)</p>
           <p className="text-muted-foreground">Das Admin-Panel ist die zentrale Steuerungsinstanz für den Super-Administrator.</p>
           <Card>
               <CardHeader><CardTitle id="dashboard-uebersicht-admin" className="text-xl text-accent scroll-mt-24">Dashboard Übersicht (Admin)</CardTitle></CardHeader>
-              <CardContent><p>Bietet eine zentrale Übersicht über die Verwaltungsfunktionen und eine Agenda für offene Punkte und geplante Features.</p></CardContent>
+              <CardContent><p>Bietet eine zentrale Übersicht über die Verwaltungsfunktionen und eine Agenda für offene Punkte und geplante Features (Roadmap).</p></CardContent>
           </Card>
           <Card>
               <CardHeader><CardTitle id="saisonverwaltung" className="text-xl text-accent scroll-mt-24">Saisonverwaltung</CardTitle></CardHeader>
@@ -167,8 +169,8 @@ export default function HandbuchPage() {
               <CardContent>
                   <p>Der Super-Admin kann hier alle Mannschaften verwalten.</p>
                   <ul className="list-disc pl-5 space-y-1 mt-2">
-                      <li><strong>Filter:</strong> Saison, Verein und Liga auswählen, um Mannschaften zu filtern. Wichtig: Um "liga-lose" Mannschaften (die von Vereinsvertretern ohne direkte Ligazuweisung angelegt wurden) zu finden, Saison und Verein auswählen und den Liga-Filter auf "Alle Ligen" lassen.</li>
-                      <li><strong>Anlegen/Bearbeiten:</strong> Mannschaften erstellen oder bearbeiten, **Ligazugehörigkeit festlegen oder ändern**, Mannschaftsführer-Kontaktdaten (Name, E-Mail, Telefon - optional) erfassen. Ein Hinweis erinnert an die korrekte Benennung nach Spielstärke (I, II, ...).</li>
+                      <li><strong>Filter:</strong> Saison, Verein und Liga auswählen, um Mannschaften zu filtern. Wichtig: Um "liga-lose" Mannschaften (die von Vereinsvertretern angelegt wurden) zu finden, Saison und Verein auswählen und den Liga-Filter auf "Alle Ligen" lassen.</li>
+                      <li><strong>Anlegen/Bearbeiten:</strong> Mannschaften erstellen oder bearbeiten, <strong>Ligazugehörigkeit festlegen oder ändern</strong>, Mannschaftsführer-Kontaktdaten (Name, E-Mail, Telefon - optional) erfassen. Ein Hinweis erinnert an die korrekte Benennung nach Spielstärke (I, II, ...).</li>
                       <li><strong>Schützen zuweisen:</strong> Schützen den Teams zuordnen (max. 3 pro Team; Regel: ein Schütze pro Saison/spezifischer Disziplin nur in einem Team).</li>
                   </ul>
               </CardContent>
@@ -190,8 +192,8 @@ export default function HandbuchPage() {
                   <p>Erfassung von Ergebnissen für alle Ligen.</p>
                    <ul className="list-disc pl-5 space-y-1 mt-2">
                       <li><strong>Auswahl:</strong> Nur "Laufende" Saisons, Liga, Durchgang (jetzt vor Mannschaft), Mannschaft, Schütze.</li>
-                      <li><strong>Eingabe:</strong> Ringergebnis (Validierung auf Maximalwert je nach Disziplin), Ergebnistyp (Regulär, Vorschießen, Nachschießen).</li>
-                      <li><strong>Zwischenspeicher:</strong> Ergebnisse werden gesammelt ("Zur Liste hinzufügen"), bevor sie endgültig gespeichert werden. Bereits erfasste Schützen/Durchgänge werden im Dropdown nicht mehr angeboten. Die Liste bleibt beim Wechsel der Mannschaft (im gleichen Durchgang/Liga/Saison) erhalten.</li>
+                      <li><strong>Eingabe:</strong> Ringergebnis (Validierung auf Maximalwert je nach Disziplin: 300 für KK, 400 für LG/LP), Ergebnistyp (Regulär, Vorschießen, Nachschießen).</li>
+                      <li><strong>Zwischenspeicher:</strong> Ergebnisse werden gesammelt ("Zur Liste hinzufügen"), bevor sie endgültig gespeichert werden. Bereits erfasste Schützen/Durchgänge werden im Dropdown nicht mehr angeboten (auch nach Neuladen der Seite). Die Liste bleibt beim Wechsel der Mannschaft (im gleichen Durchgang/Liga/Saison) erhalten.</li>
                       <li><strong>Speichern:</strong> Schreibt Ergebnisse in die Datenbank und erstellt/aktualisiert einen Eintrag für den "Letzte Änderungen"-Feed auf der Startseite (gruppiert nach Liga, Tag, Disziplin und Jahr).</li>
                   </ul>
               </CardContent>
@@ -206,10 +208,10 @@ export default function HandbuchPage() {
               <CardHeader><CardTitle id="benutzerverwaltung-admin-rechtevergabe" className="text-xl text-accent scroll-mt-24">Benutzerverwaltung (Admin - Rechtevergabe)</CardTitle></CardHeader>
               <CardContent>
                   <p>
-                    Der Super-Administrator legt Benutzer **manuell in der Firebase Konsole (Bereich "Authentication")** an (E-Mail, initiales Passwort). 
-                    Anschließend kann er auf dieser Seite in der App (unter "Benutzerverwaltung") dem Benutzer (identifiziert durch seine eindeutige User-ID (UID), die aus der Firebase Konsole entnommen werden muss) eine Rolle ("vereinsvertreter" oder "mannschaftsfuehrer") und **genau einen Verein** (bzw. bis zu 3, wenn die App-Logik dafür später angepasst wird) zuweisen. 
+                    Der Super-Administrator legt Benutzer <strong>manuell in der Firebase Konsole (Bereich "Authentication")</strong> an (E-Mail, initiales Passwort). 
+                    Anschließend weist er diesen Benutzern (identifiziert durch ihre UID, die er aus der Konsole entnimmt und in der App eingibt) auf dieser Seite in der App eine Rolle ("vereinsvertreter", "mannschaftsfuehrer") und <strong>genau einen Verein</strong> zu (die Möglichkeit für bis zu 3 Vereine pro Nutzer ist technisch im Backend vorbereitet, aber die UI unterstützt aktuell nur einen). 
                     Diese Berechtigungen werden in der Datenbank (`user_permissions`-Collection) gespeichert. 
-                    Die Eingabe der E-Mail und des Anzeigenamens des Benutzers auf der App-Seite dient der Referenz und muss vom Admin gepflegt werden.
+                    Die Eingabe der E-Mail und des Anzeigenamens in der App dient der Referenz und Vervollständigung des `user_permissions`-Dokuments.
                   </p>
               </CardContent>
           </Card>
@@ -222,7 +224,7 @@ export default function HandbuchPage() {
            <Card>
               <CardHeader><CardTitle id="agenda--offene-punkte-admin" className="text-xl text-accent scroll-mt-24">Agenda / Offene Punkte (Admin)</CardTitle></CardHeader>
               <CardContent>
-                <p>Eine Liste geplanter Features und offener Aufgaben im Admin-Dashboard.</p>
+                <p>Eine Liste geplanter Features und offener Aufgaben im Admin-Dashboard, strukturiert nach potenziellen Versionen.</p>
               </CardContent>
           </Card>
         </section>
@@ -234,23 +236,23 @@ export default function HandbuchPage() {
         <h2 className="text-3xl font-semibold text-primary border-b pb-2">4. Für Vereinsvertreter und Mannschaftsführer</h2>
         <Card>
             <CardHeader><CardTitle id="zugriff-und-vereinskontext-vvmf" className="text-xl text-accent scroll-mt-24">Zugriff und Vereinskontext</CardTitle></CardHeader>
-            <CardContent><p>Nach dem Login mit den vom Super-Admin bereitgestellten Zugangsdaten und der Zuweisung der Rolle und Vereinszugehörigkeit in der Datenbank (`user_permissions`), erhält der Benutzer Zugriff auf den "Mein Verein"-Bereich. Die angezeigten Daten und Bearbeitungsmöglichkeiten sind auf den/die Verein(e) beschränkt, der/die dem eingeloggten Benutzer zugewiesen ist/sind. Ist einem Benutzer mehr als ein Verein zugewiesen, erscheint auf den Verwaltungsseiten (Meine Mannschaften, Meine Schützen, Ergebnisse erfassen) oben ein Dropdown, um den Verein auszuwählen, für den aktuell Aktionen durchgeführt werden sollen.</p></CardContent>
+            <CardContent><p>Nach dem Login mit den vom Super-Admin bereitgestellten Zugangsdaten und der Zuweisung der Rolle und Vereinszugehörigkeit in der Datenbank (`user_permissions`-Collection), erhält der Benutzer Zugriff auf den "Mein Verein"-Bereich. Die angezeigten Daten und Bearbeitungsmöglichkeiten sind auf den Verein beschränkt, der dem eingeloggten Benutzer in seinem `user_permissions`-Dokument zugewiesen ist. Die App liest diese Berechtigungen aus der Datenbank, um den Zugriff zu steuern. (Die technische Vorbereitung für die Verwaltung mehrerer Vereine pro VV/MF ist vorhanden, aber die UI unterstützt aktuell die Auswahl und Bearbeitung im Kontext von genau einem zugewiesenen Verein).</p></CardContent>
         </Card>
         <Card>
             <CardHeader><CardTitle id="dashboard-uebersicht-vvmf" className="text-xl text-accent scroll-mt-24">Dashboard Übersicht (VV/MF)</CardTitle></CardHeader>
-            <CardContent><p>Zeigt eine Begrüßung, die zugewiesene Rolle ("Vereinsvertreter" oder "Mannschaftsführer") und den Namen des/der Vereins/e an, für den/die der Benutzer zuständig ist.</p></CardContent>
+            <CardContent><p>Zeigt eine Begrüßung, die zugewiesene Rolle ("Vereinsvertreter" oder "Mannschaftsführer") und den Namen des Vereins an, für den der Benutzer zuständig ist.</p></CardContent>
         </Card>
         <Card>
             <CardHeader><CardTitle id="mannschaftsverwaltung-vv" className="text-xl text-accent scroll-mt-24">Mannschaftsverwaltung (nur Vereinsvertreter)</CardTitle></CardHeader>
             <CardContent>
                 <p>Diese Funktion ist nur für Benutzer mit der Rolle "vereinsvertreter" verfügbar. Mannschaftsführer sehen die Liste (falls der Link zugänglich wäre), können aber keine Änderungen vornehmen (Buttons sind ausgeblendet).</p>
                 <ul className="list-disc pl-5 space-y-1 mt-2">
-                    <li><strong>Saisonauswahl:** Der VV wählt eine vom Super-Admin angelegte Saison aus.</li>
-                    <li><strong>Anzeige:** Mannschaften des zugewiesenen Vereins für die gewählte Saison.</li>
-                    <li><strong>Anlegen (VV):** Neue Mannschaften für den eigenen Verein und die gewählte Saison erstellen. **Die Zuweisung zu einer spezifischen Liga erfolgt ausschließlich durch den Super-Admin.** Name und Mannschaftsführer-Kontaktdaten können erfasst werden. Ein Hinweis erinnert an die korrekte Benennung nach Spielstärke (I, II, ...).</li>
-                    <li><strong>Bearbeiten (VV):** Namen von Mannschaften und Mannschaftsführer-Kontaktdaten ändern.</li>
-                    <li><strong>Schützen zuweisen (VV):** Schützen des eigenen Vereins können den Mannschaften zugeordnet werden (max. 3 pro Team; Regel "Ein Schütze pro Saison/spezifischer Disziplin nur in einem Team" wird geprüft, falls Team schon Ligatyp hat).</li>
-                    <li><strong>Löschen (VV):** Eigene Mannschaften entfernen.</li>
+                    <li><strong>Saisonauswahl:</strong> Der VV wählt eine vom Super-Admin angelegte Saison aus.</li>
+                    <li><strong>Anzeige:</strong> Mannschaften des zugewiesenen Vereins für die gewählte Saison.</li>
+                    <li><strong>Anlegen (VV):</strong> Neue Mannschaften für den eigenen Verein und die gewählte Saison erstellen. <strong>Die Zuweisung zu einer spezifischen Liga erfolgt ausschließlich durch den Super-Admin.</strong> Name und Mannschaftsführer-Kontaktdaten können erfasst werden. Ein Hinweis erinnert an die korrekte Benennung nach Spielstärke (I, II, ...).</li>
+                    <li><strong>Bearbeiten (VV):</strong> Namen von Mannschaften und Mannschaftsführer-Kontaktdaten ändern.</li>
+                    <li><strong>Schützen zuweisen (VV):</strong> Schützen des eigenen Vereins können den Mannschaften zugeordnet werden (max. 3 pro Team; Regel "Ein Schütze pro Saison/spezifischer Disziplin nur in einem Team" wird geprüft, falls Team schon Ligatyp hat).</li>
+                    <li><strong>Löschen (VV):</strong> Eigene Mannschaften entfernen.</li>
                 </ul>
             </CardContent>
         </Card>
@@ -259,9 +261,9 @@ export default function HandbuchPage() {
             <CardContent>
                 <p>Diese Funktion ist nur für Benutzer mit der Rolle "vereinsvertreter" verfügbar.</p>
                 <ul className="list-disc pl-5 space-y-1 mt-2">
-                    <li><strong>Anzeige:** Schützen des zugewiesenen Vereins.</li>
-                    <li><strong>Anlegen (VV):** Neue Schützen für den eigenen Verein erstellen (Nachname, Vorname, Geschlecht). Eine direkte Mannschaftszuordnung beim Anlegen erfolgt hier nicht, sondern über die Mannschaftsverwaltungsseite.</li>
-                    <li><strong>Bearbeiten/Löschen (VV):** Stammdaten eigener Schützen ändern oder Schützen entfernen.</li>
+                    <li><strong>Anzeige:</strong> Schützen des zugewiesenen Vereins.</li>
+                    <li><strong>Anlegen (VV):</strong> Neue Schützen für den eigenen Verein erstellen (Nachname, Vorname, Geschlecht). Eine direkte Mannschaftszuordnung beim Anlegen erfolgt hier nicht, sondern über die Mannschaftsverwaltungsseite.</li>
+                    <li><strong>Bearbeiten/Löschen (VV):</strong> Stammdaten eigener Schützen ändern oder Schützen entfernen.</li>
                 </ul>
             </CardContent>
         </Card>
@@ -269,11 +271,11 @@ export default function HandbuchPage() {
             <CardHeader><CardTitle id="ergebniserfassung-vvmf" className="text-xl text-accent scroll-mt-24">Ergebniserfassung (Vereinsvertreter und Mannschaftsführer)</CardTitle></CardHeader>
             <CardContent>
                 <ul className="list-disc pl-5 space-y-1 mt-2">
-                    <li><strong>Vereinskontext:** Der Benutzer arbeitet im Kontext seines/seiner zugewiesenen Vereins/e. Falls mehrere Vereine, muss der aktive Verein ausgewählt werden.</li>
-                    <li><strong>Saisonauswahl:** Nur "Laufende" Saisons.</li>
-                    <li><strong>Ligaauswahl:** Nur Ligen, in denen der zugewiesene (aktive) Verein im gewählten Wettkampfjahr Mannschaften gemeldet hat.</li>
-                    <li><strong>Mannschaftsauswahl:** Alle Mannschaften der ausgewählten Liga (eigene und gegnerische), damit Ergebnisse für Begegnungen eingetragen werden können.</li>
-                    <li><strong>Schützenauswahl:** Schützen der ausgewählten Mannschaft.</li>
+                    <li><strong>Vereinskontext:</strong> Der Benutzer arbeitet im Kontext seines zugewiesenen Vereins.</li>
+                    <li><strong>Saisonauswahl:</strong> Nur "Laufende" Saisons.</li>
+                    <li><strong>Ligaauswahl:</strong> Nur Ligen, in denen der zugewiesene Verein im gewählten Wettkampfjahr Mannschaften gemeldet hat.</li>
+                    <li><strong>Mannschaftsauswahl:</strong> Alle Mannschaften der ausgewählten Liga (eigene und gegnerische), damit Ergebnisse für Begegnungen eingetragen werden können.</li>
+                    <li><strong>Schützenauswahl:</strong> Schützen der ausgewählten Mannschaft.</li>
                     <li>Die weitere Erfassungslogik (Zwischenspeicher-Liste, Speichern, Validierung, Schütze verschwindet aus Dropdown) ist identisch zur Admin-Ergebniserfassung. Die `clubId` im Ergebnisdokument ist die des Teams, für das das Ergebnis eingetragen wird. Der `enteredByUserId` ist der des eingeloggten Benutzers.</li>
                 </ul>
             </CardContent>
@@ -288,12 +290,12 @@ export default function HandbuchPage() {
             <CardHeader><CardTitle id="rwk-tabellen" className="text-xl text-accent scroll-mt-24">RWK Tabellen</CardTitle></CardHeader>
             <CardContent>
                  <ul className="list-disc pl-5 space-y-1 mt-2">
-                    <li><strong>Filter:** Auswahl von Wettkampfjahr (dynamisch aus vorhandenen Saisons) und UI-Disziplin (Kleinkaliber, Luftdruck). Das aktuellste Jahr mit laufenden Saisons wird standardmäßig ausgewählt.</li>
-                    <li><strong>Anzeige:** Zeigt nur Ligen von Saisons mit Status "Laufend". Die Ligen sind standardmäßig aufgeklappt.</li>
-                    <li><strong>Mannschaftsrangliste:** Tabellarische Übersicht der Ligen mit Mannschaften, deren Rundenergebnissen, Gesamtergebnis und Schnitt. Mannschaften, deren Name "Einzel" enthält, werden hier nicht aufgeführt. Mannschaften können aufgeklappt werden, um Einzelergebnisse der Schützen zu sehen. Schützennamen in dieser Detailansicht sind klickbar und öffnen einen Statistik-Dialog.</li>
-                    <li><strong>Einzelschützenrangliste:** Tabellarische Übersicht aller Schützen der ausgewählten Saison/Disziplin, sortiert nach Gesamtleistung, mit Anzeige der Rundenergebnisse, Gesamt und Schnitt. Optional kann nach einer spezifischen Liga gefiltert werden.</li>
-                    <li><strong>Bester Schütze / Beste Dame:** Werden hervorgehoben (bezogen auf alle Ligen der Auswahl).</li>
-                    <li><strong>Detailansicht Schütze:** Klick auf einen Schützennamen (in Einzelrangliste oder Mannschaftsdetails) öffnet einen Dialog mit dessen Detailergebnissen und einem Leistungsdiagramm.</li>
+                    <li><strong>Filter:</strong> Auswahl von Wettkampfjahr (dynamisch aus vorhandenen Saisons mit Status "Laufend") und UI-Disziplin (Kleinkaliber, Luftdruck). Das aktuellste Jahr mit laufenden Saisons wird standardmäßig ausgewählt.</li>
+                    <li><strong>Anzeige:</strong> Zeigt nur Ligen von Saisons mit Status "Laufend". Die Ligen sind standardmäßig aufgeklappt.</li>
+                    <li><strong>Mannschaftsrangliste:</strong> Tabellarische Übersicht der Ligen mit Mannschaften, deren Rundenergebnissen, Gesamtergebnis und Schnitt. Mannschaften, deren Name "Einzel" enthält, werden hier nicht aufgeführt. Mannschaften können aufgeklappt werden, um Einzelergebnisse der Schützen zu sehen. Schützennamen in dieser Detailansicht sind klickbar und öffnen einen Statistik-Dialog.</li>
+                    <li><strong>Einzelschützenrangliste:</strong> Tabellarische Übersicht aller Schützen der ausgewählten Saison/Disziplin, sortiert nach Gesamtleistung, mit Anzeige der Rundenergebnisse, Gesamt und Schnitt. Optional kann nach einer spezifischen Liga gefiltert werden.</li>
+                    <li><strong>Bester Schütze / Beste Dame:</strong> Werden hervorgehoben (bezogen auf alle Ligen der Auswahl).</li>
+                    <li><strong>Detailansicht Schütze:</strong> Klick auf einen Schützennamen (in Einzelrangliste oder Mannschaftsdetails) öffnet einen Dialog mit dessen Detailergebnissen und einem Leistungsdiagramm.</li>
                 </ul>
             </CardContent>
         </Card>
@@ -308,6 +310,10 @@ export default function HandbuchPage() {
          <Card>
             <CardHeader><CardTitle id="impressum" className="text-xl text-accent scroll-mt-24">Impressum</CardTitle></CardHeader>
             <CardContent><p>Enthält die rechtlich notwendigen Angaben zum Betreiber der Webseite.</p></CardContent>
+        </Card>
+         <Card>
+            <CardHeader><CardTitle id="rwk-ordnung" className="text-xl text-accent scroll-mt-24">RWK-Ordnung</CardTitle></CardHeader>
+            <CardContent><p>(Platzhalter - hier könnte die Rundenwettkampfordnung direkt angezeigt oder verlinkt werden).</p></CardContent>
         </Card>
       </section>
 
