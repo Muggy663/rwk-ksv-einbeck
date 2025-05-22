@@ -17,28 +17,31 @@ import {
   GitPullRequestClosed, 
   BookOpenCheck,
   ShieldCheck,
-  Edit3, // Fehlendes Icon für Ergebnisse bearbeiten
-  InfoIcon // Für Hinweise
+  Edit3, 
+  InfoIcon,
+  CheckCircle, // Für erledigte Punkte
+  Loader2, // Für in Arbeit
+  AlertCircle // Für offene Punkte
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'; // Sicherstellen, dass cn importiert ist
 
 export default function AdminDashboardPage() {
   const agendaPunkte = [
-    { text: "Firestore Sicherheitsregeln vollständig implementieren und testen (basierend auf user_permissions).", status: "Als Nächstes", icon: ShieldQuestion },
-    { text: "Client-seitige Nutzung der user_permissions für Vereinsvertreter abschließen (ersetzt VV_CLUB_ASSIGNMENTS Map).", status: "In Arbeit", icon: Settings },
-    { text: "Benutzerverwaltung durch Super-Admin (UI-Verbesserungen): Auflisten/Bearbeiten von user_permissions.", status: "Offen", icon: UserCog },
-    { text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag).", status: "Offen", icon: Users },
-    { text: "Startseite: 'Letzte Änderungen'-Einträge zur RWK-Tabelle verlinken (Teil 1: Links erstellt, Teil 2: RWK-Tabellen-Seite muss Parameter verarbeiten).", status: "In Arbeit", icon: ListChecks },
-    { text: "Icons hervorheben/ändern (Navigation, Dashboard) - Wunsch des Präsidenten.", status: "Offen", icon: InfoIcon },
-    { text: "Passwortänderung beim ersten Login für neue Benutzer erzwingen (App-interne Logik).", status: "Offen", icon: ShieldCheck },
-    { text: "Captcha auf der Login-Seite integrieren (Platzhalter vorhanden).", status: "Zukunft", icon: ShieldCheck },
-    { text: "Anzeige \"Mannschaften (Info)\" verfeinern: Name des einen Teams anzeigen, wenn nur ein Team zugeordnet.", status: "Offen", icon: Users },
-    { text: "Platzhalter \"Schnitt Vorjahr\" in den Team-Dialogen mit echter Funktionalität versehen.", status: "Zukunft", icon: BarChart3 },
-    { text: "Ergebniserfassung (Details): Audit-Trail für Ergebnisänderungen durch Admin.", status: "Zukunft", icon: ListChecks },
-    { text: "PDF-Generierung für Liga-Meldebögen/Ergebnislisten (Platzhalter).", status: "Zukunft", icon: FileUp },
-    { text: "Automatischer Saisonabschluss / Auf- und Abstieg.", status: "Zukunft", icon: Trophy },
-    { text: "Urkundengenerierung (PDF) (Platzhalter).", status: "Zukunft", icon: Award },
-    { text: "Handbuch-Seite (/handbuch) mit Markdown-Rendering-Bibliothek verbessern (aktuell JSX).", status: "Offen", icon: BookOpenCheck },
+    { text: "RWK-Tabellen: URL-Parameter verarbeiten & Liga direkt öffnen (z.B. von Startseite).", status: "Erledigt", icon: CheckCircle, iconColor: "text-green-500" },
+    { text: "Handbuch aktualisiert (Admin-Abschnitt bedingt anzeigen, technische Begriffe reduziert).", status: "Erledigt", icon: CheckCircle, iconColor: "text-green-500" },
+    { text: "Firestore Sicherheitsregeln vollständig implementieren und testen (basierend auf user_permissions).", status: "Als Nächstes", icon: ShieldQuestion, iconColor: "text-destructive" },
+    { text: "Client-seitige Nutzung der user_permissions für Vereinsvertreter abschließen (letzte Feinheiten für alle VV-Seiten).", status: "In Arbeit", icon: Loader2, iconColor: "text-amber-500", className:"animate-spin" },
+    { text: "Benutzerverwaltung durch Super-Admin (UI-Verbesserungen): Auflisten/Bearbeiten von user_permissions.", status: "Offen", icon: UserCog, iconColor: "text-primary/80" },
+    { text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag).", status: "Offen", icon: Users, iconColor: "text-primary/80" },
+    { text: "Icons hervorheben/ändern (Navigation, Dashboard) - Wunsch des Präsidenten.", status: "Offen", icon: InfoIcon, iconColor: "text-primary/80" },
+    { text: "Passwortänderung beim ersten Login für neue Benutzer erzwingen (App-interne Logik).", status: "Offen", icon: ShieldCheck, iconColor: "text-primary/80" },
+    { text: "Captcha auf der Login-Seite integrieren (Platzhalter vorhanden).", status: "Zukunft", icon: ShieldCheck, iconColor: "text-muted-foreground/70" },
+    { text: "Anzeige \"Mannschaften (Info)\" verfeinern: Name des einen Teams anzeigen, wenn nur ein Team zugeordnet.", status: "Offen", icon: Users, iconColor: "text-primary/80" },
+    { text: "Platzhalter \"Schnitt Vorjahr\" in den Team-Dialogen mit echter Funktionalität versehen.", status: "Zukunft", icon: BarChart3, iconColor: "text-muted-foreground/70" },
+    { text: "Ergebniserfassung (Details): Audit-Trail für Ergebnisänderungen durch Admin.", status: "Zukunft", icon: ListChecks, iconColor: "text-muted-foreground/70" },
+    { text: "PDF-Generierung für Liga-Meldebögen/Ergebnislisten.", status: "Zukunft", icon: FileUp, iconColor: "text-muted-foreground/70" },
+    { text: "Automatischer Saisonabschluss / Auf- und Abstieg.", status: "Zukunft", icon: Trophy, iconColor: "text-muted-foreground/70" },
+    { text: "Urkundengenerierung (PDF).", status: "Zukunft", icon: Award, iconColor: "text-muted-foreground/70" },
   ];
 
   return (
@@ -87,7 +90,7 @@ export default function AdminDashboardPage() {
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium text-accent">Ergebnisse</CardTitle>
-            <ListChecks className="h-6 w-6 text-muted-foreground" /> {/* Oder Edit3 für Bearbeiten */}
+            <ListChecks className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
@@ -107,7 +110,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Benutzerrollen und Vereinszuweisungen verwalten.
+              Benutzerrollen und Vereinszuweisungen verwalten. (Manuelle UID-Eingabe)
             </CardDescription>
             <Link href="/admin/user-management" passHref>
               <Button className="w-full" variant="outline">Benutzer verwalten</Button>
@@ -165,7 +168,7 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle className="text-xl text-accent flex items-center">
             <GitPullRequestClosed className="mr-3 h-6 w-6" />
-            Nächste Schritte / Offene Punkte (Agenda)
+            Nächste Schritte / Offene Punkte
           </CardTitle>
           <CardDescription>Eine Übersicht der geplanten Erweiterungen und zu erledigenden Aufgaben.</CardDescription>
         </CardHeader>
@@ -173,12 +176,7 @@ export default function AdminDashboardPage() {
           <ul className="space-y-2 text-sm text-muted-foreground list-none pl-1">
             {agendaPunkte.map((point, index) => (
               <li key={index} className="flex items-start py-1">
-                <point.icon className={cn("h-4 w-4 mr-3 mt-0.5 flex-shrink-0", 
-                  point.status === "Als Nächstes" && "text-destructive",
-                  point.status === "In Arbeit" && "text-amber-500",
-                  point.status === "Offen" && "text-primary/80",
-                  point.status === "Zukunft" && "text-muted-foreground/70"
-                )} title={point.status} />
+                <point.icon className={cn("h-4 w-4 mr-3 mt-0.5 flex-shrink-0", point.iconColor, point.className)} title={point.status} />
                 <span className={cn(point.status === "Als Nächstes" && "font-semibold text-foreground")}>{point.text}</span>
               </li>
             ))}
