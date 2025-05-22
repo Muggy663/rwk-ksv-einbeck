@@ -6,86 +6,54 @@ import {
   LayoutDashboard, Users, Trophy, ListChecks, Edit3, Settings, 
   UserCog, MessagesSquare, FileUp, Award, BarChart3, 
   ShieldQuestion, GitPullRequestClosed, BookOpenCheck, CheckCircle, Loader2, AlertCircle, InfoIcon 
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from 'lucide-react'; // Added all potentially used icons
+import { cn } from '@/lib/utils'; // Added cn import
 
 export default function AdminDashboardPage() {
   const agendaItems = [
     { 
-      text: "RWK-Tabellen: Verarbeitung von URL-Parametern & direkte Liga-Anzeige implementiert. Standardmäßig geöffnete Ligen, klickbare Schützen in Teamdetails.", 
-      status: "Erledigt", icon: CheckCircle, iconColor: "text-green-500" 
-    },
-    { 
-      text: "Handbuch: Aktualisiert (Rollen, VV-Funktionen, RWK-Tabellen-UX, technische Begriffe reduziert). Bedingte Anzeige für Admin-Abschnitt.", 
-      status: "Erledigt", icon: CheckCircle, iconColor: "text-green-500" 
-    },
-    {
-      text: "Benutzerverwaltung: Admin kann Rolle ('vereinsvertreter', 'mannschaftsfuehrer') und Vereine (bis zu 3) für Benutzer in 'user_permissions' (Firestore) festlegen. Basis-UI vorhanden.",
-      status: "Erledigt (Basis)", icon: CheckCircle, iconColor: "text-green-500"
-    },
-    {
-      text: "Vereinsvertreter-Bereich: Seiten (Dashboard, Mannschaften, Schützen, Ergebnisse) nutzen 'user_permissions' für Rechte und Vereinskontext. Auswahl bei mehreren Vereinen implementiert.",
-      status: "Erledigt (Basis)", icon: CheckCircle, iconColor: "text-green-500"
-    },
-    {
-      text: "Rollenbasierte UI: Vereinsvertreter sehen Bearbeitungsfunktionen, Mannschaftsführer nicht (auf Mannschafts-/Schützen-VV-Seiten).",
-      status: "Erledigt", icon: CheckCircle, iconColor: "text-green-500"
-    },
-    {
-      text: "Support-Ticket-System: Formular speichert Tickets in Firestore; Admin-Ansicht zeigt Tickets an.",
-      status: "Erledigt", icon: CheckCircle, iconColor: "text-green-500"
-    },
-    { 
-      text: "Nächster Fokus: Version 0.4.0", 
-      status: "Info", icon: InfoIcon, iconColor: "text-blue-500", isHeader: true 
-    },
-    { 
-      text: "Firestore Sicherheitsregeln abschließend verfeinern und gründlich testen (basierend auf 'user_permissions' und Rollen).", 
+      text: "Firestore Sicherheitsregeln abschließend verfeinern und gründlich testen (basierend auf user_permissions).", 
       status: "Als Nächstes", icon: ShieldQuestion, iconColor: "text-destructive" 
     },
+    { 
+      text: "Client-seitige Nutzung der user_permissions für Vereinsvertreter vollständig umsetzen und testen (aktuell nur Dashboard angepasst).", 
+      status: "Offen", icon: UserCog, iconColor: "text-primary/80" 
+    },
     {
-      text: "RWK-Ordnung: Eigene Seite erstellen und in Navigation einbinden.",
-      status: "Offen", icon: BookOpenCheck, iconColor: "text-primary/80"
+      text: "Handbuch: Hinweis zur Erfassung von Einzelschützen (als 'Mannschaft Einzel') präzisieren.",
+      status: "In Arbeit", icon: BookOpenCheck, iconColor: "text-orange-500"
     },
     { 
-      text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne 'user_permissions'-Eintrag).", 
+      text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (Anzeige von Nutzern ohne user_permissions-Eintrag).", 
       status: "Offen", icon: Users, iconColor: "text-primary/80" 
     },
     { 
-      text: "Nächster Fokus: Version 0.5.0 (oder später)", 
-      status: "Info", icon: InfoIcon, iconColor: "text-blue-500", isHeader: true 
+      text: "RWK-Tabellen: URL-Parameter verarbeiten & Liga direkt öffnen (Teil 2: Tabellenseite anpassen).", 
+      status: "Offen", icon: ListChecks, iconColor: "text-primary/80" 
     },
     { 
-      text: "Captcha auf der Login-Seite integrieren.", 
+      text: "PDF-Generierung für Liga-Meldebögen/Ergebnislisten (Platzhalter).", 
+      status: "Zukunft", icon: FileUp, iconColor: "text-muted-foreground/70" 
+    },
+    { 
+      text: "Captcha auf der Login-Seite (Platzhalter).", 
       status: "Zukunft", icon: ShieldCheck, iconColor: "text-muted-foreground/70" 
-    },
-    { 
-      text: "Anzeige 'Mannschaften (Info)' verfeinern: Name des einen Teams anzeigen, wenn Schütze nur einem Team zugeordnet (ohne Seitenkontext).", 
-      status: "Zukunft", icon: Users, iconColor: "text-muted-foreground/70" 
     },
     { 
       text: "Platzhalter 'Schnitt Vorjahr' in den Team-Dialogen mit echter Funktionalität versehen.", 
       status: "Zukunft", icon: BarChart3, iconColor: "text-muted-foreground/70" 
     },
     { 
-      text: "Ergebniserfassung (Details): Audit-Trail für Ergebnisänderungen durch Admin.", 
-      status: "Zukunft", icon: ListChecks, iconColor: "text-muted-foreground/70" 
-    },
-    { 
-      text: "PDF-Generierung (Gesamtlisten, Durchgangslisten, Urkunden).", 
-      status: "Zukunft", icon: FileUp, iconColor: "text-muted-foreground/70" 
-    },
-     { 
-      text: "PDF-Generierung für Liga-Meldebögen.", 
-      status: "Zukunft", icon: FileUp, iconColor: "text-muted-foreground/70" 
+      text: "Ergebniserfassung (Details): Logging, wer wann welches Ergebnis geändert hat (Audit-Trail).", 
+      status: "Zukunft", icon: Edit3, iconColor: "text-muted-foreground/70" 
     },
     { 
       text: "Automatischer Saisonabschluss / Auf- und Abstieg.", 
       status: "Zukunft", icon: Trophy, iconColor: "text-muted-foreground/70" 
     },
-    { 
-      text: "CSV Import für Stammdaten (Vereine, Schützen).", 
-      status: "Zukunft", icon: FileUp, iconColor: "text-muted-foreground/70" 
+     { 
+      text: "Icons hervorheben/ändern (Navigation, Dashboard) - Feedback vom Präsidenten.", 
+      status: "Offen", icon: InfoIcon, iconColor: "text-blue-500" 
     },
   ];
 
@@ -156,7 +124,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Benutzer anlegen, Rollen und Vereinszuweisungen verwalten. (UID-basiert)
+              Benutzer anlegen, Rollen und Vereinszuweisungen verwalten. (UID-basiert in Firestore)
             </CardDescription>
             <Link href="/admin/user-management" passHref>
               <Button className="w-full" variant="outline">Benutzer verwalten</Button>
@@ -181,12 +149,12 @@ export default function AdminDashboardPage() {
         
          <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Einstellungen</CardTitle> {/* Geändert von Datenwerkzeuge */}
+            <CardTitle className="text-lg font-medium">Einstellungen & Werkzeuge</CardTitle>
             <Settings className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Allgemeine App-Einstellungen (zukünftig).
+              Allgemeine App-Einstellungen und Daten-Tools.
             </CardDescription>
              <div className="space-y-2">
               <Button className="w-full" disabled>CSV Import (Demnächst)</Button>
@@ -200,9 +168,9 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle className="text-xl text-accent flex items-center">
             <GitPullRequestClosed className="mr-3 h-6 w-6" />
-            Roadmap / Offene Punkte
+            Roadmap / Offene Punkte (Version 0.3.0)
           </CardTitle>
-          <CardDescription>Eine Übersicht der geplanten Erweiterungen und zu erledigenden Aufgaben, strukturiert nach Versionen.</CardDescription>
+          <CardDescription>Eine Übersicht der geplanten Erweiterungen und zu erledigenden Aufgaben.</CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-sm text-muted-foreground list-none pl-1">
