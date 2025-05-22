@@ -1,5 +1,6 @@
 // src/components/layout/MainNav.tsx
 "use client";
+import React, { useMemo } from 'react'; // Added useMemo
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
@@ -7,17 +8,14 @@ import {
   Table, 
   Newspaper, 
   HardHat, 
-  LogIn, // WICHTIG: LogIn hier hinzugefügt
+  LogIn,
   LogOut, 
   UserCircle, 
   ShieldCheck, 
   Building, 
   HelpCircle, 
   BookOpenCheck,
-  ListChecks, // Hinzugefügt für Admin-Navigation
-  Edit3,      // Hinzugefügt für Admin-Navigation
-  UserCog,    // Hinzugefügt für Admin-Navigation
-  MessagesSquare // Hinzugefügt für Admin-Navigation
+  ScrollText // For RWK-Ordnung
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -40,58 +38,72 @@ export function MainNav() {
   const {
     user,
     signOut,
-    loading, // Auth-Ladezustand
-    userAppPermissions,
+    loading, 
+    userAppPermissions, 
     loadingAppPermissions, 
-    appPermissionsError
   } = useAuth();
   const router = useRouter();
 
   const isSuperAdmin = user && user.email === ADMIN_EMAIL;
-  // VereinsUser-Prüfung basiert jetzt auf den geladenen userAppPermissions
-  const isVereinsUser = user &&
-                        user.email !== ADMIN_EMAIL &&
-                        !loadingAppPermissions && // Stelle sicher, dass Permissions geladen sind
-                        userAppPermissions &&
-                        (userAppPermissions.role === 'vereinsvertreter' || userAppPermissions.role === 'mannschaftsfuehrer') &&
-                        userAppPermissions.clubId && userAppPermissions.clubId.trim() !== '';
-
+  
+  const isVereinsUser = useMemo(() => {
+    return user &&
+           user.email !== ADMIN_EMAIL &&
+           !loadingAppPermissions &&
+           userAppPermissions &&
+           (userAppPermissions.role === 'vereinsvertreter' || userAppPermissions.role === 'mannschaftsfuehrer');
+  }, [user, loadingAppPermissions, userAppPermissions]);
 
   const navItems: NavItem[] = [
-    { href: '/', label: 'Startseite', icon: Home },
+    { href: '/', label: 'Start', icon: Home },
     { href: '/rwk-tabellen', label: 'RWK Tabellen', icon: Table },
     { href: '/updates', label: 'Updates', icon: Newspaper },
-    { href: '/km', label: 'KM', icon: HardHat }, // KM Icon beibehalten, ggf. später anpassen
+    { href: '/km', label: 'KM', icon: HardHat },
     { href: '/handbuch', label: 'Handbuch', icon: BookOpenCheck },
-    { href: '/support', label: 'Support', icon: HelpCircle }, // Geändert zu HelpCircle
+    { href: '/rwk-ordnung', label: 'RWK-Ordnung', icon: ScrollText },
+    { href: '/support', label: 'Support', icon: HelpCircle },
     { href: '/admin', label: 'Admin Panel', icon: ShieldCheck, adminOnly: true },
     { href: '/verein/dashboard', label: 'Mein Verein', icon: Building, vereinOnly: true },
     { href: '/login', label: 'Login', icon: LogIn, hideWhenAuthed: true },
   ];
 
+  const displayedRole = useMemo(() => {
+    if (isSuperAdmin) return "Super-Admin"; // This won't be shown next to email anyway due to nav logic
+    if (isVereinsUser && userAppPermissions?.role) {
+      if (userAppPermissions.role === 'vereinsvertreter') return 'Vereinsvertreter';
+      if (userAppPermissions.role === 'mannschaftsfuehrer') return 'Mannschaftsführer';
+    }
+    return null;
+  }, [isSuperAdmin, isVereinsUser, userAppPermissions]);
+
   return (
     <nav className="flex items-center space-x-1 lg:space-x-2">
       {navItems.map((item) => {
-        // Bedingte Anzeige basierend auf Ladezuständen und Rollen
+        // Initial checks for auth state loading
         if (loading && (item.adminOnly || item.vereinOnly || item.authRequired || item.hideWhenAuthed)) {
-           // Optional: Einen Skeleton/Platzhalter während des Ladens anzeigen
-           // return <div key={item.href} className="p-2"><Skeleton className="h-5 w-20" /></div>;
-           return null; // Oder einfach nichts, bis der Ladezustand geklärt ist
+           return null; 
         }
-        if (item.vereinOnly && loadingAppPermissions) {
-            // return <div key={item.href} className="p-2"><Skeleton className="h-5 w-20" /></div>;
+        // For vereinOnly links, also wait for app permissions to load if not super admin
+        if (item.vereinOnly && !isSuperAdmin && loadingAppPermissions) {
             return null;
         }
 
-        if (user && item.hideWhenAuthed) return null;
-        if (!user && item.authRequired) return null; // item.authRequired könnte nützlich sein
+        // Logic for logged-in user
+        if (user) {
+          if (item.hideWhenAuthed) return null;
+          if (item.adminOnly && !isSuperAdmin) return null;
+          if (item.vereinOnly && !isVereinsUser) return null; // Hide if not a VereinsUser
+          if (item.vereinOnly && isSuperAdmin) return null; // SuperAdmin should not see "Mein Verein"
+        } else { // Logic for logged-out user
+          if (item.authRequired) return null;
+          if (item.adminOnly) return null;
+          if (item.vereinOnly) return null;
+        }
         
-        if (item.adminOnly && !isSuperAdmin) return null;
-        if (item.vereinOnly && !isVereinsUser) return null; // Verwende die aktualisierte isVereinsUser Logik
-        
-        // Verhindere, dass Admin den "Mein Verein" Link sieht und VV/MF den "Admin Panel" Link
-        if (item.vereinOnly && isSuperAdmin) return null;
-        if (item.adminOnly && isVereinsUser) return null;
+        const isItemActive = pathname === item.href || 
+                             (item.href !== '/' && pathname.startsWith(item.href) && !(item.href === '/admin' && pathname.startsWith('/admin/')) && !(item.href === '/verein/dashboard' && pathname.startsWith('/verein/'))) ||
+                             (item.href === '/admin' && pathname.startsWith('/admin')) ||
+                             (item.href === '/verein/dashboard' && pathname.startsWith('/verein'));
 
         return (
           <Link
@@ -99,10 +111,10 @@ export function MainNav() {
             href={item.href}
             className={cn(
               "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1.5 p-2 rounded-md",
-              (pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href) && item.href !== '/admin' && item.href !== '/verein/dashboard') || (item.href === '/admin' && pathname.startsWith('/admin')) || (item.href === '/verein/dashboard' && pathname.startsWith('/verein')))
-                ? 'text-primary bg-accent/20' // Aktiver Link hervorgehoben
+              isItemActive
+                ? 'text-primary bg-accent/20' 
                 : 'text-muted-foreground',
-              "max-md:p-1.5" // Kleineres Padding auf kleineren Bildschirmen
+              "max-md:p-1.5" 
             )}
             title={item.label}
           >
@@ -111,10 +123,17 @@ export function MainNav() {
           </Link>
         );
       })}
-      {user && !loading && ( // Zeige Benutzerinfo und Logout nur wenn User geladen und vorhanden
-        <div className="flex items-center gap-2">
-           {user.email && <span className="text-sm text-muted-foreground hidden lg:inline max-w-[150px] truncate" title={user.email}>{user.email}</span>}
-           {user.email && <UserCircle className="h-6 w-6 text-muted-foreground lg:hidden" title={user.email} />}
+      {user && !loading && ( // Show user info and logout only if user is loaded and present
+        <div className="flex items-center gap-2 ml-2 border-l pl-2">
+           {user.email && (
+             <span 
+                className="text-xs text-muted-foreground hidden lg:inline max-w-[150px] truncate" 
+                title={user.email}
+              >
+                {user.email}
+              </span>
+           )}
+           {user.email && <UserCircle className="h-5 w-5 text-muted-foreground lg:hidden" title={user.email} />}
           <Button
             variant="ghost"
             size="sm"

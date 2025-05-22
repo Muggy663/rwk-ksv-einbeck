@@ -44,25 +44,25 @@ Dieses Handbuch beschreibt die Funktionen und die Bedienung der Rundenwettkampf 
 ## 1. Einleitung
 
 ### Zweck der Anwendung
-Die RWK Einbeck App dient zur Verwaltung und Darstellung der Rundenwettkämpfe des Kreisschützenverbandes Einbeck. Sie ermöglicht die Pflege von Stammdaten (Saisons, Ligen, Vereine, Mannschaften, Schützen), die Erfassung von Ergebnissen und die Anzeige von Tabellen und Ranglisten.
+Die RWK Einbeck App dient zur digitalen Verwaltung und übersichtlichen Darstellung der Rundenwettkämpfe des Kreisschützenverbandes Einbeck. Sie ermöglicht die Pflege wichtiger Daten (wie Saisons, Ligen, Vereine, Mannschaften und Schützen), die einfache Erfassung von Ergebnissen sowie die Anzeige von aktuellen Tabellen und Ranglisten.
 
 ### Zielgruppen
-*   **Super-Administratoren:** Verantwortlich für die Gesamtverwaltung der Anwendung, Anlage von Saisons, Ligen, Vereinen, Zuweisung von Mannschaften zu Ligen und die Verwaltung von Benutzerrechten.
-*   **Vereinsvertreter:** Verantwortlich für die Verwaltung der Mannschaften und Schützen ihres/ihrer zugewiesenen Vereins/e sowie die Erfassung von Ergebnissen. Sie können Mannschaften und Schützen für ihren Verein anlegen und bearbeiten.
-*   **Mannschaftsführer:** Primär verantwortlich für die Erfassung von Ergebnissen für die Ligen, an denen Mannschaften ihrer zugewiesenen Vereine teilnehmen. Können Stammdaten ihres Vereins einsehen, aber nicht bearbeiten (kein Anlegen/Ändern von Mannschaften oder Schützen).
-*   **Öffentlichkeit/Schützen:** Können Tabellen, Ergebnisse, die RWK-Ordnung und aktuelle Informationen einsehen.
+*   **Super-Administratoren (Rundenwettkampfleiter):** Verantwortlich für die Gesamtverwaltung der Anwendung. Dazu gehört das Anlegen von Wettkampfsaisons, Ligen und Vereinen, die Zuweisung von Mannschaften zu den Ligen und die Verwaltung der Benutzerzugänge und -rechte.
+*   **Vereinsvertreter:** Zuständig für die Verwaltung der Mannschaften und Schützen ihres Vereins. Sie können Ergebnisse für die Wettkämpfe ihres Vereins erfassen sowie Mannschaften und Schützen für ihren Verein anlegen und bearbeiten.
+*   **Mannschaftsführer:** Hauptsächlich verantwortlich für die Erfassung von Ergebnissen für die Ligen, an denen die Mannschaften ihres Vereins teilnehmen. Sie können die Stammdaten ihres Vereins einsehen, aber keine Mannschaften oder Schützen anlegen oder ändern.
+*   **Öffentlichkeit/Schützen:** Alle Interessierten können die aktuellen Tabellen, Ergebnisse, die RWK-Ordnung und weitere Informationen rund um die Rundenwettkämpfe einsehen.
 
 ## 2. Erste Schritte
 
 ### Login
-Der Login erfolgt über die Login-Seite mit E-Mail und Passwort. Ein Captcha ist als zukünftige Sicherheitsmaßnahme geplant (siehe Admin-Agenda).
+Der Zugang zur App erfolgt über die Login-Seite mittels E-Mail-Adresse und Passwort.
 
 ### Benutzerkonten & Rollen
-*   Benutzerkonten (für Vereinsvertreter, Mannschaftsführer) werden **ausschließlich vom Super-Administrator manuell in der Firebase Konsole (Bereich "Authentication") angelegt** (E-Mail, initiales Passwort). Es ist keine Selbstregistrierung durch Benutzer vorgesehen.
-*   Anschließend weist der Super-Administrator dem Benutzer über das Admin-Panel der App (unter "Benutzerverwaltung") eine **Rolle** ("vereinsvertreter" oder "mannschaftsfuehrer") und den zugehörigen **Verein** (aktuell genau einen, Erweiterung auf bis zu 3 ist technisch vorbereitet) zu. Diese Berechtigungen werden in einer speziellen Datenbanktabelle (`user_permissions`) gespeichert.
+*   Benutzerkonten für Vereinsvertreter und Mannschaftsführer werden **ausschließlich vom Super-Administrator manuell angelegt**. Eine Selbstregistrierung ist nicht vorgesehen.
+*   Der Super-Administrator weist jedem Benutzer im Verwaltungsbereich der App eine **Rolle** (z.B. "Vereinsvertreter" oder "Mannschaftsführer") und den zugehörigen **Verein** (oder bei Bedarf mehrere Vereine) zu. Diese Zuweisungen bestimmen, welche Funktionen und Daten der Benutzer in der App sehen und bearbeiten kann.
 *   Ein **Vereinsvertreter** hat erweiterte Rechte zur Verwaltung von Mannschaften und Schützen seines Vereins.
-*   Ein **Mannschaftsführer** kann primär Ergebnisse für die Ligen seines zugewiesenen Vereins eintragen.
-*   Es ist geplant, dass Benutzer beim ersten Login aufgefordert werden, ihr initiales Passwort zu ändern (Funktion noch nicht implementiert).
+*   Ein **Mannschaftsführer** kann primär Ergebnisse für die Ligen eintragen, in denen Mannschaften seines Vereins teilnehmen.
+*   Es ist geplant, Benutzer beim ersten Login zur Änderung ihres initialen Passworts aufzufordern (diese Funktion ist noch in Entwicklung).
 
 ## 3. Für Super-Administratoren
 (Dieser Abschnitt ist nur im Handbuch sichtbar, wenn der Super-Admin eingeloggt ist)
@@ -73,7 +73,7 @@ Das Admin-Panel ist die zentrale Steuerungsinstanz für den Super-Administrator.
 Bietet eine zentrale Übersicht über die Verwaltungsfunktionen und eine Agenda für offene Punkte und geplante Features (Roadmap).
 
 ### Saisonverwaltung
-Hier können neue Wettkampfsaisons (z.B. "RWK 2025 Kleinkaliber") mit Jahr, übergeordnetem Disziplintyp (Kleinkaliber, Luftdruck) und Status (Geplant, Laufend, Abgeschlossen) erstellt, bearbeitet und gelöscht werden. Der Status "Laufend" ist entscheidend für die Sichtbarkeit in den RWK-Tabellen und die Ergebniserfassung.
+Hier können neue Wettkampfsaisons (z.B. "RWK 2025 Kleinkaliber") mit Jahr, Disziplin (Kleinkaliber, Luftdruck) und Status (Geplant, Laufend, Abgeschlossen) erstellt, bearbeitet und gelöscht werden. Der Status "Laufend" ist entscheidend für die Sichtbarkeit in den öffentlichen RWK-Tabellen und die Ergebniserfassung.
 
 ### Ligaverwaltung
 Nach Auswahl einer Saison können hier Ligen (z.B. Kreisoberliga) angelegt werden. Der spezifische Disziplintyp (z.B. KKG, LGA, LP Freihand) muss aus einer Liste ausgewählt werden. Ligen können bearbeitet und gelöscht werden.
@@ -83,53 +83,53 @@ Ermöglicht das Anlegen, Bearbeiten und Löschen von Vereinen mit Name, Kürzel 
 
 ### Mannschaftsverwaltung (Admin)
 Der Super-Admin kann hier alle Mannschaften verwalten.
-*   **Filter:** Saison, Verein und Liga auswählen, um Mannschaften zu filtern. Wichtig: Um "liga-lose" Mannschaften (die von Vereinsvertretern angelegt wurden) zu finden, Saison und Verein auswählen und den Liga-Filter auf "Alle Ligen" lassen.
-*   **Anlegen/Bearbeiten:** Mannschaften erstellen oder bearbeiten, **Ligazugehörigkeit festlegen oder ändern**, Mannschaftsführer-Kontaktdaten (Name, E-Mail, Telefon - optional) erfassen. Ein Hinweis erinnert an die korrekte Benennung nach Spielstärke (I, II, ...).
-*   **Schützen zuweisen:** Schützen den Teams zuordnen (max. 3 pro Team; Regel: ein Schütze pro Saison/spezifischer Disziplin nur in einem Team).
+*   **Filter:** Saison, Verein und Liga auswählen, um Mannschaften zu filtern. Wichtig: Um Mannschaften zu finden, die noch keiner Liga zugewiesen sind (z.B. von Vereinsvertretern neu angelegte), Saison und Verein auswählen und den Liga-Filter auf "Alle Ligen" lassen.
+*   **Anlegen/Bearbeiten:** Mannschaften erstellen oder bearbeiten. Hier erfolgt die **Zuweisung einer Mannschaft zu einer spezifischen Liga** oder die Änderung dieser Zuweisung. Kontaktdaten des Mannschaftsführers (Name, E-Mail, Telefon - optional) können erfasst werden. Ein Hinweis erinnert an die korrekte Benennung nach Spielstärke (I, II, ...).
+*   **Schützen zuweisen:** Schützen den Teams zuordnen (maximal 3 pro Team; Regel: ein Schütze pro Saison und spezifischer Disziplin nur in einem Team).
 
 ### Schützenverwaltung (Admin)
 Verwaltung aller Schützen.
 *   **Filter:** Nach Verein filtern.
-*   **Anlegen/Bearbeiten:** Schützen mit Vorname, Nachname, Geschlecht und Vereinszugehörigkeit anlegen oder ändern. Beim Anlegen können Schützen direkt Mannschaften zugeordnet werden (Beachtung der Regeln "max. 3 Schützen pro Team" und "ein Schütze pro Saison/spezifischer Disziplin nur in einem Team").
+*   **Anlegen/Bearbeiten:** Schützen mit Vorname, Nachname, Geschlecht und Vereinszugehörigkeit anlegen oder ändern. Beim Anlegen können Schützen direkt Mannschaften zugeordnet werden (Beachtung der Regeln für maximale Schützenzahl und Disziplin-Beschränkungen).
 *   **Mannschaftszuordnung (Info):** In der Schützenliste wird angezeigt, welchen Mannschaften ein Schütze zugeordnet ist.
 
 ### Ergebniserfassung (Admin)
 Erfassung von Ergebnissen für alle Ligen.
-*   **Auswahl:** Nur "Laufende" Saisons, Liga, Durchgang (jetzt vor Mannschaft), Mannschaft, Schütze.
-*   **Eingabe:** Ringergebnis (Validierung auf Maximalwert je nach Disziplin: 300 für KK, 400 für LG/LP), Ergebnistyp (Regulär, Vorschießen, Nachschießen).
-*   **Zwischenspeicher:** Ergebnisse werden gesammelt ("Zur Liste hinzufügen"), bevor sie endgültig gespeichert werden. Bereits erfasste Schützen/Durchgänge werden im Dropdown nicht mehr angeboten (auch nach Neuladen der Seite). Die Liste bleibt beim Wechsel der Mannschaft (im gleichen Durchgang/Liga/Saison) erhalten.
-*   **Speichern:** Schreibt Ergebnisse in die Datenbank und erstellt/aktualisiert einen Eintrag für den "Letzte Änderungen"-Feed auf der Startseite (gruppiert nach Liga, Tag, Disziplin und Jahr).
+*   **Auswahl:** Nur Saisons mit Status "Laufend", Liga, Durchgang, Mannschaft, Schütze. Die Reihenfolge der Auswahlfelder wurde optimiert (Durchgang vor Mannschaft).
+*   **Eingabe:** Ringergebnis (mit Prüfung auf Maximalwert je nach Disziplin), Ergebnistyp (Regulär, Vorschießen, Nachschießen).
+*   **Zwischenspeicher:** Ergebnisse werden gesammelt ("Zur Liste hinzufügen"), bevor sie endgültig gespeichert werden. Bereits erfasste Schützen/Durchgänge werden im Dropdown nicht mehr angeboten (auch nach Neuladen der Seite oder wenn Ergebnisse bereits in der Datenbank sind). Die Liste der vorgemerkten Ergebnisse bleibt auch beim Wechsel der Mannschaft (im gleichen Durchgang/Liga/Saison) erhalten.
+*   **Speichern:** Schreibt Ergebnisse in die Datenbank und erstellt/aktualisiert einen Eintrag für den "Letzte Änderungen"-Feed auf der Startseite.
 
 ### Ergebnisse bearbeiten/löschen (Admin)
 Ermöglicht die Suche, Bearbeitung (Ringzahl, Typ) und das Löschen von bereits erfassten Ergebnissen. Änderungen werden mit Benutzer und Zeitstempel versehen.
 
 ### Benutzerverwaltung (Admin - Rechtevergabe)
-Der Super-Administrator legt Benutzer **manuell in der Firebase Konsole (Bereich "Authentication")** an (E-Mail, initiales Passwort). Anschließend weist er diesen Benutzern (identifiziert durch ihre UID, die er aus der Konsole entnimmt und in der App eingibt) auf dieser Seite in der App eine Rolle ("vereinsvertreter", "mannschaftsfuehrer") und **einen Verein** (oder bis zu 3, falls die Implementierung das später unterstützt) zu. Diese Berechtigungen werden in der Datenbank (`user_permissions`-Collection) gespeichert. Die Eingabe der E-Mail und des Anzeigenamens in der App dient der Referenz und Vervollständigung des Dokuments in `user_permissions`.
+Der Super-Administrator legt Benutzerkonten **manuell in der Firebase Konsole (Bereich "Authentication")** an (E-Mail, initiales Passwort). Anschließend weist er diesen Benutzern (identifiziert durch ihre eindeutige Benutzer-ID, die er aus der Konsole entnimmt und in der App eingibt) auf dieser Seite in der App eine Rolle ("vereinsvertreter", "mannschaftsfuehrer") und den zugehörigen Verein (oder bis zu 3 Vereine) zu. Diese Berechtigungen werden sicher in der Datenbank gespeichert. Die Eingabe von E-Mail und Anzeigenamen des Benutzers in der App dient der Referenz und Vervollständigung der gespeicherten Berechtigungsdaten.
 
 ### Support Tickets einsehen (Admin)
 Zeigt eine Liste aller über das Support-Formular eingegangenen Tickets an. Der Status der Tickets (Neu, In Bearbeitung, Gelesen, Geschlossen) kann hier verwaltet werden.
 
 ### Agenda / Offene Punkte (Admin)
-Eine Liste geplanter Features und offener Aufgaben im Admin-Dashboard, strukturiert nach potenziellen Versionen.
+Eine Liste geplanter Features und offener Aufgaben im Admin-Dashboard, strukturiert nach potenziellen Versionen, um den Entwicklungsfortschritt zu verfolgen.
 
 ## 4. Für Vereinsvertreter und Mannschaftsführer
 
-Nach dem Login mit den vom Super-Admin bereitgestellten Zugangsdaten und der Zuweisung der Rolle und Vereinszugehörigkeit in der Datenbank (`user_permissions`-Collection), erhält der Benutzer Zugriff auf den "Mein Verein"-Bereich.
+Nach dem Login mit den vom Super-Admin bereitgestellten Zugangsdaten erhält der Benutzer Zugriff auf den "Mein Verein"-Bereich, sofern ihm eine Rolle und mindestens ein Verein zugewiesen wurden.
 
 ### Zugriff und Vereinskontext (VV/MF)
-Die angezeigten Daten und Bearbeitungsmöglichkeiten sind auf den/die Verein(e) beschränkt, der/die dem eingeloggten Benutzer in seinem `user_permissions`-Dokument zugewiesen ist/sind. Die App liest diese Berechtigungen aus der Datenbank, um den Zugriff zu steuern. Wenn einem Benutzer mehrere Vereine zugewiesen sind, erscheint auf den relevanten Verwaltungsseiten (Mannschaften, Schützen, Ergebnisse) ein Dropdown zur Auswahl des aktuell zu bearbeitenden Vereins.
+Die angezeigten Daten und Bearbeitungsmöglichkeiten sind auf den/die Verein(e) beschränkt, der/die dem eingeloggten Benutzer zugewiesen ist/sind. Die App prüft diese Berechtigungen, um den Zugriff zu steuern. Wenn einem Benutzer mehrere Vereine zugewiesen sind, erscheint auf den relevanten Verwaltungsseiten (Mannschaften, Schützen, Ergebnisse) ein Dropdown zur Auswahl des aktuell zu bearbeitenden Vereins.
 
 ### Dashboard Übersicht (VV/MF)
 Zeigt eine Begrüßung, die zugewiesene Rolle ("Vereinsvertreter" oder "Mannschaftsführer") und den Namen des/der Vereins/e an, für den/die der Benutzer zuständig ist.
 
 ### Mannschaftsverwaltung (nur Vereinsvertreter)
-Diese Funktion ist nur für Benutzer mit der Rolle "vereinsvertreter" verfügbar. Mannschaftsführer sehen die Liste (falls der Link zugänglich wäre), können aber keine Änderungen vornehmen (Buttons sind ausgeblendet).
+Diese Funktion ist nur für Benutzer mit der Rolle "vereinsvertreter" verfügbar. Mannschaftsführer sehen die Liste ihrer Mannschaften, können aber keine Änderungen vornehmen oder neue anlegen (entsprechende Schaltflächen sind ausgeblendet).
 *   **Vereinsauswahl (falls zutreffend):** Wenn dem VV mehrere Vereine zugewiesen sind, wählt er hier den Verein, für den er Mannschaften verwalten möchte.
 *   **Saisonauswahl:** Der VV wählt eine vom Super-Admin angelegte Saison aus.
 *   **Anzeige:** Mannschaften des ausgewählten Vereins für die gewählte Saison.
 *   **Anlegen (VV):** Neue Mannschaften für den eigenen Verein und die gewählte Saison erstellen. **Die Zuweisung zu einer spezifischen Liga erfolgt ausschließlich durch den Super-Admin.** Name und Mannschaftsführer-Kontaktdaten können erfasst werden. Ein Hinweis erinnert an die korrekte Benennung nach Spielstärke (I, II, ...).
 *   **Bearbeiten (VV):** Namen von Mannschaften und Mannschaftsführer-Kontaktdaten ändern.
-*   **Schützen zuweisen (VV):** Schützen des eigenen Vereins können den Mannschaften zugeordnet werden (max. 3 pro Team; Regel "Ein Schütze pro Saison/spezifischer Disziplin nur in einem Team" wird geprüft, falls Team schon Ligatyp hat).
+*   **Schützen zuweisen (VV):** Schützen des eigenen Vereins können den Mannschaften zugeordnet werden (max. 3 pro Team; Regel "Ein Schütze pro Saison/spezifischer Disziplin nur in einem Team" wird geprüft, falls das Team bereits einer Liga mit einem Disziplintyp zugeordnet wurde).
 *   **Löschen (VV):** Eigene Mannschaften entfernen.
 
 #### Umgang mit Einzelschützen (ohne volle Mannschaft) durch Vereinsvertreter
@@ -140,30 +140,30 @@ Wenn ein Verein nicht genügend Schützen (also weniger als drei) für eine voll
 Die App filtert Mannschaften, deren Name "Einzel" enthält, automatisch aus der Mannschafts-Rangliste in den RWK-Tabellen heraus. Die Ergebnisse dieser Schützen fließen aber in die Einzelschützen-Rangliste ein.
 
 ### Schützenverwaltung (nur Vereinsvertreter)
-Diese Funktion ist nur für Benutzer mit der Rolle "vereinsvertreter" verfügbar.
+Diese Funktion ist nur für Benutzer mit der Rolle "vereinsvertreter" verfügbar. Mannschaftsführer können Schützenlisten einsehen, aber keine Änderungen vornehmen.
 *   **Vereinsauswahl (falls zutreffend):** Auswahl des Vereinskontexts.
 *   **Anzeige:** Schützen des ausgewählten/zugewiesenen Vereins.
-*   **Anlegen (VV):** Neue Schützen für den eigenen Verein erstellen (Nachname, Vorname, Geschlecht). Eine direkte Mannschaftszuordnung beim Anlegen erfolgt hier nicht mehr; dies geschieht über die Seite "Meine Mannschaften".
+*   **Anlegen (VV):** Neue Schützen für den eigenen Verein erstellen (Nachname, Vorname, Geschlecht). Die Zuordnung zu Mannschaften erfolgt über die Seite "Meine Mannschaften".
 *   **Bearbeiten/Löschen (VV):** Stammdaten eigener Schützen ändern oder Schützen entfernen.
 
 ### Ergebniserfassung (Vereinsvertreter und Mannschaftsführer)
 *   **Vereinsauswahl (falls zutreffend):** Auswahl des Vereinskontexts, für dessen Ligen Ergebnisse erfasst werden sollen.
-*   **Saisonauswahl:** Nur "Laufende" Saisons.
+*   **Saisonauswahl:** Nur Saisons mit Status "Laufend".
 *   **Ligaauswahl:** Nur Ligen, in denen der ausgewählte/zugewiesene Verein im gewählten Wettkampfjahr Mannschaften gemeldet hat.
 *   **Mannschaftsauswahl:** Alle Mannschaften der ausgewählten Liga (eigene und gegnerische), damit Ergebnisse für Begegnungen eingetragen werden können.
 *   **Schützenauswahl:** Schützen der ausgewählten Mannschaft.
-*   Die weitere Erfassungslogik (Zwischenspeicher-Liste, Speichern, Validierung, Schütze verschwindet aus Dropdown) ist identisch zur Admin-Ergebniserfassung. Die `clubId` im Ergebnisdokument ist die des Teams, für das das Ergebnis eingetragen wird. Der `enteredByUserId` ist der des eingeloggten Benutzers.
+*   Die weitere Erfassungslogik (Zwischenspeicher-Liste, Speichern, Validierung, Schütze verschwindet aus Dropdown) ist identisch zur Admin-Ergebniserfassung. Die Vereins-ID im Ergebnisdokument ist die des Teams, für das das Ergebnis eingetragen wird. Der Erfasser wird ebenfalls gespeichert.
 
 ## 5. Öffentliche Ansichten
 
 ### RWK Tabellen
 Die RWK-Tabellen zeigen die aktuellen Ranglisten.
-*   **Filter:** Auswahl von Wettkampfjahr (dynamisch aus vorhandenen Saisons mit Status "Laufend") und UI-Disziplin (Kleinkaliber, Luftdruck). Das aktuellste Jahr mit laufenden Saisons wird standardmäßig ausgewählt. Bei Klick auf einen Link aus dem "Letzte Änderungen"-Feed werden Jahr, Disziplin und Liga vorausgewählt und die Liga direkt geöffnet.
-*   **Anzeige:** Zeigt nur Ligen von Saisons mit Status "Laufend". Die Ligen sind standardmäßig aufgeklappt.
-*   **Mannschaftsrangliste:** Tabellarische Übersicht der Ligen mit Mannschaften, deren Rundenergebnissen, Gesamtergebnis und Schnitt. Mannschaften, deren Name "Einzel" enthält, werden hier nicht aufgeführt. Mannschaften können aufgeklappt werden, um Einzelergebnisse der Schützen zu sehen. Schützennamen in dieser Detailansicht sind klickbar und öffnen einen Statistik-Dialog.
-*   **Einzelschützenrangliste:** Tabellarische Übersicht aller Schützen der ausgewählten Saison/Disziplin, sortiert nach Gesamtleistung, mit Anzeige der Rundenergebnisse, Gesamt und Schnitt. Optional kann nach einer spezifischen Liga gefiltert werden.
-*   **Bester Schütze / Beste Dame:** Werden hervorgehoben (bezogen auf alle Ligen der Auswahl).
-*   **Detailansicht Schütze:** Klick auf einen Schützennamen (in Einzelrangliste oder Mannschaftsdetails) öffnet einen Dialog mit dessen Detailergebnissen und einem Leistungsdiagramm.
+*   **Filter:** Auswahl von Wettkampfjahr (dynamisch aus vorhandenen Saisons mit Status "Laufend") und Disziplin (Kleinkaliber, Luftdruck). Das aktuellste Jahr mit laufenden Saisons wird standardmäßig ausgewählt. Bei Klick auf einen Link aus dem "Letzte Änderungen"-Feed werden Jahr, Disziplin und Liga vorausgewählt und die Liga direkt geöffnet.
+*   **Anzeige:** Zeigt nur Ligen von Saisons mit Status "Laufend". Die Ligen sind standardmäßig aufgeklappt, können aber einzeln geschlossen werden.
+*   **Mannschaftsrangliste:** Tabellarische Übersicht der Ligen mit Mannschaften, deren Rundenergebnissen, Gesamtergebnis und Schnitt. Mannschaften, deren Name "Einzel" enthält, werden hier nicht aufgeführt. Mannschaften können aufgeklappt werden, um Einzelergebnisse der Schützen zu sehen. Schützennamen in dieser Detailansicht sind klickbar und öffnen einen Statistik-Dialog mit Leistungsdiagramm.
+*   **Einzelschützenrangliste:** Tabellarische Übersicht aller Schützen der ausgewählten Saison/Disziplin, sortiert nach Gesamtleistung, mit Anzeige der Rundenergebnisse, Gesamt und Schnitt. Optional kann über ein Dropdown nach einer spezifischen Liga gefiltert werden, um nur deren Einzelschützen anzuzeigen.
+*   **Bester Schütze / Beste Dame:** Werden für den gesamten ausgewählten Wettbewerb (Jahr/Disziplin) hervorgehoben.
+*   **Detailansicht Schütze:** Klick auf einen Schützennamen öffnet einen Dialog mit dessen Detailergebnissen und einem Leistungsdiagramm.
 
 ### Letzte Änderungen (Startseite)
 Die Startseite zeigt die neuesten Aktualisierungen an, wenn Ergebnisse für Ligen hinzugefügt wurden (gruppiert pro Liga, Tag, Disziplin und Jahr). Jeder Eintrag ist direkt zur entsprechenden Liga in den RWK-Tabellen verlinkt.
@@ -175,12 +175,12 @@ Listet die Versionshistorie der Anwendung mit den wichtigsten Änderungen und Ne
 Enthält die rechtlich notwendigen Angaben zum Betreiber der Webseite.
 
 ### RWK-Ordnung
-(Platzhalter - hier könnte die Rundenwettkampfordnung direkt angezeigt oder verlinkt werden).
+Eine eigene Seite zeigt den Inhalt der Rundenwettkampfordnung an oder verlinkt auf das entsprechende Dokument.
 
 ## 6. Support
 
 ### Support-Ticket erstellen
-Ein Formular, um Fragen, Probleme oder Anregungen an den Administrator zu senden. Die Nachrichten werden in einer Datenbank (`support_tickets`) gespeichert und können vom Administrator eingesehen werden. Ein Hinweis zur Sicherung von Screenshots bei Problemen ist enthalten.
+Ein Formular, um Fragen, Probleme oder Anregungen an den Administrator zu senden. Die Nachrichten werden sicher gespeichert und können vom Administrator eingesehen werden. Ein Hinweis zur Sicherung von Screenshots bei Problemen ist enthalten.
 
 ---
 *Dieses Handbuch wird parallel zur Entwicklung der Anwendung aktualisiert.*
