@@ -3,106 +3,125 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { 
-  LayoutDashboard, 
-  Users, 
-  Trophy, 
-  ListChecks, 
-  Edit3, 
-  Settings, 
-  UserCog, 
-  MessagesSquare, 
-  FileUp, 
-  Award, 
-  BarChart3, 
-  ShieldQuestion, 
-  GitPullRequestClosed, 
-  BookOpenCheck, 
-  Printer,
-  ClipboardList,
-  KeyRound,
-  ListTree,
-  Table as TableIcon, // Alias Table from lucide-react
-  Info as InfoIcon,    // Alias Info from lucide-react
-  CheckCircle,
-  AlertCircle,
-  ShieldCheck as AdminShieldIcon, // Alias ShieldCheck for admin-specific use
-  FileText // Added missing FileText
+  LayoutDashboard, Users, Trophy, ListChecks, Edit3, Settings, UserCog, 
+  MessagesSquare, FileUp, Award, BarChart3, ShieldQuestion, GitPullRequestClosed, 
+  BookOpenCheck, Printer, ClipboardList, KeyRound, ListTree, 
+  Table as TableIcon, Info as InfoIcon, CheckCircle, AlertCircle, ShieldCheck as AdminShieldIcon, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+interface AgendaItem {
+  text: string;
+  status: string; // z.B. "Erledigt (vX.Y.Z)", "In Arbeit (vX.Y.Z)", "Offen (vX.Y.Z)", "Zukunft"
+  icon: React.ElementType;
+  iconColor?: string;
+  isMajor?: boolean; // Für größere geplante Versionssprünge
+  versionTarget?: string; // Zielversion
+}
+
 export default function AdminDashboardPage() {
-  const agendaItems = [
-    // Ziel: Version 0.4.0 (Sicherheit & VV/MF Kernfunktionen stabilisieren)
+  const agendaItems: AgendaItem[] = [
+    // Version 0.3.x - Stabilisierung & Kern-UX
     { 
-      text: "Firestore Sicherheitsregeln vollständig implementieren und gründlich testen (basierend auf user_permissions).", 
-      status: "Als Nächstes (Version 0.4.0)", icon: AdminShieldIcon, iconColor: "text-destructive" 
+      text: "Basis-Admin-Funktionen (Stammdaten CRUD, Ergebniserfassung/-bearbeitung) implementiert.", 
+      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600" 
     },
-    {
-      text: "Client-seitige Nutzung der user_permissions für VV/MF finalisieren (Sicherstellen, dass alle VV/MF-Seiten konsistent die zugewiesene(n) clubId(s) aus dem Context nutzen und die UI die Rollen korrekt widerspiegelt).",
-      status: "In Arbeit (Version 0.4.0)", icon: UserCog, iconColor: "text-primary"
+    { 
+      text: "Basis-VV/MF-Funktionen (Dashboard, Mannschafts-/Schützenansicht, Ergebniserfassung für eigenen Verein über user_permissions) implementiert.", 
+      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
     },
-    {
-      text: "RWK-Tabellen: Links von Startseite korrekt verarbeiten & Liga direkt öffnen/hervorheben.",
-      status: "Erledigt (v0.3.0)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-     {
-      text: "Startseite: 'Letzte Änderungen'-Einträge zur RWK-Tabelle verlinken (Links erstellt, Zielseite verarbeitet Parameter).",
+    { 
+      text: "RWK-Tabellen: Funktionalität mit Filtern, Detailansichten, URL-Parameter-Verarbeitung und Standard-Sortierung.", 
       status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600" 
     },
     {
-      text: "Seite für 'Rundenwettkampfordnung (RWK-Ordnung)' mit Inhalt füllen.",
+      text: "Handbuch, Impressum, RWK-Ordnung und Support-Formular (mit DB-Speicherung) erstellt.",
+      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
+    },
+     {
+      text: "Admin-Benutzerverwaltung: Zuweisung von Rolle und einem Verein zu Benutzern (UID-basiert, Speicherung in `user_permissions`) implementiert.",
+      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
+    },
+    {
+      text: "Regeln für Mannschaftszuordnung (max. 3 Schützen/Team; 1x pro Schütze/Disziplinkategorie/Jahr) in Admin- und VV-Bereichen implementiert.",
+      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
+    },
+    {
+      text: "Diverse UI-Verbesserungen und Fehlerbehebungen (Layouts, Importfehler, Vercel Build-Fehler).",
+      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
+    },
+    {
+      text: "Anzeige der Mannschaftsführer-Kontaktdaten und Hinweis zur Mannschaftsstärke in Team-Dialogen.",
+      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
+    },
+
+    // Ziel: Version 0.4.0 (Sicherheit & VV/MF Kernfunktionen finalisieren)
+    { 
+      text: "Firestore Sicherheitsregeln vollständig implementieren und gründlich testen (basierend auf `user_permissions` und Rollen VV/MF).", 
+      status: "Als Nächstes (Version 0.4.0)", icon: AdminShieldIcon, iconColor: "text-destructive", versionTarget: "0.4.0", isMajor: true 
+    },
+    {
+      text: "Client-seitige Nutzung der `user_permissions` für VV/MF finalisieren und `VV_CLUB_ASSIGNMENTS`-Map entfernen.",
       status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
     },
     {
       text: "Seite für 'Dokumente/Ausschreibungen' erstellen (Basis).",
-      status: "Offen (Version 0.4.0)", icon: FileText, iconColor: "text-blue-600" // Using FileText here
+      status: "Offen (Version 0.4.0)", icon: FileText, iconColor: "text-blue-600", versionTarget: "0.4.0"
     },
-     {
-      text: "Hauptnavigation: Icons überprüft/optimiert, 'KM'-Link entfernt, 'Mein Verein' zu 'Vereinsbereich' umbenannt.",
-      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-    {
-      text: "Erfassung/Anzeige von Mannschaftsführer-Kontaktdaten.",
-      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-    {
-      text: "Admin-Panel: Liste aller Mannschaftsführer einer Saison mit Kontaktdaten anzeigen.",
-      status: "Offen (Version 0.4.0)", icon: ClipboardList, iconColor: "text-blue-600"
-    },
-    {
-      text: "RWK-Tabellen: Druckfunktion für Ligaergebnisse (ohne sensible Daten).",
-      status: "Offen (Version 0.4.0)", icon: Printer, iconColor: "text-blue-600"
-    },
+
     // Ziel: Version 0.5.0 (UX-Verbesserungen, Vorbereitung für erste breitere Tests)
     {
       text: "Ergebniserfassung (VV/MF/Admin): UX-Verbesserungen (z.B. Vorauswahl Durchgang, Anzeige fehlender Schützen, Live-Validierung Ringzahlen).",
-      status: "Offen (Version 0.5.0)", icon: ListChecks, iconColor: "text-blue-600"
+      status: "Offen (Version 0.5.0)", icon: ListChecks, iconColor: "text-blue-600", versionTarget: "0.5.0", isMajor: true
+    },
+    {
+      text: "Admin-Panel: Liste aller Mannschaftsführer einer Saison (mit Kontaktdaten).",
+      status: "Offen (Version 0.5.0)", icon: ClipboardList, iconColor: "text-blue-600", versionTarget: "0.5.0"
     },
     {
       text: "Login: Passwort-Reset-Funktion implementieren.",
-      status: "Offen (Version 0.5.0)", icon: KeyRound, iconColor: "text-blue-600"
+      status: "Offen (Version 0.5.0)", icon: KeyRound, iconColor: "text-blue-600", versionTarget: "0.5.0"
     },
-    { 
-      text: "Benutzerverwaltung durch Super-Admin (UI-Verbesserungen): Auflisten von Benutzern mit Berechtigungen, einfacheres Bearbeiten.",
-      status: "Offen (Version 0.5.0)", icon: UserCog, iconColor: "text-blue-600"
+    {
+      text: "Anzeige 'Mannschaften (Info)' verfeinern: Name des einen Teams anzeigen, wenn nur ein Team zugeordnet (ohne Kontext).",
+      status: "Offen (Version 0.5.0)", icon: Users, iconColor: "text-blue-600", versionTarget: "0.5.0"
     },
-     // Ziel: Version 0.6.0 (Weitere Features, Richtung Beta-Reife)
+    {
+      text: "RWK-Tabellen: Druckfunktion für Ligaergebnisse (ohne sensible Daten).",
+      status: "Offen (Version 0.5.0)", icon: Printer, iconColor: "text-blue-600", versionTarget: "0.5.0"
+    },
+    {
+      text: "Hauptnavigation: Icons überprüfen/optimieren, 'KM'-Link entfernt/auskommentiert.",
+      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
+    },
+    {
+      text: "Admin-Benutzerverwaltung: UI-Verbesserungen (Auflisten, einfacheres Bearbeiten).",
+      status: "Offen (Version 0.5.0)", icon: UserCog, iconColor: "text-blue-600", versionTarget: "0.5.0"
+    },
+
+
+    // Ziel: Version 0.6.0 (Weitere Features, Richtung Beta-Reife)
     { 
       text: "Audit-Trail für Ergebniserfassung (Admin): Protokollierung von Änderungen.", 
-      status: "Offen (Version 0.6.0)", icon: Edit3, iconColor: "text-purple-600" 
+      status: "Offen (Version 0.6.0)", icon: Edit3, iconColor: "text-purple-600", versionTarget: "0.6.0", isMajor: true
     },
     { 
       text: "Platzhalter 'Schnitt Vorjahr' in den Team-Dialogen mit echter Funktionalität versehen.", 
-      status: "Offen (Version 0.6.0)", icon: BarChart3, iconColor: "text-purple-600" 
+      status: "Offen (Version 0.6.0)", icon: BarChart3, iconColor: "text-purple-600", versionTarget: "0.6.0"
     },
+    { 
+      text: "PDF-Generierung (Erweitert): Gesamtlisten, Urkunden (falls nötig).", 
+      status: "Offen (Version 0.6.0)", icon: Award, iconColor: "text-purple-600", versionTarget: "0.6.0"
+    },
+
     // Zukunft (Nach Beta / v1.0+)
     {
-      text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard.", 
-      status: "Zurückgestellt (Weniger relevant durch aktuellen Admin-Workflow der Benutzeranlage).", icon: Users, iconColor: "text-muted-foreground/70" 
+      text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (weniger relevant durch aktuellen Admin-Workflow).", 
+      status: "Zurückgestellt", icon: Users, iconColor: "text-muted-foreground/70" 
     },
     {
-      text: "RWK-Tabellen: Detailliertere Disziplin-Filterung (z.B. KKG, LGA), falls gewünscht.",
-      status: "Zurückgestellt (Feedback: Aktuelle Filterung ist übersichtlich)", icon: ListChecks, iconColor: "text-muted-foreground/70"
+      text: "RWK-Tabellen: Detailliertere Disziplin-Filterung (z.B. KKG, LGA), falls doch gewünscht.",
+      status: "Zurückgestellt", icon: ListChecks, iconColor: "text-muted-foreground/70"
     },
     {
       text: "RWK-Tabellen: Anzeige einer Kreuztabelle/Paarungsübersicht pro Liga.",
@@ -116,13 +135,9 @@ export default function AdminDashboardPage() {
       text: "Automatischer Saisonabschluss / Auf- und Abstieg (komplex).", 
       status: "Zukunft", icon: Trophy, iconColor: "text-muted-foreground/70" 
     },
-     { 
-      text: "PDF-Generierung (Erweitert): Urkunden, Meldebögen (falls nötig).", 
-      status: "Zukunftsmusik (Version 0.5.0+)", icon: Award, iconColor: "text-muted-foreground/70"
-    },
     {
-      text: "CSV Import-Funktion für Stammdaten.",
-      status: "Zurückgestellt (Aktuell nicht benötigt)", icon: FileUp, iconColor: "text-muted-foreground/70"
+      text: "CSV Import-Funktion für Stammdaten (aktuell nicht benötigt).",
+      status: "Zurückgestellt", icon: FileUp, iconColor: "text-muted-foreground/70"
     },
      { 
       text: "Captcha auf der Login-Seite (Platzhalter).", 
@@ -133,6 +148,15 @@ export default function AdminDashboardPage() {
       status: "Zukunft", icon: ListTree, iconColor: "text-muted-foreground/70"
     },
   ];
+
+  const getStatusColor = (status: string) => {
+    if (status.startsWith("Erledigt")) return "text-green-600";
+    if (status.startsWith("Als Nächstes")) return "text-destructive";
+    if (status.startsWith("In Arbeit")) return "text-blue-600";
+    if (status.startsWith("Offen")) return "text-orange-600";
+    return "text-muted-foreground";
+  };
+
 
   return (
     <div className="space-y-6">
@@ -153,7 +177,9 @@ export default function AdminDashboardPage() {
             <CardDescription className="mb-4">
               Saisons, Ligen und zugehörige Daten verwalten.
             </CardDescription>
-            <Link href="/admin/seasons" passHref><Button className="w-full">Saisons verwalten</Button></Link>
+            <Link href="/admin/seasons" passHref>
+              <Button className="w-full">Saisons verwalten</Button>
+            </Link>
           </CardContent>
         </Card>
 
@@ -197,7 +223,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Benutzer anlegen und Berechtigungen zuweisen. (UID-basiert)
+              Benutzer anlegen (manuell in Firebase Auth), Rollen und Vereinszuweisungen in der App verwalten.
             </CardDescription>
             <Link href="/admin/user-management" passHref>
               <Button className="w-full" variant="outline">Benutzer verwalten</Button>
@@ -222,7 +248,7 @@ export default function AdminDashboardPage() {
         
          <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Systemeinstellungen</CardTitle> {/* Umbenannt von Berichte & Exporte */}
+            <CardTitle className="text-lg font-medium">System & Berichte</CardTitle> 
             <Settings className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -230,7 +256,7 @@ export default function AdminDashboardPage() {
               PDF-Exporte und andere Systemfunktionen.
             </CardDescription>
              <div className="space-y-2">
-              <Button className="w-full" variant="outline" disabled>PDF: Ergebnislisten (v0.5.0+)</Button>
+              <Button className="w-full" variant="outline" disabled>PDF: Ergebnislisten (v0.6.0+)</Button>
               <Button className="w-full" variant="outline" disabled>PDF: Urkunden (Zukunft)</Button>
             </div>
           </CardContent>
@@ -246,24 +272,28 @@ export default function AdminDashboardPage() {
           <CardDescription>Übersicht geplanter Erweiterungen und wichtiger Aufgaben, strukturiert nach potenziellen Versionen.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2 text-sm text-muted-foreground list-none pl-1">
+          <ul className="space-y-1 text-sm text-muted-foreground list-none pl-1">
             {agendaItems.map((item, index) => (
-              <li key={index} className={cn(
-                "flex items-start py-1.5",
-                item.status.startsWith("Erledigt") && "line-through text-muted-foreground/70 opacity-80",
-                item.status.startsWith("Teilweise Erledigt") && "text-muted-foreground/90",
-                item.status.startsWith("Als Nächstes") && "font-semibold text-primary/90"
-              )}>
-                <item.icon 
-                  className={cn(
-                    "h-4 w-4 mr-3 mt-0.5 flex-shrink-0", 
-                    item.iconColor || "text-primary", 
-                    item.status.startsWith("Erledigt") && "!text-green-500"
-                  )} 
-                  title={item.status} 
-                />
-                <span>{item.text} - <span className={cn("font-semibold", item.iconColor || "text-primary", item.status.startsWith("Erledigt") && "!text-green-500")}>({item.status})</span></span>
-              </li>
+              <React.Fragment key={index}>
+                {item.isMajor && item.versionTarget && (
+                  <li className="pt-3 pb-1 first:pt-0">
+                    <h3 className={cn("text-md font-semibold", getStatusColor(item.status))}>
+                      Ziel: Version {item.versionTarget}
+                    </h3>
+                    <hr className="my-1 border-border/50"/>
+                  </li>
+                )}
+                <li className={cn("flex items-start py-1")}>
+                  <item.icon 
+                    className={cn(
+                      "h-4 w-4 mr-3 mt-0.5 flex-shrink-0", 
+                      item.iconColor || getStatusColor(item.status)
+                    )} 
+                    title={item.status} 
+                  />
+                  <span>{item.text} - <span className={cn("font-semibold", getStatusColor(item.status))}>({item.status})</span></span>
+                </li>
+              </React.Fragment>
             ))}
           </ul>
         </CardContent>

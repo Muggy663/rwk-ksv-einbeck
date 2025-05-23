@@ -357,15 +357,20 @@ function RwkTabellenPageComponent() {
   const fetchAvailableYearsFromSeasons = useCallback(async (): Promise<number[]> => {
     console.log("RWK DEBUG: fetchAvailableYearsFromSeasons called");
     try {
+      // Query for seasons with status "Laufend" to determine available years
       const seasonsColRef = collection(db, 'seasons');
-      const q = query(seasonsColRef, orderBy('competitionYear', 'desc'));
+      const q = query(seasonsColRef,
+        where("status", "==", "Laufend"),
+        orderBy('competitionYear', 'desc') // <-- Sortierung hierher verschieben
+      ); // <-- schließende Klammer und Semikolon hinzufügen/überprüfen
+
       const seasonsSnapshot = await getDocs(q);
       const years = new Set<number>();
       seasonsSnapshot.forEach(docData => {
         const seasonData = docData.data() as Season;
         if (seasonData.competitionYear) years.add(seasonData.competitionYear);
       });
-      const sortedYears = Array.from(years).sort((a, b) => b - a); 
+      const sortedYears = Array.from(years).sort((a, b) => b - a);
       console.log("RWK DEBUG: Available years from DB:", sortedYears);
       return sortedYears.length > 0 ? sortedYears : [new Date().getFullYear()];
     } catch (err: any) {
