@@ -1,13 +1,12 @@
 // src/components/layout/MainNav.tsx
 "use client";
-import React, { useMemo } from 'react'; // Added useMemo
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   Home, 
-  Table, 
+  Table as TableIcon, 
   Newspaper, 
-  HardHat, 
   LogIn,
   LogOut, 
   UserCircle, 
@@ -15,11 +14,13 @@ import {
   Building, 
   HelpCircle, 
   BookOpenCheck,
-  ScrollText // For RWK-Ordnung
+  ScrollText,
+  Settings // Re-added Settings icon as per previous discussions for Admin Panel
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
+import type { UserPermission } from '@/types/rwk';
 
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";
 
@@ -38,7 +39,7 @@ export function MainNav() {
   const {
     user,
     signOut,
-    loading, 
+    loading, // Corrected: use 'loading' for Firebase Auth state
     userAppPermissions, 
     loadingAppPermissions, 
   } = useAuth();
@@ -49,61 +50,66 @@ export function MainNav() {
   const isVereinsUser = useMemo(() => {
     return user &&
            user.email !== ADMIN_EMAIL &&
-           !loadingAppPermissions &&
+           !loadingAppPermissions && 
            userAppPermissions &&
            (userAppPermissions.role === 'vereinsvertreter' || userAppPermissions.role === 'mannschaftsfuehrer');
-  }, [user, loadingAppPermissions, userAppPermissions]);
+  }, [user, userAppPermissions, loadingAppPermissions]);
 
   const navItems: NavItem[] = [
-    { href: '/', label: 'Start', icon: Home },
-    { href: '/rwk-tabellen', label: 'RWK Tabellen', icon: Table },
+    { href: '/', label: 'Startseite', icon: Home }, // Ensured label is "Startseite"
+    { href: '/rwk-tabellen', label: 'RWK Tabellen', icon: TableIcon },
     { href: '/updates', label: 'Updates', icon: Newspaper },
-    { href: '/km', label: 'KM', icon: HardHat },
     { href: '/handbuch', label: 'Handbuch', icon: BookOpenCheck },
     { href: '/rwk-ordnung', label: 'RWK-Ordnung', icon: ScrollText },
     { href: '/support', label: 'Support', icon: HelpCircle },
-    { href: '/admin', label: 'Admin Panel', icon: ShieldCheck, adminOnly: true },
-    { href: '/verein/dashboard', label: 'Mein Verein', icon: Building, vereinOnly: true },
+    { href: '/admin', label: 'Admin Panel', icon: Settings, adminOnly: true }, // Using Settings for Admin Panel
+    { href: '/verein/dashboard', label: 'Vereinsbereich', icon: Building, vereinOnly: true },
     { href: '/login', label: 'Login', icon: LogIn, hideWhenAuthed: true },
   ];
 
   const displayedRole = useMemo(() => {
-    if (isSuperAdmin) return "Super-Admin"; // This won't be shown next to email anyway due to nav logic
+    if (!user || loading || loadingAppPermissions) return null;
+    if (isSuperAdmin) return null; // Super-Admin-Rolle wird nicht explizit angezeigt
     if (isVereinsUser && userAppPermissions?.role) {
       if (userAppPermissions.role === 'vereinsvertreter') return 'Vereinsvertreter';
       if (userAppPermissions.role === 'mannschaftsfuehrer') return 'Mannschaftsführer';
     }
     return null;
-  }, [isSuperAdmin, isVereinsUser, userAppPermissions]);
+  }, [user, loading, loadingAppPermissions, isSuperAdmin, isVereinsUser, userAppPermissions]);
 
   return (
     <nav className="flex items-center space-x-1 lg:space-x-2">
       {navItems.map((item) => {
-        // Initial checks for auth state loading
         if (loading && (item.adminOnly || item.vereinOnly || item.authRequired || item.hideWhenAuthed)) {
            return null; 
         }
-        // For vereinOnly links, also wait for app permissions to load if not super admin
-        if (item.vereinOnly && !isSuperAdmin && loadingAppPermissions) {
+        if (item.vereinOnly && !isSuperAdmin && loadingAppPermissions) { 
             return null;
         }
 
-        // Logic for logged-in user
+        let showItem = true;
         if (user) {
-          if (item.hideWhenAuthed) return null;
-          if (item.adminOnly && !isSuperAdmin) return null;
-          if (item.vereinOnly && !isVereinsUser) return null; // Hide if not a VereinsUser
-          if (item.vereinOnly && isSuperAdmin) return null; // SuperAdmin should not see "Mein Verein"
-        } else { // Logic for logged-out user
-          if (item.authRequired) return null;
-          if (item.adminOnly) return null;
-          if (item.vereinOnly) return null;
+          if (item.hideWhenAuthed) showItem = false;
+          if (item.adminOnly && !isSuperAdmin) showItem = false;
+          if (item.vereinOnly && !isVereinsUser && !isSuperAdmin) showItem = false;
+          if (item.vereinOnly && isSuperAdmin) showItem = false; 
+        } else { 
+          if (item.authRequired) showItem = false;
+          if (item.adminOnly) showItem = false;
+          if (item.vereinOnly) showItem = false;
         }
         
-        const isItemActive = pathname === item.href || 
-                             (item.href !== '/' && pathname.startsWith(item.href) && !(item.href === '/admin' && pathname.startsWith('/admin/')) && !(item.href === '/verein/dashboard' && pathname.startsWith('/verein/'))) ||
-                             (item.href === '/admin' && pathname.startsWith('/admin')) ||
-                             (item.href === '/verein/dashboard' && pathname.startsWith('/verein'));
+        if (!showItem) return null;
+        
+        const isActive = pathname === item.href || 
+                         (item.href !== '/' && pathname.startsWith(item.href) && 
+                          !((item.href === '/admin' && pathname.startsWith('/admin/')) ||
+                            (item.href === '/verein/dashboard' && pathname.startsWith('/verein/')) 
+                         )) ||
+                         (pathname.startsWith('/admin') && item.href === '/admin') ||
+                         (pathname.startsWith('/verein') && item.href === '/verein/dashboard');
+        
+        const showIcon = !user || item.href === '/' || item.href === '/rwk-tabellen' || item.href === '/updates' || item.href === '/handbuch' || item.href === '/rwk-ordnung' || item.href === '/support' || item.href === '/login' || (user && (item.adminOnly || item.vereinOnly));
 
         return (
           <Link
@@ -111,19 +117,19 @@ export function MainNav() {
             href={item.href}
             className={cn(
               "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1.5 p-2 rounded-md",
-              isItemActive
+              isActive
                 ? 'text-primary bg-accent/20' 
                 : 'text-muted-foreground',
               "max-md:p-1.5" 
             )}
-            title={item.label}
+            title={item.label} // Title attribute from item.label
           >
-            <item.icon className="h-5 w-5" />
-            <span className="hidden md:inline">{item.label}</span>
+            {showIcon && <item.icon className="h-5 w-5 flex-shrink-0" />}
+            <span className={cn( "hidden md:inline", !showIcon && "md:ml-0" )}>{item.label}</span>
           </Link>
         );
       })}
-      {user && !loading && ( // Show user info and logout only if user is loaded and present
+      {user && !loading && (
         <div className="flex items-center gap-2 ml-2 border-l pl-2">
            {user.email && (
              <span 
@@ -144,7 +150,7 @@ export function MainNav() {
             className="flex items-center gap-1.5 p-2 rounded-md text-muted-foreground hover:text-primary max-md:p-1.5"
             title="Logout"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-5 w-5 flex-shrink-0" />
             <span className="hidden md:inline">Logout</span>
           </Button>
         </div>
