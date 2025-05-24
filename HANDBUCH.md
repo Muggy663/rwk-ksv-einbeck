@@ -1,7 +1,7 @@
 
 # Benutzerhandbuch RWK Einbeck App
 
-Dieses Handbuch beschreibt die Funktionen und die Bedienung der Rundenwettkampf (RWK) App für den Kreisschützenverband Einbeck. (Stand: 22. Mai 2025)
+Dieses Handbuch beschreibt die Funktionen und die Bedienung der Rundenwettkampf (RWK) App für den Kreisschützenverband Einbeck. (Stand: 24. Mai 2025)
 
 ## Inhaltsverzeichnis
 
@@ -100,6 +100,7 @@ Erfassung von Ergebnissen für alle Ligen.
 *   **Auswahl:** Nur Saisons mit Status "Laufend", Liga, Durchgang (jetzt vor Mannschaft), Mannschaft, Schütze.
 *   **Eingabe:** Ringergebnis (mit Prüfung auf Maximalwert je nach Disziplin: LG/LP max. 400, KK max. 300), Ergebnistyp (Regulär, Vorschießen, Nachschießen).
 *   **Zwischenspeicher:** Ergebnisse werden gesammelt ("Zur Liste hinzufügen"), bevor sie endgültig gespeichert werden. Bereits erfasste Schützen/Durchgänge werden im Dropdown nicht mehr angeboten. Die Liste der vorgemerkten Ergebnisse bleibt auch beim Wechsel der Mannschaft (im gleichen Durchgang/Liga/Saison) erhalten.
+*   **Benutzerfreundlichkeit:** Der ausgewählte Durchgang bleibt beim Mannschaftswechsel erhalten. Mannschaften, deren Schützen bereits alle Ergebnisse für einen Durchgang haben, werden aus dem Dropdown entfernt.
 *   **Speichern:** Schreibt Ergebnisse in die Datenbank und erstellt/aktualisiert einen Eintrag für den "Letzte Änderungen"-Feed auf der Startseite (gruppiert pro Liga und Tag).
 
 ### Ergebnisse bearbeiten/löschen (Admin)
@@ -154,9 +155,11 @@ Diese Funktion ist nur für Benutzer mit der Rolle "vereinsvertreter" verfügbar
 *   **Vereinsauswahl (falls zutreffend):** Auswahl des Vereinskontexts, für dessen Ligen/Mannschaften Ergebnisse erfasst werden sollen.
 *   **Saisonauswahl:** Nur Saisons mit Status "Laufend".
 *   **Ligaauswahl:** Nur Ligen, in denen der ausgewählte/zugewiesene Verein im gewählten Wettkampfjahr Mannschaften gemeldet hat.
-*   **Mannschaftsauswahl:** Alle Mannschaften der ausgewählten Liga (eigene und gegnerische), damit Ergebnisse für Begegnungen eingetragen werden können.
-*   **Schützenauswahl:** Schützen der ausgewählten Mannschaft.
-*   Die weitere Erfassungslogik (Zwischenspeicher-Liste, Speichern, Validierung, Schütze verschwindet aus Dropdown, Ringzahl-Validierung) ist identisch zur Admin-Ergebniserfassung. Die Vereins-ID im Ergebnisdokument ist die des Teams, für das das Ergebnis eingetragen wird. Der Erfasser (VV/MF) wird ebenfalls gespeichert.
+*   **Durchgangsauswahl:** Auswahl des Wettkampfdurchgangs (1-5 bei KK, 1-4 bei Luftdruck).
+*   **Mannschaftsauswahl:** Alle Mannschaften der ausgewählten Liga (eigene und gegnerische), damit Ergebnisse für Begegnungen eingetragen werden können. Mannschaften, deren Schützen bereits alle Ergebnisse für den ausgewählten Durchgang haben, werden automatisch ausgeblendet.
+*   **Schützenauswahl:** Schützen der ausgewählten Mannschaft, die noch kein Ergebnis für den ausgewählten Durchgang haben.
+*   **Benutzerfreundlichkeit:** Der ausgewählte Durchgang bleibt beim Mannschaftswechsel erhalten. Die Zwischenspeicher-Liste bleibt auch beim Wechsel der Mannschaft (im gleichen Durchgang/Liga/Saison) erhalten.
+*   Die weitere Erfassungslogik (Zwischenspeicher-Liste, Speichern, Validierung, Ringzahl-Validierung) ist identisch zur Admin-Ergebniserfassung. Die Vereins-ID im Ergebnisdokument ist die des Teams, für das das Ergebnis eingetragen wird. Der Erfasser (VV/MF) wird ebenfalls gespeichert.
 
 ## 5. Öffentliche Ansichten
 

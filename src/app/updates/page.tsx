@@ -8,6 +8,18 @@ import type { ChangelogEntry } from '@/types/updates';
 
 const changelogEntries: ChangelogEntry[] = [
   {
+    version: '0.3.4',
+    date: '24. Mai 2025',
+    title: 'Verbesserte Ergebniserfassung & Benutzerfreundlichkeit',
+    descriptionPoints: [
+      'Behoben: Durchgang wird beim Mannschaftswechsel in der Ergebniserfassung nicht mehr zurückgesetzt (Admin und Vereinsvertreter).',
+      'Behoben: "seasonId is not defined"-Fehler in der Ergebniserfassung für Admin und Vereinsvertreter.',
+      'Verbessert: Mannschaften, deren Schützen bereits alle Ergebnisse für einen Durchgang haben, werden aus dem Dropdown entfernt.',
+      'Verbessert: Anzeige "Alle Teams vollständig erfasst" wenn keine Mannschaften mehr für den ausgewählten Durchgang verfügbar sind.',
+      'Aktualisierung der Dokumentation und Handbuch mit den neuesten Funktionen.',
+    ],
+  },
+  {
     version: '0.3.3',
     date: '22. Mai 2025',
     title: 'Fehlerbehebung Admin-Schützenverwaltung & Stabilitätsverbesserungen',

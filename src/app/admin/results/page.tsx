@@ -91,7 +91,7 @@ export default function AdminResultsPage() {
   useEffect(() => { fetchMasterData(); }, [fetchMasterData]);
   useEffect(() => {setSelectedLeagueId(''); setSelectedTeamId(''); setSelectedShooterId(''); setSelectedRound(''); setPendingScores([]); setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]); }, [selectedSeasonId]);
   useEffect(() => {setSelectedTeamId(''); setSelectedShooterId(''); setSelectedRound(''); setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]); }, [selectedLeagueId]);
-  useEffect(() => {setSelectedShooterId(''); setSelectedRound(''); setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]); }, [selectedTeamId]);
+  useEffect(() => {setSelectedShooterId(''); setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]); }, [selectedTeamId]);
   useEffect(() => {setSelectedShooterId(''); setScore(''); setExistingScoresForTeamAndRound([]);}, [selectedRound]);
 
   useEffect(() => {
@@ -105,19 +105,77 @@ export default function AdminResultsPage() {
     }
   }, [selectedSeasonId, allLeagues]);
 
+  // Effekt zum Laden der Teams für die ausgewählte Liga und Saison
+  // Wenn ein Durchgang ausgewählt ist, werden Teams gefiltert, bei denen alle Schützen bereits Ergebnisse haben
   useEffect(() => {
     const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId);
     if (selectedLeagueId && selectedSeason && !isLoadingLeagues) {
       setIsLoadingTeams(true);
       const fetchTeams = async () => {
         try {
+            // Teams für die ausgewählte Liga und Saison laden
             const teamsQuery = query(collection(db, TEAMS_COLLECTION), 
                 where("leagueId", "==", selectedLeagueId), 
                 where("competitionYear", "==", selectedSeason.competitionYear),
                 orderBy("name", "asc")
             );
             const teamsSnapshot = await getDocs(teamsQuery);
-            setAllTeamsInSelectedLeague(teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team)).filter(t => t.id));
+            const fetchedTeams = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team)).filter(t => t.id);
+            
+            // Wenn kein Durchgang ausgewählt ist, alle Teams anzeigen
+            if (!selectedRound) {
+                setAllTeamsInSelectedLeague(fetchedTeams);
+                setIsLoadingTeams(false);
+                return;
+            }
+            
+            // Wenn ein Durchgang ausgewählt ist, Teams filtern, bei denen alle Schützen bereits Ergebnisse haben
+            const parsedRound = parseInt(selectedRound, 10);
+            
+            // Für jedes Team prüfen, ob alle Schützen bereits Ergebnisse haben
+            const teamsWithFilterInfo = await Promise.all(fetchedTeams.map(async team => {
+                const teamShooterIds = team.shooterIds || [];
+                if (teamShooterIds.length === 0) return { team, allShootersHaveResults: false };
+                
+                // Ergebnisse für dieses Team und diesen Durchgang aus der Datenbank laden
+                const scoresQuery = query(
+                    collection(db, SCORES_COLLECTION),
+                    where("teamId", "==", team.id),
+                    where("durchgang", "==", parsedRound),
+                    where("competitionYear", "==", selectedSeason.competitionYear)
+                );
+                const scoresSnapshot = await getDocs(scoresQuery);
+                const existingScores = scoresSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
+                
+                // Schützen-IDs mit existierenden Ergebnissen sammeln
+                const shooterIdsWithResults = new Set(existingScores.map(score => score.shooterId));
+                
+                // Schützen mit Ergebnissen in der Zwischenliste hinzufügen
+                pendingScores.forEach(ps => {
+                    if (ps.teamId === team.id && ps.durchgang === parsedRound) {
+                        shooterIdsWithResults.add(ps.shooterId);
+                    }
+                });
+                
+                // Schützen mit gerade gespeicherten Ergebnissen hinzufügen
+                justSavedScoreIdentifiers.forEach(js => {
+                    if (js.durchgang === parsedRound && teamShooterIds.includes(js.shooterId)) {
+                        shooterIdsWithResults.add(js.shooterId);
+                    }
+                });
+                
+                // Prüfen, ob alle Schützen des Teams bereits Ergebnisse haben
+                const allShootersHaveResults = teamShooterIds.every(id => shooterIdsWithResults.has(id));
+                
+                return { team, allShootersHaveResults };
+            }));
+            
+            // Teams filtern, bei denen nicht alle Schützen bereits Ergebnisse haben
+            const filteredTeams = teamsWithFilterInfo
+                .filter(({ allShootersHaveResults }) => !allShootersHaveResults)
+                .map(({ team }) => team);
+            
+            setAllTeamsInSelectedLeague(filteredTeams);
         } catch (error) {
             console.error("Error fetching teams for league:", error);
             toast({ title: "Fehler Teams laden", description: (error as Error).message, variant: "destructive" });
@@ -130,7 +188,7 @@ export default function AdminResultsPage() {
     } else {
       setAllTeamsInSelectedLeague([]);
     }
-  }, [selectedLeagueId, selectedSeasonId, allSeasons, isLoadingLeagues, toast]);
+  }, [selectedLeagueId, selectedSeasonId, selectedRound, allSeasons, isLoadingLeagues, pendingScores, justSavedScoreIdentifiers, toast]);
   
   useEffect(() => {
     if (selectedTeamId && allShootersFromDB.length > 0 && !isLoadingTeams) {
@@ -181,7 +239,8 @@ export default function AdminResultsPage() {
     }
   }, [selectedTeamId, selectedSeasonId, selectedRound, allSeasons, toast]);
 
-   useEffect(() => {
+   // Effekt für die Filterung der verfügbaren Schützen
+  useEffect(() => {
     if (selectedTeamId && selectedRound && shootersOfSelectedTeam.length > 0 && !isLoadingExistingScores) {
       const parsedRound = parseInt(selectedRound, 10);
       const shootersInPendingThisRound = pendingScores.filter(ps => ps.teamId === selectedTeamId && ps.durchgang === parsedRound).map(ps => ps.shooterId);
@@ -232,7 +291,7 @@ export default function AdminResultsPage() {
 
     const newPendingEntry: PendingScoreEntry = {
       tempId: new Date().toISOString() + Math.random().toString(36).substring(2, 15),
-      seasonId, seasonName: season.name, leagueId: selectedLeagueId, leagueName: league.name, leagueType: league.type,
+      seasonId: selectedSeasonId, seasonName: season.name, leagueId: selectedLeagueId, leagueName: league.name, leagueType: league.type,
       teamId: selectedTeamId, teamName: team.name, clubId: team.clubId, shooterId: selectedShooterId, shooterName: shooter.name, 
       shooterGender: shooter.gender, durchgang: parsedRound, totalRinge: scoreVal, scoreInputType: resultType, competitionYear: season.competitionYear,
     };
@@ -366,7 +425,7 @@ export default function AdminResultsPage() {
              <div className="space-y-2"> {/* Mannschaft nach Durchgang */}
               <Label htmlFor="team">Mannschaft</Label>
               <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={!selectedLeagueId || isLoadingTeams || !selectedRound || allTeamsInSelectedLeague.length === 0}>
-                <SelectTrigger id="team"><SelectValue placeholder={isLoadingTeams ? "Lade Teams..." : (!selectedRound ? "Durchgang wählen" : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId ? "Keine Teams für Liga" : "Mannschaft wählen"))} /></SelectTrigger>
+                <SelectTrigger id="team"><SelectValue placeholder={isLoadingTeams ? "Lade Teams..." : (!selectedRound ? "Durchgang wählen" : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId && selectedRound ? "Alle Teams vollständig erfasst" : "Mannschaft wählen"))} /></SelectTrigger>
                 <SelectContent>{allTeamsInSelectedLeague.filter(t => t.id).map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>

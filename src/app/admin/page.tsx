@@ -1,4 +1,6 @@
 // src/app/admin/page.tsx
+"use client";
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -58,7 +60,7 @@ export default function AdminDashboardPage() {
     // Ziel: Version 0.4.0 (Sicherheit & VV/MF Kernfunktionen finalisieren)
     { 
       text: "Firestore Sicherheitsregeln vollständig implementieren und gründlich testen (basierend auf `user_permissions` und Rollen VV/MF).", 
-      status: "Als Nächstes (Version 0.4.0)", icon: AdminShieldIcon, iconColor: "text-destructive", versionTarget: "0.4.0", isMajor: true 
+      status: "Erledigt (v0.3.4)", icon: CheckCircle, iconColor: "text-green-600"
     },
     {
       text: "Client-seitige Nutzung der `user_permissions` für VV/MF finalisieren und `VV_CLUB_ASSIGNMENTS`-Map entfernen.",
@@ -72,7 +74,7 @@ export default function AdminDashboardPage() {
     // Ziel: Version 0.5.0 (UX-Verbesserungen, Vorbereitung für erste breitere Tests)
     {
       text: "Ergebniserfassung (VV/MF/Admin): UX-Verbesserungen (z.B. Vorauswahl Durchgang, Anzeige fehlender Schützen, Live-Validierung Ringzahlen).",
-      status: "Offen (Version 0.5.0)", icon: ListChecks, iconColor: "text-blue-600", versionTarget: "0.5.0", isMajor: true
+      status: "Teilweise erledigt (v0.3.4)", icon: ListChecks, iconColor: "text-blue-600", versionTarget: "0.5.0", isMajor: true
     },
     {
       text: "Admin-Panel: Liste aller Mannschaftsführer einer Saison (mit Kontaktdaten).",
@@ -267,7 +269,7 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle className="text-xl text-accent flex items-center">
             <GitPullRequestClosed className="mr-3 h-6 w-6" />
-            Roadmap / Nächste Schritte (Stand: 22. Mai 2025)
+            Roadmap / Nächste Schritte (Stand: 24. Mai 2025)
           </CardTitle>
           <CardDescription>Übersicht geplanter Erweiterungen und wichtiger Aufgaben, strukturiert nach potenziellen Versionen.</CardDescription>
         </CardHeader>
