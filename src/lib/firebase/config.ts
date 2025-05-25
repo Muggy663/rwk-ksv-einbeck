@@ -2,7 +2,8 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
-import { getFunctions, Functions } from "firebase/functions"; // Added Functions import
+import { getFunctions, Functions } from "firebase/functions";
+import { getStorage, Storage } from "firebase/storage"; // Hinzugefügt für Firebase Storage
 
 // IMPORTANT: In a production environment, these values should ideally be set
 // as environment variables and not be directly in the code.
@@ -26,8 +27,7 @@ if (!getApps().length) {
 
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
-// Initialize Functions and point to a specific region
 const functions: Functions = getFunctions(app, 'europe-west1');
+const storage: Storage = getStorage(app); // Firebase Storage initialisieren
 
-
-export { app, auth, db, functions }; // Export functions
+export { app, auth, db, functions, storage }; // Storage exportieren

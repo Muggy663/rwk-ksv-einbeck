@@ -114,5 +114,11 @@ service cloud.firestore {
     // match /user_management_data/{userId} {
     //   allow read, write: if isSuperAdmin();
     // }
+    
+    // Dokumente und Ausschreibungen
+    match /documents/{documentId} {
+      allow read: if true;  // Jeder darf Dokumente lesen
+      allow write: if isSuperAdmin();  // Nur Super-Admin darf Dokumente erstellen/bearbeiten/löschen
+    }
   }
 }

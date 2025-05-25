@@ -4,6 +4,7 @@ import React, { useState, useEffect, FormEvent, useCallback, useMemo } from 'rea
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Loader2, AlertTriangle, UserCircle as UserIcon } from 'lucide-react';
+import { HelpTooltip } from '@/components/ui/help-tooltip';
 import {
   Table,
   TableBody,
@@ -496,7 +497,14 @@ export default function VereinSchuetzenPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-primary">Meine Schützen</h1>
+          <div className="flex items-center">
+            <h1 className="text-2xl font-semibold text-primary">Meine Schützen</h1>
+            <HelpTooltip 
+              text="Hier können Sie Schützen für Ihren Verein anlegen und verwalten." 
+              side="right" 
+              className="ml-2"
+            />
+          </div>
           {activeClubName && <p className="text-muted-foreground">Verein: <span className="font-semibold">{activeClubName}</span></p>}
           {contextTeamName && <p className="text-xs text-muted-foreground">Kontext: Mannschaft "{contextTeamName}" {isContextTeamNameLoading && "(Lade...)"}</p>}
         </div>
@@ -516,7 +524,15 @@ export default function VereinSchuetzenPage() {
         </CardHeader>
         <CardContent>
           <div className="mb-4">
+            <div className="flex items-center mb-2">
+              <Label htmlFor="vsp-search">Schützen suchen</Label>
+              <HelpTooltip 
+                text="Suchen Sie nach Schützen anhand von Vor- oder Nachnamen." 
+                className="ml-2"
+              />
+            </div>
             <Input
+              id="vsp-search"
               type="search"
               placeholder="Schützen suchen..."
               value={shooterSearchQuery}
@@ -608,11 +624,35 @@ export default function VereinSchuetzenPage() {
                 </DialogDescriptionComponent>
               </DialogHeader>
               <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
-                <div className="space-y-1.5"><Label htmlFor="vsp-lastName-dialog">Nachname</Label><Input id="vsp-lastName-dialog" value={currentShooter.lastName || ''} onChange={(e) => handleFormInputChange('lastName', e.target.value)} required disabled={!isVereinsvertreter && formMode ==='edit'} /></div>
-                <div className="space-y-1.5"><Label htmlFor="vsp-firstName-dialog">Vorname</Label><Input id="vsp-firstName-dialog" value={currentShooter.firstName || ''} onChange={(e) => handleFormInputChange('firstName', e.target.value)} required disabled={!isVereinsvertreter && formMode ==='edit'}/></div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center">
+                    <Label htmlFor="vsp-lastName-dialog">Nachname</Label>
+                    <HelpTooltip 
+                      text="Geben Sie den Nachnamen des Schützen ein." 
+                      className="ml-2"
+                    />
+                  </div>
+                  <Input id="vsp-lastName-dialog" value={currentShooter.lastName || ''} onChange={(e) => handleFormInputChange('lastName', e.target.value)} required disabled={!isVereinsvertreter && formMode ==='edit'} />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center">
+                    <Label htmlFor="vsp-firstName-dialog">Vorname</Label>
+                    <HelpTooltip 
+                      text="Geben Sie den Vornamen des Schützen ein." 
+                      className="ml-2"
+                    />
+                  </div>
+                  <Input id="vsp-firstName-dialog" value={currentShooter.firstName || ''} onChange={(e) => handleFormInputChange('firstName', e.target.value)} required disabled={!isVereinsvertreter && formMode ==='edit'}/>
+                </div>
                 <div className="space-y-1.5"> <Label htmlFor="vsp-clubDisplay-dialog">Verein</Label> <Input id="vsp-clubDisplay-dialog" value={activeClubName || ''} disabled className="bg-muted/50" /> </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="vsp-gender-dialog">Geschlecht</Label>
+                  <div className="flex items-center">
+                    <Label htmlFor="vsp-gender-dialog">Geschlecht</Label>
+                    <HelpTooltip 
+                      text="Wählen Sie das Geschlecht des Schützen aus." 
+                      className="ml-2"
+                    />
+                  </div>
                   <Select value={currentShooter.gender || 'male'} onValueChange={(v) => handleFormInputChange('gender', v as 'male' | 'female')} disabled={!isVereinsvertreter && formMode ==='edit'}>
                     <SelectTrigger id="vsp-gender-dialog"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="male">Männlich</SelectItem><SelectItem value="female">Weiblich</SelectItem></SelectContent>
@@ -621,7 +661,13 @@ export default function VereinSchuetzenPage() {
 
                 {formMode === 'new' && activeClubId && isVereinsvertreter && (
                   <div className="space-y-2 pt-3 border-t mt-3">
-                    <Label className="text-base font-medium">Mannschaften für "{activeClubName}" zuordnen (Optional)</Label>
+                    <div className="flex items-center">
+                      <Label className="text-base font-medium">Mannschaften für "{activeClubName}" zuordnen (Optional)</Label>
+                      <HelpTooltip 
+                        text="Wählen Sie optional Mannschaften aus, denen der Schütze zugeordnet werden soll." 
+                        className="ml-2"
+                      />
+                    </div>
                     <p className="text-xs text-muted-foreground">Ein Schütze darf pro Saison und Disziplinkategorie (Gewehr/Pistole) nur einer Mannschaft angehören. Max. {MAX_SHOOTERS_PER_TEAM} Schützen pro Team.</p>
                     {isLoadingTeamsForDialog ? (
                       <div className="flex items-center justify-center p-4 h-32 border rounded-md bg-muted/30"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="ml-2">Lade Mannschaften...</p></div>

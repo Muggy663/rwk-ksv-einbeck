@@ -15,7 +15,8 @@ import {
   HelpCircle, 
   BookOpenCheck,
   ScrollText,
-  Settings // Re-added Settings icon as per previous discussions for Admin Panel
+  Settings, // Re-added Settings icon as per previous discussions for Admin Panel
+  FileText // Für Dokumente-Seite
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -58,9 +59,9 @@ export function MainNav() {
   const navItems: NavItem[] = [
     { href: '/', label: 'Startseite', icon: Home }, // Ensured label is "Startseite"
     { href: '/rwk-tabellen', label: 'RWK Tabellen', icon: TableIcon },
+    { href: '/dokumente', label: 'Dokumente', icon: FileText },
     { href: '/updates', label: 'Updates', icon: Newspaper },
     { href: '/handbuch', label: 'Handbuch', icon: BookOpenCheck },
-    { href: '/rwk-ordnung', label: 'RWK-Ordnung', icon: ScrollText },
     { href: '/support', label: 'Support', icon: HelpCircle },
     { href: '/admin', label: 'Admin Panel', icon: Settings, adminOnly: true }, // Using Settings for Admin Panel
     { href: '/verein/dashboard', label: 'Vereinsbereich', icon: Building, vereinOnly: true },
@@ -109,7 +110,7 @@ export function MainNav() {
                          (pathname.startsWith('/admin') && item.href === '/admin') ||
                          (pathname.startsWith('/verein') && item.href === '/verein/dashboard');
         
-        const showIcon = !user || item.href === '/' || item.href === '/rwk-tabellen' || item.href === '/updates' || item.href === '/handbuch' || item.href === '/rwk-ordnung' || item.href === '/support' || item.href === '/login' || (user && (item.adminOnly || item.vereinOnly));
+        const showIcon = !user || item.href === '/' || item.href === '/rwk-tabellen' || item.href === '/dokumente' || item.href === '/updates' || item.href === '/handbuch' || item.href === '/support' || item.href === '/login' || (user && (item.adminOnly || item.vereinOnly));
 
         return (
           <Link

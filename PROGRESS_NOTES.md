@@ -82,15 +82,17 @@ Die App ist für weniger technikaffine Nutzer konzipiert und legt Wert auf:
 - Automatische Filterung und Vorauswahl wo möglich
 
 ## Aktuelle Version
-- **Version**: 0.3.5 (Stand: 24. Mai 2025)
-- **Letzte Änderungen**: Verbesserte Ergebniserfassung & Benutzerfreundlichkeit
-  - Durchgang bleibt beim Mannschaftswechsel erhalten
-  - "seasonId is not defined"-Fehler behoben
-  - Mannschaften mit vollständigen Ergebnissen werden ausgeblendet
+- **Version**: 0.4.0 (Stand: 24. Mai 2025)
+- **Letzte Änderungen**: Dokumentenverwaltung & Benutzerfreundlichkeit
+  - Neue Seite für Dokumente & Ausschreibungen mit Kategorien
+  - Admin-Dokumenten-Manager zum Hochladen und Verwalten von Dokumenten
+  - Live-Tooltips für Vereinsvertreter zur besseren Benutzerführung
   - Schützen ohne Ergebnisse werden fett und mit Warnzeichen hervorgehoben
   - Firestore-Sicherheitsregeln implementiert
 
 ## Nächste Schritte
-- Implementierung der Seite für Dokumente/Ausschreibungen
-- Weitere UX-Verbesserungen für die Ergebniserfassung
+- ✅ Implementierung der Seite für Dokumente/Ausschreibungen
+- ✅ Weitere UX-Verbesserungen für die Ergebniserfassung
+- ✅ Dokumenten-Manager für Admins
+- ✅ Live-Tooltips für Vereinsvertreter
 - Vorbereitung für erste breitere Tests mit Vereinsvertretern und Mannschaftsführern

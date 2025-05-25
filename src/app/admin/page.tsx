@@ -57,18 +57,26 @@ export default function AdminDashboardPage() {
       status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
     },
 
-    // Ziel: Version 0.4.0 (Sicherheit & VV/MF Kernfunktionen finalisieren)
+    // Version 0.4.0 (Sicherheit & VV/MF Kernfunktionen finalisieren)
     { 
       text: "Firestore Sicherheitsregeln vollständig implementieren und gründlich testen (basierend auf `user_permissions` und Rollen VV/MF).", 
-      status: "Erledigt (v0.3.4)", icon: CheckCircle, iconColor: "text-green-600"
+      status: "Erledigt (v0.4.0)", icon: CheckCircle, iconColor: "text-green-600"
     },
     {
       text: "Client-seitige Nutzung der `user_permissions` für VV/MF finalisieren und `VV_CLUB_ASSIGNMENTS`-Map entfernen.",
       status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
     },
     {
+      text: "Tooltips für bessere Benutzerführung in allen Bereichen hinzufügen.",
+      status: "Erledigt (v0.4.0)", icon: CheckCircle, iconColor: "text-green-600"
+    },
+    {
+      text: "Ergebniserfassung für Vereinsvertreter verbessern (Erfassung für alle Mannschaften in einer Liga).",
+      status: "Erledigt (v0.4.0)", icon: CheckCircle, iconColor: "text-green-600"
+    },
+    {
       text: "Seite für 'Dokumente/Ausschreibungen' erstellen (Basis).",
-      status: "Offen (Version 0.4.0)", icon: FileText, iconColor: "text-blue-600", versionTarget: "0.4.0"
+      status: "Erledigt (v0.4.0)", icon: CheckCircle, iconColor: "text-green-600"
     },
 
     // Ziel: Version 0.5.0 (UX-Verbesserungen, Vorbereitung für erste breitere Tests)
@@ -235,6 +243,21 @@ export default function AdminDashboardPage() {
 
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Dokumentenverwaltung</CardTitle>
+            <FileText className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Dokumente, Ausschreibungen und Formulare hochladen und verwalten.
+            </CardDescription>
+            <Link href="/admin/documents" passHref>
+              <Button className="w-full">Dokumente verwalten</Button>
+            </Link>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium">Support Anfragen</CardTitle>
             <MessagesSquare className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
@@ -269,7 +292,7 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle className="text-xl text-accent flex items-center">
             <GitPullRequestClosed className="mr-3 h-6 w-6" />
-            Roadmap / Nächste Schritte (Stand: 24. Mai 2025, Version 0.3.5)
+            Roadmap / Nächste Schritte (Stand: 25. Mai 2025, Version 0.4.0)
           </CardTitle>
           <CardDescription>Übersicht geplanter Erweiterungen und wichtiger Aufgaben, strukturiert nach potenziellen Versionen.</CardDescription>
         </CardHeader>

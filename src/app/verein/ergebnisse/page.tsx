@@ -10,12 +10,13 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckSquare, Save, PlusCircle, Trash2, Loader2, AlertTriangle, Building } from 'lucide-react';
+import { HelpTooltip } from '@/components/ui/help-tooltip';
 import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, FirestoreLeagueSpecificDiscipline, Club, LeagueUpdateEntry, UserPermission } from '@/types/rwk';
 import { leagueDisciplineOptions } from '@/types/rwk';
 import { useVereinAuth } from '@/app/verein/layout'; 
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, documentId, getDoc as getFirestoreDoc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, documentId, getDoc as getFirestoreDoc, Timestamp, setDoc, updateDoc, addDoc } from 'firebase/firestore';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -379,46 +380,64 @@ export default function VereinErgebnissePage() {
     if (!userPermission?.uid) { toast({ title: "Fehler", description: "Benutzer nicht identifiziert.", variant: "destructive" }); return; }
     if (pendingScores.length === 0) { toast({ title: "Keine Ergebnisse", variant: "destructive" }); return; }
     setIsSubmittingScores(true);
-    const batch = writeBatch(db);
     const newlySavedIdentifiers: { shooterId: string; durchgang: number }[] = [];
-    const leagueUpdatesToProcess = new Map<string, { leagueId: string, leagueName: string, leagueType: FirestoreLeagueSpecificDiscipline, competitionYear: number }>();
-
-    pendingScores.forEach(entry => {
-      const key = `${entry.leagueId}_${entry.competitionYear}`;
-      if (!leagueUpdatesToProcess.has(key) && entry.leagueType && entry.leagueName && entry.competitionYear !== undefined) {
-        leagueUpdatesToProcess.set(key, { leagueId: entry.leagueId, leagueName: entry.leagueName, leagueType: entry.leagueType, competitionYear: entry.competitionYear });
-      }
-    });
-
+    
     try {
-      pendingScores.forEach((entry) => {
-        const { tempId, ...dataToSave } = entry; 
-        const scoreDocRef = doc(collection(db, SCORES_COLLECTION)); 
-        const scoreDataForDb: Omit<ScoreEntry, 'id' | 'entryTimestamp' | 'enteredByUserId' | 'enteredByUserName'> = {...dataToSave};
-        batch.set(scoreDocRef, {
-            ...scoreDataForDb, enteredByUserId: userPermission.uid, enteredByUserName: userPermission.displayName || userPermission.email || "Unbekannt", entryTimestamp: serverTimestamp()
-        });
-        newlySavedIdentifiers.push({ shooterId: entry.shooterId, durchgang: entry.durchgang });
-      });
-
-      for (const updateInfo of leagueUpdatesToProcess.values()) {
-        const today = new Date();
-        const startOfDay = Timestamp.fromDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
-        const endOfDay = Timestamp.fromDate(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
-        const q = query(collection(db, LEAGUE_UPDATES_COLLECTION),
-            where("leagueId", "==", updateInfo.leagueId), where("competitionYear", "==", updateInfo.competitionYear),
-            where("timestamp", ">=", startOfDay), where("timestamp", "<=", endOfDay)
-        );
-        const existingUpdatesSnapshot = await getDocs(q);
-        if (!existingUpdatesSnapshot.empty) {
-            batch.update(existingUpdatesSnapshot.docs[0].ref, { timestamp: serverTimestamp() });
-        } else {
-            const leagueUpdateData: Omit<LeagueUpdateEntry, 'id'> = {...updateInfo, timestamp: serverTimestamp(), action: 'results_added'};
-            batch.set(doc(collection(db, LEAGUE_UPDATES_COLLECTION)), leagueUpdateData);
+      // Ergebnisse einzeln speichern statt als Batch
+      for (const entry of pendingScores) {
+        try {
+          const { tempId, ...dataToSave } = entry;
+          const scoreDocRef = doc(collection(db, SCORES_COLLECTION));
+          
+          // Einzelnes Dokument speichern
+          await setDoc(scoreDocRef, {
+            ...dataToSave,
+            enteredByUserId: userPermission.uid,
+            enteredByUserName: userPermission.displayName || userPermission.email || "Unbekannt",
+            entryTimestamp: serverTimestamp()
+          });
+          
+          newlySavedIdentifiers.push({ shooterId: entry.shooterId, durchgang: entry.durchgang });
+          
+          // Liga-Update für jedes Ergebnis einzeln verarbeiten
+          if (entry.leagueId && entry.leagueName && entry.leagueType && entry.competitionYear !== undefined) {
+            try {
+              const today = new Date();
+              const startOfDay = Timestamp.fromDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
+              const endOfDay = Timestamp.fromDate(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
+              
+              const q = query(collection(db, LEAGUE_UPDATES_COLLECTION),
+                where("leagueId", "==", entry.leagueId),
+                where("competitionYear", "==", entry.competitionYear),
+                where("timestamp", ">=", startOfDay),
+                where("timestamp", "<=", endOfDay)
+              );
+              
+              const existingUpdatesSnapshot = await getDocs(q);
+              if (!existingUpdatesSnapshot.empty) {
+                await updateDoc(existingUpdatesSnapshot.docs[0].ref, { timestamp: serverTimestamp() });
+              } else {
+                const leagueUpdateData = {
+                  leagueId: entry.leagueId,
+                  leagueName: entry.leagueName,
+                  leagueType: entry.leagueType,
+                  competitionYear: entry.competitionYear,
+                  timestamp: serverTimestamp(),
+                  action: 'results_added'
+                };
+                await addDoc(collection(db, LEAGUE_UPDATES_COLLECTION), leagueUpdateData);
+              }
+            } catch (updateError) {
+              console.error("VER_ERGEBNISSE DEBUG: Error updating league update:", updateError);
+              // Fehler bei Liga-Updates ignorieren
+            }
+          }
+        } catch (scoreError) {
+          console.error("VER_ERGEBNISSE DEBUG: Error saving individual score:", scoreError);
+          // Fehler für einzelnes Ergebnis protokollieren und mit dem nächsten fortfahren
         }
       }
 
-      await batch.commit();
       toast({ title: "Ergebnisse gespeichert" });
       setPendingScores([]);
       setJustSavedScoreIdentifiers(prev => [...prev, ...newlySavedIdentifiers]);
@@ -426,8 +445,9 @@ export default function VereinErgebnissePage() {
       const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
       if (selectedTeamId && currentSeason?.competitionYear && selectedRound) {
           setIsLoadingExistingScores(true);
-          const scoresQuery = query( collection(db, SCORES_COLLECTION),
-            where("teamId", "==", selectedTeamId), where("competitionYear", "==", currentSeason.competitionYear),
+          const scoresQuery = query(collection(db, SCORES_COLLECTION),
+            where("teamId", "==", selectedTeamId), 
+            where("competitionYear", "==", currentSeason.competitionYear),
             where("durchgang", "==", parseInt(selectedRound, 10))
           );
           const snapshot = await getDocs(scoresQuery);
@@ -484,42 +504,81 @@ export default function VereinErgebnissePage() {
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center"><h1 className="text-2xl font-semibold text-primary">Ergebniserfassung {activeClubNameForEntry ? `(Kontext: ${activeClubNameForEntry})` : ''}</h1></div>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center">
+          <h1 className="text-2xl font-semibold text-primary">Ergebniserfassung {activeClubNameForEntry ? `(Kontext: ${activeClubNameForEntry})` : ''}</h1>
+          <HelpTooltip 
+            text="Hier können Sie Ergebnisse für Mannschaften erfassen und speichern." 
+            side="right" 
+            className="ml-2"
+          />
+        </div>
+      </div>
       
       <Card className="shadow-md">
         <CardHeader><CardTitle>Einzelergebnis zur Liste hinzufügen</CardTitle><CardDescription>Wählen Sie Parameter und fügen Sie Ergebnisse hinzu.</CardDescription></CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="vver-season">Saison (laufend)</Label>
+              <div className="flex items-center">
+                <Label htmlFor="vver-season">Saison (laufend)</Label>
+                <HelpTooltip 
+                  text="Wählen Sie die Saison aus, für die Sie Ergebnisse erfassen möchten." 
+                  className="ml-2"
+                />
+              </div>
               <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={availableRunningSeasons.length === 0}>
                 <SelectTrigger id="vver-season"><SelectValue placeholder={availableRunningSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"} /></SelectTrigger>
                 <SelectContent>{availableRunningSeasons.filter(s => s.id).map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="vver-league">Liga (Ihres Vereins)</Label>
+              <div className="flex items-center">
+                <Label htmlFor="vver-league">Liga (Ihres Vereins)</Label>
+                <HelpTooltip 
+                  text="Wählen Sie die Liga aus, für die Sie Ergebnisse erfassen möchten." 
+                  className="ml-2"
+                />
+              </div>
               <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={!selectedSeasonId || isLoadingLeagues || leaguesForActiveClubAndSeason.length === 0}>
                 <SelectTrigger id="vver-league"><SelectValue placeholder={isLoadingLeagues ? "Lade Ligen..." : (leaguesForActiveClubAndSeason.length === 0 && selectedSeasonId ? "Keine Ligen für Verein/Saison" : "Liga wählen")} /></SelectTrigger>
                 <SelectContent>{leaguesForActiveClubAndSeason.filter(l=>l.id).map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2"> {/* Durchgang vor Mannschaft */}
-              <Label htmlFor="vver-round">Durchgang</Label>
+              <div className="flex items-center">
+                <Label htmlFor="vver-round">Durchgang</Label>
+                <HelpTooltip 
+                  text="Wählen Sie den Durchgang aus, für den Sie Ergebnisse erfassen möchten." 
+                  className="ml-2"
+                />
+              </div>
               <Select value={selectedRound} onValueChange={(value) => { setSelectedRound(value);}} disabled={!selectedLeagueId}>
                 <SelectTrigger id="vver-round"><SelectValue placeholder="Durchgang wählen" /></SelectTrigger>
                 <SelectContent>{[...Array(numRoundsForSelect)].map((_, i) => (<SelectItem key={i + 1} value={(i + 1).toString()}>Durchgang {i + 1}</SelectItem>))}</SelectContent>
               </Select>
             </div>
              <div className="space-y-2"> {/* Mannschaft nach Durchgang */}
-              <Label htmlFor="vver-team">Mannschaft (Eigene oder Gegner)</Label>
+              <div className="flex items-center">
+                <Label htmlFor="vver-team">Mannschaft (Eigene oder Gegner)</Label>
+                <HelpTooltip 
+                  text="Wählen Sie die Mannschaft aus, für die Sie Ergebnisse erfassen möchten. Es werden nur Mannschaften angezeigt, die noch nicht vollständig erfasst sind." 
+                  className="ml-2"
+                />
+              </div>
               <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={!selectedLeagueId || isLoadingTeams || !selectedRound || allTeamsInSelectedLeague.length === 0}>
                 <SelectTrigger id="vver-team"><SelectValue placeholder={isLoadingTeams ? "Lade Teams..." : (!selectedRound ? "Durchgang wählen" : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId && selectedRound ? "Alle Teams vollständig erfasst" : "Mannschaft wählen"))} /></SelectTrigger>
                 <SelectContent>{allTeamsInSelectedLeague.filter(t=>t.id).map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="vver-shooter">Schütze</Label>
+              <div className="flex items-center">
+                <Label htmlFor="vver-shooter">Schütze</Label>
+                <HelpTooltip 
+                  text="Wählen Sie den Schützen aus, für den Sie ein Ergebnis erfassen möchten. Schützen mit ⚠️ haben noch kein Ergebnis für diesen Durchgang." 
+                  className="ml-2"
+                />
+              </div>
               <Select value={selectedShooterId} onValueChange={setSelectedShooterId} disabled={!selectedTeamId || isLoadingShooters || isLoadingExistingScores || (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound)}>
                 <SelectTrigger id="vver-shooter"><SelectValue placeholder={isLoadingShooters || isLoadingExistingScores ? "Lade Schützen..." : (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound ? "Alle erfasst/keine" : "Schütze wählen")} /></SelectTrigger>
                 <SelectContent>
@@ -546,7 +605,13 @@ export default function VereinErgebnissePage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="vver-score">Ergebnis (Ringe)</Label>
+              <div className="flex items-center">
+                <Label htmlFor="vver-score">Ergebnis (Ringe)</Label>
+                <HelpTooltip 
+                  text="Geben Sie das Ergebnis in Ringen ein. Je nach Disziplin sind Werte zwischen 0-300 oder 0-400 möglich." 
+                  className="ml-2"
+                />
+              </div>
               <Input 
                 id="vver-score" 
                 type="number" 
@@ -610,7 +675,13 @@ export default function VereinErgebnissePage() {
             </div>
           </div>
           <div className="space-y-3 pt-2">
-            <Label>Ergebnistyp</Label>
+            <div className="flex items-center">
+              <Label>Ergebnistyp</Label>
+              <HelpTooltip 
+                text="Wählen Sie den Typ des Ergebnisses: Regulär für normale Wettkämpfe, Vorschießen für vorzeitig geschossene Ergebnisse, Nachschießen für nachträglich geschossene Ergebnisse." 
+                className="ml-2"
+              />
+            </div>
             <RadioGroup value={resultType} onValueChange={(value) => setResultType(value as "regular" | "pre" | "post")} className="flex space-x-4">
               <div className="flex items-center space-x-2"><RadioGroupItem value="regular" id="vver-r-regular" /><Label htmlFor="vver-r-regular">Regulär</Label></div>
               <div className="flex items-center space-x-2"><RadioGroupItem value="pre" id="vver-r-pre" /><Label htmlFor="vver-r-pre">Vorschießen</Label></div>

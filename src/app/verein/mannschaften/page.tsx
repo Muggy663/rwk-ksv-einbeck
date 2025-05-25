@@ -5,6 +5,7 @@ import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'rea
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Users as TeamsIcon, Loader2, AlertTriangle, InfoIcon } from 'lucide-react';
+import { HelpTooltip } from '@/components/ui/help-tooltip';
 import {
   Table,
   TableBody,
@@ -145,10 +146,11 @@ export default function VereinMannschaftenPage() {
         seasonsSnapshotPromise, leaguesSnapshotPromise, clubsSnapshotPromise
       ]);
 
+      // Alle Saisons laden, aber nur laufende Saisons anzeigen
       const fetchedSeasons = seasonsSnapshot.docs.map(sDoc => ({ id: sDoc.id, ...sDoc.data() } as Season))
-        .filter(s => s.id && typeof s.id === 'string' && s.id.trim() !== "");
+        .filter(s => s.id && typeof s.id === 'string' && s.id.trim() !== "" && s.status === 'Laufend');
       setAllSeasons(fetchedSeasons);
-      console.log("VMP DEBUG: fetchInitialData - Seasons fetched:", fetchedSeasons.length);
+      console.log("VMP DEBUG: fetchInitialData - Running seasons fetched:", fetchedSeasons.length);
 
       const fetchedLeaguesRaw = leaguesSnapshot.docs.map(lDoc => ({ id: lDoc.id, ...lDoc.data() } as League));
       const fetchedLeagues = fetchedLeaguesRaw.filter(l => l.id && typeof l.id === 'string' && l.id.trim() !== "");
@@ -192,6 +194,7 @@ export default function VereinMannschaftenPage() {
         .map(team => team.leagueId!)
     ));
   
+    // Nur Ligen anzeigen, in denen der Verein Mannschaften hat
     const filtered = allLeagues.filter(l =>
       l.seasonId === selectedSeasonId && // Belongs to the selected season
       leagueIdsOfActiveClubTeamsInYear.includes(l.id) && // The active club has a team in this league for this season
@@ -721,13 +724,26 @@ export default function VereinMannschaftenPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-semibold text-primary">Meine Mannschaften</h1>
+        <div className="flex items-center">
+          <h1 className="text-2xl font-semibold text-primary">Meine Mannschaften</h1>
+          <HelpTooltip 
+            text="Hier können Sie Mannschaften für Ihren Verein anlegen und verwalten." 
+            side="right" 
+            className="ml-2"
+          />
+        </div>
         {activeClubName && <p className="text-muted-foreground text-lg md:text-right">Verein: <span className="font-semibold text-primary">{activeClubName}</span></p>}
       </div>
 
       <div className="flex flex-col sm:flex-row items-end gap-3 mb-4 p-4 border rounded-md shadow-sm bg-card">
         <div className="flex-grow space-y-1.5 w-full sm:w-auto">
-          <Label htmlFor="vvm-saison-select">Saison auswählen</Label>
+          <div className="flex items-center">
+            <Label htmlFor="vvm-saison-select">Saison auswählen</Label>
+            <HelpTooltip 
+              text="Wählen Sie die Saison aus, für die Sie Mannschaften anzeigen oder anlegen möchten." 
+              className="ml-2"
+            />
+          </div>
           <Select
             value={selectedSeasonId}
             onValueChange={(value) => { setSelectedSeasonId(value); setSelectedLeagueIdFilter(""); }}
@@ -746,7 +762,13 @@ export default function VereinMannschaftenPage() {
           </Select>
         </div>
         <div className="flex-grow space-y-1.5 w-full sm:w-auto">
-          <Label htmlFor="vvm-liga-filter">Nach Liga filtern (Optional)</Label>
+          <div className="flex items-center">
+            <Label htmlFor="vvm-liga-filter">Nach Liga filtern (Optional)</Label>
+            <HelpTooltip 
+              text="Filtern Sie optional nach einer bestimmten Liga." 
+              className="ml-2"
+            />
+          </div>
            <Select
             value={selectedLeagueIdFilter}
             onValueChange={(value) => {
@@ -885,7 +907,13 @@ export default function VereinMannschaftenPage() {
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                     <div className="space-y-1.5">
-                        <Label htmlFor="vvm-teamStrengthDialog">Mannschaftsstärke</Label>
+                        <div className="flex items-center">
+                          <Label htmlFor="vvm-teamStrengthDialog">Mannschaftsstärke</Label>
+                          <HelpTooltip 
+                            text="Wählen Sie die Stärke Ihrer Mannschaft (I für die stärkste, II für die zweitstärkste usw.)." 
+                            className="ml-2"
+                          />
+                        </div>
                         <Select
                           value={teamStrength}
                           onValueChange={handleTeamStrengthChange}
@@ -909,7 +937,13 @@ export default function VereinMannschaftenPage() {
                 </div>
                 
                 <div className="space-y-1.5 mt-3">
-                    <Label htmlFor="vvm-teamNameDialog">Name der Mannschaft</Label>
+                    <div className="flex items-center">
+                      <Label htmlFor="vvm-teamNameDialog">Name der Mannschaft</Label>
+                      <HelpTooltip 
+                        text="Der Name wird automatisch aus dem Vereinsnamen und der Mannschaftsstärke generiert, kann aber angepasst werden." 
+                        className="ml-2"
+                      />
+                    </div>
                     <Input 
                       id="vvm-teamNameDialog" 
                       value={currentTeam?.name || ''} 

@@ -8,6 +8,17 @@ import type { ChangelogEntry } from '@/types/updates';
 
 const changelogEntries: ChangelogEntry[] = [
   {
+    version: '0.4.0',
+    date: '25. Mai 2025',
+    title: 'Berechtigungen für Ergebniserfassung & Tooltips',
+    descriptionPoints: [
+      'Behoben: Vereinsvertreter können jetzt Ergebnisse für alle Mannschaften in einer Liga erfassen, in der ihr Verein teilnimmt.',
+      'Verbessert: Tooltips für bessere Benutzerführung in allen Bereichen hinzugefügt.',
+      'Optimiert: Ergebniserfassung speichert jetzt jedes Ergebnis einzeln, um Berechtigungsprobleme zu vermeiden.',
+      'Aktualisierung der Dokumentation und Handbuch mit den neuesten Funktionen.',
+    ],
+  },
+  {
     version: '0.3.5',
     date: '24. Mai 2025',
     title: 'Verbesserte Ergebniserfassung & Benutzerfreundlichkeit',
