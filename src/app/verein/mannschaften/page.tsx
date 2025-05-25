@@ -101,6 +101,11 @@ export default function VereinMannschaftenPage() {
   const [persistedShooterIdsForTeam, setPersistedShooterIdsForTeam] = useState<string[]>([]);
   const [selectedShooterIdsInForm, setSelectedShooterIdsInForm] = useState<string[]>([]);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
+  
+  // Neue Zustandsvariablen für die vereinfachte Mannschaftsanlage
+  const [teamStrength, setTeamStrength] = useState<string>("");
+  const [suggestedTeamName, setSuggestedTeamName] = useState<string>("");
+  const [shooterSearchQuery, setShooterSearchQuery] = useState<string>("");
 
   const isVereinsvertreter = userPermission?.role === 'vereinsvertreter';
 
@@ -356,6 +361,9 @@ export default function VereinMannschaftenPage() {
       captainEmail: '',
       captainPhone: '',
     });
+    // Zurücksetzen der Mannschaftsstärke und des vorgeschlagenen Namens
+    setTeamStrength("");
+    setSuggestedTeamName("");
     setIsFormOpen(true);
   };
 
@@ -366,6 +374,16 @@ export default function VereinMannschaftenPage() {
     }
     setFormMode('edit');
     setCurrentTeam(team);
+    
+    // Versuche, die Mannschaftsstärke aus dem Namen zu extrahieren (z.B. "Verein I" -> "I")
+    const strengthMatch = team.name.match(/\s([IVX]+)$/);
+    if (strengthMatch) {
+      setTeamStrength(strengthMatch[1]);
+    } else {
+      setTeamStrength("");
+    }
+    
+    setSuggestedTeamName(team.name);
     setIsFormOpen(true);
   };
 
@@ -564,6 +582,30 @@ export default function VereinMannschaftenPage() {
   ) => {
     setCurrentTeam(prev => prev ? ({ ...prev, [field]: value }) : null);
   };
+  
+  // Funktion zur Generierung von Mannschaftsnamen basierend auf Verein und Stärke
+  const generateTeamName = useCallback((clubName: string | null, strength: string): string => {
+    if (!clubName) return strength;
+    
+    // Wenn der Vereinsname ein Kürzel enthält (in Klammern), verwenden wir das
+    const clubShortMatch = clubName.match(/\(([^)]+)\)/);
+    const clubShort = clubShortMatch ? clubShortMatch[1] : clubName;
+    
+    // Wenn kein Kürzel gefunden wurde, verwenden wir den vollen Namen
+    return `${clubShort} ${strength}`;
+  }, []);
+  
+  // Handler für Änderungen an der Mannschaftsstärke
+  const handleTeamStrengthChange = (value: string) => {
+    setTeamStrength(value);
+    
+    // Automatisch den Mannschaftsnamen aktualisieren
+    const newTeamName = generateTeamName(activeClubName, value);
+    setSuggestedTeamName(newTeamName);
+    
+    // Aktualisiere das currentTeam-Objekt mit dem neuen Namen
+    setCurrentTeam(prev => prev ? ({ ...prev, name: newTeamName }) : null);
+  };
 
  const handleShooterSelectionChange = (shooterId: string, isChecked: boolean) => {
     if (!isVereinsvertreter || isSubmittingForm || isLoadingDialogData) return;
@@ -707,13 +749,17 @@ export default function VereinMannschaftenPage() {
           <Label htmlFor="vvm-liga-filter">Nach Liga filtern (Optional)</Label>
            <Select
             value={selectedLeagueIdFilter}
-            onValueChange={setSelectedLeagueIdFilter}
+            onValueChange={(value) => {
+              // Wenn "Alle Ligen anzeigen" ausgewählt wurde, setze den Filter zurück
+              setSelectedLeagueIdFilter(value === "ALL_LEAGUES" ? "" : value);
+            }}
             disabled={!selectedSeasonId || isLoadingTeams || availableLeaguesForFilter.length === 0}
            >
             <SelectTrigger id="vvm-liga-filter" className="w-full">
                 <SelectValue placeholder={!selectedSeasonId ? "Saison wählen" : (isLoadingTeams ? "Lade Ligen..." : (availableLeaguesForFilter.length === 0 ? "Keine Ligen für Verein/Saison" : "Alle Ligen des Vereins"))} />
             </SelectTrigger>
             <SelectContent>
+                <SelectItem value="ALL_LEAGUES">Alle Ligen anzeigen</SelectItem>
                 {console.log("VMP DEBUG: Rendering leagues for filter dropdown:", JSON.stringify(availableLeaguesForFilter.map(l => ({id: l.id, name: l.name})) ))}
                 {availableLeaguesForFilter
                     .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "") // Strict filter
@@ -809,7 +855,18 @@ export default function VereinMannschaftenPage() {
       </Card>
 
       {isFormOpen && currentTeam && activeClubId && isVereinsvertreter && (
-        <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) {setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAllClubShootersForDialog([]);} setIsFormOpen(open); }}>
+        <Dialog open={isFormOpen} onOpenChange={(open) => { 
+          if (!open) {
+            setCurrentTeam(null); 
+            setSelectedShooterIdsInForm([]); 
+            setPersistedShooterIdsForTeam([]); 
+            setAllClubShootersForDialog([]);
+            setTeamStrength("");
+            setSuggestedTeamName("");
+            setShooterSearchQuery("");
+          } 
+          setIsFormOpen(open); 
+        }}>
           <DialogContent className="sm:max-w-2xl"> {/* Increased width */}
             <form onSubmit={handleSubmitTeamForm}>
               <DialogHeader>
@@ -822,19 +879,49 @@ export default function VereinMannschaftenPage() {
                 <Alert variant="default" className="mb-4 bg-blue-50 border-blue-300 text-blue-700">
                     <InfoIcon className="h-4 w-4 text-blue-600" />
                     <UiAlertDescription>
-                        Hinweis zur Mannschaftsstärke: Bitte kennzeichnen Sie Ihre leistungsstärkste Mannschaft mit "I", die zweitstärkste mit "II" usw. Die Ligazuweisung erfolgt durch den Rundenwettkampfleiter.
+                        Hinweis zur Mannschaftsstärke: Bitte wählen Sie die Stärke Ihrer Mannschaft aus (I für die stärkste, II für die zweitstärkste usw.). Der Mannschaftsname wird automatisch vorgeschlagen. Die Ligazuweisung erfolgt durch den Rundenwettkampfleiter.
                     </UiAlertDescription>
                 </Alert>
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                     <div className="space-y-1.5">
-                        <Label htmlFor="vvm-teamNameDialog">Name der Mannschaft</Label>
-                        <Input id="vvm-teamNameDialog" value={currentTeam.name || ''} onChange={(e) => handleFormInputChange('name', e.target.value)} required />
+                        <Label htmlFor="vvm-teamStrengthDialog">Mannschaftsstärke</Label>
+                        <Select
+                          value={teamStrength}
+                          onValueChange={handleTeamStrengthChange}
+                        >
+                          <SelectTrigger id="vvm-teamStrengthDialog" className="w-full">
+                            <SelectValue placeholder="Mannschaftsstärke wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="I">I (Erste Mannschaft)</SelectItem>
+                            <SelectItem value="II">II (Zweite Mannschaft)</SelectItem>
+                            <SelectItem value="III">III (Dritte Mannschaft)</SelectItem>
+                            <SelectItem value="IV">IV (Vierte Mannschaft)</SelectItem>
+                            <SelectItem value="V">V (Fünfte Mannschaft)</SelectItem>
+                          </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-1.5">
                         <Label htmlFor="vvm-teamClubDialog">Verein (Zugewiesen)</Label>
                         <Input id="vvm-teamClubDialog" value={activeClubName || ''} disabled className="bg-muted/50" />
                     </div>
+                </div>
+                
+                <div className="space-y-1.5 mt-3">
+                    <Label htmlFor="vvm-teamNameDialog">Name der Mannschaft</Label>
+                    <Input 
+                      id="vvm-teamNameDialog" 
+                      value={currentTeam?.name || ''} 
+                      onChange={(e) => handleFormInputChange('name', e.target.value)} 
+                      placeholder={suggestedTeamName || "Wird automatisch generiert nach Auswahl der Mannschaftsstärke"}
+                      required 
+                    />
+                    {suggestedTeamName && formMode === 'new' && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Vorschlag basierend auf Verein und Mannschaftsstärke. Sie können den Namen bei Bedarf anpassen.
+                      </p>
+                    )}
                 </div>
                 
                 <div className="space-y-1.5 mt-3">
@@ -861,66 +948,94 @@ export default function VereinMannschaftenPage() {
                     <Label className="text-base font-medium">Schützen für diese Mannschaft auswählen</Label>
                     <span className="text-sm text-muted-foreground">{selectedShooterIdsInForm.length} / {MAX_SHOOTERS_PER_TEAM} ausgewählt</span>
                   </div>
+                  
+                  <div className="mb-2">
+                    <Input
+                      type="search"
+                      placeholder="Schützen suchen..."
+                      value={shooterSearchQuery}
+                      onChange={(e) => setShooterSearchQuery(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  
                   {isLoadingDialogData ? (
-                     <div className="flex items-center justify-center p-4 h-40 border rounded-md bg-muted/30"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="ml-2">Lade Schützen...</p></div>
+                     <div className="flex items-center justify-center p-4 h-40 border rounded-md bg-muted/30">
+                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                       <p className="ml-2">Lade Schützen...</p>
+                     </div>
                   ) : allClubShootersForDialog.length > 0 ? (
-                    <ScrollArea className="h-40 rounded-md border p-3 bg-background">
-                      <div className="space-y-1">
-                      {allClubShootersForDialog.map(shooter => {
-                        if (!shooter || !shooter.id) return null; 
-                        const isSelected = selectedShooterIdsInForm.includes(shooter.id);
-                        
-                        let isDisabledByMax = !isSelected && selectedShooterIdsInForm.length >= MAX_SHOOTERS_PER_TEAM;
-                        let isDisabledByDisciplineConflict = false;
-                        let disableReason = "";
-                        
-                        const teamBeingEdited = currentTeam;
-                        const teamLeagueData = teamBeingEdited?.leagueId ? allLeagues.find(l => l.id === teamBeingEdited.leagueId) : null;
-                        const categoryOfCurrentTeam = getDisciplineCategory(teamLeagueData?.type);
-                        const currentTeamCompYearForValidation = teamBeingEdited?.competitionYear || allSeasons.find(s => s.id === selectedSeasonId)?.competitionYear;
+                      <ScrollArea className="h-40 rounded-md border p-3 bg-background">
+                        <div className="space-y-1">
+                          {allClubShootersForDialog
+                            .filter(shooter => {
+                              if (!shooter || !shooter.name) return false;
+                              if (!shooterSearchQuery.trim()) return true;
+                              return shooter.name.toLowerCase().includes(shooterSearchQuery.toLowerCase());
+                            })
+                            .map(shooter => {
+                              if (!shooter || !shooter.id) return null; 
+                              const isSelected = selectedShooterIdsInForm.includes(shooter.id);
+                              
+                              let isDisabledByMax = !isSelected && selectedShooterIdsInForm.length >= MAX_SHOOTERS_PER_TEAM;
+                              let isDisabledByDisciplineConflict = false;
+                              let disableReason = "";
+                              
+                              const teamBeingEdited = currentTeam;
+                              const teamLeagueData = teamBeingEdited?.leagueId ? allLeagues.find(l => l.id === teamBeingEdited.leagueId) : null;
+                              const categoryOfCurrentTeam = getDisciplineCategory(teamLeagueData?.type);
+                              const currentTeamCompYearForValidation = teamBeingEdited?.competitionYear || allSeasons.find(s => s.id === selectedSeasonId)?.competitionYear;
 
-                        if (!isSelected && teamLeagueData && categoryOfCurrentTeam && currentTeamCompYearForValidation !== undefined) {
-                           if (formMode === 'new' || !persistedShooterIdsForTeam.includes(shooter.id)) { 
-                                let assignedToSameCategoryInYear = false;
-                                (shooter.teamIds || []).forEach(assignedTeamId => {
+                              if (!isSelected && teamLeagueData && categoryOfCurrentTeam && currentTeamCompYearForValidation !== undefined) {
+                                if (formMode === 'new' || !persistedShooterIdsForTeam.includes(shooter.id)) { 
+                                  let assignedToSameCategoryInYear = false;
+                                  (shooter.teamIds || []).forEach(assignedTeamId => {
                                     if (formMode === 'edit' && teamBeingEdited?.id === assignedTeamId) return; 
                                     
                                     const assignedTeamInfo = allTeamsForValidation.find(t => t.id === assignedTeamId);
                                     if (assignedTeamInfo?.leagueCompetitionYear === currentTeamCompYearForValidation) { 
-                                        const categoryOfAssignedTeam = getDisciplineCategory(assignedTeamInfo.leagueType);
-                                        if (categoryOfAssignedTeam && categoryOfAssignedTeam === categoryOfCurrentTeam) assignedToSameCategoryInYear = true;
+                                      const categoryOfAssignedTeam = getDisciplineCategory(assignedTeamInfo.leagueType);
+                                      if (categoryOfAssignedTeam && categoryOfAssignedTeam === categoryOfCurrentTeam) assignedToSameCategoryInYear = true;
                                     }
-                                });
-                                if (assignedToSameCategoryInYear) {
+                                  });
+                                  if (assignedToSameCategoryInYear) {
                                     isDisabledByDisciplineConflict = true;
                                     disableReason = `(bereits in ${categoryOfCurrentTeam}-Team ${currentTeamCompYearForValidation})`;
+                                  }
                                 }
-                           }
-                        }
-                         if (isDisabledByMax && !isDisabledByDisciplineConflict) disableReason = "(Max. Schützen erreicht)";
-                        
-                        const finalIsDisabled = isDisabledByMax || isLoadingDialogData || isDisabledByDisciplineConflict;
-                        return (
-                            <div key={shooter.id} className="flex items-center space-x-3 p-1.5 hover:bg-muted/50 rounded-md">
-                            <Checkbox
-                                id={`vvm-team-shooter-assign-${shooter.id}`}
-                                checked={isSelected}
-                                onCheckedChange={(checkedState) => handleShooterSelectionChange(shooter.id, !!checkedState)}
-                                disabled={finalIsDisabled}
-                            />
-                            <Label htmlFor={`vvm-team-shooter-assign-${shooter.id}`} className={`font-normal cursor-pointer flex-grow ${finalIsDisabled ? 'opacity-50 cursor-not-allowed' : '' }`}>
-                                {shooter.name}
-                                <span className='text-xs text-muted-foreground block'>(Schnitt Vorjahr: folgt)</span>
-                                {finalIsDisabled && disableReason && <span className="text-xs text-destructive ml-1">{disableReason}</span>}
-                            </Label>
-                            </div>
-                        );
-                      })}
-                      </div>
-                    </ScrollArea>
+                              }
+                              if (isDisabledByMax && !isDisabledByDisciplineConflict) disableReason = "(Max. Schützen erreicht)";
+                              
+                              const finalIsDisabled = isDisabledByMax || isLoadingDialogData || isDisabledByDisciplineConflict;
+                              return (
+                                <div key={shooter.id} className="flex items-center space-x-3 p-1.5 hover:bg-muted/50 rounded-md">
+                                  <Checkbox
+                                    id={`vvm-team-shooter-assign-${shooter.id}`}
+                                    checked={isSelected}
+                                    onCheckedChange={(checkedState) => handleShooterSelectionChange(shooter.id, !!checkedState)}
+                                    disabled={finalIsDisabled}
+                                  />
+                                  <Label htmlFor={`vvm-team-shooter-assign-${shooter.id}`} className={`font-normal cursor-pointer flex-grow ${finalIsDisabled ? 'opacity-50 cursor-not-allowed' : '' } ${isSelected ? 'text-primary font-medium' : ''}`}>
+                                    {shooter.name} {isSelected && '✓'}
+                                    <span className='text-xs text-muted-foreground block'>(Schnitt Vorjahr: folgt)</span>
+                                    {finalIsDisabled && disableReason && <span className="text-xs text-destructive ml-1">{disableReason}</span>}
+                                  </Label>
+                                </div>
+                              );
+                            })
+                          }
+                        </div>
+                      </ScrollArea>
                   ) : (
                     <div className="text-sm text-muted-foreground p-4 h-40 border rounded-md flex items-center justify-center bg-muted/30">
-                      <p>{(activeClubId) ? `Keine Schützen für '${activeClubName || 'diesen Verein'}' verfügbar oder alle für diese Kriterien bereits zugewiesen/ungeeignet.` : 'Verein nicht aktiv.'}</p>
+                      <p>
+                        {shooterSearchQuery.trim() && allClubShootersForDialog.length > 0 
+                          ? `Keine Schützen gefunden, die "${shooterSearchQuery}" enthalten.` 
+                          : (activeClubId) 
+                            ? `Keine Schützen für '${activeClubName || 'diesen Verein'}' verfügbar oder alle für diese Kriterien bereits zugewiesen/ungeeignet.` 
+                            : 'Verein nicht aktiv.'
+                        }
+                      </p>
                     </div>
                   )}
                 </div>

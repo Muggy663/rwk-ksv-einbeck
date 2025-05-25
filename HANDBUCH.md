@@ -1,7 +1,7 @@
 
 # Benutzerhandbuch RWK Einbeck App
 
-Dieses Handbuch beschreibt die Funktionen und die Bedienung der Rundenwettkampf (RWK) App für den Kreisschützenverband Einbeck. (Stand: 24. Mai 2025)
+Dieses Handbuch beschreibt die Funktionen und die Bedienung der Rundenwettkampf (RWK) App für den Kreisschützenverband Einbeck. (Stand: 24. Mai 2025, Version 0.3.5)
 
 ## Inhaltsverzeichnis
 

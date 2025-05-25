@@ -522,12 +522,91 @@ export default function VereinErgebnissePage() {
               <Label htmlFor="vver-shooter">Schütze</Label>
               <Select value={selectedShooterId} onValueChange={setSelectedShooterId} disabled={!selectedTeamId || isLoadingShooters || isLoadingExistingScores || (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound)}>
                 <SelectTrigger id="vver-shooter"><SelectValue placeholder={isLoadingShooters || isLoadingExistingScores ? "Lade Schützen..." : (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound ? "Alle erfasst/keine" : "Schütze wählen")} /></SelectTrigger>
-                <SelectContent>{availableShootersForDropdown.filter(sh=>sh.id).map(sh => <SelectItem key={sh.id} value={sh.id}>{sh.name}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {availableShootersForDropdown.filter(sh=>sh.id).map(sh => {
+                    // Prüfen, ob der Schütze bereits Ergebnisse hat
+                    const hasExistingScore = existingScoresForTeamAndRound.some(score => score.shooterId === sh.id);
+                    const hasPendingScore = pendingScores.some(ps => ps.shooterId === sh.id && ps.teamId === selectedTeamId && ps.durchgang === parseInt(selectedRound, 10));
+                    const hasJustSavedScore = justSavedScoreIdentifiers.some(js => js.shooterId === sh.id && js.durchgang === parseInt(selectedRound, 10));
+                    
+                    // Wenn der Schütze noch kein Ergebnis hat, heben wir ihn hervor
+                    const needsScore = !hasExistingScore && !hasPendingScore && !hasJustSavedScore;
+                    
+                    return (
+                      <SelectItem 
+                        key={sh.id} 
+                        value={sh.id} 
+                        className={needsScore ? "font-bold text-primary" : ""}
+                      >
+                        {needsScore ? `${sh.name} ⚠️` : sh.name}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="vver-score">Ergebnis (Ringe)</Label>
-              <Input id="vver-score" type="number" value={score} onChange={(e) => setScore(e.target.value)} placeholder="z.B. 285" disabled={!selectedShooterId} />
+              <Input 
+                id="vver-score" 
+                type="number" 
+                value={score} 
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setScore(value);
+                  
+                  // Live-Validierung der Ringzahlen
+                  if (value && selectedLeagueId) {
+                    const scoreVal = parseInt(value);
+                    let maxPossibleScore = 300;
+                    const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
+                    const selectedLeagueObject = allLeagues.find(l => l.id === selectedLeagueId);
+                    
+                    if (selectedLeagueObject && fourHundredPointDisciplines.includes(selectedLeagueObject.type)) {
+                      maxPossibleScore = 400;
+                    }
+                    
+                    if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) {
+                      e.target.setCustomValidity(`Bitte geben Sie eine gültige Ringzahl zwischen 0 und ${maxPossibleScore} ein.`);
+                    } else {
+                      e.target.setCustomValidity('');
+                    }
+                  }
+                }}
+                placeholder="z.B. 285" 
+                disabled={!selectedShooterId}
+                className={score && selectedLeagueId ? (
+                  (() => {
+                    const scoreVal = parseInt(score);
+                    let maxPossibleScore = 300;
+                    const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
+                    const selectedLeagueObject = allLeagues.find(l => l.id === selectedLeagueId);
+                    
+                    if (selectedLeagueObject && fourHundredPointDisciplines.includes(selectedLeagueObject.type)) {
+                      maxPossibleScore = 400;
+                    }
+                    
+                    return (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) 
+                      ? "border-red-500 focus:ring-red-500" 
+                      : "border-green-500 focus:ring-green-500";
+                  })()
+                ) : ""}
+              />
+              {score && selectedLeagueId && (() => {
+                const scoreVal = parseInt(score);
+                let maxPossibleScore = 300;
+                const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
+                const selectedLeagueObject = allLeagues.find(l => l.id === selectedLeagueId);
+                
+                if (selectedLeagueObject && fourHundredPointDisciplines.includes(selectedLeagueObject.type)) {
+                  maxPossibleScore = 400;
+                }
+                
+                if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) {
+                  return <p className="text-xs text-red-500 mt-1">Bitte geben Sie eine gültige Ringzahl zwischen 0 und {maxPossibleScore} ein.</p>;
+                }
+                return null;
+              })()}
             </div>
           </div>
           <div className="space-y-3 pt-2">

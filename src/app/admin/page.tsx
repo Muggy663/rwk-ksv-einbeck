@@ -74,7 +74,7 @@ export default function AdminDashboardPage() {
     // Ziel: Version 0.5.0 (UX-Verbesserungen, Vorbereitung für erste breitere Tests)
     {
       text: "Ergebniserfassung (VV/MF/Admin): UX-Verbesserungen (z.B. Vorauswahl Durchgang, Anzeige fehlender Schützen, Live-Validierung Ringzahlen).",
-      status: "Teilweise erledigt (v0.3.4)", icon: ListChecks, iconColor: "text-blue-600", versionTarget: "0.5.0", isMajor: true
+      status: "Teilweise erledigt (v0.3.5)", icon: ListChecks, iconColor: "text-blue-600", versionTarget: "0.5.0", isMajor: true
     },
     {
       text: "Admin-Panel: Liste aller Mannschaftsführer einer Saison (mit Kontaktdaten).",
@@ -269,7 +269,7 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle className="text-xl text-accent flex items-center">
             <GitPullRequestClosed className="mr-3 h-6 w-6" />
-            Roadmap / Nächste Schritte (Stand: 24. Mai 2025)
+            Roadmap / Nächste Schritte (Stand: 24. Mai 2025, Version 0.3.5)
           </CardTitle>
           <CardDescription>Übersicht geplanter Erweiterungen und wichtiger Aufgaben, strukturiert nach potenziellen Versionen.</CardDescription>
         </CardHeader>

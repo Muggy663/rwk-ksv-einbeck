@@ -102,6 +102,7 @@ export default function VereinSchuetzenPage() {
   
   const [contextTeamName, setContextTeamName] = useState<string | null>(null);
   const [isContextTeamNameLoading, setIsContextTeamNameLoading] = useState<boolean>(false);
+  const [shooterSearchQuery, setShooterSearchQuery] = useState<string>("");
 
   // States for team assignment in "New Shooter" dialog (simplified for VV)
   const [teamsOfSelectedClubInDialog, setTeamsOfSelectedClubInDialog] = useState<Array<Team & { leagueType?: FirestoreLeagueSpecificDiscipline, leagueCompetitionYear?: number, currentShooterCount?: number }>>([]);
@@ -514,12 +515,34 @@ export default function VereinSchuetzenPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <Input
+              type="search"
+              placeholder="Schützen suchen..."
+              value={shooterSearchQuery}
+              onChange={(e) => setShooterSearchQuery(e.target.value)}
+              className="w-full"
+            />
+          </div>
           {isLoadingClubSpecificData && <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2">Lade Schützen...</p></div>}
           {!isLoadingClubSpecificData && shootersOfActiveClub.length === 0 && (
             <div className="p-4 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <AlertTriangle className="mx-auto h-8 w-8 text-primary/70 mb-2" />
               <p>{`Keine Schützen für "${activeClubName || 'diesen Verein'}" gefunden.`}</p>
               {isVereinsvertreter && <p className="text-sm mt-1">Klicken Sie auf "Neuen Schützen anlegen".</p>}
+            </div>
+          )}
+          {!isLoadingClubSpecificData && shootersOfActiveClub.length > 0 && 
+           shootersOfActiveClub.filter(shooter => {
+             if (!shooterSearchQuery.trim()) return true;
+             const fullName = `${shooter.firstName} ${shooter.lastName}`.toLowerCase();
+             const reverseName = `${shooter.lastName} ${shooter.firstName}`.toLowerCase();
+             const searchTerm = shooterSearchQuery.toLowerCase();
+             return fullName.includes(searchTerm) || reverseName.includes(searchTerm);
+           }).length === 0 && (
+            <div className="p-4 text-center text-muted-foreground bg-secondary/30 rounded-md">
+              <AlertTriangle className="mx-auto h-8 w-8 text-primary/70 mb-2" />
+              <p>{`Keine Schützen gefunden, die "${shooterSearchQuery}" enthalten.`}</p>
             </div>
           )}
           {!isLoadingClubSpecificData && shootersOfActiveClub.length > 0 && (
@@ -530,7 +553,15 @@ export default function VereinSchuetzenPage() {
                   {isVereinsvertreter && <TableHead className="text-right">Aktionen</TableHead>}
               </TableRow></TableHeader>
               <TableBody>
-                {shootersOfActiveClub.map((shooter) => (
+                {shootersOfActiveClub
+                  .filter(shooter => {
+                    if (!shooterSearchQuery.trim()) return true;
+                    const fullName = `${shooter.firstName} ${shooter.lastName}`.toLowerCase();
+                    const reverseName = `${shooter.lastName} ${shooter.firstName}`.toLowerCase();
+                    const searchTerm = shooterSearchQuery.toLowerCase();
+                    return fullName.includes(searchTerm) || reverseName.includes(searchTerm);
+                  })
+                  .map((shooter) => (
                 <TableRow key={shooter.id}>
                     <TableCell>{shooter.lastName}</TableCell>
                     <TableCell>{shooter.firstName}</TableCell>
