@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.4.0"; // Aktualisierte Version
+  const version = "0.5.1"; // Aktualisierte Version
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">
@@ -17,7 +17,9 @@ export function SiteFooter() {
           </Link>
         </div>
         <p className="text-center text-sm text-muted-foreground md:text-right">
-          Version {version}
+          <Link href="/updates" className="hover:text-primary">
+            Version {version}
+          </Link>
         </p>
       </div>
     </footer>

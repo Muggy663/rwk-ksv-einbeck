@@ -79,26 +79,26 @@ export default function AdminDashboardPage() {
       status: "Erledigt (v0.4.0)", icon: CheckCircle, iconColor: "text-green-600"
     },
 
-    // Ziel: Version 0.5.0 (UX-Verbesserungen, Vorbereitung für erste breitere Tests)
+    // Version 0.5.0 (UX-Verbesserungen, Vorbereitung für erste breitere Tests)
     {
       text: "Ergebniserfassung (VV/MF/Admin): UX-Verbesserungen (z.B. Vorauswahl Durchgang, Anzeige fehlender Schützen, Live-Validierung Ringzahlen).",
-      status: "Teilweise erledigt (v0.3.5)", icon: ListChecks, iconColor: "text-blue-600", versionTarget: "0.5.0", isMajor: true
+      status: "Teilweise erledigt (v0.5.0)", icon: ListChecks, iconColor: "text-blue-600", versionTarget: "0.5.0", isMajor: true
     },
     {
       text: "Admin-Panel: Liste aller Mannschaftsführer einer Saison (mit Kontaktdaten).",
-      status: "Offen (Version 0.5.0)", icon: ClipboardList, iconColor: "text-blue-600", versionTarget: "0.5.0"
+      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
     },
     {
       text: "Login: Passwort-Reset-Funktion implementieren.",
-      status: "Offen (Version 0.5.0)", icon: KeyRound, iconColor: "text-blue-600", versionTarget: "0.5.0"
+      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
     },
     {
       text: "Anzeige 'Mannschaften (Info)' verfeinern: Name des einen Teams anzeigen, wenn nur ein Team zugeordnet (ohne Kontext).",
-      status: "Offen (Version 0.5.0)", icon: Users, iconColor: "text-blue-600", versionTarget: "0.5.0"
+      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
     },
     {
-      text: "RWK-Tabellen: Druckfunktion für Ligaergebnisse (ohne sensible Daten).",
-      status: "Offen (Version 0.5.0)", icon: Printer, iconColor: "text-blue-600", versionTarget: "0.5.0"
+      text: "RWK-Tabellen: Druckfunktion für Ligaergebnisse (ohne sensible Daten, aktuell mit Dummy-Daten).",
+      status: "Erledigt (v0.5.1)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.1"
     },
     {
       text: "Hauptnavigation: Icons überprüfen/optimieren, 'KM'-Link entfernt/auskommentiert.",
@@ -106,7 +106,7 @@ export default function AdminDashboardPage() {
     },
     {
       text: "Admin-Benutzerverwaltung: UI-Verbesserungen (Auflisten, einfacheres Bearbeiten).",
-      status: "Offen (Version 0.5.0)", icon: UserCog, iconColor: "text-blue-600", versionTarget: "0.5.0"
+      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
     },
 
 
@@ -228,6 +228,21 @@ export default function AdminDashboardPage() {
         
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium text-accent">Mannschaftsführer</CardTitle>
+            <ClipboardList className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Übersicht aller Mannschaftsführer mit Kontaktdaten nach Saison.
+            </CardDescription>
+            <Link href="/admin/captains" passHref>
+              <Button className="w-full">Mannschaftsführer anzeigen</Button>
+            </Link>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium">Benutzerverwaltung</CardTitle>
             <UserCog className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
@@ -292,7 +307,7 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle className="text-xl text-accent flex items-center">
             <GitPullRequestClosed className="mr-3 h-6 w-6" />
-            Roadmap / Nächste Schritte (Stand: 25. Mai 2025, Version 0.4.0)
+            Roadmap / Nächste Schritte (Stand: 27. Mai 2025, Version 0.5.1)
           </CardTitle>
           <CardDescription>Übersicht geplanter Erweiterungen und wichtiger Aufgaben, strukturiert nach potenziellen Versionen.</CardDescription>
         </CardHeader>

@@ -8,6 +8,30 @@ import type { ChangelogEntry } from '@/types/updates';
 
 const changelogEntries: ChangelogEntry[] = [
   {
+    version: '0.5.1',
+    date: '27. Mai 2025',
+    title: 'Druckfunktion-Fix & Kompatibilitätsverbesserungen',
+    descriptionPoints: [
+      'Behoben: Druckfunktion für RWK-Tabellen funktioniert jetzt zuverlässig mit React 18.',
+      'Verbessert: Eigene Drucklösung implementiert, die ohne externe Bibliotheken auskommt.',
+      'Hinweis: Druckansicht zeigt aktuell Dummy-Daten aufgrund von Berechtigungseinschränkungen.',
+      'Aktualisierung der Dokumentation und Handbuch mit den neuesten Funktionen.',
+    ],
+  },
+  {
+    version: '0.5.0',
+    date: '26. Mai 2025',
+    title: 'UX-Verbesserungen & Benutzerfreundlichkeit',
+    descriptionPoints: [
+      'Neu: Admin-Panel mit Liste aller Mannschaftsführer einer Saison mit Kontaktdaten und CSV-Export.',
+      'Neu: Passwort-Reset-Funktion für Benutzer implementiert.',
+      'Verbessert: Anzeige der Mannschaftsinformationen für Schützen zeigt jetzt alle Teamnamen statt nur die Anzahl.',
+      'Neu: Druckfunktion für RWK-Tabellen mit CSV-Export-Option.',
+      'Verbessert: Admin-Benutzerverwaltung mit Benutzerübersicht, Suchfunktion und einfacherem Bearbeiten.',
+      'Aktualisierung der Dokumentation und Handbuch mit den neuesten Funktionen.',
+    ],
+  },
+  {
     version: '0.4.0',
     date: '25. Mai 2025',
     title: 'Berechtigungen für Ergebniserfassung & Tooltips',

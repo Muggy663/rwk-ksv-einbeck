@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LogIn, AlertTriangle } from 'lucide-react';
+import { PasswordResetForm } from './PasswordResetForm';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Ungültige E-Mail-Adresse." }),
@@ -22,6 +23,7 @@ type LoginFormInputs = z.infer<typeof loginSchema>;
 export function LoginForm() {
   const { signIn, loading, error: authError } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
 
   const {
     register,
@@ -41,6 +43,10 @@ export function LoginForm() {
       // setFormError((e as Error).message || "Anmeldung fehlgeschlagen.");
     }
   };
+
+  if (showPasswordReset) {
+    return <PasswordResetForm onBack={() => setShowPasswordReset(false)} />;
+  }
 
   return (
     <div className="flex justify-center items-center py-12">
@@ -75,6 +81,16 @@ export function LoginForm() {
                 aria-invalid={errors.password ? "true" : "false"}
               />
               {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+              <div className="text-right">
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-sm" 
+                  onClick={() => setShowPasswordReset(true)}
+                  type="button"
+                >
+                  Passwort vergessen?
+                </Button>
+              </div>
             </div>
             
             <div className="pt-2 text-sm text-muted-foreground">
@@ -106,7 +122,7 @@ export function LoginForm() {
         </CardContent>
         <CardFooter className="text-center text-sm">
           <p className="text-muted-foreground">
-            Passwort vergessen? Bitte kontaktieren Sie den Administrator.
+            Bei Problemen mit der Anmeldung wenden Sie sich bitte an den Administrator.
           </p>
         </CardFooter>
       </Card>
