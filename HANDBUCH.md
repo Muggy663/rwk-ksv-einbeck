@@ -1,7 +1,7 @@
 
 # Benutzerhandbuch RWK Einbeck App
 
-Dieses Handbuch beschreibt die Funktionen und die Bedienung der Rundenwettkampf (RWK) App für den Kreisschützenverband Einbeck. (Stand: 24. Mai 2025, Version 0.3.5)
+Dieses Handbuch beschreibt die Funktionen und die Bedienung der Rundenwettkampf (RWK) App für den Kreisschützenverband Einbeck. (Stand: 27. Mai 2025, Version 0.5.1)
 
 ## Inhaltsverzeichnis
 
@@ -168,6 +168,7 @@ Die RWK-Tabellen zeigen die aktuellen Ranglisten.
 *   **Filter:** Auswahl von Wettkampfjahr (dynamisch aus vorhandenen Saisons) und Disziplin (Kleinkaliber, Luftdruck). Das aktuellste Jahr mit laufenden Saisons wird standardmäßig ausgewählt. Bei Klick auf einen Link aus dem "Letzte Änderungen"-Feed werden Jahr, Disziplin und Liga vorausgewählt und die Liga direkt geöffnet.
 *   **Anzeige:** Zeigt nur Ligen von Saisons mit Status "Laufend". Die Ligen sind standardmäßig aufgeklappt, können aber einzeln geschlossen werden.
 *   **Mannschaftsrangliste:** Tabellarische Übersicht der Ligen mit Mannschaften, deren Rundenergebnissen, Gesamtergebnis und Schnitt. Mannschaften, deren Name "Einzel" enthält, werden hier nicht aufgeführt. Mannschaften können aufgeklappt werden, um Einzelergebnisse der Schützen zu sehen. Schützennamen in dieser Detailansicht sind klickbar und öffnen einen Statistik-Dialog mit Leistungsdiagramm.
+*   **Druckfunktion:** Jede Liga verfügt über einen Druckbutton, mit dem eine druckfreundliche Version der Ligatabelle geöffnet werden kann. In dieser Ansicht können die Daten auch als CSV-Datei exportiert werden. Hinweis: Die Druckansicht zeigt aktuell Dummy-Daten aufgrund von Berechtigungseinschränkungen.
 *   **Einzelschützenrangliste:** Tabellarische Übersicht aller Schützen der ausgewählten Saison/Disziplin, sortiert nach Gesamtleistung, mit Anzeige der Rundenergebnisse, Gesamt und Schnitt. Optional kann über ein Dropdown nach einer spezifischen Liga gefiltert werden, um nur deren Einzelschützen anzuzeigen.
 *   **Bester Schütze / Beste Dame:** Werden für den gesamten ausgewählten Wettbewerb (Jahr/Disziplin) hervorgehoben.
 *   **Detailansicht Schütze:** Klick auf einen Schützennamen öffnet einen Dialog mit dessen Detailergebnissen und einem Leistungsdiagramm.

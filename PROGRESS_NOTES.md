@@ -19,6 +19,7 @@ Die RWK Einbeck App ist eine Webanwendung zur Verwaltung von Rundenwettkämpfen 
 - **league_updates**: Aktualisierungen für den "Letzte Änderungen"-Feed auf der Startseite
 - **support_tickets**: Support-Anfragen von Benutzern
 - **user_permissions**: Benutzerberechtigungen mit Rolle und Vereinszuordnung
+- **documents**: Dokumente und Ausschreibungen mit Kategorien
 
 ## Benutzerrollen und Berechtigungen
 - **Super-Administrator**: Vollzugriff auf alle Funktionen, verwaltet Saisons, Ligen, Vereine und Benutzerrechte
@@ -28,7 +29,7 @@ Die RWK Einbeck App ist eine Webanwendung zur Verwaltung von Rundenwettkämpfen 
 
 ## Firestore-Sicherheitsregeln
 Die Sicherheitsregeln sind implementiert und basieren auf der `user_permissions`-Collection:
-- Öffentlich lesbare Collections: seasons, clubs, rwk_leagues, newsItems
+- Öffentlich lesbare Collections: seasons, clubs, rwk_leagues, newsItems, documents
 - Beschränkte Schreibrechte für Vereinsvertreter und Mannschaftsführer auf ihre eigenen Daten
 - Vollzugriff für Super-Administrator auf alle Collections
 - Validierung der Benutzerrechte basierend auf UID und zugewiesenem Verein
@@ -43,6 +44,12 @@ Die Sicherheitsregeln sind implementiert und basieren auf der `user_permissions`
 - ✅ Fehler "seasonId is not defined" in der Ergebniserfassung behoben
 - ✅ Durchgang bleibt beim Mannschaftswechsel in der Ergebniserfassung erhalten
 - ✅ Mannschaften mit vollständigen Ergebnissen werden aus dem Dropdown entfernt
+- ✅ Dokumentenverwaltung & Benutzerfreundlichkeit
+- ✅ Passwort-Reset-Funktion implementiert
+- ✅ Admin-Panel: Liste aller Mannschaftsführer einer Saison mit Kontaktdaten
+- ✅ Anzeige 'Mannschaften (Info)' verfeinert: Name des Teams anzeigen, wenn nur ein Team zugeordnet
+- ✅ RWK-Tabellen: Druckfunktion für Ligaergebnisse
+- ✅ Admin-Benutzerverwaltung: UI-Verbesserungen (Auflisten, einfacheres Bearbeiten)
 
 ## Aktuelle Aufgaben
 - 🔄 Weitere UX-Verbesserungen für die Ergebniserfassung:
@@ -50,17 +57,11 @@ Die Sicherheitsregeln sind implementiert und basieren auf der `user_permissions`
   - ✅ Visuelle Hervorhebung von Schützen, für die noch keine Ergebnisse eingetragen wurden
   - Live-Validierung der Ringzahlen
 
-## Geplante Verbesserungen (Version 0.5.0)
+## Geplante Verbesserungen (Version 0.6.0)
 - Vereinfachte Mannschaftsanlage mit Dropdown für Mannschaftsstärke (I, II, III)
 - Automatische Vorschläge für Mannschaftsnamen basierend auf Verein und Stärke
 - Suchfunktion für Schützen bei größeren Vereinen
 - Deutlichere visuelle Unterscheidung zwischen verfügbaren und bereits zugewiesenen Schützen
-- Admin-Panel: Liste aller Mannschaftsführer einer Saison mit Kontaktdaten
-- Login: Passwort-Reset-Funktion
-- RWK-Tabellen: Druckfunktion für Ligaergebnisse
-- Admin-Benutzerverwaltung: UI-Verbesserungen
-
-## Geplante Features (Version 0.6.0)
 - Audit-Trail für Ergebniserfassung (Admin)
 - "Schnitt Vorjahr" in den Team-Dialogen mit echter Funktionalität
 - PDF-Generierung für Gesamtlisten und Urkunden
@@ -82,17 +83,27 @@ Die App ist für weniger technikaffine Nutzer konzipiert und legt Wert auf:
 - Automatische Filterung und Vorauswahl wo möglich
 
 ## Aktuelle Version
-- **Version**: 0.4.0 (Stand: 24. Mai 2025)
-- **Letzte Änderungen**: Dokumentenverwaltung & Benutzerfreundlichkeit
-  - Neue Seite für Dokumente & Ausschreibungen mit Kategorien
-  - Admin-Dokumenten-Manager zum Hochladen und Verwalten von Dokumenten
-  - Live-Tooltips für Vereinsvertreter zur besseren Benutzerführung
-  - Schützen ohne Ergebnisse werden fett und mit Warnzeichen hervorgehoben
-  - Firestore-Sicherheitsregeln implementiert
+- **Version**: 0.5.1 (Stand: 27. Mai 2025)
+- **Letzte Änderungen**: Druckfunktion-Fix & Kompatibilitätsverbesserungen
+  - Druckfunktion für RWK-Tabellen funktioniert jetzt zuverlässig mit React 18
+  - Eigene Drucklösung implementiert, die ohne externe Bibliotheken auskommt
+  - Hinweis: Druckansicht zeigt aktuell Dummy-Daten aufgrund von Berechtigungseinschränkungen
+
+- **Version**: 0.5.0 (Stand: 26. Mai 2025)
+- **Letzte Änderungen**: UX-Verbesserungen & Benutzerfreundlichkeit
+  - Admin-Panel: Liste aller Mannschaftsführer einer Saison mit Kontaktdaten
+  - Passwort-Reset-Funktion implementiert
+  - Anzeige 'Mannschaften (Info)' verfeinert: Name des Teams anzeigen, wenn nur ein Team zugeordnet
+  - RWK-Tabellen: Druckfunktion für Ligaergebnisse
+  - Admin-Benutzerverwaltung: UI-Verbesserungen (Auflisten, einfacheres Bearbeiten)
 
 ## Nächste Schritte
 - ✅ Implementierung der Seite für Dokumente/Ausschreibungen
 - ✅ Weitere UX-Verbesserungen für die Ergebniserfassung
 - ✅ Dokumenten-Manager für Admins
 - ✅ Live-Tooltips für Vereinsvertreter
+- ✅ Passwort-Reset-Funktion
+- ✅ Admin-Panel: Liste aller Mannschaftsführer einer Saison
+- ✅ RWK-Tabellen: Druckfunktion für Ligaergebnisse
+- ✅ Admin-Benutzerverwaltung: UI-Verbesserungen
 - Vorbereitung für erste breitere Tests mit Vereinsvertretern und Mannschaftsführern
