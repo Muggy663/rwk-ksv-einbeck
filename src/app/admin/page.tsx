@@ -82,7 +82,7 @@ export default function AdminDashboardPage() {
     // Version 0.5.0 (UX-Verbesserungen, Vorbereitung für erste breitere Tests)
     {
       text: "Ergebniserfassung (VV/MF/Admin): UX-Verbesserungen (z.B. Vorauswahl Durchgang, Anzeige fehlender Schützen, Live-Validierung Ringzahlen).",
-      status: "Teilweise erledigt (v0.5.0)", icon: ListChecks, iconColor: "text-blue-600", versionTarget: "0.5.0", isMajor: true
+      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0", isMajor: true
     },
     {
       text: "Admin-Panel: Liste aller Mannschaftsführer einer Saison (mit Kontaktdaten).",
@@ -97,8 +97,8 @@ export default function AdminDashboardPage() {
       status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
     },
     {
-      text: "RWK-Tabellen: Druckfunktion für Ligaergebnisse (ohne sensible Daten, aktuell mit Dummy-Daten).",
-      status: "Erledigt (v0.5.1)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.1"
+      text: "RWK-Tabellen: Druckfunktion für Ligaergebnisse (ohne sensible Daten).",
+      status: "Verschoben (v0.5.2)", icon: Printer, iconColor: "text-blue-600", versionTarget: "0.5.2"
     },
     {
       text: "Hauptnavigation: Icons überprüfen/optimieren, 'KM'-Link entfernt/auskommentiert.",
@@ -108,8 +108,26 @@ export default function AdminDashboardPage() {
       text: "Admin-Benutzerverwaltung: UI-Verbesserungen (Auflisten, einfacheres Bearbeiten).",
       status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
     },
+    {
+      text: "Vereinfachte Mannschaftsanlage mit Dropdown für Mannschaftsstärke und automatischen Namensvorschlägen.",
+      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
+    },
+    {
+      text: "Suchfunktion für Schützen bei größeren Vereinen implementiert.",
+      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
+    },
+    {
+      text: "Deutlichere visuelle Unterscheidung zwischen verfügbaren und zugewiesenen Schützen.",
+      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
+    },
 
 
+    // Ziel: Version 0.5.2 (Druckfunktion)
+    {
+      text: "RWK-Tabellen: Druckfunktion für Ligaergebnisse implementieren.",
+      status: "Als Nächstes (v0.5.2)", icon: Printer, iconColor: "text-destructive", versionTarget: "0.5.2", isMajor: true
+    },
+    
     // Ziel: Version 0.6.0 (Weitere Features, Richtung Beta-Reife)
     { 
       text: "Audit-Trail für Ergebniserfassung (Admin): Protokollierung von Änderungen.", 
@@ -228,21 +246,6 @@ export default function AdminDashboardPage() {
         
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-accent">Mannschaftsführer</CardTitle>
-            <ClipboardList className="h-6 w-6 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="mb-4">
-              Übersicht aller Mannschaftsführer mit Kontaktdaten nach Saison.
-            </CardDescription>
-            <Link href="/admin/captains" passHref>
-              <Button className="w-full">Mannschaftsführer anzeigen</Button>
-            </Link>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium">Benutzerverwaltung</CardTitle>
             <UserCog className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
@@ -267,6 +270,21 @@ export default function AdminDashboardPage() {
             </CardDescription>
             <Link href="/admin/documents" passHref>
               <Button className="w-full">Dokumente verwalten</Button>
+            </Link>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Mannschaftsführer</CardTitle>
+            <Users className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Liste aller Mannschaftsführer nach Saison und Liga mit Kontaktdaten.
+            </CardDescription>
+            <Link href="/admin/team-managers" passHref>
+              <Button className="w-full" variant="outline">Mannschaftsführer anzeigen</Button>
             </Link>
           </CardContent>
         </Card>

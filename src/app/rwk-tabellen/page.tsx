@@ -51,7 +51,6 @@ import {
   Trophy,
   Medal,
   LineChart as LineChartIcon,
-  Printer,
 } from 'lucide-react';
 import type {
   Season,
@@ -1005,25 +1004,9 @@ function RwkTabellenPageComponent() {
             <Accordion type="multiple" value={openAccordionItems} onValueChange={handleAccordionValueChange} className="w-full space-y-4">
               {teamData.leagues.map((league) => (
                 <AccordionItem value={league.id} key={league.id} className="border bg-card shadow-lg rounded-lg overflow-hidden">
-                  <div className="flex items-center bg-accent/10 hover:bg-accent/20">
-                    <AccordionTrigger className="flex-1 px-6 py-4 text-xl font-semibold text-accent data-[state=open]:border-b data-[state=open]:border-border/50">
-                      {league.name} {league.shortName && `(${league.shortName})`}
-                    </AccordionTrigger>
-                    <div className="pr-4">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="hover:bg-accent/20 rounded-md"
-                        title="Drucken"
-                        onClick={() => {
-                          const printWindow = window.open(`/rwk-tabellen/print?league=${league.id}&year=${selectedCompetition.year}&discipline=${selectedCompetition.discipline}`, '_blank');
-                          if (printWindow) printWindow.focus();
-                        }}
-                      >
-                        <Printer className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  </div>
+                  <AccordionTrigger className="bg-accent/10 hover:bg-accent/20 px-6 py-4 text-xl font-semibold text-accent data-[state=open]:border-b data-[state=open]:border-border/50">
+                    {league.name} {league.shortName && `(${league.shortName})`}
+                  </AccordionTrigger>
                   <AccordionContent className="pt-0 data-[state=closed]:pb-0 data-[state=open]:pb-0"> {/* Ensure no extra padding */}
                     {league.teams.length > 0 ? (
                       <div className="overflow-x-auto">
@@ -1158,10 +1141,6 @@ function RwkTabellenPageComponent() {
 }
 
 export default function RwkTabellenPage() {
-  // Prüfen, ob wir auf der Druckseite sind
-  const searchParams = useSearchParams();
-  const isPrintView = searchParams.has('print');
-  
   return (
     <Suspense fallback={<RwkTabellenPageLoadingSkeleton title="RWK Tabellen laden..." />}>
       <RwkTabellenPageComponent />

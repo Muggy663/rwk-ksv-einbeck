@@ -487,10 +487,7 @@ export default function AdminShootersPage() {
 
     if (assignedTeamNames.length === 0 && teamIds.length > 0) return `${teamIds.length} (Lade Teaminfo...)`;
     if (assignedTeamNames.length === 1) return assignedTeamNames[0]!;
-    if (assignedTeamNames.length > 1) {
-      // Show all team names instead of just the count
-      return assignedTeamNames.join(', ');
-    }
+    if (assignedTeamNames.length > 1) return `${assignedTeamNames.length} Mannschaften`;
     
     return '-';
   }, [allTeamsData, queryTeamId, contextTeamName]);

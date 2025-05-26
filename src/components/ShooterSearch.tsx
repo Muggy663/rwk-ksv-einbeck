@@ -1,113 +1,166 @@
-import React, { useState } from 'react';
+// src/components/ShooterSearch.tsx
+"use client";
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2 } from 'lucide-react';
-import type { Shooter } from '@/types/rwk';
+import { Search, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+interface Shooter {
+  id: string;
+  firstName: string;
+  lastName: string;
+  gender: string;
+  clubId: string;
+  [key: string]: any; // For any additional properties
+}
 
 interface ShooterSearchProps {
   shooters: Shooter[];
-  selectedShooterIds: string[];
-  onShooterSelect: (shooterId: string, isChecked: boolean) => void;
-  isLoading: boolean;
-  maxShooters: number;
-  disabledShooters?: {
-    [key: string]: { disabled: boolean; reason: string }
-  };
-  activeClubName?: string | null;
+  onSelect: (shooter: Shooter) => void;
+  placeholder?: string;
+  className?: string;
+  label?: string;
+  excludeIds?: string[];
 }
 
 export function ShooterSearch({
   shooters,
-  selectedShooterIds,
-  onShooterSelect,
-  isLoading,
-  maxShooters,
-  disabledShooters = {},
-  activeClubName
+  onSelect,
+  placeholder = "Schützen suchen...",
+  className = "",
+  label = "Schützensuche",
+  excludeIds = []
 }: ShooterSearchProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [filteredShooters, setFilteredShooters] = useState<Shooter[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   
-  const filteredShooters = shooters.filter(shooter => {
-    if (!shooter || !shooter.name) return false;
-    if (!searchQuery.trim()) return true;
-    return shooter.name.toLowerCase().includes(searchQuery.toLowerCase());
-  });
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-4 h-40 border rounded-md bg-muted/30">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <p className="ml-2">Lade Schützen...</p>
-      </div>
-    );
-  }
-
-  if (shooters.length === 0) {
-    return (
-      <div className="text-sm text-muted-foreground p-4 h-40 border rounded-md flex items-center justify-center bg-muted/30">
-        <p>
-          {activeClubName 
-            ? `Keine Schützen für '${activeClubName}' verfügbar.` 
-            : 'Keine Schützen verfügbar.'}
-        </p>
-      </div>
-    );
-  }
-
+  // Filter shooters based on search query and excluded IDs
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredShooters([]);
+      return;
+    }
+    
+    const query = searchQuery.toLowerCase().trim();
+    const filtered = shooters
+      .filter(shooter => 
+        !excludeIds.includes(shooter.id) && 
+        (shooter.firstName.toLowerCase().includes(query) || 
+         shooter.lastName.toLowerCase().includes(query))
+      )
+      .sort((a, b) => {
+        // Sort by last name first, then first name
+        const lastNameComparison = a.lastName.localeCompare(b.lastName);
+        if (lastNameComparison !== 0) return lastNameComparison;
+        return a.firstName.localeCompare(b.firstName);
+      })
+      .slice(0, 10); // Limit to 10 results for performance
+    
+    setFilteredShooters(filtered);
+    setHighlightedIndex(filtered.length > 0 ? 0 : -1);
+  }, [searchQuery, shooters, excludeIds]);
+  
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showResults || filteredShooters.length === 0) return;
+    
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex(prev => 
+          prev < filteredShooters.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex(prev => prev > 0 ? prev - 1 : 0);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedIndex >= 0) {
+          handleSelect(filteredShooters[highlightedIndex]);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setShowResults(false);
+        break;
+    }
+  };
+  
+  const handleSelect = (shooter: Shooter) => {
+    onSelect(shooter);
+    setSearchQuery('');
+    setShowResults(false);
+  };
+  
+  const handleClear = () => {
+    setSearchQuery('');
+    setFilteredShooters([]);
+  };
+  
   return (
-    <>
-      <div className="mb-2">
+    <div className={`relative ${className}`}>
+      <Label htmlFor="shooter-search">{label}</Label>
+      <div className="relative">
+        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          type="search"
-          placeholder="Schützen suchen..."
+          id="shooter-search"
+          type="text"
+          placeholder={placeholder}
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full"
+          onChange={(e) => {
+            setSearchQuery(e.target.value || '');
+            setShowResults(true);
+          }}
+          onFocus={() => setShowResults(true)}
+          onBlur={() => {
+            // Delay hiding results to allow for click events
+            setTimeout(() => setShowResults(false), 200);
+          }}
+          onKeyDown={handleKeyDown}
+          className="pl-8 pr-8"
         />
+        {searchQuery && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute right-0 top-0 h-full px-3 py-0"
+            onClick={handleClear}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Löschen</span>
+          </Button>
+        )}
       </div>
       
-      <ScrollArea className="h-40 rounded-md border p-3 bg-background">
-        <div className="space-y-1">
-          {filteredShooters.length > 0 ? (
-            filteredShooters.map(shooter => {
-              if (!shooter || !shooter.id) return null;
-              const isSelected = selectedShooterIds.includes(shooter.id);
-              const shooterInfo = disabledShooters[shooter.id] || { disabled: false, reason: '' };
-              const isDisabled = shooterInfo.disabled || (!isSelected && selectedShooterIds.length >= maxShooters);
-              
-              return (
-                <div key={shooter.id} className="flex items-center space-x-3 p-1.5 hover:bg-muted/50 rounded-md">
-                  <Checkbox
-                    id={`shooter-select-${shooter.id}`}
-                    checked={isSelected}
-                    onCheckedChange={(checked) => onShooterSelect(shooter.id, !!checked)}
-                    disabled={isDisabled}
-                  />
-                  <Label 
-                    htmlFor={`shooter-select-${shooter.id}`} 
-                    className={`font-normal cursor-pointer flex-grow ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {shooter.name}
-                    <span className="text-xs text-muted-foreground block">(Schnitt Vorjahr: folgt)</span>
-                    {isDisabled && shooterInfo.reason && (
-                      <span className="text-xs text-destructive ml-1">{shooterInfo.reason}</span>
-                    )}
-                    {isDisabled && !shooterInfo.reason && (
-                      <span className="text-xs text-destructive ml-1">(Max. Schützen erreicht)</span>
-                    )}
-                  </Label>
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center py-4 text-muted-foreground">
-              Keine Schützen gefunden, die "{searchQuery}" enthalten.
-            </div>
-          )}
+      {showResults && filteredShooters.length > 0 && (
+        <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-y-auto">
+          <ul className="py-1">
+            {filteredShooters.map((shooter, index) => (
+              <li
+                key={shooter.id}
+                className={`px-4 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground ${
+                  index === highlightedIndex ? 'bg-accent text-accent-foreground' : ''
+                }`}
+                onClick={() => handleSelect(shooter)}
+                onMouseEnter={() => setHighlightedIndex(index)}
+              >
+                <div className="font-medium">{shooter.lastName}, {shooter.firstName}</div>
+              </li>
+            ))}
+          </ul>
         </div>
-      </ScrollArea>
-    </>
+      )}
+      
+      {showResults && searchQuery && filteredShooters.length === 0 && (
+        <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg p-4 text-center text-muted-foreground">
+          Keine Schützen gefunden
+        </div>
+      )}
+    </div>
   );
 }

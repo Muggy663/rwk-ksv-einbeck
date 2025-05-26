@@ -17,9 +17,7 @@ export function SiteFooter() {
           </Link>
         </div>
         <p className="text-center text-sm text-muted-foreground md:text-right">
-          <Link href="/updates" className="hover:text-primary">
-            Version {version}
-          </Link>
+          Version {version}
         </p>
       </div>
     </footer>

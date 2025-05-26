@@ -1,19 +1,20 @@
+// src/app/admin/user-management/page.tsx
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { UserCog, Info, Loader2, HelpCircle } from 'lucide-react';
+import { UserCog, Info, Loader2, SaveIcon, Users as UsersIcon, HelpCircle, ListChecks, Search, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Club, UserPermission } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, orderBy, doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { UserList } from './user-list';
+// Cloud Function imports werden nicht mehr für die Kernfunktionalität hier verwendet.
+// import { setUserRoleAndClubClient, getUserDetailsByEmailClient, getUsersWithoutRoleClient } from '@/lib/firebase/functions';
 
 const CLUBS_COLLECTION = "clubs";
 const USER_PERMISSIONS_COLLECTION = "user_permissions";
@@ -29,7 +30,7 @@ interface UserPermissionFormData {
   email: string;
   displayName: string;
   role: string;
-  selectedClubId: string;
+  selectedClubId: string; // Nur noch eine Club-ID
 }
 
 export default function AdminUserManagementPage() {
@@ -48,8 +49,6 @@ export default function AdminUserManagementPage() {
   const [isLoadingClubs, setIsLoadingClubs] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingDetails, setIsFetchingDetails] = useState(false);
-  const [activeTab, setActiveTab] = useState("list");
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const fetchClubs = async () => {
@@ -159,9 +158,6 @@ export default function AdminUserManagementPage() {
       setFormData({
         uid: '', email: '', displayName: '', role: 'NO_ROLE', selectedClubId: '',
       });
-      
-      // Trigger refresh of user list
-      setRefreshTrigger(prev => prev + 1);
 
     } catch (error: any) {
       console.error("Error saving permissions to Firestore:", error);
@@ -171,18 +167,7 @@ export default function AdminUserManagementPage() {
     }
   };
   
-  const handleEditUser = (user: UserPermission) => {
-    setFormData({
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName || '',
-      role: user.role || 'NO_ROLE',
-      selectedClubId: user.clubId || '',
-    });
-    setActiveTab("form");
-  };
-  
-  if (!adminUser) {
+  if (!adminUser) { // Einfache Ladeanzeige, bis Admin-User geladen ist
     return <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 
@@ -223,7 +208,7 @@ export default function AdminUserManagementPage() {
                   </ul>
                 </li>
                 <li>
-                  <strong>Schritt 3: Benutzer informieren:</strong> Teile dem Benutzer seine Anmeldedaten (E-Mail und initiales Passwort) mit und weise ihn ggf. darauf hin, sein Passwort nach dem ersten Login zu ändern.
+                  <strong>Schritt 3: Benutzer informieren:</strong> Teile dem Benutzer seine Anmeldedaten (E-Mail und initiales Passwort) mit und weise ihn ggf. darauf hin, sein Passwort nach dem ersten Login zu ändern (Funktion dafür noch nicht implementiert).
                 </li>
               </ol>
             </div>
@@ -231,112 +216,77 @@ export default function AdminUserManagementPage() {
         </AccordionItem>
       </Accordion>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 mb-6">
-          <TabsTrigger value="list">Benutzerübersicht</TabsTrigger>
-          <TabsTrigger value="form">Benutzer hinzufügen/bearbeiten</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="list" className="space-y-4">
-          <UserList 
-            clubs={allClubs} 
-            onEditUser={handleEditUser} 
-            refreshTrigger={refreshTrigger}
-          />
-        </TabsContent>
-        
-        <TabsContent value="form" className="space-y-4">
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-xl text-accent">
-                {formData.uid ? 'Benutzer bearbeiten' : 'Neuen Benutzer anlegen'}
-              </CardTitle>
-              <CardDescription>
-                {formData.uid 
-                  ? `Bearbeiten Sie die Berechtigungen für ${formData.email || 'den Benutzer'}.`
-                  : 'Weisen Sie einem Benutzer eine Rolle und einen Verein zu. Die Berechtigungen werden in Firestore gespeichert.'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmitPermissions} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                  <div className="space-y-1.5 md:col-span-1">
-                    <Label htmlFor="uid">User-ID (UID) des Benutzers</Label>
-                    <Input id="uid" name="uid" type="text" placeholder="UID aus Firebase Authentication" value={formData.uid} onChange={handleInputChange} required className="font-mono text-xs" />
-                  </div>
-                  <div className="space-y-1.5 md:col-span-1">
-                    <Label htmlFor="email">E-Mail des Benutzers</Label>
-                    <Input id="email" name="email" type="email" placeholder="E-Mail (aus Firebase Auth)" value={formData.email} onChange={handleInputChange} required />
-                  </div>
-                  <div className="space-y-1.5 md:col-span-1">
-                    <Label htmlFor="displayName">Anzeigename (Optional)</Label>
-                    <Input id="displayName" name="displayName" type="text" placeholder="Vorname Nachname" value={formData.displayName} onChange={handleInputChange} />
-                  </div>
-                </div>
-                
-                {isFetchingDetails && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Lade bestehende Berechtigungen...</div>}
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-xl text-accent">Berechtigungen für Benutzer zuweisen/ändern</CardTitle>
+          <CardDescription>
+            Weisen Sie einem Benutzer (identifiziert durch seine UID) eine Rolle und einen Verein zu.
+            Die Berechtigungen werden in Firestore (`user_permissions` Collection) gespeichert.
+            E-Mail und Anzeigename dienen hier zur Referenz und sollten mit Firebase Auth übereinstimmen.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmitPermissions} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div className="space-y-1.5 md:col-span-1">
+                <Label htmlFor="uid">User-ID (UID) des Benutzers</Label>
+                <Input id="uid" name="uid" type="text" placeholder="UID aus Firebase Authentication" value={formData.uid} onChange={handleInputChange} required className="font-mono text-xs" />
+              </div>
+              <div className="space-y-1.5 md:col-span-1">
+                <Label htmlFor="email">E-Mail des Benutzers</Label>
+                <Input id="email" name="email" type="email" placeholder="E-Mail (aus Firebase Auth)" value={formData.email} onChange={handleInputChange} required />
+              </div>
+              <div className="space-y-1.5 md:col-span-1">
+                <Label htmlFor="displayName">Anzeigename (Optional)</Label>
+                <Input id="displayName" name="displayName" type="text" placeholder="Vorname Nachname" value={formData.displayName} onChange={handleInputChange} />
+              </div>
+            </div>
+            
+            {isFetchingDetails && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Lade bestehende Berechtigungen...</div>}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="roleSelect">Rolle zuweisen</Label>
-                    <Select 
-                      value={formData.role} 
-                      onValueChange={(value) => handleSelectChange('role', value)}
-                    >
-                      <SelectTrigger id="roleSelect"><SelectValue placeholder="Rolle auswählen" /></SelectTrigger>
-                      <SelectContent>
-                        {ROLES_OPTIONS.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                
-                  <div className="space-y-1.5">
-                    <Label htmlFor="clubIdSelect">Verein zuweisen (nur 1)</Label>
-                    <Select
-                      value={formData.selectedClubId}
-                      onValueChange={(value) => handleSelectChange('selectedClubId', value === "NONE" ? "" : value)}
-                      disabled={isLoadingClubs || allClubs.length === 0}
-                    >
-                      <SelectTrigger id="clubIdSelect"><SelectValue placeholder="Verein wählen" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="NONE">- Keinen -</SelectItem>
-                        {allClubs.map(club => <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end space-x-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => {
-                      setFormData({
-                        uid: '', email: '', displayName: '', role: 'NO_ROLE', selectedClubId: '',
-                      });
-                    }}
-                    disabled={isSubmitting || isFetchingDetails}
-                  >
-                    Zurücksetzen
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting || isLoadingClubs || !formData.uid.trim() || isFetchingDetails}
-                  >
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Berechtigungen speichern
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-            <CardFooter>
-              <p className="text-xs text-muted-foreground">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+              <div className="space-y-1.5">
+                <Label htmlFor="roleSelect">Rolle zuweisen</Label>
+                <Select 
+                  value={formData.role} 
+                  onValueChange={(value) => handleSelectChange('role', value)}
+                >
+                  <SelectTrigger id="roleSelect"><SelectValue placeholder="Rolle auswählen" /></SelectTrigger>
+                  <SelectContent>
+                    {ROLES_OPTIONS.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            
+              <div className="space-y-1.5">
+                <Label htmlFor="clubIdSelect">Verein zuweisen (nur 1)</Label>
+                <Select
+                  value={formData.selectedClubId}
+                  onValueChange={(value) => handleSelectChange('selectedClubId', value === "NONE" ? "" : value)}
+                  disabled={isLoadingClubs || allClubs.length === 0}
+                >
+                  <SelectTrigger id="clubIdSelect"><SelectValue placeholder="Verein wählen" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">- Keinen -</SelectItem>
+                    {allClubs.map(club => <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <Button type="submit" className="w-full" disabled={isSubmitting || isLoadingClubs || !formData.uid.trim() || isFetchingDetails}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Berechtigungen speichern
+            </Button>
+          </form>
+        </CardContent>
+         <CardFooter>
+            <p className="text-xs text-muted-foreground">
                 Stellen Sie sicher, dass die UID, E-Mail und der Anzeigename mit den Daten des Benutzers in Firebase Authentication übereinstimmen, um Verwirrung zu vermeiden.
-              </p>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                Die hier gespeicherten E-Mail/Namen dienen nur der einfacheren Identifizierung in der `user_permissions`-Tabelle und überschreiben nicht die Auth-Daten.
+            </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

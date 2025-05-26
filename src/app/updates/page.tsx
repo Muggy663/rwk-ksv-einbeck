@@ -10,12 +10,13 @@ const changelogEntries: ChangelogEntry[] = [
   {
     version: '0.5.1',
     date: '27. Mai 2025',
-    title: 'Druckfunktion-Fix & Kompatibilitätsverbesserungen',
+    title: 'Bugfixes für Passwort-Reset und Mannschaftsführer-Anzeige',
     descriptionPoints: [
-      'Behoben: Druckfunktion für RWK-Tabellen funktioniert jetzt zuverlässig mit React 18.',
-      'Verbessert: Eigene Drucklösung implementiert, die ohne externe Bibliotheken auskommt.',
-      'Hinweis: Druckansicht zeigt aktuell Dummy-Daten aufgrund von Berechtigungseinschränkungen.',
-      'Aktualisierung der Dokumentation und Handbuch mit den neuesten Funktionen.',
+      'Behoben: Fehler beim Passwort-Reset-Formular durch Auslagerung in separate Komponente.',
+      'Behoben: Mannschaftsführer wurden in der Übersicht nicht angezeigt aufgrund unterschiedlicher Feldnamen in der Datenbank.',
+      'Behoben: Firestore-Sicherheitsregeln für Vereinsvertreter korrigiert (Feldname clubId statt assignedClubId).',
+      'Verbessert: Saisonauswahl in der Mannschaftsführer-Übersicht mit automatischer Auswahl der neuesten Saison.',
+      'Dokumentation aktualisiert mit Datenbankstruktur-Informationen und Berechtigungsmodell.',
     ],
   },
   {
@@ -23,12 +24,14 @@ const changelogEntries: ChangelogEntry[] = [
     date: '26. Mai 2025',
     title: 'UX-Verbesserungen & Benutzerfreundlichkeit',
     descriptionPoints: [
-      'Neu: Admin-Panel mit Liste aller Mannschaftsführer einer Saison mit Kontaktdaten und CSV-Export.',
       'Neu: Passwort-Reset-Funktion für Benutzer implementiert.',
-      'Verbessert: Anzeige der Mannschaftsinformationen für Schützen zeigt jetzt alle Teamnamen statt nur die Anzahl.',
-      'Neu: Druckfunktion für RWK-Tabellen mit CSV-Export-Option.',
-      'Verbessert: Admin-Benutzerverwaltung mit Benutzerübersicht, Suchfunktion und einfacherem Bearbeiten.',
-      'Aktualisierung der Dokumentation und Handbuch mit den neuesten Funktionen.',
+      'Neu: Suchfunktion für Schützen bei größeren Vereinen hinzugefügt.',
+      'Neu: Vereinfachte Mannschaftsanlage mit Dropdown für Mannschaftsstärke.',
+      'Neu: Admin-Panel mit Liste aller Mannschaftsführer einer Saison und Kontaktdaten.',
+      'Verbessert: Deutlichere visuelle Unterscheidung zwischen verfügbaren und zugewiesenen Schützen.',
+      'Verbessert: Automatische Vorauswahl des aktuellen Durchgangs basierend auf Datum.',
+      'Verbessert: Live-Validierung der Ringzahlen während der Eingabe.',
+      'Verbessert: Admin-Benutzerverwaltung mit optimierter Benutzeroberfläche.',
     ],
   },
   {
