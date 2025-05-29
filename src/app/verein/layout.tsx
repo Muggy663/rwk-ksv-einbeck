@@ -3,7 +3,7 @@
 import React, { type ReactNode, createContext, useContext, useState, useEffect, useMemo } from 'react'; // Added useMemo
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, AlertTriangle, ShieldAlert, UserCog } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -11,7 +11,8 @@ import { cn } from '@/lib/utils';
 import type { UserPermission, VereinContextType } from '@/types/rwk';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-// Removed import of logger from firebase-functions/logger
+import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
+import { PasswordChangePrompt } from '@/components/auth/PasswordChangePrompt';
 
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";
 
@@ -34,6 +35,7 @@ const vereinNavItems = [
   { href: '/verein/mannschaften', label: 'Meine Mannschaften', icon: Users },
   { href: '/verein/schuetzen', label: 'Meine Schützen', icon: UserCircle },
   { href: '/verein/ergebnisse', label: 'Ergebnisse erfassen', icon: ListChecks },
+  { href: '/verein/team-managers', label: 'Mannschaftsführer', icon: UserCog },
 ];
 
 export default function VereinLayout({ children }: VereinLayoutProps) {
@@ -224,6 +226,9 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
             })}
           </nav>
           <Separator className="my-6" />
+          <div className="space-y-2 mb-4">
+            <OnboardingWizard />
+          </div>
           <Button variant="outline" onClick={() => router.push('/')} className="w-full mb-2">
             <ArrowLeft className="mr-2 h-4 w-4" /> Zur Startseite
           </Button>
@@ -232,12 +237,11 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
           </Button>}
         </aside>
         <main className="flex-1 p-6 lg:p-8 bg-muted/20 overflow-y-auto">
+          {/* Passwort-Änderungsaufforderung */}
+          {user && <PasswordChangePrompt />}
           {children}
         </main>
       </div>
     </VereinContext.Provider>
   );
 }
-
-// Alte Implementierung von React.cloneElement wurde entfernt, da der Context jetzt genutzt wird.
-// Die Kind-Komponenten (wie VereinDashboardPage) greifen direkt auf den Context zu.

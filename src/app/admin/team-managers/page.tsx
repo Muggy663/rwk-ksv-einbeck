@@ -74,7 +74,7 @@ export default function TeamManagersPage() {
         })) as Season[];
         
         // Sort seasons by year (descending)
-        seasonsData.sort((a, b) => b.competitionYear - a.competitionYear);
+        seasonsData.sort((a, b) => (b.competitionYear || 0) - (a.competitionYear || 0));
         setSeasons(seasonsData);
         
         // Auto-select the most recent season
@@ -178,9 +178,6 @@ export default function TeamManagersPage() {
           // Skip if club filter is active and doesn't match
           if (selectedClub && selectedClub !== 'all' && teamData.clubId !== selectedClub) continue;
           
-          // Include all teams, even if they don't have manager info
-          // This is different from the captains page, which filters out teams without captain info
-          
           // Find club name
           const club = clubs.find(c => c.id === teamData.clubId);
           
@@ -190,9 +187,8 @@ export default function TeamManagersPage() {
           // Find season name
           const season = seasons.find(s => s.id === teamData.seasonId);
           
-          // In der captains/page.tsx werden die Felder captainName, captainEmail und captainPhone verwendet
-          // Hier verwenden wir managerName, managerEmail und managerPhone
-          // Prüfen wir, ob die Felder captainName, captainEmail und captainPhone existieren und verwenden sie falls ja
+          // Konsistente Verwendung der Feldnamen für Mannschaftsführer
+          // Prüfen, ob die Felder captainName, captainEmail und captainPhone existieren und verwenden sie falls ja
           const managerName = teamData.captainName || teamData.managerName || '';
           const managerEmail = teamData.captainEmail || teamData.managerEmail || '';
           const managerPhone = teamData.captainPhone || teamData.managerPhone || '';
@@ -259,37 +255,46 @@ export default function TeamManagersPage() {
       return;
     }
     
-    // Create CSV content
-    const headers = ['Verein', 'Mannschaft', 'Liga', 'Name', 'E-Mail', 'Telefon'];
-    const rows = filteredManagers.map(manager => [
-      manager.clubName,
-      manager.teamName,
-      manager.leagueName,
-      manager.managerName,
-      manager.managerEmail,
-      manager.managerPhone
-    ]);
-    
-    const csvContent = [
-      headers.join(';'),
-      ...rows.map(row => row.join(';'))
-    ].join('\n');
-    
-    // Create download link
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Mannschaftsfuehrer_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({
-      title: 'Export erfolgreich',
-      description: 'Die Mannschaftsführer wurden erfolgreich exportiert.'
-    });
+    try {
+      // Create CSV content
+      const headers = ['Verein', 'Mannschaft', 'Liga', 'Name', 'E-Mail', 'Telefon'];
+      const rows = filteredManagers.map(manager => [
+        manager.clubName,
+        manager.teamName,
+        manager.leagueName,
+        manager.managerName,
+        manager.managerEmail,
+        manager.managerPhone
+      ]);
+      
+      const csvContent = [
+        headers.join(';'),
+        ...rows.map(row => row.join(';'))
+      ].join('\n');
+      
+      // Create download link
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Mannschaftsfuehrer_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: 'Export erfolgreich',
+        description: 'Die Mannschaftsführer wurden erfolgreich exportiert.'
+      });
+    } catch (error) {
+      console.error('Fehler beim Exportieren der Daten:', error);
+      toast({
+        title: 'Export fehlgeschlagen',
+        description: 'Beim Exportieren der Daten ist ein Fehler aufgetreten.',
+        variant: 'destructive'
+      });
+    }
   };
   
   const getSeasonName = (seasonId: string) => {

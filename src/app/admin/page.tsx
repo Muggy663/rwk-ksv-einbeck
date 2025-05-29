@@ -8,7 +8,8 @@ import {
   LayoutDashboard, Users, Trophy, ListChecks, Edit3, Settings, UserCog, 
   MessagesSquare, FileUp, Award, BarChart3, ShieldQuestion, GitPullRequestClosed, 
   BookOpenCheck, Printer, ClipboardList, KeyRound, ListTree, 
-  Table as TableIcon, Info as InfoIcon, CheckCircle, AlertCircle, ShieldCheck as AdminShieldIcon, FileText
+  Table as TableIcon, Info as InfoIcon, CheckCircle, AlertCircle, ShieldCheck as AdminShieldIcon, FileText,
+  CalendarDays, Smartphone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -122,24 +123,56 @@ export default function AdminDashboardPage() {
     },
 
 
-    // Ziel: Version 0.5.2 (Druckfunktion)
-    {
-      text: "RWK-Tabellen: Druckfunktion für Ligaergebnisse implementieren.",
-      status: "Als Nächstes (v0.5.2)", icon: Printer, iconColor: "text-destructive", versionTarget: "0.5.2", isMajor: true
-    },
-    
-    // Ziel: Version 0.6.0 (Weitere Features, Richtung Beta-Reife)
+    // Version 0.6.0 und 0.6.1 (Implementierte Features)
     { 
       text: "Audit-Trail für Ergebniserfassung (Admin): Protokollierung von Änderungen.", 
-      status: "Offen (Version 0.6.0)", icon: Edit3, iconColor: "text-purple-600", versionTarget: "0.6.0", isMajor: true
+      status: "Erledigt (v0.6.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.0", isMajor: true
     },
     { 
       text: "Platzhalter 'Schnitt Vorjahr' in den Team-Dialogen mit echter Funktionalität versehen.", 
-      status: "Offen (Version 0.6.0)", icon: BarChart3, iconColor: "text-purple-600", versionTarget: "0.6.0"
+      status: "Erledigt (v0.6.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.0"
     },
     { 
-      text: "PDF-Generierung (Erweitert): Gesamtlisten, Urkunden (falls nötig).", 
-      status: "Offen (Version 0.6.0)", icon: Award, iconColor: "text-purple-600", versionTarget: "0.6.0"
+      text: "PDF-Generierung (Erweitert): Gesamtlisten, Urkunden.", 
+      status: "Erledigt (v0.6.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.0"
+    },
+    {
+      text: "Onboarding-Assistent für neue Benutzer implementiert.",
+      status: "Erledigt (v0.6.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.0"
+    },
+    {
+      text: "Passwortänderungsaufforderung nach dem ersten Login.",
+      status: "Erledigt (v0.6.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.0"
+    },
+    {
+      text: "RWK-Tabellen: Druckfunktion für Ligaergebnisse implementiert.",
+      status: "Erledigt (v0.6.1)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.1", isMajor: true
+    },
+    {
+      text: "Optimierte PDF-Layouts für bessere Lesbarkeit.",
+      status: "Erledigt (v0.6.1)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.1"
+    },
+    {
+      text: "Integration des Vorjahresdurchschnitts in Team-Dialoge.",
+      status: "Erledigt (v0.6.1)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.1"
+    },
+    {
+      text: "Hilfs-Tooltips für komplexe Funktionen.",
+      status: "Erledigt (v0.6.1)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.1"
+    },
+    
+    // Ziel: Version 0.7.0 (Statistik & Mobile)
+    {
+      text: "Statistik-Dashboard mit erweiterten Visualisierungen.",
+      status: "Als Nächstes (v0.7.0)", icon: BarChart3, iconColor: "text-destructive", versionTarget: "0.7.0", isMajor: true
+    },
+    {
+      text: "Terminkalender für Wettkämpfe.",
+      status: "Offen (v0.7.0)", icon: CalendarDays, iconColor: "text-purple-600", versionTarget: "0.7.0"
+    },
+    {
+      text: "Mobile Optimierung und Progressive Web App (PWA).",
+      status: "Offen (v0.7.0)", icon: Smartphone, iconColor: "text-purple-600", versionTarget: "0.7.0"
     },
 
     // Zukunft (Nach Beta / v1.0+)
@@ -314,8 +347,10 @@ export default function AdminDashboardPage() {
               PDF-Exporte und andere Systemfunktionen.
             </CardDescription>
              <div className="space-y-2">
-              <Button className="w-full" variant="outline" disabled>PDF: Ergebnislisten (v0.6.0+)</Button>
-              <Button className="w-full" variant="outline" disabled>PDF: Urkunden (Zukunft)</Button>
+              <Link href="/admin/exports" passHref>
+                <Button className="w-full" variant="outline">PDF: Ergebnislisten & Urkunden</Button>
+              </Link>
+              <Button className="w-full" variant="outline" disabled>Erweiterte Berichte (Zukunft)</Button>
             </div>
           </CardContent>
         </Card>
@@ -325,7 +360,7 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle className="text-xl text-accent flex items-center">
             <GitPullRequestClosed className="mr-3 h-6 w-6" />
-            Roadmap / Nächste Schritte (Stand: 27. Mai 2025, Version 0.5.1)
+            Roadmap / Nächste Schritte (Stand: 26. Mai 2025, Version 0.6.2)
           </CardTitle>
           <CardDescription>Übersicht geplanter Erweiterungen und wichtiger Aufgaben, strukturiert nach potenziellen Versionen.</CardDescription>
         </CardHeader>
