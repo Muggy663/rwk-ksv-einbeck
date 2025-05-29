@@ -16,7 +16,8 @@ import {
   BookOpenCheck,
   ScrollText,
   Settings, // Re-added Settings icon as per previous discussions for Admin Panel
-  FileText // Für Dokumente-Seite
+  FileText, // Für Dokumente-Seite
+  FileDown // Für System & Berichte
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -64,6 +65,7 @@ export function MainNav() {
     { href: '/handbuch', label: 'Handbuch', icon: BookOpenCheck },
     { href: '/support', label: 'Support', icon: HelpCircle },
     { href: '/admin', label: 'Admin Panel', icon: Settings, adminOnly: true }, // Using Settings for Admin Panel
+    { href: '/admin/exports', label: 'System & Berichte', icon: FileDown, adminOnly: true }, // Hinzugefügt für System & Berichte
     { href: '/verein/dashboard', label: 'Vereinsbereich', icon: Building, vereinOnly: true },
     { href: '/login', label: 'Login', icon: LogIn, hideWhenAuthed: true },
   ];

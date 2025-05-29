@@ -1,7 +1,6 @@
 "use client";
 
 import React from 'react';
-import { HelpCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -10,20 +9,21 @@ import {
 } from '@/components/ui/tooltip';
 
 interface HelpTooltipProps {
-  text: string;
+  children: React.ReactNode;
+  content: React.ReactNode;
   side?: "top" | "right" | "bottom" | "left";
-  className?: string;
+  align?: "start" | "center" | "end";
 }
 
-export function HelpTooltip({ text, side = "top", className = "" }: HelpTooltipProps) {
+export function HelpTooltip({ children, content, side = "top", align = "center" }: HelpTooltipProps) {
   return (
     <TooltipProvider>
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
-          <HelpCircle className={`h-4 w-4 text-muted-foreground cursor-help ${className}`} />
+          <span className="cursor-help">{children}</span>
         </TooltipTrigger>
-        <TooltipContent side={side} className="max-w-xs">
-          <p className="text-sm">{text}</p>
+        <TooltipContent side={side} align={align} className="max-w-xs">
+          <p className="text-sm">{content}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
