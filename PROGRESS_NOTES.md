@@ -19,6 +19,7 @@ Die RWK Einbeck App ist eine Webanwendung zur Verwaltung von Rundenwettkämpfen 
 - **league_updates**: Aktualisierungen für den "Letzte Änderungen"-Feed auf der Startseite
 - **support_tickets**: Support-Anfragen von Benutzern mit Name, E-Mail, Betreff, Nachricht und Status
 - **user_permissions**: Benutzerberechtigungen mit Rolle ('vereinsvertreter', 'mannschaftsfuehrer'), clubId (Vereinszuordnung) und Benutzermetadaten
+- **audit_logs**: Protokollierung von Änderungen an Ergebnissen und anderen wichtigen Daten (neu in Version 0.6.0)
 
 ## Benutzerrollen und Berechtigungen
 - **Super-Administrator**: Vollzugriff auf alle Funktionen, verwaltet Saisons, Ligen, Vereine und Benutzerrechte
@@ -61,12 +62,6 @@ function hasClubAccess(clubId) {
 - ✅ Durchgang bleibt beim Mannschaftswechsel in der Ergebniserfassung erhalten
 - ✅ Mannschaften mit vollständigen Ergebnissen werden aus dem Dropdown entfernt
 
-## Aktuelle Aufgaben
-- 🔄 Weitere UX-Verbesserungen für die Ergebniserfassung:
-  - Automatische Vorauswahl des aktuellen Durchgangs basierend auf Datum
-  - ✅ Visuelle Hervorhebung von Schützen, für die noch keine Ergebnisse eingetragen wurden
-  - Live-Validierung der Ringzahlen
-
 ## Abgeschlossene Verbesserungen (Version 0.5.0 & 0.5.1)
 - ✅ Vereinfachte Mannschaftsanlage mit Dropdown für Mannschaftsstärke (I, II, III)
 - ✅ Automatische Vorschläge für Mannschaftsnamen basierend auf Verein und Stärke
@@ -78,10 +73,15 @@ function hasClubAccess(clubId) {
 - ✅ Admin-Benutzerverwaltung: UI-Verbesserungen
 - ✅ Firestore-Sicherheitsregeln für Vereinsvertreter korrigiert (clubId statt assignedClubId)
 
-## Geplante Features (Version 0.6.0)
-- Audit-Trail für Ergebniserfassung (Admin)
-- "Schnitt Vorjahr" in den Team-Dialogen mit echter Funktionalität
-- PDF-Generierung für Gesamtlisten und Urkunden
+## Abgeschlossene Verbesserungen (Version 0.6.0)
+- ✅ "Erste Schritte"-Assistent für neue Vereinsvertreter und Mannschaftsführer
+- ✅ Aufforderung zur Passwortänderung nach dem ersten Login
+- ✅ Übersicht der Mannschaftsführer für Vereinsvertreter
+- ✅ Audit-Trail für Ergebniserfassung mit detaillierter Änderungshistorie
+- ✅ "Schnitt Vorjahr" Funktionalität in den Team-Dialogen implementiert
+- ✅ PDF-Generierung für Ergebnislisten und Urkunden
+- ✅ Vereins-Layout mit zusätzlichem Menüpunkt für Mannschaftsführer
+- ✅ Dokumentation und Benutzerhandbuch aktualisiert
 
 ## Wichtige Regeln und Einschränkungen
 - Ein Schütze darf pro Saison und Disziplinkategorie (Gewehr/Pistole) nur in einer Mannschaft schießen
@@ -100,6 +100,39 @@ Die App ist für weniger technikaffine Nutzer konzipiert und legt Wert auf:
 - Automatische Filterung und Vorauswahl wo möglich
 
 ## Aktuelle Version
+- **Version**: 0.6.2 (Stand: 26. Mai 2025)
+- **Letzte Änderungen**: Stabilität & Fehlerbehandlung
+  - Verbessert: PDF-Generator mit robusterer Fehlerbehandlung und Null-Checks
+  - Verbessert: Vorjahresdurchschnitt-Komponente mit besserer Fehlerbehandlung
+  - Verbessert: Onboarding-Assistent und Passwortänderungsaufforderung mit robusterem localStorage-Zugriff
+  - Verbessert: Admin-Index mit vollständigen Exporten aller Admin-Komponenten
+  - Verbessert: Firestore-Sicherheitsregeln für audit_logs und documents
+  - Behoben: Verschiedene Fehler bei der PDF-Generierung in unterschiedlichen Browsern
+  - Behoben: Probleme mit der Vorjahresdurchschnitt-Berechnung bei fehlenden Daten
+  - Behoben: Inkonsistente Verwendung von captainName und managerName in der Mannschaftsführer-Übersicht
+
+- **Version**: 0.6.1 (Stand: 26. Mai 2025)
+- **Letzte Änderungen**: PDF-Funktionalität & Vorjahresdurchschnitt
+  - Neu: Druckfunktion für Ligaergebnisse implementiert
+  - Neu: Optimierte PDF-Layouts für bessere Lesbarkeit
+  - Neu: Integration des Vorjahresdurchschnitts in Team-Dialoge
+  - Neu: Hilfs-Tooltips für komplexe Funktionen
+  - Verbessert: Onboarding-Assistent mit zusätzlichen Hinweisen
+  - Verbessert: PDF-Export-Seite für Ergebnislisten und Urkunden
+  - Verbessert: Admin-Index für einfacheren Import von Admin-Komponenten
+  - Behoben: Verschiedene Bugfixes und Performance-Optimierungen
+
+- **Version**: 0.6.0 (Stand: 28. Mai 2025)
+- **Letzte Änderungen**: Benutzerführung & Audit-Trail
+  - Neu: "Erste Schritte"-Assistent für neue Vereinsvertreter und Mannschaftsführer
+  - Neu: Aufforderung zur Passwortänderung nach dem ersten Login
+  - Neu: Übersicht der Mannschaftsführer für Vereinsvertreter
+  - Neu: Audit-Trail für Ergebniserfassung mit detaillierter Änderungshistorie
+  - Neu: "Schnitt Vorjahr" Funktionalität in den Team-Dialogen implementiert
+  - Neu: PDF-Generierung für Ergebnislisten und Urkunden
+  - Verbessert: Vereins-Layout mit zusätzlichem Menüpunkt für Mannschaftsführer
+  - Verbessert: Dokumentation und Benutzerhandbuch aktualisiert
+
 - **Version**: 0.5.1 (Stand: 27. Mai 2025)
 - **Letzte Änderungen**: Bugfixes & Verbesserungen
   - Behoben: Fehler beim Passwort-Reset-Formular durch Auslagerung in separate Komponente
@@ -119,12 +152,12 @@ Die App ist für weniger technikaffine Nutzer konzipiert und legt Wert auf:
   - Verbessert: Live-Validierung der Ringzahlen während der Eingabe
   - Verbessert: Admin-Benutzerverwaltung mit optimierter Benutzeroberfläche
 
-## Nächste Schritte (Version 0.5.2 & 0.6.0)
-- RWK-Tabellen: Druckfunktion für Ligaergebnisse (Version 0.5.2)
-- Vorbereitung für erste breitere Tests mit Vereinsvertretern und Mannschaftsführern
-- Audit-Trail für Ergebniserfassung (Admin) (Version 0.6.0)
-- "Schnitt Vorjahr" in den Team-Dialogen mit echter Funktionalität (Version 0.6.0)
-- PDF-Generierung für Gesamtlisten und Urkunden (Version 0.6.0)
+## Nächste Schritte (Version 0.7.0)
+- RWK-Tabellen: Druckfunktion für Ligaergebnisse
+- Statistik-Dashboard mit erweiterten Visualisierungen
+- Terminkalender für Wettkämpfe
+- Mobile Optimierung und Progressive Web App (PWA)
+- Benachrichtigungssystem für wichtige Updates
 
 ## Abgeschlossene Schritte
 - ✅ Implementierung der Seite für Dokumente/Ausschreibungen
@@ -133,3 +166,7 @@ Die App ist für weniger technikaffine Nutzer konzipiert und legt Wert auf:
 - ✅ Live-Tooltips für Vereinsvertreter
 - ✅ Passwort-Reset-Funktion für Benutzer
 - ✅ Mannschaftsführer-Übersicht für Admins
+- ✅ "Erste Schritte"-Assistent für neue Benutzer
+- ✅ Aufforderung zur Passwortänderung nach dem ersten Login
+- ✅ Audit-Trail für Ergebniserfassung
+- ✅ PDF-Generierung für Ergebnislisten und Urkunden
