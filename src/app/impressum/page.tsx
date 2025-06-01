@@ -1,13 +1,13 @@
 // src/app/impressum/page.tsx
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { BookUser } from 'lucide-react';
+import { Book } from 'lucide-react';
 
 export default function ImpressumPage() {
   return (
     <div className="space-y-8 container mx-auto px-4 py-8">
       <div className="flex items-center space-x-3 mb-8">
-        <BookUser className="h-10 w-10 text-primary" />
+        <Book className="h-10 w-10 text-primary" />
         <div>
           <h1 className="text-4xl font-bold text-primary">Impressum</h1>
           <p className="text-lg text-muted-foreground">

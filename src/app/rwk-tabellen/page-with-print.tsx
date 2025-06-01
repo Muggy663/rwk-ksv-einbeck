@@ -9,7 +9,10 @@ import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import type { LeagueDisplay } from '@/types/rwk';
 
-export default function RwkTabellenPageWithPrint() {
+// Explizit exportieren, um den Fehler mit ClientPageRoot zu beheben
+export default RwkTabellenPageWithPrint;
+
+function RwkTabellenPageWithPrint() {
   const [showPrintView, setShowPrintView] = useState(false);
   const [printData, setPrintData] = useState<{
     league: LeagueDisplay;
