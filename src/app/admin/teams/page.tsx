@@ -52,7 +52,7 @@ import {
   where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayUnion, arrayRemove, Timestamp
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -66,11 +66,27 @@ export default function AdminTeamsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const querySeasonId = searchParams.get('seasonId');
-  const queryLeagueId = searchParams.get('leagueId');
-  const queryClubId = searchParams.get('clubId');
+  const [queryParams, setQueryParams] = useState<{seasonId: string | null, leagueId: string | null, clubId: string | null}>({
+    seasonId: null,
+    leagueId: null,
+    clubId: null
+  });
+  
+  // Extrahiere URL-Parameter auf Client-Seite
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      setQueryParams({
+        seasonId: urlParams.get('seasonId'),
+        leagueId: urlParams.get('leagueId'),
+        clubId: urlParams.get('clubId')
+      });
+    }
+  }, []);
+  
+  const querySeasonId = queryParams.seasonId;
+  const queryLeagueId = queryParams.leagueId;
+  const queryClubId = queryParams.clubId;
 
   const [allSeasons, setAllSeasons] = useState<Season[]>([]);
   const [allLeagues, setAllLeagues] = useState<League[]>([]);

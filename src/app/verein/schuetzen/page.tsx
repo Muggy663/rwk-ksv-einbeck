@@ -66,7 +66,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, useSearchParams } from 'next/navigation'; // Import useSearchParams
+import { useRouter } from 'next/navigation';
 
 const SHOOTERS_COLLECTION = "rwk_shooters";
 const TEAMS_COLLECTION = "rwk_teams";
@@ -77,8 +77,15 @@ export default function VereinSchuetzenPage() {
   const { userPermission, loadingPermissions, permissionError, assignedClubId } = useVereinAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const queryTeamId = searchParams.get('teamId');
+  const [queryTeamId, setQueryTeamId] = useState<string | null>(null);
+  
+  // Extrahiere URL-Parameter auf Client-Seite
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      setQueryTeamId(urlParams.get('teamId'));
+    }
+  }, []);
 
   const [activeClubId, setActiveClubId] = useState<string | null>(null);
   const [activeClubName, setActiveClubName] = useState<string | null>(null);

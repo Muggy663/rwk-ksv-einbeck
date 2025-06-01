@@ -1,6 +1,6 @@
 // src/app/admin/leagues/page.tsx
 "use client";
-import React, { useState, useEffect, FormEvent, useCallback } from 'react';
+import React, { useState, useEffect, FormEvent, useCallback, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Loader2, Eye } from 'lucide-react';
@@ -39,20 +39,34 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import type { Season, League, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
 import { leagueDisciplineOptions } from '@/types/rwk'; 
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, documentId } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
+// Separate component for search params to be wrapped in Suspense
+function SearchParamsWrapper() {
+  const { useSearchParams } = require('next/navigation');
+  const searchParams = useSearchParams();
+  return searchParams;
+}
+
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
 
 export default function AdminLeaguesPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const querySeasonId = searchParams.get('seasonId');
+  const [searchParamsValue, setSearchParamsValue] = useState<URLSearchParams | null>(null);
+  
+  useEffect(() => {
+    // Get search params on client side to avoid SSR issues
+    const params = new URLSearchParams(window.location.search);
+    setSearchParamsValue(params);
+  }, []);
+  
+  const querySeasonId = searchParamsValue?.get('seasonId') || null;
 
   const { toast } = useToast();
 

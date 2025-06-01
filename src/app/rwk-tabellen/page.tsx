@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Card,
@@ -321,8 +321,17 @@ const RwkTabellenPageLoadingSkeleton: React.FC<{ title?: string }> = ({ title })
 
 function RwkTabellenPageComponent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
+  
+  const [urlParams, setUrlParams] = useState<{
+    year: string | null,
+    discipline: string | null,
+    league: string | null
+  }>({
+    year: null,
+    discipline: null,
+    league: null
+  });
 
   // States for filters and data
   const [availableYearsFromDb, setAvailableYearsFromDb] = useState<number[]>([]);
@@ -349,10 +358,22 @@ function RwkTabellenPageComponent() {
   const [isShooterDetailModalOpen, setIsShooterDetailModalOpen] = useState(false);
   const [selectedShooterForDetail, setSelectedShooterForDetail] = useState<IndividualShooterDisplayData | null>(null);
 
+  // Extrahiere URL-Parameter auf Client-Seite
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setUrlParams({
+        year: params.get('year'),
+        discipline: params.get('discipline'),
+        league: params.get('league')
+      });
+    }
+  }, []);
+  
   // Memoize URL parameters to stabilize dependencies
-  const initialYearFromParams = useMemo(() => searchParams.get('year'), [searchParams]);
-  const initialDisciplineFromParams = useMemo(() => searchParams.get('discipline') as UIDisciplineSelection | null, [searchParams]);
-  const initialLeagueIdFromParams = useMemo(() => searchParams.get('league'), [searchParams]);
+  const initialYearFromParams = useMemo(() => urlParams.year, [urlParams.year]);
+  const initialDisciplineFromParams = useMemo(() => urlParams.discipline as UIDisciplineSelection | null, [urlParams.discipline]);
+  const initialLeagueIdFromParams = useMemo(() => urlParams.league, [urlParams.league]);
 
   const fetchAvailableYearsFromSeasons = useCallback(async (): Promise<number[]> => {
     console.log("RWK DEBUG: fetchAvailableYearsFromSeasons called");
@@ -822,7 +843,7 @@ function RwkTabellenPageComponent() {
       }
       
       // Normalize URL if params were missing or defaulted
-      const currentParams = new URLSearchParams(searchParams.toString());
+      const currentParams = new URLSearchParams(window.location.search);
       let needsUrlUpdate = false;
       if (currentParams.get('year') !== yearToSet.toString()) {
           currentParams.set('year', yearToSet.toString());
@@ -855,7 +876,7 @@ function RwkTabellenPageComponent() {
         setError("Fehler beim Initialisieren der Jahresauswahl.");
     });
     return () => { isMounted = false; };
-  }, [fetchAvailableYearsFromSeasons, initialYearFromParams, initialDisciplineFromParams, initialLeagueIdFromParams, router, searchParams, selectedCompetition]); // Added selectedCompetition to dependencies carefully
+  }, [fetchAvailableYearsFromSeasons, initialYearFromParams, initialDisciplineFromParams, initialLeagueIdFromParams, router, selectedCompetition]); // Removed searchParams from dependencies
 
 
   // Effect to load data when selectedCompetition, activeTab, or league filter changes

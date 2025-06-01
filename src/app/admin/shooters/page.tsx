@@ -44,7 +44,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import type { Shooter, Club, Team, FirestoreLeagueSpecificDiscipline, TeamValidationInfo } from '@/types/rwk';
 import { MAX_SHOOTERS_PER_TEAM, getDisciplineCategory, leagueDisciplineOptions, GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
@@ -62,9 +62,24 @@ const ALL_CLUBS_FILTER_VALUE = "__ALL_CLUBS__";
 
 export default function AdminShootersPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const queryTeamId = searchParams.get('teamId');
-  const queryClubIdFromParams = searchParams.get('clubId');
+  const [queryParams, setQueryParams] = useState<{teamId: string | null, clubId: string | null}>({
+    teamId: null,
+    clubId: null
+  });
+  
+  // Extrahiere URL-Parameter auf Client-Seite
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      setQueryParams({
+        teamId: urlParams.get('teamId'),
+        clubId: urlParams.get('clubId')
+      });
+    }
+  }, []);
+  
+  const queryTeamId = queryParams.teamId;
+  const queryClubIdFromParams = queryParams.clubId;
 
   const { toast } = useToast();
 
