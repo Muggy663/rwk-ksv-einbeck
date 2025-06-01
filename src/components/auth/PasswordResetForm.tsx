@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { KeyRound, AlertTriangle, ArrowLeft, CheckCircle } from 'lucide-react';
+import { KeyRound, AlertCircle, ArrowLeft, CheckIcon } from 'lucide-react';
 import { auth } from '@/lib/firebase/config';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -88,7 +88,7 @@ export function PasswordResetForm({ onBack }: PasswordResetFormProps) {
         <CardContent>
           {resetSent ? (
             <div className="text-center py-4">
-              <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+              <CheckIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">E-Mail gesendet!</h3>
               <p className="text-muted-foreground">
                 Wir haben eine E-Mail mit einem Link zum Zurücksetzen Ihres Passworts an {emailSent} gesendet.
@@ -114,7 +114,7 @@ export function PasswordResetForm({ onBack }: PasswordResetFormProps) {
 
               {formError && (
                 <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
+                  <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Fehler</AlertTitle>
                   <AlertDescription>{formError}</AlertDescription>
                 </Alert>

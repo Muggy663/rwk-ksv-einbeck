@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { FileText, Upload, Trash2, Edit, Eye, Download, Calendar, AlertCircle, Loader2 } from 'lucide-react';
+import { FileText, Upload, Trash2, Edit, Eye, Download, Calendar, AlertCircle, Loader } from 'lucide-react';
 import { db, storage } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
@@ -326,7 +326,7 @@ export default function AdminDocumentsPage() {
                   Abbrechen
                 </Button>
                 <Button type="submit" disabled={uploading}>
-                  {uploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {uploading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
                   {uploading ? 'Wird hochgeladen...' : 'Dokument speichern'}
                 </Button>
               </DialogFooter>
@@ -348,7 +348,7 @@ export default function AdminDocumentsPage() {
           <CardContent className="pt-6">
             {loading ? (
               <div className="flex justify-center items-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mr-3" />
+                <Loader className="h-8 w-8 animate-spin text-primary mr-3" />
                 <p>Dokumente werden geladen...</p>
               </div>
             ) : filteredDocuments.length === 0 ? (
@@ -421,7 +421,7 @@ export default function AdminDocumentsPage() {
       <Card className="mt-8 bg-muted/30">
         <CardHeader>
           <CardTitle className="flex items-center text-lg">
-            <AlertCircle className="h-5 w-5 mr-2" />
+            <CircleAlert className="h-5 w-5 mr-2" />
             Hinweis zur Dokumentenverwaltung
           </CardTitle>
         </CardHeader>
