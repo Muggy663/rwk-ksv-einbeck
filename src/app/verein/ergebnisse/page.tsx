@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckSquare, Save, PlusCircle, Trash2, Loader2, AlertTriangle, Building } from 'lucide-react';
+import { CheckSquare, Save, Plus, Trash2, Loader, AlertCircle, Building } from 'lucide-react';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, FirestoreLeagueSpecificDiscipline, Club, LeagueUpdateEntry, UserPermission } from '@/types/rwk';
 import { leagueDisciplineOptions } from '@/types/rwk';
@@ -470,16 +470,16 @@ export default function VereinErgebnissePage() {
   }
 
   if (loadingPermissions || isLoadingAssignedClubDetails) {
-    return <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary mr-3" /><p>Lade Benutzer- und Vereinsdaten...</p></div>;
+    return <div className="flex justify-center items-center py-12"><Loader className="h-12 w-12 animate-spin text-primary mr-3" /><p>Lade Benutzer- und Vereinsdaten...</p></div>;
   }
   if (permissionError) {
-    return <div className="p-6"><Card className="border-destructive bg-destructive/5"><CardHeader><CardTitle className="text-destructive flex items-center"><AlertTriangle className="mr-2 h-5 w-5" /> {permissionError}</CardTitle></CardHeader><CardContent><p>Bitte kontaktieren Sie den Administrator.</p></CardContent></Card></div>;
+    return <div className="p-6"><Card className="border-destructive bg-destructive/5"><CardHeader><CardTitle className="text-destructive flex items-center"><AlertCircle className="mr-2 h-5 w-5" /> {permissionError}</CardTitle></CardHeader><CardContent><p>Bitte kontaktieren Sie den Administrator.</p></CardContent></Card></div>;
   }
    if (!activeClubIdForEntry && !loadingPermissions && !permissionError) {
     return (
         <div className="p-6">
             <Card className="border-amber-500 bg-amber-50/50">
-                <CardHeader><CardTitle className="text-amber-700 flex items-center gap-2"><AlertTriangle />Vereinskontext fehlt</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-amber-700 flex items-center gap-2"><AlertCircle />Vereinskontext fehlt</CardTitle></CardHeader>
                 <CardContent><p>Ihrem Konto ist kein Verein für die Ergebniserfassung zugewiesen oder der Verein konnte nicht geladen werden.</p></CardContent>
             </Card>
         </div>
@@ -487,7 +487,7 @@ export default function VereinErgebnissePage() {
   }
   
   if (isLoadingPageData) { 
-    return <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary mr-3" /><p>Lade Daten für {activeClubNameForEntry || 'Verein'}...</p></div>;
+    return <div className="flex justify-center items-center py-12"><Loader className="h-12 w-12 animate-spin text-primary mr-3" /><p>Lade Daten für {activeClubNameForEntry || 'Verein'}...</p></div>;
   }
 
   if (availableRunningSeasons.length === 0 && !isLoadingPageData) {
@@ -495,7 +495,7 @@ export default function VereinErgebnissePage() {
       <div className="space-y-6">
          <div className="flex justify-between items-center"><h1 className="text-2xl font-semibold text-primary">Ergebniserfassung {activeClubNameForEntry ? `(für ${activeClubNameForEntry})` : ''}</h1></div>
         <Card className="shadow-md border-amber-500">
-            <CardHeader><CardTitle className="text-amber-600 flex items-center"><AlertTriangle className="mr-2 h-5 w-5" />Keine laufenden Saisons</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-amber-600 flex items-center"><AlertCircle className="mr-2 h-5 w-5" />Keine laufenden Saisons</CardTitle></CardHeader>
             <CardContent><p>Aktuell sind keine Saisons mit Status "Laufend" für die Ergebniserfassung verfügbar.</p></CardContent>
         </Card>
       </div>
@@ -689,7 +689,7 @@ export default function VereinErgebnissePage() {
             </RadioGroup>
           </div>
           <div className="flex justify-end pt-4">
-            <Button onClick={handleAddToList} disabled={!selectedShooterId || !selectedRound || !score || isSubmittingScores || isLoadingExistingScores}><PlusCircle className="mr-2 h-5 w-5" /> Zur Liste hinzufügen</Button>
+            <Button onClick={handleAddToList} disabled={!selectedShooterId || !selectedRound || !score || isSubmittingScores || isLoadingExistingScores}><Plus className="mr-2 h-5 w-5" /> Zur Liste hinzufügen</Button>
           </div>
         </CardContent>
       </Card>
@@ -706,7 +706,7 @@ export default function VereinErgebnissePage() {
             <Table><TableHeader><TableRow><TableHead>Schütze</TableHead><TableHead>Mannschaft</TableHead><TableHead className="text-center">DG</TableHead><TableHead className="text-center">Ringe</TableHead><TableHead>Typ</TableHead><TableHead className="text-right">Aktion</TableHead></TableRow></TableHeader>
               <TableBody>{pendingScores.map((entry) => (<TableRow key={entry.tempId}><TableCell>{entry.shooterName}</TableCell><TableCell>{entry.teamName}</TableCell><TableCell className="text-center">{entry.durchgang}</TableCell><TableCell className="text-center">{entry.totalRinge}</TableCell><TableCell>{entry.scoreInputType === 'pre' ? 'Vorschuss' : entry.scoreInputType === 'post' ? 'Nachschuss' : 'Regulär'}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleRemoveFromList(entry.tempId)} className="text-destructive hover:text-destructive/80" disabled={isSubmittingScores}><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody>
             </Table>
-            <div className="flex justify-end pt-6"><Button onClick={handleFinalSave} size="lg" disabled={isSubmittingScores || pendingScores.length === 0}>{isSubmittingScores && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Alle {pendingScores.length} Ergebnisse speichern</Button></div>
+            <div className="flex justify-end pt-6"><Button onClick={handleFinalSave} size="lg" disabled={isSubmittingScores || pendingScores.length === 0}>{isSubmittingScores && <Loader className="mr-2 h-4 w-4 animate-spin" />} Alle {pendingScores.length} Ergebnisse speichern</Button></div>
           </CardContent>
         </Card>
       )}
