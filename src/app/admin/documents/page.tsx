@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { FileText, Upload, Trash2, Edit, Eye, Download, Calendar, AlertCircle, Loader } from 'lucide-react';
+import { FileText, Upload, Trash2, Edit, Eye, Download, Calendar, AlertCircle as CircleAlert, Loader } from 'lucide-react';
 import { db, storage } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
