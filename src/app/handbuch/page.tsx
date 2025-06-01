@@ -20,7 +20,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch RWK Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 22. Mai 2025, Version 0.4.0)
+            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 01. Juni 2025, Version 0.6.3)
           </p>
         </div>
       </div>
@@ -263,7 +263,7 @@ export default function HandbuchPage() {
                 <p>Wenn ein Verein nicht genügend Schützen (also weniger als drei) für eine vollständige Mannschaft in einer Disziplin hat, diese aber dennoch am Rundenwettkampf teilnehmen sollen (um in der Einzelwertung berücksichtigt zu werden), geht der Vereinsvertreter wie folgt vor:</p>
                 <ol className="list-decimal list-inside pl-5 mt-1 space-y-0.5 text-sm">
                     <li>Auf der Seite "Meine Mannschaften" eine neue Mannschaft anlegen.</li>
-                    <li>Als Mannschaftsnamen eine Bezeichnung wählen, die klar auf Einzelstarter hinweist, z.B. "**Vereinsname Einzel**" (Beispiel: "SV Mackensen Einzel").</li>
+                    <li>Als Mannschaftsnamen eine Bezeichnung wählen, die klar auf Einzelstarter hinweist, z.B. "**Vereinsname Einzel**" (Beispiel: "Einbecker Schützengilde Einzel").</li>
                     <li>Dieser "Einzel"-Mannschaft dann die 1 oder 2 Schützen zuweisen.</li>
                 </ol>
                 <p className="text-sm mt-1">Die App filtert Mannschaften, deren Name "Einzel" enthält, automatisch aus der Mannschafts-Rangliste in den RWK-Tabellen heraus. Die Ergebnisse dieser Schützen fließen aber in die Einzelschützen-Rangliste ein.</p>

@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
 const adminNavItems = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/seasons', label: 'Saisons & Ligen', icon: Trophy },
   { href: '/admin/clubs', label: 'Vereine', icon: Users },
   { href: '/admin/teams', label: 'Mannschaften', icon: Users },

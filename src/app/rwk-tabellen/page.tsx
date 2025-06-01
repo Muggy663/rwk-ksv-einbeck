@@ -1047,7 +1047,7 @@ function RwkTabellenPageComponent() {
                           <TableBody>
                             {league.teams.map(team => (
                               <React.Fragment key={team.id}>
-                                <TableRow className="hover:bg-secondary/20 transition-colors">
+                                <TableRow className="hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => toggleTeamExpansion(team.id)}>
                                   <TableCell className="text-center font-medium px-2 py-2">{team.rank}</TableCell>
                                   <TableCell className="font-medium text-foreground px-2 py-2">{team.name}</TableCell>
                                   {[...Array(currentNumRoundsState)].map((_, i) => (
@@ -1056,7 +1056,7 @@ function RwkTabellenPageComponent() {
                                   <TableCell className="text-center font-semibold text-primary px-2 py-2">{team.totalScore ?? '-'}</TableCell>
                                   <TableCell className="text-center font-medium text-muted-foreground px-2 py-2">{team.averageScore != null ? team.averageScore.toFixed(2) : '-'}</TableCell>
                                   <TableCell className="text-right pr-4 px-2 py-2">
-                                    <Button variant="ghost" size="icon" onClick={() => toggleTeamExpansion(team.id)} aria-label={`Details für ${team.name} ${expandedTeamIds.includes(team.id) ? 'ausblenden' : 'anzeigen'}`} className="hover:bg-accent/20 rounded-md">
+                                    <Button variant="ghost" size="icon" onClick={(e) => {e.stopPropagation(); toggleTeamExpansion(team.id);}} aria-label={`Details für ${team.name} ${expandedTeamIds.includes(team.id) ? 'ausblenden' : 'anzeigen'}`} className="hover:bg-accent/20 rounded-md">
                                       {expandedTeamIds.includes(team.id) ? <ChevronDown className="h-5 w-5 transition-transform duration-200 rotate-180" /> : <ChevronRight className="h-5 w-5 transition-transform duration-200" />}
                                     </Button>
                                   </TableCell>

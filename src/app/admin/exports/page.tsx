@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -10,14 +10,28 @@ import { PdfButton } from '@/components/ui/pdf-button';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function ExportsPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [selectedSeason, setSelectedSeason] = useState<string>('');
   const [selectedLeague, setSelectedLeague] = useState<string>('');
   const [seasons, setSeasons] = useState<Array<{ id: string; name: string; year: number }>>([]);
   const [leagues, setLeagues] = useState<Array<{ id: string; name: string; type: string }>>([]);
   const [activeTab, setActiveTab] = useState<string>('results');
+  const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
+  const [showAllShooters, setShowAllShooters] = useState<boolean>(false);
+
+  // Wenn der Tab auf "certificates" gesetzt wird, zur Urkunden-Seite navigieren
+  useEffect(() => {
+    if (activeTab === 'certificates') {
+      router.push('/admin/exports/certificates');
+    }
+  }, [activeTab, router]);
 
   // Lade verfügbare Saisons
   React.useEffect(() => {
@@ -207,20 +221,11 @@ export default function ExportsPage() {
 
   // Generiere Daten für die Einzelschützenergebnisse
   const generateShooterResultsData = async () => {
-    if (!selectedLeague || !selectedSeason) {
+    if ((!selectedLeague && !showAllShooters) || !selectedSeason) {
       throw new Error('Liga oder Saison nicht ausgewählt');
     }
     
     try {
-      // Liga-Informationen abrufen
-      const leagueRef = doc(db, 'rwk_leagues', selectedLeague);
-      const leagueSnap = await getDoc(leagueRef);
-      
-      if (!leagueSnap.exists()) {
-        throw new Error('Liga nicht gefunden');
-      }
-      const leagueData = leagueSnap.data();
-      
       // Saison-Informationen abrufen
       const seasonRef = doc(db, 'seasons', selectedSeason);
       const seasonSnap = await getDoc(seasonRef);
@@ -230,14 +235,54 @@ export default function ExportsPage() {
       }
       const seasonData = seasonSnap.data();
       
-      // Anzahl der Durchgänge bestimmen
-      const numRounds = leagueData.type.startsWith('L') ? 4 : 5; // Luftdruck: 4, KK: 5
+      let leagueData = { name: 'Alle Ligen', type: '' };
+      let numRounds = 5; // Standard für KK
       
-      // Ergebnisse für die Liga abrufen
-      const scoresQuery = query(
-        collection(db, 'rwk_scores'),
-        where('leagueId', '==', selectedLeague)
-      );
+      // Liga-Informationen abrufen, wenn eine spezifische Liga ausgewählt ist
+      if (selectedLeague && !showAllShooters) {
+        const leagueRef = doc(db, 'rwk_leagues', selectedLeague);
+        const leagueSnap = await getDoc(leagueRef);
+        
+        if (!leagueSnap.exists()) {
+          throw new Error('Liga nicht gefunden');
+        }
+        leagueData = leagueSnap.data();
+        
+        // Anzahl der Durchgänge bestimmen
+        numRounds = leagueData.type.startsWith('L') ? 4 : 5; // Luftdruck: 4, KK: 5
+      }
+      
+      // Ergebnisse abrufen - entweder für eine spezifische Liga oder alle Ligen der Saison
+      let scoresQuery;
+      
+      if (showAllShooters) {
+        // Alle Ligen der Saison, außer Sportpistole
+        const leaguesQuery = query(
+          collection(db, 'rwk_leagues'),
+          where('seasonId', '==', selectedSeason)
+        );
+        
+        const leaguesSnapshot = await getDocs(leaguesQuery);
+        const leagueIds = leaguesSnapshot.docs
+          .filter(doc => !doc.data().type.includes('SP')) // Sportpistole ausschließen
+          .map(doc => doc.id);
+        
+        if (leagueIds.length === 0) {
+          throw new Error('Keine passenden Ligen gefunden');
+        }
+        
+        // Ergebnisse für alle gefilterten Ligen abrufen
+        scoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('leagueId', 'in', leagueIds)
+        );
+      } else {
+        // Nur Ergebnisse für die ausgewählte Liga
+        scoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('leagueId', '==', selectedLeague)
+        );
+      }
       
       const scoresSnapshot = await getDocs(scoresQuery);
       const shootersMap = new Map();
@@ -247,21 +292,31 @@ export default function ExportsPage() {
         const scoreData = scoreDoc.data();
         const shooterId = scoreData.shooterId;
         const durchgang = scoreData.durchgang;
+        const gender = scoreData.shooterGender || 'unknown';
         
-        if (!shooterId || durchgang < 1 || durchgang > numRounds) return;
+        // Geschlechterfilter anwenden
+        if (genderFilter !== 'all') {
+          if ((genderFilter === 'male' && gender !== 'male') || 
+              (genderFilter === 'female' && gender !== 'female')) {
+            return;
+          }
+        }
+        
+        if (!shooterId || durchgang < 1 || durchgang > 5) return; // Max 5 Durchgänge
         
         if (!shootersMap.has(shooterId)) {
           shootersMap.set(shooterId, {
             shooterId,
             name: scoreData.shooterName || 'Unbekannter Schütze',
             teamName: scoreData.teamName || 'Unbekanntes Team',
+            gender: gender,
             results: {},
             totalScore: 0,
             roundsShot: 0
           });
           
           // Durchgangsergebnisse initialisieren
-          for (let i = 1; i <= numRounds; i++) {
+          for (let i = 1; i <= 5; i++) { // Immer 5 Spalten für Durchgänge reservieren
             shootersMap.get(shooterId).results[`dg${i}`] = null;
           }
         }
@@ -290,10 +345,11 @@ export default function ExportsPage() {
       });
       
       return {
-        leagueName: leagueData.name,
+        leagueName: showAllShooters ? 'Gesamtrangliste' : leagueData.name,
         season: seasonData.name,
         shooters,
-        numRounds
+        numRounds: 5, // Immer 5 Spalten für Durchgänge anzeigen
+        genderFilter
       };
     } catch (error) {
       console.error('Fehler beim Generieren der Einzelschützenergebnisse:', error);
@@ -359,7 +415,7 @@ export default function ExportsPage() {
                   <Select
                     value={selectedLeague}
                     onValueChange={setSelectedLeague}
-                    disabled={leagues.length === 0}
+                    disabled={leagues.length === 0 || showAllShooters}
                   >
                     <SelectTrigger id="league-select" className="w-full">
                       <SelectValue placeholder="Liga auswählen" />
@@ -401,19 +457,58 @@ export default function ExportsPage() {
                   <CardHeader>
                     <CardTitle className="text-lg">Einzelschützenergebnisse</CardTitle>
                     <CardDescription>
-                      Exportieren Sie die Einzelschützenergebnisse der ausgewählten Liga.
+                      Exportieren Sie Einzelschützenergebnisse nach Liga oder als Gesamtliste.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="show-all-shooters"
+                        checked={showAllShooters}
+                        onChange={(e) => setShowAllShooters(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label htmlFor="show-all-shooters">
+                        Gesamtliste aller Schützen (außer Sportpistole)
+                      </Label>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Nach Geschlecht filtern</Label>
+                      <RadioGroup 
+                        value={genderFilter} 
+                        onValueChange={(value) => setGenderFilter(value as 'all' | 'male' | 'female')}
+                        className="flex space-x-4"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="all" id="all" />
+                          <Label htmlFor="all">Alle</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="male" id="male" />
+                          <Label htmlFor="male">Männlich</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="female" id="female" />
+                          <Label htmlFor="female">Weiblich</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                    
                     <PdfButton
                       title="Einzelschützenergebnisse"
-                      subtitle={leagues.find(l => l.id === selectedLeague)?.name || ''}
+                      subtitle={showAllShooters 
+                        ? `Gesamtliste (${genderFilter === 'all' ? 'Alle' : genderFilter === 'male' ? 'Männlich' : 'Weiblich'})` 
+                        : leagues.find(l => l.id === selectedLeague)?.name || ''}
                       generateData={generateShooterResultsData}
                       pdfType="shooterResults"
                       buttonText="Einzelschützenergebnisse exportieren"
-                      fileName={`Einzelschuetzenergebnisse_${leagues.find(l => l.id === selectedLeague)?.name || 'Liga'}.pdf`}
+                      fileName={`Einzelschuetzenergebnisse_${showAllShooters 
+                        ? `Gesamt_${genderFilter === 'all' ? 'Alle' : genderFilter === 'male' ? 'Männlich' : 'Weiblich'}` 
+                        : leagues.find(l => l.id === selectedLeague)?.name || 'Liga'}.pdf`}
                       orientation="landscape"
-                      className="w-full"
+                      className="w-full mt-4"
                     />
                   </CardContent>
                 </Card>
@@ -422,21 +517,7 @@ export default function ExportsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="certificates">
-          <Card>
-            <CardHeader>
-              <CardTitle>Urkunden erstellen</CardTitle>
-              <CardDescription>
-                Erstellen Sie Urkunden für Mannschaften und Einzelschützen.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Diese Funktion wird in einer zukünftigen Version verfügbar sein.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Der TabsContent für "certificates" wird nicht mehr benötigt, da wir direkt zur Urkunden-Seite navigieren */}
       </Tabs>
     </div>
   );

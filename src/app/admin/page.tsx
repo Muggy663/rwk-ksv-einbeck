@@ -99,7 +99,7 @@ export default function AdminDashboardPage() {
     },
     {
       text: "RWK-Tabellen: Druckfunktion für Ligaergebnisse (ohne sensible Daten).",
-      status: "Verschoben (v0.5.2)", icon: Printer, iconColor: "text-blue-600", versionTarget: "0.5.2"
+      status: "Offen (v0.7.0)", icon: Printer, iconColor: "text-purple-600", versionTarget: "0.7.0"
     },
     {
       text: "Hauptnavigation: Icons überprüfen/optimieren, 'KM'-Link entfernt/auskommentiert.",
@@ -123,7 +123,19 @@ export default function AdminDashboardPage() {
     },
 
 
-    // Version 0.6.0 und 0.6.1 (Implementierte Features)
+    // Version 0.6.0 bis 0.6.3 (Implementierte Features)
+    { 
+      text: "Vercel-Kompatibilität: Ersetzung von useSearchParams durch clientseitiges Parsen mit window.location.search.", 
+      status: "Erledigt (v0.6.3)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.3", isMajor: true
+    },
+    { 
+      text: "Behebung von Fehlern beim statischen Rendering auf Vercel.", 
+      status: "Erledigt (v0.6.3)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.3"
+    },
+    { 
+      text: "Optimierte Firestore-Abfragen für Vercel-Limits und verbesserte Asset-Handhabung.", 
+      status: "Erledigt (v0.6.3)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.3"
+    },
     { 
       text: "Audit-Trail für Ergebniserfassung (Admin): Protokollierung von Änderungen.", 
       status: "Erledigt (v0.6.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.0", isMajor: true
@@ -133,8 +145,12 @@ export default function AdminDashboardPage() {
       status: "Erledigt (v0.6.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.0"
     },
     { 
-      text: "PDF-Generierung (Erweitert): Gesamtlisten, Urkunden.", 
-      status: "Erledigt (v0.6.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.0"
+      text: "PDF-Generierung (Erweitert): Gesamtlisten mit Geschlechterfilter.", 
+      status: "Erledigt (v0.6.3)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.3"
+    },
+    { 
+      text: "Urkunden-Generator für Schützen und Mannschaften mit Vercel-Kompatibilität.", 
+      status: "Erledigt (v0.6.3)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.3"
     },
     {
       text: "Onboarding-Assistent für neue Benutzer implementiert.",
@@ -360,7 +376,7 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle className="text-xl text-accent flex items-center">
             <GitPullRequestClosed className="mr-3 h-6 w-6" />
-            Roadmap / Nächste Schritte (Stand: 26. Mai 2025, Version 0.6.2)
+            Roadmap / Nächste Schritte (Stand: 01. Juni 2025, Version 0.6.3)
           </CardTitle>
           <CardDescription>Übersicht geplanter Erweiterungen und wichtiger Aufgaben, strukturiert nach potenziellen Versionen.</CardDescription>
         </CardHeader>

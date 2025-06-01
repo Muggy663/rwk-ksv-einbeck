@@ -275,8 +275,8 @@ export default function AdminDocumentsPage() {
                     <SelectValue placeholder="Kategorie wählen" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ausschreibung">Ausschreibung</SelectItem>
-                    <SelectItem value="formular">Formular</SelectItem>
+                    <SelectItem value="ausschreibung">Ausschreibung (Platzhalter)</SelectItem>
+                    <SelectItem value="formular">Formular (Platzhalter)</SelectItem>
                     <SelectItem value="ordnung">Regelwerk & Hilfe</SelectItem>
                     <SelectItem value="archiv">Archiv</SelectItem>
                   </SelectContent>
@@ -338,8 +338,8 @@ export default function AdminDocumentsPage() {
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-5 mb-8">
           <TabsTrigger value="all">Alle</TabsTrigger>
-          <TabsTrigger value="ausschreibung">Ausschreibungen</TabsTrigger>
-          <TabsTrigger value="formular">Formulare</TabsTrigger>
+          <TabsTrigger value="ausschreibung">Ausschreibungen (Platzhalter)</TabsTrigger>
+          <TabsTrigger value="formular">Formulare (Platzhalter)</TabsTrigger>
           <TabsTrigger value="ordnung">Regelwerke & Hilfen</TabsTrigger>
           <TabsTrigger value="archiv">Archiv</TabsTrigger>
         </TabsList>
@@ -374,8 +374,8 @@ export default function AdminDocumentsPage() {
                     <TableRow key={doc.id}>
                       <TableCell className="font-medium">{doc.title}</TableCell>
                       <TableCell>
-                        {doc.category === 'ausschreibung' && 'Ausschreibung'}
-                        {doc.category === 'formular' && 'Formular'}
+                        {doc.category === 'ausschreibung' && 'Ausschreibung (Platzhalter)'}
+                        {doc.category === 'formular' && 'Formular (Platzhalter)'}
                         {doc.category === 'ordnung' && 'Regelwerk & Hilfe'}
                         {doc.category === 'archiv' && 'Archiv'}
                       </TableCell>
