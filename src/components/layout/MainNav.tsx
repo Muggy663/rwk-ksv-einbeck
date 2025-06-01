@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import type { UserPermission } from '@/types/rwk';
+import { InactivityTimer } from '@/components/auth/InactivityTimer';
 
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";
 
@@ -143,6 +144,7 @@ export function MainNav() {
               </span>
            )}
            {user.email && <UserCircle className="h-5 w-5 text-muted-foreground lg:hidden" title={user.email} />}
+           {user && <InactivityTimer />}
           <Button
             variant="ghost"
             size="sm"

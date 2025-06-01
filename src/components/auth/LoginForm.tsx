@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LogIn, AlertTriangle } from 'lucide-react';
 import { PasswordResetForm } from './PasswordResetForm';
+import { PasswordInput } from '@/components/ui/password-input';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Ungültige E-Mail-Adresse." }),
@@ -71,9 +72,8 @@ export function LoginForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Passwort</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 placeholder="********"
                 {...register('password')}
                 className={errors.password ? 'border-destructive' : ''}

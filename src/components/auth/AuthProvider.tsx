@@ -1,7 +1,7 @@
 // src/components/auth/AuthProvider.tsx
 "use client";
 import type { ReactNode } from 'react';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { onAuthStateChanged, signInWithEmail, signOutUser, type FirebaseUser } from '@/lib/firebase/auth';
 import { AuthContext, type AuthContextType } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -14,6 +14,7 @@ interface AuthProviderProps {
 }
 
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";
+const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 Minuten in Millisekunden
 
 export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -25,6 +26,58 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
   const [appPermissionsError, setAppPermissionsError] = useState<string | null>(null);
 
   const { toast } = useToast();
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Funktion zum Zurücksetzen des Inaktivitäts-Timers
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+    
+    // Nur Timer setzen, wenn ein Benutzer angemeldet ist
+    if (user) {
+      inactivityTimerRef.current = setTimeout(() => {
+        // Benutzer nach Inaktivität abmelden
+        signOut();
+        toast({ 
+          title: "Automatische Abmeldung", 
+          description: "Sie wurden aufgrund von Inaktivität automatisch abgemeldet.", 
+          variant: "default" 
+        });
+      }, INACTIVITY_TIMEOUT);
+    }
+  }, [user]);
+
+  // Event-Listener für Benutzeraktivität
+  useEffect(() => {
+    if (!user) return;
+    
+    // Benutzeraktivitäten überwachen
+    const activityEvents = ['mousedown', 'keypress', 'scroll', 'touchstart'];
+    
+    const handleUserActivity = () => {
+      resetInactivityTimer();
+    };
+    
+    // Event-Listener hinzufügen
+    activityEvents.forEach(event => {
+      window.addEventListener(event, handleUserActivity);
+    });
+    
+    // Initial Timer setzen
+    resetInactivityTimer();
+    
+    // Cleanup
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+      
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, handleUserActivity);
+      });
+    };
+  }, [user, resetInactivityTimer]);
 
   const fetchUserAppPermissions = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
@@ -99,6 +152,12 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
   const signOut = async (): Promise<void> => {
     setError(null);
     try {
+      // Timer löschen beim Abmelden
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      
       await signOutUser();
       // setUser(null) und fetchUserAppPermissions(null) werden durch onAuthStateChanged getriggert
       toast({ title: "Erfolgreich abgemeldet" });
@@ -117,6 +176,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): JSX.Element => {
     userAppPermissions,
     loadingAppPermissions, // Permissions loading state
     appPermissionsError,
+    resetInactivityTimer, // Exportiere die Funktion zum Zurücksetzen des Timers
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

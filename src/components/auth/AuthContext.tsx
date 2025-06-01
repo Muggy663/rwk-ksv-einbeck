@@ -13,6 +13,7 @@ export interface AuthContextType {
   userAppPermissions: UserPermission | null; // App-specific permissions from Firestore
   loadingAppPermissions: boolean; // Loading state for app-specific permissions
   appPermissionsError: string | null; // Error from fetching app-specific permissions
+  resetInactivityTimer?: () => void; // Funktion zum Zurücksetzen des Inaktivitäts-Timers
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
