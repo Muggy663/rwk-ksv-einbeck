@@ -19,55 +19,56 @@ export default function UpdatesPage() {
           <Card className="border-primary/20">
             <CardHeader className="bg-primary/5">
               <CardTitle className="text-xl text-primary flex items-center justify-between">
-                <span>Version 0.6.3 (01. Juni 2025)</span>
+                <span>Version 0.7.0 (03. Juni 2025)</span>
                 <span className="text-sm bg-primary/20 px-2 py-1 rounded-full">Aktuell</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Sicherheit & Benutzerfreundlichkeit</h3>
+                  <h3 className="text-lg font-semibold mb-2">Statistik-Dashboard</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Neu: Automatischer Logout nach 10 Minuten Inaktivität mit sichtbarem Countdown-Timer</li>
-                    <li>Neu: Verbesserte Benutzerführung für Vereinsvertreter und Mannschaftsführer</li>
-                    <li>Verbessert: Onboarding-Dialog zeigt nur für relevante Benutzerrollen an</li>
+                    <li>Neu: Umfassendes Statistik-Dashboard mit erweiterten Visualisierungen</li>
+                    <li>Neu: Leistungsentwicklung von Schützen über die Saison (Liniendiagramm)</li>
+                    <li>Neu: Vergleich zwischen Mannschaften einer Liga (Balkendiagramm)</li>
+                    <li>Neu: Verteilung der Ergebnisse nach Geschlecht (Kreisdiagramm)</li>
+                    <li>Neu: Filter für Saison, Liga und Verein</li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">PDF-Exporte & Auswertungen</h3>
+                  <h3 className="text-lg font-semibold mb-2">Terminkalender</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Neu: Gesamtrangliste aller Einzelschützen über alle Ligen hinweg (außer Sportpistole)</li>
-                    <li>Neu: Filterung der Einzelschützenergebnisse nach Geschlecht (männlich/weiblich)</li>
-                    <li>Neu: Urkunden-Generator für die besten Schützen und Mannschaften jeder Liga</li>
-                    <li>Neu: Automatische Erstellung von Urkunden für Gesamtsieger (bester Schütze, beste Dame)</li>
-                    <li>Verbessert: Optimiertes PDF-Layout mit Kreisverbandslogo und besserer Lesbarkeit</li>
-                    <li>Verbessert: Mehr Abstand zwischen Einzelschützenergebnissen für bessere Übersichtlichkeit</li>
+                    <li>Neu: Übersichtlicher Kalender für alle Wettkämpfe und Veranstaltungen</li>
+                    <li>Neu: Filterung nach Liga und Termintyp</li>
+                    <li>Neu: Export von Terminen als iCal-Datei (kompatibel mit Google Kalender)</li>
+                    <li>Neu: Einfaches Eingabeformular für neue Termine mit Tooltips</li>
+                    <li>Neu: Unterscheidung zwischen RWK-Terminen und Kreisverbandsterminen</li>
+                    <li>Neu: Terminverwaltung zum Bearbeiten und Löschen von Terminen (nur für Administratoren)</li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Vercel-Kompatibilität</h3>
+                  <h3 className="text-lg font-semibold mb-2">Mobile Optimierung</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Verbesserte Kompatibilität mit Vercel-Deployment durch Optimierung des URL-Parameter-Handlings</li>
-                    <li>Behebung von Fehlern beim statischen Rendering auf Vercel</li>
-                    <li>Optimierte Suspense-Boundary-Behandlung für Next.js 15</li>
-                    <li>Verbesserte Firestore-Abfragen für Vercel-Limits bei der Urkunden-Generierung</li>
-                    <li>Optimierte Asset-Handhabung für PDF-Generierung auf Vercel</li>
+                    <li>Verbessert: Responsive Design für alle Seiten</li>
+                    <li>Neu: Progressive Web App (PWA) Funktionalität</li>
+                    <li>Neu: Offline-Zugriff auf grundlegende Funktionen</li>
+                    <li>Verbessert: Touch-optimierte UI-Elemente</li>
+                    <li>Verbessert: Anpassung der Tabellen für kleine Bildschirme</li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Benutzerfreundlichkeit</h3>
+                  <h3 className="text-lg font-semibold mb-2">Druckfunktion</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Neu: Passwort-Sichtbarkeits-Toggle für einfachere Passworteingabe</li>
-                    <li>Verbessert: Zurück-Button bei Urkunden-Erstellung für bessere Navigation</li>
-                    <li>Verbessert: Entfernung von "RWK" aus Saisonnamen für bessere Lesbarkeit</li>
-                    <li>Verbessert: Kennzeichnung von Platzhalter-Funktionen in der Dokumentenverwaltung</li>
+                    <li>Neu: Optimierte Druckansicht für Ligaergebnisse ohne sensible Daten</li>
+                    <li>Verbessert: Direkter Druck aus der Tabellenseite</li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Bugfixes</h3>
+                  <h3 className="text-lg font-semibold mb-2">Fehlerbehebungen</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Behebung des Fehlers "CircleAlert is not defined" in der Dokumentenverwaltung</li>
-                    <li>Behebung von Rendering-Problemen in verschiedenen Admin-Bereichen</li>
+                    <li>Behoben: Router-Update-Fehler im AdminLayout beim automatischen Logout</li>
+                    <li>Verbessert: Optimierte Ladezeiten für große Datenmengen</li>
+                    <li>Verbessert: Einheitliche Darstellung auf allen Geräten</li>
                   </ul>
                 </div>
               </div>
@@ -76,32 +77,76 @@ export default function UpdatesPage() {
           
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">Version 0.6.2 (26. Mai 2025)</CardTitle>
+              <CardTitle className="text-xl">Version 0.6.5 (05. Juni 2025)</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Dokumentenverwaltung</h3>
+                  <h3 className="text-lg font-semibold mb-2">Neue Funktionen</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Neue Dokumentenverwaltung für Ausschreibungen, Formulare und Regelwerke</li>
-                    <li>Upload von PDF-Dateien oder Verlinkung zu externen Webseiten</li>
-                    <li>Kategorisierung nach Dokumenttyp (Ausschreibung, Formular, Regelwerk, Archiv)</li>
+                    <li>Hinzugefügt: PDF-Export für Ligaergebnisse und Einzelschützenergebnisse</li>
+                    <li>Hinzugefügt: Druckfreundliche Darstellung der Tabellen</li>
+                    <li>Hinzugefügt: Logo in der oberen linken Ecke der Anwendung für bessere Markenidentität</li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Benutzerfreundlichkeit</h3>
+                  <h3 className="text-lg font-semibold mb-2">Fehlerbehebungen</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Verbesserte Navigation und Filteroptionen in der Ergebniserfassung</li>
-                    <li>Optimierte Darstellung auf mobilen Geräten</li>
-                    <li>Hilfetexte und Tooltips für komplexe Funktionen</li>
+                    <li>Behoben: Problem mit der Groß-/Kleinschreibung bei der Abfrage von Saisons in RWK-Tabellen</li>
+                    <li>Behoben: "RWK" aus dem Anzeigenamen der Wettbewerbe entfernt</li>
+                    <li>Behoben: Icons in der Hauptnavigation aktualisiert für bessere Verständlichkeit</li>
+                    <li>Behoben: Login-Button in der Hauptnavigation wiederhergestellt</li>
+                    <li>Behoben: Dokumente und Support-Links zur Hauptnavigation hinzugefügt</li>
+                    <li>Behoben: Beispieldaten für Termine entfernt, wenn keine Termine gefunden werden</li>
+                    <li>Behoben: Beispieldaten aus statistics-service entfernt</li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Bugfixes</h3>
+                  <h3 className="text-lg font-semibold mb-2">Verbesserungen</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Behebung von Darstellungs- und JavaScript-Fehlern auf der RWK-Tabellenseite (EOF, useSearchParams).</li>
-                    <li>Korrektur der Sortierung in der Einzelschützen-Rangliste</li>
-                    <li>Verbesserung der Ladezeiten bei großen Datenmengen</li>
+                    <li>Verbessert: Protokollierung der verfügbaren Disziplinen für bessere Fehlerdiagnose</li>
+                    <li>Verbessert: Konsistente Behandlung von Groß-/Kleinschreibung bei Disziplinen (kk/KK, lg/LG)</li>
+                    <li>Verbessert: Ortsauswahl bei Terminen verwendet jetzt Clubs aus der Datenbank</li>
+                    <li>Verbessert: Konsistentes Layout mit Logo in der Kopfzeile für bessere Markenidentität</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">Version 0.6.4 (02. Juni 2025)</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Benutzeroberfläche</h3>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Verbessert: Logo in den Ergebnislisten ist jetzt rechtsbündig positioniert</li>
+                    <li>Behoben: Doppelte Anzeige von "Kleinkaliber" in den Urkunden entfernt</li>
+                    <li>Hinzugefügt: Unterschriftenbilder in den Urkunden für Präsident und Rundenwettkampfleiter</li>
+                    <li>Verbessert: Benutzerhandbuch für normale Benutzer vereinfacht, technische Begriffe entfernt</li>
+                    <li>Geändert: Begriff "Spielstärke" im Handbuch durch "Mannschaftsstärke" ersetzt</li>
+                    <li>Behoben: "undefined"-Einträge im Handbuch entfernt</li>
+                    <li>Verbessert: Nummerierung der Abschnitte im Handbuch für normale Benutzer korrigiert</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Dokumentation</h3>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Aktualisiert: Handbuch mit benutzerfreundlicheren Erklärungen</li>
+                    <li>Aktualisiert: Versionsnummer und Datum in allen relevanten Dateien</li>
+                    <li>Geändert: Bezeichnung "Super-Administrator" durchgängig durch "Rundenwettkampfleiter" ersetzt</li>
+                    <li>Korrigiert: Hinweise auf mehrere Vereine pro Benutzer entfernt</li>
+                    <li>Aktualisiert: Information zur Passwortänderung beim ersten Login aktualisiert</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Technische Details</h3>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Verbessert: PDF-Generierung für Urkunden mit Unterschriftenbildern</li>
+                    <li>Optimiert: Layout der Druckansicht für bessere Lesbarkeit</li>
                   </ul>
                 </div>
               </div>
@@ -112,6 +157,79 @@ export default function UpdatesPage() {
         <TabsContent value="previous" className="space-y-4">
           <ScrollArea className="h-[600px] pr-4">
             <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">Version 0.6.3 (01. Juni 2025)</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Sicherheit & Benutzerfreundlichkeit</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neu: Automatischer Logout nach 10 Minuten Inaktivität mit sichtbarem Countdown-Timer</li>
+                        <li>Neu: Verbesserte Benutzerführung für Vereinsvertreter und Mannschaftsführer</li>
+                        <li>Verbessert: Onboarding-Dialog zeigt nur für relevante Benutzerrollen an</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">PDF-Exporte & Auswertungen</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neu: Gesamtrangliste aller Einzelschützen über alle Ligen hinweg (außer Sportpistole)</li>
+                        <li>Neu: Filterung der Einzelschützenergebnisse nach Geschlecht (männlich/weiblich)</li>
+                        <li>Neu: Urkunden-Generator für die besten Schützen und Mannschaften jeder Liga</li>
+                        <li>Neu: Automatische Erstellung von Urkunden für Gesamtsieger (bester Schütze, beste Dame)</li>
+                        <li>Verbessert: Optimiertes PDF-Layout mit Kreisverbandslogo und besserer Lesbarkeit</li>
+                        <li>Verbessert: Mehr Abstand zwischen Einzelschützenergebnissen für bessere Übersichtlichkeit</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Vercel-Kompatibilität</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Verbesserte Kompatibilität mit Vercel-Deployment durch Optimierung des URL-Parameter-Handlings</li>
+                        <li>Behebung von Fehlern beim statischen Rendering auf Vercel</li>
+                        <li>Optimierte Suspense-Boundary-Behandlung für Next.js 15</li>
+                        <li>Verbesserte Firestore-Abfragen für Vercel-Limits bei der Urkunden-Generierung</li>
+                        <li>Optimierte Asset-Handhabung für PDF-Generierung auf Vercel</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">Version 0.6.2 (26. Mai 2025)</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Dokumentenverwaltung</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neue Dokumentenverwaltung für Ausschreibungen, Formulare und Regelwerke</li>
+                        <li>Upload von PDF-Dateien oder Verlinkung zu externen Webseiten</li>
+                        <li>Kategorisierung nach Dokumenttyp (Ausschreibung, Formular, Regelwerk, Archiv)</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Benutzerfreundlichkeit</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Verbesserte Navigation und Filteroptionen in der Ergebniserfassung</li>
+                        <li>Optimierte Darstellung auf mobilen Geräten</li>
+                        <li>Hilfetexte und Tooltips für komplexe Funktionen</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Bugfixes</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Behebung von Darstellungs- und JavaScript-Fehlern auf der RWK-Tabellenseite (EOF, useSearchParams).</li>
+                        <li>Korrektur der Sortierung in der Einzelschützen-Rangliste</li>
+                        <li>Verbesserung der Ladezeiten bei großen Datenmengen</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
               <Card>
                 <CardHeader>
                   <CardTitle className="text-xl">Version 0.6.1 (26. Mai 2025)</CardTitle>
@@ -325,16 +443,11 @@ export default function UpdatesPage() {
                 <CardContent className="pt-6">
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold mb-2">Admin-Bereich</h3>
+                      <h3 className="text-lg font-semibold mb-2">Admin-Bereich & Öffentliche Ansichten</h3>
                       <ul className="list-disc pl-5 space-y-1">
                         <li>Komplette Verwaltung von Saisons, Ligen, Vereinen, Mannschaften und Schützen</li>
                         <li>Ergebniserfassung und -bearbeitung</li>
                         <li>Support-Ticket-System</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Öffentliche Ansichten</h3>
-                      <ul className="list-disc pl-5 space-y-1">
                         <li>RWK-Tabellen mit Mannschafts- und Einzelranglisten</li>
                         <li>"Letzte Änderungen"-Feed auf der Startseite</li>
                         <li>RWK-Ordnung und Impressum</li>

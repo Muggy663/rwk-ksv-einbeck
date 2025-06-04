@@ -177,20 +177,56 @@ export default function AdminDashboardPage() {
       status: "Erledigt (v0.6.1)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.1"
     },
     
-    // Ziel: Version 0.7.0 (Statistik & Mobile)
+    // Version 0.7.0 (Statistik & Mobile) - Abgeschlossen
     {
       text: "Statistik-Dashboard mit erweiterten Visualisierungen.",
-      status: "Als Nächstes (v0.7.0)", icon: BarChart3, iconColor: "text-destructive", versionTarget: "0.7.0", isMajor: true
+      status: "Erledigt (v0.7.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.7.0", isMajor: true
     },
     {
-      text: "Terminkalender für Wettkämpfe.",
-      status: "Offen (v0.7.0)", icon: CalendarDays, iconColor: "text-purple-600", versionTarget: "0.7.0"
+      text: "Schützenvergleich-Funktion mit Auswahl von bis zu 6 Schützen.",
+      status: "Erledigt (v0.7.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.7.0"
+    },
+    {
+      text: "Terminkalender für Wettkämpfe mit iCal-Export.",
+      status: "Erledigt (v0.7.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.7.0"
     },
     {
       text: "Mobile Optimierung und Progressive Web App (PWA).",
-      status: "Offen (v0.7.0)", icon: Smartphone, iconColor: "text-purple-600", versionTarget: "0.7.0"
+      status: "Erledigt (v0.7.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.7.0"
+    },
+    
+    // Ziel: Version 0.7.1 (Fehlerbehebungen & UX-Verbesserungen)
+    {
+      text: "Standard-Statistik-Seite korrigieren, insbesondere den Mannschaftsvergleich.",
+      status: "Als Nächstes (v0.7.1)", icon: AlertCircle, iconColor: "text-destructive", versionTarget: "0.7.1", isMajor: true
+    },
+    {
+      text: "\"Erste Schritte starten\"-Button mit Funktionalität versehen.",
+      status: "Offen (v0.7.1)", icon: ShieldQuestion, iconColor: "text-purple-600", versionTarget: "0.7.1"
+    },
+    {
+      text: "\"Passwort ändern\"-Funktion implementieren.",
+      status: "Offen (v0.7.1)", icon: KeyRound, iconColor: "text-purple-600", versionTarget: "0.7.1"
+    },
+    {
+      text: "Vereinfachung der Benutzeroberfläche (Navigation, Terminkalender, etc.).",
+      status: "Offen (v0.7.1)", icon: Settings, iconColor: "text-purple-600", versionTarget: "0.7.1"
     },
 
+    // Ziel: Version 0.8.0 (Beta-Phase)
+    {
+      text: "Benachrichtigungssystem für neue Ergebnisse und wichtige Ereignisse.", 
+      status: "Zukunft (v0.8.0)", icon: MessagesSquare, iconColor: "text-muted-foreground", versionTarget: "0.8.0", isMajor: true
+    },
+    {
+      text: "Erweiterte Benutzerberechtigungen und Vereinfachung der Benutzerverwaltung.", 
+      status: "Zukunft (v0.8.0)", icon: UserCog, iconColor: "text-muted-foreground", versionTarget: "0.8.0"
+    },
+    {
+      text: "Automatischer Saisonabschluss / Auf- und Abstieg (komplex).", 
+      status: "Zukunft (v0.8.0)", icon: Trophy, iconColor: "text-muted-foreground", versionTarget: "0.8.0"
+    },
+    
     // Zukunft (Nach Beta / v1.0+)
     {
       text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (weniger relevant durch aktuellen Admin-Workflow).", 
@@ -376,7 +412,7 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle className="text-xl text-accent flex items-center">
             <GitPullRequestClosed className="mr-3 h-6 w-6" />
-            Roadmap / Nächste Schritte (Stand: 01. Juni 2025, Version 0.6.3)
+            Roadmap / Nächste Schritte (Stand: 05. Juni 2025, Version 0.7.0)
           </CardTitle>
           <CardDescription>Übersicht geplanter Erweiterungen und wichtiger Aufgaben, strukturiert nach potenziellen Versionen.</CardDescription>
         </CardHeader>

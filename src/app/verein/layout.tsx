@@ -1,9 +1,8 @@
-// /app/verein/layout.tsx
 "use client";
 import React, { type ReactNode, createContext, useContext, useState, useEffect, useMemo } from 'react'; // Added useMemo
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, AlertTriangle, ShieldAlert, UserCog } from 'lucide-react';
+import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, AlertTriangle, ShieldAlert, UserCog, FileDown, CalendarDays, User, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -11,8 +10,9 @@ import { cn } from '@/lib/utils';
 import type { UserPermission, VereinContextType } from '@/types/rwk';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
+
 import { PasswordChangePrompt } from '@/components/auth/PasswordChangePrompt';
+import { LogoutButton } from '@/components/auth/LogoutButton';
 
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";
 
@@ -35,7 +35,11 @@ const vereinNavItems = [
   { href: '/verein/mannschaften', label: 'Meine Mannschaften', icon: Users },
   { href: '/verein/schuetzen', label: 'Meine Schützen', icon: UserCircle },
   { href: '/verein/ergebnisse', label: 'Ergebnisse erfassen', icon: ListChecks },
+  { href: '/verein/handtabellen', label: 'Handtabellen', icon: FileDown },
+  { href: '/termine', label: 'Terminkalender', icon: CalendarDays },
+  { href: '/termine/add', label: 'Termin hinzufügen', icon: CalendarDays },
   { href: '/verein/team-managers', label: 'Mannschaftsführer', icon: UserCog },
+  { href: '/verein/hilfe', label: 'Hilfe & Einstellungen', icon: HelpCircle },
 ];
 
 export default function VereinLayout({ children }: VereinLayoutProps) {
@@ -48,6 +52,8 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
     userAppPermissions,
     loadingAppPermissions,
     appPermissionsError: authProviderPermissionError,
+    signOut,
+    resetInactivityTimer
   } = useAuth();
 
   // State for derived permission error specific to this layout's logic
@@ -59,6 +65,73 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
   const [assignedClubIdArray, setAssignedClubIdArray] = useState<string[]>([]);
   // Combined loading state
   const [combinedLoading, setCombinedLoading] = useState(true);
+
+  // Logout-Handler
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push('/');
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  // Entferne alle Onboarding-Dialoge beim Laden der Seite
+  useEffect(() => {
+    const removeOnboardingDialogs = () => {
+      // Alle Dialoge im DOM finden
+      const dialogs = document.querySelectorAll('dialog');
+      
+      // Alle Dialoge durchgehen
+      dialogs.forEach(dialog => {
+        // Wenn der Dialog den Text "Willkommen bei der RWK Einbeck App" enthält
+        if (dialog.textContent && dialog.textContent.includes('Willkommen bei der RWK Einbeck App')) {
+          // Dialog aus dem DOM entfernen
+          dialog.remove();
+          console.log("Onboarding-Dialog entfernt");
+        }
+      });
+      
+      // Auch nach Buttons suchen, die das Onboarding öffnen könnten
+      const onboardingButtons = document.querySelectorAll('button');
+      onboardingButtons.forEach(button => {
+        if (button.textContent && button.textContent.includes('Einführung starten')) {
+          // Button deaktivieren
+          button.disabled = true;
+          button.style.display = 'none';
+          console.log("Onboarding-Button deaktiviert");
+        }
+      });
+    };
+    
+    // Führe die Funktion initial aus
+    removeOnboardingDialogs();
+    
+    // Und mehrmals mit Verzögerung (falls der Dialog verzögert geladen wird)
+    const timer1 = setTimeout(removeOnboardingDialogs, 500);
+    const timer2 = setTimeout(removeOnboardingDialogs, 1000);
+    const timer3 = setTimeout(removeOnboardingDialogs, 2000);
+    
+    // Beobachter für DOM-Änderungen einrichten
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.addedNodes.length > 0) {
+          removeOnboardingDialogs();
+        }
+      }
+    });
+    
+    // Beobachter starten
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Aufräumen
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     console.log("VereinLayout DEBUG: Auth/Permissions Effect triggered. Auth loading:", authLoading, "AppPerm loading:", loadingAppPermissions);
@@ -163,7 +236,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
           <nav className="space-y-1"><Link href="/verein/dashboard" className={cn("flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium", pathname === "/verein/dashboard" ? 'bg-accent text-accent-foreground' : 'text-muted-foreground')}><LayoutDashboard className="h-5 w-5" /><span>Übersicht</span></Link></nav>
           <Separator className="my-6" />
           <Button variant="outline" onClick={() => router.push('/')} className="w-full mb-2"><ArrowLeft className="mr-2 h-4 w-4" /> Zur Startseite</Button>
-          {user && <Button variant="outline" onClick={async () => { await useAuth().signOut(); router.push('/'); }} className="w-full text-destructive hover:text-destructive/80 hover:bg-destructive/10"><LogOut className="mr-2 h-4 w-4" /> Logout</Button>}
+          {user && <Button variant="outline" onClick={handleLogout} className="w-full text-destructive hover:text-destructive/80 hover:bg-destructive/10"><LogOut className="mr-2 h-4 w-4" /> Logout</Button>}
         </aside>
         <main className="flex-1 p-8 flex flex-col justify-center items-center text-center">
           <Card className="w-full max-w-lg border-amber-500 bg-amber-50/50">
@@ -227,17 +300,18 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
           </nav>
           <Separator className="my-6" />
           <div className="space-y-2 mb-4">
-            <OnboardingWizard />
+            {/* Passwort-Button entfernt, da er jetzt auf der Hilfeseite ist */}
           </div>
           <Button variant="outline" onClick={() => router.push('/')} className="w-full mb-2">
             <ArrowLeft className="mr-2 h-4 w-4" /> Zur Startseite
           </Button>
-          {user && <Button variant="outline" onClick={async () => { await useAuth().signOut(); router.push('/'); }} className="w-full text-destructive hover:text-destructive/80 hover:bg-destructive/10">
+          
+          {user && <Button variant="outline" onClick={handleLogout} className="w-full text-destructive hover:text-destructive/80 hover:bg-destructive/10">
             <LogOut className="mr-2 h-4 w-4" /> Logout
           </Button>}
         </aside>
         <main className="flex-1 p-6 lg:p-8 bg-muted/20 overflow-y-auto">
-          {/* Passwort-Änderungsaufforderung */}
+          {/* Passwort-Änderungsdialog (nicht als Aufforderung) */}
           {user && <PasswordChangePrompt />}
           {children}
         </main>

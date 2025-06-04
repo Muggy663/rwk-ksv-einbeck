@@ -51,7 +51,9 @@ import {
   Trophy,
   Medal,
   LineChart as LineChartIcon,
+  FileDown,
 } from 'lucide-react';
+import { PDFExportButton } from '@/components/pdf-export-button';
 import type {
   Season,
   League,
@@ -382,15 +384,25 @@ function RwkTabellenPageComponent() {
       const seasonsColRef = collection(db, 'seasons');
       const q = query(seasonsColRef,
         where("status", "==", "Laufend"),
-        orderBy('competitionYear', 'desc') // <-- Sortierung hierher verschieben
-      ); // <-- schließende Klammer und Semikolon hinzufügen/überprüfen
+        orderBy('competitionYear', 'desc')
+      );
 
       const seasonsSnapshot = await getDocs(q);
       const years = new Set<number>();
+      const availableDisciplines = new Set<string>();
+      
       seasonsSnapshot.forEach(docData => {
         const seasonData = docData.data() as Season;
         if (seasonData.competitionYear) years.add(seasonData.competitionYear);
+        
+        // Store discipline types (lowercase for consistent comparison)
+        if (seasonData.type) {
+          availableDisciplines.add(seasonData.type.toLowerCase());
+        }
       });
+      
+      console.log("RWK DEBUG: Available disciplines from DB:", Array.from(availableDisciplines));
+      
       const sortedYears = Array.from(years).sort((a, b) => b - a);
       console.log("RWK DEBUG: Available years from DB:", sortedYears);
       return sortedYears.length > 0 ? sortedYears : [new Date().getFullYear()];
@@ -408,7 +420,7 @@ function RwkTabellenPageComponent() {
       const seasonsQuery = query(
         collection(db, "seasons"),
         where("competitionYear", "==", year),
-        where("type", "==", uiDiscipline),
+        where("type", "in", [uiDiscipline, uiDiscipline.toUpperCase(), uiDiscipline.toLowerCase()]),
         where("status", "==", "Laufend"),
         limit(1)
       );
@@ -449,7 +461,7 @@ function RwkTabellenPageComponent() {
       const seasonsColRef = collection(db, "seasons");
       const qSeasons = query(seasonsColRef, 
         where("competitionYear", "==", config.year), 
-        where("type", "==", config.discipline), 
+        where("type", "in", [config.discipline, config.discipline.toUpperCase(), config.discipline.toLowerCase()]), 
         where("status", "==", "Laufend") // Only "Laufend" seasons
       );
       const seasonsSnapshot = await getDocs(qSeasons);
@@ -824,7 +836,7 @@ function RwkTabellenPageComponent() {
       const newSelectedCompetition: CompetitionDisplayConfig = {
         year: yearToSet,
         discipline: disciplineToSet,
-        displayName: `RWK ${yearToSet} ${disciplineLabel}`,
+        displayName: `${yearToSet} ${disciplineLabel}`,
       };
 
       // Only update if different to prevent loops
@@ -1029,6 +1041,23 @@ function RwkTabellenPageComponent() {
                     {league.name} {league.shortName && `(${league.shortName})`}
                   </AccordionTrigger>
                   <AccordionContent className="pt-0 data-[state=closed]:pb-0 data-[state=open]:pb-0"> {/* Ensure no extra padding */}
+                    <div className="flex justify-end space-x-2 p-2 bg-muted/10">
+                      <PDFExportButton 
+                        league={league} 
+                        numRounds={currentNumRoundsState} 
+                        competitionYear={selectedCompetition.year} 
+                        type="teams"
+                        className="mr-2"
+                      />
+                      {league.individualLeagueShooters.length > 0 && (
+                        <PDFExportButton 
+                          league={league} 
+                          numRounds={currentNumRoundsState} 
+                          competitionYear={selectedCompetition.year} 
+                          type="shooters"
+                        />
+                      )}
+                    </div>
                     {league.teams.length > 0 ? (
                       <div className="overflow-x-auto">
                         <Table>

@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Users, UserCircle, ListChecks, Building, Loader2, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { Users, UserCircle, ListChecks, Building, Loader2, AlertTriangle, ShieldAlert, FileDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { collection, doc, getDoc, getDocs, query, where, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
@@ -176,6 +176,21 @@ export default function VereinDashboardPage() {
               </CardDescription>
               <Link href="/verein/ergebnisse" passHref>
               <Button className="w-full">Ergebnisse erfassen</Button>
+              </Link>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium text-accent">Handtabellen</CardTitle>
+              <FileDown className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+              <CardDescription className="mb-4">
+              Leere Tabellen zum Handausfüllen für den Saisonbeginn herunterladen.
+              </CardDescription>
+              <Link href="/verein/handtabellen" passHref>
+              <Button className="w-full">Handtabellen erstellen</Button>
               </Link>
           </CardContent>
         </Card>

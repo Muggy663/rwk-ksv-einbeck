@@ -1,24 +1,29 @@
-// src/app/page.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ListChecks, Loader2, Info } from 'lucide-react';
+import { ListChecks, Loader2, Info, CalendarDays, BarChart3, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import type { LeagueUpdateEntry, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
-import { getUIDisciplineValueFromSpecificType, uiDisciplineFilterOptions } from '@/types/rwk'; // Import uiDisciplineFilterOptions
+import { getUIDisciplineValueFromSpecificType, uiDisciplineFilterOptions } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import { collection, query, orderBy, limit as firestoreLimit, getDocs, Timestamp } from 'firebase/firestore';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { fetchEvents, Event } from '@/lib/services/calendar-service';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
 export default function HomePage() {
   const [updates, setUpdates] = useState<LeagueUpdateEntry[]>([]);
   const [loadingUpdates, setLoadingUpdates] = useState<boolean>(true);
+  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
 
+  // Lade die letzten Ergebnis-Updates
   useEffect(() => {
     const fetchUpdates = async () => {
       setLoadingUpdates(true);
@@ -49,16 +54,48 @@ export default function HomePage() {
     fetchUpdates();
   }, []);
 
+  // Lade die nächsten Termine
+  useEffect(() => {
+    const loadEvents = async () => {
+      setIsLoadingEvents(true);
+      try {
+        // Lade Termine für die nächsten 30 Tage
+        const now = new Date();
+        const endDate = addDays(now, 30);
+        const events = await fetchEvents(now, endDate);
+        setUpcomingEvents(events.slice(0, 3)); // Zeige maximal 3 Termine an
+      } catch (error) {
+        console.error('Fehler beim Laden der Termine:', error);
+      } finally {
+        setIsLoadingEvents(false);
+      }
+    };
+
+    loadEvents();
+  }, []);
+
+  // Funktion zum Bestimmen der Badge-Farbe basierend auf dem Termintyp
+  const getBadgeVariant = (type: string, isKreisverband?: boolean) => {
+    if (isKreisverband) return "destructive";
+    switch (type) {
+      case "durchgang": return "default";
+      case "kreismeisterschaft": return "secondary";
+      case "sitzung": return "outline";
+      default: return "secondary";
+    }
+  };
+
   return (
-    <div className="space-y-12">
-      <section className="text-center">
+    <div className="container py-8 max-w-7xl mx-auto">
+      {/* Logo und Willkommenstext */}
+      <section className="text-center mb-12">
         <Image
           src="/images/logo.png"
           alt="KSV Einbeck Logo"
           width={150}
           height={150}
           className="mx-auto mb-6 rounded-lg shadow-md"
-          data-ai-hint="club logo"
+          style={{ width: 150, height: 150 }}
           priority
         />
         <h1 className="text-4xl font-bold text-primary mb-2">
@@ -69,10 +106,12 @@ export default function HomePage() {
         </p>
       </section>
 
-      <Separator />
+      <Separator className="my-6" />
 
-      <section>
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+      {/* Karten-Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Letzte Ergebnis-Updates */}
+        <Card className="md:col-span-2 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader>
             <div className="flex items-center space-x-3">
               <ListChecks className="h-7 w-7 text-accent" />
@@ -123,7 +162,99 @@ export default function HomePage() {
             )}
           </CardContent>
         </Card>
-      </section>
+        
+        {/* Nächste Termine */}
+        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <CalendarDays className="mr-2 h-5 w-5" />
+              Nächste Termine
+            </CardTitle>
+            <CardDescription>
+              Die nächsten anstehenden Wettkämpfe
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingEvents ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <p className="ml-3 text-muted-foreground">Lade Termine...</p>
+              </div>
+            ) : upcomingEvents.length > 0 ? (
+              <div className="space-y-4">
+                {upcomingEvents.map((event, index) => (
+                  <div key={event.id || index} className="flex flex-col space-y-1 pb-3 border-b last:border-0">
+                    <div className="flex justify-between items-start">
+                      <span className="font-medium">{event.title}</span>
+                      <Badge variant={getBadgeVariant(event.type, event.isKreisverband)}>
+                        {event.type}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {format(event.date, 'EEEE, d. MMMM', { locale: de })}
+                    </div>
+                    <div className="text-sm">
+                      {event.time} Uhr, {event.location}
+                    </div>
+                  </div>
+                ))}
+                
+                <Link href="/termine">
+                  <Button variant="link" className="p-0 h-auto mt-2">
+                    Alle Termine anzeigen
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Keine anstehenden Termine.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Neue Features */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <BarChart3 className="mr-2 h-5 w-5 text-primary" />
+              Statistik-Dashboard
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Detaillierte Visualisierungen und Analysen für Schützen- und Mannschaftsleistungen.
+            </CardDescription>
+            <Link href="/statistik">
+              <Button variant="outline" className="w-full">
+                Zu den Statistiken
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+        
+        <Card className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <CalendarDays className="mr-2 h-5 w-5 text-primary" />
+              Terminkalender
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Übersicht aller anstehenden Wettkämpfe und Veranstaltungen.
+            </CardDescription>
+            <Link href="/termine">
+              <Button variant="outline" className="w-full">
+                Zum Kalender
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

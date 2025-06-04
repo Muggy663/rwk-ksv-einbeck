@@ -71,10 +71,15 @@ export function PrintView({ title, children, trigger }: PrintViewProps) {
         
         <div ref={printRef} className="p-4">
           <div className="print-header">
-            <h1 className="text-2xl font-bold">{title}</h1>
-            <p className="text-sm text-muted-foreground">
-              Erstellt am {new Date().toLocaleDateString('de-DE')} mit der RWK Einbeck App
-            </p>
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-2xl font-bold">{title}</h1>
+                <p className="text-sm text-muted-foreground">
+                  Erstellt am {new Date().toLocaleDateString('de-DE')} mit der RWK Einbeck App
+                </p>
+              </div>
+              <img src="/images/logo2.png" alt="Logo" className="h-16 w-auto" />
+            </div>
           </div>
           <div className="print-content">
             {children}
