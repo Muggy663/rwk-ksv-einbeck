@@ -1,76 +1,61 @@
 "use client";
-import { useState, useEffect } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { Button } from '@/components/ui/button';
 import { Clock } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function InactivityTimer() {
-  const { user, resetInactivityTimer } = useAuth();
-  const [remainingTime, setRemainingTime] = useState<number>(10 * 60); // 10 Minuten in Sekunden
-  const [isVisible, setIsVisible] = useState<boolean>(false);
-
+  const { resetInactivityTimer } = useAuth();
+  const [timeLeft, setTimeLeft] = useState(10 * 60); // 10 Minuten in Sekunden
+  
   useEffect(() => {
-    // Timer nur anzeigen, wenn ein Benutzer angemeldet ist
-    if (!user) {
-      setIsVisible(false);
-      return;
-    }
-
-    setIsVisible(true);
-    setRemainingTime(10 * 60); // Timer zurücksetzen
-
-    // Timer-Intervall
-    const interval = setInterval(() => {
-      setRemainingTime(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
+    // Timer aktualisieren
+    const timer = setInterval(() => {
+      setTimeLeft(prev => Math.max(0, prev - 1));
     }, 1000);
-
-    // Event-Listener für Benutzeraktivität
-    const handleActivity = () => {
-      setRemainingTime(10 * 60);
+    
+    // Timer zurücksetzen bei Benutzeraktivität
+    const handleUserActivity = () => {
       if (resetInactivityTimer) {
         resetInactivityTimer();
+        setTimeLeft(10 * 60);
       }
     };
-
+    
+    // Event-Listener für Benutzeraktivität
     const activityEvents = ['mousedown', 'keypress', 'scroll', 'touchstart'];
     activityEvents.forEach(event => {
-      window.addEventListener(event, handleActivity);
+      window.addEventListener(event, handleUserActivity);
     });
-
+    
     return () => {
-      clearInterval(interval);
+      clearInterval(timer);
       activityEvents.forEach(event => {
-        window.removeEventListener(event, handleActivity);
+        window.removeEventListener(event, handleUserActivity);
       });
     };
-  }, [user, resetInactivityTimer]);
-
-  if (!isVisible) return null;
-
+  }, [resetInactivityTimer]);
+  
   // Zeit formatieren (mm:ss)
-  const minutes = Math.floor(remainingTime / 60);
-  const seconds = remainingTime % 60;
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
   const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
+  
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex items-center text-sm text-muted-foreground cursor-help">
-            <Clock className="h-4 w-4 mr-1" />
-            <span>{formattedTime}</span>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Automatische Abmeldung bei Inaktivität</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Button 
+      variant="ghost" 
+      size="sm" 
+      onClick={() => {
+        if (resetInactivityTimer) {
+          resetInactivityTimer();
+          setTimeLeft(10 * 60);
+        }
+      }}
+      className="text-xs flex items-center gap-1"
+    >
+      <Clock className="h-3 w-3" />
+      {formattedTime}
+    </Button>
   );
 }

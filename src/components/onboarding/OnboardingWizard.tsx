@@ -34,14 +34,12 @@ export function OnboardingWizard() {
       const onboardingCompleted = localStorage.getItem(`${ONBOARDING_COMPLETED_KEY_PREFIX}${user.uid}`);
       setHasSeenOnboarding(!!onboardingCompleted);
       
-      // Automatisch öffnen, wenn der Benutzer neu ist und das Onboarding noch nicht gesehen hat
-      if (!onboardingCompleted) {
-        setOpen(true);
-      }
+      // Immer geschlossen halten - nur auf explizite Anforderung öffnen
+      setOpen(false);
     } catch (error) {
       console.error('Fehler beim Zugriff auf localStorage:', error);
       setStorageError(true);
-      // Fallback: Dialog nicht automatisch öffnen
+      setOpen(false);
     }
   }, [user]);
 

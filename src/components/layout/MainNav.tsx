@@ -1,165 +1,406 @@
 // src/components/layout/MainNav.tsx
 "use client";
-import React, { useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { 
-  Home, 
-  Table as TableIcon, 
-  Newspaper, 
-  LogIn,
-  LogOut, 
-  UserCircle, 
-  ShieldCheck, 
-  Building, 
-  HelpCircle, 
-  BookOpenCheck,
-  ScrollText,
-  Settings, // Re-added Settings icon as per previous discussions for Admin Panel
-  FileText, // Für Dokumente-Seite
-  FileDown // Für System & Berichte
-} from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import type { UserPermission } from '@/types/rwk';
-import { InactivityTimer } from '@/components/auth/InactivityTimer';
-
-const ADMIN_EMAIL = "admin@rwk-einbeck.de";
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: React.ElementType;
-  authRequired?: boolean;
-  hideWhenAuthed?: boolean;
-  adminOnly?: boolean;
-  vereinOnly?: boolean;
-}
+import { useAuth } from '@/hooks/use-auth';
+import { 
+  BarChart3, 
+  CalendarDays, 
+  FileBarChart, 
+  Home, 
+  LogOut, 
+  Menu, 
+  ShieldCheck, 
+  User, 
+  BookOpen,
+  Edit3,
+  LogIn,
+  FileText,
+  MessageSquare,
+  Bell,
+  Clock
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export function MainNav() {
   const pathname = usePathname();
-  const {
-    user,
-    signOut,
-    loading, // Corrected: use 'loading' for Firebase Auth state
-    userAppPermissions, 
-    loadingAppPermissions, 
-  } = useAuth();
-  const router = useRouter();
+  const { user, loading, signOut, resetInactivityTimer } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(10 * 60); // 10 Minuten in Sekunden
 
-  const isSuperAdmin = user && user.email === ADMIN_EMAIL;
+  const isAdmin = user && user.email === 'admin@rwk-einbeck.de';
+  const isVereinsvertreterOrMannschaftsfuehrer = user && user.email !== 'admin@rwk-einbeck.de';
+
+  // Timer-Logik
+  useEffect(() => {
+    if (!user || !resetInactivityTimer) return;
+    
+    // Timer aktualisieren
+    const timer = setInterval(() => {
+      setTimeLeft(prev => Math.max(0, prev - 1));
+    }, 1000);
+    
+    // Timer zurücksetzen bei Benutzeraktivität
+    const handleUserActivity = () => {
+      resetInactivityTimer();
+      setTimeLeft(10 * 60);
+    };
+    
+    // Event-Listener für Benutzeraktivität
+    const activityEvents = ['mousedown', 'keypress', 'scroll', 'touchstart'];
+    activityEvents.forEach(event => {
+      window.addEventListener(event, handleUserActivity);
+    });
+    
+    return () => {
+      clearInterval(timer);
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, handleUserActivity);
+      });
+    };
+  }, [user, resetInactivityTimer]);
   
-  const isVereinsUser = useMemo(() => {
-    return user &&
-           user.email !== ADMIN_EMAIL &&
-           !loadingAppPermissions && 
-           userAppPermissions &&
-           (userAppPermissions.role === 'vereinsvertreter' || userAppPermissions.role === 'mannschaftsfuehrer');
-  }, [user, userAppPermissions, loadingAppPermissions]);
+  // Zeit formatieren (mm:ss)
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-  const navItems: NavItem[] = [
-    { href: '/', label: 'Startseite', icon: Home }, // Ensured label is "Startseite"
-    { href: '/rwk-tabellen', label: 'RWK Tabellen', icon: TableIcon },
-    { href: '/dokumente', label: 'Dokumente', icon: FileText },
-    { href: '/updates', label: 'Updates', icon: Newspaper },
-    { href: '/handbuch', label: 'Handbuch', icon: BookOpenCheck },
-    { href: '/support', label: 'Support', icon: HelpCircle },
-    { href: '/admin', label: 'Admin Panel', icon: Settings, adminOnly: true }, // Using Settings for Admin Panel
-    { href: '/admin/exports', label: 'System & Berichte', icon: FileDown, adminOnly: true }, // Hinzugefügt für System & Berichte
-    { href: '/verein/dashboard', label: 'Vereinsbereich', icon: Building, vereinOnly: true },
-    { href: '/login', label: 'Login', icon: LogIn, hideWhenAuthed: true },
+  const routes = [
+    {
+      href: '/',
+      label: 'Home',
+      icon: <Home className="h-4 w-4 mr-2" />,
+      active: pathname === '/',
+    },
+    {
+      href: '/rwk-tabellen',
+      label: 'RWK-Tabellen',
+      icon: <FileBarChart className="h-4 w-4 mr-2" />,
+      active: pathname === '/rwk-tabellen',
+    },
+    {
+      href: '/statistik',
+      label: 'Statistik',
+      icon: <BarChart3 className="h-4 w-4 mr-2" />,
+      active: pathname === '/statistik',
+    },
+    {
+      href: '/termine',
+      label: 'Termine',
+      icon: <CalendarDays className="h-4 w-4 mr-2" />,
+      active: pathname === '/termine',
+    },
+    {
+      href: '/dokumente',
+      label: 'Dokumente',
+      icon: <FileText className="h-4 w-4 mr-2" />,
+      active: pathname === '/dokumente',
+    },
+    {
+      href: '/updates',
+      label: 'Updates',
+      icon: <Bell className="h-4 w-4 mr-2" />,
+      active: pathname === '/updates',
+    },
+    {
+      href: '/handbuch',
+      label: 'Handbuch',
+      icon: <BookOpen className="h-4 w-4 mr-2" />,
+      active: pathname === '/handbuch',
+    },
+    {
+      href: '/support',
+      label: 'Support',
+      icon: <MessageSquare className="h-4 w-4 mr-2" />,
+      active: pathname === '/support',
+    },
   ];
 
-  const displayedRole = useMemo(() => {
-    if (!user || loading || loadingAppPermissions) return null;
-    if (isSuperAdmin) return null; // Super-Admin-Rolle wird nicht explizit angezeigt
-    if (isVereinsUser && userAppPermissions?.role) {
-      if (userAppPermissions.role === 'vereinsvertreter') return 'Vereinsvertreter';
-      if (userAppPermissions.role === 'mannschaftsfuehrer') return 'Mannschaftsführer';
-    }
-    return null;
-  }, [user, loading, loadingAppPermissions, isSuperAdmin, isVereinsUser, userAppPermissions]);
+  const adminRoutes = [
+    {
+      href: '/admin',
+      label: 'Admin',
+      icon: <ShieldCheck className="h-4 w-4 mr-2" />,
+      active: pathname === '/admin' || pathname.startsWith('/admin/'),
+    },
+  ];
+
+  const vereinsvertreterRoutes = [
+    {
+      href: '/verein/dashboard',
+      label: 'Vereinsbereich',
+      icon: <User className="h-4 w-4 mr-2" />,
+      active: pathname === '/verein/dashboard' || pathname.startsWith('/verein/'),
+    },
+  ];
+
+  const mannschaftsfuehrerRoutes = [];
 
   return (
-    <nav className="flex items-center space-x-1 lg:space-x-2">
-      {navItems.map((item) => {
-        if (loading && (item.adminOnly || item.vereinOnly || item.authRequired || item.hideWhenAuthed)) {
-           return null; 
-        }
-        if (item.vereinOnly && !isSuperAdmin && loadingAppPermissions) { 
-            return null;
-        }
-
-        let showItem = true;
-        if (user) {
-          if (item.hideWhenAuthed) showItem = false;
-          if (item.adminOnly && !isSuperAdmin) showItem = false;
-          if (item.vereinOnly && !isVereinsUser && !isSuperAdmin) showItem = false;
-          if (item.vereinOnly && isSuperAdmin) showItem = false; 
-        } else { 
-          if (item.authRequired) showItem = false;
-          if (item.adminOnly) showItem = false;
-          if (item.vereinOnly) showItem = false;
-        }
-        
-        if (!showItem) return null;
-        
-        const isActive = pathname === item.href || 
-                         (item.href !== '/' && pathname.startsWith(item.href) && 
-                          !((item.href === '/admin' && pathname.startsWith('/admin/')) ||
-                            (item.href === '/verein/dashboard' && pathname.startsWith('/verein/')) 
-                         )) ||
-                         (pathname.startsWith('/admin') && item.href === '/admin') ||
-                         (pathname.startsWith('/verein') && item.href === '/verein/dashboard');
-        
-        const showIcon = !user || item.href === '/' || item.href === '/rwk-tabellen' || item.href === '/dokumente' || item.href === '/updates' || item.href === '/handbuch' || item.href === '/support' || item.href === '/login' || (user && (item.adminOnly || item.vereinOnly));
-
-        return (
+    <nav className="flex items-center space-x-4 lg:space-x-6">
+      {/* Desktop Navigation */}
+      <div className="hidden md:flex md:items-center md:space-x-4">
+        {routes.map((route) => (
           <Link
-            key={item.href}
-            href={item.href}
+            key={route.href}
+            href={route.href}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary flex items-center gap-1.5 p-2 rounded-md",
-              isActive
-                ? 'text-primary bg-accent/20' 
-                : 'text-muted-foreground',
-              "max-md:p-1.5" 
+              "text-sm font-medium transition-colors hover:text-primary flex items-center",
+              route.active ? "text-primary" : "text-muted-foreground"
             )}
-            title={item.label} // Title attribute from item.label
           >
-            {showIcon && <item.icon className="h-5 w-5 flex-shrink-0" />}
-            <span className={cn( "hidden md:inline", !showIcon && "md:ml-0" )}>{item.label}</span>
+            {route.icon}
+            {route.label}
           </Link>
-        );
-      })}
-      {user && !loading && (
-        <div className="flex items-center gap-2 ml-2 border-l pl-2">
-           {user.email && (
-             <span 
-                className="text-xs text-muted-foreground hidden lg:inline max-w-[150px] truncate" 
-                title={user.email}
-              >
-                {user.email}
-              </span>
-           )}
-           {user.email && <UserCircle className="h-5 w-5 text-muted-foreground lg:hidden" title={user.email} />}
-           {user && <InactivityTimer />}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={async () => {
-                await signOut();
-                router.push('/'); 
-            }}
-            className="flex items-center gap-1.5 p-2 rounded-md text-muted-foreground hover:text-primary max-md:p-1.5"
-            title="Logout"
+        ))}
+
+        {isAdmin && adminRoutes.map((route) => (
+          <Link
+            key={route.href}
+            href={route.href}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary flex items-center",
+              route.active ? "text-primary" : "text-muted-foreground"
+            )}
           >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
-            <span className="hidden md:inline">Logout</span>
+            {route.icon}
+            {route.label}
+          </Link>
+        ))}
+
+        {isVereinsvertreterOrMannschaftsfuehrer && (
+          <>
+            {vereinsvertreterRoutes.map((route) => (
+              <Link
+                key={route.href}
+                href={route.href}
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-primary flex items-center",
+                  route.active ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                {route.icon}
+                {route.label}
+              </Link>
+            ))}
+            
+            {mannschaftsfuehrerRoutes.map((route) => (
+              <Link
+                key={route.href}
+                href={route.href}
+                className={cn(
+                  "text-sm font-medium transition-colors hover:text-primary flex items-center",
+                  route.active ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                {route.icon}
+                {route.label}
+              </Link>
+            ))}
+          </>
+        )}
+
+        {user && resetInactivityTimer && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => {
+              resetInactivityTimer();
+              setTimeLeft(10 * 60);
+            }}
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary flex items-center"
+          >
+            <Clock className="h-4 w-4 mr-2" />
+            {formattedTime}
           </Button>
-        </div>
-      )}
+        )}
+
+        {user ? (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={signOut}
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary flex items-center"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
+        ) : (
+          <Link
+            href="/login"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary flex items-center"
+          >
+            <LogIn className="h-4 w-4 mr-2" />
+            Login
+          </Link>
+        )}
+      </div>
+
+      {/* Mobile Navigation */}
+      <div className="md:hidden">
+        <DropdownMenu open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Navigation</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            
+            {routes.map((route) => (
+              <DropdownMenuItem key={route.href} asChild>
+                <Link
+                  href={route.href}
+                  className={cn(
+                    "flex items-center",
+                    route.active ? "text-primary" : "text-muted-foreground"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {route.icon}
+                  {route.label}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+            
+            {isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                {adminRoutes.map((route) => (
+                  <DropdownMenuItem key={route.href} asChild>
+                    <Link
+                      href={route.href}
+                      className={cn(
+                        "flex items-center",
+                        route.active ? "text-primary" : "text-muted-foreground"
+                      )}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {route.icon}
+                      {route.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </>
+            )}
+            
+            {isVereinsvertreterOrMannschaftsfuehrer && (
+              <>
+                <DropdownMenuSeparator />
+                {vereinsvertreterRoutes.map((route) => (
+                  <DropdownMenuItem key={route.href} asChild>
+                    <Link
+                      href={route.href}
+                      className={cn(
+                        "flex items-center",
+                        route.active ? "text-primary" : "text-muted-foreground"
+                      )}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {route.icon}
+                      {route.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                
+                {mannschaftsfuehrerRoutes.map((route) => (
+                  <DropdownMenuItem key={route.href} asChild>
+                    <Link
+                      href={route.href}
+                      className={cn(
+                        "flex items-center",
+                        route.active ? "text-primary" : "text-muted-foreground"
+                      )}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {route.icon}
+                      {route.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/verein/ergebnisse"
+                    className="flex items-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Ergebnisse erfassen
+                  </Link>
+                </DropdownMenuItem>
+                
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Termine</DropdownMenuLabel>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/termine"
+                    className="flex items-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <CalendarDays className="h-4 w-4 mr-2" />
+                    Terminkalender
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/termine/add"
+                    className="flex items-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <CalendarDays className="h-4 w-4 mr-2" />
+                    Termin hinzufügen
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
+            
+            {user ? (
+              <>
+                <DropdownMenuSeparator />
+                {user && resetInactivityTimer && (
+                  <DropdownMenuItem onClick={() => {
+                    resetInactivityTimer();
+                    setTimeLeft(10 * 60);
+                  }}>
+                    <Clock className="h-4 w-4 mr-2" />
+                    {formattedTime}
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => { signOut(); setIsMobileMenuOpen(false); }}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/login"
+                    className="flex items-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Login
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </nav>
   );
 }

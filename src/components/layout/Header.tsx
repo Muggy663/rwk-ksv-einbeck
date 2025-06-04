@@ -18,6 +18,7 @@ export function Header() {
             width={40} 
             height={40}
             className="rounded-md"
+            style={{ width: 40, height: 40 }}
             data-ai-hint="club logo"
           />
           <span className="hidden font-bold sm:inline-block text-lg">RWK Einbeck</span>

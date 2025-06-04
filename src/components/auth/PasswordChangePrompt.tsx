@@ -23,6 +23,19 @@ export function PasswordChangePrompt() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [passwordChanged, setPasswordChanged] = useState(false);
+  
+  // Event-Listener für das Öffnen des Dialogs
+  useEffect(() => {
+    const handleDialogOpen = () => {
+      setOpen(true);
+    };
+    
+    document.addEventListener('dialog-open', handleDialogOpen);
+    
+    return () => {
+      document.removeEventListener('dialog-open', handleDialogOpen);
+    };
+  }, []);
 
   // Überprüfen, ob der Benutzer das Passwort bereits geändert hat
   useEffect(() => {
@@ -32,13 +45,17 @@ export function PasswordChangePrompt() {
       const passwordChanged = localStorage.getItem(`${PASSWORD_CHANGED_KEY_PREFIX}${user.uid}`);
       setPasswordChanged(!!passwordChanged);
       
-      // Automatisch öffnen, wenn der Benutzer neu ist und das Passwort noch nicht geändert hat
-      if (!passwordChanged) {
-        setOpen(true);
-      }
+      // Dialog niemals automatisch öffnen
+      setOpen(false);
+      
+      // Sicherstellen, dass der Dialog geschlossen bleibt
+      const forceCloseDialog = () => setOpen(false);
+      const timer = setTimeout(forceCloseDialog, 100);
+      return () => clearTimeout(timer);
     } catch (error) {
       console.error('Fehler beim Zugriff auf localStorage:', error);
       // Fallback: Dialog nicht automatisch öffnen
+      setOpen(false);
     }
   }, [user]);
 
@@ -122,22 +139,10 @@ export function PasswordChangePrompt() {
     }
   };
 
-  const handleSkip = () => {
-    setOpen(false);
-    toast({
-      title: "Passwortänderung übersprungen",
-      description: "Sie können Ihr Passwort jederzeit in den Einstellungen ändern.",
-      variant: "default",
-    });
-  };
+  // Funktion zum Schließen des Dialogs entfernt, da der "Später ändern"-Button entfernt wurde
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      // Verhindern, dass der Dialog geschlossen wird, wenn auf den Hintergrund geklickt wird
-      // Nur über die Buttons schließen lassen
-      if (!newOpen) return;
-      setOpen(newOpen);
-    }}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Passwort ändern</DialogTitle>
@@ -189,10 +194,7 @@ export function PasswordChangePrompt() {
         </div>
         
         <div className="flex justify-between">
-          <Button variant="outline" onClick={handleSkip}>
-            Später ändern
-          </Button>
-          <Button onClick={handlePasswordChange} disabled={isLoading}>
+          <Button variant="outline" onClick={handlePasswordChange} disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
