@@ -1,23 +1,3 @@
-import type {NextConfig} from 'next';
-
-const nextConfig: NextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-  },
-};
-
-export default nextConfig;
+// Diese Datei wird nicht mehr verwendet.
+// Bitte verwenden Sie stattdessen next.config.js
+// Diese Datei kann gelöscht werden, wenn der Build erfolgreich ist.
