@@ -111,7 +111,7 @@ export class CertificateGenerator {
       const seasonName = options.season.replace('RWK ', '');
       
       this.doc.text(`Beim Rundenwettkampf ${seasonName}`, this.pageWidth / 2, this.margin + 70, { align: 'center' });
-      this.doc.text(`${options.discipline}`, this.pageWidth / 2, this.margin + 85, { align: 'center' });
+      // Disziplin nur einmal anzeigen, nicht doppelt
       this.doc.text(`${options.category}`, this.pageWidth / 2, this.margin + 100, { align: 'center' });
       
       // "errang"
@@ -175,6 +175,20 @@ export class CertificateGenerator {
       this.doc.setFont('helvetica', 'normal');
       this.doc.text('Präsident', this.margin + 55, this.pageHeight - this.margin - 30, { align: 'center' });
       
+      // Unterschriftbild des Präsidenten
+      try {
+        this.doc.addImage(
+          '/images/Unterschrift Lars Sander.png',
+          'PNG',
+          this.margin + 30,
+          this.pageHeight - this.margin - 60,
+          50,
+          20
+        );
+      } catch (error) {
+        console.error('Fehler beim Hinzufügen der Präsidenten-Unterschrift:', error);
+      }
+      
       // Unterschrift rechts (Rundenwettkampfleiter)
       this.doc.line(
         this.pageWidth - this.margin - 80,
@@ -183,6 +197,20 @@ export class CertificateGenerator {
         this.pageHeight - this.margin - 40
       );
       this.doc.text('Rundenwettkampfleiter', this.pageWidth - this.margin - 55, this.pageHeight - this.margin - 30, { align: 'center' });
+      
+      // Unterschriftbild des Rundenwettkampfleiters
+      try {
+        this.doc.addImage(
+          '/images/Unterschrift Marcel Buenger.png',
+          'PNG',
+          this.pageWidth - this.margin - 80,
+          this.pageHeight - this.margin - 60,
+          50,
+          20
+        );
+      } catch (error) {
+        console.error('Fehler beim Hinzufügen der Rundenwettkampfleiter-Unterschrift:', error);
+      }
       
       // Datum am unteren Ende der Seite
       const dateText = options.date || `Einbeck, ${format(new Date(), 'dd. MMMM yyyy', { locale: de })}`;

@@ -78,13 +78,13 @@ export class PdfGenerator {
   addHeader(): void {
     const headerHeight = 25;
     
-    // Logo links oben
+    // Logo rechts oben
     try {
       // Kreisverbandslogo aus dem public-Ordner laden
       this.doc.addImage(
         '/images/logo2.png',
         'PNG',
-        this.margin + 10,
+        this.pageWidth - this.margin - 35,
         this.margin,
         25,
         25
