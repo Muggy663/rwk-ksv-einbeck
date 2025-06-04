@@ -86,3 +86,49 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Fallback styles in case Tailwind doesn't load properly */
+html, body {
+  background-color: #f5f3e6; /* Soft Beige */
+  color: #2e2a25; /* Darker text */
+}
+
+.bg-background {
+  background-color: #f5f3e6; /* Soft Beige */
+}
+
+.text-foreground {
+  color: #2e2a25; /* Darker text */
+}
+
+.bg-card {
+  background-color: #f5f3e6; /* Soft Beige */
+}
+
+.text-primary {
+  color: #2a6e2a; /* Deep Forest Green */
+}
+
+.bg-primary {
+  background-color: #2a6e2a; /* Deep Forest Green */
+}
+
+.text-accent {
+  color: #8b4513; /* Earthy Brown */
+}
+
+.bg-accent {
+  background-color: #8b4513; /* Earthy Brown */
+}
+
+.text-muted-foreground {
+  color: #7a7259; /* Darker muted text */
+}
+
+.bg-muted {
+  background-color: #e9e5d6; /* Muted beige */
+}
+
+.border-border {
+  border-color: #d9d4c0; /* Beige-toned border */
+}
