@@ -17,6 +17,14 @@ const nextConfig = {
       },
     ],
   },
+  // Lösung für das undici-Problem mit privaten Klassenfeldern
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      undici: false, // Deaktiviert undici und verwendet den Node.js-Fetch
+    };
+    return config;
+  },
 };
 
 module.exports = nextConfig;
