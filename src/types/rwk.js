@@ -63,3 +63,26 @@ export function getUIDisciplineValueFromSpecificType(specificType) {
   const option = uiDisciplineFilterOptions.find(opt => opt.firestoreTypes.includes(specificType));
   return option ? option.value : '';
 }
+
+/**
+ * Gibt die Kategorie einer Disziplin zurück
+ * @param {string} disciplineType - Disziplintyp
+ * @returns {string} Kategorie der Disziplin
+ */
+export function getDisciplineCategory(disciplineType) {
+  if (!disciplineType) return 'unknown';
+  
+  const lowerType = disciplineType.toLowerCase();
+  
+  if (lowerType.includes('lg') || lowerType === 'luftgewehr') {
+    return 'luftgewehr';
+  } else if (lowerType.includes('kk') || lowerType === 'kleinkaliber') {
+    return 'kleinkaliber';
+  } else if (lowerType.includes('lp') || lowerType === 'luftpistole') {
+    return 'luftpistole';
+  } else if (lowerType.includes('sp') || lowerType === 'sportpistole') {
+    return 'sportpistole';
+  }
+  
+  return 'unknown';
+}
