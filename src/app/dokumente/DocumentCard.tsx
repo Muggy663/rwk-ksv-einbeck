@@ -31,7 +31,7 @@ export function DocumentCard({ document }: { document: Document }) {
             {document.fileSize !== '-' && <span> • {document.fileSize}</span>}
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
-            {document.fileType === 'PDF' && (
+            {document.active && document.fileType === 'PDF' && (
               <a href={document.path} target="_blank" rel="noopener noreferrer" className="w-1/2 sm:w-auto">
                 <Button variant="outline" size="sm" className="flex items-center w-full">
                   <Eye className="h-4 w-4 mr-2" />
@@ -39,13 +39,18 @@ export function DocumentCard({ document }: { document: Document }) {
                 </Button>
               </a>
             )}
-            {document.fileType === 'PDF' ? (
+            {document.active && document.fileType === 'PDF' ? (
               <a href={document.path} download className="w-1/2 sm:w-auto">
                 <Button variant="outline" size="sm" className="flex items-center w-full">
                   <Download className="h-4 w-4 mr-2" />
                   <span className="whitespace-nowrap">Herunterladen</span>
                 </Button>
               </a>
+            ) : document.fileType === 'PDF' ? (
+              <Button variant="outline" size="sm" className="flex items-center w-full" disabled>
+                <Download className="h-4 w-4 mr-2" />
+                <span className="whitespace-nowrap">Nicht verfügbar</span>
+              </Button>
             ) : (
               <Link href={document.path} className="w-full sm:w-auto">
                 <Button variant="outline" size="sm" className="flex items-center w-full">
