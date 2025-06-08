@@ -14,9 +14,7 @@ export interface Document {
 
 export type DocumentFormData = Omit<Document, 'id'>;
 
-/**
- * Lädt alle Dokumente aus der JSON-Datei
- */
+// Lädt alle Dokumente aus der JSON-Datei
 export async function getAllDocuments(): Promise<Document[]> {
   try {
     const response = await fetch('/data/documents.json');
@@ -31,63 +29,93 @@ export async function getAllDocuments(): Promise<Document[]> {
   }
 }
 
-/**
- * Lädt nur aktive Dokumente
- */
+// Lädt nur aktive Dokumente
 export async function getActiveDocuments(): Promise<Document[]> {
   const documents = await getAllDocuments();
   return documents.filter(doc => doc.active);
 }
 
-/**
- * Lädt Dokumente nach Kategorie
- */
+// Lädt Dokumente nach Kategorie
 export async function getDocumentsByCategory(category: string): Promise<Document[]> {
   const documents = await getActiveDocuments();
   return documents.filter(doc => doc.category === category);
 }
 
-/**
- * Speichert alle Dokumente in der JSON-Datei
- * Diese Funktion kann nur serverseitig verwendet werden
- */
-export async function saveDocuments(documents: Document[]): Promise<boolean> {
-  // Diese Funktion würde in einer echten Implementierung
-  // die JSON-Datei auf dem Server aktualisieren
-  // In dieser clientseitigen Implementierung können wir das nicht direkt tun
-  console.warn('saveDocuments kann nur serverseitig verwendet werden');
-  return false;
+// Lädt ein einzelnes Dokument anhand seiner ID
+export async function getDocumentById(id: string): Promise<Document | null> {
+  try {
+    const documents = await getAllDocuments();
+    const document = documents.find(doc => doc.id === id);
+    return document || null;
+  } catch (error) {
+    console.error(`Fehler beim Laden des Dokuments mit ID ${id}:`, error);
+    return null;
+  }
 }
 
-/**
- * Fügt ein neues Dokument hinzu
- * Diese Funktion kann nur serverseitig verwendet werden
- */
+// Fügt ein neues Dokument hinzu
 export async function addDocument(document: DocumentFormData): Promise<Document | null> {
-  // Diese Funktion würde in einer echten Implementierung
-  // die JSON-Datei auf dem Server aktualisieren
-  console.warn('addDocument kann nur serverseitig verwendet werden');
-  return null;
+  try {
+    const response = await fetch('/api/documents', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(document),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Fehler beim Hinzufügen des Dokuments');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Fehler beim Hinzufügen des Dokuments:', error);
+    return null;
+  }
 }
 
-/**
- * Aktualisiert ein bestehendes Dokument
- * Diese Funktion kann nur serverseitig verwendet werden
- */
-export async function updateDocument(id: string, document: Partial<DocumentFormData>): Promise<boolean> {
-  // Diese Funktion würde in einer echten Implementierung
-  // die JSON-Datei auf dem Server aktualisieren
-  console.warn('updateDocument kann nur serverseitig verwendet werden');
-  return false;
+// Aktualisiert ein bestehendes Dokument
+export async function updateDocument(id: string, document: Partial<DocumentFormData>): Promise<Document | null> {
+  try {
+    const response = await fetch(`/api/documents/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(document),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Fehler beim Aktualisieren des Dokuments');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`Fehler beim Aktualisieren des Dokuments mit ID ${id}:`, error);
+    return null;
+  }
 }
 
-/**
- * Löscht ein Dokument
- * Diese Funktion kann nur serverseitig verwendet werden
- */
+// Löscht ein Dokument
 export async function deleteDocument(id: string): Promise<boolean> {
-  // Diese Funktion würde in einer echten Implementierung
-  // die JSON-Datei auf dem Server aktualisieren
-  console.warn('deleteDocument kann nur serverseitig verwendet werden');
-  return false;
+  try {
+    const response = await fetch(`/api/documents/${id}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Fehler beim Löschen des Dokuments');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error(`Fehler beim Löschen des Dokuments mit ID ${id}:`, error);
+    return false;
+  }
+}
+
+// Ändert den Aktivierungsstatus eines Dokuments
+export async function toggleDocumentActive(id: string, active: boolean): Promise<Document | null> {
+  return updateDocument(id, { active });
 }

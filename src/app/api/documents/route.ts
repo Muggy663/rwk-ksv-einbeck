@@ -2,15 +2,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { Document } from '@/lib/services/document-service';
 
 const documentsPath = path.join(process.cwd(), 'public', 'data', 'documents.json');
+
+// Prüft, ob eine Datei existiert
+function fileExists(filePath: string): boolean {
+  try {
+    // Entferne den führenden Slash und füge den public-Pfad hinzu
+    const fullPath = path.join(process.cwd(), 'public', filePath.replace(/^\//, ''));
+    return fs.existsSync(fullPath);
+  } catch (error) {
+    console.error('Fehler beim Prüfen der Datei:', error);
+    return false;
+  }
+}
 
 // GET /api/documents
 export async function GET() {
   try {
     const fileContents = fs.readFileSync(documentsPath, 'utf8');
     const data = JSON.parse(fileContents);
+    
+    // Prüfe für jedes PDF-Dokument, ob die Datei existiert
+    data.documents = data.documents.map((doc: any) => {
+      if (doc.fileType === 'PDF') {
+        const exists = fileExists(doc.path);
+        // Wenn die Datei nicht existiert, setze active auf false
+        if (!exists) {
+          return { ...doc, active: false };
+        }
+      }
+      return doc;
+    });
+    
     return NextResponse.json(data);
   } catch (error) {
     console.error('Fehler beim Lesen der Dokumente:', error);
@@ -31,12 +55,19 @@ export async function POST(request: NextRequest) {
     const data = JSON.parse(fileContents);
     
     // Generiere neue ID
-    const newId = (Math.max(...data.documents.map((doc: Document) => parseInt(doc.id))) + 1).toString();
+    const newId = (Math.max(...data.documents.map((doc: any) => parseInt(doc.id))) + 1).toString();
+    
+    // Prüfe, ob die Datei existiert (für PDF-Dokumente)
+    let isActive = document.active;
+    if (document.fileType === 'PDF') {
+      isActive = fileExists(document.path) && document.active;
+    }
     
     // Füge neues Dokument hinzu
     const newDocument = {
       id: newId,
-      ...document
+      ...document,
+      active: isActive
     };
     
     data.documents.push(newDocument);

@@ -2,9 +2,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { Document } from '@/lib/services/document-service';
 
 const documentsPath = path.join(process.cwd(), 'public', 'data', 'documents.json');
+
+// Prüft, ob eine Datei existiert
+function fileExists(filePath: string): boolean {
+  try {
+    // Entferne den führenden Slash und füge den public-Pfad hinzu
+    const fullPath = path.join(process.cwd(), 'public', filePath.replace(/^\//, ''));
+    return fs.existsSync(fullPath);
+  } catch (error) {
+    console.error('Fehler beim Prüfen der Datei:', error);
+    return false;
+  }
+}
 
 // GET /api/documents/[id]
 export async function GET(
@@ -15,13 +26,21 @@ export async function GET(
     const fileContents = fs.readFileSync(documentsPath, 'utf8');
     const data = JSON.parse(fileContents);
     
-    const document = data.documents.find((doc: Document) => doc.id === params.id);
+    const document = data.documents.find((doc: any) => doc.id === params.id);
     
     if (!document) {
       return NextResponse.json(
         { error: 'Dokument nicht gefunden' },
         { status: 404 }
       );
+    }
+    
+    // Prüfe, ob die Datei existiert (für PDF-Dokumente)
+    if (document.fileType === 'PDF') {
+      const exists = fileExists(document.path);
+      if (!exists) {
+        document.active = false;
+      }
     }
     
     return NextResponse.json(document);
@@ -47,7 +66,7 @@ export async function PUT(
     const data = JSON.parse(fileContents);
     
     // Finde das zu aktualisierende Dokument
-    const index = data.documents.findIndex((doc: Document) => doc.id === params.id);
+    const index = data.documents.findIndex((doc: any) => doc.id === params.id);
     
     if (index === -1) {
       return NextResponse.json(
@@ -56,10 +75,20 @@ export async function PUT(
       );
     }
     
+    // Prüfe, ob die Datei existiert (für PDF-Dokumente)
+    let isActive = updatedDocument.active !== undefined ? updatedDocument.active : data.documents[index].active;
+    const fileType = updatedDocument.fileType || data.documents[index].fileType;
+    const filePath = updatedDocument.path || data.documents[index].path;
+    
+    if (fileType === 'PDF') {
+      isActive = fileExists(filePath) && isActive;
+    }
+    
     // Aktualisiere das Dokument
     data.documents[index] = {
       ...data.documents[index],
       ...updatedDocument,
+      active: isActive,
       id: params.id // Stelle sicher, dass die ID nicht geändert wird
     };
     
@@ -87,7 +116,7 @@ export async function DELETE(
     const data = JSON.parse(fileContents);
     
     // Finde das zu löschende Dokument
-    const index = data.documents.findIndex((doc: Document) => doc.id === params.id);
+    const index = data.documents.findIndex((doc: any) => doc.id === params.id);
     
     if (index === -1) {
       return NextResponse.json(
