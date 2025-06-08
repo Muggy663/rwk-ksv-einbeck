@@ -19,12 +19,31 @@ export default function DokumentePage() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('/data/documents.json');
-        if (!response.ok) {
+        
+        // Versuche zuerst, Dokumente von der MongoDB-API zu laden
+        try {
+          const apiResponse = await fetch('/api/documents');
+          if (apiResponse.ok) {
+            const apiData = await apiResponse.json();
+            if (apiData.documents && apiData.documents.length > 0) {
+              console.log('Dokumente aus MongoDB geladen:', apiData.documents.length);
+              setDocuments(apiData.documents.filter((doc: Document) => doc.active));
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (apiErr) {
+          console.warn('Fehler beim Laden der Dokumente aus MongoDB, fallback zu JSON:', apiErr);
+        }
+        
+        // Fallback: Lade Dokumente aus der JSON-Datei
+        const jsonResponse = await fetch('/data/documents.json');
+        if (!jsonResponse.ok) {
           throw new Error('Fehler beim Laden der Dokumente');
         }
-        const data = await response.json();
-        setDocuments(data.documents.filter((doc: Document) => doc.active));
+        const jsonData = await jsonResponse.json();
+        console.log('Dokumente aus JSON geladen:', jsonData.documents.length);
+        setDocuments(jsonData.documents.filter((doc: Document) => doc.active));
       } catch (err) {
         console.error('Fehler beim Laden der Dokumente:', err);
         setError('Die Dokumente konnten nicht geladen werden.');

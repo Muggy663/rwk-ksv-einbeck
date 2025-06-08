@@ -1,21 +1,10 @@
 // src/app/api/documents/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const documentsPath = path.join(process.cwd(), 'public', 'data', 'documents.json');
-
-// Prüft, ob eine Datei existiert
-function fileExists(filePath: string): boolean {
-  try {
-    // Entferne den führenden Slash und füge den public-Pfad hinzu
-    const fullPath = path.join(process.cwd(), 'public', filePath.replace(/^\//, ''));
-    return fs.existsSync(fullPath);
-  } catch (error) {
-    console.error('Fehler beim Prüfen der Datei:', error);
-    return false;
-  }
-}
+import { 
+  getDocumentByIdFromMongo, 
+  updateDocumentInMongo, 
+  deleteDocumentFromMongo 
+} from '@/lib/db/document-service-mongo';
 
 // GET /api/documents/[id]
 export async function GET(
@@ -23,10 +12,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const fileContents = fs.readFileSync(documentsPath, 'utf8');
-    const data = JSON.parse(fileContents);
-    
-    const document = data.documents.find((doc: any) => doc.id === params.id);
+    const document = await getDocumentByIdFromMongo(params.id);
     
     if (!document) {
       return NextResponse.json(
@@ -34,9 +20,6 @@ export async function GET(
         { status: 404 }
       );
     }
-    
-    // Wir prüfen nicht mehr, ob die Datei existiert
-    // Der active-Status wird vom Benutzer kontrolliert
     
     return NextResponse.json(document);
   } catch (error) {
@@ -56,39 +39,16 @@ export async function PUT(
   try {
     const updatedDocument = await request.json();
     
-    // Lese aktuelle Dokumente
-    const fileContents = fs.readFileSync(documentsPath, 'utf8');
-    const data = JSON.parse(fileContents);
+    const document = await updateDocumentInMongo(params.id, updatedDocument);
     
-    // Finde das zu aktualisierende Dokument
-    const index = data.documents.findIndex((doc: any) => doc.id === params.id);
-    
-    if (index === -1) {
+    if (!document) {
       return NextResponse.json(
         { error: 'Dokument nicht gefunden' },
         { status: 404 }
       );
     }
     
-    // Prüfe, ob die Datei existiert (für PDF-Dokumente)
-    let isActive = updatedDocument.active !== undefined ? updatedDocument.active : data.documents[index].active;
-    const fileType = updatedDocument.fileType || data.documents[index].fileType;
-    const filePath = updatedDocument.path || data.documents[index].path;
-    
-    // Entferne die automatische Deaktivierung, wenn die Datei nicht existiert
-    // Wir vertrauen der Benutzerentscheidung über den active-Status
-    
-    // Aktualisiere das Dokument
-    data.documents[index] = {
-      ...data.documents[index],
-      ...updatedDocument,
-      id: params.id // Stelle sicher, dass die ID nicht geändert wird
-    };
-    
-    // Schreibe zurück in die Datei
-    fs.writeFileSync(documentsPath, JSON.stringify(data, null, 2));
-    
-    return NextResponse.json(data.documents[index]);
+    return NextResponse.json(document);
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Dokuments:', error);
     return NextResponse.json(
@@ -104,28 +64,16 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Lese aktuelle Dokumente
-    const fileContents = fs.readFileSync(documentsPath, 'utf8');
-    const data = JSON.parse(fileContents);
+    const success = await deleteDocumentFromMongo(params.id);
     
-    // Finde das zu löschende Dokument
-    const index = data.documents.findIndex((doc: any) => doc.id === params.id);
-    
-    if (index === -1) {
+    if (!success) {
       return NextResponse.json(
         { error: 'Dokument nicht gefunden' },
         { status: 404 }
       );
     }
     
-    // Entferne das Dokument
-    const deletedDocument = data.documents[index];
-    data.documents.splice(index, 1);
-    
-    // Schreibe zurück in die Datei
-    fs.writeFileSync(documentsPath, JSON.stringify(data, null, 2));
-    
-    return NextResponse.json(deletedDocument);
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Fehler beim Löschen des Dokuments:', error);
     return NextResponse.json(

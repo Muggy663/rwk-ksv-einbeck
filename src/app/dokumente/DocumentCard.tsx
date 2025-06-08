@@ -6,7 +6,23 @@ import { FileText, Download, Calendar, Info, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { Document } from '@/lib/services/document-service';
 
+// Funktion zur Generierung des korrekten Pfads
+function getDocumentPath(path: string): string {
+  if (!path) return '#';
+  
+  // Wenn der Pfad bereits mit http beginnt, verwenden wir ihn direkt
+  if (path.startsWith('http')) return path;
+  
+  // Wenn der Pfad mit /api beginnt, verwenden wir ihn direkt (MongoDB GridFS)
+  if (path.startsWith('/api')) return path;
+  
+  // Für relative Pfade verwenden wir den Pfad direkt
+  return path;
+}
+
 export function DocumentCard({ document }: { document: Document }) {
+  const documentPath = getDocumentPath(document.path);
+  
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-2">
@@ -33,7 +49,7 @@ export function DocumentCard({ document }: { document: Document }) {
           <div className="flex gap-2 w-full sm:w-auto">
             {document.fileType === 'PDF' && (
               <a 
-                href={document.path} 
+                href={documentPath} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="w-1/2 sm:w-auto"
@@ -46,7 +62,7 @@ export function DocumentCard({ document }: { document: Document }) {
             )}
             {document.fileType === 'PDF' ? (
               <a 
-                href={document.path} 
+                href={documentPath} 
                 download 
                 className="w-1/2 sm:w-auto"
               >
@@ -56,7 +72,7 @@ export function DocumentCard({ document }: { document: Document }) {
                 </Button>
               </a>
             ) : (
-              <Link href={document.path || '#'} className="w-full sm:w-auto">
+              <Link href={documentPath} className="w-full sm:w-auto">
                 <Button variant="outline" size="sm" className="flex items-center w-full">
                   <Info className="h-4 w-4 mr-2" />
                   <span className="whitespace-nowrap">Ansehen</span>

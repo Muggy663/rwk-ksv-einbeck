@@ -14,15 +14,31 @@ export interface Document {
 
 export type DocumentFormData = Omit<Document, 'id'>;
 
-// Lädt alle Dokumente aus der JSON-Datei
+// Lädt alle Dokumente aus der API oder als Fallback aus der JSON-Datei
 export async function getAllDocuments(): Promise<Document[]> {
   try {
-    const response = await fetch('/data/documents.json');
-    if (!response.ok) {
+    // Versuche zuerst, Dokumente von der MongoDB-API zu laden
+    try {
+      const apiResponse = await fetch('/api/documents');
+      if (apiResponse.ok) {
+        const apiData = await apiResponse.json();
+        if (apiData.documents && apiData.documents.length > 0) {
+          console.log('Dokumente aus MongoDB geladen:', apiData.documents.length);
+          return apiData.documents;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Fehler beim Laden der Dokumente aus MongoDB, fallback zu JSON:', apiErr);
+    }
+    
+    // Fallback: Lade Dokumente aus der JSON-Datei
+    const jsonResponse = await fetch('/data/documents.json');
+    if (!jsonResponse.ok) {
       throw new Error('Fehler beim Laden der Dokumente');
     }
-    const data = await response.json();
-    return data.documents;
+    const jsonData = await jsonResponse.json();
+    console.log('Dokumente aus JSON geladen:', jsonData.documents.length);
+    return jsonData.documents;
   } catch (error) {
     console.error('Fehler beim Laden der Dokumente:', error);
     return [];

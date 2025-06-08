@@ -19,36 +19,38 @@ export default function UpdatesPage() {
           <Card className="border-primary/20">
             <CardHeader className="bg-primary/5">
               <CardTitle className="text-xl text-primary flex items-center justify-between">
-                <span>Version 0.7.4 (08. Juni 2025)</span>
+                <span>Version 0.7.5 (15. Juni 2025)</span>
                 <span className="text-sm bg-primary/20 px-2 py-1 rounded-full">Aktuell</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Dokumentenverwaltung im Admin-Panel</h3>
+                  <h3 className="text-lg font-semibold mb-2">MongoDB-Integration für Dokumente</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Neu: Admin-Interface zur Verwaltung von Dokumenten</li>
-                    <li>Neu: JSON-basierte Metadatenverwaltung für Dokumente</li>
-                    <li>Neu: API-Endpunkte für CRUD-Operationen auf Dokumenten</li>
-                    <li>Neu: Benutzerfreundliches Formular zum Hinzufügen und Bearbeiten von Dokumenten</li>
+                    <li>Neu: MongoDB-Integration für die Dokumentenverwaltung</li>
+                    <li>Neu: Speicherung von Dokumenten in MongoDB GridFS</li>
+                    <li>Neu: Speichernutzungsüberwachung für MongoDB</li>
+                    <li>Neu: Migrations-Tool für die Übertragung von Dokumenten von JSON zu MongoDB</li>
+                    <li>Verbessert: Zuverlässigere Dokumentenverwaltung auf Vercel</li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Verbesserte Dokumentenseite</h3>
+                  <h3 className="text-lg font-semibold mb-2">Verbesserte Fehlerbehandlung</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Neu: Kategorisierte Ansicht von Dokumenten (Ausschreibungen, Formulare, Regelwerke, Archiv)</li>
-                    <li>Neu: Strukturierte Dokumentenablage in Unterordnern nach Kategorien</li>
-                    <li>Verbessert: Optimierte Darstellung von Dokumenten mit Metadaten</li>
-                    <li>Verbessert: Mobile Optimierung der Dokumentenseite</li>
+                    <li>Verbessert: Robustere Fehlerbehandlung bei der Dokumentenverwaltung</li>
+                    <li>Neu: Fallback-Mechanismus zur JSON-Datei, wenn MongoDB nicht verfügbar ist</li>
+                    <li>Verbessert: Bessere Fehlerbehandlung beim Hochladen von Dokumenten</li>
+                    <li>Verbessert: Detaillierte Fehlerprotokolle für die Diagnose von Problemen</li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Mobile Optimierungen</h3>
+                  <h3 className="text-lg font-semibold mb-2">Admin-Panel-Erweiterungen</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Verbessert: Responsive Tabs mit 2 Spalten auf kleinen Bildschirmen</li>
-                    <li>Verbessert: Angepasste Schriftgrößen und Abstände für mobile Geräte</li>
-                    <li>Verbessert: Optimierte Button-Darstellung auf kleinen Bildschirmen</li>
+                    <li>Neu: Speichernutzungsanzeige für MongoDB im Admin-Panel</li>
+                    <li>Neu: Migrations-Tool für die Übertragung von Dokumenten im Admin-Panel</li>
+                    <li>Verbessert: Optimierte Dokumentenverwaltung mit MongoDB-Integration</li>
+                    <li>Verbessert: Verbesserte Benutzeroberfläche für die Dokumentenverwaltung</li>
                   </ul>
                 </div>
               </div>
@@ -59,6 +61,42 @@ export default function UpdatesPage() {
         <TabsContent value="previous" className="space-y-4">
           <ScrollArea className="h-[600px] pr-4">
             <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">Version 0.7.4 (08. Juni 2025)</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Dokumentenverwaltung im Admin-Panel</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neu: Admin-Interface zur Verwaltung von Dokumenten</li>
+                        <li>Neu: JSON-basierte Metadatenverwaltung für Dokumente</li>
+                        <li>Neu: API-Endpunkte für CRUD-Operationen auf Dokumenten</li>
+                        <li>Neu: Benutzerfreundliches Formular zum Hinzufügen und Bearbeiten von Dokumenten</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Verbesserte Dokumentenseite</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neu: Kategorisierte Ansicht von Dokumenten (Ausschreibungen, Formulare, Regelwerke, Archiv)</li>
+                        <li>Neu: Strukturierte Dokumentenablage in Unterordnern nach Kategorien</li>
+                        <li>Verbessert: Optimierte Darstellung von Dokumenten mit Metadaten</li>
+                        <li>Verbessert: Mobile Optimierung der Dokumentenseite</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Mobile Optimierungen</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Verbessert: Responsive Tabs mit 2 Spalten auf kleinen Bildschirmen</li>
+                        <li>Verbessert: Angepasste Schriftgrößen und Abstände für mobile Geräte</li>
+                        <li>Verbessert: Optimierte Button-Darstellung auf kleinen Bildschirmen</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
               <Card>
                 <CardHeader>
                   <CardTitle className="text-xl">Version 0.7.3 (08. Juni 2025)</CardTitle>
