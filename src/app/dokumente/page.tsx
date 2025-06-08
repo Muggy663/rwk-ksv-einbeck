@@ -1,16 +1,40 @@
-// src/app/dokumente/page.tsx
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Calendar, Info, Eye } from 'lucide-react';
+import { Info } from 'lucide-react';
 import Link from 'next/link';
-import { Document, documents } from './documents';
 import { DocumentCard } from './DocumentCard';
+import { Document } from '@/lib/services/document-service';
 
 export default function DokumentePage() {
   const [activeTab, setActiveTab] = useState<string>('ausschreibungen');
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadDocuments() {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch('/data/documents.json');
+        if (!response.ok) {
+          throw new Error('Fehler beim Laden der Dokumente');
+        }
+        const data = await response.json();
+        setDocuments(data.documents.filter((doc: Document) => doc.active));
+      } catch (err) {
+        console.error('Fehler beim Laden der Dokumente:', err);
+        setError('Die Dokumente konnten nicht geladen werden.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDocuments();
+  }, []);
 
   const ausschreibungen = documents.filter(doc => doc.category === 'ausschreibung');
   const formulare = documents.filter(doc => doc.category === 'formular');
@@ -26,74 +50,86 @@ export default function DokumentePage() {
         </div>
       </div>
 
-      <Tabs defaultValue="ausschreibungen" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8">
-          <TabsTrigger value="ausschreibungen">Ausschreibungen</TabsTrigger>
-          <TabsTrigger value="formulare">Formulare</TabsTrigger>
-          <TabsTrigger value="ordnungen">Regelwerke & Hilfen</TabsTrigger>
-          <TabsTrigger value="archiv">Archiv</TabsTrigger>
-        </TabsList>
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <p>Dokumente werden geladen...</p>
+        </div>
+      ) : error ? (
+        <Card>
+          <CardContent className="pt-6 text-center text-muted-foreground">
+            {error}
+          </CardContent>
+        </Card>
+      ) : (
+        <Tabs defaultValue="ausschreibungen" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8">
+            <TabsTrigger value="ausschreibungen">Ausschreibungen</TabsTrigger>
+            <TabsTrigger value="formulare">Formulare</TabsTrigger>
+            <TabsTrigger value="ordnungen">Regelwerke & Hilfen</TabsTrigger>
+            <TabsTrigger value="archiv">Archiv</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="ausschreibungen" className="space-y-4">
-          <h2 className="text-xl font-semibold mb-4">Aktuelle Ausschreibungen</h2>
-          {ausschreibungen.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center text-muted-foreground">
-                Keine aktuellen Ausschreibungen verfügbar.
-              </CardContent>
-            </Card>
-          ) : (
-            ausschreibungen.map(doc => (
-              <DocumentCard key={doc.id} document={doc} />
-            ))
-          )}
-        </TabsContent>
+          <TabsContent value="ausschreibungen" className="space-y-4">
+            <h2 className="text-xl font-semibold mb-4">Aktuelle Ausschreibungen</h2>
+            {ausschreibungen.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center text-muted-foreground">
+                  Keine aktuellen Ausschreibungen verfügbar.
+                </CardContent>
+              </Card>
+            ) : (
+              ausschreibungen.map(doc => (
+                <DocumentCard key={doc.id} document={doc} />
+              ))
+            )}
+          </TabsContent>
 
-        <TabsContent value="formulare" className="space-y-4">
-          <h2 className="text-xl font-semibold mb-4">Formulare</h2>
-          {formulare.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center text-muted-foreground">
-                Keine Formulare verfügbar.
-              </CardContent>
-            </Card>
-          ) : (
-            formulare.map(doc => (
-              <DocumentCard key={doc.id} document={doc} />
-            ))
-          )}
-        </TabsContent>
+          <TabsContent value="formulare" className="space-y-4">
+            <h2 className="text-xl font-semibold mb-4">Formulare</h2>
+            {formulare.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center text-muted-foreground">
+                  Keine Formulare verfügbar.
+                </CardContent>
+              </Card>
+            ) : (
+              formulare.map(doc => (
+                <DocumentCard key={doc.id} document={doc} />
+              ))
+            )}
+          </TabsContent>
 
-        <TabsContent value="ordnungen" className="space-y-4">
-          <h2 className="text-xl font-semibold mb-4">Regelwerke & Hilfen</h2>
-          {ordnungen.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center text-muted-foreground">
-                Keine Ordnungen verfügbar.
-              </CardContent>
-            </Card>
-          ) : (
-            ordnungen.map(doc => (
-              <DocumentCard key={doc.id} document={doc} />
-            ))
-          )}
-        </TabsContent>
+          <TabsContent value="ordnungen" className="space-y-4">
+            <h2 className="text-xl font-semibold mb-4">Regelwerke & Hilfen</h2>
+            {ordnungen.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center text-muted-foreground">
+                  Keine Ordnungen verfügbar.
+                </CardContent>
+              </Card>
+            ) : (
+              ordnungen.map(doc => (
+                <DocumentCard key={doc.id} document={doc} />
+              ))
+            )}
+          </TabsContent>
 
-        <TabsContent value="archiv" className="space-y-4">
-          <h2 className="text-xl font-semibold mb-4">Archivierte Dokumente</h2>
-          {archiv.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center text-muted-foreground">
-                Keine archivierten Dokumente verfügbar.
-              </CardContent>
-            </Card>
-          ) : (
-            archiv.map(doc => (
-              <DocumentCard key={doc.id} document={doc} />
-            ))
-          )}
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="archiv" className="space-y-4">
+            <h2 className="text-xl font-semibold mb-4">Archivierte Dokumente</h2>
+            {archiv.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center text-muted-foreground">
+                  Keine archivierten Dokumente verfügbar.
+                </CardContent>
+              </Card>
+            ) : (
+              archiv.map(doc => (
+                <DocumentCard key={doc.id} document={doc} />
+              ))
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
 
       <Card className="mt-8 bg-muted/30">
         <CardHeader>

@@ -27,25 +27,36 @@ Die Dokumente sind im `/public/documents`-Ordner nach Kategorien organisiert:
       └── ausschreibung_kk_2024.pdf
 ```
 
+## Wichtige Hinweise
+
+1. **Dateinamen**: Verwenden Sie keine Leerzeichen oder Sonderzeichen in Dateinamen. Verwenden Sie stattdessen Unterstriche (_).
+   - Richtig: `ausschreibung_kk_2025.pdf`
+   - Falsch: `Ausschreibung RWK Kleinkaliber 2025.pdf`
+
+2. **Pfade**: Stellen Sie sicher, dass die Pfade in der JSON-Datei mit den tatsächlichen Dateinamen übereinstimmen.
+
+3. **Aktivierung**: Ein Dokument wird nur angezeigt, wenn es als aktiv markiert ist (`"active": true`) und die Datei tatsächlich existiert.
+
 ## Hinzufügen neuer Dokumente
 
 Um neue Dokumente hinzuzufügen:
 
-1. Legen Sie die PDF-Datei im entsprechenden Unterordner von `/public/documents` ab
-2. Fügen Sie einen neuen Eintrag in der `documents.ts`-Datei hinzu
+1. Legen Sie die PDF-Datei im entsprechenden Unterordner von `/public/documents` ab (ohne Leerzeichen im Dateinamen)
+2. Fügen Sie einen neuen Eintrag in der `documents.json`-Datei hinzu
 3. Stellen Sie sicher, dass die URL auf den korrekten Pfad im Unterordner verweist
 
 ## Beispiel für einen neuen Dokumenteneintrag
 
-```typescript
+```json
 {
-  id: '9',
-  title: 'Neues Dokument',
-  description: 'Beschreibung des neuen Dokuments',
-  url: '/documents/formulare/neues_dokument.pdf', // Pfad zum entsprechenden Unterordner
-  category: 'formular', // 'ausschreibung', 'formular', 'ordnung' oder 'archiv'
-  date: '1. Januar 2025',
-  fileType: 'PDF',
-  fileSize: '150 KB'
+  "id": "9",
+  "title": "Neues Dokument",
+  "description": "Beschreibung des neuen Dokuments",
+  "path": "/documents/formulare/neues_dokument.pdf",
+  "category": "formular",
+  "date": "1. Januar 2025",
+  "fileType": "PDF",
+  "fileSize": "150 KB",
+  "active": true
 }
 ```
