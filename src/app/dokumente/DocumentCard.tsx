@@ -32,13 +32,7 @@ export function DocumentCard({ document }: { document: Document }) {
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             {document.fileType === 'PDF' && (
-              <a href={document.path} target="_blank" rel="noopener noreferrer" className="w-1/2 sm:w-auto" onClick={(e) => {
-                // Verhindern, dass der Link geöffnet wird, wenn die Datei nicht existiert
-                if (!document.active) {
-                  e.preventDefault();
-                  alert('Dieses Dokument ist derzeit nicht verfügbar.');
-                }
-              }}>
+              <a href={document.path} target="_blank" rel="noopener noreferrer" className="w-1/2 sm:w-auto">
                 <Button variant="outline" size="sm" className="flex items-center w-full">
                   <Eye className="h-4 w-4 mr-2" />
                   <span className="whitespace-nowrap">Ansehen</span>
@@ -46,13 +40,7 @@ export function DocumentCard({ document }: { document: Document }) {
               </a>
             )}
             {document.fileType === 'PDF' ? (
-              <a href={document.path} download className="w-1/2 sm:w-auto" onClick={(e) => {
-                // Verhindern, dass der Link geöffnet wird, wenn die Datei nicht existiert
-                if (!document.active) {
-                  e.preventDefault();
-                  alert('Dieses Dokument ist derzeit nicht verfügbar.');
-                }
-              }}>
+              <a href={document.path} download className="w-1/2 sm:w-auto">
                 <Button variant="outline" size="sm" className="flex items-center w-full">
                   <Download className="h-4 w-4 mr-2" />
                   <span className="whitespace-nowrap">Herunterladen</span>
