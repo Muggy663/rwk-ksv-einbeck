@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { LogIn, AlertTriangle } from 'lucide-react';
+import { LogIn, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { PasswordResetForm } from './PasswordResetForm';
 
 const loginSchema = z.object({
@@ -25,6 +25,7 @@ export function LoginForm() {
   const { signIn, loading, error: authError } = useAuth();
   const [formError, setFormError] = useState(null);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -77,14 +78,32 @@ export function LoginForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Passwort</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="********"
-                {...register('password', { required: "Passwort ist erforderlich" })}
-                className={errors.password ? 'border-destructive' : ''}
-                aria-invalid={errors.password ? "true" : "false"}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="********"
+                  {...register('password', { required: "Passwort ist erforderlich" })}
+                  className={`pr-10 ${errors.password ? 'border-destructive' : ''}`}
+                  aria-invalid={errors.password ? "true" : "false"}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className="sr-only">
+                    {showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+                  </span>
+                </Button>
+              </div>
               {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
               <div className="text-right">
                 <Button 
