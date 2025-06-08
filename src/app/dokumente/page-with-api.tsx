@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Info } from 'lucide-react';
 import Link from 'next/link';
 import { DocumentCard } from './DocumentCard';
-import { Document } from '@/lib/services/document-service';
-import { getActiveDocuments } from '@/lib/services/document-service-client';
+import { Document, getActiveDocuments } from '@/lib/services/document-service';
 
 export default function DokumentePage() {
   const [activeTab, setActiveTab] = useState<string>('ausschreibungen');

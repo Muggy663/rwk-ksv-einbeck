@@ -29,7 +29,7 @@ import {
   getAllDocuments, 
   toggleDocumentActive, 
   deleteDocument 
-} from '@/lib/services/document-service-client';
+} from '@/lib/services/document-service';
 import { Document } from '@/lib/services/document-service';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
