@@ -35,13 +35,8 @@ export async function GET(
       );
     }
     
-    // Prüfe, ob die Datei existiert (für PDF-Dokumente)
-    if (document.fileType === 'PDF') {
-      const exists = fileExists(document.path);
-      if (!exists) {
-        document.active = false;
-      }
-    }
+    // Wir prüfen nicht mehr, ob die Datei existiert
+    // Der active-Status wird vom Benutzer kontrolliert
     
     return NextResponse.json(document);
   } catch (error) {
@@ -80,15 +75,13 @@ export async function PUT(
     const fileType = updatedDocument.fileType || data.documents[index].fileType;
     const filePath = updatedDocument.path || data.documents[index].path;
     
-    if (fileType === 'PDF') {
-      isActive = fileExists(filePath) && isActive;
-    }
+    // Entferne die automatische Deaktivierung, wenn die Datei nicht existiert
+    // Wir vertrauen der Benutzerentscheidung über den active-Status
     
     // Aktualisiere das Dokument
     data.documents[index] = {
       ...data.documents[index],
       ...updatedDocument,
-      active: isActive,
       id: params.id // Stelle sicher, dass die ID nicht geändert wird
     };
     
