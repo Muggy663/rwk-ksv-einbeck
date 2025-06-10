@@ -1,5 +1,86 @@
 # Changelog
 
+## Version 0.8.1 (12. Juni 2025) - Beta-Release
+
+### Fehlerbehebungen
+- Behoben: Anzeige von "durchgang" mit großem Anfangsbuchstaben auf der Startseite
+- Behoben: Anzeige von Schützen-IDs statt Namen in erweiterten Statistiken
+- Behoben: Anzeige von Screenshots in Support-Tickets im Admin-Bereich
+
+### Neue Funktionen
+- Hinzugefügt: E-Mail-Benachrichtigung bei neuen Support-Tickets
+- Hinzugefügt: Hinweis zum Saisonvergleich (erst ab 2026 relevant)
+- Verbessert: Benutzerfreundlichere Formulierungen im Support-Bereich
+
+## Version 0.8.0 (10. Juni 2025) - Beta-Release
+
+### Mobile Optimierung
+- Hinzugefügt: Responsive Tabellendarstellung für mobile Geräte
+- Hinzugefügt: Touch-freundliche Diagramme mit verbesserten Interaktionen
+- Verbessert: Anpassung der Navigation für mobile Geräte
+- Verbessert: Optimierte Darstellung auf kleinen Bildschirmen
+
+### Caching-Strategie
+- Hinzugefügt: Lokales Caching für häufig abgefragte Daten
+- Hinzugefügt: Optimierte Abfragemuster für bessere Performance
+- Hinzugefügt: Automatische Aktualisierung bei Datenänderungen
+- Verbessert: Schnellere Ladezeiten durch intelligentes Caching
+
+### Erweiterte Statistik-Funktionen
+- Hinzugefügt: Saisonübergreifende Vergleiche für Schützen und Mannschaften
+- Hinzugefügt: Trendanalyse für Leistungsentwicklung
+- Hinzugefügt: Erweiterte Filteroptionen für Statistiken
+- Verbessert: Neue Statistik-Übersichtsseite mit direkten Links zu allen Funktionen
+
+### Benutzerfreundlichkeit
+- Verbessert: Vereinfachte Navigation und Benutzeroberfläche
+- Verbessert: Kombinierte Terminverwaltung im Vereinsdashboard
+- Verbessert: Optimierte Terminkalender-Verlinkung auf der Startseite
+- Verbessert: Konsistentere Benutzerführung in der gesamten Anwendung
+
+## Version 0.7.5 (07. Juni 2025)
+
+### MongoDB-Integration
+- Hinzugefügt: MongoDB-Integration für die Dokumentenverwaltung
+- Hinzugefügt: Speicherung von Dokumenten in MongoDB GridFS
+- Hinzugefügt: Speichernutzungsüberwachung für MongoDB
+- Hinzugefügt: Migrations-Tool für die Übertragung von Dokumenten von JSON zu MongoDB
+- Verbessert: Fehlerbehandlung und Fallback-Mechanismen
+
+## Version 0.7.4 (06. Juni 2025)
+
+### Dokumentenverwaltung
+- Hinzugefügt: JSON-basierte Dokumentenverwaltung
+- Hinzugefügt: Admin-Interface für Dokumentenverwaltung
+- Verbessert: Optimierte Dokumentenseite
+- Verbessert: Optimierung der Dokumentenseite für mobile Geräte
+
+## Version 0.7.3 (05. Juni 2025)
+
+### PDF-Optimierung
+- Hinzugefügt: Caching für PDF-Generierung
+- Verbessert: Optimierung der Bildqualität und Dateigröße
+- Verbessert: Fehlerbehandlung bei der PDF-Erstellung
+- Hinzugefügt: Fortschrittsanzeige während der PDF-Generierung
+
+## Version 0.7.2 (04. Juni 2025)
+
+### Fehlerbehebungen & Verbesserungen
+- Behoben: Login-Formular-Fehler "Required" auf Vercel
+- Hinzugefügt: "Passwort ändern"-Funktion
+- Behoben: Standard-Statistik-Seite korrigiert
+- Hinzugefügt: "Erste Schritte starten"-Button mit Funktionalität
+- Verbessert: Vereinfachung der Benutzeroberfläche
+- Verbessert: JavaScript-Umstellung für bessere Kompatibilität
+
+## Version 0.7.1 (03. Juni 2025)
+
+### Vercel-Kompatibilität
+- Behoben: Vercel-Build-Fehler
+- Verbessert: Service-Module von TypeScript zu JavaScript konvertiert
+- Hinzugefügt: Fehlende PDF-Generierungsfunktionen
+- Hinzugefügt: Fallback-CSS-Stile
+
 ## Version 0.7.0 (03. Juni 2025)
 
 ### Neue Funktionen

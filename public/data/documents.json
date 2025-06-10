@@ -1,17 +1,6 @@
 {
   "documents": [
     {
-      "id": "1",
-      "title": "Ausschreibung RWK Luftdruck 2025",
-      "description": "Offizielle Ausschreibung für den Rundenwettkampf Luftdruck der Saison 2025",
-      "path": "/documents/ausschreibungen/ausschreibung_luftdruck_2025.pdf",
-      "category": "ausschreibung",
-      "date": "15. April 2025",
-      "fileType": "PDF",
-      "fileSize": "245 KB",
-      "active": false
-    },
-    {
       "id": "2",
       "title": "Ausschreibung RWK Kleinkaliber 2025",
       "description": "Offizielle Ausschreibung für den Rundenwettkampf Kleinkaliber der Saison 2025",
@@ -42,7 +31,7 @@
       "date": "10. Januar 2025",
       "fileType": "PDF",
       "fileSize": "110 KB",
-      "active": true
+      "active": false
     },
     {
       "id": "5",
@@ -75,7 +64,7 @@
       "date": "15. April 2024",
       "fileType": "PDF",
       "fileSize": "240 KB",
-      "active": true
+      "active": false
     },
     {
       "id": "8",
@@ -86,7 +75,7 @@
       "date": "15. März 2024",
       "fileType": "PDF",
       "fileSize": "225 KB",
-      "active": true
+      "active": false
     }
   ]
 }

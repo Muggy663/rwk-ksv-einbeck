@@ -1,69 +1,45 @@
-Betreff: Einladung zum Test der RWK Einbeck Web-App (Version 0.6.2)!
+Betreff: Einladung zum Beta-Test der RWK Einbeck Web-Anwendung
 
-Hallo liebe Schützenschwestern und Schützenbrüder,
+Liebe Schützenschwestern und Schützenbrüder,
 
-ich freue mich sehr, euch die aktuelle Version 0.6.2 meiner digitalen Anwendung für die Rundenwettkämpfe (RWK) des Kreisschützenverbandes Einbeck vorstellen zu können!
+ich freue mich, euch heute zur Beta-Testphase unserer neuen RWK Einbeck Web-Anwendung einladen zu können. Als Rundenwettkampfleiter des KSV Einbeck habe ich in den letzten Monaten intensiv an dieser Anwendung gearbeitet, um die Verwaltung und Durchführung unserer Rundenwettkämpfe zu modernisieren und zu vereinfachen. Da meine Cloudbasierte Lösung leider nicht Optimal war und Probleme mit sich gebracht hat. 
 
-Diese App habe ich entwickelt, um die Organisation, Durchführung und Präsentation unserer Wettkämpfe zu modernisieren und für uns alle einfacher und transparenter zu gestalten. Mein Ziel ist es, die manuelle Datenpflege und unübersichtliche Listen durch eine benutzerfreundliche digitale Lösung zu ersetzen.
+**Was die App bereits kann:**
 
-Du findest die aktuelle Version der App unter folgender Adresse: https://rwk-einbeck-app.vercel.app/
+- **Ergebniserfassung und -Verwaltung**: Einfache Eingabe und Bearbeitung von Wettkampfergebnissen
+- **Tabellen und Ranglisten**: Automatisch generierte Mannschafts- und Einzelschützenranglisten
+- **Statistiken und Auswertungen**: Umfassende Statistiken mit Visualisierungen (Diagramme, Trends)
+- **Terminkalender**: Übersichtliche Darstellung aller Wettkampftermine mit Export-Funktion
+- **Dokumentenverwaltung**: Zentrale Ablage für Ausschreibungen, Formulare und Regelwerke
+- **Mobile Optimierung**: Vollständig nutzbar auf Smartphones und Tablets
+- **PDF-Export**: Druckbare Ergebnislisten und Tabellen
 
-Was ist neu in Version 0.6.2?
-- Verbesserte Stabilität und Zuverlässigkeit
-- Optimierte PDF-Generierung mit besserer Unterstützung für Umlaute und Sonderzeichen
-- Verbesserte Darstellung der Vorjahresdurchschnitte
-- Benutzerfreundlichere Onboarding-Prozesse
-- Optimierte Mannschaftsführer-Übersicht
+**Was ich von euch als Tester benötige:**
 
-Was kannst du als Tester tun und worauf solltest du achten?
-Je nachdem, welche Rolle du im Verein hast (z.B. Vereinsvertreter, Mannschaftsführer, interessierter Schütze), sind unterschiedliche Bereiche für dich relevant:
+Ich brauche eure Unterstützung, um die App vor dem offiziellen Start gründlich zu testen. Besonders wichtig sind mir folgende Aspekte:
 
-1. Für alle Tester (Öffentliche Ansichten):
-• Startseite: Ist die Anzeige der "Letzten Ergebnis-Updates" verständlich und nützlich? Funktionieren die Links wie erwartet?
-• RWK Tabellen:
-  - Funktioniert die Auswahl der verschiedenen Wettkampfjahre und Disziplinen problemlos?
-  - Sind die Mannschaftsranglisten übersichtlich dargestellt?
-  - Funktioniert das Aufklappen der Mannschaftsdetails, um die Einzelergebnisse der Schützen zu sehen?
-  - Ist die Einzelschützenrangliste klar und verständlich?
-  - Wird beim Klick auf einen Schützennamen dessen Detailansicht mit Leistungsdiagramm korrekt angezeigt?
-• Handbuch & Impressum: Sind die Informationen zugänglich und nachvollziehbar?
-• Allgemeine Benutzerfreundlichkeit: Findest du dich in der App gut zurecht? Ist die Navigation intuitiv? Lädt die Seite auf deinem Gerät schnell? Entdeckst du Darstellungsfehler?
+1. **Benutzerfreundlichkeit**: Ist die App intuitiv bedienbar? Findet ihr alle Funktionen?
+2. **Fehler und Probleme**: Stoßt ihr auf Fehler oder unerwartetes Verhalten?
+3. **Mobile Nutzung**: Funktioniert die App gut auf euren Smartphones/Tablets?
+4. **Verbesserungsvorschläge**: Welche Funktionen fehlen euch? Was könnte besser sein?
+5. **Leistung**: Lädt die App schnell genug? Gibt es Verzögerungen?
 
-2. Für designierte Vereinsvertreter/Mannschaftsführer (nach Login):
-(Hierfür benötigst du Zugangsdaten, die ich dir separat mitteile, nachdem ich deinen Account angelegt und dir die entsprechenden Rechte zugewiesen habe)
+**So könnt ihr teilnehmen:**
 
-• Login: Klappt der Login-Vorgang reibungslos?
-• "Mein Verein"-Bereich:
-  - Dashboard: Ist die Übersicht klar? Werden deine Rolle und dein Verein/deine Vereine korrekt angezeigt?
-  - (Nur für Vereinsvertreter) Meine Mannschaften:
-    * Kannst du Mannschaften für deinen Verein anlegen und bearbeiten?
-    * Funktioniert das Zuweisen von Schützen deines Vereins zu den Mannschaften (unter Beachtung der Regeln: max. 3 Schützen, ein Schütze nur einmal pro Disziplin/Saison)?
-  - (Nur für Vereinsvertreter) Meine Schützen:
-    * Kannst du Schützen für deinen Verein anlegen und ihre Stammdaten bearbeiten?
-  - (Für Vereinsvertreter UND Mannschaftsführer) Ergebnisse erfassen:
-    * Kannst du Ergebnisse für die Mannschaften deines Vereins (und deren Gegner) eintragen?
-    * Ist die Auswahl von Saison, Liga, Mannschaft, Durchgang und Schütze logisch und einfach?
-    * Funktioniert das Hinzufügen zur "Vorgemerkte Ergebnisse"-Liste und das endgültige Speichern?
-    * Verschwinden Schützen korrekt aus dem Dropdown, nachdem ein Ergebnis für sie erfasst wurde?
+Um am Beta-Test teilzunehmen, benötigt ihr Zugangsdaten. Bitte meldet euch direkt bei mir per E-Mail an rwk-leiter-ksve@gmx.de, um eure Zugangsdaten zu erhalten. Ich werde euch dann persönlich einrichten und mit den nötigen Informationen versorgen.
 
-Wie meldest du Fehler oder gibst mir Feedback?
-Ich habe dafür eine spezielle Support-Seite in der App eingerichtet:
+**Feedback geben:**
 
-• Klicke in der Navigation auf "Support"
-• Fülle das Formular bitte möglichst detailliert aus
-• Bei Fehlern:
-  - Beschreibe genau, was du gemacht hast, bevor der Fehler auftrat (Schritt-für-Schritt)
-  - Was hattest du erwartet, und was ist tatsächlich passiert?
-  - Falls möglich, mache einen Screenshot vom Problem. Du kannst den Screenshot zwar nicht direkt im Formular hochladen, aber erwähne bitte, dass du einen hast. Wir können dann klären, wie du ihn mir am besten zukommen lässt (z.B. per E-Mail oder WhatsApp).
-  - Falls du dich technisch etwas auskennst und Fehler in der Browser-Konsole siehst (meist mit F12 zu öffnen -> Tab "Konsole"), kopiere diese gerne mit in deine Fehlermeldung.
-• Für allgemeines Feedback oder Verbesserungsvorschläge: Nutze bitte ebenfalls das Support-Formular.
+Für Rückmeldungen stehen euch folgende Wege zur Verfügung:
+- Direkt in der App über die Support-Funktion (mit Screenshot-Möglichkeit)
+- Per E-Mail an rwk-leiter-ksve@gmx.de
+- In unserer WhatsApp-Gruppe für Beta-Tester (Link nach Anmeldung)
+- Persönlich bei unseren Treffen
 
-Ich werde alle Tester in eine WhatsApp-Gruppe einladen, wenn eine Handynummer vorhanden ist, um den Austausch zu erleichtern und schnell auf Fragen reagieren zu können.
+Jede Rückmeldung ist wertvoll, egal ob Lob, Kritik oder Verbesserungsvorschläge. Bitte teilt mir auch mit, wenn ihr neue Ideen für Funktionen habt, die die App noch nützlicher machen könnten.
 
-Dein Feedback ist für mich unglaublich wertvoll, um die App weiter zu verbessern und sie optimal auf die Bedürfnisse unserer Schützen und Vereine abzustimmen!
-
-Vielen Dank für deine Unterstützung!
+Ich freue mich auf eure Unterstützung und bin gespannt auf euer Feedback!
 
 Mit sportlichen Grüßen,
-euer Rundenwettkampfleiter
 Marcel Bünger
+Rundenwettkampfleiter KSV Einbeck
