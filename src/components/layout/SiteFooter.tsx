@@ -1,9 +1,9 @@
-// src/components/layout/SiteFooter.js
+// src/components/layout/SiteFooter.tsx
 import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.8.1"; // Aktualisierte Version für Beta-Release
+  const version = "0.8.0"; // Aktualisierte Version für Beta-Release
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">
