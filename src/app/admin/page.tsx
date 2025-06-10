@@ -224,7 +224,7 @@ export default function AdminDashboardPage() {
     },
     {
       text: "Automatischer Saisonabschluss / Auf- und Abstieg (komplex).", 
-      status: "Zukunft (v0.8.0)", icon: Trophy, iconColor: "text-muted-foreground", versionTarget: "0.8.0"
+      status: "In Vorbereitung (v0.8.0)", icon: Trophy, iconColor: "text-blue-600", versionTarget: "0.8.0"
     },
     
     // Zukunft (Nach Beta / v1.0+)
@@ -290,9 +290,14 @@ export default function AdminDashboardPage() {
             <CardDescription className="mb-4">
               Saisons, Ligen und zugehörige Daten verwalten.
             </CardDescription>
-            <Link href="/admin/seasons" passHref>
-              <Button className="w-full">Saisons verwalten</Button>
-            </Link>
+            <div className="grid grid-cols-2 gap-2">
+              <Link href="/admin/seasons" passHref>
+                <Button className="w-full">Saisons verwalten</Button>
+              </Link>
+              <Link href="/admin/season-transition" passHref>
+                <Button variant="outline" className="w-full">Saisonwechsel</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
@@ -412,7 +417,7 @@ export default function AdminDashboardPage() {
         <CardHeader>
           <CardTitle className="text-xl text-accent flex items-center">
             <GitPullRequestClosed className="mr-3 h-6 w-6" />
-            Roadmap / Nächste Schritte (Stand: 05. Juni 2025, Version 0.7.0)
+            Roadmap / Nächste Schritte (Stand: 10. Juni 2025, Version 0.8.0 Beta)
           </CardTitle>
           <CardDescription>Übersicht geplanter Erweiterungen und wichtiger Aufgaben, strukturiert nach potenziellen Versionen.</CardDescription>
         </CardHeader>

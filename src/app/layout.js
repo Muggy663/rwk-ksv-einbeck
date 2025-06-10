@@ -1,53 +1,32 @@
-import { Inter } from 'next/font/google';
 import './globals.css';
-import { AuthProvider } from '@/components/auth/AuthProvider';
+import { Inter } from 'next/font/google';
+import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
-import Script from 'next/script';
-import { MainNav } from '@/components/layout/MainNav';
+import { SiteHeader } from '@/components/layout/SiteHeader';
 import { SiteFooter } from '@/components/layout/SiteFooter';
-import Link from 'next/link';
-import Image from 'next/image';
+import { AuthProvider } from '@/hooks/use-auth';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
   title: 'RWK App Einbeck',
-  description: 'Die digitale Plattform für die Rundenwettkämpfe des Kreisschützenverbandes Einbeck',
+  description: 'Rundenwettkampf App für den Kreisschützenverband Einbeck',
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="de" suppressHydrationWarning>
-      <head>
-        <Script src="/disable-onboarding.js" strategy="beforeInteractive" />
-        {/* Fallback CSS für den Fall, dass Tailwind nicht richtig lädt */}
-        <link rel="stylesheet" href="/styles/fallback.css" />
-      </head>
       <body className={inter.className}>
-        <AuthProvider>
-          <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container flex h-14 items-center justify-between">
-              <Link href="/" className="flex items-center space-x-2">
-                <Image 
-                  src="/images/logo.png" 
-                  alt="KSV Einbeck Logo Klein" 
-                  width={40} 
-                  height={40}
-                  className="rounded-md"
-                  style={{ width: 40, height: 40 }}
-                  data-ai-hint="club logo"
-                />
-                <span className="hidden font-bold sm:inline-block text-lg">RWK Einbeck</span>
-              </Link>
-              <MainNav />
+        <ThemeProvider attribute="class" defaultTheme="light">
+          <AuthProvider>
+            <div className="relative flex min-h-screen flex-col">
+              <SiteHeader />
+              <main className="flex-1">{children}</main>
+              <SiteFooter />
             </div>
-          </header>
-          <main>
-            {children}
-          </main>
-          <SiteFooter />
-          <Toaster />
-        </AuthProvider>
+            <Toaster />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

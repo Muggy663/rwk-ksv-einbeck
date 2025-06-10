@@ -19,38 +19,29 @@ export default function UpdatesPage() {
           <Card className="border-primary/20">
             <CardHeader className="bg-primary/5">
               <CardTitle className="text-xl text-primary flex items-center justify-between">
-                <span>Version 0.7.5 (15. Juni 2025)</span>
-                <span className="text-sm bg-primary/20 px-2 py-1 rounded-full">Aktuell</span>
+                <span>Version 0.8.1 (12. Juni 2025)</span>
+                <span className="text-sm bg-primary/20 px-2 py-1 rounded-full flex items-center gap-1">
+                  <span>Aktuell</span>
+                  <span className="bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded">Beta</span>
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">MongoDB-Integration für Dokumente</h3>
+                  <h3 className="text-lg font-semibold mb-2">Fehlerbehebungen</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Neu: MongoDB-Integration für die Dokumentenverwaltung</li>
-                    <li>Neu: Speicherung von Dokumenten in MongoDB GridFS</li>
-                    <li>Neu: Speichernutzungsüberwachung für MongoDB</li>
-                    <li>Neu: Migrations-Tool für die Übertragung von Dokumenten von JSON zu MongoDB</li>
-                    <li>Verbessert: Zuverlässigere Dokumentenverwaltung auf Vercel</li>
+                    <li>Behoben: Anzeige von "durchgang" mit großem Anfangsbuchstaben auf der Startseite</li>
+                    <li>Behoben: Anzeige von Schützen-IDs statt Namen in erweiterten Statistiken</li>
+                    <li>Behoben: Anzeige von Screenshots in Support-Tickets im Admin-Bereich</li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Verbesserte Fehlerbehandlung</h3>
+                  <h3 className="text-lg font-semibold mb-2">Neue Funktionen</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Verbessert: Robustere Fehlerbehandlung bei der Dokumentenverwaltung</li>
-                    <li>Neu: Fallback-Mechanismus zur JSON-Datei, wenn MongoDB nicht verfügbar ist</li>
-                    <li>Verbessert: Bessere Fehlerbehandlung beim Hochladen von Dokumenten</li>
-                    <li>Verbessert: Detaillierte Fehlerprotokolle für die Diagnose von Problemen</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Admin-Panel-Erweiterungen</h3>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Neu: Speichernutzungsanzeige für MongoDB im Admin-Panel</li>
-                    <li>Neu: Migrations-Tool für die Übertragung von Dokumenten im Admin-Panel</li>
-                    <li>Verbessert: Optimierte Dokumentenverwaltung mit MongoDB-Integration</li>
-                    <li>Verbessert: Verbesserte Benutzeroberfläche für die Dokumentenverwaltung</li>
+                    <li>Neu: E-Mail-Benachrichtigung bei neuen Support-Tickets</li>
+                    <li>Neu: Hinweis zum Saisonvergleich (erst ab 2026 relevant)</li>
+                    <li>Verbessert: Benutzerfreundlichere Formulierungen im Support-Bereich</li>
                   </ul>
                 </div>
               </div>
@@ -61,6 +52,90 @@ export default function UpdatesPage() {
         <TabsContent value="previous" className="space-y-4">
           <ScrollArea className="h-[600px] pr-4">
             <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">Version 0.8.0 (10. Juni 2025)</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Mobile Optimierung</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neu: Responsive Tabellendarstellung für mobile Geräte</li>
+                        <li>Neu: Touch-freundliche Diagramme mit verbesserten Interaktionen</li>
+                        <li>Verbessert: Anpassung der Navigation für mobile Geräte</li>
+                        <li>Verbessert: Optimierte Darstellung auf kleinen Bildschirmen</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Caching-Strategie</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neu: Lokales Caching für häufig abgefragte Daten</li>
+                        <li>Neu: Optimierte Abfragemuster für bessere Performance</li>
+                        <li>Neu: Automatische Aktualisierung bei Datenänderungen</li>
+                        <li>Verbessert: Schnellere Ladezeiten durch intelligentes Caching</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Erweiterte Statistik-Funktionen</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neu: Saisonübergreifende Vergleiche für Schützen und Mannschaften</li>
+                        <li>Neu: Trendanalyse für Leistungsentwicklung</li>
+                        <li>Neu: Erweiterte Filteroptionen für Statistiken</li>
+                        <li>Verbessert: Neue Statistik-Übersichtsseite mit direkten Links zu allen Funktionen</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Benutzerfreundlichkeit</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Verbessert: Vereinfachte Navigation und Benutzeroberfläche</li>
+                        <li>Verbessert: Kombinierte Terminverwaltung im Vereinsdashboard</li>
+                        <li>Verbessert: Optimierte Terminkalender-Verlinkung auf der Startseite</li>
+                        <li>Verbessert: Konsistentere Benutzerführung in der gesamten Anwendung</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">Version 0.7.5 (15. Juni 2025)</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">MongoDB-Integration für Dokumente</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neu: MongoDB-Integration für die Dokumentenverwaltung</li>
+                        <li>Neu: Speicherung von Dokumenten in MongoDB GridFS</li>
+                        <li>Neu: Speichernutzungsüberwachung für MongoDB</li>
+                        <li>Neu: Migrations-Tool für die Übertragung von Dokumenten von JSON zu MongoDB</li>
+                        <li>Verbessert: Zuverlässigere Dokumentenverwaltung auf Vercel</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Verbesserte Fehlerbehandlung</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Verbessert: Robustere Fehlerbehandlung bei der Dokumentenverwaltung</li>
+                        <li>Neu: Fallback-Mechanismus zur JSON-Datei, wenn MongoDB nicht verfügbar ist</li>
+                        <li>Verbessert: Bessere Fehlerbehandlung beim Hochladen von Dokumenten</li>
+                        <li>Verbessert: Detaillierte Fehlerprotokolle für die Diagnose von Problemen</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Admin-Panel-Erweiterungen</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neu: Speichernutzungsanzeige für MongoDB im Admin-Panel</li>
+                        <li>Neu: Migrations-Tool für die Übertragung von Dokumenten im Admin-Panel</li>
+                        <li>Verbessert: Optimierte Dokumentenverwaltung mit MongoDB-Integration</li>
+                        <li>Verbessert: Verbesserte Benutzeroberfläche für die Dokumentenverwaltung</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
               <Card>
                 <CardHeader>
                   <CardTitle className="text-xl">Version 0.7.4 (08. Juni 2025)</CardTitle>
@@ -147,22 +222,6 @@ export default function UpdatesPage() {
                         <li>Neu: "Passwort ändern"-Funktion für erhöhte Sicherheit</li>
                       </ul>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Vereinfachung der Benutzeroberfläche</h3>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>Verbessert: Vereinfachte Navigation mit optimierter Button-Anordnung</li>
-                        <li>Verbessert: Optimierte Startseite mit weniger Redundanz</li>
-                        <li>Verbessert: Vereinfachtes Vereinsdashboard für bessere Übersichtlichkeit</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">JavaScript-Umstellung</h3>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>Verbessert: Weitere Komponenten von TypeScript zu JavaScript konvertiert</li>
-                        <li>Verbessert: JSDoc-Typdefinitionen für bessere Entwicklererfahrung</li>
-                        <li>Neu: Platzhalter für automatischen Saisonabschluss / Auf- und Abstieg</li>
-                      </ul>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -176,7 +235,7 @@ export default function UpdatesPage() {
                     <div>
                       <h3 className="text-lg font-semibold mb-2">Vercel-Kompatibilität</h3>
                       <ul className="list-disc pl-5 space-y-1">
-                        <li>Verbessert: Konfigurationsdateien von TypeScript zu JavaScript konvertiert für bessere Vercel-Kompatibilität</li>
+                        <li>Verbessert: Konfigurationsdateien von TypeScript zu JavaScript konvertiert</li>
                         <li>Verbessert: Service-Module als JavaScript mit JSDoc-Typdefinitionen implementiert</li>
                         <li>Verbessert: Webpack-Konfiguration für problematische Bibliotheken angepasst</li>
                         <li>Neu: Fallback-CSS-Stile für verbesserte Zuverlässigkeit bei Problemen mit Tailwind</li>
@@ -186,24 +245,8 @@ export default function UpdatesPage() {
                       <h3 className="text-lg font-semibold mb-2">PDF-Generierung</h3>
                       <ul className="list-disc pl-5 space-y-1">
                         <li>Neu: Vollständige Implementierung aller PDF-Generierungsfunktionen</li>
-                        <li>Neu: Unterstützung für Mannschaftstabellen, Einzelschützentabellen, Handtabellen und Gesamtlisten</li>
+                        <li>Neu: Unterstützung für Mannschaftstabellen, Einzelschützentabellen und Gesamtlisten</li>
                         <li>Verbessert: Optimierte PDF-Layouts für bessere Lesbarkeit</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Benutzerfreundlichkeit</h3>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>Behoben: Login-Formular-Fehler "Required" auf Vercel</li>
-                        <li>Verbessert: Explizite Validierungsmeldungen für Formularfelder</li>
-                        <li>Verbessert: Fehlerbehandlung bei der Anmeldung</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Dokumentation</h3>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>Neu: Dokumentation der Vercel-Deployment-Anforderungen</li>
-                        <li>Aktualisiert: Entwicklerdokumentation mit Informationen zu JavaScript-Service-Modulen</li>
-                        <li>Verbessert: Roadmap für zukünftige Entwicklungen</li>
                       </ul>
                     </div>
                   </div>
@@ -233,33 +276,6 @@ export default function UpdatesPage() {
                         <li>Neu: Filterung nach Liga und Termintyp</li>
                         <li>Neu: Export von Terminen als iCal-Datei (kompatibel mit Google Kalender)</li>
                         <li>Neu: Einfaches Eingabeformular für neue Termine mit Tooltips</li>
-                        <li>Neu: Unterscheidung zwischen RWK-Terminen und Kreisverbandsterminen</li>
-                        <li>Neu: Terminverwaltung zum Bearbeiten und Löschen von Terminen (nur für Administratoren)</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Mobile Optimierung</h3>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>Verbessert: Responsive Design für alle Seiten</li>
-                        <li>Neu: Progressive Web App (PWA) Funktionalität</li>
-                        <li>Neu: Offline-Zugriff auf grundlegende Funktionen</li>
-                        <li>Verbessert: Touch-optimierte UI-Elemente</li>
-                        <li>Verbessert: Anpassung der Tabellen für kleine Bildschirme</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Druckfunktion</h3>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>Neu: Optimierte Druckansicht für Ligaergebnisse ohne sensible Daten</li>
-                        <li>Verbessert: Direkter Druck aus der Tabellenseite</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Fehlerbehebungen</h3>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>Behoben: Router-Update-Fehler im AdminLayout beim automatischen Logout</li>
-                        <li>Verbessert: Optimierte Ladezeiten für große Datenmengen</li>
-                        <li>Verbessert: Einheitliche Darstellung auf allen Geräten</li>
                       </ul>
                     </div>
                   </div>
@@ -277,28 +293,15 @@ export default function UpdatesPage() {
                       <ul className="list-disc pl-5 space-y-1">
                         <li>Hinzugefügt: PDF-Export für Ligaergebnisse und Einzelschützenergebnisse</li>
                         <li>Hinzugefügt: Druckfreundliche Darstellung der Tabellen</li>
-                        <li>Hinzugefügt: Logo in der oberen linken Ecke der Anwendung für bessere Markenidentität</li>
+                        <li>Hinzugefügt: Logo in der oberen linken Ecke der Anwendung</li>
                       </ul>
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold mb-2">Fehlerbehebungen</h3>
                       <ul className="list-disc pl-5 space-y-1">
-                        <li>Behoben: Problem mit der Groß-/Kleinschreibung bei der Abfrage von Saisons in RWK-Tabellen</li>
+                        <li>Behoben: Problem mit der Groß-/Kleinschreibung bei der Abfrage von Saisons</li>
                         <li>Behoben: "RWK" aus dem Anzeigenamen der Wettbewerbe entfernt</li>
                         <li>Behoben: Icons in der Hauptnavigation aktualisiert für bessere Verständlichkeit</li>
-                        <li>Behoben: Login-Button in der Hauptnavigation wiederhergestellt</li>
-                        <li>Behoben: Dokumente und Support-Links zur Hauptnavigation hinzugefügt</li>
-                        <li>Behoben: Beispieldaten für Termine entfernt, wenn keine Termine gefunden werden</li>
-                        <li>Behoben: Beispieldaten aus statistics-service entfernt</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Verbesserungen</h3>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>Verbessert: Protokollierung der verfügbaren Disziplinen für bessere Fehlerdiagnose</li>
-                        <li>Verbessert: Konsistente Behandlung von Groß-/Kleinschreibung bei Disziplinen (kk/KK, lg/LG)</li>
-                        <li>Verbessert: Ortsauswahl bei Terminen verwendet jetzt Clubs aus der Datenbank</li>
-                        <li>Verbessert: Konsistentes Layout mit Logo in der Kopfzeile für bessere Markenidentität</li>
                       </ul>
                     </div>
                   </div>
@@ -317,10 +320,6 @@ export default function UpdatesPage() {
                         <li>Verbessert: Logo in den Ergebnislisten ist jetzt rechtsbündig positioniert</li>
                         <li>Behoben: Doppelte Anzeige von "Kleinkaliber" in den Urkunden entfernt</li>
                         <li>Hinzugefügt: Unterschriftenbilder in den Urkunden für Präsident und Rundenwettkampfleiter</li>
-                        <li>Verbessert: Benutzerhandbuch für normale Benutzer vereinfacht, technische Begriffe entfernt</li>
-                        <li>Geändert: Begriff "Spielstärke" im Handbuch durch "Mannschaftsstärke" ersetzt</li>
-                        <li>Behoben: "undefined"-Einträge im Handbuch entfernt</li>
-                        <li>Verbessert: Nummerierung der Abschnitte im Handbuch für normale Benutzer korrigiert</li>
                       </ul>
                     </div>
                     <div>
@@ -328,16 +327,7 @@ export default function UpdatesPage() {
                       <ul className="list-disc pl-5 space-y-1">
                         <li>Aktualisiert: Handbuch mit benutzerfreundlicheren Erklärungen</li>
                         <li>Aktualisiert: Versionsnummer und Datum in allen relevanten Dateien</li>
-                        <li>Geändert: Bezeichnung "Super-Administrator" durchgängig durch "Rundenwettkampfleiter" ersetzt</li>
-                        <li>Korrigiert: Hinweise auf mehrere Vereine pro Benutzer entfernt</li>
-                        <li>Aktualisiert: Information zur Passwortänderung beim ersten Login aktualisiert</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Technische Details</h3>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>Verbessert: PDF-Generierung für Urkunden mit Unterschriftenbildern</li>
-                        <li>Optimiert: Layout der Druckansicht für bessere Lesbarkeit</li>
+                        <li>Geändert: Bezeichnung "Super-Administrator" durch "Rundenwettkampfleiter" ersetzt</li>
                       </ul>
                     </div>
                   </div>
@@ -361,29 +351,14 @@ export default function UpdatesPage() {
                     <div>
                       <h3 className="text-lg font-semibold mb-2">PDF-Exporte & Auswertungen</h3>
                       <ul className="list-disc pl-5 space-y-1">
-                        <li>Neu: Gesamtrangliste aller Einzelschützen über alle Ligen hinweg (außer Sportpistole)</li>
-                        <li>Neu: Filterung der Einzelschützenergebnisse nach Geschlecht (männlich/weiblich)</li>
+                        <li>Neu: Gesamtrangliste aller Einzelschützen über alle Ligen hinweg</li>
+                        <li>Neu: Filterung der Einzelschützenergebnisse nach Geschlecht</li>
                         <li>Neu: Urkunden-Generator für die besten Schützen und Mannschaften jeder Liga</li>
-                        <li>Neu: Automatische Erstellung von Urkunden für Gesamtsieger (bester Schütze, beste Dame)</li>
-                        <li>Verbessert: Optimiertes PDF-Layout mit Kreisverbandslogo und besserer Lesbarkeit</li>
-                        <li>Verbessert: Mehr Abstand zwischen Einzelschützenergebnissen für bessere Übersichtlichkeit</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Vercel-Kompatibilität</h3>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>Verbesserte Kompatibilität mit Vercel-Deployment durch Optimierung des URL-Parameter-Handlings</li>
-                        <li>Behebung von Fehlern beim statischen Rendering auf Vercel</li>
-                        <li>Optimierte Suspense-Boundary-Behandlung für Next.js 15</li>
-                        <li>Verbesserte Firestore-Abfragen für Vercel-Limits bei der Urkunden-Generierung</li>
-                        <li>Optimierte Asset-Handhabung für PDF-Generierung auf Vercel</li>
                       </ul>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              
-              {/* Weitere Versionen hier... */}
             </div>
           </ScrollArea>
         </TabsContent>

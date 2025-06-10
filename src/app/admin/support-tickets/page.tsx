@@ -1,196 +1,293 @@
-// src/app/admin/support-tickets/page.tsx
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, MessagesSquare, AlertTriangle, Eye } from 'lucide-react';
-import type { SupportTicket } from '@/types/rwk';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MessagesSquare, Loader2, ExternalLink, Image as ImageIcon } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, orderBy, Timestamp, doc, updateDoc } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
+import { collection, query, orderBy, getDocs, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 const SUPPORT_TICKETS_COLLECTION = "support_tickets";
-type TicketStatus = SupportTicket['status'];
 
-export default function AdminSupportTicketsPage() {
-  const { toast } = useToast();
+interface SupportTicket {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  reportedByUserId: string | null;
+  timestamp: Timestamp;
+  status: 'neu' | 'in_bearbeitung' | 'gelesen' | 'geschlossen';
+  screenshot?: {
+    name: string;
+    type: string;
+    data: string;
+  };
+}
+
+export default function SupportTicketsPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null); // Store ticket ID being updated
-
-  const fetchTickets = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const ticketsQuery = query(collection(db, SUPPORT_TICKETS_COLLECTION), orderBy("timestamp", "desc"));
-      const querySnapshot = await getDocs(ticketsQuery);
-      const fetchedTickets: SupportTicket[] = [];
-      querySnapshot.forEach((docSnap) => {
-        fetchedTickets.push({ id: docSnap.id, ...docSnap.data() } as SupportTicket);
-      });
-      setTickets(fetchedTickets);
-    } catch (error) {
-      console.error("Error fetching support tickets: ", error);
-      toast({
-        title: "Fehler beim Laden der Tickets",
-        description: (error as Error).message || "Ein unbekannter Fehler ist aufgetreten.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('all');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
+    const fetchTickets = async () => {
+      setLoading(true);
+      try {
+        const ticketsQuery = query(
+          collection(db, SUPPORT_TICKETS_COLLECTION),
+          orderBy('timestamp', 'desc')
+        );
+        const querySnapshot = await getDocs(ticketsQuery);
+        const fetchedTickets: SupportTicket[] = [];
+        querySnapshot.forEach((doc) => {
+          fetchedTickets.push({ id: doc.id, ...doc.data() } as SupportTicket);
+        });
+        setTickets(fetchedTickets);
+      } catch (error) {
+        console.error("Error fetching support tickets:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchTickets();
-  }, [fetchTickets]);
+  }, []);
 
-  const handleShowDetails = (ticket: SupportTicket) => {
-    setSelectedTicket(ticket);
-    setIsModalOpen(true);
-  };
-
-  const handleStatusChange = async (ticketId: string, newStatus: TicketStatus) => {
-    if (!ticketId) return;
-    setIsUpdatingStatus(ticketId);
+  const handleStatusChange = async (ticketId: string, newStatus: string) => {
+    setUpdatingStatus(true);
     try {
-      const ticketDocRef = doc(db, SUPPORT_TICKETS_COLLECTION, ticketId);
-      await updateDoc(ticketDocRef, { status: newStatus });
-      toast({
-        title: "Status aktualisiert",
-        description: `Der Status des Tickets wurde auf "${newStatus}" geändert.`,
+      const ticketRef = doc(db, SUPPORT_TICKETS_COLLECTION, ticketId);
+      await updateDoc(ticketRef, {
+        status: newStatus
       });
-      // Optimistic update or refetch
-      setTickets(prevTickets => 
-        prevTickets.map(t => t.id === ticketId ? { ...t, status: newStatus } : t)
-      );
+      
+      // Update local state
+      setTickets(tickets.map(ticket => 
+        ticket.id === ticketId ? { ...ticket, status: newStatus as SupportTicket['status'] } : ticket
+      ));
+      
+      if (selectedTicket && selectedTicket.id === ticketId) {
+        setSelectedTicket({ ...selectedTicket, status: newStatus as SupportTicket['status'] });
+      }
     } catch (error) {
       console.error("Error updating ticket status:", error);
-      toast({
-        title: "Fehler beim Statusupdate",
-        description: (error as Error).message,
-        variant: "destructive",
-      });
     } finally {
-      setIsUpdatingStatus(null);
+      setUpdatingStatus(false);
+    }
+  };
+
+  const openTicketDetails = (ticket: SupportTicket) => {
+    setSelectedTicket(ticket);
+    setIsDialogOpen(true);
+  };
+
+  const filteredTickets = activeTab === 'all' 
+    ? tickets 
+    : tickets.filter(ticket => ticket.status === activeTab);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'neu':
+        return <Badge variant="destructive">Neu</Badge>;
+      case 'in_bearbeitung':
+        return <Badge variant="default">In Bearbeitung</Badge>;
+      case 'gelesen':
+        return <Badge variant="secondary">Gelesen</Badge>;
+      case 'geschlossen':
+        return <Badge variant="outline">Geschlossen</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-3">
-        <MessagesSquare className="h-8 w-8 text-primary" />
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-semibold text-primary">Support Tickets</h1>
-          <p className="text-muted-foreground">Übersicht der eingegangenen Support-Anfragen.</p>
+          <h1 className="text-3xl font-bold text-primary">Support-Tickets</h1>
+          <p className="text-muted-foreground">
+            Übersicht aller eingegangenen Support-Anfragen.
+          </p>
         </div>
       </div>
-      <Card className="shadow-md">
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="all">Alle</TabsTrigger>
+          <TabsTrigger value="neu">Neu</TabsTrigger>
+          <TabsTrigger value="in_bearbeitung">In Bearbeitung</TabsTrigger>
+          <TabsTrigger value="gelesen">Gelesen</TabsTrigger>
+          <TabsTrigger value="geschlossen">Geschlossen</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <Card>
         <CardHeader>
-          <CardTitle>Eingegangene Tickets</CardTitle>
-          <CardDescription>Hier sehen Sie alle von Benutzern gesendeten Anfragen und können deren Status verwalten.</CardDescription>
+          <CardTitle className="flex items-center">
+            <MessagesSquare className="mr-2 h-5 w-5" />
+            Support-Anfragen
+          </CardTitle>
+          <CardDescription>
+            Alle eingegangenen Support-Anfragen von Benutzern.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center items-center py-10">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="ml-3">Lade Tickets...</p>
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mr-3" />
+              <p>Lade Support-Tickets...</p>
             </div>
-          ) : tickets.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[150px]">Datum</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>E-Mail</TableHead>
-                    <TableHead>Betreff</TableHead>
-                    <TableHead className="w-[180px]">Status</TableHead>
-                    <TableHead className="text-right w-[100px]">Aktion</TableHead>
+          ) : filteredTickets.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Datum</TableHead>
+                  <TableHead>Betreff</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>E-Mail</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Anhang</TableHead>
+                  <TableHead>Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTickets.map((ticket) => (
+                  <TableRow key={ticket.id}>
+                    <TableCell>
+                      {ticket.timestamp ? format(ticket.timestamp.toDate(), 'dd.MM.yyyy HH:mm', { locale: de }) : '-'}
+                    </TableCell>
+                    <TableCell>{ticket.subject}</TableCell>
+                    <TableCell>{ticket.name}</TableCell>
+                    <TableCell>
+                      <a href={`mailto:${ticket.email}`} className="text-primary hover:underline">
+                        {ticket.email}
+                      </a>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(ticket.status)}</TableCell>
+                    <TableCell>
+                      {ticket.screenshot ? (
+                        <Badge variant="outline" className="flex items-center">
+                          <ImageIcon className="h-3 w-3 mr-1" />
+                          Ja
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => openTicketDetails(ticket)}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-1" />
+                        Details
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tickets.map((ticket) => (
-                    <TableRow key={ticket.id}>
-                      <TableCell>
-                        {ticket.timestamp ? format((ticket.timestamp as Timestamp).toDate(), 'dd.MM.yy HH:mm', { locale: de }) : '-'}
-                      </TableCell>
-                      <TableCell>{ticket.name}</TableCell>
-                      <TableCell>{ticket.email}</TableCell>
-                      <TableCell className="max-w-xs truncate" title={ticket.subject}>{ticket.subject}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={ticket.status || 'neu'}
-                          onValueChange={(newStatus) => handleStatusChange(ticket.id!, newStatus as TicketStatus)}
-                          disabled={isUpdatingStatus === ticket.id}
-                        >
-                          <SelectTrigger className="h-9 text-xs">
-                            <SelectValue placeholder="Status wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="neu">Neu</SelectItem>
-                            <SelectItem value="in Bearbeitung">In Bearbeitung</SelectItem>
-                            <SelectItem value="gelesen">Gelesen</SelectItem>
-                            <SelectItem value="geschlossen">Geschlossen</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {isUpdatingStatus === ticket.id && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="outline" size="sm" onClick={() => handleShowDetails(ticket)}>
-                          <Eye className="mr-1 h-4 w-4" /> Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           ) : (
-            <div className="p-8 text-center text-muted-foreground bg-secondary/30 rounded-md">
-               <AlertTriangle className="mx-auto h-10 w-10 mb-3 text-primary/70" />
-              <p className="text-lg">Keine Support-Tickets vorhanden.</p>
+            <div className="text-center py-8 text-muted-foreground">
+              <MessagesSquare className="mx-auto h-10 w-10 mb-3 text-primary/70" />
+              <p>Keine Support-Tickets gefunden.</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-lg">
-          {selectedTicket && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-xl text-primary">{selectedTicket.subject}</DialogTitle>
-                <DialogDescription>
-                  Von: {selectedTicket.name} ({selectedTicket.email}) <br />
-                  Gesendet am: {selectedTicket.timestamp ? format((selectedTicket.timestamp as Timestamp).toDate(), 'dd.MM.yyyy HH:mm', { locale: de }) : '-'}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-4 whitespace-pre-wrap text-sm text-muted-foreground bg-muted/50 p-4 rounded-md max-h-[60vh] overflow-y-auto">
-                {selectedTicket.message}
+      {/* Ticket Details Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {selectedTicket && (
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex justify-between items-center">
+                <span>{selectedTicket.subject}</span>
+                {getStatusBadge(selectedTicket.status)}
+              </DialogTitle>
+              <DialogDescription>
+                Von {selectedTicket.name} ({selectedTicket.email}) am {
+                  selectedTicket.timestamp ? format(selectedTicket.timestamp.toDate(), 'dd.MM.yyyy HH:mm', { locale: de }) : '-'
+                } Uhr
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 my-4">
+              <div>
+                <h3 className="font-semibold mb-1">Nachricht:</h3>
+                <div className="bg-muted p-4 rounded-md whitespace-pre-wrap">
+                  {selectedTicket.message}
+                </div>
               </div>
-            </>
-          )}
-        </DialogContent>
+              
+              {selectedTicket.screenshot && (
+                <div>
+                  <h3 className="font-semibold mb-1">Screenshot:</h3>
+                  <div className="bg-muted p-4 rounded-md">
+                    <img 
+                      src={selectedTicket.screenshot.data} 
+                      alt="Benutzer-Screenshot" 
+                      className="max-w-full max-h-[500px] object-contain mx-auto border rounded-md"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2 text-center">
+                      {selectedTicket.screenshot.name} ({selectedTicket.screenshot.type})
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {selectedTicket.reportedByUserId && (
+                <div>
+                  <h3 className="font-semibold mb-1">Benutzer-ID:</h3>
+                  <code className="bg-muted p-2 rounded-md text-xs block overflow-x-auto">
+                    {selectedTicket.reportedByUserId}
+                  </code>
+                </div>
+              )}
+            </div>
+            
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <div className="flex-1 flex items-center">
+                <span className="mr-2 text-sm">Status ändern:</span>
+                <Select
+                  value={selectedTicket.status}
+                  onValueChange={(value) => handleStatusChange(selectedTicket.id, value)}
+                  disabled={updatingStatus}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Status wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="neu">Neu</SelectItem>
+                    <SelectItem value="in_bearbeitung">In Bearbeitung</SelectItem>
+                    <SelectItem value="gelesen">Gelesen</SelectItem>
+                    <SelectItem value="geschlossen">Geschlossen</SelectItem>
+                  </SelectContent>
+                </Select>
+                {updatingStatus && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+              </div>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Schließen
+              </Button>
+              <Button asChild>
+                <a href={`mailto:${selectedTicket.email}?subject=Re: ${selectedTicket.subject}`}>
+                  Antworten
+                </a>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
       </Dialog>
     </div>
   );

@@ -213,6 +213,27 @@ export default function VereinDashboardPage() {
               </Link>
           </CardContent>
         </Card>
+        
+        {/* Terminverwaltung (kombiniert) */}
+        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium text-accent">Terminkalender</CardTitle>
+              <CalendarDays className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+              <CardDescription className="mb-4">
+              Termine einsehen und neue Termine für Ihren Verein hinzufügen.
+              </CardDescription>
+              <div className="grid grid-cols-2 gap-2">
+                <Link href="/termine" passHref>
+                  <Button className="w-full" variant="outline">Termine ansehen</Button>
+                </Link>
+                <Link href="/termine/add" passHref>
+                  <Button className="w-full">Termin hinzufügen</Button>
+                </Link>
+              </div>
+          </CardContent>
+        </Card>
 
         {/* Zeige Mannschafts- und Schützenverwaltung nur für Vereinsvertreter */}
         {isVereinsvertreter && (

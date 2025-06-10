@@ -20,7 +20,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch RWK Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 03. Juni 2025, Version 0.7.0)
+            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 10. Juni 2025, Version 0.8.0 Beta)
           </p>
         </div>
       </div>

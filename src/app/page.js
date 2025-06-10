@@ -77,11 +77,18 @@ export default function HomePage() {
   const getBadgeVariant = (type, isKreisverband) => {
     if (isKreisverband) return "destructive";
     switch (type) {
+      case "Durchgang": return "default";
       case "durchgang": return "default";
       case "kreismeisterschaft": return "secondary";
       case "sitzung": return "outline";
       default: return "secondary";
     }
+  };
+
+  // Funktion zum Formatieren des Termintyps mit großem Anfangsbuchstaben
+  const formatEventType = (type) => {
+    if (!type) return "";
+    return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
   return (
@@ -186,7 +193,7 @@ export default function HomePage() {
                     <div className="flex justify-between items-start">
                       <span className="font-medium">{event.title}</span>
                       <Badge variant={getBadgeVariant(event.type, event.isKreisverband)}>
-                        {event.type}
+                        {formatEventType(event.type)}
                       </Badge>
                     </div>
                     <div className="text-sm text-muted-foreground">
@@ -198,15 +205,23 @@ export default function HomePage() {
                   </div>
                 ))}
                 
-                <Link href="/termine">
-                  <Button variant="link" className="p-0 h-auto mt-2">
-                    Alle Termine anzeigen
+                <Button asChild variant="default" className="w-full mt-2">
+                  <Link href="/termine">
+                    Terminkalender öffnen
                     <ChevronRight className="ml-1 h-4 w-4" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Keine anstehenden Termine.</p>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">Keine anstehenden Termine.</p>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/termine">
+                    Terminkalender öffnen
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
