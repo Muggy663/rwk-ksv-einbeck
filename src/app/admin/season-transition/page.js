@@ -220,7 +220,7 @@ export default function SeasonTransitionPage() {
                   Bis zur vollständigen Implementierung des Assistenten können Sie den Saisonwechsel mit folgenden manuellen Schritten durchführen:
                 </p>
                 <ol className="list-decimal pl-5 space-y-2">
-                  <li>Erstellen Sie eine neue Saison unter "Admin > Saisons"</li>
+                  <li>Erstellen Sie eine neue Saison unter &quot;Admin &gt; Saisons&quot;</li>
                   <li>Erstellen Sie die Ligen für die neue Saison</li>
                   <li>Erstellen Sie die Mannschaften für die neue Saison basierend auf den Ergebnissen der Vorsaison</li>
                   <li>Weisen Sie die Schützen den neuen Mannschaften zu</li>
