@@ -14,9 +14,9 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
 const passwordChangeSchema = z.object({
-  currentPassword: z.string().min(6, { message: "Aktuelles Passwort muss mindestens 6 Zeichen lang sein." }),
-  newPassword: z.string().min(8, { message: "Neues Passwort muss mindestens 8 Zeichen lang sein." }),
-  confirmPassword: z.string().min(8, { message: "Passwortbestätigung muss mindestens 8 Zeichen lang sein." }),
+  currentPassword: z.string({ required_error: "Aktuelles Passwort ist erforderlich." }).min(6, { message: "Aktuelles Passwort muss mindestens 6 Zeichen lang sein." }),
+  newPassword: z.string({ required_error: "Neues Passwort ist erforderlich." }).min(8, { message: "Neues Passwort muss mindestens 8 Zeichen lang sein." }),
+  confirmPassword: z.string({ required_error: "Passwortbestätigung ist erforderlich." }).min(8, { message: "Passwortbestätigung muss mindestens 8 Zeichen lang sein." }),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwörter stimmen nicht überein.",
   path: ["confirmPassword"],

@@ -170,7 +170,15 @@ export const AuthProvider = ({ children }) => {
     
     try {
       // Zuerst mit aktuellem Passwort erneut anmelden, um Credentials zu aktualisieren
-      await signInWithEmail(user.email, currentPassword);
+      try {
+        await signInWithEmail(user.email, currentPassword);
+      } catch (signInErr) {
+        console.error("Fehler bei der Reauthentifizierung:", signInErr);
+        if (signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/wrong-password') {
+          throw new Error("Das aktuelle Passwort ist nicht korrekt.");
+        }
+        throw signInErr;
+      }
       
       // Dann Passwort ändern
       await updateUserPassword(newPassword);
@@ -182,9 +190,10 @@ export const AuthProvider = ({ children }) => {
       });
     } catch (err) {
       setError(err);
+      const errorMessage = err.message || "Ein unbekannter Fehler ist aufgetreten.";
       toast({ 
         title: "Fehler beim Ändern des Passworts", 
-        description: err.message, 
+        description: errorMessage, 
         variant: "destructive" 
       });
       throw err; // Fehler weitergeben für die Behandlung im Formular
