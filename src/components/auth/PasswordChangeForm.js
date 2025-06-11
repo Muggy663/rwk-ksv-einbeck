@@ -9,8 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, ArrowLeft, Check } from 'lucide-react';
-import { PasswordInput } from '@/components/ui/password-input';
+import { AlertTriangle, ArrowLeft, Check, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,6 +29,11 @@ export function PasswordChangeForm() {
   const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  
+  // State für Passwort-Sichtbarkeit
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -109,37 +113,64 @@ export function PasswordChangeForm() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Aktuelles Passwort</Label>
-                <PasswordInput
-                  id="currentPassword"
-                  placeholder="********"
-                  {...register('currentPassword', { required: "Aktuelles Passwort ist erforderlich" })}
-                  className={errors.currentPassword ? 'border-destructive' : ''}
-                  aria-invalid={errors.currentPassword ? "true" : "false"}
-                />
+                <div className="relative">
+                  <Input
+                    id="currentPassword"
+                    type={showCurrentPassword ? "text" : "password"}
+                    placeholder="********"
+                    {...register('currentPassword')}
+                    className={errors.currentPassword ? 'border-destructive pr-10' : 'pr-10'}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-0 top-0 h-full px-3 py-2 text-gray-400 hover:text-gray-600"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  >
+                    {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
                 {errors.currentPassword && <p className="text-sm text-destructive">{errors.currentPassword.message}</p>}
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="newPassword">Neues Passwort</Label>
-                <PasswordInput
-                  id="newPassword"
-                  placeholder="********"
-                  {...register('newPassword', { required: "Neues Passwort ist erforderlich" })}
-                  className={errors.newPassword ? 'border-destructive' : ''}
-                  aria-invalid={errors.newPassword ? "true" : "false"}
-                />
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    type={showNewPassword ? "text" : "password"}
+                    placeholder="********"
+                    {...register('newPassword')}
+                    className={errors.newPassword ? 'border-destructive pr-10' : 'pr-10'}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-0 top-0 h-full px-3 py-2 text-gray-400 hover:text-gray-600"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
                 {errors.newPassword && <p className="text-sm text-destructive">{errors.newPassword.message}</p>}
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Passwort bestätigen</Label>
-                <PasswordInput
-                  id="confirmPassword"
-                  placeholder="********"
-                  {...register('confirmPassword', { required: "Passwortbestätigung ist erforderlich" })}
-                  className={errors.confirmPassword ? 'border-destructive' : ''}
-                  aria-invalid={errors.confirmPassword ? "true" : "false"}
-                />
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="********"
+                    {...register('confirmPassword')}
+                    className={errors.confirmPassword ? 'border-destructive pr-10' : 'pr-10'}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-0 top-0 h-full px-3 py-2 text-gray-400 hover:text-gray-600"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
                 {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
               </div>
 
