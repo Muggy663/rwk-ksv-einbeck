@@ -85,8 +85,9 @@ Ermöglicht das Anlegen, Bearbeiten und Löschen von Vereinen mit Name, Kürzel 
 
 ### Mannschaftsverwaltung (Admin)
 Der Super-Admin kann hier alle Mannschaften verwalten.
-*   **Filter:** Saison, Verein und Liga auswählen, um Mannschaften zu filtern. Wichtig: Um Mannschaften zu finden, die noch keiner Liga zugewiesen sind (z.B. von Vereinsvertretern neu angelegte), Saison und Verein auswählen und den Liga-Filter auf "Alle Ligen" lassen.
+*   **Filter:** Saison, Verein und Liga auswählen, um Mannschaften zu filtern. Wichtig: Um Mannschaften zu finden, die noch keiner Liga zugewiesen sind (z.B. von Vereinsvertretern neu angelegte), Saison und Verein auswählen und den Liga-Filter auf "Alle Ligen" lassen. Mit dem Filter "Nicht zugewiesen" können speziell Mannschaften ohne Ligazuweisung angezeigt werden.
 *   **Anlegen/Bearbeiten:** Mannschaften erstellen oder bearbeiten. Hier erfolgt die **Zuweisung einer Mannschaft zu einer spezifischen Liga** oder die Änderung dieser Zuweisung. Kontaktdaten des Mannschaftsführers (Name, E-Mail, Telefon - optional) können erfasst werden. Ein Hinweis erinnert an die korrekte Benennung nach Spielstärke (I, II, ...).
+*   **Außer Konkurrenz:** Mannschaften können als "außer Konkurrenz" markiert werden. Diese nehmen am Wettkampf teil, werden aber nicht in der offiziellen Wertung berücksichtigt. In den Tabellen werden sie mit einem "AK"-Badge gekennzeichnet.
 *   **Schützen zuweisen:** Schützen den Teams zuordnen (maximal 3 pro Team; Regel: ein Schütze pro Saison und spezifischer Disziplinkategorie (Gewehr/Pistole) nur in einem Team).
 
 ### Schützenverwaltung (Admin)
@@ -137,6 +138,8 @@ Diese Funktion ist nur für Benutzer mit der Rolle "vereinsvertreter" verfügbar
 *   **Schützen zuweisen (VV):** Schützen des eigenen Vereins können den Mannschaften zugeordnet werden (max. 3 pro Team; Regel "Ein Schütze pro Saison/spezifischer Disziplinkategorie (Gewehr/Pistole) nur in einem Team" wird geprüft, falls das Team bereits einer Liga mit einem Disziplintyp zugeordnet wurde).
 *   **Löschen (VV):** Eigene Mannschaften entfernen.
 
+**Hinweis:** Die Markierung einer Mannschaft als "außer Konkurrenz" kann nur durch den Super-Administrator erfolgen. Mannschaften mit diesem Status nehmen am Wettkampf teil, werden aber nicht in der offiziellen Wertung berücksichtigt.
+
 #### Umgang mit Einzelschützen (ohne volle Mannschaft) durch Vereinsvertreter
 Wenn ein Verein nicht genügend Schützen (also weniger als drei) für eine vollständige Mannschaft in einer Disziplin hat, diese aber dennoch am Rundenwettkampf teilnehmen sollen (um in der Einzelwertung berücksichtigt zu werden), geht der Vereinsvertreter wie folgt vor:
 1.  Auf der Seite "Meine Mannschaften" eine neue Mannschaft anlegen.
@@ -167,7 +170,7 @@ Diese Funktion ist nur für Benutzer mit der Rolle "vereinsvertreter" verfügbar
 Die RWK-Tabellen zeigen die aktuellen Ranglisten.
 *   **Filter:** Auswahl von Wettkampfjahr (dynamisch aus vorhandenen Saisons) und Disziplin (Kleinkaliber, Luftdruck). Das aktuellste Jahr mit laufenden Saisons wird standardmäßig ausgewählt. Bei Klick auf einen Link aus dem "Letzte Änderungen"-Feed werden Jahr, Disziplin und Liga vorausgewählt und die Liga direkt geöffnet.
 *   **Anzeige:** Zeigt nur Ligen von Saisons mit Status "Laufend". Die Ligen sind standardmäßig aufgeklappt, können aber einzeln geschlossen werden.
-*   **Mannschaftsrangliste:** Tabellarische Übersicht der Ligen mit Mannschaften, deren Rundenergebnissen, Gesamtergebnis und Schnitt. Mannschaften, deren Name "Einzel" enthält, werden hier nicht aufgeführt. Mannschaften können aufgeklappt werden, um Einzelergebnisse der Schützen zu sehen. Schützennamen in dieser Detailansicht sind klickbar und öffnen einen Statistik-Dialog mit Leistungsdiagramm.
+*   **Mannschaftsrangliste:** Tabellarische Übersicht der Ligen mit Mannschaften, deren Rundenergebnissen, Gesamtergebnis und Schnitt. Mannschaften, deren Name "Einzel" enthält, werden hier nicht aufgeführt. Mannschaften mit dem Status "Außer Konkurrenz" werden mit einem "AK"-Badge gekennzeichnet und fließen nicht in die offizielle Wertung ein. Mannschaften können aufgeklappt werden, um Einzelergebnisse der Schützen zu sehen. Schützennamen in dieser Detailansicht sind klickbar und öffnen einen Statistik-Dialog mit Leistungsdiagramm.
 *   **Einzelschützenrangliste:** Tabellarische Übersicht aller Schützen der ausgewählten Saison/Disziplin, sortiert nach Gesamtleistung, mit Anzeige der Rundenergebnisse, Gesamt und Schnitt. Optional kann über ein Dropdown nach einer spezifischen Liga gefiltert werden, um nur deren Einzelschützen anzuzeigen.
 *   **Bester Schütze / Beste Dame:** Werden für den gesamten ausgewählten Wettbewerb (Jahr/Disziplin) hervorgehoben.
 *   **Detailansicht Schütze:** Klick auf einen Schützennamen öffnet einen Dialog mit dessen Detailergebnissen und einem Leistungsdiagramm.

@@ -1,5 +1,32 @@
 # Changelog
 
+## Version 0.8.3 (15. Juni 2025) - Beta-Release
+
+### "Außer Konkurrenz"-Funktion
+- Hinzugefügt: Mannschaften können als "außer Konkurrenz" markiert werden
+- Hinzugefügt: Anzeige eines "AK"-Badges in Tabellen mit Tooltip für den Grund
+- Hinzugefügt: Migrationsfunktion für bestehende Teams
+- Hinzugefügt: Admin-Seite für Migration unter `/admin/migrations`
+
+### Verbesserungen
+- Hinzugefügt: "Nicht zugewiesen" Filter für Ligen in der Mannschaftsverwaltung
+- Behoben: RWK-Tabellen können jetzt vollständig minimiert werden
+- Verbessert: Entwicklungsdokumentation für bessere Nachvollziehbarkeit
+- Verbessert: Mannschaftsverwaltung behält Saison-Auswahl nach dem Speichern bei
+- Behoben: Problem mit dem Speichern von Mannschaften mit "Außer Konkurrenz"-Status
+
+## Version 0.8.2 (15. Juni 2025) - Beta-Release
+
+### Verbesserte Dokumentenverwaltung
+- Hinzugefügt: Neue Kategorie "Ligalisten & Handtabellen" für bessere Organisation
+- Hinzugefügt: Jahresfilterung für Ligalisten und Handtabellen
+- Hinzugefügt: Gruppierung von Ligalisten nach Liga-Typ (Kreisoberliga, Kreisliga, etc.)
+- Hinzugefügt: Suchfunktion für alle Dokumente
+- Hinzugefügt: Favoriten-System zum Speichern häufig verwendeter Dokumente
+- Hinzugefügt: Integrierte PDF-Vorschau ohne Download
+- Verbessert: Visuelle Kennzeichnung von eingeschränkten Dokumenten für Vereinsvertreter/Mannschaftsführer
+- Verbessert: Jahr-Badges für schnelle Identifikation von Ligalisten
+
 ## Version 0.8.1 (12. Juni 2025) - Beta-Release
 
 ### Fehlerbehebungen

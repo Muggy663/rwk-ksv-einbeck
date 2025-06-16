@@ -1,4 +1,4 @@
-Betreff: Einladung zum Beta-Test der RWK Einbeck Web-Anwendung
+Betreff: Einladung zum Beta-Test der RWK App Einbeck
 
 Liebe Schützenschwestern und Schützenbrüder,
 
@@ -6,13 +6,28 @@ ich freue mich, euch heute zur Beta-Testphase unserer neuen RWK Einbeck Web-Anwe
 
 **Was die App bereits kann:**
 
-- **Ergebniserfassung und -Verwaltung**: Einfache Eingabe und Bearbeitung von Wettkampfergebnissen
+- **Ergebniserfassung und -verwaltung**: Einfache Eingabe und Bearbeitung von Wettkampfergebnissen
 - **Tabellen und Ranglisten**: Automatisch generierte Mannschafts- und Einzelschützenranglisten
 - **Statistiken und Auswertungen**: Umfassende Statistiken mit Visualisierungen (Diagramme, Trends)
 - **Terminkalender**: Übersichtliche Darstellung aller Wettkampftermine mit Export-Funktion
 - **Dokumentenverwaltung**: Zentrale Ablage für Ausschreibungen, Formulare und Regelwerke
 - **Mobile Optimierung**: Vollständig nutzbar auf Smartphones und Tablets
-- **PDF-Export**: Druckbare Ergebnislisten und Tabellen
+- **PDF-Export**: Druckbare Ergebnislisten, Tabellen und Urkunden
+
+**Unterschiede zwischen Vereinsvertreter und Mannschaftsführer:**
+
+Als **Vereinsvertreter** kannst du:
+- Mannschaften für deinen Verein anlegen und verwalten
+- Schützen für deinen Verein anlegen und verwalten
+- Schützen den Mannschaften zuordnen
+- Ergebnisse für alle Mannschaften deines Vereins erfassen
+- Alle Statistiken und Auswertungen einsehen
+
+Als **Mannschaftsführer** kannst du:
+- Ergebnisse für deine Mannschaft erfassen
+- Mannschafts- und Schützendaten einsehen (aber nicht ändern)
+- Statistiken und Auswertungen einsehen
+- Termine im Kalender verwalten
 
 **Was ich von euch als Tester benötige:**
 
@@ -28,15 +43,24 @@ Ich brauche eure Unterstützung, um die App vor dem offiziellen Start gründlich
 
 Um am Beta-Test teilzunehmen, benötigt ihr Zugangsdaten. Bitte meldet euch direkt bei mir per E-Mail an rwk-leiter-ksve@gmx.de, um eure Zugangsdaten zu erhalten. Ich werde euch dann persönlich einrichten und mit den nötigen Informationen versorgen.
 
+Die App ist unter folgender Adresse erreichbar:
+https://rwk-einbeck-app.vercel.app/
+
 **Feedback geben:**
 
 Für Rückmeldungen stehen euch folgende Wege zur Verfügung:
 - Direkt in der App über die Support-Funktion (mit Screenshot-Möglichkeit)
 - Per E-Mail an rwk-leiter-ksve@gmx.de
-- In unserer WhatsApp-Gruppe für Beta-Tester (Link nach Anmeldung)
+- In unserer WhatsApp-Gruppe für Beta-Tester (Einladung nach Anmeldung)
 - Persönlich bei unseren Treffen
 
 Jede Rückmeldung ist wertvoll, egal ob Lob, Kritik oder Verbesserungsvorschläge. Bitte teilt mir auch mit, wenn ihr neue Ideen für Funktionen habt, die die App noch nützlicher machen könnten.
+
+**Wichtig zu wissen:**
+- Die App ist noch in der Entwicklung, kleinere Fehler können auftreten
+- Alle eingegebenen Daten werden für die finale Version übernommen
+- Die Benutzeroberfläche wird kontinuierlich verbessert
+- Eure Privatsphäre wird geschützt - persönliche Daten werden sicher behandelt
 
 Ich freue mich auf eure Unterstützung und bin gespannt auf euer Feedback!
 

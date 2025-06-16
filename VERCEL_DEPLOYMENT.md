@@ -1,165 +1,121 @@
-# Vercel Deployment Guide für RWK App Einbeck
+# Vercel Deployment Guide
 
-Diese Dokumentation beschreibt die Anforderungen und Best Practices für das Deployment der RWK App Einbeck auf Vercel.
+Diese Anleitung beschreibt, wie die RWK App Einbeck auf Vercel deployed wird und welche Konfigurationen dabei zu beachten sind.
 
-## Grundlegende Anforderungen
+## Voraussetzungen
 
-Für ein erfolgreiches Deployment auf Vercel müssen folgende Anforderungen erfüllt sein:
-
-### 1. Konfigurationsdateien im JavaScript-Format
-
-Vercel erwartet Konfigurationsdateien im JavaScript-Format, nicht als TypeScript. Folgende Dateien müssen als `.js` vorliegen:
-
-- `next.config.js` (nicht `next.config.ts`)
-- `tailwind.config.js` (nicht `tailwind.config.ts`)
-- `postcss.config.js` (nicht `postcss.config.mjs`)
-
-**Beispiel für next.config.js:**
-```javascript
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-  },
-  // Lösung für das undici-Problem mit privaten Klassenfeldern
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      undici: false, // Deaktiviert undici und verwendet den Node.js-Fetch
-    };
-    return config;
-  },
-};
-
-module.exports = nextConfig;
-```
-
-### 2. Service-Module als JavaScript
-
-Kritische Service-Module sollten als JavaScript-Dateien mit JSDoc-Typdefinitionen implementiert werden:
-
-- `calendar-service.js`
-- `statistics-service.js`
-- `pdf-service.js`
-- `updates-service.js`
-
-**Beispiel für JSDoc-Typdefinitionen:**
-```javascript
-/**
- * @typedef {Object} Event
- * @property {string} [id]
- * @property {string} title
- * @property {Date} date
- * @property {string} time
- */
-
-/**
- * Lädt Termine aus der Datenbank
- * @param {Date} [startDate] - Startdatum für die Filterung
- * @param {Date} [endDate] - Enddatum für die Filterung
- * @returns {Promise<Event[]>} Liste der Termine
- */
-export async function fetchEvents(startDate, endDate) {
-  // Implementierung
-}
-```
-
-### 3. Fallback-CSS für Tailwind
-
-Um Probleme mit der Tailwind-Kompilierung zu vermeiden, sollten Fallback-CSS-Stile vorhanden sein:
-
-- Erstellen Sie eine `fallback.css` in `public/styles/`
-- Binden Sie diese in `src/app/layout.js` ein
-
-**Beispiel für Einbindung:**
-```javascript
-<head>
-  <Script src="/disable-onboarding.js" strategy="beforeInteractive" />
-  {/* Fallback CSS für den Fall, dass Tailwind nicht richtig lädt */}
-  <link rel="stylesheet" href="/styles/fallback.css" />
-</head>
-```
-
-### 4. Webpack-Konfiguration für problematische Bibliotheken
-
-In `next.config.js` sollte eine Webpack-Konfiguration enthalten sein, die problematische Bibliotheken wie `undici` deaktiviert:
-
-```javascript
-webpack: (config) => {
-  config.resolve.alias = {
-    ...config.resolve.alias,
-    undici: false, // Deaktiviert undici und verwendet den Node.js-Fetch
-  };
-  return config;
-}
-```
+- Ein Vercel-Konto (kostenlos verfügbar)
+- Git-Repository mit dem Projekt
+- Zugriff auf die Firebase-Konfiguration
 
 ## Deployment-Prozess
 
-1. **Vorbereitung:**
-   - Stellen Sie sicher, dass alle Konfigurationsdateien im JavaScript-Format vorliegen
-   - Überprüfen Sie, dass alle kritischen Service-Module als JavaScript implementiert sind
-   - Fügen Sie Fallback-CSS-Stile hinzu
+### 1. Projekt auf Vercel importieren
 
-2. **Deployment:**
-   - Pushen Sie die Änderungen in das GitHub-Repository
-   - Vercel wird automatisch ein neues Deployment starten
-   - Überwachen Sie den Build-Prozess auf Fehler
+1. Melde dich bei [Vercel](https://vercel.com) an
+2. Klicke auf "New Project"
+3. Importiere das Git-Repository
+4. Wähle "Next.js" als Framework-Preset
 
-3. **Fehlerbehebung:**
-   - Bei Build-Fehlern prüfen Sie die Vercel-Logs
-   - Häufige Probleme sind fehlende Abhängigkeiten oder TypeScript-Konfigurationsdateien
-   - Beheben Sie die Fehler lokal und pushen Sie die Änderungen erneut
+### 2. Umgebungsvariablen konfigurieren
 
-## Bekannte Probleme und Lösungen
+Folgende Umgebungsvariablen müssen in den Vercel-Projekteinstellungen konfiguriert werden:
 
-### Problem: "Configuring Next.js via 'next.config.ts' is not supported"
-**Lösung:** Konvertieren Sie `next.config.ts` zu `next.config.js`
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=xxx
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=xxx
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=xxx
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=xxx
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=xxx
+NEXT_PUBLIC_FIREBASE_APP_ID=xxx
+FIREBASE_ADMIN_CLIENT_EMAIL=xxx
+FIREBASE_ADMIN_PRIVATE_KEY=xxx
+```
 
-### Problem: "Module parse failed: Unexpected token (#target)"
-**Lösung:** Fügen Sie die Webpack-Konfiguration hinzu, um `undici` zu deaktivieren
+> **Wichtig**: Bei `FIREBASE_ADMIN_PRIVATE_KEY` muss der gesamte Private Key inklusive der Zeilenumbrüche eingefügt werden.
 
-### Problem: "Module not found: Can't resolve '@/lib/services/calendar-service'"
-**Lösung:** Erstellen Sie die fehlenden Service-Module als JavaScript-Dateien
+### 3. Build-Einstellungen
 
-### Problem: "Module not found: Can't resolve '@radix-ui/react-radio-group'"
-**Lösung:** Fügen Sie die fehlenden Abhängigkeiten in `package.json` hinzu und führen Sie `npm install` aus
+Die Build-Einstellungen werden automatisch von Vercel erkannt, da wir Next.js verwenden. Die folgenden Befehle werden ausgeführt:
 
-### Problem: Fehlende Formatierung und Stile auf der Vercel-Seite
-**Lösung:** Fügen Sie Fallback-CSS-Stile hinzu und stellen Sie sicher, dass die Tailwind-Konfiguration korrekt ist
+- **Build Command**: `next build`
+- **Output Directory**: `.next`
+- **Install Command**: `npm install` oder `yarn install`
 
-## Best Practices
+### 4. TypeScript-spezifische Einstellungen
 
-1. **Verwenden Sie JavaScript für Konfigurationsdateien:**
-   - Alle Konfigurationsdateien sollten im JavaScript-Format vorliegen
-   - Verwenden Sie JSDoc-Kommentare für Typdefinitionen
+Mit der Umstellung auf TypeScript müssen folgende Punkte beachtet werden:
 
-2. **Implementieren Sie kritische Service-Module als JavaScript:**
-   - Service-Module, die für die Kernfunktionalität wichtig sind, sollten als JavaScript implementiert werden
-   - Verwenden Sie JSDoc-Typdefinitionen für Typsicherheit
+- Der Build wird fehlschlagen, wenn TypeScript-Fehler vorhanden sind
+- Stelle sicher, dass `tsconfig.json` korrekt konfiguriert ist
+- Vercel führt automatisch `tsc --noEmit` aus, um Typfehler zu prüfen
 
-3. **Fügen Sie Fallback-Stile hinzu:**
-   - Stellen Sie sicher, dass die Anwendung auch funktioniert, wenn Tailwind nicht korrekt geladen wird
-   - Implementieren Sie grundlegende Stile für die wichtigsten UI-Elemente
+Um TypeScript-Fehler im Build zu ignorieren (nicht empfohlen), kann folgende Umgebungsvariable gesetzt werden:
 
-4. **Testen Sie lokal vor dem Deployment:**
-   - Verwenden Sie `next build` und `next start`, um die Produktionsversion lokal zu testen
-   - Überprüfen Sie, ob alle Funktionen wie erwartet funktionieren
+```
+NEXT_TYPESCRIPT_IGNORE_ERRORS=true
+```
 
-5. **Überwachen Sie die Vercel-Logs:**
-   - Überprüfen Sie die Logs nach jedem Deployment
-   - Beheben Sie Fehler sofort, um die Verfügbarkeit der Anwendung zu gewährleisten
+### 5. Deployment-Domains
+
+Vercel stellt automatisch eine Domain im Format `[project-name].vercel.app` bereit. Zusätzlich können eigene Domains konfiguriert werden:
+
+1. Gehe zu den Projekteinstellungen
+2. Wähle "Domains"
+3. Füge deine eigene Domain hinzu
+4. Folge den Anweisungen zur DNS-Konfiguration
+
+### 6. Deployment-Logs überprüfen
+
+Nach jedem Deployment sollten die Logs auf TypeScript-spezifische Warnungen überprüft werden:
+
+1. Gehe zum Deployment
+2. Klicke auf "View Build Logs"
+3. Suche nach TypeScript-Warnungen oder -Fehlern
+
+### 7. Automatische Deployments
+
+Vercel deployed automatisch:
+- Bei jedem Push in den `main`-Branch
+- Bei Pull Requests (als Preview-Deployment)
+
+## Troubleshooting
+
+### TypeScript-Build-Fehler
+
+Wenn der Build aufgrund von TypeScript-Fehlern fehlschlägt:
+
+1. Führe lokal `npm run type-check` aus, um die Fehler zu identifizieren
+2. Behebe die Fehler oder füge temporär `// @ts-ignore` hinzu
+3. Committe und pushe die Änderungen
+
+### Umgebungsvariablen-Probleme
+
+Wenn Firebase-Verbindungsfehler auftreten:
+
+1. Überprüfe die Umgebungsvariablen in den Vercel-Einstellungen
+2. Stelle sicher, dass der Firebase Admin Private Key korrekt formatiert ist
+3. Überprüfe, ob die Variablen im Code korrekt verwendet werden
+
+### Performance-Optimierungen
+
+Um die Performance des Deployments zu verbessern:
+
+1. Aktiviere die Vercel Cache-Optimierungen
+2. Konfiguriere die `next.config.js` für optimale Build-Zeiten
+3. Nutze die Vercel Analytics, um Performance-Probleme zu identifizieren
+
+## Nützliche Befehle
+
+Vor dem Deployment können folgende Befehle lokal ausgeführt werden, um Probleme zu vermeiden:
+
+```bash
+# TypeScript-Typprüfung
+npm run type-check
+
+# Linting
+npm run lint
+
+# Build testen
+npm run build
+```
