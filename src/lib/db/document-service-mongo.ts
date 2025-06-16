@@ -15,7 +15,8 @@ function mapDocumentFromMongo(doc: any): Document {
     date: doc.date,
     fileType: doc.fileType,
     fileSize: doc.fileSize,
-    active: doc.active
+    active: doc.active,
+    restricted: doc.restricted || false
   };
 }
 
@@ -163,6 +164,7 @@ export async function migrateDocumentsToMongo(documents: Document[]): Promise<bo
       fileType: doc.fileType,
       fileSize: doc.fileSize,
       active: doc.active,
+      restricted: doc.restricted || false,
       createdAt: new Date(),
       updatedAt: new Date()
     }));

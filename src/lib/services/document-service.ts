@@ -5,11 +5,12 @@ export interface Document {
   title: string;
   description: string;
   path: string;
-  category: 'ausschreibung' | 'formular' | 'ordnung' | 'archiv';
+  category: 'ausschreibung' | 'formular' | 'ordnung' | 'archiv' | 'ligaliste';
   date: string;
   fileType: 'PDF' | 'Webseite';
   fileSize: string;
   active: boolean;
+  restricted?: boolean; // Neues Feld: true = nur für VV/MF, false = für alle
 }
 
 export type DocumentFormData = Omit<Document, 'id'>;

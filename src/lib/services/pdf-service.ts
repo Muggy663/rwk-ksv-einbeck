@@ -61,10 +61,11 @@ export async function generateLeaguePDF(
   // Daten für die Tabelle vorbereiten
   const tableData = league.teams.map(team => {
     const rowData: any = {
-      rank: team.rank,
-      name: team.name,
+      rank: team.outOfCompetition ? "AK" : team.rank,
+      name: team.outOfCompetition ? `${team.name} (Außer Konkurrenz)` : team.name,
       totalScore: team.totalScore || '-',
-      averageScore: team.averageScore ? team.averageScore.toFixed(2) : '-'
+      averageScore: team.averageScore ? team.averageScore.toFixed(2) : '-',
+      isOutOfCompetition: team.outOfCompetition // Zusätzliches Feld für die Formatierung
     };
     
     // Durchgangsergebnisse hinzufügen
@@ -96,6 +97,19 @@ export async function generateLeaguePDF(
     columnStyles: {
       0: { cellWidth: 15 }, // Platz
       1: { cellWidth: 50 }, // Mannschaft
+    },
+    // Spezielle Formatierung für Teams "außer Konkurrenz"
+    didDrawCell: (data) => {
+      if (data.section === 'body') {
+        const row = tableData[data.row.index];
+        if (row.isOutOfCompetition) {
+          // Amber-Farbe für Teams "außer Konkurrenz"
+          doc.setTextColor(194, 124, 14);
+        } else {
+          // Normale Textfarbe für andere Teams
+          doc.setTextColor(0, 0, 0);
+        }
+      }
     }
   });
   
@@ -167,11 +181,12 @@ export async function generateShootersPDF(
   // Daten für die Tabelle vorbereiten
   const tableData = league.individualLeagueShooters.map(shooter => {
     const rowData: any = {
-      rank: shooter.rank,
+      rank: shooter.teamOutOfCompetition ? "AK" : shooter.rank,
       name: shooter.shooterName,
-      team: shooter.teamName,
+      team: shooter.teamOutOfCompetition ? `${shooter.teamName} (AK)` : shooter.teamName,
       totalScore: shooter.totalScore || '-',
-      averageScore: shooter.averageScore ? shooter.averageScore.toFixed(2) : '-'
+      averageScore: shooter.averageScore ? shooter.averageScore.toFixed(2) : '-',
+      isOutOfCompetition: shooter.teamOutOfCompetition // Zusätzliches Feld für die Formatierung
     };
     
     // Durchgangsergebnisse hinzufügen
@@ -204,6 +219,19 @@ export async function generateShootersPDF(
       0: { cellWidth: 15 }, // Platz
       1: { cellWidth: 40 }, // Name
       2: { cellWidth: 40 }, // Mannschaft
+    },
+    // Spezielle Formatierung für Schützen "außer Konkurrenz"
+    didDrawCell: (data) => {
+      if (data.section === 'body') {
+        const row = tableData[data.row.index];
+        if (row.isOutOfCompetition) {
+          // Amber-Farbe für Schützen "außer Konkurrenz"
+          doc.setTextColor(194, 124, 14);
+        } else {
+          // Normale Textfarbe für andere Schützen
+          doc.setTextColor(0, 0, 0);
+        }
+      }
     }
   });
   
@@ -225,270 +253,166 @@ export async function generateShootersPDF(
 }
 
 /**
- * Generiert eine leere Tabelle für den Saisonbeginn zum Handausfüllen mit Kontaktdaten
- * @param league Die Liga mit Teams
- * @param numRounds Anzahl der Durchgänge
- * @param competitionYear Das Wettkampfjahr
- * @param teamContacts Kontaktdaten der Mannschaftsführer (optional)
- * @returns Blob des generierten PDFs
+ * Generiert eine einseitige, leere Tabelle im Querformat für den Saisonbeginn,
+ * basierend auf dem Design des ursprünglichen PDF-Beispiels.
+ * @param league Die Liga mit Teams und optionalen Schützen/Kontakten.
+ * @param numRounds Anzahl der Durchgänge.
+ * @param competitionYear Das Wettkampfjahr.
+ * @returns Blob des generierten PDFs.
  */
 export async function generateEmptySeasonTablePDF(
-  league: LeagueDisplay,
-  numRounds: number,
-  competitionYear: number,
-  teamContacts?: Record<string, { name: string; phone: string; email: string }>
-): Promise<Blob> {
-  // PDF im A3-Format erstellen (Querformat für mehr Platz)
-  const doc = new jsPDF({
-    orientation: 'landscape',
-    unit: 'mm',
-    format: 'a3'
-  });
-  
-  // Schriftart setzen
-  doc.setFont('helvetica', 'normal');
-  
-  // Logo-Einfügung entfernen, da es Probleme verursacht
-  // Das Logo kann später hinzugefügt werden, wenn die korrekte Einbindung implementiert ist
-  
-  // Titel
-  doc.setFontSize(18);
-  doc.text(`${league.name} ${competitionYear} - Wettkampfplan`, 14, 20);
-  
-  // Untertitel
-  doc.setFontSize(12);
-  doc.text(`Erstellt am: ${format(new Date(), 'dd.MM.yyyy', { locale: de })}`, 14, 28);
-  
-  // Tabelle für Wettkampfplan mit Durchgängen
-  const headers = [
-    { title: 'Mannschaft / Schützen', dataKey: 'name' },
-  ];
-  
-  // Durchgänge hinzufügen
-  for (let i = 1; i <= numRounds; i++) {
-    headers.push({ 
-      title: `Durchgang ${i}`, 
-      dataKey: `dg${i}` 
+    league,
+    numRounds,
+    competitionYear
+) {
+    // Benötigte Bibliotheken aus dem globalen Namespace
+    const { jsPDF } = window.jspdf;
+    const autoTable = window.jspdf.autoTable;
+    const { format } = window.dateFns;
+    const { de } = window.dateFns.locale;
+
+    // PDF im A4-Querformat erstellen
+    const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
     });
-  }
-  
-  // Spalte für Endergebnis
-  headers.push({ title: 'Gesamt', dataKey: 'total' });
-  headers.push({ title: 'Platz', dataKey: 'rank' });
-  
-  // Daten für die Tabelle vorbereiten
-  const tableData = [];
-  
-  // Für jede Mannschaft
-  league.teams.forEach(team => {
-    // Mannschaftsname
-    tableData.push([
-      { content: team.name, colSpan: 1, styles: { fontStyle: 'bold' } },
-      { content: '', colSpan: numRounds },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 }
-    ]);
+
+    // Globale Variablen für das Layout
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 15;
+    const contentWidth = pageWidth - 2 * margin;
+
+    // --- KOPFZEILE ---
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text(`Kreisoberliga KK 50m Auflage ${competitionYear}`, margin, margin);
     
-    // Schützen der Mannschaft (oder leere Zeilen, wenn keine Schützen vorhanden)
-    const shooters = team.shooters || [];
-    const shooterCount = Math.max(shooters.length, 3); // Mindestens 3 Zeilen für Schützen
-    
-    for (let i = 0; i < shooterCount; i++) {
-      const shooter = shooters[i] || { name: '' };
-      const row = [
-        { content: shooter.name, colSpan: 1 }
-      ];
-      
-      // Leere Zellen für Durchgänge
-      for (let j = 0; j < numRounds; j++) {
-        row.push({ content: '', colSpan: 1 });
-      }
-      
-      // Leere Zellen für Gesamt und Platz
-      row.push({ content: '', colSpan: 1 });
-      row.push({ content: '', colSpan: 1 });
-      
-      tableData.push(row);
-    }
-    
-    // Mannschaftsergebnis-Zeile
-    const totalRow = [
-      { content: 'Mannschaft gesamt', colSpan: 1, styles: { fontStyle: 'bold' } }
-    ];
-    
-    // Leere Zellen für Durchgänge
-    for (let j = 0; j < numRounds; j++) {
-      totalRow.push({ content: '', colSpan: 1 });
-    }
-    
-    // Leere Zellen für Gesamt und Platz
-    totalRow.push({ content: '', colSpan: 1 });
-    totalRow.push({ content: '', colSpan: 1 });
-    
-    tableData.push(totalRow);
-    
-    // Leerzeile zwischen Mannschaften
-    tableData.push([
-      { content: '', colSpan: numRounds + 3 }
-    ]);
-  });
-  
-  // Tabelle erstellen
-  doc.autoTable({
-    head: [headers.map(header => header.title)],
-    body: tableData,
-    startY: 35,
-    theme: 'grid',
-    headStyles: {
-      fillColor: [41, 128, 185],
-      textColor: 255,
-      fontStyle: 'bold'
-    },
-    styles: {
-      fontSize: 10,
-      cellPadding: 3
-    },
-    columnStyles: {
-      0: { cellWidth: 50 }, // Mannschaft/Schützen
-    },
-    didDrawCell: (data) => {
-      // Platz für Ort, Datum und Uhrzeit in der Kopfzeile
-      if (data.row.index === 0 && data.column.index > 0 && data.column.index <= numRounds) {
-        const x = data.cell.x;
-        const y = data.cell.y;
-        const w = data.cell.width;
-        
-        // Linien für Einträge
-        doc.setDrawColor(200, 200, 200);
-        doc.line(x + 15, y + 15, x + w - 2, y + 15); // Linie für Ort
-        doc.line(x + 15, y + 20, x + w - 2, y + 20); // Linie für Datum
-        doc.line(x + 15, y + 25, x + w - 2, y + 25); // Linie für Uhrzeit
-        
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(`Abgabetermin: 15. August ${competitionYear + 1}`, pageWidth - margin, margin, { align: 'right' });
+
+    let startY = margin + 15;
+
+    // --- HAUPTBEREICH: MANNSCHAFTEN ---
+    const teamBlockWidth = (contentWidth / 2) - 5; // Zwei Spalten für Teams
+    let currentX = margin;
+    let columnMaxY = 0; // Um die Höhe der Spalten zu verfolgen
+
+    league.teams.forEach((team, index) => {
+        // Nach der Hälfte der Teams in die zweite Spalte wechseln
+        if (index === Math.ceil(league.teams.length / 2)) {
+            currentX = margin + teamBlockWidth + 10;
+            startY = margin + 15; // Y-Position für die zweite Spalte zurücksetzen
+        }
+
+        // --- MANNSCHAFTSBLOCK ---
+        let teamBlockStartY = startY;
+
+        // Mannschaftsname
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text(team.name, currentX, teamBlockStartY);
+        teamBlockStartY += 6;
+
+        // --- Sub-Tabelle für die Mannschaft ---
+        const firstColWidth = 40;
+        const roundHeaders = Array.from({ length: numRounds }, (_, i) => `DG ${i + 1}`);
+        roundHeaders.push('Gesamt');
+        const roundColWidth = (teamBlockWidth - firstColWidth) / roundHeaders.length;
+
+        // Header-Zeile der Sub-Tabelle
+        doc.setFont('helvetica', 'bold');
         doc.setFontSize(8);
-        doc.text(`Ort:`, x + 2, y + 15);
-        doc.text(`Datum:`, x + 2, y + 20);
-        doc.text(`Uhrzeit:`, x + 2, y + 25);
-      }
-    }
-  });
-  
-  // Mannschaftsführer-Kontakte unter dem Wettkampfplan
-  const lastY = (doc as any).lastAutoTable.finalY + 15;
-  doc.setFontSize(14);
-  doc.text("Mannschaftsführer", 14, lastY);
-  
-  const contactData = [];
-  league.teams.forEach(team => {
-    const contact = teamContacts?.[team.id] || { name: '', phone: '', email: '' };
-    contactData.push([
-      team.name,
-      contact.name,
-      contact.phone,
-      contact.email
-    ]);
-  });
-  
-  doc.autoTable({
-    head: [['Mannschaft', 'Mannschaftsführer', 'Telefon', 'E-Mail']],
-    body: contactData,
-    startY: lastY + 5,
-    theme: 'grid',
-    headStyles: {
-      fillColor: [41, 128, 185],
-      textColor: 255,
-      fontStyle: 'bold'
-    },
-    styles: {
-      fontSize: 9,
-      cellPadding: 2
-    }
-  });
-  
-  // Platz für Einzel- und Mannschaftsplatzierungen
-  const contactsEndY = (doc as any).lastAutoTable.finalY + 15;
-  
-  // Einfache Tabelle für Platzierungen
-  doc.setFontSize(14);
-  doc.text("Platzierungen", 14, contactsEndY);
-  
-  const platzierungsData = [
-    ['Platz', 'Mannschaft', 'Gesamt'],
-    ['1.', '', ''],
-    ['2.', '', ''],
-    ['3.', '', ''],
-    ['4.', '', ''],
-    ['5.', '', ''],
-    ['6.', '', ''],
-    ['7.', '', ''],
-    ['8.', '', ''],
-    ['9.', '', ''],
-    ['10.', '', '']
-  ];
-  
-  doc.autoTable({
-    head: [['Platz Mannschaft', '', '']],
-    body: platzierungsData,
-    startY: contactsEndY + 5,
-    theme: 'grid',
-    headStyles: {
-      fillColor: [41, 128, 185],
-      textColor: 255,
-      fontStyle: 'bold'
-    },
-    styles: {
-      fontSize: 9,
-      cellPadding: 2
-    },
-    margin: { right: doc.internal.pageSize.getWidth() / 2 + 10 }
-  });
-  
-  // Einzelplatzierungen
-  const einzelData = [
-    ['Platz', 'Name', 'Gesamt'],
-    ['1.', '', ''],
-    ['2.', '', ''],
-    ['3.', '', ''],
-    ['4.', '', ''],
-    ['5.', '', ''],
-    ['6.', '', ''],
-    ['7.', '', ''],
-    ['8.', '', ''],
-    ['9.', '', ''],
-    ['10.', '', '']
-  ];
-  
-  doc.autoTable({
-    head: [['Platz Einzel', '', '']],
-    body: einzelData,
-    startY: contactsEndY + 5,
-    theme: 'grid',
-    headStyles: {
-      fillColor: [41, 128, 185],
-      textColor: 255,
-      fontStyle: 'bold'
-    },
-    styles: {
-      fontSize: 9,
-      cellPadding: 2
-    },
-    margin: { left: doc.internal.pageSize.getWidth() / 2 + 5 }
-  });
-  
-  // Fußzeile
-  const pageCount = doc.internal.getNumberOfPages();
-  doc.setFontSize(8);
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.text(
-      `Seite ${i} von ${pageCount} - Erstellt mit RWK App Einbeck`,
-      doc.internal.pageSize.getWidth() / 2,
-      doc.internal.pageSize.getHeight() - 10,
-      { align: 'center' }
-    );
-  }
-  
-  // PDF als Blob zurückgeben
-  return doc.output('blob');
+        doc.rect(currentX, teamBlockStartY, firstColWidth, 10);
+        doc.text('Name', currentX + 2, teamBlockStartY + 6);
+        
+        let headerX = currentX + firstColWidth;
+        roundHeaders.forEach(header => {
+            doc.rect(headerX, teamBlockStartY, roundColWidth, 10);
+            doc.text("Ringe", headerX + 2, teamBlockStartY + 4);
+            doc.text("Gesamt", headerX + roundColWidth - 2, teamBlockStartY + 4, { align: 'right'});
+            doc.line(headerX, teamBlockStartY + 5, headerX + roundColWidth, teamBlockStartY + 5);
+            headerX += roundColWidth;
+        });
+        teamBlockStartY += 10;
+        
+        // Schützen-Zeilen (mindestens 3)
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        const shooterCount = Math.max(team.shooters?.length || 0, 3);
+        for (let i = 0; i < shooterCount; i++) {
+            doc.rect(currentX, teamBlockStartY, firstColWidth, 7);
+            let shooterX = currentX + firstColWidth;
+            roundHeaders.forEach(() => {
+                doc.rect(shooterX, teamBlockStartY, roundColWidth, 7);
+                shooterX += roundColWidth;
+            });
+            teamBlockStartY += 7;
+        }
+
+        // Total-Zeile
+        doc.setFont('helvetica', 'bold');
+        doc.rect(currentX, teamBlockStartY, firstColWidth, 7);
+        doc.text('Total', currentX + 2, teamBlockStartY + 5);
+        let totalX = currentX + firstColWidth;
+        roundHeaders.forEach(() => {
+            doc.rect(totalX, teamBlockStartY, roundColWidth, 7);
+            totalX += roundColWidth;
+        });
+        teamBlockStartY += 7;
+        
+        // Mannschaftsführer-Zeile
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        const contact = team.contact || { name: '', phone: '' };
+        doc.text(`Mannschaftsführer: ${contact.name} ${contact.phone}`, currentX, teamBlockStartY + 5);
+        teamBlockStartY += 10;
+
+        // Y-Position für den nächsten Block in derselben Spalte aktualisieren
+        startY = teamBlockStartY;
+        if (startY > columnMaxY) {
+            columnMaxY = startY;
+        }
+    });
+
+    // --- FUSSBEREICH: PLATZIERUNGEN ---
+    let footerY = (columnMaxY > pageHeight - 50) ? pageHeight - 50 : columnMaxY + 5;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Mannschaft', margin + (contentWidth / 4), footerY, { align: 'center' });
+    doc.text('Einzelschütze', margin + (contentWidth * 3 / 4), footerY, { align: 'center' });
+    
+    const rankingBody = Array.from({length: 8}, (_, i) => [`${i+1}.`, '', '']);
+    
+    // Mannschafts-Rangliste
+    autoTable(doc, {
+        head: [['Platz', 'Name', 'Gesamt']],
+        body: rankingBody,
+        startY: footerY + 5,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 1.5 },
+        headStyles: { fillColor: [220, 220, 220], textColor: 20, fontStyle: 'bold' },
+        margin: { left: margin, right: pageWidth / 2 + 5 },
+        tableWidth: teamBlockWidth
+    });
+
+    // Einzel-Rangliste
+    autoTable(doc, {
+        head: [['Platz', 'Name', 'Gesamt']],
+        body: rankingBody,
+        startY: footerY + 5,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 1.5 },
+        headStyles: { fillColor: [220, 220, 220], textColor: 20, fontStyle: 'bold' },
+        margin: { left: pageWidth / 2 + 5, right: margin },
+        tableWidth: teamBlockWidth
+    });
+
+    // PDF als Blob zurückgeben
+    return doc.output('blob');
 }
 
 /**

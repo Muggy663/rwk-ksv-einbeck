@@ -17,6 +17,13 @@ export interface Event {
   createdAt: Date;
 }
 
+/**
+ * Lädt Termine aus der Datenbank
+ * @param startDate - Startdatum für die Filterung
+ * @param endDate - Enddatum für die Filterung
+ * @param leagueId - Liga-ID für die Filterung
+ * @returns Liste der Termine
+ */
 export async function fetchEvents(
   startDate?: Date,
   endDate?: Date,
@@ -66,7 +73,7 @@ export async function fetchEvents(
         isKreisverband: data.isKreisverband || false,
         createdBy: data.createdBy,
         createdAt: data.createdAt.toDate()
-      };
+      } as Event;
     });
   } catch (error) {
     console.error('Fehler beim Laden der Termine:', error);
@@ -74,6 +81,11 @@ export async function fetchEvents(
   }
 }
 
+/**
+ * Erstellt einen neuen Termin
+ * @param event - Termindaten
+ * @returns ID des erstellten Termins oder null bei Fehler
+ */
 export async function createEvent(event: Omit<Event, 'id' | 'createdAt'>): Promise<string | null> {
   try {
     const eventData = {
@@ -90,9 +102,15 @@ export async function createEvent(event: Omit<Event, 'id' | 'createdAt'>): Promi
   }
 }
 
+/**
+ * Aktualisiert einen Termin
+ * @param id - ID des Termins
+ * @param event - Zu aktualisierende Termindaten
+ * @returns Erfolg der Aktualisierung
+ */
 export async function updateEvent(id: string, event: Partial<Event>): Promise<boolean> {
   try {
-    const eventData: any = { ...event };
+    const eventData = { ...event };
     
     if (event.date) {
       eventData.date = Timestamp.fromDate(event.date);
@@ -106,6 +124,11 @@ export async function updateEvent(id: string, event: Partial<Event>): Promise<bo
   }
 }
 
+/**
+ * Löscht einen Termin
+ * @param id - ID des Termins
+ * @returns Erfolg des Löschvorgangs
+ */
 export async function deleteEvent(id: string): Promise<boolean> {
   try {
     await deleteDoc(doc(db, 'events', id));
@@ -116,6 +139,11 @@ export async function deleteEvent(id: string): Promise<boolean> {
   }
 }
 
+/**
+ * Generiert einen iCal-Eintrag für einen Termin
+ * @param event - Termindaten
+ * @returns iCal-Daten als String
+ */
 export function generateICalEvent(event: Event): string {
   const dateStart = format(event.date, 'yyyyMMdd');
   const timeStart = event.time.replace(':', '') + '00';
@@ -127,30 +155,16 @@ export function generateICalEvent(event: Event): string {
   
   const now = format(new Date(), "yyyyMMdd'T'HHmmss'Z'");
   
-  return `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//RWK Einbeck App//DE
-CALSCALE:GREGORIAN
-BEGIN:VEVENT
-SUMMARY:${event.title}
-DTSTART:${dateStart}T${timeStart}
-DTEND:${dateStart}T${timeEnd}
-LOCATION:${event.location}
-DESCRIPTION:${event.description || ''}
-STATUS:CONFIRMED
-SEQUENCE:0
-DTSTAMP:${now}
-CREATED:${now}
-END:VEVENT
-END:VCALENDAR`;
+  return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//RWK Einbeck App//DE\nCALSCALE:GREGORIAN\nBEGIN:VEVENT\nSUMMARY:${event.title}\nDTSTART:${dateStart}T${timeStart}\nDTEND:${dateStart}T${timeEnd}\nLOCATION:${event.location}\nDESCRIPTION:${event.description || ''}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT\nEND:VCALENDAR`;
 }
 
+/**
+ * Generiert eine iCal-Datei für mehrere Termine
+ * @param events - Liste der Termine
+ * @returns iCal-Daten als String
+ */
 export function generateICalFile(events: Event[]): string {
-  let icalContent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//RWK Einbeck App//DE
-CALSCALE:GREGORIAN
-`;
+  let icalContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//RWK Einbeck App//DE\nCALSCALE:GREGORIAN\n`;
   
   events.forEach(event => {
     const dateStart = format(event.date, 'yyyyMMdd');
@@ -163,18 +177,7 @@ CALSCALE:GREGORIAN
     
     const now = format(new Date(), "yyyyMMdd'T'HHmmss'Z'");
     
-    icalContent += `BEGIN:VEVENT
-SUMMARY:${event.title}
-DTSTART:${dateStart}T${timeStart}
-DTEND:${dateStart}T${timeEnd}
-LOCATION:${event.location}
-DESCRIPTION:${event.description || ''}
-STATUS:CONFIRMED
-SEQUENCE:0
-DTSTAMP:${now}
-CREATED:${now}
-END:VEVENT
-`;
+    icalContent += `BEGIN:VEVENT\nSUMMARY:${event.title}\nDTSTART:${dateStart}T${timeStart}\nDTEND:${dateStart}T${timeEnd}\nLOCATION:${event.location}\nDESCRIPTION:${event.description || ''}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT\n`;
   });
   
   icalContent += 'END:VCALENDAR';
