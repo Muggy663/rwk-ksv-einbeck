@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { TeamStatusBadge } from '@/components/ui/team-status-badge';
 import {
   Card,
   CardContent,
@@ -10,12 +11,8 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ManualAccordion } from './manual-accordion';
 import {
   Table,
   TableBody,
@@ -141,6 +138,9 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
               leagueId: parentTeam.leagueId,
               leagueType: parentTeam.leagueType,
               competitionYear: parentTeam.competitionYear,
+              // Pass team competition status
+              teamOutOfCompetition: parentTeam.outOfCompetition || false,
+              teamOutOfCompetitionReason: parentTeam.outOfCompetitionReason,
             };
             return (
               <TableRow key={`ts-${shooterRes.shooterId}`} className="text-sm border-b-0 hover:bg-background/40">
@@ -208,10 +208,25 @@ const ShooterDetailModalContent: React.FC<ShooterDetailModalContentProps> = ({ s
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-2xl text-primary">{shooterData.shooterName}</DialogTitle>
+        <DialogTitle className="text-2xl text-primary">
+          {shooterData.shooterName}
+          {shooterData.teamOutOfCompetition && (
+            <span 
+              className="ml-2 text-sm bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium cursor-help"
+              title={shooterData.teamOutOfCompetitionReason || 'Außer Konkurrenz'}
+            >
+              AK
+            </span>
+          )}
+        </DialogTitle>
         <DialogDescription>
           {shooterData.teamName} - Ergebnisse der Saison {shooterData.competitionYear || ''}
           {shooterData.rank && ` (Aktueller Rang in dieser Ansicht: ${shooterData.rank})`}
+          {shooterData.teamOutOfCompetition && (
+            <span className="block mt-1 text-amber-700">
+              Außer Konkurrenz: {shooterData.teamOutOfCompetitionReason || 'Keine Begründung angegeben'}
+            </span>
+          )}
         </DialogDescription>
       </DialogHeader>
       <div className="mt-4 grid gap-6">
@@ -349,6 +364,10 @@ function RwkTabellenPageComponent() {
   const [topMaleShooter, setTopMaleShooter] = useState<IndividualShooterDisplayData | null>(null);
   const [topFemaleShooter, setTopFemaleShooter] = useState<IndividualShooterDisplayData | null>(null);
   const [selectedIndividualLeagueFilter, setSelectedIndividualLeagueFilter] = useState<string>(""); // Empty string for "All Leagues"
+  
+  // Filter für "Außer Konkurrenz"-Teams und Schützen
+  const [showOutOfCompetitionTeams, setShowOutOfCompetitionTeams] = useState<boolean>(true);
+  const [showOutOfCompetitionShooters, setShowOutOfCompetitionShooters] = useState<boolean>(true);
 
   const [loadingData, setLoadingData] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -369,6 +388,17 @@ function RwkTabellenPageComponent() {
         discipline: params.get('discipline'),
         league: params.get('league')
       });
+      
+      // Filter-Einstellungen aus URL laden
+      const showAKParam = params.get('showAK');
+      if (showAKParam !== null) {
+        setShowOutOfCompetitionTeams(showAKParam === 'true');
+      }
+      
+      const showAKShootersParam = params.get('showAKShooters');
+      if (showAKShootersParam !== null) {
+        setShowOutOfCompetitionShooters(showAKShootersParam === 'true');
+      }
     }
   }, []);
   
@@ -617,8 +647,28 @@ function RwkTabellenPageComponent() {
           teamDisplayItem.averageScore = numScoredRds > 0 ? parseFloat((teamTotal / numScoredRds).toFixed(2)) : null;
           teamDisplays.push(teamDisplayItem);
         }
-        teamDisplays.sort((a, b) => (b.totalScore ?? 0) - (a.totalScore ?? 0) || (b.averageScore ?? 0) - (a.averageScore ?? 0) || a.clubName.localeCompare(b.clubName) || a.name.localeCompare(b.name));
-        teamDisplays.forEach((team, index) => { team.rank = index + 1; });
+        // Sortiere Teams und berücksichtige "Außer Konkurrenz"-Status
+        teamDisplays.sort((a, b) => {
+          // Teams "außer Konkurrenz" immer nach Teams in Wertung
+          if (a.outOfCompetition && !b.outOfCompetition) return 1;
+          if (!a.outOfCompetition && b.outOfCompetition) return -1;
+          
+          // Normale Sortierung nach Punkten, Durchschnitt, etc.
+          return (b.totalScore ?? 0) - (a.totalScore ?? 0) || 
+                 (b.averageScore ?? 0) - (a.averageScore ?? 0) || 
+                 a.clubName.localeCompare(b.clubName) || 
+                 a.name.localeCompare(b.name);
+        });
+        
+        // Vergebe Rangplätze nur für Teams in Wertung
+        let rankCounter = 1;
+        teamDisplays.forEach(team => {
+          if (!team.outOfCompetition) {
+            team.rank = rankCounter++;
+          } else {
+            team.rank = null; // Kein Rang für Teams "außer Konkurrenz"
+          }
+        });
         leagueDisplay.teams = teamDisplays;
         
         // Populate individualLeagueShooters
@@ -638,14 +688,34 @@ function RwkTabellenPageComponent() {
                         competitionYear: team.competitionYear,
                         leagueId: leagueDisplay.id,
                         leagueType: leagueDisplay.type,
+                        teamOutOfCompetition: team.outOfCompetition || false,
+                        teamOutOfCompetitionReason: team.outOfCompetitionReason,
                     });
                 }
             });
         });
+        // Filtere und sortiere Schützen
         leagueDisplay.individualLeagueShooters = Array.from(leagueShootersMap.values())
             .filter(s => s.roundsShot > 0) // Only shooters with actual scores
-            .sort((a, b) => (b.totalScore ?? 0) - (a.totalScore ?? 0) || a.shooterName.localeCompare(b.shooterName));
-        leagueDisplay.individualLeagueShooters.forEach((shooter, index) => { shooter.rank = index + 1; });
+            .sort((a, b) => {
+              // Schützen "außer Konkurrenz" immer nach Schützen in Wertung
+              if (a.teamOutOfCompetition && !b.teamOutOfCompetition) return 1;
+              if (!a.teamOutOfCompetition && b.teamOutOfCompetition) return -1;
+              
+              // Normale Sortierung nach Punkten und Namen
+              return (b.totalScore ?? 0) - (a.totalScore ?? 0) || 
+                     a.shooterName.localeCompare(b.shooterName);
+            });
+        
+        // Vergebe Rangplätze nur für Schützen in Wertung
+        let shooterRankCounter = 1;
+        leagueDisplay.individualLeagueShooters.forEach(shooter => {
+          if (!shooter.teamOutOfCompetition) {
+            shooter.rank = shooterRankCounter++;
+          } else {
+            shooter.rank = null; // Kein Rang für Schützen "außer Konkurrenz"
+          }
+        });
 
 
         fetchedLeaguesData.push(leagueDisplay);
@@ -700,6 +770,8 @@ function RwkTabellenPageComponent() {
             shooterGender: score.shooterGender || 'unknown', teamName: score.teamName || "Unbek. Team", 
             results: initialResults, totalScore: 0, averageScore: null, roundsShot: 0,
             competitionYear: score.competitionYear, leagueId: score.leagueId, leagueType: score.leagueType,
+            teamOutOfCompetition: score.teamOutOfCompetition || false,
+            teamOutOfCompetitionReason: score.teamOutOfCompetitionReason,
           };
           shootersMap.set(score.shooterId, currentShooterData);
         }
@@ -741,7 +813,15 @@ function RwkTabellenPageComponent() {
       const rankedShooters = Array.from(shootersMap.values())
         .filter(s => s.roundsShot > 0) 
         .sort((a, b) => (b.totalScore ?? 0) - (a.totalScore ?? 0) || (b.averageScore ?? 0) - (a.averageScore ?? 0) || a.shooterName.localeCompare(b.shooterName));
-      rankedShooters.forEach((shooter, index) => { shooter.rank = index + 1; });
+      // Vergebe Rangplätze nur für Schützen in Wertung
+      let shooterRankCounter = 1;
+      rankedShooters.forEach(shooter => {
+        if (!shooter.teamOutOfCompetition) {
+          shooter.rank = shooterRankCounter++;
+        } else {
+          shooter.rank = null; // Kein Rang für Schützen "außer Konkurrenz"
+        }
+      });
       console.log(`RWK DEBUG: fetchIndividualShooterData - Processed ${rankedShooters.length} shooters.`);
       return rankedShooters;
     } catch (err: any) {
@@ -898,6 +978,29 @@ function RwkTabellenPageComponent() {
       loadData();
     }
   }, [selectedCompetition, activeTab, selectedIndividualLeagueFilter, loadData, isLoadingInitialYears]); // loadData is memoized
+  
+  // Speichern der Filtereinstellungen im localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('showOutOfCompetitionTeams', showOutOfCompetitionTeams.toString());
+      localStorage.setItem('showOutOfCompetitionShooters', showOutOfCompetitionShooters.toString());
+    }
+  }, [showOutOfCompetitionTeams, showOutOfCompetitionShooters]);
+  
+  // Laden der gespeicherten Filtereinstellungen beim Start
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTeamsPreference = localStorage.getItem('showOutOfCompetitionTeams');
+      if (savedTeamsPreference !== null) {
+        setShowOutOfCompetitionTeams(savedTeamsPreference === 'true');
+      }
+      
+      const savedShootersPreference = localStorage.getItem('showOutOfCompetitionShooters');
+      if (savedShootersPreference !== null) {
+        setShowOutOfCompetitionShooters(savedShootersPreference === 'true');
+      }
+    }
+  }, []);
 
   // Effect to open all league accordions by default if no specific league is targeted
   useEffect(() => {
@@ -933,6 +1036,23 @@ function RwkTabellenPageComponent() {
 
   const handleAccordionValueChange = useCallback((value: string[]) => {
     setOpenAccordionItems(value);
+  }, []);
+  
+  // Tastaturkürzel für Filter
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Alt+A für Teams "Außer Konkurrenz"
+      if (e.altKey && e.key === 'a') {
+        setShowOutOfCompetitionTeams(prev => !prev);
+      }
+      // Alt+S für Schützen "Außer Konkurrenz"
+      if (e.altKey && e.key === 's') {
+        setShowOutOfCompetitionShooters(prev => !prev);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const toggleTeamExpansion = useCallback((teamId: string) => {
@@ -1034,29 +1154,50 @@ function RwkTabellenPageComponent() {
             </Card>
           )}
           {!loadingData && !error && teamData && teamData.leagues.length > 0 && (
-            <Accordion type="multiple" value={openAccordionItems} onValueChange={handleAccordionValueChange} className="w-full space-y-4">
-              {teamData.leagues.map((league) => (
-                <AccordionItem value={league.id} key={league.id} className="border bg-card shadow-lg rounded-lg overflow-hidden">
-                  <AccordionTrigger className="bg-accent/10 hover:bg-accent/20 px-6 py-4 text-xl font-semibold text-accent data-[state=open]:border-b data-[state=open]:border-border/50">
-                    {league.name} {league.shortName && `(${league.shortName})`}
-                  </AccordionTrigger>
-                  <AccordionContent className="pt-0 data-[state=closed]:pb-0 data-[state=open]:pb-0"> {/* Ensure no extra padding */}
-                    <div className="flex justify-end space-x-2 p-2 bg-muted/10">
-                      <PDFExportButton 
-                        league={league} 
-                        numRounds={currentNumRoundsState} 
-                        competitionYear={selectedCompetition.year} 
-                        type="teams"
-                        className="mr-2"
-                      />
-                      {league.individualLeagueShooters.length > 0 && (
+            <ManualAccordion 
+              items={teamData.leagues.map(league => ({
+                id: league.id,
+                title: <>{league.name} {league.shortName && `(${league.shortName})`}</>,
+                content: (
+                  <div className="pt-0 pb-0">
+                    <div className="flex justify-between items-center p-2 bg-muted/10">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`showOutOfCompetitionTeams-${league.id}`}
+                          checked={showOutOfCompetitionTeams}
+                          onCheckedChange={(checked) => {
+                            setShowOutOfCompetitionTeams(!!checked);
+                            // URL aktualisieren
+                            const currentParams = new URLSearchParams(window.location.search);
+                            currentParams.set('showAK', (!!checked).toString());
+                            router.replace(`/rwk-tabellen?${currentParams.toString()}`, { scroll: false });
+                          }}
+                          className="mr-1"
+                        />
+                        <Label 
+                          htmlFor={`showOutOfCompetitionTeams-${league.id}`}
+                          className="text-sm font-medium cursor-pointer"
+                        >
+                          Teams "Außer Konkurrenz" anzeigen
+                        </Label>
+                      </div>
+                      <div className="flex space-x-2">
                         <PDFExportButton 
                           league={league} 
                           numRounds={currentNumRoundsState} 
                           competitionYear={selectedCompetition.year} 
-                          type="shooters"
+                          type="teams"
+                          className="mr-2"
                         />
-                      )}
+                        {league.individualLeagueShooters.length > 0 && (
+                          <PDFExportButton 
+                            league={league} 
+                            numRounds={currentNumRoundsState} 
+                            competitionYear={selectedCompetition.year} 
+                            type="shooters"
+                          />
+                        )}
+                      </div>
                     </div>
                     {league.teams.length > 0 ? (
                       <div className="overflow-x-auto">
@@ -1074,11 +1215,25 @@ function RwkTabellenPageComponent() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {league.teams.map(team => (
+                            {league.teams
+                              .filter(team => showOutOfCompetitionTeams || !team.outOfCompetition)
+                              .map(team => (
                               <React.Fragment key={team.id}>
                                 <TableRow className="hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => toggleTeamExpansion(team.id)}>
-                                  <TableCell className="text-center font-medium px-2 py-2">{team.rank}</TableCell>
-                                  <TableCell className="font-medium text-foreground px-2 py-2">{team.name}</TableCell>
+                                  <TableCell className="text-center font-medium px-2 py-2">
+                                    {team.outOfCompetition ? 
+                                      <span className="text-amber-500" title="Außer Konkurrenz">AK</span> : 
+                                      team.rank
+                                    }
+                                  </TableCell>
+                                  <TableCell className="font-medium text-foreground px-2 py-2">
+                                    {team.name}
+                                    <TeamStatusBadge 
+                                      outOfCompetition={team.outOfCompetition} 
+                                      reason={team.outOfCompetitionReason} 
+                                      className="ml-2" 
+                                    />
+                                  </TableCell>
                                   {[...Array(currentNumRoundsState)].map((_, i) => (
                                     <TableCell key={`dg-val-${i + 1}-${team.id}`} className="text-center px-1 py-2">{(team.roundResults as any)?.[`dg${i + 1}`] ?? '-'}</TableCell>
                                   ))}
@@ -1103,36 +1258,57 @@ function RwkTabellenPageComponent() {
                         </Table>
                       </div>
                     ) : (<p className="p-4 text-center text-muted-foreground">Keine Mannschaften in dieser Liga für {pageTitle} vorhanden.</p>)}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+                  </div>
+                )
+              }))}
+            />
           )}
         </TabsContent>
 
         <TabsContent value="einzelschützen">
           {!loadingData && !error && (
-             <div className="mb-4">
-                <Label htmlFor="individualLeagueFilter" className="text-sm font-medium">Nach Liga filtern:</Label>
-                <Select 
-                    value={selectedIndividualLeagueFilter || "ALL_LEAGUES_IND_FILTER"} 
-                    onValueChange={(value) => setSelectedIndividualLeagueFilter(value === "ALL_LEAGUES_IND_FILTER" ? "" : value)}
-                    disabled={loadingData || !teamData || availableLeaguesForIndividualFilter.length === 0}
-                >
-                  <SelectTrigger id="individualLeagueFilter" className="w-full sm:w-[350px] mt-1 shadow-sm">
-                    <SelectValue placeholder="Alle Ligen der Disziplin anzeigen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL_LEAGUES_IND_FILTER">Alle Ligen der Disziplin</SelectItem>
-                    {availableLeaguesForIndividualFilter
-                      .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "") 
-                      .map(league => (<SelectItem key={league.id} value={league.id}>{league.name} ({leagueDisciplineOptions.find(opt => opt.value === league.type)?.label || league.type}, {league.competitionYear})</SelectItem>))
-                    }
-                    {availableLeaguesForIndividualFilter.filter(l => l && typeof l.id === 'string' && l.id.trim() !== "").length === 0 && selectedCompetition && (
-                      <SelectItem value="NO_LEAGUES_FOR_IND_FILTER_RWK" disabled>Keine Ligen für Filter in dieser Saison/Disziplin</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+             <div className="mb-4 space-y-4">
+                <div>
+                  <Label htmlFor="individualLeagueFilter" className="text-sm font-medium">Nach Liga filtern:</Label>
+                  <Select 
+                      value={selectedIndividualLeagueFilter || "ALL_LEAGUES_IND_FILTER"} 
+                      onValueChange={(value) => setSelectedIndividualLeagueFilter(value === "ALL_LEAGUES_IND_FILTER" ? "" : value)}
+                      disabled={loadingData || !teamData || availableLeaguesForIndividualFilter.length === 0}
+                  >
+                    <SelectTrigger id="individualLeagueFilter" className="w-full sm:w-[350px] mt-1 shadow-sm">
+                      <SelectValue placeholder="Alle Ligen der Disziplin anzeigen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL_LEAGUES_IND_FILTER">Alle Ligen der Disziplin</SelectItem>
+                      {availableLeaguesForIndividualFilter
+                        .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "") 
+                        .map(league => (<SelectItem key={league.id} value={league.id}>{league.name} ({leagueDisciplineOptions.find(opt => opt.value === league.type)?.label || league.type}, {league.competitionYear})</SelectItem>))
+                      }
+                      {availableLeaguesForIndividualFilter.filter(l => l && typeof l.id === 'string' && l.id.trim() !== "").length === 0 && selectedCompetition && (
+                        <SelectItem value="NO_LEAGUES_FOR_IND_FILTER_RWK" disabled>Keine Ligen für Filter in dieser Saison/Disziplin</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="showOutOfCompetitionShootersIndividual"
+                    checked={showOutOfCompetitionShooters}
+                    onCheckedChange={(checked) => {
+                      setShowOutOfCompetitionShooters(!!checked);
+                      // URL aktualisieren
+                      const currentParams = new URLSearchParams(window.location.search);
+                      currentParams.set('showAKShooters', (!!checked).toString());
+                      router.replace(`/rwk-tabellen?${currentParams.toString()}`, { scroll: false });
+                    }}
+                  />
+                  <Label 
+                    htmlFor="showOutOfCompetitionShootersIndividual"
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Schützen "Außer Konkurrenz" anzeigen
+                  </Label>
+                </div>
               </div>
           )}
           {!loadingData && !error && filteredIndividualData.length === 0 && (
@@ -1157,15 +1333,33 @@ function RwkTabellenPageComponent() {
                           <TableHead className="text-center font-semibold px-1 py-1.5 text-xs text-muted-foreground whitespace-nowrap">Gesamt</TableHead><TableHead className="text-center font-semibold px-1 py-1.5 text-xs text-muted-foreground whitespace-nowrap">Schnitt</TableHead>
                       </TableRow></TableHeader>
                       <TableBody>
-                        {filteredIndividualData.map(shooter => (
+                        {filteredIndividualData
+                          .filter(shooter => showOutOfCompetitionShooters || !shooter.teamOutOfCompetition)
+                          .map(shooter => (
                           <TableRow key={`ind-${shooter.shooterId}`} className="hover:bg-secondary/20 transition-colors">
-                            <TableCell className="text-center font-medium">{shooter.rank}</TableCell>
+                            <TableCell className="text-center font-medium">
+                              {shooter.teamOutOfCompetition ? 
+                                <span className="text-amber-500" title="Außer Konkurrenz">AK</span> : 
+                                shooter.rank
+                              }
+                            </TableCell>
                             <TableCell className="font-medium text-foreground">
                               <Button variant="link" className="p-0 h-auto text-base text-left hover:text-primary whitespace-normal text-wrap" onClick={() => handleShooterNameClick(shooter)}>
                                 {shooter.shooterName}
                               </Button>
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">{shooter.teamName}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {shooter.teamName}
+                              {shooter.teamOutOfCompetition && (
+                                <span 
+                                  className="ml-2 text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium cursor-help"
+                                  title={shooter.teamOutOfCompetitionReason || 'Außer Konkurrenz'}
+                                  aria-label={`Außer Konkurrenz: ${shooter.teamOutOfCompetitionReason || 'Keine Begründung angegeben'}`}
+                                >
+                                  AK
+                                </span>
+                              )}
+                            </TableCell>
                             {[...Array(currentNumRoundsState)].map((_, i) => (<TableCell key={`ind-dg-val-${i + 1}-${shooter.shooterId}`} className="text-center px-1 py-2">{shooter.results?.[`dg${i + 1}`] ?? '-'}</TableCell>))}
                             <TableCell className="text-center font-semibold text-primary">{shooter.totalScore}</TableCell>
                             <TableCell className="text-center font-medium text-muted-foreground">{shooter.averageScore != null ? shooter.averageScore.toFixed(2) : '-'}</TableCell>

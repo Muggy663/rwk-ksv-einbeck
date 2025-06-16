@@ -23,7 +23,8 @@ import {
   Edit, 
   Trash2, 
   Eye, 
-  EyeOff 
+  EyeOff,
+  Lock
 } from 'lucide-react';
 import { 
   getAllDocuments, 
@@ -151,6 +152,9 @@ export default function DocumentsAdminPage() {
                         <div className="flex items-center">
                           <FileText className="h-4 w-4 mr-2 text-primary" />
                           {doc.title}
+                          {doc.restricted && (
+                            <Lock className="h-4 w-4 ml-2 text-amber-500" title="Nur für Vereinsvertreter/Mannschaftsführer" />
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -158,6 +162,7 @@ export default function DocumentsAdminPage() {
                         {doc.category === 'formular' && 'Formular'}
                         {doc.category === 'ordnung' && 'Regelwerk'}
                         {doc.category === 'archiv' && 'Archiv'}
+                        {doc.category === 'ligaliste' && 'Ligaliste'}
                       </TableCell>
                       <TableCell>{doc.date}</TableCell>
                       <TableCell>{doc.fileType}</TableCell>

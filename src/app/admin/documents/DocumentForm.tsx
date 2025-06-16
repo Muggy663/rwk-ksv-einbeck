@@ -48,6 +48,7 @@ export function DocumentForm({ initialData, onSubmit, isSubmitting }: DocumentFo
       fileType: initialData?.fileType || 'PDF',
       fileSize: initialData?.fileSize || '',
       active: initialData?.active !== undefined ? initialData.active : true,
+      restricted: initialData?.restricted !== undefined ? initialData.restricted : false,
     },
   });
 
@@ -149,6 +150,7 @@ export function DocumentForm({ initialData, onSubmit, isSubmitting }: DocumentFo
                       <SelectItem value="ausschreibung">Ausschreibung</SelectItem>
                       <SelectItem value="formular">Formular</SelectItem>
                       <SelectItem value="ordnung">Regelwerk</SelectItem>
+                      <SelectItem value="ligaliste">Ligalisten & Handtabellen</SelectItem>
                       <SelectItem value="archiv">Archiv</SelectItem>
                     </SelectContent>
                   </Select>
@@ -293,6 +295,28 @@ export function DocumentForm({ initialData, onSubmit, isSubmitting }: DocumentFo
             )}
           />
         </div>
+        
+        <FormField
+          control={form.control}
+          name="restricted"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-amber-50">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Nur für Vereinsvertreter/Mannschaftsführer</FormLabel>
+                <FormDescription>
+                  Wenn aktiviert, ist dieses Dokument nur für Vereinsvertreter und Mannschaftsführer sichtbar.
+                  Andere Benutzer können dieses Dokument nicht sehen.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Wird gespeichert...' : 'Speichern'}

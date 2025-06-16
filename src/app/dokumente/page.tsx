@@ -3,16 +3,68 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Info } from 'lucide-react';
+import { Info, Lock, Calendar, Filter, LogIn } from 'lucide-react';
+import { LigaGrouping } from './LigaGrouping';
+import { SearchBar } from './SearchBar';
+
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import Link from 'next/link';
 import { DocumentCard } from './DocumentCard';
 import { Document } from '@/lib/services/document-service';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function DokumentePage() {
   const [activeTab, setActiveTab] = useState<string>('ausschreibungen');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  
+  // Jahre für den Filter (aktuelles Jahr und 2 Jahre zurück)
+  const years = [
+    new Date().getFullYear().toString(),
+    (new Date().getFullYear() - 1).toString(),
+    (new Date().getFullYear() - 2).toString()
+  ];
+
+  // Auth-Kontext verwenden
+  const { user, userAppPermissions } = useAuth();
+  
+  // Prüfen, ob der Benutzer Vereinsvertreter, Mannschaftsführer oder Admin ist
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  
+  // Prüfen, ob der Benutzer ein Admin ist
+  const isAdmin = user?.email === 'admin@rwk-einbeck.de';
+
+  // Benutzerrolle prüfen
+  useEffect(() => {
+    // Prüfen, ob der Benutzer eingeloggt ist
+    if (user) {
+      // Admin-Prüfung
+      if (isAdmin) {
+        setIsAuthorized(true);
+        return;
+      }
+      
+      // Prüfen, ob der Benutzer Vereinsvertreter oder Mannschaftsführer ist
+      if (userAppPermissions && 
+          (userAppPermissions.role === 'vereinsvertreter' || 
+           userAppPermissions.role === 'mannschaftsfuehrer')) {
+        setIsAuthorized(true);
+        return;
+      }
+    }
+    
+    // Standardmäßig nicht autorisiert
+    setIsAuthorized(false);
+  }, [user, userAppPermissions, isAdmin]);
 
   useEffect(() => {
     async function loadDocuments() {
@@ -27,7 +79,19 @@ export default function DokumentePage() {
             const apiData = await apiResponse.json();
             if (apiData.documents && apiData.documents.length > 0) {
               console.log('Dokumente aus MongoDB geladen:', apiData.documents.length);
-              setDocuments(apiData.documents.filter((doc: Document) => doc.active));
+              
+              // Filtere Dokumente basierend auf Benutzerrolle
+              const filteredDocs = apiData.documents.filter((doc: Document) => {
+                // Aktive Dokumente
+                if (!doc.active) return false;
+                
+                // Wenn eingeschränkt und Benutzer nicht autorisiert ist, nicht anzeigen
+                if (doc.restricted && !isAuthorized) return false;
+                
+                return true;
+              });
+              
+              setDocuments(filteredDocs);
               setLoading(false);
               return;
             }
@@ -43,7 +107,19 @@ export default function DokumentePage() {
         }
         const jsonData = await jsonResponse.json();
         console.log('Dokumente aus JSON geladen:', jsonData.documents.length);
-        setDocuments(jsonData.documents.filter((doc: Document) => doc.active));
+        
+        // Filtere Dokumente basierend auf Benutzerrolle
+        const filteredDocs = jsonData.documents.filter((doc: Document) => {
+          // Aktive Dokumente
+          if (!doc.active) return false;
+          
+          // Wenn eingeschränkt und Benutzer nicht autorisiert ist, nicht anzeigen
+          if (doc.restricted && !isAuthorized) return false;
+          
+          return true;
+        });
+        
+        setDocuments(filteredDocs);
       } catch (err) {
         console.error('Fehler beim Laden der Dokumente:', err);
         setError('Die Dokumente konnten nicht geladen werden.');
@@ -53,20 +129,43 @@ export default function DokumentePage() {
     }
 
     loadDocuments();
-  }, []);
+  }, [isAuthorized]);
 
-  const ausschreibungen = documents.filter(doc => doc.category === 'ausschreibung');
-  const formulare = documents.filter(doc => doc.category === 'formular');
-  const ordnungen = documents.filter(doc => doc.category === 'ordnung');
-  const archiv = documents.filter(doc => doc.category === 'archiv');
+  // Filtere Dokumente basierend auf der Suchanfrage
+  const filterBySearch = (docs: Document[]) => {
+    if (!searchQuery) return docs;
+    
+    const query = searchQuery.toLowerCase();
+    return docs.filter(doc => 
+      doc.title.toLowerCase().includes(query) || 
+      doc.description.toLowerCase().includes(query)
+    );
+  };
+
+  const ausschreibungen = filterBySearch(documents.filter(doc => doc.category === 'ausschreibung'));
+  const formulare = filterBySearch(documents.filter(doc => doc.category === 'formular'));
+  const ordnungen = filterBySearch(documents.filter(doc => doc.category === 'ordnung'));
+  const ligalisten = documents.filter(doc => doc.category === 'ligaliste');
+  
+  // Gefilterte Ligalisten basierend auf Jahr und Suchanfrage
+  const filteredLigalisten = filterBySearch(ligalisten.filter(doc => 
+    doc.title.includes(selectedYear) || 
+    doc.description.includes(selectedYear) ||
+    // Wenn kein Jahr im Titel oder in der Beschreibung gefunden wird, zeige es trotzdem an
+    (!doc.title.match(/\b20\d{2}\b/) && !doc.description.match(/\b20\d{2}\b/))
+  ));
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-primary">Dokumente & Ausschreibungen</h1>
           <p className="text-sm md:text-base text-muted-foreground">Offizielle Dokumente und Formulare des KSV Einbeck</p>
         </div>
+        <SearchBar 
+          onSearch={(query) => setSearchQuery(query)} 
+          placeholder="Dokumente durchsuchen..." 
+        />
       </div>
 
       {loading ? (
@@ -84,8 +183,8 @@ export default function DokumentePage() {
           <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8">
             <TabsTrigger value="ausschreibungen">Ausschreibungen</TabsTrigger>
             <TabsTrigger value="formulare">Formulare</TabsTrigger>
+            <TabsTrigger value="ligalisten">Ligalisten</TabsTrigger>
             <TabsTrigger value="ordnungen">Regelwerke & Hilfen</TabsTrigger>
-            <TabsTrigger value="archiv">Archiv</TabsTrigger>
           </TabsList>
 
           <TabsContent value="ausschreibungen" className="space-y-4">
@@ -118,6 +217,53 @@ export default function DokumentePage() {
             )}
           </TabsContent>
 
+          <TabsContent value="ligalisten" className="space-y-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+              <h2 className="text-xl font-semibold">Ligalisten & Handtabellen</h2>
+              <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-md">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-[120px] h-8 text-sm">
+                    <SelectValue placeholder="Jahr wählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {years.map(year => (
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-xs text-muted-foreground">Jahr filtern</span>
+              </div>
+            </div>
+            
+            {ligalisten.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center text-muted-foreground">
+                  Keine Ligalisten oder Handtabellen verfügbar.
+                </CardContent>
+              </Card>
+            ) : filteredLigalisten.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center text-muted-foreground">
+                  Keine Ligalisten oder Handtabellen für {selectedYear} verfügbar.
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4 flex items-start">
+                  <Filter className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-blue-800">
+                      Zeige Ligalisten & Handtabellen für <span className="font-medium">{selectedYear}</span>
+                    </p>
+                  </div>
+                </div>
+                
+                <LigaGrouping documents={filteredLigalisten} />
+              </>
+            )}
+          </TabsContent>
+
           <TabsContent value="ordnungen" className="space-y-4">
             <h2 className="text-xl font-semibold mb-4">Regelwerke & Hilfen</h2>
             {ordnungen.length === 0 ? (
@@ -128,21 +274,6 @@ export default function DokumentePage() {
               </Card>
             ) : (
               ordnungen.map(doc => (
-                <DocumentCard key={doc.id} document={doc} />
-              ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="archiv" className="space-y-4">
-            <h2 className="text-xl font-semibold mb-4">Archivierte Dokumente</h2>
-            {archiv.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center text-muted-foreground">
-                  Keine archivierten Dokumente verfügbar.
-                </CardContent>
-              </Card>
-            ) : (
-              archiv.map(doc => (
                 <DocumentCard key={doc.id} document={doc} />
               ))
             )}
@@ -161,6 +292,31 @@ export default function DokumentePage() {
           <p>
             Alle offiziellen Dokumente werden hier zentral bereitgestellt. Bei Fragen zu den Dokumenten wenden Sie sich bitte an den Rundenwettkampfleiter oder nutzen Sie das <Link href="/support" className="text-primary hover:underline">Support-Formular</Link>.
           </p>
+          
+          {!user && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md flex items-start">
+              <LogIn className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+              <div>
+                <p className="font-medium text-blue-800">Eingeschränkte Dokumente</p>
+                <p className="text-sm text-blue-700">
+                  Einige Dokumente sind nur für angemeldete Vereinsvertreter und Mannschaftsführer sichtbar. 
+                  <Link href="/login" className="ml-1 text-primary hover:underline">Jetzt anmelden</Link>
+                </p>
+              </div>
+            </div>
+          )}
+          
+          {isAuthorized && (
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-start">
+              <Lock className="h-5 w-5 text-amber-600 mr-2 mt-0.5" />
+              <div>
+                <p className="font-medium text-amber-800">Vereinsvertreter/Mannschaftsführer-Zugang</p>
+                <p className="text-sm text-amber-700">
+                  Sie sehen zusätzliche Dokumente, die nur für Vereinsvertreter und Mannschaftsführer sichtbar sind.
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

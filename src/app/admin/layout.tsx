@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
@@ -36,20 +36,31 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
-  // Wenn der Benutzer nicht angemeldet ist, zur Login-Seite umleiten
-  if (!loading && !user) {
-    router.push('/login');
-    return null;
-  }
-
-  // Prüfen, ob der Benutzer ein Admin ist (vereinfachte Prüfung)
+  // Prüfen, ob der Benutzer ein Admin ist
   const isAdmin = user?.email === 'admin@rwk-einbeck.de';
 
-  // Wenn der Benutzer kein Admin ist, zur Startseite umleiten
-  if (!loading && !isAdmin) {
+  // Umleitung zur Login-Seite oder Startseite
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+      } else if (!isAdmin) {
+        router.push('/');
+      }
+    }
+  }, [loading, user, isAdmin, router]);
+
+  // Logout-Handler
+  const handleLogout = useCallback(async () => {
+    await signOut();
     router.push('/');
+  }, [signOut, router]);
+
+  // Wenn noch geladen wird oder Umleitung erfolgen soll, nichts rendern
+  if (loading || (!user) || (!isAdmin && !loading)) {
     return null;
   }
 
@@ -84,9 +95,13 @@ export default function AdminLayout({
         <Button variant="outline" onClick={() => router.push('/')} className="w-full mb-2">
           <ArrowLeft className="mr-2 h-4 w-4" /> Zur Startseite
         </Button>
-        {user && <Button variant="outline" onClick={async () => { await useAuth().signOut(); router.push('/'); }} className="w-full text-destructive hover:text-destructive/80 hover:bg-destructive/10">
+        <Button 
+          variant="outline" 
+          onClick={handleLogout} 
+          className="w-full text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+        >
           <LogOut className="mr-2 h-4 w-4" /> Logout
-        </Button>}
+        </Button>
       </aside>
       <main className="flex-1 p-6 lg:p-8 bg-muted/20 overflow-y-auto">
         {children}

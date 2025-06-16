@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/components/auth/AuthProvider';
@@ -8,23 +7,28 @@ import { MainNav } from '@/components/layout/MainNav';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Metadata } from 'next';
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'RWK App Einbeck',
   description: 'Die digitale Plattform für die Rundenwettkämpfe des Kreisschützenverbandes Einbeck',
+  manifest: '/manifest.json',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
+interface RootLayoutProps {
   children: React.ReactNode;
-}>) {
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="de" suppressHydrationWarning>
       <head>
         <Script src="/disable-onboarding.js" strategy="beforeInteractive" />
+        <meta name="theme-color" content="#ffffff" />
+        <link rel="apple-touch-icon" href="/images/logo2.png" />
       </head>
       <body className={inter.className}>
         <AuthProvider>
@@ -50,6 +54,7 @@ export default function RootLayout({
           </main>
           <SiteFooter />
           <Toaster />
+          <ServiceWorkerRegistration />
         </AuthProvider>
       </body>
     </html>

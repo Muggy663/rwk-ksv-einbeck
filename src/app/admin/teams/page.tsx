@@ -4,6 +4,7 @@ import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'rea
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Users, Loader2, AlertTriangle, InfoIcon } from 'lucide-react';
+import { TeamStatusBadge } from '@/components/ui/team-status-badge';
 import {
   Table,
   TableBody,
@@ -44,12 +45,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from '@/hooks/use-auth';
-import type { Season, League, Club, Team, Shooter, TeamValidationInfo, FirestoreLeagueSpecificDiscipline, UIDisciplineSelection } from '@/types/rwk';
+import type { Season, League, Club, Team, Shooter, TeamValidationInfo, FirestoreLeagueSpecificDiscipline, UIDisciplineSelection, TeamCompetitionStatus } from '@/types/rwk';
 import { MAX_SHOOTERS_PER_TEAM, getDisciplineCategory, leagueDisciplineOptions } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import {
   collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query,
-  where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayUnion, arrayRemove, Timestamp
+  where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayUnion, arrayRemove, Timestamp,
+  setDoc
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -191,7 +193,10 @@ export default function AdminTeamsPage() {
 
 
   const handleSearchTeams = useCallback(async () => {
-    if (!selectedSeasonId) {
+    // Wenn keine Saison ausgewählt ist, aber wir haben eine im State, verwenden wir diese
+    const effectiveSeasonId = selectedSeasonId || (allSeasons.length > 0 ? allSeasons[0].id : null);
+    
+    if (!effectiveSeasonId) {
       toast({ title: "Saison fehlt", description: "Bitte wählen Sie eine Saison aus.", variant: "warning" });
       setTeamsForDisplay([]);
       return;
@@ -199,9 +204,9 @@ export default function AdminTeamsPage() {
     
     setIsLoadingTeams(true);
     setTeamsForDisplay([]); 
-    console.log(`AdminTeamsPage: handleSearchTeams - Searching for season: ${selectedSeasonId}, club: ${selectedClubIdFilter}, league: ${selectedLeagueIdFilter}`);
+    console.log(`AdminTeamsPage: handleSearchTeams - Searching for season: ${effectiveSeasonId}, club: ${selectedClubIdFilter}, league: ${selectedLeagueIdFilter}`);
     try {
-      const selectedSeasonData = allSeasons.find(s => s.id === selectedSeasonId);
+      const selectedSeasonData = allSeasons.find(s => s.id === effectiveSeasonId);
       if (!selectedSeasonData) {
         toast({ title: "Saisondaten nicht gefunden", variant: "destructive" });
         setIsLoadingTeams(false);
@@ -214,11 +219,10 @@ export default function AdminTeamsPage() {
       if (selectedClubIdFilter !== ALL_CLUBS_FILTER_VALUE) {
         qConstraints.push(where("clubId", "==", selectedClubIdFilter));
       }
-      if (selectedLeagueIdFilter !== ALL_LEAGUES_FILTER_VALUE) {
+      if (selectedLeagueIdFilter === "NO_LEAGUE_ASSIGNED") {
+        qConstraints.push(where("leagueId", "==", null));
+      } else if (selectedLeagueIdFilter !== ALL_LEAGUES_FILTER_VALUE) {
         qConstraints.push(where("leagueId", "==", selectedLeagueIdFilter));
-      } else {
-        // If no league filter, we might want to show teams with leagueId=null as "Nicht zugewiesen"
-        // This part might need adjustment depending on how unassigned teams should be handled
       }
       
       const teamsQuery = query(collection(db, TEAMS_COLLECTION), ...qConstraints, orderBy("name", "asc"));
@@ -335,6 +339,7 @@ export default function AdminTeamsPage() {
       captainName: '',
       captainEmail: '',
       captainPhone: '',
+      outOfCompetition: false,
     });
     setFormMode('new');
     setIsFormOpen(true);
@@ -405,6 +410,7 @@ export default function AdminTeamsPage() {
       captainName: currentTeam.captainName?.trim() || '',
       captainEmail: currentTeam.captainEmail?.trim() || '',
       captainPhone: currentTeam.captainPhone?.trim() || '',
+      outOfCompetition: currentTeam.outOfCompetition || false,
     };
     
     const currentTeamLeagueInfo = allLeagues.find(l => l.id === teamDataToSave.leagueId);
@@ -629,6 +635,7 @@ export default function AdminTeamsPage() {
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value={ALL_LEAGUES_FILTER_VALUE}>Alle Ligen</SelectItem>
+                    <SelectItem value="NO_LEAGUE_ASSIGNED">Nicht zugewiesen</SelectItem>
                     {leaguesForFilterDropdown.filter(l => l && typeof l.id === 'string' && l.id.trim() !== "").map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
                      {leaguesForFilterDropdown.length === 0 && selectedSeasonId &&
                         <SelectItem value="NO_LEAGUES_FOR_SEASON_FILTER_ADMIN_TEAMS" disabled>Keine Ligen für diese Saison</SelectItem>
@@ -670,7 +677,13 @@ export default function AdminTeamsPage() {
               <TableBody>
                 {teamsForDisplay.map((team) => (
                   <TableRow key={team.id}>
-                    <TableCell>{team.name}</TableCell>
+                    <TableCell>
+                      {team.name}
+                      <TeamStatusBadge 
+                        outOfCompetition={team.outOfCompetition} 
+                        className="ml-2" 
+                      />
+                    </TableCell>
                     <TableCell>{getClubName(team.clubId)}</TableCell>
                     <TableCell>{getLeagueName(team.leagueId)}</TableCell>
                     <TableCell>{team.competitionYear}</TableCell>
@@ -707,7 +720,7 @@ export default function AdminTeamsPage() {
 
       <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) {setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAvailableClubShooters([]);} setIsFormOpen(open); }}>
         <DialogContent className="sm:max-w-lg">
-          <form onSubmit={handleSubmitTeamForm}>
+          <form>
             <DialogHeader>
               <DialogTitle>{formMode === 'new' ? 'Neue Mannschaft anlegen' : 'Mannschaft bearbeiten'}</DialogTitle>
               <DialogDescriptionComponent>
@@ -785,6 +798,24 @@ export default function AdminTeamsPage() {
                         <Label htmlFor="captainPhoneAdmin">Telefon MF</Label>
                         <Input id="captainPhoneAdmin" type="tel" value={currentTeam.captainPhone || ''} onChange={(e) => handleFormInputChange('captainPhone', e.target.value)} />
                     </div>
+                </div>
+                
+                <div className="border border-amber-200 bg-amber-50 rounded-md p-4">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox 
+                            id="outOfCompetitionCheckbox" 
+                            checked={currentTeam.outOfCompetition || false}
+                            onCheckedChange={(checked) => {
+                                setCurrentTeam(prev => prev ? {...prev, outOfCompetition: !!checked} : null);
+                            }}
+                        />
+                        <Label htmlFor="outOfCompetitionCheckbox" className="font-medium text-amber-800">
+                            Außer Konkurrenz
+                        </Label>
+                    </div>
+                    <p className="text-xs text-amber-700 mt-2">
+                        Mannschaften "außer Konkurrenz" nehmen an Wettkämpfen teil, fließen aber nicht in die offizielle Wertung ein.
+                    </p>
                 </div>
                 
                 <div className="space-y-2 pt-2">
@@ -873,8 +904,59 @@ export default function AdminTeamsPage() {
             )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAvailableClubShooters([]);}}>Abbrechen</Button>
-              <Button type="submit" disabled={isSubmittingForm || isLoadingShootersForDialog || isLoadingValidationData}>
-                 {(isSubmittingForm || isLoadingShootersForDialog || isLoadingValidationData) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button 
+                onClick={() => {
+                  console.log("Speichern wird ausgeführt...", currentTeam);
+                  
+                  if (!currentTeam) {
+                    alert("Fehler: Kein Team-Objekt vorhanden");
+                    return;
+                  }
+                  
+                  const teamRef = formMode === 'edit' && currentTeam.id 
+                    ? doc(db, TEAMS_COLLECTION, currentTeam.id)
+                    : doc(collection(db, TEAMS_COLLECTION));
+                  
+                  const teamData = {
+                    name: currentTeam.name || "",
+                    clubId: currentTeam.clubId || "",
+                    seasonId: currentTeam.seasonId || "",
+                    competitionYear: currentTeam.competitionYear || 0,
+                    leagueId: currentTeam.leagueId || null,
+                    shooterIds: selectedShooterIdsInForm || [],
+                    captainName: currentTeam.captainName || '',
+                    captainEmail: currentTeam.captainEmail || '',
+                    captainPhone: currentTeam.captainPhone || '',
+                    outOfCompetition: currentTeam.outOfCompetition || false
+                  };
+                  
+                  if (formMode === 'edit' && currentTeam.id) {
+                    updateDoc(teamRef, teamData)
+                      .then(() => {
+                        toast({ title: "Erfolg", description: "Mannschaft erfolgreich aktualisiert!" });
+                        setIsFormOpen(false);
+                        // Aktualisiere nur die Teams-Liste, ohne die Saison zurückzusetzen
+                        handleSearchTeams();
+                      })
+                      .catch(err => {
+                        alert("Fehler beim Speichern: " + err.message);
+                        console.error("Fehler beim Speichern:", err);
+                      });
+                  } else {
+                    setDoc(teamRef, teamData)
+                      .then(() => {
+                        toast({ title: "Erfolg", description: "Mannschaft erfolgreich erstellt!" });
+                        setIsFormOpen(false);
+                        // Aktualisiere nur die Teams-Liste, ohne die Saison zurückzusetzen
+                        handleSearchTeams();
+                      })
+                      .catch(err => {
+                        alert("Fehler beim Speichern: " + err.message);
+                        console.error("Fehler beim Speichern:", err);
+                      });
+                  }
+                }}
+              >
                 Speichern
               </Button>
             </DialogFooter>

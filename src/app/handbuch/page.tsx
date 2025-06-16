@@ -20,7 +20,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch RWK Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 10. Juni 2025, Version 0.8.0 Beta)
+            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 15. Juni 2025, Version 0.8.2 Beta)
           </p>
         </div>
       </div>
@@ -343,7 +343,17 @@ export default function HandbuchPage() {
         </Card>
          <Card>
             <CardHeader><CardTitle id="dokumente" className="text-xl text-accent scroll-mt-24">Dokumente</CardTitle></CardHeader>
-            <CardContent><p>Eine Seite, auf der zukünftig wichtige Dokumente und Ausschreibungen zum Download oder zur Ansicht bereitgestellt werden können (aktuell Platzhalter).</p></CardContent>
+            <CardContent>
+              <p>Eine zentrale Seite für alle wichtigen Dokumente, Ausschreibungen, Formulare und Ligalisten.</p>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li><strong>Kategorien:</strong> Dokumente sind in Ausschreibungen, Formulare, Ligalisten & Handtabellen, Regelwerke und Archiv unterteilt.</li>
+                <li><strong>Suchfunktion:</strong> Ermöglicht das schnelle Finden von Dokumenten nach Stichworten.</li>
+                <li><strong>Favoriten:</strong> Häufig benötigte Dokumente können als Favoriten markiert werden.</li>
+                <li><strong>Jahresfilter:</strong> Ligalisten können nach Jahr gefiltert werden.</li>
+                <li><strong>Vorschau:</strong> PDF-Dokumente können direkt im Browser angesehen werden, ohne sie herunterladen zu müssen.</li>
+                <li><strong>Eingeschränkte Dokumente:</strong> Bestimmte Dokumente sind nur für Vereinsvertreter und Mannschaftsführer sichtbar (z.B. Handtabellen mit Kontaktdaten).</li>
+              </ul>
+            </CardContent>
         </Card>
       </section>
 

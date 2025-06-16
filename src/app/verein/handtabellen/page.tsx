@@ -202,14 +202,26 @@ export default function HandtabellenPage() {
         // Fehler beim Laden der Schützen ignorieren und ohne Schützen fortfahren
       }
       
-      // PDF generieren
-      const pdfBlob = await generateEmptySeasonTablePDF(leagueCopy, 5, selectedYear, teamContacts);
+      // Prüfen, ob der Benutzer Vereinsvertreter oder Mannschaftsführer ist
+      const isVereinsvertreterOrMannschaftsfuehrer = 
+        userPermission?.role === 'vereinsvertreter' || 
+        userPermission?.role === 'mannschaftsfuehrer';
+      
+      // PDF generieren (mit Kontaktdaten nur für VV und MF)
+      const pdfBlob = await generateEmptySeasonTablePDF(
+        leagueCopy, 
+        5, 
+        selectedYear, 
+        teamContacts, 
+        isVereinsvertreterOrMannschaftsfuehrer
+      );
       
       // PDF herunterladen
       const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${league.name.replace(/\s+/g, '_')}_Handtabelle_${selectedYear}.pdf`;
+      const filenameSuffix = isVereinsvertreterOrMannschaftsfuehrer ? "_mit_Kontakten" : "";
+      link.download = `${league.name.replace(/\s+/g, '_')}_Handtabelle_${selectedYear}${filenameSuffix}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -273,14 +285,25 @@ export default function HandtabellenPage() {
       // Kontaktdaten laden
       const teamContacts = await fetchTeamContacts(league.id);
       
-      // PDF generieren
-      const pdfBlob = await generateGesamtlistePDF(league, selectedYear, teamContacts);
+      // Prüfen, ob der Benutzer Vereinsvertreter oder Mannschaftsführer ist
+      const isVereinsvertreterOrMannschaftsfuehrer = 
+        userPermission?.role === 'vereinsvertreter' || 
+        userPermission?.role === 'mannschaftsfuehrer';
+      
+      // PDF generieren (mit Kontaktdaten nur für VV und MF)
+      const pdfBlob = await generateGesamtlistePDF(
+        league, 
+        selectedYear, 
+        teamContacts, 
+        isVereinsvertreterOrMannschaftsfuehrer
+      );
       
       // PDF herunterladen
       const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${league.name.replace(/\s+/g, '_')}_Gesamtliste_${selectedYear}.pdf`;
+      const filenameSuffix = isVereinsvertreterOrMannschaftsfuehrer ? "_mit_Kontakten" : "";
+      link.download = `${league.name.replace(/\s+/g, '_')}_Gesamtliste_${selectedYear}${filenameSuffix}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -333,6 +356,11 @@ export default function HandtabellenPage() {
     );
   }
   
+  // Prüfen, ob der Benutzer Vereinsvertreter oder Mannschaftsführer ist
+  const isVereinsvertreterOrMannschaftsfuehrer = 
+    userPermission?.role === 'vereinsvertreter' || 
+    userPermission?.role === 'mannschaftsfuehrer';
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -369,7 +397,8 @@ export default function HandtabellenPage() {
         <CardHeader>
           <CardTitle>Handtabellen für Saisonbeginn</CardTitle>
           <CardDescription>
-            Erstellen Sie leere Tabellen zum Handausfüllen für den Saisonbeginn mit Kontaktdaten der Mannschaftsführer.
+            Erstellen Sie leere Tabellen zum Handausfüllen für den Saisonbeginn
+            {isVereinsvertreterOrMannschaftsfuehrer && " mit Kontaktdaten der Mannschaftsführer"}.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -419,7 +448,8 @@ export default function HandtabellenPage() {
         <CardHeader>
           <CardTitle>Gesamtliste für Kreisoberliga KK 50</CardTitle>
           <CardDescription>
-            Erstellen Sie eine Gesamtliste für die Kreisoberliga KK 50 mit Kontaktdaten der Mannschaftsführer.
+            Erstellen Sie eine Gesamtliste für die Kreisoberliga KK 50
+            {isVereinsvertreterOrMannschaftsfuehrer && " mit Kontaktdaten der Mannschaftsführer"}.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -480,21 +510,29 @@ export default function HandtabellenPage() {
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>Die Handtabellen enthalten:</p>
           <ul className="list-disc list-inside ml-2 space-y-1">
-            <li>Kontaktdaten der Mannschaftsführer</li>
             <li>Wettkampfplan mit Platz für Ort, Datum und Uhrzeit</li>
             <li>Leere Tabelle für Einzelschützen-Rangliste</li>
+            {isVereinsvertreterOrMannschaftsfuehrer && <li>Kontaktdaten der Mannschaftsführer</li>}
           </ul>
           
           <p className="mt-4">Die Gesamtliste für die Kreisoberliga KK 50 enthält:</p>
           <ul className="list-disc list-inside ml-2 space-y-1">
             <li>Mannschaftsnamen und zugehörige Schützen</li>
-            <li>Kontaktdaten der Mannschaftsführer</li>
+            {isVereinsvertreterOrMannschaftsfuehrer && <li>Kontaktdaten der Mannschaftsführer</li>}
             <li>Spalten für Ringe und Gesamtergebnisse für 4 Durchgänge</li>
             <li>Platz für Einzelschützen</li>
             <li>Abgabetermin: 15. August {selectedYear}</li>
           </ul>
           
           <p className="mt-4">Die Tabellen werden im PDF-Format erstellt und können ausgedruckt werden.</p>
+          
+          {isVereinsvertreterOrMannschaftsfuehrer && (
+            <p className="mt-4 text-amber-600">
+              <strong>Hinweis:</strong> Als {userPermission?.role === 'vereinsvertreter' ? 'Vereinsvertreter' : 'Mannschaftsführer'} 
+              erhalten Sie eine Version mit den Kontaktdaten der Mannschaftsführer. 
+              Bitte behandeln Sie diese Daten vertraulich.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

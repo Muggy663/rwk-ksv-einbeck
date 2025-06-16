@@ -99,7 +99,8 @@ export default function EditDocumentPage({ params }: EditDocumentPageProps) {
     date: document.date,
     fileType: document.fileType,
     fileSize: document.fileSize,
-    active: document.active
+    active: document.active,
+    restricted: document.restricted
   };
 
   return (
