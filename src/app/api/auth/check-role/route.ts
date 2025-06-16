@@ -1,7 +1,7 @@
 // src/app/api/auth/check-role/route.ts
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase/auth';
-import { db } from '@/lib/firebase/config';
+import { auth } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 export async function GET(request: Request) {

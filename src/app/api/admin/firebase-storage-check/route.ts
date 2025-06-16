@@ -8,9 +8,21 @@ async function checkFirestoreUsage() {
   try {
     // Firebase Admin initialisieren, falls noch nicht geschehen
     if (getApps().length === 0) {
-      const serviceAccount = JSON.parse(
-        process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}'
-      );
+      const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}';
+      let serviceAccount;
+      
+      try {
+        serviceAccount = JSON.parse(serviceAccountKey);
+      } catch (e) {
+        console.error('Fehler beim Parsen des Service Account Keys:', e);
+        throw new Error('Ungültiger Service Account Key');
+      }
+      
+      // Überprüfe, ob project_id vorhanden ist
+      if (!serviceAccount.project_id) {
+        console.error('Service Account fehlt project_id');
+        throw new Error('Service Account muss eine project_id enthalten');
+      }
       
       initializeApp({
         credential: cert(serviceAccount)

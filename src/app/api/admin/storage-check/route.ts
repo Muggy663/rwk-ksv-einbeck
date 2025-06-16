@@ -4,9 +4,10 @@ import { MongoClient } from 'mongodb';
 const STORAGE_THRESHOLD_MB = 450;
 
 async function checkStorageUsage(mongoUri: string) {
-  const client = new MongoClient(mongoUri);
+  let client: MongoClient | null = null;
   
   try {
+    client = new MongoClient(mongoUri);
     await client.connect();
     
     // Hole nur die Statistiken für die rwk_einbeck-Datenbank
@@ -38,7 +39,8 @@ async function checkStorageUsage(mongoUri: string) {
       isNearLimit,
       limit: 512,
       threshold: STORAGE_THRESHOLD_MB,
-      percentUsed: Math.min(percentUsed, 100) // Begrenze auf maximal 100%
+      percentUsed: Math.min(percentUsed, 100), // Begrenze auf maximal 100%
+      stats
     };
   } catch (error) {
     console.error('Fehler beim Abrufen der Datenbankstatistiken:', error);
@@ -52,7 +54,13 @@ async function checkStorageUsage(mongoUri: string) {
       error: 'Fehler beim Abrufen der Datenbankstatistiken'
     };
   } finally {
-    await client.close();
+    if (client) {
+      try {
+        await client.close();
+      } catch (error) {
+        console.error('Fehler beim Schließen der MongoDB-Verbindung:', error);
+      }
+    }
   }
 }
 
@@ -61,6 +69,7 @@ export async function GET() {
     const mongoUri = process.env.MONGODB_URI;
     
     if (!mongoUri) {
+      console.error('MongoDB URI nicht konfiguriert');
       return NextResponse.json(
         { error: 'MongoDB URI nicht konfiguriert' },
         { status: 500 }
