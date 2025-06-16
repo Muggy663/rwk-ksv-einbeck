@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.8.3"; // Aktualisierte Version für Beta-Release
+  const version = "0.8.4"; // Aktualisierte Version für Beta-Release mit UI-Verbesserungen
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

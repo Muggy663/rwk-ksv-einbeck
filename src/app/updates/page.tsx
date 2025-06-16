@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function UpdatesPage() {
+  // Version 0.8.4 - UI-Modernisierung und Verbesserungen
   return (
     <div className="container py-8 max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-primary">Updates & Changelog</h1>
@@ -19,7 +20,7 @@ export default function UpdatesPage() {
           <Card className="border-primary/20">
             <CardHeader className="bg-primary/5">
               <CardTitle className="text-xl text-primary flex items-center justify-between">
-                <span>Version 0.8.3 (15. Juni 2025)</span>
+                <span>Version 0.8.4 (16. Juni 2025)</span>
                 <span className="text-sm bg-primary/20 px-2 py-1 rounded-full flex items-center gap-1">
                   <span>Aktuell</span>
                   <span className="bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded">Beta</span>
@@ -29,43 +30,17 @@ export default function UpdatesPage() {
             <CardContent className="pt-6">
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">"Außer Konkurrenz"-Funktion</h3>
+                  <h3 className="text-lg font-semibold mb-2">UI-Modernisierung</h3>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li>Neu: Mannschaften können als "außer Konkurrenz" markiert werden</li>
-                    <li>Neu: Anzeige eines "AK"-Badges in Tabellen mit Tooltip für den Grund</li>
-                    <li>Neu: Migrationsfunktion für bestehende Teams</li>
-                    <li>Neu: Admin-Seite für Migration unter `/admin/migrations`</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">TypeScript-Optimierung</h3>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Verbessert: TypeScript-Konfiguration mit strengeren Typprüfungen</li>
-                    <li>Verbessert: ESLint-Konfiguration für TypeScript mit erweiterten Regeln</li>
-                    <li>Neu: Konvertierung von JavaScript-Hooks zu TypeScript mit expliziten Typdefinitionen</li>
-                    <li>Neu: Erweiterte zentrale Typdefinitionen für bessere Codequalität</li>
-                    <li>Verbessert: Test-Utilities mit erweiterten Optionen für Routing und State-Management</li>
-                    <li>Neu: Dokumentation für TypeScript-Best-Practices und Vercel-Deployment</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Verbesserungen</h3>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Neu: "Nicht zugewiesen" Filter für Ligen in der Mannschaftsverwaltung</li>
-                    <li>Behoben: RWK-Tabellen können jetzt vollständig minimiert werden</li>
-                    <li>Verbessert: Entwicklungsdokumentation für bessere Nachvollziehbarkeit</li>
-                    <li>Verbessert: Mannschaftsverwaltung behält Saison-Auswahl nach dem Speichern bei</li>
-                    <li>Behoben: Problem mit dem Speichern von Mannschaften mit "Außer Konkurrenz"-Status</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Technische Optimierungen</h3>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Neu: Migration von JavaScript-Services zu TypeScript für bessere Typsicherheit</li>
-                    <li>Verbessert: Entfernung doppelter und ungenutzter Dateien für schlankere Projektstruktur</li>
-                    <li>Verbessert: Optimierte Projektstruktur mit konsistenten Dateiendungen</li>
-                    <li>Neu: Aktualisierte Dokumentation mit Aufräumplan für zukünftige Verbesserungen</li>
-                    <li>Verbessert: Reduzierte Projektgröße durch Entfernung temporärer und Backup-Dateien</li>
+                    <li>Neu: Modernes Dashboard-Layout mit abgerundeten Karten und subtilen Schatten</li>
+                    <li>Neu: Optimierte mobile Ansicht für Tabellen und Touch-freundliche Bedienelemente</li>
+                    <li>Neu: Verbesserte visuelle Hierarchie mit Farbakzenten für wichtige Aktionen</li>
+                    <li>Neu: Interaktive Diagramme für Ergebnistrends mit Leistungsindikatoren</li>
+                    <li>Neu: Farbkodierte Leistungsindikatoren (grün für Verbesserung, rot für Verschlechterung)</li>
+                    <li>Neu: Platzhalter für Benachrichtigungssystem für wichtige Updates</li>
+                    <li>Verbessert: Konsistente Farbpalette mit Hauptfarbton und Akzentfarben</li>
+                    <li>Verbessert: Mehr Weißraum zwischen Elementen für bessere Lesbarkeit</li>
+                    <li>Hervorgehoben: Progressive Web App (PWA) Funktionalität bereits integriert</li>
                   </ul>
                 </div>
               </div>
@@ -76,6 +51,56 @@ export default function UpdatesPage() {
         <TabsContent value="previous" className="space-y-4">
           <ScrollArea className="h-[600px] pr-4">
             <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">Version 0.8.3 (15. Juni 2025)</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">"Außer Konkurrenz"-Funktion</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neu: Mannschaften können als "außer Konkurrenz" markiert werden</li>
+                        <li>Neu: Anzeige eines "AK"-Badges in Tabellen mit Tooltip für den Grund</li>
+                        <li>Neu: Migrationsfunktion für bestehende Teams</li>
+                        <li>Neu: Admin-Seite für Migration unter `/admin/migrations`</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">TypeScript-Optimierung</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Verbessert: TypeScript-Konfiguration mit strengeren Typprüfungen</li>
+                        <li>Verbessert: ESLint-Konfiguration für TypeScript mit erweiterten Regeln</li>
+                        <li>Neu: Konvertierung von JavaScript-Hooks zu TypeScript mit expliziten Typdefinitionen</li>
+                        <li>Neu: Erweiterte zentrale Typdefinitionen für bessere Codequalität</li>
+                        <li>Verbessert: Test-Utilities mit erweiterten Optionen für Routing und State-Management</li>
+                        <li>Neu: Dokumentation für TypeScript-Best-Practices und Vercel-Deployment</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Verbesserungen</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neu: "Nicht zugewiesen" Filter für Ligen in der Mannschaftsverwaltung</li>
+                        <li>Behoben: RWK-Tabellen können jetzt vollständig minimiert werden</li>
+                        <li>Verbessert: Entwicklungsdokumentation für bessere Nachvollziehbarkeit</li>
+                        <li>Verbessert: Mannschaftsverwaltung behält Saison-Auswahl nach dem Speichern bei</li>
+                        <li>Behoben: Problem mit dem Speichern von Mannschaften mit "Außer Konkurrenz"-Status</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Technische Optimierungen</h3>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Neu: Migration von JavaScript-Services zu TypeScript für bessere Typsicherheit</li>
+                        <li>Verbessert: Entfernung doppelter und ungenutzter Dateien für schlankere Projektstruktur</li>
+                        <li>Verbessert: Optimierte Projektstruktur mit konsistenten Dateiendungen</li>
+                        <li>Neu: Aktualisierte Dokumentation mit Aufräumplan für zukünftige Verbesserungen</li>
+                        <li>Verbessert: Reduzierte Projektgröße durch Entfernung temporärer und Backup-Dateien</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
               <Card>
                 <CardHeader>
                   <CardTitle className="text-xl">Version 0.8.2 (10. Juni 2025)</CardTitle>

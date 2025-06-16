@@ -133,6 +133,24 @@ export default function HomePage() {
 
       <Separator className="my-6" />
 
+      {/* App-Installation Hinweis */}
+      <div className="bg-gradient-to-r from-blue-500 to-blue-700 text-white p-4 rounded-lg shadow-lg mb-6 transform hover:scale-[1.01] transition-all">
+        <div className="flex items-center">
+          <div className="bg-white p-3 rounded-full mr-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+              <path d="M12 2H2v10h10V2z"></path>
+              <path d="M22 12h-10v10h10V12z"></path>
+              <path d="M12 12H2v10h10V12z"></path>
+              <path d="M22 2h-10v10h10V2z"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold mb-1">NEU: RWK App auf Ihrem Smartphone installieren!</h2>
+            <p className="text-blue-100">Sie können diese Website jetzt direkt auf Ihrem Smartphone als App installieren. Tippen Sie in Ihrem Browser auf "Zum Startbildschirm hinzufügen" für schnelleren Zugriff und bessere Bedienung.</p>
+          </div>
+        </div>
+      </div>
+
       {/* Karten-Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Letzte Ergebnis-Updates */}
