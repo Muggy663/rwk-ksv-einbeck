@@ -1,0 +1,81 @@
+{
+  "documents": [
+    {
+      "id": "2",
+      "title": "Ausschreibung RWK Kleinkaliber 2025",
+      "description": "Offizielle Ausschreibung für den Rundenwettkampf Kleinkaliber der Saison 2025",
+      "path": "/documents/ausschreibungen/ausschreibung_kk_2025.pdf",
+      "category": "ausschreibung",
+      "date": "15. März 2025",
+      "fileType": "PDF",
+      "fileSize": "230 KB",
+      "active": true
+    },
+    {
+      "id": "3",
+      "title": "Mannschaftsmeldebogen",
+      "description": "Formular zur Meldung von Mannschaften für den Rundenwettkampf",
+      "path": "/documents/formulare/Mannschaftsmeldebogen.pdf",
+      "category": "formular",
+      "date": "10. Januar 2025",
+      "fileType": "PDF",
+      "fileSize": "125 KB",
+      "active": true
+    },
+    {
+      "id": "4",
+      "title": "Ergebnismeldebogen (Papierform)",
+      "description": "Formular zur manuellen Erfassung von Wettkampfergebnissen",
+      "path": "/documents/formulare/Ergebnismeldebogen_(Papierform).pdf",
+      "category": "formular",
+      "date": "10. Januar 2025",
+      "fileType": "PDF",
+      "fileSize": "110 KB",
+      "active": false
+    },
+    {
+      "id": "5",
+      "title": "RWK-Ordnung KSV Einbeck",
+      "description": "Aktuelle Rundenwettkampfordnung des Kreisschützenverbandes Einbeck",
+      "path": "/rwk-ordnung",
+      "category": "ordnung",
+      "date": "1. Januar 2025",
+      "fileType": "Webseite",
+      "fileSize": "-",
+      "active": true
+    },
+    {
+      "id": "6",
+      "title": "Benutzerhandbuch RWK Einbeck App",
+      "description": "Ausführliche Anleitung zur Nutzung der RWK Einbeck App",
+      "path": "/handbuch",
+      "category": "ordnung",
+      "date": "24. Mai 2025",
+      "fileType": "Webseite",
+      "fileSize": "-",
+      "active": true
+    },
+    {
+      "id": "7",
+      "title": "Ausschreibung RWK Luftdruck 2024",
+      "description": "Archivierte Ausschreibung für den Rundenwettkampf Luftdruck der Saison 2024",
+      "path": "/documents/archiv/Ausschreibung RWK Luftdruck 2024.pdf",
+      "category": "archiv",
+      "date": "15. April 2024",
+      "fileType": "PDF",
+      "fileSize": "240 KB",
+      "active": false
+    },
+    {
+      "id": "8",
+      "title": "Ausschreibung RWK Kleinkaliber 2024",
+      "description": "Archivierte Ausschreibung für den Rundenwettkampf Kleinkaliber der Saison 2024",
+      "path": "/documents/archiv/Ausschreibung RWK Kleinkaliber 2024.pdf",
+      "category": "archiv",
+      "date": "15. März 2024",
+      "fileType": "PDF",
+      "fileSize": "225 KB",
+      "active": false
+    }
+  ]
+}
