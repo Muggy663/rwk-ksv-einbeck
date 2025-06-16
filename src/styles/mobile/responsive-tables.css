@@ -1,0 +1,81 @@
+/* Mobile-optimierte Tabellendarstellung */
+@media (max-width: 768px) {
+  /* Allgemeine Tabellen-Anpassungen */
+  .responsive-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Spezifische Anpassungen für RWK-Tabellen */
+  .rwk-table-container {
+    margin: 0 -1rem;
+    padding: 0 1rem;
+    width: calc(100% + 2rem);
+  }
+
+  .rwk-table th, 
+  .rwk-table td {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  /* Verstecke weniger wichtige Spalten auf kleinen Bildschirmen */
+  .rwk-table .hide-on-mobile {
+    display: none;
+  }
+
+  /* Statistik-Tabellen */
+  .statistics-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Verbesserte Touch-Interaktionen */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Verbesserte Lesbarkeit auf kleinen Bildschirmen */
+  .mobile-text-sm {
+    font-size: 0.875rem;
+  }
+
+  .mobile-text-xs {
+    font-size: 0.75rem;
+  }
+}
+
+/* Verbesserte Touch-Interaktionen für Diagramme */
+@media (max-width: 768px) {
+  .recharts-wrapper {
+    touch-action: pan-y;
+  }
+
+  .recharts-tooltip-wrapper {
+    padding: 8px;
+  }
+
+  .recharts-default-tooltip {
+    padding: 8px !important;
+    border-radius: 6px !important;
+  }
+
+  .recharts-tooltip-item {
+    margin-bottom: 4px !important;
+  }
+
+  /* Größere Klickbereiche für Diagramm-Elemente */
+  .recharts-layer {
+    cursor: pointer;
+  }
+
+  .recharts-active-dot {
+    r: 6;
+  }
+}
