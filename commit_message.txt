@@ -1,0 +1,8 @@
+fix: Druckfunktion für RWK-Tabellen verbessert
+
+- Behebt Kompatibilitätsprobleme mit React 18 und findDOMNode
+- Implementiert eigene Drucklösung ohne externe Bibliotheken
+- Fügt Dummy-Daten für die Druckansicht hinzu (wegen Berechtigungseinschränkungen)
+- Aktualisiert Dokumentation und Handbuch mit Hinweisen zu Dummy-Daten
+- Erhöht Versionsnummer auf 0.5.1
+- Aktualisiert Changelog, Admin-Agenda und Fortschrittsnotizen
