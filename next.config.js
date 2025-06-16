@@ -39,6 +39,10 @@ const nextConfig = {
       },
     ];
   },
+  // Aktiviere den Webpack Build Worker
+  experimental: {
+    webpackBuildWorker: true
+  }
 };
 
 module.exports = nextConfig;
