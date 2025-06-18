@@ -1,57 +1,42 @@
-/**
- * Komponente für barrierefreie Live-Ankündigungen
- */
 "use client";
 
-import React, { useEffect, useState } from 'react';
-
-type PolitenessLevel = 'polite' | 'assertive' | 'off';
+import React, { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 interface AriaLiveProps {
-  message?: string;
-  politeness?: PolitenessLevel;
-  timeout?: number;
+  message: string;
+  assertive?: boolean;
+  clearAfter?: number; // Zeit in Millisekunden, nach der die Nachricht gelöscht wird
   className?: string;
 }
 
-/**
- * Komponente für barrierefreie Live-Ankündigungen
- */
 export function AriaLive({
   message,
-  politeness = 'polite',
-  timeout = 5000,
-  className = 'sr-only', // Screen-Reader-only by default
+  assertive = false,
+  clearAfter,
+  className,
 }: AriaLiveProps) {
-  const [announcement, setAnnouncement] = useState<string>('');
-  
+  const [liveMessage, setLiveMessage] = useState(message);
+
   useEffect(() => {
-    if (!message) return;
-    
-    // Setze die Nachricht
-    setAnnouncement(message);
-    
-    // Entferne die Nachricht nach dem Timeout
-    if (timeout > 0) {
+    setLiveMessage(message);
+
+    if (clearAfter && message) {
       const timer = setTimeout(() => {
-        setAnnouncement('');
-      }, timeout);
-      
+        setLiveMessage('');
+      }, clearAfter);
+
       return () => clearTimeout(timer);
     }
-    
-    return undefined;
-  }, [message, timeout]);
-  
-  if (!announcement) return null;
-  
+  }, [message, clearAfter]);
+
   return (
-    <div 
-      aria-live={politeness}
+    <div
+      className={cn('sr-only', className)}
+      aria-live={assertive ? 'assertive' : 'polite'}
       aria-atomic="true"
-      className={className}
     >
-      {announcement}
+      {liveMessage}
     </div>
   );
 }

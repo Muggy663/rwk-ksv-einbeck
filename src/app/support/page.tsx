@@ -186,8 +186,8 @@ export default function SupportPage() {
       ) : (
         <Card className="shadow-lg max-w-2xl mx-auto">
           <CardHeader>
-            <CardTitle className="text-2xl text-accent">Support-Anfrage senden</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl text-primary font-bold">Support-Anfrage senden</CardTitle>
+            <CardDescription className="text-muted-foreground font-medium">
               Fülle das Formular aus, um uns deine Frage oder dein Problem mitzuteilen.
             </CardDescription>
           </CardHeader>
@@ -195,7 +195,7 @@ export default function SupportPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="name">Dein Name</Label>
+                  <Label htmlFor="name" className="font-medium">Dein Name</Label>
                   <Input 
                     id="name" 
                     placeholder="Max Mustermann" 
@@ -204,7 +204,7 @@ export default function SupportPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="email">Deine E-Mail Adresse</Label>
+                  <Label htmlFor="email" className="font-medium">Deine E-Mail Adresse</Label>
                   <Input 
                     id="email" 
                     type="email" 
@@ -216,7 +216,7 @@ export default function SupportPage() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="subject">Betreff</Label>
+                <Label htmlFor="subject" className="font-medium">Betreff</Label>
                 <Input 
                   id="subject" 
                   placeholder="z.B. Problem mit Ergebniserfassung" 
@@ -226,7 +226,7 @@ export default function SupportPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="message">Deine Nachricht</Label>
+                <Label htmlFor="message" className="font-medium">Deine Nachricht</Label>
                 <Textarea
                   id="message"
                   placeholder="Bitte beschreibe dein Problem möglichst detailliert. Bei Fehlern oder Problemen beschreibe die Schritte, die zum Problem führen."
@@ -240,7 +240,7 @@ export default function SupportPage() {
                 </p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="screenshot">Screenshot hochladen (optional)</Label>
+                <Label htmlFor="screenshot" className="font-medium">Screenshot hochladen (optional)</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     ref={fileInputRef}

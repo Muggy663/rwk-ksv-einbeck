@@ -134,7 +134,7 @@ export default function HomePage() {
       <Separator className="my-6" />
 
       {/* App-Installation Hinweis */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-700 text-white p-4 rounded-lg shadow-lg mb-6 transform hover:scale-[1.01] transition-all">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-700 p-4 rounded-lg shadow-lg mb-6 transform hover:scale-[1.01] transition-all">
         <div className="flex items-center">
           <div className="bg-white p-3 rounded-full mr-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
@@ -145,8 +145,8 @@ export default function HomePage() {
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-bold mb-1">NEU: RWK App auf Ihrem Smartphone installieren!</h2>
-            <p className="text-blue-100">Sie können diese Website jetzt direkt auf Ihrem Smartphone als App installieren. Tippen Sie in Ihrem Browser auf "Zum Startbildschirm hinzufügen" für schnelleren Zugriff und bessere Bedienung.</p>
+            <h2 className="text-xl font-bold mb-1 text-white">NEU: RWK App auf Ihrem Smartphone installieren!</h2>
+            <p className="text-white">Sie können diese Website jetzt direkt auf Ihrem Smartphone als App installieren. Tippen Sie in Ihrem Browser auf "Zum Startbildschirm hinzufügen" für schnelleren Zugriff und bessere Bedienung.</p>
           </div>
         </div>
       </div>
@@ -157,10 +157,10 @@ export default function HomePage() {
         <Card className="md:col-span-2 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <ListChecks className="h-7 w-7 text-accent" />
-              <CardTitle className="text-2xl text-accent">Letzte Ergebnis-Updates</CardTitle>
+              <ListChecks className="h-7 w-7 text-primary" />
+              <CardTitle className="text-2xl text-primary font-bold">Letzte Ergebnis-Updates</CardTitle>
             </div>
-            <CardDescription>
+            <CardDescription className="text-muted-foreground dark:text-muted-foreground">
               Die neuesten Aktualisierungen der Ergebnistabellen.
             </CardDescription>
           </CardHeader>
@@ -171,7 +171,7 @@ export default function HomePage() {
                 <p className="ml-3 text-muted-foreground">Lade Updates...</p>
               </div>
             ) : updates.length > 0 ? (
-              <ul className="space-y-4">
+              <ul className="space-y-4 text-foreground dark:text-foreground">
                 {updates.map((update) => {
                   const uiDiscValueForLink = getUIDisciplineValueFromSpecificType(update.leagueType);
                   const disciplineOption = uiDisciplineFilterOptions.find(opt => opt.firestoreTypes.includes(update.leagueType));
@@ -185,10 +185,10 @@ export default function HomePage() {
                     <li key={update.id} className="p-4 bg-muted/50 rounded-md shadow-sm hover:bg-muted/70 transition-colors">
                       <Link href={linkHref} className="block hover:text-primary">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                          <p className="text-md font-medium text-foreground">
-                            Ergebnisse in der Liga <strong className="text-primary">{update.leagueName} {uiDiscDisplayLabel ? `(${uiDiscDisplayLabel})` : ''}</strong> ({update.competitionYear}) hinzugefügt.
+                          <p className="text-md font-medium text-foreground dark:text-foreground">
+                            Ergebnisse in der Liga <strong className="text-primary dark:text-primary">{update.leagueName} {uiDiscDisplayLabel ? `(${uiDiscDisplayLabel})` : ''}</strong> ({update.competitionYear}) hinzugefügt.
                           </p>
-                          <p className="text-xs text-muted-foreground mt-1 sm:mt-0">
+                          <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1 sm:mt-0">
                             {update.timestamp ? format((update.timestamp instanceof Timestamp ? update.timestamp : Timestamp.fromDate(new Date(update.timestamp))).toDate(), 'dd. MMMM yyyy, HH:mm', { locale: de }) : '-'} Uhr
                           </p>
                         </div>

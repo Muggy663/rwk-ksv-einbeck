@@ -21,7 +21,8 @@ import {
   FileText,
   MessageSquare,
   Bell,
-  Clock
+  Clock,
+  Settings
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -130,6 +131,12 @@ export function MainNav() {
       label: 'Support',
       icon: <MessageSquare className="h-4 w-4 mr-2" />,
       active: pathname === '/support',
+    },
+    {
+      href: '/einstellungen',
+      label: 'Einstellungen',
+      icon: <Settings className="h-4 w-4 mr-2" />,
+      active: pathname === '/einstellungen',
     },
   ];
 

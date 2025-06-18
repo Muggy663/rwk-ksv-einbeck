@@ -5,6 +5,9 @@ import { ShooterComparisonSelector, Shooter } from '@/components/statistics/Shoo
 import { ShooterComparisonChart } from '@/components/statistics/ShooterComparisonChart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft } from 'lucide-react';
+import Link from 'next/link';
 import { fetchSeasons, fetchLeagues, fetchShooterPerformanceData } from '@/lib/services/statistics-service';
 
 export default function ShooterComparisonPage() {
@@ -155,7 +158,15 @@ export default function ShooterComparisonPage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-primary">Schützenvergleich</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-primary">Schützenvergleich</h1>
+        <Button asChild variant="outline">
+          <Link href="/statistik" className="flex items-center">
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Zurück zur Übersicht
+          </Link>
+        </Button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div>

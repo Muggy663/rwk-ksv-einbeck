@@ -1,50 +1,45 @@
-/**
- * Barrierefreier Button für nicht-Button-Elemente
- */
 "use client";
 
-import React, { KeyboardEvent, MouseEvent } from 'react';
+import React, { forwardRef } from 'react';
+import { Button, ButtonProps } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
-interface A11yButtonProps extends React.HTMLAttributes<HTMLDivElement> {
-  onClick?: (e: MouseEvent<HTMLDivElement>) => void;
-  label?: string;
-  disabled?: boolean;
-  children: React.ReactNode;
-  className?: string;
+interface A11yButtonProps extends ButtonProps {
+  ariaLabel?: string;
+  tooltipText?: string;
+  keyboardShortcut?: string;
 }
 
-/**
- * Macht ein Element zu einem barrierefreien Button
- */
-export function A11yButton({
-  onClick,
-  label,
-  disabled = false,
-  children,
-  className = '',
-  ...props
-}: A11yButtonProps) {
-  // Tastatur-Handler für Enter und Space
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (disabled) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onClick && onClick(e as unknown as MouseEvent<HTMLDivElement>);
-    }
-  };
+export const A11yButton = forwardRef<HTMLButtonElement, A11yButtonProps>(
+  ({ className, children, ariaLabel, tooltipText, keyboardShortcut, ...props }, ref) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      // Verbesserte Tastaturunterstützung
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.currentTarget.click();
+      }
+    };
 
-  return (
-    <div
-      role="button"
-      tabIndex={disabled ? -1 : 0}
-      aria-label={label}
-      aria-disabled={disabled}
-      onClick={disabled ? undefined : onClick}
-      onKeyDown={handleKeyDown}
-      className={`${className} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
+    return (
+      <Button
+        ref={ref}
+        className={cn(
+          'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+          'transition-all duration-200',
+          'aria-disabled:opacity-50 aria-disabled:cursor-not-allowed',
+          className
+        )}
+        aria-label={ariaLabel}
+        title={tooltipText || ariaLabel}
+        data-keyboard-shortcut={keyboardShortcut}
+        onKeyDown={handleKeyDown}
+        {...props}
+      >
+        {children}
+        {keyboardShortcut && (
+          <span className="sr-only"> (Tastaturkürzel: {keyboardShortcut})</span>
+        )}
+      </Button>
+    );
+  }
+);

@@ -1,0 +1,17 @@
+/* Verbesserte Überschriften für besseren Kontrast */
+.text-accent {
+  color: hsl(var(--primary)) !important;
+  font-weight: 700 !important;
+}
+
+/* Verbesserte Lesbarkeit für Tabellen */
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+}
+
+/* Verbesserte Lesbarkeit für Überschriften in Karten */
+.card-title {
+  color: hsl(var(--primary));
+  font-weight: 700;
+}

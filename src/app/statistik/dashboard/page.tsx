@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { Download } from 'lucide-react';
+import { Download, ChevronLeft } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
@@ -218,7 +219,15 @@ export default function StatistikDashboardPage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-primary">Statistik-Dashboard</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-primary">Statistik-Dashboard</h1>
+        <Button asChild variant="outline">
+          <Link href="/statistik" className="flex items-center">
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Zurück zur Übersicht
+          </Link>
+        </Button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div>
