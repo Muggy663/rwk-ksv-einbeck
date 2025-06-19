@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { Download, ChevronLeft } from 'lucide-react';
+import { Download, ChevronLeft, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,6 +18,9 @@ import {
   fetchTeamComparisonData, 
   fetchGenderDistributionData
 } from '@/lib/services/statistics-service';
+import { CrossSeasonStats } from '@/components/statistics/cross-season-stats';
+import { LeagueTrendAnalysis } from '@/components/statistics/LeagueTrendAnalysis';
+import { TrendAnalysis } from '@/components/statistics/TrendAnalysis';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
@@ -294,10 +297,12 @@ export default function StatistikDashboardPage() {
       </div>
       
       <Tabs defaultValue="performance" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
+        <TabsList className="grid w-full grid-cols-5 mb-8">
           <TabsTrigger value="performance">Leistungsentwicklung</TabsTrigger>
           <TabsTrigger value="comparison">Mannschaftsvergleich</TabsTrigger>
           <TabsTrigger value="distribution">Geschlechterverteilung</TabsTrigger>
+          <TabsTrigger value="trends">Saisonvergleich</TabsTrigger>
+          <TabsTrigger value="trend-analysis">Trendanalyse</TabsTrigger>
         </TabsList>
         
         <TabsContent value="performance">
@@ -470,6 +475,18 @@ export default function StatistikDashboardPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="trends">
+          <CrossSeasonStats />
+        </TabsContent>
+        
+        <TabsContent value="trend-analysis">
+          <TrendAnalysis 
+            seasonId={selectedSeason} 
+            leagueId={selectedLeague} 
+            clubId={selectedClub} 
+          />
         </TabsContent>
       </Tabs>
     </div>

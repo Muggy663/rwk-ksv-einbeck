@@ -22,7 +22,8 @@ import {
   MessageSquare,
   Bell,
   Clock,
-  Settings
+  Settings,
+  TrendingUp
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -97,10 +98,10 @@ export function MainNav() {
       active: pathname === '/rwk-tabellen',
     },
     {
-      href: '/statistik',
-      label: 'Statistik',
-      icon: <BarChart3 className="h-4 w-4 mr-2" />,
-      active: pathname === '/statistik',
+      href: '/statistiken',
+      label: 'Statistiken',
+      icon: <TrendingUp className="h-4 w-4 mr-2" />,
+      active: pathname === '/statistiken',
     },
     {
       href: '/termine',

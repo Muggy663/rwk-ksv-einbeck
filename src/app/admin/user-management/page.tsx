@@ -1,4 +1,3 @@
-// src/app/admin/user-management/page.tsx
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -8,13 +7,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Club, UserPermission } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, orderBy, doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-// Cloud Function imports werden nicht mehr für die Kernfunktionalität hier verwendet.
-// import { setUserRoleAndClubClient, getUserDetailsByEmailClient, getUsersWithoutRoleClient } from '@/lib/firebase/functions';
+import { UserList } from './user-list';
+import { CreateUserFormLocal } from '@/components/admin/create-user-form-local';
+import Link from 'next/link';
 
 const CLUBS_COLLECTION = "clubs";
 const USER_PERMISSIONS_COLLECTION = "user_permissions";
@@ -49,6 +50,8 @@ export default function AdminUserManagementPage() {
   const [isLoadingClubs, setIsLoadingClubs] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingDetails, setIsFetchingDetails] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [activeTab, setActiveTab] = useState("create");
 
   useEffect(() => {
     const fetchClubs = async () => {
@@ -158,6 +161,9 @@ export default function AdminUserManagementPage() {
       setFormData({
         uid: '', email: '', displayName: '', role: 'NO_ROLE', selectedClubId: '',
       });
+      
+      // Aktualisiere die Benutzerliste
+      setRefreshTrigger(prev => prev + 1);
 
     } catch (error: any) {
       console.error("Error saving permissions to Firestore:", error);
@@ -165,6 +171,21 @@ export default function AdminUserManagementPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+  
+  const handleEditUser = (user: UserPermission) => {
+    setFormData({
+      uid: user.uid,
+      email: user.email || '',
+      displayName: user.displayName || '',
+      role: user.role || 'NO_ROLE',
+      selectedClubId: user.clubId || '',
+    });
+    setActiveTab("edit");
+  };
+  
+  const handleUserCreated = () => {
+    setRefreshTrigger(prev => prev + 1);
   };
   
   if (!adminUser) { // Einfache Ladeanzeige, bis Admin-User geladen ist
@@ -178,14 +199,108 @@ export default function AdminUserManagementPage() {
         <h1 className="text-3xl font-bold text-primary">Benutzerverwaltung & Berechtigungen</h1>
       </div>
 
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="create">Neuen Benutzer erstellen</TabsTrigger>
+          <TabsTrigger value="edit">Berechtigungen bearbeiten</TabsTrigger>
+          <TabsTrigger value="list">Benutzerübersicht</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="create" className="space-y-4">
+          <CreateUserFormLocal clubs={allClubs} onUserCreated={handleUserCreated} />
+        </TabsContent>
+        
+        <TabsContent value="edit" className="space-y-4">
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-xl text-primary">Berechtigungen für Benutzer zuweisen/ändern</CardTitle>
+              <CardDescription>
+                Weisen Sie einem Benutzer (identifiziert durch seine UID) eine Rolle und einen Verein zu.
+                Die Berechtigungen werden in Firestore (`user_permissions` Collection) gespeichert.
+                E-Mail und Anzeigename dienen hier zur Referenz und sollten mit Firebase Auth übereinstimmen.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmitPermissions} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <div className="space-y-1.5 md:col-span-1">
+                    <Label htmlFor="uid">User-ID (UID) des Benutzers</Label>
+                    <Input id="uid" name="uid" type="text" placeholder="UID aus Firebase Authentication" value={formData.uid} onChange={handleInputChange} required className="font-mono text-xs" />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-1">
+                    <Label htmlFor="email">E-Mail des Benutzers</Label>
+                    <Input id="email" name="email" type="email" placeholder="E-Mail (aus Firebase Auth)" value={formData.email} onChange={handleInputChange} required />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-1">
+                    <Label htmlFor="displayName">Anzeigename (Optional)</Label>
+                    <Input id="displayName" name="displayName" type="text" placeholder="Vorname Nachname" value={formData.displayName} onChange={handleInputChange} />
+                  </div>
+                </div>
+                
+                {isFetchingDetails && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Lade bestehende Berechtigungen...</div>}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="roleSelect">Rolle zuweisen</Label>
+                    <Select 
+                      value={formData.role} 
+                      onValueChange={(value) => handleSelectChange('role', value)}
+                    >
+                      <SelectTrigger id="roleSelect"><SelectValue placeholder="Rolle auswählen" /></SelectTrigger>
+                      <SelectContent>
+                        {ROLES_OPTIONS.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                
+                  <div className="space-y-1.5">
+                    <Label htmlFor="clubIdSelect">Verein zuweisen (nur 1)</Label>
+                    <Select
+                      value={formData.selectedClubId}
+                      onValueChange={(value) => handleSelectChange('selectedClubId', value === "NONE" ? "" : value)}
+                      disabled={isLoadingClubs || allClubs.length === 0}
+                    >
+                      <SelectTrigger id="clubIdSelect"><SelectValue placeholder="Verein wählen" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NONE">- Keinen -</SelectItem>
+                        {allClubs.map(club => <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isSubmitting || isLoadingClubs || !formData.uid.trim() || isFetchingDetails}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Berechtigungen speichern
+                </Button>
+              </form>
+            </CardContent>
+            <CardFooter>
+              <p className="text-xs text-muted-foreground">
+                Stellen Sie sicher, dass die UID, E-Mail und der Anzeigename mit den Daten des Benutzers in Firebase Authentication übereinstimmen, um Verwirrung zu vermeiden.
+                Die hier gespeicherten E-Mail/Namen dienen nur der einfacheren Identifizierung in der `user_permissions`-Tabelle und überschreiben nicht die Auth-Daten.
+              </p>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="list">
+          <UserList 
+            clubs={allClubs} 
+            onEditUser={handleEditUser} 
+            refreshTrigger={refreshTrigger} 
+          />
+        </TabsContent>
+      </Tabs>
+
       <Accordion type="single" collapsible className="w-full" defaultValue="anleitung-benutzeranlage">
         <AccordionItem value="anleitung-benutzeranlage">
-          <AccordionTrigger className="text-lg font-semibold text-accent hover:no-underline">
-            <HelpCircle className="mr-2 h-5 w-5" /> Anleitung: Benutzer manuell anlegen & Berechtigungen zuweisen
+          <AccordionTrigger className="text-lg font-semibold text-primary hover:no-underline">
+            <HelpCircle className="mr-2 h-5 w-5" /> Anleitung: Benutzer anlegen & Berechtigungen zuweisen
           </AccordionTrigger>
           <AccordionContent>
             <div className="p-4 bg-muted/30 rounded-md space-y-3 text-sm">
-              <p className="font-semibold">Workflow zur Benutzerverwaltung (ohne Cloud Functions für die Account-Erstellung):</p>
+              <p className="font-semibold">Workflow zur Benutzerverwaltung:</p>
               <ol className="list-decimal list-inside space-y-2 pl-4">
                 <li>
                   <strong>Schritt 1: Benutzer in Firebase Authentication anlegen (Manuell durch Super-Admin):</strong>
@@ -194,99 +309,31 @@ export default function AdminUserManagementPage() {
                     <li>Navigiere zu "Authentication" -> Tab "Users".</li>
                     <li>Klicke auf "Add user".</li>
                     <li>Gib die E-Mail-Adresse und ein initiales Passwort für den neuen Benutzer ein. Lege optional einen Anzeigenamen fest.</li>
-                    <li>Nach dem Erstellen: **Kopiere die User-ID (UID)** dieses neuen Benutzers. Diese ist entscheidend.</li>
+                    <li>Nach dem Erstellen: <strong>Kopiere die User-ID (UID)</strong> dieses neuen Benutzers. Diese ist entscheidend.</li>
                   </ul>
                 </li>
                 <li>
-                  <strong>Schritt 2: Berechtigungen in dieser App zuweisen (Formular unten):</strong>
+                  <strong>Schritt 2: Berechtigungen in dieser App zuweisen:</strong>
                   <ul className="list-disc list-inside pl-6 text-xs text-muted-foreground space-y-1">
-                    <li>Gib die kopierte **User-ID (UID)** in das Feld "User-ID (UID) des Benutzers" unten ein. Die App versucht, bestehende Daten zu laden oder ein neues Profil anzulegen.</li>
-                    <li>Gib die **E-Mail** und den **Anzeigenamen** des Benutzers ein (diese werden zur Referenz in den Berechtigungen gespeichert und müssen mit den Daten aus Firebase Auth übereinstimmen, um Verwirrung zu vermeiden).</li>
-                    <li>Wähle die gewünschte Rolle (z.B. "Vereinsvertreter", "Mannschaftsführer" oder "Keine Rolle").</li>
+                    <li>Wechsle zum Tab "Neuen Benutzer erstellen".</li>
+                    <li>Gib die kopierte <strong>User-ID (UID)</strong> in das entsprechende Feld ein.</li>
+                    <li>Gib die <strong>E-Mail</strong> und den <strong>Anzeigenamen</strong> des Benutzers ein.</li>
+                    <li>Wähle die gewünschte Rolle (z.B. "Vereinsvertreter", "Mannschaftsführer").</li>
                     <li>Wähle den Verein aus, den der Benutzer verwalten darf.</li>
-                    <li>Klicke auf "Berechtigungen speichern". Die Berechtigungen werden in der Firestore-Collection `user_permissions` unter der UID des Benutzers gespeichert.</li>
+                    <li>Klicke auf "Berechtigungen speichern".</li>
                   </ul>
                 </li>
                 <li>
-                  <strong>Schritt 3: Benutzer informieren:</strong> Teile dem Benutzer seine Anmeldedaten (E-Mail und initiales Passwort) mit und weise ihn ggf. darauf hin, sein Passwort nach dem ersten Login zu ändern (Funktion dafür noch nicht implementiert).
+                  <strong>Schritt 3: Benutzer informieren:</strong> Teile dem Benutzer seine Anmeldedaten (E-Mail und initiales Passwort) mit und weise ihn darauf hin, sein Passwort nach dem ersten Login zu ändern.
                 </li>
               </ol>
+              <p className="mt-4 text-amber-700 font-medium">
+                <strong>Hinweis:</strong> Da Sie den kostenlosen Spark-Plan verwenden, ist die automatische Benutzererstellung nicht verfügbar. Sie müssen Benutzer manuell in der Firebase Console erstellen und dann hier die Berechtigungen zuweisen.
+              </p>
             </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-xl text-accent">Berechtigungen für Benutzer zuweisen/ändern</CardTitle>
-          <CardDescription>
-            Weisen Sie einem Benutzer (identifiziert durch seine UID) eine Rolle und einen Verein zu.
-            Die Berechtigungen werden in Firestore (`user_permissions` Collection) gespeichert.
-            E-Mail und Anzeigename dienen hier zur Referenz und sollten mit Firebase Auth übereinstimmen.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmitPermissions} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              <div className="space-y-1.5 md:col-span-1">
-                <Label htmlFor="uid">User-ID (UID) des Benutzers</Label>
-                <Input id="uid" name="uid" type="text" placeholder="UID aus Firebase Authentication" value={formData.uid} onChange={handleInputChange} required className="font-mono text-xs" />
-              </div>
-              <div className="space-y-1.5 md:col-span-1">
-                <Label htmlFor="email">E-Mail des Benutzers</Label>
-                <Input id="email" name="email" type="email" placeholder="E-Mail (aus Firebase Auth)" value={formData.email} onChange={handleInputChange} required />
-              </div>
-              <div className="space-y-1.5 md:col-span-1">
-                <Label htmlFor="displayName">Anzeigename (Optional)</Label>
-                <Input id="displayName" name="displayName" type="text" placeholder="Vorname Nachname" value={formData.displayName} onChange={handleInputChange} />
-              </div>
-            </div>
-            
-            {isFetchingDetails && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Lade bestehende Berechtigungen...</div>}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-              <div className="space-y-1.5">
-                <Label htmlFor="roleSelect">Rolle zuweisen</Label>
-                <Select 
-                  value={formData.role} 
-                  onValueChange={(value) => handleSelectChange('role', value)}
-                >
-                  <SelectTrigger id="roleSelect"><SelectValue placeholder="Rolle auswählen" /></SelectTrigger>
-                  <SelectContent>
-                    {ROLES_OPTIONS.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            
-              <div className="space-y-1.5">
-                <Label htmlFor="clubIdSelect">Verein zuweisen (nur 1)</Label>
-                <Select
-                  value={formData.selectedClubId}
-                  onValueChange={(value) => handleSelectChange('selectedClubId', value === "NONE" ? "" : value)}
-                  disabled={isLoadingClubs || allClubs.length === 0}
-                >
-                  <SelectTrigger id="clubIdSelect"><SelectValue placeholder="Verein wählen" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NONE">- Keinen -</SelectItem>
-                    {allClubs.map(club => <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <Button type="submit" className="w-full" disabled={isSubmitting || isLoadingClubs || !formData.uid.trim() || isFetchingDetails}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Berechtigungen speichern
-            </Button>
-          </form>
-        </CardContent>
-         <CardFooter>
-            <p className="text-xs text-muted-foreground">
-                Stellen Sie sicher, dass die UID, E-Mail und der Anzeigename mit den Daten des Benutzers in Firebase Authentication übereinstimmen, um Verwirrung zu vermeiden.
-                Die hier gespeicherten E-Mail/Namen dienen nur der einfacheren Identifizierung in der `user_permissions`-Tabelle und überschreiben nicht die Auth-Daten.
-            </p>
-        </CardFooter>
-      </Card>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, History, Search, Filter, Calendar, User } from 'lucide-react';
+import { Loader2, History, Search, Filter, Calendar, User, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy, limit, Timestamp } from 'firebase/firestore';
@@ -55,6 +55,9 @@ export function AuditTrail({
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<string>('');
+  const [userFilter, setUserFilter] = useState<string>('');
+  const [uniqueUsers, setUniqueUsers] = useState<{id: string, name: string}[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Lade Audit-Einträge
   useEffect(() => {
@@ -86,6 +89,25 @@ export function AuditTrail({
         
         setAuditEntries(entries);
         setFilteredEntries(entries);
+        
+        // Extrahiere eindeutige Benutzer für den Filter
+        const users = entries.reduce((acc, entry) => {
+          if (entry.userId && entry.userName && !acc.some(u => u.id === entry.userId)) {
+            acc.push({ id: entry.userId, name: entry.userName });
+          }
+          return acc;
+        }, [] as {id: string, name: string}[]);
+        
+        setUniqueUsers(users);
+        
+        // Zeige Meldung, wenn keine Einträge gefunden wurden
+        if (entries.length === 0) {
+          toast({
+            title: 'Keine Einträge gefunden',
+            description: 'Es wurden keine Audit-Einträge in der Datenbank gefunden.',
+            variant: 'default'
+          });
+        }
       } catch (error) {
         console.error('Fehler beim Laden der Audit-Einträge:', error);
         toast({
@@ -99,7 +121,7 @@ export function AuditTrail({
     };
     
     fetchAuditEntries();
-  }, [entityType, entityId, entryLimit, toast]);
+  }, [entityType, entityId, entryLimit, toast, refreshTrigger]);
 
   // Filtern der Einträge basierend auf Suchbegriff und Filtern
   useEffect(() => {
@@ -117,46 +139,58 @@ export function AuditTrail({
     }
     
     // Aktionsfilter
-    if (actionFilter) {
+    if (actionFilter && actionFilter !== 'all-actions') {
       filtered = filtered.filter(entry => entry.action === actionFilter);
     }
     
+    // Benutzerfilter
+    if (userFilter && userFilter !== 'all-users') {
+      filtered = filtered.filter(entry => entry.userId === userFilter);
+    }
+    
     // Datumsfilter
-    if (dateFilter) {
+    if (dateFilter && dateFilter !== 'all-dates') {
       const today = new Date();
       let filterDate = new Date();
       
       switch (dateFilter) {
         case 'today':
-          // Bereits auf heute gesetzt
+          filterDate.setHours(0, 0, 0, 0); // Beginn des heutigen Tages
           break;
         case 'yesterday':
           filterDate.setDate(today.getDate() - 1);
+          filterDate.setHours(0, 0, 0, 0); // Beginn des gestrigen Tages
           break;
         case 'last7days':
           filterDate.setDate(today.getDate() - 7);
+          filterDate.setHours(0, 0, 0, 0); // Beginn des Tages vor 7 Tagen
           break;
         case 'last30days':
           filterDate.setDate(today.getDate() - 30);
+          filterDate.setHours(0, 0, 0, 0); // Beginn des Tages vor 30 Tagen
           break;
-        default:
-          // Kein Filter
-          filterDate = new Date(0); // 1970-01-01
       }
       
       filtered = filtered.filter(entry => {
+        if (!entry.timestamp) return false;
         const entryDate = entry.timestamp.toDate();
         return entryDate >= filterDate;
       });
     }
     
     setFilteredEntries(filtered);
-  }, [searchTerm, actionFilter, dateFilter, auditEntries]);
+  }, [searchTerm, actionFilter, dateFilter, userFilter, auditEntries]);
 
   // Formatiere Zeitstempel für die Anzeige
   const formatTimestamp = (timestamp: Timestamp) => {
-    const date = timestamp.toDate();
-    return format(date, 'dd.MM.yyyy HH:mm:ss', { locale: de });
+    if (!timestamp || !timestamp.toDate) return '-';
+    try {
+      const date = timestamp.toDate();
+      return format(date, 'dd.MM.yyyy HH:mm:ss', { locale: de });
+    } catch (error) {
+      console.error('Fehler beim Formatieren des Zeitstempels:', error);
+      return '-';
+    }
   };
 
   // Generiere eine lesbare Beschreibung der Änderung
@@ -177,59 +211,99 @@ export function AuditTrail({
     }
   };
 
+  // Manuelles Aktualisieren der Audit-Einträge
+  const handleRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   return (
     <div className="space-y-4">
       {showFilters && (
-        <div className="grid gap-4 md:grid-cols-3">
-          <div>
-            <Label htmlFor="search">Suche</Label>
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="search"
-                placeholder="Nach Benutzer, Team oder Beschreibung suchen"
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold">Filter</h2>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Aktualisieren
+            </Button>
+          </div>
+          
+          <div className="grid gap-4 md:grid-cols-4">
+            <div>
+              <Label htmlFor="search">Suche</Label>
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="search"
+                  placeholder="Nach Benutzer, Team oder Beschreibung suchen"
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="action-filter">Aktion</Label>
-            <Select
-              value={actionFilter}
-              onValueChange={setActionFilter}
-            >
-              <SelectTrigger id="action-filter">
-                <SelectValue placeholder="Alle Aktionen" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-actions">Alle Aktionen</SelectItem>
-                <SelectItem value="create">Erstellen</SelectItem>
-                <SelectItem value="update">Aktualisieren</SelectItem>
-                <SelectItem value="delete">Löschen</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label htmlFor="date-filter">Zeitraum</Label>
-            <Select
-              value={dateFilter}
-              onValueChange={setDateFilter}
-            >
-              <SelectTrigger id="date-filter">
-                <SelectValue placeholder="Alle Zeiträume" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-dates">Alle Zeiträume</SelectItem>
-                <SelectItem value="today">Heute</SelectItem>
-                <SelectItem value="yesterday">Gestern</SelectItem>
-                <SelectItem value="last7days">Letzte 7 Tage</SelectItem>
-                <SelectItem value="last30days">Letzte 30 Tage</SelectItem>
-              </SelectContent>
-            </Select>
+            
+            <div>
+              <Label htmlFor="action-filter">Aktion</Label>
+              <Select
+                value={actionFilter}
+                onValueChange={setActionFilter}
+              >
+                <SelectTrigger id="action-filter">
+                  <SelectValue placeholder="Alle Aktionen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-actions">Alle Aktionen</SelectItem>
+                  <SelectItem value="create">Erstellen</SelectItem>
+                  <SelectItem value="update">Aktualisieren</SelectItem>
+                  <SelectItem value="delete">Löschen</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="user-filter">Benutzer</Label>
+              <Select
+                value={userFilter}
+                onValueChange={setUserFilter}
+              >
+                <SelectTrigger id="user-filter">
+                  <SelectValue placeholder="Alle Benutzer" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-users">Alle Benutzer</SelectItem>
+                  {uniqueUsers.map(user => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="date-filter">Zeitraum</Label>
+              <Select
+                value={dateFilter}
+                onValueChange={setDateFilter}
+              >
+                <SelectTrigger id="date-filter">
+                  <SelectValue placeholder="Alle Zeiträume" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-dates">Alle Zeiträume</SelectItem>
+                  <SelectItem value="today">Heute</SelectItem>
+                  <SelectItem value="yesterday">Gestern</SelectItem>
+                  <SelectItem value="last7days">Letzte 7 Tage</SelectItem>
+                  <SelectItem value="last30days">Letzte 30 Tage</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       )}
@@ -251,59 +325,61 @@ export function AuditTrail({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[180px]">Zeitpunkt</TableHead>
-                  <TableHead>Benutzer</TableHead>
-                  <TableHead>Aktion</TableHead>
-                  <TableHead>Details</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredEntries.map(entry => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="font-mono text-xs">
-                      {formatTimestamp(entry.timestamp)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                        {entry.userName || entry.userId || 'Unbekannter Benutzer'}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        entry.action === 'create' ? 'bg-green-100 text-green-800' :
-                        entry.action === 'update' ? 'bg-blue-100 text-blue-800' :
-                        entry.action === 'delete' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {entry.action === 'create' ? 'Erstellt' :
-                         entry.action === 'update' ? 'Aktualisiert' :
-                         entry.action === 'delete' ? 'Gelöscht' :
-                         entry.action}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <p className="text-sm">{getChangeDescription(entry)}</p>
-                        {entry.entityType && (
-                          <p className="text-xs text-muted-foreground">
-                            {entry.entityType === 'score' ? 'Ergebnis' :
-                             entry.entityType === 'team' ? 'Mannschaft' :
-                             entry.entityType === 'shooter' ? 'Schütze' :
-                             entry.entityType}
-                            {entry.teamName && `: ${entry.teamName}`}
-                            {entry.shooterName && `: ${entry.shooterName}`}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[180px]">Zeitpunkt</TableHead>
+                    <TableHead>Benutzer</TableHead>
+                    <TableHead>Aktion</TableHead>
+                    <TableHead>Details</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredEntries.map(entry => (
+                    <TableRow key={entry.id}>
+                      <TableCell className="font-mono text-xs">
+                        {formatTimestamp(entry.timestamp)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                          {entry.userName || entry.userId || 'Unbekannter Benutzer'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          entry.action === 'create' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' :
+                          entry.action === 'update' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100' :
+                          entry.action === 'delete' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100' :
+                          'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100'
+                        }`}>
+                          {entry.action === 'create' ? 'Erstellt' :
+                           entry.action === 'update' ? 'Aktualisiert' :
+                           entry.action === 'delete' ? 'Gelöscht' :
+                           entry.action}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <p className="text-sm">{getChangeDescription(entry)}</p>
+                          {entry.entityType && (
+                            <p className="text-xs text-muted-foreground">
+                              {entry.entityType === 'score' ? 'Ergebnis' :
+                               entry.entityType === 'team' ? 'Mannschaft' :
+                               entry.entityType === 'shooter' ? 'Schütze' :
+                               entry.entityType}
+                              {entry.teamName && `: ${entry.teamName}`}
+                              {entry.shooterName && `: ${entry.shooterName}`}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -315,6 +391,15 @@ export function AuditTrail({
             <p className="text-muted-foreground">
               Es wurden keine Audit-Einträge gefunden, die den Filterkriterien entsprechen.
             </p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Aktualisieren
+            </Button>
           </CardContent>
         </Card>
       )}

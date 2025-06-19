@@ -295,7 +295,7 @@ export default function AdminDashboardPage() {
                 <Button className="w-full">Saisons verwalten</Button>
               </Link>
               <Link href="/admin/season-transition" passHref>
-                <Button variant="outline" className="w-full">Saisonwechsel</Button>
+                <Button variant="outline" className="w-full">Saisonwechsel & Auf-/Abstieg</Button>
               </Link>
             </div>
           </CardContent>
@@ -407,47 +407,18 @@ export default function AdminDashboardPage() {
               <Link href="/admin/exports" passHref>
                 <Button className="w-full" variant="outline">PDF: Ergebnislisten & Urkunden</Button>
               </Link>
-              <Button className="w-full" variant="outline" disabled>Erweiterte Berichte (Zukunft)</Button>
+              <Link href="/admin/cleanup" passHref>
+                <Button className="w-full" variant="outline">Datenbereinigung</Button>
+              </Link>
+              <Link href="/admin/audit" passHref>
+                <Button className="w-full" variant="outline">Änderungsprotokoll</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300">
-        <CardHeader>
-          <CardTitle className="text-xl text-accent flex items-center">
-            <GitPullRequestClosed className="mr-3 h-6 w-6" />
-            Roadmap / Nächste Schritte (Stand: 10. Juni 2025, Version 0.8.0 Beta)
-          </CardTitle>
-          <CardDescription>Übersicht geplanter Erweiterungen und wichtiger Aufgaben, strukturiert nach potenziellen Versionen.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-1 text-sm text-muted-foreground list-none pl-1">
-            {agendaItems.map((item, index) => (
-              <React.Fragment key={index}>
-                {item.isMajor && item.versionTarget && (
-                  <li className="pt-3 pb-1 first:pt-0">
-                    <h3 className={cn("text-md font-semibold", getStatusColor(item.status))}>
-                      Ziel: Version {item.versionTarget}
-                    </h3>
-                    <hr className="my-1 border-border/50"/>
-                  </li>
-                )}
-                <li className={cn("flex items-start py-1")}>
-                  <item.icon 
-                    className={cn(
-                      "h-4 w-4 mr-3 mt-0.5 flex-shrink-0", 
-                      item.iconColor || getStatusColor(item.status)
-                    )} 
-                    title={item.status} 
-                  />
-                  <span>{item.text} - <span className={cn("font-semibold", getStatusColor(item.status))}>({item.status})</span></span>
-                </li>
-              </React.Fragment>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+
 
        <Card className="mt-8 shadow-lg">
         <CardHeader>

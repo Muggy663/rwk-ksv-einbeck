@@ -365,7 +365,13 @@ export default function TerminePage() {
               ) : events.length > 0 ? (
                 <div className="space-y-2">
                   {events
-                    .filter(event => event.date >= new Date())
+                    .filter(event => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const eventDate = new Date(event.date);
+                      eventDate.setHours(0, 0, 0, 0);
+                      return eventDate >= today;
+                    })
                     .sort((a, b) => a.date.getTime() - b.date.getTime())
                     .slice(0, 3)
                     .map((event, index) => (

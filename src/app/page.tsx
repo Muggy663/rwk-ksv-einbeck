@@ -77,10 +77,11 @@ export default function HomePage() {
     const loadEvents = async () => {
       setIsLoadingEvents(true);
       try {
-        // Lade Termine für die nächsten 30 Tage
-        const now = new Date();
-        const endDate = addDays(now, 30);
-        const events = await fetchEvents(now, endDate);
+        // Lade Termine ab heute (00:00 Uhr) für die nächsten 30 Tage
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const endDate = addDays(today, 30);
+        const events = await fetchEvents(today, endDate);
         setUpcomingEvents(events.slice(0, 3)); // Zeige maximal 3 Termine an
       } catch (error) {
         console.error('Fehler beim Laden der Termine:', error);
@@ -145,8 +146,8 @@ export default function HomePage() {
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-bold mb-1 text-white">NEU: RWK App auf Ihrem Smartphone installieren!</h2>
-            <p className="text-white">Sie können diese Website jetzt direkt auf Ihrem Smartphone als App installieren. Tippen Sie in Ihrem Browser auf "Zum Startbildschirm hinzufügen" für schnelleren Zugriff und bessere Bedienung.</p>
+            <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">NEU: RWK App auf Ihrem Smartphone installieren!</h2>
+            <p style={{color: 'white'}}>Sie können diese Website jetzt direkt auf Ihrem Smartphone als App installieren. Tippen Sie in Ihrem Browser auf "Zum Startbildschirm hinzufügen" für schnelleren Zugriff und bessere Bedienung.</p>
           </div>
         </div>
       </div>
@@ -225,22 +226,27 @@ export default function HomePage() {
               </div>
             ) : upcomingEvents.length > 0 ? (
               <div className="space-y-4">
-                {upcomingEvents.map((event, index) => (
-                  <div key={event.id || index} className="flex flex-col space-y-1 pb-3 border-b last:border-0">
-                    <div className="flex justify-between items-start">
-                      <span className="font-medium">{event.title}</span>
-                      <Badge variant={getBadgeVariant(event.type, event.isKreisverband)}>
-                        {formatEventType(event.type)}
-                      </Badge>
+                {upcomingEvents.map((event, index) => {
+                  const isToday = new Date(event.date).toDateString() === new Date().toDateString();
+                  return (
+                    <div key={event.id || index} className={`flex flex-col space-y-1 pb-3 border-b last:border-0 ${isToday ? 'bg-primary/10 p-2 rounded-md' : ''}`}>
+                      <div className="flex justify-between items-start">
+                        <span className={`font-medium ${isToday ? 'text-primary font-bold' : ''}`}>
+                          {isToday && '🔥 '}{event.title}
+                        </span>
+                        <Badge variant={getBadgeVariant(event.type, event.isKreisverband)}>
+                          {formatEventType(event.type)}
+                        </Badge>
+                      </div>
+                      <div className={`text-sm ${isToday ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                        {isToday ? 'HEUTE' : format(new Date(event.date), 'EEEE, d. MMMM', { locale: de })}
+                      </div>
+                      <div className="text-sm">
+                        {event.time} Uhr, {event.location}
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      {format(new Date(event.date), 'EEEE, d. MMMM', { locale: de })}
-                    </div>
-                    <div className="text-sm">
-                      {event.time} Uhr, {event.location}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 
                 <Button asChild variant="default" className="w-full mt-2">
                   <Link href="/termine">

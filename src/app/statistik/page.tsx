@@ -58,17 +58,16 @@ export default function StatistikPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <TrendingUp className="mr-2 h-5 w-5" />
-              Erweiterte Statistiken
+              Saisonübergreifende Statistiken
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="mb-4">
-              Entdecken Sie saisonübergreifende Vergleiche und Trendanalysen 
-              für tiefere Einblicke in die Leistungsentwicklung.
+              Analysieren Sie Leistungstrends über mehrere Saisons hinweg für Schützen und Mannschaften.
             </p>
             <Button asChild>
               <Link href="/statistik/erweitert">
-                Zu den erweiterten Statistiken
+                Zu den saisonübergreifenden Statistiken
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

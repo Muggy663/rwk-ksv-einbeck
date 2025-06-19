@@ -1,131 +1,158 @@
 "use client";
+
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArrowUpIcon, ArrowDownIcon, MinusIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-type TrendType = 'improving' | 'stable' | 'declining';
-
-interface ShooterWithTrend {
+interface TopShooter {
   shooterId: string;
   shooterName: string;
-  teamName?: string;
+  teamName: string;
   averageScore: number;
-  trend: TrendType;
+  trend: 'rising' | 'stable' | 'falling';
+  trendValue?: number;
 }
 
 interface TrendAnalysisCardProps {
-  shooters?: ShooterWithTrend[];
-  className?: string;
+  shooters: TopShooter[];
 }
 
-export function TrendAnalysisCard({ shooters = [], className }: TrendAnalysisCardProps) {
+export function TrendAnalysisCard({ shooters }: TrendAnalysisCardProps) {
   // Gruppiere Schützen nach Trend
-  const improvingShooters = shooters.filter(shooter => shooter.trend === 'improving');
+  const risingShooters = shooters.filter(shooter => shooter.trend === 'rising');
   const stableShooters = shooters.filter(shooter => shooter.trend === 'stable');
-  const decliningShooters = shooters.filter(shooter => shooter.trend === 'declining');
+  const fallingShooters = shooters.filter(shooter => shooter.trend === 'falling');
 
-  // Funktion zum Rendern eines Trend-Badges
-  const renderTrendBadge = (trend: TrendType) => {
+  // Sortiere nach Durchschnitt
+  risingShooters.sort((a, b) => b.averageScore - a.averageScore);
+  stableShooters.sort((a, b) => b.averageScore - a.averageScore);
+  fallingShooters.sort((a, b) => b.averageScore - a.averageScore);
+
+  const renderTrendIcon = (trend: 'rising' | 'stable' | 'falling') => {
     switch (trend) {
-      case 'improving':
-        return (
-          <Badge variant="success" className="ml-2 bg-green-100 text-green-800 hover:bg-green-200">
-            <ArrowUpIcon className="h-3 w-3 mr-1" />
-            Steigend
-          </Badge>
-        );
-      case 'declining':
-        return (
-          <Badge variant="destructive" className="ml-2 bg-red-100 text-red-800 hover:bg-red-200">
-            <ArrowDownIcon className="h-3 w-3 mr-1" />
-            Fallend
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="ml-2">
-            <MinusIcon className="h-3 w-3 mr-1" />
-            Stabil
-          </Badge>
-        );
+      case 'rising':
+        return <TrendingUp className="h-4 w-4 text-green-500" />;
+      case 'stable':
+        return <Minus className="h-4 w-4 text-amber-500" />;
+      case 'falling':
+        return <TrendingDown className="h-4 w-4 text-red-500" />;
     }
   };
 
-  // Funktion zum Rendern einer Schützenliste mit Trend
-  const renderShooterList = (shooterList: ShooterWithTrend[], emptyMessage: string) => {
-    if (shooterList.length === 0) {
-      return <p className="text-sm text-muted-foreground">{emptyMessage}</p>;
+  const renderTrendText = (trend: 'rising' | 'stable' | 'falling') => {
+    switch (trend) {
+      case 'rising':
+        return <span className="text-green-600">Steigend</span>;
+      case 'stable':
+        return <span className="text-amber-600">Stabil</span>;
+      case 'falling':
+        return <span className="text-red-600">Fallend</span>;
     }
-
-    return (
-      <ul className="space-y-2">
-        {shooterList.map(shooter => (
-          <li key={shooter.shooterId} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
-            <div>
-              <span className="font-medium">{shooter.shooterName}</span>
-              <span className="text-sm text-muted-foreground ml-2">
-                ({shooter.teamName || 'Kein Team'})
-              </span>
-            </div>
-            <div className="flex items-center">
-              <span className="text-sm font-medium mr-2">
-                Ø {shooter.averageScore.toFixed(1)}
-              </span>
-              {renderTrendBadge(shooter.trend)}
-            </div>
-          </li>
-        ))}
-      </ul>
-    );
   };
 
   return (
-    <Card className={cn("w-full", className)}>
+    <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle>Trendanalyse</CardTitle>
-        <CardDescription>Leistungsentwicklung der Schützen über die Saison</CardDescription>
+        <CardTitle className="flex items-center">
+          <TrendingUp className="mr-2 h-5 w-5" />
+          Trendanalyse
+        </CardTitle>
+        <CardDescription>
+          Leistungsentwicklung der Schützen über die Saison
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        {shooters.length === 0 ? (
-          <p className="text-muted-foreground">Keine Daten für die Trendanalyse verfügbar</p>
-        ) : (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium flex items-center mb-2">
-                <ArrowUpIcon className="h-5 w-5 mr-2 text-green-600" />
-                Steigende Leistung
-              </h3>
-              {renderShooterList(
-                improvingShooters, 
-                "Keine Schützen mit steigender Leistung gefunden"
-              )}
-            </div>
-
-            <div>
-              <h3 className="text-lg font-medium flex items-center mb-2">
-                <MinusIcon className="h-5 w-5 mr-2" />
-                Stabile Leistung
-              </h3>
-              {renderShooterList(
-                stableShooters, 
-                "Keine Schützen mit stabiler Leistung gefunden"
-              )}
-            </div>
-
-            <div>
-              <h3 className="text-lg font-medium flex items-center mb-2">
-                <ArrowDownIcon className="h-5 w-5 mr-2 text-red-600" />
-                Fallende Leistung
-              </h3>
-              {renderShooterList(
-                decliningShooters, 
-                "Keine Schützen mit fallender Leistung gefunden"
-              )}
-            </div>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Steigende Leistung */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 text-green-600 flex items-center">
+              <TrendingUp className="mr-2 h-5 w-5" />
+              Steigende Leistung
+            </h3>
+            
+            {risingShooters.length > 0 ? (
+              <ul className="space-y-4">
+                {risingShooters.map(shooter => (
+                  <li key={shooter.shooterId} className="border-b pb-3">
+                    <div className="font-medium">{shooter.shooterName}</div>
+                    <div className="text-sm text-muted-foreground">({shooter.teamName})</div>
+                    <div className="flex justify-between items-center mt-1">
+                      <div className="font-semibold">Ø {shooter.averageScore.toFixed(1)}</div>
+                      <div className="flex items-center text-green-600">
+                        {renderTrendIcon(shooter.trend)}
+                        <span className="ml-1">Steigend</span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">
+                Keine Schützen mit steigender Leistung gefunden.
+              </p>
+            )}
           </div>
-        )}
+          
+          {/* Stabile Leistung */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 text-amber-600 flex items-center">
+              <Minus className="mr-2 h-5 w-5" />
+              Stabile Leistung
+            </h3>
+            
+            {stableShooters.length > 0 ? (
+              <ul className="space-y-4">
+                {stableShooters.map(shooter => (
+                  <li key={shooter.shooterId} className="border-b pb-3">
+                    <div className="font-medium">{shooter.shooterName}</div>
+                    <div className="text-sm text-muted-foreground">({shooter.teamName})</div>
+                    <div className="flex justify-between items-center mt-1">
+                      <div className="font-semibold">Ø {shooter.averageScore.toFixed(1)}</div>
+                      <div className="flex items-center text-amber-600">
+                        {renderTrendIcon(shooter.trend)}
+                        <span className="ml-1">Stabil</span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">
+                Keine Schützen mit stabiler Leistung gefunden.
+              </p>
+            )}
+          </div>
+          
+          {/* Fallende Leistung */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 text-red-600 flex items-center">
+              <TrendingDown className="mr-2 h-5 w-5" />
+              Fallende Leistung
+            </h3>
+            
+            {fallingShooters.length > 0 ? (
+              <ul className="space-y-4">
+                {fallingShooters.map(shooter => (
+                  <li key={shooter.shooterId} className="border-b pb-3">
+                    <div className="font-medium">{shooter.shooterName}</div>
+                    <div className="text-sm text-muted-foreground">({shooter.teamName})</div>
+                    <div className="flex justify-between items-center mt-1">
+                      <div className="font-semibold">Ø {shooter.averageScore.toFixed(1)}</div>
+                      <div className="flex items-center text-red-600">
+                        {renderTrendIcon(shooter.trend)}
+                        <span className="ml-1">Fallend</span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">
+                Keine Schützen mit fallender Leistung gefunden.
+              </p>
+            )}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

@@ -5,11 +5,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Search, Loader2, UserCog } from 'lucide-react';
+import { Edit, Trash2, Search, Loader2, UserCog, Clock } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { UserPermission, Club } from '@/types/rwk';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface UserListProps {
   clubs: Club[];
@@ -44,6 +47,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
   const fetchUsers = async () => {
     setLoading(true);
     try {
+      // Benutzerberechtigungen laden
       const usersQuery = query(collection(db, 'user_permissions'), orderBy('email', 'asc'));
       const snapshot = await getDocs(usersQuery);
       const fetchedUsers = snapshot.docs.map(doc => ({
@@ -51,8 +55,30 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
         uid: doc.id
       })) as UserPermission[];
       
-      setUsers(fetchedUsers);
-      setFilteredUsers(fetchedUsers);
+      // Letzte Login-Daten laden
+      const usersWithLoginData = await Promise.all(
+        fetchedUsers.map(async (user) => {
+          try {
+            // Versuche, die Login-Daten aus der users-Collection zu laden
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              return {
+                ...user,
+                lastLogin: userData.lastLogin || null
+              };
+            }
+          } catch (error) {
+            console.error(`Error fetching login data for user ${user.uid}:`, error);
+          }
+          return user;
+        })
+      );
+      
+      setUsers(usersWithLoginData);
+      setFilteredUsers(usersWithLoginData);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -133,6 +159,18 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
     }
   };
 
+  const formatLastLogin = (lastLogin: any) => {
+    if (!lastLogin) return 'Nie';
+    
+    try {
+      const date = lastLogin.toDate ? lastLogin.toDate() : new Date(lastLogin);
+      return format(date, 'dd.MM.yyyy HH:mm', { locale: de });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Unbekannt';
+    }
+  };
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
@@ -168,7 +206,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
               </p>
             </div>
           ) : (
-            <div className="border rounded-md">
+            <div className="border rounded-md overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -176,6 +214,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
                     <TableHead>Name</TableHead>
                     <TableHead>Rolle</TableHead>
                     <TableHead>Verein</TableHead>
+                    <TableHead>Letzter Login</TableHead>
                     <TableHead className="text-right">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -186,6 +225,21 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
                       <TableCell>{user.displayName || '-'}</TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
                       <TableCell>{getClubName(user.clubId)}</TableCell>
+                      <TableCell>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center">
+                                <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                                <span>{formatLastLogin(user.lastLogin)}</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Letzter Login des Benutzers</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
                           <Button 

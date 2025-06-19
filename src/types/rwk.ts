@@ -97,6 +97,16 @@ export interface LeagueDisciplineOption {
   label: string;
 }
 
+export interface UserPermission {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  role: string | null;
+  clubId: string | null;
+  lastUpdated?: Timestamp;
+  lastLogin?: Timestamp;
+}
+
 export const uiDisciplineFilterOptions: DisciplineFilterOption[] = [
   { 
     value: 'kk', 

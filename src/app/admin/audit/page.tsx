@@ -4,6 +4,8 @@ import React from 'react';
 import { AuditTrail } from '@/components/audit/AuditTrail';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { History } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function AuditPage() {
   return (
@@ -15,6 +17,9 @@ export default function AuditPage() {
             Protokollierung aller Änderungen an Ergebnissen und anderen Daten.
           </p>
         </div>
+        <Button asChild variant="outline">
+          <Link href="/admin/audit/create-samples">Beispiel-Einträge erstellen</Link>
+        </Button>
       </div>
 
       <Card className="mb-6">
