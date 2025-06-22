@@ -13,24 +13,24 @@ export default function UpdatesOverviewPage() {
         <Card className="border-primary/20 shadow-md hover:shadow-lg transition-all">
           <CardHeader className="bg-primary/5">
             <CardTitle className="text-xl text-primary flex items-center justify-between">
-              <span>Aktuelle Version: 0.9.0 (20. Juni 2025)</span>
+              <span>Aktuelle Version: 0.9.1 (22. Juni 2025)</span>
               <span className="text-sm bg-primary/20 px-2 py-1 rounded-full flex items-center gap-1">
                 <span>Beta</span>
               </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
-            <p className="mb-4">Erweiterte Funktionen und verbesserte Benutzerverwaltung.</p>
+            <p className="mb-4">Mobile Optimierungen und verbesserte Benutzerfreundlichkeit.</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>In Arbeit: Vereinfachte Benutzerverwaltung mit integriertem Formular</li>
-              <li>In Arbeit: Erweiterte Statistikfunktionen mit saisonübergreifenden Daten</li>
-              <li>Geplant: Verbessertes Änderungsprotokoll mit detaillierter Filterung</li>
-              <li>Geplant: Automatisierter Saisonwechsel mit Auf-/Abstiegsregelung</li>
+              <li>✅ Touch-Gesten: Swipe-Navigation für Tabs</li>
+              <li>✅ Sticky Headers: Navigation bleibt beim Scrollen sichtbar</li>
+              <li>✅ Verbesserte Formulare: Größere Touch-Targets</li>
+              <li>✅ Mobile Optimierungen: Buttons und Layout angepasst</li>
             </ul>
           </CardContent>
           <CardFooter>
             <Button asChild variant="outline">
-              <Link href="/updates/v0.9">Details zu Version 0.9.x</Link>
+              <Link href="/updates/v0.9.1">Details zu Version 0.9.1</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -43,12 +43,12 @@ export default function UpdatesOverviewPage() {
             <CardTitle>Version 0.9.x</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Erweiterte Funktionen und verbesserte Benutzerverwaltung.</p>
-            <p className="text-sm text-muted-foreground mt-2">0.9.0</p>
+            <p>Mobile Optimierungen und Statistik-Dashboard.</p>
+            <p className="text-sm text-muted-foreground mt-2">0.9.0 - 0.9.1</p>
           </CardContent>
           <CardFooter>
             <Button asChild>
-              <Link href="/updates/v0.9">Details anzeigen</Link>
+              <Link href="/updates/v0.9.1">Details anzeigen</Link>
             </Button>
           </CardFooter>
         </Card>

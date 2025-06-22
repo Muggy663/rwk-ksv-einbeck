@@ -78,7 +78,7 @@ export function DarkModeDemo() {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card>
+        <Card className="dark:hidden">
           <CardHeader>
             <CardTitle>UI-Komponenten im Dunkelmodus</CardTitle>
             <CardDescription>Beispiele für verschiedene UI-Elemente</CardDescription>

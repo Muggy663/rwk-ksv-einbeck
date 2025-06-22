@@ -211,9 +211,9 @@ export default function AdminSeasonsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-primary">Saisonverwaltung</h1>
-        <Button onClick={handleAddNew} variant="default">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <h1 className="text-xl sm:text-2xl font-semibold text-primary">Saisonverwaltung</h1>
+        <Button onClick={handleAddNew} variant="default" className="w-full sm:w-auto">
           <PlusCircle className="mr-2 h-5 w-5" /> Neue Saison anlegen
         </Button>
       </div>
@@ -245,16 +245,20 @@ export default function AdminSeasonsPage() {
                     <TableCell>{season.type}</TableCell>
                     <TableCell>{season.name}</TableCell>
                     <TableCell>{season.status}</TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => navigateToLeagues(season.id)}>
-                        <Eye className="mr-1 h-4 w-4" /> Ligen verwalten
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(season)} aria-label="Saison bearbeiten">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteConfirmation(season)} className="text-destructive hover:text-destructive/80" aria-label="Saison löschen">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <TableCell className="text-right">
+                      <div className="flex flex-col sm:flex-row gap-2 justify-end">
+                        <Button variant="outline" size="sm" onClick={() => navigateToLeagues(season.id)} className="text-xs">
+                          <Eye className="mr-1 h-3 w-3" /> Ligen
+                        </Button>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(season)} aria-label="Saison bearbeiten">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteConfirmation(season)} className="text-destructive hover:text-destructive/80" aria-label="Saison löschen">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

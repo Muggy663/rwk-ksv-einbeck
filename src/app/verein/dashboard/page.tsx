@@ -134,9 +134,9 @@ export default function VereinDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-primary">Vereins-Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary">Vereins-Dashboard</h1>
            <p className="text-muted-foreground">
             Willkommen, {userPermission?.displayName || userPermission?.email || 'Benutzer'}!
           </p>
@@ -184,18 +184,18 @@ export default function VereinDashboardPage() {
           </CardContent>
         </Card>
         
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow opacity-50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-medium text-accent">Handtabellen</CardTitle>
+              <CardTitle className="text-lg font-medium text-muted-foreground">Handtabellen</CardTitle>
               <FileDown className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
               <CardDescription className="mb-4">
               Leere Tabellen zum Handausfüllen für den Saisonbeginn herunterladen.
               </CardDescription>
-              <Link href="/verein/handtabellen" passHref>
-              <Button className="w-full">Handtabellen erstellen</Button>
-              </Link>
+              <Button className="w-full" disabled>
+                Handtabellen erstellen (In Entwicklung)
+              </Button>
           </CardContent>
         </Card>
 
@@ -228,7 +228,7 @@ export default function VereinDashboardPage() {
               <CardDescription className="mb-4">
               Termine einsehen und neue Termine für Ihren Verein hinzufügen.
               </CardDescription>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
                 <Link href="/termine" passHref>
                   <Button className="w-full" variant="outline">Termine ansehen</Button>
                 </Link>

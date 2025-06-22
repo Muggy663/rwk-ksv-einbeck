@@ -215,9 +215,9 @@ export default function AdminClubsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-primary">Vereinsverwaltung</h1>
-        <Button onClick={handleAddNew} variant="default">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <h1 className="text-xl sm:text-2xl font-semibold text-primary">Vereinsverwaltung</h1>
+        <Button onClick={handleAddNew} variant="default" className="w-full sm:w-auto">
           <PlusCircle className="mr-2 h-5 w-5" /> Neuen Verein anlegen
         </Button>
       </div>
@@ -247,26 +247,28 @@ export default function AdminClubsPage() {
                     <TableCell>{club.clubNumber || '-'}</TableCell>
                     <TableCell>{club.name}</TableCell>
                     <TableCell>{club.shortName || '-'}</TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(club)} aria-label="Verein bearbeiten">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          if (club.id) {
-                            handleDeleteConfirmation(club);
-                          } else {
-                            console.error("FEHLER: club.id ist undefined beim Klick auf Löschen-Button für Club:", club);
-                            toast({ title: "Fehler", description: "Vereins-ID nicht gefunden, Löschen nicht möglich.", variant: "destructive"});
-                          }
-                        }}
-                        className="text-destructive hover:text-destructive/80"
-                        aria-label="Verein löschen"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <TableCell className="text-right">
+                      <div className="flex gap-1 justify-end">
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(club)} aria-label="Verein bearbeiten">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (club.id) {
+                              handleDeleteConfirmation(club);
+                            } else {
+                              console.error("FEHLER: club.id ist undefined beim Klick auf Löschen-Button für Club:", club);
+                              toast({ title: "Fehler", description: "Vereins-ID nicht gefunden, Löschen nicht möglich.", variant: "destructive"});
+                            }
+                          }}
+                          className="text-destructive hover:text-destructive/80"
+                          aria-label="Verein löschen"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -158,10 +158,10 @@ export default function ShooterComparisonPage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-primary">Schützenvergleich</h1>
-        <Button asChild variant="outline">
-          <Link href="/statistik" className="flex items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary">Schützenvergleich</h1>
+        <Button asChild variant="outline" className="w-full sm:w-auto">
+          <Link href="/statistik" className="flex items-center justify-center">
             <ChevronLeft className="mr-2 h-4 w-4" />
             Zurück zur Übersicht
           </Link>

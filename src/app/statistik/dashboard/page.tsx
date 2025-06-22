@@ -21,6 +21,7 @@ import {
 import { CrossSeasonStats } from '@/components/statistics/cross-season-stats';
 import { LeagueTrendAnalysis } from '@/components/statistics/LeagueTrendAnalysis';
 import { TrendAnalysis } from '@/components/statistics/TrendAnalysis';
+import { useSwipe } from '@/hooks/use-swipe';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
 
@@ -29,6 +30,7 @@ export default function StatistikDashboardPage() {
   const [seasons, setSeasons] = useState<any[]>([]);
   const [leagues, setLeagues] = useState<any[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('performance');
   
   const [selectedSeason, setSelectedSeason] = useState<string>('');
   const [selectedLeague, setSelectedLeague] = useState<string>('all');
@@ -187,6 +189,23 @@ export default function StatistikDashboardPage() {
   }, [selectedSeason, selectedLeague, selectedClub]);
   
   // Funktion zum Exportieren eines Diagramms als PNG
+  const tabs = ['performance', 'comparison', 'distribution', 'trends', 'trend-analysis'];
+  
+  const swipeRef = useSwipe({
+    onSwipeLeft: () => {
+      const currentIndex = tabs.indexOf(activeTab);
+      if (currentIndex < tabs.length - 1) {
+        setActiveTab(tabs[currentIndex + 1]);
+      }
+    },
+    onSwipeRight: () => {
+      const currentIndex = tabs.indexOf(activeTab);
+      if (currentIndex > 0) {
+        setActiveTab(tabs[currentIndex - 1]);
+      }
+    }
+  });
+
   const exportChart = (chartId: string, filename: string) => {
     const chartElement = document.getElementById(chartId);
     if (!chartElement) return;
@@ -222,10 +241,10 @@ export default function StatistikDashboardPage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-primary">Statistik-Dashboard</h1>
-        <Button asChild variant="outline">
-          <Link href="/statistik" className="flex items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary">Statistik-Dashboard</h1>
+        <Button asChild variant="outline" className="w-full sm:w-auto">
+          <Link href="/statistik" className="flex items-center justify-center">
             <ChevronLeft className="mr-2 h-4 w-4" />
             Zurück zur Übersicht
           </Link>
@@ -234,18 +253,18 @@ export default function StatistikDashboardPage() {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div>
-          <Label htmlFor="season-select">Saison</Label>
+          <Label htmlFor="season-select" className="text-base font-medium">Saison</Label>
           <Select
             value={selectedSeason}
             onValueChange={setSelectedSeason}
             disabled={seasons.length === 0}
           >
-            <SelectTrigger id="season-select">
+            <SelectTrigger id="season-select" className="h-12 text-base">
               <SelectValue placeholder="Saison auswählen" />
             </SelectTrigger>
             <SelectContent>
               {seasons.map(season => (
-                <SelectItem key={season.id} value={season.id}>
+                <SelectItem key={season.id} value={season.id} className="h-12 text-base">
                   {season.name}
                 </SelectItem>
               ))}
@@ -254,19 +273,19 @@ export default function StatistikDashboardPage() {
         </div>
         
         <div>
-          <Label htmlFor="league-select">Liga</Label>
+          <Label htmlFor="league-select" className="text-base font-medium">Liga</Label>
           <Select
             value={selectedLeague}
             onValueChange={setSelectedLeague}
             disabled={leagues.length === 0}
           >
-            <SelectTrigger id="league-select">
+            <SelectTrigger id="league-select" className="h-12 text-base">
               <SelectValue placeholder="Alle Ligen" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Alle Ligen</SelectItem>
+              <SelectItem value="all" className="h-12 text-base">Alle Ligen</SelectItem>
               {leagues.map(league => (
-                <SelectItem key={league.id} value={league.id}>
+                <SelectItem key={league.id} value={league.id} className="h-12 text-base">
                   {league.name}
                 </SelectItem>
               ))}
@@ -275,19 +294,19 @@ export default function StatistikDashboardPage() {
         </div>
         
         <div>
-          <Label htmlFor="club-select">Verein</Label>
+          <Label htmlFor="club-select" className="text-base font-medium">Verein</Label>
           <Select
             value={selectedClub}
             onValueChange={setSelectedClub}
             disabled={clubs.length === 0}
           >
-            <SelectTrigger id="club-select">
+            <SelectTrigger id="club-select" className="h-12 text-base">
               <SelectValue placeholder="Alle Vereine" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Alle Vereine</SelectItem>
+              <SelectItem value="all" className="h-12 text-base">Alle Vereine</SelectItem>
               {clubs.map(club => (
-                <SelectItem key={club.id} value={club.id}>
+                <SelectItem key={club.id} value={club.id} className="h-12 text-base">
                   {club.name}
                 </SelectItem>
               ))}
@@ -296,18 +315,20 @@ export default function StatistikDashboardPage() {
         </div>
       </div>
       
-      <Tabs defaultValue="performance" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 mb-8">
-          <TabsTrigger value="performance">Leistungsentwicklung</TabsTrigger>
-          <TabsTrigger value="comparison">Mannschaftsvergleich</TabsTrigger>
-          <TabsTrigger value="distribution">Geschlechterverteilung</TabsTrigger>
-          <TabsTrigger value="trends">Saisonvergleich</TabsTrigger>
-          <TabsTrigger value="trend-analysis">Trendanalyse</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-8 h-auto sticky top-0 z-10 bg-background">
+          <TabsTrigger value="performance" className="text-xs sm:text-sm p-2">Leistung</TabsTrigger>
+          <TabsTrigger value="comparison" className="text-xs sm:text-sm p-2">Teams</TabsTrigger>
+          <TabsTrigger value="distribution" className="text-xs sm:text-sm p-2">Geschlecht</TabsTrigger>
+          <TabsTrigger value="trends" className="text-xs sm:text-sm p-2">Saisons</TabsTrigger>
+          <TabsTrigger value="trend-analysis" className="text-xs sm:text-sm p-2">Trends</TabsTrigger>
         </TabsList>
+        
+        <div ref={swipeRef} className="touch-pan-y">
         
         <TabsContent value="performance">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle>Leistungsentwicklung über die Saison</CardTitle>
                 <CardDescription>Entwicklung der Ringzahlen der Top 6 Schützen über alle Durchgänge</CardDescription>
@@ -316,6 +337,7 @@ export default function StatistikDashboardPage() {
                 variant="outline" 
                 size="sm" 
                 onClick={() => exportChart('shooter-performance-chart', 'Leistungsentwicklung.png')}
+                className="w-full sm:w-auto"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Exportieren
@@ -376,7 +398,7 @@ export default function StatistikDashboardPage() {
         
         <TabsContent value="comparison">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle>Mannschaftsvergleich</CardTitle>
                 <CardDescription>Durchschnittliche Leistung der Mannschaften in der ausgewählten Liga</CardDescription>
@@ -385,6 +407,7 @@ export default function StatistikDashboardPage() {
                 variant="outline" 
                 size="sm" 
                 onClick={() => exportChart('team-comparison-chart', 'Mannschaftsvergleich.png')}
+                className="w-full sm:w-auto"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Exportieren
@@ -426,7 +449,7 @@ export default function StatistikDashboardPage() {
         
         <TabsContent value="distribution">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle>Geschlechterverteilung</CardTitle>
                 <CardDescription>Verteilung der Schützen nach Geschlecht</CardDescription>
@@ -435,6 +458,7 @@ export default function StatistikDashboardPage() {
                 variant="outline" 
                 size="sm" 
                 onClick={() => exportChart('gender-distribution-chart', 'Geschlechterverteilung.png')}
+                className="w-full sm:w-auto"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Exportieren
@@ -488,6 +512,7 @@ export default function StatistikDashboardPage() {
             clubId={selectedClub} 
           />
         </TabsContent>
+        </div>
       </Tabs>
     </div>
   );

@@ -363,14 +363,14 @@ export default function HandtabellenPage() {
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-primary">Handtabellen</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary">Handtabellen</h1>
           <p className="text-muted-foreground">
             Erstellen Sie leere Tabellen zum Handausfüllen für den Saisonbeginn.
           </p>
         </div>
-        <Link href="/verein/dashboard" className="flex items-center text-primary hover:underline">
+        <Link href="/verein/dashboard" className="flex items-center text-primary hover:underline w-full sm:w-auto justify-center sm:justify-start">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Zurück zum Dashboard
         </Link>

@@ -28,7 +28,7 @@ export function ShooterComparisonChart({
 }: ShooterComparisonChartProps) {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <CardTitle>Schützenvergleich</CardTitle>
           <CardDescription>Vergleich der ausgewählten Schützen über alle Durchgänge</CardDescription>
@@ -38,6 +38,7 @@ export function ShooterComparisonChart({
             variant="outline" 
             size="sm" 
             onClick={onExport}
+            className="w-full sm:w-auto"
           >
             <Download className="h-4 w-4 mr-2" />
             Exportieren

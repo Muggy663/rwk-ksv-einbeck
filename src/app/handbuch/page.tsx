@@ -20,7 +20,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch RWK Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 15. Juni 2025, Version 0.8.2 Beta)
+            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 15. Juni 2025, Version 0.9.0 Beta)
           </p>
         </div>
       </div>
@@ -82,6 +82,7 @@ export default function HandbuchPage() {
                         <li><a href="#impressum" className="text-primary hover:underline">Impressum</a></li>
                          <li><a href="#rwk-ordnung" className="text-primary hover:underline">RWK-Ordnung</a></li>
                          <li><a href="#dokumente" className="text-primary hover:underline">Dokumente</a></li>
+                         <li><a href="#statistiken" className="text-primary hover:underline">Statistiken</a></li>
                     </ul>
                 </li>
                 <li><a href="#support" className="text-primary hover:underline">5. Support</a>
@@ -352,6 +353,23 @@ export default function HandbuchPage() {
                 <li><strong>Jahresfilter:</strong> Ligalisten können nach Jahr gefiltert werden.</li>
                 <li><strong>Vorschau:</strong> PDF-Dokumente können direkt im Browser angesehen werden, ohne sie herunterladen zu müssen.</li>
                 <li><strong>Eingeschränkte Dokumente:</strong> Bestimmte Dokumente sind nur für Vereinsvertreter und Mannschaftsführer sichtbar (z.B. Handtabellen mit Kontaktdaten).</li>
+              </ul>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader><CardTitle id="statistiken" className="text-xl text-accent scroll-mt-24">Statistiken</CardTitle></CardHeader>
+            <CardContent>
+              <p>Das neue Statistik-Dashboard bietet umfangreiche Analysemöglichkeiten für Schützen- und Mannschaftsleistungen.</p>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li><strong>Standard-Statistiken:</strong> Dashboard mit 5 verschiedenen Ansichten</li>
+                <li><strong>Leistungsentwicklung:</strong> Entwicklung der Top 6 Schützen über alle Durchgänge</li>
+                <li><strong>Mannschaftsvergleich:</strong> Durchschnittliche Leistung aller Teams einer Liga</li>
+                <li><strong>Geschlechterverteilung:</strong> Verteilung der Schützen nach Geschlecht</li>
+                <li><strong>Saisonvergleich:</strong> Saisonübergreifende Schützenstatistiken mit Suchfunktion</li>
+                <li><strong>Trendanalyse:</strong> Automatische Erkennung von Leistungstrends (steigend/stabil/fallend)</li>
+                <li><strong>Schützenvergleich:</strong> Direkter Vergleich von bis zu 6 Schützen</li>
+                <li><strong>Export-Funktionen:</strong> Alle Diagramme können als PNG exportiert werden</li>
+                <li><strong>Filter:</strong> Alle Statistiken können nach Saison, Liga und Verein gefiltert werden</li>
               </ul>
             </CardContent>
         </Card>

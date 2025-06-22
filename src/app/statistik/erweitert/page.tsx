@@ -340,10 +340,13 @@ export default function ExtendedStatisticsPage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-primary">Saisonübergreifende Statistiken</h1>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/statistik" className="flex items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-primary">
+          <span className="sm:hidden">Saison-<br />übergreifende<br />Statistiken</span>
+          <span className="hidden sm:inline">Saisonübergreifende Statistiken</span>
+        </h1>
+        <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+          <Link href="/statistik" className="flex items-center justify-center">
             <ChevronLeft className="mr-2 h-4 w-4" />
             Zurück zur Übersicht
           </Link>
@@ -373,7 +376,7 @@ export default function ExtendedStatisticsPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="flex-grow"
                   />
-                  <Button onClick={handleSearch} disabled={isLoading || searchTerm.trim().length < 3}>
+                  <Button onClick={handleSearch} disabled={isLoading || searchTerm.trim().length < 3} className="whitespace-nowrap">
                     {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
                     Suchen
                   </Button>
@@ -451,18 +454,21 @@ export default function ExtendedStatisticsPage() {
               </div>
               
               <Tabs defaultValue="average" className="w-full">
-                <TabsList>
-                  <TabsTrigger value="average" className="flex items-center">
-                    <LineChartIcon className="h-4 w-4 mr-2" />
-                    Durchschnittsentwicklung
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto">
+                  <TabsTrigger value="average" className="flex items-center text-xs sm:text-sm p-2">
+                    <LineChartIcon className="h-4 w-4 mr-1 sm:mr-2" />
+                    <span className="sm:hidden">Durchschnitt</span>
+                    <span className="hidden sm:inline">Durchschnittsentwicklung</span>
                   </TabsTrigger>
-                  <TabsTrigger value="progression" className="flex items-center">
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Leistungsverlauf
+                  <TabsTrigger value="progression" className="flex items-center text-xs sm:text-sm p-2">
+                    <TrendingUp className="h-4 w-4 mr-1 sm:mr-2" />
+                    <span className="sm:hidden">Verlauf</span>
+                    <span className="hidden sm:inline">Leistungsverlauf</span>
                   </TabsTrigger>
-                  <TabsTrigger value="details" className="flex items-center">
-                    <Medal className="h-4 w-4 mr-2" />
-                    Saisondetails
+                  <TabsTrigger value="details" className="flex items-center text-xs sm:text-sm p-2">
+                    <Medal className="h-4 w-4 mr-1 sm:mr-2" />
+                    <span className="sm:hidden">Details</span>
+                    <span className="hidden sm:inline">Saisondetails</span>
                   </TabsTrigger>
                 </TabsList>
                 

@@ -218,65 +218,72 @@ export default function DokumentePage() {
           </TabsContent>
 
           <TabsContent value="ligalisten" className="space-y-4">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
-              <h2 className="text-xl font-semibold">Ligalisten & Handtabellen</h2>
-              <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-md">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger className="w-[120px] h-8 text-sm">
-                    <SelectValue placeholder="Jahr wählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map(year => (
-                      <SelectItem key={year} value={year}>{year}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span className="text-xs text-muted-foreground">Jahr filtern</span>
-              </div>
-            </div>
-            
-            {ligalisten.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center text-muted-foreground">
-                  Keine Ligalisten oder Handtabellen verfügbar.
-                </CardContent>
-              </Card>
-            ) : filteredLigalisten.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center text-muted-foreground">
-                  Keine Ligalisten oder Handtabellen für {selectedYear} verfügbar.
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4 flex items-start">
-                  <Filter className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-blue-800">
-                      Zeige Ligalisten & Handtabellen für <span className="font-medium">{selectedYear}</span>
-                    </p>
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <CardTitle className="text-xl">Ligalisten & Handtabellen</CardTitle>
+                  <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-md">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <Select value={selectedYear} onValueChange={setSelectedYear}>
+                      <SelectTrigger className="w-[120px] h-8 text-sm">
+                        <SelectValue placeholder="Jahr wählen" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {years.map(year => (
+                          <SelectItem key={year} value={year}>{year}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-xs text-muted-foreground">Jahr filtern</span>
                   </div>
                 </div>
-                
-                <LigaGrouping documents={filteredLigalisten} />
-              </>
-            )}
+              </CardHeader>
+              <CardContent>
+                {ligalisten.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    Keine Ligalisten oder Handtabellen verfügbar.
+                  </div>
+                ) : filteredLigalisten.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    Keine Ligalisten oder Handtabellen für {selectedYear} verfügbar.
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4 flex items-start">
+                      <Filter className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+                      <div>
+                        <p className="text-sm text-blue-800">
+                          Zeige Ligalisten & Handtabellen für <span className="font-medium">{selectedYear}</span>
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <LigaGrouping documents={filteredLigalisten} />
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="ordnungen" className="space-y-4">
-            <h2 className="text-xl font-semibold mb-4">Regelwerke & Hilfen</h2>
-            {ordnungen.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center text-muted-foreground">
-                  Keine Ordnungen verfügbar.
-                </CardContent>
-              </Card>
-            ) : (
-              ordnungen.map(doc => (
-                <DocumentCard key={doc.id} document={doc} />
-              ))
-            )}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">Regelwerke & Hilfen</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {ordnungen.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    Keine Ordnungen verfügbar.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {ordnungen.map(doc => (
+                      <DocumentCard key={doc.id} document={doc} />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       )}

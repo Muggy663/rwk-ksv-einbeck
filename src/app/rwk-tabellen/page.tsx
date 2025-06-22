@@ -1181,13 +1181,13 @@ function RwkTabellenPageComponent() {
                           Teams "Außer Konkurrenz" anzeigen
                         </Label>
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <PDFExportButton 
                           league={league} 
                           numRounds={currentNumRoundsState} 
                           competitionYear={selectedCompetition.year} 
                           type="teams"
-                          className="mr-2"
+                          className="text-xs px-2 py-1 whitespace-nowrap"
                         />
                         {league.individualLeagueShooters.length > 0 && (
                           <PDFExportButton 
@@ -1195,6 +1195,7 @@ function RwkTabellenPageComponent() {
                             numRounds={currentNumRoundsState} 
                             competitionYear={selectedCompetition.year} 
                             type="shooters"
+                            className="text-xs px-2 py-1 whitespace-nowrap"
                           />
                         )}
                       </div>
