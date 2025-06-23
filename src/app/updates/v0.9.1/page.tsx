@@ -119,6 +119,29 @@ export default function UpdateV091Page() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center">
                 <Monitor className="mr-2 h-5 w-5" />
+                Datenbereinigung & Logik-Fixes
+              </CardTitle>
+              <Badge variant="default">Neu</Badge>
+            </div>
+            <CardDescription>
+              Erweiterte Datenbereinigung und korrigierte Schützen-Zuordnung
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm">
+              <li>• Erweiterte Datenbereinigung mit Diagnose-Tools</li>
+              <li>• Schützen-Zuordnungslogik korrigiert: KK Gewehr ≠ KK Pistole</li>
+              <li>• Ein Schütze darf in verschiedenen Disziplin-Kategorien antreten</li>
+              <li>• Firestore Security Rules für Admin-Cleanup erweitert</li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center">
+                <Monitor className="mr-2 h-5 w-5" />
                 Allgemeine Verbesserungen
               </CardTitle>
               <Badge variant="outline">Optimiert</Badge>
@@ -129,10 +152,10 @@ export default function UpdateV091Page() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm">
-              <li>• Dokumente: Card-Rahmen für Ligalisten und Regelwerke</li>
-              <li>• Einstellungen: UI-Komponenten im Dunkelmodus ausgeblendet</li>
-              <li>• Konsistentere Benutzeroberfläche</li>
-              <li>• Kleinere Bugfixes und Performance-Optimierungen</li>
+              <li>• Dokumente: Einheitliche Card-Rahmen für alle Tabs</li>
+              <li>• Einstellungen: UI-Komponenten im Dunkelmodus entfernt</li>
+              <li>• PWA Manifest: Icon-Pfad korrigiert</li>
+              <li>• Server-Side Rendering für /statistiken/erweitert</li>
             </ul>
           </CardContent>
         </Card>
@@ -141,9 +164,10 @@ export default function UpdateV091Page() {
       <div className="mt-8 p-4 bg-muted rounded-lg">
         <h3 className="font-semibold mb-2">Hinweis für Beta-Tester</h3>
         <p className="text-sm text-muted-foreground">
-          Diese Version fokussiert sich auf die Verbesserung der mobilen Nutzererfahrung. 
-          Bitte testen Sie die App auf verschiedenen Geräten und melden Sie uns Feedback 
-          zur Bedienung und Darstellung.
+          Diese Version bringt wichtige mobile Optimierungen und behebt einen kritischen 
+          Logikfehler bei der Schützen-Zuordnung. Ein Schütze darf jetzt korrekt in 
+          verschiedenen Disziplin-Kategorien (z.B. KK Gewehr UND KK Pistole) antreten.
+          Die erweiterte Datenbereinigung hilft bei der Lösung von Inkonsistenzen.
         </p>
       </div>
     </div>
