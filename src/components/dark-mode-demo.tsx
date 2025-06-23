@@ -77,44 +77,7 @@ export function DarkModeDemo() {
         </Card>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card className="dark:hidden">
-          <CardHeader>
-            <CardTitle>UI-Komponenten im Dunkelmodus</CardTitle>
-            <CardDescription>Beispiele für verschiedene UI-Elemente</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="Max Mustermann" />
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              <Badge>Standard</Badge>
-              <Badge variant="secondary">Sekundär</Badge>
-              <Badge variant="destructive">Warnung</Badge>
-              <Badge variant="outline">Umriss</Badge>
-            </div>
-            
-            <Tabs defaultValue="tab1" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="tab1">Tab 1</TabsTrigger>
-                <TabsTrigger value="tab2">Tab 2</TabsTrigger>
-                <TabsTrigger value="tab3">Tab 3</TabsTrigger>
-              </TabsList>
-              <TabsContent value="tab1" className="p-4 border rounded-md mt-2">
-                Inhalt von Tab 1
-              </TabsContent>
-              <TabsContent value="tab2" className="p-4 border rounded-md mt-2">
-                Inhalt von Tab 2
-              </TabsContent>
-              <TabsContent value="tab3" className="p-4 border rounded-md mt-2">
-                Inhalt von Tab 3
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-        
+      <div className="grid grid-cols-1 gap-8">
         <Card>
           <CardHeader>
             <CardTitle>Vorteile des Dunkelmodus</CardTitle>

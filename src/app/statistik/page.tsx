@@ -65,10 +65,11 @@ export default function StatistikPage() {
             <p className="mb-4">
               Analysieren Sie Leistungstrends über mehrere Saisons hinweg für Schützen und Mannschaften.
             </p>
-            <Button asChild>
-              <Link href="/statistik/erweitert">
-                Zu den saisonübergreifenden Statistiken
-                <ArrowRight className="ml-2 h-4 w-4" />
+            <Button asChild className="w-full text-center">
+              <Link href="/statistik/erweitert" className="flex items-center justify-center">
+                <span className="sm:hidden">Saisonübergreifend</span>
+                <span className="hidden sm:inline">Zu den saisonübergreifenden Statistiken</span>
+                <ArrowRight className="ml-2 h-4 w-4 flex-shrink-0" />
               </Link>
             </Button>
           </CardContent>

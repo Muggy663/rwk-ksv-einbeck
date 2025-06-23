@@ -248,8 +248,8 @@ export default function DokumentePage() {
                     Keine Ligalisten oder Handtabellen für {selectedYear} verfügbar.
                   </div>
                 ) : (
-                  <>
-                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4 flex items-start">
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-start">
                       <Filter className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
                       <div>
                         <p className="text-sm text-blue-800">
@@ -259,31 +259,25 @@ export default function DokumentePage() {
                     </div>
                     
                     <LigaGrouping documents={filteredLigalisten} />
-                  </>
+                  </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="ordnungen" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl">Regelwerke & Hilfen</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {ordnungen.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-8">
-                    Keine Ordnungen verfügbar.
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {ordnungen.map(doc => (
-                      <DocumentCard key={doc.id} document={doc} />
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <h2 className="text-xl font-semibold mb-4">Regelwerke & Hilfen</h2>
+            {ordnungen.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center text-muted-foreground">
+                  Keine Ordnungen verfügbar.
+                </CardContent>
+              </Card>
+            ) : (
+              ordnungen.map(doc => (
+                <DocumentCard key={doc.id} document={doc} />
+              ))
+            )}
           </TabsContent>
         </Tabs>
       )}

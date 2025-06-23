@@ -290,12 +290,12 @@ export default function AdminDashboardPage() {
             <CardDescription className="mb-4">
               Saisons, Ligen und zugehörige Daten verwalten.
             </CardDescription>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
               <Link href="/admin/seasons" passHref>
                 <Button className="w-full">Saisons verwalten</Button>
               </Link>
               <Link href="/admin/season-transition" passHref>
-                <Button variant="outline" className="w-full">Saisonwechsel & Auf-/Abstieg</Button>
+                <Button variant="outline" className="w-full text-xs sm:text-sm">Saisonwechsel</Button>
               </Link>
             </div>
           </CardContent>

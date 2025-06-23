@@ -443,7 +443,7 @@ export default function AdminResultsPage() {
           </div>
           <div className="space-y-3 pt-2">
             <Label>Ergebnistyp</Label>
-            <RadioGroup value={resultType} onValueChange={(value) => setResultType(value as "regular" | "pre" | "post")} className="flex space-x-4">
+            <RadioGroup value={resultType} onValueChange={(value) => setResultType(value as "regular" | "pre" | "post")} className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0">
               <div className="flex items-center space-x-2"><RadioGroupItem value="regular" id="r-regular" /><Label htmlFor="r-regular">Regulär</Label></div>
               <div className="flex items-center space-x-2"><RadioGroupItem value="pre" id="r-pre" /><Label htmlFor="r-pre">Vorschießen</Label></div>
               <div className="flex items-center space-x-2"><RadioGroupItem value="post" id="r-post" /><Label htmlFor="r-post">Nachschießen</Label></div>

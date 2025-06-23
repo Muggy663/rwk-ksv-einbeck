@@ -47,9 +47,14 @@ export default function UpdatesOverviewPage() {
             <p className="text-sm text-muted-foreground mt-2">0.9.0 - 0.9.1</p>
           </CardContent>
           <CardFooter>
-            <Button asChild>
-              <Link href="/updates/v0.9.1">Details anzeigen</Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button asChild variant="outline">
+                <Link href="/updates/v0.9">v0.9.0</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/updates/v0.9.1">v0.9.1</Link>
+              </Button>
+            </div>
           </CardFooter>
         </Card>
         
