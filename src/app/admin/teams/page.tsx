@@ -856,6 +856,8 @@ export default function AdminTeamsPage() {
                                     const assignedTeamInfo = allTeamsForYearValidation.find(t => t.id === assignedTeamId);
                                     if (assignedTeamInfo?.leagueCompetitionYear === currentTeamCompYearForValidation) {
                                         const categoryOfAssignedTeam = getDisciplineCategory(assignedTeamInfo.leagueType);
+                                        // Ein Schütze darf nur einmal pro Disziplin-Kategorie und Jahr antreten
+                                        // Aber KK Gewehr und KK Pistole sind verschiedene Kategorien
                                         if (categoryOfAssignedTeam && categoryOfAssignedTeam === categoryOfCurrentTeam) {
                                             assignedToSameCategoryInYear = true;
                                         }

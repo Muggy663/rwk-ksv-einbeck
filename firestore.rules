@@ -27,6 +27,11 @@ service cloud.firestore {
              get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubId == clubId;
     }
 
+    // Admin-Berechtigung für Datenbereinigung
+    function hasAdminCleanupAccess() {
+      return isSuperAdmin();
+    }
+
     // === Regeln für Collections ===
 
     // Öffentlich lesbare, nur von Admin schreibbare Collections
@@ -50,47 +55,80 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    // Regeln für events-Sammlung
+    match /events/{eventId} {
+      allow read: if true;
+      allow create, update: if request.auth != null && 
+        (isSuperAdmin() ||
+         get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == "mannschaftsfuehrer" || 
+         get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == "vereinsvertreter");
+      allow delete: if request.auth != null && 
+        (isSuperAdmin() || 
+         resource.data.createdBy == request.auth.uid);
+    }
+
     // Teams - Verwaltung durch Admin und Vereinsvertreter
     match /rwk_teams/{teamId} {
       allow read: if true;
-      
       allow create: if isSuperAdmin() ||
                       (isVereinsvertreter() && 
                        hasClubAccess(request.resource.data.clubId));
-      
       allow update: if isSuperAdmin() ||
                       (isVereinsvertreter() && 
                        hasClubAccess(resource.data.clubId) && 
                        hasClubAccess(request.resource.data.clubId));
-                        
       allow delete: if isSuperAdmin() || 
                       (isVereinsvertreter() && 
                        hasClubAccess(resource.data.clubId));
     }
 
+    // Team-Schützen-Zuordnungen - Erweiterte Berechtigung für Bereinigung
+    match /rwk_team_shooters/{assignmentId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isSuperAdmin() || 
+                    (isVereinsvertreter() && 
+                     hasClubAccess(resource.data.clubId));
+      allow delete: if hasAdminCleanupAccess() || 
+                    (isVereinsvertreter() && 
+                     hasClubAccess(resource.data.clubId));
+    }
+
+    // Regeln für rwk_shooter_team_assignments
+    match /rwk_shooter_team_assignments/{assignmentId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isSuperAdmin() || 
+                    (isVereinsvertreter() && 
+                     hasClubAccess(resource.data.clubId));
+      allow delete: if hasAdminCleanupAccess() || 
+                    (isVereinsvertreter() && 
+                     hasClubAccess(resource.data.clubId));
+    }
+
     // Schützen - Verwaltung durch Admin und Vereinsvertreter
     match /rwk_shooters/{shooterId} {
       allow read: if true; 
-      
       allow create: if isSuperAdmin() ||
                       (isVereinsvertreter() && 
                        hasClubAccess(request.resource.data.clubId));
-
       allow update: if isSuperAdmin() ||
                       (isVereinsvertreter() && 
                        hasClubAccess(resource.data.clubId) &&
                        hasClubAccess(request.resource.data.clubId));
-
       allow delete: if isSuperAdmin() ||
                       (isVereinsvertreter() && 
                        hasClubAccess(resource.data.clubId));
     }
 
-    // Ergebnisse - Erfassung durch jeden authentifizierten Benutzer
+    // Ergebnisse - Erweiterte Berechtigung für Bereinigung
     match /rwk_scores/{scoreId} {
       allow read: if true;
       allow create: if isAuthenticated();
-      allow update, delete: if isSuperAdmin();
+      allow update: if isSuperAdmin();
+      allow delete: if hasAdminCleanupAccess() || 
+                    (isVereinsvertreter() && 
+                     hasClubAccess(resource.data.clubId));
     }
 
     // Liga-Updates - Lesbar für alle, schreibbar für authentifizierte Benutzer
@@ -118,7 +156,7 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update, delete: if false; // Audit-Logs sollten nie geändert oder gelöscht werden
     }
-    
+
     // Dokumente - Lesbar für alle, schreibbar nur für Admin
     match /documents/{documentId} {
       allow read: if true;

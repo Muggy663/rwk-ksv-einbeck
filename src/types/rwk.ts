@@ -128,21 +128,34 @@ export function getUIDisciplineValueFromSpecificType(specificType: FirestoreLeag
 
 /**
  * Gibt die Kategorie einer Disziplin zurück
+ * Ein Schütze darf pro Saison in verschiedenen Kategorien antreten,
+ * aber nur einmal pro Kategorie
  * @param disciplineType - Disziplintyp
  * @returns Kategorie der Disziplin
  */
 export function getDisciplineCategory(disciplineType: string): string {
   if (!disciplineType) return 'unknown';
   
-  const lowerType = disciplineType.toLowerCase();
+  const upperType = disciplineType.toUpperCase();
   
-  if (lowerType.includes('lg') || lowerType === 'luftgewehr') {
+  // Kleinkaliber Gewehr (KKG, KKS)
+  if (upperType === 'KKG' || upperType === 'KKS' || upperType.includes('GEWEHR')) {
+    return 'kk-gewehr';
+  }
+  // Kleinkaliber Pistole (KKP)
+  else if (upperType === 'KKP' || (upperType.includes('KK') && upperType.includes('PISTOL'))) {
+    return 'kk-pistole';
+  }
+  // Luftgewehr (LGA, LGS)
+  else if (upperType === 'LGA' || upperType === 'LGS' || upperType.includes('LUFTGEWEHR')) {
     return 'luftgewehr';
-  } else if (lowerType.includes('kk') || lowerType === 'kleinkaliber') {
-    return 'kleinkaliber';
-  } else if (lowerType.includes('lp') || lowerType === 'luftpistole') {
+  }
+  // Luftpistole (LP, LPF)
+  else if (upperType === 'LP' || upperType === 'LPF' || upperType.includes('LUFTPISTOL')) {
     return 'luftpistole';
-  } else if (lowerType.includes('sp') || lowerType === 'sportpistole') {
+  }
+  // Sportpistole
+  else if (upperType.includes('SPORTPISTOL')) {
     return 'sportpistole';
   }
   
