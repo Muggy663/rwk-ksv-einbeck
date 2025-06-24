@@ -109,20 +109,8 @@ export default function VereinErgebnissePage() {
       return;
     }
     
-    // Cache für Ergebniserfassung (10 Min)
-    const cacheKey = `results-data-${activeClubIdForEntry}`;
-    const cachedData = localStorage.getItem(cacheKey);
-    const cacheTime = localStorage.getItem(cacheKey + '-time');
-    
-    if (cachedData && cacheTime && Date.now() - parseInt(cacheTime) < 600000) {
-      const parsed = JSON.parse(cachedData);
-      setAllSeasons(parsed.seasons);
-      setAvailableRunningSeasons(parsed.runningSeasons);
-      setAllLeagues(parsed.leagues);
-      setAllShootersFromDB(parsed.shooters);
-      setIsLoadingPageData(false);
-      return;
-    }
+    // Cache für Ergebniserfassung deaktiviert
+    // Daten werden immer frisch geladen, um Probleme zu vermeiden
     
     setIsLoadingPageData(true);
     try {
@@ -162,14 +150,8 @@ export default function VereinErgebnissePage() {
         setAllShootersFromDB(allShooterDocs);
       }
 
-      // Cache speichern
-      localStorage.setItem(cacheKey, JSON.stringify({
-        seasons: fetchedSeasons,
-        runningSeasons: runningSeasons,
-        leagues: fetchedAllLeagues,
-        shooters: allShooterDocs.slice(0, shootersLimit)
-      }));
-      localStorage.setItem(cacheKey + '-time', Date.now().toString());
+      // Cache-Speicherung deaktiviert
+      // Keine Daten werden im localStorage gespeichert, um Probleme zu vermeiden
 
     } catch (error) {
       console.error("VER_ERGEBNISSE DEBUG: Error fetching initial page data:", error);
@@ -252,6 +234,10 @@ export default function VereinErgebnissePage() {
             const teamShooterIds = team.shooterIds || [];
             if (teamShooterIds.length === 0) return { team, allShootersHaveResults: false };
             
+            // Nur gültige Schützen-IDs berücksichtigen
+            const validShooterIds = teamShooterIds.filter(id => id && typeof id === 'string' && id.trim() !== "");
+            if (validShooterIds.length === 0) return { team, allShootersHaveResults: false };
+            
             // Ergebnisse für dieses Team und diesen Durchgang aus der Datenbank laden
             const scoresQuery = query(
                 collection(db, SCORES_COLLECTION),
@@ -274,13 +260,22 @@ export default function VereinErgebnissePage() {
             
             // Schützen mit gerade gespeicherten Ergebnissen hinzufügen
             justSavedScoreIdentifiers.forEach(js => {
-                if (js.durchgang === parsedRound && teamShooterIds.includes(js.shooterId)) {
+                if (js.durchgang === parsedRound && validShooterIds.includes(js.shooterId)) {
                     shooterIdsWithResults.add(js.shooterId);
                 }
             });
             
             // Prüfen, ob alle Schützen des Teams bereits Ergebnisse haben
-            const allShootersHaveResults = teamShooterIds.every(id => shooterIdsWithResults.has(id));
+            const allShootersHaveResults = validShooterIds.every(id => shooterIdsWithResults.has(id));
+            
+            // Debug-Informationen
+            if (team.name.includes("Einbecker SGi I")) {
+                console.log(`Team ${team.name} für DG ${parsedRound}:`);
+                console.log(`- Gültige Schützen-IDs: ${validShooterIds.join(', ')}`);
+                console.log(`- Schützen mit Ergebnissen: ${Array.from(shooterIdsWithResults).join(', ')}`);
+                console.log(`- Fehlende Ergebnisse: ${validShooterIds.filter(id => !shooterIdsWithResults.has(id)).join(', ')}`);
+                console.log(`- Alle Ergebnisse vorhanden: ${allShootersHaveResults}`);
+            }
             
             return { team, allShootersHaveResults };
         }));
@@ -289,6 +284,11 @@ export default function VereinErgebnissePage() {
         const filteredTeams = teamsWithFilterInfo
             .filter(({ allShootersHaveResults }) => !allShootersHaveResults)
             .map(({ team }) => team);
+            
+        // Wenn keine Teams übrig bleiben, zeige eine Meldung
+        if (filteredTeams.length === 0) {
+          console.log(`Alle Teams für Liga ${selectedLeagueId} und Durchgang ${parsedRound} haben bereits vollständige Ergebnisse.`);
+        }
         
         setAllTeamsInSelectedLeague(filteredTeams);
       } catch (error) {
@@ -311,10 +311,45 @@ export default function VereinErgebnissePage() {
             if (teamData && teamData.shooterIds && teamData.shooterIds.length > 0) {
                 const validShooterIds = teamData.shooterIds.filter(id => id && typeof id === 'string' && id.trim() !== "");
                 if (validShooterIds.length > 0) {
-                    const shootersForTeam = allShootersFromDB.filter(shooter => validShooterIds.includes(shooter.id)).sort((a, b) => a.name.localeCompare(b.name));
-                    setShootersOfSelectedTeam(shootersForTeam);
-                } else { setShootersOfSelectedTeam([]); }
-            } else { setShootersOfSelectedTeam([]); }
+                    // Prüfen, ob alle Schützen-IDs im allShootersFromDB vorhanden sind
+                    const foundShooters = allShootersFromDB.filter(shooter => validShooterIds.includes(shooter.id));
+                    const foundShooterIds = foundShooters.map(s => s.id);
+                    const missingShooterIds = validShooterIds.filter(id => !foundShooterIds.includes(id));
+                    
+                    if (missingShooterIds.length > 0) {
+                        console.log(`VER_ERGEBNISSE DEBUG: Fehlende Schützen im Cache: ${missingShooterIds.join(', ')}`);
+                        
+                        // Fehlende Schützen direkt aus der Datenbank laden
+                        try {
+                            const shootersQuery = query(
+                                collection(db, SHOOTERS_COLLECTION),
+                                where(documentId(), "in", missingShooterIds)
+                            );
+                            const shootersSnapshot = await getDocs(shootersQuery);
+                            const additionalShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Shooter));
+                            
+                            console.log(`VER_ERGEBNISSE DEBUG: ${additionalShooters.length} zusätzliche Schützen geladen`);
+                            
+                            // Kombiniere gefundene und zusätzlich geladene Schützen
+                            const allTeamShooters = [...foundShooters, ...additionalShooters].sort((a, b) => a.name.localeCompare(b.name));
+                            setShootersOfSelectedTeam(allTeamShooters);
+                        } catch (error) {
+                            console.error("VER_ERGEBNISSE DEBUG: Error fetching additional shooters:", error);
+                            // Fallback auf die bereits gefundenen Schützen
+                            setShootersOfSelectedTeam(foundShooters.sort((a, b) => a.name.localeCompare(b.name)));
+                        }
+                    } else {
+                        // Alle Schützen wurden im Cache gefunden
+                        setShootersOfSelectedTeam(foundShooters.sort((a, b) => a.name.localeCompare(b.name)));
+                    }
+                } else { 
+                    console.log("VER_ERGEBNISSE DEBUG: Keine gültigen Schützen-IDs im Team");
+                    setShootersOfSelectedTeam([]); 
+                }
+            } else { 
+                console.log("VER_ERGEBNISSE DEBUG: Keine Schützen-IDs im Team gefunden");
+                setShootersOfSelectedTeam([]); 
+            }
         } catch (error) {
             console.error("VER_ERGEBNISSE DEBUG: Error fetching shooters for team:", error);
             toast({ title: "Fehler Schützenladen", description: (error as Error).message, variant: "destructive" });
@@ -323,7 +358,7 @@ export default function VereinErgebnissePage() {
             setIsLoadingShooters(false); setSelectedShooterId('');
         }
     };
-    if (selectedTeamId && allShootersFromDB.length > 0 && activeClubIdForEntry) loadShootersForTeam(); else setShootersOfSelectedTeam([]);
+    if (selectedTeamId && activeClubIdForEntry) loadShootersForTeam(); else setShootersOfSelectedTeam([]);
   }, [selectedTeamId, allTeamsInSelectedLeague, allShootersFromDB, activeClubIdForEntry, toast]);
 
   useEffect(() => {
@@ -336,7 +371,12 @@ export default function VereinErgebnissePage() {
             where("teamId", "==", selectedTeamId), where("competitionYear", "==", currentSeason.competitionYear), where("durchgang", "==", parseInt(selectedRound, 10))
         );
         const snapshot = await getDocs(scoresQuery);
-        setExistingScoresForTeamAndRound(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry)));
+        const scores = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
+        
+        console.log(`Existierende Ergebnisse für Team ${selectedTeamId}, DG ${selectedRound}: ${scores.length}`);
+        scores.forEach(score => console.log(`- Schütze ${score.shooterId}: ${score.shooterName}, Ringe: ${score.totalRinge}`));
+        
+        setExistingScoresForTeamAndRound(scores);
       } catch (error) {
         console.error("VER_ERGEBNISSE DEBUG: Error fetching existing scores: ", error);
         toast({ title: "Fehler Ex. Ergebnisse", description: (error as Error).message, variant: "destructive" });
@@ -349,39 +389,142 @@ export default function VereinErgebnissePage() {
   }, [selectedTeamId, selectedSeasonId, selectedRound, allSeasons, activeClubIdForEntry, toast]);
 
    useEffect(() => {
-    if (selectedTeamId && selectedRound && shootersOfSelectedTeam.length > 0 && !isLoadingExistingScores) {
-      const parsedRound = parseInt(selectedRound, 10);
-      const shootersInPendingThisRound = pendingScores.filter(ps => ps.teamId === selectedTeamId && ps.durchgang === parsedRound).map(ps => ps.shooterId);
-      const shootersInJustSavedThisRound = justSavedScoreIdentifiers.filter(js => js.durchgang === parsedRound && shootersOfSelectedTeam.some(s => s.id === js.shooterId)).map(js => js.shooterId);
-      const shootersInExistingScoresThisRound = existingScoresForTeamAndRound.filter(es => es.durchgang === parsedRound).map(es => es.shooterId);
-      
-      const filtered = shootersOfSelectedTeam.filter(sh => 
-        sh.id && !shootersInPendingThisRound.includes(sh.id) && !shootersInJustSavedThisRound.includes(sh.id) && !shootersInExistingScoresThisRound.includes(sh.id)
-      );
-      setAvailableShootersForDropdown(filtered);
-    } else {
-      setAvailableShootersForDropdown([]);
-    }
-  }, [selectedTeamId, selectedRound, shootersOfSelectedTeam, pendingScores, justSavedScoreIdentifiers, existingScoresForTeamAndRound, isLoadingExistingScores]);
+    const loadAvailableShooters = async () => {
+      if (selectedTeamId && selectedRound && !isLoadingExistingScores) {
+        const parsedRound = parseInt(selectedRound, 10);
+        
+        // Hole die aktuelle Team-Daten
+        const selectedTeam = allTeamsInSelectedLeague.find(t => t.id === selectedTeamId);
+        if (!selectedTeam || !selectedTeam.shooterIds || selectedTeam.shooterIds.length === 0) {
+          setAvailableShootersForDropdown([]);
+          return;
+        }
+        
+        // Alle gültigen Schützen-IDs des Teams
+        const validTeamShooterIds = selectedTeam.shooterIds.filter(id => id && typeof id === 'string' && id.trim() !== "");
+        
+        // Schützen-IDs, die bereits Ergebnisse haben
+        const shootersInPendingThisRound = pendingScores.filter(ps => ps.teamId === selectedTeamId && ps.durchgang === parsedRound).map(ps => ps.shooterId);
+        const shootersInJustSavedThisRound = justSavedScoreIdentifiers.filter(js => js.durchgang === parsedRound).map(js => js.shooterId);
+        const shootersInExistingScoresThisRound = existingScoresForTeamAndRound.filter(es => es.durchgang === parsedRound).map(es => es.shooterId);
+        
+        // Alle Schützen-IDs mit Ergebnissen kombinieren
+        const allShooterIdsWithResults = new Set([
+          ...shootersInPendingThisRound,
+          ...shootersInJustSavedThisRound,
+          ...shootersInExistingScoresThisRound
+        ]);
+        
+        // Finde Schützen ohne Ergebnisse
+        const shooterIdsWithoutResults = validTeamShooterIds.filter(id => !allShooterIdsWithResults.has(id));
+        
+        console.log(`Team Schützen-IDs: ${validTeamShooterIds.join(', ')}`);
+        console.log(`Schützen mit Ergebnissen: ${Array.from(allShooterIdsWithResults).join(', ')}`);
+        console.log(`Schützen ohne Ergebnisse: ${shooterIdsWithoutResults.join(', ')}`);
+        
+        if (shooterIdsWithoutResults.length === 0) {
+          setAvailableShootersForDropdown([]);
+          return;
+        }
+        
+        // Prüfe, welche Schützen im Cache fehlen
+        const availableShootersFromCache = allShootersFromDB.filter(sh => 
+          sh.id && shooterIdsWithoutResults.includes(sh.id)
+        );
+        
+        const foundShooterIds = availableShootersFromCache.map(s => s.id);
+        const missingShooterIds = shooterIdsWithoutResults.filter(id => !foundShooterIds.includes(id));
+        
+        let finalAvailableShooters = availableShootersFromCache;
+        
+        // Wenn Schützen fehlen, lade sie direkt aus der Datenbank
+        if (missingShooterIds.length > 0) {
+          console.log(`Fehlende Schützen im Dropdown: ${missingShooterIds.join(', ')}`);
+          
+          try {
+            const shootersQuery = query(
+              collection(db, SHOOTERS_COLLECTION),
+              where(documentId(), "in", missingShooterIds)
+            );
+            const shootersSnapshot = await getDocs(shootersQuery);
+            const additionalShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Shooter));
+            
+            console.log(`Zusätzlich geladene Schützen für Dropdown: ${additionalShooters.length}`);
+            additionalShooters.forEach(s => console.log(`- ${s.id}: ${s.name}`));
+            
+            // Kombiniere gefundene und zusätzlich geladene Schützen
+            finalAvailableShooters = [...availableShootersFromCache, ...additionalShooters];
+          } catch (error) {
+            console.error("Fehler beim Laden zusätzlicher Schützen für Dropdown:", error);
+          }
+        }
+        
+        console.log(`Verfügbare Schützen für DG ${parsedRound}: ${finalAvailableShooters.length} von ${validTeamShooterIds.length} gesamt`);
+        setAvailableShootersForDropdown(finalAvailableShooters);
+      } else {
+        setAvailableShootersForDropdown([]);
+      }
+    };
+    
+    loadAvailableShooters();
+  }, [selectedTeamId, selectedRound, allTeamsInSelectedLeague, pendingScores, justSavedScoreIdentifiers, existingScoresForTeamAndRound, isLoadingExistingScores, allShootersFromDB]);
 
   useEffect(() => { setSelectedLeagueId(''); setSelectedTeamId(''); setSelectedShooterId(''); setSelectedRound(''); setPendingScores([]); setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]);}, [selectedSeasonId, activeClubIdForEntry]);
   useEffect(() => { setSelectedTeamId(''); setSelectedShooterId(''); setSelectedRound(''); setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]);}, [selectedLeagueId]);
   useEffect(() => { setSelectedShooterId(''); setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]);}, [selectedTeamId]);
   useEffect(() => { setSelectedShooterId(''); setScore(''); setExistingScoresForTeamAndRound([]);}, [selectedRound]);
 
-  const handleAddToList = () => {
-    if (!userPermission?.uid) { toast({ title: "Fehler", description: "Benutzer nicht identifiziert.", variant: "destructive" }); return; }
-    if (!selectedShooterId || !selectedRound || !score || !selectedSeasonId || !selectedLeagueId || !selectedTeamId || !activeClubIdForEntry ) {
-      toast({ title: "Fehlende Eingabe", description: "Bitte alle Felder ausfüllen.", variant: "destructive" }); return;
+  const handleAddToList = async () => {
+    console.log("handleAddToList aufgerufen");
+    
+    if (!userPermission?.uid) { 
+      console.log("Fehler: Benutzer nicht identifiziert");
+      toast({ title: "Fehler", description: "Benutzer nicht identifiziert.", variant: "destructive" }); 
+      return; 
     }
+    
+    if (!selectedShooterId || !selectedRound || !score || !selectedSeasonId || !selectedLeagueId || !selectedTeamId || !activeClubIdForEntry ) {
+      console.log("Fehlende Eingabe:", { selectedShooterId, selectedRound, score, selectedSeasonId, selectedLeagueId, selectedTeamId, activeClubIdForEntry });
+      toast({ title: "Fehlende Eingabe", description: "Bitte alle Felder ausfüllen.", variant: "destructive" }); 
+      return;
+    }
+    
     const scoreVal = parseInt(score);
     const season = allSeasons.find(s => s.id === selectedSeasonId);
     const league = allLeagues.find(l => l.id === selectedLeagueId); 
     const team = allTeamsInSelectedLeague.find(t => t.id === selectedTeamId); 
-    const shooter = allShootersFromDB.find(sh => sh.id === selectedShooterId);
+    
+    // Suche den Schützen in allen verfügbaren Quellen
+    let shooter = availableShootersForDropdown.find(sh => sh.id === selectedShooterId) || 
+                  shootersOfSelectedTeam.find(sh => sh.id === selectedShooterId) ||
+                  allShootersFromDB.find(sh => sh.id === selectedShooterId);
+    
+    // Wenn der Schütze nicht gefunden wurde, versuche ihn direkt aus der Datenbank zu laden
+    if (!shooter) {
+      console.log(`Schütze mit ID ${selectedShooterId} nicht im Cache gefunden, lade aus Datenbank`);
+      try {
+        const shooterDocRef = doc(db, SHOOTERS_COLLECTION, selectedShooterId);
+        const shooterSnap = await getFirestoreDoc(shooterDocRef);
+        
+        if (shooterSnap.exists()) {
+          shooter = { id: shooterSnap.id, ...shooterSnap.data() } as Shooter;
+          console.log(`Schütze aus Datenbank geladen: ${shooter.name}`);
+        } else {
+          console.error(`Schütze mit ID ${selectedShooterId} nicht in der Datenbank gefunden`);
+          toast({ title: "Datenfehler", description: "Schütze nicht gefunden.", variant: "destructive" });
+          return;
+        }
+      } catch (error) {
+        console.error("Fehler beim Laden des Schützen:", error);
+        toast({ title: "Datenfehler", description: "Fehler beim Laden des Schützen.", variant: "destructive" });
+        return;
+      }
+    }
 
     if (!season || !league || !team || !shooter || !team.clubId) {
-      toast({ title: "Datenfehler", description: "Basisdaten unvollständig (Saison, Liga, Team, Schütze, Team ClubID).", variant: "destructive" }); return;
+      console.error("Basisdaten unvollständig:", { season, league, team, shooter, teamClubId: team?.clubId });
+      toast({ title: "Datenfehler", description: "Basisdaten unvollständig (Saison, Liga, Team, Schütze, Team ClubID).", variant: "destructive" }); 
+      return;
     }
     
     let maxPossibleScore = 300;
@@ -389,25 +532,42 @@ export default function VereinErgebnissePage() {
     if (fourHundredPointDisciplines.includes(league.type)) maxPossibleScore = 400;
     
     if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) {
-      toast({ title: "Ungültiges Ergebnis", description: `Ringzahl (0-${maxPossibleScore}).`, variant: "destructive" }); return;
+      toast({ title: "Ungültiges Ergebnis", description: `Ringzahl (0-${maxPossibleScore}).`, variant: "destructive" }); 
+      return;
     }
     
     const parsedRound = parseInt(selectedRound, 10);
     if (pendingScores.some(ps => ps.shooterId === selectedShooterId && ps.durchgang === parsedRound && ps.teamId === selectedTeamId) || 
         justSavedScoreIdentifiers.some(js => js.shooterId === selectedShooterId && js.durchgang === parsedRound) ||
         existingScoresForTeamAndRound.some(es => es.shooterId === selectedShooterId && es.durchgang === parsedRound)) {
-      toast({ title: "Ergebnis existiert bereits", variant: "warning"}); return;
+      toast({ title: "Ergebnis existiert bereits", variant: "warning"}); 
+      return;
     }
 
     const newPendingEntry: PendingScoreEntry = {
       tempId: new Date().toISOString() + Math.random().toString(36).substring(2, 15),
-      seasonId: selectedSeasonId, seasonName: season.name, leagueId: selectedLeagueId, leagueName: league.name, leagueType: league.type,
-      teamId: selectedTeamId, teamName: team.name, clubId: team.clubId, shooterId: selectedShooterId, shooterName: shooter.name, 
-      shooterGender: shooter.gender, durchgang: parsedRound, totalRinge: scoreVal, scoreInputType: resultType, competitionYear: season.competitionYear,
+      seasonId: selectedSeasonId, 
+      seasonName: season.name, 
+      leagueId: selectedLeagueId, 
+      leagueName: league.name, 
+      leagueType: league.type,
+      teamId: selectedTeamId, 
+      teamName: team.name, 
+      clubId: team.clubId, 
+      shooterId: selectedShooterId, 
+      shooterName: shooter.name, 
+      shooterGender: shooter.gender, 
+      durchgang: parsedRound, 
+      totalRinge: scoreVal, 
+      scoreInputType: resultType, 
+      competitionYear: season.competitionYear,
     };
+    
+    console.log("Neuer Eintrag wird hinzugefügt:", newPendingEntry);
     setPendingScores(prev => [...prev, newPendingEntry]);
     toast({ title: "Ergebnis hinzugefügt" });
-    setSelectedShooterId(''); setScore(''); 
+    setSelectedShooterId(''); 
+    setScore(''); 
   };
 
   const handleRemoveFromList = (tempId: string) => {
@@ -440,7 +600,7 @@ export default function VereinErgebnissePage() {
           
           newlySavedIdentifiers.push({ shooterId: entry.shooterId, durchgang: entry.durchgang });
           
-          // Liga-Update für jedes Ergebnis einzeln verarbeiten
+          // Liga-Update für jedes Ergebnis einzeln verarbeiten (für "Letzte Ergebnis-Updates" auf der Startseite)
           if (entry.leagueId && entry.leagueName && entry.leagueType && entry.competitionYear !== undefined) {
             try {
               const today = new Date();
@@ -469,8 +629,8 @@ export default function VereinErgebnissePage() {
                 await addDoc(collection(db, LEAGUE_UPDATES_COLLECTION), leagueUpdateData);
               }
             } catch (updateError) {
-              console.error("VER_ERGEBNISSE DEBUG: Error updating league update:", updateError);
-              // Fehler bei Liga-Updates ignorieren
+              // Berechtigungsfehler ignorieren - die Hauptfunktion (Ergebnisse speichern) funktioniert trotzdem
+              console.log("Liga-Update konnte nicht durchgeführt werden (fehlende Berechtigung) - Ergebnisse wurden trotzdem gespeichert");
             }
           }
         } catch (scoreError) {
@@ -611,8 +771,28 @@ export default function VereinErgebnissePage() {
                 />
               </div>
               <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={!selectedLeagueId || isLoadingTeams || !selectedRound || allTeamsInSelectedLeague.length === 0}>
-                <SelectTrigger id="vver-team"><SelectValue placeholder={isLoadingTeams ? "Lade Teams..." : (!selectedRound ? "Durchgang wählen" : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId && selectedRound ? "Alle Teams vollständig erfasst" : "Mannschaft wählen"))} /></SelectTrigger>
-                <SelectContent>{allTeamsInSelectedLeague.filter(t=>t.id).map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                <SelectTrigger id="vver-team">
+                  <SelectValue placeholder={
+                    isLoadingTeams 
+                      ? "Lade Teams..." 
+                      : (!selectedRound 
+                          ? "Durchgang wählen" 
+                          : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId && selectedRound 
+                              ? "✓ Alle Teams vollständig erfasst" 
+                              : "Mannschaft wählen"))
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {allTeamsInSelectedLeague.length === 0 && selectedLeagueId && selectedRound ? (
+                    <SelectItem value="no-teams-available" disabled>
+                      Alle Ergebnisse für diesen Durchgang erfasst
+                    </SelectItem>
+                  ) : (
+                    allTeamsInSelectedLeague.filter(t=>t.id).map(t => 
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    )
+                  )}
+                </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
@@ -623,28 +803,35 @@ export default function VereinErgebnissePage() {
                   className="ml-2"
                 />
               </div>
-              <Select value={selectedShooterId} onValueChange={setSelectedShooterId} disabled={!selectedTeamId || isLoadingShooters || isLoadingExistingScores || (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound)}>
-                <SelectTrigger id="vver-shooter"><SelectValue placeholder={isLoadingShooters || isLoadingExistingScores ? "Lade Schützen..." : (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound ? "Alle erfasst/keine" : "Schütze wählen")} /></SelectTrigger>
+              <Select value={selectedShooterId} onValueChange={setSelectedShooterId} disabled={!selectedTeamId || isLoadingShooters || isLoadingExistingScores}>
+                <SelectTrigger id="vver-shooter">
+                  <SelectValue placeholder={
+                    isLoadingShooters || isLoadingExistingScores 
+                      ? "Lade Schützen..." 
+                      : (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound 
+                          ? "Alle Ergebnisse erfasst" 
+                          : "Schütze wählen")
+                  } />
+                </SelectTrigger>
                 <SelectContent>
-                  {availableShootersForDropdown.filter(sh=>sh.id).map(sh => {
-                    // Prüfen, ob der Schütze bereits Ergebnisse hat
-                    const hasExistingScore = existingScoresForTeamAndRound.some(score => score.shooterId === sh.id);
-                    const hasPendingScore = pendingScores.some(ps => ps.shooterId === sh.id && ps.teamId === selectedTeamId && ps.durchgang === parseInt(selectedRound, 10));
-                    const hasJustSavedScore = justSavedScoreIdentifiers.some(js => js.shooterId === sh.id && js.durchgang === parseInt(selectedRound, 10));
-                    
-                    // Wenn der Schütze noch kein Ergebnis hat, heben wir ihn hervor
-                    const needsScore = !hasExistingScore && !hasPendingScore && !hasJustSavedScore;
-                    
-                    return (
-                      <SelectItem 
-                        key={sh.id} 
-                        value={sh.id} 
-                        className={needsScore ? "font-bold text-primary" : ""}
-                      >
-                        {needsScore ? `${sh.name} ⚠️` : sh.name}
-                      </SelectItem>
-                    );
-                  })}
+                  {availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound ? (
+                    <SelectItem value="no-shooters-available" disabled>
+                      Alle Ergebnisse für diesen Durchgang erfasst
+                    </SelectItem>
+                  ) : (
+                    availableShootersForDropdown
+                      .filter(sh => sh.id)
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map(sh => (
+                        <SelectItem 
+                          key={sh.id} 
+                          value={sh.id} 
+                          className="font-bold text-primary"
+                        >
+                          {sh.name} ⚠️
+                        </SelectItem>
+                      ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -735,7 +922,12 @@ export default function VereinErgebnissePage() {
             </RadioGroup>
           </div>
           <div className="flex justify-end pt-4">
-            <Button onClick={handleAddToList} disabled={!selectedShooterId || !selectedRound || !score || isSubmittingScores || isLoadingExistingScores}><Plus className="mr-2 h-5 w-5" /> Zur Liste hinzufügen</Button>
+            <Button 
+              onClick={() => handleAddToList()} 
+              disabled={!selectedShooterId || !selectedRound || !score || isSubmittingScores || isLoadingExistingScores}
+            >
+              <Plus className="mr-2 h-5 w-5" /> Zur Liste hinzufügen
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -756,21 +948,18 @@ export default function VereinErgebnissePage() {
           </CardContent>
         </Card>
       )}
-      {hasMoreShooters && (
+      {hasMoreShooters && allShootersFromDB.length > 0 && (
         <Card className="shadow-md">
           <CardContent className="pt-6 text-center">
             <Button 
               onClick={() => {
                 setShootersLimit(prev => prev + 30);
-                // Cache invalidieren um mehr Schützen zu laden
-                const cacheKey = `results-data-${activeClubIdForEntry}`;
-                localStorage.removeItem(cacheKey);
-                localStorage.removeItem(cacheKey + '-time');
+                // Direkt neue Daten laden ohne Cache-Invalidierung
                 fetchInitialPageData();
               }}
               variant="outline"
             >
-              Weitere 30 Schützen laden
+              Weitere {Math.min(30, shootersLimit)} Schützen laden
             </Button>
           </CardContent>
         </Card>

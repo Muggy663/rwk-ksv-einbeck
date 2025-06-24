@@ -50,4 +50,17 @@ Punkt 3: Ergebniserfassung den Kontext Text löschen bei Mannschaftsführer und 
 Punkt 4: Ergebnis eintragen, Ergebnis (Ringe)  kann ich dir RInge hoch nd runter klicken, die pfeile können entfernt werden
 
 
+Failed to load resource: the server responded with a status of 404 ()Fehler nachvollziehen
+2472-e4e45643b4e9e31d.js:1 ChunkLoadError: Loading chunk 6436 failed.
+(error: https://rwk-einbeck-app.vercel.app/_next/static/chunks/app/termine/edit/%255Bid%255D/page-89b03fc03caf5dc5.js)
+    at __webpack_require__.f.j (webpack-9526d3b921a69475.js:1:4062)
+    at webpack-9526d3b921a69475.js:1:1733
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (webpack-9526d3b921a69475.js:1:1681)
+    at z (2472-e4e45643b4e9e31d.js:9:662)
+    at ra (2472-e4e45643b4e9e31d.js:9:7718)
+    at c (2472-e4e45643b4e9e31d.js:9:8756)
+window.console.error @ 2472-e4e45643b4e9e31d.js:1Fehler nachvollziehen
+
+
 

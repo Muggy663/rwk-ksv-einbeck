@@ -13,24 +13,24 @@ export default function UpdatesOverviewPage() {
         <Card className="border-primary/20 shadow-md hover:shadow-lg transition-all">
           <CardHeader className="bg-primary/5">
             <CardTitle className="text-xl text-primary flex items-center justify-between">
-              <span>Aktuelle Version: 0.9.2 (20. Januar 2025)</span>
+              <span>Aktuelle Version: 0.9.3 (24. Juni 2025)</span>
               <span className="text-sm bg-primary/20 px-2 py-1 rounded-full flex items-center gap-1">
                 <span>Beta</span>
               </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
-            <p className="mb-4">Performance-Optimierungen für RWK-Tabellen - bis zu 90% schnellere Ladezeiten.</p>
+            <p className="mb-4">Bugfix-Update zur Behebung von Problemen und Verbesserung der Stabilität.</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>⚡ Hybrid Lazy Loading für optimale Performance</li>
-              <li>🚀 Batch-Loading reduziert Datenbankabfragen von ~49 auf 3</li>
-              <li>💾 Intelligentes Caching für bereits geladene Daten</li>
-              <li>📱 Sofortige Anzeige der Team-Tabellen</li>
+              <li>🐛 Korrektur der Ergebniserfassung und Team-Anzeige</li>
+              <li>🔒 Behebung von Berechtigungsproblemen bei Liga-Updates</li>
+              <li>📊 Filterung von Saisons in Statistiken (nur laufende/abgeschlossene)</li>
+              <li>⚡ Verbesserung der Stabilität durch Optimierung der Offline-Funktionen</li>
             </ul>
           </CardContent>
           <CardFooter>
             <Button asChild variant="outline">
-              <Link href="/updates/v0.9.2">Details zu Version 0.9.2</Link>
+              <Link href="/updates/v0.9.3">Details zu Version 0.9.3</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -44,7 +44,7 @@ export default function UpdatesOverviewPage() {
           </CardHeader>
           <CardContent>
             <p>Mobile Optimierungen, Statistik-Dashboard und Performance-Verbesserungen.</p>
-            <p className="text-sm text-muted-foreground mt-2">0.9.0 - 0.9.2</p>
+            <p className="text-sm text-muted-foreground mt-2">0.9.0 - 0.9.3</p>
           </CardContent>
           <CardFooter>
             <div className="flex gap-2">
@@ -54,8 +54,11 @@ export default function UpdatesOverviewPage() {
               <Button asChild variant="outline">
                 <Link href="/updates/v0.9.1">v0.9.1</Link>
               </Button>
-              <Button asChild>
+              <Button asChild variant="outline">
                 <Link href="/updates/v0.9.2">v0.9.2</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/updates/v0.9.3">v0.9.3</Link>
               </Button>
             </div>
           </CardFooter>

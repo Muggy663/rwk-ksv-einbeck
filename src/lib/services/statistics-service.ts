@@ -238,9 +238,10 @@ export async function fetchGenderDistributionData(
 
 export async function fetchSeasons() {
   try {
-    // Versuche, Saisons aus Firestore zu laden
+    // Versuche, Saisons aus Firestore zu laden - nur laufende und abgeschlossene
     const seasonsQuery = query(
       collection(db, 'seasons'),
+      where('status', 'in', ['Laufend', 'Abgeschlossen']),
       orderBy('competitionYear', 'desc')
     );
     
@@ -250,12 +251,13 @@ export async function fetchSeasons() {
       return snapshot.docs.map(doc => ({
         id: doc.id,
         name: doc.data().name,
-        year: doc.data().competitionYear
+        year: doc.data().competitionYear,
+        status: doc.data().status
       }));
     }
     
     // Keine Daten gefunden
-    console.log('Keine Saisons in Firestore gefunden.');
+    console.log('Keine laufenden oder abgeschlossenen Saisons in Firestore gefunden.');
     return [];
   } catch (error) {
     console.error('Fehler beim Laden der Saisons:', error);
@@ -265,6 +267,25 @@ export async function fetchSeasons() {
 
 export async function fetchLeagues(seasonId: string) {
   try {
+    // Prüfe zuerst, ob die Saison laufend oder abgeschlossen ist
+    const seasonDoc = await getDocs(
+      query(
+        collection(db, 'seasons'),
+        where('__name__', '==', seasonId)
+      )
+    );
+    
+    if (seasonDoc.empty) {
+      console.log('Saison nicht gefunden.');
+      return [];
+    }
+    
+    const seasonData = seasonDoc.docs[0].data();
+    if (seasonData.status !== 'Laufend' && seasonData.status !== 'Abgeschlossen') {
+      console.log('Nur laufende oder abgeschlossene Saisons können in den Statistiken angezeigt werden.');
+      return [];
+    }
+    
     // Versuche, Ligen aus Firestore zu laden
     const leaguesQuery = query(
       collection(db, 'rwk_leagues'),

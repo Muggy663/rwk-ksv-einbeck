@@ -131,11 +131,11 @@ service cloud.firestore {
                      hasClubAccess(resource.data.clubId));
     }
 
-    // Liga-Updates - Lesbar für alle, schreibbar für authentifizierte Benutzer
+    // Liga-Updates - Lesbar für alle, schreibbar und aktualisierbar für authentifizierte Benutzer
     match /league_updates/{updateId} { 
       allow read: if true;
-      allow create: if isAuthenticated();
-      allow update, delete: if isSuperAdmin();
+      allow create, update: if isAuthenticated();
+      allow delete: if isSuperAdmin();
     }
 
     // Support-Tickets - Erstellung für alle, Verwaltung nur für Admin

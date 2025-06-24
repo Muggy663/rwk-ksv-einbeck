@@ -1,62 +1,56 @@
 # Changelog
 
-## Version 0.9.2 (20. Januar 2025) - Performance-Optimierungen
+## Version 0.9.3 (24. Juni 2025)
 
-### Performance-Verbesserungen
-- Neu: Hybrid Lazy Loading für RWK-Tabellen - bis zu 90% schnellere Ladezeiten
-- Neu: Batch-Loading für Teams, Scores und Clubs reduziert Datenbankabfragen von ~49 auf 3
-- Neu: Intelligentes Caching für bereits geladene Schützen-Details
-- Neu: Lazy Loading für Einzelschützen-Tab - lädt nur bei Bedarf
-- Neu: Loading-Spinner für Schützen-Details beim Team-Aufklappen
-- Verbessert: Sofortige Anzeige der Team-Tabellen ohne Wartezeit
-- Verbessert: Schützen-Details werden nur beim ersten Erweitern geladen
-- Optimiert: Reduzierte initiale Ladezeit von mehreren Sekunden auf 1-2 Sekunden
+### Behobene Fehler
+- **Ergebniserfassung**: Korrektur der Anzeige von Teams mit fehlenden Ergebnissen
+- **Ergebniserfassung**: Verbesserung der Benutzeroberfläche für vollständig erfasste Teams
+- **Ergebniserfassung**: Behebung von Berechtigungsproblemen bei Liga-Updates
+- **Statistiken**: Filterung von Saisons - nur laufende und abgeschlossene Saisons werden angezeigt
+- **Allgemein**: Deaktivierung problematischer Offline-Funktionen zur Verbesserung der Stabilität
 
-### Technische Optimierungen
-- Neu: Zustandsverwaltung für lazy geladene Daten
-- Neu: Optimierte Firestore-Abfragen mit `where("leagueId", "in", allLeagueIds)`
-- Verbessert: Effiziente Datenstruktur für Team-Grunddaten vs. Detail-Daten
-- Verbessert: Minimale UI-Blockierung durch asynchrones Nachladen
+### Technische Verbesserungen
+- Verbesserte Fehlerbehandlung bei Berechtigungsproblemen
+- Aktualisierte Firestore-Regeln für Liga-Updates
+- Optimierte Ladelogik für Schützen-Daten
 
-## Version 0.8.4 (16. Juni 2025) - UI-Modernisierung
+## Version 0.9.2 (20. Januar 2025)
 
-### UI-Modernisierung
-- Neu: Modernes Dashboard-Layout mit abgerundeten Karten und subtilen Schatten
-- Neu: Optimierte mobile Ansicht für Tabellen und Touch-freundliche Bedienelemente
-- Neu: Verbesserte visuelle Hierarchie mit Farbakzenten für wichtige Aktionen
-- Neu: Interaktive Diagramme für Ergebnistrends mit Leistungsindikatoren
-- Neu: Farbkodierte Leistungsindikatoren (grün für Verbesserung, rot für Verschlechterung)
-- Neu: Platzhalter für Benachrichtigungssystem für wichtige Updates
-- Verbessert: Konsistente Farbpalette mit Hauptfarbton und Akzentfarben
-- Verbessert: Mehr Weißraum zwischen Elementen für bessere Lesbarkeit
-- Hervorgehoben: Progressive Web App (PWA) Funktionalität bereits integriert
+### Performance-Optimierungen
+- Hybrid Lazy Loading für optimale Performance
+- Batch-Loading reduziert Datenbankabfragen von ~49 auf 3
+- Intelligentes Caching für bereits geladene Daten
+- Sofortige Anzeige der Team-Tabellen
 
-## Version 0.8.3 (15. Juni 2025)
+### Technische Verbesserungen
+- Implementierung von Batch-Loading für Firestore-Abfragen
+- Optimierung der Datenstruktur für schnellere Verarbeitung
+- Verbesserte Fehlerbehandlung und Logging
 
-### "Außer Konkurrenz"-Funktion
-- Neu: Mannschaften können als "außer Konkurrenz" markiert werden
-- Neu: Anzeige eines "AK"-Badges in Tabellen mit Tooltip für den Grund
-- Neu: Migrationsfunktion für bestehende Teams
-- Neu: Admin-Seite für Migration unter `/admin/migrations`
+## Version 0.9.1 (15. Dezember 2024)
 
-### TypeScript-Optimierung
-- Verbessert: TypeScript-Konfiguration mit strengeren Typprüfungen
-- Verbessert: ESLint-Konfiguration für TypeScript mit erweiterten Regeln
-- Neu: Konvertierung von JavaScript-Hooks zu TypeScript mit expliziten Typdefinitionen
-- Neu: Erweiterte zentrale Typdefinitionen für bessere Codequalität
-- Verbessert: Test-Utilities mit erweiterten Optionen für Routing und State-Management
-- Neu: Dokumentation für TypeScript-Best-Practices und Vercel-Deployment
+### Neue Funktionen
+- Statistik-Dashboard mit Leistungsentwicklung, Mannschaftsvergleich und Geschlechterverteilung
+- Saisonübergreifende Statistiken für Schützen und Mannschaften
+- Schützenvergleich mit bis zu 6 Schützen
 
 ### Verbesserungen
-- Neu: "Nicht zugewiesen" Filter für Ligen in der Mannschaftsverwaltung
-- Behoben: RWK-Tabellen können jetzt vollständig minimiert werden
-- Verbessert: Entwicklungsdokumentation für bessere Nachvollziehbarkeit
-- Verbessert: Mannschaftsverwaltung behält Saison-Auswahl nach dem Speichern bei
-- Behoben: Problem mit dem Speichern von Mannschaften mit "Außer Konkurrenz"-Status
+- Optimierte Ladezeiten für Statistiken
+- Verbesserte Darstellung von Diagrammen
+- Export-Funktion für Diagramme als PNG
 
-### Technische Optimierungen
-- Neu: Migration von JavaScript-Services zu TypeScript für bessere Typsicherheit
-- Verbessert: Entfernung doppelter und ungenutzter Dateien für schlankere Projektstruktur
-- Verbessert: Optimierte Projektstruktur mit konsistenten Dateiendungen
-- Neu: Aktualisierte Dokumentation mit Aufräumplan für zukünftige Verbesserungen
-- Verbessert: Reduzierte Projektgröße durch Entfernung temporärer und Backup-Dateien
+## Version 0.9.0 (1. November 2024)
+
+### Neue Funktionen
+- Mobile Optimierungen für alle Bereiche der Anwendung
+- Responsive Design für Smartphones und Tablets
+- Touch-freundliche Bedienelemente
+
+### Verbesserungen
+- Überarbeitete Navigation für mobile Geräte
+- Optimierte Tabellendarstellung auf kleinen Bildschirmen
+- Verbesserte Performance auf mobilen Geräten
+
+## Ältere Versionen
+
+Siehe separate Changelog-Dateien für frühere Versionen.
