@@ -385,7 +385,12 @@ export default function AdminTeamsPage() {
 
   const handleEditTeam = (team: Team) => {
     setFormMode('edit');
-    setCurrentTeam(team);
+    // Stelle sicher, dass seasonId gesetzt ist
+    const teamWithSeasonId = {
+      ...team,
+      seasonId: team.seasonId || selectedSeasonId
+    };
+    setCurrentTeam(teamWithSeasonId);
     setIsFormOpen(true);
   };
 
@@ -767,7 +772,7 @@ export default function AdminTeamsPage() {
       </Card>
 
       <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) {setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAvailableClubShooters([]);} setIsFormOpen(open); }}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto">
           <form onSubmit={(e) => {
             e.preventDefault();
             console.log("Form submitted");
@@ -900,7 +905,7 @@ export default function AdminTeamsPage() {
                   {isLoadingShootersForDialog || isLoadingValidationData ? (
                      <div className="flex items-center justify-center p-4 h-40 border rounded-md bg-muted/30"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="ml-2">Lade Schützen...</p></div>
                   ) : availableClubShooters.length > 0 ? (
-                    <ScrollArea className="h-40 rounded-md border p-2 bg-muted/20">
+                    <ScrollArea className="h-32 md:h-40 rounded-md border p-2 bg-muted/20">
                       <div className="space-y-1">
                       {availableClubShooters.map(shooter => {
                         if (!shooter || !shooter.id) return null; 
@@ -978,18 +983,26 @@ export default function AdminTeamsPage() {
                 </div>
               </div>
             )}
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAvailableClubShooters([]);}}>Abbrechen</Button>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAvailableClubShooters([]);}} className="w-full sm:w-auto">Abbrechen</Button>
               <Button 
                 type="button"
                 disabled={isSubmittingForm}
+                className="w-full sm:w-auto"
                 onClick={() => {
+                  console.log('Button clicked! isSubmittingForm:', isSubmittingForm);
+                  
                   if (!currentTeam || !currentTeam.name?.trim() || !currentTeam.clubId || !currentTeam.seasonId || currentTeam.competitionYear === undefined) {
+                    console.log('Validation failed:', { currentTeam, name: currentTeam?.name, clubId: currentTeam?.clubId, seasonId: currentTeam?.seasonId, competitionYear: currentTeam?.competitionYear });
                     toast({ title: "Ungültige Eingabe", description: "Name, Verein, Saison und Wettkampfjahr sind erforderlich.", variant: "destructive" });
                     return;
                   }
                   
+                  console.log('Validation passed, currentTeam:', currentTeam);
+                  console.log('selectedShooterIdsInForm:', selectedShooterIdsInForm);
+                  
                   setIsSubmittingForm(true);
+                  console.log('Starting form submission...');
                   
                   const teamRef = formMode === 'edit' && currentTeam.id 
                     ? doc(db, TEAMS_COLLECTION, currentTeam.id)
@@ -1009,7 +1022,10 @@ export default function AdminTeamsPage() {
                     outOfCompetition: currentTeam.outOfCompetition || false
                   };
                   
+                  console.log('About to save with formMode:', formMode, 'teamData:', teamData);
+                  
                   if (formMode === 'edit' && currentTeam.id) {
+                    console.log('Updating existing team...');
                     updateDoc(teamRef, teamData)
                       .then(() => {
                         toast({ title: "Erfolg", description: "Mannschaft erfolgreich aktualisiert!" });
@@ -1025,6 +1041,7 @@ export default function AdminTeamsPage() {
                         setIsSubmittingForm(false);
                       });
                   } else {
+                    console.log('Creating new team...');
                     setDoc(teamRef, teamData)
                       .then(() => {
                         toast({ title: "Erfolg", description: "Mannschaft erfolgreich erstellt!" });
