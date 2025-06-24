@@ -71,7 +71,7 @@ import { uiDisciplineFilterOptions, getUIDisciplineValueFromSpecificType, league
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { db } from '@/lib/firebase/config';
-import { collection, doc, getDoc, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, orderBy, limit, documentId } from 'firebase/firestore';
 import {
   ResponsiveContainer,
   LineChart,
@@ -361,6 +361,10 @@ function RwkTabellenPageComponent() {
   const [allIndividualDataForDiscipline, setAllIndividualDataForDiscipline] = useState<IndividualShooterDisplayData[]>([]);
   const [filteredIndividualData, setFilteredIndividualData] = useState<IndividualShooterDisplayData[]>([]);
   
+  // Lazy loading states
+  const [loadedTeamShooters, setLoadedTeamShooters] = useState<Set<string>>(new Set());
+  const [loadingTeamShooters, setLoadingTeamShooters] = useState<Set<string>>(new Set());
+  
   const [topMaleShooter, setTopMaleShooter] = useState<IndividualShooterDisplayData | null>(null);
   const [topFemaleShooter, setTopFemaleShooter] = useState<IndividualShooterDisplayData | null>(null);
   const [selectedIndividualLeagueFilter, setSelectedIndividualLeagueFilter] = useState<string>(""); // Empty string for "All Leagues"
@@ -522,6 +526,52 @@ function RwkTabellenPageComponent() {
       const clubCache = new Map<string, string>(); 
       const shooterCache = new Map<string, Shooter>();
 
+
+
+
+
+      // Batch-load ALLE Teams für alle Ligen auf einmal
+      const allLeagueIds = leaguesSnapshot.docs.map(doc => doc.id);
+      const allTeamsQuery = query(
+        collection(db, "rwk_teams"), 
+        where("leagueId", "in", allLeagueIds), 
+        where("competitionYear", "==", config.year)
+      );
+      const allTeamsSnapshot = await getDocs(allTeamsQuery);
+      const teamsByLeague = new Map<string, any[]>();
+      allTeamsSnapshot.docs.forEach(teamDoc => {
+        const teamData = teamDoc.data();
+        const leagueId = teamData.leagueId;
+        if (!teamsByLeague.has(leagueId)) teamsByLeague.set(leagueId, []);
+        teamsByLeague.get(leagueId)!.push({id: teamDoc.id, ...teamData});
+      });
+
+      // Batch-load ALLE Scores auf einmal
+      const allScoresQuery = query(
+        collection(db, "rwk_scores"),
+        where("competitionYear", "==", config.year),
+        where("leagueType", "in", firestoreDisciplinesToQuery)
+      );
+      const allScoresSnapshot = await getDocs(allScoresQuery);
+      const scoresByTeam = new Map<string, ScoreEntry[]>();
+      allScoresSnapshot.docs.forEach(scoreDoc => {
+        const score = scoreDoc.data() as ScoreEntry;
+        if (!scoresByTeam.has(score.teamId)) scoresByTeam.set(score.teamId, []);
+        scoresByTeam.get(score.teamId)!.push({id: scoreDoc.id, ...score});
+      });
+
+      // Batch-load alle Clubs auf einmal
+      const allClubIds = [...new Set(allTeamsSnapshot.docs.map(doc => doc.data().clubId).filter(Boolean))];
+      if (allClubIds.length > 0) {
+        try {
+          const clubsQuery = query(collection(db, "clubs"), where(documentId(), "in", allClubIds));
+          const clubsSnapshot = await getDocs(clubsQuery);
+          clubsSnapshot.docs.forEach(clubDoc => {
+            clubCache.set(clubDoc.id, (clubDoc.data() as Club).name || "Unbek. Verein");
+          });
+        } catch (e) { console.error("RWK DEBUG: Error batch-fetching clubs", e); }
+      }
+
       for (const leagueDoc of leaguesSnapshot.docs) {
         const leagueData = leagueDoc.data() as Omit<League, 'id'>;
         const leagueDisplay: LeagueDisplay = { 
@@ -532,103 +582,49 @@ function RwkTabellenPageComponent() {
         };
         let teamDisplays: TeamDisplay[] = [];
         
-        const teamsColRef = collection(db, "rwk_teams");
-        const qTeams = query(teamsColRef, where("leagueId", "==", leagueDisplay.id), where("competitionYear", "==", config.year));
-        const teamsSnapshot = await getDocs(qTeams);
+        const teamsForThisLeague = teamsByLeague.get(leagueDisplay.id) || [];
 
-        for (const teamDoc of teamsSnapshot.docs) {
-          const teamData = teamDoc.data() as Team;
+        for (const teamData of teamsForThisLeague) {
+
           if (teamData.name && teamData.name.toLowerCase().includes(EXCLUDED_TEAM_NAME_PART)) {
             console.log(`RWK DEBUG: Filtering out team by name: ${teamData.name}`);
             continue; 
           }
           
-          let clubName = "Unbek. Verein";
-          if (teamData.clubId) {
-            if (clubCache.has(teamData.clubId)) { clubName = clubCache.get(teamData.clubId)!; } 
-            else {
-              try {
-                const clubSnap = await getDoc(doc(db, "clubs", teamData.clubId));
-                if (clubSnap.exists()) { clubName = (clubSnap.data() as Club).name || clubName; clubCache.set(teamData.clubId, clubName); }
-              } catch (e) { console.error("RWK DEBUG: Error fetching club", teamData.clubId, e); }
-            }
-          }
-          const teamDisplayItem: TeamDisplay = { 
-            ...teamData, 
-            id: teamDoc.id, 
-            clubName, 
-            shootersResults: [], 
-            roundResults: {}, 
-            totalScore: 0, 
-            averageScore: null, 
-            numScoredRounds: 0,
-            leagueType: leagueDisplay.type 
-          };
-
-          const shooterIdsForTeam = teamData.shooterIds || [];
-          if (shooterIdsForTeam.length > 0) {
-            const validShooterIds = shooterIdsForTeam.filter(id => id && typeof id === 'string' && id.trim() !== "");
-            if (validShooterIds.length > 0) {
-                const scoresQuery = query(collection(db, "rwk_scores"), 
-                                          where("teamId", "==", teamDisplayItem.id), 
-                                          where("competitionYear", "==", teamDisplayItem.competitionYear),
-                                          where("shooterId", "in", validShooterIds));
-                const teamScoresSnapshot = await getDocs(scoresQuery);
-                const scoresByShooter = new Map<string, ScoreEntry[]>();
-                teamScoresSnapshot.forEach(scoreDoc => {
-                    const score = scoreDoc.data() as ScoreEntry;
-                    if (!scoresByShooter.has(score.shooterId)) scoresByShooter.set(score.shooterId, []);
-                    scoresByShooter.get(score.shooterId)!.push(score);
-                });
-              
-              for (const shooterId of validShooterIds) {
-                let shooterInfo = shooterCache.get(shooterId);
-                if (!shooterInfo) {
-                  try {
-                    const shooterSnap = await getDoc(doc(db, "rwk_shooters", shooterId));
-                    if (shooterSnap.exists()) { shooterInfo = {id: shooterSnap.id, ...shooterSnap.data()} as Shooter; shooterCache.set(shooterId, shooterInfo); }
-                  } catch (e) { console.error("RWK DEBUG: Error fetching shooter", shooterId, e); }
-                }
-                const sResults: ShooterDisplayResults = { 
-                  shooterId, 
-                  shooterName: shooterInfo?.name || (scoresByShooter.get(shooterId)?.[0]?.shooterName) || `Schütze ${shooterId.substring(0,5)}`, 
-                  shooterGender: shooterInfo?.gender || (scoresByShooter.get(shooterId)?.[0]?.shooterGender) || 'unknown',
-                  results: {}, average: null, total: 0, roundsShot: 0,
-                  teamId: teamDisplayItem.id, 
-                  leagueId: leagueDisplay.id, 
-                  competitionYear: teamDisplayItem.competitionYear,
-                  leagueType: leagueDisplay.type,
-                };
-                for (let r = 1; r <= numRoundsForCompetition; r++) sResults.results[`dg${r}`] = null;
-                
-                const scoresForThisShooterInTeam = scoresByShooter.get(shooterId) || [];
-                scoresForThisShooterInTeam.forEach(score => {
-                  if (score.durchgang >= 1 && score.durchgang <= numRoundsForCompetition && typeof score.totalRinge === 'number') {
-                    sResults.results[`dg${score.durchgang}`] = score.totalRinge;
-                  }
-                });
-                let currentTotal = 0; let roundsShotCount = 0;
-                Object.values(sResults.results).forEach(res => { if (res !== null && typeof res === 'number') { currentTotal += res; roundsShotCount++; } });
-                sResults.total = currentTotal; sResults.roundsShot = roundsShotCount;
-                if (sResults.roundsShot > 0 && sResults.total !== null) sResults.average = parseFloat((sResults.total / sResults.roundsShot).toFixed(2));
-                teamDisplayItem.shootersResults.push(sResults);
-              }
-              teamDisplayItem.shootersResults.sort((a, b) => (b.total ?? 0) - (a.total ?? 0) || a.shooterName.localeCompare(b.shooterName));
-            }
-          }
-
+          const clubName = teamData.clubId ? (clubCache.get(teamData.clubId) || "Unbek. Verein") : "Unbek. Verein";
+          // Berechne Team-Grunddaten aus Scores (ohne Schützen-Details)
+          const teamScores = scoresByTeam.get(teamData.id) || [];
           let roundResultsTemp: { [key: string]: number[] } = {};
           for (let r = 1; r <= numRoundsForCompetition; r++) roundResultsTemp[`dg${r}`] = [];
           
-          teamDisplayItem.shootersResults.forEach(sr => {
+          // Gruppiere Scores nach Schützen für Team-Berechnung
+          const scoresByShooter = new Map<string, ScoreEntry[]>();
+          teamScores.forEach(score => {
+            if (!scoresByShooter.has(score.shooterId)) scoresByShooter.set(score.shooterId, []);
+            scoresByShooter.get(score.shooterId)!.push(score);
+          });
+
+          // Berechne beste Scores pro Runde für Team-Wertung
+          scoresByShooter.forEach(shooterScores => {
+            const shooterResults: { [key: string]: number | null } = {};
+            for (let r = 1; r <= numRoundsForCompetition; r++) shooterResults[`dg${r}`] = null;
+            
+            shooterScores.forEach(score => {
+              if (score.durchgang >= 1 && score.durchgang <= numRoundsForCompetition && typeof score.totalRinge === 'number') {
+                shooterResults[`dg${score.durchgang}`] = score.totalRinge;
+              }
+            });
+
             for (let r = 1; r <= numRoundsForCompetition; r++) {
               const rk = `dg${r}`;
-              if (sr.results[rk] !== null && typeof sr.results[rk] === 'number') {
-                roundResultsTemp[rk].push(sr.results[rk] as number);
+              if (shooterResults[rk] !== null && typeof shooterResults[rk] === 'number') {
+                roundResultsTemp[rk].push(shooterResults[rk] as number);
               }
             }
           });
 
+          // Berechne Team-Ergebnisse
+          const roundResults: { [key: string]: number | null } = {};
           for (let r = 1; r <= numRoundsForCompetition; r++) {
             const rk = `dg${r}`;
             const scoresForRound = roundResultsTemp[rk].sort((a, b) => b - a);
@@ -638,13 +634,22 @@ function RwkTabellenPageComponent() {
                 roundSum += scoresForRound[sIdx];
                 contributingScoresCount++;
             }
-            teamDisplayItem.roundResults[rk] = contributingScoresCount === MAX_SHOOTERS_PER_TEAM ? roundSum : null;
+            roundResults[rk] = contributingScoresCount === MAX_SHOOTERS_PER_TEAM ? roundSum : null;
           }
 
           let teamTotal = 0; let numScoredRds = 0;
-          Object.values(teamDisplayItem.roundResults).forEach(val => { if (val !== null) { teamTotal += val; numScoredRds++; } });
-          teamDisplayItem.totalScore = teamTotal; teamDisplayItem.numScoredRounds = numScoredRds;
-          teamDisplayItem.averageScore = numScoredRds > 0 ? parseFloat((teamTotal / numScoredRds).toFixed(2)) : null;
+          Object.values(roundResults).forEach(val => { if (val !== null) { teamTotal += val; numScoredRds++; } });
+
+          const teamDisplayItem: TeamDisplay = { 
+            ...teamData, 
+            clubName, 
+            shootersResults: [], // Wird lazy geladen
+            roundResults, 
+            totalScore: teamTotal, 
+            averageScore: numScoredRds > 0 ? parseFloat((teamTotal / numScoredRds).toFixed(2)) : null, 
+            numScoredRounds: numScoredRds,
+            leagueType: leagueDisplay.type 
+          };
           teamDisplays.push(teamDisplayItem);
         }
         // Sortiere Teams und berücksichtige "Außer Konkurrenz"-Status
@@ -838,6 +843,23 @@ function RwkTabellenPageComponent() {
       setLoadingData(false);
       return;
     }
+    
+    // Smart Refresh: Prüfe ob Daten frisch genug sind (5 Min)
+    const cacheKey = `rwk-data-${selectedCompetition.year}-${selectedCompetition.discipline}`;
+    const lastFetch = localStorage.getItem(cacheKey + '-time');
+    const cachedData = localStorage.getItem(cacheKey);
+    
+    if (lastFetch && cachedData && Date.now() - parseInt(lastFetch) < 300000) {
+      const parsed = JSON.parse(cachedData);
+      setTeamData(parsed.teamData);
+      if (activeTab === 'einzelschützen') {
+        setAllIndividualDataForDiscipline(parsed.individualData || []);
+        setFilteredIndividualData(parsed.individualData || []);
+      }
+      setLoadingData(false);
+      return;
+    }
+    
     console.log("RWK DEBUG: loadData triggered.", { year: selectedCompetition.year, disc: selectedCompetition.discipline, tab: activeTab, leagueFilter: selectedIndividualLeagueFilter });
     setLoadingData(true); setError(null); 
     setTeamData(null); 
@@ -854,25 +876,37 @@ function RwkTabellenPageComponent() {
       const fetchedTeamData = await fetchCompetitionTeamData(selectedCompetition, numRounds);
       setTeamData(fetchedTeamData);
       
-      // Fetch all individuals for the selected discipline (without league filter initially)
-      const allIndividuals = await fetchIndividualShooterData(selectedCompetition, numRounds, null);
-      setAllIndividualDataForDiscipline(allIndividuals);
+      let allIndividuals: any[] = [];
       
-      // Apply league filter if one is selected
-      if (selectedIndividualLeagueFilter && selectedIndividualLeagueFilter !== "ALL_LEAGUES_IND_FILTER") {
-          const individualsInLeague = await fetchIndividualShooterData(selectedCompetition, numRounds, selectedIndividualLeagueFilter);
-          setFilteredIndividualData(individualsInLeague);
-      } else {
-          setFilteredIndividualData(allIndividuals); // Show all if no league filter
-      }
-
-      if (allIndividuals.length > 0) { // Base top shooters on all individuals for the discipline
-        const males = allIndividuals.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'male' || s.shooterGender.toLowerCase() === 'm'));
-        setTopMaleShooter(males.length > 0 ? males[0] : null);
+      // Lazy load individual data only when needed (on tab switch)
+      if (activeTab === 'einzelschützen') {
+        // Fetch all individuals for the selected discipline (without league filter initially)
+        allIndividuals = await fetchIndividualShooterData(selectedCompetition, numRounds, null);
+        setAllIndividualDataForDiscipline(allIndividuals);
         
-        const females = allIndividuals.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'female' || s.shooterGender.toLowerCase() === 'w'));
-        setTopFemaleShooter(females.length > 0 ? females[0] : null);
+        // Apply league filter if one is selected
+        if (selectedIndividualLeagueFilter && selectedIndividualLeagueFilter !== "ALL_LEAGUES_IND_FILTER") {
+            const individualsInLeague = await fetchIndividualShooterData(selectedCompetition, numRounds, selectedIndividualLeagueFilter);
+            setFilteredIndividualData(individualsInLeague);
+        } else {
+            setFilteredIndividualData(allIndividuals); // Show all if no league filter
+        }
+
+        if (allIndividuals.length > 0) { // Base top shooters on all individuals for the discipline
+          const males = allIndividuals.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'male' || s.shooterGender.toLowerCase() === 'm'));
+          setTopMaleShooter(males.length > 0 ? males[0] : null);
+          
+          const females = allIndividuals.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'female' || s.shooterGender.toLowerCase() === 'w'));
+          setTopFemaleShooter(females.length > 0 ? females[0] : null);
+        }
       }
+      
+      // Cache speichern
+      localStorage.setItem(cacheKey, JSON.stringify({
+        teamData: fetchedTeamData,
+        individualData: allIndividuals
+      }));
+      localStorage.setItem(cacheKey + '-time', Date.now().toString());
     } catch (err: any) {
       console.error('RWK DEBUG: Failed to load RWK data in loadData:', err);
       toast({ title: "Fehler Datenladen", description: `Fehler beim Laden der Wettkampfdaten: ${err.message}`, variant: "destructive" });
@@ -1055,9 +1089,113 @@ function RwkTabellenPageComponent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const loadTeamShooters = useCallback(async (teamId: string, teamData: TeamDisplay, numRounds: number) => {
+    if (loadedTeamShooters.has(teamId) || loadingTeamShooters.has(teamId)) return;
+    
+    // Conditional Loading: Nur laden wenn Team Schützen hat
+    const shooterIdsForTeam = teamData.shooterIds || [];
+    const validShooterIds = shooterIdsForTeam.filter(id => id && typeof id === 'string' && id.trim() !== "");
+    
+    if (validShooterIds.length === 0) {
+      // Kein Loading nötig - Team hat keine Schützen
+      setLoadedTeamShooters(prev => new Set([...prev, teamId]));
+      return;
+    }
+    
+    setLoadingTeamShooters(prev => new Set([...prev, teamId]));
+    
+    try {
+
+      // Lade Scores für dieses Team
+      const scoresQuery = query(
+        collection(db, "rwk_scores"), 
+        where("teamId", "==", teamId), 
+        where("competitionYear", "==", teamData.competitionYear),
+        where("shooterId", "in", validShooterIds)
+      );
+      const teamScoresSnapshot = await getDocs(scoresQuery);
+      const scoresByShooter = new Map<string, ScoreEntry[]>();
+      teamScoresSnapshot.forEach(scoreDoc => {
+        const score = scoreDoc.data() as ScoreEntry;
+        if (!scoresByShooter.has(score.shooterId)) scoresByShooter.set(score.shooterId, []);
+        scoresByShooter.get(score.shooterId)!.push(score);
+      });
+
+      // Lade Schützen-Infos
+      const shootersQuery = query(collection(db, "rwk_shooters"), where(documentId(), "in", validShooterIds));
+      const shootersSnapshot = await getDocs(shootersQuery);
+      const shooterInfos = new Map<string, Shooter>();
+      shootersSnapshot.docs.forEach(shooterDoc => {
+        shooterInfos.set(shooterDoc.id, {id: shooterDoc.id, ...shooterDoc.data()} as Shooter);
+      });
+
+      // Erstelle Schützen-Ergebnisse
+      const shootersResults: ShooterDisplayResults[] = [];
+      for (const shooterId of validShooterIds) {
+        const shooterInfo = shooterInfos.get(shooterId);
+        const sResults: ShooterDisplayResults = { 
+          shooterId, 
+          shooterName: shooterInfo?.name || (scoresByShooter.get(shooterId)?.[0]?.shooterName) || `Schütze ${shooterId.substring(0,5)}`, 
+          shooterGender: shooterInfo?.gender || (scoresByShooter.get(shooterId)?.[0]?.shooterGender) || 'unknown',
+          results: {}, average: null, total: 0, roundsShot: 0,
+          teamId, 
+          leagueId: teamData.leagueId, 
+          competitionYear: teamData.competitionYear,
+          leagueType: teamData.leagueType,
+        };
+        for (let r = 1; r <= numRounds; r++) sResults.results[`dg${r}`] = null;
+        
+        const scoresForThisShooter = scoresByShooter.get(shooterId) || [];
+        scoresForThisShooter.forEach(score => {
+          if (score.durchgang >= 1 && score.durchgang <= numRounds && typeof score.totalRinge === 'number') {
+            sResults.results[`dg${score.durchgang}`] = score.totalRinge;
+          }
+        });
+        
+        let currentTotal = 0; let roundsShotCount = 0;
+        Object.values(sResults.results).forEach(res => { if (res !== null && typeof res === 'number') { currentTotal += res; roundsShotCount++; } });
+        sResults.total = currentTotal; sResults.roundsShot = roundsShotCount;
+        if (sResults.roundsShot > 0 && sResults.total !== null) sResults.average = parseFloat((sResults.total / sResults.roundsShot).toFixed(2));
+        shootersResults.push(sResults);
+      }
+      
+      shootersResults.sort((a, b) => (b.total ?? 0) - (a.total ?? 0) || a.shooterName.localeCompare(b.shooterName));
+
+      // Update teamData
+      setTeamData(prev => {
+        if (!prev) return prev;
+        const updatedLeagues = prev.leagues.map(league => ({
+          ...league,
+          teams: league.teams.map(team => 
+            team.id === teamId ? { ...team, shootersResults } : team
+          )
+        }));
+        return { ...prev, leagues: updatedLeagues };
+      });
+
+      setLoadedTeamShooters(prev => new Set([...prev, teamId]));
+    } catch (error) {
+      console.error('Error loading team shooters:', error);
+    } finally {
+      setLoadingTeamShooters(prev => { const newSet = new Set(prev); newSet.delete(teamId); return newSet; });
+    }
+  }, [loadedTeamShooters, loadingTeamShooters]);
+
   const toggleTeamExpansion = useCallback((teamId: string) => {
+    const isExpanding = !expandedTeamIds.includes(teamId);
     setExpandedTeamIds(prev => prev.includes(teamId) ? prev.filter(id => id !== teamId) : [...prev, teamId]);
-  }, []);
+    
+    if (isExpanding && teamData) {
+      // Finde das Team und lade Schützen-Details
+      for (const league of teamData.leagues) {
+        const team = league.teams.find(t => t.id === teamId);
+        if (team) {
+          loadTeamShooters(teamId, team, currentNumRoundsState);
+          break;
+        }
+      }
+    }
+  }, [expandedTeamIds, teamData, loadTeamShooters, currentNumRoundsState]);
 
   const handleShooterNameClick = useCallback((shooterData: IndividualShooterDisplayData) => {
     setSelectedShooterForDetail(shooterData);
@@ -1248,8 +1386,15 @@ function RwkTabellenPageComponent() {
                                 </TableRow>
                                 {expandedTeamIds.includes(team.id) && (
                                   <TableRow className="bg-transparent hover:bg-transparent">
-                                    <TableCell colSpan={5 + currentNumRoundsState + 1} className="p-0 border-t-0"> {/* Adjusted colSpan */}
-                                      <TeamShootersTable shootersResults={team.shootersResults} numRounds={currentNumRoundsState} parentTeam={team} onShooterClick={handleShooterNameClick} />
+                                    <TableCell colSpan={5 + currentNumRoundsState + 1} className="p-0 border-t-0">
+                                      {loadingTeamShooters.has(team.id) ? (
+                                        <div className="p-4 text-center">
+                                          <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                                          <p className="text-sm text-muted-foreground">Lade Schützen...</p>
+                                        </div>
+                                      ) : (
+                                        <TeamShootersTable shootersResults={team.shootersResults} numRounds={currentNumRoundsState} parentTeam={team} onShooterClick={handleShooterNameClick} />
+                                      )}
                                     </TableCell>
                                   </TableRow>
                                 )}

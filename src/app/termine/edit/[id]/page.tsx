@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,11 +22,15 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
-export default function EditEventPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: { id: string };
+}
+
+export default function EditEventPage({ params }: PageProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
-  const id = React.use(params).id;
+  const id = decodeURIComponent(params.id);
   
   const [event, setEvent] = useState<Event | null>(null);
   const [title, setTitle] = useState('');
@@ -379,7 +383,7 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
                   className="w-full md:w-auto"
                 >
                   {isSaving ? (
-                    <>Speichern...</>
+                    "Speichern..."
                   ) : (
                     <>
                       <Save className="mr-2 h-4 w-4" />

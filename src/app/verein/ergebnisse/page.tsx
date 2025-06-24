@@ -16,7 +16,7 @@ import { leagueDisciplineOptions } from '@/types/rwk';
 import { useVereinAuth } from '@/app/verein/layout'; 
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, documentId, getDoc as getFirestoreDoc, Timestamp, setDoc, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, documentId, getDoc as getFirestoreDoc, Timestamp, setDoc, updateDoc, addDoc, limit } from 'firebase/firestore';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -48,6 +48,8 @@ export default function VereinErgebnissePage() {
   
   const [allShootersFromDB, setAllShootersFromDB] = useState<Shooter[]>([]); 
   const [shootersOfSelectedTeam, setShootersOfSelectedTeam] = useState<Shooter[]>([]);
+  const [shootersLimit, setShootersLimit] = useState(30);
+  const [hasMoreShooters, setHasMoreShooters] = useState(false);
   const [availableShootersForDropdown, setAvailableShootersForDropdown] = useState<Shooter[]>([]);
   const [selectedShooterId, setSelectedShooterId] = useState<string>('');
   
@@ -106,11 +108,31 @@ export default function VereinErgebnissePage() {
       setAllSeasons([]); setAvailableRunningSeasons([]); setAllLeagues([]); setAllShootersFromDB([]);
       return;
     }
+    
+    // Cache für Ergebniserfassung (10 Min)
+    const cacheKey = `results-data-${activeClubIdForEntry}`;
+    const cachedData = localStorage.getItem(cacheKey);
+    const cacheTime = localStorage.getItem(cacheKey + '-time');
+    
+    if (cachedData && cacheTime && Date.now() - parseInt(cacheTime) < 600000) {
+      const parsed = JSON.parse(cachedData);
+      setAllSeasons(parsed.seasons);
+      setAvailableRunningSeasons(parsed.runningSeasons);
+      setAllLeagues(parsed.leagues);
+      setAllShootersFromDB(parsed.shooters);
+      setIsLoadingPageData(false);
+      return;
+    }
+    
     setIsLoadingPageData(true);
     try {
       const seasonsSnapshotPromise = getDocs(query(collection(db, SEASONS_COLLECTION), orderBy("competitionYear", "desc")));
       const allLeaguesSnapshotPromise = getDocs(query(collection(db, LEAGUES_COLLECTION), orderBy("name", "asc")));
-      const shootersSnapshotPromise = getDocs(query(collection(db, SHOOTERS_COLLECTION), orderBy("name", "asc")));
+      const shootersSnapshotPromise = getDocs(query(
+        collection(db, SHOOTERS_COLLECTION), 
+        orderBy("name", "asc"),
+        limit(shootersLimit + 1) // +1 um zu prüfen ob mehr vorhanden
+      ));
 
       const [seasonsSnapshot, allLeaguesSnapshot, shootersSnapshot] = await Promise.all([
           seasonsSnapshotPromise, allLeaguesSnapshotPromise, shootersSnapshotPromise
@@ -129,8 +151,25 @@ export default function VereinErgebnissePage() {
       const fetchedAllLeagues = allLeaguesSnapshot.docs.map(lDoc => ({ id: lDoc.id, ...lDoc.data() } as League)).filter(l => l.id);
       setAllLeagues(fetchedAllLeagues);
       
-      const fetchedAllShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Shooter)).filter(s => s.id);
-      setAllShootersFromDB(fetchedAllShooters);
+      const allShooterDocs = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Shooter)).filter(s => s.id);
+      
+      // Prüfe ob mehr Schützen vorhanden sind
+      if (allShooterDocs.length > shootersLimit) {
+        setHasMoreShooters(true);
+        setAllShootersFromDB(allShooterDocs.slice(0, shootersLimit)); // Nur ersten 30
+      } else {
+        setHasMoreShooters(false);
+        setAllShootersFromDB(allShooterDocs);
+      }
+
+      // Cache speichern
+      localStorage.setItem(cacheKey, JSON.stringify({
+        seasons: fetchedSeasons,
+        runningSeasons: runningSeasons,
+        leagues: fetchedAllLeagues,
+        shooters: allShooterDocs.slice(0, shootersLimit)
+      }));
+      localStorage.setItem(cacheKey + '-time', Date.now().toString());
 
     } catch (error) {
       console.error("VER_ERGEBNISSE DEBUG: Error fetching initial page data:", error);
@@ -383,14 +422,16 @@ export default function VereinErgebnissePage() {
     const newlySavedIdentifiers: { shooterId: string; durchgang: number }[] = [];
     
     try {
-      // Ergebnisse einzeln speichern statt als Batch
+      // Batch Write für alle Ergebnisse
+      const batch = writeBatch(db);
+      
       for (const entry of pendingScores) {
         try {
           const { tempId, ...dataToSave } = entry;
           const scoreDocRef = doc(collection(db, SCORES_COLLECTION));
           
-          // Einzelnes Dokument speichern
-          await setDoc(scoreDocRef, {
+          // Zu Batch hinzufügen statt einzeln speichern
+          batch.set(scoreDocRef, {
             ...dataToSave,
             enteredByUserId: userPermission.uid,
             enteredByUserName: userPermission.displayName || userPermission.email || "Unbekannt",
@@ -437,6 +478,9 @@ export default function VereinErgebnissePage() {
           // Fehler für einzelnes Ergebnis protokollieren und mit dem nächsten fortfahren
         }
       }
+      
+      // Alle Scores in einem Batch speichern
+      await batch.commit();
 
       toast({ title: "Ergebnisse gespeichert" });
       setPendingScores([]);
@@ -493,7 +537,7 @@ export default function VereinErgebnissePage() {
   if (availableRunningSeasons.length === 0 && !isLoadingPageData) {
     return (
       <div className="space-y-6">
-         <div className="flex justify-between items-center"><h1 className="text-2xl font-semibold text-primary">Ergebniserfassung {activeClubNameForEntry ? `(für ${activeClubNameForEntry})` : ''}</h1></div>
+         <div className="flex justify-between items-center"><h1 className="text-2xl font-semibold text-primary">Ergebniserfassung</h1></div>
         <Card className="shadow-md border-amber-500">
             <CardHeader><CardTitle className="text-amber-600 flex items-center"><AlertCircle className="mr-2 h-5 w-5" />Keine laufenden Saisons</CardTitle></CardHeader>
             <CardContent><p>Aktuell sind keine Saisons mit Status "Laufend" für die Ergebniserfassung verfügbar.</p></CardContent>
@@ -506,7 +550,7 @@ export default function VereinErgebnissePage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center">
-          <h1 className="text-2xl font-semibold text-primary">Ergebniserfassung {activeClubNameForEntry ? `(Kontext: ${activeClubNameForEntry})` : ''}</h1>
+          <h1 className="text-2xl font-semibold text-primary">Ergebniserfassung</h1>
           <HelpTooltip 
             text="Hier können Sie Ergebnisse für Mannschaften erfassen und speichern." 
             side="right" 
@@ -616,6 +660,8 @@ export default function VereinErgebnissePage() {
                 id="vver-score" 
                 type="number" 
                 value={score} 
+                style={{ MozAppearance: 'textfield' }}
+                className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 onChange={(e) => {
                   const value = e.target.value;
                   setScore(value);
@@ -710,6 +756,26 @@ export default function VereinErgebnissePage() {
           </CardContent>
         </Card>
       )}
+      {hasMoreShooters && (
+        <Card className="shadow-md">
+          <CardContent className="pt-6 text-center">
+            <Button 
+              onClick={() => {
+                setShootersLimit(prev => prev + 30);
+                // Cache invalidieren um mehr Schützen zu laden
+                const cacheKey = `results-data-${activeClubIdForEntry}`;
+                localStorage.removeItem(cacheKey);
+                localStorage.removeItem(cacheKey + '-time');
+                fetchInitialPageData();
+              }}
+              variant="outline"
+            >
+              Weitere 30 Schützen laden
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      
       {pendingScores.length === 0 && !isLoadingPageData && activeClubIdForEntry && (
          <div className="mt-8 p-6 text-center text-muted-foreground bg-secondary/30 rounded-md"><CheckSquare className="mx-auto h-10 w-10 mb-3 text-primary/70" /><p className="text-base">Noch keine Ergebnisse zur Speicherung vorgemerkt.</p></div>
       )}

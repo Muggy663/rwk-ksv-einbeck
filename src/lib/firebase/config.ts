@@ -30,4 +30,17 @@ const db: Firestore = getFirestore(app);
 const functions: Functions = getFunctions(app, 'europe-west1');
 const storage: FirebaseStorage = getStorage(app); // Firebase Storage initialisieren
 
+// Aktiviere Offline Persistence (einmalig)
+if (typeof window !== 'undefined') {
+  import('firebase/firestore').then(({ enableIndexedDbPersistence }) => {
+    enableIndexedDbPersistence(db).catch((err) => {
+      if (err.code === 'failed-precondition') {
+        console.log('Persistence failed: Multiple tabs open');
+      } else if (err.code === 'unimplemented') {
+        console.log('Persistence not supported');
+      }
+    });
+  });
+}
+
 export { app, auth, db, functions, storage }; // Storage exportieren

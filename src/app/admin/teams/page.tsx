@@ -51,7 +51,7 @@ import { db } from '@/lib/firebase/config';
 import {
   collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query,
   where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayUnion, arrayRemove, Timestamp,
-  setDoc
+  setDoc, limit
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -99,6 +99,8 @@ export default function AdminTeamsPage() {
   const [selectedLeagueIdFilter, setSelectedLeagueIdFilter] = useState<string>(queryLeagueId || ALL_LEAGUES_FILTER_VALUE);
   
   const [teamsForDisplay, setTeamsForDisplay] = useState<Team[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const TEAMS_PER_PAGE = 20;
   
   const [availableClubShooters, setAvailableClubShooters] = useState<Shooter[]>([]);
   const [allTeamsForYearValidation, setAllTeamsForYearValidation] = useState<TeamValidationInfo[]>([]);
@@ -173,8 +175,28 @@ export default function AdminTeamsPage() {
   }, [toast, querySeasonId, queryClubId, queryLeagueId, selectedSeasonId]); 
 
   useEffect(() => {
-    fetchInitialData();
-  }, [fetchInitialData]);
+    // Cache initial data for 5 minutes
+    const cacheKey = 'admin-teams-initial-data';
+    const cachedData = sessionStorage.getItem(cacheKey);
+    const cacheTime = sessionStorage.getItem(cacheKey + '-time');
+    
+    if (cachedData && cacheTime && Date.now() - parseInt(cacheTime) < 300000) {
+      const parsed = JSON.parse(cachedData);
+      setAllSeasons(parsed.seasons);
+      setAllLeagues(parsed.leagues);
+      setAllClubs(parsed.clubs);
+      setIsLoadingData(false);
+    } else {
+      fetchInitialData().then(() => {
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+          seasons: allSeasons,
+          leagues: allLeagues,
+          clubs: allClubs
+        }));
+        sessionStorage.setItem(cacheKey + '-time', Date.now().toString());
+      });
+    }
+  }, []);
 
   const leaguesForFilterDropdown = useMemo(() => {
     if (!selectedSeasonId || allLeagues.length === 0) return [];
@@ -202,8 +224,15 @@ export default function AdminTeamsPage() {
       return;
     }
     
+    // Background Sync: Zeige gecachte Daten sofort, lade frische im Hintergrund
+    const cacheKey = `admin-teams-${effectiveSeasonId}-${selectedClubIdFilter}-${selectedLeagueIdFilter}`;
+    const cachedTeams = sessionStorage.getItem(cacheKey);
+    
+    if (cachedTeams) {
+      setTeamsForDisplay(JSON.parse(cachedTeams));
+    }
+    
     setIsLoadingTeams(true);
-    setTeamsForDisplay([]); 
     console.log(`AdminTeamsPage: handleSearchTeams - Searching for season: ${effectiveSeasonId}, club: ${selectedClubIdFilter}, league: ${selectedLeagueIdFilter}`);
     try {
       const selectedSeasonData = allSeasons.find(s => s.id === effectiveSeasonId);
@@ -225,11 +254,20 @@ export default function AdminTeamsPage() {
         qConstraints.push(where("leagueId", "==", selectedLeagueIdFilter));
       }
       
-      const teamsQuery = query(collection(db, TEAMS_COLLECTION), ...qConstraints, orderBy("name", "asc"));
+      const teamsQuery = query(
+        collection(db, TEAMS_COLLECTION), 
+        ...qConstraints, 
+        orderBy("name", "asc"),
+        limit(TEAMS_PER_PAGE) // Nur 20 Teams pro Abfrage
+      );
       
       const querySnapshot = await getDocs(teamsQuery);
       const fetchedTeams = querySnapshot.docs.map(d => ({ id: d.id, ...d.data(), shooterIds: d.data().shooterIds || [] } as Team));
       setTeamsForDisplay(fetchedTeams);
+      
+      // Cache für Background Sync speichern
+      sessionStorage.setItem(cacheKey, JSON.stringify(fetchedTeams));
+      
       console.log(`AdminTeamsPage: handleSearchTeams - Found ${fetchedTeams.length} teams.`);
       if (fetchedTeams.length === 0) {
         toast({title: "Keine Mannschaften", description: "Für die gewählten Filter wurden keine Mannschaften gefunden."});
@@ -407,7 +445,8 @@ export default function AdminTeamsPage() {
       clubId: currentTeam.clubId,
       seasonId: currentTeam.seasonId,
       competitionYear: currentTeam.competitionYear,
-      leagueId: currentTeam.leagueId || null, 
+      leagueId: currentTeam.leagueId || null,
+      leagueType: currentTeam.leagueType,
       shooterIds: selectedShooterIdsInForm, 
       captainName: currentTeam.captainName?.trim() || '',
       captainEmail: currentTeam.captainEmail?.trim() || '',
@@ -687,7 +726,14 @@ export default function AdminTeamsPage() {
                       />
                     </TableCell>
                     <TableCell>{getClubName(team.clubId)}</TableCell>
-                    <TableCell>{getLeagueName(team.leagueId)}</TableCell>
+                    <TableCell>
+                      {getLeagueName(team.leagueId)}
+                      {team.leagueType && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                          {team.leagueType}
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>{team.competitionYear}</TableCell>
                     <TableCell className="text-center">{team.shooterIds?.length || 0} / {MAX_SHOOTERS_PER_TEAM}</TableCell>
                     <TableCell className="text-right space-x-1">
@@ -767,8 +813,29 @@ export default function AdminTeamsPage() {
                     </div>
                 </div>
                 
-                <div className="space-y-1.5">
-                  <Label htmlFor="dialogLeagueSelectAdmin">Liga zuweisen</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="teamDisciplineSelectAdmin">Disziplin</Label>
+                    <Select
+                      value={currentTeam.leagueType || ""}
+                      onValueChange={(value) => setCurrentTeam(prev => prev ? {...prev, leagueType: value as FirestoreLeagueSpecificDiscipline} : null)}
+                      required
+                    >
+                      <SelectTrigger id="teamDisciplineSelectAdmin">
+                        <SelectValue placeholder="Disziplin wählen..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="KKG">Kleinkaliber Gewehr</SelectItem>
+
+                        <SelectItem value="KKP">Kleinkaliber Pistole</SelectItem>
+                        <SelectItem value="LGA">Luftgewehr Auflage</SelectItem>
+                        <SelectItem value="LGS">Luftgewehr Freihand</SelectItem>
+                        <SelectItem value="LP">Luftpistole</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="dialogLeagueSelectAdmin">Liga zuweisen</Label>
                   <Select
                     value={currentTeam.leagueId || ""}
                     onValueChange={(value) => handleFormInputChange('leagueId', value === "NO_LEAGUE_ASSIGNED_PLACEHOLDER_ADMIN_TEAMS" ? null : value)}
@@ -789,6 +856,7 @@ export default function AdminTeamsPage() {
                       }
                     </SelectContent>
                   </Select>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -933,6 +1001,7 @@ export default function AdminTeamsPage() {
                     seasonId: currentTeam.seasonId,
                     competitionYear: currentTeam.competitionYear,
                     leagueId: currentTeam.leagueId || null,
+                    leagueType: currentTeam.leagueType,
                     shooterIds: selectedShooterIdsInForm,
                     captainName: currentTeam.captainName?.trim() || '',
                     captainEmail: currentTeam.captainEmail?.trim() || '',

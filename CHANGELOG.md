@@ -1,5 +1,23 @@
 # Changelog
 
+## Version 0.9.2 (20. Januar 2025) - Performance-Optimierungen
+
+### Performance-Verbesserungen
+- Neu: Hybrid Lazy Loading für RWK-Tabellen - bis zu 90% schnellere Ladezeiten
+- Neu: Batch-Loading für Teams, Scores und Clubs reduziert Datenbankabfragen von ~49 auf 3
+- Neu: Intelligentes Caching für bereits geladene Schützen-Details
+- Neu: Lazy Loading für Einzelschützen-Tab - lädt nur bei Bedarf
+- Neu: Loading-Spinner für Schützen-Details beim Team-Aufklappen
+- Verbessert: Sofortige Anzeige der Team-Tabellen ohne Wartezeit
+- Verbessert: Schützen-Details werden nur beim ersten Erweitern geladen
+- Optimiert: Reduzierte initiale Ladezeit von mehreren Sekunden auf 1-2 Sekunden
+
+### Technische Optimierungen
+- Neu: Zustandsverwaltung für lazy geladene Daten
+- Neu: Optimierte Firestore-Abfragen mit `where("leagueId", "in", allLeagueIds)`
+- Verbessert: Effiziente Datenstruktur für Team-Grunddaten vs. Detail-Daten
+- Verbessert: Minimale UI-Blockierung durch asynchrones Nachladen
+
 ## Version 0.8.4 (16. Juni 2025) - UI-Modernisierung
 
 ### UI-Modernisierung

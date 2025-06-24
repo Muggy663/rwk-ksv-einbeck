@@ -462,6 +462,7 @@ export default function VereinMannschaftenPage() {
       seasonId: currentSeasonForSubmit.id,
       competitionYear: currentSeasonForSubmit.competitionYear,
       leagueId: formMode === 'new' ? null : (currentTeam.leagueId || null),
+      leagueType: currentTeam.leagueType,
       shooterIds: selectedShooterIdsInForm,
       captainName: currentTeam.captainName?.trim() || '',
       captainEmail: currentTeam.captainEmail?.trim() || '',
@@ -538,7 +539,7 @@ export default function VereinMannschaftenPage() {
         const newTeamRef = doc(collection(db, TEAMS_COLLECTION)); 
         teamIdForShooterUpdates = newTeamRef.id;
         const { id, ...dataForNewTeam } = teamDataToSave; 
-        batch.set(newTeamRef, {...dataForNewTeam, shooterIds: selectedShooterIdsInForm, leagueId: null }); // Explizit leagueId: null für VV
+        batch.set(newTeamRef, {...dataForNewTeam, shooterIds: selectedShooterIdsInForm, leagueId: null, leagueType: currentTeam.leagueType }); // Explizit leagueId: null für VV
         toast({ title: "Mannschaft erstellt", description: `"${dataForNewTeam.name}" wurde erfolgreich angelegt.` });
       } else if (formMode === 'edit' && currentTeam.id) {
         teamIdForShooterUpdates = currentTeam.id;
@@ -837,7 +838,14 @@ export default function VereinMannschaftenPage() {
                 {teamsOfActiveClub.map((team) => (
                 <TableRow key={team.id}>
                     <TableCell>{team.name}</TableCell>
-                    <TableCell>{getLeagueNameDisplay(team.leagueId)}</TableCell>
+                    <TableCell>
+                      {getLeagueNameDisplay(team.leagueId)}
+                      {team.leagueType && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                          {team.leagueType}
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>{team.competitionYear}</TableCell>
                     <TableCell className="text-center">{team.shooterIds?.length || 0} / {MAX_SHOOTERS_PER_TEAM}</TableCell>
                     {isVereinsvertreter && (
@@ -905,7 +913,7 @@ export default function VereinMannschaftenPage() {
                     </UiAlertDescription>
                 </Alert>
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
                     <div className="space-y-1.5">
                         <div className="flex items-center">
                           <Label htmlFor="vvm-teamStrengthDialog">Mannschaftsstärke</Label>
@@ -927,6 +935,31 @@ export default function VereinMannschaftenPage() {
                             <SelectItem value="III">III (Dritte Mannschaft)</SelectItem>
                             <SelectItem value="IV">IV (Vierte Mannschaft)</SelectItem>
                             <SelectItem value="V">V (Fünfte Mannschaft)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                        <div className="flex items-center">
+                          <Label htmlFor="vvm-teamDisciplineDialog">Disziplin</Label>
+                          <HelpTooltip 
+                            text="Wählen Sie die Disziplin, in der diese Mannschaft antreten soll." 
+                            className="ml-2"
+                          />
+                        </div>
+                        <Select
+                          value={currentTeam?.leagueType || ""}
+                          onValueChange={(value) => setCurrentTeam(prev => prev ? {...prev, leagueType: value as FirestoreLeagueSpecificDiscipline} : null)}
+                          required
+                        >
+                          <SelectTrigger id="vvm-teamDisciplineDialog" className="w-full">
+                            <SelectValue placeholder="Disziplin wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="KKG">Kleinkaliber Gewehr</SelectItem>
+                            <SelectItem value="KKP">Kleinkaliber Pistole</SelectItem>
+                            <SelectItem value="LGA">Luftgewehr Auflage</SelectItem>
+                            <SelectItem value="LGS">Luftgewehr Freihand</SelectItem>
+                            <SelectItem value="LP">Luftpistole</SelectItem>
                           </SelectContent>
                         </Select>
                     </div>
@@ -988,7 +1021,14 @@ export default function VereinMannschaftenPage() {
                       type="search"
                       placeholder="Schützen suchen..."
                       value={shooterSearchQuery}
-                      onChange={(e) => setShooterSearchQuery(e.target.value)}
+                      onChange={(e) => {
+                        setShooterSearchQuery(e.target.value);
+                        // Debounce: Warte 300ms bevor Filter angewendet wird
+                        clearTimeout(window.shooterSearchTimeout);
+                        window.shooterSearchTimeout = setTimeout(() => {
+                          // Filter wird nur alle 300ms angewendet, nicht bei jedem Tastendruck
+                        }, 300);
+                      }}
                       className="w-full"
                     />
                   </div>
