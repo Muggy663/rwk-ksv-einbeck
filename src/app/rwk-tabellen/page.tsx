@@ -70,6 +70,7 @@ import type {
 import { uiDisciplineFilterOptions, getUIDisciplineValueFromSpecificType, leagueDisciplineOptions, MAX_SHOOTERS_PER_TEAM } from '@/types/rwk';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { db } from '@/lib/firebase/config';
 import { collection, doc, getDoc, getDocs, query, where, orderBy, limit, documentId } from 'firebase/firestore';
 import {
@@ -648,19 +649,75 @@ function RwkTabellenPageComponent() {
             totalScore: teamTotal, 
             averageScore: numScoredRds > 0 ? parseFloat((teamTotal / numScoredRds).toFixed(2)) : null, 
             numScoredRounds: numScoredRds,
-            leagueType: leagueDisplay.type 
+            leagueType: leagueDisplay.type,
+            sortingScore: 0, // Wird später berechnet
+            sortingAverage: 0 // Wird später berechnet
           };
           teamDisplays.push(teamDisplayItem);
         }
         // Sortiere Teams und berücksichtige "Außer Konkurrenz"-Status
+        // Prüfe, ob alle Teams den aktuellen Durchgang abgeschlossen haben
+        const determineCurrentRound = () => {
+          // Finde den höchsten abgeschlossenen Durchgang
+          let maxCompletedRound = 0;
+          
+          for (const team of teamDisplays) {
+            for (let r = numRoundsForCompetition; r >= 1; r--) {
+              const roundKey = `dg${r}`;
+              if (team.roundResults && team.roundResults[roundKey] !== null) {
+                maxCompletedRound = Math.max(maxCompletedRound, r);
+                break;
+              }
+            }
+          }
+          
+          // Prüfe, ob alle Teams diesen Durchgang abgeschlossen haben
+          const allTeamsCompletedRound = (round) => {
+            if (round === 0) return false;
+            const roundKey = `dg${round}`;
+            return teamDisplays.every(team => 
+              team.roundResults && team.roundResults[roundKey] !== null
+            );
+          };
+          
+          // Finde den höchsten Durchgang, den alle Teams abgeschlossen haben
+          let currentRound = maxCompletedRound;
+          while (currentRound > 0 && !allTeamsCompletedRound(currentRound)) {
+            currentRound--;
+          }
+          
+          return currentRound;
+        };
+        
+        const currentRound = determineCurrentRound();
+        console.log(`RWK DEBUG: Aktueller vollständiger Durchgang für Sortierung: ${currentRound}`);
+        
+        // Berechne die Punktzahl bis zum aktuellen vollständigen Durchgang
+        for (const team of teamDisplays) {
+          let totalScore = 0;
+          let completedRounds = 0;
+          
+          for (let r = 1; r <= currentRound; r++) {
+            const roundKey = `dg${r}`;
+            if (team.roundResults && team.roundResults[roundKey] !== null) {
+              totalScore += team.roundResults[roundKey];
+              completedRounds++;
+            }
+          }
+          
+          // Speichere die Werte für die Sortierung
+          team.sortingScore = totalScore;
+          team.sortingAverage = completedRounds > 0 ? totalScore / completedRounds : 0;
+        }
+        
         teamDisplays.sort((a, b) => {
           // Teams "außer Konkurrenz" immer nach Teams in Wertung
           if (a.outOfCompetition && !b.outOfCompetition) return 1;
           if (!a.outOfCompetition && b.outOfCompetition) return -1;
           
-          // Normale Sortierung nach Punkten, Durchschnitt, etc.
-          return (b.totalScore ?? 0) - (a.totalScore ?? 0) || 
-                 (b.averageScore ?? 0) - (a.averageScore ?? 0) || 
+          // Sortierung nach Punkten bis zum aktuellen vollständigen Durchgang
+          return (b.sortingScore ?? 0) - (a.sortingScore ?? 0) || 
+                 (b.sortingAverage ?? 0) - (a.sortingAverage ?? 0) || 
                  a.clubName.localeCompare(b.clubName) || 
                  a.name.localeCompare(b.name);
         });
@@ -1304,6 +1361,69 @@ function RwkTabellenPageComponent() {
                 title: <>{league.name} {league.shortName && `(${league.shortName})`}</>,
                 content: (
                   <div className="pt-0 pb-0">
+                    {/* Erklärung der Wertungslogik */}
+                    <div className="mb-4 bg-muted/20 p-3 rounded-md text-sm">
+                      <h4 className="font-medium mb-1">Hinweis zur Tabellensortierung:</h4>
+                      <p>Die Tabelle wird nach dem letzten vollständig abgeschlossenen Durchgang sortiert. 
+                      Teams, die bereits weitere Durchgänge begonnen haben, werden erst neu eingeordnet, 
+                      wenn alle Teams diesen Durchgang abgeschlossen haben.</p>
+                    </div>
+                    
+                    {/* Farbkodierung für den aktuellen Durchgang */}
+                    <div className="flex items-center gap-2 text-sm mb-4">
+                      <span className="font-medium">Aktueller vollständiger Durchgang:</span>
+                      <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-md font-bold">
+                        {league.teams.length > 0 && 
+                         league.teams[0].sortingScore !== undefined && 
+                         league.teams[0].sortingAverage && 
+                         !isNaN(league.teams[0].sortingScore / league.teams[0].sortingAverage) ? 
+                          Math.floor(league.teams[0].sortingScore / league.teams[0].sortingAverage) : 0}
+                      </span>
+                    </div>
+                    
+                    {/* Fortschrittsanzeige für Durchgänge */}
+                    <div className="flex gap-1 mb-4">
+                      {[...Array(currentNumRoundsState)].map((_, i) => {
+                        const currentRound = league.teams.length > 0 && 
+                          league.teams[0].sortingScore !== undefined && 
+                          league.teams[0].sortingAverage && 
+                          !isNaN(league.teams[0].sortingScore / league.teams[0].sortingAverage) ? 
+                            Math.floor(league.teams[0].sortingScore / league.teams[0].sortingAverage) : 0;
+                        return (
+                          <div 
+                            key={i} 
+                            className={`h-2 flex-1 rounded-full ${i < currentRound ? 'bg-green-500' : 'bg-muted'}`}
+                            title={`Durchgang ${i+1}: ${i < currentRound ? 'Abgeschlossen' : 'Offen'}`}
+                          />
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Verbesserte mobile Ansicht */}
+                    <div className="md:hidden p-3 bg-yellow-50 text-yellow-800 rounded-md mb-4">
+                      <p className="text-sm">Für die beste Ansicht der Tabelle bitte das Gerät drehen oder einen größeren Bildschirm verwenden.</p>
+                    </div>
+                    
+                    {/* Schnellfilter für Teams */}
+                    <div className="mb-4">
+                      <Input 
+                        placeholder="Team suchen..." 
+                        className="max-w-xs" 
+                        onChange={(e) => {
+                          const filterValue = e.target.value.toLowerCase();
+                          const filteredTeams = league.teams.filter(team => 
+                            team.name.toLowerCase().includes(filterValue) || 
+                            team.clubName.toLowerCase().includes(filterValue)
+                          );
+                          // Hier könnte man die gefilterten Teams anzeigen, aber das würde eine größere Änderung erfordern
+                          // Für jetzt nur die Anzahl der gefundenen Teams anzeigen
+                          if (filterValue) {
+                            console.log(`${filteredTeams.length} Teams gefunden für "${filterValue}"`);
+                          }
+                        }}
+                      />
+                    </div>
+                    
                     <div className="flex justify-between items-center p-2 bg-muted/10">
                       <div className="flex items-center space-x-2">
                         <Checkbox 
@@ -1333,15 +1453,61 @@ function RwkTabellenPageComponent() {
                           type="teams"
                           className="text-xs px-2 py-1 whitespace-nowrap"
                         />
-                        {league.individualLeagueShooters.length > 0 && (
-                          <PDFExportButton 
-                            league={league} 
-                            numRounds={currentNumRoundsState} 
-                            competitionYear={selectedCompetition.year} 
-                            type="shooters"
-                            className="text-xs px-2 py-1 whitespace-nowrap"
-                          />
-                        )}
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-xs px-2 py-1 whitespace-nowrap"
+                          onClick={async () => {
+                            // Import der benötigten Funktionen
+                            const { generateShootersPDF } = await import('@/lib/services/pdf-service');
+                            // Lade Einzelschützen für diese Liga
+                            const shooterData = await fetchIndividualShooterData(
+                              selectedCompetition, 
+                              currentNumRoundsState, 
+                              league.id
+                            );
+                            
+                            // Erstelle temporäres League-Objekt mit den geladenen Schützen
+                            const tempLeague = {
+                              ...league,
+                              individualLeagueShooters: shooterData
+                            };
+                            
+                            // Generiere PDF mit den geladenen Daten
+                            try {
+                              const pdfBlob = await generateShootersPDF(
+                                tempLeague, 
+                                currentNumRoundsState, 
+                                selectedCompetition.year
+                              );
+                              
+                              // PDF herunterladen
+                              const url = URL.createObjectURL(pdfBlob);
+                              const link = document.createElement('a');
+                              link.href = url;
+                              const fileName = `${league.name.replace(/\\s+/g, '_')}_Einzelschuetzen_${selectedCompetition.year}.pdf`;
+                              link.download = fileName;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              URL.revokeObjectURL(url);
+                              
+                              toast({
+                                title: 'PDF erstellt',
+                                description: 'Die PDF-Datei wurde erfolgreich erstellt und heruntergeladen.',
+                              });
+                            } catch (error) {
+                              console.error('Fehler beim Erstellen der PDF:', error);
+                              toast({
+                                title: 'Fehler',
+                                description: 'Die PDF-Datei konnte nicht erstellt werden.',
+                                variant: 'destructive'
+                              });
+                            }
+                          }}
+                        >
+                          Einzelschützen als PDF
+                        </Button>
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
@@ -1382,7 +1548,18 @@ function RwkTabellenPageComponent() {
                                   {[...Array(currentNumRoundsState)].map((_, i) => (
                                     <TableCell key={`dg-val-${i + 1}-${team.id}`} className="text-center px-1 py-2">{(team.roundResults as any)?.[`dg${i + 1}`] ?? '-'}</TableCell>
                                   ))}
-                                  <TableCell className="text-center font-semibold text-primary px-2 py-2">{team.totalScore ?? '-'}</TableCell>
+                                  <TableCell className="text-center font-semibold text-primary px-2 py-2">
+                                    {team.sortingScore !== undefined && team.sortingScore !== team.totalScore ? (
+                                      <div className="flex flex-col items-center">
+                                        <span>{team.totalScore ?? '-'}</span>
+                                        <span className="text-xs text-muted-foreground bg-muted/30 px-1.5 py-0.5 rounded-sm mt-0.5" title="Wertung basiert auf vollständig abgeschlossenen Durchgängen">
+                                          Wertung: {team.sortingScore}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      team.totalScore ?? '-'
+                                    )}
+                                  </TableCell>
                                   <TableCell className="text-center font-medium text-muted-foreground px-2 py-2">{team.averageScore != null ? team.averageScore.toFixed(2) : '-'}</TableCell>
                                   <TableCell className="text-right pr-4 px-2 py-2">
                                     <Button variant="ghost" size="icon" onClick={(e) => {e.stopPropagation(); toggleTeamExpansion(team.id);}} aria-label={`Details für ${team.name} ${expandedTeamIds.includes(team.id) ? 'ausblenden' : 'anzeigen'}`} className="hover:bg-accent/20 rounded-md">

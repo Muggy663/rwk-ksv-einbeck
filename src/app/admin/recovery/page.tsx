@@ -17,7 +17,7 @@ export default function RecoveryPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [clubs, setClubs] = useState<Club[]>([]);
-  const [selectedClubId, setSelectedClubId] = useState<string>('');
+  const [selectedClubId, setSelectedClubId] = useState<string>('global');
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditResult, setAuditResult] = useState<DatabaseAuditResult | null>(null);
   const [analysis, setAnalysis] = useState<any>(null);
@@ -45,7 +45,9 @@ export default function RecoveryPage() {
   const handleAudit = async () => {
     setIsAuditing(true);
     try {
-      const result = await auditDatabase(selectedClubId);
+      // Verwende null für globale Analyse statt leerer String
+      const clubIdForAudit = selectedClubId === 'global' ? null : selectedClubId;
+      const result = await auditDatabase(clubIdForAudit);
       setAuditResult(result);
       
       const analysisResult = analyzeCriticalDataLoss(result);
@@ -110,7 +112,7 @@ export default function RecoveryPage() {
                 <SelectValue placeholder="Verein auswählen oder leer lassen für globale Analyse" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Alle Vereine (globale Analyse)</SelectItem>
+                <SelectItem value="global">Alle Vereine (globale Analyse)</SelectItem>
                 {clubs.map(club => (
                   <SelectItem key={club.id} value={club.id}>
                     {club.name}

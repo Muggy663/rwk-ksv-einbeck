@@ -54,10 +54,10 @@ export default function StatistikPage() {
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader>
+        <Card className="border-primary/20 shadow-lg">
+          <CardHeader className="bg-primary/5">
             <CardTitle className="flex items-center">
-              <TrendingUp className="mr-2 h-5 w-5" />
+              <TrendingUp className="mr-2 h-5 w-5 text-primary" />
               Saisonübergreifende Statistiken
             </CardTitle>
           </CardHeader>

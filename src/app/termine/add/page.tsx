@@ -428,7 +428,7 @@ export default function AddTerminPage() {
                   onValueChange={setType}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Typ auswählen" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="durchgang">Durchgang</SelectItem>

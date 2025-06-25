@@ -18,7 +18,7 @@ import {
   fetchTeamComparisonData, 
   fetchGenderDistributionData
 } from '@/lib/services/statistics-service';
-import { CrossSeasonStats } from '@/components/statistics/cross-season-stats';
+{/* CrossSeasonStats-Import entfernt */}
 import { LeagueTrendAnalysis } from '@/components/statistics/LeagueTrendAnalysis';
 import { TrendAnalysis } from '@/components/statistics/TrendAnalysis';
 import { useSwipe } from '@/hooks/use-swipe';
@@ -189,7 +189,7 @@ export default function StatistikDashboardPage() {
   }, [selectedSeason, selectedLeague, selectedClub]);
   
   // Funktion zum Exportieren eines Diagramms als PNG
-  const tabs = ['performance', 'comparison', 'distribution', 'trends', 'trend-analysis'];
+  const tabs = ['performance', 'comparison', 'distribution', 'trend-analysis'];
   
   const swipeRef = useSwipe({
     onSwipeLeft: () => {
@@ -316,11 +316,10 @@ export default function StatistikDashboardPage() {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-8 h-auto sticky top-0 z-10 bg-background">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 mb-8 h-auto sticky top-0 z-10 bg-background">
           <TabsTrigger value="performance" className="text-xs sm:text-sm p-2">Leistung</TabsTrigger>
           <TabsTrigger value="comparison" className="text-xs sm:text-sm p-2">Teams</TabsTrigger>
           <TabsTrigger value="distribution" className="text-xs sm:text-sm p-2">Geschlecht</TabsTrigger>
-          <TabsTrigger value="trends" className="text-xs sm:text-sm p-2">Saisons</TabsTrigger>
           <TabsTrigger value="trend-analysis" className="text-xs sm:text-sm p-2">Trends</TabsTrigger>
         </TabsList>
         
@@ -501,9 +500,7 @@ export default function StatistikDashboardPage() {
           </Card>
         </TabsContent>
         
-        <TabsContent value="trends">
-          <CrossSeasonStats />
-        </TabsContent>
+        {/* Saisons-Tab entfernt - Funktionalität ist auf der Seite /statistik/erweitert verfügbar */}
         
         <TabsContent value="trend-analysis">
           <TrendAnalysis 

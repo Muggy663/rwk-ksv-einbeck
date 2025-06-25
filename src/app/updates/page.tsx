@@ -13,25 +13,27 @@ export default function UpdatesOverviewPage() {
         <Card className="border-primary/20 shadow-md hover:shadow-lg transition-all">
           <CardHeader className="bg-primary/5">
             <CardTitle className="text-xl text-primary flex items-center justify-between">
-              <span>Aktuelle Version: 0.9.3 (25. Juni 2025)</span>
+              <span>Aktuelle Version: 0.9.4 (25. Juni 2025)</span>
               <span className="text-sm bg-primary/20 px-2 py-1 rounded-full flex items-center gap-1">
                 <span>Beta</span>
               </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
-            <p className="mb-4">Bugfix-Update zur Behebung von Problemen und Verbesserung der Stabilität.</p>
+            <p className="mb-4">Update mit Fehlerbehebungen und UI-Verbesserungen für RWK-Tabellen und Terminverwaltung.</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>🐛 Korrektur der Ergebniserfassung und Team-Anzeige</li>
-              <li>🔒 Behebung von Berechtigungsproblemen bei Liga-Updates</li>
-              <li>📊 Filterung von Saisons in Statistiken (nur laufende/abgeschlossene)</li>
-              <li>📅 Verbesserte Terminverwaltung und Anzeige der nächsten Termine</li>
-              <li>⚡ Verbesserung der Stabilität durch Optimierung der Offline-Funktionen</li>
+              <li>🐛 Behebung von Fehlern in der Datenbank-Recovery-Seite</li>
+              <li>📅 Korrektur von Problemen beim Hinzufügen von Terminen</li>
+              <li>📊 Verbesserte Sortierlogik für RWK-Tabellen</li>
+              <li>🔧 Behebung von NaN-Fehlern in RWK-Tabellen</li>
+              <li>🎨 Neue UI-Funktionen für RWK-Tabellen</li>
+              <li>📱 Verbesserte mobile Ansicht für Tabellen</li>
+              <li>📊 Optimiertes Statistik-Dashboard</li>
             </ul>
           </CardContent>
           <CardFooter>
             <Button asChild variant="outline">
-              <Link href="/updates/v0.9.3">Details zu Version 0.9.3</Link>
+              <Link href="/updates/v0.9.4">Details zu Version 0.9.4</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -45,21 +47,24 @@ export default function UpdatesOverviewPage() {
           </CardHeader>
           <CardContent>
             <p>Mobile Optimierungen, Statistik-Dashboard und Performance-Verbesserungen.</p>
-            <p className="text-sm text-muted-foreground mt-2">0.9.0 - 0.9.3</p>
+            <p className="text-sm text-muted-foreground mt-2">0.9.0 - 0.9.4</p>
           </CardContent>
           <CardFooter>
-            <div className="flex gap-2">
-              <Button asChild variant="outline">
+            <div className="grid grid-cols-3 gap-2">
+              <Button asChild variant="outline" size="sm">
                 <Link href="/updates/v0.9">v0.9.0</Link>
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" size="sm">
                 <Link href="/updates/v0.9.1">v0.9.1</Link>
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" size="sm">
                 <Link href="/updates/v0.9.2">v0.9.2</Link>
               </Button>
-              <Button asChild>
+              <Button asChild variant="outline" size="sm">
                 <Link href="/updates/v0.9.3">v0.9.3</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/updates/v0.9.4">v0.9.4</Link>
               </Button>
             </div>
           </CardFooter>

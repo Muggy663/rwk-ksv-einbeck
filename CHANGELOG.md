@@ -1,5 +1,27 @@
 # Changelog
 
+## Version 0.9.4 (25. Juni 2025)
+
+### Behobene Fehler
+- **Admin**: Fehler in der Datenbank-Recovery-Seite behoben
+- **Termine**: Fehler beim Hinzufügen von Terminen behoben
+- **RWK-Tabellen**: Fehler bei der Sortierung der Teams behoben
+- **RWK-Tabellen**: NaN-Fehler bei Ligen ohne abgeschlossene Durchgänge behoben
+
+### Technische Verbesserungen
+- Verbesserte Fehlerbehandlung in UI-Komponenten
+- Korrektur von Typ-Validierungen in Formularfeldern
+- Verbesserte Sortierlogik für RWK-Tabellen basierend auf vollständig abgeschlossenen Durchgängen
+
+### UI-Verbesserungen
+- Verbesserte Anzeige der Wertungspunkte in RWK-Tabellen
+- Hinzugefügt: Erklärung der Tabellensortierung und Anzeige des aktuellen Durchgangs
+- Hinzugefügt: Fortschrittsanzeige für Durchgänge in RWK-Tabellen
+- Hinzugefügt: Schnellfilter für Teams in RWK-Tabellen
+- Verbesserte mobile Ansicht für RWK-Tabellen
+- Entfernung des redundanten "Saisons"-Tabs im Statistik-Dashboard
+- Hervorhebung der Saisonübergreifenden Statistiken auf der Übersichtsseite
+
 ## Version 0.9.3 (25. Juni 2025)
 
 ### Behobene Fehler

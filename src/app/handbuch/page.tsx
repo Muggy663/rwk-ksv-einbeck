@@ -20,7 +20,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch RWK Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 15. Juni 2025, Version 0.9.0 Beta)
+            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 25. Juni 2025, Version 0.9.4 Beta)
           </p>
         </div>
       </div>
@@ -39,26 +39,11 @@ export default function HandbuchPage() {
                 </li>
                 <li><a href="#erste-schritte" className="text-primary hover:underline">2. Erste Schritte</a>
                     <ul className="list-circle list-inside pl-6 text-xs">
-                        <li><a href="#login" className="text-primary hover:underline">Login</a></li>
-                        <li><a href="#benutzerkonten-rollen" className="text-primary hover:underline">Benutzerkonten &amp; Rollen</a></li>
+                        <li><a href="#login" className="text-primary hover:underline">Zugang zur App</a></li>
                     </ul>
                 </li>
                 {isSuperAdmin && ( 
-                  <li><a href="#fuer-super-administratoren" className="text-primary hover:underline">3. Für Rundenwettkampfleiter</a>
-                    <ul className="list-circle list-inside pl-6 text-xs">
-                        <li><a href="#dashboard-uebersicht-admin" className="text-primary hover:underline">Dashboard Übersicht</a></li>
-                        <li><a href="#saisonverwaltung" className="text-primary hover:underline">Saisonverwaltung</a></li>
-                        <li><a href="#ligaverwaltung" className="text-primary hover:underline">Ligaverwaltung</a></li>
-                        <li><a href="#vereinsverwaltung" className="text-primary hover:underline">Vereinsverwaltung</a></li>
-                        <li><a href="#mannschaftsverwaltung-admin" className="text-primary hover:underline">Mannschaftsverwaltung (Admin)</a></li>
-                        <li><a href="#schuetzenverwaltung-admin" className="text-primary hover:underline">Schützenverwaltung (Admin)</a></li>
-                        <li><a href="#ergebniserfassung-admin" className="text-primary hover:underline">Ergebniserfassung (Admin)</a></li>
-                        <li><a href="#ergebnisse-bearbeitenloeschen-admin" className="text-primary hover:underline">Ergebnisse bearbeiten/löschen (Admin)</a></li>
-                        <li><a href="#benutzerverwaltung-admin-rechtevergabe" className="text-primary hover:underline">Benutzerverwaltung (Admin - Rechtevergabe)</a></li>
-                        <li><a href="#support-tickets-einsehen-admin" className="text-primary hover:underline">Support Tickets einsehen</a></li>
-                        <li><a href="#agenda--offene-punkte-admin" className="text-primary hover:underline">Agenda / Offene Punkte</a></li>
-                    </ul>
-                  </li>
+                  <li><a href="#fuer-super-administratoren" className="text-primary hover:underline">3. Für Rundenwettkampfleiter</a></li>
                 )}
                 <li><a href="#fuer-vereinsvertreter-und-mannschaftsfuehrer" className="text-primary hover:underline">3. Für Vereinsvertreter und Mannschaftsführer</a>
                      <ul className="list-circle list-inside pl-6 text-xs">
@@ -121,21 +106,33 @@ export default function HandbuchPage() {
       {/* Section 2: Erste Schritte */}
       <section id="erste-schritte" className="space-y-4 scroll-mt-20">
         <h2 className="text-3xl font-semibold text-primary border-b pb-2">2. Erste Schritte</h2>
-        <Card>
-            <CardHeader><CardTitle id="login" className="text-xl text-accent scroll-mt-24">Login</CardTitle></CardHeader>
+        
+        <Card className="border-primary/20 shadow-lg">
+            <CardHeader className="bg-primary/5">
+              <CardTitle id="login" className="text-xl text-primary scroll-mt-24">Zugang zur App</CardTitle>
+            </CardHeader>
             <CardContent>
-                <p>Der Zugang zur App erfolgt über die Login-Seite mittels E-Mail-Adresse und Passwort. Ein Captcha-Platzhalter ist vorhanden und wird zu einem späteren Zeitpunkt aktiviert.</p>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader><CardTitle id="benutzerkonten-rollen" className="text-xl text-accent scroll-mt-24">Benutzerkonten &amp; Rollen</CardTitle></CardHeader>
-            <CardContent>
-                 <p>Benutzerkonten (z.B. für Vereinsvertreter, Mannschaftsführer) werden <strong>ausschließlich vom Rundenwettkampfleiter angelegt</strong>. Der Rundenwettkampfleiter erstellt den Account (E-Mail, initiales Passwort) und teilt dem Benutzer diese Daten mit.</p>
-                 <p className="mt-2">Anschließend weist der Rundenwettkampfleiter über die Seite "Benutzerverwaltung" jedem Benutzer eine <strong>Rolle</strong> (z.B. "Vereinsvertreter" oder "Mannschaftsführer") und den zugehörigen <strong>Verein</strong> zu. Diese Berechtigungen werden sicher in der Datenbank gespeichert.</p>
-                <p className="mt-2">Diese Zuweisungen legen fest, welche Funktionen und Daten der Benutzer in der App sehen und bearbeiten kann. Man kann sich nicht selbst für die App registrieren - ein Zugang wird nur vom Rundenwettkampfleiter eingerichtet.</p>
-                <p className="mt-2">Ein <strong>Vereinsvertreter</strong> hat erweiterte Rechte zur Verwaltung von Mannschaften und Schützen seines/seiner zugewiesenen Vereins/e.</p>
-                <p className="mt-1">Ein <strong>Mannschaftsführer</strong> kann primär Ergebnisse für die Ligen eintragen, in denen Mannschaften seines/seiner zugewiesenen Vereins/e teilnehmen. Die Verwaltung von Mannschaften und Schützen ist ihm nicht gestattet.</p>
-                <p className="mt-2">Benutzer werden beim ersten Login automatisch aufgefordert, ihr initiales Passwort zu ändern.</p>
+                <p>Der Zugang zur App erfolgt über die Login-Seite mittels E-Mail-Adresse und Passwort.</p>
+                
+                <div className="mt-4 bg-blue-50 p-3 rounded-md border border-blue-100">
+                  <p className="font-medium text-blue-800">Wichtig: Benutzerkonten werden ausschließlich vom Rundenwettkampfleiter angelegt. Eine Selbstregistrierung ist nicht möglich.</p>
+                  <p className="mt-1 text-blue-700">Wenn Sie einen Zugang benötigen, wenden Sie sich bitte per E-Mail an: <strong>rwk-leiter-ksve@gmx.de</strong></p>
+                </div>
+                
+                <h4 className="font-medium mt-4 mb-2">Passwort ändern</h4>
+                <p>Sie können Ihr Passwort jederzeit ändern:</p>
+                <ol className="list-decimal list-inside pl-2 mt-1 space-y-1">
+                  <li>Gehen Sie zum Vereins-Dashboard</li>
+                  <li>Klicken Sie auf die Schaltfläche "Passwort ändern"</li>
+                  <li>Geben Sie Ihr aktuelles und neues Passwort ein</li>
+                </ol>
+                
+                <h4 className="font-medium mt-4 mb-2">Benutzerrollen</h4>
+                <p>Je nach Ihrer Funktion erhalten Sie eine der folgenden Rollen:</p>
+                <ul className="list-disc pl-5 mt-1 space-y-1">
+                  <li><strong>Vereinsvertreter:</strong> Sie können Mannschaften und Schützen Ihres Vereins verwalten sowie Ergebnisse eintragen.</li>
+                  <li><strong>Mannschaftsführer:</strong> Sie können Ergebnisse für Ihre Mannschaften eintragen, aber keine Mannschaften oder Schützen verwalten.</li>
+                </ul>
             </CardContent>
         </Card>
       </section>
@@ -146,88 +143,7 @@ export default function HandbuchPage() {
         <section id="fuer-super-administratoren" className="space-y-4 scroll-mt-20">
           <h2 className="text-3xl font-semibold text-primary border-b pb-2">3. Für Rundenwettkampfleiter</h2>
           <p className="text-muted-foreground">(Dieser Abschnitt ist nur sichtbar, wenn der Rundenwettkampfleiter eingeloggt ist)</p>
-          <p>Das Admin-Panel ist die zentrale Steuerungsinstanz für den Rundenwettkampfleiter.</p>
-          
-          <Card>
-              <CardHeader><CardTitle id="dashboard-uebersicht-admin" className="text-xl text-accent scroll-mt-24">Dashboard Übersicht (Admin)</CardTitle></CardHeader>
-              <CardContent><p>Bietet eine zentrale Übersicht über die Verwaltungsfunktionen und eine Agenda für offene Punkte und geplante Features (Roadmap).</p></CardContent>
-          </Card>
-          <Card>
-              <CardHeader><CardTitle id="saisonverwaltung" className="text-xl text-accent scroll-mt-24">Saisonverwaltung</CardTitle></CardHeader>
-              <CardContent>
-                  <p>Hier können neue Wettkampfsaisons (z.B. "RWK 2025 Kleinkaliber") mit Jahr, Disziplin (Kleinkaliber, Luftdruck) und Status (Geplant, Laufend, Abgeschlossen) erstellt, bearbeitet und gelöscht werden. Der Status "Laufend" ist entscheidend für die Sichtbarkeit in den öffentlichen RWK-Tabellen und die Ergebniserfassung.</p>
-              </CardContent>
-          </Card>
-          <Card>
-              <CardHeader><CardTitle id="ligaverwaltung" className="text-xl text-accent scroll-mt-24">Ligaverwaltung</CardTitle></CardHeader>
-              <CardContent>
-                  <p>Nach Auswahl einer Saison können hier Ligen (z.B. Kreisoberliga) angelegt werden. Der spezifische Disziplintyp (z.B. KKG, LGA, LP Freihand) muss aus einer Liste ausgewählt werden. Ligen können bearbeitet und gelöscht werden.</p>
-              </CardContent>
-          </Card>
-          <Card>
-              <CardHeader><CardTitle id="vereinsverwaltung" className="text-xl text-accent scroll-mt-24">Vereinsverwaltung</CardTitle></CardHeader>
-              <CardContent>
-                  <p>Ermöglicht das Anlegen, Bearbeiten und Löschen von Vereinen mit Name, Kürzel und Vereinsnummer. Eine Prüfung auf doppelte Vereinsnamen ist implementiert.</p>
-              </CardContent>
-          </Card>
-          <Card>
-              <CardHeader><CardTitle id="mannschaftsverwaltung-admin" className="text-xl text-accent scroll-mt-24">Mannschaftsverwaltung (Admin)</CardTitle></CardHeader>
-              <CardContent>
-                  <p>Der Super-Admin kann hier alle Mannschaften verwalten.</p>
-                  <ul className="list-disc pl-5 space-y-1 mt-2">
-                      <li><strong>Filter:</strong> Saison, Verein und Liga auswählen, um Mannschaften zu filtern. Wichtig: Um Mannschaften zu finden, die noch keiner Liga zugewiesen sind (z.B. von Vereinsvertretern neu angelegte), Saison und Verein auswählen und den Liga-Filter auf "Alle Ligen" lassen.</li>
-                      <li><strong>Anlegen/Bearbeiten:</strong> Mannschaften erstellen oder bearbeiten. Hier erfolgt die **Zuweisung einer Mannschaft zu einer spezifischen Liga** oder die Änderung dieser Zuweisung. Kontaktdaten des Mannschaftsführers (Name, E-Mail, Telefon - optional) können erfasst werden. Ein Hinweis erinnert an die korrekte Benennung nach Mannschaftsstärke (I, II, ...).</li>
-                      <li><strong>Schützen zuweisen:</strong> Schützen den Teams zuordnen (maximal 3 pro Team; Regel: ein Schütze pro Saison und spezifischer Disziplinkategorie (Gewehr/Pistole) nur in einem Team).</li>
-                  </ul>
-              </CardContent>
-          </Card>
-          <Card>
-              <CardHeader><CardTitle id="schuetzenverwaltung-admin" className="text-xl text-accent scroll-mt-24">Schützenverwaltung (Admin)</CardTitle></CardHeader>
-              <CardContent>
-                  <p>Verwaltung aller Schützen.</p>
-                   <ul className="list-disc pl-5 space-y-1 mt-2">
-                      <li><strong>Filter:</strong> Nach Verein filtern.</li>
-                      <li><strong>Anlegen/Bearbeiten:</strong> Schützen mit Vorname, Nachname, Geschlecht und Vereinszugehörigkeit anlegen oder ändern. Beim Anlegen können Schützen direkt Mannschaften zugeordnet werden (Beachtung der Regeln für maximale Schützenzahl und Disziplin-Beschränkungen).</li>
-                      <li><strong>Mannschaftszuordnung (Info):</strong> In der Schützenliste wird angezeigt, welchen Mannschaften ein Schütze zugeordnet ist.</li>
-                  </ul>
-              </CardContent>
-          </Card>
-          <Card>
-              <CardHeader><CardTitle id="ergebniserfassung-admin" className="text-xl text-accent scroll-mt-24">Ergebniserfassung (Admin)</CardTitle></CardHeader>
-              <CardContent>
-                  <p>Erfassung von Ergebnissen für alle Ligen.</p>
-                   <ul className="list-disc pl-5 space-y-1 mt-2">
-                      <li><strong>Auswahl:</strong> Nur Saisons mit Status "Laufend", Liga, Durchgang (jetzt vor Mannschaft), Mannschaft, Schütze.</li>
-                      <li><strong>Eingabe:</strong> Ringergebnis (mit Prüfung auf Maximalwert je nach Disziplin: LG/LP max. 400, KK max. 300), Ergebnistyp (Regulär, Vorschießen, Nachschießen).</li>
-                      <li><strong>Zwischenspeicher:</strong> Ergebnisse werden gesammelt ("Zur Liste hinzufügen"), bevor sie endgültig gespeichert werden. Bereits erfasste Schützen/Durchgänge werden im Dropdown nicht mehr angeboten. Die Liste der vorgemerkten Ergebnisse bleibt auch beim Wechsel der Mannschaft (im gleichen Durchgang/Liga/Saison) erhalten.</li>
-                      <li><strong>Speichern:</strong> Schreibt Ergebnisse in die Datenbank und erstellt/aktualisiert einen Eintrag für den "Letzte Änderungen"-Feed auf der Startseite (gruppiert pro Liga und Tag).</li>
-                  </ul>
-              </CardContent>
-          </Card>
-          <Card>
-              <CardHeader><CardTitle id="ergebnisse-bearbeitenloeschen-admin" className="text-xl text-accent scroll-mt-24">Ergebnisse bearbeiten/löschen (Admin)</CardTitle></CardHeader>
-              <CardContent>
-                  <p>Ermöglicht die Suche, Bearbeitung (Ringzahl, Typ) und das Löschen von bereits erfassten Ergebnissen. Änderungen werden mit Benutzer und Zeitstempel versehen.</p>
-              </CardContent>
-          </Card>
-           <Card>
-              <CardHeader><CardTitle id="benutzerverwaltung-admin-rechtevergabe" className="text-xl text-accent scroll-mt-24">Benutzerverwaltung (Admin - Rechtevergabe)</CardTitle></CardHeader>
-              <CardContent>
-                <p>Der Administrator legt Benutzerkonten manuell an (E-Mail, initiales Passwort). Anschließend weist er diesen Benutzern auf der Seite "Benutzerverwaltung" in der App eine Rolle ("Vereinsvertreter" oder "Mannschaftsführer") und den zugehörigen Verein (oder bis zu 3 Vereine) zu. Diese Berechtigungen bestimmen, welche Funktionen und Daten der Benutzer in der App sehen und bearbeiten kann.</p>
-              </CardContent>
-          </Card>
-          <Card>
-              <CardHeader><CardTitle id="support-tickets-einsehen-admin" className="text-xl text-accent scroll-mt-24">Support Tickets einsehen</CardTitle></CardHeader>
-              <CardContent>
-                  <p>Zeigt eine Liste aller über das Support-Formular eingegangenen Tickets an. Der Status der Tickets (Neu, In Bearbeitung, Gelesen, Geschlossen) kann hier verwaltet werden.</p>
-              </CardContent>
-          </Card>
-           <Card>
-              <CardHeader><CardTitle id="agenda--offene-punkte-admin" className="text-xl text-accent scroll-mt-24">Agenda / Offene Punkte (Admin)</CardTitle></CardHeader>
-              <CardContent>
-                <p>Eine Liste geplanter Features und offener Aufgaben im Admin-Dashboard, strukturiert nach potenziellen Versionen, um den Entwicklungsfortschritt zu verfolgen.</p>
-              </CardContent>
-          </Card>
+          <p>Detaillierte Informationen zur Administration des Systems.</p>
         </section>
       )}
 
@@ -307,9 +223,12 @@ export default function HandbuchPage() {
                     <li><strong>Filter:</strong> Sie können das Wettkampfjahr und die Disziplin (Kleinkaliber oder Luftdruck) auswählen. Das aktuelle Jahr ist normalerweise schon vorausgewählt. Wenn Sie auf der Startseite auf einen Eintrag unter "Letzte Änderungen" klicken, werden Sie direkt zur richtigen Tabelle mit den passenden Einstellungen weitergeleitet.</li>
                     <li><strong>Anzeige:</strong> Zeigt nur Ligen von Saisons mit Status "Laufend". Die Ligen sind standardmäßig aufgeklappt, können aber einzeln geschlossen werden.</li>
                     <li><strong>Mannschaftsrangliste:</strong> Hier sehen Sie eine Tabelle mit allen Mannschaften einer Liga, ihren Ergebnissen in den einzelnen Durchgängen, dem Gesamtergebnis und dem Durchschnitt. Mannschaften mit "Einzel" im Namen werden nicht in dieser Liste angezeigt. Sie können auf eine Mannschaft klicken, um die Ergebnisse der einzelnen Schützen zu sehen. Wenn Sie dann auf einen Schützennamen klicken, öffnet sich ein Fenster mit detaillierten Statistiken und einem Leistungsdiagramm.</li>
+                    <li><strong>Sortierlogik:</strong> Die Tabelle wird nach dem letzten vollständig abgeschlossenen Durchgang sortiert. Teams, die bereits weitere Durchgänge begonnen haben, werden erst neu eingeordnet, wenn alle Teams diesen Durchgang abgeschlossen haben. Bei Teams mit unterschiedlichem Fortschritt wird die Wertungspunktzahl angezeigt.</li>
                     <li><strong>Einzelschützenrangliste:</strong> Diese Tabelle zeigt alle Schützen der ausgewählten Saison und Disziplin, sortiert nach ihrem Gesamtergebnis. Sie sehen die Ergebnisse jedes Durchgangs, das Gesamtergebnis und den Durchschnitt. Mit einem Auswahlmenü können Sie die Anzeige auf eine bestimmte Liga beschränken.</li>
                     <li><strong>Bester Schütze / Beste Dame:</strong> Werden für den gesamten ausgewählten Wettbewerb (Jahr/Disziplin) hervorgehoben.</li>
                     <li><strong>Detailansicht Schütze:</strong> Klick auf einen Schützennamen öffnet einen Dialog mit dessen Detailergebnissen und einem Leistungsdiagramm.</li>
+                    <li><strong>Teamfilter:</strong> Mit dem Schnellfilter können Sie nach bestimmten Teams suchen.</li>
+                    <li><strong>Fortschrittsanzeige:</strong> Zeigt an, welche Durchgänge bereits vollständig abgeschlossen sind.</li>
                 </ul>
             </CardContent>
         </Card>
@@ -359,18 +278,37 @@ export default function HandbuchPage() {
         <Card>
             <CardHeader><CardTitle id="statistiken" className="text-xl text-accent scroll-mt-24">Statistiken</CardTitle></CardHeader>
             <CardContent>
-              <p>Das neue Statistik-Dashboard bietet umfangreiche Analysemöglichkeiten für Schützen- und Mannschaftsleistungen.</p>
-              <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li><strong>Standard-Statistiken:</strong> Dashboard mit 5 verschiedenen Ansichten</li>
-                <li><strong>Leistungsentwicklung:</strong> Entwicklung der Top 6 Schützen über alle Durchgänge</li>
-                <li><strong>Mannschaftsvergleich:</strong> Durchschnittliche Leistung aller Teams einer Liga</li>
-                <li><strong>Geschlechterverteilung:</strong> Verteilung der Schützen nach Geschlecht</li>
-                <li><strong>Saisonvergleich:</strong> Saisonübergreifende Schützenstatistiken mit Suchfunktion</li>
-                <li><strong>Trendanalyse:</strong> Automatische Erkennung von Leistungstrends (steigend/stabil/fallend)</li>
-                <li><strong>Schützenvergleich:</strong> Direkter Vergleich von bis zu 6 Schützen</li>
-                <li><strong>Export-Funktionen:</strong> Alle Diagramme können als PNG exportiert werden</li>
-                <li><strong>Filter:</strong> Alle Statistiken können nach Saison, Liga und Verein gefiltert werden</li>
-              </ul>
+              <p>Das Statistik-Dashboard bietet umfangreiche Analysemöglichkeiten für Schützen- und Mannschaftsleistungen. Entdecken Sie wertvolle Einblicke in die Leistungsdaten!</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="bg-muted/20 p-3 rounded-md">
+                  <h4 className="font-medium mb-2 text-primary">Leistungsanalyse</h4>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li><strong>Leistungsentwicklung:</strong> Verfolgen Sie die Entwicklung der Top 6 Schützen über alle Durchgänge mit farbigen Liniendiagrammen</li>
+                    <li><strong>Mannschaftsvergleich:</strong> Visualisierung der durchschnittlichen Leistung aller Teams einer Liga mit übersichtlichen Balkendiagrammen</li>
+                    <li><strong>Trendanalyse:</strong> Automatische Erkennung von Leistungstrends (steigend/stabil/fallend) mit intelligenten Algorithmen</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-muted/20 p-3 rounded-md">
+                  <h4 className="font-medium mb-2 text-primary">Vergleichsfunktionen</h4>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li><strong>Schützenvergleich:</strong> Direkter Vergleich von bis zu 6 Schützen mit detaillierten Leistungskurven</li>
+                    <li><strong>Geschlechterverteilung:</strong> Analyse der Verteilung männlicher und weiblicher Schützen in interaktiven Kreisdiagrammen</li>
+                    <li><strong>Saisonübergreifende Statistiken:</strong> Umfassende Analyse von Schützenleistungen über mehrere Jahre hinweg</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="bg-muted/20 p-3 rounded-md mt-4">
+                <h4 className="font-medium mb-2 text-primary">Benutzerfreundliche Funktionen</h4>
+                <ul className="list-disc pl-5 space-y-1 grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                  <li><strong>Interaktive Diagramme:</strong> Bewegen Sie den Mauszeiger über Datenpunkte für detaillierte Informationen</li>
+                  <li><strong>Export-Funktionen:</strong> Alle Diagramme können als PNG-Dateien exportiert werden</li>
+                  <li><strong>Umfangreiche Filter:</strong> Filtern Sie nach Saison, Liga und Verein für maßgeschneiderte Analysen</li>
+                  <li><strong>Responsive Design:</strong> Optimale Darstellung auf allen Geräten, vom Desktop bis zum Smartphone</li>
+                </ul>
+              </div>
             </CardContent>
         </Card>
       </section>
@@ -393,5 +331,3 @@ export default function HandbuchPage() {
     </div>
   );
 }
-
-    
