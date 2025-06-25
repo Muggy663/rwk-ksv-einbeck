@@ -17,6 +17,14 @@ import { format, isSameDay, startOfMonth, endOfMonth, addMonths, subMonths } fro
 import { de } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { cleanupExpiredEvents } from '@/lib/services/event-cleanup';
+
+// Globale Variable für die nächsten Termine
+declare global {
+  interface Window {
+    nextEvents?: Event[];
+  }
+}
 
 export default function TerminePage() {
   const { toast } = useToast();
@@ -35,17 +43,22 @@ export default function TerminePage() {
   // Lade Saisons beim ersten Rendern
   useEffect(() => {
     const loadSeasons = async () => {
-      const seasonsData = await fetchSeasons();
-      setSeasons(seasonsData);
-      
-      if (seasonsData.length > 0) {
-        // Finde die aktuelle Saison (Status "Laufend")
-        const currentSeason = seasonsData.find(s => s.name.includes('2025'));
-        if (currentSeason) {
-          setSelectedSeason(currentSeason.id);
-        } else {
-          setSelectedSeason(seasonsData[0].id);
+      try {
+        const seasonsData = await fetchSeasons();
+        setSeasons(seasonsData || []);
+        
+        if (seasonsData && seasonsData.length > 0) {
+          // Finde die aktuelle Saison (Status "Laufend")
+          const currentSeason = seasonsData.find(s => s.name && s.name.includes('2025'));
+          if (currentSeason && currentSeason.id) {
+            setSelectedSeason(currentSeason.id);
+          } else {
+            setSelectedSeason(seasonsData[0].id || '');
+          }
         }
+      } catch (error) {
+        console.error('Fehler beim Laden der Saisons:', error);
+        setSeasons([]);
       }
     };
     
@@ -55,28 +68,63 @@ export default function TerminePage() {
   // Lade Ligen, wenn sich die Saison ändert
   useEffect(() => {
     const loadLeagues = async () => {
-      if (!selectedSeason) return;
+      if (!selectedSeason) {
+        setLeagues([]);
+        return;
+      }
       
-      const leaguesData = await fetchLeagues(selectedSeason);
-      setLeagues(leaguesData);
+      try {
+        const leaguesData = await fetchLeagues(selectedSeason);
+        setLeagues(leaguesData || []);
+      } catch (error) {
+        console.error('Fehler beim Laden der Ligen:', error);
+        setLeagues([]);
+      }
     };
     
     loadLeagues();
   }, [selectedSeason]);
   
-  // Lade Termine, wenn sich der Monat oder die Filter ändern
+  // Lade Termine für den Kalender und die nächsten Termine
   useEffect(() => {
     const loadEvents = async () => {
-      if (!selectedSeason) return;
-      
+      // Auch ohne ausgewählte Saison Termine laden
       setIsLoading(true);
       
-      const start = startOfMonth(currentMonth);
-      const end = endOfMonth(currentMonth);
+      // Bereinige abgelaufene Termine
+      try {
+        const deletedCount = await cleanupExpiredEvents();
+        if (deletedCount > 0) {
+          console.log(`${deletedCount} abgelaufene Termine wurden automatisch gelöscht.`);
+        }
+      } catch (error) {
+        console.error('Fehler bei der automatischen Bereinigung:', error);
+      }
       
       try {
+        // Lade Termine für den aktuellen Monat (für den Kalender)
+        const start = startOfMonth(currentMonth);
+        const end = endOfMonth(currentMonth);
         const eventsData = await fetchEvents(start, end, selectedLeague);
+        console.log(`${eventsData.length} Termine geladen für ${format(start, 'MMM yyyy')} bis ${format(end, 'MMM yyyy')}`);
         setEvents(eventsData);
+        
+        // Lade alle zukünftigen Termine für die "Aktuelle Termine" Sektion
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const futureEnd = new Date(today);
+        futureEnd.setFullYear(futureEnd.getFullYear() + 1); // Ein Jahr in die Zukunft
+        
+        const allFutureEvents = await fetchEvents(today, futureEnd, selectedLeague);
+        console.log(`${allFutureEvents.length} zukünftige Termine geladen`);
+        
+        // Setze die nächsten Termine global
+        window.nextEvents = allFutureEvents.sort((a, b) => {
+          const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+          const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+          return dateA.getTime() - dateB.getTime();
+        }).slice(0, 3);
+        
       } catch (error) {
         console.error('Fehler beim Laden der Termine:', error);
         toast({
@@ -84,21 +132,29 @@ export default function TerminePage() {
           description: 'Die Termine konnten nicht geladen werden.',
           variant: 'destructive'
         });
+        // Leeres Array setzen, um UI-Fehler zu vermeiden
+        setEvents([]);
+        window.nextEvents = [];
       } finally {
         setIsLoading(false);
       }
     };
     
     loadEvents();
-  }, [currentMonth, selectedSeason, selectedLeague, toast]);
+  }, [currentMonth, selectedLeague, toast]);
   
   // Aktualisiere die ausgewählten Termine, wenn sich das Datum oder die Termine ändern
   useEffect(() => {
-    if (selectedDate && events.length > 0) {
-      const filteredEvents = events.filter(event => 
-        isSameDay(event.date, selectedDate)
-      );
-      setSelectedEvents(filteredEvents);
+    if (selectedDate && events && events.length > 0) {
+      try {
+        const filteredEvents = events.filter(event => 
+          event.date && isSameDay(event.date, selectedDate)
+        );
+        setSelectedEvents(filteredEvents);
+      } catch (error) {
+        console.error('Fehler beim Filtern der Termine:', error);
+        setSelectedEvents([]);
+      }
     } else {
       setSelectedEvents([]);
     }
@@ -106,11 +162,27 @@ export default function TerminePage() {
   
   // Funktion, die prüft, ob ein Datum Termine enthält
   const hasEvents = (date: Date) => {
-    return events.some(event => isSameDay(event.date, date));
+    if (!events || events.length === 0) return false;
+    
+    try {
+      return events.some(event => event.date && isSameDay(event.date, date));
+    } catch (error) {
+      console.error('Fehler beim Prüfen auf Termine:', error);
+      return false;
+    }
   };
   
   // Funktion zum Exportieren eines Termins als iCal
   const exportEvent = (event: Event) => {
+    if (!event || !event.title || !event.date) {
+      toast({
+        title: 'Fehler',
+        description: 'Der Termin enthält ungültige Daten und kann nicht exportiert werden.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     try {
       const icalContent = generateICalEvent(event);
       const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
@@ -118,10 +190,14 @@ export default function TerminePage() {
       
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${event.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`;
+      const safeTitle = (event.title || 'termin').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      link.download = `${safeTitle}.ics`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      // URL-Objekt freigeben, um Speicherlecks zu vermeiden
+      setTimeout(() => URL.revokeObjectURL(url), 100);
       
       toast({
         title: 'Export erfolgreich',
@@ -139,8 +215,29 @@ export default function TerminePage() {
   
   // Funktion zum Exportieren aller Termine als iCal
   const exportAllEvents = () => {
+    if (!events || events.length === 0) {
+      toast({
+        title: 'Keine Termine',
+        description: 'Es sind keine Termine zum Exportieren vorhanden.',
+        variant: 'warning'
+      });
+      return;
+    }
+    
     try {
-      const icalContent = generateICalFile(events);
+      // Nur gültige Termine exportieren
+      const validEvents = events.filter(event => event && event.date && event.title);
+      
+      if (validEvents.length === 0) {
+        toast({
+          title: 'Keine gültigen Termine',
+          description: 'Es sind keine gültigen Termine zum Exportieren vorhanden.',
+          variant: 'warning'
+        });
+        return;
+      }
+      
+      const icalContent = generateICalFile(validEvents);
       const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       
@@ -151,9 +248,12 @@ export default function TerminePage() {
       link.click();
       document.body.removeChild(link);
       
+      // URL-Objekt freigeben, um Speicherlecks zu vermeiden
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+      
       toast({
         title: 'Export erfolgreich',
-        description: 'Alle Termine wurden als iCal-Datei exportiert.',
+        description: `${validEvents.length} Termine wurden als iCal-Datei exportiert.`,
       });
     } catch (error) {
       console.error('Fehler beim Exportieren der Termine:', error);
@@ -357,24 +457,24 @@ export default function TerminePage() {
           <Card className="mt-6">
             <CardHeader>
               <CardTitle>Nächste Termine</CardTitle>
-              <CardDescription>Anstehende Wettkämpfe</CardDescription>
+              <CardDescription>Die kommenden Termine im Überblick</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading ? (
                 <Skeleton className="h-[150px] w-full" />
-              ) : events.length > 0 ? (
+              ) : (
                 <div className="space-y-2">
-                  {events
-                    .filter(event => {
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const eventDate = new Date(event.date);
-                      eventDate.setHours(0, 0, 0, 0);
-                      return eventDate >= today;
-                    })
-                    .sort((a, b) => a.date.getTime() - b.date.getTime())
-                    .slice(0, 3)
-                    .map((event, index) => (
+                  {(() => {
+                    // Verwende die global gespeicherten nächsten Termine
+                    const nextEvents = window.nextEvents || [];
+                    
+                    // Wenn keine Termine, zeige eine Nachricht
+                    if (nextEvents.length === 0) {
+                      return <p className="text-muted-foreground">Keine Termine verfügbar.</p>;
+                    }
+                    
+                    // Rendere die Termine
+                    return nextEvents.map((event, index) => (
                       <div key={event.id || index} className="flex justify-between items-center py-2 border-b last:border-0">
                         <div>
                           <p className="font-medium">{event.title}</p>
@@ -387,11 +487,9 @@ export default function TerminePage() {
                           </Badge>
                         </div>
                       </div>
-                    ))
-                  }
+                    ));
+                  })()}
                 </div>
-              ) : (
-                <p className="text-muted-foreground">Keine anstehenden Termine.</p>
               )}
             </CardContent>
           </Card>

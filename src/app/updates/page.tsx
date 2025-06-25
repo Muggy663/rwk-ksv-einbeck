@@ -13,7 +13,7 @@ export default function UpdatesOverviewPage() {
         <Card className="border-primary/20 shadow-md hover:shadow-lg transition-all">
           <CardHeader className="bg-primary/5">
             <CardTitle className="text-xl text-primary flex items-center justify-between">
-              <span>Aktuelle Version: 0.9.3 (24. Juni 2025)</span>
+              <span>Aktuelle Version: 0.9.3 (25. Juni 2025)</span>
               <span className="text-sm bg-primary/20 px-2 py-1 rounded-full flex items-center gap-1">
                 <span>Beta</span>
               </span>
@@ -25,6 +25,7 @@ export default function UpdatesOverviewPage() {
               <li>🐛 Korrektur der Ergebniserfassung und Team-Anzeige</li>
               <li>🔒 Behebung von Berechtigungsproblemen bei Liga-Updates</li>
               <li>📊 Filterung von Saisons in Statistiken (nur laufende/abgeschlossene)</li>
+              <li>📅 Verbesserte Terminverwaltung und Anzeige der nächsten Termine</li>
               <li>⚡ Verbesserung der Stabilität durch Optimierung der Offline-Funktionen</li>
             </ul>
           </CardContent>

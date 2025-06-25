@@ -1,7 +1,11 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import { cleanupExpiredEvents } from './cleanupEvents';
 
 admin.initializeApp();
+
+// Exportiere die Funktion zum Löschen abgelaufener Termine
+export { cleanupExpiredEvents };
 
 /**
  * Cloud Function zum Erstellen eines neuen Benutzers mit Rolle und Vereinszuweisung

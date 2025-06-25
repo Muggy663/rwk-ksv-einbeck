@@ -1,8 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createUserWithRole = void 0;
+exports.createUserWithRole = exports.cleanupExpiredEvents = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const cleanupEvents_1 = require("./cleanupEvents");
+Object.defineProperty(exports, "cleanupExpiredEvents", { enumerable: true, get: function () { return cleanupEvents_1.cleanupExpiredEvents; } });
 admin.initializeApp();
 /**
  * Cloud Function zum Erstellen eines neuen Benutzers mit Rolle und Vereinszuweisung

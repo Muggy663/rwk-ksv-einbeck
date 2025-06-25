@@ -30,51 +30,82 @@ export async function fetchEvents(
   leagueId?: string
 ): Promise<Event[]> {
   try {
-    let eventsQuery = query(
-      collection(db, 'events'),
-      orderBy('date', 'asc')
-    );
+    // Debug-Ausgabe
+    console.log("fetchEvents aufgerufen mit:", 
+      startDate ? startDate.toISOString() : "kein Startdatum", 
+      endDate ? endDate.toISOString() : "kein Enddatum", 
+      leagueId || "keine Liga");
     
+    // Basis-Query erstellen
+    const eventsRef = collection(db, 'events');
+    
+    // Queries für verschiedene Filter vorbereiten
+    let constraints = [];
+    
+    // Datum-Filter hinzufügen
     if (startDate) {
-      eventsQuery = query(
-        eventsQuery,
-        where('date', '>=', Timestamp.fromDate(startDate))
-      );
+      constraints.push(where('date', '>=', Timestamp.fromDate(startDate)));
     }
     
     if (endDate) {
-      eventsQuery = query(
-        eventsQuery,
-        where('date', '<=', Timestamp.fromDate(endDate))
-      );
+      constraints.push(where('date', '<=', Timestamp.fromDate(endDate)));
     }
     
+    // Liga-Filter hinzufügen
     if (leagueId && leagueId !== 'all') {
-      eventsQuery = query(
-        eventsQuery,
-        where('leagueId', '==', leagueId)
-      );
+      constraints.push(where('leagueId', '==', leagueId));
     }
     
+    // Sortierung hinzufügen
+    constraints.push(orderBy('date', 'asc'));
+    
+    // Query ausführen
+    const eventsQuery = query(eventsRef, ...constraints);
     const snapshot = await getDocs(eventsQuery);
     
-    return snapshot.docs.map(doc => {
+    console.log(`fetchEvents: ${snapshot.docs.length} Termine gefunden`);
+    
+    // Ergebnisse mappen
+    const events = snapshot.docs.map(doc => {
       const data = doc.data();
+      
+      // Datum korrekt konvertieren
+      let eventDate;
+      try {
+        eventDate = data.date?.toDate();
+      } catch (error) {
+        console.error("Fehler beim Konvertieren des Datums:", error);
+        eventDate = new Date();
+      }
+      
       return {
         id: doc.id,
-        title: data.title,
-        date: data.date.toDate(),
-        time: data.time,
-        location: data.location,
-        leagueId: data.leagueId,
-        leagueName: data.leagueName,
-        type: data.type,
-        description: data.description,
+        title: data.title || 'Unbenannter Termin',
+        date: eventDate,
+        time: data.time || '00:00',
+        location: data.location || 'Kein Ort angegeben',
+        leagueId: data.leagueId || '',
+        leagueName: data.leagueName || '',
+        type: data.type || 'sonstiges',
+        description: data.description || '',
         isKreisverband: data.isKreisverband || false,
-        createdBy: data.createdBy,
-        createdAt: data.createdAt.toDate()
+        createdBy: data.createdBy || '',
+        createdAt: data.createdAt?.toDate() || new Date()
       } as Event;
     });
+    
+    // Debug-Ausgabe für Datumsformate
+    if (events.length > 0) {
+      console.log("Beispiel-Termin:", {
+        id: events[0].id,
+        title: events[0].title,
+        date: events[0].date,
+        dateType: typeof events[0].date,
+        isDateObject: events[0].date instanceof Date
+      });
+    }
+    
+    return events;
   } catch (error) {
     console.error('Fehler beim Laden der Termine:', error);
     return [];
@@ -145,17 +176,55 @@ export async function deleteEvent(id: string): Promise<boolean> {
  * @returns iCal-Daten als String
  */
 export function generateICalEvent(event: Event): string {
-  const dateStart = format(event.date, 'yyyyMMdd');
-  const timeStart = event.time.replace(':', '') + '00';
-  
-  // Endzeit ist 2 Stunden nach Startzeit
-  const [hours, minutes] = event.time.split(':').map(Number);
-  const endHours = hours + 2;
-  const timeEnd = `${endHours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}00`;
-  
-  const now = format(new Date(), "yyyyMMdd'T'HHmmss'Z'");
-  
-  return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//RWK Einbeck App//DE\nCALSCALE:GREGORIAN\nBEGIN:VEVENT\nSUMMARY:${event.title}\nDTSTART:${dateStart}T${timeStart}\nDTEND:${dateStart}T${timeEnd}\nLOCATION:${event.location}\nDESCRIPTION:${event.description || ''}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT\nEND:VCALENDAR`;
+  try {
+    if (!event.date) {
+      throw new Error('Ungültiges Datum für iCal-Export');
+    }
+    
+    const dateStart = format(event.date, 'yyyyMMdd');
+    const timeStart = (event.time || '00:00').replace(':', '') + '00';
+    
+    // Endzeit ist 2 Stunden nach Startzeit
+    let endHours = 0;
+    let minutes = 0;
+    
+    try {
+      const [hours, mins] = (event.time || '00:00').split(':').map(Number);
+      endHours = hours + 2;
+      minutes = mins;
+    } catch (error) {
+      console.error('Fehler beim Parsen der Zeit:', error);
+      endHours = 2;
+      minutes = 0;
+    }
+    
+    // Sicherstellen, dass die Stunden nicht über 23 gehen
+    if (endHours > 23) {
+      endHours = 23;
+      minutes = 59;
+    }
+    
+    const timeEnd = `${endHours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}00`;
+    const now = format(new Date(), "yyyyMMdd'T'HHmmss'Z'");
+    
+    // Escape special characters in text fields
+    const escapeText = (text: string) => {
+      return (text || '')
+        .replace(/\\/g, '\\\\')
+        .replace(/;/g, '\\;')
+        .replace(/,/g, '\\,')
+        .replace(/\n/g, '\\n');
+    };
+    
+    const title = escapeText(event.title || 'Unbenannter Termin');
+    const location = escapeText(event.location || '');
+    const description = escapeText(event.description || '');
+    
+    return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//RWK Einbeck App//DE\nCALSCALE:GREGORIAN\nBEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${dateStart}T${timeStart}\nDTEND:${dateStart}T${timeEnd}\nLOCATION:${location}\nDESCRIPTION:${description}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT\nEND:VCALENDAR`;
+  } catch (error) {
+    console.error('Fehler beim Generieren des iCal-Events:', error);
+    throw error;
+  }
 }
 
 /**
@@ -164,23 +233,66 @@ export function generateICalEvent(event: Event): string {
  * @returns iCal-Daten als String
  */
 export function generateICalFile(events: Event[]): string {
-  let icalContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//RWK Einbeck App//DE\nCALSCALE:GREGORIAN\n`;
-  
-  events.forEach(event => {
-    const dateStart = format(event.date, 'yyyyMMdd');
-    const timeStart = event.time.replace(':', '') + '00';
+  try {
+    let icalContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//RWK Einbeck App//DE\nCALSCALE:GREGORIAN\n`;
     
-    // Endzeit ist 2 Stunden nach Startzeit
-    const [hours, minutes] = event.time.split(':').map(Number);
-    const endHours = hours + 2;
-    const timeEnd = `${endHours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}00`;
+    // Escape special characters in text fields
+    const escapeText = (text: string) => {
+      return (text || '')
+        .replace(/\\/g, '\\\\')
+        .replace(/;/g, '\\;')
+        .replace(/,/g, '\\,')
+        .replace(/\n/g, '\\n');
+    };
     
-    const now = format(new Date(), "yyyyMMdd'T'HHmmss'Z'");
+    // Nur gültige Events verarbeiten
+    const validEvents = events.filter(event => event && event.date);
     
-    icalContent += `BEGIN:VEVENT\nSUMMARY:${event.title}\nDTSTART:${dateStart}T${timeStart}\nDTEND:${dateStart}T${timeEnd}\nLOCATION:${event.location}\nDESCRIPTION:${event.description || ''}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT\n`;
-  });
-  
-  icalContent += 'END:VCALENDAR';
-  
-  return icalContent;
+    for (const event of validEvents) {
+      try {
+        const dateStart = format(event.date, 'yyyyMMdd');
+        const timeStart = (event.time || '00:00').replace(':', '') + '00';
+        
+        // Endzeit ist 2 Stunden nach Startzeit
+        let endHours = 0;
+        let minutes = 0;
+        
+        try {
+          const [hours, mins] = (event.time || '00:00').split(':').map(Number);
+          endHours = hours + 2;
+          minutes = mins;
+        } catch (error) {
+          console.error('Fehler beim Parsen der Zeit:', error);
+          endHours = 2;
+          minutes = 0;
+        }
+        
+        // Sicherstellen, dass die Stunden nicht über 23 gehen
+        if (endHours > 23) {
+          endHours = 23;
+          minutes = 59;
+        }
+        
+        const timeEnd = `${endHours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}00`;
+        const now = format(new Date(), "yyyyMMdd'T'HHmmss'Z'");
+        
+        const title = escapeText(event.title || 'Unbenannter Termin');
+        const location = escapeText(event.location || '');
+        const description = escapeText(event.description || '');
+        
+        icalContent += `BEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${dateStart}T${timeStart}\nDTEND:${dateStart}T${timeEnd}\nLOCATION:${location}\nDESCRIPTION:${description}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT\n`;
+      } catch (error) {
+        console.error('Fehler beim Verarbeiten eines Events für iCal:', error);
+        // Einzelnes Event überspringen, aber weitermachen
+        continue;
+      }
+    }
+    
+    icalContent += 'END:VCALENDAR';
+    
+    return icalContent;
+  } catch (error) {
+    console.error('Fehler beim Generieren der iCal-Datei:', error);
+    throw error;
+  }
 }

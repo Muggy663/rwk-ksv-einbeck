@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, Users, Trophy, ListChecks, Edit3, Settings, UserCog, 
-  MessagesSquare, FileUp, ArrowLeft, LogOut, History, FileText, Database
+  MessagesSquare, FileUp, ArrowLeft, LogOut, History, FileText, Database, RefreshCw, Target
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,8 @@ const adminNavItems = [
   { href: '/admin/documents', label: 'Dokumente', icon: FileText },
   { href: '/admin/migrate', label: 'Daten-Migration', icon: FileUp },
   { href: '/admin/storage', label: 'Speichernutzung', icon: Database },
+  { href: '/admin/recovery', label: 'Datenwiederherstellung', icon: RefreshCw },
+  { href: '/admin/emergency-data-entry', label: 'Notfall-Eingabe', icon: Target },
   { href: '/admin/support-tickets', label: 'Support-Tickets', icon: MessagesSquare },
   { href: '/admin/audit', label: 'Änderungsprotokoll', icon: History },
 ];
@@ -37,12 +39,9 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading, signOut } = useAuth();
-  const [shouldRedirect, setShouldRedirect] = useState(false);
 
-  // Prüfen, ob der Benutzer ein Admin ist
   const isAdmin = user?.email === 'admin@rwk-einbeck.de';
 
-  // Umleitung zur Login-Seite oder Startseite
   useEffect(() => {
     if (!loading) {
       if (!user) {
@@ -53,13 +52,11 @@ export default function AdminLayout({
     }
   }, [loading, user, isAdmin, router]);
 
-  // Logout-Handler
   const handleLogout = useCallback(async () => {
     await signOut();
     router.push('/');
   }, [signOut, router]);
 
-  // Wenn noch geladen wird oder Umleitung erfolgen soll, nichts rendern
   if (loading || (!user) || (!isAdmin && !loading)) {
     return null;
   }

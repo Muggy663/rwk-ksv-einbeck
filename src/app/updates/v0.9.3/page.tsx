@@ -22,7 +22,7 @@ export default function UpdateV093Page() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Bug className="mr-2 h-5 w-5 text-amber-500" />
-            Bugfix-Update (24. Juni 2025)
+            Bugfix-Update (25. Juni 2025)
           </CardTitle>
         </CardHeader>
         <CardContent className="prose prose-sm max-w-none">
@@ -40,6 +40,8 @@ export default function UpdateV093Page() {
             <li><strong>Ergebniserfassung</strong>: Verbesserung der Benutzeroberfläche für vollständig erfasste Teams</li>
             <li><strong>Ergebniserfassung</strong>: Behebung von Berechtigungsproblemen bei Liga-Updates</li>
             <li><strong>Statistiken</strong>: Filterung von Saisons - nur laufende und abgeschlossene Saisons werden angezeigt</li>
+            <li><strong>Termine</strong>: Behebung des Fehlers bei der Bearbeitung von Terminen</li>
+            <li><strong>Termine</strong>: Verbesserte Anzeige der nächsten Termine unabhängig vom ausgewählten Monat</li>
             <li><strong>Allgemein</strong>: Deaktivierung problematischer Offline-Funktionen zur Verbesserung der Stabilität</li>
           </ul>
           
@@ -51,6 +53,7 @@ export default function UpdateV093Page() {
             <li>Verbesserte Fehlerbehandlung bei Berechtigungsproblemen</li>
             <li>Aktualisierte Firestore-Regeln für Liga-Updates</li>
             <li>Optimierte Ladelogik für Schützen-Daten</li>
+            <li>Automatische Bereinigung abgelaufener Termine</li>
           </ul>
           
           <h3 className="text-lg font-semibold mt-6 mb-2 flex items-center">

@@ -13,6 +13,7 @@ import { collection, query, orderBy, limit as firestoreLimit, getDocs, Timestamp
 import { format, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { fetchEvents } from '@/lib/services/calendar-service';
+import { cleanupExpiredEvents } from '@/lib/services/event-cleanup';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
@@ -77,12 +78,67 @@ export default function HomePage() {
     const loadEvents = async () => {
       setIsLoadingEvents(true);
       try {
+        // Bereinige abgelaufene Termine
+        try {
+          const deletedCount = await cleanupExpiredEvents();
+          if (deletedCount > 0) {
+            console.log(`${deletedCount} abgelaufene Termine wurden automatisch gelöscht.`);
+          }
+        } catch (error) {
+          console.error('Fehler bei der automatischen Bereinigung:', error);
+        }
+        
         // Lade Termine ab heute (00:00 Uhr) für die nächsten 30 Tage
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const endDate = addDays(today, 30);
-        const events = await fetchEvents(today, endDate);
-        setUpcomingEvents(events.slice(0, 3)); // Zeige maximal 3 Termine an
+        
+        // Debug-Ausgabe
+        console.log("Startseite: Lade Termine von", today, "bis", endDate);
+        
+        const allEvents = await fetchEvents(today, endDate);
+        console.log("Startseite: Geladene Termine:", allEvents.length);
+        
+        // Filtere nur zukünftige Termine
+        const futureEvents = allEvents.filter(event => {
+          if (!event || !event.date) return false;
+          
+          try {
+            // Konvertiere das Datum korrekt
+            const eventDate = event.date instanceof Date ? 
+              event.date : 
+              new Date(event.date);
+            
+            // Setze Uhrzeit auf 0 für Vergleich
+            const eventDateOnly = new Date(eventDate);
+            eventDateOnly.setHours(0, 0, 0, 0);
+            
+            // Vergleiche nur die Datumswerte
+            return eventDateOnly >= today;
+          } catch (error) {
+            console.error('Fehler beim Filtern nach Datum:', error);
+            return false;
+          }
+        });
+        
+        console.log("Startseite: Zukünftige Termine:", futureEvents.length);
+        
+        // Sortiere nach Datum
+        const sortedEvents = [...futureEvents].sort((a, b) => {
+          try {
+            if (!a.date || !b.date) return 0;
+            const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+            const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+            return dateA.getTime() - dateB.getTime();
+          } catch (error) {
+            console.error('Fehler beim Sortieren nach Datum:', error);
+            return 0;
+          }
+        });
+        
+        // Nimm die ersten 3
+        setUpcomingEvents(sortedEvents.slice(0, 3)); // Zeige maximal 3 Termine an
+        console.log("Startseite: Angezeigte Termine:", sortedEvents.slice(0, 3).length);
       } catch (error) {
         console.error('Fehler beim Laden der Termine:', error);
       } finally {

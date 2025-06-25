@@ -119,7 +119,7 @@ export default function TermineVerwaltungPage() {
   // Funktion zum Bearbeiten eines Termins
   const handleEditEvent = (event: Event) => {
     if (!event.id) return;
-    router.push(`/termine/edit/${event.id}`);
+    router.push(`/termine/bearbeiten?id=${event.id}`);
   };
 
   return (

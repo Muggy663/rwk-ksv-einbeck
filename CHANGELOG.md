@@ -1,18 +1,21 @@
 # Changelog
 
-## Version 0.9.3 (24. Juni 2025)
+## Version 0.9.3 (25. Juni 2025)
 
 ### Behobene Fehler
 - **Ergebniserfassung**: Korrektur der Anzeige von Teams mit fehlenden Ergebnissen
 - **Ergebniserfassung**: Verbesserung der Benutzeroberfläche für vollständig erfasste Teams
 - **Ergebniserfassung**: Behebung von Berechtigungsproblemen bei Liga-Updates
 - **Statistiken**: Filterung von Saisons - nur laufende und abgeschlossene Saisons werden angezeigt
+- **Termine**: Behebung des Fehlers bei der Bearbeitung von Terminen
+- **Termine**: Verbesserte Anzeige der nächsten Termine unabhängig vom ausgewählten Monat
 - **Allgemein**: Deaktivierung problematischer Offline-Funktionen zur Verbesserung der Stabilität
 
 ### Technische Verbesserungen
 - Verbesserte Fehlerbehandlung bei Berechtigungsproblemen
 - Aktualisierte Firestore-Regeln für Liga-Updates
 - Optimierte Ladelogik für Schützen-Daten
+- Automatische Bereinigung abgelaufener Termine
 
 ## Version 0.9.2 (20. Januar 2025)
 
