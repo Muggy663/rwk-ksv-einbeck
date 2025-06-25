@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import admin from 'firebase-admin';
-const { getFirestore } = admin.firestore;
-const { initializeApp, getApps, cert } = admin;
+
+// Korrigierte Importe
+import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 
 const STORAGE_THRESHOLD_KB = 450 * 1024; // 450 MB in KB
 
