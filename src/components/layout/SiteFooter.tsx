@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.9.5"; // Bugfix-Update für Firebase-Admin-Importe
+  const version = "0.9.6"; // Benutzerfreundlichkeits-Update
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

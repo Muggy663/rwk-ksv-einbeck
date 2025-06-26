@@ -31,42 +31,42 @@ export default function RwkOrdnungPage() {
           
           <h3 className="font-semibold text-lg mt-4 !text-primary border-b pb-1">Inhaltsverzeichnis</h3>
           <ol className="list-decimal list-inside space-y-1 text-sm pl-5">
-            <li>Veranstalter der Rundenwettkämpfe</li>
-            <li>Zweck der Rundenwettkämpfe</li>
-            <li>Disziplinen</li>
-            <li>Wettkampftermine und -orte</li>
-            <li>Meldungen und Einteilung in Gruppen</li>
-            <li>Klasseneinteilung</li>
-            <li>Startberechtigung</li>
-            <li>Schießstände</li>
-            <li>Startgelder</li>
-            <li>Vorschießen oder Nachschießen</li>
-            <li>Protokollführung</li>
-            <li>Mannschaftswechsel und Ersatzschützen</li>
-            <li>Siegerehrung</li>
-            <li>Einsprüche/Unstimmigkeiten</li>
-            <li>Betrug/Betrugsversuch</li>
-            <li>Auf- und Abstieg auf Kreisebene</li>
-            <li>Auf- und Abstieg in die Bezirksliga/Landesliga</li>
-            <li>Änderungen</li>
-            <li>Schlussbemerkung</li>
+            <li><a href="#section-1" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Veranstalter der Rundenwettkämpfe</a></li>
+            <li><a href="#section-2" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Zweck der Rundenwettkämpfe</a></li>
+            <li><a href="#section-3" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Disziplinen</a></li>
+            <li><a href="#section-4" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Wettkampftermine und -orte</a></li>
+            <li><a href="#section-5" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Meldungen und Einteilung in Gruppen</a></li>
+            <li><a href="#section-6" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Klasseneinteilung</a></li>
+            <li><a href="#section-7" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Startberechtigung</a></li>
+            <li><a href="#section-8" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Schießstände</a></li>
+            <li><a href="#section-9" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Startgelder</a></li>
+            <li><a href="#section-10" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Vorschießen oder Nachschießen</a></li>
+            <li><a href="#section-11" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Protokollführung</a></li>
+            <li><a href="#section-12" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Mannschaftswechsel und Ersatzschützen</a></li>
+            <li><a href="#section-13" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Siegerehrung</a></li>
+            <li><a href="#section-14" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Einsprüche/Unstimmigkeiten</a></li>
+            <li><a href="#section-15" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Betrug/Betrugsversuch</a></li>
+            <li><a href="#section-16" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Auf- und Abstieg auf Kreisebene</a></li>
+            <li><a href="#section-17" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Auf- und Abstieg in die Bezirksliga/Landesliga</a></li>
+            <li><a href="#section-18" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Änderungen</a></li>
+            <li><a href="#section-19" className="text-primary hover:text-primary/80 hover:underline cursor-pointer">Schlussbemerkung</a></li>
           </ol>
 
           <Separator className="my-6" />
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">1. Veranstalter der Rundenwettkämpfe</h4>
+            <h4 id="section-1" className="font-semibold text-md !text-primary mt-3">1. Veranstalter der Rundenwettkämpfe</h4>
             <p>Veranstalter der Rundenwettkämpfe ist der Kreisschützenverband Einbeck, nachfolgend KSV Einbeck (oder auch KSVE) genannt. Verantwortlich für die Vorbereitung, Klasseneinteilung, Leitung, Überwachung und Einhaltung der Regeln der alljährlichen durchzuführenden Rundenwettkämpfe ist der Rundenwettkampfleiter, nachfolgend „RWK-Leiter“ genannt. Der Gesamtvorstand schlägt einen Rundenwettkampfleiter vor, der beim Kreisschützentag durch die Delegierten gewählt wird. Maßgebend für die Abwicklung der Rundenwettkämpfe ist die jeweils aktuell gültige Sportordnung des Deutschen Schützenbundes.</p>
             <p>Aus Vereinfachung werden in dieser RWK-Ordnung Wörter und Begriffe nur in der männlichen Form gebraucht. Sie gelten auch in der weiblichen Form.</p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">2. Zweck der Rundenwettkämpfe</h4>
+            <h4 id="section-2" className="font-semibold text-md !text-primary mt-3">2. Zweck der Rundenwettkämpfe</h4>
             <p>Die Rundenwettkämpfe innerhalb des KSV Einbeck dienen der Belebung und Förderung des Schießsports, und sie sollen den Schützen Gelegenheit geben, ihre Schießleistungen zu steigern, Wettkampferfahrung zu sammeln und das Kennenlernen der Schützen untereinander fördern. Ein RWK wird als Mannschaftswettbewerb ausgeschrieben, es besteht aber auch die Möglichkeit als Einzelschütze zu starten.</p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">3. Disziplinen</h4>
+            <h4 id="section-3" className="font-semibold text-md !text-primary mt-3">3. Disziplinen</h4>
             <p>Der Rundenwettkampf Luftdruckwaffen beginnt am 1. Oktober und endet am 1. März des darauffolgenden Jahres.</p>
             <ul className="list-disc list-inside pl-5 space-y-2">
               <li>
@@ -104,13 +104,13 @@ export default function RwkOrdnungPage() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">4. Wettkampftermine und -orte</h4>
+            <h4 id="section-4" className="font-semibold text-md !text-primary mt-3">4. Wettkampftermine und -orte</h4>
             <p>Der RWK-Leiter setzt jeweils nur den ersten Wettkampfort fest. Dies ist in der Gruppeneinteilung die zuerst genannte Mannschaft. Die nachfolgenden Termine und Orte sind in den jeweiligen Gruppen selbstständig festzulegen. Folgetermine sind jeweils auf dem Wettkampfprotokoll zu notieren, so dass diese allen Teilnehmern bekannt werden können.</p>
             <p>Sollte der jeweils erste Wettkampf einer Gruppe nicht an dem vom RWK-Leiter festgelegten Ort stattfinden können, so hat der Sportleiter des Vereins oder Mannschaftsführer, der eigentlich als Gastgeber vorgesehen war, für einen abweichenden Austragungsort Sorge zu tragen und die anderen Mannschaften hierüber zu informieren.</p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">5. Meldungen und Einteilung der Gruppen</h4>
+            <h4 id="section-5" className="font-semibold text-md !text-primary mt-3">5. Meldungen und Einteilung der Gruppen</h4>
             <p>Der RWK-Leiter setzt rechtzeitig vor Saisonbeginn die Ausschreibungen zur Teilnahme an den Rundenwettkämpfen auf und versendet diese auf digitalem Wege an die jeweiligen Sportleiter aller dem Kreisschützenverband Einbeck e.V. angeschlossenen Vereine.</p>
             <p>Die Meldezettel müssen von den Vereinen ausgefüllt und rechtzeitig zum, durch den RWK-Leiter festgesetzten Termin (Für den RWK Lichtpunkt, Luftgewehr und Luftpistole bis zum Ilmepokalschießen, für den RWK KK-Gewehr und Sportpistole bis zum 31. März) zurückgesendet werden. Verspätete Meldungen können in Ausnahmefällen berücksichtigt werden, jedoch nicht mehr nach Bekanntgabe der Gruppeneinteilung.</p>
             <p>Der RWK-Leiter fasst alle Meldungen zusammen und erstellt daraus die Gruppeneinteilungen in den einzelnen Disziplinen unter Berücksichtigung der Auf- und Abstiege der letzten Saison. Diese Einteilungen werden dann den jeweiligen Sportleitern der Vereine und Mannschaftsführern zugestellt. Als Mannschaftsführer und damit Ansprechpartner gilt die erstgenannte Person der Mannschaften. Bei Änderung des Mannschaftsführers, ist der RWK-Leiter zu Informieren.</p>
@@ -119,7 +119,7 @@ export default function RwkOrdnungPage() {
           </div>
           
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">6. Klasseneinteilung</h4>
+            <h4 id="section-6" className="font-semibold text-md !text-primary mt-3">6. Klasseneinteilung</h4>
             <p>Die Einteilung erfolgt in folgenden Klassen:</p>
             <ul className="list-disc list-inside pl-5 space-y-1">
                 <li>Lichtpunktgewehr Auflage</li>
@@ -153,26 +153,26 @@ export default function RwkOrdnungPage() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">7. Startberechtigung</h4>
+            <h4 id="section-7" className="font-semibold text-md !text-primary mt-3">7. Startberechtigung</h4>
             <p>Startberechtigt sind ausschließlich Mitglieder des KSV Einbeck die über ihren Verein dem NSSV gemeldet sind und ausreichend gegen Haftpflicht und Unfall versichert sind. Schießsportgemeinschaften, die nicht als Verein gemeldet sind, sind in diesem Wettkampf nicht startberechtigt.</p>
             <p>Ist ein Teilnehmer in mehreren Vereinen aktiv, so kann er frei wählen für welchen Verein und in welcher Disziplin er starten möchte. Er ist pro Disziplin nur für einen Verein startberechtigt. Doppelstarts in den Ligen des NSSV (oder anderer Landesverbände) und des KSV sind nicht zulässig. Teilnehmer werden in diesen Fällen „AK - außer Konkurrenz“- gewertet.</p>
             <p>Startet ein Verein zum 1. Mal bei den Rundenwettkämpfen, so muss die Mannschaft in der untersten Klasse beginnen. Einzelschützen werden den jeweiligen Mannschaften zwecks Fahrgemeinschaften zugeordnet. Erst im darauffolgenden Jahr kann ein Aufstieg in die nächst höhere Leistungsklasse erfolgen.</p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">8. Schießstände</h4>
+            <h4 id="section-8" className="font-semibold text-md !text-primary mt-3">8. Schießstände</h4>
             <p>Der gastgebende Verein stellt sicher, dass sich zum angesetzten Wettkampftermin qualifiziertes Personal zur Durchführung und Leitung des jeweiligen Wettkampfs auf dem Schießstand befindet.</p>
             <p>Der gastgebende Verein stellt laut Ausschreibung zugelassene Scheiben, Scheibenstreifen oder gegebenenfalls elektronische Anlagen zur Verfügung. Für passende Sportgeräte und Munition hat jeder Teilnehmer selbst zu sorgen. Beschossene Scheiben, sowie bei elektronischen Anlagen Kopien des maschinellen Wettkampfprotokolls, müssen bis nach der Siegerehrung aufbewahrt werden.</p>
             <p>Die Teilnehmer müssen sich selbstständig erkundigen, ob der gastgebende Verein für die eigenen Bedürfnisse hinreichend ausgestattet ist. Gegebenenfalls hat der Teilnehmer dafür zu sorgen, dass die Teilnahme am Wettkampf überhaupt möglich wird, z.B. durch das Mitbringen eines Hockers für das Schießen im Sitzen (gem. SpO T. 9).</p>
           </div>
           
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">9. Startgelder</h4>
+            <h4 id="section-9" className="font-semibold text-md !text-primary mt-3">9. Startgelder</h4>
             <p>Die Höhe des Startgeldes wird auf der Delegiertenversammlung beim Kreisschützentag festgesetzt und vom Kreisschatzmeister den Vereinen in Rechnung gestellt.</p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">10. Vorschießen oder Nachschießen</h4>
+            <h4 id="section-10" className="font-semibold text-md !text-primary mt-3">10. Vorschießen oder Nachschießen</h4>
             <p>Zwischen den Durchgängen sollen drei (3) Wochen Zeit liegen, um verhinderten Schützen (z.B. Schichtarbeitern, Erkrankung des Schützen, Urlaub) Gelegenheit zum Vor- oder Nachschießen zu geben. Eine Verkürzung der 3 Wochenfristen ist nur mit Zustimmung und Absprache der zur Gruppe gehörenden Mannschaftsführer einvernehmlich gestattet.</p>
             <p>Es soll nur zwischen den Durchgängen der zuletzt geschossene Durchgang nachgeschossen werden.</p>
             <p>Ein Nachschießen von aufeinanderfolgenden Durchgängen ist nicht zulässig.</p>
@@ -181,14 +181,14 @@ export default function RwkOrdnungPage() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">11. Protokollführung</h4>
+            <h4 id="section-11" className="font-semibold text-md !text-primary mt-3">11. Protokollführung</h4>
             <p>Wettkampfprotokolle sind zu jedem Wettkampf zu führen. Es sind immer die aktuellen Formulare zu verwenden. Sie sind ordnungsgemäß und leserlich auszufüllen. Dies betrifft vor allem Teilnehmer, Einzelergebnisse und Mannschaftsergebnisse. Bei unleserlichen Angaben erfolgt keine Wertung. Wettkampfort und -termin des nächsten Wettkampfes sind ebenfalls einzutragen.</p>
             <p>Vor der Abgabe der Protokolle hat der jeweilige Wettkampfleiter (Ausrichtender Verein) die Ergebnisse auf seine Richtigkeit hin zu überprüfen. Die Ergebnisse sind durch Unterschrift des Wettkampfleiters und des jeweiligen Mannschaftsführers zu bestätigen. Nachschießergebnisse müssen auf der Liste des darauffolgenden Durchgangs eingetragen werden, sonst gibt es keine Wertung des Durchgangs für den Schützen.</p>
             <p>Nach Beendigung des Wettkampfes sind die Protokolle dem RWK-Leiter innerhalb einer Frist von drei Tagen via E-Mail zuzustellen. Die bevorzugten Dateiformate dabei sind PDF, Excel oder JPEG/JPG. Die E-Mail-Adresse befindet sich auf den Protokollen.</p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">12. Mannschaftswechsel und Ersatzschützen</h4>
+            <h4 id="section-12" className="font-semibold text-md !text-primary mt-3">12. Mannschaftswechsel und Ersatzschützen</h4>
             <p>Ist ein Teilnehmer innerhalb einer Klasse oder Liga bereits als Teil einer Mannschaft gewertet worden, kann er innerhalb dieser Klasse oder Liga nicht mehr als Teil einer anderen Mannschaft starten. Sollte ein Schütze komplett ausfallen (z.B. Krankheit), darf ein anderer Einzelschütze als Ersatzschütze einspringen. Die bisherigen Ergebnisse des Einzelschützen werden Transferiert.</p>
             <p>Sollte ein Schütze einspringen, der bisher nicht am RWK teilgenommen hat, wird das bisherige Ergebnis vom ausgefallenen Schützen übernommen und der Ersatzschütze nimmt nur noch an den bisher nicht stattgefunden Terminen teil.</p>
             <p>Sollte ein Einzelschütze die Mannschaft auffüllen der bisher nicht an jedem Durchgang teilgenommen hat, werden nur die vorhandenen Ergebnisse vom Einzelschützen übernommen, die nicht vorhandenen Ergebnisse werden vom ausgefallenden Schützen übernommen.</p>
@@ -197,7 +197,7 @@ export default function RwkOrdnungPage() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">13. Siegerehrung</h4>
+            <h4 id="section-13" className="font-semibold text-md !text-primary mt-3">13. Siegerehrung</h4>
             <p>Sieger des Rundenwettkampfes ist jeweils die Mannschaft und in der Einzelwertung der Schütze, mit der höchsten Gesamtringzahl.</p>
             <p>Die Damen, die in der offenen Klasse bzw. in gemischten Mannschaften mitschießen, werden von der Kreisdamenleiterin separat geführt und geehrt. Das Mannschaftsergebnis bleibt davon ausgenommen.</p>
             <p>In der Einzelwertung werden Urkunden an die Sieger ausgegeben. Als Auszeichnung erhält die Siegermannschaft einen Wanderpokal und eine Urkunde. Der Pokal muss bei der nächsten Siegerehrung zurückgegeben werden.</p>
@@ -205,21 +205,21 @@ export default function RwkOrdnungPage() {
           </div>
           
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">14. Einsprüche/Unstimmigkeiten</h4>
+            <h4 id="section-14" className="font-semibold text-md !text-primary mt-3">14. Einsprüche/Unstimmigkeiten</h4>
             <p>Alle Einsprüche oder sonstigen Vorkommnisse, die nicht an Ort und Stelle von den anwesenden Mannschaftsführern geregelt werden können, sind dem Rundenwettkampfleiter schriftlich unter Angabe der Gründe des Einspruches, oder der Vorkommnisse, mitzuteilen.</p>
             <p>Der Sportausschuss des KSV Einbeck berät über den Einspruch, die Sportkommission entscheidet dann endgültig darüber.</p>
             <p>Die Einspruchsgebühr beträgt 25,00 €.</p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">15. Betrug/Betrugsversuch</h4>
+            <h4 id="section-15" className="font-semibold text-md !text-primary mt-3">15. Betrug/Betrugsversuch</h4>
             <p>Die Schusslöcher dürfen in keiner Art und Weise durch den Teilnehmer verändert werden, zum Beispiel durch Schusslochprüfer, Kugelschreiber oder ähnliche Gegenstände. Auch das Abkratzen der „Fransen“ von der Hinterseite einer beschossenen Scheibe ist nicht gestattet.</p>
             <p>Bei Verdacht auf Manipulation beschossener Scheiben sind diese unverzüglich in Zusammenarbeit mit den Mannschaftsführern, sicherzustellen und dem RWK-Leiter oder dem Kreisschießsportleiter zuzustellen.</p>
             <p>Im Verdachtsfall wird durch den Kreisschießsportleiter die Schießsportkommission gem. § 17 der Satzung einberufen, welche über das weitere Vorgehen in dem Fall zu entscheiden hat. Wird eine Manipulation der beschossenen Scheiben durch einen Teilnehmer zweifelsfrei festgestellt, so ist dieser Teilnehmer umgehend vom laufenden Wettkampf auszuschließen.</p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">16. Auf- und Abstieg auf Kreisebene</h4>
+            <h4 id="section-16" className="font-semibold text-md !text-primary mt-3">16. Auf- und Abstieg auf Kreisebene</h4>
             <p>Die erstplatzierte Mannschaft einer Klasse oder Liga steigt in die nächsthöhere Klasse oder Liga auf (ausgenommen Kreisoberliga). Die gruppenletzte Mannschaft steigt in die jeweils niedrigere Klasse oder Liga ab. Der zweite der Klasse oder Liga steigt ebenfalls auf, wenn sein Ergebnis besser ist, als der Vorletzte der höheren Klasse oder Liga. Dieser steigt dann auch ab.</p>
             <p>Ein direkter Aufstieg von z.B. der 2. Kreisklasse in die Kreisoberliga ist nicht möglich.</p>
             <p>Der direkte Abstieg von der Kreisoberliga in die 2. Kreisklasse ist ebenfalls nicht möglich.</p>
@@ -229,7 +229,7 @@ export default function RwkOrdnungPage() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">17. Auf- und Abstieg in die Bezirksliga/Landesliga</h4>
+            <h4 id="section-17" className="font-semibold text-md !text-primary mt-3">17. Auf- und Abstieg in die Bezirksliga/Landesliga</h4>
             <p>Die Gruppensieger und Zweitplatzierten der Offenen Klasse Luftgewehr Freihand, Luftpistole und KK SpoPi sowie die Gruppensieger und Zweitplatzierten der Kreisoberliga KK, Luftgewehr Auflage qualifizieren sich auf Wunsch für das Aufstiegsschießen (Relegation) der Bezirksliga Göttingen.</p>
             <p>Stellt ein qualifizierter Verein eventuell schon eine Mannschaft in der Bezirksliga Göttingen, so qualifiziert sich auf Wunsch der dritt- oder viertplatzierte Verein für das Aufstiegsschiessen.</p>
             <p>Das Alter der Teilnehmer LG Auflage richtet sich nach der Ligaordnung des NSSV.</p>
@@ -237,12 +237,12 @@ export default function RwkOrdnungPage() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">18. Änderungen</h4>
+            <h4 id="section-18" className="font-semibold text-md !text-primary mt-3">18. Änderungen</h4>
             <p>Änderungen und Ergänzungen dieser Rundenwettkampfordnung sind nach Mehrheitsbeschluss auf einer Sportkommissionssitzung möglich.</p>
           </div>
 
           <div>
-            <h4 className="font-semibold text-md !text-accent mt-3">19. Schlussbemerkung</h4>
+            <h4 id="section-19" className="font-semibold text-md !text-primary mt-3">19. Schlussbemerkung</h4>
             <p>Für alle in dieser Rundenwettkampfordnung nicht besonders aufgeführten Punkte sind die Regelungen der gültigen Sportordnung des DSB nach sportlichen Gesichtspunkten zu beachten.</p>
             <p>Mit der Meldung zur Veranstaltung erklären sich die Teilnehmer aus organisatorischen Gründen mit der elektronischen Speicherung der wettkampfrelevanten Daten, unter der Angabe von Namen, Vereinsname, Alter, Klasse, Wettkampfbezeichnung einverstanden. Sie willigen ebenfalls ein mit der Veröffentlichung von Fotos und der Start- und Ergebnislisten in Aushängen, im Internet und in weiteren Publikationen des KSVE sowie dessen Untergliederungen.</p>
             <p>Änderungen und Ergänzungen der Ausschreibungen bleiben dem Veranstalter vorbehalten.</p>

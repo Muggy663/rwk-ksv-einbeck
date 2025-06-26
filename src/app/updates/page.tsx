@@ -19,7 +19,7 @@ export default function UpdatesPage() {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs py-1 px-2">
-            <span>Aktuelle Version: 0.9.5 (26. Juni 2025)</span>
+            <span>Aktuelle Version: 0.9.6 (26. Juni 2025)</span>
           </Badge>
         </div>
       </div>
@@ -28,18 +28,40 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.5</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.6</CardTitle>
               <Badge variant="secondary">Neu</Badge>
             </div>
             <CardDescription>26. Juni 2025</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="mb-4">Bugfix-Update für Firebase-Admin-Integration und Vercel-Build.</p>
+            <p className="mb-4">Verbesserungen für Einzelschützen-Rangliste und Navigation der RWK-Ordnung.</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Admin</strong>: Korrektur der Firebase-Admin-Importe für Firestore-Statistik</li>
-              <li><strong>Vercel</strong>: Behebung des Fehlers "d is not a function" im Vercel-Build</li>
-              <li>Optimierte Importe für Firebase-Admin v10+</li>
-              <li>Verbesserte Fehlerbehandlung in der Firestore-Statistik-Funktion</li>
+              <li><strong>Einzelschützen-Rangliste</strong>: Sortierung nach Durchschnitt für fairere Bewertung</li>
+              <li><strong>RWK-Ordnung</strong>: Klickbares Inhaltsverzeichnis mit Sprunglinks</li>
+              <li><strong>Verbesserte Navigation</strong>: Optimierte Benutzerführung</li>
+              <li><strong>Fairere Wertung</strong>: Schützen mit weniger Durchgängen nicht mehr benachteiligt</li>
+            </ul>
+            <div className="mt-4 flex justify-end">
+              <Link href="/updates/v0.9.6" className="text-primary hover:text-primary/80 text-sm flex items-center">
+                Details <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl">Version 0.9.5</CardTitle>
+            <CardDescription>26. Juni 2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Analytics Dashboard, verbessertes Onboarding und UI-Optimierungen.</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📊 <strong>Analytics Dashboard</strong>: Nutzungsstatistiken und Performance-Monitoring</li>
+              <li>🎯 <strong>Interaktives Onboarding</strong>: Mit Emojis, Icons und praktischen Beispielen</li>
+              <li>👥 <strong>Vereins-Dashboard</strong>: Für blutige Anfänger optimiert</li>
+              <li>🔒 <strong>Rechtliche Absicherung</strong>: Copyright und Nutzungsbedingungen</li>
+              <li>🎨 <strong>UI-Verbesserungen</strong>: Größere Texte und bessere Visualisierung</li>
             </ul>
             <div className="mt-4 flex justify-end">
               <Link href="/updates/v0.9.5" className="text-primary hover:text-primary/80 text-sm flex items-center">

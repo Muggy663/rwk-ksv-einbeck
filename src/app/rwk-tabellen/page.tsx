@@ -764,8 +764,9 @@ function RwkTabellenPageComponent() {
               if (a.teamOutOfCompetition && !b.teamOutOfCompetition) return 1;
               if (!a.teamOutOfCompetition && b.teamOutOfCompetition) return -1;
               
-              // Normale Sortierung nach Punkten und Namen
-              return (b.totalScore ?? 0) - (a.totalScore ?? 0) || 
+              // Sortierung nach Durchschnitt, dann nach Gesamtpunkten, dann nach Namen
+              return (b.averageScore ?? 0) - (a.averageScore ?? 0) || 
+                     (b.totalScore ?? 0) - (a.totalScore ?? 0) || 
                      a.shooterName.localeCompare(b.shooterName);
             });
         
@@ -895,7 +896,7 @@ function RwkTabellenPageComponent() {
       });
       const rankedShooters = Array.from(shootersMap.values())
         .filter(s => s.roundsShot > 0) 
-        .sort((a, b) => (b.totalScore ?? 0) - (a.totalScore ?? 0) || (b.averageScore ?? 0) - (a.averageScore ?? 0) || a.shooterName.localeCompare(b.shooterName));
+        .sort((a, b) => (b.averageScore ?? 0) - (a.averageScore ?? 0) || (b.totalScore ?? 0) - (a.totalScore ?? 0) || a.shooterName.localeCompare(b.shooterName));
       // Vergebe Rangplätze nur für Schützen in Wertung
       let shooterRankCounter = 1;
       rankedShooters.forEach(shooter => {

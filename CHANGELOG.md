@@ -1,14 +1,49 @@
 # Changelog
 
+## Version 0.9.6 (26. Juni 2025)
+
+### Neue Features
+- **E-Mail-Benachrichtigungen**: Funktionale Support-Ticket-Benachrichtigungen via Nodemailer
+- **GMX-Integration**: Vollständige E-Mail-Integration mit GMX-Server für Support-Anfragen
+
+### Technische Verbesserungen
+- Nodemailer-Paket hinzugefügt und konfiguriert
+- Umgebungsvariablen für E-Mail-Konfiguration implementiert
+- Vercel-kompatible E-Mail-Funktionalität
+
 ## Version 0.9.5 (26. Juni 2025)
 
 ### Behobene Fehler
 - **Admin**: Korrektur der Firebase-Admin-Importe für Firestore-Statistik
 - **Vercel**: Behebung des Fehlers "d is not a function" im Vercel-Build
+- **Ergebniserfassung**: Entfernung des nutzlosen "Weitere 30 Schützen laden" Buttons
+
+### Neue Features
+- **Interaktive Onboarding-Tour**: Vollständig überarbeitete Einführung mit Emojis, Icons und praktischen Beispielen
+- **Info-Tooltips**: Hilfreiche Erklärungen bei komplexen Funktionen
+- **Nutzungsbedingungen**: Vollständige AGB für rechtliche Absicherung
+- **Analytics Dashboard**: Neue Admin-Seite für Nutzungsstatistiken und Performance-Überwachung
+
+### Benutzerfreundlichkeit
+- **Vereins-Dashboard**: Komplett überarbeitet für blutige Anfänger mit größeren Texten und besserer Visualisierung
+- **Aufgelockertes Onboarding**: Kürzere Texte, visuelle Icons und praktische Beispiele
+- **Farbkodierte Karten**: Bedeutungsvolle Farbgebung (grün=wichtig, blau=wichtig, orange=häufig)
+- **Navigation**: Handtabellen aus Vereinsbereich entfernt, "Mein Verein" als Titel
+
+### Rechtliche Verbesserungen
+- **Copyright-Schutz**: Vollständige Urheberrechts-Kennzeichnung (© 2025 Marcel Bünger für den KSV Einbeck)
+- **Eigenständigkeits-Nachweis**: Dokumentation der eigenständigen Entwicklung
+
+### Admin-Verbesserungen
+- **Analytics & Monitoring**: Nutzungsstatistiken, Performance-Daten und Fehlerberichte
+- **Vereinfachte Navigation**: Redundante Admin-Seiten entfernt
+- **Zentrale Verwaltung**: Alle Admin-Funktionen auf einer Seite
 
 ### Technische Verbesserungen
-- Optimierte Importe für Firebase-Admin v10+
-- Verbesserte Fehlerbehandlung in der Firestore-Statistik-Funktion
+- Optimierte Firebase-Admin-Importe für bessere Kompatibilität
+- Neue Analytics-Infrastruktur für bessere Überwachung
+- Erweiterte Hook-Bibliothek für Onboarding-Management
+- Bereinigung redundanter Code-Bereiche
 
 ## Version 0.9.4 (25. Juni 2025)
 
