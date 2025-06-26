@@ -48,7 +48,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription as UiAlertDescription } from "@/components/ui/alert"; // Renamed to avoid conflict
 import { useVereinAuth } from '@/app/verein/layout';
 import type { Season, League, Club, Team, Shooter, TeamValidationInfo, FirestoreLeagueSpecificDiscipline, UserPermission } from '@/types/rwk';
-import { GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES, leagueDisciplineOptions, MAX_SHOOTERS_PER_TEAM, getDisciplineCategory } from '@/types/rwk';
+import { GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES, leagueDisciplineOptions, MAX_SHOOTERS_PER_TEAM } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import {
   collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query,
@@ -470,7 +470,7 @@ export default function VereinMannschaftenPage() {
     };
     
     const teamLeagueData = teamDataToSave.leagueId ? allLeagues.find(l => l.id === teamDataToSave.leagueId) : null;
-    const categoryOfCurrentTeamForValidation = getDisciplineCategory(teamLeagueData?.type);
+    const categoryOfCurrentTeamForValidation = teamLeagueData?.type;
     
     if (teamLeagueData && categoryOfCurrentTeamForValidation && teamDataToSave.competitionYear !== undefined) {
         for (const shooterId of selectedShooterIdsInForm) {
@@ -485,7 +485,7 @@ export default function VereinMannschaftenPage() {
               
               const teamValidationEntry = allTeamsForValidation.find(t => t.id === existingTeamId);
               if (teamValidationEntry?.leagueCompetitionYear === teamDataToSave.competitionYear) { 
-                const categoryOfExistingTeam = getDisciplineCategory(teamValidationEntry.leagueType);
+                const categoryOfExistingTeam = teamValidationEntry.leagueType;
                 if (categoryOfExistingTeam && categoryOfExistingTeam === categoryOfCurrentTeamForValidation) { 
                    conflictFound = true; break;
                 }

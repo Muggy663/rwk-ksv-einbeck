@@ -46,7 +46,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from 'next/navigation';
 import type { Shooter, Club, Team, FirestoreLeagueSpecificDiscipline, TeamValidationInfo } from '@/types/rwk';
-import { MAX_SHOOTERS_PER_TEAM, getDisciplineCategory, leagueDisciplineOptions, GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES } from '@/types/rwk';
+import { MAX_SHOOTERS_PER_TEAM, leagueDisciplineOptions, GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import { 
   collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, 
@@ -374,7 +374,7 @@ export default function AdminShootersPage() {
               setIsFormSubmitting(false); return;
             }
             
-            const category = getDisciplineCategory(teamInfo.leagueType);
+            const category = teamInfo.leagueType;
             if (category && teamInfo.leagueCompetitionYear !== undefined) {
               const key = `${teamInfo.leagueCompetitionYear}_${category}`;
               if (yearCategoryMap.has(key)) {
@@ -459,13 +459,13 @@ export default function AdminShootersPage() {
         return; 
       }
       
-      const categoryOfTeamBeingChanged = getDisciplineCategory(teamBeingChanged.leagueType);
+      const categoryOfTeamBeingChanged = teamBeingChanged.leagueType;
       const yearOfTeamBeingChanged = teamBeingChanged.leagueCompetitionYear;
 
       if (categoryOfTeamBeingChanged && yearOfTeamBeingChanged !== undefined) {
         const conflict = currentSelectedTeamsData.some(selectedTeam => {
             if (selectedTeam.id === teamId) return false; // Don't check against itself if it were already there
-            const selectedTeamCategory = getDisciplineCategory(selectedTeam.leagueType);
+            const selectedTeamCategory = selectedTeam.leagueType;
             return selectedTeamCategory === categoryOfTeamBeingChanged && 
                    selectedTeam.leagueCompetitionYear === yearOfTeamBeingChanged;
         });
@@ -677,13 +677,13 @@ export default function AdminShootersPage() {
                             if (teamIsFull && !isSelected) {
                                 isDisabled = true; disableReason = "(Voll)";
                             } else if (!isSelected) {
-                                const categoryOfCurrentTeamDialog = getDisciplineCategory(team.leagueType);
+                                const categoryOfCurrentTeamDialog = team.leagueType;
                                 const yearOfCurrentTeamDialog = team.leagueCompetitionYear;
                                 if (categoryOfCurrentTeamDialog && yearOfCurrentTeamDialog !== undefined) {
                                     const conflictExists = selectedTeamIdsInForm.some(selectedTeamIdInForm => {
                                         const otherSelectedTeamData = teamsOfSelectedClubInDialog.find(t => t.id === selectedTeamIdInForm);
                                         if (!otherSelectedTeamData) return false;
-                                        const otherSelectedTeamCategory = getDisciplineCategory(otherSelectedTeamData.leagueType);
+                                        const otherSelectedTeamCategory = otherSelectedTeamData.leagueType;
                                         return otherSelectedTeamCategory === categoryOfCurrentTeamDialog &&
                                                otherSelectedTeamData.leagueCompetitionYear === yearOfCurrentTeamDialog;
                                     });

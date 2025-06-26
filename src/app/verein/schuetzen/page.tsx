@@ -46,7 +46,7 @@ import { Checkbox } from "@/components/ui/checkbox"; // Keep for potential futur
 import { ScrollArea } from "@/components/ui/scroll-area"; // Keep for potential future team assignment in dialog
 import { useVereinAuth } from '@/app/verein/layout';
 import type { Shooter, Club, Team, UserPermission, FirestoreLeagueSpecificDiscipline, TeamValidationInfo } from '@/types/rwk';
-import { MAX_SHOOTERS_PER_TEAM, getDisciplineCategory, leagueDisciplineOptions } from '@/types/rwk';
+import { MAX_SHOOTERS_PER_TEAM, leagueDisciplineOptions } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import {
   collection,
@@ -439,14 +439,14 @@ export default function VereinSchuetzenPage() {
       if ((teamBeingChanged.currentShooterCount || 0) >= MAX_SHOOTERS_PER_TEAM) {
         toast({ title: "Mannschaft voll", variant: "warning" }); return; 
       }
-      const categoryOfTeamBeingChanged = getDisciplineCategory(teamBeingChanged.leagueType);
+      const categoryOfTeamBeingChanged = teamBeingChanged.leagueType;
       const yearOfTeamBeingChanged = teamBeingChanged.leagueCompetitionYear;
 
       if (categoryOfTeamBeingChanged && yearOfTeamBeingChanged !== undefined) {
         const conflict = selectedTeamIdsInForm.some(id => {
           if (id === teamId) return false;
           const otherTeam = teamsOfSelectedClubInDialog.find(t => t.id === id);
-          return otherTeam && getDisciplineCategory(otherTeam.leagueType) === categoryOfTeamBeingChanged && otherTeam.leagueCompetitionYear === yearOfTeamBeingChanged;
+          return otherTeam && otherTeam.leagueType === categoryOfTeamBeingChanged && otherTeam.leagueCompetitionYear === yearOfTeamBeingChanged;
         });
         if (conflict) {
           toast({ title: "Regelverstoß", description: `Schütze kann pro Saison/Disziplinkategorie nur einem Team angehören.`, variant: "destructive", duration: 7000 });
@@ -692,13 +692,13 @@ export default function VereinSchuetzenPage() {
                             if (teamIsFull && !isSelected) {
                                 isDisabled = true; disableReason = "(Voll)";
                             } else if (!isSelected) { // Nur prüfen, wenn versucht wird, das Team neu auszuwählen
-                                const categoryOfCurrentTeamDialog = getDisciplineCategory(team.leagueType);
+                                const categoryOfCurrentTeamDialog = team.leagueType;
                                 const yearOfCurrentTeamDialog = team.leagueCompetitionYear;
                                 if (categoryOfCurrentTeamDialog && yearOfCurrentTeamDialog !== undefined) {
                                     const conflictExists = selectedTeamIdsInForm.some(selectedTeamIdInForm => {
                                         const otherSelectedTeamData = teamsOfSelectedClubInDialog.find(t => t.id === selectedTeamIdInForm);
                                         return otherSelectedTeamData &&
-                                               getDisciplineCategory(otherSelectedTeamData.leagueType) === categoryOfCurrentTeamDialog &&
+                                               otherSelectedTeamData.leagueType === categoryOfCurrentTeamDialog &&
                                                otherSelectedTeamData.leagueCompetitionYear === yearOfCurrentTeamDialog;
                                     });
                                     if (conflictExists) {
