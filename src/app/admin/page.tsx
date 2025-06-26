@@ -396,6 +396,21 @@ export default function AdminDashboardPage() {
         
          <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Analytics & Monitoring</CardTitle> 
+            <BarChart3 className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Nutzungsstatistiken, Performance und Fehlerberichte.
+            </CardDescription>
+            <Link href="/admin/analytics" passHref>
+              <Button className="w-full">Zu Analytics</Button>
+            </Link>
+          </CardContent>
+        </Card>
+        
+         <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium">System & Berichte</CardTitle> 
             <Settings className="h-6 w-6 text-muted-foreground" />
           </CardHeader>

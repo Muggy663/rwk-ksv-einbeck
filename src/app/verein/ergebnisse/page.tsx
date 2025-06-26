@@ -948,22 +948,7 @@ export default function VereinErgebnissePage() {
           </CardContent>
         </Card>
       )}
-      {hasMoreShooters && allShootersFromDB.length > 0 && (
-        <Card className="shadow-md">
-          <CardContent className="pt-6 text-center">
-            <Button 
-              onClick={() => {
-                setShootersLimit(prev => prev + 30);
-                // Direkt neue Daten laden ohne Cache-Invalidierung
-                fetchInitialPageData();
-              }}
-              variant="outline"
-            >
-              Weitere {Math.min(30, shootersLimit)} Schützen laden
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+
       
       {pendingScores.length === 0 && !isLoadingPageData && activeClubIdForEntry && (
          <div className="mt-8 p-6 text-center text-muted-foreground bg-secondary/30 rounded-md"><CheckSquare className="mx-auto h-10 w-10 mb-3 text-primary/70" /><p className="text-base">Noch keine Ergebnisse zur Speicherung vorgemerkt.</p></div>

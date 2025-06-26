@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 0.9.5 (26. Juni 2025)
+
+### Behobene Fehler
+- **Admin**: Korrektur der Firebase-Admin-Importe für Firestore-Statistik
+- **Vercel**: Behebung des Fehlers "d is not a function" im Vercel-Build
+
+### Technische Verbesserungen
+- Optimierte Importe für Firebase-Admin v10+
+- Verbesserte Fehlerbehandlung in der Firestore-Statistik-Funktion
+
 ## Version 0.9.4 (25. Juni 2025)
 
 ### Behobene Fehler

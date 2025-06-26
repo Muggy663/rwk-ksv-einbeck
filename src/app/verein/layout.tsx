@@ -35,7 +35,6 @@ const vereinNavItems = [
   { href: '/verein/mannschaften', label: 'Meine Mannschaften', icon: Users },
   { href: '/verein/schuetzen', label: 'Meine Schützen', icon: UserCircle },
   { href: '/verein/ergebnisse', label: 'Ergebnisse erfassen', icon: ListChecks },
-  { href: '/verein/handtabellen', label: 'Handtabellen', icon: FileDown },
   { href: '/termine', label: 'Terminkalender', icon: CalendarDays },
   { href: '/termine/add', label: 'Termin hinzufügen', icon: CalendarDays },
   { href: '/verein/team-managers', label: 'Mannschaftsführer', icon: UserCog },
@@ -278,8 +277,6 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
           </div>
           <nav className="space-y-1">
             {vereinNavItems.map((item) => {
-              // Role check for specific items can be done here if needed,
-              // but for now, all VV/MF see the same nav items in /verein
               const isItemActive = pathname === item.href || (item.href !== '/verein/dashboard' && pathname.startsWith(item.href));
               return (
                 <Link 

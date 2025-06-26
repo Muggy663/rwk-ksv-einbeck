@@ -1,291 +1,266 @@
+// src/app/verein/dashboard/page.tsx
 "use client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Users, FileText, BarChart3, Calendar, Key, Play, Sparkles, Target, Trophy, Shield, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
-import { Users, UserCircle, ListChecks, Building, Loader2, AlertTriangle, ShieldAlert, FileDown, Settings, Key, CalendarDays } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { collection, doc, getDoc, getDocs, query, where, documentId } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
-import { useVereinAuth } from '@/app/verein/layout'; 
-import { FirstStepsWizard } from '@/components/onboarding/FirstStepsWizard';
-
-const CLUBS_COLLECTION = "clubs";
-
-interface ClubInfo {
-  id: string;
-  name: string;
-}
+import { useAuth } from '@/hooks/use-auth';
+import { InteractiveGuide } from '@/components/onboarding/InteractiveGuide';
 
 export default function VereinDashboardPage() {
-  const { 
-    userPermission, 
-    loadingPermissions, 
-    permissionError: contextPermissionError,
-    assignedClubIdArray 
-  } = useVereinAuth();
+  const { user } = useAuth();
+  const [showGuide, setShowGuide] = useState(false);
 
-  const [assignedClubsInfo, setAssignedClubsInfo] = useState<ClubInfo[]>([]);
-  const [isLoadingClubNames, setIsLoadingClubNames] = useState<boolean>(false);
-  const [clubNameError, setClubNameError] = useState<string | null>(null);
+  const onboardingSteps = [
+    {
+      id: 'welcome',
+      title: 'Willkommen im Vereinsbereich! 🎯',
+      description: 'Hier verwalten Sie alles rund um Ihren Verein: Mannschaften erstellen, Schützen hinzufügen und Wettkampfergebnisse eintragen.',
+      icon: <Sparkles className="h-6 w-6 text-purple-600" />,
+      example: 'Sie sehen 6 Karten mit verschiedenen Funktionen - jede hat eine andere Farbe und Bedeutung.',
+      tips: [
+        'Grüne und blaue Karten sind am wichtigsten',
+        'Graue Karten sind noch nicht verfügbar',
+        'Jede Karte zeigt, was Sie dort machen können'
+      ]
+    },
+    {
+      id: 'teams',
+      title: 'Mannschaften - Ihr Team aufstellen 👥',
+      description: 'Hier erstellen Sie Mannschaften für verschiedene Disziplinen. Jede Mannschaft kann bis zu 3 Schützen haben.',
+      icon: <Users className="h-6 w-6 text-green-600" />,
+      example: 'Erstellen Sie "SV Musterverein I" für Kleinkaliber und "SV Musterverein II" für eine zweite Mannschaft.',
+      tips: [
+        'Benennung: "Vereinsname I", "Vereinsname II", etc.',
+        'Der Admin muss Ihre Mannschaft einer Liga zuweisen',
+        'Für Einzelschützen: "Vereinsname Einzel" verwenden'
+      ]
+    },
+    {
+      id: 'shooters',
+      title: 'Schützen - Ihre Vereinsmitglieder 🎯',
+      description: 'Fügen Sie alle Schützen Ihres Vereins hinzu. Sie brauchen mindestens Vor- und Nachname sowie das Geschlecht.',
+      icon: <Target className="h-6 w-6 text-blue-600" />,
+      example: 'Max Mustermann, männlich - dann können Sie ihn einer Mannschaft zuweisen.',
+      tips: [
+        'Ein Schütze kann pro Saison nur in einer Mannschaft stehen',
+        'Bei weniger als 3 Schützen: "Einzel"-Mannschaft erstellen',
+        'Schützen werden automatisch alphabetisch sortiert'
+      ]
+    },
+    {
+      id: 'results',
+      title: 'Ergebnisse - Wettkampf eintragen 🏆',
+      description: 'Nach jedem Wettkampf tragen Sie hier die Schießergebnisse ein. Das System prüft automatisch die Gültigkeit.',
+      icon: <Trophy className="h-6 w-6 text-orange-600" />,
+      example: 'Saison wählen → Liga wählen → Durchgang 1 → Mannschaft → Schütze → 285 Ringe eingeben.',
+      tips: [
+        'Kleinkaliber: max. 300 Ringe, Luftgewehr: max. 400 Ringe',
+        'Sie können auch Ergebnisse für Gegner eintragen',
+        'Sammeln Sie mehrere Ergebnisse, bevor Sie speichern'
+      ]
+    },
+    {
+      id: 'password',
+      title: 'Sicherheit - Passwort schützen 🔐',
+      description: 'Ändern Sie regelmäßig Ihr Passwort, um die Vereinsdaten zu schützen.',
+      icon: <Shield className="h-6 w-6 text-red-600" />,
+      example: 'Mindestens 8 Zeichen mit Groß-/Kleinbuchstaben und Zahlen verwenden.',
+      tips: [
+        'Passwort regelmäßig ändern',
+        'Niemals das Passwort weitergeben',
+        'Bei Problemen: rwk-leiter-ksve@gmx.de kontaktieren'
+      ]
+    },
+    {
+      id: 'help',
+      title: 'Hilfe & weitere Funktionen 💡',
+      description: 'Termine zeigen Wettkampfdaten, das Handbuch erklärt alles detailliert, und bei Problemen erstellen Sie ein Support-Ticket.',
+      icon: <HelpCircle className="h-6 w-6 text-purple-600" />,
+      example: 'Nächster Wettkampf am 15.07. um 14:00 Uhr - steht im Terminkalender.',
+      tips: [
+        'Handbuch hat Screenshots und Schritt-für-Schritt Anleitungen',
+        'Support-Tickets werden schnell bearbeitet',
+        'Handtabellen kommen in einem späteren Update'
+      ]
+    }
+  ];
 
-  useEffect(() => {
-    console.log("VereinDashboard DEBUG: Props from context - loadingPermissions:", loadingPermissions, "contextPermissionError:", contextPermissionError, "assignedClubIdArray:", assignedClubIdArray);
-    console.log("VereinDashboard DEBUG: userPermission from context:", userPermission);
-
-    const fetchClubNames = async () => {
-      if (loadingPermissions) {
-          console.log("VereinDashboard DEBUG: Still loading permissions, deferring club name fetch.");
-          return;
-      }
-      if (!userPermission || !assignedClubIdArray || assignedClubIdArray.length === 0) {
-        console.log("VereinDashboard DEBUG: No userPermission or no assigned club IDs. Clearing club names.");
-        setAssignedClubsInfo([]);
-        if (!contextPermissionError && userPermission && (!assignedClubIdArray || assignedClubIdArray.length === 0) ) {
-            setClubNameError("Ihrem Konto sind aktuell keine spezifischen Vereine zugewiesen.");
-        }
-        return;
-      }
-
-      setIsLoadingClubNames(true);
-      setClubNameError(null);
-      
-      try {
-        console.log("VereinDashboard DEBUG: Fetching names for club IDs:", assignedClubIdArray);
-        const validClubIds = assignedClubIdArray.filter(id => typeof id === 'string' && id.trim() !== '');
-        if (validClubIds.length === 0) {
-            setAssignedClubsInfo([]);
-            setClubNameError("Keine gültigen Vereins-IDs zur Abfrage vorhanden.");
-            setIsLoadingClubNames(false);
-            return;
-        }
-
-        const clubsQuery = query(collection(db, CLUBS_COLLECTION), where(documentId(), "in", validClubIds));
-        const clubsSnap = await getDocs(clubsQuery);
-        
-        const fetchedClubs = clubsSnap.docs.map(snap => ({
-            id: snap.id,
-            name: (snap.data()).name || "Unbekannter Verein"
-        }));
-        setAssignedClubsInfo(fetchedClubs);
-
-        if (fetchedClubs.length === 0 && validClubIds.length > 0) {
-             console.warn("VereinDashboard DEBUG: No clubs found in Firestore for the assigned IDs:", validClubIds);
-             setClubNameError(`Die zugewiesenen Vereine konnten nicht in der Datenbank gefunden werden.`);
-        }
-        
-      } catch (error: any) {
-        console.error("VereinDashboard DEBUG: Fehler beim Laden der Vereinsnamen:", error);
-        setClubNameError(`Fehler beim Laden der Vereinsdetails: ${error.message}`);
-        setAssignedClubsInfo([]);
-      } finally {
-        setIsLoadingClubNames(false);
-      }
-    };
-
-    fetchClubNames();
-  }, [assignedClubIdArray, userPermission, loadingPermissions, contextPermissionError]);
-
-
-  if (loadingPermissions) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mr-3" />
-        <p>Lade Vereins- und Berechtigungsdaten...</p>
-      </div>
-    );
-  }
-
-  // Fehler vom VereinLayout (z.B. keine Rolle, keine clubIds im user_permissions Dokument)
-  if (contextPermissionError) {
-    return (
-      <div className="p-6">
-        <Card className="border-destructive bg-destructive/10">
-          <CardHeader>
-            <CardTitle className="text-destructive flex items-center">
-              <AlertTriangle className="mr-2 h-5 w-5" /> Zugriffsproblem im Dashboard
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{contextPermissionError}</p>
-            <p className="text-sm mt-1">Bitte kontaktieren Sie den Administrator, um diese Zuweisung vorzunehmen oder zu korrigieren.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  
-  // Fall, dass userPermission da ist, aber aus irgendeinem Grund keine clubIds (sollte durch Layout abgefangen werden, aber als Sicherheit)
-  if (!userPermission || !assignedClubIdArray || assignedClubIdArray.length === 0) {
-    return (
-        <Card className="border-amber-500 bg-amber-50/50">
-            <CardHeader><CardTitle className="text-amber-700 flex items-center gap-2"><AlertTriangle />Kein Verein zugewiesen</CardTitle></CardHeader>
-            <CardContent><p>Ihrem Konto ist kein Verein für die Nutzung dieses Bereichs zugewiesen. Bitte kontaktieren Sie den Administrator.</p></CardContent>
-        </Card>
-     );
-  }
-
-  const roleDisplay = userPermission?.role === 'vereinsvertreter' 
-    ? 'Vereinsvertreter' 
-    : userPermission?.role === 'mannschaftsfuehrer' 
-    ? 'Mannschaftsführer' 
-    : (userPermission?.role ? userPermission.role : 'Unbekannte Rolle');
-  
-  const isVereinsvertreter = userPermission?.role === 'vereinsvertreter';
+  const startGuide = () => setShowGuide(true);
+  const completeGuide = () => setShowGuide(false);
+  const skipGuide = () => setShowGuide(false);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+    <div className="container py-8 max-w-7xl mx-auto">
+      {/* Onboarding-Tour */}
+      {showGuide && (
+        <InteractiveGuide
+          steps={onboardingSteps}
+          onComplete={completeGuide}
+          onSkip={skipGuide}
+        />
+      )}
+
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary">Vereins-Dashboard</h1>
-           <p className="text-muted-foreground">
-            Willkommen, {userPermission?.displayName || userPermission?.email || 'Benutzer'}!
+          <h1 className="text-4xl font-bold text-primary mb-2">Vereins-Dashboard</h1>
+          <p className="text-lg text-muted-foreground">
+            Willkommen, {user?.displayName || user?.email}
           </p>
-          {userPermission?.role && (
-            <p className="text-sm text-accent font-medium mt-1">
-              Ihre Rolle: {roleDisplay}
-            </p>
-          )}
-
-          {isLoadingClubNames && <div className="flex items-center mt-1"><Loader2 className="h-4 w-4 animate-spin mr-2" /> Lade Vereinsnamen...</div>}
-          
-          {!isLoadingClubNames && assignedClubsInfo.length > 0 && (
-            <div className="mt-1">
-              <span className="text-sm text-muted-foreground">Aktuell aktiv für Verein(e): </span>
-              <ul className="list-disc list-inside ml-1">
-                {assignedClubsInfo.map(club => (
-                    <li key={club.id} className="text-sm font-semibold text-primary">{club.name}</li>
-                ))}
-              </ul>
-               {assignedClubsInfo.length > 1 && <p className="text-xs text-muted-foreground mt-1">Auf den jeweiligen Verwaltungsseiten können Sie den aktiven Verein auswählen.</p>}
-            </div>
-          )}
-           {!isLoadingClubNames && clubNameError && (
-             <p className="text-destructive text-sm mt-1">{clubNameError}</p>
-           )}
-           {!isLoadingClubNames && assignedClubsInfo.length === 0 && !clubNameError && (
-             <p className="text-amber-700 text-sm mt-1">Keine Vereinsdetails für die zugewiesenen IDs gefunden oder keine Vereine zugewiesen.</p>
-           )}
+          <p className="text-sm text-muted-foreground mt-1">
+            Verwalten Sie hier Ihre Mannschaften, Schützen und Ergebnisse
+          </p>
         </div>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-medium text-accent">Ergebniserfassung</CardTitle>
-              <ListChecks className="h-6 w-6 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-              <CardDescription className="mb-4">
-              Ergebnisse für die Wettkampfrunden Ihrer Mannschaften eintragen.
-              </CardDescription>
-              <Link href="/verein/ergebnisse" passHref>
-              <Button className="w-full">Ergebnisse erfassen</Button>
-              </Link>
-          </CardContent>
-        </Card>
         
-        <Card className="shadow-lg hover:shadow-xl transition-shadow opacity-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-medium text-muted-foreground">Handtabellen</CardTitle>
-              <FileDown className="h-6 w-6 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-              <CardDescription className="mb-4">
-              Leere Tabellen zum Handausfüllen für den Saisonbeginn herunterladen.
-              </CardDescription>
-              <Button className="w-full" disabled>
-                Handtabellen erstellen (In Entwicklung)
-              </Button>
-          </CardContent>
-        </Card>
-
-        {/* Erste Schritte Wizard */}
-        <FirstStepsWizard />
-
-        {/* Passwort ändern */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-medium text-accent">Passwort ändern</CardTitle>
-              <Key className="h-6 w-6 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-              <CardDescription className="mb-4">
-              Ändern Sie Ihr Passwort regelmäßig für mehr Sicherheit.
-              </CardDescription>
-              <Link href="/change-password" passHref>
-              <Button className="w-full">Passwort ändern</Button>
-              </Link>
-          </CardContent>
-        </Card>
-        
-        {/* Terminverwaltung (kombiniert) */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-medium text-accent">Terminkalender</CardTitle>
-              <CalendarDays className="h-6 w-6 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-              <CardDescription className="mb-4">
-              Termine einsehen und neue Termine für Ihren Verein hinzufügen.
-              </CardDescription>
-              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
-                <Link href="/termine" passHref>
-                  <Button className="w-full" variant="outline">Termine ansehen</Button>
-                </Link>
-                <Link href="/termine/add" passHref>
-                  <Button className="w-full">Termin hinzufügen</Button>
-                </Link>
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-full">
+                <Sparkles className="h-6 w-6 text-blue-600" />
               </div>
+              <div>
+                <h3 className="font-semibold text-blue-900">Neu hier?</h3>
+                <p className="text-sm text-blue-700 mb-3">
+                  Lassen Sie sich durch die wichtigsten Funktionen führen
+                </p>
+                <Button onClick={startGuide} className="bg-blue-600 hover:bg-blue-700">
+                  <Play className="mr-2 h-4 w-4" />
+                  Erste Schritte starten
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-green-500">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Users className="h-6 w-6 text-green-600" />
+              </div>
+              <Badge variant="secondary">Wichtig</Badge>
+            </div>
+            <CardTitle className="text-xl">Mannschaften</CardTitle>
+            <CardDescription className="text-base">
+              Erstellen und verwalten Sie Ihre Mannschaften für die verschiedenen Ligen
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full h-12 text-base font-semibold">
+              <Link href="/verein/mannschaften">
+                Mannschaften verwalten
+              </Link>
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Zeige Mannschafts- und Schützenverwaltung nur für Vereinsvertreter */}
-        {isVereinsvertreter && (
-          <>
-            <Card className="shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-medium text-accent">Meine Mannschaften</CardTitle>
-                <Users className="h-6 w-6 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="mb-4">
-                  Mannschaften Ihres Vereins anlegen und verwalten.
-                </CardDescription>
-                <Link href="/verein/mannschaften" passHref>
-                  <Button className="w-full">Mannschaften verwalten</Button>
-                </Link>
-              </CardContent>
-            </Card>
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-blue-500">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
+              <Badge variant="secondary">Wichtig</Badge>
+            </div>
+            <CardTitle className="text-xl">Schützen</CardTitle>
+            <CardDescription className="text-base">
+              Fügen Sie neue Schützen hinzu und bearbeiten Sie deren Stammdaten
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full h-12 text-base font-semibold">
+              <Link href="/verein/schuetzen">
+                Schützen verwalten
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
 
-            <Card className="shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-medium text-accent">Meine Schützen</CardTitle>
-                <UserCircle className="h-6 w-6 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="mb-4">
-                  Schützen Ihres Vereins anlegen und verwalten.
-                </CardDescription>
-                <Link href="/verein/schuetzen" passHref>
-                  <Button className="w-full">Schützen verwalten</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </>
-        )}
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-orange-500">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <BarChart3 className="h-6 w-6 text-orange-600" />
+              </div>
+              <Badge variant="secondary">Häufig</Badge>
+            </div>
+            <CardTitle className="text-xl">Ergebnisse</CardTitle>
+            <CardDescription className="text-base">
+              Tragen Sie die Wettkampfergebnisse für Ihre Mannschaften ein
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full h-12 text-base font-semibold">
+              <Link href="/verein/ergebnisse">Ergebnisse erfassen</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-gray-400 opacity-60">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-gray-100 rounded-lg">
+                <FileText className="h-6 w-6 text-gray-500" />
+              </div>
+              <Badge variant="outline">Bald verfügbar</Badge>
+            </div>
+            <CardTitle className="text-xl text-gray-600">Handtabellen</CardTitle>
+            <CardDescription className="text-base text-gray-500">
+              Handtabellen für Wettkämpfe generieren - in einem kommenden Update verfügbar
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button disabled className="w-full h-12 text-base">
+              In Entwicklung...
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-purple-500">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Calendar className="h-6 w-6 text-purple-600" />
+              </div>
+              <Badge variant="outline">Info</Badge>
+            </div>
+            <CardTitle className="text-xl">Termine</CardTitle>
+            <CardDescription className="text-base">
+              Sehen Sie alle aktuellen Wettkampftermine ein
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="w-full h-12 text-base">
+              <Link href="/termine">Termine anzeigen</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-red-500">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <Key className="h-6 w-6 text-red-600" />
+              </div>
+              <Badge variant="outline">Sicherheit</Badge>
+            </div>
+            <CardTitle className="text-xl">Passwort ändern</CardTitle>
+            <CardDescription className="text-base">
+              Ändern Sie Ihr Passwort für mehr Sicherheit
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="w-full h-12 text-base">
+              <Link href="/change-password">Passwort ändern</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-       <Card className="mt-8 shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-xl text-accent">Wichtige Hinweise</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>Dies ist Ihr persönlicher Verwaltungsbereich für Ihre zugewiesenen Vereine.</p>
-          {userPermission?.role === 'mannschaftsfuehrer' && 
-            <p>Als Mannschaftsführer können Sie Ergebnisse eintragen. Die Verwaltung von Mannschaften und Schützen obliegt dem Vereinsvertreter oder Super-Admin.</p>
-          }
-           <p>Wenn Sie Ihren Verein nicht verwalten können oder ein falscher Verein zugewiesen ist, kontaktieren Sie bitte den Administrator.</p>
-        </CardContent>
-      </Card>
     </div>
   );
 }
