@@ -7,12 +7,12 @@ import { ScrollText } from 'lucide-react';
 
 export default function RwkOrdnungPage() {
   return (
-    <div className="space-y-8 container mx-auto px-4 py-8">
-      <div className="flex items-center space-x-3 mb-8">
-        <ScrollText className="h-10 w-10 text-primary" />
+    <div className="space-y-8 container mx-auto px-4 py-8 max-w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:space-x-3 mb-8">
+        <ScrollText className="h-8 w-8 sm:h-10 sm:w-10 text-primary flex-shrink-0" />
         <div>
-          <h1 className="text-4xl font-bold text-primary">Rundenwettkampfordnung</h1>
-          <p className="text-lg text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary break-words">Rundenwettkampfordnung</h1>
+          <p className="text-base sm:text-lg text-muted-foreground break-words">
             des Kreisschützenverbandes Einbeck e.V.
           </p>
         </div>
@@ -23,7 +23,7 @@ export default function RwkOrdnungPage() {
           <CardTitle className="text-xl text-accent">Rundenwettkampfordnung des Kreisschützenverbandes Einbeck</CardTitle>
           <CardDescription className="text-xs text-muted-foreground">Ausgestellt am 27. September 1982 – Überarbeitet Januar 2025</CardDescription>
         </CardHeader>
-        <CardContent className="prose prose-sm sm:prose-base lg:prose-lg prose-headings:text-accent prose-strong:text-foreground dark:prose-invert text-foreground space-y-3 max-w-none">
+        <CardContent className="prose prose-sm sm:prose-base lg:prose-lg prose-headings:text-accent prose-strong:text-foreground dark:prose-invert text-foreground space-y-3 max-w-none overflow-x-auto">
           <div className="text-center mb-6">
             <p>Die Kreisschießsportleiterin <br /><strong>Angelika Kappei</strong></p>
             <p className="mt-2">Der Rundenwettkampfleiter <br /><strong>Marcel Bünger</strong></p>

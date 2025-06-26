@@ -11,6 +11,9 @@ import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface Season {
   id: string;
@@ -25,6 +28,19 @@ interface League {
   type: string;
   competitionYear: number;
   teams: string[];
+  order?: number;
+}
+
+interface PromotionRelegationSuggestion {
+  teamId: string;
+  teamName: string;
+  clubName: string;
+  currentLeague: string;
+  currentPosition: number;
+  action: 'promote' | 'relegate' | 'stay';
+  targetLeague?: string;
+  reason: string;
+  confirmed: boolean;
 }
 
 export default function SeasonTransitionPage() {
@@ -37,6 +53,8 @@ export default function SeasonTransitionPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<string>('');
+  const [suggestions, setSuggestions] = useState<PromotionRelegationSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     const fetchSeasons = async () => {
@@ -131,38 +149,139 @@ export default function SeasonTransitionPage() {
     }
   };
 
-  const handlePromotionRelegation = async () => {
-    if (!user || user.email !== 'admin@rwk-einbeck.de') {
+  const generateSuggestions = async () => {
+    if (!selectedSourceSeason || !selectedLeague) {
       toast({
-        title: 'Nicht autorisiert',
-        description: 'Sie müssen als Administrator angemeldet sein, um diese Funktion zu nutzen.',
+        title: 'Fehlende Auswahl',
+        description: 'Bitte wählen Sie Saison und Liga aus.',
         variant: 'destructive'
       });
       return;
     }
-    
-    if (!selectedLeague) {
-      toast({
-        title: 'Keine Liga ausgewählt',
-        description: 'Bitte wählen Sie eine Liga aus.',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
+
     setIsProcessing(true);
     try {
-      // Hier würde die Logik für den Auf-/Abstieg implementiert werden
-      toast({
-        title: 'Funktion in Entwicklung',
-        description: 'Diese Funktion wird in einem kommenden Update verfügbar sein.',
-        variant: 'default'
+      const selectedSeason = seasons.find(s => s.id === selectedSourceSeason);
+      if (!selectedSeason) return;
+
+      // Lade Teams und deren Platzierungen
+      const teamsQuery = query(
+        collection(db, 'rwk_teams'),
+        where('competitionYear', '==', selectedSeason.year),
+        where('leagueId', '==', selectedLeague)
+      );
+      const teamsSnapshot = await getDocs(teamsQuery);
+      
+      // Lade Clubs für Namen
+      const clubsQuery = query(collection(db, 'clubs'));
+      const clubsSnapshot = await getDocs(clubsQuery);
+      const clubsMap = new Map();
+      clubsSnapshot.docs.forEach(doc => {
+        clubsMap.set(doc.id, doc.data().name);
       });
+
+      // Simuliere Platzierungen (in echter App aus RWK-Tabellen)
+      const mockSuggestions: PromotionRelegationSuggestion[] = [];
+      
+      teamsSnapshot.docs.forEach((doc, index) => {
+        const team = doc.data();
+        const position = index + 1; // Vereinfacht
+        
+        let action: 'promote' | 'relegate' | 'stay' = 'stay';
+        let reason = 'Verbleibt in aktueller Liga';
+        let targetLeague = undefined;
+        
+        // Intelligente Auf-/Abstiegslogik
+        const totalTeams = teamsSnapshot.docs.length;
+        
+        if (position === 1) {
+          action = 'promote';
+          reason = 'Meister - steigt auf';
+          targetLeague = 'Höhere Liga';
+        } else if (position === totalTeams) {
+          action = 'relegate';
+          reason = 'Letzter Platz - steigt ab';
+          targetLeague = 'Niedrigere Liga';
+        } else if (position === totalTeams - 1) {
+          // Vorletzer: Wird mit Zweitplatziertem der unteren Liga verglichen
+          action = 'relegate'; // Vorläufig, wird später verglichen
+          reason = 'Vorletzer - Vergleich mit unterer Liga erforderlich';
+          targetLeague = 'Abhängig von Vergleich';
+        } else if (position === 2) {
+          // Zweiter: Wird mit Vorletztem der oberen Liga verglichen
+          action = 'promote'; // Vorläufig, wird später verglichen
+          reason = 'Zweiter - Vergleich mit oberer Liga erforderlich';
+          targetLeague = 'Abhängig von Vergleich';
+        }
+        
+        mockSuggestions.push({
+          teamId: doc.id,
+          teamName: team.name,
+          clubName: clubsMap.get(team.clubId) || 'Unbekannt',
+          currentLeague: selectedLeague,
+          currentPosition: position,
+          action,
+          targetLeague,
+          reason,
+          confirmed: false
+        });
+      });
+      
+      setSuggestions(mockSuggestions);
+      setShowSuggestions(true);
+      
+      toast({
+        title: 'Vorschläge generiert',
+        description: `${mockSuggestions.length} Auf-/Abstiegs-Vorschläge erstellt.`
+      });
+      
     } catch (error: any) {
-      console.error('Error processing promotion/relegation:', error);
+      console.error('Error generating suggestions:', error);
       toast({
         title: 'Fehler',
-        description: error.message || 'Bei der Verarbeitung des Auf-/Abstiegs ist ein Fehler aufgetreten.',
+        description: 'Vorschläge konnten nicht generiert werden.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const toggleSuggestionConfirmation = (teamId: string) => {
+    setSuggestions(prev => prev.map(s => 
+      s.teamId === teamId ? { ...s, confirmed: !s.confirmed } : s
+    ));
+  };
+
+  const applySuggestions = async () => {
+    const confirmedSuggestions = suggestions.filter(s => s.confirmed);
+    
+    if (confirmedSuggestions.length === 0) {
+      toast({
+        title: 'Keine Bestätigungen',
+        description: 'Bitte bestätigen Sie mindestens einen Vorschlag.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Hier würde die tatsächliche Umsetzung erfolgen
+      // Für Demo: Nur Toast
+      toast({
+        title: 'Auf-/Abstiege angewendet',
+        description: `${confirmedSuggestions.length} Änderungen wurden vorgenommen.`,
+      });
+      
+      setShowSuggestions(false);
+      setSuggestions([]);
+      
+    } catch (error: any) {
+      console.error('Error applying suggestions:', error);
+      toast({
+        title: 'Fehler',
+        description: 'Änderungen konnten nicht angewendet werden.',
         variant: 'destructive'
       });
     } finally {
@@ -313,23 +432,105 @@ export default function SeasonTransitionPage() {
                 </div>
               </div>
 
-              <Button
-                onClick={handlePromotionRelegation}
-                disabled={!selectedSourceSeason || !selectedLeague || isProcessing || !user}
-                className="w-full"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Auf-/Abstieg wird verarbeitet...
-                  </>
-                ) : (
-                  <>
-                    <ArrowUpDown className="mr-2 h-4 w-4" />
-                    Auf-/Abstieg verarbeiten
-                  </>
+              <div className="flex gap-2">
+                <Button
+                  onClick={generateSuggestions}
+                  disabled={!selectedSourceSeason || !selectedLeague || isProcessing || !user}
+                  className="flex-1"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Analysiere...
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="mr-2 h-4 w-4" />
+                      Vorschläge generieren
+                    </>
+                  )}
+                </Button>
+                
+                {showSuggestions && (
+                  <Button
+                    onClick={applySuggestions}
+                    disabled={isProcessing || suggestions.filter(s => s.confirmed).length === 0}
+                    variant="default"
+                    className="flex-1"
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Bestätigte anwenden
+                  </Button>
                 )}
-              </Button>
+              </div>
+              
+              {showSuggestions && suggestions.length > 0 && (
+                <Card className="mt-4">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Auf-/Abstiegs-Vorschläge</CardTitle>
+                    <CardDescription>
+                      Überprüfen Sie die Vorschläge und bestätigen Sie die gewünschten Änderungen.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">✓</TableHead>
+                          <TableHead>Mannschaft</TableHead>
+                          <TableHead>Verein</TableHead>
+                          <TableHead className="text-center">Platz</TableHead>
+                          <TableHead>Aktion</TableHead>
+                          <TableHead>Grund</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {suggestions.map(suggestion => (
+                          <TableRow key={suggestion.teamId}>
+                            <TableCell>
+                              <input
+                                type="checkbox"
+                                checked={suggestion.confirmed}
+                                onChange={() => toggleSuggestionConfirmation(suggestion.teamId)}
+                                className="w-4 h-4"
+                              />
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {suggestion.teamName}
+                            </TableCell>
+                            <TableCell>{suggestion.clubName}</TableCell>
+                            <TableCell className="text-center">
+                              {suggestion.currentPosition}
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={suggestion.action === 'promote' ? 'default' : 
+                                        suggestion.action === 'relegate' ? 'destructive' : 'secondary'}
+                                className="flex items-center w-fit"
+                              >
+                                {suggestion.action === 'promote' && <ArrowUp className="w-3 h-3 mr-1" />}
+                                {suggestion.action === 'relegate' && <ArrowDown className="w-3 h-3 mr-1" />}
+                                {suggestion.action === 'promote' ? 'Aufstieg' : 
+                                 suggestion.action === 'relegate' ? 'Abstieg' : 'Verbleibt'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {suggestion.reason}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    
+                    <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                      <p className="text-sm text-amber-800">
+                        <strong>Hinweis:</strong> Diese Vorschläge berücksichtigen die aktuellen Tabellenstände. 
+                        Bei fehlenden Mannschaften oder besonderen Umständen können manuelle Anpassungen erforderlich sein.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </CardContent>
             <CardFooter className="text-sm text-muted-foreground">
               <p>

@@ -1,20 +1,34 @@
-import { Timestamp } from 'firebase/firestore';
+// src/types/rwk.ts
+export type FirestoreLeagueSpecificDiscipline = 'KK' | 'KKP' | 'KKG' | 'LG' | 'LGA' | 'LP' | 'LPA';
 
-export type FirestoreLeagueSpecificDiscipline = 'KKG' | 'KKS' | 'KKP' | 'LGA' | 'LGS' | 'LP' | 'LPF';
-
-export interface LeagueUpdateEntry {
-  id: string;
-  leagueId: string;
-  leagueName: string;
-  leagueType: FirestoreLeagueSpecificDiscipline;
-  competitionYear: number;
-  timestamp: Timestamp;
-}
-
-export interface Shooter {
+export interface Season {
   id: string;
   name: string;
-  gender: 'male' | 'female' | 'unknown';
+  competitionYear: number;
+  type: string;
+  status: 'Vorbereitung' | 'Laufend' | 'Abgeschlossen';
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export interface League {
+  id: string;
+  name: string;
+  shortName?: string;
+  type: FirestoreLeagueSpecificDiscipline;
+  seasonId: string;
+  competitionYear: number;
+  order?: number;
+}
+
+export interface Club {
+  id: string;
+  name: string;
+  shortName?: string;
+  address?: string;
+  contactPerson?: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface Team {
@@ -23,8 +37,165 @@ export interface Team {
   clubId: string;
   leagueId: string;
   competitionYear: number;
+  shooterIds: string[];
+  teamLeader?: string;
+  teamLeaderEmail?: string;
+  teamLeaderPhone?: string;
+  outOfCompetition?: boolean;
+  outOfCompetitionReason?: string;
+}
+
+export interface Shooter {
+  id: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  gender: 'male' | 'female' | 'unknown';
+  birthYear?: number;
+  clubId?: string;
+  email?: string;
+  phone?: string;
+  isActive?: boolean;
+}
+
+export interface ScoreEntry {
+  id: string;
+  shooterId: string;
+  shooterName: string;
+  shooterGender?: string;
+  teamId: string;
+  teamName: string;
+  clubId: string;
+  leagueId: string;
   leagueType: FirestoreLeagueSpecificDiscipline;
-  shooters?: Shooter[];
+  competitionYear: number;
+  durchgang: number;
+  totalRinge: number;
+  scoreInputType: 'regular' | 'pre' | 'post';
+  enteredByUserId?: string;
+  enteredByUserName?: string;
+  entryTimestamp?: any;
+  teamOutOfCompetition?: boolean;
+  teamOutOfCompetitionReason?: string;
+}
+
+// Neue Interfaces für Ersatzschützen
+export interface TeamSubstitution {
+  id: string;
+  teamId: string;
+  teamName: string;
+  leagueId: string;
+  competitionYear: number;
+  originalShooterId: string;
+  originalShooterName: string;
+  replacementShooterId: string;
+  replacementShooterName: string;
+  substitutionDate: Date;
+  fromRound: number; // Ab welchem Durchgang der Ersatz gilt
+  type: 'individual_to_team' | 'new_shooter';
+  reason?: string; // z.B. "Krankheit", "Umzug", etc.
+  transferredResults?: ScoreEntry[]; // Bei Einzelschütze → Team
+  createdByUserId: string;
+  createdByUserName: string;
+  createdAt: Date;
+}
+
+export interface UserPermission {
+  uid: string;
+  email: string;
+  displayName?: string;
+  role: 'admin' | 'vereinsvertreter' | 'mannschaftsfuehrer';
+  clubId?: string;
+  isActive: boolean;
+  createdAt?: Date;
+  lastLogin?: Date;
+}
+
+export interface SupportTicket {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  category: 'bug' | 'feature' | 'question' | 'other';
+  createdAt: Date;
+  updatedAt?: Date;
+  resolvedAt?: Date;
+  assignedTo?: string;
+  response?: string;
+}
+
+export interface Document {
+  id: string;
+  title: string;
+  description?: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  category: 'ausschreibung' | 'protokoll' | 'sonstiges';
+  uploadedBy: string;
+  uploadedAt: Date;
+  isPublic: boolean;
+  downloadCount?: number;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  userId: string;
+  userEmail: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  changes?: Record<string, any>;
+  timestamp: Date;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+export interface LeagueUpdateEntry {
+  id: string;
+  leagueId: string;
+  leagueName: string;
+  leagueType: FirestoreLeagueSpecificDiscipline;
+  competitionYear: number;
+  timestamp: Date;
+  action: string;
+}
+
+// UI-spezifische Typen
+export type UIDisciplineSelection = 'KK' | 'LG' | 'LP';
+
+export interface UIDisciplineFilterOption {
+  value: UIDisciplineSelection;
+  label: string;
+  firestoreTypes: FirestoreLeagueSpecificDiscipline[];
+}
+
+export interface LeagueDisciplineOption {
+  value: FirestoreLeagueSpecificDiscipline;
+  label: string;
+}
+
+export interface CompetitionDisplayConfig {
+  year: number;
+  discipline: UIDisciplineSelection;
+  displayName: string;
+}
+
+export interface ShooterDisplayResults {
+  shooterId: string;
+  shooterName: string;
+  shooterGender: string;
+  results: { [key: string]: number | null };
+  total: number | null;
+  average: number | null;
+  roundsShot: number;
+  teamId: string;
+  leagueId: string;
+  competitionYear: number;
+  leagueType: FirestoreLeagueSpecificDiscipline;
 }
 
 export interface TeamDisplay {
@@ -34,29 +205,21 @@ export interface TeamDisplay {
   clubName: string;
   leagueId: string;
   competitionYear: number;
-  outOfCompetition?: boolean;
-  outOfCompetitionReason?: string;
+  shooterIds: string[];
   shootersResults: ShooterDisplayResults[];
-  roundResults: Record<string, number | null>;
-  totalScore: number;
+  roundResults: { [key: string]: number | null };
+  totalScore: number | null;
   averageScore: number | null;
   numScoredRounds: number;
-  leagueType: string;
-  rank?: number;
-}
-
-export interface ShooterDisplayResults {
-  shooterId: string;
-  shooterName: string;
-  shooterGender: string;
-  results: Record<string, number | null>;
-  average: number | null;
-  total: number;
-  roundsShot: number;
-  teamId: string;
-  leagueId: string;
-  competitionYear: number;
-  leagueType: string;
+  leagueType: FirestoreLeagueSpecificDiscipline;
+  teamLeader?: string;
+  teamLeaderEmail?: string;
+  teamLeaderPhone?: string;
+  outOfCompetition?: boolean;
+  outOfCompetitionReason?: string;
+  rank?: number | null;
+  sortingScore?: number;
+  sortingAverage?: number;
 }
 
 export interface IndividualShooterDisplayData {
@@ -64,100 +227,85 @@ export interface IndividualShooterDisplayData {
   shooterName: string;
   shooterGender: string;
   teamName: string;
-  results: Record<string, number | null>;
+  results: { [key: string]: number | null };
   totalScore: number;
   averageScore: number | null;
   roundsShot: number;
-  rank?: number;
   competitionYear?: number;
   leagueId?: string;
-  leagueType?: string;
+  leagueType?: FirestoreLeagueSpecificDiscipline;
   teamOutOfCompetition?: boolean;
   teamOutOfCompetitionReason?: string;
+  rank?: number | null;
 }
 
 export interface LeagueDisplay {
   id: string;
   name: string;
-  type: string;
   shortName?: string;
+  type: FirestoreLeagueSpecificDiscipline;
+  seasonId: string;
   competitionYear: number;
+  order?: number;
   teams: TeamDisplay[];
   individualLeagueShooters: IndividualShooterDisplayData[];
 }
 
-export interface DisciplineFilterOption {
-  value: string;
-  label: string;
-  firestoreTypes: FirestoreLeagueSpecificDiscipline[];
+export interface AggregatedCompetitionData {
+  id: string;
+  config: CompetitionDisplayConfig;
+  leagues: LeagueDisplay[];
 }
 
-export interface LeagueDisciplineOption {
-  value: string;
-  label: string;
+export interface PendingScoreEntry {
+  tempId: string;
+  seasonId: string;
+  seasonName: string;
+  leagueId: string;
+  leagueName: string;
+  leagueType: FirestoreLeagueSpecificDiscipline;
+  teamId: string;
+  teamName: string;
+  clubId: string;
+  shooterId: string;
+  shooterName: string;
+  shooterGender: string;
+  durchgang: number;
+  totalRinge: number;
+  scoreInputType: 'regular' | 'pre' | 'post';
+  competitionYear: number;
 }
 
-export interface UserPermission {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  role: string | null;
-  clubId: string | null;
-  lastUpdated?: Timestamp;
-  lastLogin?: Timestamp;
+export interface VereinContextType {
+  userPermission: UserPermission | null;
+  loadingPermissions: boolean;
+  permissionError: string | null;
+  assignedClubId: string | null;
+  assignedClubIdArray: string[];
 }
 
-export const uiDisciplineFilterOptions: DisciplineFilterOption[] = [
-  { 
-    value: 'kk', 
-    label: 'Kleinkaliber (KK)', 
-    firestoreTypes: ['KKG', 'KKS', 'KKP'] 
-  }
+// Konstanten
+export const MAX_SHOOTERS_PER_TEAM = 3;
+
+export const uiDisciplineFilterOptions: UIDisciplineFilterOption[] = [
+  { value: 'KK', label: 'Kleinkaliber (KK, KKP, KKG)', firestoreTypes: ['KK', 'KKP', 'KKG'] },
+  { value: 'LG', label: 'Luftgewehr (LG, LGA)', firestoreTypes: ['LG', 'LGA'] },
+  { value: 'LP', label: 'Luftpistole (LP, LPA)', firestoreTypes: ['LP', 'LPA'] },
 ];
 
 export const leagueDisciplineOptions: LeagueDisciplineOption[] = [
-  { value: 'all', label: 'Alle Disziplinen' }
+  { value: 'KK', label: 'Kleinkaliber Gewehr' },
+  { value: 'KKP', label: 'Kleinkaliber Pistole' },
+  { value: 'KKG', label: 'Kleinkaliber Gewehr (Gruppe)' },
+  { value: 'LG', label: 'Luftgewehr' },
+  { value: 'LGA', label: 'Luftgewehr Auflage' },
+  { value: 'LP', label: 'Luftpistole' },
+  { value: 'LPA', label: 'Luftpistole Auflage' },
 ];
 
-export const MAX_SHOOTERS_PER_TEAM = 3;
-
-export function getUIDisciplineValueFromSpecificType(specificType: FirestoreLeagueSpecificDiscipline | string): string {
-  const option = uiDisciplineFilterOptions.find(opt => opt.firestoreTypes.includes(specificType as FirestoreLeagueSpecificDiscipline));
-  return option ? option.value : '';
-}
-
-/**
- * Gibt die Kategorie einer Disziplin zurück
- * Ein Schütze darf pro Saison in verschiedenen Kategorien antreten,
- * aber nur einmal pro Kategorie
- * @param disciplineType - Disziplintyp
- * @returns Kategorie der Disziplin
- */
-export function getDisciplineCategory(disciplineType: string): string {
-  if (!disciplineType) return 'unknown';
-  
-  const upperType = disciplineType.toUpperCase();
-  
-  // Kleinkaliber Gewehr (KKG, KKS)
-  if (upperType === 'KKG' || upperType === 'KKS' || upperType.includes('GEWEHR')) {
-    return 'kk-gewehr';
-  }
-  // Kleinkaliber Pistole (KKP)
-  else if (upperType === 'KKP' || (upperType.includes('KK') && upperType.includes('PISTOL'))) {
-    return 'kk-pistole';
-  }
-  // Luftgewehr (LGA, LGS)
-  else if (upperType === 'LGA' || upperType === 'LGS' || upperType.includes('LUFTGEWEHR')) {
-    return 'luftgewehr';
-  }
-  // Luftpistole (LP, LPF)
-  else if (upperType === 'LP' || upperType === 'LPF' || upperType.includes('LUFTPISTOL')) {
-    return 'luftpistole';
-  }
-  // Sportpistole
-  else if (upperType.includes('SPORTPISTOL')) {
-    return 'sportpistole';
-  }
-  
-  return 'unknown';
+export function getUIDisciplineValueFromSpecificType(specificType: FirestoreLeagueSpecificDiscipline): UIDisciplineSelection {
+  if (['KK', 'KKP', 'KKG'].includes(specificType)) return 'KK';
+  if (['LG', 'LGA'].includes(specificType)) return 'LG';
+  if (['LP', 'LPA'].includes(specificType)) return 'LP';
+  return 'KK';
 }

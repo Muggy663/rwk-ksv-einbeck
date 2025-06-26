@@ -3,7 +3,7 @@
 import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Users, Loader2, AlertTriangle, InfoIcon } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Users, Loader2, AlertTriangle, InfoIcon, UserPlus } from 'lucide-react';
 import { TeamStatusBadge } from '@/components/ui/team-status-badge';
 import {
   Table,
@@ -46,7 +46,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from '@/hooks/use-auth';
 import type { Season, League, Club, Team, Shooter, TeamValidationInfo, FirestoreLeagueSpecificDiscipline, UIDisciplineSelection, TeamCompetitionStatus } from '@/types/rwk';
-import { MAX_SHOOTERS_PER_TEAM, getDisciplineCategory, leagueDisciplineOptions } from '@/types/rwk';
+import { MAX_SHOOTERS_PER_TEAM, leagueDisciplineOptions } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import {
   collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query,
@@ -55,6 +55,7 @@ import {
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { SubstitutionDialog } from '@/components/admin/SubstitutionDialog';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -120,6 +121,8 @@ export default function AdminTeamsPage() {
   const [selectedShooterIdsInForm, setSelectedShooterIdsInForm] = useState<string[]>([]);
   
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
+  const [substitutionDialogOpen, setSubstitutionDialogOpen] = useState(false);
+  const [selectedTeamForSubstitution, setSelectedTeamForSubstitution] = useState<Team | null>(null);
 
   const fetchInitialData = useCallback(async () => {
     setIsLoadingData(true);
@@ -460,7 +463,7 @@ export default function AdminTeamsPage() {
     };
     
     const currentTeamLeagueInfo = allLeagues.find(l => l.id === teamDataToSave.leagueId);
-    const categoryOfCurrentTeamForValidation = getDisciplineCategory(currentTeamLeagueInfo?.type);
+    const categoryOfCurrentTeamForValidation = currentTeamLeagueInfo?.type;
     
     if (teamDataToSave.leagueId && categoryOfCurrentTeamForValidation && teamDataToSave.competitionYear !== undefined) {
         for (const shooterId of selectedShooterIdsInForm) {
@@ -475,7 +478,7 @@ export default function AdminTeamsPage() {
               
               const teamValidationEntry = allTeamsForYearValidation.find(t => t.id === existingTeamId);
               if (teamValidationEntry && teamValidationEntry.leagueCompetitionYear === teamDataToSave.competitionYear) { 
-                const categoryOfExistingTeam = getDisciplineCategory(teamValidationEntry.leagueType);
+                const categoryOfExistingTeam = teamValidationEntry.leagueType;
                 if (categoryOfExistingTeam && categoryOfExistingTeam === categoryOfCurrentTeamForValidation) { 
                    conflictFound = true; break;
                 }
@@ -590,7 +593,7 @@ export default function AdminTeamsPage() {
     if (!currentTeamData || currentTeamData.competitionYear === undefined) return;
     
     const currentTeamLeagueData = allLeagues.find(l => l.id === currentTeamData.leagueId);
-    const categoryOfCurrentTeam = getDisciplineCategory(currentTeamLeagueData?.type);
+    const categoryOfCurrentTeam = currentTeamLeagueData?.type;
 
     if (isChecked) { 
       if (selectedShooterIdsInForm.length >= MAX_SHOOTERS_PER_TEAM) {
@@ -606,7 +609,7 @@ export default function AdminTeamsPage() {
                   
                   const teamValidationEntry = allTeamsForYearValidation.find(t => t.id === existingTeamId);
                   if (teamValidationEntry?.leagueCompetitionYear === currentTeamData.competitionYear) { 
-                      const categoryOfExistingTeam = getDisciplineCategory(teamValidationEntry.leagueType);
+                      const categoryOfExistingTeam = teamValidationEntry.leagueType;
                       if (categoryOfExistingTeam && categoryOfExistingTeam === categoryOfCurrentTeam) {
                           conflictFound = true; break;
                       }
@@ -743,6 +746,18 @@ export default function AdminTeamsPage() {
                     <TableCell className="text-center">{team.shooterIds?.length || 0} / {MAX_SHOOTERS_PER_TEAM}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button variant="ghost" size="icon" onClick={() => handleEditTeam(team)} aria-label="Mannschaft bearbeiten"><Edit className="h-4 w-4" /></Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => {
+                          setSelectedTeamForSubstitution(team);
+                          setSubstitutionDialogOpen(true);
+                        }} 
+                        aria-label="Ersatzschütze hinzufügen"
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <UserPlus className="h-4 w-4" />
+                      </Button>
                        <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" onClick={() => handleDeleteConfirmation(team)} aria-label="Mannschaft löschen"><Trash2 className="h-4 w-4" /></Button>
@@ -918,7 +933,7 @@ export default function AdminTeamsPage() {
                         const currentTeamLeague = allLeagues.find(l => l.id === currentTeam?.leagueId);
                         const currentTeamSpecificLeagueType = currentTeamLeague?.type;
                         const currentTeamCompYearForValidation = currentTeam?.competitionYear;
-                        const categoryOfCurrentTeam = getDisciplineCategory(currentTeamSpecificLeagueType);
+                        const categoryOfCurrentTeam = currentTeamSpecificLeagueType;
 
                         if (!isSelected && categoryOfCurrentTeam && currentTeamCompYearForValidation !== undefined) {
                            if (!persistedShooterIdsForTeam.includes(shooter.id)) { // Only check for new assignments
@@ -928,7 +943,7 @@ export default function AdminTeamsPage() {
                                     
                                     const assignedTeamInfo = allTeamsForYearValidation.find(t => t.id === assignedTeamId);
                                     if (assignedTeamInfo?.leagueCompetitionYear === currentTeamCompYearForValidation) {
-                                        const categoryOfAssignedTeam = getDisciplineCategory(assignedTeamInfo.leagueType);
+                                        const categoryOfAssignedTeam = assignedTeamInfo.leagueType;
                                         // Ein Schütze darf nur einmal pro Disziplin-Kategorie und Jahr antreten
                                         // Aber KK Gewehr und KK Pistole sind verschiedene Kategorien
                                         if (categoryOfAssignedTeam && categoryOfAssignedTeam === categoryOfCurrentTeam) {
@@ -1066,6 +1081,28 @@ export default function AdminTeamsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Ersatzschützen Dialog */}
+      {selectedTeamForSubstitution && user && (
+        <SubstitutionDialog
+          isOpen={substitutionDialogOpen}
+          onClose={() => {
+            setSubstitutionDialogOpen(false);
+            setSelectedTeamForSubstitution(null);
+          }}
+          team={selectedTeamForSubstitution}
+          userPermission={{
+            uid: user.uid,
+            email: user.email || '',
+            displayName: user.displayName,
+            role: 'admin',
+            isActive: true
+          }}
+          onSubstitutionCreated={() => {
+            handleSearchTeams(); // Aktualisiere die Mannschaftsliste
+          }}
+        />
+      )}
     </div>
   );
 }

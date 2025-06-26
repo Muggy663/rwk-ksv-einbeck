@@ -88,6 +88,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { SubstitutionBadge } from '@/components/ui/substitution-badge';
 
 const EXCLUDED_TEAM_NAME_PART = 'einzel'; // Case-insensitive check later
 
@@ -96,6 +97,7 @@ interface TeamShootersTableProps {
   numRounds: number;
   parentTeam: TeamDisplay; // Pass the whole parent team for context
   onShooterClick: (shooterData: IndividualShooterDisplayData) => void;
+  teamSubstitutions: Map<string, any>;
 }
 
 const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
@@ -103,6 +105,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
   numRounds,
   parentTeam,
   onShooterClick,
+  teamSubstitutions,
 }) => {
   if (!shootersResults || shootersResults.length === 0) {
     return (
@@ -146,13 +149,19 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
             return (
               <TableRow key={`ts-${shooterRes.shooterId}`} className="text-sm border-b-0 hover:bg-background/40">
                 <TableCell className="font-medium pl-3 pr-1 py-1.5 whitespace-nowrap">
-                   <Button
-                    variant="link"
-                    className="p-0 h-auto text-sm text-left hover:text-primary whitespace-normal text-wrap"
-                    onClick={() => onShooterClick(shooterDataForModal)}
-                  >
-                    {shooterRes.shooterName}
-                  </Button>
+                  <div className="flex flex-col gap-1">
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto text-sm text-left hover:text-primary whitespace-normal text-wrap justify-start"
+                      onClick={() => onShooterClick(shooterDataForModal)}
+                    >
+                      {shooterRes.shooterName}
+                    </Button>
+                    <SubstitutionBadge
+                      isSubstitute={teamSubstitutions.has(`${parentTeam.id}-${shooterRes.shooterId}`)}
+                      substitutionInfo={teamSubstitutions.get(`${parentTeam.id}-${shooterRes.shooterId}`)}
+                    />
+                  </div>
                 </TableCell>
                 {[...Array(numRounds)].map((_, i) => (
                   <TableCell key={`shooter-dg${i + 1}-${shooterRes.shooterId}`} className="px-1 py-1.5 text-center">
@@ -383,6 +392,7 @@ function RwkTabellenPageComponent() {
   
   const [isShooterDetailModalOpen, setIsShooterDetailModalOpen] = useState(false);
   const [selectedShooterForDetail, setSelectedShooterForDetail] = useState<IndividualShooterDisplayData | null>(null);
+  const [teamSubstitutions, setTeamSubstitutions] = useState<Map<string, any>>(new Map());
 
   // Extrahiere URL-Parameter auf Client-Seite
   useEffect(() => {
@@ -783,6 +793,30 @@ function RwkTabellenPageComponent() {
 
         fetchedLeaguesData.push(leagueDisplay);
       }
+      // Lade Substitutions-Daten
+      try {
+        const substitutionsQuery = query(
+          collection(db, 'team_substitutions'),
+          where('competitionYear', '==', config.year)
+        );
+        const substitutionsSnapshot = await getDocs(substitutionsQuery);
+        const substitutionsMap = new Map();
+        substitutionsSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          const key = `${data.teamId}-${data.replacementShooterId}`;
+          substitutionsMap.set(key, {
+            originalShooterName: data.originalShooterName,
+            fromRound: data.fromRound,
+            reason: data.reason,
+            type: data.type
+          });
+        });
+        setTeamSubstitutions(substitutionsMap);
+      } catch (error) {
+        console.error('RWK DEBUG: Error loading substitutions:', error);
+        setTeamSubstitutions(new Map());
+      }
+      
       console.log(`RWK DEBUG: fetchCompetitionTeamData - Processed ${fetchedLeaguesData.length} leagues.`);
       return { id: `${config.year}-${config.discipline}`, config, leagues: fetchedLeaguesData };
     } catch (err: any) {
@@ -1577,7 +1611,7 @@ function RwkTabellenPageComponent() {
                                           <p className="text-sm text-muted-foreground">Lade Schützen...</p>
                                         </div>
                                       ) : (
-                                        <TeamShootersTable shootersResults={team.shootersResults} numRounds={currentNumRoundsState} parentTeam={team} onShooterClick={handleShooterNameClick} />
+                                        <TeamShootersTable shootersResults={team.shootersResults} numRounds={currentNumRoundsState} parentTeam={team} onShooterClick={handleShooterNameClick} teamSubstitutions={teamSubstitutions} />
                                       )}
                                     </TableCell>
                                   </TableRow>

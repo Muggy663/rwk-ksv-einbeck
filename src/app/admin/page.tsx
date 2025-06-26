@@ -9,7 +9,7 @@ import {
   MessagesSquare, FileUp, Award, BarChart3, ShieldQuestion, GitPullRequestClosed, 
   BookOpenCheck, Printer, ClipboardList, KeyRound, ListTree, 
   Table as TableIcon, Info as InfoIcon, CheckCircle, AlertCircle, ShieldCheck as AdminShieldIcon, FileText,
-  CalendarDays, Smartphone
+  CalendarDays, Smartphone, Euro
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -405,6 +405,21 @@ export default function AdminDashboardPage() {
             </CardDescription>
             <Link href="/admin/analytics" passHref>
               <Button className="w-full">Zu Analytics</Button>
+            </Link>
+          </CardContent>
+        </Card>
+        
+         <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Startgelder & Finanzen</CardTitle> 
+            <Euro className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Startgelder berechnen und Kostenübersicht für den Schatzmeister.
+            </CardDescription>
+            <Link href="/admin/startgelder" passHref>
+              <Button className="w-full">Startgelder verwalten</Button>
             </Link>
           </CardContent>
         </Card>
