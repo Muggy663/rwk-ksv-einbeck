@@ -486,6 +486,16 @@ export default function HandzettelPage() {
                         <head>
                           <title>Meldebogen</title>
                           <style>
+                            @page { size: A4 portrait; margin: 5mm; }
+                            @media print { 
+                              body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; height: 100vh; }
+                              .print-area { width: 100% !important; height: 100% !important; transform: none !important; }
+                            }
+                            @media screen and (max-width: 768px) {
+                              body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10px; }
+                              .print-area { width: 100% !important; height: auto !important; transform: scale(0.8) !important; }
+                              table { font-size: 8px !important; }
+                            }
                             body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; height: 100vh; }
                             .print-area { width: 210mm; height: 297mm; display: flex; flex-direction: column; }
                             table { border-collapse: collapse; width: 100%; flex: 1; }
@@ -595,6 +605,16 @@ export default function HandzettelPage() {
                             <title>Gesamtergebnisliste</title>
                             <style>
                               @page { size: A4 landscape; margin: 5mm; }
+                              @media print { 
+                                body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 6px; }
+                                .gesamt-print-area { width: 100% !important; height: 100% !important; transform: none !important; }
+                              }
+                              @media screen and (max-width: 768px) {
+                                body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 5px; }
+                                .gesamt-print-area { width: 100% !important; height: auto !important; transform: scale(0.5) !important; }
+                                table { font-size: 4px !important; }
+                                th, td { padding: 1px !important; height: 8px !important; }
+                              }
                               body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 6px; }
                               .gesamt-print-area { width: 100%; height: 100vh; page-break-inside: avoid; transform: scale(${Math.max(0.75, 1 - (teams.length * 0.02))}); transform-origin: top left; }
                               .flex { display: flex !important; }

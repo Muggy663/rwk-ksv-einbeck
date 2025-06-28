@@ -19,7 +19,7 @@ export default function UpdatesPage() {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs py-1 px-2">
-            <span>Aktuelle Version: 0.9.8 (Heute)</span>
+            <span>Aktuelle Version: 0.9.8.1 (Bugfix)</span>
           </Badge>
         </div>
       </div>
@@ -28,8 +28,31 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.8.1</CardTitle>
+              <Badge variant="secondary">Bugfix</Badge>
+            </div>
+            <CardDescription>Heute</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Bugfix-Release für mobile Druckoptimierung.</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📱 <strong>Mobile Druckoptimierung</strong>: Handzettel und Gesamtergebnislisten drucken korrekt auf mobilen Geräten</li>
+              <li>🖨️ <strong>Responsive Skalierung</strong>: Automatische Anpassung für verschiedene Bildschirmgrößen</li>
+              <li>🔧 <strong>Print-Media-Queries</strong>: Optimierte Druckausgabe für alle Gerätetypen</li>
+            </ul>
+            <div className="mt-4 flex justify-end">
+              <Link href="/updates/v0.9.8.1" className="text-primary hover:text-primary/80 text-sm flex items-center">
+                Details <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
               <CardTitle className="text-xl">Version 0.9.8</CardTitle>
-              <Badge variant="secondary">Neu</Badge>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>Heute</CardDescription>
           </CardHeader>

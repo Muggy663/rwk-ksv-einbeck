@@ -414,6 +414,14 @@ export default function HandzettelGeneratorPage() {
                       <title>Meldebogen</title>
                       <style>
                         @page { size: A4 portrait; margin: 5mm; }
+                        @media print { 
+                          body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; height: 100vh; }
+                          .print-area { width: 100% !important; height: 100% !important; transform: none !important; }
+                        }
+                        @media screen and (max-width: 768px) {
+                          body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10px; }
+                          .print-area { width: 100% !important; height: auto !important; transform: scale(0.8) !important; transform-origin: top left !important; }
+                        }
                         body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; height: 100vh; }
                         .print-area { width: 210mm; height: 297mm; display: flex; flex-direction: column; transform: scale(1); transform-origin: top left; }
                         table { border-collapse: collapse; width: 100%; flex: 1; }

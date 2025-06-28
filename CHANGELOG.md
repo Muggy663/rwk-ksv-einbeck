@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.9.8.1 (Heute)
+
+### Bugfixes
+- **Mobile Druckoptimierung**: Handzettel und Gesamtergebnislisten drucken jetzt korrekt auf mobilen Geräten
+- **Responsive Print-Styles**: Automatische Skalierung für verschiedene Bildschirmgrößen
+- **Print-Media-Queries**: Optimierte Druckausgabe für alle Bereiche (Admin, Vereins, öffentlich)
+- **Cross-Device-Kompatibilität**: Einheitliche Druckfunktionalität auf Desktop und Mobile
+
 ## Version 0.9.8 (Heute)
 
 ### Handzettel-Optimierungen

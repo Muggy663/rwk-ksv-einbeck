@@ -413,7 +413,53 @@ export default function VereinHandtabellenPage() {
                 </Button>
                 
                 <Button variant="outline" onClick={() => {
-                  window.print();
+                  const printContent = document.querySelector('.print-area');
+                  if (printContent) {
+                    const printWindow = window.open('', '_blank');
+                    printWindow?.document.write(`
+                      <html>
+                        <head>
+                          <title>Meldebogen</title>
+                          <style>
+                            @page { size: A4 portrait; margin: 5mm; }
+                            @media print { 
+                              body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; height: 100vh; }
+                              .print-area { width: 100% !important; height: 100% !important; transform: none !important; }
+                            }
+                            @media screen and (max-width: 768px) {
+                              body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10px; }
+                              .print-area { width: 100% !important; height: auto !important; transform: scale(0.8) !important; }
+                              table { font-size: 8px !important; }
+                            }
+                            body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; height: 100vh; }
+                            .print-area { width: 210mm; height: 297mm; display: flex; flex-direction: column; }
+                            table { border-collapse: collapse; width: 100%; flex: 1; }
+                            th, td { border: 1px solid black; padding: 4px; text-align: left; }
+                            .bg-yellow-100 { background-color: #fef3c7; }
+                            .border { border: 1px solid black; }
+                            .font-bold { font-weight: bold; }
+                            .text-center { text-align: center; }
+                            .text-xs { font-size: 10px; }
+                            .italic { font-style: italic; }
+                            .grid { display: grid; }
+                            .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+                            .gap-4 { gap: 16px; }
+                            .mb-4 { margin-bottom: 16px; }
+                            .p-2 { padding: 8px; }
+                            .flex { display: flex; }
+                            .justify-between { justify-content: space-between; }
+                            .items-start { align-items: flex-start; }
+                            .flex-1 { flex: 1; }
+                            .flex-shrink-0 { flex-shrink: 0; }
+                            .flex-col { flex-direction: column; }
+                          </style>
+                        </head>
+                        <body>${printContent.innerHTML}</body>
+                      </html>
+                    `);
+                    printWindow?.document.close();
+                    printWindow?.print();
+                  }
                 }} disabled={!selectedSeasonId || !selectedLeagueId}>
                   <Printer className="mr-2 h-4 w-4" />
                   Drucken

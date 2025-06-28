@@ -207,6 +207,16 @@ export default function GesamtergebnislisteGeneratorPage() {
                         <title>Gesamtergebnisliste</title>
                         <style>
                           @page { size: A4 landscape; margin: 5mm; }
+                          @media print { 
+                            body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: ${teams.length > 12 ? '5px' : teams.length > 8 ? '6px' : '7px'}; }
+                            .gesamt-print-area { width: 100% !important; height: 100% !important; transform: none !important; }
+                          }
+                          @media screen and (max-width: 768px) {
+                            body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 8px; }
+                            .gesamt-print-area { width: 100% !important; height: auto !important; transform: scale(0.6) !important; transform-origin: top left !important; }
+                            table { font-size: 6px !important; }
+                            th, td { padding: 1px !important; height: 12px !important; }
+                          }
                           body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: ${teams.length > 12 ? '5px' : teams.length > 8 ? '6px' : '7px'}; }
                           .gesamt-print-area { width: 100%; height: 95vh; page-break-inside: avoid; transform: scale(${Math.max(0.75, 1 - (teams.length * 0.02))}); transform-origin: top left; }
                           table { border-collapse: collapse; width: 100%; font-size: ${teams.length > 12 ? '6px' : teams.length > 8 ? '7px' : '8px'}; }
