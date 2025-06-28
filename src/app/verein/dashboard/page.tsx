@@ -201,22 +201,24 @@ export default function VereinDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-gray-400 opacity-60">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-indigo-500">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <FileText className="h-6 w-6 text-gray-500" />
+              <div className="p-2 bg-indigo-100 rounded-lg">
+                <FileText className="h-6 w-6 text-indigo-600" />
               </div>
-              <Badge variant="outline">Bald verfügbar</Badge>
+              <Badge variant="secondary">Neu</Badge>
             </div>
-            <CardTitle className="text-xl text-gray-600">Handtabellen</CardTitle>
-            <CardDescription className="text-base text-gray-500">
-              Handtabellen für Wettkämpfe generieren - in einem kommenden Update verfügbar
+            <CardTitle className="text-xl">Handtabellen</CardTitle>
+            <CardDescription className="text-base">
+              Erstellen Sie Durchgangs-Meldebögen und Gesamtergebnislisten für Wettkämpfe
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button disabled className="w-full h-12 text-base">
-              In Entwicklung...
+            <Button asChild className="w-full h-12 text-base font-semibold">
+              <Link href="/verein/handtabellen">
+                Handtabellen erstellen
+              </Link>
             </Button>
           </CardContent>
         </Card>

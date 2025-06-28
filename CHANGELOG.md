@@ -1,5 +1,28 @@
 # Changelog
 
+## Version 0.9.8 (Heute)
+
+### Handzettel-Optimierungen
+- **Dynamische Skalierung**: Gesamtergebnislisten passen automatisch auf eine A4-Seite
+- **Intelligente Anpassung**: Optimale Balance zwischen Lesbarkeit und Platznutzung bei verschiedenen Teamanzahlen
+- **Verbesserte Druckfunktion**: Auch Ligen mit vielen Einzelschützen (z.B. 2. Kreisklasse) passen komplett auf eine Seite
+- **Benutzerfreundlichkeit**: Eingabefelder bleiben ausreichend groß für handschriftliche Eintragungen
+
+### Neue Features
+- **Vollständige Handtabellen-Suite**: Durchgangs-Meldebögen und Gesamtergebnislisten in drei Bereichen
+- **Vereinsbereich**: Komplette Handtabellen-Funktionalität mit allen Kontaktdaten
+- **Öffentliche Generatoren**: Zwei separate Tools im Dokumentenbereich ohne sensible Daten
+- **Präsente Darstellung**: Große Generator-Karten mit Beschreibungen und Icons
+- **Nahtlose Navigation**: Direkte Verlinkung zwischen Generatoren und zurück zu Ligalisten-Tab
+- **Rundschreiben-System**: Admin-Kommunikation mit Empfänger-Auswahl und Nachrichtenvorlagen
+- **Datenschutz**: Kontaktdaten nur für eingeloggte Vereinsvertreter sichtbar
+
+### Technische Verbesserungen
+- Skalierungsformel: `Math.max(0.75, 1 - (teams.length * 0.02))` für optimale Seitenausnutzung
+- Dynamische Zeilenhöhen basierend auf Teamanzahl
+- Verbesserte Schriftgrößen (7px) für bessere Lesbarkeit
+- Admin-Bugfix: Automatische Saison-Auswahl in der Mannschaftsverwaltung
+
 ## Version 0.9.6 (26. Juni 2025)
 
 ### Neue Features

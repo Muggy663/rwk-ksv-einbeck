@@ -2,7 +2,7 @@
 import React, { type ReactNode, createContext, useContext, useState, useEffect, useMemo } from 'react'; // Added useMemo
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, AlertTriangle, ShieldAlert, UserCog, FileDown, CalendarDays, User, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, AlertTriangle, ShieldAlert, UserCog, FileDown, CalendarDays, User, HelpCircle, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -35,6 +35,7 @@ const vereinNavItems = [
   { href: '/verein/mannschaften', label: 'Meine Mannschaften', icon: Users },
   { href: '/verein/schuetzen', label: 'Meine Schützen', icon: UserCircle },
   { href: '/verein/ergebnisse', label: 'Ergebnisse erfassen', icon: ListChecks },
+  { href: '/verein/handtabellen', label: 'Handtabellen', icon: FileText },
   { href: '/termine', label: 'Terminkalender', icon: CalendarDays },
   { href: '/termine/add', label: 'Termin hinzufügen', icon: CalendarDays },
   { href: '/verein/team-managers', label: 'Mannschaftsführer', icon: UserCog },

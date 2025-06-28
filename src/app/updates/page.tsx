@@ -19,7 +19,7 @@ export default function UpdatesPage() {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs py-1 px-2">
-            <span>Aktuelle Version: 0.9.7 (26. Juni 2025)</span>
+            <span>Aktuelle Version: 0.9.8 (Heute)</span>
           </Badge>
         </div>
       </div>
@@ -28,9 +28,35 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.7</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.8</CardTitle>
               <Badge variant="secondary">Neu</Badge>
             </div>
+            <CardDescription>Heute</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Optimierungen für Handzettel-Druckfunktionen und bessere Seitenausnutzung.</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🖨️ <strong>Dynamische Skalierung</strong>: Gesamtergebnislisten passen automatisch auf eine Seite</li>
+              <li>📊 <strong>Intelligente Anpassung</strong>: Optimale Balance zwischen Lesbarkeit und Platznutzung</li>
+              <li>📋 <strong>Vollständige Handzettel-Suite</strong>: Durchgangs-Meldebögen und Gesamtergebnislisten</li>
+              <li>🏢 <strong>Vereinsbereich erweitert</strong>: Komplette Handtabellen-Funktionalität mit Kontaktdaten</li>
+              <li>🌍 <strong>Öffentliche Generatoren</strong>: Handzettel & Gesamtlisten ohne sensible Daten</li>
+              <li>🎨 <strong>Präsente Darstellung</strong>: Große Generator-Karten im Dokumentenbereich</li>
+              <li>🔗 <strong>Nahtlose Navigation</strong>: Direkte Verlinkung zwischen Generatoren</li>
+              <li>📧 <strong>Rundschreiben-System</strong>: Admin-Kommunikation mit Vorlagen und Empfänger-Auswahl</li>
+              <li>🔧 <strong>Admin-Bugfix</strong>: Saison-Dropdown wird automatisch gefüllt</li>
+            </ul>
+            <div className="mt-4 flex justify-end">
+              <Link href="/updates/v0.9.8" className="text-primary hover:text-primary/80 text-sm flex items-center">
+                Details <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl">Version 0.9.7</CardTitle>
             <CardDescription>26. Juni 2025</CardDescription>
           </CardHeader>
           <CardContent>

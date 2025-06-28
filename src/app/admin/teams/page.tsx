@@ -157,7 +157,7 @@ export default function AdminTeamsPage() {
       if (querySeasonId && fetchedSeasons.some(s => s.id === querySeasonId)) {
         setSelectedSeasonId(querySeasonId);
       } else if (!selectedSeasonId && fetchedSeasons.length > 0) {
-        // setSelectedSeasonId(fetchedSeasons[0].id); // Auto-select first season if none selected
+        setSelectedSeasonId(fetchedSeasons[0].id); // Auto-select first season if none selected
       }
       
       if (queryClubId && filteredClubs.some(c => c.id === queryClubId)) {

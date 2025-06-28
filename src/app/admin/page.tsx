@@ -426,6 +426,26 @@ export default function AdminDashboardPage() {
         
          <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Handzettel & Kommunikation</CardTitle> 
+            <FileText className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Handzettel für Mannschaftsführer erstellen und Kommunikation verwalten.
+            </CardDescription>
+             <div className="space-y-2">
+              <Link href="/admin/handzettel" passHref>
+                <Button className="w-full">Handzettel erstellen</Button>
+              </Link>
+              <Link href="/admin/kommunikation" passHref>
+                <Button className="w-full" variant="outline">Rundschreiben</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+        
+         <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium">System & Berichte</CardTitle> 
             <Settings className="h-6 w-6 text-muted-foreground" />
           </CardHeader>

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Info, Lock, Calendar, Filter, LogIn } from 'lucide-react';
+import { Info, Lock, Calendar, Filter, LogIn, FileText, BarChart3 } from 'lucide-react';
 import { LigaGrouping } from './LigaGrouping';
 import { SearchBar } from './SearchBar';
 
@@ -65,6 +65,13 @@ export default function DokumentePage() {
     // Standardmäßig nicht autorisiert
     setIsAuthorized(false);
   }, [user, userAppPermissions, isAdmin]);
+
+  // URL-Hash-Handler für Tab-Navigation
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#ligalisten') {
+      setActiveTab('ligalisten');
+    }
+  }, []);
 
   useEffect(() => {
     async function loadDocuments() {
@@ -180,6 +187,8 @@ export default function DokumentePage() {
         </Card>
       ) : (
         <Tabs defaultValue="ausschreibungen" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          {/* URL-Hash-Handler für direkte Navigation zu Tabs */}
+          {typeof window !== 'undefined' && window.location.hash === '#ligalisten' && activeTab !== 'ligalisten' && setActiveTab('ligalisten')}
           <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8">
             <TabsTrigger value="ausschreibungen">Ausschreibungen</TabsTrigger>
             <TabsTrigger value="formulare">Formulare</TabsTrigger>
@@ -220,9 +229,52 @@ export default function DokumentePage() {
           <TabsContent value="ligalisten" className="space-y-4">
             <Card>
               <CardHeader>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex flex-col gap-6">
                   <CardTitle className="text-xl">Ligalisten & Handtabellen</CardTitle>
-                  <div className="flex items-center gap-2 bg-muted/30 p-2 rounded-md">
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="border-2 border-primary/20 hover:border-primary/40 transition-colors">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 bg-primary/10 rounded-lg">
+                            <FileText className="h-8 w-8 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg mb-2">Durchgangs-Meldebögen</h3>
+                            <p className="text-sm text-muted-foreground mb-4">Erstellen Sie Handzettel für einzelne Durchgänge mit allen Mannschaften</p>
+                            <Link href="/handzettel-generator">
+                              <Button className="w-full">
+                                <FileText className="h-4 w-4 mr-2" />
+                                Handzettel erstellen
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-2 border-primary/20 hover:border-primary/40 transition-colors">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 bg-primary/10 rounded-lg">
+                            <BarChart3 className="h-8 w-8 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg mb-2">Gesamtergebnislisten</h3>
+                            <p className="text-sm text-muted-foreground mb-4">Erstellen Sie Übersichten für alle 5 Durchgänge einer Liga</p>
+                            <Link href="/gesamtergebnisliste-generator">
+                              <Button className="w-full">
+                                <BarChart3 className="h-4 w-4 mr-2" />
+                                Gesamtergebnisliste erstellen
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 bg-muted/30 p-3 rounded-md w-fit">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <Select value={selectedYear} onValueChange={setSelectedYear}>
                       <SelectTrigger className="w-[120px] h-8 text-sm">
@@ -234,7 +286,7 @@ export default function DokumentePage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <span className="text-xs text-muted-foreground">Jahr filtern</span>
+                    <span className="text-xs text-muted-foreground">Jahr für hochgeladene Dokumente filtern</span>
                   </div>
                 </div>
               </CardHeader>
@@ -298,9 +350,9 @@ export default function DokumentePage() {
             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md flex items-start">
               <LogIn className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
               <div>
-                <p className="font-medium text-blue-800">Eingeschränkte Dokumente</p>
+                <p className="font-medium text-blue-800">Eingeschränkte Dokumente & Datenschutz</p>
                 <p className="text-sm text-blue-700">
-                  Einige Dokumente sind nur für angemeldete Vereinsvertreter und Mannschaftsführer sichtbar. 
+                  Einige Dokumente sind nur für angemeldete Vereinsvertreter sichtbar. In den öffentlichen Handzettel-Generatoren werden keine sensiblen Kontaktdaten der Mannschaftsführer angezeigt.
                   <Link href="/login" className="ml-1 text-primary hover:underline">Jetzt anmelden</Link>
                 </p>
               </div>
