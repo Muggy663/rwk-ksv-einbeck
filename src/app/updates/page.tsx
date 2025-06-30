@@ -19,7 +19,7 @@ export default function UpdatesPage() {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs py-1 px-2">
-            <span>Aktuelle Version: 0.9.8.1 (Bugfix)</span>
+            <span>Aktuelle Version: 0.9.8.2 (Bugfix)</span>
           </Badge>
         </div>
       </div>
@@ -28,8 +28,32 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.8.1</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.8.2</CardTitle>
               <Badge variant="secondary">Bugfix</Badge>
+            </div>
+            <CardDescription>Heute</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Layout-Fixes für Handzettel-Generatoren und Druckoptimierung.</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📱 <strong>Mobile Layout-Fixes</strong>: Buttons bleiben im Layout auf allen Geräten</li>
+              <li>👀 <strong>Verbesserte Vorschauen</strong>: Vollständige Sicht auf Handzettel und Gesamtergebnislisten</li>
+              <li>🖨️ <strong>Druckoptimierung</strong>: Größere Schrift und höhere Zeilen für bessere Lesbarkeit</li>
+              <li>🔧 <strong>UI-Verbesserungen</strong>: Responsive Header und kompakte Buttons</li>
+            </ul>
+            <div className="mt-4 flex justify-end">
+              <Link href="/updates/v0.9.8.2" className="text-primary hover:text-primary/80 text-sm flex items-center">
+                Details <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.8.1</CardTitle>
+              <Badge variant="outline">Bugfix</Badge>
             </div>
             <CardDescription>Heute</CardDescription>
           </CardHeader>

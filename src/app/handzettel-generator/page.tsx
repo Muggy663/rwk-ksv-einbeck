@@ -141,7 +141,7 @@ export default function HandzettelGeneratorPage() {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3">
           <FileText className="h-8 w-8 text-primary" />
           <div>
@@ -149,17 +149,17 @@ export default function HandzettelGeneratorPage() {
             <p className="text-muted-foreground">Erstellen Sie Durchgangs-Meldebögen für Wettkämpfe</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/gesamtergebnisliste-generator">
-            <Button variant="outline">
+            <Button variant="outline" size="sm">
               <BarChart3 className="mr-2 h-4 w-4" />
-              Gesamtergebnisliste
+              Gesamt
             </Button>
           </Link>
           <Link href="/dokumente#ligalisten">
-            <Button variant="outline">
+            <Button variant="outline" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Zurück zu Dokumenten
+              Zurück
             </Button>
           </Link>
         </div>
@@ -267,7 +267,7 @@ export default function HandzettelGeneratorPage() {
             <CardTitle>Vorschau</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="print-area border rounded-lg p-4 bg-white w-full max-w-[210mm] h-[297mm] text-xs mx-auto overflow-hidden flex flex-col" style={{aspectRatio: '210/297', transform: 'scale(0.75)', transformOrigin: 'top center'}}>
+            <div className="print-area border rounded-lg p-4 bg-white text-xs mx-auto overflow-auto flex flex-col" style={{width: '100%', maxWidth: '400px', height: '600px', transform: 'scale(0.7)', transformOrigin: 'top center'}}>
               <div className="flex justify-between items-start mb-4">
                 <div className="border p-2 text-xs">
                   <div className="font-bold mb-1">Ergebnisse an:</div>
@@ -367,42 +367,7 @@ export default function HandzettelGeneratorPage() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-wrap gap-3">
-            <Button onClick={async () => {
-              const printContent = document.querySelector('.print-area');
-              if (printContent) {
-                try {
-                  const canvas = await html2canvas(printContent as HTMLElement, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true
-                  });
-                  
-                  const imgData = canvas.toDataURL('image/png');
-                  const pdf = new jsPDF('p', 'mm', 'a4');
-                  const imgWidth = 210;
-                  const pageHeight = 297;
-                  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                  
-                  pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-                  pdf.save(`Meldebogen_${selectedDurchgang}DG_${wettkampfData.datum || 'unbekannt'}.pdf`);
-                  
-                  toast({
-                    title: 'PDF erstellt',
-                    description: 'Der Meldebogen wurde als PDF heruntergeladen.'
-                  });
-                } catch (error) {
-                  console.error('PDF-Fehler:', error);
-                  toast({
-                    title: 'Fehler',
-                    description: 'PDF konnte nicht erstellt werden.',
-                    variant: 'destructive'
-                  });
-                }
-              }
-            }} disabled={!selectedSeasonId || !selectedLeagueId}>
-              <Download className="mr-2 h-4 w-4" />
-              PDF herunterladen
-            </Button>
+
             
             <Button variant="outline" onClick={() => {
               const printContent = document.querySelector('.print-area');
@@ -413,14 +378,13 @@ export default function HandzettelGeneratorPage() {
                     <head>
                       <title>Meldebogen</title>
                       <style>
-                        @page { size: A4 portrait; margin: 5mm; }
+                        @page { size: A4 portrait; margin: 8mm; }
                         @media print { 
-                          body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; height: 100vh; }
-                          .print-area { width: 100% !important; height: 100% !important; transform: none !important; }
-                        }
-                        @media screen and (max-width: 768px) {
-                          body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10px; }
-                          .print-area { width: 100% !important; height: auto !important; transform: scale(0.8) !important; transform-origin: top left !important; }
+                          body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 11px; }
+                          .print-area { width: 100% !important; height: 100% !important; transform: none !important; page-break-after: avoid; }
+                          img { width: 20px !important; height: 20px !important; }
+                          table { width: 100% !important; font-size: 10px !important; }
+                          th, td { font-size: 10px !important; padding: 4px !important; height: 28px !important; }
                         }
                         body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; height: 100vh; }
                         .print-area { width: 210mm; height: 297mm; display: flex; flex-direction: column; transform: scale(1); transform-origin: top left; }

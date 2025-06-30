@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.9.8.2 (Heute)
+
+### Bugfixes
+- **Mobile Layout-Fixes**: Buttons bleiben im Layout auf allen Gerätetypen
+- **Verbesserte Vorschauen**: Vollständige Sicht auf Handzettel und Gesamtergebnislisten durch optimierte Skalierung
+- **Druckoptimierung**: Größere Schrift (11px) und höhere Zeilen (28px) für bessere Lesbarkeit
+- **UI-Verbesserungen**: Responsive Header mit flex-wrap und kompakte Button-Größen
+- **Dropdown-Fix**: Liga-Dropdown bricht Layout nicht mehr
+
 ## Version 0.9.8.1 (Heute)
 
 ### Bugfixes

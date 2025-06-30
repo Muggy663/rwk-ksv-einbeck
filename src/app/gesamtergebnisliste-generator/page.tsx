@@ -130,7 +130,7 @@ export default function GesamtergebnislisteGeneratorPage() {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3">
           <BarChart3 className="h-8 w-8 text-primary" />
           <div>
@@ -138,17 +138,17 @@ export default function GesamtergebnislisteGeneratorPage() {
             <p className="text-muted-foreground">Erstellen Sie Gesamtergebnislisten für alle 5 Durchgänge</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/handzettel-generator">
-            <Button variant="outline">
+            <Button variant="outline" size="sm">
               <FileText className="mr-2 h-4 w-4" />
               Handzettel
             </Button>
           </Link>
           <Link href="/dokumente#ligalisten">
-            <Button variant="outline">
+            <Button variant="outline" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Zurück zu Dokumenten
+              Zurück
             </Button>
           </Link>
         </div>
@@ -195,9 +195,9 @@ export default function GesamtergebnislisteGeneratorPage() {
 
         <Card className="lg:col-span-3">
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <CardTitle>Gesamtergebnisliste (5 Durchgänge)</CardTitle>
-              <Button variant="outline" onClick={() => {
+              <Button variant="outline" size="sm" onClick={() => {
                 const printContent = document.querySelector('.gesamt-print-area');
                 if (printContent) {
                   const printWindow = window.open('', '_blank');
@@ -249,10 +249,10 @@ export default function GesamtergebnislisteGeneratorPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="gesamt-print-area border rounded-lg p-2 bg-white w-full overflow-x-auto" style={{
-              transform: `scale(${Math.max(0.5, 0.7 - (teams.length * 0.01))})`, 
-              transformOrigin: 'top center',
-              minHeight: '400px'
+            <div className="gesamt-print-area border rounded-lg p-2 bg-white w-full overflow-auto" style={{
+              transform: `scale(${Math.max(0.4, 0.6 - (teams.length * 0.01))})`, 
+              transformOrigin: 'top left',
+              height: '500px'
             }}>
               <div className="flex justify-between items-center mb-4">
                 <img src="/images/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
