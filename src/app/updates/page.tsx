@@ -42,9 +42,9 @@ export default function UpdatesPage() {
               <li>🔧 <strong>UI-Verbesserungen</strong>: Responsive Header und kompakte Buttons</li>
             </ul>
             <div className="mt-4 flex justify-end">
-              <Link href="/updates/v0.9.8.2" className="text-primary hover:text-primary/80 text-sm flex items-center">
-                Details <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
+              <span className="text-muted-foreground text-sm">
+                Alle Details hier angezeigt
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -65,9 +65,9 @@ export default function UpdatesPage() {
               <li>🔧 <strong>Print-Media-Queries</strong>: Optimierte Druckausgabe für alle Gerätetypen</li>
             </ul>
             <div className="mt-4 flex justify-end">
-              <Link href="/updates/v0.9.8.1" className="text-primary hover:text-primary/80 text-sm flex items-center">
-                Details <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
+              <span className="text-muted-foreground text-sm">
+                Alle Details hier angezeigt
+              </span>
             </div>
           </CardContent>
         </Card>
