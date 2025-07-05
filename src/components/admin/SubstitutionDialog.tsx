@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, where, addDoc, serverTimestamp, updateDoc, doc, writeBatch, arrayRemove, arrayUnion } from 'firebase/firestore';
 import type { Team, Shooter, TeamSubstitution, UserPermission } from '@/types/rwk';
 import { UserCircle, Users, AlertCircle } from 'lucide-react';
 
@@ -206,6 +206,24 @@ export function SubstitutionDialog({
       await updateDoc(doc(db, 'rwk_teams', team.id), {
         shooterIds: updatedShooterIds
       });
+      
+      // Aktualisiere Schützen teamIds
+      const shooterBatch = writeBatch(db);
+      
+      // Entferne Team-ID vom ursprünglichen Schützen
+      const originalShooterRef = doc(db, 'rwk_shooters', selectedOriginalShooter);
+      shooterBatch.update(originalShooterRef, {
+        teamIds: arrayRemove(team.id)
+      });
+      
+      // Füge Team-ID zum Ersatzschützen hinzu
+      const replacementShooterRef = doc(db, 'rwk_shooters', selectedReplacementShooter);
+      shooterBatch.update(replacementShooterRef, {
+        teamIds: arrayUnion(team.id)
+      });
+      
+      console.log(`Substitution: Removing ${team.id} from ${originalShooter.name}, adding to ${replacementShooter.name}`);
+      await shooterBatch.commit();
 
       const successMessage = substitutionType === 'individual_to_team' 
         ? `${replacementShooter.name} ersetzt ${originalShooter.name} ab DG${fromRound}. Ergebnisse wurden übertragen.`

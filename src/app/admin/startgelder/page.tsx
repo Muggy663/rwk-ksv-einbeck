@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import type { Season, Team, Club } from '@/types/rwk';
+import Link from 'next/link';
 
 interface StartgeldBerechnung {
   clubId: string;
@@ -284,6 +285,11 @@ export default function StartgelderPage() {
           <Euro className="h-8 w-8 text-primary" />
           <h1 className="text-2xl font-semibold text-primary">Startgelder-Verwaltung</h1>
         </div>
+        <Link href="/admin">
+          <Button variant="outline">
+            Zurück zum Dashboard
+          </Button>
+        </Link>
       </div>
 
       <Card>

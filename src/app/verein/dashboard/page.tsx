@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Users, FileText, BarChart3, Calendar, Key, Play, Sparkles, Target, Trophy, Shield, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
+import { ClubSwitcher } from '@/components/ui/club-switcher';
 import { InteractiveGuide } from '@/components/onboarding/InteractiveGuide';
 
 export default function VereinDashboardPage() {
@@ -106,7 +107,13 @@ export default function VereinDashboardPage() {
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-primary mb-2">Vereins-Dashboard</h1>
+          <h1 className="text-4xl font-bold text-primary mb-4">Vereins-Dashboard</h1>
+          <div className="mb-4">
+            <ClubSwitcher />
+            <p className="text-xs text-muted-foreground mt-1 sm:hidden">
+              ℹ️ Tippen Sie hier, um zwischen Ihren Vereinen zu wechseln
+            </p>
+          </div>
           <p className="text-lg text-muted-foreground">
             Willkommen, {user?.displayName || user?.email}
           </p>

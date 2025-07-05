@@ -28,7 +28,7 @@ const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
 
 export default function VereinErgebnissePage() {
-  const { userPermission, loadingPermissions, permissionError, assignedClubId } = useVereinAuth();
+  const { userPermission, loadingPermissions, permissionError, assignedClubId, currentClubId } = useVereinAuth();
   const { toast } = useToast();
   
   const [activeClubIdForEntry, setActiveClubIdForEntry] = useState<string | null>(null);
@@ -70,18 +70,20 @@ export default function VereinErgebnissePage() {
 
  useEffect(() => {
     console.log("VER_ERGEBNISSE DEBUG: Effect for activeClubIdForEntry. loadingPermissions:", loadingPermissions, "assignedClubId from context:", assignedClubId);
-    if (!loadingPermissions && assignedClubId && typeof assignedClubId === 'string' && assignedClubId.trim() !== '') {
-      setActiveClubIdForEntry(assignedClubId);
+    if (!loadingPermissions) {
+      const effectiveClubId = currentClubId || assignedClubId;
+      if (effectiveClubId && typeof effectiveClubId === 'string' && effectiveClubId.trim() !== '') {
+      setActiveClubIdForEntry(effectiveClubId);
       const fetchClubName = async () => {
         setIsLoadingAssignedClubDetails(true);
         try {
-          const clubDocRef = doc(db, CLUBS_COLLECTION, assignedClubId);
+          const clubDocRef = doc(db, CLUBS_COLLECTION, effectiveClubId);
           const clubSnap = await getFirestoreDoc(clubDocRef);
           if (clubSnap.exists()) {
             setActiveClubNameForEntry(clubSnap.data()?.name || "Unbek. Verein");
           } else {
             setActiveClubNameForEntry("Zugew. Verein nicht gefunden");
-            console.warn("VER_ERGEBNISSE DEBUG: Club with ID", assignedClubId, "not found.");
+            console.warn("VER_ERGEBNISSE DEBUG: Club with ID", effectiveClubId, "not found.");
           }
         } catch (e) {
           console.error("VER_ERGEBNISSE DEBUG: Error fetching assigned club name:", e);
@@ -91,13 +93,14 @@ export default function VereinErgebnissePage() {
         }
       };
       fetchClubName();
-    } else if (!loadingPermissions && !assignedClubId) {
-      console.warn("VER_ERGEBNISSE DEBUG: No assignedClubId available after loading permissions.");
+    } else if (!loadingPermissions && !effectiveClubId) {
+      console.warn("VER_ERGEBNISSE DEBUG: No effectiveClubId available after loading permissions.");
       setActiveClubIdForEntry(null);
       setActiveClubNameForEntry(null);
       setIsLoadingAssignedClubDetails(false);
     }
-  }, [assignedClubId, loadingPermissions]);
+    }
+  }, [assignedClubId, currentClubId, loadingPermissions]);
 
 
   const fetchInitialPageData = useCallback(async () => {

@@ -5,6 +5,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { AlertTriangle, Database, HardDrive, Server } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 interface MongoDBStorageInfo {
   rwkEinbeckSizeInMB: number;
@@ -91,6 +93,11 @@ export default function StoragePage() {
           <h1 className="text-2xl font-bold">Speichernutzung</h1>
           <p className="text-muted-foreground">Überwachen Sie die Nutzung Ihres Datenbank-Speicherplatzes</p>
         </div>
+        <Link href="/admin">
+          <Button variant="outline">
+            Zurück zum Dashboard
+          </Button>
+        </Link>
       </div>
 
       <Tabs defaultValue="mongodb" className="w-full">

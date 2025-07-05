@@ -45,6 +45,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from "@/components/ui/checkbox"; // Keep for potential future team assignment in dialog
 import { ScrollArea } from "@/components/ui/scroll-area"; // Keep for potential future team assignment in dialog
 import { useVereinAuth } from '@/app/verein/layout';
+import { useClubContext } from '@/contexts/ClubContext';
 import type { Shooter, Club, Team, UserPermission, FirestoreLeagueSpecificDiscipline, TeamValidationInfo } from '@/types/rwk';
 import { MAX_SHOOTERS_PER_TEAM, leagueDisciplineOptions } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
@@ -74,7 +75,8 @@ const CLUBS_COLLECTION = "clubs";
 const LEAGUES_COLLECTION = "rwk_leagues";
 
 export default function VereinSchuetzenPage() {
-  const { userPermission, loadingPermissions, permissionError, assignedClubId } = useVereinAuth();
+  const { userPermission, loadingPermissions, permissionError, assignedClubId, currentClubId } = useVereinAuth();
+  const { activeClubId: contextActiveClubId } = useClubContext();
   const { toast } = useToast();
   const router = useRouter();
   const [queryTeamId, setQueryTeamId] = useState<string | null>(null);
@@ -158,12 +160,21 @@ export default function VereinSchuetzenPage() {
   useEffect(() => {
     console.log("VSP DEBUG: Effect for activeClubId. loadingPermissions:", loadingPermissions, "assignedClubId from context:", assignedClubId);
     if (!loadingPermissions) { // Wait for permissions to be loaded
-      if (assignedClubId && typeof assignedClubId === 'string' && assignedClubId.trim() !== '') {
-        setActiveClubId(assignedClubId);
-        const clubInfo = allClubsGlobal.find(c => c.id === assignedClubId);
+      // Verwende currentClubId direkt aus Hook
+      const effectiveClubId = currentClubId || assignedClubId;
+      console.log('VSP DEBUG: currentClubId:', currentClubId, 'assignedClubId:', assignedClubId, 'effectiveClubId:', effectiveClubId);
+      
+      // WICHTIG: Wenn contextActiveClubId gesetzt ist, verwende NUR diesen!
+      if (contextActiveClubId && contextActiveClubId !== assignedClubId) {
+        console.log('VSP DEBUG: Using contextActiveClubId over assignedClubId');
+      }
+      
+      if (effectiveClubId && typeof effectiveClubId === 'string' && effectiveClubId.trim() !== '') {
+        setActiveClubId(effectiveClubId);
+        const clubInfo = allClubsGlobal.find(c => c.id === effectiveClubId);
         if (clubInfo) {
           setActiveClubName(clubInfo.name);
-          console.log("VSP DEBUG: activeClubId SET to:", assignedClubId, "Name:", clubInfo.name);
+          console.log("VSP DEBUG: activeClubId SET to:", effectiveClubId, "Name:", clubInfo.name);
         } else if (allClubsGlobal.length > 0) {
           console.warn("VSP DEBUG: Club info for assignedClubId not found in allClubsGlobal. ID:", assignedClubId);
           setActiveClubName("Verein nicht gefunden"); 
@@ -173,12 +184,36 @@ export default function VereinSchuetzenPage() {
            setActiveClubName("Lade Vereinsname...");
         }
       } else {
-        console.warn("VSP DEBUG: No valid assignedClubId in userPermission from context. Setting activeClub to null.", { assignedClubId });
+        console.warn("VSP DEBUG: No valid clubId available. Setting activeClub to null.", { contextActiveClubId, assignedClubId });
         setActiveClubId(null);
         setActiveClubName(null);
       }
     }
-  }, [assignedClubId, loadingPermissions, allClubsGlobal]);
+  }, [contextActiveClubId, assignedClubId, currentClubId, loadingPermissions, allClubsGlobal]);
+  
+  // Reagiere auf contextActiveClubId Änderungen
+  useEffect(() => {
+    if (contextActiveClubId && contextActiveClubId !== activeClubId) {
+      console.log('VSP DEBUG: contextActiveClubId changed, updating activeClubId from', activeClubId, 'to', contextActiveClubId);
+      setActiveClubId(contextActiveClubId);
+      const clubInfo = allClubsGlobal.find(c => c.id === contextActiveClubId);
+      if (clubInfo) {
+        setActiveClubName(clubInfo.name);
+      }
+    }
+  }, [contextActiveClubId, activeClubId, allClubsGlobal]);
+  
+  // Listen auf Club-Wechsel Events
+  useEffect(() => {
+    const handleClubChange = (event: CustomEvent) => {
+      console.log('VSP: Club changed event received, new clubId:', event.detail);
+      // Force activeClubId update
+      setActiveClubId(event.detail);
+    };
+    
+    window.addEventListener('clubChanged', handleClubChange as EventListener);
+    return () => window.removeEventListener('clubChanged', handleClubChange as EventListener);
+  }, []);
   
   // Re-attempt to set club name if allClubsGlobal loads after assignedClubId is set
   useEffect(() => {

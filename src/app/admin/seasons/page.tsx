@@ -35,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import type { Season, UIDisciplineSelection } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, documentId } from 'firebase/firestore';
@@ -213,9 +214,16 @@ export default function AdminSeasonsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h1 className="text-xl sm:text-2xl font-semibold text-primary">Saisonverwaltung</h1>
-        <Button onClick={handleAddNew} variant="default" className="w-full sm:w-auto">
-          <PlusCircle className="mr-2 h-5 w-5" /> Neue Saison anlegen
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Link href="/admin">
+            <Button variant="outline" size="sm">
+              Zurück zum Dashboard
+            </Button>
+          </Link>
+          <Button onClick={handleAddNew} variant="default" className="flex-1 sm:flex-none">
+            <PlusCircle className="mr-2 h-5 w-5" /> Neue Saison anlegen
+          </Button>
+        </div>
       </div>
       <Card className="shadow-md">
         <CardHeader>

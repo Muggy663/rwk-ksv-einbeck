@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
+import Link from 'next/link';
 
 interface Season {
   id: string;
@@ -291,9 +292,16 @@ export default function SeasonTransitionPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-3">
-        <Calendar className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold text-primary">Saisonwechsel & Auf-/Abstieg</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <Calendar className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold text-primary">Saisonwechsel & Auf-/Abstieg</h1>
+        </div>
+        <Link href="/admin">
+          <Button variant="outline">
+            Zurück zum Dashboard
+          </Button>
+        </Link>
       </div>
 
       <Tabs defaultValue="season" className="space-y-6">

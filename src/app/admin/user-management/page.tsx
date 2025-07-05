@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { UserList } from './user-list';
 import { CreateUserFormLocal } from '@/components/admin/create-user-form-local';
+import { MultiClubSelector } from '@/components/admin/multi-club-selector';
 import Link from 'next/link';
 
 const CLUBS_COLLECTION = "clubs";
@@ -31,7 +32,8 @@ interface UserPermissionFormData {
   email: string;
   displayName: string;
   role: string;
-  selectedClubId: string; // Nur noch eine Club-ID
+  selectedClubId: string; // Legacy - Hauptverein
+  selectedClubIds: string[]; // Multi-Verein-Support
 }
 
 export default function AdminUserManagementPage() {
@@ -44,6 +46,7 @@ export default function AdminUserManagementPage() {
     displayName: '',
     role: 'NO_ROLE',
     selectedClubId: '',
+    selectedClubIds: [],
   });
   
   const [allClubs, setAllClubs] = useState<Club[]>([]);
@@ -89,6 +92,7 @@ export default function AdminUserManagementPage() {
           displayName: data.displayName || '',
           role: data.role || 'NO_ROLE',
           selectedClubId: data.clubId || '',
+          selectedClubIds: data.representedClubs || (data.clubId ? [data.clubId] : []),
         });
         toast({title: "Benutzerdaten geladen", description: `Berechtigungen für UID ${uidToFetch.trim()} geladen.`});
       } else {
@@ -137,7 +141,7 @@ export default function AdminUserManagementPage() {
     }
 
     const roleToSet = formData.role === 'NO_ROLE' ? null : formData.role;
-    const clubIdToSet = formData.selectedClubId.trim() === "" ? null : formData.selectedClubId.trim();
+    const clubIdToSet = formData.selectedClubIds.length > 0 ? formData.selectedClubIds[0] : null;
     
     if ((roleToSet === 'vereinsvertreter' || roleToSet === 'mannschaftsfuehrer') && !clubIdToSet) {
       toast({ title: "Fehlende Vereinszuweisung", description: `Für die Rolle '${roleToSet}' muss ein Verein ausgewählt werden.`, variant: "destructive" }); return;
@@ -152,6 +156,7 @@ export default function AdminUserManagementPage() {
         displayName: formData.displayName.trim() || null,
         role: roleToSet as UserPermission['role'],
         clubId: clubIdToSet,
+        representedClubs: formData.selectedClubIds.length > 0 ? formData.selectedClubIds : undefined,
         lastUpdated: Timestamp.now(),
       };
 
@@ -159,7 +164,7 @@ export default function AdminUserManagementPage() {
       toast({ title: "Berechtigungen gespeichert", description: `Berechtigungen für UID ${formData.uid.trim()} erfolgreich in Firestore gespeichert.` });
       
       setFormData({
-        uid: '', email: '', displayName: '', role: 'NO_ROLE', selectedClubId: '',
+        uid: '', email: '', displayName: '', role: 'NO_ROLE', selectedClubId: '', selectedClubIds: [],
       });
       
       // Aktualisiere die Benutzerliste
@@ -180,6 +185,7 @@ export default function AdminUserManagementPage() {
       displayName: user.displayName || '',
       role: user.role || 'NO_ROLE',
       selectedClubId: user.clubId || '',
+      selectedClubIds: user.representedClubs || (user.clubId ? [user.clubId] : []),
     });
     setActiveTab("edit");
   };
@@ -194,9 +200,16 @@ export default function AdminUserManagementPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center space-x-3">
-        <UserCog className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold text-primary">Benutzerverwaltung & Berechtigungen</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <UserCog className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold text-primary">Benutzerverwaltung & Berechtigungen</h1>
+        </div>
+        <Link href="/admin">
+          <Button variant="outline">
+            Zurück zum Dashboard
+          </Button>
+        </Link>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -254,18 +267,13 @@ export default function AdminUserManagementPage() {
                   </div>
                 
                   <div className="space-y-1.5">
-                    <Label htmlFor="clubIdSelect">Verein zuweisen (nur 1)</Label>
-                    <Select
-                      value={formData.selectedClubId}
-                      onValueChange={(value) => handleSelectChange('selectedClubId', value === "NONE" ? "" : value)}
-                      disabled={isLoadingClubs || allClubs.length === 0}
-                    >
-                      <SelectTrigger id="clubIdSelect"><SelectValue placeholder="Verein wählen" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="NONE">- Keinen -</SelectItem>
-                        {allClubs.map(club => <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <MultiClubSelector
+                      clubs={allClubs}
+                      selectedClubIds={formData.selectedClubIds}
+                      onSelectionChange={(clubIds) => setFormData(prev => ({ ...prev, selectedClubIds: clubIds }))}
+                      disabled={isLoadingClubs}
+                    />
+                    <p className="text-xs text-muted-foreground">Der erste ausgewählte Verein wird als Hauptverein gesetzt</p>
                   </div>
                 </div>
                 

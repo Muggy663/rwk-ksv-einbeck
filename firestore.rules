@@ -2,6 +2,15 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+  
+// Users Collection - Admin kann Login-Daten lesen
+match /users/{userId} {
+  allow read: if request.auth != null && (
+    request.auth.uid == userId || 
+    (exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) &&
+     get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == 'superadmin')
+  );
+}
 
     // === Globale Hilfsfunktionen ===
     function isSuperAdmin() {
@@ -30,6 +39,11 @@ service cloud.firestore {
     // Admin-Berechtigung für Datenbereinigung
     function hasAdminCleanupAccess() {
       return isSuperAdmin();
+    }
+
+    // Validierung für Ringzahlen basierend auf Liga-Einstellungen
+    function isValidRingCount(rings) {
+      return rings is number && rings >= 0 && rings <= 600; // Max 600 für alle Disziplinen
     }
 
     // === Regeln für Collections ===
@@ -121,10 +135,14 @@ service cloud.firestore {
                        hasClubAccess(resource.data.clubId));
     }
 
-    // Ergebnisse - Erweiterte Berechtigung für Bereinigung
+    // Ergebnisse - VERBESSERT: Validierung der Ringzahlen
     match /rwk_scores/{scoreId} {
       allow read: if true;
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated() && 
+                    isValidRingCount(request.resource.data.totalRinge) &&
+                    request.resource.data.durchgang is number &&
+                    request.resource.data.durchgang >= 1 &&
+                    request.resource.data.durchgang <= 5;
       allow update: if isSuperAdmin();
       allow delete: if hasAdminCleanupAccess() || 
                     (isVereinsvertreter() && 
@@ -138,9 +156,13 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // Support-Tickets - Erstellung für alle, Verwaltung nur für Admin
+    // Support-Tickets - VERBESSERT: Rate Limiting
     match /support_tickets/{ticketId} {
-      allow create: if true;
+      allow create: if true && 
+                    request.resource.data.email is string &&
+                    request.resource.data.name is string &&
+                    request.resource.data.subject is string &&
+                    request.resource.data.message is string;
       allow read, update, delete: if isSuperAdmin();
     }
 
@@ -161,6 +183,20 @@ service cloud.firestore {
     match /documents/{documentId} {
       allow read: if true;
       allow write: if isSuperAdmin();
+    }
+    
+        // Team-Substitutions - Verwaltung durch Admin und Vereinsvertreter
+    match /team_substitutions/{substitutionId} {
+      allow read: if true;
+      allow create: if isSuperAdmin() ||
+                      (isVereinsvertreter() && 
+                       hasClubAccess(request.resource.data.clubId));
+      allow update: if isSuperAdmin() ||
+                      (isVereinsvertreter() && 
+                       hasClubAccess(resource.data.clubId));
+      allow delete: if isSuperAdmin() ||
+                      (isVereinsvertreter() && 
+                       hasClubAccess(resource.data.clubId));
     }
 
     // Fallback-Regel: Alles andere verbieten

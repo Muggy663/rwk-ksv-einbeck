@@ -63,6 +63,8 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
   const [userPermissionForContext, setUserPermissionForContext] = useState<UserPermission | null | false>(false);
   // State for the array of club IDs the user is assigned to
   const [assignedClubIdArray, setAssignedClubIdArray] = useState<string[]>([]);
+  // State for currently active club
+  const [currentClubId, setCurrentClubId] = useState<string | null>(null);
   // Combined loading state
   const [combinedLoading, setCombinedLoading] = useState(true);
 
@@ -176,20 +178,47 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
       setUserPermissionForContext(null);
       setAssignedClubIdArray([]);
     } else {
-      const { role, clubId } = userAppPermissions; // Using single clubId model
-      console.log("VereinLayout DEBUG: Checking permission data - Role:", role, "SingleClubId:", clubId);
+      const { role, clubId, representedClubs } = userAppPermissions;
+      console.log("VereinLayout DEBUG: Checking permission data - Role:", role, "SingleClubId:", clubId, "RepresentedClubs:", representedClubs);
 
       const allowedRoles = ['vereinsvertreter', 'mannschaftsfuehrer'];
       if (role && allowedRoles.includes(role)) {
-        if (clubId && typeof clubId === 'string' && clubId.trim() !== '') {
-          console.log("VereinLayout DEBUG: Valid role and single clubId found.", { role, singleClubId: clubId });
+        // Multi-Verein-Support: representedClubs hat Priorität
+        const clubIds = representedClubs && representedClubs.length > 0 
+          ? representedClubs 
+          : (clubId && typeof clubId === 'string' && clubId.trim() !== '' ? [clubId] : []);
+          
+        if (clubIds.length > 0) {
+          console.log("VereinLayout DEBUG: Valid role and club(s) found.", { role, clubIds });
           setUserPermissionForContext(userAppPermissions);
-          setAssignedClubIdArray([clubId]); // Create an array with the single clubId
-          setDerivedPermissionError(null); // Clear previous errors
+          setAssignedClubIdArray(clubIds);
+          
+          // Multi-Verein: Weiterleitung zur Club-Auswahl
+          console.log('VereinLayout: clubIds.length:', clubIds.length, 'clubIds:', clubIds);
+          if (clubIds.length > 1) {
+            const savedClubId = typeof window !== 'undefined' ? localStorage.getItem('currentClubId') : null;
+            console.log('VereinLayout: savedClubId:', savedClubId);
+            if (savedClubId && clubIds.includes(savedClubId)) {
+              console.log('VereinLayout: Using saved club:', savedClubId);
+              setCurrentClubId(savedClubId);
+            } else {
+              // Weiterleitung zur Club-Auswahl
+              console.log('VereinLayout: Redirecting to club selection');
+              if (typeof window !== 'undefined') {
+                window.location.href = '/verein/club-selection';
+              }
+              return;
+            }
+          } else {
+            console.log('VereinLayout: Single club, using:', clubIds[0]);
+            setCurrentClubId(clubIds[0]);
+          }
+          
+          setDerivedPermissionError(null);
         } else {
-          console.warn("VereinLayout DEBUG: Role is valid, but no valid single clubId assigned.", { role, clubId });
-          setDerivedPermissionError("Benutzer hat Rolle, aber keinen gültigen Verein zugewiesen (Club-ID fehlt oder ist ungültig).");
-          setUserPermissionForContext(userAppPermissions); // Store for role display, but array will be empty
+          console.warn("VereinLayout DEBUG: Role is valid, but no valid clubs assigned.", { role, clubId, representedClubs });
+          setDerivedPermissionError("Benutzer hat Rolle, aber keinen gültigen Verein zugewiesen.");
+          setUserPermissionForContext(userAppPermissions);
           setAssignedClubIdArray([]);
         }
       } else {
@@ -207,8 +236,21 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
     loadingPermissions: combinedLoading,
     permissionError: derivedPermissionError,
     assignedClubId: assignedClubIdArray.length > 0 ? assignedClubIdArray[0] : null,
+    currentClubId,
+    switchClub: (clubId: string) => {
+      console.log('VereinLayout: switchClub called with:', clubId, 'assignedClubIdArray:', assignedClubIdArray);
+      if (assignedClubIdArray.includes(clubId)) {
+        console.log('VereinLayout: Setting currentClubId to:', clubId);
+        setCurrentClubId(clubId);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('currentClubId', clubId);
+        }
+      } else {
+        console.warn('VereinLayout: clubId not in assignedClubIdArray:', clubId);
+      }
+    },
     assignedClubIdArray: assignedClubIdArray,
-  }), [userPermissionForContext, combinedLoading, derivedPermissionError, assignedClubIdArray]);
+  }), [userPermissionForContext, combinedLoading, derivedPermissionError, assignedClubIdArray, currentClubId]);
 
   console.log("VereinLayout DEBUG: Rendering. CombinedLoading:", combinedLoading, "DerivedPermissionError:", derivedPermissionError, "UserPermissionForContext set:", userPermissionForContext !== false, "AssignedClubIdArray length:", assignedClubIdArray.length);
   console.log("VereinLayout DEBUG: Providing context value:", contextValue);

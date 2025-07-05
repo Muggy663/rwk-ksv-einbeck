@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, Clock, AlertTriangle, Users, Trash2, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
 import { usageTracker } from '@/lib/analytics/usage-tracker';
 import { performanceMonitor } from '@/lib/analytics/performance-monitor';
 import { errorTracker } from '@/lib/analytics/error-tracker';
@@ -83,6 +84,11 @@ export default function AdminAnalyticsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Link href="/admin">
+            <Button variant="outline" size="sm">
+              Zurück zum Dashboard
+            </Button>
+          </Link>
           <Button onClick={loadAnalyticsData} variant="outline" size="sm">
             <RefreshCw className="mr-2 h-4 w-4" />
             Aktualisieren

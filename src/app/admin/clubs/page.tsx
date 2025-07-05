@@ -37,6 +37,7 @@ import type { Club } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, where, documentId, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 const CLUBS_COLLECTION = "clubs";
 
@@ -217,9 +218,16 @@ export default function AdminClubsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h1 className="text-xl sm:text-2xl font-semibold text-primary">Vereinsverwaltung</h1>
-        <Button onClick={handleAddNew} variant="default" className="w-full sm:w-auto">
-          <PlusCircle className="mr-2 h-5 w-5" /> Neuen Verein anlegen
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Link href="/admin">
+            <Button variant="outline" size="sm">
+              Zurück zum Dashboard
+            </Button>
+          </Link>
+          <Button onClick={handleAddNew} variant="default" className="flex-1 sm:flex-none">
+            <PlusCircle className="mr-2 h-5 w-5" /> Neuen Verein anlegen
+          </Button>
+        </div>
       </div>
       <Card className="shadow-md">
         <CardHeader>

@@ -11,17 +11,24 @@ interface ManualAccordionProps {
     content: React.ReactNode;
   }[];
   className?: string;
+  value?: string[];
+  onValueChange?: (value: string[]) => void;
 }
 
-export function ManualAccordion({ items, className }: ManualAccordionProps) {
-  const [openItems, setOpenItems] = useState<string[]>([]);
+export function ManualAccordion({ items, className, value, onValueChange }: ManualAccordionProps) {
+  const [internalOpenItems, setInternalOpenItems] = useState<string[]>([]);
+  const openItems = value ?? internalOpenItems;
 
   const toggleItem = (id: string) => {
-    setOpenItems(prev => 
-      prev.includes(id) 
-        ? prev.filter(item => item !== id) 
-        : [...prev, id]
-    );
+    const newOpenItems = openItems.includes(id) 
+      ? openItems.filter(item => item !== id) 
+      : [...openItems, id];
+    
+    if (onValueChange) {
+      onValueChange(newOpenItems);
+    } else {
+      setInternalOpenItems(newOpenItems);
+    }
   };
 
   return (

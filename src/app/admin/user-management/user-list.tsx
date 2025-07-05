@@ -60,8 +60,10 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
         fetchedUsers.map(async (user) => {
           try {
             // Versuche, die Login-Daten aus der users-Collection zu laden
+            console.log('Trying to fetch user data for:', user.uid);
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
+            console.log('User doc exists:', userDoc.exists());
             
             if (userDoc.exists()) {
               const userData = userDoc.data();
@@ -102,6 +104,9 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
       (user.email && user.email.toLowerCase().includes(lowerSearchTerm)) ||
       (user.displayName && user.displayName.toLowerCase().includes(lowerSearchTerm)) ||
       (user.role && user.role.toLowerCase().includes(lowerSearchTerm)) ||
+      (user.representedClubs && user.representedClubs.some(clubId => 
+        clubs.find(club => club.id === clubId)?.name.toLowerCase().includes(lowerSearchTerm)
+      )) ||
       (user.clubId && clubs.find(club => club.id === user.clubId)?.name.toLowerCase().includes(lowerSearchTerm))
     );
     
@@ -140,10 +145,21 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
     setIsDeleteDialogOpen(true);
   };
 
-  const getClubName = (clubId: string | null) => {
-    if (!clubId) return '-';
-    const club = clubs.find(c => c.id === clubId);
-    return club ? club.name : 'Unbekannter Verein';
+  const getClubNames = (user: UserPermission) => {
+    const clubIds = user.representedClubs || (user.clubId ? [user.clubId] : []);
+    if (clubIds.length === 0) return '-';
+    
+    const clubNames = clubIds.map(clubId => {
+      const club = clubs.find(c => c.id === clubId);
+      return club ? club.name : 'Unbekannt';
+    });
+    
+    return clubNames.join(', ');
+  };
+
+  const getClubCount = (user: UserPermission) => {
+    const clubIds = user.representedClubs || (user.clubId ? [user.clubId] : []);
+    return clubIds.length;
   };
 
   const getRoleBadge = (role: string | null) => {
@@ -213,7 +229,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
                     <TableHead>E-Mail</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Rolle</TableHead>
-                    <TableHead>Verein</TableHead>
+                    <TableHead>Vereine</TableHead>
                     <TableHead>Letzter Login</TableHead>
                     <TableHead className="text-right">Aktionen</TableHead>
                   </TableRow>
@@ -224,7 +240,16 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
                       <TableCell className="font-medium">{user.email}</TableCell>
                       <TableCell>{user.displayName || '-'}</TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
-                      <TableCell>{getClubName(user.clubId)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span>{getClubNames(user)}</span>
+                          {getClubCount(user) > 1 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {getClubCount(user)} Vereine
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <TooltipProvider>
                           <Tooltip>

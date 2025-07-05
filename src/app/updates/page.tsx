@@ -18,9 +18,14 @@ export default function UpdatesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs py-1 px-2">
-            <span>Aktuelle Version: 0.9.8.2 (Bugfix)</span>
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs py-1 px-2">
+              <span>Aktuelle Version: 0.9.9 (Heute)</span>
+            </Badge>
+            <Badge variant="default" className="text-xs py-1 px-2 bg-green-600">
+              <span>🌐 Live: rwk-einbeck.de</span>
+            </Badge>
+          </div>
         </div>
       </div>
 
@@ -28,10 +33,79 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.8.2</CardTitle>
-              <Badge variant="secondary">Bugfix</Badge>
+              <CardTitle className="text-xl">Version 0.9.9</CardTitle>
+              <Badge variant="secondary">Neu</Badge>
             </div>
-            <CardDescription>Heute</CardDescription>
+            <CardDescription>06. Juli 2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Multi-Verein-System, vollständiges E-Mail-System mit eigener Domain, professionelle Website-Adresse und erweiterte Features.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🎉 Highlights Version 0.9.9</h4>
+              <div className="grid grid-cols-2 gap-2 text-xs text-green-700">
+                <div>🏢 Multi-Verein-System</div>
+                <div>🔄 Club-Switcher Navigation</div>
+                <div>🌐 rwk-einbeck.de (HTTPS)</div>
+                <div>📧 E-Mails von @rwk-einbeck.de</div>
+                <div>📎 PDF/Word-Anhänge</div>
+                <div>🎯 Liga-Filter für Kontakte</div>
+                <div>📊 Automatische Fehlerüberwachung</div>
+                <div>⚡ Performance-Optimierungen</div>
+              </div>
+              <div className="mt-2 p-2 bg-white rounded border text-xs">
+                <strong>🚀 Jetzt live:</strong> <a href="https://rwk-einbeck.de" target="_blank" className="text-blue-600 hover:underline">https://rwk-einbeck.de</a> - Professionelle Domain mit SSL-Verschlüsselung
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🏢 <strong>Multi-Verein-System</strong>: Benutzer können mehreren Vereinen zugeordnet werden und nahtlos zwischen ihnen wechseln</li>
+              <li>🔄 <strong>Club-Switcher</strong>: Navigation mit persistenter Auswahl - gewählter Verein wird gespeichert</li>
+              <li>📊 <strong>Einheitliche Datenansicht</strong>: Alle Seiten (Mannschaften, Schützen, Ergebnisse) zeigen Daten des aktuell ausgewählten Vereins</li>
+              <li>⚙️ <strong>Liga-Einstellungen</strong>: Flexible Schusszahlen und Disziplinen pro Liga konfigurierbar</li>
+              <li>🎯 <strong>Alle Disziplinen</strong>: KK Gewehr/Pistole, LG Auflage/Freihand, Luftpistole + Benutzerdefiniert</li>
+              <li>🔢 <strong>Variable Schusszahlen</strong>: 20/30/40 Schuss mit entsprechenden Ringzahlen</li>
+              <li>📱 <strong>Mobile Statistik-Fix</strong>: Kreisdiagramm korrekt dargestellt</li>
+              <li>📈 <strong>Statistik-Hinweise</strong>: Icons und Tipps für Schützen-Diagramme in RWK-Tabellen</li>
+              <li>🔧 <strong>Substitutions-Fix</strong>: Berechtigungsfehler behoben, graceful fallback</li>
+              <li>📧 <strong>E-Mail-System</strong>: Vollständige Rundschreiben-Verwaltung mit professioneller Domain</li>
+              <li>📎 <strong>Anhang-Funktion</strong>: PDF, Word, Bilder versendbar (bis 10MB pro Datei)</li>
+              <li>🎯 <strong>Liga-Filter</strong>: Intelligente Kontakt-Filterung für zielgerichtete Kommunikation</li>
+              <li>👤 <strong>Einzelkontakt-Auswahl</strong>: Gezielte Empfänger-Auswahl zusätzlich zu Gruppen</li>
+              <li>🌐 <strong>Professionelle Domain</strong>: rwk-einbeck.de mit HTTPS und SSL-Verschlüsselung</li>
+              <li>📧 <strong>E-Mail-Domain</strong>: Professionelle E-Mails von @rwk-einbeck.de</li>
+              <li>📱 <strong>PWA-Verbesserungen</strong>: Install-Prompt nach 30 Sekunden und Offline-Indikator</li>
+              <li>📊 <strong>Error-Monitoring</strong>: Sentry-Integration mit E-Mail-Benachrichtigungen</li>
+              <li>⚡ <strong>Performance-Tracking</strong>: Monitoring von Ladezeiten und API-Performance</li>
+              <li>🔒 <strong>Security-Audit</strong>: OWASP-Scan bestanden, SSL-Verschlüsselung aktiv</li>
+              <li>🎆 <strong>Code-Optimierung</strong>: Production-ready, Debug-Logs entfernt</li>
+              <li>🚀 <strong>Domain-Setup</strong>: Vercel Custom Domain mit automatischem SSL</li>
+              <li>📊 <strong>DNS-Konfiguration</strong>: SPF, DKIM, DMARC für E-Mail-Zustellbarkeit</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🎉 Version 0.9.9 ist live!</span>
+                  <p className="text-xs text-green-600 mt-1">Professionelle Domain mit SSL-Verschlüsselung</p>
+                </div>
+                <a href="https://rwk-einbeck.de" target="_blank" className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 transition-colors">
+                  🚀 Besuchen
+                </a>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Link href="/updates/v0.9.9" className="text-primary hover:text-primary/80 text-sm flex items-center">
+                Details <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.8.2</CardTitle>
+              <Badge variant="outline">Bugfix</Badge>
+            </div>
+            <CardDescription>30. Juni 2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Layout-Fixes für Handzettel-Generatoren und Druckoptimierung.</p>
@@ -55,7 +129,7 @@ export default function UpdatesPage() {
               <CardTitle className="text-xl">Version 0.9.8.1</CardTitle>
               <Badge variant="outline">Bugfix</Badge>
             </div>
-            <CardDescription>Heute</CardDescription>
+            <CardDescription>28. Juni 2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Bugfix-Release für mobile Druckoptimierung.</p>
@@ -78,7 +152,7 @@ export default function UpdatesPage() {
               <CardTitle className="text-xl">Version 0.9.8</CardTitle>
               <Badge variant="outline">Vorherige</Badge>
             </div>
-            <CardDescription>Heute</CardDescription>
+            <CardDescription>27. Juni 2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Optimierungen für Handzettel-Druckfunktionen und bessere Seitenausnutzung.</p>
@@ -240,12 +314,7 @@ export default function UpdatesPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <Link href="/updates/v0.9.7" className="text-primary hover:text-primary/80 flex items-center">
-                Version 0.9.7 <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-              <Link href="/updates/v0.9.1" className="text-primary hover:text-primary/80 flex items-center">
-                Version 0.9.1 <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
+
               <Link href="/updates/v0.9" className="text-primary hover:text-primary/80 flex items-center">
                 Version 0.9.0 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>

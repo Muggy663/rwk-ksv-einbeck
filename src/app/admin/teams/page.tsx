@@ -55,6 +55,7 @@ import {
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { SubstitutionDialog } from '@/components/admin/SubstitutionDialog';
 
 const SEASONS_COLLECTION = "seasons";
@@ -178,28 +179,8 @@ export default function AdminTeamsPage() {
   }, [toast, querySeasonId, queryClubId, queryLeagueId, selectedSeasonId]); 
 
   useEffect(() => {
-    // Cache initial data for 5 minutes
-    const cacheKey = 'admin-teams-initial-data';
-    const cachedData = sessionStorage.getItem(cacheKey);
-    const cacheTime = sessionStorage.getItem(cacheKey + '-time');
-    
-    if (cachedData && cacheTime && Date.now() - parseInt(cacheTime) < 300000) {
-      const parsed = JSON.parse(cachedData);
-      setAllSeasons(parsed.seasons);
-      setAllLeagues(parsed.leagues);
-      setAllClubs(parsed.clubs);
-      setIsLoadingData(false);
-    } else {
-      fetchInitialData().then(() => {
-        sessionStorage.setItem(cacheKey, JSON.stringify({
-          seasons: allSeasons,
-          leagues: allLeagues,
-          clubs: allClubs
-        }));
-        sessionStorage.setItem(cacheKey + '-time', Date.now().toString());
-      });
-    }
-  }, []);
+    fetchInitialData();
+  }, [fetchInitialData]);
 
   const leaguesForFilterDropdown = useMemo(() => {
     if (!selectedSeasonId || allLeagues.length === 0) return [];
@@ -297,6 +278,21 @@ export default function AdminTeamsPage() {
       return;
     }
     
+    // Alle Caches löschen für frische Daten
+    if (typeof window !== 'undefined') {
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.includes('admin-teams') || key.includes('shooters') || key.includes('cache')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+      // Auch localStorage leeren
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('admin-teams') || key.includes('shooters') || key.includes('cache')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
+    
     setIsLoadingShootersForDialog(true);
     setIsLoadingValidationData(true);
     try {
@@ -308,7 +304,12 @@ export default function AdminTeamsPage() {
         getDocs(teamsForYearQuery),
       ]);
 
-      const fetchedShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data(), teamIds: d.data().teamIds || [] } as Shooter));
+      // Force fresh data - ignore any cached teamIds
+      const fetchedShooters = shootersSnapshot.docs.map(d => {
+        const data = d.data();
+        console.log(`AdminTeams: Shooter ${data.name} teamIds:`, data.teamIds);
+        return { id: d.id, ...data, teamIds: data.teamIds || [] } as Shooter;
+      });
       setAvailableClubShooters(fetchedShooters);
       console.log("AdminTeamsPage: DIALOG - Fetched shooters for club:", clubIdToFetch, fetchedShooters.length);
       
@@ -544,20 +545,31 @@ export default function AdminTeamsPage() {
         throw new Error("AdminTeamsPage: handleSubmit - Invalid form mode or missing team ID for edit.");
       }
       
+      console.log('AdminTeams: Updating shooter teamIds...');
       shootersToAdd.forEach(shooterId => {
         if(availableClubShooters.some(s => s.id === shooterId)){ 
           const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
+          console.log(`AdminTeams: Adding team ${teamIdForShooterUpdates} to shooter ${shooterId}`);
           batch.update(shooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
         }
       });
       shootersToRemove.forEach(shooterId => {
           if(availableClubShooters.some(s => s.id === shooterId)){
             const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
+            console.log(`AdminTeams: Removing team ${teamIdForShooterUpdates} from shooter ${shooterId}`);
             batch.update(shooterDocRef, { teamIds: arrayRemove(teamIdForShooterUpdates) });
           }
       });
       
       await batch.commit();
+      console.log('AdminTeams: Batch committed successfully');
+      
+      // Warte kurz und aktualisiere dann die Schützen-Daten
+      setTimeout(async () => {
+        console.log('AdminTeams: Refreshing shooter data...');
+        await fetchShootersAndValidationDataForDialog();
+      }, 1000);
+      
       setIsFormOpen(false);
       setCurrentTeam(null);
       handleSearchTeams(); 
@@ -645,8 +657,20 @@ export default function AdminTeamsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-semibold text-primary">Mannschaftsverwaltung (Admin)</h1>
+        <div className="flex items-center justify-between w-full md:w-auto">
+          <h1 className="text-2xl font-semibold text-primary">Mannschaftsverwaltung (Admin)</h1>
+          <Link href="/admin" className="md:hidden">
+            <Button variant="outline" size="sm">
+              Zurück
+            </Button>
+          </Link>
+        </div>
         <div className="flex flex-col sm:flex-row items-end gap-2 w-full md:w-auto">
+          <Link href="/admin" className="hidden md:block">
+            <Button variant="outline" size="sm">
+              Zurück zum Dashboard
+            </Button>
+          </Link>
            <div className="w-full sm:w-auto space-y-1.5">
             <Label htmlFor="saison-select-admin-teams">Saison</Label>
             <Select value={selectedSeasonId} onValueChange={(val) => { setSelectedSeasonId(val); setSelectedLeagueIdFilter(ALL_LEAGUES_FILTER_VALUE); setTeamsForDisplay([]); }}>
@@ -944,9 +968,9 @@ export default function AdminTeamsPage() {
                                     const assignedTeamInfo = allTeamsForYearValidation.find(t => t.id === assignedTeamId);
                                     if (assignedTeamInfo?.leagueCompetitionYear === currentTeamCompYearForValidation) {
                                         const categoryOfAssignedTeam = assignedTeamInfo.leagueType;
-                                        // Ein Schütze darf nur einmal pro Disziplin-Kategorie und Jahr antreten
-                                        // Aber KK Gewehr und KK Pistole sind verschiedene Kategorien
-                                        if (categoryOfAssignedTeam && categoryOfAssignedTeam === categoryOfCurrentTeam) {
+                                        // WICHTIG: Nur prüfen wenn GLEICHE Liga UND gleiche Disziplin
+                                        if (categoryOfAssignedTeam && categoryOfAssignedTeam === categoryOfCurrentTeam && 
+                                            assignedTeamInfo.leagueId === currentTeam?.leagueId) {
                                             assignedToSameCategoryInYear = true;
                                         }
                                     }
@@ -1041,36 +1065,18 @@ export default function AdminTeamsPage() {
                   
                   if (formMode === 'edit' && currentTeam.id) {
                     console.log('Updating existing team...');
-                    updateDoc(teamRef, teamData)
-                      .then(() => {
-                        toast({ title: "Erfolg", description: "Mannschaft erfolgreich aktualisiert!" });
-                        setIsFormOpen(false);
-                        setCurrentTeam(null);
-                        handleSearchTeams();
-                      })
-                      .catch(err => {
-                        console.error("Fehler beim Speichern:", err);
-                        toast({ title: "Fehler beim Speichern", description: err.message, variant: "destructive" });
-                      })
-                      .finally(() => {
-                        setIsSubmittingForm(false);
-                      });
+                    
+                    // Verwende die normale handleSubmitTeamForm Funktion
+                    const fakeEvent = { preventDefault: () => {} } as FormEvent<HTMLFormElement>;
+                    handleSubmitTeamForm(fakeEvent);
+                    return;
                   } else {
                     console.log('Creating new team...');
-                    setDoc(teamRef, teamData)
-                      .then(() => {
-                        toast({ title: "Erfolg", description: "Mannschaft erfolgreich erstellt!" });
-                        setIsFormOpen(false);
-                        setCurrentTeam(null);
-                        handleSearchTeams();
-                      })
-                      .catch(err => {
-                        console.error("Fehler beim Speichern:", err);
-                        toast({ title: "Fehler beim Speichern", description: err.message, variant: "destructive" });
-                      })
-                      .finally(() => {
-                        setIsSubmittingForm(false);
-                      });
+                    
+                    // Verwende die normale handleSubmitTeamForm Funktion
+                    const fakeEvent = { preventDefault: () => {} } as FormEvent<HTMLFormElement>;
+                    handleSubmitTeamForm(fakeEvent);
+                    return;
                   }
                 }}
               >

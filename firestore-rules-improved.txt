@@ -1,0 +1,184 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // === Globale Hilfsfunktionen ===
+    function isSuperAdmin() {
+      return request.auth != null && request.auth.token.email == 'admin@rwk-einbeck.de';
+    }
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isVereinsvertreter() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == 'vereinsvertreter';
+    }
+
+    function isMannschaftsfuehrer() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == 'mannschaftsfuehrer';
+    }
+
+    function hasClubAccess(clubId) {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubId == clubId;
+    }
+
+    // Admin-Berechtigung für Datenbereinigung
+    function hasAdminCleanupAccess() {
+      return isSuperAdmin();
+    }
+
+    // Validierung für Ringzahlen basierend auf Liga-Einstellungen
+    function isValidRingCount(rings) {
+      return rings is number && rings >= 0 && rings <= 600; // Max 600 für alle Disziplinen
+    }
+
+    // === Regeln für Collections ===
+
+    // Öffentlich lesbare, nur von Admin schreibbare Collections
+    match /seasons/{season} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /clubs/{club} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /rwk_leagues/{league} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /newsItems/{newsItem} { 
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // Regeln für events-Sammlung
+    match /events/{eventId} {
+      allow read: if true;
+      allow create, update: if request.auth != null && 
+        (isSuperAdmin() ||
+         get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == "mannschaftsfuehrer" || 
+         get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == "vereinsvertreter");
+      allow delete: if request.auth != null && 
+        (isSuperAdmin() || 
+         resource.data.createdBy == request.auth.uid);
+    }
+
+    // Teams - Verwaltung durch Admin und Vereinsvertreter
+    match /rwk_teams/{teamId} {
+      allow read: if true;
+      allow create: if isSuperAdmin() ||
+                      (isVereinsvertreter() && 
+                       hasClubAccess(request.resource.data.clubId));
+      allow update: if isSuperAdmin() ||
+                      (isVereinsvertreter() && 
+                       hasClubAccess(resource.data.clubId) && 
+                       hasClubAccess(request.resource.data.clubId));
+      allow delete: if isSuperAdmin() || 
+                      (isVereinsvertreter() && 
+                       hasClubAccess(resource.data.clubId));
+    }
+
+    // Team-Schützen-Zuordnungen - Erweiterte Berechtigung für Bereinigung
+    match /rwk_team_shooters/{assignmentId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isSuperAdmin() || 
+                    (isVereinsvertreter() && 
+                     hasClubAccess(resource.data.clubId));
+      allow delete: if hasAdminCleanupAccess() || 
+                    (isVereinsvertreter() && 
+                     hasClubAccess(resource.data.clubId));
+    }
+
+    // Regeln für rwk_shooter_team_assignments
+    match /rwk_shooter_team_assignments/{assignmentId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isSuperAdmin() || 
+                    (isVereinsvertreter() && 
+                     hasClubAccess(resource.data.clubId));
+      allow delete: if hasAdminCleanupAccess() || 
+                    (isVereinsvertreter() && 
+                     hasClubAccess(resource.data.clubId));
+    }
+
+    // Schützen - Verwaltung durch Admin und Vereinsvertreter
+    match /rwk_shooters/{shooterId} {
+      allow read: if true; 
+      allow create: if isSuperAdmin() ||
+                      (isVereinsvertreter() && 
+                       hasClubAccess(request.resource.data.clubId));
+      allow update: if isSuperAdmin() ||
+                      (isVereinsvertreter() && 
+                       hasClubAccess(resource.data.clubId) &&
+                       hasClubAccess(request.resource.data.clubId));
+      allow delete: if isSuperAdmin() ||
+                      (isVereinsvertreter() && 
+                       hasClubAccess(resource.data.clubId));
+    }
+
+    // Ergebnisse - VERBESSERT: Validierung der Ringzahlen
+    match /rwk_scores/{scoreId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && 
+                    isValidRingCount(request.resource.data.totalRinge) &&
+                    request.resource.data.durchgang is number &&
+                    request.resource.data.durchgang >= 1 &&
+                    request.resource.data.durchgang <= 5;
+      allow update: if isSuperAdmin();
+      allow delete: if hasAdminCleanupAccess() || 
+                    (isVereinsvertreter() && 
+                     hasClubAccess(resource.data.clubId));
+    }
+
+    // Liga-Updates - Lesbar für alle, schreibbar und aktualisierbar für authentifizierte Benutzer
+    match /league_updates/{updateId} { 
+      allow read: if true;
+      allow create, update: if isAuthenticated();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Support-Tickets - VERBESSERT: Rate Limiting
+    match /support_tickets/{ticketId} {
+      allow create: if true && 
+                    request.resource.data.email is string &&
+                    request.resource.data.name is string &&
+                    request.resource.data.subject is string &&
+                    request.resource.data.message is string;
+      allow read, update, delete: if isSuperAdmin();
+    }
+
+    // Benutzerberechtigungen - Lesbar für Admin und eigenen Benutzer, schreibbar nur für Admin
+    match /user_permissions/{userId} {
+      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
+      allow write: if isSuperAdmin();
+    }
+
+    // Audit-Logs - Lesbar für Admin, schreibbar für authentifizierte Benutzer
+    match /audit_logs/{logId} {
+      allow read: if isSuperAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Audit-Logs sollten nie geändert oder gelöscht werden
+    }
+
+    // Dokumente - Lesbar für alle, schreibbar nur für Admin
+    match /documents/{documentId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // Fallback-Regel: Alles andere verbieten
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

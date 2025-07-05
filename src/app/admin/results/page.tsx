@@ -15,6 +15,7 @@ import { leagueDisciplineOptions } from '@/types/rwk';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
+import Link from 'next/link';
 import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, documentId, addDoc, updateDoc, Timestamp } from 'firebase/firestore';
 
 const SEASONS_COLLECTION = "seasons";
@@ -385,7 +386,14 @@ export default function AdminResultsPage() {
   if (availableRunningSeasons.length === 0 && !isLoadingMasterData) {
     return (
       <div className="space-y-6">
-         <div className="flex justify-between items-center"><h1 className="text-2xl font-semibold text-primary">Ergebniserfassung</h1></div>
+         <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-semibold text-primary">Ergebniserfassung</h1>
+          <Link href="/admin">
+            <Button variant="outline" size="sm">
+              Zurück zum Dashboard
+            </Button>
+          </Link>
+        </div>
         <Card className="shadow-md border-amber-500">
             <CardHeader><CardTitle className="text-amber-600 flex items-center"><AlertCircle className="mr-2 h-5 w-5" />Keine laufenden Saisons</CardTitle></CardHeader>
             <CardContent><p>Aktuell sind keine Saisons mit Status "Laufend" für die Ergebniserfassung verfügbar.</p></CardContent>
@@ -396,7 +404,14 @@ export default function AdminResultsPage() {
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center"><h1 className="text-2xl font-semibold text-primary">Ergebniserfassung</h1></div>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-semibold text-primary">Ergebniserfassung</h1>
+        <Link href="/admin">
+          <Button variant="outline" size="sm">
+            Zurück zum Dashboard
+          </Button>
+        </Link>
+      </div>
       <Card className="shadow-md">
         <CardHeader><CardTitle>Einzelergebnis zur Liste hinzufügen</CardTitle><CardDescription>Wählen Sie Parameter und fügen Sie Ergebnisse hinzu.</CardDescription></CardHeader>
         <CardContent className="space-y-6">

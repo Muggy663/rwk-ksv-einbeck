@@ -20,7 +20,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch RWK Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 25. Juni 2025, Version 0.9.4 Beta)
+            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 06. Juli 2025, Version 0.9.9)
           </p>
         </div>
       </div>
@@ -156,7 +156,14 @@ export default function HandbuchPage() {
             <CardHeader><CardTitle id="zugriff-und-vereinskontext-vvmf" className="text-xl text-accent scroll-mt-24">Zugriff und Vereinskontext (VV/MF)</CardTitle></CardHeader>
             <CardContent>
                 <p>Nach dem Login mit den vom Rundenwettkampfleiter erhaltenen Zugangsdaten kommt der Benutzer in den "Vereinsbereich". Hier kann er nur die Daten seines eigenen Vereins sehen und bearbeiten. Was genau er tun darf, hängt von seiner Rolle ab - entweder als "Vereinsvertreter" oder als "Mannschaftsführer".</p>
-                <p className="mt-2">Auf allen Seiten (Mannschaften, Schützen, Ergebnisse) sehen Sie automatisch nur die Daten Ihres eigenen Vereins. Der Name Ihres Vereins wird meistens oben auf der Seite angezeigt.</p>
+                
+                <div className="mt-4 bg-blue-50 p-3 rounded-md border border-blue-100">
+                  <h4 className="font-medium text-blue-800 mb-2">🏢 Multi-Verein-System (Neu in Version 0.9.9)</h4>
+                  <p className="text-blue-700">Falls Sie mehreren Vereinen zugeordnet sind, erscheint nach dem Login eine <strong>Club-Auswahl-Seite</strong>. Wählen Sie den gewünschten Verein aus.</p>
+                  <p className="text-blue-700 mt-1">In der Navigation finden Sie einen <strong>Club-Switcher</strong>, mit dem Sie jederzeit zwischen Ihren Vereinen wechseln können. Ihre Auswahl wird gespeichert.</p>
+                </div>
+                
+                <p className="mt-2">Auf allen Seiten (Mannschaften, Schützen, Ergebnisse) sehen Sie automatisch nur die Daten des aktuell ausgewählten Vereins. Der Name Ihres Vereins wird oben auf der Seite angezeigt.</p>
             </CardContent>
         </Card>
         <Card>

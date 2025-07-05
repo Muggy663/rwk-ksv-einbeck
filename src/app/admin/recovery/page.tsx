@@ -12,6 +12,7 @@ import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { auditDatabase, analyzeCriticalDataLoss, type DatabaseAuditResult } from '@/lib/services/database-audit';
 import type { Club } from '@/types/rwk';
+import Link from 'next/link';
 
 export default function RecoveryPage() {
   const { toast } = useToast();
@@ -79,12 +80,19 @@ export default function RecoveryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-3">
-        <Database className="h-8 w-8 text-red-600" />
-        <div>
-          <h1 className="text-3xl font-bold text-primary">Notfall-Datenbank-Audit</h1>
-          <p className="text-sm text-muted-foreground">Überprüft den Zustand der Datenbank nach der Bereinigung</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <Database className="h-8 w-8 text-red-600" />
+          <div>
+            <h1 className="text-3xl font-bold text-primary">Notfall-Datenbank-Audit</h1>
+            <p className="text-sm text-muted-foreground">Überprüft den Zustand der Datenbank nach der Bereinigung</p>
+          </div>
         </div>
+        <Link href="/admin">
+          <Button variant="outline">
+            Zurück zum Dashboard
+          </Button>
+        </Link>
       </div>
 
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">

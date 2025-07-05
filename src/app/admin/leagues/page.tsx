@@ -40,6 +40,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import type { Season, League, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
 import { leagueDisciplineOptions } from '@/types/rwk'; 
 import { db } from '@/lib/firebase/config';
@@ -320,6 +321,11 @@ export default function AdminLeaguesPage() {
       <div className="flex flex-wrap justify-between items-center gap-4">
         <h1 className="text-2xl font-semibold text-primary w-full sm:w-auto">Ligenverwaltung</h1>
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <Link href="/admin">
+            <Button variant="outline" size="sm">
+              Zurück zum Dashboard
+            </Button>
+          </Link>
           <Select 
             value={selectedSeasonId} 
             onValueChange={(value) => {

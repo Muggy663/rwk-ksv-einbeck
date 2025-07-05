@@ -68,7 +68,8 @@ export default function VereinMannschaftenPage() {
     userPermission,
     loadingPermissions,
     permissionError: contextPermissionError,
-    assignedClubId // Single assigned club ID from context
+    assignedClubId, // Single assigned club ID from context
+    currentClubId // Multi-Verein aktiver Club
   } = useVereinAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -114,23 +115,24 @@ export default function VereinMannschaftenPage() {
   useEffect(() => {
     console.log("VMP DEBUG: Effect to set activeClubId. loadingPermissions:", loadingPermissions, "assignedClubId from context:", assignedClubId);
     if (!loadingPermissions) {
-      if (assignedClubId && typeof assignedClubId === 'string' && assignedClubId.trim() !== '') {
-        setActiveClubId(assignedClubId);
-        const clubInfo = allClubsGlobal.find(c => c.id === assignedClubId);
+      const effectiveClubId = currentClubId || assignedClubId;
+      if (effectiveClubId && typeof effectiveClubId === 'string' && effectiveClubId.trim() !== '') {
+        setActiveClubId(effectiveClubId);
+        const clubInfo = allClubsGlobal.find(c => c.id === effectiveClubId);
         if (clubInfo) {
           setActiveClubName(clubInfo.name);
-          console.log("VMP DEBUG: activeClubId SET to:", assignedClubId, "Name:", clubInfo.name);
+          console.log("VMP DEBUG: activeClubId SET to:", effectiveClubId, "Name:", clubInfo.name);
         } else if (allClubsGlobal.length > 0) { // Attempt to find it if allClubsGlobal is already populated
           console.warn("VMP DEBUG: Club info for assignedClubId not found in allClubsGlobal. This might be a timing issue or invalid ID.");
           // Optionally, fetch if not found, but allClubsGlobal should be loaded by fetchInitialData
         }
       } else {
-        console.warn("VMP DEBUG: No valid assignedClubId from context. Setting activeClub to null.", { assignedClubId });
+        console.warn("VMP DEBUG: No valid effectiveClubId from context. Setting activeClub to null.", { currentClubId, assignedClubId });
         setActiveClubId(null);
         setActiveClubName(null);
       }
     }
-  }, [assignedClubId, loadingPermissions, allClubsGlobal]);
+  }, [assignedClubId, currentClubId, loadingPermissions, allClubsGlobal]);
 
 
   // Effect 2: Fetch initial global data (seasons, all leagues, all clubs)

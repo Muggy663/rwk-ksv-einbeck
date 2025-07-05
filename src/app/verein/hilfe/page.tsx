@@ -33,6 +33,17 @@ export default function HilfePage() {
           </CardHeader>
           <CardContent>
             <p className="mb-4">Starten Sie die Einführung, um die wichtigsten Funktionen der App kennenzulernen. Der "Erste Schritte"-Assistent führt Sie durch die grundlegenden Funktionen für Vereinsvertreter und Mannschaftsführer.</p>
+            
+            <div className="bg-blue-50 p-3 rounded-md border border-blue-100 mb-4">
+              <h4 className="font-medium text-blue-800 mb-2">🏢 Multi-Verein-System (Neu!)</h4>
+              <p className="text-sm text-blue-700">Falls Sie mehreren Vereinen zugeordnet sind:</p>
+              <ul className="text-sm text-blue-700 mt-1 ml-4 list-disc">
+                <li>Nach dem Login erscheint eine <strong>Club-Auswahl-Seite</strong></li>
+                <li>Nutzen Sie den <strong>Club-Switcher</strong> in der Navigation zum Wechseln</li>
+                <li>Ihre Vereinsauswahl wird automatisch gespeichert</li>
+                <li>Alle Daten (Mannschaften, Schützen, Ergebnisse) zeigen nur den aktuell ausgewählten Verein</li>
+              </ul>
+            </div>
             <Button 
               onClick={() => {
                 // Finde den OnboardingWizard-Button und klicke ihn

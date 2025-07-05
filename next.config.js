@@ -45,4 +45,17 @@ const nextConfig = {
   }
 };
 
-module.exports = nextConfig;
+// Sentry Configuration
+const { withSentryConfig } = require("@sentry/nextjs");
+
+module.exports = withSentryConfig(
+  nextConfig,
+  {
+    org: "ksv-einbeck",
+    project: "javascript-nextjs",
+    silent: !process.env.CI,
+    widenClientFileUpload: true,
+    disableLogger: true,
+    automaticVercelMonitors: true,
+  }
+);

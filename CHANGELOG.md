@@ -1,6 +1,63 @@
 # Changelog
 
-## Version 0.9.8.2 (Heute)
+## Version 0.9.9 (3. Januar 2025)
+
+### 🎯 Neue Features
+- **🔗 Automatisches Liga-Öffnen**: Direkter Sprung von Startseite zu spezifischer Liga-Tabelle (ein Klick weniger!)
+- **🔙 Zurück-Buttons**: Alle Admin-Seiten haben jetzt Zurück-zum-Dashboard Buttons für bessere Navigation
+- **📧 Resend E-Mail Integration**: Professionelle E-Mail-Funktionalität mit @rwk-einbeck.de Domain
+- **🎨 UX-Verbesserungen**: Verbesserte Benutzerführung und Navigation im gesamten System
+
+### 🐛 Bugfixes
+- **🔄 Liga-Navigation**: Automatisches Öffnen der richtigen Liga bei direkten Links funktioniert perfekt
+- **🎛️ Admin-Navigation**: Alle Admin-Bereiche haben konsistente Zurück-Navigation
+- **📱 Responsive Design**: Zurück-Buttons passen sich an Mobile/Desktop an
+
+### 🛠️ Technische Verbesserungen
+- **⚡ Performance**: Optimierte URL-Parameter-Verarbeitung
+- **🔧 Code-Cleanup**: Entfernung von Debug-Logs und Optimierung der useEffect-Hooks
+- **📊 State Management**: Verbesserte Accordion-Steuerung mit controlled components
+
+### Vorherige Features (bereits implementiert)
+- **Liga-Einstellungen System**: Flexible Konfiguration von Schusszahlen und Disziplinen pro Liga
+- **Alle Disziplinen unterstützt**: Kleinkaliber Gewehr/Pistole, Luftgewehr Auflage/Freihand, Luftpistole + Benutzerdefiniert
+- **Variable Schusszahlen**: 20/30/40 Schuss mit entsprechenden Ringzahlen (200/300/400)
+- **Admin-Integration**: Neuer Bereich "Liga-Einstellungen" im Admin Dashboard
+
+### 🚀 Neue Features
+- **📧 E-Mail-System**: Vollständige Rundschreiben-Verwaltung mit Kontakten, Gruppen und Vorschau
+- **📎 Anhang-Funktion**: PDF, Word-Dokumente und Bilder in E-Mails versendbar (bis 10MB pro Datei)
+- **🎯 Liga-Filter**: Intelligente Kontakt-Filterung nach Ligen für zielgerichtete Kommunikation
+- **👤 Einzelkontakt-Auswahl**: Gezielte Auswahl einzelner Empfänger zusätzlich zu Gruppen
+- **🌐 Domain-Integration**: Professionelle E-Mails von @rwk-einbeck.de mit Resend
+- **📱 PWA-Verbesserungen**: Automatischer Install-Prompt nach 30 Sekunden und Offline-Status-Anzeige
+- **📊 Error-Monitoring**: Sentry-Integration für automatische Fehlerüberwachung mit E-Mail-Benachrichtigungen
+- **⚡ Performance-Tracking**: Monitoring von Seitenladezeiten und API-Performance
+
+### 🐛 Bugfixes
+- **📱 Mobile Statistik-Fix**: Kreisdiagramm wird korrekt dargestellt (nicht mehr ei-förmig)
+- **🔥 Firebase Kompatibilität**: undefined Werte werden vor dem Speichern bereinigt
+- **📈 Statistik-Hinweise**: Icons und Tipps für Schützen-Diagramme in RWK-Tabellen hinzugefügt
+- **🔄 Substitutions-Fix**: Berechtigungsfehler behoben, graceful fallback implementiert
+- **🎨 UX-Optimierungen**: Verbesserte Navigation und Benutzerführung
+- **🔧 Code-Cleanup**: Debug-Logs entfernt, TypeScript-Typen vervollständigt
+
+### 🔒 Sicherheit
+- **OWASP-Scan bestanden**: 0 kritische Schwachstellen
+- **Input-Validierung**: Erweiterte Validierung für E-Mail-Daten
+- **Error-Handling**: Sichere Fehlerbehandlung ohne Datenpreisgabe
+
+### 📈 Performance
+- **Bundle-Optimierung**: Reduzierte JavaScript-Größe
+- **Lazy Loading**: Komponenten werden bei Bedarf geladen
+- **Caching**: Verbesserte Caching-Strategien
+
+### 🛠️ Technische Verbesserungen
+- **TypeScript**: Vollständige Typisierung aller E-Mail-Funktionen
+- **Error-Boundaries**: Bessere Fehlerbehandlung in React-Komponenten
+- **API-Optimierung**: Streamlined E-Mail-API mit FormData-Support
+
+## Version 0.9.8.2 (30. Juni 2025)
 
 ### Bugfixes
 - **Mobile Layout-Fixes**: Buttons bleiben im Layout auf allen Gerätetypen
@@ -9,7 +66,7 @@
 - **UI-Verbesserungen**: Responsive Header mit flex-wrap und kompakte Button-Größen
 - **Dropdown-Fix**: Liga-Dropdown bricht Layout nicht mehr
 
-## Version 0.9.8.1 (Heute)
+## Version 0.9.8.1 (28. Juni 2025)
 
 ### Bugfixes
 - **Mobile Druckoptimierung**: Handzettel und Gesamtergebnislisten drucken jetzt korrekt auf mobilen Geräten
@@ -17,7 +74,7 @@
 - **Print-Media-Queries**: Optimierte Druckausgabe für alle Bereiche (Admin, Vereins, öffentlich)
 - **Cross-Device-Kompatibilität**: Einheitliche Druckfunktionalität auf Desktop und Mobile
 
-## Version 0.9.8 (Heute)
+## Version 0.9.8 (27. Juni 2025)
 
 ### Handzettel-Optimierungen
 - **Dynamische Skalierung**: Gesamtergebnislisten passen automatisch auf eine A4-Seite

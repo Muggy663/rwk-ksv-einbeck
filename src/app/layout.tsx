@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import '@/components/ui/heading-styles.css';
 import { AuthProvider } from '@/components/auth/AuthProvider';
+import { ClubProvider } from '@/contexts/ClubContext';
 import { Toaster } from '@/components/ui/toaster';
 import Script from 'next/script';
 import { MainNav } from '@/components/layout/MainNav';
@@ -13,6 +14,10 @@ import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistratio
 import { ThemeProvider } from '@/components/theme-provider';
 import { ModeToggle } from '@/components/ui/mode-toggle';
 import { SkipLink } from '@/components/ui/skip-link';
+import { InstallPrompt } from '@/components/ui/install-prompt';
+import { OfflineIndicator } from '@/components/ui/offline-indicator';
+import { SentryClientInit } from '@/components/sentry-client-init';
+
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -27,6 +32,7 @@ interface RootLayoutProps {
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
+  
   return (
     <html lang="de" suppressHydrationWarning>
       <head>
@@ -40,7 +46,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
           disableTransitionOnChange
         >
         <AuthProvider>
-          <div className="min-h-screen flex flex-col">
+          <ClubProvider>
+            <div className="min-h-screen flex flex-col">
             <SkipLink targetId="main-content" />
           <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:bg-background/95 dark:border-border">
             <div className="container flex h-14 items-center justify-between">
@@ -68,7 +75,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <SiteFooter />
           <Toaster />
           <ServiceWorkerRegistration />
-          </div>
+          <InstallPrompt />
+          <OfflineIndicator />
+          <SentryClientInit />
+            </div>
+          </ClubProvider>
         </AuthProvider>
         </ThemeProvider>
       </body>

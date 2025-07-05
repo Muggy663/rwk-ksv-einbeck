@@ -366,6 +366,11 @@ export default function ExportsPage() {
             Erstellen Sie PDFs für Ergebnislisten und Urkunden.
           </p>
         </div>
+        <Link href="/admin">
+          <Button variant="outline">
+            Zurück zum Dashboard
+          </Button>
+        </Link>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

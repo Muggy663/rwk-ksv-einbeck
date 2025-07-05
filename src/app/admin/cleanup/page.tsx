@@ -28,7 +28,7 @@ export default function CleanupPage() {
     const fetchClubs = async () => {
       setIsLoading(true);
       try {
-        const clubsQuery = query(collection(db, 'rwk_clubs'), orderBy('name', 'asc'));
+        const clubsQuery = query(collection(db, 'clubs'), orderBy('name', 'asc'));
         const snapshot = await getDocs(clubsQuery);
         const fetchedClubs = snapshot.docs.map(doc => ({
           id: doc.id,

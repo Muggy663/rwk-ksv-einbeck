@@ -53,6 +53,7 @@ import {
   where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayRemove, arrayUnion, Timestamp
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 const SHOOTERS_COLLECTION = "rwk_shooters";
 const TEAMS_COLLECTION = "rwk_teams";
@@ -525,6 +526,11 @@ export default function AdminShootersPage() {
             {queryTeamId && isContextTeamNameLoading && <p className="text-sm text-muted-foreground"><Loader2 className="inline h-4 w-4 mr-1 animate-spin" /> Lade Teamkontext...</p>}
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+          <Link href="/admin">
+            <Button variant="outline" size="sm">
+              Zurück zum Dashboard
+            </Button>
+          </Link>
            <Select
             value={selectedClubIdFilter}
             onValueChange={(value) => {

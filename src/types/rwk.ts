@@ -19,6 +19,13 @@ export interface League {
   seasonId: string;
   competitionYear: number;
   order?: number;
+  shotSettings?: {
+    discipline: string;
+    shotCount: number;
+    maxRings: number;
+    description?: string;
+    customDiscipline?: string;
+  };
 }
 
 export interface Club {
@@ -106,6 +113,7 @@ export interface UserPermission {
   displayName?: string;
   role: 'admin' | 'vereinsvertreter' | 'mannschaftsfuehrer';
   clubId?: string;
+  representedClubs?: string[]; // Array von Club-IDs für Multi-Verein-Support
   isActive: boolean;
   createdAt?: Date;
   lastLogin?: Date;
@@ -282,6 +290,8 @@ export interface VereinContextType {
   permissionError: string | null;
   assignedClubId: string | null;
   assignedClubIdArray: string[];
+  currentClubId: string | null;
+  switchClub: (clubId: string) => void;
 }
 
 // Konstanten

@@ -290,12 +290,18 @@ export default function AdminDashboardPage() {
             <CardDescription className="mb-4">
               Saisons, Ligen und zugehörige Daten verwalten.
             </CardDescription>
-            <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <Link href="/admin/seasons" passHref>
                 <Button className="w-full">Saisons verwalten</Button>
               </Link>
               <Link href="/admin/season-transition" passHref>
                 <Button variant="outline" className="w-full text-xs sm:text-sm">Saisonwechsel</Button>
+              </Link>
+              <Link href="/admin/league-settings">
+                <Button variant="outline" className="w-full col-span-2">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Liga-Einstellungen
+                </Button>
               </Link>
             </div>
           </CardContent>
@@ -403,9 +409,15 @@ export default function AdminDashboardPage() {
             <CardDescription className="mb-4">
               Nutzungsstatistiken, Performance und Fehlerberichte.
             </CardDescription>
-            <Link href="/admin/analytics" passHref>
-              <Button className="w-full">Zu Analytics</Button>
-            </Link>
+            <div className="space-y-2">
+              <Link href="/admin/analytics" passHref>
+                <Button className="w-full">Nutzer-Statistiken</Button>
+              </Link>
+              <div className="text-center p-3 bg-green-50 rounded-md">
+                <p className="text-sm text-green-800 font-medium">✅ Error-Monitoring aktiv</p>
+                <p className="text-xs text-green-600">Fehler werden automatisch per E-Mail gesendet</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
         
@@ -437,8 +449,8 @@ export default function AdminDashboardPage() {
               <Link href="/admin/handzettel" passHref>
                 <Button className="w-full">Handzettel erstellen</Button>
               </Link>
-              <Link href="/admin/kommunikation" passHref>
-                <Button className="w-full" variant="outline">Rundschreiben</Button>
+              <Link href="/admin/email-system" passHref>
+                <Button className="w-full" variant="outline">E-Mail-System</Button>
               </Link>
             </div>
           </CardContent>

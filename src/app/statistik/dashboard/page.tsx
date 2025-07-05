@@ -470,14 +470,14 @@ export default function StatistikDashboardPage() {
                 </div>
               ) : genderData.length > 0 && (genderData[0].value > 0 || genderData[1].value > 0) ? (
                 <div id="gender-distribution-chart" className="h-[400px] w-full flex justify-center">
-                  <ResponsiveContainer width="60%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" className="max-w-md mx-auto">
                     <PieChart>
                       <Pie
                         data={genderData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        outerRadius={150}
+                        outerRadius={120}
                         fill="#8884d8"
                         dataKey="value"
                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}

@@ -150,13 +150,16 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
               <TableRow key={`ts-${shooterRes.shooterId}`} className="text-sm border-b-0 hover:bg-background/40">
                 <TableCell className="font-medium pl-3 pr-1 py-1.5 whitespace-nowrap">
                   <div className="flex flex-col gap-1">
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto text-sm text-left hover:text-primary whitespace-normal text-wrap justify-start"
-                      onClick={() => onShooterClick(shooterDataForModal)}
-                    >
-                      {shooterRes.shooterName}
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto text-sm text-left hover:text-primary whitespace-normal text-wrap justify-start"
+                        onClick={() => onShooterClick(shooterDataForModal)}
+                      >
+                        {shooterRes.shooterName}
+                      </Button>
+                      <LineChartIcon className="h-3 w-3 text-muted-foreground" title="Klicken Sie auf den Namen für Statistik-Diagramm" />
+                    </div>
                     <SubstitutionBadge
                       isSubstitute={teamSubstitutions.has(`${parentTeam.id}-${shooterRes.shooterId}`)}
                       substitutionInfo={teamSubstitutions.get(`${parentTeam.id}-${shooterRes.shooterId}`)}
@@ -793,7 +796,7 @@ function RwkTabellenPageComponent() {
 
         fetchedLeaguesData.push(leagueDisplay);
       }
-      // Lade Substitutions-Daten
+      // Lade Substitutions-Daten (optional - bei Fehlern wird ignoriert)
       try {
         const substitutionsQuery = query(
           collection(db, 'team_substitutions'),
@@ -813,7 +816,8 @@ function RwkTabellenPageComponent() {
         });
         setTeamSubstitutions(substitutionsMap);
       } catch (error) {
-        console.error('RWK DEBUG: Error loading substitutions:', error);
+        // Substitutions sind optional - bei Berechtigungsfehlern einfach ignorieren
+        console.log('RWK DEBUG: Substitutions nicht verfügbar (Berechtigung fehlt), wird ignoriert');
         setTeamSubstitutions(new Map());
       }
       
@@ -1077,19 +1081,15 @@ function RwkTabellenPageComponent() {
           currentParams.set('discipline', disciplineToSet);
           needsUrlUpdate = true;
       }
-      if (needsUrlUpdate && (!initialLeagueIdFromParams || currentParams.get('league') !== initialLeagueIdFromParams)) {
-         // If league was not in params, or it changed, remove it when year/discipline default
-         if (currentParams.has('league') && !initialLeagueIdFromParams) currentParams.delete('league');
-         // Or if league was in params and valid, keep it
-         else if (initialLeagueIdFromParams && !currentParams.has('league')) currentParams.set('league', initialLeagueIdFromParams);
-         
+      // Liga-Parameter beibehalten wenn vorhanden
+      if (initialLeagueIdFromParams && currentParams.get('league') !== initialLeagueIdFromParams) {
+        currentParams.set('league', initialLeagueIdFromParams);
+        needsUrlUpdate = true;
+      }
+      
+      if (needsUrlUpdate) {
          console.log(`RWK DEBUG: URL needs update. Replacing URL with: /rwk-tabellen?${currentParams.toString()}`);
          router.replace(`/rwk-tabellen?${currentParams.toString()}`, { scroll: false });
-      } else if (!needsUrlUpdate && initialLeagueIdFromParams && currentParams.get('league') !== initialLeagueIdFromParams) {
-        // If only league param is different from what's already set (e.g. user navigated back)
-        currentParams.set('league', initialLeagueIdFromParams);
-        console.log(`RWK DEBUG: URL league param different. Replacing URL with: /rwk-tabellen?${currentParams.toString()}`);
-        router.replace(`/rwk-tabellen?${currentParams.toString()}`, { scroll: false });
       }
 
 
@@ -1134,16 +1134,20 @@ function RwkTabellenPageComponent() {
     }
   }, []);
 
-  // Effect to open all league accordions by default if no specific league is targeted
+  // Effect to open league accordions - only specific league from URL or keep closed
   useEffect(() => {
-    if (teamData && teamData.leagues && !initialLeagueIdFromParams && openAccordionItems.length === 0) {
-      const allLeagueIds = teamData.leagues.map(l => l.id).filter(id => !!id);
-      if (allLeagueIds.length > 0) {
-          console.log(`RWK DEBUG: Setting openAccordionItems to all leagues by default:`, allLeagueIds);
-          setOpenAccordionItems(allLeagueIds);
+    if (teamData && teamData.leagues && openAccordionItems.length === 0) {
+      if (initialLeagueIdFromParams) {
+        // Automatisches Öffnen der spezifischen Liga aus URL-Parameter
+        const targetLeague = teamData.leagues.find(l => l.id === initialLeagueIdFromParams);
+        if (targetLeague) {
+          console.log(`RWK DEBUG: Auto-opening league from URL parameter:`, initialLeagueIdFromParams);
+          setOpenAccordionItems([initialLeagueIdFromParams]);
+        }
       }
+      // KEINE automatische Öffnung aller Ligen mehr - bleiben geschlossen
     }
-  }, [teamData, initialLeagueIdFromParams, openAccordionItems.length]);
+  }, [teamData, initialLeagueIdFromParams]);
 
 
   const handleYearChange = useCallback((yearString: string) => {
@@ -1391,6 +1395,8 @@ function RwkTabellenPageComponent() {
           )}
           {!loadingData && !error && teamData && teamData.leagues.length > 0 && (
             <ManualAccordion 
+              value={openAccordionItems}
+              onValueChange={handleAccordionValueChange}
               items={teamData.leagues.map(league => ({
                 id: league.id,
                 title: <>{league.name} {league.shortName && `(${league.shortName})`}</>,
@@ -1398,10 +1404,14 @@ function RwkTabellenPageComponent() {
                   <div className="pt-0 pb-0">
                     {/* Erklärung der Wertungslogik */}
                     <div className="mb-4 bg-muted/20 p-3 rounded-md text-sm">
-                      <h4 className="font-medium mb-1">Hinweis zur Tabellensortierung:</h4>
-                      <p>Die Tabelle wird nach dem letzten vollständig abgeschlossenen Durchgang sortiert. 
+                      <h4 className="font-medium mb-1">Hinweise:</h4>
+                      <p className="mb-2">Die Tabelle wird nach dem letzten vollständig abgeschlossenen Durchgang sortiert. 
                       Teams, die bereits weitere Durchgänge begonnen haben, werden erst neu eingeordnet, 
                       wenn alle Teams diesen Durchgang abgeschlossen haben.</p>
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <LineChartIcon className="h-3 w-3" />
+                        <strong>Tipp:</strong> Klicken Sie auf Schützen-Namen für detaillierte Statistik-Diagramme
+                      </p>
                     </div>
                     
                     {/* Farbkodierung für den aktuellen Durchgang */}
@@ -1708,9 +1718,12 @@ function RwkTabellenPageComponent() {
                               }
                             </TableCell>
                             <TableCell className="font-medium text-foreground">
-                              <Button variant="link" className="p-0 h-auto text-base text-left hover:text-primary whitespace-normal text-wrap" onClick={() => handleShooterNameClick(shooter)}>
-                                {shooter.shooterName}
-                              </Button>
+                              <div className="flex items-center gap-2">
+                                <Button variant="link" className="p-0 h-auto text-base text-left hover:text-primary whitespace-normal text-wrap" onClick={() => handleShooterNameClick(shooter)}>
+                                  {shooter.shooterName}
+                                </Button>
+                                <LineChartIcon className="h-3 w-3 text-muted-foreground" title="Klicken Sie auf den Namen für Statistik-Diagramm" />
+                              </div>
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                               {shooter.teamName}

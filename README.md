@@ -1,146 +1,136 @@
-# RWK App Einbeck
+# RWK Einbeck App - Version 0.9.9
 
-Die digitale Plattform für die Rundenwettkämpfe des Kreisschützenverbandes Einbeck e.V.
+Eine moderne Web-Anwendung für die Verwaltung von Rundenwettkämpfen im Schießsport.
 
-## Technologie-Stack
+## 🚀 Neue Features in Version 0.9.9
 
-- **Frontend**: Next.js 14 mit TypeScript
-- **Styling**: Tailwind CSS
-- **Backend**: Firebase (Firestore, Authentication)
-- **Hosting**: Vercel
+### 📧 Vollständiges E-Mail-System
+- **Rundschreiben-Verwaltung** mit Kontakten und Gruppen
+- **Anhang-Funktion** für PDF, Word-Dokumente und Bilder
+- **Liga-Filter** für zielgerichtete Kommunikation
+- **Einzelkontakt-Auswahl** zusätzlich zu Gruppen
+- **Resend-Integration** mit eigener Domain (rwk-einbeck.de)
 
-## Entwicklung
+### 📊 Error-Monitoring
+- **Sentry-Integration** für automatische Fehlerüberwachung
+- **E-Mail-Benachrichtigungen** bei kritischen Fehlern
+- **Performance-Tracking** für Optimierungen
+- **Detaillierte Fehler-Logs** mit Browser/OS-Informationen
+
+### 📱 PWA-Verbesserungen
+- **Automatischer Install-Prompt** nach 30 Sekunden
+- **Offline-Status-Anzeige** bei Verbindungsproblemen
+- **Verbessertes App-Manifest** mit Kategorien
+- **Service Worker** für bessere Performance
+
+## 🛠️ Setup & Installation
 
 ### Voraussetzungen
-
-- Node.js (v18 oder höher)
-- npm oder yarn
+- Node.js 18+
+- Firebase-Projekt
+- Resend-Account mit eigener Domain
 
 ### Installation
-
 ```bash
 # Repository klonen
-git clone <repository-url>
-cd RWK-App-Einbeck
+git clone [repository-url]
+cd rwk-app-einbeck
 
-# Abhängigkeiten installieren
+# Dependencies installieren
 npm install
-# oder
-yarn install
+
+# Umgebungsvariablen konfigurieren
+cp .env.example .env.local
 ```
 
-### Entwicklungsserver starten
+### Umgebungsvariablen (.env.local)
+```bash
+# Firebase
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 
+# E-Mail Service (Resend)
+RESEND_API_KEY=re_your_api_key
+RESEND_FROM_EMAIL=noreply@your-domain.de
+
+# Error Monitoring (Sentry)
+NEXT_PUBLIC_SENTRY_DSN=https://your_dsn@sentry.io/project_id
+```
+
+### Domain-Setup für E-Mails
+1. **Domain bei Resend hinzufügen:** https://resend.com/domains
+2. **DNS-Records setzen** (SPF, DKIM, DMARC)
+3. **Domain-Verifikation abwarten** (24-48h)
+4. **E-Mail-Adresse in .env.local konfigurieren**
+
+### Entwicklung starten
 ```bash
 npm run dev
-# oder
-yarn dev
 ```
 
-Die Anwendung ist dann unter [http://localhost:3000](http://localhost:3000) verfügbar.
+## 📋 Features
 
-### Tests ausführen
+### Wettkampf-Verwaltung
+- **Liga-Management** mit flexiblen Schusszahlen
+- **Alle Disziplinen** (KK, LG, LP, Benutzerdefiniert)
+- **Tabellen-Generierung** mit Statistiken
+- **Ergebnis-Eingabe** mit Validierung
 
+### Benutzer-Management
+- **Rollen-System** (Admin, Mannschaftsführer, Vereinsvertreter)
+- **Kontakt-Verwaltung** für E-Mail-System
+- **Gruppen-Organisation** nach Rollen und Ligen
+
+### Admin-Bereich
+- **E-Mail-System** für Rundschreiben
+- **Benutzer-Verwaltung** mit Rollen
+- **Liga-Konfiguration** und Einstellungen
+- **Statistiken** und Analytics
+
+## 🔒 Sicherheit
+
+- **OWASP-Scan bestanden** (0 kritische Schwachstellen)
+- **Firebase Security Rules** korrekt konfiguriert
+- **Input-Validierung** auf Client und Server
+- **Error-Handling** ohne Datenpreisgabe
+
+## 📈 Performance
+
+- **Firestore-Indizes** optimiert
+- **Batch-Loading** für große Datensätze
+- **Caching-Strategien** implementiert
+- **Bundle-Optimierung** für schnelle Ladezeiten
+
+## 🚀 Deployment
+
+### Vercel (Empfohlen)
 ```bash
-npm run test
-# oder
-yarn test
+# Vercel CLI installieren
+npm i -g vercel
 
-# Tests mit Watch-Modus
-npm run test:watch
-# oder
-yarn test:watch
-
-# Tests mit Coverage-Report
-npm run test:coverage
-# oder
-yarn test:coverage
+# Deployment
+vercel --prod
 ```
 
-### Linting und Formatierung
+### Umgebungsvariablen in Vercel setzen
+- Alle .env.local Variablen in Vercel Dashboard eintragen
+- Domain-Konfiguration für E-Mail-Versand prüfen
 
-```bash
-# Linting durchführen
-npm run lint
-# oder
-yarn lint
+## 📞 Support
 
-# Code formatieren
-npm run format
-# oder
-yarn format
+Bei Fragen oder Problemen:
+- **E-Mail:** rwk-leiter-ksv@gmx.de
+- **Sentry-Dashboard:** Automatische Fehlerbenachrichtigungen
+- **Updates:** Über integriertes Update-System
 
-# TypeScript-Typprüfung
-npm run type-check
-# oder
-yarn type-check
-```
+## 📄 Lizenz
 
-## TypeScript
+Dieses Projekt ist für den RWK Einbeck entwickelt und nicht für kommerzielle Nutzung bestimmt.
 
-Das Projekt verwendet TypeScript für bessere Typsicherheit und Entwicklererfahrung. Die TypeScript-Konfiguration ist für maximale Typsicherheit optimiert mit aktivierten strengen Prüfungen.
+---
 
-### Wichtige TypeScript-Dateien
-
-- `src/types/` - Zentrale Typdefinitionen
-  - `index.ts` - Allgemeine Typen und Utility-Types
-  - `rwk.ts` - Domänenspezifische Typen für Rundenwettkämpfe
-  - `documents.ts` - Typen für Dokumente
-  - `updates.ts` - Typen für Updates
-- `src/utils/type-guards.ts` - Type Guards für Laufzeittypchecks
-
-### Best Practices
-
-- Verwende explizite Typen für Props und State
-- Nutze Interfaces für Datenstrukturen
-- Definiere Union Types für begrenzte Werte
-- Verwende generische Typen für wiederverwendbare Komponenten
-- Nutze Type Guards für sichere Typprüfungen zur Laufzeit
-
-## Performance-Optimierungen
-
-Das Projekt enthält verschiedene Utilities für Performance-Optimierungen:
-
-- `src/utils/performance.ts` - Hooks für Debounce und Throttle
-- `src/utils/memoization.ts` - Utilities für die Memoization von Komponenten und Funktionen
-
-## Projektstruktur
-
-```
-RWK-App-Einbeck/
-├── public/            # Statische Dateien
-├── src/
-│   ├── app/           # Next.js App Router
-│   ├── components/    # React-Komponenten
-│   ├── hooks/         # Custom React Hooks
-│   ├── lib/           # Bibliotheken und Dienste
-│   ├── styles/        # CSS-Dateien
-│   ├── types/         # TypeScript-Typdefinitionen
-│   └── utils/         # Hilfsfunktionen
-│       ├── date-utils.ts      # Datum-Utilities
-│       ├── memoization.ts     # Memoization-Utilities
-│       ├── performance.ts     # Performance-Utilities
-│       ├── string-utils.ts    # String-Utilities
-│       ├── test-utils.tsx     # Test-Utilities
-│       └── type-guards.ts     # Type Guards
-├── .eslintrc.json     # ESLint-Konfiguration
-├── .prettierrc        # Prettier-Konfiguration
-├── jest.config.js     # Jest-Konfiguration
-├── jest.setup.js      # Jest-Setup
-├── next.config.js     # Next.js-Konfiguration
-├── tailwind.config.js # Tailwind-Konfiguration
-├── tsconfig.json      # TypeScript-Konfiguration
-└── tsconfig.jest.json # TypeScript-Konfiguration für Tests
-```
-
-## Testing
-
-Das Projekt verwendet Jest und React Testing Library für Tests. Die Test-Utilities in `src/utils/test-utils.tsx` bieten einen benutzerdefinierten Renderer mit allen benötigten Providern.
-
-## Deployment
-
-Die Anwendung wird automatisch auf Vercel deployed, wenn Änderungen in den `main`-Branch gepusht werden. Die TypeScript-Konfiguration ist so eingestellt, dass der Build fehlschlägt, wenn TypeScript-Fehler vorhanden sind.
-
-## Lizenz
-
-Alle Rechte vorbehalten. © KSV Einbeck e.V.
+**Version 0.9.9** - Vollständiges E-Mail-System mit Error-Monitoring

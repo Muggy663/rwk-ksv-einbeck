@@ -1,11 +1,15 @@
 {
-  "name": "RWK App Einbeck",
+  "name": "RWK App Einbeck - Rundenwettkampf",
   "short_name": "RWK Einbeck",
   "description": "Die digitale Plattform für die Rundenwettkämpfe des Kreisschützenverbandes Einbeck",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#1f2937",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "de",
+  "categories": ["sports", "utilities"],
   "icons": [
     {
       "src": "/images/logo.png",
