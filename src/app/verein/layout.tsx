@@ -202,12 +202,15 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
               console.log('VereinLayout: Using saved club:', savedClubId);
               setCurrentClubId(savedClubId);
             } else {
-              // Weiterleitung zur Club-Auswahl
-              console.log('VereinLayout: Redirecting to club selection');
-              if (typeof window !== 'undefined') {
-                window.location.href = '/verein/club-selection';
+              // Nur weiterleiten wenn nicht bereits auf club-selection
+              const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+              if (currentPath !== '/verein/club-selection') {
+                console.log('VereinLayout: Redirecting to club selection');
+                if (typeof window !== 'undefined') {
+                  window.location.href = '/verein/club-selection';
+                }
+                return;
               }
-              return;
             }
           } else {
             console.log('VereinLayout: Single club, using:', clubIds[0]);
