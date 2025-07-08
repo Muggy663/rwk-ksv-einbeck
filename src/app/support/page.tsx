@@ -25,7 +25,8 @@ export default function SupportPage() {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   React.useEffect(() => {
@@ -36,18 +37,30 @@ export default function SupportPage() {
   }, [user, name, email]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({
-          title: "Datei zu groß",
-          description: "Die maximale Dateigröße beträgt 5MB.",
-          variant: "destructive",
-        });
-        return;
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      const validFiles: File[] = [];
+      
+      for (const file of files) {
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            title: "Datei zu groß",
+            description: `${file.name} ist größer als 5MB und wurde übersprungen.`,
+            variant: "destructive",
+          });
+          continue;
+        }
+        validFiles.push(file);
       }
-      setSelectedFile(file);
+      
+      if (validFiles.length > 0) {
+        setSelectedFiles(prev => [...prev, ...validFiles]);
+      }
     }
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const sendEmailNotification = async (ticketData: any) => {
@@ -90,17 +103,83 @@ export default function SupportPage() {
     }
     setIsSubmitting(true);
     try {
-      // Erstelle ein Base64-String aus der Datei, falls vorhanden
-      let fileData = null;
-      if (selectedFile) {
-        fileData = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64data = reader.result as string;
-            resolve(base64data);
-          };
-          reader.readAsDataURL(selectedFile);
-        });
+      // Komprimiere Bilder für Firestore (CORS-Problem mit Storage umgehen)
+      let filesData = null;
+      if (selectedFiles.length > 0) {
+        setUploadProgress(`Verarbeite ${selectedFiles.length} Datei(en)...`);
+        
+        filesData = [];
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          setUploadProgress(`Verarbeite Datei ${i + 1}/${selectedFiles.length}: ${file.name}`);
+          
+          try {
+            if (file.type.startsWith('image/')) {
+              // Komprimiere Bilder
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              const img = new Image();
+              
+              const compressedData = await new Promise<string>((resolve) => {
+                img.onload = () => {
+                  const maxWidth = 800;
+                  const maxHeight = 600;
+                  let { width, height } = img;
+                  
+                  if (width > maxWidth || height > maxHeight) {
+                    const ratio = Math.min(maxWidth / width, maxHeight / height);
+                    width *= ratio;
+                    height *= ratio;
+                  }
+                  
+                  canvas.width = width;
+                  canvas.height = height;
+                  ctx?.drawImage(img, 0, 0, width, height);
+                  resolve(canvas.toDataURL('image/jpeg', 0.6));
+                };
+                img.src = URL.createObjectURL(file);
+              });
+              
+              filesData.push({
+                name: file.name,
+                type: 'image/jpeg',
+                data: compressedData,
+                originalSize: file.size,
+                compressedSize: Math.round(compressedData.length * 0.75) // Schätzung
+              });
+            } else {
+              // Nicht-Bilder: Nur kleine Dateien
+              if (file.size <= 100000) { // 100KB Limit
+                const reader = new FileReader();
+                const fileData = await new Promise<string>((resolve) => {
+                  reader.onloadend = () => resolve(reader.result as string);
+                  reader.readAsDataURL(file);
+                });
+                
+                filesData.push({
+                  name: file.name,
+                  type: file.type,
+                  data: fileData,
+                  originalSize: file.size
+                });
+              } else {
+                toast({
+                  title: "Datei zu groß",
+                  description: `${file.name} ist zu groß (max. 100KB für Nicht-Bilder).`,
+                  variant: "destructive",
+                });
+              }
+            }
+          } catch (error) {
+            console.error(`Fehler beim Verarbeiten von ${file.name}:`, error);
+            toast({
+              title: "Verarbeitungsfehler",
+              description: `Datei ${file.name} konnte nicht verarbeitet werden.`,
+              variant: "destructive",
+            });
+          }
+        }
+        setUploadProgress('');
       }
 
       const ticketData: any = {
@@ -113,13 +192,9 @@ export default function SupportPage() {
         status: 'neu',
       };
 
-      // Füge Datei hinzu, falls vorhanden
-      if (fileData) {
-        ticketData.screenshot = {
-          name: selectedFile.name,
-          type: selectedFile.type,
-          data: fileData,
-        };
+      // Füge Datei-URLs hinzu, falls vorhanden
+      if (filesData) {
+        ticketData.screenshots = filesData;
       }
 
       // Speichere das Ticket in Firestore
@@ -139,7 +214,7 @@ export default function SupportPage() {
       // Formular zurücksetzen
       setSubject('');
       setMessage('');
-      setSelectedFile(null);
+      setSelectedFiles([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -240,13 +315,14 @@ export default function SupportPage() {
                 </p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="screenshot" className="font-medium">Screenshot hochladen (optional)</Label>
+                <Label htmlFor="screenshot" className="font-medium">Screenshots hochladen (optional)</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     ref={fileInputRef}
                     id="screenshot"
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleFileChange}
                     className="flex-1"
                   />
@@ -256,21 +332,42 @@ export default function SupportPage() {
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <Upload className="h-4 w-4 mr-2" />
-                    Datei
+                    Dateien
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Maximale Dateigröße: 5MB. Unterstützte Formate: JPG, PNG, GIF.
+                  Maximale Dateigröße: 5MB pro Datei. Unterstützte Formate: JPG, PNG, GIF.
                 </p>
-                {selectedFile && (
-                  <p className="text-sm text-primary mt-1">
-                    Ausgewählte Datei: {selectedFile.name}
-                  </p>
+                {selectedFiles.length > 0 && (
+                  <div className="space-y-2 mt-2">
+                    <p className="text-sm font-medium text-primary">
+                      Ausgewählte Dateien ({selectedFiles.length}):
+                    </p>
+                    <div className="space-y-1">
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
+                          <div className="flex-1 truncate">
+                            <span className="font-medium">{file.name}</span>
+                            <span className="text-muted-foreground ml-2">({(file.size / 1024).toFixed(1)} KB)</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                            className="text-red-600 hover:text-red-800 h-6 w-6 p-0 ml-2"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                Anfrage senden
+                {isSubmitting ? (uploadProgress || 'Sende Anfrage...') : 'Anfrage senden'}
               </Button>
             </form>
           </CardContent>

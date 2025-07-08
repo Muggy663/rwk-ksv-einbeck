@@ -37,9 +37,8 @@ const vereinNavItems = [
   { href: '/verein/ergebnisse', label: 'Ergebnisse erfassen', icon: ListChecks },
   { href: '/verein/handtabellen', label: 'Handtabellen', icon: FileText },
   { href: '/termine', label: 'Terminkalender', icon: CalendarDays },
-  { href: '/termine/add', label: 'Termin hinzufügen', icon: CalendarDays },
+  { href: '/termine/add', label:'Termin hinzufügen', icon: CalendarDays },
   { href: '/verein/team-managers', label: 'Mannschaftsführer', icon: UserCog },
-  { href: '/verein/hilfe', label: 'Hilfe & Einstellungen', icon: HelpCircle },
 ];
 
 export default function VereinLayout({ children }: VereinLayoutProps) {

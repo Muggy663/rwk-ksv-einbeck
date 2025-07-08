@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessagesSquare, Loader2, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { MessagesSquare, Loader2, ExternalLink, Image as ImageIcon, Trash2, Reply } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
-import { collection, query, orderBy, getDocs, doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -29,6 +29,13 @@ interface SupportTicket {
     type: string;
     data: string;
   };
+  screenshots?: Array<{
+    name: string;
+    type: string;
+    data?: string;
+    url?: string;
+    size?: number;
+  }>;
 }
 
 export default function SupportTicketsPage() {
@@ -38,6 +45,7 @@ export default function SupportTicketsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [deletingTicket, setDeletingTicket] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -83,6 +91,81 @@ export default function SupportTicketsPage() {
       console.error("Error updating ticket status:", error);
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handleDeleteTicket = async (ticketId: string) => {
+    if (!confirm('Ticket wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+      return;
+    }
+    
+    setDeletingTicket(ticketId);
+    try {
+      const ticketRef = doc(db, SUPPORT_TICKETS_COLLECTION, ticketId);
+      await deleteDoc(ticketRef);
+      
+      // Update local state
+      setTickets(tickets.filter(ticket => ticket.id !== ticketId));
+      
+      if (selectedTicket && selectedTicket.id === ticketId) {
+        setIsDialogOpen(false);
+        setSelectedTicket(null);
+      }
+    } catch (error) {
+      console.error("Error deleting ticket:", error);
+      alert('Fehler beim Löschen des Tickets.');
+    } finally {
+      setDeletingTicket(null);
+    }
+  };
+
+  const generateReplyTemplate = (ticket: SupportTicket) => {
+    const templates = {
+      bug: `Hallo ${ticket.name},
+
+vielen Dank für Ihren Hinweis zu "${ticket.subject}".
+
+Wir haben das Problem reproduziert und werden es in der nächsten Version beheben. Sie erhalten eine Benachrichtigung, sobald das Update verfügbar ist.
+
+Vielen Dank für Ihr Feedback!
+
+Beste Grüße
+Marcel Bünger
+RWK Einbeck`,
+      
+      feature: `Hallo ${ticket.name},
+
+vielen Dank für Ihren Vorschlag zu "${ticket.subject}".
+
+Wir haben Ihre Anregung in unsere Entwicklungsplanung aufgenommen und prüfen die Umsetzung für zukünftige Versionen.
+
+Beste Grüße
+Marcel Bünger
+RWK Einbeck`,
+      
+      resolved: `Hallo ${ticket.name},
+
+das Problem "${ticket.subject}" wurde in Version 0.9.9.1 behoben.
+
+Bitte aktualisieren Sie die App und prüfen Sie, ob das Problem weiterhin besteht. Falls ja, melden Sie sich gerne erneut.
+
+Vielen Dank!
+
+Beste Grüße
+Marcel Bünger
+RWK Einbeck`
+    };
+    
+    // Einfache Heuristik für Template-Auswahl
+    const subject = ticket.subject.toLowerCase();
+    const message = ticket.message.toLowerCase();
+    
+    if (subject.includes('fehler') || subject.includes('problem') || message.includes('fehler') || message.includes('bug')) {
+      return templates.resolved;
+    } else if (subject.includes('vorschlag') || subject.includes('feature') || message.includes('wünsche') || message.includes('könnte')) {
+      return templates.feature;
+    } else {
+      return templates.bug;
     }
   };
 
@@ -175,24 +258,38 @@ export default function SupportTicketsPage() {
                     </TableCell>
                     <TableCell>{getStatusBadge(ticket.status)}</TableCell>
                     <TableCell>
-                      {ticket.screenshot ? (
+                      {(ticket.screenshot || (ticket.screenshots && ticket.screenshots.length > 0)) ? (
                         <Badge variant="outline" className="flex items-center">
                           <ImageIcon className="h-3 w-3 mr-1" />
-                          Ja
+                          {ticket.screenshots ? ticket.screenshots.length : 1}
                         </Badge>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => openTicketDetails(ticket)}
-                      >
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        Details
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => openTicketDetails(ticket)}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Details
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteTicket(ticket.id)}
+                          disabled={deletingTicket === ticket.id}
+                        >
+                          {deletingTicket === ticket.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -231,18 +328,42 @@ export default function SupportTicketsPage() {
                 </div>
               </div>
               
-              {selectedTicket.screenshot && (
+              {(selectedTicket.screenshot || (selectedTicket.screenshots && selectedTicket.screenshots.length > 0)) && (
                 <div>
-                  <h3 className="font-semibold mb-1">Screenshot:</h3>
-                  <div className="bg-muted p-4 rounded-md">
-                    <img 
-                      src={selectedTicket.screenshot.data} 
-                      alt="Benutzer-Screenshot" 
-                      className="max-w-full max-h-[500px] object-contain mx-auto border rounded-md"
-                    />
-                    <p className="text-xs text-muted-foreground mt-2 text-center">
-                      {selectedTicket.screenshot.name} ({selectedTicket.screenshot.type})
-                    </p>
+                  <h3 className="font-semibold mb-1">
+                    {selectedTicket.screenshots && selectedTicket.screenshots.length > 1 
+                      ? `Screenshots (${selectedTicket.screenshots.length}):` 
+                      : 'Screenshot:'}
+                  </h3>
+                  <div className="bg-muted p-4 rounded-md space-y-4">
+                    {/* Legacy single screenshot */}
+                    {selectedTicket.screenshot && (
+                      <div>
+                        <img 
+                          src={selectedTicket.screenshot.data} 
+                          alt="Benutzer-Screenshot" 
+                          className="max-w-full max-h-[400px] object-contain mx-auto border rounded-md"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2 text-center">
+                          {selectedTicket.screenshot.name} ({selectedTicket.screenshot.type})
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Multiple screenshots */}
+                    {selectedTicket.screenshots && selectedTicket.screenshots.map((screenshot, index) => (
+                      <div key={index}>
+                        <img 
+                          src={screenshot.data || screenshot.url} 
+                          alt={`Screenshot ${index + 1}`} 
+                          className="max-w-full max-h-[400px] object-contain mx-auto border rounded-md"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2 text-center">
+                          {screenshot.name} ({screenshot.type})
+                          {screenshot.size && ` - ${(screenshot.size / 1024).toFixed(1)} KB`}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -257,34 +378,55 @@ export default function SupportTicketsPage() {
               )}
             </div>
             
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <div className="flex-1 flex items-center">
-                <span className="mr-2 text-sm">Status ändern:</span>
-                <Select
-                  value={selectedTicket.status}
-                  onValueChange={(value) => handleStatusChange(selectedTicket.id, value)}
-                  disabled={updatingStatus}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Status wählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="neu">Neu</SelectItem>
-                    <SelectItem value="in_bearbeitung">In Bearbeitung</SelectItem>
-                    <SelectItem value="gelesen">Gelesen</SelectItem>
-                    <SelectItem value="geschlossen">Geschlossen</SelectItem>
-                  </SelectContent>
-                </Select>
-                {updatingStatus && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+            <DialogFooter className="flex-col gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">Status:</span>
+                  <Select
+                    value={selectedTicket.status}
+                    onValueChange={(value) => handleStatusChange(selectedTicket.id, value)}
+                    disabled={updatingStatus}
+                  >
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="neu">Neu</SelectItem>
+                      <SelectItem value="in_bearbeitung">In Bearbeitung</SelectItem>
+                      <SelectItem value="gelesen">Gelesen</SelectItem>
+                      <SelectItem value="geschlossen">Geschlossen</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {updatingStatus && <Loader2 className="h-4 w-4 animate-spin" />}
+                </div>
+                
+                <div className="flex gap-2 ml-auto">
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => handleDeleteTicket(selectedTicket.id)}
+                    disabled={deletingTicket === selectedTicket.id}
+                  >
+                    {deletingTicket === selectedTicket.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : (
+                      <Trash2 className="h-4 w-4 mr-1" />
+                    )}
+                    Löschen
+                  </Button>
+                  
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Schließen
+                  </Button>
+                  
+                  <Button asChild>
+                    <a href={`mailto:${selectedTicket.email}?subject=Re: ${selectedTicket.subject}&body=${encodeURIComponent(generateReplyTemplate(selectedTicket))}`}>
+                      <Reply className="h-4 w-4 mr-1" />
+                      Antworten
+                    </a>
+                  </Button>
+                </div>
               </div>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Schließen
-              </Button>
-              <Button asChild>
-                <a href={`mailto:${selectedTicket.email}?subject=Re: ${selectedTicket.subject}`}>
-                  Antworten
-                </a>
-              </Button>
             </DialogFooter>
           </DialogContent>
         )}

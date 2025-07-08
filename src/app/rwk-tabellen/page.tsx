@@ -381,6 +381,8 @@ function RwkTabellenPageComponent() {
   const [topMaleShooter, setTopMaleShooter] = useState<IndividualShooterDisplayData | null>(null);
   const [topFemaleShooter, setTopFemaleShooter] = useState<IndividualShooterDisplayData | null>(null);
   const [selectedIndividualLeagueFilter, setSelectedIndividualLeagueFilter] = useState<string>(""); // Empty string for "All Leagues"
+  const [lastClickedLeagueId, setLastClickedLeagueId] = useState<string | null>(null); // Track last clicked league from teams tab
+  const [shooterSearchTerm, setShooterSearchTerm] = useState<string>(""); // Search term for individual shooters
   
   // Filter für "Außer Konkurrenz"-Teams und Schützen
   const [showOutOfCompetitionTeams, setShowOutOfCompetitionTeams] = useState<boolean>(true);
@@ -777,10 +779,19 @@ function RwkTabellenPageComponent() {
               if (a.teamOutOfCompetition && !b.teamOutOfCompetition) return 1;
               if (!a.teamOutOfCompetition && b.teamOutOfCompetition) return -1;
               
-              // Sortierung nach Durchschnitt, dann nach Gesamtpunkten, dann nach Namen
-              return (b.averageScore ?? 0) - (a.averageScore ?? 0) || 
-                     (b.totalScore ?? 0) - (a.totalScore ?? 0) || 
-                     a.shooterName.localeCompare(b.shooterName);
+              // Sortierung nach Gesamtpunkten
+              const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
+              if (totalDiff !== 0) return totalDiff;
+              
+              // Bei Gleichstand: Stichentscheid vom letzten zum ersten Durchgang
+              for (let round = numRounds; round >= 1; round--) {
+                const aScore = a.results[`dg${round}`] ?? 0;
+                const bScore = b.results[`dg${round}`] ?? 0;
+                if (bScore !== aScore) return bScore - aScore;
+              }
+              
+              // Falls immer noch gleich: Alphabetisch nach Namen
+              return a.shooterName.localeCompare(b.shooterName);
             });
         
         // Vergebe Rangplätze nur für Schützen in Wertung
@@ -839,34 +850,28 @@ function RwkTabellenPageComponent() {
       const scoresColRef = collection(db, "rwk_scores");
       let scoresQueryConstraints: any[] = [where("competitionYear", "==", config.year)];
       
-      // Spezialfall für 2025 Kleinkaliber - hier müssen wir auch KKP und KKG einbeziehen
-      if (config.year === 2025 && (config.discipline === 'KK' || config.discipline === 'kk')) {
-        console.log(`RWK DEBUG: Spezielle Abfrage für 2025 Kleinkaliber mit KKP und KKG`);
-        
-        if (filterByLeagueId && filterByLeagueId !== "ALL_LEAGUES_IND_FILTER") {
-          scoresQueryConstraints = [
-            where("competitionYear", "==", config.year),
-            where("leagueId", "==", filterByLeagueId)
-          ];
-        } else {
-          scoresQueryConstraints = [
-            where("competitionYear", "==", config.year),
-            where("leagueType", "in", ["KK", "KKP", "KKG"])
-          ];
-        }
-      } else {
-        // Normale Abfrage für andere Jahre/Disziplinen
-        if (filterByLeagueId && filterByLeagueId !== "ALL_LEAGUES_IND_FILTER") {
-          scoresQueryConstraints.push(where("leagueId", "==", filterByLeagueId));
-        } else {
-          const selectedUIDiscOption = uiDisciplineFilterOptions.find(opt => opt.value === config.discipline);
-          let firestoreDisciplinesToQuery: FirestoreLeagueSpecificDiscipline[] = selectedUIDiscOption ? selectedUIDiscOption.firestoreTypes : [];
-          
-          if (firestoreDisciplinesToQuery.length > 0) {
-            scoresQueryConstraints.push(where("leagueType", "in", firestoreDisciplinesToQuery));
-          }
-        }
+      // WICHTIG: Liga-Filter ist jetzt immer erforderlich - keine übergreifende Abfrage mehr
+      if (!filterByLeagueId || filterByLeagueId === "ALL_LEAGUES_IND_FILTER") {
+        console.warn('RWK DEBUG: Keine Liga-ID für Einzelschützen-Filter - das sollte nicht passieren');
+        return [];
       }
+      
+      // Spezialfall: KK Gewehr Ehrungen - alle KK Gewehr Auflage Ligen
+      if (filterByLeagueId === "KK_GEWEHR_EHRUNGEN") {
+        console.log(`RWK DEBUG: Lade alle KK Gewehr Auflage Schützen für Ehrungen`);
+        scoresQueryConstraints = [
+          where("competitionYear", "==", config.year),
+          where("leagueType", "in", ["KK", "KKG"]) // KK Gewehr Auflage
+        ];
+      } else {
+        // Filtere nach spezifischer Liga-ID
+        scoresQueryConstraints = [
+          where("competitionYear", "==", config.year),
+          where("leagueId", "==", filterByLeagueId)
+        ];
+      }
+      
+      console.log(`RWK DEBUG: Lade Einzelschützen für: ${filterByLeagueId}`);
       
       const scoresQuery = query(scoresColRef, ...scoresQueryConstraints);
       
@@ -911,12 +916,8 @@ function RwkTabellenPageComponent() {
             currentShooterData.teamName = score.teamName;
         }
 
-        // Ensure league context for the shooter matches the filter if one is applied
-        if (filterByLeagueId && filterByLeagueId !== "ALL_LEAGUES_IND_FILTER" && score.leagueId === filterByLeagueId) {
-          currentShooterData.leagueId = score.leagueId;
-          currentShooterData.leagueType = score.leagueType;
-        } else if ((!filterByLeagueId || filterByLeagueId === "ALL_LEAGUES_IND_FILTER") && !currentShooterData.leagueId) {
-          // If no league filter, or this is the first score, set league context
+        // Setze Liga-Kontext (sollte immer gleich sein, da nach Liga gefiltert)
+        if (!currentShooterData.leagueId) {
           currentShooterData.leagueId = score.leagueId;
           currentShooterData.leagueType = score.leagueType;
         }
@@ -934,7 +935,21 @@ function RwkTabellenPageComponent() {
       });
       const rankedShooters = Array.from(shootersMap.values())
         .filter(s => s.roundsShot > 0) 
-        .sort((a, b) => (b.averageScore ?? 0) - (a.averageScore ?? 0) || (b.totalScore ?? 0) - (a.totalScore ?? 0) || a.shooterName.localeCompare(b.shooterName));
+        .sort((a, b) => {
+          // Erst nach Gesamtpunkten
+          const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
+          if (totalDiff !== 0) return totalDiff;
+          
+          // Bei Gleichstand: Stichentscheid vom letzten zum ersten Durchgang
+          for (let round = numRoundsForCompetition; round >= 1; round--) {
+            const aScore = a.results[`dg${round}`] ?? 0;
+            const bScore = b.results[`dg${round}`] ?? 0;
+            if (bScore !== aScore) return bScore - aScore;
+          }
+          
+          // Falls immer noch gleich: Alphabetisch nach Namen
+          return a.shooterName.localeCompare(b.shooterName);
+        });
       // Vergebe Rangplätze nur für Schützen in Wertung
       let shooterRankCounter = 1;
       rankedShooters.forEach(shooter => {
@@ -944,7 +959,7 @@ function RwkTabellenPageComponent() {
           shooter.rank = null; // Kein Rang für Schützen "außer Konkurrenz"
         }
       });
-      console.log(`RWK DEBUG: fetchIndividualShooterData - Processed ${rankedShooters.length} shooters.`);
+      console.log(`RWK DEBUG: fetchIndividualShooterData - Processed ${rankedShooters.length} shooters for league ${filterByLeagueId}.`);
       return rankedShooters;
     } catch (err: any) {
       console.error("RWK DEBUG: Error fetching individual shooter data:", err);
@@ -982,29 +997,26 @@ function RwkTabellenPageComponent() {
       
       let allIndividuals: any[] = [];
       
-      // Lazy load individual data only when needed (on tab switch)
-      if (activeTab === 'einzelschützen') {
-          // Fetch all individuals for the selected discipline (without league filter initially)
-        allIndividuals = await fetchIndividualShooterData(selectedCompetition, numRounds, null);
-        setAllIndividualDataForDiscipline(allIndividuals);
-        
-        // Apply league filter if one is selected
-        if (selectedIndividualLeagueFilter && selectedIndividualLeagueFilter !== "ALL_LEAGUES_IND_FILTER") {
-            // Wenn eine Liga ausgewählt ist, neue Datenbankabfrage
-            const individualsInLeague = await fetchIndividualShooterData(selectedCompetition, numRounds, selectedIndividualLeagueFilter);
-            setFilteredIndividualData(individualsInLeague);
-        } else {
-            // Wenn "Alle Ligen der Disziplin" ausgewählt ist, keine neue Datenbankabfrage nötig
-            setFilteredIndividualData(allIndividuals);
-        }
+      // Lazy load individual data only when needed (on tab switch) and only with league filter
+      if (activeTab === 'einzelschützen' && selectedIndividualLeagueFilter) {
+        // Lade nur Schützen für die ausgewählte Liga
+        const individualsInLeague = await fetchIndividualShooterData(selectedCompetition, numRounds, selectedIndividualLeagueFilter);
+        setFilteredIndividualData(individualsInLeague);
+        setAllIndividualDataForDiscipline(individualsInLeague); // Setze auch allIndividualData
 
-        if (allIndividuals.length > 0) { // Base top shooters on all individuals for the discipline
-          const males = allIndividuals.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'male' || s.shooterGender.toLowerCase() === 'm'));
+        if (individualsInLeague.length > 0) {
+          const males = individualsInLeague.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'male' || s.shooterGender.toLowerCase() === 'm'));
           setTopMaleShooter(males.length > 0 ? males[0] : null);
           
-          const females = allIndividuals.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'female' || s.shooterGender.toLowerCase() === 'w'));
+          const females = individualsInLeague.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'female' || s.shooterGender.toLowerCase() === 'w'));
           setTopFemaleShooter(females.length > 0 ? females[0] : null);
         }
+      } else if (activeTab === 'einzelschützen' && !selectedIndividualLeagueFilter) {
+        // Keine Liga ausgewählt - leere Daten setzen
+        setFilteredIndividualData([]);
+        setAllIndividualDataForDiscipline([]);
+        setTopMaleShooter(null);
+        setTopFemaleShooter(null);
       }
       
       // Cache komplett deaktiviert
@@ -1065,7 +1077,9 @@ function RwkTabellenPageComponent() {
 
       if (initialLeagueIdFromParams) {
         setOpenAccordionItems([initialLeagueIdFromParams]);
-        // Do not set selectedIndividualLeagueFilter here directly, let user choose or loadData handle "ALL"
+        // Context-Aware Navigation: Setze Liga-Filter für Einzelschützen wenn aus URL
+        setSelectedIndividualLeagueFilter(initialLeagueIdFromParams);
+        setLastClickedLeagueId(initialLeagueIdFromParams);
       } else {
         // If no specific league in URL, ensure all accordions are open by default (handled in another effect)
       }
@@ -1172,7 +1186,13 @@ function RwkTabellenPageComponent() {
 
   const handleAccordionValueChange = useCallback((value: string[]) => {
     setOpenAccordionItems(value);
-  }, []);
+    // Immer die zuletzt geöffnete Liga merken
+    const newlyOpened = value.find(id => !openAccordionItems.includes(id));
+    if (newlyOpened) {
+      setLastClickedLeagueId(newlyOpened);
+      console.log('RWK DEBUG: Zuletzt geöffnete Liga:', newlyOpened);
+    }
+  }, [openAccordionItems]);
   
   // Tastaturkürzel für Filter
   useEffect(() => {
@@ -1368,7 +1388,17 @@ function RwkTabellenPageComponent() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'mannschaften' | 'einzelschützen')} className="w-full">
+      <Tabs value={activeTab} onValueChange={(value) => {
+        setActiveTab(value as 'mannschaften' | 'einzelschützen');
+        // Context-Aware Navigation: Verwende zuletzt geöffnete Liga
+        if (value === 'einzelschützen' && lastClickedLeagueId) {
+          // Aktualisiere Liga-Filter immer mit zuletzt geöffneter Liga
+          if (selectedIndividualLeagueFilter !== lastClickedLeagueId) {
+            setSelectedIndividualLeagueFilter(lastClickedLeagueId);
+            console.log('RWK DEBUG: Liga-Filter aktualisiert auf:', lastClickedLeagueId);
+          }
+        }
+      }} className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:w-1/2 lg:w-1/3 mb-6 shadow-md">
           <TabsTrigger value="mannschaften" className="py-2.5"><Users className="mr-2 h-5 w-5" />Mannschaften</TabsTrigger>
           <TabsTrigger value="einzelschützen" className="py-2.5"><User className="mr-2 h-5 w-5" />Einzelschützen</TabsTrigger>
@@ -1642,53 +1672,97 @@ function RwkTabellenPageComponent() {
         <TabsContent value="einzelschützen">
           {!loadingData && !error && (
              <div className="mb-4 space-y-4">
-                <div>
-                  <Label htmlFor="individualLeagueFilter" className="text-sm font-medium">Nach Liga filtern:</Label>
-                  <Select 
-                      value={selectedIndividualLeagueFilter || "ALL_LEAGUES_IND_FILTER"} 
-                      onValueChange={(value) => setSelectedIndividualLeagueFilter(value === "ALL_LEAGUES_IND_FILTER" ? "" : value)}
-                      disabled={loadingData || !teamData || availableLeaguesForIndividualFilter.length === 0}
-                  >
-                    <SelectTrigger id="individualLeagueFilter" className="w-full sm:w-[350px] mt-1 shadow-sm">
-                      <SelectValue placeholder="Alle Ligen der Disziplin anzeigen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL_LEAGUES_IND_FILTER">Alle Ligen der Disziplin</SelectItem>
-                      {availableLeaguesForIndividualFilter
-                        .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "") 
-                        .map(league => (<SelectItem key={league.id} value={league.id}>{league.name} ({leagueDisciplineOptions.find(opt => opt.value === league.type)?.label || league.type}, {league.competitionYear})</SelectItem>))
-                      }
-                      {availableLeaguesForIndividualFilter.filter(l => l && typeof l.id === 'string' && l.id.trim() !== "").length === 0 && selectedCompetition && (
-                        <SelectItem value="NO_LEAGUES_FOR_IND_FILTER_RWK" disabled>Keine Ligen für Filter in dieser Saison/Disziplin</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <h4 className="font-semibold text-blue-900 mb-2">🎯 Liga-Auswahl erforderlich</h4>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Bitte wählen Sie eine Liga aus, um die Einzelrangliste anzuzeigen. 
+                    Eine übergreifende Anzeige aller Disziplinen ist nicht möglich, 
+                    da verschiedene Disziplinen (Pistole, Gewehr, Luftdruck) nicht vergleichbar sind.
+                  </p>
+                  <div>
+                    <Label htmlFor="individualLeagueFilter" className="text-sm font-medium text-blue-900">Liga auswählen:</Label>
+                    <Select 
+                        value={selectedIndividualLeagueFilter || ""} 
+                        onValueChange={(value) => setSelectedIndividualLeagueFilter(value)}
+                        disabled={loadingData || !teamData || availableLeaguesForIndividualFilter.length === 0}
+                    >
+                      <SelectTrigger id="individualLeagueFilter" className="w-full sm:w-[350px] mt-1 shadow-sm border-blue-300">
+                        <SelectValue placeholder="-- Bitte Liga auswählen --" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {/* Spezielle Option für KK Gewehr Ehrungen */}
+                        {selectedCompetition?.discipline === 'KK' && (
+                          <SelectItem value="KK_GEWEHR_EHRUNGEN" className="bg-amber-50 text-amber-800 font-medium">
+                            🏆 Alle KK Gewehr Auflage (für Ehrungen)
+                          </SelectItem>
+                        )}
+                        {availableLeaguesForIndividualFilter
+                          .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "") 
+                          .map(league => (<SelectItem key={league.id} value={league.id}>{league.name} ({leagueDisciplineOptions.find(opt => opt.value === league.type)?.label || league.type})</SelectItem>))
+                        }
+                        {availableLeaguesForIndividualFilter.filter(l => l && typeof l.id === 'string' && l.id.trim() !== "").length === 0 && selectedCompetition && (
+                          <SelectItem value="NO_LEAGUES_FOR_IND_FILTER_RWK" disabled>Keine Ligen verfügbar</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="showOutOfCompetitionShootersIndividual"
-                    checked={showOutOfCompetitionShooters}
-                    onCheckedChange={(checked) => {
-                      setShowOutOfCompetitionShooters(!!checked);
-                      // URL aktualisieren
-                      const currentParams = new URLSearchParams(window.location.search);
-                      currentParams.set('showAKShooters', (!!checked).toString());
-                      router.replace(`/rwk-tabellen?${currentParams.toString()}`, { scroll: false });
-                    }}
-                  />
-                  <Label 
-                    htmlFor="showOutOfCompetitionShootersIndividual"
-                    className="text-sm font-medium cursor-pointer"
-                  >
-                    Schützen "Außer Konkurrenz" anzeigen
-                  </Label>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="showOutOfCompetitionShootersIndividual"
+                      checked={showOutOfCompetitionShooters}
+                      onCheckedChange={(checked) => {
+                        setShowOutOfCompetitionShooters(!!checked);
+                        // URL aktualisieren
+                        const currentParams = new URLSearchParams(window.location.search);
+                        currentParams.set('showAKShooters', (!!checked).toString());
+                        router.replace(`/rwk-tabellen?${currentParams.toString()}`, { scroll: false });
+                      }}
+                    />
+                    <Label 
+                      htmlFor="showOutOfCompetitionShootersIndividual"
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      Schützen "Außer Konkurrenz" anzeigen
+                    </Label>
+                  </div>
+                  {selectedIndividualLeagueFilter && (
+                    <div className="flex-1 max-w-xs">
+                      <Input 
+                        placeholder="Schütze suchen..." 
+                        value={shooterSearchTerm}
+                        onChange={(e) => setShooterSearchTerm(e.target.value)}
+                        className="text-sm"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
           )}
-          {!loadingData && !error && filteredIndividualData.length === 0 && (
-            <Card className="shadow-lg"><CardHeader><CardTitle className="text-accent">Keine Einzelschützen für {selectedCompetition?.displayName || pageTitle} {selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : ''}</CardTitle></CardHeader><CardContent className="text-center py-12 p-6"><AlertTriangle className="mx-auto h-10 w-10 mb-3 text-primary/70" /><p className="text-lg text-muted-foreground">Für die aktuelle Auswahl wurden keine Einzelschützenergebnisse gefunden.</p></CardContent></Card>
+          {!loadingData && !error && !selectedIndividualLeagueFilter && (
+            <Card className="shadow-lg border-blue-200">
+              <CardHeader>
+                <CardTitle className="text-blue-800 flex items-center">
+                  <User className="mr-2 h-5 w-5" />
+                  Liga-Auswahl erforderlich
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-center py-12 p-6">
+                <div className="text-6xl mb-4">🎯</div>
+                <p className="text-lg text-blue-700 mb-4">
+                  Bitte wählen Sie oben eine Liga aus, um die Einzelrangliste anzuzeigen.
+                </p>
+                <p className="text-sm text-blue-600">
+                  Dies verhindert die Vermischung verschiedener Disziplinen in der Rangliste.
+                </p>
+              </CardContent>
+            </Card>
           )}
-          {!loadingData && !error && filteredIndividualData.length > 0 && (
+          {!loadingData && !error && selectedIndividualLeagueFilter && filteredIndividualData.length === 0 && (
+            <Card className="shadow-lg"><CardHeader><CardTitle className="text-accent">Keine Einzelschützen für {selectedCompetition?.displayName || pageTitle} {selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : ''}</CardTitle></CardHeader><CardContent className="text-center py-12 p-6"><AlertTriangle className="mx-auto h-10 w-10 mb-3 text-primary/70" /><p className="text-lg text-muted-foreground">Für die ausgewählte Liga wurden keine Einzelschützenergebnisse gefunden.</p></CardContent></Card>
+          )}
+          {!loadingData && !error && selectedIndividualLeagueFilter && filteredIndividualData.length > 0 && (
             <div className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 {topMaleShooter && (<Card className="shadow-lg"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium text-primary">Bester Schütze</CardTitle><Trophy className="h-5 w-5 text-amber-500" /></CardHeader><CardContent><p className="text-2xl font-bold">{topMaleShooter.shooterName}</p><p className="text-sm text-muted-foreground">{topMaleShooter.teamName}</p><p className="text-lg">Gesamt: <span className="font-semibold">{topMaleShooter.totalScore}</span> Ringe</p><p className="text-sm">Schnitt: {topMaleShooter.averageScore != null ? topMaleShooter.averageScore.toFixed(2) : '-'} ({topMaleShooter.roundsShot} DG)</p></CardContent></Card>)}
@@ -1697,7 +1771,7 @@ function RwkTabellenPageComponent() {
                 {!topFemaleShooter && !loadingData && (<Card className="shadow-lg"><CardHeader><CardTitle className="text-accent">Keine Beste Dame</CardTitle></CardHeader><CardContent><p className="text-muted-foreground">Für die aktuelle Auswahl konnte keine beste Dame ermittelt werden.</p></CardContent></Card>)}
               </div>
               <Card className="shadow-lg">
-                <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
+                <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage - Ehrungen)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
                     <Table>
@@ -1709,6 +1783,11 @@ function RwkTabellenPageComponent() {
                       <TableBody>
                         {filteredIndividualData
                           .filter(shooter => showOutOfCompetitionShooters || !shooter.teamOutOfCompetition)
+                          .filter(shooter => 
+                            !shooterSearchTerm || 
+                            shooter.shooterName.toLowerCase().includes(shooterSearchTerm.toLowerCase()) ||
+                            shooter.teamName.toLowerCase().includes(shooterSearchTerm.toLowerCase())
+                          )
                           .map(shooter => (
                           <TableRow key={`ind-${shooter.shooterId}`} className="hover:bg-secondary/20 transition-colors">
                             <TableCell className="text-center font-medium">

@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2">
-              <span>Aktuelle Version: 0.9.9 (Heute)</span>
+              <span>Aktuelle Version: 0.9.9.1 (Heute)</span>
             </Badge>
             <Badge variant="default" className="text-xs py-1 px-2 bg-green-600">
               <span>🌐 Live: rwk-einbeck.de</span>
@@ -33,8 +33,53 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.1</CardTitle>
               <Badge variant="secondary">Neu</Badge>
+            </div>
+            <CardDescription>Heute</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Bugfix-Release für Beta-Tester-Feedback - Behebung kritischer Fehler aus Version 0.9.9.</p>
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-orange-900 mb-2">🔧 Bugfixes Version 0.9.9.1</h4>
+              <div className="text-xs text-orange-700">
+                Basierend auf Beta-Tester-Feedback werden kritische Fehler behoben
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📎 <strong>Support: Multiple Screenshots</strong>: Mehrere Dateien mit automatischer Komprimierung - CORS-Problem behoben</li>
+              <li>🚫 <strong>Hilfe & Einstellungen entfernt</strong>: Redundante Seite entfernt - alle Funktionen sind im Dashboard verfügbar</li>
+              <li>🎯 <strong>Einzelrangliste-Fix</strong>: Liga-Auswahl Pflicht verhindert Disziplin-Vermischung (Raimund-Problem behoben)</li>
+              <li>🔄 <strong>Context-Aware Navigation</strong>: Zuletzt geöffnete Liga wird automatisch für Einzelschützen übernommen</li>
+              <li>🏆 <strong>KK Gewehr Ehrungen</strong>: Spezielle Option für übergreifende Beste Dame/Bester Schütze Auswertung</li>
+              <li>🔍 <strong>Schützen-Suche</strong>: Suchfunktion in Einzelrangliste nach Namen und Mannschaft</li>
+              <li>🏅 <strong>Stichentscheid-Logik</strong>: Keine gleichen Plätze mehr - bei Gleichstand entscheidet letzter Durchgang</li>
+              <li>🗑️ <strong>Admin: Ticket-Verwaltung</strong>: Support-Tickets löschen, Antwort-Templates und Multiple Screenshots-Anzeige</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-orange-800">🔧 Bugfix-Release</span>
+                  <p className="text-xs text-orange-600 mt-1">Basierend auf Beta-Tester-Feedback</p>
+                </div>
+                <span className="bg-orange-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 Live
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <span className="text-muted-foreground text-sm">
+                Alle Details hier angezeigt
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>06. Juli 2025</CardDescription>
           </CardHeader>
