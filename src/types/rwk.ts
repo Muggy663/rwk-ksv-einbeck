@@ -319,3 +319,11 @@ export function getUIDisciplineValueFromSpecificType(specificType: FirestoreLeag
   if (['LP', 'LPA'].includes(specificType)) return 'LP';
   return 'KK';
 }
+
+export function getDisciplineCategory(leagueType?: FirestoreLeagueSpecificDiscipline): string | null {
+  if (!leagueType) return null;
+  if (['KK', 'KKP', 'KKG'].includes(leagueType)) return 'KK';
+  if (['LG', 'LGA'].includes(leagueType)) return 'LG';
+  if (['LP', 'LPA'].includes(leagueType)) return 'LP';
+  return null;
+}

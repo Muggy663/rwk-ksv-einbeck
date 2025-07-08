@@ -48,7 +48,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription as UiAlertDescription } from "@/components/ui/alert"; // Renamed to avoid conflict
 import { useVereinAuth } from '@/app/verein/layout';
 import type { Season, League, Club, Team, Shooter, TeamValidationInfo, FirestoreLeagueSpecificDiscipline, UserPermission } from '@/types/rwk';
-import { GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES, leagueDisciplineOptions, MAX_SHOOTERS_PER_TEAM } from '@/types/rwk';
+import { GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES, leagueDisciplineOptions, MAX_SHOOTERS_PER_TEAM, getDisciplineCategory } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import {
   collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query,
