@@ -976,8 +976,27 @@ function RwkTabellenPageComponent() {
       return;
     }
     
-    // Cache komplett deaktiviert
-    console.log("RWK DEBUG: Cache deaktiviert, lade Daten immer frisch");
+    // Cache aktivieren um Quota zu schonen
+    const cacheKey = `rwk-data-${selectedCompetition.year}-${selectedCompetition.discipline}-${activeTab}-${selectedIndividualLeagueFilter}`;
+    const cachedData = sessionStorage.getItem(cacheKey);
+    
+    if (cachedData && !loadingData) {
+      try {
+        const parsed = JSON.parse(cachedData);
+        if (parsed.timestamp && Date.now() - parsed.timestamp < 300000) { // 5 Minuten Cache
+          console.log('RWK DEBUG: Verwende Cache-Daten');
+          if (parsed.teamData) setTeamData(parsed.teamData);
+          if (parsed.filteredIndividualData) setFilteredIndividualData(parsed.filteredIndividualData);
+          if (parsed.topMaleShooter) setTopMaleShooter(parsed.topMaleShooter);
+          if (parsed.topFemaleShooter) setTopFemaleShooter(parsed.topFemaleShooter);
+          return;
+        }
+      } catch (e) {
+        console.log('RWK DEBUG: Cache-Fehler, lade frisch');
+      }
+    }
+    
+    console.log("RWK DEBUG: Lade Daten frisch (kein gültiger Cache)");
     
     console.log("RWK DEBUG: loadData triggered.", { year: selectedCompetition.year, disc: selectedCompetition.discipline, tab: activeTab, leagueFilter: selectedIndividualLeagueFilter });
     setLoadingData(true); setError(null); 
@@ -1019,8 +1038,16 @@ function RwkTabellenPageComponent() {
         setTopFemaleShooter(null);
       }
       
-      // Cache komplett deaktiviert
-      console.log('RWK DEBUG: Cache deaktiviert, keine Daten gespeichert');
+      // Cache speichern
+      const cacheData = {
+        timestamp: Date.now(),
+        teamData: fetchedTeamData,
+        filteredIndividualData,
+        topMaleShooter,
+        topFemaleShooter
+      };
+      sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      console.log('RWK DEBUG: Daten im Cache gespeichert');
     } catch (err: any) {
       console.error('RWK DEBUG: Failed to load RWK data in loadData:', err);
       toast({ title: "Fehler Datenladen", description: `Fehler beim Laden der Wettkampfdaten: ${err.message}`, variant: "destructive" });
@@ -1698,7 +1725,18 @@ function RwkTabellenPageComponent() {
                         )}
                         {availableLeaguesForIndividualFilter
                           .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "") 
-                          .map(league => (<SelectItem key={league.id} value={league.id}>{league.name} ({leagueDisciplineOptions.find(opt => opt.value === league.type)?.label || league.type})</SelectItem>))
+                          .map(league => {
+                            // Entferne "Gruppe" und "(Gruppe)" aus dem Namen
+                            const cleanName = league.name
+                              .replace(/\s*\(Gruppe\)\s*/g, '')
+                              .replace(/\s+Gruppe\s*$/g, '')
+                              .trim();
+                            return (
+                              <SelectItem key={league.id} value={league.id}>
+                                {cleanName} ({league.type})
+                              </SelectItem>
+                            );
+                          })
                         }
                         {availableLeaguesForIndividualFilter.filter(l => l && typeof l.id === 'string' && l.id.trim() !== "").length === 0 && selectedCompetition && (
                           <SelectItem value="NO_LEAGUES_FOR_IND_FILTER_RWK" disabled>Keine Ligen verfügbar</SelectItem>

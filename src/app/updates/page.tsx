@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2">
-              <span>Aktuelle Version: 0.9.9.1 (Heute)</span>
+              <span>Aktuelle Version: 0.9.9.1 (08.07.2025)</span>
             </Badge>
             <Badge variant="default" className="text-xs py-1 px-2 bg-green-600">
               <span>🌐 Live: rwk-einbeck.de</span>
@@ -36,7 +36,7 @@ export default function UpdatesPage() {
               <CardTitle className="text-xl">Version 0.9.9.1</CardTitle>
               <Badge variant="secondary">Neu</Badge>
             </div>
-            <CardDescription>Heute</CardDescription>
+            <CardDescription>08.07.2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Bugfix-Release für Beta-Tester-Feedback - Behebung kritischer Fehler aus Version 0.9.9.</p>
@@ -54,6 +54,8 @@ export default function UpdatesPage() {
               <li>🏆 <strong>KK Gewehr Ehrungen</strong>: Spezielle Option für übergreifende Beste Dame/Bester Schütze Auswertung</li>
               <li>🔍 <strong>Schützen-Suche</strong>: Suchfunktion in Einzelrangliste nach Namen und Mannschaft</li>
               <li>🏅 <strong>Stichentscheid-Logik</strong>: Keine gleichen Plätze mehr - bei Gleichstand entscheidet letzter Durchgang</li>
+              <li>🎨 <strong>Liga-Anzeige verbessert</strong>: "Gruppe" entfernt, Typ-Kürzel in separater Spalte, mobile Optimierung</li>
+              <li>🎨 <strong>Liga-Anzeige verbessert</strong>: "Gruppe" entfernt, Typ-Kürzel in separater Spalte, mobile Optimierung</li>
               <li>🗑️ <strong>Admin: Ticket-Verwaltung</strong>: Support-Tickets löschen, Antwort-Templates und Multiple Screenshots-Anzeige</li>
             </ul>
             <div className="mt-4 p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border">

@@ -669,9 +669,19 @@ export default function VereinMannschaftenPage() {
   const getLeagueNameDisplay = (leagueId?: string | null): string => {
     if (!leagueId) return 'Nicht zugewiesen';
     const league = allLeagues.find(l => l.id === leagueId);
-    if (!league) return 'Unbek. Liga (ID: ' + leagueId + ')';
-    const leagueTypeLabel = league.type ? (leagueDisciplineOptions.find(opt => opt.value === league.type)?.label || league.type) : 'Typ N/A';
-    return `${league.name} (${leagueTypeLabel})`;
+    if (!league) return 'Unbek. Liga';
+    // Entferne "Gruppe" und "(Gruppe)" aus dem Namen
+    let cleanName = league.name
+      .replace(/\s*\(Gruppe\)\s*/g, '')
+      .replace(/\s+Gruppe\s*$/g, '')
+      .trim();
+    return cleanName;
+  };
+  
+  const getLeagueTypeDisplay = (leagueId?: string | null): string => {
+    if (!leagueId) return '-';
+    const league = allLeagues.find(l => l.id === leagueId);
+    return league?.type || '-';
   };
 
   const getClubName = (clubId?: string | null): string => {
@@ -833,22 +843,25 @@ export default function VereinMannschaftenPage() {
           )}
           {!isLoadingTeams && teamsOfActiveClub.length > 0 && activeClubId && selectedSeasonId && (
             <Table><TableHeader><TableRow>
-                <TableHead>Name</TableHead><TableHead>Liga (Admin-Zuw.)</TableHead><TableHead>Jahr</TableHead><TableHead className="text-center">Schützen</TableHead>
+                <TableHead>Name</TableHead><TableHead className="hidden sm:table-cell">Liga</TableHead><TableHead className="text-center">Typ</TableHead><TableHead className="text-center hidden md:table-cell">Jahr</TableHead><TableHead className="text-center">Schützen</TableHead>
                 {isVereinsvertreter && <TableHead className="text-right">Aktionen</TableHead>}
             </TableRow></TableHeader>
             <TableBody>
                 {teamsOfActiveClub.map((team) => (
                 <TableRow key={team.id}>
-                    <TableCell>{team.name}</TableCell>
-                    <TableCell>
-                      {getLeagueNameDisplay(team.leagueId)}
-                      {team.leagueType && (
-                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                          {team.leagueType}
-                        </span>
-                      )}
+                    <TableCell className="font-medium">
+                      <div>{team.name}</div>
+                      <div className="text-xs text-muted-foreground sm:hidden mt-1">
+                        {getLeagueNameDisplay(team.leagueId)} • {team.competitionYear}
+                      </div>
                     </TableCell>
-                    <TableCell>{team.competitionYear}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{getLeagueNameDisplay(team.leagueId)}</TableCell>
+                    <TableCell className="text-center">
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-medium">
+                        {getLeagueTypeDisplay(team.leagueId)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center hidden md:table-cell">{team.competitionYear}</TableCell>
                     <TableCell className="text-center">{team.shooterIds?.length || 0} / {MAX_SHOOTERS_PER_TEAM}</TableCell>
                     {isVereinsvertreter && (
                       <TableCell className="text-right space-x-1">

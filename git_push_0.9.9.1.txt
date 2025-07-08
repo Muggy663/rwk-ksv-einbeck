@@ -12,6 +12,8 @@ git commit -m "🔧 Version 0.9.9.1 - Beta-Tester Bugfixes
 ✅ Context-Aware Navigation: Zuletzt geöffnete Liga übernehmen
 ✅ KK Gewehr Ehrungen: Übergreifende Beste Dame/Schütze Option
 ✅ Schützen-Suche: Suchfunktion in Einzelrangliste
+✅ Stichentscheid-Logik: Keine gleichen Plätze mehr
+✅ Liga-Anzeige verbessert: Gruppe entfernt, mobile Optimierung
 ✅ Admin: Support-Tickets löschen + Antwort-Templates
 
 Basierend auf Beta-Tester-Feedback - alle kritischen Fehler behoben"
