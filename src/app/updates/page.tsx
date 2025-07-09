@@ -56,6 +56,7 @@ export default function UpdatesPage() {
               <li>🏅 <strong>Stichentscheid-Logik</strong>: Keine gleichen Plätze mehr - bei Gleichstand entscheidet letzter Durchgang</li>
               <li>🎨 <strong>Liga-Anzeige verbessert</strong>: "Gruppe" entfernt, Typ-Kürzel in separater Spalte, mobile Optimierung</li>
               <li>🎨 <strong>Liga-Anzeige verbessert</strong>: "Gruppe" entfernt, Typ-Kürzel in separater Spalte, mobile Optimierung</li>
+              <li>🔧 <strong>Kritischer Bugfix</strong>: getDisciplineCategory Funktion implementiert - behebt Mannschafts-Bearbeitung</li>
               <li>🗑️ <strong>Admin: Ticket-Verwaltung</strong>: Support-Tickets löschen, Antwort-Templates und Multiple Screenshots-Anzeige</li>
             </ul>
             <div className="mt-4 p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border">

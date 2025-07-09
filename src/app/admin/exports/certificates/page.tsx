@@ -24,8 +24,8 @@ export default function CertificatesPage() {
   const [seasons, setSeasons] = useState<Array<{ id: string; name: string }>>([]);
   const [leagues, setLeagues] = useState<Array<{ id: string; name: string; type: string }>>([]);
   const [combinePdf, setCombinePdf] = useState<boolean>(true);
-  const [generateTopShooters, setGenerateTopShooters] = useState<boolean>(true);
-  const [generateTopTeams, setGenerateTopTeams] = useState<boolean>(true);
+  const [numTopShooters, setNumTopShooters] = useState<number>(3);
+  const [numTopTeams, setNumTopTeams] = useState<number>(2);
   const [generateOverallBest, setGenerateOverallBest] = useState<boolean>(false);
 
   // Lade verfügbare Saisons
@@ -133,7 +133,11 @@ export default function CertificatesPage() {
           discipline: 'Luftgewehr Auflage',
           category: 'Kreisoberliga',
           recipientName: 'SV Edemissen III',
-          teamMembers: ['Andreas Stitz', 'Bernd Klie', 'Thomas Jaeger'],
+          teamMembersWithScores: [
+            { name: 'Andreas Stitz', totalScore: 1520, rounds: 5, averageScore: 304 },
+            { name: 'Bernd Klie', totalScore: 1480, rounds: 5, averageScore: 296 },
+            { name: 'Thomas Jaeger', totalScore: 1427, rounds: 5, averageScore: 285.4 }
+          ],
           score: '4.427',
           rank: 1,
           date: 'Einbeck, 18. Mai 2025'
@@ -165,7 +169,7 @@ export default function CertificatesPage() {
       return;
     }
     
-    if (!generateTopShooters && !generateTopTeams) {
+    if (numTopShooters === 0 && numTopTeams === 0) {
       toast({
         title: 'Fehler',
         description: 'Bitte wählen Sie mindestens eine Art von Urkunden aus.',
@@ -196,8 +200,8 @@ export default function CertificatesPage() {
       const leagueName = leagueData.name;
       
       // Top-Schützen abrufen und Urkunden generieren
-      if (generateTopShooters) {
-        const topShooters = await fetchTopShooters(selectedLeague, 3);
+      if (numTopShooters > 0) {
+        const topShooters = await fetchTopShooters(selectedLeague, numTopShooters);
         
         for (const shooter of topShooters) {
           certificates.push({
@@ -215,8 +219,9 @@ export default function CertificatesPage() {
       }
       
       // Top-Teams abrufen und Urkunden generieren
-      if (generateTopTeams) {
-        const topTeams = await fetchTopTeams(selectedLeague, 2);
+      if (numTopTeams > 0) {
+        const topTeams = await fetchTopTeams(selectedLeague, numTopTeams);
+        console.log('Top Teams mit Scores:', topTeams.map(t => ({ name: t.name, membersWithScores: t.teamMembersWithScores })));
         
         for (const team of topTeams) {
           certificates.push({
@@ -226,6 +231,7 @@ export default function CertificatesPage() {
             category: leagueName, // Verwende den tatsächlichen Liga-Namen
             recipientName: team.name,
             teamMembers: team.teamMembers,
+            teamMembersWithScores: team.teamMembersWithScores,
             score: team.totalScore.toString(),
             rank: team.rank,
             date: `Einbeck, ${currentDate}`
@@ -260,7 +266,7 @@ export default function CertificatesPage() {
               discipline: cert.discipline,
               category: cert.category,
               recipientName: cert.recipientName,
-              teamMembers: cert.teamMembers,
+              teamMembersWithScores: cert.teamMembersWithScores,
               score: cert.score,
               rank: cert.rank,
               date: cert.date
@@ -292,7 +298,7 @@ export default function CertificatesPage() {
               discipline: cert.discipline,
               category: cert.category,
               recipientName: cert.recipientName,
-              teamMembers: cert.teamMembers,
+              teamMembersWithScores: cert.teamMembersWithScores,
               score: cert.score,
               rank: cert.rank,
               date: cert.date
@@ -578,29 +584,47 @@ export default function CertificatesPage() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="top-shooters" 
-                checked={generateTopShooters} 
-                onCheckedChange={(checked) => setGenerateTopShooters(!!checked)}
-                disabled={loading}
-              />
-              <Label htmlFor="top-shooters">
-                Urkunden für die besten 3 Schützen erstellen
-              </Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="top-teams" 
-                checked={generateTopTeams} 
-                onCheckedChange={(checked) => setGenerateTopTeams(!!checked)}
-                disabled={loading}
-              />
-              <Label htmlFor="top-teams">
-                Urkunden für die besten 2 Mannschaften erstellen
-              </Label>
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="num-shooters">Anzahl Top-Schützen (0 = keine)</Label>
+                <Select
+                  value={numTopShooters.toString()}
+                  onValueChange={(value) => setNumTopShooters(parseInt(value))}
+                  disabled={loading}
+                >
+                  <SelectTrigger id="num-shooters" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num === 0 ? 'Keine Schützen' : `${num} Schütze${num > 1 ? 'n' : ''}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="num-teams">Anzahl Top-Teams (0 = keine)</Label>
+                <Select
+                  value={numTopTeams.toString()}
+                  onValueChange={(value) => setNumTopTeams(parseInt(value))}
+                  disabled={loading}
+                >
+                  <SelectTrigger id="num-teams" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[0, 1, 2, 3, 4, 5].map(num => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num === 0 ? 'Keine Teams' : `${num} Team${num > 1 ? 's' : ''}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             <div className="flex items-center space-x-2">
@@ -618,7 +642,7 @@ export default function CertificatesPage() {
 
           <Button 
             onClick={generateLeagueCertificates} 
-            disabled={!selectedLeague || !selectedSeason || loading || (!generateTopShooters && !generateTopTeams)}
+            disabled={!selectedLeague || !selectedSeason || loading || (numTopShooters === 0 && numTopTeams === 0)}
             className="w-full"
           >
             {loading ? (

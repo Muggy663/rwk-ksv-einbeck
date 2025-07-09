@@ -17,6 +17,7 @@ interface CertificateOptions {
   category: string;
   recipientName: string;
   teamMembers?: string[];
+  teamMembersWithScores?: Array<{name: string; totalScore: number; rounds: number; averageScore: number}>;
   score: number | string;
   rank: number;
   date?: string;
@@ -110,13 +111,13 @@ export class CertificateGenerator {
       // Entferne "RWK" aus dem Saisonnamen, wenn es vorhanden ist
       const seasonName = options.season.replace('RWK ', '');
       
-      this.doc.text(`Beim Rundenwettkampf ${seasonName}`, this.pageWidth / 2, this.margin + 70, { align: 'center' });
+      this.doc.text(`Beim Rundenwettkampf ${seasonName}`, this.pageWidth / 2, this.margin + 65, { align: 'center' });
       // Disziplin nur einmal anzeigen, nicht doppelt
-      this.doc.text(`${options.category}`, this.pageWidth / 2, this.margin + 100, { align: 'center' });
+      this.doc.text(`${options.category}`, this.pageWidth / 2, this.margin + 80, { align: 'center' });
       
       // "errang"
       this.doc.setFontSize(14);
-      this.doc.text('errang', this.pageWidth / 2, this.margin + 120, { align: 'center' });
+      this.doc.text('errang', this.pageWidth / 2, this.margin + 95, { align: 'center' });
       
       // Empfänger (Schütze oder Mannschaft) - ohne Klammern
       this.doc.setFontSize(18);
@@ -125,39 +126,61 @@ export class CertificateGenerator {
       // Entferne Klammern aus dem Namen
       const cleanName = options.recipientName.replace(/\s*\([^)]*\)/g, '');
       
-      this.doc.text(cleanName, this.pageWidth / 2, this.margin + 140, { align: 'center' });
+      this.doc.text(cleanName, this.pageWidth / 2, this.margin + 110, { align: 'center' });
       
-      // Teammitglieder (falls vorhanden)
-      if (options.teamMembers && options.teamMembers.length > 0) {
-        this.doc.setFontSize(12);
+      // Teammitglieder mit Einzelergebnissen (falls vorhanden)
+      if (options.teamMembersWithScores && options.teamMembersWithScores.length > 0) {
+        this.doc.setFontSize(11);
         this.doc.setFont('helvetica', 'normal');
-        let yPos = this.margin + 150;
+        let yPos = this.margin + 120;
         
-        options.teamMembers.forEach(member => {
-          this.doc.text(member, this.pageWidth / 2, yPos, { align: 'center' });
-          yPos += 10;
+        options.teamMembersWithScores.forEach(member => {
+          this.doc.text(`${member.name} (${member.totalScore} Ring)`, this.pageWidth / 2, yPos, { align: 'center' });
+          yPos += 8;
         });
         
         // Ergebnis
         this.doc.setFontSize(16);
         this.doc.setFont('helvetica', 'bold');
-        this.doc.text(`${options.score} Ring`, this.pageWidth / 2, yPos + 15, { align: 'center' });
+        this.doc.text(`${options.score} Ring`, this.pageWidth / 2, yPos + 10, { align: 'center' });
+        
+        // Platzierung
+        this.doc.setFontSize(16);
+        this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, yPos + 25, { align: 'center' });
+      } else if (options.teamMembers && options.teamMembers.length > 0) {
+        this.doc.setFontSize(11);
+        this.doc.setFont('helvetica', 'normal');
+        let yPos = this.margin + 120;
+        
+        options.teamMembers.forEach(member => {
+          this.doc.text(member, this.pageWidth / 2, yPos, { align: 'center' });
+          yPos += 8;
+        });
+        
+        // Ergebnis
+        this.doc.setFontSize(16);
+        this.doc.setFont('helvetica', 'bold');
+        this.doc.text(`${options.score} Ring`, this.pageWidth / 2, yPos + 10, { align: 'center' });
+        
+        // Platzierung
+        this.doc.setFontSize(16);
+        this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, yPos + 25, { align: 'center' });
       } else {
         // Ergebnis (für Einzelschützen)
         this.doc.setFontSize(16);
         this.doc.setFont('helvetica', 'bold');
-        this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 160, { align: 'center' });
+        this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 125, { align: 'center' });
+        
+        // Platzierung
+        this.doc.setFontSize(16);
+        this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, this.margin + 140, { align: 'center' });
       }
       
-      // Platzierung
-      this.doc.setFontSize(16);
-      this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, this.margin + 185, { align: 'center' });
-      
-      // Verband in Grün
-      this.doc.setFontSize(14);
+      // Verband in Grün - kompakter positioniert
+      this.doc.setFontSize(12);
       this.doc.setFont('helvetica', 'bold');
       this.doc.setTextColor(0, 128, 0); // Grüne Farbe
-      this.doc.text('KREISSCHÜTZENVERBAND EINBECK e.V.', this.pageWidth / 2, this.pageHeight - this.margin - 60, { align: 'center' });
+      this.doc.text('KREISSCHÜTZENVERBAND EINBECK e.V.', this.pageWidth / 2, this.pageHeight - this.margin - 50, { align: 'center' });
       this.doc.setTextColor(0, 0, 0); // Zurück zu schwarz
       
       // Unterschriftslinien
@@ -167,13 +190,13 @@ export class CertificateGenerator {
       // Unterschrift links (Präsident)
       this.doc.line(
         this.margin + 30,
-        this.pageHeight - this.margin - 40,
+        this.pageHeight - this.margin - 35,
         this.margin + 80,
-        this.pageHeight - this.margin - 40
+        this.pageHeight - this.margin - 35
       );
-      this.doc.setFontSize(10);
+      this.doc.setFontSize(9);
       this.doc.setFont('helvetica', 'normal');
-      this.doc.text('Präsident', this.margin + 55, this.pageHeight - this.margin - 30, { align: 'center' });
+      this.doc.text('Präsident', this.margin + 55, this.pageHeight - this.margin - 27, { align: 'center' });
       
       // Unterschriftbild des Präsidenten
       try {
@@ -181,9 +204,9 @@ export class CertificateGenerator {
           '/images/Unterschrift Lars Sander.png',
           'PNG',
           this.margin + 30,
-          this.pageHeight - this.margin - 60,
+          this.pageHeight - this.margin - 50,
           50,
-          20
+          15
         );
       } catch (error) {
         console.error('Fehler beim Hinzufügen der Präsidenten-Unterschrift:', error);
@@ -192,11 +215,11 @@ export class CertificateGenerator {
       // Unterschrift rechts (Rundenwettkampfleiter)
       this.doc.line(
         this.pageWidth - this.margin - 80,
-        this.pageHeight - this.margin - 40,
+        this.pageHeight - this.margin - 35,
         this.pageWidth - this.margin - 30,
-        this.pageHeight - this.margin - 40
+        this.pageHeight - this.margin - 35
       );
-      this.doc.text('Rundenwettkampfleiter', this.pageWidth - this.margin - 55, this.pageHeight - this.margin - 30, { align: 'center' });
+      this.doc.text('Rundenwettkampfleiter', this.pageWidth - this.margin - 55, this.pageHeight - this.margin - 27, { align: 'center' });
       
       // Unterschriftbild des Rundenwettkampfleiters
       try {
@@ -204,9 +227,9 @@ export class CertificateGenerator {
           '/images/Unterschrift Marcel Buenger.png',
           'PNG',
           this.pageWidth - this.margin - 80,
-          this.pageHeight - this.margin - 60,
+          this.pageHeight - this.margin - 50,
           50,
-          20
+          15
         );
       } catch (error) {
         console.error('Fehler beim Hinzufügen der Rundenwettkampfleiter-Unterschrift:', error);
@@ -214,7 +237,8 @@ export class CertificateGenerator {
       
       // Datum am unteren Ende der Seite
       const dateText = options.date || `Einbeck, ${format(new Date(), 'dd. MMMM yyyy', { locale: de })}`;
-      this.doc.text(dateText, this.pageWidth / 2, this.pageHeight - this.margin - 10, { align: 'center' });
+      this.doc.setFontSize(10);
+      this.doc.text(dateText, this.pageWidth / 2, this.pageHeight - this.margin - 15, { align: 'center' });
     } catch (error) {
       console.error('Fehler beim Generieren der Urkunde:', error);
       // Fallback: Einfache Fehlermeldung

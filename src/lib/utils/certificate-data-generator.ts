@@ -180,30 +180,42 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
       
       const averageScore = numScoredRounds > 0 ? totalScore / numScoredRounds : 0;
       
-      // Teammitglieder abrufen
+      // Teammitglieder direkt aus den bereits geladenen Scores extrahieren
       const teamMembers = [];
+      const shootersMap = new Map();
       
-      // Schützen für das Team abrufen
-      const teamShootersQuery = query(
-        collection(db, 'rwk_team_shooters'),
-        where('teamId', '==', teamDoc.id)
-      );
-      
-      const teamShootersSnapshot = await getDocs(teamShootersQuery);
-      
-      for (const teamShooterDoc of teamShootersSnapshot.docs) {
-        const teamShooterData = teamShooterDoc.data();
-        const shooterId = teamShooterData.shooterId;
+      // Alle Scores für das Team durchgehen und Schützen sammeln
+      scoresSnapshot.forEach(scoreDoc => {
+        const scoreData = scoreDoc.data();
+        const shooterId = scoreData.shooterId;
+        const shooterName = scoreData.shooterName;
         
-        // Schützeninformationen abrufen
-        const shooterRef = doc(db, 'rwk_shooters', shooterId);
-        const shooterSnap = await getDoc(shooterRef);
+        if (!shooterId || !shooterName) return;
         
-        if (shooterSnap.exists()) {
-          const shooterData = shooterSnap.data();
-          teamMembers.push(`${shooterData.firstName} ${shooterData.lastName}`);
+        if (!shootersMap.has(shooterId)) {
+          shootersMap.set(shooterId, {
+            name: shooterName,
+            totalScore: 0,
+            rounds: 0
+          });
         }
-      }
+        
+        const shooter = shootersMap.get(shooterId);
+        if (scoreData.totalRinge) {
+          shooter.totalScore += scoreData.totalRinge;
+          shooter.rounds++;
+        }
+      });
+      
+      // Schützen in Array umwandeln
+      shootersMap.forEach(shooter => {
+        teamMembers.push({
+          name: shooter.name,
+          totalScore: shooter.totalScore,
+          rounds: shooter.rounds,
+          averageScore: shooter.rounds > 0 ? Math.round(shooter.totalScore / shooter.rounds * 10) / 10 : 0
+        });
+      });
       
       teams.push({
         id: teamDoc.id,
@@ -212,7 +224,8 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
         roundResults,
         totalScore,
         averageScore,
-        teamMembers
+        teamMembers: teamMembers.map(member => member.name),
+        teamMembersWithScores: teamMembers
       });
     }
     
