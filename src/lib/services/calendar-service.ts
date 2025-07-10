@@ -65,7 +65,7 @@ export async function fetchEvents(
     
     console.log(`fetchEvents: ${snapshot.docs.length} Termine gefunden`);
     
-    // Ergebnisse mappen
+    // Ergebnisse mappen und filtern
     const events = snapshot.docs.map(doc => {
       const data = doc.data();
       

@@ -22,6 +22,7 @@ import { fetchLeagues, fetchSeasons } from '@/lib/services/statistics-service';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { containsProfanity, findProfanity } from '@/lib/utils/profanity-filter';
 
 export default function AddTerminPage() {
   const { toast } = useToast();
@@ -149,6 +150,38 @@ export default function AddTerminPage() {
       return;
     }
     
+    setIsSubmitting(true);
+    
+    // Prüfe Titel auf verbotene Wörter
+    console.log('Prüfe Titel:', title, 'Profanity:', containsProfanity(title));
+    if (containsProfanity(title)) {
+      const forbiddenWords = findProfanity(title);
+      console.log('Verbotene Wörter im Titel:', forbiddenWords);
+      toast({
+        title: 'Unerlaubter Inhalt',
+        description: `Der Titel enthält unerlaubte Wörter: ${forbiddenWords.join(', ')}`,
+        variant: 'destructive'
+      });
+      setIsSubmitting(false);
+      return;
+    }
+    
+    // Prüfe Beschreibung auf verbotene Wörter
+    console.log('Prüfe Beschreibung:', description, 'Profanity:', containsProfanity(description));
+    if (description && containsProfanity(description)) {
+      const forbiddenWords = findProfanity(description);
+      console.log('Verbotene Wörter in Beschreibung:', forbiddenWords);
+      toast({
+        title: 'Unerlaubter Inhalt',
+        description: `Die Beschreibung enthält unerlaubte Wörter: ${forbiddenWords.join(', ')}`,
+        variant: 'destructive'
+      });
+      setIsSubmitting(false);
+      return;
+    }
+    
+    console.log('Filter bestanden, erstelle Termin...');
+    
     // Verwende den benutzerdefinierten Ort, wenn "other" ausgewählt wurde
     const finalLocation = location === 'other' ? customLocation : location;
     
@@ -160,8 +193,6 @@ export default function AddTerminPage() {
       });
       return;
     }
-    
-    setIsSubmitting(true);
     
     try {
       // Finde den Namen der ausgewählten Liga

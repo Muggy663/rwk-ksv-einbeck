@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.9.9.1"; // Beta-Tester Bugfixes
+  const version = "0.9.9.2"; // Urkunden-Verbesserungen + Content-Filter
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

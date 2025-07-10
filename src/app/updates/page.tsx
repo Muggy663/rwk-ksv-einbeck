@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2">
-              <span>Aktuelle Version: 0.9.9.1 (08.07.2025)</span>
+              <span>Aktuelle Version: 0.9.9.2 (08.07.2025)</span>
             </Badge>
             <Badge variant="default" className="text-xs py-1 px-2 bg-green-600">
               <span>🌐 Live: rwk-einbeck.de</span>
@@ -33,8 +33,52 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.1</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.2</CardTitle>
               <Badge variant="secondary">Neu</Badge>
+            </div>
+            <CardDescription>08.07.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Urkunden-System Verbesserungen und Content-Filter für Termine.</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-blue-900 mb-2">🏆 Neue Features Version 0.9.9.2</h4>
+              <div className="text-xs text-blue-700">
+                Individuelle Urkunden-Erstellung und Sicherheitsverbesserungen
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🏆 <strong>Individuelle Urkunden-Auswahl</strong>: Flexible Anzahl Top-Schützen (0-10) und Teams (0-5) statt fixer "3+2"</li>
+              <li>👥 <strong>Teammitglieder mit Einzelergebnissen</strong>: Mannschaftsurkunden zeigen Namen und Ringzahlen der Schützen</li>
+              <li>🎨 <strong>Schlichte Urkunden-Gestaltung</strong>: Professionelles Design ohne überladene Dekoration</li>
+              <li>📅 <strong>Termine: 4 statt 3</strong>: Startseite zeigt jetzt 4 nächste Termine mit Beschreibungstext</li>
+              <li>🚫 <strong>Content-Filter für Termine</strong>: Automatische Filterung unerlaubter Inhalte (Drogen, Gewalt, etc.)</li>
+              <li>🔒 <strong>Proaktive Sicherheit</strong>: Bestehende problematische Termine werden automatisch ausgeblendet</li>
+              <li>⚠️ <strong>Benutzer-Feedback</strong>: Klare Fehlermeldungen bei unerlaubten Inhalten mit Wort-Auflistung</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-blue-800">🏆 Urkunden-Update</span>
+                  <p className="text-xs text-blue-600 mt-1">Individuelle Auswahl + Content-Filter</p>
+                </div>
+                <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 Live
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <span className="text-muted-foreground text-sm">
+                Alle Details hier angezeigt
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.1</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>08.07.2025</CardDescription>
           </CardHeader>

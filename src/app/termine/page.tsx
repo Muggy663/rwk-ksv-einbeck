@@ -475,16 +475,21 @@ export default function TerminePage() {
                     
                     // Rendere die Termine
                     return nextEvents.map((event, index) => (
-                      <div key={event.id || index} className="flex justify-between items-center py-2 border-b last:border-0">
-                        <div>
-                          <p className="font-medium">{event.title}</p>
-                          <p className="text-xs text-muted-foreground">{event.location}</p>
-                        </div>
-                        <div className="flex flex-col items-end">
-                          <p className="text-sm">{format(event.date, 'dd.MM.yyyy')}</p>
-                          <Badge variant={getBadgeVariant(event.type, event.isKreisverband)} className="mt-1">
-                            {getBadgeText(event.type, event.isKreisverband)}
-                          </Badge>
+                      <div key={event.id || index} className="py-3 border-b last:border-0">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium">{event.title}</p>
+                            <p className="text-xs text-muted-foreground">{event.location}</p>
+                            {event.description && (
+                              <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end ml-4">
+                            <p className="text-sm">{format(event.date, 'dd.MM.yyyy')}</p>
+                            <Badge variant={getBadgeVariant(event.type, event.isKreisverband)} className="mt-1">
+                              {getBadgeText(event.type, event.isKreisverband)}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     ));

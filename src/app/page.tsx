@@ -88,10 +88,10 @@ export default function HomePage() {
           console.error('Fehler bei der automatischen Bereinigung:', error);
         }
         
-        // Lade Termine ab heute (00:00 Uhr) für die nächsten 30 Tage
+        // Lade alle zukünftigen Termine (bis Ende nächstes Jahr)
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const endDate = addDays(today, 30);
+        const endDate = new Date(today.getFullYear() + 1, 11, 31); // Ende nächstes Jahr
         
         // Debug-Ausgabe
         console.log("Startseite: Lade Termine von", today, "bis", endDate);
@@ -136,9 +136,9 @@ export default function HomePage() {
           }
         });
         
-        // Nimm die ersten 3
-        setUpcomingEvents(sortedEvents.slice(0, 3)); // Zeige maximal 3 Termine an
-        console.log("Startseite: Angezeigte Termine:", sortedEvents.slice(0, 3).length);
+        // Nimm die ersten 4
+        setUpcomingEvents(sortedEvents.slice(0, 4)); // Zeige maximal 4 Termine an
+        console.log("Startseite: Angezeigte Termine:", sortedEvents.slice(0, 4).length);
       } catch (error) {
         console.error('Fehler beim Laden der Termine:', error);
       } finally {
@@ -300,6 +300,11 @@ export default function HomePage() {
                       <div className="text-sm">
                         {event.time} Uhr, {event.location}
                       </div>
+                      {event.description && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {event.description}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
