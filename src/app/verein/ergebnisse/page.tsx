@@ -17,6 +17,7 @@ import { useVereinAuth } from '@/app/verein/layout';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, documentId, getDoc as getFirestoreDoc, Timestamp, setDoc, updateDoc, addDoc, limit } from 'firebase/firestore';
+import { auditLogService } from '@/lib/services/audit-service';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -593,13 +594,18 @@ export default function VereinErgebnissePage() {
           const { tempId, ...dataToSave } = entry;
           const scoreDocRef = doc(collection(db, SCORES_COLLECTION));
           
-          // Zu Batch hinzufügen statt einzeln speichern
-          batch.set(scoreDocRef, {
+          const scoreData = {
             ...dataToSave,
             enteredByUserId: userPermission.uid,
             enteredByUserName: userPermission.displayName || userPermission.email || "Unbekannt",
             entryTimestamp: serverTimestamp()
-          });
+          };
+          
+          // Zu Batch hinzufügen statt einzeln speichern
+          batch.set(scoreDocRef, scoreData);
+          
+          // Audit-Log für Ergebnis-Erstellung (nach dem Batch-Commit)
+          // Wird später ausgeführt, um die Score-ID zu haben
           
           newlySavedIdentifiers.push({ shooterId: entry.shooterId, durchgang: entry.durchgang });
           
@@ -644,6 +650,42 @@ export default function VereinErgebnissePage() {
       
       // Alle Scores in einem Batch speichern
       await batch.commit();
+      
+      // Audit-Logs für alle gespeicherten Ergebnisse erstellen
+      for (const entry of pendingScores) {
+        try {
+          await auditLogService.logAction(
+            'create',
+            'score',
+            `${entry.shooterId}-${entry.durchgang}`, // Eindeutige ID
+            {
+              description: `Ergebnis erfasst: ${entry.shooterName} - ${entry.totalRinge} Ringe (DG ${entry.durchgang})`,
+              after: {
+                shooterName: entry.shooterName,
+                teamName: entry.teamName,
+                durchgang: entry.durchgang,
+                totalRinge: entry.totalRinge,
+                scoreInputType: entry.scoreInputType
+              }
+            },
+            {
+              leagueId: entry.leagueId,
+              leagueName: entry.leagueName,
+              teamId: entry.teamId,
+              teamName: entry.teamName,
+              shooterId: entry.shooterId,
+              shooterName: entry.shooterName
+            },
+            {
+              userId: userPermission.uid,
+              userName: userPermission.displayName || userPermission.email || "Unbekannt"
+            }
+          );
+        } catch (auditError) {
+          console.error('Fehler beim Erstellen des Audit-Logs:', auditError);
+          // Audit-Fehler nicht an Benutzer weiterleiten
+        }
+      }
 
       toast({ title: "Ergebnisse gespeichert" });
       setPendingScores([]);

@@ -23,7 +23,9 @@ import {
   Bell,
   Clock,
   Settings,
-  TrendingUp
+  TrendingUp,
+  AlertTriangle,
+  Newspaper
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -93,7 +95,7 @@ export function MainNav() {
     },
     {
       href: '/rwk-tabellen',
-      label: 'RWK-Tabellen',
+      label: 'Tabellen',
       icon: <FileBarChart className="h-4 w-4 mr-2" />,
       active: pathname === '/rwk-tabellen',
     },
@@ -116,12 +118,6 @@ export function MainNav() {
       active: pathname === '/dokumente',
     },
     {
-      href: '/updates',
-      label: 'Updates',
-      icon: <Bell className="h-4 w-4 mr-2" />,
-      active: pathname === '/updates',
-    },
-    {
       href: '/handbuch',
       label: 'Handbuch',
       icon: <BookOpen className="h-4 w-4 mr-2" />,
@@ -134,10 +130,10 @@ export function MainNav() {
       active: pathname === '/support',
     },
     {
-      href: '/einstellungen',
-      label: 'Einstellungen',
-      icon: <Settings className="h-4 w-4 mr-2" />,
-      active: pathname === '/einstellungen',
+      href: '/updates',
+      label: 'Updates',
+      icon: <Bell className="h-4 w-4 mr-2" />,
+      active: pathname === '/updates',
     },
   ];
 
@@ -193,6 +189,41 @@ export function MainNav() {
             {route.label}
           </Link>
         ))}
+        
+        {isAdmin && (
+          <>
+            <Link
+              href="/protests"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary flex items-center",
+                pathname === '/protests' ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <AlertTriangle className="h-4 w-4 mr-2" />
+              Proteste
+            </Link>
+            <Link
+              href="/news"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary flex items-center",
+                pathname === '/news' ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <Newspaper className="h-4 w-4 mr-2" />
+              News
+            </Link>
+            <Link
+              href="/notifications"
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary flex items-center",
+                pathname === '/notifications' ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <Bell className="h-4 w-4 mr-2" />
+              Benachrichtigungen
+            </Link>
+          </>
+        )}
 
         {isVereinsvertreterOrMannschaftsfuehrer && (
           <>
@@ -370,6 +401,50 @@ export function MainNav() {
                   >
                     <CalendarDays className="h-4 w-4 mr-2" />
                     Terminkalender
+                  </Link>
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/protests"
+                    className="flex items-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    Proteste
+                  </Link>
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/news"
+                    className="flex items-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Newspaper className="h-4 w-4 mr-2" />
+                    News
+                  </Link>
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/notifications"
+                    className="flex items-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Bell className="h-4 w-4 mr-2" />
+                    Benachrichtigungen
+                  </Link>
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/einstellungen"
+                    className="flex items-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Einstellungen
                   </Link>
                 </DropdownMenuItem>
               </>

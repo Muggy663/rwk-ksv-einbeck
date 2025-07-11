@@ -185,6 +185,37 @@ match /users/{userId} {
       allow write: if isSuperAdmin();
     }
     
+    // RWK-News - Lesbar für alle, schreibbar nur für Admin
+    match /rwk_news/{newsId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+    
+    // Proteste - Lesbar für Admin und Ersteller, schreibbar für authentifizierte Benutzer
+    match /protests/{protestId} {
+      allow read: if isSuperAdmin() || 
+                    (isAuthenticated() && resource.data.submittedBy == request.auth.token.email);
+      allow create: if isAuthenticated();
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+    
+    // Push-Notification Subscriptions
+    match /notification_subscriptions/{subscriptionId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && 
+                    (resource.data.userEmail == request.auth.token.email || isSuperAdmin());
+      allow delete: if isAuthenticated() && 
+                    (resource.data.userEmail == request.auth.token.email || isSuperAdmin());
+    }
+    
+    // Notifications History
+    match /notifications/{notificationId} {
+      allow read: if isSuperAdmin();
+      allow create: if isAuthenticated();
+    }
+    
         // Team-Substitutions - Verwaltung durch Admin und Vereinsvertreter
     match /team_substitutions/{substitutionId} {
       allow read: if true;

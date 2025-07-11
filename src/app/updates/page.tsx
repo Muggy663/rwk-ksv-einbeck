@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2">
-              <span>Aktuelle Version: 0.9.9.2 (08.07.2025)</span>
+              <span>Aktuelle Version: 0.9.9.3 (08.07.2025)</span>
             </Badge>
             <Badge variant="default" className="text-xs py-1 px-2 bg-green-600">
               <span>🌐 Live: rwk-einbeck.de</span>
@@ -33,8 +33,59 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.2</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.3</CardTitle>
               <Badge variant="secondary">Neu</Badge>
+            </div>
+            <CardDescription>11.07.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständiges Kommunikations- und Verwaltungssystem mit Push-Notifications, digitalem Protest-System und News-Management.</p>
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-purple-900 mb-2">🚀 Major Features Version 0.9.9.3</h4>
+              <div className="text-xs text-purple-700">
+                Komplettes Kommunikations-Ökosystem für moderne Vereinsverwaltung
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🔔 <strong>Push-Notifications System</strong>: FCM-Integration für sofortige Benachrichtigungen bei neuen Ergebnissen, Terminen und News</li>
+              <li>⚖️ <strong>Digitales Protest-System</strong>: Vollständiger Workflow Rundenwettkampfleiter → Sportausschuss mit Status-Tracking</li>
+              <li>📢 <strong>RWK-News Management</strong>: Professionelles Content-Management für offizielle Mitteilungen mit Kategorien und Prioritäten</li>
+              <li>📋 <strong>Funktionierendes Audit-Log</strong>: Vollständige Änderungsverfolgung aller CRUD-Operationen mit Statistik-Dashboard</li>
+              <li>🛡️ <strong>Content-Filter</strong>: Automatische Filterung unerlaubter Inhalte in allen Eingabefeldern</li>
+              <li>📱 <strong>Notification Settings</strong>: Granulare Kontrolle über Benachrichtigungstypen (Ergebnisse, Termine, News, Proteste)</li>
+              <li>🎯 <strong>Zielgruppen-Management</strong>: News für spezifische Benutzergruppen (Alle, Vereinsvertreter, Mannschaftsführer, Admins)</li>
+              <li>📊 <strong>Admin-Dashboard</strong>: Erweiterte Statistiken für News, Proteste und Audit-Aktivitäten</li>
+              <li>🔍 <strong>Erweiterte Suche</strong>: Filterbare Übersichten für News und Proteste mit Volltext-Suche</li>
+              <li>📝 <strong>Kommentar-System</strong>: Kommunikation zwischen Parteien bei Protesten mit internen/öffentlichen Kommentaren</li>
+              <li>🏷️ <strong>Tag-System</strong>: Kategorisierung und bessere Auffindbarkeit von News-Artikeln</li>
+              <li>📈 <strong>View-Tracking</strong>: Aufrufe und Engagement-Metriken für News-Artikel</li>
+              <li>🔒 <strong>Firestore Rules Update</strong>: Erweiterte Sicherheitsregeln für alle neuen Collections</li>
+              <li>⚡ <strong>Performance-Optimiert</strong>: Effiziente Datenbankabfragen und Caching-Strategien</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-purple-800">🚀 Kommunikations-Update</span>
+                  <p className="text-xs text-purple-600 mt-1">Push-Notifications + Protest-System + News + Audit-Log</p>
+                </div>
+                <span className="bg-purple-600 text-white px-3 py-1 rounded text-xs">
+                  🔔 Live
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <span className="text-muted-foreground text-sm">
+                Alle Details hier angezeigt
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.2</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>08.07.2025</CardDescription>
           </CardHeader>

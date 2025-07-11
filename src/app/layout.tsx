@@ -25,6 +25,11 @@ export const metadata: Metadata = {
   title: 'RWK App Einbeck',
   description: 'Die digitale Plattform für die Rundenwettkämpfe des Kreisschützenverbandes Einbeck',
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'RWK Einbeck'
+  },
 };
 
 interface RootLayoutProps {
@@ -37,8 +42,14 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="de" suppressHydrationWarning>
       <head>
         <Script src="/disable-onboarding.js" strategy="beforeInteractive" />
-        <meta name="theme-color" content="#ffffff" />
-        <link rel="apple-touch-icon" href="/images/logo2.png" />
+        <meta name="theme-color" content="#1f2937" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="RWK Einbeck" />
+        <link rel="apple-touch-icon" href="/images/logo.png" />
+        <link rel="icon" href="/images/logo.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="application-name" content="RWK Einbeck" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider

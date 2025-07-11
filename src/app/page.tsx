@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ListChecks, Loader2, Info, CalendarDays, ChevronRight } from 'lucide-react';
+import { ListChecks, Loader2, Info, CalendarDays, ChevronRight, Newspaper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getUIDisciplineValueFromSpecificType, uiDisciplineFilterOptions } from '@/types/rwk';
@@ -42,111 +42,83 @@ export default function HomePage() {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(true);
 
-  // Lade die letzten Ergebnis-Updates
+  // Lade Updates und Termine parallel
   useEffect(() => {
-    const fetchUpdates = async () => {
+    const loadData = async () => {
       setLoadingUpdates(true);
-      try {
-        const updatesQuery = query(
-          collection(db, LEAGUE_UPDATES_COLLECTION),
-          orderBy("timestamp", "desc"),
-          firestoreLimit(7)
-        );
-        const querySnapshot = await getDocs(updatesQuery);
-        const fetchedUpdates: LeagueUpdate[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          fetchedUpdates.push({ 
-            id: doc.id, 
-            ...data,
-            leagueType: data.leagueType
-          } as LeagueUpdate);
-        });
-        setUpdates(fetchedUpdates);
-      } catch (error) {
-        console.error("Error fetching league updates for homepage:", error);
-      } finally {
-        setLoadingUpdates(false);
-      }
-    };
-
-    fetchUpdates();
-  }, []);
-
-  // Lade die nächsten Termine
-  useEffect(() => {
-    const loadEvents = async () => {
       setIsLoadingEvents(true);
+      
       try {
-        // Bereinige abgelaufene Termine
-        try {
-          const deletedCount = await cleanupExpiredEvents();
-          if (deletedCount > 0) {
-            console.log(`${deletedCount} abgelaufene Termine wurden automatisch gelöscht.`);
-          }
-        } catch (error) {
-          console.error('Fehler bei der automatischen Bereinigung:', error);
+        // Parallele Abfragen für bessere Performance
+        const [updatesResult, eventsResult] = await Promise.allSettled([
+          // Updates laden
+          getDocs(query(
+            collection(db, LEAGUE_UPDATES_COLLECTION),
+            orderBy("timestamp", "desc"),
+            firestoreLimit(5)
+          )),
+          // Termine laden (nächste 90 Tage für mehr Termine)
+          (() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const endDate = new Date(today);
+            endDate.setDate(endDate.getDate() + 90); // 90 Tage voraus für mehr Termine
+            return fetchEvents(today, endDate);
+          })()
+        ]);
+        
+        // Updates verarbeiten
+        if (updatesResult.status === 'fulfilled') {
+          const fetchedUpdates: LeagueUpdate[] = [];
+          updatesResult.value.forEach((doc) => {
+            const data = doc.data();
+            fetchedUpdates.push({ 
+              id: doc.id, 
+              ...data,
+              leagueType: data.leagueType
+            } as LeagueUpdate);
+          });
+          setUpdates(fetchedUpdates);
+        } else {
+          console.error("Fehler beim Laden der Updates:", updatesResult.reason);
         }
         
-        // Lade alle zukünftigen Termine (bis Ende nächstes Jahr)
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const endDate = new Date(today.getFullYear() + 1, 11, 31); // Ende nächstes Jahr
-        
-        // Debug-Ausgabe
-        console.log("Startseite: Lade Termine von", today, "bis", endDate);
-        
-        const allEvents = await fetchEvents(today, endDate);
-        console.log("Startseite: Geladene Termine:", allEvents.length);
-        
-        // Filtere nur zukünftige Termine
-        const futureEvents = allEvents.filter(event => {
-          if (!event || !event.date) return false;
+        // Termine verarbeiten
+        if (eventsResult.status === 'fulfilled') {
+          const allEvents = eventsResult.value;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
           
-          try {
-            // Konvertiere das Datum korrekt
-            const eventDate = event.date instanceof Date ? 
-              event.date : 
-              new Date(event.date);
-            
-            // Setze Uhrzeit auf 0 für Vergleich
-            const eventDateOnly = new Date(eventDate);
-            eventDateOnly.setHours(0, 0, 0, 0);
-            
-            // Vergleiche nur die Datumswerte
-            return eventDateOnly >= today;
-          } catch (error) {
-            console.error('Fehler beim Filtern nach Datum:', error);
-            return false;
-          }
-        });
+          // Filtere und sortiere Termine
+          const futureEvents = allEvents
+            .filter(event => {
+              if (!event?.date) return false;
+              const eventDate = event.date instanceof Date ? event.date : new Date(event.date);
+              return eventDate >= today;
+            })
+            .sort((a, b) => {
+              const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+              const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+              return dateA.getTime() - dateB.getTime();
+            })
+            .slice(0, 3);
+          
+          console.log(`Startseite: Gefilterte Termine: ${futureEvents.length}`);
+          
+          setUpcomingEvents(futureEvents);
+        } else {
+          console.error("Fehler beim Laden der Termine:", eventsResult.reason);
+        }
         
-        console.log("Startseite: Zukünftige Termine:", futureEvents.length);
-        
-        // Sortiere nach Datum
-        const sortedEvents = [...futureEvents].sort((a, b) => {
-          try {
-            if (!a.date || !b.date) return 0;
-            const dateA = a.date instanceof Date ? a.date : new Date(a.date);
-            const dateB = b.date instanceof Date ? b.date : new Date(b.date);
-            return dateA.getTime() - dateB.getTime();
-          } catch (error) {
-            console.error('Fehler beim Sortieren nach Datum:', error);
-            return 0;
-          }
-        });
-        
-        // Nimm die ersten 4
-        setUpcomingEvents(sortedEvents.slice(0, 4)); // Zeige maximal 4 Termine an
-        console.log("Startseite: Angezeigte Termine:", sortedEvents.slice(0, 4).length);
       } catch (error) {
-        console.error('Fehler beim Laden der Termine:', error);
+        console.error('Fehler beim Laden der Startseiten-Daten:', error);
       } finally {
+        setLoadingUpdates(false);
         setIsLoadingEvents(false);
       }
     };
 
-    loadEvents();
+    loadData();
   }, []);
 
   // Funktion zum Bestimmen der Badge-Farbe basierend auf dem Termintyp
@@ -209,7 +181,7 @@ export default function HomePage() {
       </div>
 
       {/* Karten-Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         {/* Letzte Ergebnis-Updates */}
         <Card className="md:col-span-2 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader>
@@ -268,7 +240,7 @@ export default function HomePage() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center">
               <CalendarDays className="mr-2 h-5 w-5" />
-              Nächste Termine
+              Nächste 3 Termine
             </CardTitle>
             <CardDescription>
               Die nächsten anstehenden Wettkämpfe
@@ -327,6 +299,32 @@ export default function HomePage() {
                 </Button>
               </div>
             )}
+          </CardContent>
+        </Card>
+        
+        {/* RWK-News */}
+        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Newspaper className="mr-2 h-5 w-5" />
+              Neuigkeiten
+            </CardTitle>
+            <CardDescription>
+              Aktuelle Mitteilungen
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                Hier werden bald die neuesten RWK-News angezeigt.
+              </div>
+              <Button asChild variant="default" className="w-full">
+                <Link href="/news">
+                  Alle News anzeigen
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

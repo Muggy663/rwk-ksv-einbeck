@@ -9,31 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Loader2, History, Search, Filter, Calendar, User, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { auditLogService, AuditLogEntry } from '@/lib/services/audit-service';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
-interface AuditEntry {
-  id: string;
-  timestamp: Timestamp;
-  userId: string;
-  userName: string;
-  action: string;
-  entityType: string;
-  entityId: string;
-  details: {
-    before?: any;
-    after?: any;
-    description?: string;
-  };
-  leagueId?: string;
-  leagueName?: string;
-  teamId?: string;
-  teamName?: string;
-  shooterId?: string;
-  shooterName?: string;
-}
+
 
 interface AuditTrailProps {
   entityType?: string;
@@ -49,8 +29,8 @@ export function AuditTrail({
   showFilters = true 
 }: AuditTrailProps) {
   const { toast } = useToast();
-  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
-  const [filteredEntries, setFilteredEntries] = useState<AuditEntry[]>([]);
+  const [auditEntries, setAuditEntries] = useState<AuditLogEntry[]>([]);
+  const [filteredEntries, setFilteredEntries] = useState<AuditLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('');
@@ -64,28 +44,18 @@ export function AuditTrail({
     const fetchAuditEntries = async () => {
       setIsLoading(true);
       try {
-        let auditQuery = collection(db, 'audit_logs');
-        let queryConstraints = [];
+        let entries: AuditLogEntry[];
         
-        // Filter nach Entitätstyp und ID, falls angegeben
-        if (entityType) {
-          queryConstraints.push(where('entityType', '==', entityType));
+        if (entityType && entityId) {
+          // Spezifische Entität
+          entries = await auditLogService.getLogsForEntity(entityType, entityId);
+        } else if (entityType) {
+          // Nach Entitätstyp filtern
+          entries = await auditLogService.getLogsByEntityType(entityType, entryLimit);
+        } else {
+          // Alle Einträge
+          entries = await auditLogService.getAllLogs(entryLimit);
         }
-        if (entityId) {
-          queryConstraints.push(where('entityId', '==', entityId));
-        }
-        
-        // Sortierung und Limit
-        queryConstraints.push(orderBy('timestamp', 'desc'));
-        queryConstraints.push(limit(entryLimit));
-        
-        const q = query(auditQuery, ...queryConstraints);
-        const snapshot = await getDocs(q);
-        
-        const entries = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as AuditEntry));
         
         setAuditEntries(entries);
         setFilteredEntries(entries);
@@ -173,7 +143,7 @@ export function AuditTrail({
       
       filtered = filtered.filter(entry => {
         if (!entry.timestamp) return false;
-        const entryDate = entry.timestamp.toDate();
+        const entryDate = entry.timestamp instanceof Date ? entry.timestamp : new Date(entry.timestamp);
         return entryDate >= filterDate;
       });
     }
@@ -182,10 +152,10 @@ export function AuditTrail({
   }, [searchTerm, actionFilter, dateFilter, userFilter, auditEntries]);
 
   // Formatiere Zeitstempel für die Anzeige
-  const formatTimestamp = (timestamp: Timestamp) => {
-    if (!timestamp || !timestamp.toDate) return '-';
+  const formatTimestamp = (timestamp: Date) => {
+    if (!timestamp) return '-';
     try {
-      const date = timestamp.toDate();
+      const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
       return format(date, 'dd.MM.yyyy HH:mm:ss', { locale: de });
     } catch (error) {
       console.error('Fehler beim Formatieren des Zeitstempels:', error);
@@ -194,7 +164,7 @@ export function AuditTrail({
   };
 
   // Generiere eine lesbare Beschreibung der Änderung
-  const getChangeDescription = (entry: AuditEntry) => {
+  const getChangeDescription = (entry: AuditLogEntry) => {
     if (entry.details?.description) {
       return entry.details.description;
     }

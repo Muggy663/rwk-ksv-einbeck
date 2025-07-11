@@ -153,10 +153,9 @@ export default function AddTerminPage() {
     setIsSubmitting(true);
     
     // Prüfe Titel auf verbotene Wörter
-    console.log('Prüfe Titel:', title, 'Profanity:', containsProfanity(title));
     if (containsProfanity(title)) {
       const forbiddenWords = findProfanity(title);
-      console.log('Verbotene Wörter im Titel:', forbiddenWords);
+      alert(`Unerlaubter Inhalt im Titel: ${forbiddenWords.join(', ')}`);
       toast({
         title: 'Unerlaubter Inhalt',
         description: `Der Titel enthält unerlaubte Wörter: ${forbiddenWords.join(', ')}`,
@@ -167,10 +166,9 @@ export default function AddTerminPage() {
     }
     
     // Prüfe Beschreibung auf verbotene Wörter
-    console.log('Prüfe Beschreibung:', description, 'Profanity:', containsProfanity(description));
     if (description && containsProfanity(description)) {
       const forbiddenWords = findProfanity(description);
-      console.log('Verbotene Wörter in Beschreibung:', forbiddenWords);
+      alert(`Unerlaubter Inhalt in der Beschreibung: ${forbiddenWords.join(', ')}`);
       toast({
         title: 'Unerlaubter Inhalt',
         description: `Die Beschreibung enthält unerlaubte Wörter: ${forbiddenWords.join(', ')}`,

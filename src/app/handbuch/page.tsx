@@ -20,7 +20,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch RWK Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 06. Juli 2025, Version 0.9.9)
+            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 11. Juli 2025, Version 0.9.9.3)
           </p>
         </div>
       </div>
@@ -68,6 +68,9 @@ export default function HandbuchPage() {
                          <li><a href="#rwk-ordnung" className="text-primary hover:underline">RWK-Ordnung</a></li>
                          <li><a href="#dokumente" className="text-primary hover:underline">Dokumente</a></li>
                          <li><a href="#statistiken" className="text-primary hover:underline">Statistiken</a></li>
+                         <li><a href="#news-system" className="text-primary hover:underline">News-System</a></li>
+                         <li><a href="#protest-system" className="text-primary hover:underline">Protest-System</a></li>
+                         <li><a href="#push-notifications" className="text-primary hover:underline">Push-Benachrichtigungen</a></li>
                     </ul>
                 </li>
                 <li><a href="#support" className="text-primary hover:underline">5. Support</a>
@@ -316,6 +319,51 @@ export default function HandbuchPage() {
                   <li><strong>Responsive Design:</strong> Optimale Darstellung auf allen Geräten, vom Desktop bis zum Smartphone</li>
                 </ul>
               </div>
+            </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader><CardTitle id="news-system" className="text-xl text-accent scroll-mt-24">News-System</CardTitle></CardHeader>
+            <CardContent>
+              <p>Das News-System ermöglicht die Verwaltung und Anzeige offizieller Mitteilungen des Kreisschützenverbandes.</p>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li><strong>Kategorien:</strong> News werden in Allgemein, Ergebnisse, Termine, Regeländerung und Wichtig unterteilt</li>
+                <li><strong>Prioritäten:</strong> Normal, Hoch und Dringend für bessere Sichtbarkeit wichtiger Mitteilungen</li>
+                <li><strong>Zielgruppen:</strong> News können für alle Benutzer oder spezifische Gruppen (Vereinsvertreter, Mannschaftsführer, Admins) erstellt werden</li>
+                <li><strong>Content-Filter:</strong> Automatische Filterung unerlaubter Inhalte</li>
+                <li><strong>Suchfunktion:</strong> Volltext-Suche und Filterung nach Kategorien</li>
+                <li><strong>Admin-Features:</strong> Entwurf-Modus, Pinning wichtiger Artikel, Tag-System</li>
+              </ul>
+            </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader><CardTitle id="protest-system" className="text-xl text-accent scroll-mt-24">Protest-System</CardTitle></CardHeader>
+            <CardContent>
+              <p>Digitales System für die Einreichung und Bearbeitung von Einsprüchen und Beschwerden.</p>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li><strong>Workflow:</strong> Protest einreichen → Prüfung durch Rundenwettkampfleiter → Entscheidung und Benachrichtigung</li>
+                <li><strong>Kategorien:</strong> Ergebnis-Einsprüche, Verhalten, Regelverstöße, Sonstiges</li>
+                <li><strong>Status-Tracking:</strong> Eingereicht, In Bearbeitung, Entschieden, Abgelehnt</li>
+                <li><strong>Kommentar-System:</strong> Kommunikation zwischen Einreicher und Rundenwettkampfleiter</li>
+                <li><strong>Prioritäten:</strong> Niedrig, Mittel, Hoch für bessere Bearbeitung</li>
+                <li><strong>Transparenz:</strong> Vollständige Nachverfolgung aller Protest-Aktivitäten</li>
+              </ul>
+            </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader><CardTitle id="push-notifications" className="text-xl text-accent scroll-mt-24">Push-Benachrichtigungen</CardTitle></CardHeader>
+            <CardContent>
+              <p>Sofortige Benachrichtigungen über wichtige Ereignisse direkt im Browser.</p>
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li><strong>Benachrichtigungstypen:</strong> Neue Ergebnisse, Termine, News und Proteste</li>
+                <li><strong>Granulare Kontrolle:</strong> Separate Ein-/Ausschaltung für jeden Benachrichtigungstyp</li>
+                <li><strong>Browser-Integration:</strong> Funktioniert auch wenn die App geschlossen ist</li>
+                <li><strong>Click-Actions:</strong> Benachrichtigungen öffnen direkt die relevante Seite</li>
+                <li><strong>Einstellungen:</strong> Unter "Benachrichtigungen" können Sie Ihre Präferenzen verwalten</li>
+                <li><strong>Berechtigung:</strong> Browser-Berechtigung erforderlich - wird beim ersten Aktivieren abgefragt</li>
+              </ul>
             </CardContent>
         </Card>
       </section>

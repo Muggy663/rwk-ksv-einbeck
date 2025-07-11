@@ -12,6 +12,7 @@ import {
   CalendarDays, Smartphone, Euro
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AdminStats } from '@/components/admin/AdminStats';
 
 interface AgendaItem {
   text: string;
@@ -280,6 +281,9 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
+      {/* Admin-Statistiken */}
+      <AdminStats />
+      
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

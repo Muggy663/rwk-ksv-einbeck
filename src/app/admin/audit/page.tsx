@@ -1,13 +1,38 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuditTrail } from '@/components/audit/AuditTrail';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { History } from 'lucide-react';
+import { History, BarChart3, Activity, Users, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { auditLogService } from '@/lib/services/audit-service';
 import Link from 'next/link';
 
 export default function AuditPage() {
+  const [stats, setStats] = useState<{
+    total: number;
+    creates: number;
+    updates: number;
+    deletes: number;
+    byEntityType: Record<string, number>;
+  } | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const auditStats = await auditLogService.getAuditStats();
+        setStats(auditStats);
+      } catch (error) {
+        console.error('Fehler beim Laden der Audit-Statistiken:', error);
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+    
+    loadStats();
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -21,6 +46,84 @@ export default function AuditPage() {
           <Link href="/admin/audit/create-samples">Beispiel-Einträge erstellen</Link>
         </Button>
       </div>
+      
+      {/* Statistiken */}
+      {!isLoadingStats && stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Gesamt</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <p className="text-xs text-muted-foreground">Audit-Einträge</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Erstellt</CardTitle>
+              <div className="h-4 w-4 bg-green-500 rounded-full" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{stats.creates}</div>
+              <p className="text-xs text-muted-foreground">Neue Einträge</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Aktualisiert</CardTitle>
+              <div className="h-4 w-4 bg-blue-500 rounded-full" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{stats.updates}</div>
+              <p className="text-xs text-muted-foreground">Änderungen</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Gelöscht</CardTitle>
+              <div className="h-4 w-4 bg-red-500 rounded-full" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{stats.deletes}</div>
+              <p className="text-xs text-muted-foreground">Löschungen</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      
+      {/* Entitätstyp-Statistiken */}
+      {!isLoadingStats && stats && Object.keys(stats.byEntityType).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Aktivität nach Typ
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Object.entries(stats.byEntityType).map(([type, count]) => (
+                <div key={type} className="text-center">
+                  <div className="text-2xl font-bold">{count}</div>
+                  <div className="text-sm text-muted-foreground capitalize">
+                    {type === 'score' ? 'Ergebnisse' :
+                     type === 'news_article' ? 'News' :
+                     type === 'protest' ? 'Proteste' :
+                     type === 'team' ? 'Teams' :
+                     type === 'shooter' ? 'Schützen' :
+                     type}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="mb-6">
         <CardHeader>
