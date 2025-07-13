@@ -16,7 +16,7 @@ import { ModeToggle } from '@/components/ui/mode-toggle';
 import { SkipLink } from '@/components/ui/skip-link';
 import { InstallPrompt } from '@/components/ui/install-prompt';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
-import { SentryClientInit } from '@/components/sentry-client-init';
+// import { SentryClientInit } from '@/components/sentry-client-init';
 
 
 const inter = Inter({ subsets: ['latin'] });
@@ -50,6 +50,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <link rel="icon" href="/images/logo.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="RWK Einbeck" />
+        <meta name="msapplication-TileColor" content="#1f2937" />
+        <meta name="msapplication-config" content="/browserconfig.xml" />
+        <link rel="mask-icon" href="/images/logo.png" color="#1f2937" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider
@@ -88,7 +91,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <ServiceWorkerRegistration />
           <InstallPrompt />
           <OfflineIndicator />
-          <SentryClientInit />
+          {/* <SentryClientInit /> */}
             </div>
           </ClubProvider>
         </AuthProvider>

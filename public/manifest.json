@@ -4,14 +4,20 @@
   "description": "Die digitale Plattform für die Rundenwettkämpfe des Kreisschützenverbandes Einbeck",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#ffffff",
   "theme_color": "#1f2937",
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
   "orientation": "portrait",
   "scope": "/",
   "lang": "de",
   "categories": ["sports", "utilities"],
   "permissions": ["notifications"],
   "gcm_sender_id": "103953800507",
+  "prefer_related_applications": false,
+  "related_applications": [],
   "icons": [
     {
       "src": "/images/logo.png",

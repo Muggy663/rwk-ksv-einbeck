@@ -61,6 +61,9 @@ export default function UpdatesPage() {
               <li>📈 <strong>View-Tracking</strong>: Aufrufe und Engagement-Metriken für News-Artikel</li>
               <li>🔒 <strong>Firestore Rules Update</strong>: Erweiterte Sicherheitsregeln für alle neuen Collections</li>
               <li>⚡ <strong>Performance-Optimiert</strong>: Effiziente Datenbankabfragen und Caching-Strategien</li>
+              <li>📱 <strong>News auf Startseite</strong>: Echte Integration der neuesten veröffentlichten Artikel</li>
+              <li>🔧 <strong>PWA-Verbesserungen</strong>: Bessere App-Erkennung und browserconfig.xml für Windows</li>
+              <li>🚫 <strong>Sentry entfernt</strong>: Keine Trial-Abhängigkeiten mehr, App läuft vollständig eigenständig</li>
             </ul>
             <div className="mt-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border">
               <div className="flex items-center justify-between">

@@ -14,6 +14,7 @@ import { format, addDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { fetchEvents } from '@/lib/services/calendar-service';
 import { cleanupExpiredEvents } from '@/lib/services/event-cleanup';
+import { newsService } from '@/lib/services/news-service';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
@@ -41,6 +42,8 @@ export default function HomePage() {
   const [loadingUpdates, setLoadingUpdates] = useState<boolean>(true);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(true);
+  const [latestNews, setLatestNews] = useState<any[]>([]);
+  const [isLoadingNews, setIsLoadingNews] = useState<boolean>(true);
 
   // Lade Updates und Termine parallel
   useEffect(() => {
@@ -50,7 +53,7 @@ export default function HomePage() {
       
       try {
         // Parallele Abfragen für bessere Performance
-        const [updatesResult, eventsResult] = await Promise.allSettled([
+        const [updatesResult, eventsResult, newsResult] = await Promise.allSettled([
           // Updates laden
           getDocs(query(
             collection(db, LEAGUE_UPDATES_COLLECTION),
@@ -64,7 +67,9 @@ export default function HomePage() {
             const endDate = new Date(today);
             endDate.setDate(endDate.getDate() + 90); // 90 Tage voraus für mehr Termine
             return fetchEvents(today, endDate);
-          })()
+          })(),
+          // News laden (neueste 3)
+          newsService.getPublishedArticles(3)
         ]);
         
         // Updates verarbeiten
@@ -110,11 +115,19 @@ export default function HomePage() {
           console.error("Fehler beim Laden der Termine:", eventsResult.reason);
         }
         
+        // News verarbeiten
+        if (newsResult.status === 'fulfilled') {
+          setLatestNews(newsResult.value || []);
+        } else {
+          console.error("Fehler beim Laden der News:", newsResult.reason);
+        }
+        
       } catch (error) {
         console.error('Fehler beim Laden der Startseiten-Daten:', error);
       } finally {
         setLoadingUpdates(false);
         setIsLoadingEvents(false);
+        setIsLoadingNews(false);
       }
     };
 
@@ -314,17 +327,56 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="text-sm text-muted-foreground">
-                Hier werden bald die neuesten RWK-News angezeigt.
+            {isLoadingNews ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <p className="ml-3 text-muted-foreground">Lade News...</p>
               </div>
-              <Button asChild variant="default" className="w-full">
-                <Link href="/news">
-                  Alle News anzeigen
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
+            ) : latestNews.length > 0 ? (
+              <div className="space-y-3">
+                {latestNews.slice(0, 2).map((article) => (
+                  <div key={article.id} className="border-b last:border-0 pb-3 last:pb-0">
+                    <h4 className="font-medium text-sm line-clamp-2">{article.title}</h4>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {article.excerpt || article.content.substring(0, 100) + '...'}
+                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(article.publishedAt || article.createdAt).toLocaleDateString('de-DE')}
+                      </span>
+                      {article.priority === 'dringend' && (
+                        <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                          Dringend
+                        </span>
+                      )}
+                      {article.priority === 'hoch' && (
+                        <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">
+                          Wichtig
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <Button asChild variant="default" className="w-full mt-2">
+                  <Link href="/news">
+                    Alle News anzeigen
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="text-sm text-muted-foreground">
+                  Noch keine News veröffentlicht.
+                </div>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/news">
+                    News-Bereich öffnen
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
