@@ -15,10 +15,18 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Resend is available
+    if (!resend) {
+      return NextResponse.json({ 
+        success: false, 
+        message: 'E-Mail-Service nicht konfiguriert. RESEND_API_KEY fehlt.' 
+      }, { status: 500 });
+    }
+    
     const formData = await request.formData();
     
     const subject = formData.get('subject') as string;

@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Resend is available
+    if (!resend) {
+      console.log('⚠️ Resend API Key nicht konfiguriert - Webhook übersprungen');
+      return NextResponse.json({ received: true, message: 'API Key fehlt' });
+    }
+    
     const data = await request.json();
     
     console.log('📧 Webhook erhalten:', data.type);
