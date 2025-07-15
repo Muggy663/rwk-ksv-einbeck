@@ -216,6 +216,16 @@ match /users/{userId} {
       allow create: if isAuthenticated();
     }
     
+    // E-Mail Kontakte
+    match /email_contacts/{contactId} {
+      allow read, write: if isSuperAdmin();
+    }
+    
+    // Admin-Einstellungen
+    match /admin_settings/{settingId} {
+      allow read, write: if isSuperAdmin();
+    }
+    
         // Team-Substitutions - Verwaltung durch Admin und Vereinsvertreter
     match /team_substitutions/{substitutionId} {
       allow read: if true;

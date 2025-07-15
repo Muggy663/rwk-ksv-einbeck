@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2">
-              <span>Aktuelle Version: 0.9.9.3 (08.07.2025)</span>
+              <span>Aktuelle Version: 0.9.9.3b (11.07.2025)</span>
             </Badge>
             <Badge variant="default" className="text-xs py-1 px-2 bg-green-600">
               <span>🌐 Live: rwk-einbeck.de</span>
@@ -33,10 +33,100 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.3</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.3b</CardTitle>
               <Badge variant="secondary">Neu</Badge>
             </div>
             <CardDescription>11.07.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständiges E-Mail-System mit Batch-Versand, anpassbarer Signatur und News-Optimierung.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">📧 E-Mail-System Version 0.9.9.3b</h4>
+              <div className="text-xs text-green-700">
+                Professionelles E-Mail-System für Rundschreiben an 55+ Sportleiter
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🔔 <strong>Push-Notifications System</strong>: FCM-Integration für sofortige Benachrichtigungen bei neuen Ergebnissen, Terminen und News</li>
+              <li>⚖️ <strong>Digitales Protest-System</strong>: Vollständiger Workflow Rundenwettkampfleiter → Sportausschuss mit Status-Tracking</li>
+              <li>📢 <strong>RWK-News Management</strong>: Professionelles Content-Management für offizielle Mitteilungen mit Kategorien und Prioritäten</li>
+              <li>📋 <strong>Funktionierendes Audit-Log</strong>: Vollständige Änderungsverfolgung aller CRUD-Operationen mit Statistik-Dashboard</li>
+              <li>🛡️ <strong>Content-Filter</strong>: Automatische Filterung unerlaubter Inhalte in allen Eingabefeldern</li>
+              <li>📱 <strong>Notification Settings</strong>: Granulare Kontrolle über Benachrichtigungstypen (Ergebnisse, Termine, News, Proteste)</li>
+              <li>🎯 <strong>Zielgruppen-Management</strong>: News für spezifische Benutzergruppen (Alle, Vereinsvertreter, Mannschaftsführer, Admins)</li>
+              <li>📊 <strong>Admin-Dashboard</strong>: Erweiterte Statistiken für News, Proteste und Audit-Aktivitäten</li>
+              <li>🔍 <strong>Erweiterte Suche</strong>: Filterbare Übersichten für News und Proteste mit Volltext-Suche</li>
+              <li>📝 <strong>Kommentar-System</strong>: Kommunikation zwischen Parteien bei Protesten mit internen/öffentlichen Kommentaren</li>
+              <li>🏷️ <strong>Tag-System</strong>: Kategorisierung und bessere Auffindbarkeit von News-Artikeln</li>
+              <li>📈 <strong>View-Tracking</strong>: Aufrufe und Engagement-Metriken für News-Artikel</li>
+              <li>🔒 <strong>Firestore Rules Update</strong>: Erweiterte Sicherheitsregeln für alle neuen Collections</li>
+              <li>⚡ <strong>Performance-Optimiert</strong>: Effiziente Datenbankabfragen und Caching-Strategien</li>
+              <li>📧 <strong>Vollständiges E-Mail-System</strong>: Sportleiter + App-Benutzer, 55+ Kontakte importiert</li>
+              <li>✍️ <strong>Anpassbare E-Mail-Signatur</strong>: Marcel Bünger, individuell konfigurierbar</li>
+              <li>📊 <strong>E-Mail-Logs Dashboard</strong>: Monitoring, Troubleshooting, Resend-Integration</li>
+              <li>📧 <strong>Batch-Versand (50/Batch)</strong>: 422 Error Fix, Rate-Limiting umgangen</li>
+              <li>📬 <strong>Bounce-Handling</strong>: Automatische Admin-Benachrichtigungen bei E-Mail-Problemen</li>
+              <li>📋 <strong>Kontakte-Verwaltung</strong>: CRUD für E-Mail-Verteiler, Import/Export</li>
+              <li>📧 <strong>Reply-To Schutz</strong>: Automatische Weiterleitung an rwk-leiter-ksv@gmx.de</li>
+              <li>📰 <strong>News-Anzeige erweitert</strong>: 300→800 Zeichen für vollständige Artikel</li>
+              <li>🔒 <strong>Firestore Rules erweitert</strong>: admin_settings + email_contacts abgesichert</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">📧 E-Mail-System Live</span>
+                  <p className="text-xs text-green-600 mt-1">Batch-Versand + Signatur + Monitoring + 55+ Kontakte</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  📧 Bereit
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <span className="text-muted-foreground text-sm">
+                Alle Details hier angezeigt
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.3a</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>11.07.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Deployment-Verifikation und erste PWA-Optimierungen.</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-blue-900 mb-2">🔧 Verifikation Version 0.9.9.3a</h4>
+              <div className="text-xs text-blue-700">
+                Deployment-Test und erste Optimierungen
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📱 <strong>News auf Startseite</strong>: Echte Integration der neuesten veröffentlichten Artikel</li>
+              <li>🔧 <strong>PWA-Verbesserungen</strong>: Bessere App-Erkennung und browserconfig.xml für Windows</li>
+              <li>🚫 <strong>Sentry entfernt</strong>: Keine Trial-Abhängigkeiten mehr, App läuft vollständig eigenständig</li>
+              <li>🔍 <strong>Deployment-Verifikation</strong>: Version im Footer für erfolgreiche Updates</li>
+            </ul>
+            <div className="mt-4 flex justify-end">
+              <span className="text-muted-foreground text-sm">
+                Alle Details hier angezeigt
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.3</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>15.07.2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Vollständiges Kommunikations- und Verwaltungssystem mit Push-Notifications, digitalem Protest-System und News-Management.</p>
@@ -55,15 +145,6 @@ export default function UpdatesPage() {
               <li>📱 <strong>Notification Settings</strong>: Granulare Kontrolle über Benachrichtigungstypen (Ergebnisse, Termine, News, Proteste)</li>
               <li>🎯 <strong>Zielgruppen-Management</strong>: News für spezifische Benutzergruppen (Alle, Vereinsvertreter, Mannschaftsführer, Admins)</li>
               <li>📊 <strong>Admin-Dashboard</strong>: Erweiterte Statistiken für News, Proteste und Audit-Aktivitäten</li>
-              <li>🔍 <strong>Erweiterte Suche</strong>: Filterbare Übersichten für News und Proteste mit Volltext-Suche</li>
-              <li>📝 <strong>Kommentar-System</strong>: Kommunikation zwischen Parteien bei Protesten mit internen/öffentlichen Kommentaren</li>
-              <li>🏷️ <strong>Tag-System</strong>: Kategorisierung und bessere Auffindbarkeit von News-Artikeln</li>
-              <li>📈 <strong>View-Tracking</strong>: Aufrufe und Engagement-Metriken für News-Artikel</li>
-              <li>🔒 <strong>Firestore Rules Update</strong>: Erweiterte Sicherheitsregeln für alle neuen Collections</li>
-              <li>⚡ <strong>Performance-Optimiert</strong>: Effiziente Datenbankabfragen und Caching-Strategien</li>
-              <li>📱 <strong>News auf Startseite</strong>: Echte Integration der neuesten veröffentlichten Artikel</li>
-              <li>🔧 <strong>PWA-Verbesserungen</strong>: Bessere App-Erkennung und browserconfig.xml für Windows</li>
-              <li>🚫 <strong>Sentry entfernt</strong>: Keine Trial-Abhängigkeiten mehr, App läuft vollständig eigenständig</li>
             </ul>
             <div className="mt-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border">
               <div className="flex items-center justify-between">

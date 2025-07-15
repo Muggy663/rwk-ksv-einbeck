@@ -67,46 +67,48 @@ export default function EmailSystemPage() {
 
   const loadContacts = async () => {
     try {
-      // Lade aus user_permissions
+      const loadedContacts: EmailContact[] = [];
+      
+      // 1. Lade Sportleiter aus email_contacts
+      const emailContactsQuery = query(collection(db, 'email_contacts'), orderBy('name', 'asc'));
+      const emailContactsSnapshot = await getDocs(emailContactsQuery);
+      
+      emailContactsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        loadedContacts.push({
+          id: `email_${doc.id}`,
+          name: data.name,
+          email: data.email,
+          groups: [data.group || 'sportleiter'],
+          isActive: true,
+          role: data.role || 'vereinsvertreter'
+        });
+      });
+      
+      // 2. Lade App-Benutzer aus user_permissions
       const userPermissionsQuery = query(collection(db, 'user_permissions'));
       const userPermissionsSnapshot = await getDocs(userPermissionsQuery);
       
-      const loadedContacts: EmailContact[] = [];
       userPermissionsSnapshot.docs.forEach(doc => {
         const data = doc.data();
         if (data.email && data.displayName) {
-          loadedContacts.push({
-            id: doc.id,
-            name: data.displayName,
-            email: data.email,
-            groups: [data.role || 'benutzer'],
-            isActive: data.isActive !== false,
-            role: data.role,
-            clubName: data.clubName
-          });
+          // Prüfe ob E-Mail bereits existiert
+          const existingContact = loadedContacts.find(c => c.email === data.email);
+          if (!existingContact) {
+            loadedContacts.push({
+              id: `user_${doc.id}`,
+              name: data.displayName,
+              email: data.email,
+              groups: [data.role || 'app_benutzer'],
+              isActive: data.isActive !== false,
+              role: data.role,
+              clubName: data.clubName
+            });
+          }
         }
       });
 
-      // Lade zusätzliche Kontakte aus email_contacts (falls vorhanden)
-      try {
-        const emailContactsQuery = query(collection(db, 'email_contacts'));
-        const emailContactsSnapshot = await getDocs(emailContactsQuery);
-        
-        emailContactsSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          loadedContacts.push({
-            id: doc.id,
-            name: data.name,
-            email: data.email,
-            groups: data.groups || [],
-            isActive: data.isActive !== false
-          });
-        });
-      } catch (error) {
-        console.log('Keine zusätzlichen E-Mail-Kontakte gefunden');
-      }
-
-      setContacts(loadedContacts);
+      setContacts(loadedContacts.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {
       console.error('Fehler beim Laden der Kontakte:', error);
       toast({
@@ -353,7 +355,7 @@ export default function EmailSystemPage() {
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm">
             <li><strong>Domain:</strong> rwk-einbeck.de (Strato)</li>
-            <li><strong>Absender:</strong> noreply@rwk-einbeck.de</li>
+            <li><strong>Absender:</strong> admin@rwk-einbeck.de</li>
             <li><strong>Status:</strong> DNS-Verifikation läuft</li>
             <li><strong>Resend:</strong> Kostenlos bis 3.000 E-Mails/Monat</li>
           </ul>
@@ -361,7 +363,7 @@ export default function EmailSystemPage() {
             <strong>Setup (.env.local):</strong><br/>
             <code className="text-xs">
               RESEND_API_KEY=re_...<br/>
-              RESEND_FROM_EMAIL=noreply@rwk-einbeck.de
+              RESEND_FROM_EMAIL=admin@rwk-einbeck.de
             </code>
           </div>
         </CardContent>

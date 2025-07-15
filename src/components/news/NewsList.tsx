@@ -247,7 +247,7 @@ export function NewsList({ showAll = false, onEdit, limit = 10 }: NewsListProps)
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="prose prose-sm max-w-none">
-                <p>{article.content.length > 300 ? article.content.substring(0, 300) + '...' : article.content}</p>
+                <p className="whitespace-pre-wrap">{article.content.length > 800 ? article.content.substring(0, 800) + '...' : article.content}</p>
               </div>
 
               {article.tags.length > 0 && (
