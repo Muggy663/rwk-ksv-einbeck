@@ -15,11 +15,11 @@ export default function EmailSettingsPage() {
   const [signature, setSignature] = useState(`---
 WICHTIGER HINWEIS: 
 Bitte antworten Sie NICHT auf diese E-Mail.
-Bei Fragen oder Rückmeldungen schreiben Sie an: rwk-leiter-ksv@gmx.de
+Bei Fragen oder Rückmeldungen schreiben Sie an: rwk-leiter-ksve@gmx.de
 
 Mit sportlichen Grüßen
 Marcel Bünger
-Rundenwettkampfleiter KSV Einbeck`);
+Rundenwettkampfleiter KSVE Einbeck`);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 

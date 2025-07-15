@@ -65,11 +65,11 @@ export async function POST(request: NextRequest) {
     let signature = `---
 WICHTIGER HINWEIS: 
 Bitte antworten Sie NICHT auf diese E-Mail.
-Bei Fragen oder Rückmeldungen schreiben Sie an: rwk-leiter-ksv@gmx.de
+Bei Fragen oder Rückmeldungen schreiben Sie an: rwk-leiter-ksve@gmx.de
 
 Mit sportlichen Grüßen
 Marcel Bünger
-Rundenwettkampfleiter KSV Einbeck`;
+Rundenwettkampfleiter KSVE Einbeck`;
     
     try {
       const settingsDoc = await getDoc(doc(db, 'admin_settings', 'email_signature'));
@@ -102,7 +102,7 @@ ${signature}`.trim();
           subject: subject,
           text: emailContent,
           html: emailContent.replace(/\n/g, '<br>'),
-          replyTo: 'rwk-leiter-ksv@gmx.de',
+          replyTo: 'rwk-leiter-ksve@gmx.de',
           attachments: attachments.length > 0 ? attachments : undefined
         };
         
