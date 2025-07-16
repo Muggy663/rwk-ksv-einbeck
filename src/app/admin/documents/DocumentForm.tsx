@@ -151,6 +151,7 @@ export function DocumentForm({ initialData, onSubmit, isSubmitting }: DocumentFo
                       <SelectItem value="formular">Formular</SelectItem>
                       <SelectItem value="ordnung">Regelwerk</SelectItem>
                       <SelectItem value="ligaliste">Ligalisten & Handtabellen</SelectItem>
+                      <SelectItem value="software">Software</SelectItem>
                       <SelectItem value="archiv">Archiv</SelectItem>
                     </SelectContent>
                   </Select>
@@ -247,6 +248,7 @@ export function DocumentForm({ initialData, onSubmit, isSubmitting }: DocumentFo
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="PDF">PDF</SelectItem>
+                    <SelectItem value="APK">APK</SelectItem>
                     <SelectItem value="Webseite">Webseite</SelectItem>
                   </SelectContent>
                 </Select>

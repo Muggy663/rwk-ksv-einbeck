@@ -6,7 +6,7 @@ export interface DocumentMeta {
   title: string;
   description: string;
   path: string; // Pfad im public-Ordner, z.B. "/documents/ausschreibungen/dokument.pdf"
-  category: 'ausschreibung' | 'formular' | 'ordnung' | 'archiv';
+  category: 'ausschreibung' | 'formular' | 'ordnung' | 'archiv' | 'software';
   date: string;
   fileType: 'PDF' | 'Webseite';
   fileSize: string;

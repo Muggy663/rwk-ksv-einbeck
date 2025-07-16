@@ -8,17 +8,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "0.9.9.3b"
-        setProperty("archivesBaseName", "RWK-Einbeck-v$versionName")
-    }
-    buildTypes {
-        debug {
-            archivesBaseName = "RWK-Einbeck-v$versionName"
-        }
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            archivesBaseName = "RWK-Einbeck-v$versionName"
+        versionName "0.9.9.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -28,11 +18,12 @@ android {
     }
     buildTypes {
         debug {
-            applicationIdSuffix ""
+            archivesBaseName = "RWK-Einbeck-v${defaultConfig.versionName}"
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            archivesBaseName = "RWK-Einbeck-v${defaultConfig.versionName}"
         }
     }
 }

@@ -20,7 +20,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch RWK Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 11. Juli 2025, Version 0.9.9.3)
+            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 16. Juli 2025, Version 0.9.9.4)
           </p>
         </div>
       </div>
@@ -71,6 +71,7 @@ export default function HandbuchPage() {
                          <li><a href="#news-system" className="text-primary hover:underline">News-System</a></li>
                          <li><a href="#protest-system" className="text-primary hover:underline">Protest-System</a></li>
                          <li><a href="#push-notifications" className="text-primary hover:underline">Push-Benachrichtigungen</a></li>
+                         <li><a href="#android-app" className="text-primary hover:underline">Android-App</a></li>
                     </ul>
                 </li>
                 <li><a href="#support" className="text-primary hover:underline">5. Support</a>
@@ -364,6 +365,36 @@ export default function HandbuchPage() {
                 <li><strong>Einstellungen:</strong> Unter "Benachrichtigungen" können Sie Ihre Präferenzen verwalten</li>
                 <li><strong>Berechtigung:</strong> Browser-Berechtigung erforderlich - wird beim ersten Aktivieren abgefragt</li>
               </ul>
+            </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader><CardTitle id="android-app" className="text-xl text-accent scroll-mt-24">Android-App</CardTitle></CardHeader>
+            <CardContent>
+              <p>Die RWK Einbeck App ist jetzt auch als native Android-App verfügbar für bessere Performance und einfachere Nutzung.</p>
+              
+              <div className="bg-green-50 p-3 rounded-md border border-green-200 mb-4">
+                <h4 className="font-medium text-green-800 mb-2">📱 Neue Android-App (Version 0.9.9.4)</h4>
+                <p className="text-green-700">Die native Android-App bietet alle Funktionen der Web-App mit verbesserter Performance und einfacherer Installation.</p>
+              </div>
+              
+              <ul className="list-disc pl-5 space-y-1 mt-2">
+                <li><strong>Download:</strong> APK-Datei über die App-Seite oder Dokumente-Bereich herunterladen</li>
+                <li><strong>Installation:</strong> 3 einfache Schritte - APK herunterladen, "Trotzdem installieren" bei "Unbekannte App", fertig!</li>
+                <li><strong>Kompatibilität:</strong> Android 5.0+ (unterstützt 95% aller Android-Geräte)</li>
+                <li><strong>Updates:</strong> 90% der Updates erfolgen automatisch über die Web-App, nur bei neuen Features ist eine neue APK nötig</li>
+                <li><strong>Warum "Unbekannte Quelle"?</strong> Normal bei Apps außerhalb Play Store - die RWK App ist sicher und offiziell</li>
+                <li><strong>iPhone-Nutzer:</strong> Können die Web-App im Safari-Browser nutzen oder als PWA zum Home-Bildschirm hinzufügen</li>
+              </ul>
+              
+              <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
+                <h4 className="font-medium text-blue-800 mb-2">Installation Schritt-für-Schritt:</h4>
+                <ol className="list-decimal pl-5 space-y-1 text-blue-700">
+                  <li>APK-Datei mit Chrome-Browser herunterladen</li>
+                  <li>Bei Warnung "Unbekannte App" auf "Trotzdem installieren" tippen</li>
+                  <li>RWK-App-Icon antippen und loslegen!</li>
+                </ol>
+              </div>
             </CardContent>
         </Card>
       </section>

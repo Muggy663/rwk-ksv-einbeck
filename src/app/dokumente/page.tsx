@@ -187,8 +187,6 @@ export default function DokumentePage() {
         </Card>
       ) : (
         <Tabs defaultValue="ausschreibungen" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* URL-Hash-Handler für direkte Navigation zu Tabs */}
-          {typeof window !== 'undefined' && window.location.hash === '#ligalisten' && activeTab !== 'ligalisten' && setActiveTab('ligalisten')}
           <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8">
             <TabsTrigger value="ausschreibungen">Ausschreibungen</TabsTrigger>
             <TabsTrigger value="formulare">Formulare</TabsTrigger>

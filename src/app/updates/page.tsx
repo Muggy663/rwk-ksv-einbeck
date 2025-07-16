@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2">
-              <span>Aktuelle Version: 0.9.9.3b (11.07.2025)</span>
+              <span>Aktuelle Version: 0.9.9.4 (16.01.2025)</span>
             </Badge>
             <Badge variant="default" className="text-xs py-1 px-2 bg-green-600">
               <span>🌐 Live: rwk-einbeck.de</span>
@@ -33,8 +33,50 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.3b</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.4</CardTitle>
               <Badge variant="secondary">Neu</Badge>
+            </div>
+            <CardDescription>16.07.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Download-Zähler für Dokumente und Native Android App Support.</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-blue-900 mb-2">📱 Neue Features Version 0.9.9.4</h4>
+              <div className="text-xs text-blue-700">
+                Download-Tracking und native App-Entwicklung
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📊 <strong>Download-Zähler</strong>: Tracking für alle PDF-Dokumente mit MongoDB-Speicherung</li>
+              <li>📱 <strong>Native Android App</strong>: Capacitor-Integration für APK-Erstellung</li>
+              <li>🔧 <strong>App-Build-System</strong>: Gradle-Konfiguration für saubere APK-Namen</li>
+              <li>🎯 <strong>App-Icon</strong>: RWK-Logo als natives App-Symbol</li>
+              <li>📋 <strong>Vollständige Dokumentation</strong>: Update-Guide und Build-Anleitung</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-blue-800">📱 Native App verfügbar</span>
+                  <p className="text-xs text-blue-600 mt-1">APK-Download für Android-Geräte</p>
+                </div>
+                <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                  📱 Beta
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Link href="/updates/v0.9.9.4" className="text-primary hover:text-primary/80 text-sm flex items-center">
+                Details <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.3b</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>11.07.2025</CardDescription>
           </CardHeader>

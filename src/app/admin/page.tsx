@@ -366,7 +366,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Dokumente, Ausschreibungen und Formulare hochladen und verwalten.
+              Dokumente, Ausschreibungen, Formulare und APK-Dateien hochladen und verwalten.
             </CardDescription>
             <Link href="/admin/documents" passHref>
               <Button className="w-full">Dokumente verwalten</Button>
