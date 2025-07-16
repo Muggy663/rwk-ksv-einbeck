@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'RWK Einbeck',
   webDir: '.next/static',
   server: {
-    url: 'https://rwk-app-einbeck.vercel.app',
+    url: 'https://rwk-einbeck.de',
     cleartext: true
   },
   android: {
