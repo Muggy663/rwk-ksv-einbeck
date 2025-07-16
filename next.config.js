@@ -1,6 +1,13 @@
 /** @type {import('next').NextConfig} */
+const isCapacitor = process.env.NEXT_CONFIG === 'capacitor';
+
 const nextConfig = {
   /* config options here */
+  ...(isCapacitor && {
+    output: 'export',
+    trailingSlash: true,
+    images: { unoptimized: true }
+  }),
   typescript: {
     ignoreBuildErrors: true,
   },
