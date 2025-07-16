@@ -123,7 +123,7 @@ vercel --prod
 ## 📞 Support
 
 Bei Fragen oder Problemen:
-- **E-Mail:** rwk-leiter-ksv@gmx.de
+- **E-Mail:** rwk-leiter-ksve@gmx.de
 - **Sentry-Dashboard:** Automatische Fehlerbenachrichtigungen
 - **Updates:** Über integriertes Update-System
 
