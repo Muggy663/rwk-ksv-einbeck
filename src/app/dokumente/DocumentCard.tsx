@@ -59,6 +59,7 @@ export function DocumentCard({ document }: { document: Document }) {
             <div className="text-xs md:text-sm text-muted-foreground">
               <span className="font-medium">{document.fileType}</span>
               {document.fileSize !== '-' && <span> • {document.fileSize}</span>}
+              {document.fileType === 'PDF' && <span> • {document.downloadCount || 0}x heruntergeladen</span>}
               {document.category && (
                 <span className="ml-2 bg-muted px-1.5 py-0.5 rounded text-xs">
                   {document.category === 'ausschreibung' && 'Ausschreibung'}
@@ -86,6 +87,10 @@ export function DocumentCard({ document }: { document: Document }) {
                   href={documentPath} 
                   download 
                   className="w-1/2 sm:w-auto"
+                  onClick={() => {
+                    fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
+                      .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
+                  }}
                 >
                   <Button variant="outline" size="sm" className="flex items-center w-full">
                     <Download className="h-4 w-4 mr-2" />

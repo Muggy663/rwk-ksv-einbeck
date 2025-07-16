@@ -16,7 +16,9 @@ function mapDocumentFromMongo(doc: any): Document {
     fileType: doc.fileType,
     fileSize: doc.fileSize,
     active: doc.active,
-    restricted: doc.restricted || false
+    restricted: doc.restricted || false,
+    downloadCount: doc.downloadCount || 0,
+    lastDownload: doc.lastDownload
   };
 }
 

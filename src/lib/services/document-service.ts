@@ -10,7 +10,9 @@ export interface Document {
   fileType: 'PDF' | 'Webseite';
   fileSize: string;
   active: boolean;
-  restricted?: boolean; // Neues Feld: true = nur für VV/MF, false = für alle
+  restricted?: boolean;
+  downloadCount?: number;
+  lastDownload?: Date;
 }
 
 export type DocumentFormData = Omit<Document, 'id'>;
