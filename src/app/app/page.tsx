@@ -26,15 +26,15 @@ export default function AppPage() {
         </CardHeader>
         <CardContent className="text-center">
           <div className="mb-6">
-            <Button size="lg" asChild className="bg-blue-600 hover:bg-blue-700">
-              <a href="/documents/RWK-Einbeck-v0.9.9.4.apk" download>
-                <Download className="h-5 w-5 mr-2" />
-                APK herunterladen (6.1 MB)
-              </a>
-            </Button>
-            <p className="text-sm text-muted-foreground mt-2">
-              Android 5.0+ • Unterstützt 95% aller Geräte
-            </p>
+             <Button size="lg" asChild className="bg-blue-600 hover:bg-blue-700">
+              <a href="https://github.com/Muggy663/rwk-einbeck/releases/download/v0.9.9.4/RWK-Einbeck-v0.9.9.4.apk" download>
+                 <Download className="h-5 w-5 mr-2" />
+                 APK herunterladen (5.99 MB)
+               </a>
+             </Button>
+             <p className="text-sm text-muted-foreground mt-2">
+               Android 5.0+ • Unterstützt 95% aller Geräte
+             </p>
           </div>
         </CardContent>
       </Card>
