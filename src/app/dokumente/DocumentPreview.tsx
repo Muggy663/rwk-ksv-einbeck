@@ -4,6 +4,7 @@ import { Document } from '@/lib/services/document-service';
 import { Button } from '@/components/ui/button';
 import { Download, X, ExternalLink } from 'lucide-react';
 import { isMobileDevice } from '@/lib/utils/is-mobile';
+import { openWithAppChooser } from '@/lib/utils/open-external';
 
 interface DocumentPreviewProps {
   document: Document;
@@ -14,6 +15,15 @@ interface DocumentPreviewProps {
 export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewProps) {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Setze loading auf false, wenn der Dialog geschlossen wird
+  useEffect(() => {
+    if (!isOpen) {
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }, [isOpen]);
   
   useEffect(() => {
     setIsMobile(isMobileDevice());
@@ -35,31 +45,51 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
   
   const documentPath = getDocumentPath(document.path);
   
-  const handleDownload = () => {
-    // Einfacher Download oder Browser-Öffnung je nach Gerät
-    if (isMobileDevice()) {
-      window.open(documentPath, '_blank');
-    } else {
-      const link = document.createElement('a');
-      link.href = documentPath;
-      link.download = document.title;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+  const handleDownload = async () => {
+    try {
+      // Tracking
+      await fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
+        .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
+      
+      // Schließe den Dialog
+      onClose();
+      
+      // Verzögerung für bessere UX
+      setTimeout(() => {
+        // Einfacher Download oder Browser-Öffnung je nach Gerät
+        if (isMobileDevice()) {
+          openWithAppChooser(documentPath);
+        } else {
+          const link = document.createElement('a');
+          link.href = documentPath;
+          link.download = document.title;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      }, 300);
+    } catch (error) {
+      console.error('Fehler beim Herunterladen:', error);
     }
-    
-    // Tracking
-    fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
-      .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
   };
   
-  const handleExternalOpen = () => {
-    // Im Browser öffnen
-    window.open(documentPath, '_blank');
-    
-    // Tracking
-    fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
-      .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
+  const handleExternalOpen = async () => {
+    try {
+      // Tracking
+      await fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
+        .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
+      
+      // Schließe den Dialog
+      onClose();
+      
+      // Verzögerung für bessere UX
+      setTimeout(() => {
+        // Im Browser öffnen
+        window.open(documentPath, '_blank');
+      }, 300);
+    } catch (error) {
+      console.error('Fehler beim Öffnen im Browser:', error);
+    }
   };
   
   return (

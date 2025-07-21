@@ -96,11 +96,18 @@ export function DocumentCard({ document }: { document: Document }) {
                     variant="outline" 
                     size="sm" 
                     className="flex items-center w-full"
-                    onClick={() => {
-                      // Mit App-Chooser öffnen
-                      openWithAppChooser(documentPath);
-                      fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
-                        .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
+                    onClick={async () => {
+                      try {
+                        // Tracking zuerst
+                        await fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
+                          .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
+                        
+                        // Mit App-Chooser öffnen
+                        console.log('Starte App-Chooser für:', documentPath);
+                        await openWithAppChooser(documentPath);
+                      } catch (error) {
+                        console.error('Fehler beim Öffnen mit App:', error);
+                      }
                     }}
                   >
                     <Share2 className="h-4 w-4 mr-2" />

@@ -12,6 +12,8 @@ declare module 'jspdf' {
   }
 }
 
+import { openWithAppChooser } from './open-external';
+
 /**
  * Verbesserte PDF-Generator-Funktion für mobile Geräte
  * Verwendet einen anderen Ansatz für mobile Geräte, um Kompatibilitätsprobleme zu vermeiden
@@ -21,14 +23,39 @@ export async function generatePDFWithMobileSupport(
   fileName: string
 ): Promise<void> {
   try {
+    console.log('Starte PDF-Generierung für:', fileName);
+    
     // PDF generieren
     const pdfBlob = await generateFunction();
+    console.log('PDF-Blob erstellt, Größe:', pdfBlob.size);
+    
+    // Prüfen, ob wir in einer nativen App sind
+    const isNativeApp = window.Capacitor && window.Capacitor.isNativePlatform();
     
     // Prüfen, ob es sich um ein mobiles Gerät handelt
-    if (isMobileDevice()) {
-      // Auf mobilen Geräten: PDF im Browser öffnen
+    if (isMobileDevice() || isNativeApp) {
+      console.log('Mobiles Gerät oder native App erkannt');
+      
+      // Blob-URL erstellen
       const url = URL.createObjectURL(pdfBlob);
-      window.open(url, '_blank');
+      console.log('Blob-URL erstellt:', url);
+      
+      // In nativer App: Mit Capacitor öffnen
+      if (isNativeApp) {
+        console.log('Verwende Capacitor zum Öffnen');
+        try {
+          // Speichere die Datei temporär und öffne sie mit der nativen App
+          await openWithAppChooser(url);
+        } catch (nativeError) {
+          console.error('Fehler beim Öffnen mit nativer App:', nativeError);
+          // Fallback: Im Browser öffnen
+          window.open(url, '_blank');
+        }
+      } else {
+        // Auf mobilen Geräten: PDF im Browser öffnen
+        console.log('Öffne PDF im Browser');
+        window.open(url, '_blank');
+      }
       
       // Nach einer Verzögerung die URL freigeben
       setTimeout(() => {
@@ -36,6 +63,7 @@ export async function generatePDFWithMobileSupport(
       }, 5000);
     } else {
       // Auf Desktop-Geräten: PDF herunterladen
+      console.log('Desktop-Gerät erkannt, starte Download');
       const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = url;
