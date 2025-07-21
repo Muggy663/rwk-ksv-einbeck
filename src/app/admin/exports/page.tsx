@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileDown, Printer, Award } from 'lucide-react';
-import { PdfButton } from '@/components/ui/pdf-button';
+import { PDFButton } from '@/components/ui/pdf-button';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -445,7 +445,7 @@ export default function ExportsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <PdfButton
+                    <PDFButton
                       title="Mannschaftsergebnisse"
                       subtitle={leagues.find(l => l.id === selectedLeague)?.name || ''}
                       generateData={generateLeagueResultsData}
@@ -501,7 +501,7 @@ export default function ExportsPage() {
                       </RadioGroup>
                     </div>
                     
-                    <PdfButton
+                    <PDFButton
                       title="Einzelschützenergebnisse"
                       subtitle={showAllShooters 
                         ? `Gesamtliste (${genderFilter === 'all' ? 'Alle' : genderFilter === 'male' ? 'Männlich' : 'Weiblich'})` 
