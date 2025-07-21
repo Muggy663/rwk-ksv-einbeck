@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { MobileAdminNav } from '@/components/admin/MobileAdminNav';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
@@ -12,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
-const adminNavItems = [
+export const adminNavItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/seasons', label: 'Saisons & Ligen', icon: Trophy },
   { href: '/admin/clubs', label: 'Vereine', icon: Users },
@@ -101,6 +102,10 @@ export default function AdminLayout({
         </Button>
       </aside>
       <main className="flex-1 p-6 lg:p-8 bg-muted/20 overflow-y-auto">
+        <div className="md:hidden mb-4 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-primary">Admin-Bereich</h2>
+          <MobileAdminNav />
+        </div>
         {children}
       </main>
     </div>

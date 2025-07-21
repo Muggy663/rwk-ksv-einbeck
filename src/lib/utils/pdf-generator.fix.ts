@@ -40,6 +40,7 @@ export class PdfGenerator {
   private pageWidth: number;
   private pageHeight: number;
   private margin = 15;
+  private isMobile: boolean;
 
   constructor(options: PdfGeneratorOptions) {
     this.options = {
@@ -50,6 +51,11 @@ export class PdfGenerator {
       keywords: 'rwk,einbeck,schützen',
       ...options
     };
+
+    // Erkennen, ob wir auf einem mobilen Gerät sind
+    this.isMobile = typeof window !== 'undefined' && 
+      (window.navigator.userAgent.match(/Android/i) || 
+       window.navigator.userAgent.match(/iPhone|iPad|iPod/i));
 
     this.doc = new jsPDF({
       orientation: this.options.orientation,
@@ -78,16 +84,17 @@ export class PdfGenerator {
   addHeader(): void {
     const headerHeight = 25;
     
-    // Logo hinzufügen, falls vorhanden
-    if (this.options.headerImage) {
+    // Logo rechts oben - auf Mobilgeräten überspringen
+    if (!this.isMobile) {
       try {
+        // Kreisverbandslogo aus dem public-Ordner laden
         this.doc.addImage(
-          this.options.headerImage,
+          '/images/logo2.png',
           'PNG',
+          this.pageWidth - this.margin - 35,
           this.margin,
-          this.margin,
-          20,
-          20
+          25,
+          25
         );
       } catch (error) {
         console.error('Fehler beim Hinzufügen des Logos:', error);
@@ -100,7 +107,7 @@ export class PdfGenerator {
     this.doc.setFont('helvetica', 'bold');
     this.doc.text(
       this.options.title,
-      this.options.headerImage ? this.margin + 25 : this.margin,
+      this.margin,
       this.margin + 10
     );
 
@@ -110,7 +117,7 @@ export class PdfGenerator {
       this.doc.setFont('helvetica', 'normal');
       this.doc.text(
         this.options.subtitle,
-        this.options.headerImage ? this.margin + 25 : this.margin,
+        this.margin,
         this.margin + 18
       );
     }
@@ -255,7 +262,10 @@ export class PdfGenerator {
       
       // Ligainformationen
       this.addText(`Liga: ${leagueData.leagueName || 'Unbekannt'}`, this.margin, this.margin + 35, { fontSize: 14, fontStyle: 'bold' });
-      this.addText(`Saison: ${leagueData.season || 'Unbekannt'}`, this.margin, this.margin + 42, { fontSize: 12 });
+      
+      // Saison ohne "RWK" anzeigen
+      const seasonName = (leagueData.season || 'Unbekannt').replace('RWK ', '');
+      this.addText(`Saison: ${seasonName}`, this.margin + 200, this.margin + 35, { fontSize: 14 });
       
       // Tabellenspalten definieren
       const columns: TableColumn[] = [
@@ -319,11 +329,13 @@ export class PdfGenerator {
       rank: number;
       name: string;
       teamName: string;
+      gender?: string;
       results: Record<string, number | null>;
       totalScore: number;
       averageScore: number | null;
     }>;
     numRounds: number;
+    genderFilter?: 'all' | 'male' | 'female';
   }): void {
     try {
       // Header hinzufügen
@@ -331,7 +343,16 @@ export class PdfGenerator {
       
       // Ligainformationen
       this.addText(`Liga: ${shooterData.leagueName || 'Unbekannt'}`, this.margin, this.margin + 35, { fontSize: 14, fontStyle: 'bold' });
-      this.addText(`Saison: ${shooterData.season || 'Unbekannt'}`, this.margin, this.margin + 42, { fontSize: 12 });
+      
+      // Saison ohne "RWK" anzeigen
+      const seasonName = (shooterData.season || 'Unbekannt').replace('RWK ', '');
+      this.addText(`Saison: ${seasonName}`, this.margin + 200, this.margin + 35, { fontSize: 14 });
+      
+      // Geschlechterfilter-Info hinzufügen, falls vorhanden
+      if (shooterData.genderFilter && shooterData.genderFilter !== 'all') {
+        const genderText = shooterData.genderFilter === 'male' ? 'Männlich' : 'Weiblich';
+        this.addText(`Filter: ${genderText}`, this.margin + 350, this.margin + 35, { fontSize: 14 });
+      }
       
       // Tabellenspalten definieren
       const columns: TableColumn[] = [
@@ -340,21 +361,27 @@ export class PdfGenerator {
         { header: 'Mannschaft', dataKey: 'teamName', width: 50 }
       ];
       
-      // Durchgänge als Spalten hinzufügen
+      // Geschlecht als Spalte hinzufügen, wenn alle angezeigt werden
+      if (shooterData.genderFilter === 'all' && shooterData.leagueName === 'Gesamtrangliste') {
+        columns.push({ header: 'Geschl.', dataKey: 'genderDisplay', width: 20 });
+      }
+      
+      // Durchgänge als Spalten hinzufügen mit mehr Abstand
       for (let i = 1; i <= (shooterData.numRounds || 0); i++) {
-        columns.push({ header: `DG ${i}`, dataKey: `dg${i}`, width: 15 });
+        columns.push({ header: `DG ${i}`, dataKey: `dg${i}`, width: 25 });
       }
       
       // Gesamt und Schnitt hinzufügen
-      columns.push({ header: 'Gesamt', dataKey: 'totalScore', width: 20 });
-      columns.push({ header: 'Schnitt', dataKey: 'averageScore', width: 20 });
+      columns.push({ header: 'Gesamt', dataKey: 'totalScore', width: 25 });
+      columns.push({ header: 'Schnitt', dataKey: 'averageScore', width: 25 });
       
       // Tabellendaten aufbereiten
       const rows = (shooterData.shooters || []).map(shooter => {
         const rowData: Record<string, any> = {
           rank: shooter.rank || '',
           name: shooter.name || 'Unbekannt',
-          teamName: shooter.teamName || 'Unbekannt',
+          teamName: shooter.teamName || 'Unbekanntes Team',
+          genderDisplay: shooter.gender === 'male' ? 'M' : shooter.gender === 'female' ? 'W' : '-',
           totalScore: shooter.totalScore || 0,
           averageScore: shooter.averageScore !== null ? shooter.averageScore.toFixed(2) : '-'
         };
@@ -494,7 +521,20 @@ export class PdfGenerator {
     try {
       const pdfBlob = this.doc.output('blob');
       const pdfUrl = URL.createObjectURL(pdfBlob);
-      window.open(pdfUrl, '_blank');
+      
+      // Auf Mobilgeräten direkt herunterladen statt zu öffnen
+      if (this.isMobile) {
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        const fileName = `RWK_Einbeck_${this.options.title.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.pdf`;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(pdfUrl);
+      } else {
+        window.open(pdfUrl, '_blank');
+      }
     } catch (error) {
       console.error('Fehler beim Öffnen des PDFs:', error);
       alert('Fehler beim Öffnen des PDFs. Bitte versuchen Sie es erneut.');

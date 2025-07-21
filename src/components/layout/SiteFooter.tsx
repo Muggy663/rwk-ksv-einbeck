@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.9.9.4"; // Download-Zähler + Native App Support
+  const version = "0.9.9.5"; // Download-Zähler + Copyright-Informationen
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">
@@ -18,6 +18,9 @@ export function SiteFooter() {
             </Link>
             <Link href="/nutzungsbedingungen" className="text-muted-foreground hover:text-primary underline">
               Nutzungsbedingungen
+            </Link>
+            <Link href="/copyright" className="text-muted-foreground hover:text-primary underline">
+              Copyright
             </Link>
           </div>
         </div>

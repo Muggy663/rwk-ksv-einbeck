@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2">
-              <span>Aktuelle Version: 0.9.9.4 (16.01.2025)</span>
+              <span>Aktuelle Version: 0.9.9.5 (26.06.2025)</span>
             </Badge>
             <Badge variant="default" className="text-xs py-1 px-2 bg-green-600">
               <span>🌐 Live: rwk-einbeck.de</span>
@@ -33,8 +33,50 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.4</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.5</CardTitle>
               <Badge variant="secondary">Neu</Badge>
+            </div>
+            <CardDescription>26.06.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Download-Zähler für die App und umfassende Copyright-Informationen.</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-blue-900 mb-2">📱 Neue Features Version 0.9.9.5</h4>
+              <div className="text-xs text-blue-700">
+                App-Download-Zähler und Copyright-Schutz
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📊 <strong>App-Download-Zähler</strong>: Tracking für Android-App-Downloads</li>
+              <li>📄 <strong>Copyright-Seite</strong>: Umfassende Urheberrechtshinweise</li>
+              <li>🔒 <strong>Meta-Tags</strong>: SEO-Schutz für Urheberrecht</li>
+              <li>📱 <strong>Verbesserte App-Beschreibung</strong>: Aktualisierte Informationen</li>
+              <li>📊 <strong>Fehlende Ergebnisse</strong>: Deutliche Hervorhebung in Tabellen</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-blue-800">📱 App-Download-Zähler</span>
+                  <p className="text-xs text-blue-600 mt-1">Statistik für Android-App-Downloads</p>
+                </div>
+                <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                  📊 Live
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Link href="/updates/v0.9.9.5" className="text-primary hover:text-primary/80 text-sm flex items-center">
+                Details <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.4</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>16.07.2025</CardDescription>
           </CardHeader>

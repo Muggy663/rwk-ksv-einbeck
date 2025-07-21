@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Printer, FileDown, Loader2 } from 'lucide-react';
-import { PdfGenerator } from '@/lib/utils/pdf-generator';
+import { PdfGenerator } from '@/lib/utils/pdf-generator.fix';
 import { useToast } from '@/hooks/use-toast';
 
 interface PdfButtonProps {

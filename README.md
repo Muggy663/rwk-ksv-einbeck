@@ -1,4 +1,4 @@
-# RWK Einbeck App - Version 0.9.9
+# RWK Einbeck App - Version 0.9.9.5
 
 Eine moderne Web-Anwendung für die Verwaltung von Rundenwettkämpfen im Schießsport.
 
@@ -17,9 +17,10 @@ Eine moderne Web-Anwendung für die Verwaltung von Rundenwettkämpfen im Schieß
 - **Performance-Tracking** für Optimierungen
 - **Detaillierte Fehler-Logs** mit Browser/OS-Informationen
 
-### 📱 PWA-Verbesserungen
+### 📱 App-Verbesserungen
 - **Automatischer Install-Prompt** nach 30 Sekunden
-- **Offline-Status-Anzeige** bei Verbindungsproblemen
+- **Native Android-App** für bessere Performance
+- **Download-Zähler** für App-Statistiken
 - **Verbessertes App-Manifest** mit Kategorien
 - **Service Worker** für bessere Performance
 
@@ -131,6 +132,15 @@ Bei Fragen oder Problemen:
 
 Dieses Projekt ist für den RWK Einbeck entwickelt und nicht für kommerzielle Nutzung bestimmt.
 
+## 📄 Copyright
+
+Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.
+
+Dieses Projekt ist für den RWK Einbeck entwickelt und nicht für kommerzielle Nutzung bestimmt. Jede Vervielfältigung, Verbreitung oder sonstige Nutzung ohne ausdrückliche schriftliche Genehmigung ist untersagt.
+
+Weitere Informationen finden Sie auf der [Copyright-Seite](/copyright).
+
 ---
 
 **Version 0.9.9** - Vollständiges E-Mail-System mit Error-Monitoring
+**Version 0.9.9.5** - App-Verbesserungen und Copyright-Informationen

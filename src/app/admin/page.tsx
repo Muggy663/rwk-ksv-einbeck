@@ -340,6 +340,7 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-2 gap-2">
                 <Link href="/admin/results" passHref><Button className="w-full">Erfassen</Button></Link>
                 <Link href="/admin/edit-results" passHref><Button variant="outline" className="w-full">Bearbeiten/Löschen</Button></Link>
+                <Link href="/admin/missing-results" passHref><Button variant="outline" className="w-full col-span-2 mt-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200">Fehlende Ergebnisse prüfen</Button></Link>
             </div>
           </CardContent>
         </Card>

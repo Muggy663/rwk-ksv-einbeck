@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'reac
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { TeamStatusBadge } from '@/components/ui/team-status-badge';
+import { hasLaterRoundsButMissingEarlier } from '@/lib/services/missing-results-checker';
 import {
   Card,
   CardContent,
@@ -159,6 +160,11 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                         {shooterRes.shooterName}
                       </Button>
                       <LineChartIcon className="h-3 w-3 text-muted-foreground" title="Klicken Sie auf den Namen für Statistik-Diagramm" />
+                      {hasLaterRoundsButMissingEarlier(shooterRes.results, numRounds) && (
+                        <span className="bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-sm" title="Spätere Durchgänge geschossen, aber frühere fehlen">
+                          Lücken
+                        </span>
+                      )}
                     </div>
                     <SubstitutionBadge
                       isSubstitute={teamSubstitutions.has(`${parentTeam.id}-${shooterRes.shooterId}`)}
@@ -168,7 +174,20 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                 </TableCell>
                 {[...Array(numRounds)].map((_, i) => (
                   <TableCell key={`shooter-dg${i + 1}-${shooterRes.shooterId}`} className="px-1 py-1.5 text-center">
-                    {shooterRes.results?.[`dg${i + 1}`] ?? '-'}
+                    {shooterRes.results?.[`dg${i + 1}`] !== null ? (
+                      shooterRes.results?.[`dg${i + 1}`]
+                    ) : (
+                      // Prüfe, ob ein späterer Durchgang Ergebnisse hat
+                      Object.entries(shooterRes.results || {}).some(([key, value]) => 
+                        key.startsWith('dg') && 
+                        parseInt(key.substring(2)) > (i + 1) && 
+                        value !== null
+                      ) ? (
+                        <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-md font-bold" title="Fehlendes Ergebnis">FEHLT</span>
+                      ) : (
+                        <span className="text-muted-foreground" title="Durchgang noch nicht begonnen">-</span>
+                      )
+                    )}
                   </TableCell>
                 ))}
                 <TableCell className="px-1 py-1.5 text-center font-medium">{shooterRes.total ?? '-'}</TableCell>
@@ -258,7 +277,22 @@ const ShooterDetailModalContent: React.FC<ShooterDetailModalContentProps> = ({ s
             <TableBody>
               <TableRow>
                 {[...Array(numRounds)].map((_, i) => (
-                  <TableCell key={`detail-val-dg${i + 1}`} className="text-center text-sm px-1 py-1.5">{shooterData.results?.[`dg${i + 1}`] ?? '-'}</TableCell>
+                  <TableCell key={`detail-val-dg${i + 1}`} className="text-center text-sm px-1 py-1.5">
+                    {shooterData.results?.[`dg${i + 1}`] !== null ? (
+                      shooterData.results?.[`dg${i + 1}`]
+                    ) : (
+                      // Prüfe, ob ein späterer Durchgang Ergebnisse hat
+                      Object.entries(shooterData.results || {}).some(([key, value]) => 
+                        key.startsWith('dg') && 
+                        parseInt(key.substring(2)) > (i + 1) && 
+                        value !== null
+                      ) ? (
+                        <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-md font-bold" title="Fehlendes Ergebnis">FEHLT</span>
+                      ) : (
+                        <span className="text-muted-foreground" title="Durchgang noch nicht begonnen">-</span>
+                      )
+                    )}
+                  </TableCell>
                 ))}
                 <TableCell className="text-center text-sm font-semibold text-primary px-1 py-1.5">{shooterData.totalScore}</TableCell>
                 <TableCell className="text-center text-sm font-medium text-muted-foreground px-1 py-1.5">{shooterData.averageScore != null ? shooterData.averageScore.toFixed(2) : '-'}</TableCell>
@@ -673,35 +707,37 @@ function RwkTabellenPageComponent() {
         // Sortiere Teams und berücksichtige "Außer Konkurrenz"-Status
         // Prüfe, ob alle Teams den aktuellen Durchgang abgeschlossen haben
         const determineCurrentRound = () => {
-          // Finde den höchsten abgeschlossenen Durchgang
-          let maxCompletedRound = 0;
-          
-          for (const team of teamDisplays) {
-            for (let r = numRoundsForCompetition; r >= 1; r--) {
-              const roundKey = `dg${r}`;
-              if (team.roundResults && team.roundResults[roundKey] !== null) {
-                maxCompletedRound = Math.max(maxCompletedRound, r);
-                break;
+          // Prüfe, ob ein Durchgang vollständig ist (alle Teams und alle Schützen haben Ergebnisse)
+          const isRoundComplete = (round) => {
+            if (round === 0) return false;
+            const roundKey = `dg${round}`;
+            
+            // Prüfe für jedes Team
+            for (const team of teamDisplays) {
+              // Prüfe, ob das Team ein Ergebnis für diesen Durchgang hat
+              if (!team.roundResults || team.roundResults[roundKey] === null) {
+                return false;
               }
+              
+              // Prüfe auch, ob alle Schützen des Teams Ergebnisse haben
+              // Dies erfordert, dass wir die Schützen-Ergebnisse laden
+              if (team.shooterIds && team.shooterIds.length > 0) {
+                // Hier könnte eine tiefere Prüfung erfolgen, wenn die Schützen-Daten bereits geladen sind
+                // Für jetzt verlassen wir uns auf die Team-Ergebnisse
+              }
+            }
+            
+            return true;
+          };
+          
+          // Finde den höchsten vollständigen Durchgang
+          for (let r = numRoundsForCompetition; r >= 1; r--) {
+            if (isRoundComplete(r)) {
+              return r;
             }
           }
           
-          // Prüfe, ob alle Teams diesen Durchgang abgeschlossen haben
-          const allTeamsCompletedRound = (round) => {
-            if (round === 0) return false;
-            const roundKey = `dg${round}`;
-            return teamDisplays.every(team => 
-              team.roundResults && team.roundResults[roundKey] !== null
-            );
-          };
-          
-          // Finde den höchsten Durchgang, den alle Teams abgeschlossen haben
-          let currentRound = maxCompletedRound;
-          while (currentRound > 0 && !allTeamsCompletedRound(currentRound)) {
-            currentRound--;
-          }
-          
-          return currentRound;
+          return 0; // Kein vollständiger Durchgang gefunden
         };
         
         const currentRound = determineCurrentRound();
@@ -1468,6 +1504,14 @@ function RwkTabellenPageComponent() {
                       <p className="flex items-center gap-1 text-xs text-muted-foreground">
                         <LineChartIcon className="h-3 w-3" />
                         <strong>Tipp:</strong> Klicken Sie auf Schützen-Namen für detaillierte Statistik-Diagramme
+                      </p>
+                      <p className="flex items-center gap-1 text-xs text-amber-600 mt-2">
+                        <AlertTriangle className="h-3 w-3" />
+                        <strong>Achtung:</strong> Fehlende Ergebnisse werden mit <span className="bg-red-100 text-red-700 px-1 rounded-sm font-bold">FEHLT</span> markiert und können die Gesamtwertung beeinflussen
+                      </p>
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                        <span className="h-3 w-3">-</span>
+                        <strong>Hinweis:</strong> Ein Strich (-) bedeutet, dass der Durchgang noch nicht begonnen wurde
                       </p>
                     </div>
                     

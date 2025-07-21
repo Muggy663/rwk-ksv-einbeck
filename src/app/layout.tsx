@@ -53,6 +53,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta name="msapplication-TileColor" content="#1f2937" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
         <link rel="mask-icon" href="/images/logo.png" color="#1f2937" />
+        <meta name="copyright" content="© 2025 KSV Einbeck" />
+        <meta name="author" content="KSV Einbeck" />
+        <meta name="robots" content="noarchive" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider

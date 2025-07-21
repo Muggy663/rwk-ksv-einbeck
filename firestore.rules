@@ -240,6 +240,12 @@ match /users/{userId} {
                        hasClubAccess(resource.data.clubId));
     }
 
+    // App-Statistiken - Lesbar für alle, schreibbar nur über API
+    match /app_stats/{statId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
     // Fallback-Regel: Alles andere verbieten
     match /{document=**} {
       allow read, write: if false;

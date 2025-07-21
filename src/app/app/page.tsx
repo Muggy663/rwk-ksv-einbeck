@@ -1,9 +1,24 @@
+"use client";
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, Smartphone, Shield, Zap, Wifi } from 'lucide-react';
+import { Download, Smartphone, Shield, Zap, Loader2 } from 'lucide-react';
+import { getDownloadCount } from '@/lib/services/download-counter';
 
 export default function AppPage() {
+  const [downloadCount, setDownloadCount] = useState<number | null>(null);
+  
+  useEffect(() => {
+    // Lade den aktuellen Download-Zähler
+    getDownloadCount()
+      .then(count => setDownloadCount(count))
+      .catch(err => {
+        console.error('Fehler beim Laden des Download-Zählers:', err);
+        setDownloadCount(0);
+      });
+  }, []);
   return (
     <div className="container py-8 max-w-4xl mx-auto">
       <div className="text-center mb-8">
@@ -18,20 +33,44 @@ export default function AppPage() {
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2 text-2xl text-blue-900">
             <Smartphone className="h-6 w-6" />
-            RWK Einbeck v0.9.9.4
+            RWK Einbeck v0.9.9.5
           </CardTitle>
           <CardDescription className="text-blue-700">
-            Kostenlose Android-App • Keine Werbung • Offline-fähig
+            Kostenlose Android-App • Keine Werbung • Schnell & einfach
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
           <div className="mb-6">
-             <Button size="lg" asChild className="bg-blue-600 hover:bg-blue-700">
-              <a href="https://github.com/Muggy663/rwk-einbeck/releases/download/v0.9.9.4/RWK-Einbeck-v0.9.9.4.apk" download>
+             <Button 
+               size="lg" 
+               asChild 
+               className="bg-blue-600 hover:bg-blue-700"
+               onClick={() => {
+                 // Zähler inkrementieren beim Download
+                 fetch('/api/increment-download')
+                   .catch(err => console.error('Fehler beim Zählen des Downloads:', err));
+               }}
+             >
+              <a href="https://github.com/Muggy663/rwk-einbeck/releases/download/v0.9.9.5/RWK-Einbeck-v0.9.9.5.apk" download>
                  <Download className="h-5 w-5 mr-2" />
                  APK herunterladen (5.99 MB)
                </a>
              </Button>
+             <div className="flex items-center justify-center mt-3">
+               <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                 {downloadCount !== null ? (
+                   <>
+                     <Download className="h-3 w-3 mr-1" />
+                     {downloadCount} Downloads
+                   </>
+                 ) : (
+                   <>
+                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                     Lade...
+                   </>
+                 )}
+               </div>
+             </div>
              <p className="text-sm text-muted-foreground mt-2">
                Android 5.0+ • Unterstützt 95% aller Geräte
              </p>
@@ -112,10 +151,10 @@ export default function AppPage() {
 
           <details className="border rounded-lg p-4">
             <summary className="cursor-pointer font-medium">
-              Funktioniert die App offline?
+              Benötige ich Internet für die App?
             </summary>
             <div className="mt-3 text-sm text-muted-foreground">
-              <p>Teilweise - bereits geladene Inhalte sind offline verfügbar. Für neue Daten wird Internet benötigt.</p>
+              <p>Ja, die App benötigt eine Internetverbindung für aktuelle Daten. Die App ist für eine optimale Online-Nutzung konzipiert.</p>
             </div>
           </details>
         </CardContent>
@@ -169,8 +208,8 @@ export default function AppPage() {
               <span>Sicher & werbefrei</span>
             </div>
             <div className="flex items-center gap-3">
-              <Wifi className="h-5 w-5 text-purple-500" />
-              <span>Teilweise offline-fähig</span>
+              <Zap className="h-5 w-5 text-purple-500" />
+              <span>Schnelle Ladezeiten</span>
             </div>
             <div className="flex items-center gap-3">
               <Smartphone className="h-5 w-5 text-orange-500" />
