@@ -21,7 +21,7 @@ interface PDFButtonProps {
 /**
  * Button zum Exportieren von PDF-Dateien mit verbesserter mobiler Unterstützung
  */
-export function PDFButton({
+function PDFButtonComponent({
   league,
   numRounds,
   competitionYear,
@@ -81,3 +81,7 @@ export function PDFButton({
     </Button>
   );
 }
+
+// Exportiere beide Varianten, um Kompatibilität zu gewährleisten
+export const PDFButton = PDFButtonComponent;
+export const PdfButton = PDFButtonComponent;

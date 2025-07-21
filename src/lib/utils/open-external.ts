@@ -5,6 +5,19 @@ import { isMobileDevice } from './is-mobile';
  * oder im Browser auf Desktop-Geräten
  */
 export async function openWithAppChooser(url: string): Promise<void> {
-  // Einfach im Browser öffnen (funktioniert auf allen Geräten)
-  window.open(url, '_blank');
+  try {
+    // Prüfen, ob die Capacitor-API verfügbar ist (native App)
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url });
+      return;
+    }
+    
+    // Fallback: Im Browser öffnen
+    window.open(url, '_blank');
+  } catch (error) {
+    console.error('Fehler beim Öffnen der URL:', error);
+    // Fallback bei Fehler
+    window.open(url, '_blank');
+  }
 }
