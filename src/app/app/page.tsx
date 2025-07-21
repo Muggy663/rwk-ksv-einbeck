@@ -13,7 +13,30 @@ export default function AppPage() {
   useEffect(() => {
     // Lade den aktuellen Download-Zähler
     getDownloadCount()
-      .then(count => setDownloadCount(count))
+      .then(count => {
+        // Wenn der Zähler 0 ist, setze ihn auf 1, da wir wissen, dass es Downloads gab
+        if (count === 0) {
+          fetch('/api/set-download-count', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ count: 1 })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              setDownloadCount(1);
+            } else {
+              setDownloadCount(count);
+            }
+          })
+          .catch(err => {
+            console.error('Fehler beim Setzen des Download-Zählers:', err);
+            setDownloadCount(count);
+          });
+        } else {
+          setDownloadCount(count);
+        }
+      })
       .catch(err => {
         console.error('Fehler beim Laden des Download-Zählers:', err);
         setDownloadCount(0);

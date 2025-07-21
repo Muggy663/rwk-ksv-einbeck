@@ -51,7 +51,7 @@ import {
   LineChart as LineChartIcon,
   FileDown,
 } from 'lucide-react';
-import { PDFExportButton } from '@/components/pdf-export-button';
+import { PDFButton } from '@/components/ui/pdf-button';
 import type {
   Season,
   League,
@@ -1592,7 +1592,7 @@ function RwkTabellenPageComponent() {
                         </Label>
                       </div>
                       <div className="flex flex-col sm:flex-row gap-2">
-                        <PDFExportButton 
+                        <PDFButton 
                           league={league} 
                           numRounds={currentNumRoundsState} 
                           competitionYear={selectedCompetition.year} 
@@ -1605,7 +1605,7 @@ function RwkTabellenPageComponent() {
                           className="text-xs px-2 py-1 whitespace-nowrap"
                           onClick={async () => {
                             // Import der benötigten Funktionen
-                            const { generateShootersPDF } = await import('@/lib/services/pdf-service');
+                            const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
                             // Lade Einzelschützen für diese Liga
                             const shooterData = await fetchIndividualShooterData(
                               selectedCompetition, 
@@ -1621,26 +1621,15 @@ function RwkTabellenPageComponent() {
                             
                             // Generiere PDF mit den geladenen Daten
                             try {
-                              const pdfBlob = await generateShootersPDF(
+                              await generateShootersPDFFixed(
                                 tempLeague, 
                                 currentNumRoundsState, 
                                 selectedCompetition.year
                               );
                               
-                              // PDF herunterladen
-                              const url = URL.createObjectURL(pdfBlob);
-                              const link = document.createElement('a');
-                              link.href = url;
-                              const fileName = `${league.name.replace(/\\s+/g, '_')}_Einzelschuetzen_${selectedCompetition.year}.pdf`;
-                              link.download = fileName;
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                              URL.revokeObjectURL(url);
-                              
                               toast({
                                 title: 'PDF erstellt',
-                                description: 'Die PDF-Datei wurde erfolgreich erstellt und heruntergeladen.',
+                                description: 'Die PDF-Datei wurde erfolgreich erstellt.',
                               });
                             } catch (error) {
                               console.error('Fehler beim Erstellen der PDF:', error);

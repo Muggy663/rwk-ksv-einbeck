@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2">
-              <span>Aktuelle Version: 0.9.9.5 (26.06.2025)</span>
+              <span>Aktuelle Version: 0.9.9.5 (21.07.2025)</span>
             </Badge>
             <Badge variant="default" className="text-xs py-1 px-2 bg-green-600">
               <span>🌐 Live: rwk-einbeck.de</span>
@@ -36,7 +36,7 @@ export default function UpdatesPage() {
               <CardTitle className="text-xl">Version 0.9.9.5</CardTitle>
               <Badge variant="secondary">Neu</Badge>
             </div>
-            <CardDescription>26.06.2025</CardDescription>
+            <CardDescription>21.07.2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Download-Zähler für die App und umfassende Copyright-Informationen.</p>

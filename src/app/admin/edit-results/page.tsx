@@ -64,6 +64,7 @@ export default function AdminEditResultsPage() {
   const [currentScoreToEdit, setCurrentScoreToEdit] = useState<ScoreEntry | null>(null);
   const [editFormScore, setEditFormScore] = useState<string>('');
   const [editFormResultType, setEditFormResultType] = useState<'regular' | 'pre' | 'post'>('regular');
+  const [editFormRound, setEditFormRound] = useState<string>('');
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
   // Delete Alert States
@@ -270,6 +271,7 @@ export default function AdminEditResultsPage() {
     setCurrentScoreToEdit(score);
     setEditFormScore(score.totalRinge.toString());
     setEditFormResultType(score.scoreInputType);
+    setEditFormRound(score.durchgang.toString());
     setIsFormOpen(true);
   };
 
@@ -301,11 +303,18 @@ export default function AdminEditResultsPage() {
     }
 
     setIsSubmittingEdit(true);
+    const newRoundValue = parseInt(editFormRound, 10);
+    if (isNaN(newRoundValue) || newRoundValue < 1 || newRoundValue > numRoundsForSelect) {
+      toast({ title: "Ungültiger Durchgang", description: `Bitte einen gültigen Durchgang zwischen 1 und ${numRoundsForSelect} eingeben.`, variant: "destructive" });
+      return;
+    }
+    
     try {
       const scoreDocRef = doc(db, SCORES_COLLECTION, currentScoreToEdit.id);
       await updateDoc(scoreDocRef, {
         totalRinge: newScoreValue,
         scoreInputType: editFormResultType,
+        durchgang: newRoundValue,
         lastEditedByUserId: user.uid,
         lastEditedByUserName: user.displayName || user.email || "Unbekannt",
         lastEditTimestamp: serverTimestamp()
@@ -534,6 +543,22 @@ export default function AdminEditResultsPage() {
                     required
                     className="text-base"
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="editRoundValue">Durchgang</Label>
+                  <Select 
+                    value={editFormRound} 
+                    onValueChange={setEditFormRound}
+                  >
+                    <SelectTrigger id="editRoundValue">
+                      <SelectValue placeholder="Durchgang wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[...Array(numRoundsForSelect)].map((_, i) => (
+                        <SelectItem key={i + 1} value={(i + 1).toString()}>Durchgang {i + 1}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label>Ergebnistyp</Label>

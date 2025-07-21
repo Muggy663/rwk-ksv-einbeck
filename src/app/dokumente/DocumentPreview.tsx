@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Document } from '@/lib/services/document-service';
 import { Button } from '@/components/ui/button';
-import { Download, X } from 'lucide-react';
+import { Download, X, ExternalLink } from 'lucide-react';
+import { isMobileDevice } from '@/lib/utils/is-mobile';
 
 interface DocumentPreviewProps {
   document: Document;
@@ -12,6 +13,11 @@ interface DocumentPreviewProps {
 
 export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewProps) {
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+  }, []);
   
   // Funktion zur Generierung des korrekten Pfads
   function getDocumentPath(path: string): string {
@@ -30,28 +36,43 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
   const documentPath = getDocumentPath(document.path);
   
   const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = documentPath;
-    link.download = document.title;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Einfacher Download oder Browser-Öffnung je nach Gerät
+    if (isMobileDevice()) {
+      window.open(documentPath, '_blank');
+    } else {
+      const link = document.createElement('a');
+      link.href = documentPath;
+      link.download = document.title;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+    
+    // Tracking
+    fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
+      .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
+  };
+  
+  const handleExternalOpen = () => {
+    // Im Browser öffnen
+    window.open(documentPath, '_blank');
+    
+    // Tracking
+    fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
+      .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
   };
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0">
         <DialogHeader className="p-4 border-b flex flex-row justify-between items-center">
-          <DialogTitle>{document.title}</DialogTitle>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleDownload}>
-              <Download className="h-4 w-4 mr-2" />
-              Herunterladen
+          <DialogTitle className="text-sm sm:text-base">{document.title}</DialogTitle>
+          {!isMobile && (
+            <Button variant="outline" size="sm" onClick={handleDownload} className="flex items-center gap-1.5">
+              <Download className="h-4 w-4" />
+              <span>Herunterladen</span>
             </Button>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          )}
         </DialogHeader>
         
         <div className="flex-1 overflow-hidden">
@@ -61,12 +82,30 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
             </div>
           )}
           
-          <iframe 
-            src={`${documentPath}#toolbar=0`}
-            className="w-full h-full"
-            onLoad={() => setLoading(false)}
-            title={document.title}
-          />
+          {isMobile ? (
+            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+              <p className="mb-6 text-muted-foreground">
+                PDF-Vorschau ist auf mobilen Geräten eingeschränkt. Bitte wählen Sie eine der folgenden Optionen:
+              </p>
+              <div className="flex flex-col gap-4 w-full max-w-xs">
+                <Button onClick={handleExternalOpen} className="flex items-center justify-center">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Im Browser öffnen
+                </Button>
+                <Button onClick={handleDownload} variant="outline" className="flex items-center justify-center">
+                  <Download className="h-4 w-4 mr-2" />
+                  Herunterladen
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <iframe 
+              src={`${documentPath}#toolbar=0`}
+              className="w-full h-full"
+              onLoad={() => setLoading(false)}
+              title={document.title}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

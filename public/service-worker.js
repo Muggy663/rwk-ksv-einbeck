@@ -3,7 +3,7 @@
  * Vercel-kompatible Implementierung
  */
 
-const CACHE_NAME = 'rwk-app-v1';
+const CACHE_NAME = 'rwk-app-v0.9.9.5';
 
 // Zu cachende URLs
 const urlsToCache = [

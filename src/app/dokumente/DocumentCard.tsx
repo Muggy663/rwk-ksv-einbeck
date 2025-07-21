@@ -1,13 +1,16 @@
 // src/app/dokumente/DocumentCard.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Calendar, Info, Eye, Lock } from 'lucide-react';
+import { FileText, Download, Calendar, Info, Eye, Lock, ExternalLink, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { Document } from '@/lib/services/document-service';
 import { YearBadge } from './YearBadge';
 import { FavoriteButton } from './FavoriteButton';
 import { DocumentPreview } from './DocumentPreview';
+import { isMobileDevice } from '@/lib/utils/is-mobile';
+import { openWithAppChooser } from '@/lib/utils/open-external';
+import { downloadFile } from '@/lib/utils/download-file';
 
 // Funktion zur Generierung des korrekten Pfads
 function getDocumentPath(path: string): string {
@@ -25,7 +28,12 @@ function getDocumentPath(path: string): string {
 
 export function DocumentCard({ document }: { document: Document }) {
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const documentPath = getDocumentPath(document.path);
+  
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+  }, []);
   
   return (
     <>
@@ -83,20 +91,36 @@ export function DocumentCard({ document }: { document: Document }) {
                 </Button>
               )}
               {document.fileType === 'PDF' ? (
-                <a 
-                  href={documentPath} 
-                  download 
-                  className="w-1/2 sm:w-auto"
-                  onClick={() => {
-                    fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
-                      .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
-                  }}
-                >
-                  <Button variant="outline" size="sm" className="flex items-center w-full">
+                isMobile ? (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center w-full"
+                    onClick={() => {
+                      // Mit App-Chooser öffnen
+                      openWithAppChooser(documentPath);
+                      fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
+                        .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
+                    }}
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    <span className="whitespace-nowrap">Mit App öffnen</span>
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center w-full"
+                    onClick={() => {
+                      downloadFile(documentPath, document.title + '.pdf');
+                      fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
+                        .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
+                    }}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     <span className="whitespace-nowrap">Herunterladen</span>
                   </Button>
-                </a>
+                )
               ) : (
                 <Link href={documentPath} className="w-full sm:w-auto">
                   <Button variant="outline" size="sm" className="flex items-center w-full">

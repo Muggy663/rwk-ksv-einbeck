@@ -5,6 +5,21 @@ const COUNTER_DOC_ID = 'app_downloads';
 const COUNTER_COLLECTION = 'app_stats';
 
 /**
+ * Setzt den Download-Zähler auf einen bestimmten Wert
+ * Nur für administrative Zwecke
+ */
+export async function setDownloadCount(count: number): Promise<void> {
+  try {
+    const counterRef = doc(db, COUNTER_COLLECTION, COUNTER_DOC_ID);
+    await setDoc(counterRef, { count }, { merge: true });
+    console.log(`Download-Zähler auf ${count} gesetzt`);
+  } catch (error) {
+    console.error('Fehler beim Setzen des Download-Zählers:', error);
+    throw error;
+  }
+}
+
+/**
  * Erhöht den Download-Zähler und gibt die aktuelle Anzahl zurück
  */
 export async function incrementDownloadCounter(): Promise<number> {
