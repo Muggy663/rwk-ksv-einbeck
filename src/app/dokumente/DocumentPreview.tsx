@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Document } from '@/lib/services/document-service';
 import { Button } from '@/components/ui/button';
-import { Download, X, ExternalLink } from 'lucide-react';
+import { Download, X, ExternalLink, Share2 } from 'lucide-react';
 import { isMobileDevice } from '@/lib/utils/is-mobile';
 import { openWithAppChooser } from '@/lib/utils/open-external';
 
@@ -13,20 +13,16 @@ interface DocumentPreviewProps {
 }
 
 export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewProps) {
-  const [loading, setLoading] = useState(true);
+  // Wir entfernen den Loading-Status komplett, da er Probleme verursacht
   const [isMobile, setIsMobile] = useState(false);
-  
-  // Setze loading auf false, wenn der Dialog geschlossen wird
-  useEffect(() => {
-    if (!isOpen) {
-      setLoading(false);
-    } else {
-      setLoading(true);
-    }
-  }, [isOpen]);
+  const [isNativeApp, setIsNativeApp] = useState(false);
   
   useEffect(() => {
+    // Prüfe, ob wir auf einem mobilen Gerät sind
     setIsMobile(isMobileDevice());
+    
+    // Prüfe, ob wir in einer nativen App sind
+    setIsNativeApp(window.Capacitor && window.Capacitor.isNativePlatform());
   }, []);
   
   // Funktion zur Generierung des korrekten Pfads
@@ -45,50 +41,81 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
   
   const documentPath = getDocumentPath(document.path);
   
+  // Tracking-Funktion
+  const trackDownload = async () => {
+    try {
+      await fetch(`/api/documents/${document.id}/download`, { method: 'POST' });
+    } catch (err) {
+      console.warn('Download-Tracking fehlgeschlagen:', err);
+    }
+  };
+  
   const handleDownload = async () => {
     try {
-      // Tracking
-      await fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
-        .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
-      
-      // Schließe den Dialog
+      // Dialog schließen, bevor wir weitere Aktionen ausführen
       onClose();
       
-      // Verzögerung für bessere UX
-      setTimeout(() => {
-        // Einfacher Download oder Browser-Öffnung je nach Gerät
-        if (isMobileDevice()) {
-          openWithAppChooser(documentPath);
-        } else {
-          const link = document.createElement('a');
-          link.href = documentPath;
-          link.download = document.title;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
-      }, 300);
+      // Tracking
+      await trackDownload();
+      
+      // Kurze Verzögerung
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Download starten
+      if (isMobile || isNativeApp) {
+        // Auf mobilen Geräten oder in nativer App
+        await openWithAppChooser(documentPath);
+      } else {
+        // Auf Desktop-Geräten
+        const link = document.createElement('a');
+        link.href = documentPath;
+        link.download = document.title + '.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     } catch (error) {
       console.error('Fehler beim Herunterladen:', error);
+      // Fallback bei Fehler
+      window.open(documentPath, '_blank');
     }
   };
   
   const handleExternalOpen = async () => {
     try {
-      // Tracking
-      await fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
-        .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
-      
-      // Schließe den Dialog
+      // Dialog schließen, bevor wir weitere Aktionen ausführen
       onClose();
       
-      // Verzögerung für bessere UX
-      setTimeout(() => {
-        // Im Browser öffnen
-        window.open(documentPath, '_blank');
-      }, 300);
+      // Tracking
+      await trackDownload();
+      
+      // Kurze Verzögerung
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Im Browser öffnen
+      window.open(documentPath, '_blank');
     } catch (error) {
       console.error('Fehler beim Öffnen im Browser:', error);
+    }
+  };
+  
+  const handleAppOpen = async () => {
+    try {
+      // Dialog schließen, bevor wir weitere Aktionen ausführen
+      onClose();
+      
+      // Tracking
+      await trackDownload();
+      
+      // Kurze Verzögerung
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Mit App öffnen
+      await openWithAppChooser(documentPath);
+    } catch (error) {
+      console.error('Fehler beim Öffnen mit App:', error);
+      // Fallback bei Fehler
+      window.open(documentPath, '_blank');
     }
   };
   
@@ -97,45 +124,36 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
       <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0">
         <DialogHeader className="p-4 border-b flex flex-row justify-between items-center">
           <DialogTitle className="text-sm sm:text-base">{document.title}</DialogTitle>
-          {!isMobile && (
-            <Button variant="outline" size="sm" onClick={handleDownload} className="flex items-center gap-1.5">
-              <Download className="h-4 w-4" />
-              <span>Herunterladen</span>
-            </Button>
-          )}
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
         
-        <div className="flex-1 overflow-hidden">
-          {loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
-          )}
-          
-          {isMobile ? (
-            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-              <p className="mb-6 text-muted-foreground">
-                PDF-Vorschau ist auf mobilen Geräten eingeschränkt. Bitte wählen Sie eine der folgenden Optionen:
-              </p>
-              <div className="flex flex-col gap-4 w-full max-w-xs">
-                <Button onClick={handleExternalOpen} className="flex items-center justify-center">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Im Browser öffnen
+        <div className="flex-1 overflow-hidden flex items-center justify-center">
+          {/* Wir zeigen auf allen Geräten nur die Optionen an, keine iframe-Vorschau mehr */}
+          <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+            <p className="mb-6 text-muted-foreground">
+              Wie möchten Sie das Dokument "{document.title}" öffnen?
+            </p>
+            <div className="flex flex-col gap-4 w-full max-w-xs">
+              <Button onClick={handleExternalOpen} className="flex items-center justify-center">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Im Browser öffnen
+              </Button>
+              
+              <Button onClick={handleDownload} variant="outline" className="flex items-center justify-center">
+                <Download className="h-4 w-4 mr-2" />
+                Herunterladen
+              </Button>
+              
+              {(isMobile || isNativeApp) && (
+                <Button onClick={handleAppOpen} variant="secondary" className="flex items-center justify-center">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Mit App öffnen
                 </Button>
-                <Button onClick={handleDownload} variant="outline" className="flex items-center justify-center">
-                  <Download className="h-4 w-4 mr-2" />
-                  Herunterladen
-                </Button>
-              </div>
+              )}
             </div>
-          ) : (
-            <iframe 
-              src={`${documentPath}#toolbar=0`}
-              className="w-full h-full"
-              onLoad={() => setLoading(false)}
-              title={document.title}
-            />
-          )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

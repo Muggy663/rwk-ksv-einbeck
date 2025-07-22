@@ -102,11 +102,28 @@ export function DocumentCard({ document }: { document: Document }) {
                         await fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
                           .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
                         
-                        // Mit App-Chooser öffnen
-                        console.log('Starte App-Chooser für:', documentPath);
-                        await openWithAppChooser(documentPath);
+                        // Prüfen, ob wir in einer nativen App sind
+                        const isNativeApp = window.Capacitor && window.Capacitor.isNativePlatform();
+                        console.log('Starte App-Chooser für:', documentPath, 'Native App:', isNativeApp);
+                        
+                        if (isNativeApp) {
+                          // In nativer App: Capacitor Browser Plugin verwenden
+                          try {
+                            const { Browser } = await import('@capacitor/browser');
+                            await Browser.open({ url: documentPath });
+                          } catch (capacitorError) {
+                            console.error('Capacitor Browser Fehler:', capacitorError);
+                            // Fallback
+                            window.open(documentPath, '_blank');
+                          }
+                        } else {
+                          // Im mobilen Browser: Standard-Methode verwenden
+                          await openWithAppChooser(documentPath);
+                        }
                       } catch (error) {
                         console.error('Fehler beim Öffnen mit App:', error);
+                        // Letzter Fallback
+                        window.open(documentPath, '_blank');
                       }
                     }}
                   >
