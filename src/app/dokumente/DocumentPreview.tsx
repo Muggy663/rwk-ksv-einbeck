@@ -208,13 +208,7 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
                 <Download className="h-4 w-4 mr-2" />
                 Herunterladen
               </Button>
-              
-              {(isMobile || isNativeApp) && (
-                <Button onClick={handleAppOpen} variant="secondary" className="flex items-center justify-center">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Mit App öffnen
-                </Button>
-              )}
+
             </div>
           </div>
         </div>

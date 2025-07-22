@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown } from 'lucide-react';
 import { generateLeaguePDFFixed, generateShootersPDFFixed } from '@/lib/utils/pdf-generator.fix';
 import { useToast } from '@/hooks/use-toast';
+import { useNativeApp } from '@/components/ui/native-app-detector';
 
 interface League {
   id: string;
@@ -29,7 +30,13 @@ function PDFButtonComponent({
   className
 }: PDFButtonProps) {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [isNative, setIsNative] = useState<boolean>(false);
   const { toast } = useToast();
+  const { isNativeApp } = useNativeApp();
+  
+  useEffect(() => {
+    setIsNative(isNativeApp);
+  }, [isNativeApp]);
 
   const handleExport = async (): Promise<void> => {
     if (isGenerating) return;
@@ -59,6 +66,11 @@ function PDFButtonComponent({
     }
   };
 
+  // In nativer App nur in RWK-Tabellen ausblenden
+  if (isNative && typeof window !== 'undefined' && window.location.pathname.includes('/rwk-tabellen')) {
+    return null;
+  }
+  
   return (
     <Button
       variant="outline"

@@ -91,54 +91,6 @@ export function DocumentCard({ document }: { document: Document }) {
                 </Button>
               )}
               {document.fileType === 'PDF' ? (
-                isMobile ? (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex items-center w-full"
-                    onClick={async () => {
-                      try {
-                        // Tracking zuerst
-                        await fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
-                          .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
-                        
-                        // Stelle sicher, dass die URL absolut ist
-                        let fullPath = documentPath;
-                        if (!fullPath.startsWith('http')) {
-                          const baseUrl = window.location.origin;
-                          fullPath = `${baseUrl}${fullPath.startsWith('/') ? '' : '/'}${fullPath}`;
-                        }
-                        
-                        // Prüfen, ob wir in einer nativen App sind
-                        const isNativeApp = window.Capacitor && window.Capacitor.isNativePlatform();
-                        console.log('Starte App-Öffnen für:', fullPath, 'Native App:', isNativeApp);
-                        
-                        if (isNativeApp) {
-                          // In nativer App: Direkte Methode verwenden
-                          if (window.Capacitor.getPlatform() === 'android') {
-                            // Android: Verwende Intent-URL
-                            console.log('Android erkannt, verwende Intent-URL für PDF');
-                            // Direkte Intent-URL für PDF-Viewer
-                            window.location.href = `intent:${fullPath}#Intent;action=android.intent.action.VIEW;type=application/pdf;end`;
-                          } else {
-                            // iOS: Verwende _system
-                            window.open(fullPath, '_system');
-                          }
-                        } else {
-                          // Im mobilen Browser: Standard-Methode verwenden
-                          await openWithAppChooser(fullPath);
-                        }
-                      } catch (error) {
-                        console.error('Fehler beim Öffnen mit App:', error);
-                        // Letzter Fallback
-                        window.open(documentPath, '_blank');
-                      }
-                    }}
-                  >
-                    <Share2 className="h-4 w-4 mr-2" />
-                    <span className="whitespace-nowrap">Mit App öffnen</span>
-                  </Button>
-                ) : (
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -152,7 +104,6 @@ export function DocumentCard({ document }: { document: Document }) {
                     <Download className="h-4 w-4 mr-2" />
                     <span className="whitespace-nowrap">Herunterladen</span>
                   </Button>
-                )
               ) : (
                 <Link href={documentPath} className="w-full sm:w-auto">
                   <Button variant="outline" size="sm" className="flex items-center w-full">

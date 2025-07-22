@@ -33,8 +33,91 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.5</CardTitle>
+              <CardTitle className="text-xl">Native App v0.9.1.0</CardTitle>
               <Badge variant="secondary">Neu</Badge>
+            </div>
+            <CardDescription>30.05.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Erste offizielle Version der nativen Android-App mit verbesserter PDF-Anzeige.</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-blue-900 mb-2">📱 Native App v0.9.1.0</h4>
+              <div className="text-xs text-blue-700">
+                Verbesserte PDF-Anzeige und Statusleisten-Fix
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📱 <strong>PDF-Öffnen-Funktion</strong> für native Android-App komplett überarbeitet</li>
+              <li>🔗 <strong>Intent-URLs</strong> für direktes Öffnen von PDFs mit nativen PDF-Viewern</li>
+              <li>🔄 <strong>Statusleisten-Fix</strong>: Die App überlagert nicht mehr die Statusleiste</li>
+              <li>🔧 <strong>Hybride Versionierungsstrategie</strong>: Klare Trennung zwischen Web und App</li>
+              <li>🔔 <strong>Update-Benachrichtigungen</strong>: Die App erkennt neue Versionen</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-blue-800">📱 Native App</span>
+                  <p className="text-xs text-blue-600 mt-1">Verbesserte PDF-Anzeige für Android</p>
+                </div>
+                <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                  📱 v0.9.1.0
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Link href="/updates/v0.9.1.0" className="text-primary hover:text-primary/80 text-sm flex items-center">
+                Details <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.6</CardTitle>
+              <Badge variant="secondary">Neu</Badge>
+            </div>
+            <CardDescription>21.07.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Verbesserte PDF-Anzeige in der nativen App und Statusleisten-Fix.</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-blue-900 mb-2">📱 Neue Features Version 0.9.9.6</h4>
+              <div className="text-xs text-blue-700">
+                Verbesserte PDF-Anzeige und Statusleisten-Fix
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📱 <strong>PDF-Öffnen-Funktion</strong> für native Android-App komplett überarbeitet</li>
+              <li>🔗 <strong>Intent-URLs</strong> für direktes Öffnen von PDFs mit nativen PDF-Viewern</li>
+              <li>🔄 <strong>Statusleisten-Fix</strong>: Die App überlagert nicht mehr die Statusleiste</li>
+              <li>🔧 <strong>Hybride Versionierungsstrategie</strong>: Klare Trennung zwischen Web und App</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-blue-800">📱 PDF-Anzeige verbessert</span>
+                  <p className="text-xs text-blue-600 mt-1">Bessere Benutzererfahrung in der nativen App</p>
+                </div>
+                <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                  📊 Live
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Link href="/updates/v0.9.9.6" className="text-primary hover:text-primary/80 text-sm flex items-center">
+                Details <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.5</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>21.07.2025</CardDescription>
           </CardHeader>

@@ -2,9 +2,9 @@
   "documents": [
     {
       "id": "1",
-      "title": "RWK Einbeck App v0.9.9.6",
-      "description": "Neueste Version der RWK Einbeck App mit verbesserter PDF-Anzeige in der nativen App",
-      "path": "https://github.com/Muggy663/rwk-einbeck/releases/download/v.0.9.9.6/RWK-Einbeck-v0.9.9.6.apk",
+      "title": "RWK Einbeck App v0.9.1.0",
+      "description": "Erste offizielle Version der nativen App mit verbesserter PDF-Anzeige und Statusleisten-Fix",
+      "path": "https://github.com/Muggy663/rwk-einbeck/releases/download/v.0.9.1.0/RWK-Einbeck-v0.9.1.0.apk",
       "category": "formular",
       "date": "30. Mai 2024",
       "fileType": "APK",

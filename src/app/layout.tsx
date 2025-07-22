@@ -16,6 +16,8 @@ import { ModeToggle } from '@/components/ui/mode-toggle';
 import { SkipLink } from '@/components/ui/skip-link';
 import { InstallPrompt } from '@/components/ui/install-prompt';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
+import { AppUpdateChecker } from '@/components/app-update-checker';
+import { NativeAppProvider } from '@/components/ui/native-app-detector';
 // import { SentryClientInit } from '@/components/sentry-client-init';
 
 
@@ -62,6 +64,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           attribute="class"
           disableTransitionOnChange
         >
+        <NativeAppProvider>
         <AuthProvider>
           <ClubProvider>
             <div className="min-h-screen flex flex-col">
@@ -87,6 +90,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
             </div>
           </header>
           <main id="main-content" tabIndex={-1} className="flex-grow focus:outline-none">
+            <div className="container mt-4">
+              <AppUpdateChecker />
+            </div>
             {children}
           </main>
           <SiteFooter />
@@ -98,6 +104,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             </div>
           </ClubProvider>
         </AuthProvider>
+        </NativeAppProvider>
         </ThemeProvider>
       </body>
     </html>
