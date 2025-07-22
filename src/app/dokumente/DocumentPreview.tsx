@@ -62,8 +62,27 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
       await new Promise(resolve => setTimeout(resolve, 100));
       
       // Download starten
-      if (isMobile || isNativeApp) {
-        // Auf mobilen Geräten oder in nativer App
+      if (isNativeApp) {
+        // In nativer App: Direkte Methode verwenden
+        console.log('Native App erkannt, verwende direkten Download');
+        
+        // Stelle sicher, dass die URL absolut ist
+        let fullPath = documentPath;
+        if (!fullPath.startsWith('http')) {
+          const baseUrl = window.location.origin;
+          fullPath = `${baseUrl}${fullPath.startsWith('/') ? '' : '/'}${fullPath}`;
+        }
+        
+        // Für Android: Versuche Intent-URL direkt
+        if (window.Capacitor && window.Capacitor.getPlatform() === 'android') {
+          console.log('Android erkannt, verwende Intent-URL');
+          window.location.href = `intent:${fullPath}#Intent;action=android.intent.action.VIEW;type=application/pdf;end`;
+        } else {
+          // Für iOS und andere
+          window.open(fullPath, '_system');
+        }
+      } else if (isMobile) {
+        // Auf mobilen Browsern
         await openWithAppChooser(documentPath);
       } else {
         // Auf Desktop-Geräten
@@ -92,8 +111,30 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
       // Kurze Verzögerung
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Im Browser öffnen
-      window.open(documentPath, '_blank');
+      // Stelle sicher, dass die URL absolut ist
+      let fullPath = documentPath;
+      if (!fullPath.startsWith('http')) {
+        const baseUrl = window.location.origin;
+        fullPath = `${baseUrl}${fullPath.startsWith('/') ? '' : '/'}${fullPath}`;
+      }
+      
+      // Im Browser öffnen - spezielle Behandlung für native App
+      if (isNativeApp && window.Capacitor) {
+        console.log('Native App erkannt, öffne im externen Browser');
+        
+        try {
+          // Versuche mit Capacitor Browser Plugin
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.open({ url: fullPath });
+        } catch (capacitorError) {
+          console.error('Capacitor Browser Fehler:', capacitorError);
+          // Fallback
+          window.open(fullPath, '_system');
+        }
+      } else {
+        // Standard-Browser
+        window.open(fullPath, '_blank');
+      }
     } catch (error) {
       console.error('Fehler beim Öffnen im Browser:', error);
     }
@@ -110,8 +151,30 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
       // Kurze Verzögerung
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Mit App öffnen
-      await openWithAppChooser(documentPath);
+      // Stelle sicher, dass die URL absolut ist
+      let fullPath = documentPath;
+      if (!fullPath.startsWith('http')) {
+        const baseUrl = window.location.origin;
+        fullPath = `${baseUrl}${fullPath.startsWith('/') ? '' : '/'}${fullPath}`;
+      }
+      
+      // Mit App öffnen - direkte Methode für native App
+      if (isNativeApp && window.Capacitor) {
+        console.log('Native App erkannt, öffne direkt');
+        
+        if (window.Capacitor.getPlatform() === 'android') {
+          // Android: Verwende Intent-URL
+          console.log('Android erkannt, verwende Intent-URL für PDF');
+          // Direkte Intent-URL für PDF-Viewer
+          window.location.href = `intent:${fullPath}#Intent;action=android.intent.action.VIEW;type=application/pdf;end`;
+        } else {
+          // iOS: Verwende _system
+          window.open(fullPath, '_system');
+        }
+      } else {
+        // Mobiler Browser
+        await openWithAppChooser(fullPath);
+      }
     } catch (error) {
       console.error('Fehler beim Öffnen mit App:', error);
       // Fallback bei Fehler

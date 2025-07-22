@@ -7,6 +7,10 @@ declare global {
       isNativePlatform: () => boolean;
       getPlatform: () => string;
     };
+    // Für direkte Android-Intents
+    AndroidInterface?: {
+      openPdf: (url: string) => void;
+    };
   }
 }
 
@@ -18,16 +22,45 @@ export async function openWithAppChooser(url: string): Promise<void> {
   try {
     console.log('Öffne URL:', url);
     
+    // Stelle sicher, dass die URL absolut ist
+    if (!url.startsWith('http')) {
+      const baseUrl = window.location.origin;
+      url = `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+      console.log('URL zu absoluter URL konvertiert:', url);
+    }
+    
     // Prüfe, ob wir in einer nativen App sind
     const isNativeApp = window.Capacitor && window.Capacitor.isNativePlatform();
     
     if (isNativeApp) {
       console.log('Native App erkannt');
       
-      // Einfache Implementierung für native App
-      // Verwende direkt window.open, das wird vom Capacitor WebView abgefangen
-      window.open(url, '_system');
-      return;
+      // Prüfe die Plattform
+      const platform = window.Capacitor.getPlatform();
+      console.log('Plattform:', platform);
+      
+      if (platform === 'android') {
+        // Für Android: Versuche verschiedene Methoden
+        
+        // 1. Versuche direkte Android-Bridge (falls implementiert)
+        if (window.AndroidInterface && window.AndroidInterface.openPdf) {
+          console.log('Verwende AndroidInterface.openPdf');
+          window.AndroidInterface.openPdf(url);
+          return;
+        }
+        
+        // 2. Versuche mit location.href (funktioniert oft in WebViews)
+        console.log('Verwende location.href mit Intent-URL');
+        // Erstelle einen Intent-URL für Android
+        const intentUrl = `intent:${url}#Intent;action=android.intent.action.VIEW;type=application/pdf;end`;
+        window.location.href = intentUrl;
+        return;
+      } else {
+        // Für iOS und andere Plattformen
+        console.log('Verwende window.open mit _system');
+        window.open(url, '_system');
+        return;
+      }
     }
     
     // Für mobile Browser

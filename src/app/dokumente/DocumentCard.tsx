@@ -102,23 +102,31 @@ export function DocumentCard({ document }: { document: Document }) {
                         await fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
                           .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
                         
+                        // Stelle sicher, dass die URL absolut ist
+                        let fullPath = documentPath;
+                        if (!fullPath.startsWith('http')) {
+                          const baseUrl = window.location.origin;
+                          fullPath = `${baseUrl}${fullPath.startsWith('/') ? '' : '/'}${fullPath}`;
+                        }
+                        
                         // Prüfen, ob wir in einer nativen App sind
                         const isNativeApp = window.Capacitor && window.Capacitor.isNativePlatform();
-                        console.log('Starte App-Chooser für:', documentPath, 'Native App:', isNativeApp);
+                        console.log('Starte App-Öffnen für:', fullPath, 'Native App:', isNativeApp);
                         
                         if (isNativeApp) {
-                          // In nativer App: Capacitor Browser Plugin verwenden
-                          try {
-                            const { Browser } = await import('@capacitor/browser');
-                            await Browser.open({ url: documentPath });
-                          } catch (capacitorError) {
-                            console.error('Capacitor Browser Fehler:', capacitorError);
-                            // Fallback
-                            window.open(documentPath, '_blank');
+                          // In nativer App: Direkte Methode verwenden
+                          if (window.Capacitor.getPlatform() === 'android') {
+                            // Android: Verwende Intent-URL
+                            console.log('Android erkannt, verwende Intent-URL für PDF');
+                            // Direkte Intent-URL für PDF-Viewer
+                            window.location.href = `intent:${fullPath}#Intent;action=android.intent.action.VIEW;type=application/pdf;end`;
+                          } else {
+                            // iOS: Verwende _system
+                            window.open(fullPath, '_system');
                           }
                         } else {
                           // Im mobilen Browser: Standard-Methode verwenden
-                          await openWithAppChooser(documentPath);
+                          await openWithAppChooser(fullPath);
                         }
                       } catch (error) {
                         console.error('Fehler beim Öffnen mit App:', error);
