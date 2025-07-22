@@ -52,6 +52,7 @@ import {
   FileDown,
 } from 'lucide-react';
 import { PDFButton } from '@/components/ui/pdf-button';
+import { useNativeApp } from '@/components/ui/native-app-detector';
 import type {
   Season,
   League,
@@ -386,6 +387,7 @@ const RwkTabellenPageLoadingSkeleton: React.FC<{ title?: string }> = ({ title })
 function RwkTabellenPageComponent() {
   const router = useRouter();
   const { toast } = useToast();
+  const { isNativeApp } = useNativeApp();
   
   const [urlParams, setUrlParams] = useState<{
     year: string | null,
@@ -1591,59 +1593,61 @@ function RwkTabellenPageComponent() {
                           Teams "Außer Konkurrenz" anzeigen
                         </Label>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <PDFButton 
-                          league={league} 
-                          numRounds={currentNumRoundsState} 
-                          competitionYear={selectedCompetition.year} 
-                          type="teams"
-                          className="text-xs px-2 py-1 whitespace-nowrap"
-                        />
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-xs px-2 py-1 whitespace-nowrap"
-                          onClick={async () => {
-                            // Import der benötigten Funktionen
-                            const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
-                            // Lade Einzelschützen für diese Liga
-                            const shooterData = await fetchIndividualShooterData(
-                              selectedCompetition, 
-                              currentNumRoundsState, 
-                              league.id
-                            );
-                            
-                            // Erstelle temporäres League-Objekt mit den geladenen Schützen
-                            const tempLeague = {
-                              ...league,
-                              individualLeagueShooters: shooterData
-                            };
-                            
-                            // Generiere PDF mit den geladenen Daten
-                            try {
-                              await generateShootersPDFFixed(
-                                tempLeague, 
+                      {!isNativeApp && (
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <PDFButton 
+                            league={league} 
+                            numRounds={currentNumRoundsState} 
+                            competitionYear={selectedCompetition.year} 
+                            type="teams"
+                            className="text-xs px-2 py-1 whitespace-nowrap"
+                          />
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-xs px-2 py-1 whitespace-nowrap"
+                            onClick={async () => {
+                              // Import der benötigten Funktionen
+                              const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
+                              // Lade Einzelschützen für diese Liga
+                              const shooterData = await fetchIndividualShooterData(
+                                selectedCompetition, 
                                 currentNumRoundsState, 
-                                selectedCompetition.year
+                                league.id
                               );
                               
-                              toast({
-                                title: 'PDF erstellt',
-                                description: 'Die PDF-Datei wurde erfolgreich erstellt.',
-                              });
-                            } catch (error) {
-                              console.error('Fehler beim Erstellen der PDF:', error);
-                              toast({
-                                title: 'Fehler',
-                                description: 'Die PDF-Datei konnte nicht erstellt werden.',
-                                variant: 'destructive'
-                              });
-                            }
-                          }}
-                        >
-                          Einzelschützen als PDF
-                        </Button>
-                      </div>
+                              // Erstelle temporäres League-Objekt mit den geladenen Schützen
+                              const tempLeague = {
+                                ...league,
+                                individualLeagueShooters: shooterData
+                              };
+                              
+                              // Generiere PDF mit den geladenen Daten
+                              try {
+                                await generateShootersPDFFixed(
+                                  tempLeague, 
+                                  currentNumRoundsState, 
+                                  selectedCompetition.year
+                                );
+                                
+                                toast({
+                                  title: 'PDF erstellt',
+                                  description: 'Die PDF-Datei wurde erfolgreich erstellt.',
+                                });
+                              } catch (error) {
+                                console.error('Fehler beim Erstellen der PDF:', error);
+                                toast({
+                                  title: 'Fehler',
+                                  description: 'Die PDF-Datei konnte nicht erstellt werden.',
+                                  variant: 'destructive'
+                                });
+                              }
+                            }}
+                          >
+                            Einzelschützen als PDF
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     {league.teams.length > 0 ? (
                       <div className="overflow-x-auto">

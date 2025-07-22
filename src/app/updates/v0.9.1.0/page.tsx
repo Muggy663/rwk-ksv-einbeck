@@ -23,7 +23,7 @@ export default function AppUpdatePage() {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2">
-              <span>Veröffentlicht: 30.05.2025</span>
+              <span>Veröffentlicht: 22.07.2025</span>
             </Badge>
           </div>
         </div>

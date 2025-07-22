@@ -12,10 +12,13 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: true,
     captureInput: true,
-    // Statusleiste anzeigen
+    // Statusleiste-Konfiguration
     backgroundColor: "#ffffff",
     statusBarStyle: "dark",
-    statusBarOverlaysWebView: false
+    statusBarOverlaysWebView: false,
+    // Vollbild-Modus deaktivieren, damit die Statusleiste sichtbar bleibt
+    androidWindowSoftInputMode: "adjustResize",
+    fullScreen: false
   }
 };
 

@@ -11,6 +11,7 @@ import { DocumentPreview } from './DocumentPreview';
 import { isMobileDevice } from '@/lib/utils/is-mobile';
 import { openWithAppChooser } from '@/lib/utils/open-external';
 import { downloadFile } from '@/lib/utils/download-file';
+import { useNativeApp } from '@/components/ui/native-app-detector';
 
 // Funktion zur Generierung des korrekten Pfads
 function getDocumentPath(path: string): string {
@@ -29,6 +30,7 @@ function getDocumentPath(path: string): string {
 export function DocumentCard({ document }: { document: Document }) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const { isNativeApp } = useNativeApp();
   const documentPath = getDocumentPath(document.path);
   
   useEffect(() => {
@@ -95,10 +97,40 @@ export function DocumentCard({ document }: { document: Document }) {
                     variant="outline" 
                     size="sm" 
                     className="flex items-center w-full"
-                    onClick={() => {
-                      downloadFile(documentPath, document.title + '.pdf');
-                      fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
-                        .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
+                    onClick={async () => {
+                      try {
+                        // Tracking zuerst
+                        await fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
+                          .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
+                        
+                        // Stelle sicher, dass die URL absolut ist
+                        let fullPath = documentPath;
+                        if (!fullPath.startsWith('http')) {
+                          const baseUrl = window.location.origin;
+                          fullPath = `${baseUrl}${fullPath.startsWith('/') ? '' : '/'}${fullPath}`;
+                        }
+                        
+                        if (isNativeApp) {
+                          // In nativer App: Direkte Methode verwenden
+                          console.log('Native App erkannt, verwende direkten Download');
+                          
+                          // Für Android: Versuche Intent-URL direkt
+                          if (window.Capacitor && window.Capacitor.getPlatform() === 'android') {
+                            console.log('Android erkannt, verwende Intent-URL');
+                            window.location.href = `intent:${fullPath}#Intent;action=android.intent.action.VIEW;type=application/pdf;end`;
+                          } else {
+                            // Für iOS und andere
+                            window.open(fullPath, '_system');
+                          }
+                        } else {
+                          // Standard-Download-Methode
+                          downloadFile(documentPath, document.title + '.pdf');
+                        }
+                      } catch (error) {
+                        console.error('Fehler beim Herunterladen:', error);
+                        // Fallback bei Fehler
+                        window.open(documentPath, '_blank');
+                      }
                     }}
                   >
                     <Download className="h-4 w-4 mr-2" />
