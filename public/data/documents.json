@@ -1,6 +1,18 @@
 {
   "documents": [
     {
+      "id": "1",
+      "title": "RWK Einbeck App v0.9.9.6",
+      "description": "Neueste Version der RWK Einbeck App mit verbesserter PDF-Anzeige in der nativen App",
+      "path": "https://github.com/Muggy663/rwk-einbeck/releases/download/v.0.9.9.6/RWK-Einbeck-v0.9.9.6.apk",
+      "category": "formular",
+      "date": "30. Mai 2024",
+      "fileType": "APK",
+      "fileSize": "6.08 MB",
+      "active": true,
+      "downloadCount": 0
+    },
+    {
       "id": "2",
       "title": "Ausschreibung RWK Kleinkaliber 2025",
       "description": "Offizielle Ausschreibung für den Rundenwettkampf Kleinkaliber der Saison 2025",

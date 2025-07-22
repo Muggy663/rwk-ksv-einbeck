@@ -56,7 +56,7 @@ export default function AppPage() {
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2 text-2xl text-blue-900">
             <Smartphone className="h-6 w-6" />
-            RWK Einbeck v0.9.9.4
+            RWK Einbeck v0.9.9.6
           </CardTitle>
           <CardDescription className="text-blue-700">
             Kostenlose Android-App • Keine Werbung • Schnell & einfach
@@ -74,9 +74,9 @@ export default function AppPage() {
                    .catch(err => console.error('Fehler beim Zählen des Downloads:', err));
                }}
              >
-              <a href="https://github.com/Muggy663/rwk-einbeck/releases/download/v0.9.9.4/RWK-Einbeck-v0.9.9.4.apk" download>
+              <a href="https://github.com/Muggy663/rwk-einbeck/releases/download/v.0.9.9.6/RWK-Einbeck-v0.9.9.6.apk" download>
                  <Download className="h-5 w-5 mr-2" />
-                 APK herunterladen (5.99 MB)
+                 APK herunterladen (6.08 MB)
                </a>
              </Button>
              <div className="flex items-center justify-center mt-3">

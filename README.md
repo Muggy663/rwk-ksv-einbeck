@@ -1,4 +1,4 @@
-# RWK Einbeck App - Version 0.9.9.5
+# RWK Einbeck App - Version 0.9.9.6
 
 Eine moderne Web-Anwendung für die Verwaltung von Rundenwettkämpfen im Schießsport.
 
@@ -144,3 +144,4 @@ Weitere Informationen finden Sie auf der [Copyright-Seite](/copyright).
 
 **Version 0.9.9** - Vollständiges E-Mail-System mit Error-Monitoring
 **Version 0.9.9.5** - App-Verbesserungen und Copyright-Informationen
+**Version 0.9.9.6** - Verbesserte PDF-Anzeige in nativer App
