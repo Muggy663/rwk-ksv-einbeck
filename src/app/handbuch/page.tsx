@@ -20,7 +20,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch RWK Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 16. Juli 2025, Version 0.9.9.4)
+            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 30. Mai 2025, Web-Version 0.9.9.6, App-Version 0.9.1.0)
           </p>
         </div>
       </div>
@@ -374,8 +374,9 @@ export default function HandbuchPage() {
               <p>Die RWK Einbeck App ist jetzt auch als native Android-App verfügbar für bessere Performance und einfachere Nutzung.</p>
               
               <div className="bg-green-50 p-3 rounded-md border border-green-200 mb-4">
-                <h4 className="font-medium text-green-800 mb-2">📱 Neue Android-App (Version 0.9.9.4)</h4>
+                <h4 className="font-medium text-green-800 mb-2">📱 Neue Android-App (Version 0.9.1.0)</h4>
                 <p className="text-green-700">Die native Android-App bietet alle Funktionen der Web-App mit verbesserter Performance und einfacherer Installation.</p>
+                <p className="text-green-700 mt-1"><strong>Neu in Version 0.9.1.0:</strong> Verbesserte PDF-Anzeige und Statusleisten-Fix</p>
               </div>
               
               <ul className="list-disc pl-5 space-y-1 mt-2">
@@ -385,7 +386,18 @@ export default function HandbuchPage() {
                 <li><strong>Updates:</strong> 90% der Updates erfolgen automatisch über die Web-App, nur bei neuen Features ist eine neue APK nötig</li>
                 <li><strong>Warum "Unbekannte Quelle"?</strong> Normal bei Apps außerhalb Play Store - die RWK App ist sicher und offiziell</li>
                 <li><strong>iPhone-Nutzer:</strong> Können die Web-App im Safari-Browser nutzen oder als PWA zum Home-Bildschirm hinzufügen</li>
+                <li><strong>Versionierungsstrategie:</strong> Web-App (0.9.9.x) und Native App (0.9.x.y) haben unterschiedliche Versionsnummern</li>
               </ul>
+              
+              <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
+                <h4 className="font-medium text-blue-800 mb-2">Hybride Versionierungsstrategie:</h4>
+                <p className="text-blue-700 mb-2">Ab Version 0.9.9.6/0.9.1.0 verwenden wir eine hybride Versionierungsstrategie:</p>
+                <ul className="list-disc pl-5 space-y-1 text-blue-700">
+                  <li><strong>Web-App:</strong> 0.9.9.x - Aktuelle Version: 0.9.9.6</li>
+                  <li><strong>Native App:</strong> 0.9.x.y - Aktuelle Version: 0.9.1.0</li>
+                </ul>
+                <p className="text-blue-700 mt-2">Dies ermöglicht unabhängige Entwicklungszyklen für Web und App, während die Hauptversion (0.9) synchron bleibt.</p>
+              </div>
               
               <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
                 <h4 className="font-medium text-blue-800 mb-2">Installation Schritt-für-Schritt:</h4>
