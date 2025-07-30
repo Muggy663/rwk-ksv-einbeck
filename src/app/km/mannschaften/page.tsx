@@ -33,6 +33,7 @@ export default function KMMannschaften() {
   const [clubs, setClubs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     console.log('useEffect triggered, hasKMAccess:', hasKMAccess, 'authLoading:', authLoading);
@@ -108,6 +109,9 @@ export default function KMMannschaften() {
   };
 
   const generateMannschaften = async () => {
+    setIsGenerating(true);
+    toast({ title: 'Generierung gestartet', description: 'Mannschaften werden automatisch erstellt...' });
+    
     try {
       const response = await fetch('/api/km/mannschaften/generate', {
         method: 'POST',
@@ -119,14 +123,26 @@ export default function KMMannschaften() {
         const result = await response.json();
         toast({ 
           title: 'Erfolg', 
-          description: `${result.generated} Mannschaften automatisch generiert` 
+          description: `${result.generated || 0} Mannschaften automatisch generiert` 
         });
         loadData();
       } else {
-        toast({ title: 'Fehler', description: 'Generierung fehlgeschlagen', variant: 'destructive' });
+        const errorData = await response.json().catch(() => ({}));
+        toast({ 
+          title: 'Fehler', 
+          description: errorData.error || 'Generierung fehlgeschlagen', 
+          variant: 'destructive' 
+        });
       }
     } catch (error) {
-      toast({ title: 'Fehler', description: 'Generierung fehlgeschlagen', variant: 'destructive' });
+      console.error('Generate error:', error);
+      toast({ 
+        title: 'Fehler', 
+        description: `Generierung fehlgeschlagen: ${error.message}`, 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -194,9 +210,27 @@ export default function KMMannschaften() {
             </CardHeader>
             <CardContent>
               <div className="mb-4">
-                <Button onClick={generateMannschaften}>
-                  🔄 Mannschaften automatisch generieren
+                <Button 
+                  onClick={generateMannschaften}
+                  disabled={isGenerating}
+                  className="relative"
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Generiere Mannschaften...
+                    </>
+                  ) : (
+                    <>
+                      🔄 Mannschaften automatisch generieren
+                    </>
+                  )}
                 </Button>
+                {mannschaften.length > 0 && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    {mannschaften.length} Mannschaften vorhanden
+                  </p>
+                )}
               </div>
 
               <div className="space-y-4">

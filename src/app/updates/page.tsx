@@ -19,8 +19,8 @@ export default function UpdatesPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs py-1 px-2">
-              <span>Web-Version: 1.0.0 (29.07.2025)</span>
+            <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
+              <span>Web-Version: 0.9.9.5a (30.07.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (22.07.2025)</span>
@@ -36,17 +36,61 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 1.0.0 - KM-System</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.5a - Schützen-Fix + KM Beta</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
             </div>
-            <CardDescription>29.07.2025</CardDescription>
+            <CardDescription>30.07.2025</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="mb-4">Vollständiges Kreismeisterschafts-System mit digitalen Meldungen, automatischer Mannschaftsbildung und Zwischenspeicher.</p>
+            <p className="mb-4">Kritische Bugfixes für Schützen-Anzeige und vollständige KM-System Optimierungen mit Dark Mode Support.</p>
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🏆 KM-System v1.0.0</h4>
+              <h4 className="font-semibold text-green-900 mb-2">🔧 Kritische Fixes v0.9.9.5a</h4>
               <div className="text-xs text-green-700">
-                Komplettes Kreismeisterschafts-System produktionsreif
+                Schützen-Anzeige repariert + KM-System produktionsreif
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>👥 <strong>Schützen-Anzeige repariert:</strong> Erweiterte Query für clubId, rwkClubId und kmClubId</li>
+              <li>📝 <strong>Namen-Fallback:</strong> Neue Importe ohne firstName/lastName zeigen aufgeteilten name</li>
+              <li>👥 <strong>Mannschaftsinfo-Fix:</strong> Bidirektionale Suche über teamIds und shooterIds</li>
+              <li>🌌 <strong>KM Dark Mode:</strong> Vollständige Dark Mode Unterstützung für alle Eingabefelder</li>
+              <li>📋 <strong>Zwischenspeicher UX:</strong> Unter Buttons verschoben, weniger verwirrend</li>
+              <li>🎯 <strong>"Automatisch" Badge lesbar:</strong> Dark Mode kompatible Farben</li>
+              <li>📱 <strong>Mobile Onboarding-Fix:</strong> "Weiter" Button kollidiert nicht mehr mit Zurück-Geste</li>
+              <li>📅 <strong>Jahr-System implementiert:</strong> KM 2026/2027/2028 mit automatischer Archivierung</li>
+              <li>🔗 <strong>Play Store Beta-Test:</strong> Anmeldung für offizielle App-Version</li>
+              <li>👥 <strong>KM-Mitglieder CRUD:</strong> Anlegen, Bearbeiten, Löschen vollständig funktional</li>
+              <li>🔄 <strong>Mannschaften-Generator:</strong> Bessere Benutzer-Rückmeldung mit Loading-States</li>
+              <li>📊 <strong>Demo-Hinweis entfernt:</strong> "KM-System Beta" statt "Demo-Modus"</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🔧 Kritische Fixes</span>
+                  <p className="text-xs text-green-600 mt-1">Schützen-Anzeige + KM-System vollständig funktional</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.9.9.5a
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow opacity-60">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.0.0 - KM-System (Alpha Test)</CardTitle>
+              <Badge variant="outline" className="bg-gray-100 text-gray-600">Konzept</Badge>
+            </div>
+            <CardDescription>Geplant - Noch nicht dem Präsidium vorgestellt</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Konzept für vollständiges Kreismeisterschafts-System - noch in Planung und nicht implementiert.</p>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-gray-700 mb-2">💭 KM-System Konzept</h4>
+              <div className="text-xs text-gray-600">
+                Idee für komplettes KM-System - Status: Nur Konzept
               </div>
             </div>
             <ul className="list-disc pl-5 space-y-1">
@@ -63,14 +107,14 @@ export default function UpdatesPage() {
               <li>🔄 <strong>Vereinfachte Auth:</strong> Keine separate km_user_permissions mehr</li>
               <li>📱 <strong>Benutzerfreundlich:</strong> Loading-States und Erfolgs-Hinweise</li>
             </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+            <div className="mt-4 p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border">
               <div className="flex items-center justify-between">
                 <div className="text-sm">
-                  <span className="font-medium text-green-800">🏆 KM-System Live</span>
-                  <p className="text-xs text-green-600 mt-1">Vollständiges Kreismeisterschafts-System</p>
+                  <span className="font-medium text-gray-700">💭 Nur Konzept</span>
+                  <p className="text-xs text-gray-600 mt-1">Noch nicht dem Präsidium vorgestellt</p>
                 </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v1.0.0
+                <span className="bg-gray-500 text-white px-3 py-1 rounded text-xs">
+                  💡 Idee
                 </span>
               </div>
             </div>

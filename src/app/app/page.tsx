@@ -51,6 +51,47 @@ export default function AppPage() {
         </p>
       </div>
 
+      {/* Play Store Beta Test */}
+      <Card className="mb-8 border-green-200 bg-gradient-to-r from-green-50 to-blue-50">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2 text-2xl text-green-900">
+            🎆 Play Store Beta-Test
+          </CardTitle>
+          <CardDescription className="text-green-700">
+            Werde Beta-Tester für den offiziellen Play Store Launch!
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center">
+          <div className="mb-6">
+            <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold text-green-900 mb-2">🚀 Jetzt für Beta-Test anmelden!</h3>
+              <p className="text-green-800 text-sm mb-3">
+                Hilf uns dabei, die RWK App für den offiziellen Play Store zu optimieren.
+                Als Beta-Tester erhältst du frühen Zugang zu neuen Features!
+              </p>
+              <div className="space-y-2 text-sm text-green-700">
+                <p><strong>So funktioniert's:</strong></p>
+                <p>1. 📧 Sende deine <strong>Google-Mail-Adresse</strong> (die mit dem Play Store verknüpft ist)</p>
+                <p>2. 📱 Erhalte den exklusiven Beta-Test-Link</p>
+                <p>3. 🎆 Teste neue Features vor allen anderen</p>
+              </div>
+            </div>
+            <Button 
+              size="lg" 
+              asChild 
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <a href="mailto:marcel.buenger@gmx.de?subject=Play Store Beta-Test Anmeldung&body=Hallo Marcel,%0D%0A%0D%0AIch möchte gerne am Play Store Beta-Test für die RWK Einbeck App teilnehmen.%0D%0A%0D%0AMeine Google-Mail-Adresse: [HIER EINFÜGEN]%0D%0A%0D%0AViele Grüße">
+                📧 Jetzt für Beta-Test anmelden
+              </a>
+            </Button>
+            <p className="text-sm text-muted-foreground mt-2">
+              🔒 Deine E-Mail wird nur für den Beta-Test verwendet
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Download Card */}
       <Card className="mb-8 border-blue-200 bg-gradient-to-r from-blue-50 to-green-50">
         <CardHeader className="text-center">
@@ -60,6 +101,9 @@ export default function AppPage() {
           </CardTitle>
           <CardDescription className="text-blue-700">
             Kostenlose Android-App • Keine Werbung • Schnell & einfach
+            <Badge variant="outline" className="ml-2 text-xs border-orange-300 bg-orange-50 text-orange-700">
+              🚧 Direkt-Download (bis Play Store)
+            </Badge>
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">

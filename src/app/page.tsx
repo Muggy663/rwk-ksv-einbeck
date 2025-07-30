@@ -175,28 +175,55 @@ export default function HomePage() {
 
       <Separator className="my-6" />
 
-      {/* Android App Download */}
-      <Link href="/app" className="block mb-6">
-        <div className="bg-gradient-to-r from-green-500 to-green-700 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
-          <div className="flex items-center">
-            <div className="bg-white p-3 rounded-full mr-4">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
-                <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
-                <path d="M12 18h.01"/>
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">📱 NEU: RWK Einbeck App!</h2>
-              <p style={{color: 'white'}}>Jetzt als native Android-App verfügbar. Bessere Performance und einfach zu installieren.</p>
-            </div>
-            <div className="text-white">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m9 18 6-6-6-6"/>
-              </svg>
+      {/* Play Store Beta-Test */}
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link href="/app" className="block">
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
+            <div className="flex items-center">
+              <div className="bg-white p-3 rounded-full mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10,9 9,9 8,9"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">🎆 Play Store Beta-Test</h2>
+                <p style={{color: 'white'}}>Werde Beta-Tester für den offiziellen Play Store Launch!</p>
+              </div>
+              <div className="text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
-      </Link>
+        </Link>
+        
+        <Link href="/app" className="block">
+          <div className="bg-gradient-to-r from-green-500 to-green-700 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
+            <div className="flex items-center">
+              <div className="bg-white p-3 rounded-full mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+                  <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+                  <path d="M12 18h.01"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">📱 Android App (Direkt)</h2>
+                <p style={{color: 'white'}}>APK-Download - Jetzt verfügbar bis Play Store Launch</p>
+              </div>
+              <div className="text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
 
       {/* Karten-Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

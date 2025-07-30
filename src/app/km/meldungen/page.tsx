@@ -329,7 +329,7 @@ export default function KMMeldungen() {
                     setSelectedClub(e.target.value);
                     setSelectedSchuetze(''); // Reset Schützen-Auswahl
                   }}
-                  className="w-full p-2 border border-gray-300 rounded"
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 >
                   <option value="">-- Alle meine Vereine --</option>
                   {clubs
@@ -355,7 +355,7 @@ export default function KMMeldungen() {
                 <select 
                   value={selectedSchuetze} 
                   onChange={(e) => setSelectedSchuetze(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded"
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 >
                   <option value="">-- Schütze wählen --</option>
                   {schuetzen
@@ -459,7 +459,7 @@ export default function KMMeldungen() {
                                 </div>
                               )}
                             </div>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600">
                               Automatisch
                             </Badge>
                           </div>
@@ -488,9 +488,9 @@ export default function KMMeldungen() {
                     </p>
                   </div>
                 ) : (
-                  <div className="max-h-48 overflow-y-auto border border-gray-300 rounded p-2">
+                  <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800">
                     {disziplinen.map(disziplin => (
-                      <label key={disziplin.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded">
+                      <label key={disziplin.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded cursor-pointer">
                         <input
                           type="checkbox"
                           checked={selectedDisziplinen.includes(disziplin.id)}
@@ -639,45 +639,6 @@ export default function KMMeldungen() {
                 />
               </div>
 
-              {/* Zwischenspeicher */}
-              {pendingMeldungen.length > 0 && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
-                  <h4 className="font-semibold text-yellow-900 mb-2">📋 Zwischenspeicher ({pendingMeldungen.length})</h4>
-                  <div className="space-y-2 mb-3">
-                    {pendingMeldungen.map((pending, index) => {
-                      const schuetze = schuetzen.find(s => s.id === pending.schuetzeId);
-                      const disziplin = disziplinen.find(d => d.id === pending.disziplinId);
-                      return (
-                        <div key={index} className="flex justify-between items-center text-sm">
-                          <span>{schuetze?.name} - {disziplin?.spoNummer} {disziplin?.name}</span>
-                          <button 
-                            onClick={() => setPendingMeldungen(prev => prev.filter((_, i) => i !== index))}
-                            className="text-red-600 hover:text-red-800 text-xs"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={handleBulkSubmit}
-                      disabled={isSubmitting}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      {isSubmitting ? 'Speichere...' : `${pendingMeldungen.length} Meldungen speichern`}
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => setPendingMeldungen([])}
-                    >
-                      Alle löschen
-                    </Button>
-                  </div>
-                </div>
-              )}
-
               {/* Buttons */}
               <div className="flex gap-2">
                 {editingMeldung ? (
@@ -725,6 +686,45 @@ export default function KMMeldungen() {
                   </>
                 )}
               </div>
+              
+              {/* Zwischenspeicher - unter den Buttons */}
+              {pendingMeldungen.length > 0 && (
+                <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded">
+                  <h4 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-2">📋 Zwischenspeicher ({pendingMeldungen.length})</h4>
+                  <div className="space-y-2 mb-3">
+                    {pendingMeldungen.map((pending, index) => {
+                      const schuetze = schuetzen.find(s => s.id === pending.schuetzeId);
+                      const disziplin = disziplinen.find(d => d.id === pending.disziplinId);
+                      return (
+                        <div key={index} className="flex justify-between items-center text-sm bg-white dark:bg-gray-800 p-2 rounded border">
+                          <span className="text-gray-900 dark:text-gray-100">{schuetze?.name} - {disziplin?.spoNummer} {disziplin?.name}</span>
+                          <button 
+                            onClick={() => setPendingMeldungen(prev => prev.filter((_, i) => i !== index))}
+                            className="text-red-600 hover:text-red-800 text-xs px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleBulkSubmit}
+                      disabled={isSubmitting}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {isSubmitting ? 'Speichere...' : `${pendingMeldungen.length} Meldungen speichern`}
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setPendingMeldungen([])}
+                    >
+                      Alle löschen
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -788,10 +788,10 @@ export default function KMMeldungen() {
             </CardContent>
           </Card>
 
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-            <h4 className="font-semibold text-yellow-900 text-sm mb-1">💡 Demo-Modus</h4>
-            <p className="text-xs text-yellow-700">
-              Dies ist eine Demonstration. Gespeicherte Daten sind nicht persistent.
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded">
+            <h4 className="font-semibold text-blue-900 dark:text-blue-100 text-sm mb-1">🎯 KM-System Beta</h4>
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              Vollständig funktional - Meldungen werden gespeichert und sind persistent.
             </p>
           </div>
         </div>

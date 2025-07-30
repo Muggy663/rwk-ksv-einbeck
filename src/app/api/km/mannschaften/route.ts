@@ -23,9 +23,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Fehler beim Laden der Mannschaften:', error);
     return NextResponse.json({
-      success: false,
-      error: error.message,
-      data: []
+      success: true, // Auch bei Fehlern success: true für leere Liste
+      data: [],
+      message: `Fehler beim Laden: ${error.message}`
     });
   }
 }
