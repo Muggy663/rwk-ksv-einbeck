@@ -284,17 +284,17 @@ export function FirstStepsWizard() {
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[70vh] sm:max-h-[80vh] overflow-y-auto flex flex-col">
           <DialogHeader>
             <DialogTitle>{steps[currentStep].title}</DialogTitle>
             <DialogDescription>{steps[currentStep].description}</DialogDescription>
           </DialogHeader>
           
-          <div className="py-4">
+          <div className="py-4 pb-6">
             {steps[currentStep].content}
           </div>
           
-          <DialogFooter className="flex justify-between">
+          <DialogFooter className="flex justify-between pt-4 pb-6 sm:pb-4 border-t bg-background sticky bottom-0 mt-auto">
             <div>
               {currentStep > 0 && (
                 <Button variant="outline" onClick={handlePrevious}>

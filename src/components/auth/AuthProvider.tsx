@@ -139,6 +139,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       await signInWithEmail(email, password);
       // fetchUserAppPermissions wird durch onAuthStateChanged getriggert
       toast({ title: "Erfolgreich angemeldet", description: "Willkommen zurück!" });
+      
+      // Weiterleitung zur Dashboard-Auswahl
+      window.location.href = '/dashboard-auswahl';
     } catch (err: any) {
       setError(err);
       toast({ title: "Anmeldefehler", description: err.message, variant: "destructive" });
@@ -159,6 +162,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       await signOutUser();
       // setUser(null) und fetchUserAppPermissions(null) werden durch onAuthStateChanged getriggert
       toast({ title: "Erfolgreich abgemeldet" });
+      
+      // Weiterleitung zur Login-Seite
+      window.location.href = '/login';
     } catch (err: any) {
       setError(err);
       toast({ title: "Abmeldefehler", description: err.message, variant: "destructive" });

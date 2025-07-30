@@ -2,6 +2,8 @@
 export * from './rwk';
 export * from './documents';
 export * from './updates';
+export * from './km';
+export * from './mannschaftsregeln';
 
 // Allgemeine Typen, die projektübergreifend verwendet werden
 export type Nullable<T> = T | null;

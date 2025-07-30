@@ -59,10 +59,50 @@ export interface Shooter {
   lastName?: string;
   gender: 'male' | 'female' | 'unknown';
   birthYear?: number;
+  birthDate?: Date;
   clubId?: string;
   email?: string;
   phone?: string;
   isActive?: boolean;
+  // KM-spezifische Felder
+  mitgliedsnummer?: string;
+  sondergenehmigung?: boolean; // Für Schützen unter 12 Jahren
+}
+
+// Wettkampfklassen für automatische Zuordnung
+export interface AgeClass {
+  id: string;
+  name: string;
+  gender: 'male' | 'female' | 'mixed';
+  minBirthYear: number;
+  maxBirthYear: number;
+  competitionYear: number;
+  discipline?: FirestoreLeagueSpecificDiscipline;
+}
+
+// Funktion zur Berechnung der Altersklasse
+export function calculateAgeClass(birthYear: number, gender: 'male' | 'female', competitionYear: number = 2026): string {
+  const age = competitionYear - birthYear;
+  const genderSuffix = gender === 'male' ? ' m' : ' w';
+  
+  if (age <= 12) return 'Schüler' + genderSuffix;
+  if (age <= 17) return 'Jugend' + genderSuffix;
+  if (age <= 20) return 'Junioren A' + genderSuffix;
+  if (age <= 22) return 'Junioren B' + genderSuffix;
+  if (age <= 41) return gender === 'male' ? 'Herren I' : 'Damen I';
+  if (age <= 51) return gender === 'male' ? 'Herren II' : 'Damen II';
+  if (age <= 61) return gender === 'male' ? 'Herren III' : 'Damen III';
+  if (age <= 71) return gender === 'male' ? 'Herren IV' : 'Damen IV';
+  if (age <= 76) return gender === 'male' ? 'Senioren 0' : 'Seniorinnen 0';
+  if (age <= 81) return gender === 'male' ? 'Senioren I' : 'Seniorinnen I';
+  if (age <= 86) return gender === 'male' ? 'Senioren II' : 'Seniorinnen II';
+  if (age <= 91) return gender === 'male' ? 'Senioren III' : 'Seniorinnen III';
+  if (age <= 96) return gender === 'male' ? 'Senioren IV' : 'Seniorinnen IV';
+  return gender === 'male' ? 'Senioren V' : 'Seniorinnen V';
+}
+
+export function getBirthYearFromAge(age: number, competitionYear: number = 2026): number {
+  return competitionYear - age;
 }
 
 export interface ScoreEntry {

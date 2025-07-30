@@ -46,7 +46,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from 'next/navigation';
 import type { Shooter, Club, Team, FirestoreLeagueSpecificDiscipline, TeamValidationInfo } from '@/types/rwk';
-import { MAX_SHOOTERS_PER_TEAM, leagueDisciplineOptions, GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES } from '@/types/rwk';
+import { MAX_SHOOTERS_PER_TEAM, leagueDisciplineOptions, GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES, calculateAgeClass } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import { 
   collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, 
@@ -284,6 +284,7 @@ export default function AdminShootersPage() {
       lastName: '',
       clubId: initialClubIdForNewShooter,
       gender: 'male',
+      birthYear: undefined,
       teamIds: [], // Initial leer, wird durch Auswahl befüllt
     });
     setSelectedTeamIdsInForm(queryTeamId && initialClubIdForNewShooter ? [queryTeamId] : []); // Korrektur hier
@@ -394,6 +395,7 @@ export default function AdminShootersPage() {
           name: combinedName,
           clubId: currentShooter.clubId as string,
           gender: currentShooter.gender || 'male',
+          birthYear: currentShooter.birthYear ? parseInt(currentShooter.birthYear.toString()) : undefined,
           teamIds: selectedTeamIdsInForm,
         };
         batch.set(newShooterRef, shooterDataForSave);
@@ -409,6 +411,7 @@ export default function AdminShootersPage() {
           lastName: currentShooter.lastName.trim(),
           name: combinedName,
           gender: currentShooter.gender || 'male',
+          birthYear: currentShooter.birthYear ? parseInt(currentShooter.birthYear.toString()) : undefined,
         });
         toast({ title: "Schütze aktualisiert", description: `Daten für "${combinedName}" aktualisiert.` });
       }
@@ -424,7 +427,7 @@ export default function AdminShootersPage() {
     }
   };
   
-  const handleFormInputChange = (field: keyof Pick<Shooter, 'lastName' | 'firstName' | 'clubId' | 'gender'>, value: string) => {
+  const handleFormInputChange = (field: keyof Pick<Shooter, 'lastName' | 'firstName' | 'clubId' | 'gender' | 'birthYear'>, value: string) => {
      setCurrentShooter(prev => {
         if (!prev) return null;
         const updatedShooter = { ...prev, [field]: value };
@@ -574,14 +577,17 @@ export default function AdminShootersPage() {
               <TableHeader><TableRow>
                   <TableHead>Nachname</TableHead><TableHead>Vorname</TableHead>
                   <TableHead>Verein</TableHead><TableHead>Geschlecht</TableHead>
-                  <TableHead>Mannschaften (Info)</TableHead><TableHead className="text-right">Aktionen</TableHead>
+                  <TableHead>Jahrgang</TableHead><TableHead>Altersklasse 2026</TableHead>
+                  <TableHead>Mannschaften</TableHead><TableHead className="text-right">Aktionen</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {shootersOfActiveClub.map((shooter) => (
                   <TableRow key={shooter.id}>
                     <TableCell>{shooter.lastName}</TableCell><TableCell>{shooter.firstName}</TableCell>
                     <TableCell>{getClubName(shooter.clubId)}</TableCell>
-                    <TableCell>{shooter.gender === 'male' ? 'Männlich' : (shooter.gender === 'female' ? 'Weiblich' : 'N/A')}</TableCell>
+                    <TableCell>{shooter.gender === 'male' ? 'M' : (shooter.gender === 'female' ? 'W' : 'N/A')}</TableCell>
+                    <TableCell>{shooter.birthYear || '-'}</TableCell>
+                    <TableCell className="text-xs">{shooter.birthYear && shooter.gender ? calculateAgeClass(shooter.birthYear, shooter.gender as 'male' | 'female', 2026) : '-'}</TableCell>
                     <TableCell className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button variant="ghost" size="icon" onClick={() => handleEditShooter(shooter)} disabled={isFormSubmitting || isDeleting} aria-label="Schütze bearbeiten"><Edit className="h-4 w-4" /></Button>
@@ -662,6 +668,23 @@ export default function AdminShootersPage() {
                     <SelectTrigger id="genderFormDialogShooterAdmin" aria-label="Geschlecht auswählen"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="male">Männlich</SelectItem><SelectItem value="female">Weiblich</SelectItem></SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="birthYearFormDialogShooterAdmin">Geburtsjahr (für Altersklassen)</Label>
+                  <Input 
+                    id="birthYearFormDialogShooterAdmin" 
+                    type="number" 
+                    min="1920" 
+                    max="2020" 
+                    value={currentShooter.birthYear || ''} 
+                    onChange={(e) => handleFormInputChange('birthYear', e.target.value)} 
+                    placeholder="z.B. 1990"
+                  />
+                  {currentShooter.birthYear && currentShooter.gender && (
+                    <p className="text-xs text-muted-foreground">
+                      Altersklasse 2026: {calculateAgeClass(currentShooter.birthYear, currentShooter.gender as 'male' | 'female', 2026)}
+                    </p>
+                  )}
                 </div>
 
                 {formMode === 'new' && currentShooter.clubId && (

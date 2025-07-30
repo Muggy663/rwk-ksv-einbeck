@@ -87,8 +87,9 @@ self.addEventListener('fetch', (event) => {
           .catch(() => {
             // Bei Netzwerkfehlern Fallback-Seite anzeigen
             if (event.request.mode === 'navigate') {
-              return caches.match('/');
+              return caches.match('/').then(response => response || new Response('Offline', { status: 503 }));
             }
+            return new Response('Network error', { status: 503 });
           });
       })
   );

@@ -1311,9 +1311,15 @@ function RwkTabellenPageComponent() {
       // Lade Schützen-Infos
       const shootersQuery = query(collection(db, "rwk_shooters"), where(documentId(), "in", validShooterIds));
       const shootersSnapshot = await getDocs(shootersQuery);
+      console.log('📊 RWK-Tabellen: rwk_shooters abgefragt, gefunden:', shootersSnapshot.docs.length);
+      
       const shooterInfos = new Map<string, Shooter>();
       shootersSnapshot.docs.forEach(shooterDoc => {
-        shooterInfos.set(shooterDoc.id, {id: shooterDoc.id, ...shooterDoc.data()} as Shooter);
+        const shooterData = shooterDoc.data() as Shooter;
+        if (shooterData.name && (shooterData.name.toLowerCase().includes('marcel') || shooterData.name.toLowerCase().includes('stephanie'))) {
+          console.log('🎯 Marcel/Stephanie in RWK-Tabellen gefunden:', shooterData.name);
+        }
+        shooterInfos.set(shooterDoc.id, {id: shooterDoc.id, ...shooterData});
       });
 
       // Erstelle Schützen-Ergebnisse

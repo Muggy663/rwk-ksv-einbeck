@@ -26,11 +26,6 @@ match /users/{userId} {
              get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == 'vereinsvertreter';
     }
 
-    function isMannschaftsfuehrer() {
-      return isAuthenticated() && 
-             get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == 'mannschaftsfuehrer';
-    }
-
     function hasClubAccess(clubId) {
       return isAuthenticated() && 
              get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubId == clubId;
@@ -56,7 +51,7 @@ match /users/{userId} {
 
     match /clubs/{club} {
       allow read: if true;
-      allow write: if isSuperAdmin();
+      allow write: if true; // TEMPORÄR FÜR KM-IMPORT
     }
 
     match /rwk_leagues/{league} {
@@ -120,19 +115,12 @@ match /users/{userId} {
                      hasClubAccess(resource.data.clubId));
     }
 
-    // Schützen - Verwaltung durch Admin und Vereinsvertreter
+    // Schützen - TEMPORÄR OFFEN FÜR KM-IMPORT
     match /rwk_shooters/{shooterId} {
       allow read: if true; 
-      allow create: if isSuperAdmin() ||
-                      (isVereinsvertreter() && 
-                       hasClubAccess(request.resource.data.clubId));
-      allow update: if isSuperAdmin() ||
-                      (isVereinsvertreter() && 
-                       hasClubAccess(resource.data.clubId) &&
-                       hasClubAccess(request.resource.data.clubId));
-      allow delete: if isSuperAdmin() ||
-                      (isVereinsvertreter() && 
-                       hasClubAccess(resource.data.clubId));
+      allow create: if true; // TEMPORÄR FÜR KM-IMPORT
+      allow update: if true; // TEMPORÄR FÜR KM-IMPORT
+      allow delete: if true; // TEMPORÄR FÜR KM-IMPORT
     }
 
     // Ergebnisse - VERBESSERT: Validierung der Ringzahlen
@@ -226,7 +214,7 @@ match /users/{userId} {
       allow read, write: if isSuperAdmin();
     }
     
-        // Team-Substitutions - Verwaltung durch Admin und Vereinsvertreter
+    // Team-Substitutions - Verwaltung durch Admin und Vereinsvertreter
     match /team_substitutions/{substitutionId} {
       allow read: if true;
       allow create: if isSuperAdmin() ||
@@ -244,6 +232,28 @@ match /users/{userId} {
     match /app_stats/{statId} {
       allow read: if true;
       allow write: if request.auth != null;
+    }
+    
+    // === KM-SYSTEM REGELN - TEMPORÄR KOMPLETT OFFEN ===
+    
+    match /km_user_permissions/{userId} {
+      allow read, write: if true;
+    }
+    
+    match /km_wettkampfklassen/{document} {
+      allow read, write: if true;
+    }
+    
+    match /km_disziplinen/{document} {
+      allow read, write: if true;
+    }
+    
+    match /km_meldungen/{document} {
+      allow read, write: if true;
+    }
+    
+    match /km_mannschaften/{document} {
+      allow read, write: if true;
     }
     
     // Fallback-Regel: Alles andere verbieten

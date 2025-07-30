@@ -241,16 +241,41 @@ export default function VereinSchuetzenPage() {
     console.log(`VSP DEBUG: fetchPageData - Fetching for activeClubId: ${activeClubId}`);
     setIsLoadingClubSpecificData(true);
     try {
-      const shootersQuery = query(collection(db, SHOOTERS_COLLECTION), where("clubId", "==", activeClubId), orderBy("lastName", "asc"), orderBy("firstName", "asc"));
+      // Erweiterte Query: Suche nach clubId, rwkClubId oder kmClubId
+      const shootersQuery1 = query(collection(db, SHOOTERS_COLLECTION), where("clubId", "==", activeClubId));
+      const shootersQuery2 = query(collection(db, SHOOTERS_COLLECTION), where("rwkClubId", "==", activeClubId));
+      const shootersQuery3 = query(collection(db, SHOOTERS_COLLECTION), where("kmClubId", "==", activeClubId));
       const teamsQuery = query(collection(db, TEAMS_COLLECTION), where("clubId", "==", activeClubId));
 
-      const [shootersSnapshot, teamsSnapshot] = await Promise.all([
-        getDocs(shootersQuery), getDocs(teamsQuery)
+      const [shootersSnapshot1, shootersSnapshot2, shootersSnapshot3, teamsSnapshot] = await Promise.all([
+        getDocs(shootersQuery1), getDocs(shootersQuery2), getDocs(shootersQuery3), getDocs(teamsQuery)
       ]);
 
-      const fetchedShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data(), teamIds: (d.data().teamIds || []) } as Shooter));
+      // Kombiniere alle Schützen und entferne Duplikate
+      const allShooterDocs = [...shootersSnapshot1.docs, ...shootersSnapshot2.docs, ...shootersSnapshot3.docs];
+      const uniqueShooters = new Map();
+      allShooterDocs.forEach(doc => {
+        if (!uniqueShooters.has(doc.id)) {
+          uniqueShooters.set(doc.id, { id: doc.id, ...doc.data(), teamIds: (doc.data().teamIds || []) } as Shooter);
+        }
+      });
+      const fetchedShooters = Array.from(uniqueShooters.values()).sort((a, b) => {
+        const lastNameCompare = (a.lastName || '').localeCompare(b.lastName || '');
+        if (lastNameCompare !== 0) return lastNameCompare;
+        return (a.firstName || '').localeCompare(b.firstName || '');
+      });
       setShootersOfActiveClub(fetchedShooters);
       console.log(`VSP DEBUG: Fetched ${fetchedShooters.length} shooters for club ${activeClubId}`);
+      console.log('🔍 Erste 3 Schützen-Datenstruktur:', fetchedShooters.slice(0, 3).map(s => ({
+        id: s.id,
+        name: s.name,
+        firstName: s.firstName,
+        lastName: s.lastName,
+        gender: s.gender,
+        clubId: s.clubId,
+        rwkClubId: s.rwkClubId,
+        kmClubId: s.kmClubId
+      })));
 
       const fetchedTeams = teamsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Team));
       setAllTeamsDataForClub(fetchedTeams);
@@ -493,18 +518,26 @@ export default function VereinSchuetzenPage() {
   };
 
   const getTeamInfoForShooter = useCallback((shooter: Shooter): string => {
+    // Methode 1: Schütze hat teamIds
     const teamIds = shooter.teamIds || [];
-    if (teamIds.length === 0) return '-';
-    if (allTeamsDataForClub.length === 0 && teamIds.length > 0) return `${teamIds.length} (Lade Teamnamen...)`;
+    if (teamIds.length > 0) {
+      const assignedTeamNames = teamIds
+          .map(tid => allTeamsDataForClub.find(t => t.id === tid)?.name)
+          .filter(name => !!name);
+      if (assignedTeamNames.length > 0) {
+        return assignedTeamNames.length === 1 ? assignedTeamNames[0]! : `${assignedTeamNames.length} Mannschaften`;
+      }
+    }
     
-    const assignedTeamNames = teamIds
-        .map(tid => allTeamsDataForClub.find(t => t.id === tid)?.name)
-        .filter(name => !!name);
-
-    if (assignedTeamNames.length === 1) return assignedTeamNames[0]!;
-    if (assignedTeamNames.length > 0) return `${assignedTeamNames.length} Mannschaften`;
+    // Methode 2: Suche in Teams nach shooterIds (Fallback)
+    const teamsWithThisShooter = allTeamsDataForClub.filter(team => 
+      team.shooterIds && team.shooterIds.includes(shooter.id)
+    );
     
-    return teamIds.length > 0 ? `${teamIds.length} (IDs)` : '-';
+    if (teamsWithThisShooter.length === 1) return teamsWithThisShooter[0].name;
+    if (teamsWithThisShooter.length > 1) return `${teamsWithThisShooter.length} Mannschaften`;
+    
+    return '-';
   }, [allTeamsDataForClub]);
 
   if (loadingPermissions || isLoadingPageData) {
@@ -621,8 +654,8 @@ export default function VereinSchuetzenPage() {
                   })
                   .map((shooter) => (
                 <TableRow key={shooter.id}>
-                    <TableCell>{shooter.lastName}</TableCell>
-                    <TableCell>{shooter.firstName}</TableCell>
+                    <TableCell>{shooter.lastName || (shooter.name ? shooter.name.split(' ').slice(-1)[0] : '-')}</TableCell>
+                    <TableCell>{shooter.firstName || (shooter.name ? shooter.name.split(' ').slice(0, -1).join(' ') : '-')}</TableCell>
                     <TableCell>{shooter.gender === 'female' ? 'Weiblich' : (shooter.gender === 'male' ? 'Männlich' : 'N/A')}</TableCell>
                     <TableCell className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
                     {isVereinsvertreter && (

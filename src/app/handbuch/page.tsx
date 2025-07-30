@@ -1,10 +1,10 @@
 // src/app/handbuch/page.tsx
 "use client"; 
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { BookOpenCheck } from 'lucide-react';
+import { BookOpenCheck, Target, Trophy } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth'; 
 
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";
@@ -12,20 +12,49 @@ const ADMIN_EMAIL = "admin@rwk-einbeck.de";
 export default function HandbuchPage() {
   const { user, loading } = useAuth(); 
   const isSuperAdmin = !loading && user?.email === ADMIN_EMAIL;
+  const [activeTab, setActiveTab] = useState('rwk');
 
   return (
     <div className="space-y-8 container mx-auto px-4 py-8">
       <div className="flex items-center space-x-3 mb-8">
         <BookOpenCheck className="h-10 w-10 text-primary" />
         <div>
-          <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch RWK Einbeck App</h1>
+          <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch KSV Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) App. (Stand: 30. Mai 2025, Web-Version 0.9.9.6, App-Version 0.9.1.0)
+            Funktionen und Bedienung der Rundenwettkampf (RWK) und Kreismeisterschafts (KM) App. (Stand: Juli 2025, Web-Version 0.9.9.6, App-Version 0.9.1.0, KM-System 1.0.0)
           </p>
         </div>
       </div>
+      
+      {/* Tab Navigation */}
+      <div className="flex space-x-1 mb-6 bg-muted p-1 rounded-lg">
+        <button
+          onClick={() => setActiveTab('rwk')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+            activeTab === 'rwk' 
+              ? 'bg-background text-primary shadow-sm' 
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Target className="h-4 w-4" />
+          <span>Rundenwettkampf (RWK)</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('km')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+            activeTab === 'km' 
+              ? 'bg-background text-primary shadow-sm' 
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Trophy className="h-4 w-4" />
+          <span>Kreismeisterschaften (KM)</span>
+        </button>
+      </div>
 
-      <Card className="shadow-lg">
+      {activeTab === 'rwk' && (
+        <>
+          <Card className="shadow-lg">
         <CardHeader>
           <CardTitle id="inhaltsverzeichnis" className="text-2xl text-accent scroll-mt-24">Inhaltsverzeichnis</CardTitle>
         </CardHeader>
@@ -426,6 +455,238 @@ export default function HandbuchPage() {
 
       <Separator className="my-6"/>
       <p className="text-center text-sm text-muted-foreground"><em>Dieses Handbuch wird parallel zur Entwicklung der Anwendung aktualisiert.</em></p>
+        </>
+      )}
+      
+      {activeTab === 'km' && (
+        <>
+          {/* KM Handbuch Content */}
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl text-accent">Kreismeisterschaften - Benutzerhandbuch</CardTitle>
+              <CardDescription>Anleitung zur Nutzung des Kreismeisterschafts-Moduls</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <ul className="list-disc list-inside pl-4 space-y-1">
+                <li><a href="#km-einleitung" className="text-primary hover:underline">1. Einleitung KM-System</a></li>
+                <li><a href="#km-datenverwaltung" className="text-primary hover:underline">2. Datenverwaltung-Strategie</a></li>
+                <li><a href="#km-meldungen" className="text-primary hover:underline">3. Meldungen erstellen</a></li>
+                <li><a href="#km-mannschaften" className="text-primary hover:underline">4. Mannschaftsbildung</a></li>
+                <li><a href="#km-admin" className="text-primary hover:underline">5. Admin-Funktionen</a></li>
+                <li><a href="#km-wettkampfklassen" className="text-primary hover:underline">6. Wettkampfklassen</a></li>
+              </ul>
+            </CardContent>
+          </Card>
+          
+          <Separator className="my-6" />
+          
+          <section id="km-einleitung" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">1. Einleitung KM-System</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Zweck des KM-Moduls</CardTitle></CardHeader>
+              <CardContent>
+                <p>Das Kreismeisterschafts-Modul digitalisiert den bisher papierbasierten Meldeprozess für die jährlichen Kreismeisterschaften des KSV Einbeck.</p>
+                <div className="mt-4 bg-green-50 p-3 rounded-md border border-green-200">
+                  <h4 className="font-medium text-green-800 mb-2">🎯 Hauptvorteile:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-green-700">
+                    <li><strong>75% Zeitersparnis:</strong> Von 40-60h auf 8-15h Gesamtaufwand</li>
+                    <li><strong>Automatische Wettkampfklassen-Berechnung</strong> nach DSB-Sportordnung</li>
+                    <li><strong>Echtzeit-Validierung</strong> verhindert Fehler bei der Eingabe</li>
+                    <li><strong>Gemeinsame Schützendatenbank</strong> mit RWK-System</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="km-datenverwaltung" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">2. Datenverwaltung-Strategie</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Empfohlene Datenpflege-Strategie</CardTitle></CardHeader>
+              <CardContent>
+                <div className="bg-blue-50 p-4 rounded-md border border-blue-200 mb-4">
+                  <h4 className="font-medium text-blue-800 mb-2">📋 Beschluss für Sitzung mit Präsident/Kreissportleiterin:</h4>
+                  <div className="space-y-3 text-blue-700">
+                    <div>
+                      <strong>Einmalig:</strong>
+                      <ul className="list-disc pl-5 mt-1">
+                        <li>Aktueller Excel-Import als Grundlage (einmalig)</li>
+                        <li>RWK-Teilnehmer 2024/25 bleiben geschützt (wegen laufender Saison)</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <strong>Danach:</strong>
+                      <ul className="list-disc pl-5 mt-1">
+                        <li>Vereinsvertreter pflegen selbst ihre Mitglieder</li>
+                        <li>Eigenverantwortung: Wer nicht pflegt, hat unordentliche Listen</li>
+                        <li>Kein Problem für andere - jeder Verein sieht nur seine eigenen</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                
+                <h4 className="font-semibold mt-4 mb-2">Mehrfach-Vereinsmitgliedschaft</h4>
+                <p>Schützen können in verschiedenen Vereinen für verschiedene Disziplinen starten:</p>
+                <div className="bg-gray-50 p-3 rounded-md mt-2">
+                  <p className="text-sm"><strong>Beispiel:</strong> Max Mustermann</p>
+                  <ul className="list-disc pl-5 text-sm mt-1">
+                    <li>RWK für Verein A</li>
+                    <li>Luftgewehr Freihand für Verein B</li>
+                    <li>Luftgewehr Auflage für Verein C</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="km-meldungen" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">3. Meldungen erstellen</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Meldungsformular bedienen</CardTitle></CardHeader>
+              <CardContent>
+                <h4 className="font-semibold mb-2">Schritt-für-Schritt Anleitung:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Verein filtern (optional):</strong> Wählen Sie Ihren Verein aus der Dropdown-Liste</li>
+                  <li><strong>Schütze auswählen:</strong> Alle Vereinsmitglieder werden alphabetisch angezeigt</li>
+                  <li><strong>Disziplinen wählen:</strong> Mehrfachauswahl möglich - wählen Sie alle gewünschten Disziplinen</li>
+                  <li><strong>Wettkampfklassen:</strong> Werden automatisch nach DSB-Sportordnung berechnet</li>
+                  <li><strong>VM-Ergebnis eingeben:</strong> Für Durchmeldungs-Disziplinen erforderlich, sonst optional</li>
+                  <li><strong>LM-Teilnahme:</strong> Ja/Nein für Landesmeisterschaft</li>
+                  <li><strong>Anmerkungen:</strong> Besondere Wünsche (z.B. "nicht mit Ehemann zusammen")</li>
+                </ol>
+                
+                <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 mt-4">
+                  <h4 className="font-medium text-yellow-800 mb-2">⚠️ Wichtige Hinweise:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-yellow-700">
+                    <li><strong>Sportjahr = Kalenderjahr:</strong> Alter in 2026 ist entscheidend für KM 2026</li>
+                    <li><strong>Auflage vs. Freihand:</strong> Verschiedene Wettkampfklassen (Senioren bei Auflage)</li>
+                    <li><strong>Mehrfachauswahl:</strong> Ein Schütze kann in mehreren Disziplinen gemeldet werden</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="km-mannschaften" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">4. Mannschaftsbildung</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Automatische Mannschaftsgenerierung</CardTitle></CardHeader>
+              <CardContent>
+                <p>Das System bildet automatisch 3er-Mannschaften basierend auf den Meldungen und Mannschaftsregeln.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">Mannschaftsregeln:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-green-50 p-3 rounded-md">
+                    <h5 className="font-medium text-green-800 mb-2">Gemischte Mannschaften erlaubt:</h5>
+                    <ul className="list-disc pl-5 text-sm text-green-700">
+                      <li>Schüler/Jugend</li>
+                      <li>Senioren 0</li>
+                      <li>Senioren I+II</li>
+                      <li>Senioren III-VI</li>
+                    </ul>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded-md">
+                    <h5 className="font-medium text-blue-800 mb-2">Geschlechtergetrennt:</h5>
+                    <ul className="list-disc pl-5 text-sm text-blue-700">
+                      <li>Junioren I/II</li>
+                      <li>Herren/Damen I-V</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="km-admin" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">5. Admin-Funktionen</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">KM-Administration</CardTitle></CardHeader>
+              <CardContent>
+                <h4 className="font-semibold mb-2">Verfügbare Admin-Funktionen:</h4>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>System initialisieren:</strong> Wettkampfklassen und Disziplinen für neue Saison</li>
+                  <li><strong>Meldungsübersicht:</strong> Alle Meldungen mit Filterung nach Verein/Disziplin</li>
+                  <li><strong>Live-Statistiken:</strong> Teilnehmerzahlen, LM-Meldungen, VM-Ergebnisse</li>
+                  <li><strong>PDF-Export:</strong> Meldelisten, Startlisten, LM-Meldungen</li>
+                  <li><strong>Datenbereinigung:</strong> Excel-Importe und Duplikate entfernen</li>
+                </ul>
+                
+                <div className="bg-red-50 p-3 rounded-md border border-red-200 mt-4">
+                  <h4 className="font-medium text-red-800 mb-2">🔧 Datenbereinigung:</h4>
+                  <p className="text-red-700 text-sm">Zwei Buttons für saubere Datenverwaltung:</p>
+                  <ul className="list-disc pl-5 text-sm text-red-700 mt-1">
+                    <li><strong>Excel-Importe löschen (rot):</strong> Entfernt alle Schützen mit createdAt</li>
+                    <li><strong>Duplikate entfernen (orange):</strong> Bevorzugt RWK-Teilnehmer bei gleichem Namen</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="km-wettkampfklassen" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">6. Wettkampfklassen</h2>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl text-accent flex items-center justify-between">
+                  Wettkampfklassen nach DSB-Sportordnung
+                  <a 
+                    href="https://dsb.de/fileladmin/dsb/sportordnung/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    → DSB-Sportordnung
+                  </a>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">Standard (Freihand):</h4>
+                    <ul className="list-disc pl-5 text-sm space-y-1">
+                      <li>Schüler: ≤ 14 Jahre</li>
+                      <li>Jugend: 15-16 Jahre</li>
+                      <li>Junioren II: 17-18 Jahre</li>
+                      <li>Junioren I: 19-20 Jahre</li>
+                      <li>Herren/Damen I: 21-40 Jahre</li>
+                      <li>Herren/Damen II: 41-50 Jahre</li>
+                      <li>Herren/Damen III: 51-60 Jahre</li>
+                      <li>Herren/Damen IV: 61-70 Jahre</li>
+                      <li>Herren/Damen V: ≥ 71 Jahre</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">Auflage (Senioren):</h4>
+                    <ul className="list-disc pl-5 text-sm space-y-1">
+                      <li>Bis 40 Jahre: wie Standard</li>
+                      <li>Senioren 0: 41-50 Jahre</li>
+                      <li>Senioren I: 51-60 Jahre</li>
+                      <li>Senioren II: 61-65 Jahre</li>
+                      <li>Senioren III: 66-70 Jahre</li>
+                      <li>Senioren IV: 71-75 Jahre</li>
+                      <li>Senioren V: 76-80 Jahre</li>
+                      <li>Senioren VI: ≥ 81 Jahre</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          <p className="text-center text-sm text-muted-foreground"><em>KM-Handbuch wird parallel zur Entwicklung aktualisiert.</em></p>
+        </>
+      )}
     </div>
   );
 }

@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2">
-              <span>Web-Version: 0.9.9.5 (21.07.2025)</span>
+              <span>Web-Version: 1.0.0 (29.07.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (22.07.2025)</span>
@@ -36,8 +36,52 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.0.0 - KM-System</CardTitle>
+              <Badge variant="default" className="bg-green-600">Neu</Badge>
+            </div>
+            <CardDescription>29.07.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständiges Kreismeisterschafts-System mit digitalen Meldungen, automatischer Mannschaftsbildung und Zwischenspeicher.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🏆 KM-System v1.0.0</h4>
+              <div className="text-xs text-green-700">
+                Komplettes Kreismeisterschafts-System produktionsreif
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🏆 <strong>Digitale KM-Meldungen:</strong> Vollständiges Meldungsformular mit Wettkampfklassen-Berechnung</li>
+              <li>⚖️ <strong>Auflage-Regeln korrekt:</strong> Nur Schüler (≤14) und ab 41 Jahren startberechtigt</li>
+              <li>📋 <strong>39 Disziplinen:</strong> Alle KM-Disziplinen mit korrekten SpO-Nummern</li>
+              <li>👥 <strong>Multi-Verein-Support:</strong> RWK-Vereinsvertreter haben automatisch KM-Zugang</li>
+              <li>📊 <strong>LM-Teilnahme pro Disziplin:</strong> Individuelle Landesmeisterschafts-Meldung</li>
+              <li>💾 <strong>Zwischenspeicher-System:</strong> Meldungen sammeln wie beim RWK-System</li>
+              <li>🔧 <strong>Meldungen bearbeiten/löschen:</strong> Vollständige CRUD-Funktionalität</li>
+              <li>👥 <strong>Automatische Mannschaftsbildung:</strong> 3er-Teams nach Wettkampfklassen</li>
+              <li>📋 <strong>Große Meldungsübersicht:</strong> Tabelle mit Filter und Suche</li>
+              <li>🎯 <strong>VM-Ergebnisse getrennt:</strong> Pro Disziplin separate Eingabe</li>
+              <li>🔄 <strong>Vereinfachte Auth:</strong> Keine separate km_user_permissions mehr</li>
+              <li>📱 <strong>Benutzerfreundlich:</strong> Loading-States und Erfolgs-Hinweise</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🏆 KM-System Live</span>
+                  <p className="text-xs text-green-600 mt-1">Vollständiges Kreismeisterschafts-System</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v1.0.0
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
               <CardTitle className="text-xl">Native App v0.9.1.0</CardTitle>
-              <Badge variant="secondary">Neu</Badge>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>22.07.2025</CardDescription>
           </CardHeader>
@@ -664,6 +708,78 @@ export default function UpdatesPage() {
 
         {/* Weitere Update-Karten hier */}
         
+        <Card className="shadow-sm hover:shadow-md transition-shadow md:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl flex items-center gap-2">
+              🚀 Roadmap - Was kommt als nächstes?
+            </CardTitle>
+            <CardDescription>
+              Geplante Features und Verbesserungen ohne feste Termine
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="roadmap-item border-l-4 border-l-green-500 pl-4 py-2 bg-green-50 rounded-r">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🏆</span>
+                  <h4 className="font-semibold text-green-900">Kreismeisterschaftsmeldungen</h4>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">✅ Fertig</Badge>
+                </div>
+                <ul className="text-sm text-green-700 space-y-1">
+                  <li>✅ Digitale Meldungen zur Kreismeisterschaft</li>
+                  <li>✅ Automatische Wettkampfklassenberechnung</li>
+                  <li>✅ Vereinfachte Mannschaftsbildung</li>
+                  <li>✅ Integration mit bestehender Mitgliederverwaltung</li>
+                </ul>
+              </div>
+
+              <div className="roadmap-item border-l-4 border-l-blue-500 pl-4 py-2 bg-blue-50 rounded-r">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">📊</span>
+                  <h4 className="font-semibold text-blue-900">KM-Startplan-Generator</h4>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">In Planung</Badge>
+                </div>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Automatische Startzeit-Generierung</li>
+                  <li>• Zeitslot-Management</li>
+                  <li>• PDF-Export für Startpläne</li>
+                  <li>• Integration mit Meldungen</li>
+                </ul>
+              </div>
+
+              <div className="roadmap-item border-l-4 border-l-orange-500 pl-4 py-2 bg-orange-50 rounded-r">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">📊</span>
+                  <h4 className="font-semibold text-orange-900">Verbesserte Statistiken</h4>
+                  <Badge variant="secondary" className="bg-orange-100 text-orange-800">Geplant</Badge>
+                </div>
+                <ul className="text-sm text-orange-700 space-y-1">
+                  <li>• Erweiterte Auswertungen</li>
+                  <li>• Grafische Darstellungen</li>
+                  <li>• Vergleiche zwischen Saisons</li>
+                </ul>
+              </div>
+
+              <div className="roadmap-item border-l-4 border-l-purple-500 pl-4 py-2 bg-purple-50 rounded-r">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">🔧</span>
+                  <h4 className="font-semibold text-purple-900">Weitere Verbesserungen</h4>
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-800">Geplant</Badge>
+                </div>
+                <ul className="text-sm text-purple-700 space-y-1">
+                  <li>• Performance-Optimierungen</li>
+                  <li>• Mobile App-Verbesserungen</li>
+                  <li>• Zusätzliche Export-Funktionen</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="mt-6 p-3 bg-gray-50 rounded border text-sm text-gray-600">
+              <em>Diese Roadmap zeigt geplante Features ohne feste Termine. Änderungen und Anpassungen sind möglich.</em>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="shadow-sm hover:shadow-md transition-shadow md:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-xl">Ältere Versionen</CardTitle>
