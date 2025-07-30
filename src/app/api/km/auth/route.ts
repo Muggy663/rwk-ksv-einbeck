@@ -1,6 +1,6 @@
 // src/app/api/km/auth/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getKMUserPermission, createKMUserPermission } from '@/lib/services/km-auth-service';
+import { getKMUserPermission } from '@/lib/services/km-auth-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -49,19 +49,11 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const success = await createKMUserPermission(uid, email, role, clubId, displayName);
-
-    if (success) {
-      return NextResponse.json({
-        success: true,
-        message: 'KM-Berechtigung erfolgreich erstellt'
-      });
-    } else {
-      return NextResponse.json({
-        success: false,
-        error: 'Fehler beim Erstellen der Berechtigung'
-      }, { status: 500 });
-    }
+    // TODO: createKMUserPermission implementieren falls benötigt
+    return NextResponse.json({
+      success: false,
+      error: 'POST-Funktion noch nicht implementiert'
+    }, { status: 501 });
 
   } catch (error) {
     console.error('Fehler beim Erstellen der KM-Berechtigung:', error);
