@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.9.9.5a (30.07.2025)</span>
+              <span>Web-Version: 0.9.9.6 (31.07.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (22.07.2025)</span>
@@ -36,10 +36,10 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.5a - Schützen-Fix + KM Beta</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.6 - Beta-Tester Fixes</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
             </div>
-            <CardDescription>30.07.2025</CardDescription>
+            <CardDescription>31.07.2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Kritische Bugfixes für Schützen-Anzeige und vollständige KM-System Optimierungen mit Dark Mode Support.</p>
@@ -70,7 +70,7 @@ export default function UpdatesPage() {
                   <p className="text-xs text-green-600 mt-1">Schützen-Anzeige + KM-System vollständig funktional</p>
                 </div>
                 <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.9.9.5a
+                  🚀 v0.9.9.6
                 </span>
               </div>
             </div>

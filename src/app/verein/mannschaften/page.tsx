@@ -281,17 +281,63 @@ export default function VereinMannschaftenPage() {
 
     setIsLoadingDialogData(true);
     try {
-      const shootersQuery = query(collection(db, SHOOTERS_COLLECTION), where("clubId", "==", clubIdForDialog), orderBy("name", "asc"));
+      // Hole Vereinsname für Excel-Import-Abfrage
+      const clubDoc = await getFirestoreDoc(doc(db, 'clubs', clubIdForDialog));
+      const clubName = clubDoc.exists() ? clubDoc.data()?.name : null;
+      
+      // Lade RWK-Schützen (mit clubId)
+      const shootersQuery = query(
+        collection(db, SHOOTERS_COLLECTION), 
+        where("clubId", "==", clubIdForDialog), 
+        orderBy("name", "asc")
+      );
+      
+      // Lade Excel-importierte Schützen (mit kmClubId als Vereinsname)
+      const kmShootersQuery = clubName ? query(
+        collection(db, SHOOTERS_COLLECTION), 
+        where("kmClubId", "==", clubName), 
+        orderBy("name", "asc")
+      ) : null;
       const teamsForYearQuery = query(collection(db, TEAMS_COLLECTION), where("competitionYear", "==", compYearForDialog));
 
-      const [shootersSnapshot, teamsForYearSnapshot] = await Promise.all([
+      const promises = [
         getDocs(shootersQuery),
-        getDocs(teamsForYearQuery),
-      ]);
+        getDocs(teamsForYearQuery)
+      ];
+      
+      if (kmShootersQuery) {
+        promises.splice(1, 0, getDocs(kmShootersQuery));
+      }
+      
+      const results = await Promise.all(promises);
+      const shootersSnapshot = results[0];
+      const kmShootersSnapshot = kmShootersQuery ? results[1] : { docs: [] };
+      const teamsForYearSnapshot = kmShootersQuery ? results[2] : results[1];
 
-      const fetchedShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data(), teamIds: (d.data().teamIds || []) as string[] } as Shooter));
-      setAllClubShootersForDialog(fetchedShooters);
-      console.log("VMP DIALOG DEBUG: Fetched shooters for club:", clubIdForDialog, fetchedShooters.length);
+      const rwkShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data(), teamIds: (d.data().teamIds || []) as string[] } as Shooter));
+      const kmShooters = kmShootersSnapshot.docs.map(d => {
+        const data = d.data();
+        // Für Excel-Importe: Vollständigen Namen aus firstName + name zusammensetzen
+        const fullName = data.firstName && data.name ? 
+          `${data.firstName} ${data.name}` : 
+          data.name || `${data.firstName || ''} ${data.lastName || ''}`.trim();
+        
+        return { 
+          id: d.id, 
+          ...data, 
+          name: fullName,
+          teamIds: (data.teamIds || []) as string[] 
+        } as Shooter;
+      });
+      
+      // Kombiniere und entferne Duplikate
+      const allShooters = [...rwkShooters, ...kmShooters];
+      const uniqueShooters = allShooters.filter((shooter, index, self) => 
+        index === self.findIndex(s => s.id === shooter.id)
+      );
+      
+      setAllClubShootersForDialog(uniqueShooters);
+      console.log("VMP DIALOG DEBUG: Fetched shooters for club:", clubIdForDialog, uniqueShooters.length, `(RWK: ${rwkShooters.length}, KM: ${kmShooters.length})`);
 
       const leagueMap = new Map(allLeagues.map(l => [l.id, l]));
 
@@ -469,6 +515,8 @@ export default function VereinMannschaftenPage() {
       captainName: currentTeam.captainName?.trim() || '',
       captainEmail: currentTeam.captainEmail?.trim() || '',
       captainPhone: currentTeam.captainPhone?.trim() || '',
+      outOfCompetition: currentTeam.outOfCompetition || false,
+      outOfCompetitionReason: currentTeam.outOfCompetitionReason?.trim() || '',
     };
     
     const teamLeagueData = teamDataToSave.leagueId ? allLeagues.find(l => l.id === teamDataToSave.leagueId) : null;
@@ -554,17 +602,48 @@ export default function VereinMannschaftenPage() {
         throw new Error("VMP DEBUG: handleSubmit - Invalid form mode or missing team ID for edit.");
       }
       
-      shootersToAdd.forEach(shooterId => {
-        if(allClubShootersForDialog.some(s => s.id === shooterId)){ 
+      // Nur existierende Schützen-Dokumente aktualisieren
+      const validShootersToAdd = [];
+      const validShootersToRemove = [];
+      
+      // Prüfe shootersToAdd - auch Excel-importierte Schützen berücksichtigen
+      for (const shooterId of shootersToAdd) {
+        try {
           const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
-          batch.update(shooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
-        }
-      });
-      shootersToRemove.forEach(shooterId => {
-          if(allClubShootersForDialog.some(s => s.id === shooterId)){
-            const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
-            batch.update(shooterDocRef, { teamIds: arrayRemove(teamIdForShooterUpdates) });
+          const shooterDoc = await getFirestoreDoc(shooterDocRef);
+          if (shooterDoc.exists()) {
+            validShootersToAdd.push(shooterId);
+          } else {
+            console.warn(`VMP DEBUG: Shooter document ${shooterId} does not exist, skipping update`);
           }
+        } catch (error) {
+          console.warn(`VMP DEBUG: Error checking shooter ${shooterId}:`, error);
+        }
+      }
+      
+      // Prüfe shootersToRemove - auch Excel-importierte Schützen berücksichtigen
+      for (const shooterId of shootersToRemove) {
+        try {
+          const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
+          const shooterDoc = await getFirestoreDoc(shooterDocRef);
+          if (shooterDoc.exists()) {
+            validShootersToRemove.push(shooterId);
+          } else {
+            console.warn(`VMP DEBUG: Shooter document ${shooterId} does not exist, skipping update`);
+          }
+        } catch (error) {
+          console.warn(`VMP DEBUG: Error checking shooter ${shooterId}:`, error);
+        }
+      }
+      
+      // Nur gültige Schützen aktualisieren
+      validShootersToAdd.forEach(shooterId => {
+        const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
+        batch.update(shooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
+      });
+      validShootersToRemove.forEach(shooterId => {
+        const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
+        batch.update(shooterDocRef, { teamIds: arrayRemove(teamIdForShooterUpdates) });
       });
       
       await batch.commit();
@@ -678,10 +757,13 @@ export default function VereinMannschaftenPage() {
     return cleanName;
   };
   
-  const getLeagueTypeDisplay = (leagueId?: string | null): string => {
-    if (!leagueId) return '-';
-    const league = allLeagues.find(l => l.id === leagueId);
-    return league?.type || '-';
+  const getLeagueTypeDisplay = (team: Team): string => {
+    if (team.leagueId) {
+      const league = allLeagues.find(l => l.id === team.leagueId);
+      return league?.type || '-';
+    }
+    // Fallback: Verwende leagueType direkt vom Team
+    return team.leagueType || '-';
   };
 
   const getClubName = (clubId?: string | null): string => {
@@ -843,7 +925,7 @@ export default function VereinMannschaftenPage() {
           )}
           {!isLoadingTeams && teamsOfActiveClub.length > 0 && activeClubId && selectedSeasonId && (
             <Table><TableHeader><TableRow>
-                <TableHead>Name</TableHead><TableHead className="hidden sm:table-cell">Liga</TableHead><TableHead className="text-center">Typ</TableHead><TableHead className="text-center hidden md:table-cell">Jahr</TableHead><TableHead className="text-center">Schützen</TableHead>
+                <TableHead>Name</TableHead><TableHead className="hidden sm:table-cell">Liga</TableHead><TableHead className="text-center">Typ</TableHead><TableHead className="text-center">AK</TableHead><TableHead className="text-center hidden md:table-cell">Jahr</TableHead><TableHead className="text-center">Schützen</TableHead>
                 {isVereinsvertreter && <TableHead className="text-right">Aktionen</TableHead>}
             </TableRow></TableHeader>
             <TableBody>
@@ -858,8 +940,17 @@ export default function VereinMannschaftenPage() {
                     <TableCell className="hidden sm:table-cell">{getLeagueNameDisplay(team.leagueId)}</TableCell>
                     <TableCell className="text-center">
                       <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-medium">
-                        {getLeagueTypeDisplay(team.leagueId)}
+                        {getLeagueTypeDisplay(team)}
                       </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {team.outOfCompetition ? (
+                        <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded font-medium">
+                          AK
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">-</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-center hidden md:table-cell">{team.competitionYear}</TableCell>
                     <TableCell className="text-center">{team.shooterIds?.length || 0} / {MAX_SHOOTERS_PER_TEAM}</TableCell>
@@ -928,7 +1019,7 @@ export default function VereinMannschaftenPage() {
                     </UiAlertDescription>
                 </Alert>
 
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
                     <div className="space-y-1.5">
                         <div className="flex items-center">
                           <Label htmlFor="vvm-teamStrengthDialog">Mannschaftsstärke</Label>
@@ -977,6 +1068,37 @@ export default function VereinMannschaftenPage() {
                             <SelectItem value="LP">Luftpistole</SelectItem>
                           </SelectContent>
                         </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                        <div className="flex items-center">
+                          <Label htmlFor="vvm-teamOutOfCompetitionDialog">Außer Konkurrenz</Label>
+                          <HelpTooltip 
+                            text="Mannschaften außer Konkurrenz nehmen am Wettkampf teil, werden aber nicht in der Tabelle gewertet." 
+                            className="ml-2"
+                          />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="vvm-teamOutOfCompetitionDialog"
+                            checked={currentTeam?.outOfCompetition || false}
+                            onCheckedChange={(checked) => setCurrentTeam(prev => prev ? {...prev, outOfCompetition: !!checked} : null)}
+                          />
+                          <Label htmlFor="vvm-teamOutOfCompetitionDialog" className="text-sm font-normal">
+                            Diese Mannschaft außer Konkurrenz melden
+                          </Label>
+                        </div>
+                        {currentTeam?.outOfCompetition && (
+                          <div className="mt-2">
+                            <Label htmlFor="vvm-teamOutOfCompetitionReasonDialog" className="text-sm">Grund (optional)</Label>
+                            <Input
+                              id="vvm-teamOutOfCompetitionReasonDialog"
+                              value={currentTeam?.outOfCompetitionReason || ''}
+                              onChange={(e) => setCurrentTeam(prev => prev ? {...prev, outOfCompetitionReason: e.target.value} : null)}
+                              placeholder="z.B. Nachwuchsmannschaft, Gastmannschaft"
+                              className="mt-1"
+                            />
+                          </div>
+                        )}
                     </div>
                     <div className="space-y-1.5">
                         <Label htmlFor="vvm-teamClubDialog">Verein (Zugewiesen)</Label>

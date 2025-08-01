@@ -269,30 +269,16 @@ export default function VereinErgebnissePage() {
                 }
             });
             
-            // Prüfen, ob alle Schützen des Teams bereits Ergebnisse haben
-            const allShootersHaveResults = validShooterIds.every(id => shooterIdsWithResults.has(id));
+            // BUG-FIX: Prüfen ob MINDESTENS EIN Schütze noch kein Ergebnis hat (statt alle)
+            const hasAtLeastOneShooterWithoutResult = validShooterIds.some(id => !shooterIdsWithResults.has(id));
             
-            // Debug-Informationen
-            if (team.name.includes("Einbecker SGi I")) {
-                console.log(`Team ${team.name} für DG ${parsedRound}:`);
-                console.log(`- Gültige Schützen-IDs: ${validShooterIds.join(', ')}`);
-                console.log(`- Schützen mit Ergebnissen: ${Array.from(shooterIdsWithResults).join(', ')}`);
-                console.log(`- Fehlende Ergebnisse: ${validShooterIds.filter(id => !shooterIdsWithResults.has(id)).join(', ')}`);
-                console.log(`- Alle Ergebnisse vorhanden: ${allShootersHaveResults}`);
-            }
-            
-            return { team, allShootersHaveResults };
+            return { team, allShootersHaveResults: !hasAtLeastOneShooterWithoutResult };
         }));
         
-        // Teams filtern, bei denen nicht alle Schützen bereits Ergebnisse haben
+        // Teams anzeigen, bei denen mindestens ein Schütze noch kein Ergebnis hat
         const filteredTeams = teamsWithFilterInfo
             .filter(({ allShootersHaveResults }) => !allShootersHaveResults)
             .map(({ team }) => team);
-            
-        // Wenn keine Teams übrig bleiben, zeige eine Meldung
-        if (filteredTeams.length === 0) {
-          console.log(`Alle Teams für Liga ${selectedLeagueId} und Durchgang ${parsedRound} haben bereits vollständige Ergebnisse.`);
-        }
         
         setAllTeamsInSelectedLeague(filteredTeams);
       } catch (error) {

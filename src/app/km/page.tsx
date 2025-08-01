@@ -284,6 +284,19 @@ export default function KMDashboard() {
                       >
                         🔗 Namen-Fix
                       </button>
+                      <button 
+                        onClick={async () => {
+                          const res = await fetch('/api/debug/team-shooters', { method: 'GET' });
+                          if (res.ok) {
+                            const result = await res.json();
+                            console.log('🔍 Team-Schützen Debug:', result);
+                            alert(`Debug-Info in Konsole:\n${result.summary}`);
+                          }
+                        }}
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
+                      >
+                        🔍 Team-Debug
+                      </button>
                     </div>
                   )}
                 </div>
