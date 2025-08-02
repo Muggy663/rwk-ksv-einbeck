@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckSquare, Save, PlusCircle, Trash2, Loader, AlertCircle } from 'lucide-react';
+import { CheckSquare, Save, PlusCircle, Trash2, Loader, AlertCircle, Edit, ToggleLeft, ToggleRight } from 'lucide-react';
 import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, FirestoreLeagueSpecificDiscipline, Club, LeagueUpdateEntry } from '@/types/rwk';
 import { leagueDisciplineOptions } from '@/types/rwk';
 import { useAuth } from '@/hooks/use-auth';
@@ -59,6 +59,7 @@ export default function AdminResultsPage() {
   const [isLoadingShooters, setIsLoadingShooters] = useState(false);
   const [isLoadingExistingScores, setIsLoadingExistingScores] = useState(false);
   const [isSubmittingScores, setIsSubmittingScores] = useState(false);
+  const [editMode, setEditMode] = useState(true);
 
   const fetchMasterData = useCallback(async () => {
     console.log("AdminResultsPage: Fetching master data...");
@@ -130,6 +131,13 @@ export default function AdminResultsPage() {
                 return;
             }
             
+            // Im Bearbeitungsmodus alle Teams anzeigen, sonst filtern
+            if (editMode) {
+                setAllTeamsInSelectedLeague(fetchedTeams);
+                setIsLoadingTeams(false);
+                return;
+            }
+            
             // Wenn ein Durchgang ausgewählt ist, Teams filtern, bei denen alle Schützen bereits Ergebnisse haben
             const parsedRound = parseInt(selectedRound, 10);
             
@@ -189,7 +197,7 @@ export default function AdminResultsPage() {
     } else {
       setAllTeamsInSelectedLeague([]);
     }
-  }, [selectedLeagueId, selectedSeasonId, selectedRound, allSeasons, isLoadingLeagues, pendingScores, justSavedScoreIdentifiers, toast]);
+  }, [selectedLeagueId, selectedSeasonId, selectedRound, allSeasons, isLoadingLeagues, pendingScores, justSavedScoreIdentifiers, editMode, toast]);
   
   useEffect(() => {
     if (selectedTeamId && allShootersFromDB.length > 0 && !isLoadingTeams) {
@@ -246,18 +254,28 @@ export default function AdminResultsPage() {
       const parsedRound = parseInt(selectedRound, 10);
       const shootersInPendingThisRound = pendingScores.filter(ps => ps.teamId === selectedTeamId && ps.durchgang === parsedRound).map(ps => ps.shooterId);
       const shootersInJustSavedThisRound = justSavedScoreIdentifiers.filter(js => js.durchgang === parsedRound && shootersOfSelectedTeam.some(s => s.id === js.shooterId)).map(js => js.shooterId);
-      const shootersInExistingScoresThisRound = existingScoresForTeamAndRound.filter(es => es.durchgang === parsedRound).map(es => es.shooterId);
       
-      const filtered = shootersOfSelectedTeam.filter(sh => 
-        sh.id && !shootersInPendingThisRound.includes(sh.id) &&
-        !shootersInJustSavedThisRound.includes(sh.id) &&
-        !shootersInExistingScoresThisRound.includes(sh.id)
-      );
+      let filtered;
+      if (editMode) {
+        // Im Bearbeitungsmodus alle Schützen anzeigen (auch die mit existierenden Ergebnissen)
+        filtered = shootersOfSelectedTeam.filter(sh => 
+          sh.id && !shootersInPendingThisRound.includes(sh.id) &&
+          !shootersInJustSavedThisRound.includes(sh.id)
+        );
+      } else {
+        // Normal: Schützen mit existierenden Ergebnissen ausblenden
+        const shootersInExistingScoresThisRound = existingScoresForTeamAndRound.filter(es => es.durchgang === parsedRound).map(es => es.shooterId);
+        filtered = shootersOfSelectedTeam.filter(sh => 
+          sh.id && !shootersInPendingThisRound.includes(sh.id) &&
+          !shootersInJustSavedThisRound.includes(sh.id) &&
+          !shootersInExistingScoresThisRound.includes(sh.id)
+        );
+      }
       setAvailableShootersForDropdown(filtered);
     } else {
       setAvailableShootersForDropdown([]);
     }
-  }, [selectedTeamId, selectedRound, shootersOfSelectedTeam, pendingScores, justSavedScoreIdentifiers, existingScoresForTeamAndRound, isLoadingExistingScores]);
+  }, [selectedTeamId, selectedRound, shootersOfSelectedTeam, pendingScores, justSavedScoreIdentifiers, existingScoresForTeamAndRound, isLoadingExistingScores, editMode]);
 
   const handleAddToList = () => {
     if (!user) { toast({ title: "Nicht angemeldet", variant: "destructive" }); return; }
@@ -284,10 +302,18 @@ export default function AdminResultsPage() {
     }
     
     const parsedRound = parseInt(selectedRound, 10);
-    if (pendingScores.some(ps => ps.shooterId === selectedShooterId && ps.durchgang === parsedRound && ps.teamId === selectedTeamId) || 
-        justSavedScoreIdentifiers.some(js => js.shooterId === selectedShooterId && js.durchgang === parsedRound) ||
-        existingScoresForTeamAndRound.some(es => es.shooterId === selectedShooterId && es.durchgang === parsedRound)) {
+    
+    // Prüfung auf existierende Ergebnisse
+    const existingScore = existingScoresForTeamAndRound.find(es => es.shooterId === selectedShooterId && es.durchgang === parsedRound);
+    const pendingScore = pendingScores.find(ps => ps.shooterId === selectedShooterId && ps.durchgang === parsedRound && ps.teamId === selectedTeamId);
+    const justSavedScore = justSavedScoreIdentifiers.find(js => js.shooterId === selectedShooterId && js.durchgang === parsedRound);
+    
+    if (!editMode && (pendingScore || justSavedScore || existingScore)) {
       toast({ title: "Ergebnis existiert bereits", variant: "warning"}); return;
+    }
+    
+    if (editMode && pendingScore) {
+      toast({ title: "Schütze bereits in Bearbeitungsliste", variant: "warning"}); return;
     }
 
     const newPendingEntry: PendingScoreEntry = {
@@ -295,9 +321,10 @@ export default function AdminResultsPage() {
       seasonId: selectedSeasonId, seasonName: season.name, leagueId: selectedLeagueId, leagueName: league.name, leagueType: league.type,
       teamId: selectedTeamId, teamName: team.name, clubId: team.clubId, shooterId: selectedShooterId, shooterName: shooter.name, 
       shooterGender: shooter.gender, durchgang: parsedRound, totalRinge: scoreVal, scoreInputType: resultType, competitionYear: season.competitionYear,
+      existingScoreId: editMode && existingScore ? existingScore.id : undefined
     };
     setPendingScores(prev => [...prev, newPendingEntry]);
-    toast({ title: "Ergebnis hinzugefügt" });
+    toast({ title: editMode && existingScore ? "Ergebnis zur Änderung hinzugefügt" : "Ergebnis hinzugefügt" });
     setSelectedShooterId(''); setScore(''); 
   };
 
@@ -323,12 +350,23 @@ export default function AdminResultsPage() {
 
     try {
         pendingScores.forEach((entry) => {
-            const { tempId, ...dataToSave } = entry;
-            const scoreDocRef = doc(collection(db, SCORES_COLLECTION)); 
-            const scoreDataForDb: Omit<ScoreEntry, 'id' | 'entryTimestamp' | 'enteredByUserId' | 'enteredByUserName'> = {...dataToSave};
-            batch.set(scoreDocRef, {
-                ...scoreDataForDb, enteredByUserId: user.uid, enteredByUserName: user.displayName || user.email || "Unbekannt", entryTimestamp: serverTimestamp()
-            });
+            const { tempId, existingScoreId, ...dataToSave } = entry;
+            
+            if (existingScoreId) {
+                // Existierendes Ergebnis aktualisieren
+                const existingScoreRef = doc(db, SCORES_COLLECTION, existingScoreId);
+                const scoreDataForDb: Omit<ScoreEntry, 'id' | 'entryTimestamp' | 'enteredByUserId' | 'enteredByUserName'> = {...dataToSave};
+                batch.update(existingScoreRef, {
+                    ...scoreDataForDb, enteredByUserId: user.uid, enteredByUserName: user.displayName || user.email || "Unbekannt", entryTimestamp: serverTimestamp()
+                });
+            } else {
+                // Neues Ergebnis erstellen
+                const scoreDocRef = doc(collection(db, SCORES_COLLECTION)); 
+                const scoreDataForDb: Omit<ScoreEntry, 'id' | 'entryTimestamp' | 'enteredByUserId' | 'enteredByUserName'> = {...dataToSave};
+                batch.set(scoreDocRef, {
+                    ...scoreDataForDb, enteredByUserId: user.uid, enteredByUserName: user.displayName || user.email || "Unbekannt", entryTimestamp: serverTimestamp()
+                });
+            }
             newlySavedIdentifiers.push({ shooterId: entry.shooterId, durchgang: entry.durchgang });
         });
 
@@ -413,7 +451,23 @@ export default function AdminResultsPage() {
         </Link>
       </div>
       <Card className="shadow-md">
-        <CardHeader><CardTitle>Einzelergebnis zur Liste hinzufügen</CardTitle><CardDescription>Wählen Sie Parameter und fügen Sie Ergebnisse hinzu.</CardDescription></CardHeader>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>{editMode ? 'Ergebnis bearbeiten/hinzufügen' : 'Einzelergebnis zur Liste hinzufügen'}</CardTitle>
+              <CardDescription>{editMode ? 'Bearbeitungsmodus: Alle Teams und Schützen werden angezeigt' : 'Wählen Sie Parameter und fügen Sie Ergebnisse hinzu.'}</CardDescription>
+            </div>
+            <Button
+              variant={editMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setEditMode(!editMode)}
+              className="flex items-center gap-2"
+            >
+              {editMode ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+              {editMode ? 'Bearbeiten AN' : 'Bearbeiten AUS'}
+            </Button>
+          </div>
+        </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-2">
@@ -439,15 +493,28 @@ export default function AdminResultsPage() {
             </div>
              <div className="space-y-2"> {/* Mannschaft nach Durchgang */}
               <Label htmlFor="team">Mannschaft</Label>
-              <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={!selectedLeagueId || isLoadingTeams || !selectedRound || allTeamsInSelectedLeague.length === 0}>
-                <SelectTrigger id="team"><SelectValue placeholder={isLoadingTeams ? "Lade Teams..." : (!selectedRound ? "Durchgang wählen" : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId && selectedRound ? "Alle Teams vollständig erfasst" : "Mannschaft wählen"))} /></SelectTrigger>
+              <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={!selectedLeagueId || isLoadingTeams || (!editMode && !selectedRound) || allTeamsInSelectedLeague.length === 0}>
+                <SelectTrigger id="team"><SelectValue placeholder={isLoadingTeams ? "Lade Teams..." : (!selectedRound && !editMode ? "Durchgang wählen" : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId ? (editMode ? "Keine Teams" : "Alle Teams vollständig erfasst") : "Mannschaft wählen"))} /></SelectTrigger>
                 <SelectContent>{allTeamsInSelectedLeague.filter(t => t.id).map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="shooter">Schütze</Label>
-              <Select value={selectedShooterId} onValueChange={setSelectedShooterId} disabled={!selectedTeamId || isLoadingShooters || isLoadingExistingScores || (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound)}>
-                <SelectTrigger id="shooter"><SelectValue placeholder={isLoadingShooters || isLoadingExistingScores ? "Lade Schützen..." : (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound ? "Alle erfasst/keine" : "Schütze wählen")} /></SelectTrigger>
+              <Label htmlFor="shooter">Schütze {editMode && selectedShooterId && existingScoresForTeamAndRound.find(es => es.shooterId === selectedShooterId && es.durchgang === parseInt(selectedRound, 10)) && <span className="text-sm text-amber-600">(wird überschrieben)</span>}</Label>
+              <Select value={selectedShooterId} onValueChange={(value) => {
+                setSelectedShooterId(value);
+                // Im Bearbeitungsmodus das existierende Ergebnis vorausfüllen
+                if (editMode && selectedRound) {
+                  const existingScore = existingScoresForTeamAndRound.find(es => es.shooterId === value && es.durchgang === parseInt(selectedRound, 10));
+                  if (existingScore) {
+                    setScore(existingScore.totalRinge.toString());
+                    setResultType(existingScore.scoreInputType || 'regular');
+                  } else {
+                    setScore('');
+                    setResultType('regular');
+                  }
+                }
+              }} disabled={!selectedTeamId || isLoadingShooters || isLoadingExistingScores || (availableShootersForDropdown.length === 0 && !!selectedTeamId && (!!selectedRound || editMode))}>
+                <SelectTrigger id="shooter"><SelectValue placeholder={isLoadingShooters || isLoadingExistingScores ? "Lade Schützen..." : (availableShootersForDropdown.length === 0 && !!selectedTeamId && (!!selectedRound || editMode) ? (editMode ? "Keine Schützen" : "Alle erfasst/keine") : "Schütze wählen")} /></SelectTrigger>
                 <SelectContent>{availableShootersForDropdown.filter(sh => sh.id).map(sh => <SelectItem key={sh.id} value={sh.id}>{sh.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>

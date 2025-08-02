@@ -414,12 +414,28 @@ export default function AdminTeamsPage() {
       const teamDocRef = doc(db, TEAMS_COLLECTION, teamToDelete.id);
       batch.delete(teamDocRef);
 
+      // Versuche alle Schützen-IDs zu aktualisieren, ignoriere Fehler bei ungültigen IDs
       const shooterIdsInDeletedTeam = teamToDelete.shooterIds || [];
-      shooterIdsInDeletedTeam.forEach(shooterId => {
+      
+      // Prüfe welche Schützen tatsächlich existieren
+      const existingShooterIds: string[] = [];
+      for (const shooterId of shooterIdsInDeletedTeam) {
         if (shooterId && typeof shooterId === 'string' && shooterId.trim() !== '') {
-            const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
-            batch.update(shooterDocRef, { teamIds: arrayRemove(teamToDelete.id) });
+          try {
+            const shooterDoc = await getFirestoreDoc(doc(db, SHOOTERS_COLLECTION, shooterId));
+            if (shooterDoc.exists()) {
+              existingShooterIds.push(shooterId);
+            }
+          } catch (error) {
+            console.log(`Schütze ${shooterId} existiert nicht, überspringe...`);
+          }
         }
+      }
+      
+      // Nur existierende Schützen aktualisieren
+      existingShooterIds.forEach(shooterId => {
+        const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
+        batch.update(shooterDocRef, { teamIds: arrayRemove(teamToDelete.id) });
       });
       
       await batch.commit();

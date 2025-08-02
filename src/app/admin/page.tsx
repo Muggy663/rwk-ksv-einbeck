@@ -486,6 +486,12 @@ export default function AdminDashboardPage() {
               <Link href="/admin/cleanup" passHref>
                 <Button className="w-full" variant="outline">Datenbereinigung</Button>
               </Link>
+              <Link href="/admin/team-cleanup" passHref>
+                <Button className="w-full" variant="outline">Team-Bereinigung</Button>
+              </Link>
+              <Link href="/admin/shooter-normalization" passHref>
+                <Button className="w-full" variant="outline">Excel-Schützen Normalisierung</Button>
+              </Link>
               <Link href="/admin/audit" passHref>
                 <Button className="w-full" variant="outline">Änderungsprotokoll</Button>
               </Link>

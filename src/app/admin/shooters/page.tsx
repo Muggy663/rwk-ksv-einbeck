@@ -389,15 +389,19 @@ export default function AdminShootersPage() {
         }
 
         const newShooterRef = doc(collection(db, SHOOTERS_COLLECTION));
-        const shooterDataForSave: Omit<Shooter, 'id'> = {
+        const shooterDataForSave: any = {
           firstName: currentShooter.firstName.trim(),
           lastName: currentShooter.lastName.trim(),
           name: combinedName,
           clubId: currentShooter.clubId as string,
           gender: currentShooter.gender || 'male',
-          birthYear: currentShooter.birthYear ? parseInt(currentShooter.birthYear.toString()) : undefined,
           teamIds: selectedTeamIdsInForm,
         };
+        
+        // Nur birthYear hinzufügen wenn es einen Wert hat
+        if (currentShooter.birthYear && !isNaN(parseInt(currentShooter.birthYear.toString()))) {
+          shooterDataForSave.birthYear = parseInt(currentShooter.birthYear.toString());
+        }
         batch.set(newShooterRef, shooterDataForSave);
         selectedTeamIdsInForm.forEach(teamId => {
           batch.update(doc(db, TEAMS_COLLECTION, teamId), { shooterIds: arrayUnion(newShooterRef.id) });
@@ -406,13 +410,19 @@ export default function AdminShootersPage() {
 
       } else if (formMode === 'edit' && currentShooter.id) {
         const shooterDocRef = doc(db, SHOOTERS_COLLECTION, currentShooter.id);
-        batch.update(shooterDocRef, {
+        const updateData: any = {
           firstName: currentShooter.firstName.trim(),
           lastName: currentShooter.lastName.trim(),
           name: combinedName,
           gender: currentShooter.gender || 'male',
-          birthYear: currentShooter.birthYear ? parseInt(currentShooter.birthYear.toString()) : undefined,
-        });
+        };
+        
+        // Nur birthYear hinzufügen wenn es einen Wert hat
+        if (currentShooter.birthYear && !isNaN(parseInt(currentShooter.birthYear.toString()))) {
+          updateData.birthYear = parseInt(currentShooter.birthYear.toString());
+        }
+        
+        batch.update(shooterDocRef, updateData);
         toast({ title: "Schütze aktualisiert", description: `Daten für "${combinedName}" aktualisiert.` });
       }
       
