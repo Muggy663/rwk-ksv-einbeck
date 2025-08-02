@@ -14,7 +14,7 @@ import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistratio
 import { ThemeProvider } from '@/components/theme-provider';
 import { ModeToggle } from '@/components/ui/mode-toggle';
 import { SkipLink } from '@/components/ui/skip-link';
-import { InstallPrompt } from '@/components/ui/install-prompt';
+
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { AppUpdateChecker } from '@/components/app-update-checker';
 import { NativeAppProvider } from '@/components/ui/native-app-detector';
@@ -98,7 +98,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <SiteFooter />
           <Toaster />
           <ServiceWorkerRegistration />
-          <InstallPrompt />
+
           <OfflineIndicator />
           {/* <SentryClientInit /> */}
             </div>

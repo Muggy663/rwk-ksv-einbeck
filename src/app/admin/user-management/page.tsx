@@ -314,7 +314,7 @@ export default function AdminUserManagementPage() {
                   <strong>Schritt 1: Benutzer in Firebase Authentication anlegen (Manuell durch Super-Admin):</strong>
                   <ul className="list-disc list-inside pl-6 text-xs text-muted-foreground space-y-1">
                     <li>Gehe zur <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Firebase Konsole</a> deines Projekts.</li>
-                    <li>Navigiere zu "Authentication" -> Tab "Users".</li>
+                    <li>Navigiere zu "Authentication" → Tab "Users".</li>
                     <li>Klicke auf "Add user".</li>
                     <li>Gib die E-Mail-Adresse und ein initiales Passwort für den neuen Benutzer ein. Lege optional einen Anzeigenamen fest.</li>
                     <li>Nach dem Erstellen: <strong>Kopiere die User-ID (UID)</strong> dieses neuen Benutzers. Diese ist entscheidend.</li>

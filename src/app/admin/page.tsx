@@ -279,6 +279,11 @@ export default function AdminDashboardPage() {
           <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
           <p className="text-muted-foreground">Verwaltung der Rundenwettkämpfe.</p>
         </div>
+        <Link href="/km">
+          <Button variant="outline">
+            🏆 KM Admin Dashboard
+          </Button>
+        </Link>
       </div>
 
       {/* Admin-Statistiken */}

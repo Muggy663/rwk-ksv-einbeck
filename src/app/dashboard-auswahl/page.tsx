@@ -81,7 +81,7 @@ export default function DashboardAuswahl() {
               </div>
               
               <div className="flex gap-2">
-                <Link href="/verein/dashboard" className="flex-1">
+                <Link href={isRWKAdmin ? "/admin" : "/verein/dashboard"} className="flex-1">
                   <Button className="w-full">
                     RWK Dashboard öffnen
                   </Button>

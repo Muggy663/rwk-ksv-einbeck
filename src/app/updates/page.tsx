@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.9.9.6 (31.07.2025)</span>
+              <span>Web-Version: 0.9.9.6a (22.01.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (22.07.2025)</span>
@@ -36,8 +36,53 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.6 - Beta-Tester Fixes</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.6a - Admin-Tools & Fixes</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
+            </div>
+            <CardDescription>22.01.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Admin-Tools für Datenbereinigung, Benutzer-Management-Fixes und Entfernung der PWA-Installation.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🔧 Admin-Tools & Fixes v0.9.9.6a</h4>
+              <div className="text-xs text-green-700">
+                Team-Bereinigung + Schützen-Normalisierung + PWA-Entfernung
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🔧 <strong>Team-Bereinigungstool:</strong> Entfernt ungültige Schützen-IDs aus Teams mit Backup-Funktion</li>
+              <li>📊 <strong>Excel-Schützen Normalisierung:</strong> Manuelles Review-Tool für Datenstruktur-Fixes (kmClubId vs clubId)</li>
+              <li>🔄 <strong>Admin-Dashboard Navigation:</strong> Kreuznavigation zwischen RWK Admin und KM Admin</li>
+              <li>🔐 <strong>Login-Redirect Fix:</strong> RWK-Admins werden korrekt zu /admin weitergeleitet</li>
+              <li>👥 <strong>Schützen-Erstellung Fix:</strong> birthYear undefined Fehler behoben</li>
+              <li>🗑️ <strong>Team-Löschung Fix:</strong> Behandlung ungültiger Schützen-Referenzen</li>
+              <li>🔧 <strong>TypeScript-Fixes:</strong> JSX-Syntax-Fehler und HTML-Entitäten korrigiert</li>
+              <li>📱 <strong>PWA-Installation entfernt:</strong> 30-Sekunden-Einblendung nicht mehr erforderlich</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🔧 Admin-Tools</span>
+                  <p className="text-xs text-green-600 mt-1">Datenintegrität + Benutzer-Management</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.9.9.6a
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Link href="/updates/v0.9.9.6a" className="text-primary hover:text-primary/80 text-sm flex items-center">
+                Details <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.6 - Beta-Tester Fixes</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>31.07.2025</CardDescription>
           </CardHeader>

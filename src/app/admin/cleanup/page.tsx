@@ -331,7 +331,7 @@ ${result.warnings.length > 0 ? 'Warnungen:\n' + result.warnings.join('\n') : ''}
             <h4 className="font-medium text-foreground">✓ Sichere Prüfungen:</h4>
             <p>• Berücksichtigt nur die aktuelle Saison</p>
             <p>• Prüft auf vorhandene Ergebnisse vor dem Löschen</p>
-            <p>• Warnt vor zu vielen Löschungen (>100 Einträge)</p>
+            <p>• Warnt vor zu vielen Löschungen ({'>'}100 Einträge)</p>
             <p>• Löscht nur Daten ohne aktive Verknüpfungen</p>
           </div>
           <div>

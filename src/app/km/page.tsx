@@ -128,6 +128,11 @@ export default function KMDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Link href="/admin">
+            <button className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-colors">
+              🎯 RWK Admin
+            </button>
+          </Link>
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
