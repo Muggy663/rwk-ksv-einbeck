@@ -1,53 +1,59 @@
 // src/hooks/useKMAuth.ts
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '@/components/auth/AuthContext';
-import { getKMUserPermission, hasKMAdminAccess, hasKMOrganizerAccess } from '@/lib/services/km-auth-service';
-import type { KMUserPermission } from '@/types/km-auth';
+import { kmAuthService } from '@/lib/services/km-auth-service';
 
 export function useKMAuth() {
-  const { user } = useAuthContext();
-  const [kmPermission, setKmPermission] = useState<KMUserPermission | null>(null);
+  const { user, loading: authLoading } = useAuthContext();
+  const [kmPermission, setKmPermission] = useState(false);
+  const [userClubIds, setUserClubIds] = useState<string[]>([]);
+  const [userRole, setUserRole] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadKMPermission = async () => {
-      if (!user?.uid) {
-        setKmPermission(null);
-        setLoading(false);
+    const loadKMPermissions = async () => {
+      if (!user?.uid || authLoading) {
+        setLoading(authLoading);
         return;
       }
 
       try {
-        const permission = await getKMUserPermission(user.uid);
-        setKmPermission(permission);
+        const permission = await kmAuthService.checkKMPermission(user.uid);
+        console.log('useKMAuth result:', {
+          kmPermission: permission.hasAccess,
+          loading: false,
+          hasKMAccess: permission.hasAccess,
+          isActive: permission.isActive,
+          userRole: permission.role,
+          userClubIds: permission.clubIds
+        });
+        
+        setKmPermission(permission.hasAccess);
+        setUserClubIds(permission.clubIds || []);
+        setUserRole(permission.role || '');
       } catch (error) {
-        console.error('Fehler beim Laden der KM-Berechtigung:', error);
-        setKmPermission(null);
+        console.error('Error loading KM permissions:', error);
+        setKmPermission(false);
+        setUserClubIds([]);
+        setUserRole('');
       } finally {
         setLoading(false);
       }
     };
 
-    loadKMPermission();
-  }, [user?.uid]);
+    loadKMPermissions();
+  }, [user?.uid, authLoading]);
 
-  const result = {
+  return {
     kmPermission,
+    hasKMAccess: kmPermission,
+    userClubIds,
+    userRole,
     loading,
-    hasKMAdminAccess: hasKMAdminAccess(kmPermission),
-    hasKMOrganizerAccess: hasKMOrganizerAccess(kmPermission),
-    hasKMAccess: kmPermission?.isActive || false,
-    userClubId: kmPermission?.clubId || null,
-    userClubIds: kmPermission?.clubIds || (kmPermission?.clubId ? [kmPermission.clubId] : []),
-    isMultiClub: (kmPermission?.clubIds?.length || 0) > 1
+    isActive: kmPermission,
+    // Admin-spezifische Checks
+    isKMAdmin: userRole === 'admin',
+    isKMOrganisator: userRole === 'km_organisator',
+    hasFullAccess: userRole === 'admin' || userRole === 'km_organisator'
   };
-  
-  console.log('useKMAuth result:', {
-    kmPermission: !!kmPermission,
-    loading,
-    hasKMAccess: result.hasKMAccess,
-    isActive: kmPermission?.isActive
-  });
-  
-  return result;
 }

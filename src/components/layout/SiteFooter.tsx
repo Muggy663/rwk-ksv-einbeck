@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.9.9.7"; // KM Mannschaften-Generator
+  const version = "0.9.9.8"; // KM-Meldungen Bugfix
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">
@@ -24,9 +24,10 @@ export function SiteFooter() {
             </Link>
           </div>
         </div>
-        <p className="text-center text-sm text-muted-foreground md:text-right">
-          Version {version} <span className="text-xs bg-primary/10 text-primary px-1 py-0.5 rounded">Beta</span>
-        </p>
+        <div className="text-center text-sm text-muted-foreground md:text-right">
+          <p>Web-Version {version} <span className="text-xs bg-primary/10 text-primary px-1 py-0.5 rounded">Beta</span></p>
+          <p className="text-xs mt-1">App-Version 0.9.1.0</p>
+        </div>
       </div>
     </footer>
   );

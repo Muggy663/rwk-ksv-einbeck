@@ -149,7 +149,7 @@ export function MainNav() {
   const vereinsvertreterRoutes: RouteItem[] = [
     {
       href: '/verein/dashboard',
-      label: 'Vereinsbereich',
+      label: 'RWK',
       icon: <User className="h-4 w-4 mr-2" />,
       active: pathname === '/verein/dashboard' || pathname.startsWith('/verein/'),
     },
@@ -255,6 +255,19 @@ export function MainNav() {
               </Link>
             ))}
           </>
+        )}
+
+        {user && (
+          <Link
+            href="/dashboard-auswahl"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary flex items-center",
+              pathname === '/dashboard-auswahl' ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            KM
+          </Link>
         )}
 
         {/* Timer und Logout */}

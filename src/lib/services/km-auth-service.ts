@@ -1,76 +1,116 @@
 // src/lib/services/km-auth-service.ts
 import { db } from '@/lib/firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import type { KMUserPermission } from '@/types/km-auth';
 
-export async function getKMUserPermission(uid: string): Promise<KMUserPermission | null> {
-  try {
-    console.log('Loading KM permission for UID:', uid);
-    
-    // SuperAdmin-Check
-    if (uid === 'nr4qSNvqUoZvtD9tUSPhhiQmMWj2') {
-      console.log('SuperAdmin detected, granting KM admin access');
-      return {
-        uid,
-        email: 'admin@rwk-einbeck.de',
-        displayName: 'Super Admin',
-        role: 'km_admin',
-        isActive: true,
-        createdAt: new Date(),
-        lastLogin: new Date()
-      };
-    }
-    
-    // Direkt RWK-Berechtigung verwenden
-    const rwkDocRef = doc(db, 'user_permissions', uid);
-    const rwkDocSnap = await getDoc(rwkDocRef);
-    
-    if (rwkDocSnap.exists()) {
-      const rwkPermission = rwkDocSnap.data();
-      console.log('RWK Permission found:', rwkPermission);
+export const kmAuthService = {
+  async checkKMPermission(uid: string) {
+    try {
+      console.log('Loading KM permission for UID:', uid);
       
-      // Nur Vereinsvertreter bekommen KM-Zugang (keine Mannschaftsführer)
-      if (rwkPermission.role === 'admin' || rwkPermission.role === 'superadmin') {
-        return {
-          uid,
-          email: rwkPermission.email,
-          displayName: rwkPermission.displayName,
-          role: 'km_admin',
-          clubIds: rwkPermission.clubIds || (rwkPermission.clubId ? [rwkPermission.clubId] : []),
-          isActive: true, // KM-Zugang ist aktiv für RWK-Admins
-          createdAt: rwkPermission.createdAt || new Date(),
-          lastLogin: rwkPermission.lastLogin
-        };
-      } else if (rwkPermission.role === 'vereinsvertreter') {
-        // Multi-Verein-Support: representedClubs Array verwenden
-        const clubIds = rwkPermission.representedClubs || 
-                       rwkPermission.clubIds || 
-                       (rwkPermission.clubId ? [rwkPermission.clubId] : []);
-        
-        console.log('Club IDs for KM:', clubIds);
+      // VEREINFACHT: Admin hat immer Vollzugriff
+      if (uid === 'nr4qSNvqUoZvtD9tUSPhhiQmMWj2') {
+        console.log('Admin detected, granting full access');
+        const clubsSnapshot = await getDocs(collection(db, 'clubs'));
+        const allClubIds = clubsSnapshot.docs.map(doc => doc.id);
         
         return {
-          uid,
-          email: rwkPermission.email,
-          displayName: rwkPermission.displayName,
-          role: 'verein_vertreter',
-          clubIds: clubIds,
-          isActive: true, // KM-Zugang ist aktiv für RWK-Vereinsvertreter
-          createdAt: rwkPermission.createdAt || new Date(),
-          lastLogin: rwkPermission.lastLogin
+          hasAccess: true,
+          isActive: true,
+          clubIds: allClubIds,
+          role: 'admin'
         };
       }
       
-      console.log('No KM access for role:', rwkPermission.role);
-      return null;
+      // Prüfe RWK-Berechtigung für andere Benutzer
+      const rwkPermissionDoc = await getDoc(doc(db, 'user_permissions', uid));
+      
+      if (!rwkPermissionDoc.exists()) {
+        console.log('No RWK permission found for UID:', uid);
+        return { hasAccess: false, isActive: false, clubIds: [], role: '' };
+      }
+      
+      const rwkPermission = rwkPermissionDoc.data();
+      console.log('RWK Permission found:', rwkPermission);
+      
+      // Admin hat vollen Zugriff
+      if (rwkPermission.role === 'superadmin') {
+        // Lade alle Club-IDs für Admin
+        const clubsSnapshot = await getDocs(collection(db, 'clubs'));
+        const allClubIds = clubsSnapshot.docs.map(doc => doc.id);
+        
+        return {
+          hasAccess: true,
+          isActive: true,
+          clubIds: allClubIds,
+          role: 'admin'
+        };
+      }
+      
+      // KM-Organisator hat vollen Zugriff (ohne Admin-Buttons)
+      if (rwkPermission.role === 'km_organisator') {
+        const clubsSnapshot = await getDocs(collection(db, 'clubs'));
+        const allClubIds = clubsSnapshot.docs.map(doc => doc.id);
+        
+        return {
+          hasAccess: true,
+          isActive: true,
+          clubIds: allClubIds,
+          role: 'km_organisator'
+        };
+      }
+      
+      // Prüfe ob Benutzer Vereinsvertreter ist
+      if (rwkPermission.role !== 'vereinsvertreter') {
+        console.log('User is not vereinsvertreter, admin or km_organisator:', rwkPermission.role);
+        return { hasAccess: false, isActive: false, clubIds: [], role: rwkPermission.role };
+      }
+      
+      // Sammle Club-IDs für Vereinsvertreter
+      const clubIds = [];
+      
+      // Haupt-Club-ID
+      if (rwkPermission.clubId) {
+        clubIds.push(rwkPermission.clubId);
+      }
+      
+      // Zusätzliche Clubs aus representedClubs
+      if (rwkPermission.representedClubs && Array.isArray(rwkPermission.representedClubs)) {
+        clubIds.push(...rwkPermission.representedClubs);
+      }
+      
+      // Duplikate entfernen
+      const uniqueClubIds = [...new Set(clubIds)];
+      console.log('Club IDs for KM:', uniqueClubIds);
+      
+      return {
+        hasAccess: true,
+        isActive: true,
+        clubIds: uniqueClubIds,
+        role: 'vereinsvertreter'
+      };
+      
+    } catch (error) {
+      console.error('Error checking KM permission:', error);
+      return { hasAccess: false, isActive: false, clubIds: [], role: '' };
     }
-    
-    console.log('No RWK permissions found for UID:', uid);
-    return null;
-  } catch (error) {
-    console.error('Fehler beim Laden der KM-Berechtigung:', error);
-    return null;
   }
+};
+
+export async function getKMUserPermission(uid: string): Promise<KMUserPermission | null> {
+  const permission = await kmAuthService.checkKMPermission(uid);
+  if (!permission.hasAccess) return null;
+  
+  return {
+    uid,
+    email: '',
+    displayName: '',
+    role: permission.role as any,
+    clubIds: permission.clubIds,
+    isActive: permission.isActive,
+    createdAt: new Date(),
+    lastLogin: new Date()
+  };
 }
 
 export function hasKMAdminAccess(permission: KMUserPermission | null): boolean {

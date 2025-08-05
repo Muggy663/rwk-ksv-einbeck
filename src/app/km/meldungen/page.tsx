@@ -82,21 +82,27 @@ export default function KMMeldungen() {
     setLmTeilnahme({[meldung.disziplinId]: meldung.lmTeilnahme});
     setAnmerkung(meldung.anmerkung || '');
     if (meldung.vmErgebnis) {
-      setVmRinge(meldung.vmErgebnis.ringe?.toString() || '');
       // Sichere Date-Konvertierung
+      let datum = '';
       try {
-        const datum = meldung.vmErgebnis.datum;
-        if (datum) {
-          const date = typeof datum === 'string' ? new Date(datum) : datum.toDate ? datum.toDate() : new Date(datum);
+        const vmDatum = meldung.vmErgebnis.datum;
+        if (vmDatum) {
+          const date = typeof vmDatum === 'string' ? new Date(vmDatum) : vmDatum.toDate ? vmDatum.toDate() : new Date(vmDatum);
           if (!isNaN(date.getTime())) {
-            setVmDatum(date.toISOString().split('T')[0]);
+            datum = date.toISOString().split('T')[0];
           }
         }
       } catch (e) {
         console.warn('Date parsing error:', e);
-        setVmDatum('');
       }
-      setVmBemerkung(meldung.vmErgebnis.bemerkung || '');
+      
+      setVmErgebnisse({
+        [meldung.disziplinId]: {
+          ringe: meldung.vmErgebnis.ringe?.toString() || '',
+          datum,
+          bemerkung: meldung.vmErgebnis.bemerkung || ''
+        }
+      });
     }
   };
   
@@ -198,25 +204,30 @@ export default function KMMeldungen() {
     const durchmeldungsDisziplinen = selectedDisziplinen.filter(id => 
       disziplinen.find(d => d.id === id)?.nurVereinsmeisterschaft
     );
-    if (durchmeldungsDisziplinen.length > 0 && (!vmRinge || !vmDatum)) {
-      toast({ title: 'Fehler', description: 'Für Durchmeldungs-Disziplinen ist das VM-Ergebnis erforderlich', variant: 'destructive' });
-      return;
+    
+    for (const disziplinId of durchmeldungsDisziplinen) {
+      const vmData = vmErgebnisse[disziplinId];
+      if (!vmData?.ringe || !vmData?.datum) {
+        toast({ title: 'Fehler', description: 'Für Durchmeldungs-Disziplinen ist das VM-Ergebnis erforderlich', variant: 'destructive' });
+        return;
+      }
     }
 
     setIsSubmitting(true);
     try {
       if (editingMeldung) {
         // Update bestehende Meldung
+        const vmData = vmErgebnisse[selectedDisziplinen[0]];
         const response = await fetch(`/api/km/meldungen/${editingMeldung.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             lmTeilnahme: lmTeilnahme[selectedDisziplinen[0]] || false,
             anmerkung,
-            vmErgebnis: vmRinge ? {
-              ringe: parseFloat(vmRinge),
-              datum: new Date(vmDatum || Date.now()),
-              bemerkung: vmBemerkung
+            vmErgebnis: vmData?.ringe ? {
+              ringe: parseFloat(vmData.ringe),
+              datum: new Date(vmData.datum || Date.now()),
+              bemerkung: vmData.bemerkung || ''
             } : undefined
           })
         });
@@ -232,8 +243,9 @@ export default function KMMeldungen() {
         }
       } else {
         // Erstelle neue Meldungen
-        const meldungsPromises = selectedDisziplinen.map(disziplinId => 
-          fetch('/api/km/meldungen', {
+        const meldungsPromises = selectedDisziplinen.map(disziplinId => {
+          const vmData = vmErgebnisse[disziplinId];
+          return fetch('/api/km/meldungen', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -242,14 +254,14 @@ export default function KMMeldungen() {
               lmTeilnahme: lmTeilnahme[disziplinId] || false,
               anmerkung,
               gemeldeteVon: 'current-user',
-              vmErgebnis: vmRinge ? {
-                ringe: parseFloat(vmRinge),
-                datum: new Date(vmDatum || Date.now()),
-                bemerkung: vmBemerkung
+              vmErgebnis: vmData?.ringe ? {
+                ringe: parseFloat(vmData.ringe),
+                datum: new Date(vmData.datum || Date.now()),
+                bemerkung: vmData.bemerkung || ''
               } : undefined
             })
-          })
-        );
+          });
+        });
         
         const results = await Promise.all(meldungsPromises);
         const allSuccessful = results.every(async (response) => {
@@ -270,9 +282,7 @@ export default function KMMeldungen() {
       setSelectedDisziplinen([]);
       setLmTeilnahme({});
       setAnmerkung('');
-      setVmRinge('');
-      setVmDatum('');
-      setVmBemerkung('');
+      setVmErgebnisse({});
       loadData();
     } catch (error) {
       toast({ title: 'Fehler', description: 'Meldungen konnten nicht erstellt werden', variant: 'destructive' });
@@ -660,9 +670,7 @@ export default function KMMeldungen() {
                         setSelectedDisziplinen([]);
                         setLmTeilnahme({});
                         setAnmerkung('');
-                        setVmRinge('');
-                        setVmDatum('');
-                        setVmBemerkung('');
+                        setVmErgebnisse({});
                       }}
                     >
                       Abbrechen
@@ -796,9 +804,9 @@ export default function KMMeldungen() {
             </CardContent>
           </Card>
 
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded">
-            <h4 className="font-semibold text-blue-900 dark:text-blue-100 text-sm mb-1">🎯 KM-System Beta</h4>
-            <p className="text-xs text-blue-700 dark:text-blue-300">
+          <div className="mt-4 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded">
+            <h4 className="font-semibold text-green-900 dark:text-green-100 text-sm mb-1">🎯 KM-System</h4>
+            <p className="text-xs text-green-700 dark:text-green-300">
               Vollständig funktional - Meldungen werden gespeichert und sind persistent.
             </p>
           </div>

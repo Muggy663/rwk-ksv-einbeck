@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.9.9.7 (05.08.2025)</span>
+              <span>Web-Version: 0.9.9.8 (05.08.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -36,8 +36,47 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.7 - KM Mannschaften-Generator</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.8 - KM-Meldungen Bugfix</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
+            </div>
+            <CardDescription>05.08.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Kritischer Bugfix für KM-Meldungen - 500 Internal Server Error behoben durch Korrektur undefinierter Variablen.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🔧 KM-Meldungen Bugfix v0.9.9.8</h4>
+              <div className="text-xs text-green-700">
+                500 Error behoben - KM-Meldungen funktionieren wieder vollständig
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🔧 <strong>500 Error behoben:</strong> Undefinierte Variablen vmRinge, vmDatum, vmBemerkung korrigiert</li>
+              <li>📝 <strong>VM-Ergebnisse funktional:</strong> Vereinsmeisterschafts-Ergebnisse können wieder eingegeben werden</li>
+              <li>🔄 <strong>State Management korrigiert:</strong> vmErgebnisse-Objekt wird konsistent verwendet</li>
+              <li>✅ <strong>Meldungen speichern:</strong> Alle Meldungsformular-Funktionen arbeiten wieder korrekt</li>
+              <li>🎯 <strong>Bearbeitung funktional:</strong> Bestehende Meldungen können wieder bearbeitet werden</li>
+              <li>📊 <strong>KM-Orga sieht Meldungen:</strong> Vollständiger Workflow Vereine → KM-Organisator funktioniert</li>
+              <li>🏆 <strong>Produktionsreif:</strong> KM-System ist vollständig einsatzbereit für KM 2026</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🔧 Kritischer Bugfix</span>
+                  <p className="text-xs text-green-600 mt-1">KM-Meldungen 500 Error behoben</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.9.9.8
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.7 - KM Mannschaften-Generator</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>05.08.2025</CardDescription>
           </CardHeader>
@@ -74,61 +113,6 @@ export default function UpdatesPage() {
                 </div>
                 <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
                   🚀 v0.9.9.7
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.6d - Auto-Schützen aktiviert</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>22.01.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Automatische Schützen-Erstellung ist jetzt aktiviert - fehlende Schützen werden automatisch in rwk_shooters angelegt.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🎯 Auto-Schützen aktiviert v0.9.9.6d</h4>
-              <div className="text-xs text-green-700">
-                Echte Schützen-Erstellung + Firebase IN-Limit Fix
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>✅ <strong>Auto-Schützen AKTIVIERT:</strong> Fehlende Schützen werden jetzt automatisch in rwk_shooters erstellt</li>
-              <li>📝 <strong>Namen aus Scores:</strong> Vollständige Namen werden aus bestehenden Ergebnissen wiederhergestellt</li>
-              <li>🔄 <strong>Firebase IN-Limit Fix:</strong> Batch-Queries für mehr als 30 Schützen-IDs</li>
-              <li>🎯 <strong>Echte Datenbank-Erstellung:</strong> setDoc() statt Test-Modus für rwk_shooters</li>
-              <li>📊 <strong>79 Schützen identifiziert:</strong> Alle fehlenden Schützen können wiederhergestellt werden</li>
-              <li>🛡️ <strong>Sicherer Rollback:</strong> Backup-Dateien erstellt vor Aktivierung</li>
-              <li>⚡ <strong>Performance-Fix:</strong> Keine 'IN' supports up to 30 comparison values Fehler mehr</li>
-              <li>🔍 <strong>Test-Modus entfernt:</strong> Echte Implementierung ist jetzt aktiv</li>
-              <li>🏆 <strong>KM-System vollständig funktional:</strong> Meldungen, Mitglieder-CRUD, Mannschaften-Generator</li>
-              <li>🔄 <strong>Schützen-Synchronisation:</strong> rwk_shooters ↔ km_shooters automatisch synchron</li>
-              <li>📋 <strong>Duplikate-Filter:</strong> Intelligente Entfernung mit Bevorzugung von KM-Schützen</li>
-              <li>👥 <strong>Vor-/Nachname getrennt:</strong> KM-Mitglieder und Meldungen zeigen vollständige Namen</li>
-              <li>🌙 <strong>Dark Mode KM-Fix:</strong> VM-Ergebnisse und LM-Teilnahme vollständig lesbar</li>
-              <li>📱 <strong>Mobile App Fixes:</strong> Status Bar Overlay + Onboarding auf 75% Höhe</li>
-              <li>🔧 <strong>Mannschaftsfilter:</strong> Vereinsschützen-Seite zeigt nur Mannschaftsmitglieder</li>
-              <li>🔧 <strong>Team-Bereinigungstool:</strong> Entfernt ungültige Schützen-IDs aus Teams mit Backup-Funktion</li>
-              <li>📊 <strong>Excel-Schützen Normalisierung:</strong> Manuelles Review-Tool für Datenstruktur-Fixes (kmClubId vs clubId)</li>
-              <li>🔄 <strong>Admin-Dashboard Navigation:</strong> Kreuznavigation zwischen RWK Admin und KM Admin</li>
-              <li>🔐 <strong>Login-Redirect Fix:</strong> RWK-Admins werden korrekt zu /admin weitergeleitet</li>
-              <li>👥 <strong>Schützen-Erstellung Fix:</strong> birthYear undefined Fehler behoben</li>
-              <li>🗑️ <strong>Team-Löschung Fix:</strong> Behandlung ungültiger Schützen-Referenzen</li>
-              <li>🔧 <strong>TypeScript-Fixes:</strong> JSX-Syntax-Fehler und HTML-Entitäten korrigiert</li>
-              <li>📱 <strong>PWA-Installation entfernt:</strong> 30-Sekunden-Einblendung nicht mehr erforderlich</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🎯 Auto-Schützen</span>
-                  <p className="text-xs text-green-600 mt-1">Echte Erstellung aktiviert + Firebase IN-Limit Fix</p>
-                </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.9.9.6d
                 </span>
               </div>
             </div>

@@ -15,7 +15,7 @@ Eine moderne Web-Anwendung für die Verwaltung von Rundenwettkämpfen im Schieß
 
 ## 📱 App-Versionen
 
-- **Web-App**: 0.9.9.6
+- **Web-App**: 0.9.9.8
 - **Native Android-App**: 0.9.1.0
 
 ## 📄 Copyright
@@ -26,5 +26,5 @@ Dieses Projekt ist für den RWK Einbeck entwickelt und nicht für kommerzielle N
 
 ---
 
-**Web-Version 0.9.9.6** - Verbesserte PDF-Anzeige in nativer App
+**Web-Version 0.9.9.8** - KM-Meldungen Bugfix: 500 Error behoben
 **App-Version 0.9.1.0** - Erste offizielle Version der nativen Android-App

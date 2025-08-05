@@ -24,6 +24,7 @@ const USER_PERMISSIONS_COLLECTION = "user_permissions";
 const ROLES_OPTIONS = [
   { value: 'vereinsvertreter', label: 'Vereinsvertreter' },
   { value: 'mannschaftsfuehrer', label: 'Mannschaftsführer' },
+  { value: 'km_organisator', label: 'KM-Organisator' },
   { value: 'NO_ROLE', label: 'Keine Rolle / Rolle entfernen' },
 ];
 
@@ -125,7 +126,13 @@ export default function AdminUserManagementPage() {
   };
 
   const handleSelectChange = (name: keyof Pick<UserPermissionFormData, 'role' | 'selectedClubId'>, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'role' && value === 'km_organisator') {
+      // Automatisch alle Vereine für KM-Organisator auswählen
+      const allClubIds = allClubs.map(club => club.id);
+      setFormData(prev => ({ ...prev, [name]: value, selectedClubIds: allClubIds }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmitPermissions = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -145,6 +152,13 @@ export default function AdminUserManagementPage() {
     
     if ((roleToSet === 'vereinsvertreter' || roleToSet === 'mannschaftsfuehrer') && !clubIdToSet) {
       toast({ title: "Fehlende Vereinszuweisung", description: `Für die Rolle '${roleToSet}' muss ein Verein ausgewählt werden.`, variant: "destructive" }); return;
+    }
+    
+    // KM-Organisator braucht keinen spezifischen Verein
+    if (roleToSet === 'km_organisator') {
+      // Setze alle Vereine für KM-Organisator
+      const allClubIds = allClubs.map(club => club.id);
+      setFormData(prev => ({ ...prev, selectedClubIds: allClubIds }));
     }
 
     setIsSubmitting(true);

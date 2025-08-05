@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 export default function DashboardAuswahl() {
   const { user, userAppPermissions, loading } = useAuthContext();
-  const { hasKMAccess, hasKMAdminAccess, hasKMOrganizerAccess, loading: authLoading } = useKMAuth();
+  const { hasKMAccess, isKMAdmin, isKMOrganisator, hasFullAccess, loading: authLoading } = useKMAuth();
 
   if (loading || authLoading) {
     return (
@@ -57,15 +57,15 @@ export default function DashboardAuswahl() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* RWK Dashboard */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className={`shadow-lg hover:shadow-xl transition-shadow ${isKMOrganisator && !isRWKAdmin ? 'opacity-50' : ''}`}>
           <CardHeader className="pb-4">
             <CardTitle className="text-xl flex items-center gap-2">
-              🎯 Rundenwettkampf
+              🎯 Vereinsbereich
               {isRWKAdmin && <Badge variant="default">Admin</Badge>}
               {isVereinsvertreter && <Badge variant="secondary">Vereinsvertreter</Badge>}
             </CardTitle>
             <CardDescription>
-              Rundenwettkampf-System für Ligabetrieb und Ergebnisse
+              Vereinsverwaltung für Rundenwettkämpfe und Mannschaften
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -82,8 +82,8 @@ export default function DashboardAuswahl() {
               
               <div className="flex gap-2">
                 <Link href={isRWKAdmin ? "/admin" : "/verein/dashboard"} className="flex-1">
-                  <Button className="w-full">
-                    RWK Dashboard öffnen
+                  <Button className="w-full" disabled={isKMOrganisator && !isRWKAdmin}>
+                    Vereinsbereich öffnen
                   </Button>
                 </Link>
                 {isRWKAdmin && (
@@ -103,9 +103,9 @@ export default function DashboardAuswahl() {
           <CardHeader className="pb-4">
             <CardTitle className="text-xl flex items-center gap-2">
               🏆 Kreismeisterschaften
-              {hasKMAdminAccess && <Badge variant="default">KM-Admin</Badge>}
-              {hasKMOrganizerAccess && <Badge variant="secondary">KM-Organizer</Badge>}
-              {hasKMAccess && !hasKMOrganizerAccess && <Badge variant="outline">Vereinsvertreter</Badge>}
+              {isKMAdmin && <Badge variant="default">KM-Admin</Badge>}
+              {isKMOrganisator && <Badge variant="secondary">KM-Organisator</Badge>}
+              {hasKMAccess && !hasFullAccess && <Badge variant="outline">Vereinsvertreter</Badge>}
             </CardTitle>
             <CardDescription>
               Kreismeisterschafts-System für Meldungen und Organisation
@@ -121,18 +121,26 @@ export default function DashboardAuswahl() {
                       <div>• KM-Meldungen erstellen</div>
                       <div>• Mannschaftsbildung</div>
                       <div>• VM-Ergebnisse erfassen</div>
-                      {hasKMOrganizerAccess && <div>• Admin-Funktionen & Export</div>}
+                      {hasFullAccess && <div>• Admin-Funktionen & Export</div>}
                     </div>
                   </div>
                   
                   <div className="flex gap-2">
-                    <Link href="/km" className="flex-1">
-                      <Button className="w-full">
-                        KM Dashboard öffnen
-                      </Button>
-                    </Link>
-                    {hasKMOrganizerAccess && (
-                      <Link href="/km/admin">
+                    {isKMOrganisator ? (
+                      <Link href="/km-orga" className="flex-1">
+                        <Button className="w-full">
+                          KM-Orga Dashboard öffnen
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link href="/km" className="flex-1">
+                        <Button className="w-full">
+                          KM Dashboard öffnen
+                        </Button>
+                      </Link>
+                    )}
+                    {isKMAdmin && (
+                      <Link href="/km-orga">
                         <Button variant="outline" size="sm">
                           Admin
                         </Button>
@@ -153,11 +161,7 @@ export default function DashboardAuswahl() {
         </Card>
       </div>
 
-      <div className="mt-8 text-center">
-        <Button variant="outline" onClick={() => window.history.back()}>
-          ← Zurück
-        </Button>
-      </div>
+
     </div>
   );
 }

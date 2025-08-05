@@ -236,10 +236,15 @@ match /users/{userId} {
                        hasClubAccess(resource.data.clubId));
     }
 
-    // App-Statistiken - Lesbar für alle, schreibbar nur über API
+    // App-Statistiken - Lesbar für alle, schreibbar auch ohne Auth für Download-Zähler
     match /app_stats/{statId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if true; // Erlaubt Download-Zähler ohne Auth
+    }
+    
+    // Download-Zähler - Komplett offen für API-Operationen
+    match /download_stats/{document} {
+      allow read, write: if true;
     }
     
     // === KM-SYSTEM REGELN - TEMPORÄR KOMPLETT OFFEN ===

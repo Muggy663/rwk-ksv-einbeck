@@ -10,7 +10,7 @@ import { useAuthContext } from '@/components/auth/AuthContext';
 export default function KMDashboard() {
   const [isClient, setIsClient] = useState(false);
   const { user } = useAuthContext();
-  const { hasKMAdminAccess, hasKMOrganizerAccess, userClubIds, loading: authLoading } = useKMAuth();
+  const { hasKMAccess, isKMAdmin, isKMOrganisator, hasFullAccess, userRole, loading: authLoading } = useKMAuth();
   const [stats, setStats] = useState({ vereine: 0, meldungen: 0, mitglieder: 0, rwkTeilnehmer: 0 });
   const [selectedYear, setSelectedYear] = useState(2026);
   const [recentMeldungen, setRecentMeldungen] = useState([]);
@@ -124,15 +124,31 @@ export default function KMDashboard() {
         <div>
           <h1 className="text-3xl font-bold text-primary">🏆 Kreismeisterschaften {selectedYear}</h1>
           <p className="text-muted-foreground">
-            Digitale Meldungen zu den Kreismeisterschaften des KSV Einbeck
+            Hallo {user?.displayName || user?.email}! Digitale Meldungen zu den Kreismeisterschaften des KSV Einbeck
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/admin">
-            <button className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-colors">
-              🎯 RWK Admin
-            </button>
-          </Link>
+          {userRole && (
+            <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
+              {userRole === 'admin' ? 'Admin' : 
+               userRole === 'km_organisator' ? 'KM-Organisator' : 
+               'Vereinsvertreter'}
+            </Badge>
+          )}
+          {isKMAdmin && (
+            <Link href="/admin">
+              <button className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-colors">
+                🎯 RWK Admin
+              </button>
+            </Link>
+          )}
+          {isKMOrganisator && (
+            <Link href="/km-orga">
+              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                🏆 KM-Orga
+              </button>
+            </Link>
+          )}
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
@@ -142,8 +158,8 @@ export default function KMDashboard() {
             <option value={2027}>KM 2027</option>
             <option value={2028}>KM 2028</option>
           </select>
-          <Badge variant="outline" className="text-xs py-1 px-2 border-orange-300 bg-orange-50 text-orange-700">
-            <span>🚧 Beta-Version</span>
+          <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
+            <span>✅ Produktiv</span>
           </Badge>
         </div>
       </div>
@@ -196,7 +212,7 @@ export default function KMDashboard() {
                 <Link href="/km/uebersicht" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors shadow-md hover:shadow-lg">
                   📊 Alle Meldungen
                 </Link>
-                {hasKMAdminAccess && (
+                {hasFullAccess && (
                   <Link href="/km/init" className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors shadow-md hover:shadow-lg">
                     ⚙️ System Init
                   </Link>
@@ -233,7 +249,7 @@ export default function KMDashboard() {
                 </div>
               </div>
               
-              {hasKMAdminAccess && (
+              {hasFullAccess && (
                 <div className="bg-red-50 dark:bg-red-950/50 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
                   <h4 className="font-bold text-red-900 dark:text-red-100 mb-3 text-lg flex items-center gap-2">
                     <span>⚠️</span>
@@ -318,7 +334,7 @@ export default function KMDashboard() {
         </Card>
 
         {/* Admin-Bereich */}
-        {hasKMAdminAccess && (
+        {hasFullAccess && (
           <Card className="border-2 border-purple-200 dark:border-purple-800 shadow-lg hover:shadow-xl transition-all duration-200">
             <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950/50 dark:to-purple-900/50">
               <CardTitle className="text-2xl flex items-center gap-3 text-purple-700 dark:text-purple-300">
@@ -363,15 +379,15 @@ export default function KMDashboard() {
 
       {/* Info-Bereich */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-2 border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/20">
+        <Card className="border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20">
           <CardContent className="p-6">
             <div className="flex items-start gap-3">
-              <div className="text-3xl">🚧</div>
+              <div className="text-3xl">✅</div>
               <div>
-                <h3 className="font-bold text-yellow-900 dark:text-yellow-100 text-lg mb-2">Beta-Version</h3>
-                <p className="text-yellow-700 dark:text-yellow-200 leading-relaxed">
-                  Dies ist eine Vorabversion der Kreismeisterschaftsmeldungen. 
-                  Nicht alle Funktionen sind vollständig implementiert.
+                <h3 className="font-bold text-green-900 dark:text-green-100 text-lg mb-2">Produktionsreif</h3>
+                <p className="text-green-700 dark:text-green-200 leading-relaxed">
+                  Das KM-System ist vollständig funktional und produktionsreif. 
+                  Alle Meldungen werden korrekt gespeichert und verarbeitet.
                 </p>
               </div>
             </div>
