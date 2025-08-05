@@ -38,6 +38,8 @@ export default function KMMitglieder() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showAddForm, setShowAddForm] = useState(false);
   const [newShooter, setNewShooter] = useState<Partial<Shooter>>({});
+  const [selectedShooters, setSelectedShooters] = useState<Set<string>>(new Set());
+  const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -67,14 +69,14 @@ export default function KMMitglieder() {
         // Wenn wir einen lastDoc haben, starte nach diesem
         if (lastDoc) {
           batchQuery = query(
-            collection(db, 'rwk_shooters'),
+            collection(db, 'km_shooters'),
             orderBy('name'),
             startAfter(lastDoc),
             limit(500)
           );
         } else {
           batchQuery = query(
-            collection(db, 'rwk_shooters'),
+            collection(db, 'km_shooters'),
             orderBy('name'),
             limit(500)
           );
@@ -97,7 +99,26 @@ export default function KMMitglieder() {
       }
       
       console.log('🎉 Total shooters loaded:', allShooters.length);
-      const shooters = allShooters;
+      
+      // Duplikate entfernen - bevorzuge Schützen mit kmClubId
+      const uniqueShooters = new Map();
+      allShooters.forEach(shooter => {
+        const key = `${shooter.name}_${shooter.firstName || ''}_${shooter.lastName || ''}`;
+        const existing = uniqueShooters.get(key);
+        
+        if (!existing) {
+          uniqueShooters.set(key, shooter);
+        } else {
+          // Bevorzuge Schützen mit kmClubId über die ohne
+          if (shooter.kmClubId && !existing.kmClubId) {
+            uniqueShooters.set(key, shooter);
+          }
+        }
+      });
+      
+      const shooters = Array.from(uniqueShooters.values());
+      console.log(`🔧 Duplikate entfernt: ${allShooters.length} → ${shooters.length}`);
+      console.log(`📊 Davon mit kmClubId: ${shooters.filter(s => s.kmClubId).length}`);
       
       const clubsRes = await fetch('/api/clubs');
       
@@ -122,6 +143,7 @@ export default function KMMitglieder() {
       const kmShooters = shooters.filter(s => s.kmClubId && !s.clubId);
       console.log('📊 RWK-Schützen (mit clubId):', rwkShooters.length);
       console.log('📊 KM-Schützen (nur kmClubId):', kmShooters.length);
+      console.log('📊 Gemischte (beide IDs):', shooters.filter(s => s.clubId && s.kmClubId).length);
       
       // KRITISCH: Prüfe ob 881 ein Firestore-Limit ist
       if (shooters.length === 881) {
@@ -148,6 +170,15 @@ export default function KMMitglieder() {
       });
       
       console.log('🔍 Beispiel searchableText:', shootersWithSearch[0]?.searchableText);
+      
+      // DEBUG: Prüfe userClubIds
+      console.log('🔑 userClubIds:', userClubIds);
+      console.log('🔍 Beispiel Schütze Club-IDs:', {
+        clubId: shootersWithSearch[0]?.clubId,
+        rwkClubId: shootersWithSearch[0]?.rwkClubId,
+        kmClubId: shootersWithSearch[0]?.kmClubId
+      });
+      
       setShooters(shootersWithSearch);
       
       if (clubsRes.ok) {
@@ -165,7 +196,8 @@ export default function KMMitglieder() {
   const startEdit = (shooter: Shooter) => {
     setEditingId(shooter.id);
     setEditData({
-      name: shooter.name,
+      firstName: shooter.firstName || shooter.name?.split(' ')[0] || '',
+      lastName: shooter.lastName || shooter.name?.split(' ').slice(1).join(' ') || '',
       birthYear: shooter.birthYear,
       gender: shooter.gender,
       mitgliedsnummer: shooter.mitgliedsnummer
@@ -176,19 +208,21 @@ export default function KMMitglieder() {
     if (!editingId) return;
 
     try {
-      const { doc, updateDoc } = await import('firebase/firestore');
-      const { db } = await import('@/lib/firebase/config');
+      const { ShooterSyncService } = await import('@/lib/services/shooter-sync-service');
       
       const updateData: any = {};
-      if (editData.name !== undefined) updateData.name = editData.name;
+      if (editData.firstName !== undefined) updateData.firstName = editData.firstName;
+      if (editData.lastName !== undefined) updateData.lastName = editData.lastName;
+      if (editData.firstName && editData.lastName) {
+        updateData.name = `${editData.firstName} ${editData.lastName}`;
+      }
       if (editData.birthYear !== undefined) updateData.birthYear = editData.birthYear;
       if (editData.gender !== undefined) updateData.gender = editData.gender;
       if (editData.mitgliedsnummer !== undefined) updateData.mitgliedsnummer = editData.mitgliedsnummer;
-      updateData.updatedAt = new Date();
 
-      await updateDoc(doc(db, 'rwk_shooters', editingId), updateData);
+      await ShooterSyncService.updateShooter(editingId, updateData, 'km_shooters');
       
-      toast({ title: 'Erfolg', description: 'Schütze aktualisiert' });
+      toast({ title: 'Erfolg', description: 'Schütze in beiden Systemen aktualisiert' });
       setEditingId(null);
       loadData();
     } catch (error) {
@@ -209,22 +243,19 @@ export default function KMMitglieder() {
     }
 
     try {
-      const { collection, addDoc } = await import('firebase/firestore');
-      const { db } = await import('@/lib/firebase/config');
+      const { ShooterSyncService } = await import('@/lib/services/shooter-sync-service');
       
       const shooterData = {
         name: newShooter.name.trim(),
         birthYear: newShooter.birthYear,
         gender: newShooter.gender,
         mitgliedsnummer: newShooter.mitgliedsnummer?.trim(),
-        kmClubId: newShooter.kmClubId || userClubIds[0], // Standard: erster Verein
-        createdAt: new Date(),
-        updatedAt: new Date()
+        kmClubId: newShooter.kmClubId || userClubIds[0]
       };
 
-      await addDoc(collection(db, 'rwk_shooters'), shooterData);
+      await ShooterSyncService.createShooter(shooterData, 'km_shooters');
       
-      toast({ title: 'Erfolg', description: 'Schütze hinzugefügt' });
+      toast({ title: 'Erfolg', description: 'Schütze in beiden Systemen hinzugefügt' });
       setShowAddForm(false);
       setNewShooter({});
       loadData();
@@ -235,20 +266,87 @@ export default function KMMitglieder() {
   };
 
   const deleteShooter = async (shooterId: string, shooterName: string) => {
-    if (!confirm(`Schütze "${shooterName}" wirklich löschen?`)) return;
+    if (!confirm(`Schütze "${shooterName}" wirklich aus beiden Systemen löschen?`)) return;
 
     try {
-      const { doc, deleteDoc } = await import('firebase/firestore');
-      const { db } = await import('@/lib/firebase/config');
+      const { ShooterSyncService } = await import('@/lib/services/shooter-sync-service');
       
-      await deleteDoc(doc(db, 'rwk_shooters', shooterId));
+      await ShooterSyncService.deleteShooter(shooterId, 'km_shooters');
       
-      toast({ title: 'Erfolg', description: 'Schütze gelöscht' });
+      toast({ title: 'Erfolg', description: 'Schütze aus beiden Systemen gelöscht' });
       loadData();
     } catch (error) {
       console.error('Delete error:', error);
       toast({ title: 'Fehler', description: `Löschen fehlgeschlagen: ${error}`, variant: 'destructive' });
     }
+  };
+
+  const bulkDeleteShooters = async () => {
+    const shooterNames = Array.from(selectedShooters).map(id => 
+      shooters.find(s => s.id === id)?.name || 'Unbekannt'
+    ).join(', ');
+    
+    if (!confirm(`${selectedShooters.size} Schützen wirklich löschen?\n\n${shooterNames}`)) return;
+
+    try {
+      const { doc, deleteDoc } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
+      
+      const deletePromises = Array.from(selectedShooters).map(shooterId => 
+        deleteDoc(doc(db, 'km_shooters', shooterId))
+      );
+      
+      await Promise.all(deletePromises);
+      
+      toast({ title: 'Erfolg', description: `${selectedShooters.size} Schützen gelöscht` });
+      setSelectedShooters(new Set());
+      setBulkDeleteMode(false);
+      loadData();
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      toast({ title: 'Fehler', description: `Löschen fehlgeschlagen: ${error}`, variant: 'destructive' });
+    }
+  };
+
+  const toggleShooterSelection = (shooterId: string) => {
+    const newSelection = new Set(selectedShooters);
+    if (newSelection.has(shooterId)) {
+      newSelection.delete(shooterId);
+    } else {
+      newSelection.add(shooterId);
+    }
+    setSelectedShooters(newSelection);
+  };
+
+  const selectAllVisible = () => {
+    const visibleIds = new Set(filteredAndSortedShooters.map(s => s.id));
+    setSelectedShooters(visibleIds);
+  };
+
+  const deselectAll = () => {
+    setSelectedShooters(new Set());
+  };
+
+  const selectByClub = (clubName: string) => {
+    const matchingIds = new Set(
+      filteredAndSortedShooters
+        .filter(shooter => getClubName(shooter) === clubName)
+        .map(s => s.id)
+    );
+    setSelectedShooters(matchingIds);
+  };
+
+  const selectOnlyNames = () => {
+    const onlyNameIds = new Set(
+      filteredAndSortedShooters
+        .filter(shooter => {
+          const name = shooter.name || '';
+          // Nur Nachname (kein Leerzeichen) oder sehr kurze Namen
+          return !name.includes(' ') || name.trim().length < 5;
+        })
+        .map(s => s.id)
+    );
+    setSelectedShooters(onlyNameIds);
   };
 
   const getClubName = (shooter: Shooter) => {
@@ -276,7 +374,7 @@ export default function KMMitglieder() {
       shooter.kmClubId    // KM-spezifisch
     ].filter(Boolean);
     
-    // NUR Schützen der eigenen Vereine anzeigen
+    // Nur Schützen der eigenen Vereine anzeigen
     const belongsToUserClub = schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
     if (!belongsToUserClub) return false;
     
@@ -299,9 +397,13 @@ export default function KMMitglieder() {
     let aValue, bValue;
     
     switch (sortBy) {
-      case 'name':
-        aValue = a.name || '';
-        bValue = b.name || '';
+      case 'firstName':
+        aValue = a.firstName || a.name?.split(' ')[0] || '';
+        bValue = b.firstName || b.name?.split(' ')[0] || '';
+        break;
+      case 'lastName':
+        aValue = a.lastName || a.name?.split(' ').slice(1).join(' ') || '';
+        bValue = b.lastName || b.name?.split(' ').slice(1).join(' ') || '';
         break;
       case 'verein':
         aValue = getClubName(a);
@@ -369,8 +471,27 @@ export default function KMMitglieder() {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>Schützen ({filteredAndSortedShooters.length})</CardTitle>
-            <Button onClick={() => setShowAddForm(true)}>+ Neuer Schütze</Button>
+            <CardTitle>Schützen ({filteredAndSortedShooters.length} von {shooters.length})</CardTitle>
+            <div className="flex gap-2">
+              <Button 
+                variant={bulkDeleteMode ? "destructive" : "outline"}
+                onClick={() => {
+                  setBulkDeleteMode(!bulkDeleteMode);
+                  setSelectedShooters(new Set());
+                }}
+              >
+                {bulkDeleteMode ? "❌ Abbrechen" : "🗑️ Mehrfach löschen"}
+              </Button>
+              {bulkDeleteMode && selectedShooters.size > 0 && (
+                <Button 
+                  variant="destructive"
+                  onClick={() => bulkDeleteShooters()}
+                >
+                  🗑️ {selectedShooters.size} Schützen löschen
+                </Button>
+              )}
+              <Button onClick={() => setShowAddForm(true)}>+ Neuer Schütze</Button>
+            </div>
           </div>
           <div className="flex gap-2 flex-wrap">
             <select
@@ -459,13 +580,45 @@ export default function KMMitglieder() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
+                  {bulkDeleteMode && (
+                    <th className="text-left p-2 w-12">
+                      <div className="flex flex-col gap-1">
+                        <Button size="sm" variant="outline" onClick={selectAllVisible}>
+                          ✓ Alle
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={deselectAll}>
+                          ✗ Keine
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => selectByClub('Unbekannt')}>
+                          ? Unbekannt ({filteredAndSortedShooters.filter(s => getClubName(s) === 'Unbekannt').length})
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => selectOnlyNames()}>
+                          📝 Nur Namen ({filteredAndSortedShooters.filter(s => {
+                            const name = s.name || '';
+                            return !name.includes(' ') || name.trim().length < 5;
+                          }).length})
+                        </Button>
+                      </div>
+                    </th>
+                  )}
                   <th className="text-left p-2">
                     <button 
-                      onClick={() => handleSort('name')}
+                      onClick={() => handleSort('firstName')}
                       className="flex items-center gap-1 hover:text-primary"
                     >
-                      Name
-                      {sortBy === 'name' && (
+                      Vorname
+                      {sortBy === 'firstName' && (
+                        <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                  </th>
+                  <th className="text-left p-2">
+                    <button 
+                      onClick={() => handleSort('lastName')}
+                      className="flex items-center gap-1 hover:text-primary"
+                    >
+                      Nachname
+                      {sortBy === 'lastName' && (
                         <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
                       )}
                     </button>
@@ -518,18 +671,44 @@ export default function KMMitglieder() {
                 </tr>
               </thead>
               <tbody>
-                {filteredAndSortedShooters.map(shooter => (
-                  <tr key={shooter.id} className="border-b hover:bg-gray-50">
+                {filteredAndSortedShooters.map((shooter, index) => (
+                  <tr key={`${shooter.id}_${index}`} className={`border-b hover:bg-gray-50 ${
+                    selectedShooters.has(shooter.id) ? 'bg-red-50' : ''
+                  }`}>
+                    {bulkDeleteMode && (
+                      <td className="p-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedShooters.has(shooter.id)}
+                          onChange={() => toggleShooterSelection(shooter.id)}
+                          className="w-4 h-4"
+                        />
+                      </td>
+                    )}
                     <td className="p-2">
                       {editingId === shooter.id ? (
                         <input
                           type="text"
-                          value={editData.name || ''}
-                          onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
+                          value={editData.firstName || ''}
+                          onChange={(e) => setEditData(prev => ({ ...prev, firstName: e.target.value }))}
                           className="w-full p-1 border rounded text-sm"
+                          placeholder="Vorname"
                         />
                       ) : (
-                        shooter.name
+                        <span>{shooter.firstName || shooter.name?.split(' ')[0] || ''}</span>
+                      )}
+                    </td>
+                    <td className="p-2">
+                      {editingId === shooter.id ? (
+                        <input
+                          type="text"
+                          value={editData.lastName || ''}
+                          onChange={(e) => setEditData(prev => ({ ...prev, lastName: e.target.value }))}
+                          className="w-full p-1 border rounded text-sm"
+                          placeholder="Nachname"
+                        />
+                      ) : (
+                        <span>{shooter.lastName || shooter.name?.split(' ').slice(1).join(' ') || ''}</span>
                       )}
                     </td>
                     <td className="p-2">{getClubName(shooter)}</td>
@@ -566,7 +745,7 @@ export default function KMMitglieder() {
                         }`}>
                           {shooter.gender === 'male' ? 'M' :
                            shooter.gender === 'female' ? 'W' : '?'}
-                          {shooter.genderGuessed && ' (?)'}
+                          {shooter.genderGuessed && !shooter.gender ? ' (?)' : ''}
                         </span>
                       )}
                     </td>
@@ -588,6 +767,8 @@ export default function KMMitglieder() {
                           <Button size="sm" onClick={saveEdit}>✓</Button>
                           <Button size="sm" variant="outline" onClick={cancelEdit}>✗</Button>
                         </div>
+                      ) : bulkDeleteMode ? (
+                        <span className="text-sm text-gray-500">Mehrfach-Modus aktiv</span>
                       ) : (
                         <div className="flex gap-1">
                           <Button size="sm" variant="outline" onClick={() => startEdit(shooter)}>

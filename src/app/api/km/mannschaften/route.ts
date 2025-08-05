@@ -7,25 +7,27 @@ const KM_MANNSCHAFTEN_COLLECTION = 'km_mannschaften';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('Loading mannschaften...');
+    console.log('🏆 Loading mannschaften...');
     const snapshot = await getDocs(collection(db, KM_MANNSCHAFTEN_COLLECTION));
     const mannschaften = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
     
-    console.log('Found mannschaften:', mannschaften.length);
+    console.log('✅ Found mannschaften:', mannschaften.length);
+    console.log('📋 Sample mannschaft:', mannschaften[0]);
     return NextResponse.json({
       success: true,
       data: mannschaften
     });
 
   } catch (error) {
-    console.error('Fehler beim Laden der Mannschaften:', error);
+    console.error('❌ Fehler beim Laden der Mannschaften:', error);
+    // Return empty array on error to prevent UI breaking
     return NextResponse.json({
-      success: true, // Auch bei Fehlern success: true für leere Liste
+      success: true,
       data: [],
-      message: `Fehler beim Laden: ${error.message}`
+      error: error.message
     });
   }
 }

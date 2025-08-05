@@ -97,7 +97,7 @@ export default function KMUebersicht() {
   const filteredMeldungen = meldungen.filter(meldung => {
     const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
     const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-    const vereinId = schuetze?.rwkClubId || schuetze?.clubId || schuetze?.kmClubId;
+    const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
     const verein = clubs.find(c => c.id === vereinId);
 
     // Vereinsfilter für Vereinsvertreter
@@ -230,6 +230,7 @@ export default function KMUebersicht() {
                   <th className="text-left p-2">Schütze</th>
                   <th className="text-left p-2">Verein</th>
                   <th className="text-left p-2">Disziplin</th>
+                  <th className="text-left p-2">Altersklasse</th>
                   <th className="text-left p-2">LM</th>
                   <th className="text-left p-2">VM-Ringe</th>
                   <th className="text-left p-2">Meldedatum</th>
@@ -240,18 +241,44 @@ export default function KMUebersicht() {
                 {filteredMeldungen.map(meldung => {
                   const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
                   const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-                  const vereinId = schuetze?.rwkClubId || schuetze?.clubId || schuetze?.kmClubId;
+                  const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
                   const verein = clubs.find(c => c.id === vereinId);
+                  
+                  // Berechne Altersklasse
+                  let altersklasse = 'Unbekannt';
+                  if (schuetze?.birthYear && schuetze?.gender && disziplin) {
+                    try {
+                      const { calculateKMWettkampfklasse } = require('@/types/km');
+                      altersklasse = calculateKMWettkampfklasse(
+                        schuetze.birthYear, 
+                        schuetze.gender, 
+                        2026, 
+                        disziplin.auflage || false
+                      );
+                    } catch (error) {
+                      console.warn('Altersklasse calculation failed:', error);
+                    }
+                  }
 
                   return (
                     <tr key={meldung.id} className="border-b hover:bg-gray-50">
-                      <td className="p-2 font-medium">{schuetze?.name || 'Unbekannt'}</td>
+                      <td className="p-2 font-medium">
+                        {schuetze?.firstName && schuetze?.lastName 
+                          ? `${schuetze.firstName} ${schuetze.lastName}`
+                          : schuetze?.name || 'Unbekannt'
+                        }
+                      </td>
                       <td className="p-2">{verein?.name || 'Unbekannt'}</td>
                       <td className="p-2">
                         <div>
                           <span className="font-medium">{disziplin?.spoNummer}</span>
                           <div className="text-xs text-gray-500">{disziplin?.name}</div>
                         </div>
+                      </td>
+                      <td className="p-2">
+                        <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                          {altersklasse}
+                        </span>
                       </td>
                       <td className="p-2">
                         <span className={`px-2 py-1 rounded text-xs ${

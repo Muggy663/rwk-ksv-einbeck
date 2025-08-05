@@ -60,6 +60,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta name="robots" content="noarchive" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
+        {/* Mobile Status Bar Overlay */}
+        <div className="mobile-header-overlay"></div>
         <ThemeProvider
           attribute="class"
           disableTransitionOnChange

@@ -98,7 +98,11 @@ export default function KMAdmin() {
 
   const getVereinName = (schuetzeId: string) => {
     const schuetze = schuetzen.find(s => s.id === schuetzeId);
-    const verein = vereine.find(v => v.id === schuetze?.clubId);
+    if (!schuetze) return 'Unbekannt';
+    
+    // Prüfe sowohl clubId als auch kmClubId für KM-Schützen
+    const clubId = schuetze.clubId || schuetze.kmClubId;
+    const verein = vereine.find(v => v.id === clubId);
     return verein?.name || 'Unbekannt';
   };
 
@@ -109,7 +113,8 @@ export default function KMAdmin() {
 
   const filteredMeldungen = meldungen.filter(meldung => {
     const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-    const verein = vereine.find(v => v.id === schuetze?.clubId);
+    const clubId = schuetze?.clubId || schuetze?.kmClubId;
+    const verein = vereine.find(v => v.id === clubId);
     const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
     
     return (

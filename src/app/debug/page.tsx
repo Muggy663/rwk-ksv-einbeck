@@ -75,6 +75,19 @@ export default function DebugPage() {
     }
   };
 
+  const debugTeamShooters = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/debug/team-shooters');
+      const data = await response.json();
+      setResult(data);
+    } catch (error) {
+      setResult({ error: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container py-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">🔧 Debug Tools</h1>
@@ -104,6 +117,10 @@ export default function DebugPage() {
         
         <Button onClick={removeDuplicates} disabled={loading} className="bg-orange-600 hover:bg-orange-700">
           🔄 Duplikate entfernen (RWK bevorzugt)
+        </Button>
+        
+        <Button onClick={debugTeamShooters} disabled={loading} className="bg-purple-600 hover:bg-purple-700">
+          👥 Team-Debug (Schützen & Teams)
         </Button>
       </div>
 

@@ -122,6 +122,14 @@ match /users/{userId} {
       allow update: if true; // TEMPORÄR FÜR KM-IMPORT
       allow delete: if true; // TEMPORÄR FÜR KM-IMPORT
     }
+    
+    // KM-Schützen - TEMPORÄR OFFEN FÜR MIGRATION
+    match /km_shooters/{shooterId} {
+      allow read: if true;
+      allow create: if true; // TEMPORÄR FÜR MIGRATION
+      allow update: if true; // TEMPORÄR FÜR MIGRATION
+      allow delete: if true; // TEMPORÄR FÜR MIGRATION
+    }
 
     // Ergebnisse - VERBESSERT: Validierung der Ringzahlen
     match /rwk_scores/{scoreId} {
@@ -253,7 +261,9 @@ match /users/{userId} {
     }
     
     match /km_mannschaften/{document} {
-      allow read, write: if true;
+      allow read: if true; // Explizit für API-Operationen
+      allow write: if true;
+      allow create: if true;
     }
     
     // Fallback-Regel: Alles andere verbieten

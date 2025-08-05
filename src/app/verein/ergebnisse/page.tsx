@@ -309,25 +309,31 @@ export default function VereinErgebnissePage() {
                     if (missingShooterIds.length > 0) {
                         console.log(`VER_ERGEBNISSE DEBUG: Fehlende Schützen im Cache: ${missingShooterIds.join(', ')}`);
                         
-                        // Fehlende Schützen direkt aus der Datenbank laden
-                        try {
-                            const shootersQuery = query(
-                                collection(db, SHOOTERS_COLLECTION),
-                                where(documentId(), "in", missingShooterIds)
-                            );
-                            const shootersSnapshot = await getDocs(shootersQuery);
-                            const additionalShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Shooter));
-                            
-                            console.log(`VER_ERGEBNISSE DEBUG: ${additionalShooters.length} zusätzliche Schützen geladen`);
-                            
-                            // Kombiniere gefundene und zusätzlich geladene Schützen
-                            const allTeamShooters = [...foundShooters, ...additionalShooters].sort((a, b) => a.name.localeCompare(b.name));
-                            setShootersOfSelectedTeam(allTeamShooters);
-                        } catch (error) {
-                            console.error("VER_ERGEBNISSE DEBUG: Error fetching additional shooters:", error);
-                            // Fallback auf die bereits gefundenen Schützen
-                            setShootersOfSelectedTeam(foundShooters.sort((a, b) => a.name.localeCompare(b.name)));
+                        // Fehlende Schützen einzeln aus der Datenbank laden
+                        const additionalShooters: Shooter[] = [];
+                        
+                        for (const shooterId of missingShooterIds) {
+                            try {
+                                const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
+                                const shooterSnap = await getFirestoreDoc(shooterDocRef);
+                                
+                                if (shooterSnap.exists()) {
+                                    const shooterData = { id: shooterSnap.id, ...shooterSnap.data() } as Shooter;
+                                    additionalShooters.push(shooterData);
+                                    console.log(`VER_ERGEBNISSE DEBUG: Schütze geladen: ${shooterData.name} (${shooterId})`);
+                                } else {
+                                    console.warn(`VER_ERGEBNISSE DEBUG: Schütze ${shooterId} nicht in Datenbank gefunden`);
+                                }
+                            } catch (error) {
+                                console.error(`VER_ERGEBNISSE DEBUG: Fehler beim Laden von Schütze ${shooterId}:`, error);
+                            }
                         }
+                        
+                        console.log(`VER_ERGEBNISSE DEBUG: ${additionalShooters.length} zusätzliche Schützen geladen`);
+                        
+                        // Kombiniere gefundene und zusätzlich geladene Schützen
+                        const allTeamShooters = [...foundShooters, ...additionalShooters].sort((a, b) => a.name.localeCompare(b.name));
+                        setShootersOfSelectedTeam(allTeamShooters);
                     } else {
                         // Alle Schützen wurden im Cache gefunden
                         setShootersOfSelectedTeam(foundShooters.sort((a, b) => a.name.localeCompare(b.name)));
@@ -431,22 +437,79 @@ export default function VereinErgebnissePage() {
         if (missingShooterIds.length > 0) {
           console.log(`Fehlende Schützen im Dropdown: ${missingShooterIds.join(', ')}`);
           
-          try {
-            const shootersQuery = query(
-              collection(db, SHOOTERS_COLLECTION),
-              where(documentId(), "in", missingShooterIds)
-            );
-            const shootersSnapshot = await getDocs(shootersQuery);
-            const additionalShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Shooter));
-            
-            console.log(`Zusätzlich geladene Schützen für Dropdown: ${additionalShooters.length}`);
-            additionalShooters.forEach(s => console.log(`- ${s.id}: ${s.name}`));
-            
-            // Kombiniere gefundene und zusätzlich geladene Schützen
-            finalAvailableShooters = [...availableShootersFromCache, ...additionalShooters];
-          } catch (error) {
-            console.error("Fehler beim Laden zusätzlicher Schützen für Dropdown:", error);
+          const additionalShooters: Shooter[] = [];
+          
+          for (const shooterId of missingShooterIds) {
+            try {
+              const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
+              const shooterSnap = await getFirestoreDoc(shooterDocRef);
+              
+              if (shooterSnap.exists()) {
+                const shooterData = { id: shooterSnap.id, ...shooterSnap.data() } as Shooter;
+                additionalShooters.push(shooterData);
+                console.log(`Dropdown: Schütze geladen: ${shooterData.name} (${shooterId})`);
+              } else {
+                console.warn(`❌ Dropdown: Schütze ${shooterId} nicht in rwk_shooters - suche in Scores...`);
+                
+                // TEST-MODUS: Suche Namen in bestehenden Scores
+                try {
+                  const scoresQuery = query(
+                    collection(db, "rwk_scores"),
+                    where("shooterId", "==", shooterId),
+                    limit(1)
+                  );
+                  const scoresSnapshot = await getDocs(scoresQuery);
+                  
+                  if (!scoresSnapshot.empty) {
+                    const scoreData = scoresSnapshot.docs[0].data();
+                    const nameFromScore = scoreData.shooterName;
+                    console.log(`🔍 ERSTELLE Schütze ${shooterId} → "${nameFromScore}"`);
+                    
+                    // Erstelle rwk_shooters Eintrag
+                    try {
+                      const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
+                      const nameParts = nameFromScore.split(' ');
+                      const shooterData = {
+                        name: nameFromScore,
+                        firstName: nameParts[0] || '',
+                        lastName: nameParts.slice(1).join(' ') || '',
+                        gender: scoreData.shooterGender || 'unknown',
+                        createdAt: new Date(),
+                        createdBy: 'auto-from-scores'
+                      };
+                      await setDoc(shooterDocRef, shooterData);
+                      console.log(`✅ Schütze erfolgreich erstellt: ${nameFromScore}`);
+                    } catch (createError) {
+                      console.error(`Fehler beim Erstellen von Schütze ${shooterId}:`, createError);
+                    }
+                    
+                    additionalShooters.push({
+                      id: shooterId,
+                      name: nameFromScore,
+                      gender: scoreData.shooterGender || 'unknown'
+                    } as Shooter);
+                  } else {
+                    console.log(`⚠️ Dropdown: Keine Scores für ${shooterId} - erstelle Placeholder`);
+                    additionalShooters.push({
+                      id: shooterId,
+                      name: `Schütze ${shooterId.substring(0,8)}`,
+                      gender: 'unknown'
+                    } as Shooter);
+                  }
+                } catch (scoreError) {
+                  console.error(`Dropdown: Fehler beim Suchen in Scores für ${shooterId}:`, scoreError);
+                }
+              }
+            } catch (error) {
+              console.error(`Dropdown: Fehler beim Laden von Schütze ${shooterId}:`, error);
+            }
           }
+          
+          console.log(`Zusätzlich geladene Schützen für Dropdown: ${additionalShooters.length}`);
+          additionalShooters.forEach(s => console.log(`- ${s.id}: ${s.name}`));
+          
+          // Kombiniere gefundene und zusätzlich geladene Schützen
+          finalAvailableShooters = [...availableShootersFromCache, ...additionalShooters];
         }
         
         console.log(`Verfügbare Schützen für DG ${parsedRound}: ${finalAvailableShooters.length} von ${validTeamShooterIds.length} gesamt`);
@@ -589,6 +652,34 @@ export default function VereinErgebnissePage() {
           
           // Zu Batch hinzufügen statt einzeln speichern
           batch.set(scoreDocRef, scoreData);
+          
+          // Prüfe und erstelle fehlenden Schützen-Eintrag in rwk_shooters
+          try {
+            const shooterDocRef = doc(db, SHOOTERS_COLLECTION, entry.shooterId);
+            const shooterSnap = await getFirestoreDoc(shooterDocRef);
+            
+            if (!shooterSnap.exists()) {
+              // Erstelle Schützen-Eintrag mit verfügbaren Daten
+              const shooterData = {
+                name: entry.shooterName,
+                gender: entry.shooterGender || 'unknown',
+                createdAt: serverTimestamp(),
+                createdBy: 'auto-from-scores'
+              };
+              
+              // Versuche Namen zu parsen
+              const nameParts = entry.shooterName.split(' ');
+              if (nameParts.length >= 2) {
+                shooterData.firstName = nameParts[0];
+                shooterData.lastName = nameParts.slice(1).join(' ');
+              }
+              
+              batch.set(shooterDocRef, shooterData);
+              console.log(`Auto-created shooter: ${entry.shooterName} (${entry.shooterId})`);
+            }
+          } catch (shooterError) {
+            console.warn(`Could not check/create shooter ${entry.shooterId}:`, shooterError);
+          }
           
           // Audit-Log für Ergebnis-Erstellung (nach dem Batch-Commit)
           // Wird später ausgeführt, um die Score-ID zu haben

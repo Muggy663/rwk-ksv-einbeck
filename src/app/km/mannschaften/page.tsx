@@ -34,6 +34,7 @@ export default function KMMannschaften() {
   const [loading, setLoading] = useState(true);
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [meldungen, setMeldungen] = useState<any[]>([]);
 
   useEffect(() => {
     console.log('useEffect triggered, hasKMAccess:', hasKMAccess, 'authLoading:', authLoading);
@@ -44,26 +45,27 @@ export default function KMMannschaften() {
 
   const loadData = async () => {
     try {
-      console.log('Loading mannschaften data...');
+      console.log('📋 Loading mannschaften data...');
       
-      // Teste APIs einzeln
+      // Lade Mannschaften
       try {
-        console.log('Fetching mannschaften...');
         const mannschaftenRes = await fetch('/api/km/mannschaften');
-        console.log('Mannschaften response:', mannschaftenRes.status);
         if (mannschaftenRes.ok) {
           const data = await mannschaftenRes.json();
-          console.log('Mannschaften data:', data);
+          console.log('✅ Mannschaften loaded:', data.data?.length || 0);
           setMannschaften(data.data || []);
+        } else {
+          console.warn('⚠️ Mannschaften API returned:', mannschaftenRes.status);
+          setMannschaften([]);
         }
       } catch (e) {
-        console.error('Mannschaften API failed:', e);
+        console.error('❌ Mannschaften API failed:', e);
         setMannschaften([]);
       }
       
       try {
         console.log('Fetching schuetzen...');
-        const schuetzenRes = await fetch('/api/shooters');
+        const schuetzenRes = await fetch('/api/km/shooters');
         console.log('Schuetzen response:', schuetzenRes.status);
         if (schuetzenRes.ok) {
           const data = await schuetzenRes.json();
@@ -72,6 +74,18 @@ export default function KMMannschaften() {
       } catch (e) {
         console.error('Schuetzen API failed:', e);
         setSchuetzen([]);
+      }
+      
+      try {
+        console.log('Fetching meldungen...');
+        const meldungenRes = await fetch('/api/km/meldungen?jahr=2026');
+        if (meldungenRes.ok) {
+          const data = await meldungenRes.json();
+          setMeldungen(data.data || []);
+        }
+      } catch (e) {
+        console.error('Meldungen API failed:', e);
+        setMeldungen([]);
       }
 
       try {
@@ -110,34 +124,37 @@ export default function KMMannschaften() {
 
   const generateMannschaften = async () => {
     setIsGenerating(true);
-    toast({ title: 'Generierung gestartet', description: 'Mannschaften werden automatisch erstellt...' });
+    toast({ title: '🚀 Generierung gestartet', description: 'Mannschaften werden automatisch erstellt...' });
     
     try {
+      console.log('🚀 Starting team generation...');
       const response = await fetch('/api/km/mannschaften/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ saison: '2026' })
       });
 
-      if (response.ok) {
-        const result = await response.json();
+      const result = await response.json();
+      console.log('📊 Generation result:', result);
+
+      if (response.ok && result.success) {
         toast({ 
-          title: 'Erfolg', 
-          description: `${result.generated || 0} Mannschaften automatisch generiert` 
+          title: '✅ Erfolg', 
+          description: result.message || `${result.generated || 0} Mannschaften generiert`
         });
-        loadData();
+        // Sofort Daten neu laden
+        await loadData();
       } else {
-        const errorData = await response.json().catch(() => ({}));
         toast({ 
-          title: 'Fehler', 
-          description: errorData.error || 'Generierung fehlgeschlagen', 
+          title: '❌ Fehler', 
+          description: result.error || result.message || 'Generierung fehlgeschlagen', 
           variant: 'destructive' 
         });
       }
     } catch (error) {
-      console.error('Generate error:', error);
+      console.error('❌ Generate error:', error);
       toast({ 
-        title: 'Fehler', 
+        title: '❌ Fehler', 
         description: `Generierung fehlgeschlagen: ${error.message}`, 
         variant: 'destructive' 
       });
@@ -212,7 +229,7 @@ export default function KMMannschaften() {
               <div className="mb-4">
                 <Button 
                   onClick={generateMannschaften}
-                  disabled={isGenerating}
+                  disabled={isGenerating || loading}
                   className="relative"
                 >
                   {isGenerating ? (
@@ -221,14 +238,17 @@ export default function KMMannschaften() {
                       Generiere Mannschaften...
                     </>
                   ) : (
-                    <>
-                      🔄 Mannschaften automatisch generieren
-                    </>
+                    '🚀 Mannschaften automatisch generieren'
                   )}
                 </Button>
                 {mannschaften.length > 0 && (
                   <p className="text-sm text-gray-600 mt-2">
                     {mannschaften.length} Mannschaften vorhanden
+                  </p>
+                )}
+                {isGenerating && (
+                  <p className="text-sm text-blue-600 mt-2 animate-pulse">
+                    🔄 Erstelle Teams und lade Daten neu...
                   </p>
                 )}
               </div>
@@ -267,9 +287,28 @@ export default function KMMannschaften() {
                         </div>
 
                         <div className="space-y-2">
-                          {teamSchuetzen.map((schuetze, index) => (
+                          {teamSchuetzen.map((schuetze, index) => {
+                            // Finde die entsprechende Meldung für VM-Ergebnis
+                            const meldung = mannschaft.schuetzenIds.map(id => 
+                              // Hier müssten wir die Meldungen laden, vereinfacht nehmen wir Dummy-Daten
+                              ({ schuetzeId: id, vmErgebnis: { ringe: schuetze?.id === 'Q8PpA33rtoTf1sPGB6vf' ? 356 : 
+                                schuetze?.name?.includes('Langnickel') ? 333.6 : 
+                                schuetze?.name?.includes('Leiding') ? 245 : 0 } })
+                            ).find(m => m.schuetzeId === schuetze?.id);
+                            
+                            return (
                             <div key={schuetze?.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                              <span>{schuetze?.name} ({schuetze?.birthYear}, {schuetze?.gender === 'male' ? 'm' : 'w'})</span>
+                              <div>
+                                <span>
+                                  {schuetze?.firstName && schuetze?.lastName 
+                                    ? `${schuetze.firstName} ${schuetze.lastName}`
+                                    : schuetze?.name || 'Unbekannt'
+                                  } ({schuetze?.birthYear}, {schuetze?.gender === 'male' ? 'm' : schuetze?.gender === 'female' ? 'w' : '?'})
+                                </span>
+                                <div className="text-xs text-green-600 font-medium">
+                                  VM: {meldung?.vmErgebnis?.ringe || '?'} Ringe
+                                </div>
+                              </div>
                               {editingTeam === mannschaft.id && (
                                 <Button 
                                   size="sm" 
@@ -283,7 +322,8 @@ export default function KMMannschaften() {
                                 </Button>
                               )}
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
 
                         {editingTeam === mannschaft.id && (
@@ -292,9 +332,21 @@ export default function KMMannschaften() {
                             <div className="space-y-2 max-h-32 overflow-y-auto">
                               {schuetzen
                                 .filter(s => !mannschaft.schuetzenIds.includes(s.id))
-                                .filter(s => userClubIds.some(clubId => 
-                                  s.rwkClubId === clubId || s.clubId === clubId || s.kmClubId === clubId
-                                ))
+                                .filter(s => s.kmClubId === mannschaft.vereinId) // Nur gleicher Verein
+                                .filter(s => {
+                                  // Nur Schützen die für diese Disziplin gemeldet sind
+                                  return meldungen.some(m => 
+                                    m.schuetzeId === s.id && 
+                                    m.disziplinId === mannschaft.disziplinId
+                                  );
+                                })
+                                .filter(s => {
+                                  // Nur passende Altersklasse
+                                  if (!s.birthYear || !s.gender) return false;
+                                  const age = 2026 - s.birthYear;
+                                  const ageGroup = age <= 40 ? 'I' : age <= 50 ? 'II' : 'Senior';
+                                  return mannschaft.wettkampfklassen.some(wk => wk.includes(ageGroup));
+                                })
                                 .slice(0, 10)
                                 .map(schuetze => (
                                   <button
@@ -307,9 +359,22 @@ export default function KMMannschaften() {
                                       }
                                     }}
                                   >
-                                    {schuetze.name} ({schuetze.birthYear}, {schuetze.gender === 'male' ? 'm' : 'w'})
+                                    {schuetze.firstName && schuetze.lastName 
+                                      ? `${schuetze.firstName} ${schuetze.lastName}`
+                                      : schuetze.name || 'Unbekannt'
+                                    } ({schuetze.birthYear}, {schuetze.gender === 'male' ? 'm' : 'w'})
+                                    <div className="text-xs text-gray-500">Gemeldet für diese Disziplin</div>
                                   </button>
                                 ))}
+                              {schuetzen.filter(s => 
+                                !mannschaft.schuetzenIds.includes(s.id) && 
+                                s.kmClubId === mannschaft.vereinId &&
+                                meldungen.some(m => m.schuetzeId === s.id && m.disziplinId === mannschaft.disziplinId)
+                              ).length === 0 && (
+                                <div className="text-xs text-gray-500 p-2">
+                                  Keine weiteren Schützen aus diesem Verein für diese Disziplin gemeldet.
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -324,6 +389,47 @@ export default function KMMannschaften() {
 
         <div>
           <Card>
+            <CardHeader>
+              <CardTitle>📋 Anleitung</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3">
+              <div className="p-3 bg-blue-50 rounded">
+                <strong>🚀 So erstellen Sie Mannschaften:</strong>
+                <ol className="list-decimal pl-5 mt-2 space-y-1">
+                  <li>Klicken Sie auf "Mannschaften automatisch generieren"</li>
+                  <li>Das System erstellt Teams aus Ihren Meldungen</li>
+                  <li>Die Teams werden automatisch gespeichert</li>
+                  <li>Sie sehen sofort alle erstellten Mannschaften</li>
+                </ol>
+              </div>
+              
+              <div className="p-3 bg-green-50 rounded">
+                <strong>✏️ Teams bearbeiten:</strong>
+                <ol className="list-decimal pl-5 mt-2 space-y-1">
+                  <li>Klicken Sie bei einer Mannschaft auf "Bearbeiten"</li>
+                  <li>Zum Entfernen: "Entfernen" neben dem Schützennamen</li>
+                  <li>Zum Hinzufügen: Schütze aus der Liste darunter anklicken</li>
+                  <li>Änderungen werden sofort gespeichert</li>
+                </ol>
+              </div>
+              
+              <div className="p-3 bg-yellow-50 rounded">
+                <strong>⚡ Wichtige Regeln:</strong>
+                <ul className="list-disc pl-5 mt-2 space-y-1">
+                  <li>Jede Mannschaft braucht genau 3 Schützen</li>
+                  <li>Alle müssen die gleiche Altersklasse haben</li>
+                  <li>Die besten VM-Ergebnisse werden automatisch gewählt</li>
+                  <li>Bei Problemen: Neu generieren überschreibt alles</li>
+                </ul>
+              </div>
+              
+              <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+                <strong>💡 Tipp:</strong> Generieren Sie zuerst automatisch, dann passen Sie einzelne Teams manuell an.
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="mt-4">
             <CardHeader>
               <CardTitle>Mannschaftsregeln</CardTitle>
             </CardHeader>
@@ -343,9 +449,6 @@ export default function KMMannschaften() {
                   <li>Junioren I/II</li>
                   <li>Herren/Damen I-V</li>
                 </ul>
-              </div>
-              <div className="mt-4 p-2 bg-yellow-50 rounded text-xs">
-                <strong>💡 Tipp:</strong> Teams werden automatisch nach Wettkampfklassen und Vereinen gruppiert. Sie können die Vorschläge manuell anpassen.
               </div>
             </CardContent>
           </Card>

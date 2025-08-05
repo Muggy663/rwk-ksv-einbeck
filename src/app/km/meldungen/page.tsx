@@ -386,7 +386,10 @@ export default function KMMeldungen() {
                       
                       return (
                         <option key={schuetze.id} value={schuetze.id}>
-                          {schuetze.name} ({birthYearDisplay}, {genderDisplay}) - {club?.name || 'Verein unbekannt'}
+                          {schuetze.firstName && schuetze.lastName 
+                            ? `${schuetze.firstName} ${schuetze.lastName}`
+                            : schuetze.name
+                          } ({birthYearDisplay}, {genderDisplay}) - {club?.name || 'Verein unbekannt'}
                         </option>
                       );
                     })}
@@ -534,7 +537,7 @@ export default function KMMeldungen() {
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-sm font-medium mb-1">
+                            <label className="block text-sm font-medium mb-1 text-blue-900 dark:text-blue-100">
                               Ringe {disziplin.nurVereinsmeisterschaft && '*'}
                             </label>
                             <input
@@ -547,13 +550,13 @@ export default function KMMeldungen() {
                                 ...prev,
                                 [disziplinId]: { ...vmData, ringe: e.target.value }
                               }))}
-                              className="w-full p-2 border border-gray-300 rounded text-sm"
+                              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                               placeholder="z.B. 385.7 (mit Nachkommastelle)"
                               required={disziplin.nurVereinsmeisterschaft}
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium mb-1">
+                            <label className="block text-sm font-medium mb-1 text-blue-900 dark:text-blue-100">
                               Datum {disziplin.nurVereinsmeisterschaft && '*'}
                             </label>
                             <input
@@ -563,13 +566,13 @@ export default function KMMeldungen() {
                                 ...prev,
                                 [disziplinId]: { ...vmData, datum: e.target.value }
                               }))}
-                              className="w-full p-2 border border-gray-300 rounded text-sm"
+                              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                               required={disziplin.nurVereinsmeisterschaft}
                             />
                           </div>
                         </div>
                         <div className="mt-3">
-                          <label className="block text-sm font-medium mb-1">Bemerkung (Optional)</label>
+                          <label className="block text-sm font-medium mb-1 text-blue-900 dark:text-blue-100">Bemerkung (Optional)</label>
                           <input
                             type="text"
                             value={vmData.bemerkung}
@@ -577,7 +580,7 @@ export default function KMMeldungen() {
                               ...prev,
                               [disziplinId]: { ...vmData, bemerkung: e.target.value }
                             }))}
-                            className="w-full p-2 border border-gray-300 rounded text-sm"
+                            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                             placeholder="z.B. Vereinsmeisterschaft 2025"
                           />
                         </div>
@@ -609,7 +612,7 @@ export default function KMMeldungen() {
                                 checked={lmTeilnahme[disziplinId] === true}
                                 onChange={() => setLmTeilnahme(prev => ({...prev, [disziplinId]: true}))}
                               />
-                              <span>Ja</span>
+                              <span className="text-purple-900 dark:text-purple-100">Ja</span>
                             </label>
                             <label className="flex items-center space-x-2">
                               <input
@@ -618,7 +621,7 @@ export default function KMMeldungen() {
                                 checked={lmTeilnahme[disziplinId] === false}
                                 onChange={() => setLmTeilnahme(prev => ({...prev, [disziplinId]: false}))}
                               />
-                              <span>Nein</span>
+                              <span className="text-purple-900 dark:text-purple-100">Nein</span>
                             </label>
                           </div>
                         </div>
@@ -745,7 +748,12 @@ export default function KMMeldungen() {
                   return (
                     <div key={meldung.id} className={`text-sm border-l-2 border-${color}-500 pl-3 flex justify-between items-center`}>
                       <div>
-                        <div className="font-medium">{schuetze?.name || 'Unbekannt'}</div>
+                        <div className="font-medium">
+                          {schuetze?.firstName && schuetze?.lastName 
+                            ? `${schuetze.firstName} ${schuetze.lastName}`
+                            : schuetze?.name || 'Unbekannt'
+                          }
+                        </div>
                         <div className="text-gray-500">
                           {disziplin?.spoNummer} {disziplin?.name} • {schuetze ? getWettkampfklasse(schuetze, disziplin?.auflage) : 'N/A'}
                           {meldung.vmErgebnis?.ringe && (

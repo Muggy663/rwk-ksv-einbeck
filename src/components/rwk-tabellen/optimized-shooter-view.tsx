@@ -97,7 +97,10 @@ export function OptimizedShooterView({
                 <Trophy className="h-5 w-5 text-amber-500" />
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{topShooters.male.shooterName}</p>
+                <div className="text-2xl font-bold">
+                  {topShooters.male.title && <span className="text-sm text-gray-500">{topShooters.male.title} </span>}
+                  <span>{(topShooters.male.firstName || '') + ' ' + (topShooters.male.lastName || topShooters.male.shooterName || '')}</span>
+                </div>
                 <p className="text-sm text-muted-foreground">{topShooters.male.teamName}</p>
                 <p className="text-lg">Gesamt: <span className="font-semibold">{topShooters.male.totalScore}</span> Ringe</p>
                 <p className="text-sm">
@@ -115,7 +118,10 @@ export function OptimizedShooterView({
                 <Medal className="h-5 w-5 text-pink-500" />
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{topShooters.female.shooterName}</p>
+                <div className="text-2xl font-bold">
+                  {topShooters.female.title && <span className="text-sm text-gray-500">{topShooters.female.title} </span>}
+                  <span>{(topShooters.female.firstName || '') + ' ' + (topShooters.female.lastName || topShooters.female.shooterName || '')}</span>
+                </div>
                 <p className="text-sm text-muted-foreground">{topShooters.female.teamName}</p>
                 <p className="text-lg">Gesamt: <span className="font-semibold">{topShooters.female.totalScore}</span> Ringe</p>
                 <p className="text-sm">
@@ -176,7 +182,10 @@ export function OptimizedShooterView({
                               className="p-0 h-auto text-base text-left hover:text-primary whitespace-normal text-wrap" 
                               onClick={() => onShooterClick && onShooterClick(shooter)}
                             >
-                              {shooter.shooterName}
+                              <div>
+                                {shooter.title && <span className="text-xs text-gray-500">{shooter.title} </span>}
+                                <span>{(shooter.firstName || '') + ' ' + (shooter.lastName || shooter.shooterName || '')}</span>
+                              </div>
                             </Button>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">

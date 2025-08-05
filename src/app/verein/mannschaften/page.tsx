@@ -1227,7 +1227,11 @@ export default function VereinMannschaftenPage() {
                                     disabled={finalIsDisabled}
                                   />
                                   <Label htmlFor={`vvm-team-shooter-assign-${shooter.id}`} className={`font-normal cursor-pointer flex-grow ${finalIsDisabled ? 'opacity-50 cursor-not-allowed' : '' } ${isSelected ? 'text-primary font-medium' : ''}`}>
-                                    {shooter.name} {isSelected && '✓'}
+                                    <div>
+                                      {shooter.title && <span className="text-xs text-gray-500">{shooter.title} </span>}
+                                      <span>{(shooter.firstName || '') + ' ' + (shooter.lastName || shooter.name || '')}</span>
+                                      {isSelected && ' ✓'}
+                                    </div>
                                     <span className='text-xs text-muted-foreground block'>(Schnitt Vorjahr: folgt)</span>
                                     {finalIsDisabled && disableReason && <span className="text-xs text-destructive ml-1">{disableReason}</span>}
                                   </Label>

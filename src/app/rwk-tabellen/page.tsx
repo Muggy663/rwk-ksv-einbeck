@@ -74,7 +74,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { db } from '@/lib/firebase/config';
-import { collection, doc, getDoc, getDocs, query, where, orderBy, limit, documentId } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, orderBy, limit, documentId, setDoc } from 'firebase/firestore';
 import {
   ResponsiveContainer,
   LineChart,
@@ -612,15 +612,19 @@ function RwkTabellenPageComponent() {
         scoresByTeam.get(score.teamId)!.push({id: scoreDoc.id, ...score});
       });
 
-      // Batch-load alle Clubs auf einmal
+      // Batch-load alle Clubs auf einmal (mit IN-Limit Handling)
       const allClubIds = [...new Set(allTeamsSnapshot.docs.map(doc => doc.data().clubId).filter(Boolean))];
       if (allClubIds.length > 0) {
         try {
-          const clubsQuery = query(collection(db, "clubs"), where(documentId(), "in", allClubIds));
-          const clubsSnapshot = await getDocs(clubsQuery);
-          clubsSnapshot.docs.forEach(clubDoc => {
-            clubCache.set(clubDoc.id, (clubDoc.data() as Club).name || "Unbek. Verein");
-          });
+          const batchSize = 30;
+          for (let i = 0; i < allClubIds.length; i += batchSize) {
+            const batch = allClubIds.slice(i, i + batchSize);
+            const clubsQuery = query(collection(db, "clubs"), where(documentId(), "in", batch));
+            const clubsSnapshot = await getDocs(clubsQuery);
+            clubsSnapshot.docs.forEach(clubDoc => {
+              clubCache.set(clubDoc.id, (clubDoc.data() as Club).name || "Unbek. Verein");
+            });
+          }
         } catch (e) { console.error("RWK DEBUG: Error batch-fetching clubs", e); }
       }
 
@@ -924,14 +928,49 @@ function RwkTabellenPageComponent() {
       console.log(`RWK DEBUG: Gefundene leagueTypes: ${leagueTypes.slice(0, 3).join(', ')}${leagueTypes.length > 3 ? '...' : ''} (${leagueTypes.length} total)`);
 
       const shootersMap = new Map<string, IndividualShooterDisplayData>();
+      // Lade alle einzigartigen Schützen-IDs für bessere Namensauflösung
+      const allShooterIds = [...new Set(allScores.map(s => s.shooterId).filter(Boolean))];
+      const shooterNamesMap = new Map<string, string>();
+      
+      // Batch-lade Schützen-Infos für bessere Namen (mit IN-Limit Handling)
+      if (allShooterIds.length > 0) {
+        try {
+          // Firebase IN-Limit: Max 30 IDs pro Query
+          const batchSize = 30;
+          for (let i = 0; i < allShooterIds.length; i += batchSize) {
+            const batch = allShooterIds.slice(i, i + batchSize);
+            const shootersQuery = query(collection(db, "rwk_shooters"), where(documentId(), "in", batch));
+            const shootersSnapshot = await getDocs(shootersQuery);
+            shootersSnapshot.docs.forEach(doc => {
+              const shooterData = doc.data() as Shooter;
+              let displayName = shooterData.name || '';
+              if (shooterData.firstName || shooterData.lastName) {
+                const nameParts = [];
+                if (shooterData.firstName) nameParts.push(shooterData.firstName);
+                if (shooterData.lastName) nameParts.push(shooterData.lastName);
+                if (shooterData.title) nameParts.push(shooterData.title);
+                displayName = nameParts.join(' ');
+              }
+              shooterNamesMap.set(doc.id, displayName);
+            });
+          }
+        } catch (error) {
+          console.warn('RWK DEBUG: Fehler beim Laden der Schützen-Namen:', error);
+        }
+      }
+      
       for (const score of allScores) {
         if (!score.shooterId) continue;
         let currentShooterData = shootersMap.get(score.shooterId);
         if (!currentShooterData) {
           const initialResults: { [key: string]: number | null } = {};
           for (let r = 1; r <= numRoundsForCompetition; r++) initialResults[`dg${r}`] = null;
+          
+          // Verwende verbesserten Namen falls verfügbar
+          const shooterName = shooterNamesMap.get(score.shooterId) || score.shooterName || "Unbek. Schütze";
+          
           currentShooterData = {
-            shooterId: score.shooterId, shooterName: score.shooterName || "Unbek. Schütze",
+            shooterId: score.shooterId, shooterName,
             shooterGender: score.shooterGender || 'unknown', teamName: score.teamName || "Unbek. Team", 
             results: initialResults, totalScore: 0, averageScore: null, roundsShot: 0,
             competitionYear: score.competitionYear, leagueId: score.leagueId, leagueType: score.leagueType,
@@ -1308,27 +1347,102 @@ function RwkTabellenPageComponent() {
         scoresByShooter.get(score.shooterId)!.push(score);
       });
 
-      // Lade Schützen-Infos
-      const shootersQuery = query(collection(db, "rwk_shooters"), where(documentId(), "in", validShooterIds));
-      const shootersSnapshot = await getDocs(shootersQuery);
-      console.log('📊 RWK-Tabellen: rwk_shooters abgefragt, gefunden:', shootersSnapshot.docs.length);
+      // Lade Schützen-Infos einzeln für bessere Fehlerbehandlung
+      const shooterInfos = new Map<string, any>();
       
-      const shooterInfos = new Map<string, Shooter>();
-      shootersSnapshot.docs.forEach(shooterDoc => {
-        const shooterData = shooterDoc.data() as Shooter;
-        if (shooterData.name && (shooterData.name.toLowerCase().includes('marcel') || shooterData.name.toLowerCase().includes('stephanie'))) {
-          console.log('🎯 Marcel/Stephanie in RWK-Tabellen gefunden:', shooterData.name);
+      for (const shooterId of validShooterIds) {
+        try {
+          const shooterDocRef = doc(db, "rwk_shooters", shooterId);
+          const shooterSnap = await getDoc(shooterDocRef);
+          
+          if (shooterSnap.exists()) {
+            const shooterData = shooterSnap.data();
+            
+            // Erstelle vollständigen Namen aus firstName, lastName, title
+            let displayName = shooterData.name || '';
+            if (shooterData.firstName || shooterData.lastName) {
+              const nameParts = [];
+              if (shooterData.firstName) nameParts.push(shooterData.firstName);
+              if (shooterData.lastName) nameParts.push(shooterData.lastName);
+              if (shooterData.title) nameParts.push(shooterData.title);
+              displayName = nameParts.join(' ');
+            }
+            
+            console.log(`🎯 Schütze ${shooterId}: "${displayName}" (firstName: ${shooterData.firstName}, lastName: ${shooterData.lastName})`);
+            
+            shooterInfos.set(shooterId, {
+              ...shooterData,
+              displayName // Speichere den zusammengesetzten Namen separat
+            });
+          } else {
+            console.warn(`❌ Schütze ${shooterId} nicht in rwk_shooters gefunden - suche in Scores...`);
+            
+            // TEST-MODUS: Suche Namen in bestehenden Scores
+            try {
+              const scoresQuery = query(
+                collection(db, "rwk_scores"),
+                where("shooterId", "==", shooterId),
+                limit(1)
+              );
+              const scoresSnapshot = await getDocs(scoresQuery);
+              
+              if (!scoresSnapshot.empty) {
+                const scoreData = scoresSnapshot.docs[0].data();
+                const nameFromScore = scoreData.shooterName;
+                console.log(`🔍 ERSTELLE Schütze ${shooterId} → "${nameFromScore}"`);
+                
+                // Erstelle rwk_shooters Eintrag
+                try {
+                  const shooterDocRef = doc(db, "rwk_shooters", shooterId);
+                  const nameParts = nameFromScore.split(' ');
+                  const shooterData = {
+                    name: nameFromScore,
+                    firstName: nameParts[0] || '',
+                    lastName: nameParts.slice(1).join(' ') || '',
+                    gender: scoreData.shooterGender || 'unknown',
+                    createdAt: new Date(),
+                    createdBy: 'auto-from-scores'
+                  };
+                  await setDoc(shooterDocRef, shooterData);
+                  console.log(`✅ Schütze erfolgreich erstellt: ${nameFromScore}`);
+                } catch (createError) {
+                  console.error(`Fehler beim Erstellen von Schütze ${shooterId}:`, createError);
+                }
+                
+                shooterInfos.set(shooterId, {
+                  name: nameFromScore,
+                  displayName: nameFromScore,
+                  gender: scoreData.shooterGender || 'unknown',
+                  isTemporary: false
+                });
+              } else {
+                console.log(`⚠️ Keine Scores für ${shooterId} gefunden - erstelle Placeholder`);
+                shooterInfos.set(shooterId, {
+                  name: `Schütze ${shooterId.substring(0,8)}`,
+                  displayName: `Schütze ${shooterId.substring(0,8)}`,
+                  gender: 'unknown',
+                  isTemporary: true
+                });
+              }
+            } catch (scoreError) {
+              console.error(`Fehler beim Suchen in Scores für ${shooterId}:`, scoreError);
+            }
+          }
+        } catch (error) {
+          console.error(`Fehler beim Laden von Schütze ${shooterId}:`, error);
         }
-        shooterInfos.set(shooterDoc.id, {id: shooterDoc.id, ...shooterData});
-      });
+      }
 
       // Erstelle Schützen-Ergebnisse
       const shootersResults: ShooterDisplayResults[] = [];
       for (const shooterId of validShooterIds) {
         const shooterInfo = shooterInfos.get(shooterId);
+        // Verwende den bereits zusammengesetzten Namen oder Fallback
+        let shooterDisplayName = shooterInfo?.displayName || shooterInfo?.name || (scoresByShooter.get(shooterId)?.[0]?.shooterName) || `Schütze ${shooterId.substring(0,5)}`;
+        
         const sResults: ShooterDisplayResults = { 
           shooterId, 
-          shooterName: shooterInfo?.name || (scoresByShooter.get(shooterId)?.[0]?.shooterName) || `Schütze ${shooterId.substring(0,5)}`, 
+          shooterName: shooterDisplayName, 
           shooterGender: shooterInfo?.gender || (scoresByShooter.get(shooterId)?.[0]?.shooterGender) || 'unknown',
           results: {}, average: null, total: 0, roundsShot: 0,
           teamId, 

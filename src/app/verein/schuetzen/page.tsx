@@ -113,6 +113,9 @@ export default function VereinSchuetzenPage() {
   const [contextTeamName, setContextTeamName] = useState<string | null>(null);
   const [isContextTeamNameLoading, setIsContextTeamNameLoading] = useState<boolean>(false);
   const [shooterSearchQuery, setShooterSearchQuery] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>('lastName');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showOnlyTeamMembers, setShowOnlyTeamMembers] = useState<boolean>(false);
 
   // States for team assignment in "New Shooter" dialog (simplified for VV)
   const [teamsOfSelectedClubInDialog, setTeamsOfSelectedClubInDialog] = useState<Array<Team & { leagueType?: FirestoreLeagueSpecificDiscipline, leagueCompetitionYear?: number, currentShooterCount?: number }>>([]);
@@ -259,11 +262,7 @@ export default function VereinSchuetzenPage() {
           uniqueShooters.set(doc.id, { id: doc.id, ...doc.data(), teamIds: (doc.data().teamIds || []) } as Shooter);
         }
       });
-      const fetchedShooters = Array.from(uniqueShooters.values()).sort((a, b) => {
-        const lastNameCompare = (a.lastName || '').localeCompare(b.lastName || '');
-        if (lastNameCompare !== 0) return lastNameCompare;
-        return (a.firstName || '').localeCompare(b.firstName || '');
-      });
+      const fetchedShooters = Array.from(uniqueShooters.values());
       setShootersOfActiveClub(fetchedShooters);
       console.log(`VSP DEBUG: Fetched ${fetchedShooters.length} shooters for club ${activeClubId}`);
       console.log('🔍 Erste 3 Schützen-Datenstruktur:', fetchedShooters.slice(0, 3).map(s => ({
@@ -365,9 +364,28 @@ export default function VereinSchuetzenPage() {
   };
 
   const handleEditShooter = (shooter: Shooter) => {
-    if (!isVereinsvertreter || shooter.clubId !== activeClubId) {
+    console.log('🔧 Edit shooter clicked:', {
+      shooterName: shooter.name,
+      shooterClubId: shooter.clubId,
+      shooterRwkClubId: shooter.rwkClubId,
+      shooterKmClubId: shooter.kmClubId,
+      activeClubId: activeClubId,
+      isVereinsvertreter: isVereinsvertreter
+    });
+    
+    // Erweiterte Berechtigung: Schütze gehört zu einem der Club-IDs des aktiven Vereins
+    const shooterBelongsToActiveClub = [
+      shooter.clubId,
+      shooter.rwkClubId,
+      shooter.kmClubId
+    ].includes(activeClubId);
+    
+    if (!isVereinsvertreter || !shooterBelongsToActiveClub) {
+      console.log('❌ Edit not authorized:', { isVereinsvertreter, shooterBelongsToActiveClub });
       toast({ title: "Nicht autorisiert", variant: "destructive" }); return;
     }
+    
+    console.log('✅ Opening edit dialog for:', shooter.name);
     setFormMode('edit');
     setCurrentShooter(shooter);
     setSelectedTeamIdsInForm([]); // Reset, not editing teams here
@@ -376,7 +394,13 @@ export default function VereinSchuetzenPage() {
   };
 
   const handleDeleteConfirmation = (shooter: Shooter) => {
-    if (!isVereinsvertreter || shooter.clubId !== activeClubId) {
+    const shooterBelongsToActiveClub = [
+      shooter.clubId,
+      shooter.rwkClubId,
+      shooter.kmClubId
+    ].includes(activeClubId);
+    
+    if (!isVereinsvertreter || !shooterBelongsToActiveClub) {
       toast({ title: "Nicht autorisiert", variant: "destructive" }); return;
     }
     setShooterToDelete(shooter);
@@ -517,6 +541,15 @@ export default function VereinSchuetzenPage() {
     setSelectedTeamIdsInForm(prev => checked ? [...prev, teamId] : prev.filter(id => id !== teamId));
   };
 
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('asc');
+    }
+  };
+
   const getTeamInfoForShooter = useCallback((shooter: Shooter): string => {
     // Methode 1: Schütze hat teamIds
     const teamIds = shooter.teamIds || [];
@@ -592,7 +625,7 @@ export default function VereinSchuetzenPage() {
       
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>Schützenliste für {activeClubName || "Ihren Verein"}</CardTitle>
+          <CardTitle>Schützenliste für {activeClubName || "Ihren Verein"} ({shootersOfActiveClub.length})</CardTitle>
           <CardDescription>
             {isVereinsvertreter ? "Verwalten Sie hier die Schützen Ihres Vereins." : "Übersicht der Schützen Ihres Vereins."}
           </CardDescription>
@@ -639,23 +672,72 @@ export default function VereinSchuetzenPage() {
           {!isLoadingClubSpecificData && shootersOfActiveClub.length > 0 && (
             <Table>
               <TableHeader><TableRow>
-                  <TableHead>Nachname</TableHead><TableHead>Vorname</TableHead>
-                  <TableHead>Geschlecht</TableHead><TableHead>Mannschaften (Info)</TableHead>
+                  <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('lastName')}>Nachname {sortBy === 'lastName' && (sortOrder === 'asc' ? '↑' : '↓')}</TableHead>
+                  <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('firstName')}>Vorname {sortBy === 'firstName' && (sortOrder === 'asc' ? '↑' : '↓')}</TableHead>
+                  <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('gender')}>Geschlecht {sortBy === 'gender' && (sortOrder === 'asc' ? '↑' : '↓')}</TableHead>
+                  <TableHead>
+                    <button 
+                      onClick={() => setShowOnlyTeamMembers(!showOnlyTeamMembers)}
+                      className="hover:text-primary cursor-pointer"
+                    >
+                      Mannschaften (Info) {showOnlyTeamMembers ? '✓' : ''}
+                    </button>
+                  </TableHead>
                   {isVereinsvertreter && <TableHead className="text-right">Aktionen</TableHead>}
               </TableRow></TableHeader>
               <TableBody>
                 {shootersOfActiveClub
                   .filter(shooter => {
-                    if (!shooterSearchQuery.trim()) return true;
-                    const fullName = `${shooter.firstName} ${shooter.lastName}`.toLowerCase();
-                    const reverseName = `${shooter.lastName} ${shooter.firstName}`.toLowerCase();
-                    const searchTerm = shooterSearchQuery.toLowerCase();
-                    return fullName.includes(searchTerm) || reverseName.includes(searchTerm);
+                    // Suchfilter
+                    if (shooterSearchQuery.trim()) {
+                      const fullName = `${shooter.firstName} ${shooter.lastName}`.toLowerCase();
+                      const reverseName = `${shooter.lastName} ${shooter.firstName}`.toLowerCase();
+                      const searchTerm = shooterSearchQuery.toLowerCase();
+                      if (!fullName.includes(searchTerm) && !reverseName.includes(searchTerm)) return false;
+                    }
+                    
+                    // Mannschaftsfilter
+                    if (showOnlyTeamMembers) {
+                      const hasTeam = (shooter.teamIds && shooter.teamIds.length > 0) || 
+                                     allTeamsDataForClub.some(team => team.shooterIds && team.shooterIds.includes(shooter.id));
+                      if (!hasTeam) return false;
+                    }
+                    
+                    return true;
+                  })
+                  .sort((a, b) => {
+                    let aValue, bValue;
+                    switch (sortBy) {
+                      case 'firstName':
+                        aValue = a.firstName || (a.name ? a.name.split(' ').slice(0, -1).join(' ') : '');
+                        bValue = b.firstName || (b.name ? b.name.split(' ').slice(0, -1).join(' ') : '');
+                        break;
+                      case 'lastName':
+                        aValue = a.lastName || (a.name ? a.name.split(' ').slice(-1)[0] : '');
+                        bValue = b.lastName || (b.name ? b.name.split(' ').slice(-1)[0] : '');
+                        break;
+                      case 'gender':
+                        aValue = a.gender === 'female' ? 'Weiblich' : (a.gender === 'male' ? 'Männlich' : 'N/A');
+                        bValue = b.gender === 'female' ? 'Weiblich' : (b.gender === 'male' ? 'Männlich' : 'N/A');
+                        break;
+                      default:
+                        aValue = a.lastName || (a.name ? a.name.split(' ').slice(-1)[0] : '');
+                        bValue = b.lastName || (b.name ? b.name.split(' ').slice(-1)[0] : '');
+                    }
+                    const result = aValue.localeCompare(bValue);
+                    return sortOrder === 'asc' ? result : -result;
                   })
                   .map((shooter) => (
                 <TableRow key={shooter.id}>
-                    <TableCell>{shooter.lastName || (shooter.name ? shooter.name.split(' ').slice(-1)[0] : '-')}</TableCell>
-                    <TableCell>{shooter.firstName || (shooter.name ? shooter.name.split(' ').slice(0, -1).join(' ') : '-')}</TableCell>
+                    <TableCell>
+                      <div>
+                        {shooter.title && <span className="text-xs text-gray-500">{shooter.title} </span>}
+                        <span>{shooter.lastName || (shooter.name ? shooter.name.split(' ').slice(-1)[0] : '-')}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span>{shooter.firstName || (shooter.name ? shooter.name.split(' ').slice(0, -1).join(' ') : '-')}</span>
+                    </TableCell>
                     <TableCell>{shooter.gender === 'female' ? 'Weiblich' : (shooter.gender === 'male' ? 'Männlich' : 'N/A')}</TableCell>
                     <TableCell className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
                     {isVereinsvertreter && (

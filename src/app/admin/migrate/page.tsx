@@ -1,101 +1,87 @@
 "use client";
-import React, { useState } from 'react';
+
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle2, AlertTriangle, ArrowRight, Database } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function MigratePage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState('');
+  const [migrating, setMigrating] = useState(false);
 
-  const handleMigration = async () => {
+  const executeMigration = async () => {
+    setMigrating(true);
+    setStatus('🚀 Starte Migration...');
+
     try {
-      setIsLoading(true);
-      setResult(null);
-      setError(null);
+      const { collection, getDocs, writeBatch, doc } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
 
-      const response = await fetch('/api/migrate', {
-        method: 'POST',
+      // 1. Alle rwk_shooters laden
+      const shootersSnap = await getDocs(collection(db, 'rwk_shooters'));
+      setStatus(`📊 Gefunden: ${shootersSnap.docs.length} Schützen`);
+
+      const batch = writeBatch(db);
+      let kmCount = 0;
+      let rwkCount = 0;
+
+      shootersSnap.docs.forEach((docSnap) => {
+        const shooter = docSnap.data();
+
+        // 1:1 Kopie aller Schützen nach km_shooters
+        const kmShooterRef = doc(db, 'km_shooters', docSnap.id);
+        batch.set(kmShooterRef, {
+          firstName: shooter.firstName || '',
+          lastName: shooter.lastName || '',
+          title: shooter.title || '',
+          name: shooter.name || '',
+          kmClubId: shooter.kmClubId || null,
+          clubId: shooter.clubId || null,
+          rwkClubId: shooter.rwkClubId || null,
+          gender: shooter.gender || '',
+          birthYear: shooter.birthYear || null,
+          mitgliedsnummer: shooter.mitgliedsnummer || '',
+          teamIds: shooter.teamIds || [],
+          isActive: shooter.isActive !== false,
+          genderGuessed: shooter.genderGuessed || false,
+          createdAt: shooter.createdAt || new Date(),
+          importedAt: shooter.importedAt || null,
+          migratedAt: new Date(),
+          migratedFrom: 'rwk_shooters'
+        });
+        kmCount++;
+        
+        if (shooter.clubId) rwkCount++;
       });
 
-      const data = await response.json();
+      setStatus('💾 Schreibe km_shooters...');
+      await batch.commit();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Fehler bei der Migration');
-      }
-
-      setResult({
-        success: true,
-        message: data.message
-      });
-    } catch (err: any) {
-      setError(err.message || 'Ein unbekannter Fehler ist aufgetreten');
-      setResult({
-        success: false,
-        message: 'Migration fehlgeschlagen'
-      });
+      setStatus(`✅ Migration abgeschlossen!\n📊 Alle Schützen kopiert: ${kmCount}\n📊 Davon RWK-Schützen: ${rwkCount}\n\n🔄 Sync-Functions werden aktiviert...`);
+    } catch (error) {
+      setStatus(`❌ Fehler: ${error}`);
     } finally {
-      setIsLoading(false);
+      setMigrating(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Daten-Migration</h1>
-          <p className="text-muted-foreground">Migrieren Sie Ihre Dokumente von JSON zu MongoDB</p>
-        </div>
-      </div>
-
+    <div className="container py-8">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            Migration zu MongoDB
-          </CardTitle>
-          <CardDescription>
-            Diese Funktion migriert alle Dokumente aus der JSON-Datei zu MongoDB. 
-            Bestehende Dokumente in MongoDB werden überschrieben.
-          </CardDescription>
+          <CardTitle>🔄 KM/RWK Migration</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-muted p-4 rounded-md">
-            <h3 className="font-medium mb-2">Vor der Migration:</h3>
-            <ul className="list-disc list-inside space-y-1 text-sm">
-              <li>Stellen Sie sicher, dass Ihre MongoDB-Verbindung korrekt konfiguriert ist</li>
-              <li>Erstellen Sie ein Backup Ihrer Daten, falls erforderlich</li>
-              <li>Diese Aktion kann nicht rückgängig gemacht werden</li>
-            </ul>
-          </div>
-
-          {result && (
-            <Alert variant={result.success ? "success" : "destructive"}>
-              {result.success ? (
-                <CheckCircle2 className="h-4 w-4" />
-              ) : (
-                <AlertTriangle className="h-4 w-4" />
-              )}
-              <AlertTitle>{result.success ? 'Erfolg' : 'Fehler'}</AlertTitle>
-              <AlertDescription>
-                {result.message}
-                {error && <div className="mt-2 text-sm">{error}</div>}
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-        <CardFooter>
+        <CardContent>
           <Button 
-            onClick={handleMigration} 
-            disabled={isLoading}
-            className="flex items-center gap-2"
+            onClick={executeMigration} 
+            disabled={migrating}
+            className="mb-4"
           >
-            {isLoading ? 'Migration läuft...' : 'Migration starten'}
-            <ArrowRight className="h-4 w-4" />
+            {migrating ? 'Migriere...' : 'Migration starten'}
           </Button>
-        </CardFooter>
+          <pre className="bg-gray-100 p-4 rounded whitespace-pre-wrap">
+            {status}
+          </pre>
+        </CardContent>
       </Card>
     </div>
   );

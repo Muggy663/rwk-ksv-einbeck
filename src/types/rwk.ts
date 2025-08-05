@@ -273,6 +273,9 @@ export interface TeamDisplay {
 export interface IndividualShooterDisplayData {
   shooterId: string;
   shooterName: string;
+  firstName?: string;
+  lastName?: string;
+  title?: string;
   shooterGender: string;
   teamName: string;
   results: { [key: string]: number | null };

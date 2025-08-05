@@ -64,6 +64,58 @@
   }
 }
 
+/* Mobile App Fixes */
+@media (max-width: 768px) {
+  /* Status Bar Overlay Fix */
+  body {
+    padding-top: env(safe-area-inset-top);
+    background-color: hsl(var(--background));
+  }
+  
+  /* Header vollständig überdecken */
+  .mobile-header-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 44px);
+    background-color: hsl(var(--background));
+    z-index: 9999;
+  }
+  
+  /* Alle Modals/Dialogs sicher positionieren */
+  [role="dialog"], .dialog-content {
+    max-height: 80vh !important;
+    margin-bottom: env(safe-area-inset-bottom, 60px) !important;
+  }
+  
+  /* Buttons am unteren Rand sicher positionieren */
+  .dialog-footer, .fixed-bottom-buttons {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px) !important;
+  }
+  
+  /* Erste Schritte Modal anpassen */
+  .onboarding-content {
+    margin-top: env(safe-area-inset-top, 20px);
+    margin-bottom: env(safe-area-inset-bottom, 20px);
+    max-height: 75vh;
+    overflow-y: auto;
+    padding-bottom: 80px; /* Platz für Navigation Buttons */
+  }
+  
+  /* Tabellen scrollbar sicher */
+  .table-container {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    margin-bottom: env(safe-area-inset-bottom, 60px);
+  }
+  
+  /* Toast Notifications sicher positionieren */
+  .toast-viewport {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 80px) !important;
+  }
+}
+
 /* Verbesserte Lesbarkeit für Tabellen */
 .text-muted-foreground {
   color: hsl(var(--muted-foreground));
@@ -121,4 +173,32 @@
 
 :root:not(.dark) .border-border {
   border-color: #d9d4c0; /* Beige-toned border */
+}
+
+/* Native App Status Bar */
+.capacitor-app {
+  padding-top: env(safe-area-inset-top) !important;
+  padding-bottom: env(safe-area-inset-bottom) !important;
+}
+
+.capacitor-app .mobile-header-overlay {
+  display: block !important;
+}
+
+/* Alle wichtigen UI-Elemente für Android sicher */
+@media (max-width: 768px) {
+  /* Hauptnavigation */
+  .main-nav {
+    z-index: 9998;
+  }
+  
+  /* Formulare */
+  .form-container {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+  }
+  
+  /* Sticky Footer */
+  .site-footer {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
 }

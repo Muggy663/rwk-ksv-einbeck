@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { CompetitionDisplayConfig, IndividualShooterDisplayData, ScoreEntry } from '@/types/rwk';
 
 export async function fetchShooterDataForCompetition(
@@ -33,8 +33,10 @@ export async function fetchShooterDataForCompetition(
       allScores.push({ id: d.id, ...d.data() as ScoreEntry }); 
     });
     
-    // Schützendaten verarbeiten
+    // Schützendaten verarbeiten und erweiterte Informationen laden
     const shootersMap = new Map<string, IndividualShooterDisplayData>();
+    const shooterDetailsCache = new Map<string, any>();
+    
     for (const score of allScores) {
       if (!score.shooterId) continue;
       
@@ -43,9 +45,34 @@ export async function fetchShooterDataForCompetition(
         const initialResults: { [key: string]: number | null } = {};
         for (let r = 1; r <= numRounds; r++) initialResults[`dg${r}`] = null;
         
+        // Lade erweiterte Schützendaten aus rwk_shooters
+        let shooterDetails = shooterDetailsCache.get(score.shooterId);
+        if (!shooterDetails) {
+          try {
+            const shooterDoc = await getDoc(doc(db, 'rwk_shooters', score.shooterId));
+            if (shooterDoc.exists()) {
+              shooterDetails = shooterDoc.data();
+              shooterDetailsCache.set(score.shooterId, shooterDetails);
+            }
+          } catch (error) {
+            console.warn(`Could not load shooter details for ${score.shooterId}:`, error);
+          }
+        }
+        
+        // Erstelle vollständigen Namen aus firstName + lastName oder nutze shooterName als Fallback
+        let displayName = score.shooterName || "Unbek. Schütze";
+        if (shooterDetails?.firstName && shooterDetails?.lastName) {
+          displayName = `${shooterDetails.firstName} ${shooterDetails.lastName}`;
+        } else if (shooterDetails?.name) {
+          displayName = shooterDetails.name;
+        }
+        
         currentShooterData = {
           shooterId: score.shooterId, 
-          shooterName: score.shooterName || "Unbek. Schütze",
+          shooterName: displayName,
+          firstName: shooterDetails?.firstName,
+          lastName: shooterDetails?.lastName,
+          title: shooterDetails?.title,
           shooterGender: score.shooterGender || 'unknown', 
           teamName: score.teamName || "Unbek. Team", 
           results: initialResults, 

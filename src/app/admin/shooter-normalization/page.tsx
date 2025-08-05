@@ -48,27 +48,68 @@ export default function ShooterNormalizationPage() {
   const [backupCreated, setBackupCreated] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (user) {
+      loadData();
+    }
+  }, [user]);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Alle Schützen laden
-      const shootersSnapshot = await getDocs(collection(db, "rwk_shooters"));
-      const allShooters = shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ExcelShooter));
+      console.log('🔄 Loading shooter normalization data in batches...');
+      
+      // Batch-Loading für Schützen
+      const { orderBy, limit, startAfter } = await import('firebase/firestore');
+      const allShooters = [];
+      let lastDoc = null;
+      let batchCount = 0;
+      
+      while (true) {
+        batchCount++;
+        console.log(`📦 Loading batch ${batchCount}...`);
+        
+        let batchQuery;
+        if (lastDoc) {
+          batchQuery = query(
+            collection(db, 'rwk_shooters'),
+            orderBy('name'),
+            startAfter(lastDoc),
+            limit(500)
+          );
+        } else {
+          batchQuery = query(
+            collection(db, 'rwk_shooters'),
+            orderBy('name'),
+            limit(500)
+          );
+        }
+        
+        const batchSnapshot = await getDocs(batchQuery);
+        const batchShooters = batchSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ExcelShooter));
+        
+        console.log(`📦 Batch ${batchCount}: ${batchShooters.length} shooters`);
+        allShooters.push(...batchShooters);
+        
+        if (batchShooters.length < 500) break;
+        lastDoc = batchSnapshot.docs[batchSnapshot.docs.length - 1];
+      }
+      
+      console.log('📊 Total shooters loaded:', allShooters.length);
       
       // Excel-Schützen (haben kmClubId, kein clubId)
       const excel = allShooters.filter(s => s.kmClubId && !s.clubId);
+      console.log('📋 Excel shooters found:', excel.length);
       setExcelShooters(excel);
       
       // Normale Schützen (haben clubId)
       const normal = allShooters.filter(s => s.clubId && !s.kmClubId);
+      console.log('👥 Normal shooters found:', normal.length);
       setNormalShooters(normal);
       
       // Clubs laden
       const clubsSnapshot = await getDocs(collection(db, "clubs"));
       const clubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Club));
+      console.log('🏢 Clubs loaded:', clubs.length);
       setAllClubs(clubs);
       
       // Normalisierungspläne erstellen
@@ -108,9 +149,10 @@ export default function ShooterNormalizationPage() {
       setNormalizationPlans(plans);
       
     } catch (error) {
-      console.error("Fehler beim Laden der Daten:", error);
-      toast({ title: "Fehler", description: (error as Error).message, variant: "destructive" });
+      console.error("❌ Fehler beim Laden der Daten:", error);
+      toast({ title: "Fehler", description: `Laden fehlgeschlagen: ${(error as Error).message}`, variant: "destructive" });
     } finally {
+      console.log('✅ Data loading completed');
       setIsLoading(false);
     }
   };
@@ -144,6 +186,120 @@ export default function ShooterNormalizationPage() {
     setNormalizationPlans(prev => prev.map(plan => 
       plan.shooterId === shooterId ? { ...plan, [field]: value } : plan
     ));
+  };
+
+  const cleanupNames = async () => {
+    setIsProcessing(true);
+    try {
+      // Alle Schützen laden (nicht nur Excel)
+      const shootersSnapshot = await getDocs(collection(db, "rwk_shooters"));
+      const allShooters = shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      const batch = writeBatch(db);
+      let cleanedCount = 0;
+      
+      for (const shooter of allShooters) {
+        const firstName = shooter.firstName || '';
+        const currentName = shooter.name || '';
+        
+        if (firstName && currentName.startsWith(firstName)) {
+          // Entferne Vorname vom Anfang des name-Feldes
+          const cleanedName = currentName.replace(firstName, '').trim();
+          
+          if (cleanedName !== currentName) {
+            const shooterRef = doc(db, "rwk_shooters", shooter.id);
+            batch.update(shooterRef, {
+              name: cleanedName
+            });
+            cleanedCount++;
+          }
+        }
+      }
+      
+      await batch.commit();
+      
+      toast({ 
+        title: "Namen bereinigt", 
+        description: `${cleanedCount} Schützen-Namen wurden bereinigt.` 
+      });
+      
+      // Daten neu laden
+      await loadData();
+      
+    } catch (error) {
+      console.error("Fehler bei Namen-Bereinigung:", error);
+      toast({ title: "Bereinigung fehlgeschlagen", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const autoFixNames = async () => {
+    if (!confirm(`${excelShooters.length} Schützen automatisch korrigieren?\n\nDies teilt "Vorname Nachname" korrekt auf.`)) return;
+    
+    setIsProcessing(true);
+    try {
+      const batch = writeBatch(db);
+      let fixedCount = 0;
+      
+      for (const shooter of excelShooters) {
+        const fullName = shooter.name || '';
+        const parts = fullName.trim().split(' ');
+        
+        if (parts.length >= 2) {
+          // Titel erkennen und separat speichern
+          const titles = ['Dr.', 'Prof.', 'Dr', 'Prof', 'Prof. Dr.', 'Dr. med.', 'Dr. phil.', 'Dipl.-Ing.', 'Ing.'];
+          let title = '';
+          let firstName, lastName;
+          
+          if (titles.includes(parts[0]) && parts.length >= 3) {
+            // "Dr. Hans Mueller" → title: "Dr.", firstName: "Hans", lastName: "Mueller"
+            title = parts[0];
+            firstName = parts[1];
+            lastName = parts.slice(2).join(' ');
+          } else if (parts.length >= 4 && titles.includes(parts[0] + ' ' + parts[1])) {
+            // "Prof. Dr. Hans Mueller" → title: "Prof. Dr.", firstName: "Hans", lastName: "Mueller"
+            title = parts[0] + ' ' + parts[1];
+            firstName = parts[2];
+            lastName = parts.slice(3).join(' ');
+          } else {
+            // "Hans Mueller" → firstName: "Hans", lastName: "Mueller"
+            firstName = parts[0];
+            lastName = parts.slice(1).join(' ');
+          }
+          
+          const shooterRef = doc(db, "rwk_shooters", shooter.id);
+          const updateData: any = {
+            firstName: firstName,
+            lastName: lastName,
+            name: fullName // Vollständiger Name bleibt
+          };
+          
+          if (title) {
+            updateData.title = title;
+          }
+          
+          batch.update(shooterRef, updateData);
+          fixedCount++;
+        }
+      }
+      
+      await batch.commit();
+      
+      toast({ 
+        title: "Namen korrigiert", 
+        description: `${fixedCount} Schützen-Namen wurden aufgeteilt.` 
+      });
+      
+      // Daten neu laden
+      await loadData();
+      
+    } catch (error) {
+      console.error("Fehler bei Namen-Korrektur:", error);
+      toast({ title: "Korrektur fehlgeschlagen", description: (error as Error).message, variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const processNormalization = async () => {
@@ -201,6 +357,14 @@ export default function ShooterNormalizationPage() {
     }
   };
 
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <p>Authentifizierung erforderlich...</p>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -257,9 +421,27 @@ export default function ShooterNormalizationPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Normalisierung starten</CardTitle>
+            <CardTitle className="text-lg">Automatische Korrektur</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-2">
+            <Button 
+              onClick={autoFixNames} 
+              disabled={isProcessing || excelShooters.length === 0}
+              className="w-full"
+              variant="outline"
+            >
+              {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              🔧 Namen automatisch aufteilen ({excelShooters.length})
+            </Button>
+            <Button 
+              onClick={cleanupNames} 
+              disabled={isProcessing}
+              className="w-full"
+              variant="outline"
+            >
+              {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              🧹 Namen bereinigen (Vorname aus Nachname entfernen)
+            </Button>
             <Button 
               onClick={processNormalization} 
               disabled={!backupCreated || isProcessing || excelShooters.length === 0}

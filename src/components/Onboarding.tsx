@@ -58,7 +58,8 @@ export function Onboarding() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-3xl max-h-[75vh] overflow-hidden">
+        <div className="onboarding-content">
         <DialogHeader>
           <div className="flex justify-between items-center">
             <DialogTitle className="text-2xl font-bold text-primary">Willkommen zur RWK App v0.6.3</DialogTitle>
@@ -262,6 +263,7 @@ export function Onboarding() {
             {activeTab === 'start' ? 'Fertig' : 'Überspringen'}
           </Button>
         </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
