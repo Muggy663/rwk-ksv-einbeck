@@ -28,13 +28,33 @@ export default function WettkampfDashboardPage() {
       try {
         // Meldungen laden
         const meldungenSnapshot = await getDocs(collection(db, 'km_meldungen'));
-        const kmErgebnisseSnapshot = await getDocs(collection(db, 'km_ergebnisse'));
+        const kmErgebnisseSnapshot = await getDocs(collection(db, 'km_vm_ergebnisse'));
         
         // Ergebnisse-Map erstellen
         const ergebnisseMap = new Map();
         kmErgebnisseSnapshot.docs.forEach(doc => {
           const data = doc.data();
           ergebnisseMap.set(data.meldung_id, true);
+        });
+        
+        // Lade Disziplinen und Schützen für Namensauflösung
+        const [disziplinenSnapshot, schuetzenSnapshot] = await Promise.all([
+          getDocs(collection(db, 'km_disziplinen')),
+          getDocs(collection(db, 'km_shooters'))
+        ]);
+        
+        const disziplinenMap = new Map();
+        disziplinenSnapshot.docs.forEach(doc => {
+          disziplinenMap.set(doc.id, doc.data().name);
+        });
+        
+        const schuetzenMap = new Map();
+        schuetzenSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          const name = data.firstName && data.lastName 
+            ? `${data.firstName} ${data.lastName}` 
+            : data.name || 'Unbekannt';
+          schuetzenMap.set(doc.id, name);
         });
         
         // Status pro Disziplin berechnen
@@ -46,28 +66,24 @@ export default function WettkampfDashboardPage() {
         
         meldungenSnapshot.docs.forEach(doc => {
           const data = doc.data();
-          if (data.schuetzen && Array.isArray(data.schuetzen)) {
-            data.schuetzen.forEach((schuetze: any) => {
-              const meldungId = `${doc.id}-${schuetze.id}`;
-              const disziplin = data.disziplin;
-              
-              if (!statusMap.has(disziplin)) {
-                statusMap.set(disziplin, {
-                  gesamtStarter: 0,
-                  erfassteErgebnisse: 0,
-                  fehlendStarter: []
-                });
-              }
-              
-              const status = statusMap.get(disziplin)!;
-              status.gesamtStarter++;
-              
-              if (ergebnisseMap.has(meldungId)) {
-                status.erfassteErgebnisse++;
-              } else {
-                status.fehlendStarter.push(`${schuetze.name} (${data.vereinsname})`);
-              }
+          const disziplinName = disziplinenMap.get(data.disziplinId) || 'Unbekannt';
+          const schuetzeName = schuetzenMap.get(data.schuetzeId) || 'Unbekannt';
+          
+          if (!statusMap.has(disziplinName)) {
+            statusMap.set(disziplinName, {
+              gesamtStarter: 0,
+              erfassteErgebnisse: 0,
+              fehlendStarter: []
             });
+          }
+          
+          const status = statusMap.get(disziplinName)!;
+          status.gesamtStarter++;
+          
+          if (ergebnisseMap.has(doc.id)) {
+            status.erfassteErgebnisse++;
+          } else {
+            status.fehlendStarter.push(schuetzeName);
           }
         });
         

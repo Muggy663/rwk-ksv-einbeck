@@ -10,6 +10,8 @@ import { useKMAuth } from '@/hooks/useKMAuth';
 interface Shooter {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   rwkClubId?: string;      // Für Rundenwettkampf
   kmClubId?: string;       // Für Kreismeisterschaft
   birthYear?: number;
@@ -237,25 +239,29 @@ export default function KMMitglieder() {
   };
 
   const addShooter = async () => {
-    if (!newShooter.name?.trim()) {
-      toast({ title: 'Fehler', description: 'Name ist erforderlich', variant: 'destructive' });
+    if (!newShooter.firstName?.trim() || !newShooter.lastName?.trim()) {
+      toast({ title: 'Fehler', description: 'Vor- und Nachname sind erforderlich', variant: 'destructive' });
       return;
     }
 
     try {
-      const { ShooterSyncService } = await import('@/lib/services/shooter-sync-service');
+      const { addDoc, collection } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
       
       const shooterData = {
-        name: newShooter.name.trim(),
+        name: `${newShooter.firstName.trim()} ${newShooter.lastName.trim()}`,
+        firstName: newShooter.firstName.trim(),
+        lastName: newShooter.lastName.trim(),
         birthYear: newShooter.birthYear,
         gender: newShooter.gender,
         mitgliedsnummer: newShooter.mitgliedsnummer?.trim(),
-        kmClubId: newShooter.kmClubId || userClubIds[0]
+        kmClubId: newShooter.kmClubId || userClubIds[0],
+        createdAt: new Date()
       };
 
-      await ShooterSyncService.createShooter(shooterData, 'km_shooters');
+      await addDoc(collection(db, 'km_shooters'), shooterData);
       
-      toast({ title: 'Erfolg', description: 'Schütze in beiden Systemen hinzugefügt' });
+      toast({ title: 'Erfolg', description: 'Schütze hinzugefügt' });
       setShowAddForm(false);
       setNewShooter({});
       loadData();
@@ -527,12 +533,19 @@ export default function KMMitglieder() {
           {showAddForm && (
             <div className="mb-6 p-4 border rounded-lg bg-gray-50">
               <h3 className="font-semibold mb-3">Neuen Schützen hinzufügen</h3>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                 <input
                   type="text"
-                  placeholder="Name *"
-                  value={newShooter.name || ''}
-                  onChange={(e) => setNewShooter(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Vorname *"
+                  value={newShooter.firstName || ''}
+                  onChange={(e) => setNewShooter(prev => ({ ...prev, firstName: e.target.value }))}
+                  className="p-2 border rounded"
+                />
+                <input
+                  type="text"
+                  placeholder="Nachname *"
+                  value={newShooter.lastName || ''}
+                  onChange={(e) => setNewShooter(prev => ({ ...prev, lastName: e.target.value }))}
                   className="p-2 border rounded"
                 />
                 <select
@@ -672,7 +685,7 @@ export default function KMMitglieder() {
               </thead>
               <tbody>
                 {filteredAndSortedShooters.map((shooter, index) => (
-                  <tr key={`${shooter.id}_${index}`} className={`border-b hover:bg-gray-50 ${
+                  <tr key={`shooter_${shooter.id}_${index}_${shooter.name}`} className={`border-b hover:bg-gray-50 ${
                     selectedShooters.has(shooter.id) ? 'bg-red-50' : ''
                   }`}>
                     {bulkDeleteMode && (

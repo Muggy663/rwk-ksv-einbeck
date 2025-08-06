@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.9.9.9 (15.01.2025)</span>
+              <span>Web-Version: 0.9.9.9a (15.01.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -36,8 +36,45 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.9 - KM-Startlisten-System</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.9a - KM-Meldungen Fixes</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
+            </div>
+            <CardDescription>15.01.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Kritische Bugfixes für KM-Meldungen: Schützen-Dropdown-Sortierung, neue Schützen sichtbar, Namen-Anzeige korrigiert.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🔧 KM-Meldungen Fixes v0.9.9.9a</h4>
+              <div className="text-xs text-green-700">
+                Schützen-Dropdown funktioniert wieder vollständig
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>👥 <strong>Schützen-Dropdown-Fix:</strong> Neue Schützen erscheinen sofort in der Auswahlliste</li>
+              <li>📝 <strong>Namen-Anzeige korrigiert:</strong> Zwischenspeicher zeigt firstName + lastName korrekt an</li>
+              <li>🔤 <strong>Sortierung repariert:</strong> Dropdown sortiert alphabetisch nach Vor- und Nachnamen</li>
+              <li>🔄 <strong>API-Optimierung:</strong> /api/shooters lädt aus korrekter km_shooters Collection</li>
+              <li>✅ <strong>Konsistente Datenstruktur:</strong> Einheitliche Behandlung von name vs firstName/lastName</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🔧 KM-Meldungen Fixes</span>
+                  <p className="text-xs text-green-600 mt-1">Schützen-Dropdown + Namen-Anzeige + Sortierung</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.9.9.9a
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.9 - KM-Startlisten-System</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>15.01.2025</CardDescription>
           </CardHeader>

@@ -17,6 +17,7 @@ export default function KMMeldungen() {
   const [selectedSchuetze, setSelectedSchuetze] = useState('');
   const [selectedDisziplinen, setSelectedDisziplinen] = useState<string[]>([]);
   const [selectedClub, setSelectedClub] = useState('');
+  const [schuetzenSuche, setSchuetzenSuche] = useState('');
   const [lmTeilnahme, setLmTeilnahme] = useState<{[key: string]: boolean}>({});
   const [anmerkung, setAnmerkung] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -362,6 +363,13 @@ export default function KMMeldungen() {
                     </span>
                   )}
                 </label>
+                <input
+                  type="text"
+                  placeholder="Schütze suchen..."
+                  value={schuetzenSuche}
+                  onChange={(e) => setSchuetzenSuche(e.target.value)}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 mb-2"
+                />
                 <select 
                   value={selectedSchuetze} 
                   onChange={(e) => setSelectedSchuetze(e.target.value)}
@@ -384,11 +392,25 @@ export default function KMMeldungen() {
                       const hasAccess = schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
                       if (!hasAccess) return false;
                       
-                      if (!selectedClub) return true;
-                      // Filtere nach gewähltem Verein
-                      return schuetzeClubIds.includes(selectedClub);
+                      if (selectedClub && !schuetzeClubIds.includes(selectedClub)) return false;
+                      
+                      // Suchfilter
+                      if (schuetzenSuche) {
+                        const searchTerm = schuetzenSuche.toLowerCase();
+                        const fullName = schuetze.firstName && schuetze.lastName 
+                          ? `${schuetze.firstName} ${schuetze.lastName}` 
+                          : schuetze.name;
+                        return fullName.toLowerCase().includes(searchTerm);
+                      }
+                      
+                      return true;
                     })
-                    .sort((a, b) => a.name.localeCompare(b.name)) // Alphabetisch sortieren
+                    .sort((a, b) => {
+                      // Nach Nachname sortieren
+                      const aLastName = a.lastName || a.name?.split(' ').slice(-1)[0] || '';
+                      const bLastName = b.lastName || b.name?.split(' ').slice(-1)[0] || '';
+                      return aLastName.localeCompare(bLastName);
+                    })
                     .map(schuetze => {
                       const club = clubs.find(c => c.id === (schuetze.rwkClubId || schuetze.clubId || schuetze.kmClubId));
                       const birthYearDisplay = schuetze.birthYear || 'Jahrgang fehlt';
@@ -397,7 +419,7 @@ export default function KMMeldungen() {
                       return (
                         <option key={schuetze.id} value={schuetze.id}>
                           {schuetze.firstName && schuetze.lastName 
-                            ? `${schuetze.firstName} ${schuetze.lastName}`
+                            ? `${schuetze.lastName}, ${schuetze.firstName}`
                             : schuetze.name
                           } ({birthYearDisplay}, {genderDisplay}) - {club?.name || 'Verein unbekannt'}
                         </option>
@@ -727,7 +749,12 @@ export default function KMMeldungen() {
                       const disziplin = disziplinen.find(d => d.id === pending.disziplinId);
                       return (
                         <div key={index} className="flex justify-between items-center text-sm bg-white dark:bg-gray-800 p-2 rounded border">
-                          <span className="text-gray-900 dark:text-gray-100">{schuetze?.name} - {disziplin?.spoNummer} {disziplin?.name}</span>
+                          <span className="text-gray-900 dark:text-gray-100">
+                            {schuetze?.firstName && schuetze?.lastName 
+                              ? `${schuetze.firstName} ${schuetze.lastName}`
+                              : schuetze?.name || 'Unbekannt'
+                            } - {disziplin?.spoNummer} {disziplin?.name}
+                          </span>
                           <button 
                             onClick={() => setPendingMeldungen(prev => prev.filter((_, i) => i !== index))}
                             className="text-red-600 hover:text-red-800 text-xs px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-950/30"

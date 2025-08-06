@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Download, Users, Clock, Target, Save, FileText, Plus, Minus, Brain, AlertTriangle, Lightbulb } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, doc, getDoc, query, where, addDoc, updateDoc } from 'firebase/firestore';
@@ -59,6 +59,7 @@ export default function GenerierenPage() {
   const [gruppenZeitOffset, setGruppenZeitOffset] = useState<number>(0);
   const [showAbsageDialog, setShowAbsageDialog] = useState(false);
   const [startlisteGesperrt, setStartlisteGesperrt] = useState(false);
+  const [selectedAbsageStarter, setSelectedAbsageStarter] = useState<string[]>([]);
   const [kiAnalyse, setKiAnalyse] = useState<KIAnalyse | null>(null);
   const [showKiPanel, setShowKiPanel] = useState(false);
   const [disziplinen, setDisziplinen] = useState<any[]>([]);
@@ -459,6 +460,8 @@ export default function GenerierenPage() {
 
 
 
+
+
   const exportToPDF = async () => {
     await saveStartliste();
     
@@ -511,7 +514,14 @@ export default function GenerierenPage() {
         doc.text(disziplin, 20, yPosition);
         yPosition += 10;
         
-        const tableData = starter.map((s, index) => [
+        // Sortiere nach Ständen
+        const sortedStarter = starter.sort((a, b) => {
+          const standA = parseInt(a.stand || '0');
+          const standB = parseInt(b.stand || '0');
+          return standA - standB;
+        });
+        
+        const tableData = sortedStarter.map((s, index) => [
           (index + 1).toString(),
           s.name,
           s.verein,
@@ -758,7 +768,13 @@ export default function GenerierenPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {filteredStartliste.map(starter => (
+                {filteredStartliste
+                  .sort((a, b) => {
+                    const standA = parseInt(a.stand || '0');
+                    const standB = parseInt(b.stand || '0');
+                    return standA - standB;
+                  })
+                  .map(starter => (
                   <div key={starter.id} className="grid grid-cols-12 gap-2 p-2 bg-green-50 border border-green-200 rounded text-sm items-center">
                     <div className="col-span-3">
                       <div className="font-medium">{starter.name}</div>
@@ -781,7 +797,11 @@ export default function GenerierenPage() {
                       )}
                     </div>
                     <div className="col-span-2">
-                      <Select value={starter.stand} onValueChange={(value) => handleStarterChange(starter.id, 'stand', value)}>
+                      <Select 
+                        value={starter.stand} 
+                        onValueChange={(value) => handleStarterChange(starter.id, 'stand', value)}
+                        disabled={startlisteGesperrt}
+                      >
                         <SelectTrigger className="h-8">
                           <SelectValue />
                         </SelectTrigger>
@@ -798,6 +818,7 @@ export default function GenerierenPage() {
                         value={starter.startzeit}
                         onChange={(e) => handleStarterChange(starter.id, 'startzeit', e.target.value)}
                         className="h-8"
+                        disabled={startlisteGesperrt}
                       />
                     </div>
                     <div className="col-span-1 text-center">
@@ -807,12 +828,85 @@ export default function GenerierenPage() {
                       )}
                     </div>
                   </div>
-                ))}
+                  ))}
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Absage Dialog */}
+      <Dialog open={showAbsageDialog} onOpenChange={setShowAbsageDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Starter als abgesagt markieren</DialogTitle>
+            <DialogDescription>
+              Wählen Sie die Starter aus, die abgesagt haben. Nachrücker werden automatisch hinzugefügt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="max-h-64 overflow-y-auto space-y-2">
+              {startliste.map(starter => (
+                <div key={starter.id} className="flex items-center space-x-2 p-2 border rounded">
+                  <input
+                    type="checkbox"
+                    checked={selectedAbsageStarter.includes(starter.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedAbsageStarter(prev => [...prev, starter.id]);
+                      } else {
+                        setSelectedAbsageStarter(prev => prev.filter(id => id !== starter.id));
+                      }
+                    }}
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium">{starter.name}</div>
+                    <div className="text-sm text-gray-500">{starter.verein} - {starter.disziplin} - Stand {starter.stand}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => {
+                setShowAbsageDialog(false);
+                setSelectedAbsageStarter([]);
+              }}>
+                Abbrechen
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={() => {
+                  // Entferne abgesagte Starter
+                  const neueStartliste = startliste.filter(s => !selectedAbsageStarter.includes(s.id));
+                  
+                  // Füge Nachrücker hinzu
+                  const nachrücker = nichtZugeteilte.slice(0, selectedAbsageStarter.length);
+                  nachrücker.forEach(starter => {
+                    neueStartliste.push({
+                      ...starter,
+                      stand: config?.verfuegbareStaende[0] || '1',
+                      startzeit: '09:00',
+                      durchgang: 1
+                    });
+                  });
+                  
+                  setStartliste(neueStartliste);
+                  setShowAbsageDialog(false);
+                  setSelectedAbsageStarter([]);
+                  
+                  toast({ 
+                    title: 'Absagen verarbeitet', 
+                    description: `${selectedAbsageStarter.length} Starter abgesagt, ${nachrücker.length} Nachrücker hinzugefügt.` 
+                  });
+                }}
+                disabled={selectedAbsageStarter.length === 0}
+              >
+                {selectedAbsageStarter.length} Starter absagen
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Gruppen-Anpassung Dialog */}
       <Dialog open={showGruppenDialog} onOpenChange={setShowGruppenDialog}>

@@ -37,6 +37,7 @@ export default function StartlistenPage() {
   const [disziplinen, setDisziplinen] = useState<Array<{spoNummer: number, name: string}>>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('luftdruck');
   
   const [config, setConfig] = useState<StartlistConfig>({
     austragungsort: '',
@@ -281,6 +282,151 @@ export default function StartlistenPage() {
           </CardContent>
         </Card>
 
+        {/* Disziplinen */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Disziplinen auswählen
+            </CardTitle>
+            <CardDescription>
+              Wählen Sie die Disziplinen aus, die an diesem Wettkampftag ausgetragen werden
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4">
+              <div className="flex border-b">
+                {[
+                  { key: 'luftdruck', label: 'Luftdruck', range: [1] },
+                  { key: 'kleinkaliber', label: 'Kleinkaliber', range: [2] },
+                  { key: 'licht', label: 'Licht', range: [11] },
+                  { key: 'blasrohr', label: 'Blasrohr', range: [] },
+                  { key: 'andere', label: 'Andere', range: [4, 5, 6, 7, 8, 9] }
+                ].map(kategorie => {
+                  const count = disziplinen.filter(d => {
+                    const disziplinName = d.name?.toLowerCase() || '';
+                    switch(kategorie.key) {
+                      case 'luftdruck': return disziplinName.includes('luftgewehr') || disziplinName.includes('luftpistole') || disziplinName.includes('10m luftpistole') || disziplinName.includes('10 m luftpistole');
+                      case 'kleinkaliber': return (disziplinName.includes('kk') || disziplinName.includes('kleinkaliber') || disziplinName.includes('pistole') || disziplinName.includes('pistol')) && !disziplinName.includes('100m') && !disziplinName.includes('50m') && !disziplinName.includes('luftpistole') && !disziplinName.includes('lichtpistole');
+                      case 'licht': return disziplinName.includes('licht');
+                      case 'blasrohr': return disziplinName.includes('blasrohr');
+                      case 'andere': return (!disziplinName.includes('luftgewehr') && !disziplinName.includes('luftpistole') && !disziplinName.includes('licht') && !disziplinName.includes('blasrohr')) && (disziplinName.includes('100m') || (!disziplinName.includes('kk') && !disziplinName.includes('kleinkaliber') && !disziplinName.includes('pistole') && !disziplinName.includes('pistol')));
+                      default: return false;
+                    }
+                  }).length;
+                  return (
+                    <button
+                      key={kategorie.key}
+                      onClick={() => setActiveTab(kategorie.key)}
+                      className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                        activeTab === kategorie.key
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      {kategorie.label} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-2 w-12">Auswählen</th>
+                    <th className="text-left p-2 w-16">SPO-Nr.</th>
+                    <th className="text-left p-2">Disziplin</th>
+                    <th className="text-left p-2 w-20">Typ</th>
+                    <th className="text-left p-2 w-24">Schießzeit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {disziplinen
+                    .filter(d => {
+                      const spoStr = d.spoNummer?.toString() || '';
+                      const firstDigit = parseInt(spoStr.charAt(0)) || 0;
+                      
+                      const disziplinName = d.name?.toLowerCase() || '';
+                      
+                      switch(activeTab) {
+                        case 'luftdruck': return disziplinName.includes('luftgewehr') || disziplinName.includes('luftpistole') || disziplinName.includes('10m luftpistole') || disziplinName.includes('10 m luftpistole');
+                        case 'kleinkaliber': return (disziplinName.includes('kk') || disziplinName.includes('kleinkaliber') || disziplinName.includes('pistole') || disziplinName.includes('pistol')) && !disziplinName.includes('100m') && !disziplinName.includes('50m') && !disziplinName.includes('luftpistole') && !disziplinName.includes('lichtpistole');
+                        case 'licht': return disziplinName.includes('licht');
+                        case 'blasrohr': return disziplinName.includes('blasrohr');
+                        case 'andere': return (!disziplinName.includes('luftgewehr') && !disziplinName.includes('luftpistole') && !disziplinName.includes('licht') && !disziplinName.includes('blasrohr')) && (disziplinName.includes('100m') || (!disziplinName.includes('kk') && !disziplinName.includes('kleinkaliber') && !disziplinName.includes('pistole') && !disziplinName.includes('pistol')));
+                        default: return true;
+                      }
+                    })
+                    .sort((a, b) => (a.spoNummer || 0) - (b.spoNummer || 0))
+                    .map(disziplin => {
+                      const avgTime = config.altersklassen.length > 0 
+                        ? Math.round(config.altersklassen.reduce((sum, ak) => 
+                            sum + getSchiesszeit(disziplin, ak, config.anlagensystem), 0
+                          ) / config.altersklassen.length)
+                        : (config.anlagensystem === 'zuganlagen' 
+                            ? (disziplin.schiesszeit_zuganlagen || 90)
+                            : (disziplin.schiesszeit_andere || 90));
+                      
+                      return (
+                        <tr key={disziplin.name} className={`border-b hover:bg-gray-50 ${
+                          config.disziplinen.includes(disziplin.name) ? 'bg-blue-50' : ''
+                        }`}>
+                          <td className="p-2">
+                            <Checkbox
+                              id={disziplin.name}
+                              checked={config.disziplinen.includes(disziplin.name)}
+                              onCheckedChange={(checked) => handleDisziplinChange(disziplin.name, checked as boolean)}
+                            />
+                          </td>
+                          <td className="p-2 font-mono font-medium">
+                            {disziplin.spoNummer || '-'}
+                          </td>
+                          <td className="p-2">
+                            <Label htmlFor={disziplin.name} className="cursor-pointer">
+                              {disziplin.name}
+                            </Label>
+                          </td>
+                          <td className="p-2">
+                            <span className={`px-2 py-1 text-xs rounded ${
+                              disziplin.auflage 
+                                ? 'bg-blue-100 text-blue-800' 
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {disziplin.auflage ? 'Auflage' : 'Freihand'}
+                            </span>
+                          </td>
+                          <td className="p-2 font-medium">
+                            {avgTime} Min
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+            
+            {disziplinen.length === 0 && !loading && (
+              <div className="text-center py-4 text-muted-foreground">
+                Keine KM-Disziplinen in der Datenbank gefunden.
+              </div>
+            )}
+            
+            {config.disziplinen.length > 0 && (
+              <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                <p className="text-sm text-green-700">
+                  <strong>{config.disziplinen.length}</strong> Disziplin{config.disziplinen.length !== 1 ? 'en' : ''} ausgewählt
+                </p>
+                <div className="text-xs text-green-600 mt-1">
+                  Auflage: {disziplinen.filter(d => config.disziplinen.includes(d.name) && d.auflage).length} • 
+                  Freihand: {disziplinen.filter(d => config.disziplinen.includes(d.name) && !d.auflage).length}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Zeitplanung */}
         <Card>
           <CardHeader>
@@ -301,8 +447,8 @@ export default function StartlistenPage() {
                   type="number"
                   min="30"
                   max="180"
-                  value={config.durchgangsDauer}
-                  onChange={(e) => setConfig(prev => ({...prev, durchgangsDauer: parseInt(e.target.value) || 90}))}
+                  value={config.durchgangsDauer || ''}
+                  onChange={(e) => setConfig(prev => ({...prev, durchgangsDauer: e.target.value === '' ? '' : parseInt(e.target.value) || 90}))}
                 />
                 {config.disziplinen.length > 0 && (
                   <div className="text-xs text-gray-600">
@@ -420,93 +566,6 @@ export default function StartlistenPage() {
                     </div>
                   </div>
                 )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Disziplinen */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              Disziplinen auswählen
-            </CardTitle>
-            <CardDescription>
-              Wählen Sie die Disziplinen aus, die an diesem Wettkampftag ausgetragen werden
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {disziplinen.map(disziplin => (
-                <div key={disziplin.name} className="p-3 border rounded-lg">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Checkbox
-                      id={disziplin.name}
-                      checked={config.disziplinen.includes(disziplin.name)}
-                      onCheckedChange={(checked) => handleDisziplinChange(disziplin.name, checked as boolean)}
-                    />
-                    <Label htmlFor={disziplin.name} className="text-sm font-medium">
-                      {disziplin.spoNummer ? `${disziplin.spoNummer} - ` : ''}{disziplin.name}
-                    </Label>
-                    <div className="flex gap-2 ml-auto">
-                      {disziplin.auflage && (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                          Auflage
-                        </span>
-                      )}
-                      {!disziplin.auflage && (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                          Freihand
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-600 ml-6">
-                    {disziplin.schusszahlen ? (
-                      <div className="space-y-1">
-                        <div className="font-medium">🕰️ Schießzeiten ({config.anlagensystem === 'zuganlagen' ? 'Zuganlagen' : 'Elektronische Anlagen'}):</div>
-                        {disziplin.schusszahlen.map((schussConfig: any, index: number) => (
-                          <div key={index} className="flex justify-between">
-                            <span>{schussConfig.altersklassen.join(', ')}: {schussConfig.schusszahl} Schuss</span>
-                            <span className="font-medium">
-                              {config.anlagensystem === 'zuganlagen' 
-                                ? schussConfig.schiesszeit_zuganlagen 
-                                : schussConfig.schiesszeit_andere
-                              } Min
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div>
-                        🕰️ Schießzeit: {config.anlagensystem === 'zuganlagen' 
-                          ? (disziplin.schiesszeit_zuganlagen || disziplin.schiesszeit_minuten || 90)
-                          : (disziplin.schiesszeit_andere || disziplin.schiesszeit_minuten || 90)
-                        } Minuten ({config.anlagensystem === 'zuganlagen' ? 'Zuganlagen' : 'Elektronische Anlagen'})
-                      </div>
-                    )}
-                    {disziplin.auflage && " • Senioren-Klassen ab 41 Jahren"}
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {disziplinen.length === 0 && !loading && (
-              <div className="text-center py-4 text-muted-foreground">
-                Keine KM-Disziplinen in der Datenbank gefunden.
-              </div>
-            )}
-            
-            {config.disziplinen.length > 0 && (
-              <div className="mt-4 p-3 bg-green-50 rounded-lg">
-                <p className="text-sm text-green-700">
-                  <strong>{config.disziplinen.length}</strong> Disziplin{config.disziplinen.length !== 1 ? 'en' : ''} ausgewählt
-                </p>
-                <div className="text-xs text-green-600 mt-1">
-                  Auflage: {disziplinen.filter(d => config.disziplinen.includes(d.name) && d.auflage).length} • 
-                  Freihand: {disziplinen.filter(d => config.disziplinen.includes(d.name) && !d.auflage).length}
-                </div>
               </div>
             )}
           </CardContent>

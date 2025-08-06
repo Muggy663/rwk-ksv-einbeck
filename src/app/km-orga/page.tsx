@@ -279,6 +279,9 @@ export default function KMAdminDashboard() {
               <Link href="/km-orga/mitglieder">
                 <Button variant="outline" className="w-full">Alle Mitglieder</Button>
               </Link>
+              <Link href="/km-orga/startgebuehren">
+                <Button variant="outline" className="w-full">💰 Startgebühren-Übersicht</Button>
+              </Link>
               <Link href="/km-orga/mannschaften">
                 <Button variant="outline" className="w-full">Mannschaften verwalten</Button>
               </Link>

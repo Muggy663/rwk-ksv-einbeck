@@ -6,7 +6,7 @@ export class ShooterSyncService {
   
   // Schütze in beide Collections erstellen
   static async createShooter(shooterData: any, sourceCollection: 'km_shooters' | 'rwk_shooters') {
-    const shooterId = shooterData.id || doc(db, sourceCollection).id;
+    const shooterId = shooterData.id || doc(db, 'temp').id;
     
     try {
       // In Quell-Collection erstellen
