@@ -268,18 +268,19 @@ export default function StartlistenUebersichtPage() {
                     <div>
                       <CardTitle className="flex items-center gap-2">
                         <Target className="h-5 w-5" />
-                        Startliste - {vereine[config?.austragungsort || ''] || 'Unbekannt'}
+                        Startliste - {config ? (vereine[config.austragungsort] || 'Einbecker Schützengilde') : 'Einbecker Schützengilde'}
                       </CardTitle>
                       <CardDescription className="flex items-center gap-4 mt-2">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          {new Date(liste.datum).toLocaleDateString('de-DE')}
+                          {new Date(liste.datum).toLocaleDateString('de-DE')} um {config?.startUhrzeit || '09:00'} Uhr
                         </span>
                         <span>{liste.startliste.length} Starter</span>
+                        <span>{Math.max(...liste.startliste.map((s: any) => s.durchgang || 1))} Durchgänge</span>
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <Link href={`/km-orga/startlisten/generieren/${liste.id}`}>
+                      <Link href={`/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`}>
                         <Button 
                           variant="outline" 
                           size="sm"
@@ -310,7 +311,13 @@ export default function StartlistenUebersichtPage() {
                     
                     <div className="flex justify-between items-center pt-2">
                       <span className="text-xs text-muted-foreground">
-                        Gespeichert: {liste.createdAt.toLocaleDateString('de-DE')}
+                        Gespeichert: {(() => {
+                          const date = liste.updatedAt ? (liste.updatedAt.toDate ? liste.updatedAt.toDate() : new Date(liste.updatedAt)) : liste.createdAt;
+                          return date.toLocaleDateString('de-DE');
+                        })()} um {(() => {
+                          const date = liste.updatedAt ? (liste.updatedAt.toDate ? liste.updatedAt.toDate() : new Date(liste.updatedAt)) : liste.createdAt;
+                          return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                        })()} Uhr
                       </span>
                       <div className="flex gap-2">
                         <Button 

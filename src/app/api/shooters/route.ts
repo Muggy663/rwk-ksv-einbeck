@@ -8,74 +8,28 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const includeMembers = url.searchParams.get('includeMembers') === 'true';
     
-    // Lade RWK-Schützen
-    const rwkSnapshot = await getDocs(collection(db, 'rwk_shooters'));
-    const rwkShooters = rwkSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      source: 'rwk'
-    }));
+    let allShooters = [];
     
-    let allShooters = [...rwkShooters];
-    
-    // Für KM: Lade auch Vereinsmitglieder
     if (includeMembers) {
+      // Für KM: Lade nur KM-Schützen
       try {
-        const membersSnapshot = await getDocs(collection(db, 'club_members'));
-        const clubMembers = membersSnapshot.docs.map(doc => ({
+        const kmSnapshot = await getDocs(collection(db, 'km_shooters'));
+        allShooters = kmSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-          source: 'club_member'
+          source: 'km_shooter'
         }));
-        
-        // Lade Vereine für Namen-Matching
-        const clubsSnapshot = await getDocs(collection(db, 'clubs'));
-        const clubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        // Robustes Vereins-Matching
-        const normalizeString = (str) => {
-          return str
-            .toLowerCase()
-            .trim()
-            .replace(/ä/g, 'ae')
-            .replace(/ö/g, 'oe')
-            .replace(/ü/g, 'ue')
-            .replace(/ß/g, 'ss')
-            .replace(/[^a-z0-9]/g, '');
-        };
-        
-        const findClubByName = (excelName, clubs) => {
-          const normalizedExcel = normalizeString(excelName);
-          return clubs.find(club => 
-            normalizeString(club.name).includes(normalizedExcel) ||
-            normalizedExcel.includes(normalizeString(club.name))
-          );
-        };
-        
-        // Füge Mitglieder hinzu, die nicht bereits als RWK-Schützen vorhanden sind
-        clubMembers.forEach(member => {
-          if (!member.name) return;
-          
-          // Vereins-ID durch Namen-Matching finden
-          if (member.clubName && !member.clubId) {
-            const matchedClub = findClubByName(member.clubName, clubs);
-            if (matchedClub) {
-              member.clubId = matchedClub.id;
-              member.clubName = matchedClub.name; // Normalisieren
-            }
-          }
-          
-          const existsInRwk = rwkShooters.some(rwk => 
-            rwk.name === member.name && (rwk.clubId === member.clubId || rwk.rwkClubId === member.clubId)
-          );
-          
-          if (!existsInRwk) {
-            allShooters.push(member);
-          }
-        });
-      } catch (memberError) {
-        console.warn('club_members Collection nicht gefunden, verwende nur RWK-Schützen');
+      } catch (kmError) {
+        console.warn('km_shooters Collection nicht gefunden');
       }
+    } else {
+      // Für RWK: Lade RWK-Schützen
+      const rwkSnapshot = await getDocs(collection(db, 'rwk_shooters'));
+      allShooters = rwkSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        source: 'rwk'
+      }));
     }
 
     return NextResponse.json({

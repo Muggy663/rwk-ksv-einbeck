@@ -407,21 +407,43 @@ export default function KMMeldungen() {
                     })
                     .sort((a, b) => {
                       // Nach Nachname sortieren
-                      const aLastName = a.lastName || a.name?.split(' ').slice(-1)[0] || '';
-                      const bLastName = b.lastName || b.name?.split(' ').slice(-1)[0] || '';
-                      return aLastName.localeCompare(bLastName);
+                      const getLastName = (schuetze) => {
+                        if (schuetze.lastName) return schuetze.lastName;
+                        if (schuetze.name) {
+                          const parts = schuetze.name.trim().split(' ');
+                          return parts.length >= 2 ? parts.pop() : schuetze.name;
+                        }
+                        return '';
+                      };
+                      
+                      return getLastName(a).localeCompare(getLastName(b));
                     })
                     .map(schuetze => {
                       const club = clubs.find(c => c.id === (schuetze.rwkClubId || schuetze.clubId || schuetze.kmClubId));
                       const birthYearDisplay = schuetze.birthYear || 'Jahrgang fehlt';
                       const genderDisplay = schuetze.gender === 'male' ? 'm' : schuetze.gender === 'female' ? 'w' : 'Geschlecht fehlt';
                       
+                      // Intelligente Namen-Anzeige
+                      let displayName;
+                      if (schuetze.firstName && schuetze.lastName) {
+                        displayName = `${schuetze.lastName}, ${schuetze.firstName}`;
+                      } else if (schuetze.name) {
+                        // Wenn name "Vorname Nachname" Format hat, umdrehen
+                        const nameParts = schuetze.name.trim().split(' ');
+                        if (nameParts.length >= 2) {
+                          const lastName = nameParts.pop();
+                          const firstName = nameParts.join(' ');
+                          displayName = `${lastName}, ${firstName}`;
+                        } else {
+                          displayName = schuetze.name;
+                        }
+                      } else {
+                        displayName = 'Unbekannt';
+                      }
+                      
                       return (
                         <option key={schuetze.id} value={schuetze.id}>
-                          {schuetze.firstName && schuetze.lastName 
-                            ? `${schuetze.lastName}, ${schuetze.firstName}`
-                            : schuetze.name
-                          } ({birthYearDisplay}, {genderDisplay}) - {club?.name || 'Verein unbekannt'}
+                          {displayName} ({birthYearDisplay}, {genderDisplay}) - {club?.name || 'Verein unbekannt'}
                         </option>
                       );
                     })}
@@ -682,16 +704,7 @@ export default function KMMeldungen() {
                 />
               </div>
 
-              {/* Weitere Anmerkungen */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Weitere Anmerkungen</label>
-                <textarea
-                  value={anmerkung}
-                  onChange={(e) => setAnmerkung(e.target.value)}
-                  placeholder="z.B. bitte nicht mit Ehemann zusammen starten lassen"
-                  className="w-full p-2 border border-gray-300 rounded h-16"
-                />
-              </div>
+
 
               {/* Buttons */}
               <div className="flex gap-2">

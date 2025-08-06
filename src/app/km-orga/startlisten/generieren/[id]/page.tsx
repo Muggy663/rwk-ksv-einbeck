@@ -66,36 +66,65 @@ export default function GenerierenPage() {
 
   useEffect(() => {
     const loadData = async () => {
+      console.log('loadData started, params.id:', params.id);
       try {
         // Prüfe ob es eine Konfiguration oder gespeicherte Startliste ist
         let configData: StartlistConfig;
         let existingStartliste: Starter[] | null = null;
         
-        // Versuche zuerst als Konfiguration zu laden
-        const configDoc = await getDoc(doc(db, 'km_startlisten_configs', params.id as string));
-        if (configDoc.exists()) {
-          configData = configDoc.data() as StartlistConfig;
-        } else {
-          // Versuche als gespeicherte Startliste zu laden
-          const startlisteDoc = await getDoc(doc(db, 'km_startlisten', params.id as string));
+        // Prüfe ob startlisteId Parameter vorhanden ist
+        const urlParams = new URLSearchParams(window.location.search);
+        const startlisteId = urlParams.get('startlisteId');
+        console.log('startlisteId from URL:', startlisteId);
+        
+        if (startlisteId) {
+          console.log('Loading existing startliste with ID:', startlisteId);
+          // Lade gespeicherte Startliste
+          const startlisteDoc = await getDoc(doc(db, 'km_startlisten', startlisteId));
+          console.log('startlisteDoc exists:', startlisteDoc.exists());
           if (startlisteDoc.exists()) {
             const startlisteData = startlisteDoc.data();
             existingStartliste = startlisteData.startliste;
+            console.log('existingStartliste loaded:', existingStartliste?.length, 'items');
             
             // Lade die zugehörige Konfiguration
             const relatedConfigDoc = await getDoc(doc(db, 'km_startlisten_configs', startlisteData.configId));
+            console.log('relatedConfigDoc exists:', relatedConfigDoc.exists());
             if (relatedConfigDoc.exists()) {
               configData = relatedConfigDoc.data() as StartlistConfig;
+              console.log('configData loaded:', configData);
             } else {
-              toast({ title: 'Fehler', description: 'Zugehörige Konfiguration nicht gefunden.', variant: 'destructive' });
-              return;
+              console.warn('Config not found, creating minimal config from startliste data');
+              // Erstelle minimale Konfiguration aus Startliste
+              const staende = [...new Set(existingStartliste.map(s => s.stand))].sort();
+              const disziplinen = [...new Set(existingStartliste.map(s => s.disziplin))];
+              configData = {
+                austragungsort: '1icqJ91FFStTBn6ORukx', // Einbecker Schützengilde
+                verfuegbareStaende: staende,
+                startDatum: startlisteData.datum,
+                startUhrzeit: '09:00',
+                durchgangsDauer: 50,
+                wechselzeit: 15,
+                disziplinen: disziplinen
+              } as StartlistConfig;
+              console.log('minimal configData created:', configData);
             }
           } else {
-            toast({ title: 'Fehler', description: 'Konfiguration oder Startliste nicht gefunden.', variant: 'destructive' });
+            toast({ title: 'Fehler', description: 'Startliste nicht gefunden.', variant: 'destructive' });
+            return;
+          }
+        } else {
+          // Lade Konfiguration für neue Startliste
+          const configDoc = await getDoc(doc(db, 'km_startlisten_configs', params.id as string));
+          if (configDoc.exists()) {
+            configData = configDoc.data() as StartlistConfig;
+          } else {
+            toast({ title: 'Fehler', description: 'Konfiguration nicht gefunden.', variant: 'destructive' });
             return;
           }
         }
         
+        console.log('Setting config:', configData);
         setConfig(configData);
 
         // Disziplinen mit Schießzeiten laden (ZUERST!)
@@ -157,6 +186,7 @@ export default function GenerierenPage() {
               name: name,
               verein: vereinsname,
               disziplin: disziplinName,
+              gewehrSharingHinweis: data.anmerkung || null,
               vmErgebnis: data.vmErgebnis ? {
                 ringe: data.vmErgebnis.ringe,
                 teiler: data.vmErgebnis.teiler || 0,
@@ -179,8 +209,11 @@ export default function GenerierenPage() {
         // Disziplinen bereits geladen
         
         // Verwende existierende Startliste oder generiere neue
+        let finalStartliste;
         if (existingStartliste) {
+          console.log('Setting existing startliste:', existingStartliste.length, 'items');
           setStartliste(existingStartliste);
+          finalStartliste = existingStartliste;
           toast({ 
             title: '📝 Startliste geladen', 
             description: 'Gespeicherte Startliste wurde zum Bearbeiten geladen.',
@@ -191,10 +224,10 @@ export default function GenerierenPage() {
           const basisStartliste = generiereStartliste(meldungen, configData, disziplinenData);
           const optimierteStartliste = optimizeStartlist(basisStartliste, configData);
           setStartliste(optimierteStartliste);
+          finalStartliste = optimierteStartliste;
         }
         
         // KI-Analyse durchführen
-        const finalStartliste = existingStartliste || optimierteStartliste;
         const analyse = analyzeStartlist(meldungen, finalStartliste, configData);
         setKiAnalyse(analyse);
         
@@ -205,6 +238,7 @@ export default function GenerierenPage() {
         console.error('Fehler beim Laden:', error);
         toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden.', variant: 'destructive' });
       } finally {
+        console.log('loadData finished, setting loading to false');
         setLoading(false);
       }
     };
@@ -269,9 +303,32 @@ export default function GenerierenPage() {
       
       let standIndex = 0;
       
-      // Gruppiere Starter mit Gewehr-Sharing
+      // Finde alle Gewehr-Sharing-Paare
+      const gewehrSharing = new Map<string, string[]>();
+      sortiertStarter.forEach(s => {
+        if (s.gewehrSharingHinweis) {
+          const nameMatches = s.gewehrSharingHinweis.match(/([A-Za-z\s]+(?:\s[A-Za-z]+)+)/g);
+          if (nameMatches) {
+            const partnerName = nameMatches[0].trim();
+            const key = [s.name, partnerName].sort().join('_');
+            if (!gewehrSharing.has(key)) gewehrSharing.set(key, []);
+            gewehrSharing.get(key)!.push(s.name, partnerName);
+          }
+        }
+      });
+      
+      // Gruppiere Starter
       const gewehrGroups = sortiertStarter.reduce((acc, s) => {
-        const key = s.gewehrSharingHinweis || `solo_${s.id}`;
+        let key = `solo_${s.id}`;
+        
+        // Prüfe ob Schütze in Gewehr-Sharing-Gruppe ist
+        for (const [groupKey, namen] of gewehrSharing.entries()) {
+          if (namen.includes(s.name)) {
+            key = `sharing_${groupKey}`;
+            break;
+          }
+        }
+        
         if (!acc[key]) acc[key] = [];
         acc[key].push(s);
         return acc;
@@ -279,28 +336,40 @@ export default function GenerierenPage() {
 
       Object.values(gewehrGroups).forEach(gruppe => {
         const schiesszeit = gruppe[0].schiesszeit || config.durchgangsDauer;
-        const zusatzzeit = gruppe.length > 1 ? config.wechselzeit : 0; // Extra Zeit für Gewehr-Sharing
         
-        gruppe.forEach((s, index) => {
-          if (standIndex === 0 && index === 0 && startliste.length > 0) {
-            // Nächster Durchgang
-            durchgang++;
+        if (gruppe.length > 1) {
+          // Gewehr-Sharing: Gleicher Stand, unterschiedliche Zeiten
+          const gruppenStand = config.verfuegbareStaende[standIndex];
+          
+          gruppe.forEach((s, index) => {
+            // Individuelle Startzeit für Gewehr-Sharing
             const [hours, minutes] = currentTime.split(':').map(Number);
-            const totalMinutes = hours * 60 + minutes + schiesszeit + config.wechselzeit + zusatzzeit;
+            const offsetMinutes = index * (schiesszeit + config.wechselzeit);
+            const totalMinutes = hours * 60 + minutes + offsetMinutes;
             const newHours = Math.floor(totalMinutes / 60);
             const newMinutes = totalMinutes % 60;
-            currentTime = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
-          }
+            const individualStartzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
 
+            startliste.push({
+              ...s,
+              stand: gruppenStand,
+              startzeit: individualStartzeit,
+              durchgang
+            });
+          });
+          
+          standIndex = (standIndex + 1) % staendeAnzahl;
+        } else {
+          // Einzelschütze ohne Gewehr-Sharing
           startliste.push({
-            ...s,
+            ...gruppe[0],
             stand: config.verfuegbareStaende[standIndex],
             startzeit: currentTime,
             durchgang
           });
 
           standIndex = (standIndex + 1) % staendeAnzahl;
-        });
+        }
       });
     });
 
@@ -331,18 +400,34 @@ export default function GenerierenPage() {
   const saveStartliste = async () => {
     console.log('Speichere Startliste...', { configId: params.id, startliste });
     try {
-      const docRef = await addDoc(collection(db, 'km_startlisten'), {
-        configId: params.id,
-        startliste,
-        datum: config?.startDatum,
-        createdAt: new Date()
-      });
-      console.log('Startliste gespeichert mit ID:', docRef.id);
-      toast({ 
-        title: '✅ Gespeichert', 
-        description: `Startliste wurde erfolgreich gespeichert (ID: ${docRef.id.substring(0, 8)}...)`,
-        duration: 3000
-      });
+      const urlParams = new URLSearchParams(window.location.search);
+      const startlisteId = urlParams.get('startlisteId');
+      
+      if (startlisteId) {
+        // Bestehende Startliste überschreiben
+        await updateDoc(doc(db, 'km_startlisten', startlisteId), {
+          startliste,
+          updatedAt: new Date()
+        });
+        toast({ 
+          title: '✅ Aktualisiert', 
+          description: 'Startliste wurde erfolgreich überschrieben.',
+          duration: 3000
+        });
+      } else {
+        // Neue Startliste erstellen
+        const docRef = await addDoc(collection(db, 'km_startlisten'), {
+          configId: params.id,
+          startliste,
+          datum: config?.startDatum,
+          createdAt: new Date()
+        });
+        toast({ 
+          title: '✅ Gespeichert', 
+          description: `Neue Startliste wurde erfolgreich erstellt (ID: ${docRef.id.substring(0, 8)}...)`,
+          duration: 3000
+        });
+      }
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
       toast({ title: 'Fehler', description: 'Startliste konnte nicht gespeichert werden.', variant: 'destructive' });
@@ -416,16 +501,64 @@ export default function GenerierenPage() {
   };
 
   const handleNachmeldung = (starter: Starter) => {
-    // Füge Starter zur Startliste hinzu
-    const neuerStarter = {
-      ...starter,
-      stand: config?.verfuegbareStaende[0] || '1',
-      startzeit: '09:00', // Standard-Zeit
-      durchgang: 1
-    };
+    setStartliste(prev => {
+      // Prüfe auf Gewehr-Sharing-Konflikte
+      if (starter.gewehrSharingHinweis && starter.gewehrSharingHinweis.includes('Marcel Leiding')) {
+        const marcel = prev.find(s => s.name === 'Marcel Leiding');
+        
+        if (marcel) {
+          // Marcel gefunden - gleicher Stand, spätere Zeit
+          const [hours, minutes] = marcel.startzeit!.split(':').map(Number);
+          const schiesszeit = config?.durchgangsDauer || 60;
+          const wechselzeit = config?.wechselzeit || 15;
+          const totalMinutes = hours * 60 + minutes + schiesszeit + wechselzeit;
+          const newHours = Math.floor(totalMinutes / 60);
+          const newMinutes = totalMinutes % 60;
+          const neueStartzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
+          
+          const neuerStarter = {
+            ...starter,
+            stand: marcel.stand,
+            startzeit: neueStartzeit,
+            durchgang: marcel.durchgang + 1
+          };
+          
+          return [...prev, neuerStarter];
+        }
+      }
+      
+      // Finde freien Stand zur aktuellen Zeit
+      const currentTime = '09:00';
+      const belegteStaende = prev.filter(s => s.startzeit === currentTime).map(s => s.stand);
+      const freierStand = config?.verfuegbareStaende.find(stand => !belegteStaende.includes(stand)) || config?.verfuegbareStaende[0] || '1';
+      
+      const neuerStarter = {
+        ...starter,
+        stand: freierStand,
+        startzeit: currentTime,
+        durchgang: 1
+      };
+      
+      return [...prev, neuerStarter];
+    });
     
-    setStartliste(prev => [...prev, neuerStarter]);
-    toast({ title: 'Nachmeldung', description: `${starter.name} zur Startliste hinzugefügt.` });
+    // KI-Analyse nach Hinzufügung aktualisieren
+    setTimeout(() => {
+      if (config) {
+        setStartliste(current => {
+          const neueAnalyse = analyzeStartlist(alleMeldungen, current, config);
+          setKiAnalyse(neueAnalyse);
+          return current;
+        });
+      }
+    }, 100);
+    
+    toast({ 
+      title: 'Nachmeldung', 
+      description: starter.gewehrSharingHinweis && starter.gewehrSharingHinweis.includes('Marcel Leiding') 
+        ? `${starter.name} mit Gewehr-Sharing zu Marcel hinzugefügt.`
+        : `${starter.name} zur Startliste hinzugefügt.`
+    });
   };
 
   const handleStartlisteLock = () => {
@@ -770,65 +903,110 @@ export default function GenerierenPage() {
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {filteredStartliste
                   .sort((a, b) => {
+                    // 1. Nach Durchgang sortieren
+                    if (a.durchgang !== b.durchgang) {
+                      return (a.durchgang || 1) - (b.durchgang || 1);
+                    }
+                    // 2. Nach Stand sortieren
                     const standA = parseInt(a.stand || '0');
                     const standB = parseInt(b.stand || '0');
-                    return standA - standB;
+                    if (standA !== standB) {
+                      return standA - standB;
+                    }
+                    // 3. Nach Startzeit sortieren
+                    if (a.startzeit !== b.startzeit) {
+                      return (a.startzeit || '').localeCompare(b.startzeit || '');
+                    }
+                    // 4. Nach Namen sortieren
+                    return a.name.localeCompare(b.name);
                   })
-                  .map(starter => (
-                  <div key={starter.id} className="grid grid-cols-12 gap-2 p-2 bg-green-50 border border-green-200 rounded text-sm items-center">
-                    <div className="col-span-3">
-                      <div className="font-medium">{starter.name}</div>
-                      <div className="text-xs text-muted-foreground">{starter.verein}</div>
-                      {starter.vmErgebnis && (
-                        <div className="text-xs text-green-600 font-medium mt-1">
-                          🏆 VM: {starter.vmErgebnis.ringe}{starter.vmErgebnis.teiler ? `.${starter.vmErgebnis.teiler}` : ''}
+                  .map(starter => {
+                    // Prüfe auf Konflikte
+                    const hatKonflikt = kiAnalyse?.konflikte.some(k => k.betroffeneStarter?.includes(starter.id)) || false;
+                    const gleicheZeitStand = filteredStartliste.filter(s => 
+                      s.id !== starter.id && s.stand === starter.stand && s.startzeit === starter.startzeit
+                    ).length > 0;
+                    
+                    const bgColor = hatKonflikt || gleicheZeitStand ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200';
+                    
+                    return (
+                      <div key={starter.id} className={`grid grid-cols-12 gap-2 p-2 ${bgColor} rounded text-sm items-center`}>
+                        <div className="col-span-3">
+                          <div className="font-medium">{starter.name}</div>
+                          <div className="text-xs text-muted-foreground">{starter.verein}</div>
+                          {starter.vmErgebnis && (
+                            <div className="text-xs text-green-600 font-medium mt-1">
+                              🏆 VM: {starter.vmErgebnis.ringe}{starter.vmErgebnis.teiler ? `.${starter.vmErgebnis.teiler}` : ''}
+                            </div>
+                          )}
+                          {starter.gewehrSharingHinweis && (
+                            <div className="text-xs text-orange-600 font-medium mt-1">
+                              🔫 {starter.gewehrSharingHinweis}
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {starter.gewehrSharingHinweis && (
-                        <div className="text-xs text-orange-600 font-medium mt-1">
-                          🔫 {starter.gewehrSharingHinweis}
+                        <div className="col-span-2">
+                          <Badge variant="outline" className="text-xs">{starter.disziplin}</Badge>
+                          {starter.auflage && (
+                            <Badge variant="secondary" className="text-xs ml-1">Auflage</Badge>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div className="col-span-2">
-                      <Badge variant="outline" className="text-xs">{starter.disziplin}</Badge>
-                      {starter.auflage && (
-                        <Badge variant="secondary" className="text-xs ml-1">Auflage</Badge>
-                      )}
-                    </div>
-                    <div className="col-span-2">
-                      <Select 
-                        value={starter.stand} 
-                        onValueChange={(value) => handleStarterChange(starter.id, 'stand', value)}
-                        disabled={startlisteGesperrt}
-                      >
-                        <SelectTrigger className="h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {config.verfuegbareStaende.map(stand => (
-                            <SelectItem key={stand} value={stand}>Stand {stand}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="col-span-2">
-                      <Input
-                        type="time"
-                        value={starter.startzeit}
-                        onChange={(e) => handleStarterChange(starter.id, 'startzeit', e.target.value)}
-                        className="h-8"
-                        disabled={startlisteGesperrt}
-                      />
-                    </div>
-                    <div className="col-span-1 text-center">
-                      <Badge variant="secondary" className="text-xs">DG {starter.durchgang}</Badge>
-                      {starter.schiesszeit && starter.schiesszeit !== config?.durchgangsDauer && (
-                        <div className="text-xs text-blue-600 mt-1">{starter.schiesszeit}min</div>
-                      )}
-                    </div>
-                  </div>
-                  ))}
+                        <div className="col-span-2">
+                          <Select 
+                            value={starter.stand} 
+                            onValueChange={(value) => handleStarterChange(starter.id, 'stand', value)}
+                            disabled={startlisteGesperrt}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {config.verfuegbareStaende.map(stand => (
+                                <SelectItem key={stand} value={stand}>Stand {stand}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="col-span-2">
+                          <Input
+                            type="time"
+                            value={starter.startzeit}
+                            onChange={(e) => handleStarterChange(starter.id, 'startzeit', e.target.value)}
+                            className="h-8"
+                            disabled={startlisteGesperrt}
+                          />
+                        </div>
+                        <div className="col-span-1 text-center">
+                          <Badge variant="secondary" className="text-xs">DG {starter.durchgang}</Badge>
+                          {starter.schiesszeit && starter.schiesszeit !== config?.durchgangsDauer && (
+                            <div className="text-xs text-blue-600 mt-1">{starter.schiesszeit}min</div>
+                          )}
+                        </div>
+                        {(hatKonflikt || gleicheZeitStand) && (
+                          <div className="col-span-12 text-xs text-red-600 font-medium mt-1">
+                            ⚠️ Konflikt: {gleicheZeitStand ? 'Gleicher Stand zur gleichen Zeit' : 'KI-Konflikt erkannt'}
+                            {gleicheZeitStand && (() => {
+                              // Finde freie Stände zur gleichen Zeit
+                              const gleicheZeit = starter.startzeit;
+                              const belegteStaende = filteredStartliste
+                                .filter(s => s.startzeit === gleicheZeit)
+                                .map(s => s.stand);
+                              const freieStaende = config.verfuegbareStaende.filter(stand => !belegteStaende.includes(stand));
+                              
+                              if (freieStaende.length > 0) {
+                                return (
+                                  <div className="text-blue-600 mt-1">
+                                    💡 Lösung: Stand {freieStaende[0]} um {gleicheZeit} ist noch frei
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             </CardContent>
           </Card>

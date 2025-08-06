@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.9.9.9"; // KM-Startlisten-System
+  const version = "0.9.9.9b"; // Startlisten-System Vollendung
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

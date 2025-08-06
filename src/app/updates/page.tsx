@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.9.9.9a (15.01.2025)</span>
+              <span>Web-Version: 0.9.9.9b (06.08.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -36,10 +36,50 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.9a - KM-Meldungen Fixes</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.9b - Startlisten-System Vollendung</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
             </div>
-            <CardDescription>15.01.2025</CardDescription>
+            <CardDescription>06.08.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollendung des Startlisten-Systems: Bearbeitung, Gewehr-Sharing, intelligente Sortierung und KI-Konfliktlösung.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🏆 Startlisten-System Vollendung v0.9.9.9b</h4>
+              <div className="text-xs text-green-700">
+                Professionelle Startlisten-Verwaltung mit KI-Unterstützung
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>✏️ <strong>Startlisten-Bearbeitung:</strong> Bestehende Startlisten können überschrieben werden</li>
+              <li>🔫 <strong>Gewehr-Sharing perfektioniert:</strong> Automatische Zeitversetzung bei geteilten Waffen</li>
+              <li>📅 <strong>Intelligente Sortierung:</strong> Durchgang → Stand → Zeit → Name</li>
+              <li>⚠️ <strong>KI-Konfliktlösung:</strong> Automatische Lösungsvorschläge bei Stand/Zeit-Konflikten</li>
+              <li>📊 <strong>Verbesserte Übersicht:</strong> Korrekte Zeitanzeige und Vereinsnamen</li>
+              <li>👥 <strong>KM-Meldungen-Fixes:</strong> Schützen-Dropdown, Namen-Anzeige, API-Optimierung</li>
+              <li>🔄 <strong>Robuste Datenladung:</strong> Funktioniert auch bei fehlenden Konfigurationen</li>
+              <li>🎨 <strong>Visuelle Verbesserungen:</strong> Rote Konflikt-Hervorhebung mit Lösungstipps</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🏆 Startlisten-System Vollendung</span>
+                  <p className="text-xs text-green-600 mt-1">Bearbeitung + Gewehr-Sharing + KI-Konfliktlösung</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.9.9.9b
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.9a - KM-Meldungen Fixes</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>06.08.2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Kritische Bugfixes für KM-Meldungen: Schützen-Dropdown-Sortierung, neue Schützen sichtbar, Namen-Anzeige korrigiert.</p>
@@ -64,50 +104,6 @@ export default function UpdatesPage() {
                 </div>
                 <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
                   🚀 v0.9.9.9a
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.9 - KM-Startlisten-System</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>15.01.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Vollständiges KM-Startlisten-System mit intelligenter Generierung, Altersklassen-basierter Schießzeit-Berechnung und KI-Optimierung.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🎯 KM-Startlisten-System v0.9.9.9</h4>
-              <div className="text-xs text-green-700">
-                Intelligente Startlisten-Generierung mit KI-Optimierung und Altersklassen-System
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>🤖 <strong>KI-Startlisten-Generator:</strong> Automatische Optimierung mit 100% Qualitäts-Analyse</li>
-              <li>📅 <strong>Altersklassen-System:</strong> Schüler (20 Schuss), Jugend/Junioren/Erwachsene (40 Schuss) mit korrekten Schießzeiten</li>
-              <li>⚡ <strong>Anlagensystem-Unterscheidung:</strong> Zuganlagen vs. Elektronische Anlagen (Disag, Meyton) mit angepassten Zeiten</li>
-              <li>📄 <strong>Startlisten-Assistent:</strong> Schritt-für-Schritt Workflow für Sportleiterin</li>
-              <li>💾 <strong>Konfiguration speichern:</strong> Wiederverwendbare Wettkampf-Einstellungen für nächste Jahre</li>
-              <li>✏️ <strong>Startlisten bearbeiten:</strong> Gespeicherte Listen können nachträglich angepasst werden</li>
-              <li>📊 <strong>Intelligente Zeitplanung:</strong> Berücksichtigt Gewehr-Sharing und Wechselzeiten</li>
-              <li>📝 <strong>PDF/Excel Export:</strong> Mit RWK-Logo und professioneller Formatierung</li>
-              <li>📊 <strong>Startlisten-Übersicht:</strong> Verwaltung aller Konfigurationen und gespeicherten Listen</li>
-              <li>🎯 <strong>VM-Ergebnisse-Prüfung:</strong> Qualifikationslimits 2025 für LM-Teilnahme</li>
-              <li>🔄 <strong>Datenreparatur-Scripts:</strong> Automatische Korrektur bei Datenbank-Änderungen</li>
-              <li>🏁 <strong>Produktionsreif:</strong> Vollständig getestet und einsatzbereit für KM 2026</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🎯 KM-Startlisten-System</span>
-                  <p className="text-xs text-green-600 mt-1">Intelligente Generierung + KI-Optimierung + Altersklassen</p>
-                </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.9.9.9
                 </span>
               </div>
             </div>
