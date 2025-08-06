@@ -2,9 +2,9 @@
 
 > **Moderne Digitalisierung für Schießsport-Rundenwettkämpfe**
 
-Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schießvereine.
+Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
-[![Version](https://img.shields.io/badge/Version-0.9.9.8-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-0.9.9.9-green?style=for-the-badge)](#)
 [![Android App](https://img.shields.io/badge/Android_App-0.9.1.0-success?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -12,7 +12,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 - 🏆 **Vollständige RWK & KM Verwaltung** - Von Meldungen bis Ergebnislisten
 - 📱 **Progressive Web App + Native Android** - Funktioniert überall
-- 🎯 **Alle Disziplinen** - KK, LG, LP, Bogen, Benutzerdefiniert
+- 🎯 **Alle Disziplinen** - KK, LG, LP, Benutzerdefiniert
 - 📊 **Automatische Tabellen** - Live-Berechnung mit Statistiken
 - 📧 **E-Mail Integration** - Automatische Rundschreiben
 - 🔐 **Rollen-System** - Admin, Verein, Schütze
@@ -56,13 +56,13 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 | Platform | Version | Status | Download |
 |----------|---------|--------|---------|
-| **Web App** | 0.9.9.8 | ✅ Produktiv | Vercel Deployment |
+| **Web App** | 0.9.9.9 | ✅ Produktiv | Vercel Deployment |
 | **Android App** | 0.9.1.0 | ✅ Produktiv | Google Play Store |
-| **iOS App** | Geplant | 🔄 In Entwicklung | - |
+| **iOS App** | 0.9.1.0 | 🛠️ Technisch bereit | App Store Pending |
 
 ## 🎯 Zielgruppe
 
-- **Schießvereine** in Deutschland
+- **Schützenvereine** in Deutschland
 - **Kreisverbände** für KM-Organisation
 - **Schießsport-Organisatoren**
 - **Wettkampfleiter** und Vereinsvorstände
@@ -113,7 +113,6 @@ npm run build:capacitor
 
 - **15+ Vereine** nutzen die App aktiv
 - **200+ Schützen** registriert
-- **500+ Wettkämpfe** digital abgewickelt
 - **99.9% Uptime** seit Launch
 - **0 Datenverluste** durch Cloud-Backup
 
@@ -136,15 +135,16 @@ npm run build:capacitor
 ## 📞 Support & Kontakt
 
 - **Issues**: [GitHub Issues](https://github.com/Muggy663/rwk-einbeck/issues)
-- **E-Mail**: support@ksv-einbeck.de
+- **E-Mail**: rwk-leiter-ksv@gmx.de
+- **Playstore Beta**: Google Play Store (Beta-Test)
 - **Dokumentation**: Siehe `/docs` Ordner
-- **Entwickler**: KSV Einbeck Development Team
+- **Entwickler**: KSV Einbeck RWK-Leiter Marcel Bünger
 
 ## 📄 Lizenz & Copyright
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schießvereine entwickelt. 
+Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 
 **Alle Inhalte dieser Software, einschließlich:**
 - Software-Code und Algorithmen
@@ -158,18 +158,18 @@ Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK 
 Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzung ohne ausdrückliche schriftliche Genehmigung ist untersagt und kann rechtlich verfolgt werden.
 
 ### Nutzungsrechte
-- ✅ **Erlaubt**: Nutzung durch registrierte Schießvereine
+- ✅ **Erlaubt**: Nutzung durch registrierte Schützenvereine
 - ✅ **Erlaubt**: Ansehen des Codes für Lernzwecke
 - ❌ **Verboten**: Kommerzielle Nutzung ohne Lizenz
 - ❌ **Verboten**: Weiterverteilung oder Kopieren
 - ❌ **Verboten**: Reverse Engineering für konkurrierende Produkte
 
-**Für Lizenzanfragen kontaktieren Sie:** copyright@ksv-einbeck.de
+**Für Lizenzanfragen kontaktieren Sie:** rwk-leiter-ksv@gmx.de
 
 ---
 
 **Aktuelle Versionen:**
-- **Web-Version 0.9.9.8** - KM-Meldungen Bugfix: 500 Error behoben
+- **Web-Version 0.9.9.9** - KM-Ergebnisse: Duplikate-Fix und bessere Rückmeldungen
 - **App-Version 0.9.1.0** - Erste offizielle Version der nativen Android-App
 
 *Entwickelt mit ❤️ für den deutschen Schießsport*
