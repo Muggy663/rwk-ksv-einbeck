@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const data = JSON.parse(fileContents);
     
     // Protokolliere die Dokumente für Debugging-Zwecke
-    console.log(`Migriere ${data.documents.length} Dokumente zu MongoDB`);
+
     
     // Migriere die Dokumente zu MongoDB
     const success = await migrateDocumentsToMongo(data.documents);
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log('Migration erfolgreich');
+
     return NextResponse.json({ 
       success: true,
       message: `${data.documents.length} Dokumente erfolgreich migriert`

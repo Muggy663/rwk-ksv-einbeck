@@ -25,7 +25,7 @@ export class ShooterSyncService {
         syncedFrom: sourceCollection
       });
       
-      console.log(`✅ Schütze ${shooterId} in beiden Collections erstellt`);
+
       return shooterId;
     } catch (error) {
       console.error('❌ Sync-Fehler beim Erstellen:', error);
@@ -52,7 +52,7 @@ export class ShooterSyncService {
         syncedFrom: sourceCollection
       });
       
-      console.log(`✅ Schütze ${shooterId} in beiden Collections aktualisiert`);
+
     } catch (error) {
       console.error('❌ Sync-Fehler beim Aktualisieren:', error);
       throw error;
@@ -69,7 +69,7 @@ export class ShooterSyncService {
       const targetCollection = sourceCollection === 'km_shooters' ? 'rwk_shooters' : 'km_shooters';
       await deleteDoc(doc(db, targetCollection, shooterId));
       
-      console.log(`✅ Schütze ${shooterId} aus beiden Collections gelöscht`);
+
     } catch (error) {
       console.error('❌ Sync-Fehler beim Löschen:', error);
       throw error;

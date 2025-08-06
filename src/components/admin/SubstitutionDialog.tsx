@@ -181,9 +181,9 @@ export function SubstitutionDialog({
             await batch.commit();
             substitution.transferredResults = transferredResults;
             
-            console.log(`Transferred ${transferredResults.length} scores from individual to team`);
+
           } else {
-            console.log('No individual scores found to transfer');
+
           }
         } catch (transferError) {
           console.error('Error transferring individual scores:', transferError);
@@ -222,7 +222,7 @@ export function SubstitutionDialog({
         teamIds: arrayUnion(team.id)
       });
       
-      console.log(`Substitution: Removing ${team.id} from ${originalShooter.name}, adding to ${replacementShooter.name}`);
+
       await shooterBatch.commit();
 
       const successMessage = substitutionType === 'individual_to_team' 

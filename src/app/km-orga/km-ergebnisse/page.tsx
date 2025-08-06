@@ -67,7 +67,7 @@ export default function KMErgebnissePage() {
         
         schuetzenSnapshot.docs.forEach(doc => {
           const data = doc.data();
-          console.log('Schütze:', doc.id, data);
+
           const fullName = data.firstName && data.lastName 
             ? `${data.firstName} ${data.lastName}`
             : data.name || 'Unbekannt';
@@ -89,9 +89,9 @@ export default function KMErgebnissePage() {
 
         meldungenSnapshot.docs.forEach(doc => {
           const data = doc.data();
-          console.log('Meldung:', doc.id, data);
+
           const schuetze = schuetzenMap.get(data.schuetzeId);
-          console.log('Gefundener Schütze:', schuetze);
+
           const disziplinName = disziplinenMap.get(data.disziplinId) || 'Unbekannte Disziplin';
           
           // Verwende vereinsname aus Meldung oder lade über clubId
@@ -99,7 +99,7 @@ export default function KMErgebnissePage() {
           if (!data.vereinsname && schuetze && schuetze.clubId) {
             vereinsname = clubsMap.get(schuetze.clubId) || 'Unbekannter Verein';
           }
-          console.log('Vereinsname:', vereinsname);
+
           
           meldungenData.push({
             id: doc.id,
@@ -113,7 +113,7 @@ export default function KMErgebnissePage() {
 
         setMeldungen(meldungenData);
         setDisziplinen(Array.from(disziplinenSet).sort());
-        console.log('Geladene Meldungen:', meldungenData.length, meldungenData);
+
       } catch (error) {
         console.error('Fehler beim Laden:', error);
         toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden.', variant: 'destructive' });

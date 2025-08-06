@@ -48,13 +48,13 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    console.log('DELETE request received');
+
     const url = new URL(request.url);
     const action = url.searchParams.get('action');
-    console.log('Action:', action);
+
     
     if (action === 'cleanup-duplicates') {
-      console.log('Starting duplicate cleanup...');
+
       const snapshot = await getDocs(collection(db, 'rwk_shooters'));
       const shooters = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
       
@@ -75,7 +75,7 @@ export async function DELETE(request: NextRequest) {
         }
       });
       
-      console.log('Duplicates to delete:', toDelete.length);
+
       
       if (toDelete.length > 0) {
         const batch = writeBatch(db);
@@ -93,16 +93,16 @@ export async function DELETE(request: NextRequest) {
     }
     
     if (action === 'cleanup-imports') {
-      console.log('Starting cleanup...');
+
       // Lösche rwk_shooters mit createdAt (Excel-Importe)
       const snapshot = await getDocs(collection(db, 'rwk_shooters'));
-      console.log('Loaded shooters:', snapshot.docs.length);
+
       
       const shooters = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
       
       // Lösche nur Schützen mit createdAt (= Excel-Importe)
       const toDelete = shooters.filter(s => s.createdAt);
-      console.log('To delete:', toDelete.length);
+
       
       if (toDelete.length > 0) {
         // Verwende Batch für bessere Performance
@@ -112,7 +112,7 @@ export async function DELETE(request: NextRequest) {
         });
         
         await batch.commit();
-        console.log('Deletion completed');
+
       }
       
       return NextResponse.json({

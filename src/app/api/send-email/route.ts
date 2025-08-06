@@ -76,9 +76,7 @@ Rundenwettkampfleiter KSVE Einbeck`;
       if (settingsDoc.exists()) {
         signature = settingsDoc.data().signature || signature;
       }
-    } catch (error) {
-      console.log('Verwende Standard-Signatur:', error);
-    }
+
     
     // E-Mail-Inhalt mit anpassbarer Signatur
     const emailContent = `${message}
@@ -90,9 +88,7 @@ ${signature}`.trim();
     const results = [];
     const errors = [];
     
-    console.log(`📧 Starte E-Mail-Versand an ${recipients.length} Empfänger in Batches von ${batchSize} (Resend Limit)`);
-    
-    for (let i = 0; i < recipients.length; i += batchSize) {
+
       const batch = recipients.slice(i, i + batchSize);
       
       try {
@@ -107,12 +103,7 @@ ${signature}`.trim();
         };
         
         const result = await resend.emails.send(emailData);
-        
-        console.log(`✅ Batch ${Math.floor(i/batchSize) + 1} gesendet:`, {
-          id: result.data?.id,
-          recipients: batch.length,
-          emails: batch.map(r => r.email)
-        });
+
         
         results.push({
           batchNumber: Math.floor(i/batchSize) + 1,
@@ -122,10 +113,7 @@ ${signature}`.trim();
         });
         
         // Pause zwischen Batches (60 Sekunden für bessere Zustellbarkeit)
-        if (i + batchSize < recipients.length) {
-          console.log(`⏱️ Warte 60 Sekunden vor nächstem Batch...`);
-          await new Promise(resolve => setTimeout(resolve, 60000));
-        }
+
         
       } catch (error) {
         console.error(`❌ Batch ${Math.floor(i/batchSize) + 1} Fehler:`, error);
@@ -136,14 +124,7 @@ ${signature}`.trim();
         });
       }
     }
-    
-    console.log('📊 E-Mail-Versand abgeschlossen:', {
-      totalRecipients: recipients.length,
-      successfulBatches: results.length,
-      failedBatches: errors.length,
-      results: results,
-      errors: errors
-    });
+
     
     const successfulRecipients = results.reduce((sum, batch) => sum + batch.recipients, 0);
     const failedRecipients = errors.reduce((sum, batch) => sum + batch.recipients.length, 0);

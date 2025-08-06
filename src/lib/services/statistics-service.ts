@@ -94,7 +94,7 @@ export async function fetchShooterPerformanceData(
     }
     
     // Keine Daten gefunden
-    console.log('Keine Schützenleistungsdaten in Firestore gefunden.');
+
     return [];
   } catch (error) {
     console.error('Fehler beim Laden der Schützenleistungsdaten:', error);
@@ -162,7 +162,7 @@ export async function fetchTeamComparisonData(
     }
     
     // Keine Daten gefunden
-    console.log('Keine Mannschaftsvergleichsdaten in Firestore gefunden.');
+
     return [];
   } catch (error) {
     console.error('Fehler beim Laden der Mannschaftsvergleichsdaten:', error);
@@ -228,7 +228,7 @@ export async function fetchGenderDistributionData(
     }
     
     // Keine Daten gefunden
-    console.log('Keine Geschlechterverteilungsdaten in Firestore gefunden.');
+
     return { male: 0, female: 0 };
   } catch (error) {
     console.error('Fehler beim Laden der Geschlechterverteilungsdaten:', error);
@@ -257,7 +257,7 @@ export async function fetchSeasons() {
     }
     
     // Keine Daten gefunden
-    console.log('Keine laufenden oder abgeschlossenen Saisons in Firestore gefunden.');
+
     return [];
   } catch (error) {
     console.error('Fehler beim Laden der Saisons:', error);
@@ -276,13 +276,13 @@ export async function fetchLeagues(seasonId: string) {
     );
     
     if (seasonDoc.empty) {
-      console.log('Saison nicht gefunden.');
+
       return [];
     }
     
     const seasonData = seasonDoc.docs[0].data();
     if (seasonData.status !== 'Laufend' && seasonData.status !== 'Abgeschlossen') {
-      console.log('Nur laufende oder abgeschlossene Saisons können in den Statistiken angezeigt werden.');
+
       return [];
     }
     
@@ -304,7 +304,7 @@ export async function fetchLeagues(seasonId: string) {
     }
     
     // Keine Daten gefunden
-    console.log('Keine Ligen in Firestore gefunden.');
+
     return [];
   } catch (error) {
     console.error('Fehler beim Laden der Ligen:', error);
@@ -331,7 +331,7 @@ export async function fetchClubs() {
     }
     
     // Keine Daten gefunden
-    console.log('Keine Vereine in Firestore gefunden.');
+
     return [];
   } catch (error) {
     console.error('Fehler beim Laden der Vereine:', error);

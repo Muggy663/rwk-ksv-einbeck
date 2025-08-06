@@ -24,7 +24,7 @@ export default function ExcelImport() {
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-      console.log('Excel Rohdaten (erste 5 Zeilen):', jsonData.slice(0, 5)); // Debug
+
       
       const members = [];
       let currentVerein = '';
@@ -32,7 +32,7 @@ export default function ExcelImport() {
       for (let i = 1; i < jsonData.length; i++) { // Skip Header (Zeile 0)
         const row = jsonData[i] as any[];
         // Reduzierter Debug
-        if (i < 3) console.log(`Zeile ${i}:`, { name: row[3], vorname: row[4], geburt: row[5] });
+
         
         // Skip komplett leere Zeilen
         if (!row || row.every(cell => !cell)) continue;
@@ -45,7 +45,7 @@ export default function ExcelImport() {
         const vorname = row[4]?.toString() || '';
         let geburtsdatum = '';
         if (row[5]) {
-          if (i < 3) console.log(`Zeile ${i} - Geburt:`, row[5], typeof row[5]);
+
           try {
             let dateValue = row[5];
             
@@ -55,7 +55,7 @@ export default function ExcelImport() {
               const date = new Date(excelEpoch.getTime() + (dateValue - 2) * 24 * 60 * 60 * 1000);
               if (!isNaN(date.getTime()) && date.getFullYear() > 1920 && date.getFullYear() < 2020) {
                 geburtsdatum = date.toISOString().split('T')[0];
-                if (i < 3) console.log(`-> Excel-Zahl: ${geburtsdatum}`);
+
               }
             } else if (dateValue) {
               // String-Datum - verschiedene Formate probieren
@@ -86,13 +86,13 @@ export default function ExcelImport() {
                 const date = new Date(format);
                 if (!isNaN(date.getTime()) && date.getFullYear() > 1920 && date.getFullYear() < 2020) {
                   geburtsdatum = date.toISOString().split('T')[0];
-                  if (i < 3) console.log(`-> String-Format '${format}': ${geburtsdatum}`);
+
                   break;
                 }
               }
             }
           } catch (e) {
-            console.log(`Zeile ${i} - Datums-Parsing Fehler:`, row[5], e);
+
           }
         }
         
@@ -100,7 +100,7 @@ export default function ExcelImport() {
         if (verein && verein.trim() !== '' && 
             verein !== 'Verein' && verein !== 'Club' && verein !== 'Schützenverein') {
           currentVerein = verein.trim();
-          if (i < 5) console.log('Neuer Verein:', currentVerein);
+
         }
         
         // Skip Header und nur echte Mitglieder mit Verein hinzufügen
@@ -118,7 +118,7 @@ export default function ExcelImport() {
             geburtsdatum,
             gender
           });
-          if (i < 5) console.log('Mitglied hinzugefügt:', members[members.length - 1]); // Debug
+
         }
       }
       
@@ -162,7 +162,7 @@ export default function ExcelImport() {
     if (femaleNames.some(n => nameLower.includes(n) || n.includes(nameLower))) return 'female';
     
     // Sammle unbekannte Namen für Debugging
-    if (Math.random() < 0.05) console.log('Unbekannter Name:', vorname);
+
     
     // Endungen-basierte Erkennung (verbessert)
     if (nameLower.endsWith('a') && !nameLower.endsWith('cha') && !nameLower.endsWith('sha')) return 'female';

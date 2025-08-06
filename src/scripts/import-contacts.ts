@@ -58,10 +58,10 @@ function parseEmailList(emailString: string): Contact[] {
 }
 
 export async function importContacts() {
-  console.log('🔄 Importiere E-Mail-Kontakte...');
+
   
   const contacts = parseEmailList(emailList);
-  console.log(`📧 ${contacts.length} Kontakte gefunden`);
+
   
   let imported = 0;
   let skipped = 0;
@@ -77,10 +77,10 @@ export async function importContacts() {
       
       if (existingDocs.empty) {
         await addDoc(collection(db, 'email_contacts'), contact);
-        console.log(`✅ Importiert: ${contact.name} (${contact.email})`);
+
         imported++;
       } else {
-        console.log(`⏭️ Übersprungen (existiert): ${contact.email}`);
+
         skipped++;
       }
     } catch (error) {
@@ -88,10 +88,10 @@ export async function importContacts() {
     }
   }
   
-  console.log(`\n📊 Import abgeschlossen:`);
-  console.log(`✅ Importiert: ${imported}`);
-  console.log(`⏭️ Übersprungen: ${skipped}`);
-  console.log(`📧 Gesamt: ${contacts.length}`);
+
+
+
+
 }
 
 // Für direkten Aufruf

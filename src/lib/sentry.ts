@@ -23,7 +23,7 @@ export function initSentry() {
         return event;
       },
     });
-    console.log('Sentry initialized for', process.env.NODE_ENV);
+
   }
 }
 

@@ -6,11 +6,11 @@ import type { KMUserPermission } from '@/types/km-auth';
 export const kmAuthService = {
   async checkKMPermission(uid: string) {
     try {
-      console.log('Loading KM permission for UID:', uid);
+
       
       // VEREINFACHT: Admin hat immer Vollzugriff
       if (uid === 'nr4qSNvqUoZvtD9tUSPhhiQmMWj2') {
-        console.log('Admin detected, granting full access');
+
         const clubsSnapshot = await getDocs(collection(db, 'clubs'));
         const allClubIds = clubsSnapshot.docs.map(doc => doc.id);
         
@@ -26,12 +26,12 @@ export const kmAuthService = {
       const rwkPermissionDoc = await getDoc(doc(db, 'user_permissions', uid));
       
       if (!rwkPermissionDoc.exists()) {
-        console.log('No RWK permission found for UID:', uid);
+
         return { hasAccess: false, isActive: false, clubIds: [], role: '' };
       }
       
       const rwkPermission = rwkPermissionDoc.data();
-      console.log('RWK Permission found:', rwkPermission);
+
       
       // Admin hat vollen Zugriff
       if (rwkPermission.role === 'superadmin') {
@@ -62,7 +62,7 @@ export const kmAuthService = {
       
       // Prüfe ob Benutzer Vereinsvertreter ist
       if (rwkPermission.role !== 'vereinsvertreter') {
-        console.log('User is not vereinsvertreter, admin or km_organisator:', rwkPermission.role);
+
         return { hasAccess: false, isActive: false, clubIds: [], role: rwkPermission.role };
       }
       
@@ -81,7 +81,7 @@ export const kmAuthService = {
       
       // Duplikate entfernen
       const uniqueClubIds = [...new Set(clubIds)];
-      console.log('Club IDs for KM:', uniqueClubIds);
+
       
       return {
         hasAccess: true,

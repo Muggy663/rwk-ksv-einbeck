@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const jahr = parseInt(searchParams.get('jahr') || '2026');
     
-    console.log(`Loading KM meldungen for year: ${jahr}`);
+
     
     // Filtere nach Jahr (für 2027+ wichtig)
     const q = query(
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       ...doc.data()
     }));
     
-    console.log(`Found meldungen for ${jahr}:`, meldungen.length);
+
     
     return NextResponse.json({
       success: true,

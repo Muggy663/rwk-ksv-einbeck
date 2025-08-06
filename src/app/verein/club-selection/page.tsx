@@ -43,7 +43,7 @@ export default function ClubSelectionPage() {
   }, [userAppPermissions, router]);
 
   const selectClub = (clubId: string) => {
-    console.log('ClubSelection: Setting club to:', clubId);
+
     localStorage.setItem('currentClubId', clubId);
     // Force reload to ensure context picks up the change
     window.location.href = '/verein/dashboard';

@@ -10,7 +10,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 export async function migrateKMShooters() {
-  console.log('🚀 Starte KM-Schützen Migration...');
+
   
   // 1. Alle rwk_shooters laden
   const shootersSnap = await getDocs(collection(db, 'rwk_shooters'));
@@ -49,9 +49,9 @@ export async function migrateKMShooters() {
   // Migration ausführen
   await batch.commit();
   
-  console.log(`✅ Migration abgeschlossen:`);
-  console.log(`📊 KM-Schützen migriert: ${kmCount}`);
-  console.log(`📊 RWK-Schützen verbleiben: ${rwkCount}`);
+
+
+
   
   return { kmCount, rwkCount };
 }

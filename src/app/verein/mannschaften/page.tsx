@@ -113,7 +113,7 @@ export default function VereinMannschaftenPage() {
 
   // Effect 1: Set activeClubId and activeClubName based on userPermission from context
   useEffect(() => {
-    console.log("VMP DEBUG: Effect to set activeClubId. loadingPermissions:", loadingPermissions, "assignedClubId from context:", assignedClubId);
+
     if (!loadingPermissions) {
       const effectiveClubId = currentClubId || assignedClubId;
       if (effectiveClubId && typeof effectiveClubId === 'string' && effectiveClubId.trim() !== '') {
@@ -121,7 +121,7 @@ export default function VereinMannschaftenPage() {
         const clubInfo = allClubsGlobal.find(c => c.id === effectiveClubId);
         if (clubInfo) {
           setActiveClubName(clubInfo.name);
-          console.log("VMP DEBUG: activeClubId SET to:", effectiveClubId, "Name:", clubInfo.name);
+
         } else if (allClubsGlobal.length > 0) { // Attempt to find it if allClubsGlobal is already populated
           console.warn("VMP DEBUG: Club info for assignedClubId not found in allClubsGlobal. This might be a timing issue or invalid ID.");
           // Optionally, fetch if not found, but allClubsGlobal should be loaded by fetchInitialData
@@ -137,7 +137,7 @@ export default function VereinMannschaftenPage() {
 
   // Effect 2: Fetch initial global data (seasons, all leagues, all clubs)
   const fetchInitialData = useCallback(async () => {
-    console.log("VMP DEBUG: fetchInitialData triggered.");
+
     setIsLoadingPageData(true);
     try {
       const seasonsSnapshotPromise = getDocs(query(collection(db, SEASONS_COLLECTION), orderBy("competitionYear", "desc")));
@@ -152,24 +152,24 @@ export default function VereinMannschaftenPage() {
       const fetchedSeasons = seasonsSnapshot.docs.map(sDoc => ({ id: sDoc.id, ...sDoc.data() } as Season))
         .filter(s => s.id && typeof s.id === 'string' && s.id.trim() !== "" && s.status === 'Laufend');
       setAllSeasons(fetchedSeasons);
-      console.log("VMP DEBUG: fetchInitialData - Running seasons fetched:", fetchedSeasons.length);
+
 
       const fetchedLeaguesRaw = leaguesSnapshot.docs.map(lDoc => ({ id: lDoc.id, ...lDoc.data() } as League));
       const fetchedLeagues = fetchedLeaguesRaw.filter(l => l.id && typeof l.id === 'string' && l.id.trim() !== "");
       setAllLeagues(fetchedLeagues);
-      console.log("VMP DEBUG: fetchInitialData - All leagues fetched:", fetchedLeagues.length);
+
       
       const fetchedClubsRaw = clubsSnapshot.docs.map(cDoc => ({ id: cDoc.id, ...cDoc.data() } as Club));
       const fetchedClubs = fetchedClubsRaw.filter(c => c.id && typeof c.id === 'string' && c.id.trim() !== "");
       setAllClubsGlobal(fetchedClubs);
-      console.log("VMP DEBUG: fetchInitialData - All global clubs fetched:", fetchedClubs.length);
+
 
     } catch (error) {
       console.error("VMP DEBUG: fetchInitialData - Error fetching initial page data:", error);
       toast({ title: "Fehler Basisdaten", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingPageData(false);
-      console.log("VMP DEBUG: fetchInitialData finished. isLoadingPageData set to false");
+
     }
   }, [toast]);
 
@@ -180,7 +180,7 @@ export default function VereinMannschaftenPage() {
 
   // Effect 3: Populate availableLeaguesForFilter dropdown based on selectedSeason and teams of active club
   const calculatedAvailableLeaguesForFilter = useMemo(() => {
-    console.log("VMP DEBUG: Calculating availableLeaguesForFilter. selectedSeasonId:", selectedSeasonId, "activeClubId:", activeClubId, "allLeagues len:", allLeagues.length, "teamsOfActiveClub len:", teamsOfActiveClub.length);
+
     if (!selectedSeasonId || !activeClubId || !allLeagues || allLeagues.length === 0) {
       return [];
     }
@@ -202,7 +202,7 @@ export default function VereinMannschaftenPage() {
       leagueIdsOfActiveClubTeamsInYear.includes(l.id) && // The active club has a team in this league for this season
       l.id && typeof l.id === 'string' && l.id.trim() !== ""
     );
-    console.log("VMP DEBUG: availableLeaguesForFilter computed:", filtered.map(l => ({id: l.id, name: l.name})));
+
     return filtered.sort((a,b) => (a.order || 0) - (b.order || 0));
   }, [selectedSeasonId, activeClubId, allLeagues, allSeasons, teamsOfActiveClub]);
 
@@ -215,10 +215,10 @@ export default function VereinMannschaftenPage() {
   const fetchTeamsForClubAndSeason = useCallback(async () => {
     if (!activeClubId || !selectedSeasonId) {
       setTeamsOfActiveClub([]);
-      console.log("VMP DEBUG: fetchTeamsForClubAndSeason - No activeClubId or selectedSeasonId. activeClubId:", activeClubId, "selectedSeasonId:", selectedSeasonId);
+
       return;
     }
-    console.log("VMP DEBUG: fetchTeamsForClubAndSeason - Fetching for activeClubId:", activeClubId, "selectedSeasonId:", selectedSeasonId, "leagueFilter:", selectedLeagueIdFilter);
+
     setIsLoadingTeams(true);
     try {
       const selectedSeasonData = allSeasons.find(s => s.id === selectedSeasonId);
@@ -243,7 +243,7 @@ export default function VereinMannschaftenPage() {
       const querySnapshot = await getDocs(teamsQuery);
       const fetchedTeams = querySnapshot.docs.map(d => ({ id: d.id, ...d.data(), shooterIds: (d.data().shooterIds || []) as string[] } as Team));
       setTeamsOfActiveClub(fetchedTeams);
-      console.log(`VMP DEBUG: fetchTeamsForClubAndSeason - Fetched ${fetchedTeams.length} teams.`);
+
     } catch (error) {
       console.error("VMP DEBUG: fetchTeamsForClubAndSeason - Error:", error);
       toast({ title: "Fehler Mannschaftsladung", description: (error as Error).message, variant: "destructive" });
@@ -254,7 +254,7 @@ export default function VereinMannschaftenPage() {
   }, [activeClubId, selectedSeasonId, selectedLeagueIdFilter, allSeasons, toast]);
 
   useEffect(() => {
-    console.log("VMP DEBUG: Effect for fetchTeamsForClubAndSeason. activeClubId:", activeClubId, "selectedSeasonId:", selectedSeasonId);
+
     if (activeClubId && selectedSeasonId) { // Only fetch if both are set
       fetchTeamsForClubAndSeason();
     } else {
@@ -269,13 +269,13 @@ export default function VereinMannschaftenPage() {
     const seasonForDialog = allSeasons.find(s => s.id === (currentTeam?.seasonId || selectedSeasonId));
     const compYearForDialog = currentTeam?.competitionYear || seasonForDialog?.competitionYear;
 
-    console.log("VMP DIALOG DEBUG: fetchDialogData triggered. clubIdForDialog:", clubIdForDialog, "compYearForDialog:", compYearForDialog, "isFormOpen:", isFormOpen);
+
 
     if (!isFormOpen || !clubIdForDialog || compYearForDialog === undefined) {
       setAllClubShootersForDialog([]);
       setAllTeamsForValidation([]);
       setIsLoadingDialogData(false);
-      console.log("VMP DIALOG DEBUG: Pre-conditions for fetching dialog data not met.");
+
       return;
     }
 
@@ -337,7 +337,7 @@ export default function VereinMannschaftenPage() {
       );
       
       setAllClubShootersForDialog(uniqueShooters);
-      console.log("VMP DIALOG DEBUG: Fetched shooters for club:", clubIdForDialog, uniqueShooters.length, `(RWK: ${rwkShooters.length}, KM: ${kmShooters.length})`);
+
 
       const leagueMap = new Map(allLeagues.map(l => [l.id, l]));
 
@@ -354,7 +354,7 @@ export default function VereinMannschaftenPage() {
         };
       });
       setAllTeamsForValidation(teamsForValidationData);
-      console.log("VMP DIALOG DEBUG: Fetched teams for year validation:", compYearForDialog, teamsForValidationData.length);
+
 
     } catch (error) {
       console.error("VMP DIALOG DEBUG: Error fetching dialog data:", error);
@@ -382,11 +382,11 @@ export default function VereinMannschaftenPage() {
             allClubShootersForDialog.some(shooter => shooter.id === shooterId)
         );
         setSelectedShooterIdsInForm(validInitialShooterIds);
-        console.log("VMP DIALOG (EDIT) DEBUG: Persisted IDs:", persistedIds, "Available Club Shooters:", allClubShootersForDialog.map(s=>s.id) ,"Valid Initial For Form:", validInitialShooterIds);
+
     } else if (isFormOpen && formMode === 'new') {
         setSelectedShooterIdsInForm([]);
         setPersistedShooterIdsForTeam([]);
-         console.log("VMP DIALOG (NEW) DEBUG: Initializing selectedShooterIdsInForm as empty.");
+
     }
   }, [isFormOpen, formMode, currentTeam?.id, currentTeam?.shooterIds, teamsOfActiveClub, isLoadingDialogData, allClubShootersForDialog]);
 
@@ -482,7 +482,7 @@ export default function VereinMannschaftenPage() {
     event.preventDefault();
     if (!isVereinsvertreter) { toast({ title: "Keine Berechtigung", variant: "destructive" }); setIsSubmittingForm(false); return; }
 
-    console.log("VMP SUBMIT: Form submitted. currentTeam:", JSON.stringify(currentTeam), "activeClubId:", activeClubId, "selectedSeasonId:", selectedSeasonId);
+
 
     if (!currentTeam || !currentTeam.name?.trim() || !activeClubId || !selectedSeasonId) {
       console.warn("VMP SUBMIT VALIDATION FAILED: Missing required fields.", { currentTeam, activeClubId, selectedSeasonId });
@@ -581,9 +581,9 @@ export default function VereinMannschaftenPage() {
       const shootersToAdd = selectedShooterIdsInForm.filter(id => !originalShooterIds.includes(id));
       const shootersToRemove = originalShooterIds.filter(id => !selectedShooterIdsInForm.includes(id) && allClubShootersForDialog.some(s => s.id === id));
       
-      console.log("VMP DEBUG: handleSubmit - Original Shooter IDs:", originalShooterIds);
-      console.log("VMP DEBUG: handleSubmit - Shooters to Add:", shootersToAdd);
-      console.log("VMP DEBUG: handleSubmit - Shooters to Remove:", shootersToRemove);
+
+
+
       
       if (formMode === 'new') {
         const newTeamRef = doc(collection(db, TEAMS_COLLECTION)); 
@@ -705,7 +705,7 @@ export default function VereinMannschaftenPage() {
     const categoryOfCurrentTeam = getDisciplineCategory(teamLeagueData?.type);
     const currentTeamCompYearForValidation = teamBeingEdited.competitionYear;
 
-    console.log("VMP DIALOG ShooterSelect: shooterId:", shooterId, "isChecked:", isChecked, "currentTeamLeagueType:", teamLeagueData?.type, "category:", categoryOfCurrentTeam, "year:", currentTeamCompYearForValidation);
+
 
     if (isChecked) { 
       if (selectedShooterIdsInForm.length >= MAX_SHOOTERS_PER_TEAM) {
@@ -737,7 +737,7 @@ export default function VereinMannschaftenPage() {
       } else if (teamLeagueData && !categoryOfCurrentTeam){
           console.warn("VMP DIALOG ShooterSelect: Cannot perform discipline conflict check because category of current team's league type is unknown or team has no league.", teamLeagueData?.type);
       } else if (!teamLeagueData) {
-          console.log("VMP DIALOG ShooterSelect: Current team is not assigned to a league. Skipping discipline conflict check for now.");
+
       }
     } 
     setSelectedShooterIdsInForm(prevSelectedIds =>
@@ -877,7 +877,7 @@ export default function VereinMannschaftenPage() {
             </SelectTrigger>
             <SelectContent>
                 <SelectItem value="ALL_LEAGUES">Alle Ligen anzeigen</SelectItem>
-                {console.log("VMP DEBUG: Rendering leagues for filter dropdown:", JSON.stringify(availableLeaguesForFilter.map(l => ({id: l.id, name: l.name})) ))}
+
                 {availableLeaguesForFilter
                     .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "") // Strict filter
                     .map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)

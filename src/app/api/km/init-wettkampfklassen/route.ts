@@ -54,9 +54,9 @@ export async function POST(request: NextRequest) {
   try {
     // Debug: Auth-Token prüfen
     const authHeader = request.headers.get('authorization');
-    console.log('Auth header:', authHeader ? 'Present' : 'Missing');
+
     
-    console.log('Starting wettkampfklassen generation...');
+
     const collectionRef = collection(db, 'km_wettkampfklassen');
     
     // Erst alle bestehenden Wettkampfklassen laden
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     try {
       existingSnapshot = await getDocs(collectionRef);
     } catch (e) {
-      console.log('Collection does not exist yet, creating new one');
+
       existingSnapshot = { docs: [] };
     }
     const existingNames = new Set(
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     for (const klasse of WETTKAMPFKLASSEN_2026) {
       // Nur hinzufügen wenn Name noch nicht existiert
       if (!existingNames.has(klasse.name)) {
-        console.log('Adding class:', klasse.name);
+
         await addDoc(collectionRef, {
           ...klasse,
           saison: '2026',

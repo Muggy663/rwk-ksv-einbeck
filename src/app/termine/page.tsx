@@ -95,7 +95,7 @@ export default function TerminePage() {
       try {
         const deletedCount = await cleanupExpiredEvents();
         if (deletedCount > 0) {
-          console.log(`${deletedCount} abgelaufene Termine wurden automatisch gelöscht.`);
+
         }
       } catch (error) {
         console.error('Fehler bei der automatischen Bereinigung:', error);
@@ -106,7 +106,7 @@ export default function TerminePage() {
         const start = startOfMonth(currentMonth);
         const end = endOfMonth(currentMonth);
         const eventsData = await fetchEvents(start, end, selectedLeague);
-        console.log(`${eventsData.length} Termine geladen für ${format(start, 'MMM yyyy')} bis ${format(end, 'MMM yyyy')}`);
+
         setEvents(eventsData);
         
         // Lade alle zukünftigen Termine für die "Aktuelle Termine" Sektion
@@ -116,7 +116,7 @@ export default function TerminePage() {
         futureEnd.setFullYear(futureEnd.getFullYear() + 1); // Ein Jahr in die Zukunft
         
         const allFutureEvents = await fetchEvents(today, futureEnd, selectedLeague);
-        console.log(`${allFutureEvents.length} zukünftige Termine geladen`);
+
         
         // Setze die nächsten Termine global
         window.nextEvents = allFutureEvents.sort((a, b) => {

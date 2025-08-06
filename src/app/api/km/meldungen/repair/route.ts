@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       disziplinenMap.set(data.name, doc.id);
     });
     
-    console.log('Verfügbare Disziplinen:', Array.from(disziplinenMap.keys()));
+
     
     let repariert = 0;
     let fehler = 0;
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
           await updateDoc(doc(db, 'km_meldungen', meldungDoc.id), {
             disziplinId: neueId
           });
-          console.log(`Meldung ${meldungDoc.id}: ${aktuelleId} -> ${neueId}`);
+
           repariert++;
         } else {
           console.error(`Keine Luftgewehr-Disziplin gefunden für Meldung ${meldungDoc.id}`);

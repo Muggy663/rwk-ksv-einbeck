@@ -25,7 +25,7 @@ export default function EmailLogsPage() {
       });
       
       const result = await response.json();
-      console.log('Test-Response:', result);
+
       
       toast({
         title: 'API-Test',

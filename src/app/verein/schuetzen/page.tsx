@@ -6,39 +6,13 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Loader2, AlertTriangle, UserCircle as UserIcon } from 'lucide-react';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription as DialogDescriptionComponent,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -50,20 +24,7 @@ import type { Shooter, Club, Team, UserPermission, FirestoreLeagueSpecificDiscip
 import { MAX_SHOOTERS_PER_TEAM, leagueDisciplineOptions } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import {
-  collection,
-  addDoc,
-  getDocs,
-  doc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  documentId,
-  writeBatch,
   getDoc as getFirestoreDoc,
-  arrayRemove,
-  arrayUnion,
   Timestamp
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -127,7 +88,7 @@ export default function VereinSchuetzenPage() {
 
   // Effect 1: Fetch all clubs globally once for name lookups
   const fetchAllClubsAndLeaguesGlobal = useCallback(async () => {
-    console.log("VSP DEBUG: Fetching all clubs and leagues globally.");
+
     setIsLoadingPageData(true); // Indicates global data is loading
     try {
       const clubsSnapshotPromise = getDocs(query(collection(db, CLUBS_COLLECTION), orderBy("name", "asc")));
@@ -139,13 +100,13 @@ export default function VereinSchuetzenPage() {
         .map(docData => ({ id: docData.id, ...docData.data() } as Club))
         .filter(c => c.id && typeof c.id === 'string' && c.id.trim() !== "");
       setAllClubsGlobal(fetchedClubs);
-      console.log("VSP DEBUG: All global clubs fetched:", fetchedClubs.length);
+
 
       const fetchedLeagues = leaguesSnapshot.docs
         .map(lDoc => ({ id: lDoc.id, ...lDoc.data() } as League))
         .filter(l => l.id && typeof l.id === 'string' && l.id.trim() !== "");
       setAllLeaguesGlobal(fetchedLeagues);
-      console.log("VSP DEBUG: All global leagues fetched:", fetchedLeagues.length);
+
 
     } catch (error) {
       console.error("VSP DEBUG: Error fetching global clubs/leagues:", error);
@@ -161,15 +122,15 @@ export default function VereinSchuetzenPage() {
 
   // Effect 2: Set activeClubId and activeClubName based on userPermission from context
   useEffect(() => {
-    console.log("VSP DEBUG: Effect for activeClubId. loadingPermissions:", loadingPermissions, "assignedClubId from context:", assignedClubId);
+
     if (!loadingPermissions) { // Wait for permissions to be loaded
       // Verwende currentClubId direkt aus Hook
       const effectiveClubId = currentClubId || assignedClubId;
-      console.log('VSP DEBUG: currentClubId:', currentClubId, 'assignedClubId:', assignedClubId, 'effectiveClubId:', effectiveClubId);
+
       
       // WICHTIG: Wenn contextActiveClubId gesetzt ist, verwende NUR diesen!
       if (contextActiveClubId && contextActiveClubId !== assignedClubId) {
-        console.log('VSP DEBUG: Using contextActiveClubId over assignedClubId');
+
       }
       
       if (effectiveClubId && typeof effectiveClubId === 'string' && effectiveClubId.trim() !== '') {
@@ -177,13 +138,13 @@ export default function VereinSchuetzenPage() {
         const clubInfo = allClubsGlobal.find(c => c.id === effectiveClubId);
         if (clubInfo) {
           setActiveClubName(clubInfo.name);
-          console.log("VSP DEBUG: activeClubId SET to:", effectiveClubId, "Name:", clubInfo.name);
+
         } else if (allClubsGlobal.length > 0) {
           console.warn("VSP DEBUG: Club info for assignedClubId not found in allClubsGlobal. ID:", assignedClubId);
           setActiveClubName("Verein nicht gefunden"); 
         } else {
            // allClubsGlobal might not be loaded yet if this effect runs before fetchAllClubsAndLeaguesGlobal finishes
-           console.log("VSP DEBUG: allClubsGlobal not yet populated, will try to set name later.");
+
            setActiveClubName("Lade Vereinsname...");
         }
       } else {
@@ -197,7 +158,7 @@ export default function VereinSchuetzenPage() {
   // Reagiere auf contextActiveClubId Änderungen
   useEffect(() => {
     if (contextActiveClubId && contextActiveClubId !== activeClubId) {
-      console.log('VSP DEBUG: contextActiveClubId changed, updating activeClubId from', activeClubId, 'to', contextActiveClubId);
+
       setActiveClubId(contextActiveClubId);
       const clubInfo = allClubsGlobal.find(c => c.id === contextActiveClubId);
       if (clubInfo) {
@@ -209,7 +170,7 @@ export default function VereinSchuetzenPage() {
   // Listen auf Club-Wechsel Events
   useEffect(() => {
     const handleClubChange = (event: CustomEvent) => {
-      console.log('VSP: Club changed event received, new clubId:', event.detail);
+
       // Force activeClubId update
       setActiveClubId(event.detail);
     };
@@ -224,7 +185,7 @@ export default function VereinSchuetzenPage() {
         const clubInfo = allClubsGlobal.find(c => c.id === activeClubId);
         if (clubInfo) {
             setActiveClubName(clubInfo.name);
-            console.log("VSP DEBUG: ActiveClubName updated from allClubsGlobal to:", clubInfo.name);
+
         } else {
             setActiveClubName("Verein nicht gefunden");
             console.warn("VSP DEBUG: (Re-check) Club info for activeClubId not found in allClubsGlobal. ID:", activeClubId);
@@ -238,10 +199,8 @@ export default function VereinSchuetzenPage() {
     if (!activeClubId) {
       setShootersOfActiveClub([]);
       setAllTeamsDataForClub([]);
-      console.log("VSP DEBUG: fetchPageData - No activeClubId, clearing data.");
-      return;
     }
-    console.log(`VSP DEBUG: fetchPageData - Fetching for activeClubId: ${activeClubId}`);
+
     setIsLoadingClubSpecificData(true);
     try {
       // Erweiterte Query: Suche nach clubId, rwkClubId oder kmClubId
@@ -261,11 +220,10 @@ export default function VereinSchuetzenPage() {
         if (!uniqueShooters.has(doc.id)) {
           uniqueShooters.set(doc.id, { id: doc.id, ...doc.data(), teamIds: (doc.data().teamIds || []) } as Shooter);
         }
-      });
       const fetchedShooters = Array.from(uniqueShooters.values());
       setShootersOfActiveClub(fetchedShooters);
-      console.log(`VSP DEBUG: Fetched ${fetchedShooters.length} shooters for club ${activeClubId}`);
-      console.log('🔍 Erste 3 Schützen-Datenstruktur:', fetchedShooters.slice(0, 3).map(s => ({
+
+
         id: s.id,
         name: s.name,
         firstName: s.firstName,
@@ -278,7 +236,7 @@ export default function VereinSchuetzenPage() {
 
       const fetchedTeams = teamsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Team));
       setAllTeamsDataForClub(fetchedTeams);
-      console.log(`VSP DEBUG: Fetched ${fetchedTeams.length} teams for club ${activeClubId} (for info column).`);
+
 
     } catch (error) {
       console.error(`VSP DEBUG: Error fetching page data for club ${activeClubId}:`, error);
@@ -301,9 +259,8 @@ export default function VereinSchuetzenPage() {
   const fetchTeamsForClubInDialog = useCallback(async () => {
     if (!isFormOpen || formMode !== 'new' || !activeClubId || !isVereinsvertreter) {
       setTeamsOfSelectedClubInDialog([]);
-      return;
     }
-    console.log("VSP DIALOG DEBUG: Fetching teams for new shooter dialog, activeClubId:", activeClubId);
+
     setIsLoadingTeamsForDialog(true);
     try {
       const teamsQuery = query(collection(db, TEAMS_COLLECTION), where("clubId", "==", activeClubId), orderBy("name", "asc"));
@@ -319,9 +276,8 @@ export default function VereinSchuetzenPage() {
           leagueCompetitionYear: leagueInfo?.competitionYear,
           currentShooterCount: (teamData.shooterIds || []).length,
         };
-      });
       setTeamsOfSelectedClubInDialog(teamsData);
-      console.log("VSP DIALOG DEBUG: Fetched teams for dialog:", teamsData.length);
+
 
       if (queryTeamId && teamsData.some(t => t.id === queryTeamId)) {
         const contextTeam = teamsData.find(t => t.id === queryTeamId);
@@ -358,34 +314,29 @@ export default function VereinSchuetzenPage() {
       clubId: activeClubId,
       gender: 'male',
       teamIds: [],
-    });
     // Team pre-selection based on queryTeamId will be handled by fetchTeamsForClubInDialog
     setIsFormOpen(true);
   };
 
   const handleEditShooter = (shooter: Shooter) => {
-    console.log('🔧 Edit shooter clicked:', {
+
       shooterName: shooter.name,
       shooterClubId: shooter.clubId,
       shooterRwkClubId: shooter.rwkClubId,
       shooterKmClubId: shooter.kmClubId,
       activeClubId: activeClubId,
       isVereinsvertreter: isVereinsvertreter
-    });
-    
     // Erweiterte Berechtigung: Schütze gehört zu einem der Club-IDs des aktiven Vereins
     const shooterBelongsToActiveClub = [
-      shooter.clubId,
-      shooter.rwkClubId,
       shooter.kmClubId
     ].includes(activeClubId);
     
     if (!isVereinsvertreter || !shooterBelongsToActiveClub) {
-      console.log('❌ Edit not authorized:', { isVereinsvertreter, shooterBelongsToActiveClub });
+
       toast({ title: "Nicht autorisiert", variant: "destructive" }); return;
     }
     
-    console.log('✅ Opening edit dialog for:', shooter.name);
+
     setFormMode('edit');
     setCurrentShooter(shooter);
     setSelectedTeamIdsInForm([]); // Reset, not editing teams here
@@ -395,8 +346,6 @@ export default function VereinSchuetzenPage() {
 
   const handleDeleteConfirmation = (shooter: Shooter) => {
     const shooterBelongsToActiveClub = [
-      shooter.clubId,
-      shooter.rwkClubId,
       shooter.kmClubId
     ].includes(activeClubId);
     
@@ -422,12 +371,9 @@ export default function VereinSchuetzenPage() {
         collection(db, TEAMS_COLLECTION),
         where("clubId", "==", activeClubId),
         where("shooterIds", "array-contains", shooterToDelete.id)
-      );
       const teamsToUpdateSnap = await getDocs(teamsToUpdateQuery);
       teamsToUpdateSnap.forEach(teamDoc => {
         batch.update(teamDoc.ref, { shooterIds: arrayRemove(shooterToDelete.id) });
-      });
-      
       await batch.commit();
       toast({ title: "Schütze gelöscht", description: `"${shooterToDelete.name}" wurde entfernt.` });
       fetchPageDataForActiveClub();
@@ -483,7 +429,6 @@ export default function VereinSchuetzenPage() {
            if(teamInfo && (teamInfo.currentShooterCount || 0) < MAX_SHOOTERS_PER_TEAM) {
              batch.update(doc(db, TEAMS_COLLECTION, teamId), { shooterIds: arrayUnion(newShooterRef.id) });
            }
-        });
         toast({ title: "Schütze erstellt", description: `${shooterDataForSave.name} wurde für ${activeClubName} angelegt.` });
 
       } else if (formMode === 'edit' && currentShooter.id) {
@@ -531,10 +476,8 @@ export default function VereinSchuetzenPage() {
           if (id === teamId) return false;
           const otherTeam = teamsOfSelectedClubInDialog.find(t => t.id === id);
           return otherTeam && otherTeam.leagueType === categoryOfTeamBeingChanged && otherTeam.leagueCompetitionYear === yearOfTeamBeingChanged;
-        });
         if (conflict) {
           toast({ title: "Regelverstoß", description: `Schütze kann pro Saison/Disziplinkategorie nur einem Team angehören.`, variant: "destructive", duration: 7000 });
-          return;
         }
       }
     }
@@ -565,8 +508,6 @@ export default function VereinSchuetzenPage() {
     // Methode 2: Suche in Teams nach shooterIds (Fallback)
     const teamsWithThisShooter = allTeamsDataForClub.filter(team => 
       team.shooterIds && team.shooterIds.includes(shooter.id)
-    );
-    
     if (teamsWithThisShooter.length === 1) return teamsWithThisShooter[0].name;
     if (teamsWithThisShooter.length > 1) return `${teamsWithThisShooter.length} Mannschaften`;
     
@@ -582,7 +523,6 @@ export default function VereinSchuetzenPage() {
         </div>
         <div className="flex justify-center items-center py-10"> <Loader2 className="h-12 w-12 animate-spin text-primary" /> <p className="ml-3">Lade Vereinsdaten und Schützen...</p></div>
       </div>
-    );
   }
 
   if (permissionError) {
@@ -598,7 +538,6 @@ export default function VereinSchuetzenPage() {
           <CardContent><p>Ihrem Konto ist kein Verein für die Schützenverwaltung zugewiesen oder der Verein konnte nicht geladen werden. Bitte kontaktieren Sie den Administrator.</p></CardContent>
         </Card>
       </div>
-    );
   }
   
   return (
@@ -711,15 +650,12 @@ export default function VereinSchuetzenPage() {
                       case 'firstName':
                         aValue = a.firstName || (a.name ? a.name.split(' ').slice(0, -1).join(' ') : '');
                         bValue = b.firstName || (b.name ? b.name.split(' ').slice(0, -1).join(' ') : '');
-                        break;
                       case 'lastName':
                         aValue = a.lastName || (a.name ? a.name.split(' ').slice(-1)[0] : '');
                         bValue = b.lastName || (b.name ? b.name.split(' ').slice(-1)[0] : '');
-                        break;
                       case 'gender':
                         aValue = a.gender === 'female' ? 'Weiblich' : (a.gender === 'male' ? 'Männlich' : 'N/A');
                         bValue = b.gender === 'female' ? 'Weiblich' : (b.gender === 'male' ? 'Männlich' : 'N/A');
-                        break;
                       default:
                         aValue = a.lastName || (a.name ? a.name.split(' ').slice(-1)[0] : '');
                         bValue = b.lastName || (b.name ? b.name.split(' ').slice(-1)[0] : '');
@@ -850,7 +786,6 @@ export default function VereinSchuetzenPage() {
                                         return otherSelectedTeamData &&
                                                otherSelectedTeamData.leagueType === categoryOfCurrentTeamDialog &&
                                                otherSelectedTeamData.leagueCompetitionYear === yearOfCurrentTeamDialog;
-                                    });
                                     if (conflictExists) {
                                         isDisabled = true;
                                         disableReason = `(bereits ${categoryOfCurrentTeamDialog}-Team ${yearOfCurrentTeamDialog} gewählt)`;
@@ -868,7 +803,6 @@ export default function VereinSchuetzenPage() {
                                   {isDisabled && disableReason && <span className="text-xs text-destructive block mt-0.5">{disableReason}</span>}
                                 </Label>
                               </div>
-                            );
                           })}
                         </div>
                       </ScrollArea>
@@ -893,5 +827,4 @@ export default function VereinSchuetzenPage() {
         </Dialog>
       )}
     </div>
-  );
 }

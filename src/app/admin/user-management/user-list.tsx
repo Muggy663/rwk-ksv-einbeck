@@ -60,10 +60,10 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
         fetchedUsers.map(async (user) => {
           try {
             // Versuche, die Login-Daten aus der users-Collection zu laden
-            console.log('Trying to fetch user data for:', user.uid);
+
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
-            console.log('User doc exists:', userDoc.exists());
+
             
             if (userDoc.exists()) {
               const userData = userDoc.data();

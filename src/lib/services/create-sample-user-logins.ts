@@ -29,7 +29,7 @@ export async function createSampleUserLogins() {
       }, { merge: true });
     }
     
-    console.log(`Login-Daten für ${users.length} Benutzer erstellt`);
+
     return users.length;
   } catch (error) {
     console.error('Fehler beim Erstellen der Login-Daten:', error);

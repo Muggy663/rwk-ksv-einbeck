@@ -89,13 +89,13 @@ export default function AdminLeaguesPage() {
   const [leagueToDelete, setLeagueToDelete] = useState<League | null>(null);
 
   const fetchSeasons = useCallback(async () => {
-    console.log(">>> leagues/fetchSeasons: Fetching seasons...");
+
     setIsLoadingData(true);
     try {
       const seasonsSnapshot = await getDocs(query(collection(db, SEASONS_COLLECTION), orderBy("competitionYear", "desc")));
       const fetchedSeasons: Season[] = seasonsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Season));
       setAllSeasons(fetchedSeasons);
-      console.log(">>> leagues/fetchSeasons: Seasons fetched:", fetchedSeasons.length);
+
 
       if (fetchedSeasons.length > 0) {
         if (querySeasonId && fetchedSeasons.some(s => s.id === querySeasonId)) {
@@ -114,7 +114,7 @@ export default function AdminLeaguesPage() {
       toast({ title: "Fehler beim Laden der Saisons", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingData(false);
-      console.log(">>> leagues/fetchSeasons: Finished. isLoadingData:", false);
+
     }
   }, [querySeasonId, toast]);
 
@@ -125,10 +125,10 @@ export default function AdminLeaguesPage() {
   const fetchLeaguesForSeason = useCallback(async (seasonId: string) => {
     if (!seasonId) {
       setLeagues([]);
-      console.log(">>> leagues/fetchLeagues: No season selected, clearing leagues.");
+
       return;
     }
-    console.log(`>>> leagues/fetchLeagues: Fetching leagues for seasonId ${seasonId}`);
+
     setIsLoadingLeagues(true);
     try {
       const q = query(
@@ -139,14 +139,14 @@ export default function AdminLeaguesPage() {
       const querySnapshot = await getDocs(q);
       const fetchedLeagues: League[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as League));
       setLeagues(fetchedLeagues);
-      console.log(">>> leagues/fetchLeagues: Leagues fetched:", fetchedLeagues.length);
+
     } catch (error) {
       console.error(`>>> leagues/fetchLeagues: Error fetching leagues for season ${seasonId}: `, error);
       toast({ title: "Fehler beim Laden der Ligen", description: (error as Error).message, variant: "destructive" });
       setLeagues([]);
     } finally {
       setIsLoadingLeagues(false);
-      console.log(">>> leagues/fetchLeagues: Finished. isLoadingLeagues:", false);
+
     }
   }, [toast]);
 
@@ -199,11 +199,11 @@ export default function AdminLeaguesPage() {
       return;
     }
     
-    console.log(`>>> leagues/handleDeleteLeague: Attempting to delete league: ${leagueToDelete.name} (ID: ${leagueToDelete.id})`);
+
     setIsLoadingDelete(true); 
     try {
       await deleteDoc(doc(db, LEAGUES_COLLECTION, leagueToDelete.id));
-      console.log(`>>> leagues/handleDeleteLeague: League ${leagueToDelete.id} successfully deleted from Firestore.`);
+
       toast({ title: "Liga gelöscht", description: `"${leagueToDelete.name}" wurde erfolgreich entfernt.` });
       if (selectedSeasonId) fetchLeaguesForSeason(selectedSeasonId); 
     } catch (error) {
@@ -213,13 +213,13 @@ export default function AdminLeaguesPage() {
       setIsLoadingDelete(false);
       setIsAlertOpen(false);
       setLeagueToDelete(null);
-      console.log(`>>> leagues/handleDeleteLeague: Finished for league ${leagueToDelete?.id}.`);
+
     }
   };
   
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log(">>> leagues/handleSubmit: Form submitted.");
+
 
     if (!currentLeague || !currentLeague.name?.trim() || !currentLeague.seasonId || !currentLeague.type || currentLeague.competitionYear === undefined) {
       toast({ title: "Ungültige Eingabe", description: "Bitte alle erforderlichen Felder ausfüllen.", variant: "destructive" });
@@ -242,7 +242,7 @@ export default function AdminLeaguesPage() {
       competitionYear: selectedSeasonData.competitionYear,
       type: currentLeague.type as FirestoreLeagueSpecificDiscipline, 
     };
-    console.log(">>> leagues/handleSubmit: League data to save:", leagueDataToSave);
+
 
     setIsLoadingForm(true);
     try {
@@ -256,10 +256,10 @@ export default function AdminLeaguesPage() {
 
       if (formMode === 'edit' && currentLeague?.id) {
         duplicateQuery = query(leaguesCollectionRef, ...baseDuplicateConditions, where(documentId(), "!=", currentLeague.id));
-        console.log(">>> leagues/handleSubmit: Checking for duplicates (edit mode). Name:", leagueDataToSave.name, "SeasonId:", leagueDataToSave.seasonId, "Exclude ID:", currentLeague.id);
+
       } else {
         duplicateQuery = query(leaguesCollectionRef, ...baseDuplicateConditions);
-        console.log(">>> leagues/handleSubmit: Checking for duplicates (new mode). Name:", leagueDataToSave.name, "SeasonId:", leagueDataToSave.seasonId);
+
       }
       
       const duplicateSnapshot = await getDocs(duplicateQuery);
@@ -275,14 +275,14 @@ export default function AdminLeaguesPage() {
       }
 
       if (formMode === 'new') {
-        console.log(">>> leagues/handleSubmit: Attempting to add new league document...");
+
         const docRef = await addDoc(leaguesCollectionRef, leagueDataToSave);
-        console.log(">>> leagues/handleSubmit: New league document added with ID:", docRef.id);
+
         toast({ title: "Liga erstellt", description: `"${leagueDataToSave.name}" wurde erfolgreich angelegt.` });
       } else if (formMode === 'edit' && currentLeague.id) {
-        console.log(`>>> leagues/handleSubmit: Attempting to update league document ${currentLeague.id}...`);
+
         await updateDoc(doc(db, LEAGUES_COLLECTION, currentLeague.id), leagueDataToSave as Partial<League>);
-        console.log(`>>> leagues/handleSubmit: League document ${currentLeague.id} updated.`);
+
         toast({ title: "Liga aktualisiert", description: `"${leagueDataToSave.name}" wurde erfolgreich aktualisiert.` });
       }
       setIsFormOpen(false);
@@ -294,7 +294,7 @@ export default function AdminLeaguesPage() {
       toast({ title: `Fehler beim ${action}`, description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingForm(false);
-      console.log(">>> leagues/handleSubmit: Finished.");
+
     }
   };
 

@@ -135,7 +135,7 @@ npm run build:capacitor
 ## 📞 Support & Kontakt
 
 - **Issues**: [GitHub Issues](https://github.com/Muggy663/rwk-einbeck/issues)
-- **E-Mail**: rwk-leiter-ksv@gmx.de
+- **E-Mail**: rwk-leiter-ksve@gmx.de
 - **Playstore Beta**: Google Play Store (Beta-Test)
 - **Dokumentation**: Siehe `/docs` Ordner
 - **Entwickler**: KSV Einbeck RWK-Leiter Marcel Bünger
@@ -164,7 +164,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 - ❌ **Verboten**: Weiterverteilung oder Kopieren
 - ❌ **Verboten**: Reverse Engineering für konkurrierende Produkte
 
-**Für Lizenzanfragen kontaktieren Sie:** rwk-leiter-ksv@gmx.de
+**Für Lizenzanfragen kontaktieren Sie:** rwk-leiter-ksve@gmx.de
 
 ---
 

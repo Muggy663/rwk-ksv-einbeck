@@ -23,7 +23,7 @@ export async function cleanupExpiredEvents(): Promise<number> {
     const expiredEvents = await getDocs(expiredEventsQuery);
     
     if (expiredEvents.empty) {
-      console.log('Keine abgelaufenen Termine zum Löschen gefunden.');
+
       return 0;
     }
     
@@ -37,7 +37,7 @@ export async function cleanupExpiredEvents(): Promise<number> {
     });
     
     await batch.commit();
-    console.log(`${count} abgelaufene Termine wurden gelöscht.`);
+
     
     return count;
   } catch (error) {

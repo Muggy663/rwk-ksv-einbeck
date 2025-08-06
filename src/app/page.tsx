@@ -108,7 +108,7 @@ export default function HomePage() {
             })
             .slice(0, 3);
           
-          console.log(`Startseite: Gefilterte Termine: ${futureEvents.length}`);
+
           
           setUpcomingEvents(futureEvents);
         } else {

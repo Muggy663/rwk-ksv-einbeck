@@ -11,7 +11,7 @@ export const migrateTeamsForOutOfCompetition = async () => {
     const teamsSnapshot = await getDocs(teamsRef);
     
     if (teamsSnapshot.empty) {
-      console.log("Keine Teams gefunden, Migration nicht erforderlich");
+
       return { success: true, message: "Keine Teams gefunden", migratedCount: 0 };
     }
     
@@ -31,10 +31,10 @@ export const migrateTeamsForOutOfCompetition = async () => {
     
     if (migratedCount > 0) {
       await batch.commit();
-      console.log(`Migration abgeschlossen: ${migratedCount} Teams aktualisiert`);
+
       return { success: true, message: `${migratedCount} Teams aktualisiert`, migratedCount };
     } else {
-      console.log("Alle Teams haben bereits das outOfCompetition-Feld");
+
       return { success: true, message: "Alle Teams haben bereits das outOfCompetition-Feld", migratedCount: 0 };
     }
   } catch (error) {

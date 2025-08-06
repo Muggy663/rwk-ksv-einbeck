@@ -51,7 +51,7 @@ export async function createAuditEntry(
     // Speichere den Audit-Eintrag in der Datenbank
     const docRef = await addDoc(collection(db, 'audit_logs'), auditEntry);
     
-    console.log(`Audit-Eintrag erstellt: ${docRef.id}`);
+
     return docRef.id;
   } catch (error) {
     console.error('Fehler beim Erstellen des Audit-Eintrags:', error);

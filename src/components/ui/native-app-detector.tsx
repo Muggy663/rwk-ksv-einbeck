@@ -28,7 +28,7 @@ export function NativeAppProvider({ children }: { children: ReactNode }) {
         // Füge eine Klasse zum body hinzu, um CSS-Anpassungen zu ermöglichen
         document.body.classList.add('native-app');
         
-        console.log('Native App erkannt:', window.Capacitor.getPlatform());
+
       }
     };
     

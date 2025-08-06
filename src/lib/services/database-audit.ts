@@ -35,7 +35,7 @@ export async function auditDatabase(clubId?: string): Promise<DatabaseAuditResul
 
   try {
     for (const collectionName of collectionsToCheck) {
-      console.log(`Checking collection: ${collectionName}`);
+
       
       let q = query(collection(db, collectionName));
       

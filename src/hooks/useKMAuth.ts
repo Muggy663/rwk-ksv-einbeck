@@ -14,20 +14,17 @@ export function useKMAuth() {
     const loadKMPermissions = async () => {
       if (!user?.uid || authLoading) {
         setLoading(authLoading);
-        return;
       }
 
       try {
         const permission = await kmAuthService.checkKMPermission(user.uid);
-        console.log('useKMAuth result:', {
+
           kmPermission: permission.hasAccess,
           loading: false,
           hasKMAccess: permission.hasAccess,
           isActive: permission.isActive,
           userRole: permission.role,
           userClubIds: permission.clubIds
-        });
-        
         setKmPermission(permission.hasAccess);
         setUserClubIds(permission.clubIds || []);
         setUserRole(permission.role || '');
@@ -45,11 +42,7 @@ export function useKMAuth() {
   }, [user?.uid, authLoading]);
 
   return {
-    kmPermission,
     hasKMAccess: kmPermission,
-    userClubIds,
-    userRole,
-    loading,
     isActive: kmPermission,
     // Admin-spezifische Checks
     isKMAdmin: userRole === 'admin',

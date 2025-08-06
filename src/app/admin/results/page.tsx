@@ -62,7 +62,7 @@ export default function AdminResultsPage() {
   const [editMode, setEditMode] = useState(true);
 
   const fetchMasterData = useCallback(async () => {
-    console.log("AdminResultsPage: Fetching master data...");
+
     setIsLoadingMasterData(true);
     try {
       const seasonsSnapshot = await getDocs(query(collection(db, SEASONS_COLLECTION), orderBy("competitionYear", "desc")));

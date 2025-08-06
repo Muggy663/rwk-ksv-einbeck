@@ -5,7 +5,7 @@ import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔄 Updating existing KM meldungen with jahr field...');
+
     
     // Lade alle Meldungen
     const snapshot = await getDocs(collection(db, 'km_meldungen'));
@@ -21,14 +21,14 @@ export async function POST(request: NextRequest) {
           jahr: 2026
         });
         updated++;
-        console.log(`✅ Updated meldung ${docSnap.id} with jahr: 2026`);
+
       } else {
         skipped++;
-        console.log(`⏭️ Skipped meldung ${docSnap.id} (already has jahr: ${data.jahr})`);
+
       }
     }
     
-    console.log(`🎉 Update complete: ${updated} updated, ${skipped} skipped`);
+
     
     return NextResponse.json({
       success: true,

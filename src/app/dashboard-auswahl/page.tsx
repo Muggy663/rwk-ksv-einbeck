@@ -43,7 +43,7 @@ export default function DashboardAuswahl() {
   
   // Debug Auth reduziert
   if (!hasKMAccess) {
-    console.log('KM Access denied for:', user?.email, 'Role:', userAppPermissions?.role);
+
   }
 
   return (

@@ -89,7 +89,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
         if (dialog.textContent && dialog.textContent.includes('Willkommen bei der RWK Einbeck App')) {
           // Dialog aus dem DOM entfernen
           dialog.remove();
-          console.log("Onboarding-Dialog entfernt");
+
         }
       });
       
@@ -100,7 +100,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
           // Button deaktivieren
           button.disabled = true;
           button.style.display = 'none';
-          console.log("Onboarding-Button deaktiviert");
+
         }
       });
     };
@@ -135,13 +135,13 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
   }, []);
 
   useEffect(() => {
-    console.log("VereinLayout DEBUG: Auth/Permissions Effect triggered. Auth loading:", authLoading, "AppPerm loading:", loadingAppPermissions);
-    console.log("VereinLayout DEBUG: User from useAuth():", user ? user.uid : "null");
-    console.log("VereinLayout DEBUG: userAppPermissions from useAuth():", userAppPermissions ? JSON.stringify(userAppPermissions) : "null");
-    console.log("VereinLayout DEBUG: appPermissionsError from AuthProvider:", authProviderPermissionError);
+
+
+
+
 
     if (authLoading || loadingAppPermissions) {
-      console.log("VereinLayout DEBUG: Still loading auth or app permissions.");
+
       setCombinedLoading(true);
       // Don't set errors or permissions yet if still loading upstream
       return;
@@ -178,7 +178,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
       setAssignedClubIdArray([]);
     } else {
       const { role, clubId, representedClubs } = userAppPermissions;
-      console.log("VereinLayout DEBUG: Checking permission data - Role:", role, "SingleClubId:", clubId, "RepresentedClubs:", representedClubs);
+
 
       const allowedRoles = ['vereinsvertreter', 'mannschaftsfuehrer'];
       if (role && allowedRoles.includes(role)) {
@@ -188,23 +188,23 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
           : (clubId && typeof clubId === 'string' && clubId.trim() !== '' ? [clubId] : []);
           
         if (clubIds.length > 0) {
-          console.log("VereinLayout DEBUG: Valid role and club(s) found.", { role, clubIds });
+
           setUserPermissionForContext(userAppPermissions);
           setAssignedClubIdArray(clubIds);
           
           // Multi-Verein: Weiterleitung zur Club-Auswahl
-          console.log('VereinLayout: clubIds.length:', clubIds.length, 'clubIds:', clubIds);
+
           if (clubIds.length > 1) {
             const savedClubId = typeof window !== 'undefined' ? localStorage.getItem('currentClubId') : null;
-            console.log('VereinLayout: savedClubId:', savedClubId);
+
             if (savedClubId && clubIds.includes(savedClubId)) {
-              console.log('VereinLayout: Using saved club:', savedClubId);
+
               setCurrentClubId(savedClubId);
             } else {
               // Nur weiterleiten wenn nicht bereits auf club-selection
               const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
               if (currentPath !== '/verein/club-selection') {
-                console.log('VereinLayout: Redirecting to club selection');
+
                 if (typeof window !== 'undefined') {
                   window.location.href = '/verein/club-selection';
                 }
@@ -212,7 +212,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
               }
             }
           } else {
-            console.log('VereinLayout: Single club, using:', clubIds[0]);
+
             setCurrentClubId(clubIds[0]);
           }
           
@@ -230,7 +230,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
         setAssignedClubIdArray([]);
       }
     }
-    console.log("VereinLayout DEBUG: Finished processing permissions. CombinedLoading:", false, "DerivedPermissionError:", derivedPermissionError);
+
   }, [user, authLoading, userAppPermissions, loadingAppPermissions, authProviderPermissionError, router, derivedPermissionError]); // Added derivedPermissionError to dependencies
 
   const contextValue: VereinContextType = useMemo(() => ({
@@ -240,9 +240,9 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
     assignedClubId: assignedClubIdArray.length > 0 ? assignedClubIdArray[0] : null,
     currentClubId,
     switchClub: (clubId: string) => {
-      console.log('VereinLayout: switchClub called with:', clubId, 'assignedClubIdArray:', assignedClubIdArray);
+
       if (assignedClubIdArray.includes(clubId)) {
-        console.log('VereinLayout: Setting currentClubId to:', clubId);
+
         setCurrentClubId(clubId);
         if (typeof window !== 'undefined') {
           localStorage.setItem('currentClubId', clubId);
@@ -254,8 +254,8 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
     assignedClubIdArray: assignedClubIdArray,
   }), [userPermissionForContext, combinedLoading, derivedPermissionError, assignedClubIdArray, currentClubId]);
 
-  console.log("VereinLayout DEBUG: Rendering. CombinedLoading:", combinedLoading, "DerivedPermissionError:", derivedPermissionError, "UserPermissionForContext set:", userPermissionForContext !== false, "AssignedClubIdArray length:", assignedClubIdArray.length);
-  console.log("VereinLayout DEBUG: Providing context value:", contextValue);
+
+
 
 
   if (combinedLoading) {

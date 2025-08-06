@@ -178,7 +178,7 @@ export default function AddTerminPage() {
       return;
     }
     
-    console.log('Filter bestanden, erstelle Termin...');
+
     
     // Verwende den benutzerdefinierten Ort, wenn "other" ausgewählt wurde
     const finalLocation = location === 'other' ? customLocation : location;

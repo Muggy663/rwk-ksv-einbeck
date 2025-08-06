@@ -68,7 +68,7 @@ export function ClubProvider({ children }: ClubProviderProps) {
           
               // Setze ersten Verein als aktiv wenn noch keiner gewählt
           if (!activeClubId && clubs.length > 0) {
-            console.log('ClubContext: Setting first club as active:', clubs[0].id, clubs[0].name);
+
             setActiveClubId(clubs[0].id);
           }
         }
@@ -83,7 +83,7 @@ export function ClubProvider({ children }: ClubProviderProps) {
   }, [user?.uid]);
 
   const setActiveClubId = (clubId: string) => {
-    console.log('ClubContext: setActiveClubId called with:', clubId);
+
     setActiveClubIdState(clubId);
     if (typeof window !== 'undefined') {
       localStorage.setItem('activeClubId', clubId);

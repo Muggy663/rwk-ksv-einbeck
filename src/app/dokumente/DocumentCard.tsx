@@ -112,11 +112,11 @@ export function DocumentCard({ document }: { document: Document }) {
                         
                         if (isNativeApp) {
                           // In nativer App: Direkte Methode verwenden
-                          console.log('Native App erkannt, verwende direkten Download');
+
                           
                           // Für Android: Versuche Intent-URL direkt
                           if (window.Capacitor && window.Capacitor.getPlatform() === 'android') {
-                            console.log('Android erkannt, verwende Intent-URL');
+
                             window.location.href = `intent:${fullPath}#Intent;action=android.intent.action.VIEW;type=application/pdf;end`;
                           } else {
                             // Für iOS und andere

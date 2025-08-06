@@ -77,7 +77,7 @@ export default function SupportPage() {
           message: ticketData.message,
         }),
       });
-      console.log('E-Mail-Benachrichtigung gesendet');
+
     } catch (error) {
       console.error('Fehler beim Senden der E-Mail-Benachrichtigung:', error);
     }

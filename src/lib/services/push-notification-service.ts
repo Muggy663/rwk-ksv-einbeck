@@ -34,7 +34,7 @@ class PushNotificationService {
     try {
       // Check if notifications are supported
       if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-        console.log('Push notifications not supported');
+
         return;
       }
 
@@ -45,7 +45,7 @@ class PushNotificationService {
       this.messaging = getMessaging();
       this.isSupported = true;
       
-      console.log('Push notifications initialized');
+
     } catch (error) {
       console.error('Error initializing push notifications:', error);
     }
@@ -76,7 +76,7 @@ class PushNotificationService {
         throw new Error('Failed to get FCM token');
       }
 
-      console.log('FCM Token:', token);
+
       return token;
     } catch (error) {
       console.error('Error requesting notification permission:', error);
@@ -101,7 +101,7 @@ class PushNotificationService {
       const existingDocs = await getDocs(existingQuery);
       
       if (!existingDocs.empty) {
-        console.log('Subscription already exists');
+
         return;
       }
 
@@ -115,7 +115,7 @@ class PushNotificationService {
       };
 
       await addDoc(collection(db, 'notification_subscriptions'), subscription);
-      console.log('Push notification subscription saved');
+
     } catch (error) {
       console.error('Error subscribing to push notifications:', error);
       throw error;
@@ -142,12 +142,12 @@ class PushNotificationService {
         await deleteDoc(doc(db, 'notification_subscriptions', subscriptionDoc.id));
       }
 
-      console.log('Push notification subscription removed');
+
     } catch (error) {
       console.error('Error unsubscribing from push notifications:', error);
       // Ignoriere Berechtigungsfehler - Subscription ist trotzdem entfernt
       if (error instanceof Error && error.message.includes('permissions')) {
-        console.log('Subscription removed despite permission error');
+
         return;
       }
       throw error;
@@ -161,7 +161,7 @@ class PushNotificationService {
     if (!this.isSupported || !this.messaging) return;
 
     onMessage(this.messaging, (payload) => {
-      console.log('Foreground message received:', payload);
+
       callback(payload);
     });
   }
@@ -207,12 +207,12 @@ export async function sendPushNotification(
     const subscriptions = await getDocs(subscriptionsQuery);
     
     if (subscriptions.empty) {
-      console.log('No notification subscriptions found');
+
       return;
     }
 
     // This would typically be done server-side with Firebase Admin SDK
-    console.log(`Would send notification to ${subscriptions.size} subscribers:`, payload);
+
     
     // Store notification in database for history
     await addDoc(collection(db, 'notifications'), {

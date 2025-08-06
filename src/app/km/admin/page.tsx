@@ -28,8 +28,6 @@ export default function KMAdmin() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type })
-      });
-
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -120,9 +118,6 @@ export default function KMAdmin() {
     return (
       (!filter.verein || verein?.name.toLowerCase().includes(filter.verein.toLowerCase())) &&
       (!filter.disziplin || disziplin?.name.toLowerCase().includes(filter.disziplin.toLowerCase()))
-    );
-  });
-
   const stats = {
     vereine: new Set(meldungen.map(m => getVereinName(m.schuetzeId))).size,
     gesamtmeldungen: meldungen.length,
@@ -140,7 +135,6 @@ export default function KMAdmin() {
           </div>
         </div>
       </div>
-    );
   }
 
   if (!hasKMOrganizerAccess) {
@@ -156,7 +150,6 @@ export default function KMAdmin() {
           </Link>
         </div>
       </div>
-    );
   }
 
   return (
@@ -295,7 +288,7 @@ export default function KMAdmin() {
                   variant="outline"
                   onClick={async () => {
                     try {
-                      console.log('Lade RWK-Benutzerberechtigungen...');
+
                       
                       // Lade Benutzer-Daten über bestehende API
                       const response = await fetch('/api/shooters');
@@ -311,34 +304,30 @@ export default function KMAdmin() {
                       const clubsResult = await clubsRes.json();
                       const clubs = clubsResult.data || [];
                       
-                      console.log('Erste 5 Schützen:', schuetzen.slice(0, 5));
-                      console.log('Erste 5 Vereine:', clubs.slice(0, 5));
+
+
                       
                       // Finde Vereins-IDs für Einbeck, Post, Linnenkamp
                       const einbeckClub = clubs.find(c => c.name && c.name.toLowerCase().includes('einbeck'));
                       const postClub = clubs.find(c => c.name && c.name.toLowerCase().includes('post'));
                       const linnenkampClub = clubs.find(c => c.name && c.name.toLowerCase().includes('linnenkamp'));
                       
-                      console.log('Gefundene Vereine:', {
+
                         einbeck: einbeckClub,
                         post: postClub,
                         linnenkamp: linnenkampClub
-                      });
-                      
                       const echteClubIds = [
-                        einbeckClub?.id,
-                        postClub?.id, 
                         linnenkampClub?.id
                       ].filter(Boolean);
                       
-                      console.log('Echte Club-IDs:', echteClubIds);
+
                       
                       const probeUser = {
                         id: 'm7ffEKT1qXebEDKYaa2ohLQUO4p2',
                         clubIds: echteClubIds
                       };
                       
-                      console.log('Erstelle KM-Berechtigung für:', probeUser.id);
+
                       
                       // Erstelle KM-Berechtigung mit echten Vereins-IDs
                       const kmUserData = {
@@ -355,7 +344,7 @@ export default function KMAdmin() {
                         kmUserData.clubId = probeUser.clubId;
                       }
                       
-                      console.log('Erstelle KM-Berechtigung direkt...');
+
                       
                       // Erstelle KM-Berechtigung direkt über Firebase
                       const { db } = await import('@/lib/firebase/config');
@@ -364,21 +353,18 @@ export default function KMAdmin() {
                       const kmUserRef = doc(db, 'km_user_permissions', 'm7ffEKT1qXebEDKYaa2ohLQUO4p2');
                       await setDoc(kmUserRef, kmUserData);
                       
-                      console.log('✓ KM-Berechtigung erfolgreich erstellt!');
-                      console.log('Daten:', JSON.stringify(kmUserData, null, 2));
+
+
                       
                       toast({ 
                         title: 'Erfolg!', 
                         description: 'KM-Berechtigung für Probe-Benutzer erstellt. Er kann jetzt KM-Meldungen machen!' 
-                      });
-                      
                     } catch (error) {
                       console.error('Fehler:', error);
                       toast({ 
                         title: 'Fehler', 
                         description: `Fehler: ${error.message}`,
                         variant: 'destructive'
-                      });
                     }
                   }}
                 >
@@ -436,7 +422,6 @@ export default function KMAdmin() {
                           <span>{disziplin.spoNummer}:</span>
                           <span>{count}</span>
                         </div>
-                      );
                     })}
                   </div>
                 </div>
@@ -461,5 +446,4 @@ export default function KMAdmin() {
         </p>
       </div>
     </div>
-  );
 }

@@ -81,7 +81,7 @@ export async function createSampleAuditEntries() {
       await addDoc(auditCollection, entry);
     }
     
-    console.log('Beispiel-Audit-Einträge erstellt');
+
     return true;
   } catch (error) {
     console.error('Fehler beim Erstellen der Beispiel-Audit-Einträge:', error);

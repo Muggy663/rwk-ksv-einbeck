@@ -46,7 +46,7 @@ export interface ExcelMember {
 }
 
 export async function importMembersFromExcel(members: ExcelMember[]) {
-  console.log('importMembersFromExcel gestartet mit', members.length, 'Mitgliedern');
+
   
   const results = {
     imported: 0,
@@ -55,23 +55,23 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
   };
 
   // Lade bestehende Vereine
-  console.log('Lade bestehende Vereine...');
+
   const clubsSnapshot = await getDocs(collection(db, 'clubs'));
   const existingClubs = new Map(
     clubsSnapshot.docs.map(doc => [doc.data().name, doc.id])
   );
-  console.log('Gefundene Vereine:', existingClubs.size);
+
 
   for (let i = 0; i < members.length; i++) {
     const member = members[i];
-    console.log(`Verarbeite Mitglied ${i + 1}/${members.length}:`, member.vorname, member.name);
+
     
     try {
       // Überspringe leere oder ungültige Zeilen
       if (!member.name || !member.vorname || 
           member.name.trim() === '' || member.vorname.trim() === '' ||
           member.name === 'Name' || member.vorname === 'Vorname') {
-        console.log('Zeile übersprungen (leer/ungültig)');
+
         results.skipped++;
         continue;
       }
@@ -101,7 +101,7 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
       const gender = guessGender(member.vorname);
 
       // Erstelle Schütze mit getrennter KM-Vereinszuordnung
-      console.log('Erstelle Schütze in Firebase...');
+
       const docRef = await addDoc(collection(db, 'rwk_shooters'), {
         name: `${member.vorname} ${member.name}`,
         kmClubId: clubId,        // Für Kreismeisterschaft
@@ -114,7 +114,7 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
         importedAt: new Date(),
         genderGuessed: gender === 'unknown'
       });
-      console.log('Schütze erstellt mit ID:', docRef.id);
+
 
       results.imported++;
     } catch (error) {

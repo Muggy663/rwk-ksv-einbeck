@@ -113,7 +113,7 @@ export default function AdminShootersPage() {
 
 
   const fetchInitialData = useCallback(async () => {
-    console.log("ASP DEBUG: Fetching initial global data (clubs, all teams, all leagues)...");
+
     setIsLoading(true);
     try {
       const clubsSnapshotPromise = getDocs(query(collection(db, CLUBS_COLLECTION), orderBy("name", "asc")));
@@ -130,19 +130,19 @@ export default function AdminShootersPage() {
         .map(docData => ({ id: docData.id, ...docData.data() } as Club))
         .filter(c => c && typeof c.id === 'string' && c.id.trim() !== "");
       setAllClubsGlobal(fetchedClubs);
-      console.log("ASP DEBUG: All global clubs fetched:", fetchedClubs.length);
+
 
       const fetchedTeams = teamsSnapshot.docs
         .map(d => ({ id: d.id, ...d.data() } as Team))
         .filter(t => t && typeof t.id === 'string' && t.id.trim() !== "");
       setAllTeamsData(fetchedTeams);
-      console.log("ASP DEBUG: All global teams fetched:", fetchedTeams.length);
+
       
       const fetchedLeagues = leaguesSnapshot.docs
         .map(lDoc => ({ id: lDoc.id, ...lDoc.data() } as League))
         .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "");
       setAllLeaguesGlobal(fetchedLeagues);
-      console.log("ASP DEBUG: All global leagues fetched:", fetchedLeagues.length);
+
       
       if (queryClubIdFromParams && fetchedClubs.some(c => c.id === queryClubIdFromParams)) {
         setSelectedClubIdFilter(queryClubIdFromParams);
@@ -170,7 +170,7 @@ export default function AdminShootersPage() {
       setShootersOfActiveClub([]);
       return;
     }
-    console.log(`ASP DEBUG: Fetching page data for activeClubId: ${selectedClubIdFilter}`);
+
     setIsLoadingClubSpecificData(true);
     try {
       let shootersQuery;
@@ -182,7 +182,7 @@ export default function AdminShootersPage() {
       const shootersSnapshot = await getDocs(shootersQuery);
       const fetchedShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data(), teamIds: (d.data().teamIds || []) } as Shooter));
       setShootersOfActiveClub(fetchedShooters);
-      console.log(`ASP DEBUG: Fetched ${fetchedShooters.length} shooters.`);
+
     } catch (error) {
       console.error(`ASP DEBUG: Error fetching shooters for club ${selectedClubIdFilter}:`, error);
       toast({ title: "Fehler", description: "Schützendaten konnten nicht geladen werden.", variant: "destructive" });
@@ -225,7 +225,7 @@ export default function AdminShootersPage() {
       setTeamsOfSelectedClubInDialog([]);
       return;
     }
-    console.log("ASP DIALOG DEBUG: Fetching teams for new shooter dialog, clubId:", clubId);
+
     setIsLoadingTeamsForDialog(true);
     try {
       const teamsQuery = query(collection(db, TEAMS_COLLECTION), where("clubId", "==", clubId), orderBy("name", "asc"));
@@ -243,7 +243,7 @@ export default function AdminShootersPage() {
         } as TeamValidationInfo;
       });
       setTeamsOfSelectedClubInDialog(teamsData);
-      console.log("ASP DIALOG DEBUG: Fetched teams for dialog:", teamsData.length, teamsData);
+
 
       if (queryTeamId && teamsData.some(t => t.id === queryTeamId)) {
         const contextTeam = teamsData.find(t => t.id === queryTeamId);

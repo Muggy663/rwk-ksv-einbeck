@@ -30,7 +30,7 @@ export async function cleanupDeletedTeamReferences(teamId: string) {
     // Batch-Operationen ausführen
     await batch.commit();
     
-    console.log(`Referenzen für gelöschte Mannschaft ${teamId} erfolgreich bereinigt`);
+
     return true;
   } catch (error) {
     console.error('Fehler beim Bereinigen von Mannschaftsreferenzen:', error);
@@ -86,9 +86,9 @@ export async function cleanupAllDeletedTeamReferencesForClub(clubId: string, use
     // Batch-Operationen ausführen
     if (deletedCount > 0) {
       await batch.commit();
-      console.log(`${deletedCount} verwaiste Referenzen für Verein ${clubId} bereinigt`);
+
     } else {
-      console.log(`Keine verwaisten Referenzen für Verein ${clubId} gefunden`);
+
     }
     
     return deletedCount;

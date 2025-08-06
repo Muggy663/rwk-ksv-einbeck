@@ -11,7 +11,7 @@ export default function BeispielPage() {
   
   // Beispiel für useMemo zur Optimierung von Berechnungen
   const expensiveCalculation = useMemo(() => {
-    console.log("Berechnung wird durchgeführt...");
+
     // Simuliere eine aufwändige Berechnung
     let result = 0;
     for (let i = 0; i < 1000; i++) {

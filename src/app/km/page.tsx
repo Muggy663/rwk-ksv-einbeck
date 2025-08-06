@@ -36,10 +36,10 @@ export default function KMDashboard() {
           const data = await meldungenRes.json();
           meldungen = data.data || [];
           setRecentMeldungen(meldungen.slice(0, 3));
-          console.log(`✅ Meldungen für ${selectedYear} geladen:`, meldungen.length);
+
         }
       } catch (error) {
-        console.log('❌ Meldungen nicht geladen:', error.message);
+
       }
       
       // 2. Lade Schützen (direkt aus Firestore)
@@ -50,9 +50,9 @@ export default function KMDashboard() {
         const shootersSnapshot = await getDocs(collection(db, 'rwk_shooters'));
         schuetzen = shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setSchuetzen(schuetzen);
-        console.log('✅ Schützen geladen:', schuetzen.length);
+
       } catch (error) {
-        console.log('❌ Schützen nicht geladen:', error.message);
+
       }
       
       // 3. Lade Clubs (optional)
@@ -61,10 +61,10 @@ export default function KMDashboard() {
         if (clubsRes.ok) {
           const data = await clubsRes.json();
           clubs = data.data || [];
-          console.log('✅ Clubs geladen:', clubs.length);
+
         }
       } catch (error) {
-        console.log('❌ Clubs nicht geladen:', error.message);
+
       }
       
       // 4. Lade Disziplinen (optional)
@@ -73,10 +73,10 @@ export default function KMDashboard() {
         if (disziplinenRes.ok) {
           const data = await disziplinenRes.json();
           setDisziplinen(data.data || []);
-          console.log('✅ Disziplinen geladen');
+
         }
       } catch (error) {
-        console.log('❌ Disziplinen nicht geladen:', error.message);
+
       }
       
       // 5. Berechne Statistiken
@@ -310,7 +310,7 @@ export default function KMDashboard() {
                           const res = await fetch('/api/debug/team-shooters', { method: 'GET' });
                           if (res.ok) {
                             const result = await res.json();
-                            console.log('🔍 Team-Schützen Debug:', result);
+
                             alert(`Debug-Info in Konsole:\n${result.summary}`);
                           }
                         }}

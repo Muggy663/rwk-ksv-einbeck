@@ -26,12 +26,7 @@ async function checkStorageUsage(mongoUri: string) {
     // Berechne den Prozentsatz der Nutzung
     const percentUsed = Math.round((rwkEinbeckSizeInMB / 512) * 100);
     
-    // Protokolliere die Werte für Debugging
-    console.log('MongoDB Speichernutzung:', {
-      rwkEinbeckSizeInMB,
-      percentUsed,
-      stats
-    });
+
     
     return {
       totalSizeInMB: rwkEinbeckSizeInMB,

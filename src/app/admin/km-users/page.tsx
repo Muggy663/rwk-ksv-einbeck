@@ -64,7 +64,7 @@ export default function KMUserManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted with data:', formData);
+
     
     if (!formData.uid || !formData.email) {
       toast({ title: 'Fehler', description: 'UID und E-Mail sind erforderlich', variant: 'destructive' });
@@ -87,9 +87,9 @@ export default function KMUserManagement() {
         kmUserData.clubId = formData.clubId;
       }
       
-      console.log('Creating KM user with data:', kmUserData);
+
       await setDoc(doc(db, 'km_user_permissions', formData.uid), kmUserData);
-      console.log('KM user created successfully');
+
       
       toast({ title: 'Erfolg', description: 'KM-Benutzer erstellt' });
       setFormData({ uid: '', email: '', displayName: '', role: 'km_organizer', clubId: 'none' });

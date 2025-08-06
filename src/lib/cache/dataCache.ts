@@ -35,11 +35,11 @@ export async function getCachedData<T>(
   const cached = memoryCache.get(key) as CacheEntry<T> | undefined;
   
   if (cached && (now - cached.timestamp < duration)) {
-    console.log(`Cache hit for ${key}`);
+
     return Promise.resolve(cached.data);
   }
   
-  console.log(`Cache miss for ${key}, fetching fresh data`);
+
   return fetchFunction().then(data => {
     memoryCache.set(key, {
       data,
@@ -89,7 +89,7 @@ export const dataCache = {
     const cached = memoryCache.get(key) as CacheEntry<T> | undefined;
     
     if (cached && cached.duration && (now - cached.timestamp < cached.duration)) {
-      console.log(`Cache hit for ${key}`);
+
       return cached.data;
     }
     

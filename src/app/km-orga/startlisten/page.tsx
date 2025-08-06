@@ -123,7 +123,7 @@ export default function StartlistenPage() {
       // Konfiguration in Firestore speichern
       await addDoc(collection(db, 'km_startlisten_configs'), configToSave);
       
-      console.log('Startlisten-Konfiguration:', configToSave);
+
       
       toast({
         title: "Konfiguration gespeichert",

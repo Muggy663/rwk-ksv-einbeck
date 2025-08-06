@@ -70,7 +70,7 @@ export default function VereinErgebnissePage() {
   const [isSubmittingScores, setIsSubmittingScores] = useState(false);
 
  useEffect(() => {
-    console.log("VER_ERGEBNISSE DEBUG: Effect for activeClubIdForEntry. loadingPermissions:", loadingPermissions, "assignedClubId from context:", assignedClubId);
+
     if (!loadingPermissions) {
       const effectiveClubId = currentClubId || assignedClubId;
       if (effectiveClubId && typeof effectiveClubId === 'string' && effectiveClubId.trim() !== '') {
@@ -105,9 +105,9 @@ export default function VereinErgebnissePage() {
 
 
   const fetchInitialPageData = useCallback(async () => {
-    console.log("VER_ERGEBNISSE DEBUG: fetchInitialPageData called. ActiveClubForEntry:", activeClubIdForEntry);
+
     if (!activeClubIdForEntry) {
-      console.log("VER_ERGEBNISSE DEBUG: fetchInitialPageData - No activeClubIdForEntry, aborting data load.");
+
       setIsLoadingPageData(false); 
       setAllSeasons([]); setAvailableRunningSeasons([]); setAllLeagues([]); setAllShootersFromDB([]);
       return;
@@ -307,7 +307,7 @@ export default function VereinErgebnissePage() {
                     const missingShooterIds = validShooterIds.filter(id => !foundShooterIds.includes(id));
                     
                     if (missingShooterIds.length > 0) {
-                        console.log(`VER_ERGEBNISSE DEBUG: Fehlende Schützen im Cache: ${missingShooterIds.join(', ')}`);
+
                         
                         // Fehlende Schützen einzeln aus der Datenbank laden
                         const additionalShooters: Shooter[] = [];
@@ -320,7 +320,7 @@ export default function VereinErgebnissePage() {
                                 if (shooterSnap.exists()) {
                                     const shooterData = { id: shooterSnap.id, ...shooterSnap.data() } as Shooter;
                                     additionalShooters.push(shooterData);
-                                    console.log(`VER_ERGEBNISSE DEBUG: Schütze geladen: ${shooterData.name} (${shooterId})`);
+
                                 } else {
                                     console.warn(`VER_ERGEBNISSE DEBUG: Schütze ${shooterId} nicht in Datenbank gefunden`);
                                 }
@@ -329,7 +329,7 @@ export default function VereinErgebnissePage() {
                             }
                         }
                         
-                        console.log(`VER_ERGEBNISSE DEBUG: ${additionalShooters.length} zusätzliche Schützen geladen`);
+
                         
                         // Kombiniere gefundene und zusätzlich geladene Schützen
                         const allTeamShooters = [...foundShooters, ...additionalShooters].sort((a, b) => a.name.localeCompare(b.name));
@@ -339,11 +339,11 @@ export default function VereinErgebnissePage() {
                         setShootersOfSelectedTeam(foundShooters.sort((a, b) => a.name.localeCompare(b.name)));
                     }
                 } else { 
-                    console.log("VER_ERGEBNISSE DEBUG: Keine gültigen Schützen-IDs im Team");
+
                     setShootersOfSelectedTeam([]); 
                 }
             } else { 
-                console.log("VER_ERGEBNISSE DEBUG: Keine Schützen-IDs im Team gefunden");
+
                 setShootersOfSelectedTeam([]); 
             }
         } catch (error) {
@@ -369,8 +369,8 @@ export default function VereinErgebnissePage() {
         const snapshot = await getDocs(scoresQuery);
         const scores = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
         
-        console.log(`Existierende Ergebnisse für Team ${selectedTeamId}, DG ${selectedRound}: ${scores.length}`);
-        scores.forEach(score => console.log(`- Schütze ${score.shooterId}: ${score.shooterName}, Ringe: ${score.totalRinge}`));
+
+
         
         setExistingScoresForTeamAndRound(scores);
       } catch (error) {
@@ -414,9 +414,9 @@ export default function VereinErgebnissePage() {
         // Finde Schützen ohne Ergebnisse
         const shooterIdsWithoutResults = validTeamShooterIds.filter(id => !allShooterIdsWithResults.has(id));
         
-        console.log(`Team Schützen-IDs: ${validTeamShooterIds.join(', ')}`);
-        console.log(`Schützen mit Ergebnissen: ${Array.from(allShooterIdsWithResults).join(', ')}`);
-        console.log(`Schützen ohne Ergebnisse: ${shooterIdsWithoutResults.join(', ')}`);
+
+
+
         
         if (shooterIdsWithoutResults.length === 0) {
           setAvailableShootersForDropdown([]);
@@ -435,7 +435,7 @@ export default function VereinErgebnissePage() {
         
         // Wenn Schützen fehlen, lade sie direkt aus der Datenbank
         if (missingShooterIds.length > 0) {
-          console.log(`Fehlende Schützen im Dropdown: ${missingShooterIds.join(', ')}`);
+
           
           const additionalShooters: Shooter[] = [];
           
@@ -447,7 +447,7 @@ export default function VereinErgebnissePage() {
               if (shooterSnap.exists()) {
                 const shooterData = { id: shooterSnap.id, ...shooterSnap.data() } as Shooter;
                 additionalShooters.push(shooterData);
-                console.log(`Dropdown: Schütze geladen: ${shooterData.name} (${shooterId})`);
+
               } else {
                 console.warn(`❌ Dropdown: Schütze ${shooterId} nicht in rwk_shooters - suche in Scores...`);
                 
@@ -463,7 +463,7 @@ export default function VereinErgebnissePage() {
                   if (!scoresSnapshot.empty) {
                     const scoreData = scoresSnapshot.docs[0].data();
                     const nameFromScore = scoreData.shooterName;
-                    console.log(`🔍 ERSTELLE Schütze ${shooterId} → "${nameFromScore}"`);
+
                     
                     // Erstelle rwk_shooters Eintrag
                     try {
@@ -478,7 +478,7 @@ export default function VereinErgebnissePage() {
                         createdBy: 'auto-from-scores'
                       };
                       await setDoc(shooterDocRef, shooterData);
-                      console.log(`✅ Schütze erfolgreich erstellt: ${nameFromScore}`);
+
                     } catch (createError) {
                       console.error(`Fehler beim Erstellen von Schütze ${shooterId}:`, createError);
                     }
@@ -489,7 +489,7 @@ export default function VereinErgebnissePage() {
                       gender: scoreData.shooterGender || 'unknown'
                     } as Shooter);
                   } else {
-                    console.log(`⚠️ Dropdown: Keine Scores für ${shooterId} - erstelle Placeholder`);
+
                     additionalShooters.push({
                       id: shooterId,
                       name: `Schütze ${shooterId.substring(0,8)}`,
@@ -505,14 +505,14 @@ export default function VereinErgebnissePage() {
             }
           }
           
-          console.log(`Zusätzlich geladene Schützen für Dropdown: ${additionalShooters.length}`);
-          additionalShooters.forEach(s => console.log(`- ${s.id}: ${s.name}`));
+
+
           
           // Kombiniere gefundene und zusätzlich geladene Schützen
           finalAvailableShooters = [...availableShootersFromCache, ...additionalShooters];
         }
         
-        console.log(`Verfügbare Schützen für DG ${parsedRound}: ${finalAvailableShooters.length} von ${validTeamShooterIds.length} gesamt`);
+
         setAvailableShootersForDropdown(finalAvailableShooters);
       } else {
         setAvailableShootersForDropdown([]);
@@ -528,16 +528,16 @@ export default function VereinErgebnissePage() {
   useEffect(() => { setSelectedShooterId(''); setScore(''); setExistingScoresForTeamAndRound([]);}, [selectedRound]);
 
   const handleAddToList = async () => {
-    console.log("handleAddToList aufgerufen");
+
     
     if (!userPermission?.uid) { 
-      console.log("Fehler: Benutzer nicht identifiziert");
+
       toast({ title: "Fehler", description: "Benutzer nicht identifiziert.", variant: "destructive" }); 
       return; 
     }
     
     if (!selectedShooterId || !selectedRound || !score || !selectedSeasonId || !selectedLeagueId || !selectedTeamId || !activeClubIdForEntry ) {
-      console.log("Fehlende Eingabe:", { selectedShooterId, selectedRound, score, selectedSeasonId, selectedLeagueId, selectedTeamId, activeClubIdForEntry });
+
       toast({ title: "Fehlende Eingabe", description: "Bitte alle Felder ausfüllen.", variant: "destructive" }); 
       return;
     }
@@ -554,14 +554,14 @@ export default function VereinErgebnissePage() {
     
     // Wenn der Schütze nicht gefunden wurde, versuche ihn direkt aus der Datenbank zu laden
     if (!shooter) {
-      console.log(`Schütze mit ID ${selectedShooterId} nicht im Cache gefunden, lade aus Datenbank`);
+
       try {
         const shooterDocRef = doc(db, SHOOTERS_COLLECTION, selectedShooterId);
         const shooterSnap = await getFirestoreDoc(shooterDocRef);
         
         if (shooterSnap.exists()) {
           shooter = { id: shooterSnap.id, ...shooterSnap.data() } as Shooter;
-          console.log(`Schütze aus Datenbank geladen: ${shooter.name}`);
+
         } else {
           console.error(`Schütze mit ID ${selectedShooterId} nicht in der Datenbank gefunden`);
           toast({ title: "Datenfehler", description: "Schütze nicht gefunden.", variant: "destructive" });
@@ -616,7 +616,7 @@ export default function VereinErgebnissePage() {
       competitionYear: season.competitionYear,
     };
     
-    console.log("Neuer Eintrag wird hinzugefügt:", newPendingEntry);
+
     setPendingScores(prev => [...prev, newPendingEntry]);
     toast({ title: "Ergebnis hinzugefügt" });
     setSelectedShooterId(''); 
@@ -675,7 +675,7 @@ export default function VereinErgebnissePage() {
               }
               
               batch.set(shooterDocRef, shooterData);
-              console.log(`Auto-created shooter: ${entry.shooterName} (${entry.shooterId})`);
+
             }
           } catch (shooterError) {
             console.warn(`Could not check/create shooter ${entry.shooterId}:`, shooterError);
@@ -716,7 +716,7 @@ export default function VereinErgebnissePage() {
               }
             } catch (updateError) {
               // Berechtigungsfehler ignorieren - die Hauptfunktion (Ergebnisse speichern) funktioniert trotzdem
-              console.log("Liga-Update konnte nicht durchgeführt werden (fehlende Berechtigung) - Ergebnisse wurden trotzdem gespeichert");
+
             }
           }
         } catch (scoreError) {

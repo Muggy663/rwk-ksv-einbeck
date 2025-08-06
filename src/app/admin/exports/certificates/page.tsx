@@ -221,7 +221,7 @@ export default function CertificatesPage() {
       // Top-Teams abrufen und Urkunden generieren
       if (numTopTeams > 0) {
         const topTeams = await fetchTopTeams(selectedLeague, numTopTeams);
-        console.log('Top Teams mit Scores:', topTeams.map(t => ({ name: t.name, membersWithScores: t.teamMembersWithScores })));
+
         
         for (const team of topTeams) {
           certificates.push({

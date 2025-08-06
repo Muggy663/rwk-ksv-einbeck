@@ -4,7 +4,7 @@
 
 const loadData = useCallback(async () => {
   if (!selectedCompetition) {
-    console.log("RWK DEBUG: loadData - Aborting, selectedCompetition not ready.");
+
     setLoadingData(false);
     return;
   }
@@ -19,7 +19,7 @@ const loadData = useCallback(async () => {
       (selectedCompetition.discipline === 'KK' || selectedCompetition.discipline === 'kk')) {
     localStorage.removeItem(cacheKey);
     localStorage.removeItem(cacheKey + '-time');
-    console.log("RWK DEBUG: Cache für 2025 Kleinkaliber gelöscht");
+
   } else if (lastFetch && cachedData && Date.now() - parseInt(lastFetch) < 300000) {
     const parsed = JSON.parse(cachedData);
     setTeamData(parsed.teamData);
@@ -31,7 +31,7 @@ const loadData = useCallback(async () => {
     return;
   }
   
-  console.log("RWK DEBUG: loadData triggered.", { year: selectedCompetition.year, disc: selectedCompetition.discipline, tab: activeTab, leagueFilter: selectedIndividualLeagueFilter });
+
   setLoadingData(true); setError(null); 
   setTeamData(null); 
   setAllIndividualDataForDiscipline([]); 
@@ -42,7 +42,7 @@ const loadData = useCallback(async () => {
   try {
     const numRounds = await calculateNumRounds(selectedCompetition.year, selectedCompetition.discipline);
     setCurrentNumRoundsState(numRounds);
-    console.log(`RWK DEBUG: loadData - Num rounds for competition set to: ${numRounds}`);
+
 
     const fetchedTeamData = await fetchCompetitionTeamData(selectedCompetition, numRounds);
     setTeamData(fetchedTeamData);
@@ -54,7 +54,7 @@ const loadData = useCallback(async () => {
       // Spezialfall für 2025 Kleinkaliber
       if (selectedCompetition.year === 2025 && 
           (selectedCompetition.discipline === 'KK' || selectedCompetition.discipline === 'kk')) {
-        console.log('RWK DEBUG: Verwende loadShooterData für 2025 Kleinkaliber');
+
         const { loadShooterData } = await import('./loadData');
         
         // Fetch all individuals for the selected discipline (without league filter initially)
@@ -106,6 +106,6 @@ const loadData = useCallback(async () => {
     setError((err as Error).message || 'Unbekannter Fehler beim Laden der Daten.');
   } finally {
     setLoadingData(false);
-    console.log("RWK DEBUG: loadData finished.");
+
   }
 }, [selectedCompetition, activeTab, selectedIndividualLeagueFilter, calculateNumRounds, fetchCompetitionTeamData, fetchIndividualShooterData, toast]);

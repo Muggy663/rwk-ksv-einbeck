@@ -49,7 +49,7 @@ export default function KMMitglieder() {
 
   const loadData = async () => {
     try {
-      console.log('🔄 Loading ALL shooters in batches (1500+ expected)...');
+
       
       const { collection, getDocs, query, orderBy, limit, startAfter } = await import('firebase/firestore');
       const { db } = await import('@/lib/firebase/config');
@@ -64,7 +64,7 @@ export default function KMMitglieder() {
       // Lade in Batches von 500 (unter Firestore-Limit)
       while (true) {
         batchCount++;
-        console.log(`📦 Batch ${batchCount} loading...`);
+
         
         let batchQuery;
         
@@ -75,32 +75,28 @@ export default function KMMitglieder() {
             orderBy('name'),
             startAfter(lastDoc),
             limit(500)
-          );
         } else {
           batchQuery = query(
             collection(db, 'km_shooters'),
             orderBy('name'),
             limit(500)
-          );
         }
         
         const batchSnapshot = await getDocs(batchQuery);
         const batchShooters = batchSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        console.log(`📦 Batch ${batchCount}: ${batchShooters.length} shooters loaded`);
+
         allShooters.push(...batchShooters);
         
         // Wenn weniger als 500 zurückkommen, sind wir fertig
         if (batchShooters.length < 500) {
-          console.log('✅ All batches loaded!');
-          break;
         }
         
         // Setze lastDoc für nächste Iteration
         lastDoc = batchSnapshot.docs[batchSnapshot.docs.length - 1];
       }
       
-      console.log('🎉 Total shooters loaded:', allShooters.length);
+
       
       // Duplikate entfernen - bevorzuge Schützen mit kmClubId
       const uniqueShooters = new Map();
@@ -116,11 +112,9 @@ export default function KMMitglieder() {
             uniqueShooters.set(key, shooter);
           }
         }
-      });
-      
       const shooters = Array.from(uniqueShooters.values());
-      console.log(`🔧 Duplikate entfernt: ${allShooters.length} → ${shooters.length}`);
-      console.log(`📊 Davon mit kmClubId: ${shooters.filter(s => s.kmClubId).length}`);
+
+
       
       const clubsRes = await fetch('/api/clubs');
       
@@ -131,25 +125,25 @@ export default function KMMitglieder() {
       const stephanieBuenger = shooters.find(s => s.name && s.name.toLowerCase().includes('stephanie') && s.name.toLowerCase().includes('bünger'));
       const melinaBrinckmann = shooters.find(s => s.name && s.name.toLowerCase().includes('melina') && s.name.toLowerCase().includes('brinckmann'));
       
-      console.log('✅ Marcel Bünger gefunden:', marcelBuenger ? marcelBuenger.name : '❌ NICHT GEFUNDEN!');
-      console.log('✅ Stephanie Bünger gefunden:', stephanieBuenger ? stephanieBuenger.name : '❌ NICHT GEFUNDEN!');
-      console.log('✅ Melina Brinckmann gefunden:', melinaBrinckmann ? melinaBrinckmann.name : '❌ NICHT GEFUNDEN!');
+
+
+
       
       // Prüfe ob Firestore-Abfrage limitiert ist
       const sortedNames = shooters.map(s => s.name).sort();
-      console.log('🔍 Erste 5 Namen:', sortedNames.slice(0, 5));
-      console.log('🔍 Letzte 5 Namen:', sortedNames.slice(-5));
+
+
       
       // Zähle RWK vs KM Schützen
       const rwkShooters = shooters.filter(s => s.clubId);
       const kmShooters = shooters.filter(s => s.kmClubId && !s.clubId);
-      console.log('📊 RWK-Schützen (mit clubId):', rwkShooters.length);
-      console.log('📊 KM-Schützen (nur kmClubId):', kmShooters.length);
-      console.log('📊 Gemischte (beide IDs):', shooters.filter(s => s.clubId && s.kmClubId).length);
+
+
+
       
       // KRITISCH: Prüfe ob 881 ein Firestore-Limit ist
       if (shooters.length === 881) {
-        console.log('⚠️ WARNUNG: Genau 881 Schützen - möglicherweise Firestore-Limit erreicht!');
+
       }
       
       // LÖSUNG: Füge searchableText zu allen Schützen hinzu
@@ -164,23 +158,16 @@ export default function KMMitglieder() {
             shooter.firstName || '',
             shooter.lastName || '',
             shooter.mitgliedsnummer || '',
-            clubName,
             clubId || '',
             shooter.gender || ''
           ].join(' ').toLowerCase()
         };
-      });
-      
-      console.log('🔍 Beispiel searchableText:', shootersWithSearch[0]?.searchableText);
-      
       // DEBUG: Prüfe userClubIds
-      console.log('🔑 userClubIds:', userClubIds);
-      console.log('🔍 Beispiel Schütze Club-IDs:', {
+
+
         clubId: shootersWithSearch[0]?.clubId,
         rwkClubId: shootersWithSearch[0]?.rwkClubId,
         kmClubId: shootersWithSearch[0]?.kmClubId
-      });
-      
       setShooters(shootersWithSearch);
       
       if (clubsRes.ok) {
@@ -203,7 +190,6 @@ export default function KMMitglieder() {
       birthYear: shooter.birthYear,
       gender: shooter.gender,
       mitgliedsnummer: shooter.mitgliedsnummer
-    });
   };
 
   const saveEdit = async () => {
@@ -241,7 +227,6 @@ export default function KMMitglieder() {
   const addShooter = async () => {
     if (!newShooter.firstName?.trim() || !newShooter.lastName?.trim()) {
       toast({ title: 'Fehler', description: 'Vor- und Nachname sind erforderlich', variant: 'destructive' });
-      return;
     }
 
     try {
@@ -300,8 +285,6 @@ export default function KMMitglieder() {
       
       const deletePromises = Array.from(selectedShooters).map(shooterId => 
         deleteDoc(doc(db, 'km_shooters', shooterId))
-      );
-      
       await Promise.all(deletePromises);
       
       toast({ title: 'Erfolg', description: `${selectedShooters.size} Schützen gelöscht` });
@@ -338,7 +321,6 @@ export default function KMMitglieder() {
       filteredAndSortedShooters
         .filter(shooter => getClubName(shooter) === clubName)
         .map(s => s.id)
-    );
     setSelectedShooters(matchingIds);
   };
 
@@ -351,7 +333,6 @@ export default function KMMitglieder() {
           return !name.includes(' ') || name.trim().length < 5;
         })
         .map(s => s.id)
-    );
     setSelectedShooters(onlyNameIds);
   };
 
@@ -406,27 +387,21 @@ export default function KMMitglieder() {
       case 'firstName':
         aValue = a.firstName || a.name?.split(' ')[0] || '';
         bValue = b.firstName || b.name?.split(' ')[0] || '';
-        break;
       case 'lastName':
         aValue = a.lastName || a.name?.split(' ').slice(1).join(' ') || '';
         bValue = b.lastName || b.name?.split(' ').slice(1).join(' ') || '';
-        break;
       case 'verein':
         aValue = getClubName(a);
         bValue = getClubName(b);
-        break;
       case 'birthYear':
         aValue = a.birthYear || 0;
         bValue = b.birthYear || 0;
-        break;
       case 'gender':
         aValue = a.gender || '';
         bValue = b.gender || '';
-        break;
       case 'mitgliedsnummer':
         aValue = a.mitgliedsnummer || '';
         bValue = b.mitgliedsnummer || '';
-        break;
       default:
         return 0;
     }
@@ -439,8 +414,6 @@ export default function KMMitglieder() {
     if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
     if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
     return 0;
-  });
-
   if (authLoading || loading) {
     return (
       <div className="container py-8 max-w-6xl mx-auto">
@@ -450,7 +423,6 @@ export default function KMMitglieder() {
           <p className="text-sm text-gray-400 mt-2">Schützendaten werden geladen</p>
         </div>
       </div>
-    );
   }
 
   if (!hasKMAccess) {
@@ -461,7 +433,6 @@ export default function KMMitglieder() {
           <Link href="/km" className="text-primary hover:text-primary/80">← Zurück</Link>
         </div>
       </div>
-    );
   }
 
   return (
@@ -801,5 +772,4 @@ export default function KMMitglieder() {
         </CardContent>
       </Card>
     </div>
-  );
 }

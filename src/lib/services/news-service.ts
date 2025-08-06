@@ -82,7 +82,7 @@ class NewsService {
       
       // TODO: Push-Notification senden wenn veröffentlicht
       if (article.status === 'veroeffentlicht') {
-        console.log('News-Artikel veröffentlicht:', docRef.id);
+
       }
       
       return docRef.id;
@@ -198,7 +198,7 @@ class NewsService {
 
       await updateDoc(doc(db, this.collection, id), updateData);
       
-      console.log('News-Artikel aktualisiert:', id);
+
     } catch (error) {
       console.error('Fehler beim Aktualisieren des News-Artikels:', error);
       throw error;
@@ -211,7 +211,7 @@ class NewsService {
   async deleteArticle(id: string): Promise<void> {
     try {
       await deleteDoc(doc(db, this.collection, id));
-      console.log('News-Artikel gelöscht:', id);
+
     } catch (error) {
       console.error('Fehler beim Löschen des News-Artikels:', error);
       throw error;

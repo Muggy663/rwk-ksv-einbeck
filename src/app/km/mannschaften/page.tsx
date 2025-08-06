@@ -37,7 +37,7 @@ export default function KMMannschaften() {
   const [meldungen, setMeldungen] = useState<any[]>([]);
 
   useEffect(() => {
-    console.log('useEffect triggered, hasKMAccess:', hasKMAccess, 'authLoading:', authLoading);
+
     if (hasKMAccess && !authLoading) {
       loadData();
     }
@@ -45,14 +45,14 @@ export default function KMMannschaften() {
 
   const loadData = async () => {
     try {
-      console.log('📋 Loading mannschaften data...');
+
       
       // Lade Mannschaften
       try {
         const mannschaftenRes = await fetch('/api/km/mannschaften');
         if (mannschaftenRes.ok) {
           const data = await mannschaftenRes.json();
-          console.log('✅ Mannschaften loaded:', data.data?.length || 0);
+
           setMannschaften(data.data || []);
         } else {
           console.warn('⚠️ Mannschaften API returned:', mannschaftenRes.status);
@@ -64,9 +64,9 @@ export default function KMMannschaften() {
       }
       
       try {
-        console.log('Fetching schuetzen...');
+
         const schuetzenRes = await fetch('/api/km/shooters');
-        console.log('Schuetzen response:', schuetzenRes.status);
+
         if (schuetzenRes.ok) {
           const data = await schuetzenRes.json();
           setSchuetzen(data.data || []);
@@ -77,7 +77,7 @@ export default function KMMannschaften() {
       }
       
       try {
-        console.log('Fetching meldungen...');
+
         const meldungenRes = await fetch('/api/km/meldungen?jahr=2026');
         if (meldungenRes.ok) {
           const data = await meldungenRes.json();
@@ -89,9 +89,9 @@ export default function KMMannschaften() {
       }
 
       try {
-        console.log('Fetching disziplinen...');
+
         const disziplinenRes = await fetch('/api/km/disziplinen');
-        console.log('Disziplinen response:', disziplinenRes.status);
+
         if (disziplinenRes.ok) {
           const data = await disziplinenRes.json();
           setDisziplinen(data.data || []);
@@ -102,9 +102,9 @@ export default function KMMannschaften() {
       }
       
       try {
-        console.log('Fetching clubs...');
+
         const clubsRes = await fetch('/api/clubs');
-        console.log('Clubs response:', clubsRes.status);
+
         if (clubsRes.ok) {
           const data = await clubsRes.json();
           setClubs(data.data || []);
@@ -117,7 +117,7 @@ export default function KMMannschaften() {
       console.error('LoadData error:', error);
       toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden', variant: 'destructive' });
     } finally {
-      console.log('Setting loading to false');
+
       setLoading(false);
     }
   };
@@ -127,7 +127,7 @@ export default function KMMannschaften() {
     toast({ title: '🚀 Generierung gestartet', description: 'Mannschaften werden automatisch erstellt...' });
     
     try {
-      console.log('🚀 Starting team generation...');
+
       const response = await fetch('/api/km/mannschaften/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -135,7 +135,7 @@ export default function KMMannschaften() {
       });
 
       const result = await response.json();
-      console.log('📊 Generation result:', result);
+
 
       if (response.ok && result.success) {
         toast({ 

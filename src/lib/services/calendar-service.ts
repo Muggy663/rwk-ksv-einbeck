@@ -30,11 +30,6 @@ export async function fetchEvents(
   leagueId?: string
 ): Promise<Event[]> {
   try {
-    // Debug-Ausgabe
-    console.log("fetchEvents aufgerufen mit:", 
-      startDate ? startDate.toISOString() : "kein Startdatum", 
-      endDate ? endDate.toISOString() : "kein Enddatum", 
-      leagueId || "keine Liga");
     
     // Basis-Query erstellen
     const eventsRef = collection(db, 'events');
@@ -63,7 +58,7 @@ export async function fetchEvents(
     const eventsQuery = query(eventsRef, ...constraints);
     const snapshot = await getDocs(eventsQuery);
     
-    console.log(`fetchEvents: ${snapshot.docs.length} Termine gefunden`);
+
     
     // Ergebnisse mappen und filtern
     const events = snapshot.docs.map(doc => {
@@ -94,16 +89,7 @@ export async function fetchEvents(
       } as Event;
     });
     
-    // Debug-Ausgabe für Datumsformate
-    if (events.length > 0) {
-      console.log("Beispiel-Termin:", {
-        id: events[0].id,
-        title: events[0].title,
-        date: events[0].date,
-        dateType: typeof events[0].date,
-        isDateObject: events[0].date instanceof Date
-      });
-    }
+
     
     return events;
   } catch (error) {

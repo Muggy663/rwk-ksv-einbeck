@@ -12,7 +12,7 @@ export function ServiceWorkerRegistration() {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js')
           .then(registration => {
-            console.log('Service Worker registriert:', registration);
+
           })
           .catch(error => {
             console.error('Service Worker Registrierungsfehler:', error);

@@ -98,7 +98,7 @@ export default function AdminClubsPage() {
       toast({ title: "Fehler", description: "Vereinsdaten unvollständig, Löschdialog kann nicht geöffnet werden.", variant: "destructive"});
       return;
     }
-    console.log(`Löschen-Button geklickt für Verein ID: ${club.id}, Name: ${club.name}`);
+
     setClubToDelete(club);
     setIsAlertOpen(true);
   };
@@ -113,20 +113,20 @@ export default function AdminClubsPage() {
 
     const clubId = clubToDelete.id;
     const clubName = clubToDelete.name;
-    console.log(`--- handleDeleteClub: Attempting to delete club: ${clubName} (ID: ${clubId}) ---`);
+
     
     setIsLoading(true); 
     try {
-      console.log(`--- handleDeleteClub: Calling deleteDoc for ${clubId} ---`);
-      await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
-      console.log(`--- handleDeleteClub: deleteDoc successful for ${clubId}. ---`);
 
-      console.log(`--- handleDeleteClub: About to call SUCCESS toast for ${clubId}. ---`);
+      await deleteDoc(doc(db, CLUBS_COLLECTION, clubId));
+
+
+
       toast({
         title: "Verein gelöscht",
         description: `"${clubName}" wurde erfolgreich entfernt.`,
       });
-      console.log(`--- handleDeleteClub: SUCCESS toast call for ${clubId} has been made. ---`);
+
       
       await fetchClubs(); 
     } catch (error) {
@@ -137,7 +137,7 @@ export default function AdminClubsPage() {
         variant: "destructive",
       });
     } finally {
-      console.log(`--- handleDeleteClub: Finally block. Setting isLoading to false for ${clubId}. ---`);
+
       setIsLoading(false);
       setIsAlertOpen(false);
       setClubToDelete(null);

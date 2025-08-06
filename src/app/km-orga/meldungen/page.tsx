@@ -35,7 +35,7 @@ export default function KMAdminMeldungen() {
       
       if (meldungenRes.ok) {
         const data = await meldungenRes.json();
-        console.log('Meldungen geladen:', data.data);
+
         setMeldungen(data.data || []);
       }
 
@@ -46,9 +46,9 @@ export default function KMAdminMeldungen() {
 
       if (disziplinenRes.ok) {
         const data = await disziplinenRes.json();
-        console.log('Disziplinen geladen:', data.data);
-        console.log('Disziplinen IDs:', data.data?.map(d => d.id));
-        console.log('Gesuchte disziplinId: Pu5j9BeiCGlwlJAb7BPJ');
+
+
+
         setDisziplinen(data.data || []);
       }
 
@@ -69,8 +69,6 @@ export default function KMAdminMeldungen() {
     try {
       const response = await fetch(`/api/km/meldungen/${meldungId}`, {
         method: 'DELETE'
-      });
-      
       if (response.ok) {
         toast({ title: 'Erfolg', description: 'Meldung gelöscht' });
         loadData();
@@ -102,8 +100,6 @@ export default function KMAdminMeldungen() {
     }
 
     return true;
-  });
-
   if (loading) {
     return (
       <div className="container py-8 max-w-6xl mx-auto">
@@ -112,7 +108,6 @@ export default function KMAdminMeldungen() {
           <p className="text-lg text-gray-600">Lade alle KM-Meldungen...</p>
         </div>
       </div>
-    );
   }
 
   if (!hasFullAccess) {
@@ -123,7 +118,6 @@ export default function KMAdminMeldungen() {
           <Link href="/km-orga" className="text-primary hover:text-primary/80">← Zurück</Link>
         </div>
       </div>
-    );
   }
 
   return (
@@ -224,31 +218,26 @@ export default function KMAdminMeldungen() {
               <tbody>
                 {filteredMeldungen.map(meldung => {
                   const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-                  if (!schuetze) console.log('Schütze nicht gefunden für ID:', meldung.schuetzeId);
-                  else console.log('Schütze gefunden:', schuetze);
+
+
                   const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-                  console.log('Meldung disziplinId:', meldung.disziplinId, 'Gefundene Disziplin:', disziplin);
+
                   const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
                   const verein = clubs.find(c => c.id === vereinId);
 
                   // Berechne Altersklasse
                   let altersklasse = 'Unbekannt';
-                  console.log('Altersklasse-Debug:', {
+
                     birthYear: schuetze?.birthYear,
                     gender: schuetze?.gender,
                     disziplin: disziplin?.name,
                     auflage: disziplin?.auflage
-                  });
-                  
                   if (schuetze?.birthYear && schuetze?.gender && disziplin) {
                     try {
                       const { calculateKMWettkampfklasse } = require('@/types/km');
                       altersklasse = calculateKMWettkampfklasse(
-                        schuetze.birthYear, 
-                        schuetze.gender, 
                         2026, 
                         disziplin.auflage || false
-                      );
                     } catch (error) {
                       console.warn('Altersklasse calculation failed:', error);
                     }
@@ -311,7 +300,6 @@ export default function KMAdminMeldungen() {
                         </div>
                       </td>
                     </tr>
-                  );
                 })}
               </tbody>
             </table>
@@ -325,5 +313,4 @@ export default function KMAdminMeldungen() {
         </CardContent>
       </Card>
     </div>
-  );
 }

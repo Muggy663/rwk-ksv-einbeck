@@ -91,12 +91,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setAppPermissionsError(null);
       setUserAppPermissions(null); // Reset für neuen Benutzer
       try {
-        console.log("AuthProvider DEBUG: Fetching permissions for UID:", firebaseUser.uid);
+
         const permDocRef = doc(db, "user_permissions", firebaseUser.uid);
         const docSnap = await getDoc(permDocRef);
         if (docSnap.exists()) {
           const permissionData = docSnap.data() as UserPermission;
-          console.log("AuthProvider DEBUG: Permissions found:", permissionData);
+
           setUserAppPermissions(permissionData);
           // Fehlerprüfung basierend auf Rolle und clubId
           if (permissionData.role !== 'vereinsvertreter' && permissionData.role !== 'mannschaftsfuehrer') {

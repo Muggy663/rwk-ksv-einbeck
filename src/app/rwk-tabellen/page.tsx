@@ -464,7 +464,7 @@ function RwkTabellenPageComponent() {
   const initialLeagueIdFromParams = useMemo(() => urlParams.league, [urlParams.league]);
 
   const fetchAvailableYearsFromSeasons = useCallback(async (): Promise<number[]> => {
-    console.log("RWK DEBUG: fetchAvailableYearsFromSeasons called");
+
     try {
       // Query for seasons with status "Laufend" to determine available years
       const seasonsColRef = collection(db, 'seasons');
@@ -487,10 +487,10 @@ function RwkTabellenPageComponent() {
         }
       });
       
-      console.log("RWK DEBUG: Available disciplines from DB:", Array.from(availableDisciplines));
+
       
       const sortedYears = Array.from(years).sort((a, b) => b - a);
-      console.log("RWK DEBUG: Available years from DB:", sortedYears);
+
       return sortedYears.length > 0 ? sortedYears : [new Date().getFullYear()];
     } catch (err: any) {
       console.error('RWK DEBUG: Error fetching available years:', err);
@@ -501,7 +501,7 @@ function RwkTabellenPageComponent() {
 
   const calculateNumRounds = useCallback(async (year: number, uiDiscipline: UIDisciplineSelection): Promise<number> => {
     if (!year || !uiDiscipline) return 5;
-    console.log(`RWK DEBUG: calculateNumRounds for year ${year}, UI disc ${uiDiscipline}`);
+
     try {
       const seasonsQuery = query(
         collection(db, "seasons"),
@@ -526,7 +526,7 @@ function RwkTabellenPageComponent() {
                 const specificType = leagueData.type;
                 const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
                 if (fourHundredPointDisciplines.includes(specificType)) {
-                  console.log(`RWK DEBUG: calculateNumRounds - Luftdruckdisziplin (${specificType}), 4 Runden.`);
+
                   return 4;
                 }
             }
@@ -536,13 +536,13 @@ function RwkTabellenPageComponent() {
       console.error('RWK DEBUG: Error in calculateNumRounds:', err);
       toast({ title: "Fehler Rundenanzahl", description: `Anzahl der Durchgänge konnte nicht ermittelt werden: ${err.message}`, variant: "destructive" });
     }
-    console.log(`RWK DEBUG: calculateNumRounds - Defaulting to 5 Runden.`);
+
     return 5;
   }, [toast]);
 
   const fetchCompetitionTeamData = useCallback(async (config: CompetitionDisplayConfig, numRoundsForCompetition: number): Promise<AggregatedCompetitionData | null> => {
     if (!config || !config.year || !config.discipline) return null;
-    console.log(`RWK DEBUG: fetchCompetitionTeamData for year ${config.year}, UI discipline ${config.discipline}`);
+
     try {
       const seasonsColRef = collection(db, "seasons");
       const qSeasons = query(seasonsColRef, 
@@ -643,7 +643,7 @@ function RwkTabellenPageComponent() {
         for (const teamData of teamsForThisLeague) {
 
           if (teamData.name && teamData.name.toLowerCase().includes(EXCLUDED_TEAM_NAME_PART)) {
-            console.log(`RWK DEBUG: Filtering out team by name: ${teamData.name}`);
+
             continue; 
           }
           
@@ -747,7 +747,7 @@ function RwkTabellenPageComponent() {
         };
         
         const currentRound = determineCurrentRound();
-        console.log(`RWK DEBUG: Aktueller vollständiger Durchgang für Sortierung: ${currentRound}`);
+
         
         // Berechne die Punktzahl bis zum aktuellen vollständigen Durchgang
         for (const team of teamDisplays) {
@@ -870,11 +870,11 @@ function RwkTabellenPageComponent() {
         setTeamSubstitutions(substitutionsMap);
       } catch (error) {
         // Substitutions sind optional - bei Berechtigungsfehlern einfach ignorieren
-        console.log('RWK DEBUG: Substitutions nicht verfügbar (Berechtigung fehlt), wird ignoriert');
+
         setTeamSubstitutions(new Map());
       }
       
-      console.log(`RWK DEBUG: fetchCompetitionTeamData - Processed ${fetchedLeaguesData.length} leagues.`);
+
       return { id: `${config.year}-${config.discipline}`, config, leagues: fetchedLeaguesData };
     } catch (err: any) {
       console.error('RWK DEBUG: Error fetching team data:', err);
@@ -886,7 +886,7 @@ function RwkTabellenPageComponent() {
 
   const fetchIndividualShooterData = useCallback(async (config: CompetitionDisplayConfig, numRoundsForCompetition: number, filterByLeagueId?: string | null): Promise<IndividualShooterDisplayData[]> => {
     if (!config || !config.year || !config.discipline) return [];
-    console.log(`RWK DEBUG: fetchIndividualShooterData for year ${config.year}, UI disc ${config.discipline}, League Filter: ${filterByLeagueId || 'ALL'}`);
+
     
     try {
       const scoresColRef = collection(db, "rwk_scores");
@@ -900,7 +900,7 @@ function RwkTabellenPageComponent() {
       
       // Spezialfall: KK Gewehr Ehrungen - alle KK Gewehr Auflage Ligen
       if (filterByLeagueId === "KK_GEWEHR_EHRUNGEN") {
-        console.log(`RWK DEBUG: Lade alle KK Gewehr Auflage Schützen für Ehrungen`);
+
         scoresQueryConstraints = [
           where("competitionYear", "==", config.year),
           where("leagueType", "in", ["KK", "KKG"]) // KK Gewehr Auflage
@@ -913,7 +913,7 @@ function RwkTabellenPageComponent() {
         ];
       }
       
-      console.log(`RWK DEBUG: Lade Einzelschützen für: ${filterByLeagueId}`);
+
       
       const scoresQuery = query(scoresColRef, ...scoresQueryConstraints);
       
@@ -921,11 +921,11 @@ function RwkTabellenPageComponent() {
       const allScores: ScoreEntry[] = [];
       scoresSnapshot.docs.forEach(d => { allScores.push({ id: d.id, ...d.data() as ScoreEntry }); });
       
-      console.log(`RWK DEBUG: Gefundene Scores: ${allScores.length}`);
+
       
       // Optional: Zeige die ersten 3 leagueTypes zur Diagnose
       const leagueTypes = [...new Set(allScores.map(s => s.leagueType))];
-      console.log(`RWK DEBUG: Gefundene leagueTypes: ${leagueTypes.slice(0, 3).join(', ')}${leagueTypes.length > 3 ? '...' : ''} (${leagueTypes.length} total)`);
+
 
       const shootersMap = new Map<string, IndividualShooterDisplayData>();
       // Lade alle einzigartigen Schützen-IDs für bessere Namensauflösung
@@ -1036,7 +1036,7 @@ function RwkTabellenPageComponent() {
           shooter.rank = null; // Kein Rang für Schützen "außer Konkurrenz"
         }
       });
-      console.log(`RWK DEBUG: fetchIndividualShooterData - Processed ${rankedShooters.length} shooters for league ${filterByLeagueId}.`);
+
       return rankedShooters;
     } catch (err: any) {
       console.error("RWK DEBUG: Error fetching individual shooter data:", err);
@@ -1048,7 +1048,7 @@ function RwkTabellenPageComponent() {
 
   const loadData = useCallback(async () => {
     if (!selectedCompetition) {
-      console.log("RWK DEBUG: loadData - Aborting, selectedCompetition not ready.");
+
       setLoadingData(false);
       return;
     }
@@ -1061,7 +1061,7 @@ function RwkTabellenPageComponent() {
       try {
         const parsed = JSON.parse(cachedData);
         if (parsed.timestamp && Date.now() - parsed.timestamp < 300000) { // 5 Minuten Cache
-          console.log('RWK DEBUG: Verwende Cache-Daten');
+
           if (parsed.teamData) setTeamData(parsed.teamData);
           if (parsed.filteredIndividualData) setFilteredIndividualData(parsed.filteredIndividualData);
           if (parsed.topMaleShooter) setTopMaleShooter(parsed.topMaleShooter);
@@ -1069,13 +1069,13 @@ function RwkTabellenPageComponent() {
           return;
         }
       } catch (e) {
-        console.log('RWK DEBUG: Cache-Fehler, lade frisch');
+
       }
     }
     
-    console.log("RWK DEBUG: Lade Daten frisch (kein gültiger Cache)");
+
     
-    console.log("RWK DEBUG: loadData triggered.", { year: selectedCompetition.year, disc: selectedCompetition.discipline, tab: activeTab, leagueFilter: selectedIndividualLeagueFilter });
+
     setLoadingData(true); setError(null); 
     setTeamData(null); 
     setAllIndividualDataForDiscipline([]); 
@@ -1086,7 +1086,7 @@ function RwkTabellenPageComponent() {
     try {
       const numRounds = await calculateNumRounds(selectedCompetition.year, selectedCompetition.discipline);
       setCurrentNumRoundsState(numRounds);
-      console.log(`RWK DEBUG: loadData - Num rounds for competition set to: ${numRounds}`);
+
 
       const fetchedTeamData = await fetchCompetitionTeamData(selectedCompetition, numRounds);
       setTeamData(fetchedTeamData);
@@ -1124,20 +1124,20 @@ function RwkTabellenPageComponent() {
         topFemaleShooter
       };
       sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
-      console.log('RWK DEBUG: Daten im Cache gespeichert');
+
     } catch (err: any) {
       console.error('RWK DEBUG: Failed to load RWK data in loadData:', err);
       toast({ title: "Fehler Datenladen", description: `Fehler beim Laden der Wettkampfdaten: ${err.message}`, variant: "destructive" });
       setError((err as Error).message || 'Unbekannter Fehler beim Laden der Daten.');
     } finally {
       setLoadingData(false);
-      console.log("RWK DEBUG: loadData finished.");
+
     }
   }, [selectedCompetition, activeTab, selectedIndividualLeagueFilter, calculateNumRounds, fetchCompetitionTeamData, fetchIndividualShooterData, toast]);
 
   // Effect for initial load and when URL parameters change
   useEffect(() => {
-    console.log("RWK DEBUG: Main useEffect for initialization. searchParams:", initialYearFromParams, initialDisciplineFromParams, initialLeagueIdFromParams);
+
     setIsLoadingInitialYears(true);
     let isMounted = true;
   
@@ -1173,10 +1173,10 @@ function RwkTabellenPageComponent() {
 
       // Only update if different to prevent loops
       if (JSON.stringify(newSelectedCompetition) !== JSON.stringify(selectedCompetition)) {
-          console.log("RWK DEBUG: Setting selectedCompetition from initial params/defaults:", newSelectedCompetition);
+
           setSelectedCompetition(newSelectedCompetition);
       } else {
-          console.log("RWK DEBUG: selectedCompetition is already up-to-date, not setting again from initial effect.");
+
       }
 
       if (initialLeagueIdFromParams) {
@@ -1206,7 +1206,7 @@ function RwkTabellenPageComponent() {
       }
       
       if (needsUrlUpdate) {
-         console.log(`RWK DEBUG: URL needs update. Replacing URL with: /rwk-tabellen?${currentParams.toString()}`);
+
          router.replace(`/rwk-tabellen?${currentParams.toString()}`, { scroll: false });
       }
 
@@ -1224,7 +1224,7 @@ function RwkTabellenPageComponent() {
   // Effect to load data when selectedCompetition, activeTab, or league filter changes
   useEffect(() => {
     if (selectedCompetition && !isLoadingInitialYears) { 
-      console.log("RWK DEBUG: useEffect for loadData triggered by selectedCompetition, activeTab or selectedIndividualLeagueFilter change.");
+
       loadData();
     }
   }, [selectedCompetition, activeTab, selectedIndividualLeagueFilter, loadData, isLoadingInitialYears]); // loadData is memoized
@@ -1259,7 +1259,7 @@ function RwkTabellenPageComponent() {
         // Automatisches Öffnen der spezifischen Liga aus URL-Parameter
         const targetLeague = teamData.leagues.find(l => l.id === initialLeagueIdFromParams);
         if (targetLeague) {
-          console.log(`RWK DEBUG: Auto-opening league from URL parameter:`, initialLeagueIdFromParams);
+
           setOpenAccordionItems([initialLeagueIdFromParams]);
         }
       }
@@ -1271,7 +1271,7 @@ function RwkTabellenPageComponent() {
   const handleYearChange = useCallback((yearString: string) => {
     const year = parseInt(yearString, 10);
     if (!selectedCompetition || selectedCompetition.year === year || isNaN(year) || loadingData) return;
-    console.log("RWK DEBUG: handleYearChange - Year changed to:", year);
+
     // Update URL, this will trigger the main useEffect to update selectedCompetition
     router.replace(`/rwk-tabellen?year=${year.toString()}&discipline=${selectedCompetition.discipline}`, { scroll: false });
     setOpenAccordionItems([]); // Reset open accordions on year change
@@ -1280,7 +1280,7 @@ function RwkTabellenPageComponent() {
 
   const handleDisciplineChange = useCallback((discipline: UIDisciplineSelection) => {
     if (!selectedCompetition || selectedCompetition.discipline === discipline || loadingData) return;
-    console.log("RWK DEBUG: handleDisciplineChange - Discipline changed to:", discipline);
+
     // Update URL, this will trigger the main useEffect to update selectedCompetition
     router.replace(`/rwk-tabellen?year=${selectedCompetition.year}&discipline=${discipline}`, { scroll: false });
     setOpenAccordionItems([]); // Reset open accordions on discipline change
@@ -1294,7 +1294,7 @@ function RwkTabellenPageComponent() {
     const newlyOpened = value.find(id => !openAccordionItems.includes(id));
     if (newlyOpened) {
       setLastClickedLeagueId(newlyOpened);
-      console.log('RWK DEBUG: Zuletzt geöffnete Liga:', newlyOpened);
+
     }
   }, [openAccordionItems]);
   
@@ -1368,7 +1368,7 @@ function RwkTabellenPageComponent() {
               displayName = nameParts.join(' ');
             }
             
-            console.log(`🎯 Schütze ${shooterId}: "${displayName}" (firstName: ${shooterData.firstName}, lastName: ${shooterData.lastName})`);
+
             
             shooterInfos.set(shooterId, {
               ...shooterData,
@@ -1389,7 +1389,7 @@ function RwkTabellenPageComponent() {
               if (!scoresSnapshot.empty) {
                 const scoreData = scoresSnapshot.docs[0].data();
                 const nameFromScore = scoreData.shooterName;
-                console.log(`🔍 ERSTELLE Schütze ${shooterId} → "${nameFromScore}"`);
+
                 
                 // Erstelle rwk_shooters Eintrag
                 try {
@@ -1404,7 +1404,7 @@ function RwkTabellenPageComponent() {
                     createdBy: 'auto-from-scores'
                   };
                   await setDoc(shooterDocRef, shooterData);
-                  console.log(`✅ Schütze erfolgreich erstellt: ${nameFromScore}`);
+
                 } catch (createError) {
                   console.error(`Fehler beim Erstellen von Schütze ${shooterId}:`, createError);
                 }
@@ -1416,7 +1416,7 @@ function RwkTabellenPageComponent() {
                   isTemporary: false
                 });
               } else {
-                console.log(`⚠️ Keine Scores für ${shooterId} gefunden - erstelle Placeholder`);
+
                 shooterInfos.set(shooterId, {
                   name: `Schütze ${shooterId.substring(0,8)}`,
                   displayName: `Schütze ${shooterId.substring(0,8)}`,
@@ -1580,7 +1580,7 @@ function RwkTabellenPageComponent() {
           // Aktualisiere Liga-Filter immer mit zuletzt geöffneter Liga
           if (selectedIndividualLeagueFilter !== lastClickedLeagueId) {
             setSelectedIndividualLeagueFilter(lastClickedLeagueId);
-            console.log('RWK DEBUG: Liga-Filter aktualisiert auf:', lastClickedLeagueId);
+
           }
         }
       }} className="w-full">
@@ -1686,7 +1686,7 @@ function RwkTabellenPageComponent() {
                           // Hier könnte man die gefilterten Teams anzeigen, aber das würde eine größere Änderung erfordern
                           // Für jetzt nur die Anzahl der gefundenen Teams anzeigen
                           if (filterValue) {
-                            console.log(`${filteredTeams.length} Teams gefunden für "${filterValue}"`);
+
                           }
                         }}
                       />

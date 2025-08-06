@@ -19,7 +19,7 @@ export default function KMUebersicht() {
   const [filter, setFilter] = useState({ verein: '', disziplin: '', search: '' });
 
   useEffect(() => {
-    console.log('useEffect triggered, hasKMAccess:', hasKMAccess, 'authLoading:', authLoading);
+
     if (hasKMAccess && !authLoading) {
       loadData();
     }
@@ -27,7 +27,7 @@ export default function KMUebersicht() {
 
   const loadData = async () => {
     try {
-      console.log('Loading uebersicht data...');
+
       const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
         fetch(`/api/km/meldungen?jahr=${selectedYear}`),
         fetch('/api/shooters'),
@@ -35,23 +35,21 @@ export default function KMUebersicht() {
         fetch('/api/clubs')
       ]);
       
-      console.log('API responses:', {
+
         meldungen: meldungenRes.status,
         schuetzen: schuetzenRes.status,
         disziplinen: disziplinenRes.status,
         clubs: clubsRes.status
-      });
-
       if (meldungenRes.ok) {
         const data = await meldungenRes.json();
-        console.log('📊 KM-Übersicht Meldungen geladen:', data.data?.length || 0);
-        console.log('🔍 Erste Meldung:', data.data?.[0]);
+
+
         setMeldungen(data.data || []);
       }
 
       if (schuetzenRes.ok) {
         const data = await schuetzenRes.json();
-        console.log('👥 Schützen geladen:', data.data?.length || 0);
+
         setSchuetzen(data.data || []);
       }
 
@@ -77,8 +75,6 @@ export default function KMUebersicht() {
     try {
       const response = await fetch(`/api/km/meldungen/${meldungId}`, {
         method: 'DELETE'
-      });
-      
       if (response.ok) {
         toast({ title: 'Erfolg', description: 'Meldung gelöscht' });
         loadData();
@@ -88,12 +84,10 @@ export default function KMUebersicht() {
     }
   };
 
-  console.log('🔍 Filter-Debug:', { 
+ 
     totalMeldungen: meldungen.length, 
     totalSchuetzen: schuetzen.length,
     totalClubs: clubs.length 
-  });
-  
   const filteredMeldungen = meldungen.filter(meldung => {
     const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
     const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
@@ -116,8 +110,6 @@ export default function KMUebersicht() {
     }
 
     return true;
-  });
-
   if (loading) {
     return (
       <div className="container py-8 max-w-6xl mx-auto">
@@ -127,7 +119,6 @@ export default function KMUebersicht() {
           <p className="text-sm text-gray-400 mt-2">Daten werden geladen</p>
         </div>
       </div>
-    );
   }
 
   if (!hasKMAccess) {
@@ -138,7 +129,6 @@ export default function KMUebersicht() {
           <Link href="/km" className="text-primary hover:text-primary/80">← Zurück</Link>
         </div>
       </div>
-    );
   }
 
   return (
@@ -250,11 +240,8 @@ export default function KMUebersicht() {
                     try {
                       const { calculateKMWettkampfklasse } = require('@/types/km');
                       altersklasse = calculateKMWettkampfklasse(
-                        schuetze.birthYear, 
-                        schuetze.gender, 
                         2026, 
                         disziplin.auflage || false
-                      );
                     } catch (error) {
                       console.warn('Altersklasse calculation failed:', error);
                     }
@@ -317,7 +304,6 @@ export default function KMUebersicht() {
                         </div>
                       </td>
                     </tr>
-                  );
                 })}
               </tbody>
             </table>
@@ -331,5 +317,4 @@ export default function KMUebersicht() {
         </CardContent>
       </Card>
     </div>
-  );
 }

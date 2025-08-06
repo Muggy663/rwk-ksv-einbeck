@@ -32,7 +32,7 @@ export function ClubSwitcher() {
     <div className="flex items-center gap-2 w-full sm:w-auto">
       <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
       <Select value={currentClubId || ''} onValueChange={(value) => {
-        console.log('ClubSwitcher: onValueChange called with:', value);
+
         switchClub(value);
       }}>
         <SelectTrigger className="w-full sm:w-[250px] min-w-0">

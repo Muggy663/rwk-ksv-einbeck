@@ -79,7 +79,7 @@ export function cachePDF(type: string, params: Record<string, any>, pdfBlob: Blo
     key
   });
   
-  console.log(`PDF cached: ${key}`);
+
 }
 
 /**
@@ -93,18 +93,18 @@ export function getCachedPDF(type: string, params: Record<string, any>): Blob | 
   const cachedEntry = pdfCache.get(key);
   
   if (!cachedEntry) {
-    console.log(`PDF cache miss: ${key}`);
+
     return null;
   }
   
   // Prüfe, ob der Cache-Eintrag abgelaufen ist
   if (Date.now() - cachedEntry.timestamp > CACHE_EXPIRY_TIME) {
-    console.log(`PDF cache expired: ${key}`);
+
     pdfCache.delete(key);
     return null;
   }
   
-  console.log(`PDF cache hit: ${key}`);
+
   return cachedEntry.blob;
 }
 
@@ -119,7 +119,7 @@ export function invalidatePDFCache(type: string, params: Record<string, any>): b
   const result = pdfCache.delete(key);
   
   if (result) {
-    console.log(`PDF cache invalidated: ${key}`);
+
   }
   
   return result;
@@ -131,7 +131,7 @@ export function invalidatePDFCache(type: string, params: Record<string, any>): b
 export function clearPDFCache(): void {
   const cacheSize = pdfCache.size;
   pdfCache.clear();
-  console.log(`PDF cache cleared: ${cacheSize} entries removed`);
+
 }
 
 /**

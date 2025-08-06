@@ -64,7 +64,7 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
       // Download starten
       if (isNativeApp) {
         // In nativer App: Direkte Methode verwenden
-        console.log('Native App erkannt, verwende direkten Download');
+
         
         // Stelle sicher, dass die URL absolut ist
         let fullPath = documentPath;
@@ -75,7 +75,7 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
         
         // Für Android: Versuche Intent-URL direkt
         if (window.Capacitor && window.Capacitor.getPlatform() === 'android') {
-          console.log('Android erkannt, verwende Intent-URL');
+
           window.location.href = `intent:${fullPath}#Intent;action=android.intent.action.VIEW;type=application/pdf;end`;
         } else {
           // Für iOS und andere
@@ -120,7 +120,7 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
       
       // Im Browser öffnen - spezielle Behandlung für native App
       if (isNativeApp && window.Capacitor) {
-        console.log('Native App erkannt, öffne im externen Browser');
+
         
         try {
           // Versuche mit Capacitor Browser Plugin
@@ -160,11 +160,11 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
       
       // Mit App öffnen - direkte Methode für native App
       if (isNativeApp && window.Capacitor) {
-        console.log('Native App erkannt, öffne direkt');
+
         
         if (window.Capacitor.getPlatform() === 'android') {
           // Android: Verwende Intent-URL
-          console.log('Android erkannt, verwende Intent-URL für PDF');
+
           // Direkte Intent-URL für PDF-Viewer
           window.location.href = `intent:${fullPath}#Intent;action=android.intent.action.VIEW;type=application/pdf;end`;
         } else {

@@ -1,3 +1,0 @@
-git add .
-git commit -m "feat: Multi-Verein-System v0.9.9 - Club-Switcher, persistente Auswahl, einheitliche Datenansicht"
-git push origin master

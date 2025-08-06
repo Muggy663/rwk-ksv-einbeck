@@ -122,7 +122,7 @@ export function ProtestForm({ onSuccess, onCancel }: ProtestFormProps) {
       await protestService.submitProtest(protestData);
       
       // Push-Notification Hinweis (ohne Cloud Functions)
-      console.log('⚖️ Protest eingereicht - Push-Notifications würden an Rundenwettkampfleiter gesendet:', title);
+
 
       toast({
         title: 'Protest eingereicht',

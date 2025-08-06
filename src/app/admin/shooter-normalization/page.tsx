@@ -56,7 +56,7 @@ export default function ShooterNormalizationPage() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      console.log('🔄 Loading shooter normalization data in batches...');
+
       
       // Batch-Loading für Schützen
       const { orderBy, limit, startAfter } = await import('firebase/firestore');
@@ -66,7 +66,7 @@ export default function ShooterNormalizationPage() {
       
       while (true) {
         batchCount++;
-        console.log(`📦 Loading batch ${batchCount}...`);
+
         
         let batchQuery;
         if (lastDoc) {
@@ -87,29 +87,29 @@ export default function ShooterNormalizationPage() {
         const batchSnapshot = await getDocs(batchQuery);
         const batchShooters = batchSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ExcelShooter));
         
-        console.log(`📦 Batch ${batchCount}: ${batchShooters.length} shooters`);
+
         allShooters.push(...batchShooters);
         
         if (batchShooters.length < 500) break;
         lastDoc = batchSnapshot.docs[batchSnapshot.docs.length - 1];
       }
       
-      console.log('📊 Total shooters loaded:', allShooters.length);
+
       
       // Excel-Schützen (haben kmClubId, kein clubId)
       const excel = allShooters.filter(s => s.kmClubId && !s.clubId);
-      console.log('📋 Excel shooters found:', excel.length);
+
       setExcelShooters(excel);
       
       // Normale Schützen (haben clubId)
       const normal = allShooters.filter(s => s.clubId && !s.kmClubId);
-      console.log('👥 Normal shooters found:', normal.length);
+
       setNormalShooters(normal);
       
       // Clubs laden
       const clubsSnapshot = await getDocs(collection(db, "clubs"));
       const clubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Club));
-      console.log('🏢 Clubs loaded:', clubs.length);
+
       setAllClubs(clubs);
       
       // Normalisierungspläne erstellen
@@ -152,7 +152,7 @@ export default function ShooterNormalizationPage() {
       console.error("❌ Fehler beim Laden der Daten:", error);
       toast({ title: "Fehler", description: `Laden fehlgeschlagen: ${(error as Error).message}`, variant: "destructive" });
     } finally {
-      console.log('✅ Data loading completed');
+
       setIsLoading(false);
     }
   };

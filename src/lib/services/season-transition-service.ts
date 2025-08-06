@@ -88,7 +88,7 @@ export async function calculatePromotionsAndRelegations(
   rules: Record<string, PromotionRelegationRule>
 ): Promise<PromotionRelegationResult> {
   // Platzhalter-Implementierung
-  console.log("Berechne Auf- und Absteiger für Saison:", seasonId);
+
   
   // Hier würde die eigentliche Implementierung folgen:
   // 1. Laden der Ligatabellen
@@ -109,7 +109,7 @@ export async function calculatePromotionsAndRelegations(
  */
 export async function executeSeasonTransition(config: SeasonTransitionConfig): Promise<boolean> {
   // Platzhalter-Implementierung
-  console.log("Führe Saisonübergang durch:", config);
+
   
   // Hier würde die eigentliche Implementierung folgen:
   // 1. Berechnen der Auf- und Absteiger
@@ -129,7 +129,7 @@ export async function executeSeasonTransition(config: SeasonTransitionConfig): P
  */
 export async function previewSeasonTransition(config: SeasonTransitionConfig): Promise<SeasonTransitionPreview> {
   // Platzhalter-Implementierung
-  console.log("Generiere Vorschau für Saisonübergang:", config);
+
   
   // Hier würde die eigentliche Implementierung folgen:
   // 1. Berechnen der Auf- und Absteiger
@@ -153,7 +153,7 @@ export async function previewSeasonTransition(config: SeasonTransitionConfig): P
  */
 export async function loadSeasonTransitionConfig(sourceSeasonId: string): Promise<SeasonTransitionConfig | null> {
   // Platzhalter-Implementierung
-  console.log("Lade Konfiguration für Saisonübergang von Saison:", sourceSeasonId);
+
   
   // Hier würde die eigentliche Implementierung folgen:
   // 1. Laden der Konfiguration aus der Datenbank
@@ -169,7 +169,7 @@ export async function loadSeasonTransitionConfig(sourceSeasonId: string): Promis
  */
 export async function saveSeasonTransitionConfig(config: SeasonTransitionConfig): Promise<boolean> {
   // Platzhalter-Implementierung
-  console.log("Speichere Konfiguration für Saisonübergang:", config);
+
   
   // Hier würde die eigentliche Implementierung folgen:
   // 1. Speichern der Konfiguration in der Datenbank

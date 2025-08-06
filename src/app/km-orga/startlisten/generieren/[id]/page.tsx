@@ -66,7 +66,7 @@ export default function GenerierenPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      console.log('loadData started, params.id:', params.id);
+
       try {
         // Prüfe ob es eine Konfiguration oder gespeicherte Startliste ist
         let configData: StartlistConfig;
@@ -75,24 +75,24 @@ export default function GenerierenPage() {
         // Prüfe ob startlisteId Parameter vorhanden ist
         const urlParams = new URLSearchParams(window.location.search);
         const startlisteId = urlParams.get('startlisteId');
-        console.log('startlisteId from URL:', startlisteId);
+
         
         if (startlisteId) {
-          console.log('Loading existing startliste with ID:', startlisteId);
+
           // Lade gespeicherte Startliste
           const startlisteDoc = await getDoc(doc(db, 'km_startlisten', startlisteId));
-          console.log('startlisteDoc exists:', startlisteDoc.exists());
+
           if (startlisteDoc.exists()) {
             const startlisteData = startlisteDoc.data();
             existingStartliste = startlisteData.startliste;
-            console.log('existingStartliste loaded:', existingStartliste?.length, 'items');
+
             
             // Lade die zugehörige Konfiguration
             const relatedConfigDoc = await getDoc(doc(db, 'km_startlisten_configs', startlisteData.configId));
-            console.log('relatedConfigDoc exists:', relatedConfigDoc.exists());
+
             if (relatedConfigDoc.exists()) {
               configData = relatedConfigDoc.data() as StartlistConfig;
-              console.log('configData loaded:', configData);
+
             } else {
               console.warn('Config not found, creating minimal config from startliste data');
               // Erstelle minimale Konfiguration aus Startliste
@@ -107,7 +107,7 @@ export default function GenerierenPage() {
                 wechselzeit: 15,
                 disziplinen: disziplinen
               } as StartlistConfig;
-              console.log('minimal configData created:', configData);
+
             }
           } else {
             toast({ title: 'Fehler', description: 'Startliste nicht gefunden.', variant: 'destructive' });
@@ -124,7 +124,7 @@ export default function GenerierenPage() {
           }
         }
         
-        console.log('Setting config:', configData);
+
         setConfig(configData);
 
         // Disziplinen mit Schießzeiten laden (ZUERST!)
@@ -196,7 +196,7 @@ export default function GenerierenPage() {
           }
         });
 
-        console.log('Geladene Meldungen:', meldungen.length);
+
         setAlleMeldungen(meldungen);
         
         // Vereine für PDF-Export (bereits geladen)
@@ -211,7 +211,7 @@ export default function GenerierenPage() {
         // Verwende existierende Startliste oder generiere neue
         let finalStartliste;
         if (existingStartliste) {
-          console.log('Setting existing startliste:', existingStartliste.length, 'items');
+
           setStartliste(existingStartliste);
           finalStartliste = existingStartliste;
           toast({ 
@@ -238,7 +238,7 @@ export default function GenerierenPage() {
         console.error('Fehler beim Laden:', error);
         toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden.', variant: 'destructive' });
       } finally {
-        console.log('loadData finished, setting loading to false');
+
         setLoading(false);
       }
     };
@@ -398,7 +398,7 @@ export default function GenerierenPage() {
   };
 
   const saveStartliste = async () => {
-    console.log('Speichere Startliste...', { configId: params.id, startliste });
+
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const startlisteId = urlParams.get('startlisteId');

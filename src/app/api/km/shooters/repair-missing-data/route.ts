@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       // Updates anwenden
       if (Object.keys(updates).length > 0) {
         await updateDoc(doc(db, 'km_shooters', schuetzeDoc.id), updates);
-        console.log(`Schütze ${schuetzeDoc.id} repariert:`, updates);
+
         repariert++;
       }
     }

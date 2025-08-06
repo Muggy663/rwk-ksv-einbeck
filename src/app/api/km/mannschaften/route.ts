@@ -7,15 +7,15 @@ const KM_MANNSCHAFTEN_COLLECTION = 'km_mannschaften';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🏆 Loading mannschaften...');
+
     const snapshot = await getDocs(collection(db, KM_MANNSCHAFTEN_COLLECTION));
     const mannschaften = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
     
-    console.log('✅ Found mannschaften:', mannschaften.length);
-    console.log('📋 Sample mannschaft:', mannschaften[0]);
+
+
     return NextResponse.json({
       success: true,
       data: mannschaften

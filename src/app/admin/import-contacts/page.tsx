@@ -58,7 +58,7 @@ export default function ImportContactsPage() {
     
     try {
       const contacts = parseEmailList(emailList);
-      console.log(`📧 ${contacts.length} Kontakte gefunden`);
+
       
       let imported = 0;
       let skipped = 0;
@@ -73,10 +73,10 @@ export default function ImportContactsPage() {
           
           if (existingDocs.empty) {
             await addDoc(collection(db, 'email_contacts'), contact);
-            console.log(`✅ Importiert: ${contact.name} (${contact.email})`);
+
             imported++;
           } else {
-            console.log(`⏭️ Übersprungen: ${contact.email}`);
+
             skipped++;
           }
         } catch (error) {

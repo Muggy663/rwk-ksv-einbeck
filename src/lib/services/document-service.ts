@@ -26,7 +26,7 @@ export async function getAllDocuments(): Promise<Document[]> {
       if (apiResponse.ok) {
         const apiData = await apiResponse.json();
         if (apiData.documents && apiData.documents.length > 0) {
-          console.log('Dokumente aus MongoDB geladen:', apiData.documents.length);
+
           return apiData.documents;
         }
       }
@@ -40,7 +40,7 @@ export async function getAllDocuments(): Promise<Document[]> {
       throw new Error('Fehler beim Laden der Dokumente');
     }
     const jsonData = await jsonResponse.json();
-    console.log('Dokumente aus JSON geladen:', jsonData.documents.length);
+
     return jsonData.documents;
   } catch (error) {
     console.error('Fehler beim Laden der Dokumente:', error);

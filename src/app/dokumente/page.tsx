@@ -85,7 +85,7 @@ export default function DokumentePage() {
           if (apiResponse.ok) {
             const apiData = await apiResponse.json();
             if (apiData.documents && apiData.documents.length > 0) {
-              console.log('Dokumente aus MongoDB geladen:', apiData.documents.length);
+
               
               // Filtere Dokumente basierend auf Benutzerrolle
               const filteredDocs = apiData.documents.filter((doc: Document) => {
@@ -113,7 +113,7 @@ export default function DokumentePage() {
           throw new Error('Fehler beim Laden der Dokumente');
         }
         const jsonData = await jsonResponse.json();
-        console.log('Dokumente aus JSON geladen:', jsonData.documents.length);
+
         
         // Filtere Dokumente basierend auf Benutzerrolle
         const filteredDocs = jsonData.documents.filter((doc: Document) => {

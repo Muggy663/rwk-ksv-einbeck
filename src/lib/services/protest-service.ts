@@ -65,7 +65,7 @@ class ProtestService {
       const docRef = await addDoc(collection(db, this.collection), protestData);
       
       // TODO: Push-Notification an Rundenwettkampfleiter senden
-      console.log('Neuer Protest eingereicht:', docRef.id);
+
       
       return docRef.id;
     } catch (error) {
@@ -166,7 +166,7 @@ class ProtestService {
       await updateDoc(doc(db, this.collection, protestId), updateData);
       
       // TODO: Push-Notification an Einreicher senden
-      console.log('Protest-Status aktualisiert:', protestId, status);
+
     } catch (error) {
       console.error('Fehler beim Aktualisieren des Protest-Status:', error);
       throw error;
@@ -211,7 +211,7 @@ class ProtestService {
         comments: updatedComments
       });
 
-      console.log('Kommentar hinzugefügt:', protestId);
+
     } catch (error) {
       console.error('Fehler beim Hinzufügen des Kommentars:', error);
       throw error;
@@ -224,7 +224,7 @@ class ProtestService {
   async deleteProtest(protestId: string): Promise<void> {
     try {
       await deleteDoc(doc(db, this.collection, protestId));
-      console.log('Protest gelöscht:', protestId);
+
     } catch (error) {
       console.error('Fehler beim Löschen des Protests:', error);
       throw error;

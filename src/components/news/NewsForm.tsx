@@ -108,7 +108,7 @@ export function NewsForm({ article, onSuccess, onCancel }: NewsFormProps) {
         
         // Push-Notification Hinweis (ohne Cloud Functions)
         if (status === 'veroeffentlicht') {
-          console.log('📢 News veröffentlicht - Push-Notifications würden gesendet:', title);
+
         }
         
         toast({
