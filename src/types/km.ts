@@ -1,4 +1,8 @@
 // src/types/km.ts - Kreismeisterschaft spezifische Typen
+// 
+// WICHTIG: Schüler haben nur 20 Schuss statt 40 Schuss!
+// Daher gibt es für die Hauptdisziplinen separate Schüler-Varianten mit "S" Suffix
+// Diese haben reduzierte Schusszahl (20) und angepasste Schießzeiten
 
 export interface KMDisziplin {
   id: string;
@@ -53,6 +57,27 @@ export interface KMMannschaft {
 }
 
 // Hilfsfunktionen
+export function getCorrectDisciplineForAge(
+  spoNummer: string,
+  birthYear: number,
+  saison: number = 2026
+): string {
+  const age = saison - birthYear;
+  const isSchueler = age <= 14;
+  
+  // Für Schüler die spezielle Schüler-Disziplin verwenden
+  if (isSchueler && !spoNummer.endsWith('S')) {
+    // Prüfe ob es eine Schüler-Variante gibt
+    const schuelerVariante = spoNummer + 'S';
+    const availableDisciplines = KM_DISZIPLINEN_2026.map(d => d.spoNummer);
+    if (availableDisciplines.includes(schuelerVariante)) {
+      return schuelerVariante;
+    }
+  }
+  
+  return spoNummer;
+}
+
 export function calculateKMWettkampfklasse(
   birthYear: number, 
   gender: 'male' | 'female', 
@@ -92,9 +117,11 @@ export function calculateKMWettkampfklasse(
 
 // Vollständige Disziplinen-Liste für KM 2026
 export const KM_DISZIPLINEN_2026: Omit<KMDisziplin, 'id'>[] = [
-  // Luftgewehr
+  // Luftgewehr - Schüler haben 20 Schuss, alle anderen 40 Schuss
   { spoNummer: '1.10', name: 'Luftgewehr', kategorie: 'LG', schusszahl: 40, schiesszeit: 75, mindestalter: 12, auflage: false, aktiv: true },
+  { spoNummer: '1.10S', name: 'Luftgewehr Schüler', kategorie: 'LG', schusszahl: 20, schiesszeit: 45, mindestalter: 12, auflage: false, aktiv: true },
   { spoNummer: '1.11', name: 'Luftgewehr Auflage', kategorie: 'LG', schusszahl: 40, schiesszeit: 60, mindestalter: 12, auflage: true, aktiv: true },
+  { spoNummer: '1.11S', name: 'Luftgewehr Auflage Schüler', kategorie: 'LG', schusszahl: 20, schiesszeit: 40, mindestalter: 12, auflage: true, aktiv: true },
   { spoNummer: '1.12', name: '10m Luftgewehr MixTeam', kategorie: 'LG', schusszahl: 40, schiesszeit: 75, mindestalter: 12, auflage: false, aktiv: true },
   { spoNummer: '1.19', name: 'Luftgewehr Auflage sitzend', kategorie: 'LG', schusszahl: 40, schiesszeit: 60, mindestalter: 12, auflage: true, aktiv: true },
   { spoNummer: '1.20', name: '10m Luftgewehr 3-Stellung', kategorie: 'LG', schusszahl: 120, schiesszeit: 150, mindestalter: 14, auflage: false, aktiv: true, nurVereinsmeisterschaft: true },
@@ -114,9 +141,11 @@ export const KM_DISZIPLINEN_2026: Omit<KMDisziplin, 'id'>[] = [
   { spoNummer: '1.60', name: 'KK Gewehr - 3x40', kategorie: 'KKG', schusszahl: 120, schiesszeit: 180, mindestalter: 18, auflage: false, aktiv: true },
   { spoNummer: '1.80', name: 'KK Gewehr - Liegendkampf', kategorie: 'KKG', schusszahl: 60, schiesszeit: 90, mindestalter: 14, auflage: false, aktiv: true },
   
-  // Luftpistole
+  // Luftpistole - Schüler haben 20 Schuss, alle anderen 40 Schuss
   { spoNummer: '2.10', name: '10m Luftpistole', kategorie: 'LP', schusszahl: 40, schiesszeit: 75, mindestalter: 14, auflage: false, aktiv: true },
+  { spoNummer: '2.10S', name: '10m Luftpistole Schüler', kategorie: 'LP', schusszahl: 20, schiesszeit: 45, mindestalter: 12, auflage: false, aktiv: true },
   { spoNummer: '2.11', name: '10 m Luftpistole Auflage', kategorie: 'LP', schusszahl: 40, schiesszeit: 60, mindestalter: 14, auflage: true, aktiv: true },
+  { spoNummer: '2.11S', name: '10 m Luftpistole Auflage Schüler', kategorie: 'LP', schusszahl: 20, schiesszeit: 40, mindestalter: 12, auflage: true, aktiv: true },
   { spoNummer: '2.12', name: '10m LP MixTeam', kategorie: 'LP', schusszahl: 40, schiesszeit: 75, mindestalter: 14, auflage: false, aktiv: true },
   { spoNummer: '2.17', name: '10m LP Mehrkampf', kategorie: 'LP', schusszahl: 60, schiesszeit: 90, mindestalter: 14, auflage: false, aktiv: true },
   { spoNummer: '2.18', name: '10m LP Standard', kategorie: 'LP', schusszahl: 40, schiesszeit: 75, mindestalter: 14, auflage: false, aktiv: true },
@@ -135,12 +164,16 @@ export const KM_DISZIPLINEN_2026: Omit<KMDisziplin, 'id'>[] = [
   { spoNummer: '5.11', name: 'Armbrust 10m Auflage', kategorie: 'AB', schusszahl: 30, schiesszeit: 60, mindestalter: 12, auflage: true, aktiv: true },
   { spoNummer: '5.20', name: 'Armbrust 30m', kategorie: 'AB', schusszahl: 30, schiesszeit: 75, mindestalter: 14, auflage: false, aktiv: true },
   
-  // Lichtgewehr/Lichtpistole
+  // Lichtgewehr/Lichtpistole - Schüler haben 20 Schuss, alle anderen 40 Schuss
   { spoNummer: '11.10', name: 'Lichtgewehr', kategorie: 'LI', schusszahl: 40, schiesszeit: 60, mindestalter: 8, auflage: false, aktiv: true },
+  { spoNummer: '11.10S', name: 'Lichtgewehr Schüler', kategorie: 'LI', schusszahl: 20, schiesszeit: 40, mindestalter: 8, auflage: false, aktiv: true },
   { spoNummer: '11.11', name: 'Faszination Lichtgewehr', kategorie: 'LI', schusszahl: 40, schiesszeit: 60, mindestalter: 8, auflage: false, aktiv: true },
+  { spoNummer: '11.11S', name: 'Faszination Lichtgewehr Schüler', kategorie: 'LI', schusszahl: 20, schiesszeit: 40, mindestalter: 8, auflage: false, aktiv: true },
   { spoNummer: '11.20', name: 'Lichtgewehr 3-stellung', kategorie: 'LI', schusszahl: 120, schiesszeit: 90, mindestalter: 10, auflage: false, aktiv: true },
   { spoNummer: '11.50', name: 'Lichtpistole', kategorie: 'LI', schusszahl: 40, schiesszeit: 60, mindestalter: 8, auflage: false, aktiv: true },
+  { spoNummer: '11.50S', name: 'Lichtpistole Schüler', kategorie: 'LI', schusszahl: 20, schiesszeit: 40, mindestalter: 8, auflage: false, aktiv: true },
   { spoNummer: '11.51', name: 'Faszination Lichtpistole', kategorie: 'LI', schusszahl: 40, schiesszeit: 60, mindestalter: 8, auflage: false, aktiv: true },
+  { spoNummer: '11.51S', name: 'Faszination Lichtpistole Schüler', kategorie: 'LI', schusszahl: 20, schiesszeit: 40, mindestalter: 8, auflage: false, aktiv: true },
   
   // Blasrohr
   { spoNummer: '12.10', name: 'Blasrohrsport', kategorie: 'BR', schusszahl: 30, schiesszeit: 45, mindestalter: 8, auflage: false, aktiv: true }

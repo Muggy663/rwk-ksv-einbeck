@@ -123,7 +123,7 @@ match /users/{userId} {
       allow delete: if true; // TEMPORÄR FÜR KM-IMPORT
     }
     
-    // KM-Schützen - TEMPORÄR OFFEN FÜR MIGRATION
+        // KM-Schützen - TEMPORÄR OFFEN FÜR MIGRATION
     match /km_shooters/{shooterId} {
       allow read: if true;
       allow create: if true; // TEMPORÄR FÜR MIGRATION
@@ -247,30 +247,54 @@ match /users/{userId} {
       allow read, write: if true;
     }
     
-    // === KM-SYSTEM REGELN - TEMPORÄR KOMPLETT OFFEN ===
+    // === KM-SYSTEM REGELN ===
     
+    // KM-Benutzerberechtigungen - Nur SuperAdmin kann verwalten
     match /km_user_permissions/{userId} {
-      allow read, write: if true;
+      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
+      allow write: if isSuperAdmin();
     }
     
+    // KM-Wettkampfklassen - Temporär komplett offen
     match /km_wettkampfklassen/{document} {
       allow read, write: if true;
     }
     
+    // KM-Disziplinen - Temporär komplett offen
     match /km_disziplinen/{document} {
       allow read, write: if true;
     }
     
+    // KM-Meldungen - Temporär offen
     match /km_meldungen/{document} {
       allow read, write: if true;
     }
     
+    // KM-Mannschaften - Temporär offen
     match /km_mannschaften/{document} {
       allow read: if true; // Explizit für API-Operationen
       allow write: if true;
       allow create: if true;
     }
+
+   
+    match /km_startlisten_configs/{document} {
+      allow read, write: if true;
+    }
     
+    match /km_startlisten/{document} {
+      allow read, write: if true;
+    }
+    
+    match /km_vm_ergebnisse/{document} {
+      allow read, write: if true;
+    }
+    
+    // KM-Ergebnisse - Temporär offen
+    match /km_ergebnisse/{document} {
+      allow read, write: if true;
+    }
+
     // Fallback-Regel: Alles andere verbieten
     match /{document=**} {
       allow read, write: if false;

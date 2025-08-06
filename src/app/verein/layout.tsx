@@ -158,7 +158,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
     // Super-Admin should not be in /verein layout, redirect them
     if (user.email === ADMIN_EMAIL) {
       console.warn("VereinLayout DEBUG: Super-Admin detected, redirecting to /admin/dashboard.");
-      router.push('/admin/dashboard');
+      router.push('/admin');
       return; 
     }
 

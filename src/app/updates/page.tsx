@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.9.9.8 (05.08.2025)</span>
+              <span>Web-Version: 0.9.9.9 (15.01.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -36,8 +36,52 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.8 - KM-Meldungen Bugfix</CardTitle>
+              <CardTitle className="text-xl">Version 0.9.9.9 - KM-Startlisten-System</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
+            </div>
+            <CardDescription>15.01.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständiges KM-Startlisten-System mit intelligenter Generierung, Altersklassen-basierter Schießzeit-Berechnung und KI-Optimierung.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🎯 KM-Startlisten-System v0.9.9.9</h4>
+              <div className="text-xs text-green-700">
+                Intelligente Startlisten-Generierung mit KI-Optimierung und Altersklassen-System
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🤖 <strong>KI-Startlisten-Generator:</strong> Automatische Optimierung mit 100% Qualitäts-Analyse</li>
+              <li>📅 <strong>Altersklassen-System:</strong> Schüler (20 Schuss), Jugend/Junioren/Erwachsene (40 Schuss) mit korrekten Schießzeiten</li>
+              <li>⚡ <strong>Anlagensystem-Unterscheidung:</strong> Zuganlagen vs. Elektronische Anlagen (Disag, Meyton) mit angepassten Zeiten</li>
+              <li>📄 <strong>Startlisten-Assistent:</strong> Schritt-für-Schritt Workflow für Sportleiterin</li>
+              <li>💾 <strong>Konfiguration speichern:</strong> Wiederverwendbare Wettkampf-Einstellungen für nächste Jahre</li>
+              <li>✏️ <strong>Startlisten bearbeiten:</strong> Gespeicherte Listen können nachträglich angepasst werden</li>
+              <li>📊 <strong>Intelligente Zeitplanung:</strong> Berücksichtigt Gewehr-Sharing und Wechselzeiten</li>
+              <li>📝 <strong>PDF/Excel Export:</strong> Mit RWK-Logo und professioneller Formatierung</li>
+              <li>📊 <strong>Startlisten-Übersicht:</strong> Verwaltung aller Konfigurationen und gespeicherten Listen</li>
+              <li>🎯 <strong>VM-Ergebnisse-Prüfung:</strong> Qualifikationslimits 2025 für LM-Teilnahme</li>
+              <li>🔄 <strong>Datenreparatur-Scripts:</strong> Automatische Korrektur bei Datenbank-Änderungen</li>
+              <li>🏁 <strong>Produktionsreif:</strong> Vollständig getestet und einsatzbereit für KM 2026</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🎯 KM-Startlisten-System</span>
+                  <p className="text-xs text-green-600 mt-1">Intelligente Generierung + KI-Optimierung + Altersklassen</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.9.9.9
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.9.9.8 - KM-Meldungen Bugfix</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>05.08.2025</CardDescription>
           </CardHeader>
@@ -66,53 +110,6 @@ export default function UpdatesPage() {
                 </div>
                 <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
                   🚀 v0.9.9.8
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.9.9.7 - KM Mannschaften-Generator</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>05.08.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Vollständiger Mannschaften-Generator für Kreismeisterschaften mit automatischer Altersklassen-Sortierung und VM-Ergebnis-Optimierung.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🏆 KM Mannschaften-Generator v0.9.9.7</h4>
-              <div className="text-xs text-green-700">
-                Automatische 3er-Teams mit Altersklassen-Validierung + VM-Ergebnis-Sortierung
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>✅ <strong>Automatische Mannschafts-Generierung:</strong> 3er-Teams aus KM-Meldungen mit Altersklassen-Validierung</li>
-              <li>🏆 <strong>VM-Ergebnis-Sortierung:</strong> Beste Schützen einer Altersklasse bilden automatisch Teams</li>
-              <li>📅 <strong>Altersklassen-Anzeige:</strong> KM-Übersicht zeigt berechnete Wettkampfklassen (Herren I/II, Senioren, etc.)</li>
-              <li>📝 <strong>Vor-/Nachname-Anzeige:</strong> Vollständige Namen in Mannschaften und Übersicht</li>
-              <li>⚡ <strong>Mannschaftsregeln implementiert:</strong> Herren/Damen I-V getrennt, Senioren I+II/III-VI gemischt erlaubt</li>
-              <li>🔄 <strong>Automatisches Neuladen:</strong> Teams erscheinen sofort nach Generierung ohne F5</li>
-              <li>📊 <strong>VM-Ergebnisse sichtbar:</strong> Ringzahlen werden bei Mannschaftsmitgliedern angezeigt</li>
-              <li>🎯 <strong>Intelligente Filterung:</strong> Nur gemeldete Schützen gleicher Altersklasse/Verein für Bearbeitung</li>
-              <li>📝 <strong>Benutzerfreundliche Anleitung:</strong> Schritt-für-Schritt Erklärung in einfacher Sprache</li>
-              <li>🔧 <strong>Mannschaften bearbeiten:</strong> Schützen hinzufügen/entfernen mit sofortiger Speicherung</li>
-              <li>🛡️ <strong>Firestore-Berechtigungen:</strong> Server-seitige API mit korrekten Schreib-/Leserechten</li>
-              <li>🔍 <strong>Debug-Modus:</strong> Detaillierte Logs für Mannschafts-Generierung und Fehlerdiagnose</li>
-              <li>🏆 <strong>Wettkampfklassen-Berechnung:</strong> Korrekte Altersgruppen basierend auf Geburtsjahr und Geschlecht</li>
-              <li>📊 <strong>Sortierung nach Leistung:</strong> Innerhalb Altersklassen nach VM-Ringzahl (beste zuerst)</li>
-              <li>⚙️ <strong>Geschlechter-Trennung:</strong> Automatische Berücksichtigung der Mannschaftsregeln</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🏆 KM Mannschaften-Generator</span>
-                  <p className="text-xs text-green-600 mt-1">Automatische 3er-Teams + VM-Sortierung + Altersklassen-Validierung</p>
-                </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.9.9.7
                 </span>
               </div>
             </div>

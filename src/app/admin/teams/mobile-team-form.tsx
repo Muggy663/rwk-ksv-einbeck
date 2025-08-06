@@ -123,14 +123,14 @@ export function MobileTeamForm({
                 <div>
                   <Label htmlFor="league">Liga</Label>
                   <Select
-                    value={currentTeam.leagueId || ''}
-                    onValueChange={(value) => onTeamChange('leagueId', value)}
+                    value={currentTeam.leagueId || 'NO_LEAGUE_ASSIGNED'}
+                    onValueChange={(value) => onTeamChange('leagueId', value === 'NO_LEAGUE_ASSIGNED' ? null : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Liga wählen (optional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Nicht zugewiesen</SelectItem>
+                      <SelectItem value="NO_LEAGUE_ASSIGNED">Nicht zugewiesen</SelectItem>
                       {availableLeagues.map(league => (
                         <SelectItem key={league.id} value={league.id}>
                           {league.name}

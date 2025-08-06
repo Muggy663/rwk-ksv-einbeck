@@ -839,6 +839,12 @@ export default function VereinErgebnissePage() {
             className="ml-2"
           />
         </div>
+        {activeClubNameForEntry && (
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Building className="h-4 w-4 mr-1" />
+            <span>Verein: <strong className="text-foreground">{activeClubNameForEntry}</strong></span>
+          </div>
+        )}
       </div>
       
       <Card className="shadow-md">

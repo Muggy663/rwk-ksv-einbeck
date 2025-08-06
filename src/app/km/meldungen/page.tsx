@@ -641,14 +641,33 @@ export default function KMMeldungen() {
                 </div>
               )}
 
-              {/* Anmerkungen */}
+              {/* Gewehr-Sharing */}
               <div>
-                <label className="block text-sm font-medium mb-2">Anmerkungen</label>
+                <label className="block text-sm font-medium mb-2">🔫 Gewehr-Sharing (Optional)</label>
+                <div className="p-3 bg-orange-50 border border-orange-200 rounded mb-3">
+                  <p className="text-sm text-orange-700 mb-2">
+                    Falls mehrere Schützen sich ein Gewehr teilen müssen, geben Sie hier die Details an.
+                  </p>
+                  <div className="text-xs text-orange-600">
+                    Beispiel: "2 Schützen, 1 Gewehr" oder "Max Mustermann und ich teilen uns ein Gewehr"
+                  </div>
+                </div>
+                <textarea
+                  value={anmerkung}
+                  onChange={(e) => setAnmerkung(e.target.value)}
+                  placeholder="z.B. 2 Schützen, 1 Gewehr - bitte zeitlich versetzen"
+                  className="w-full p-2 border border-gray-300 rounded h-20"
+                />
+              </div>
+
+              {/* Weitere Anmerkungen */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Weitere Anmerkungen</label>
                 <textarea
                   value={anmerkung}
                   onChange={(e) => setAnmerkung(e.target.value)}
                   placeholder="z.B. bitte nicht mit Ehemann zusammen starten lassen"
-                  className="w-full p-2 border border-gray-300 rounded h-20"
+                  className="w-full p-2 border border-gray-300 rounded h-16"
                 />
               </div>
 

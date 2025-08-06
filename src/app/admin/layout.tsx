@@ -71,7 +71,7 @@ export default function AdminLayout({
         </div>
         <nav className="space-y-1">
           {adminNavItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href));
+            const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
             return (
               <Link 
                 key={item.href} 

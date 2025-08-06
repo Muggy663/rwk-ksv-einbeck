@@ -28,13 +28,14 @@ export default function KMAdminMeldungen() {
     try {
       const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
         fetch(`/api/km/meldungen?jahr=${selectedYear}`),
-        fetch('/api/shooters'),
+        fetch('/api/km/shooters'),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs')
       ]);
       
       if (meldungenRes.ok) {
         const data = await meldungenRes.json();
+        console.log('Meldungen geladen:', data.data);
         setMeldungen(data.data || []);
       }
 
@@ -45,6 +46,9 @@ export default function KMAdminMeldungen() {
 
       if (disziplinenRes.ok) {
         const data = await disziplinenRes.json();
+        console.log('Disziplinen geladen:', data.data);
+        console.log('Disziplinen IDs:', data.data?.map(d => d.id));
+        console.log('Gesuchte disziplinId: Pu5j9BeiCGlwlJAb7BPJ');
         setDisziplinen(data.data || []);
       }
 
@@ -87,7 +91,10 @@ export default function KMAdminMeldungen() {
     if (filter.disziplin && meldung.disziplinId !== filter.disziplin) return false;
     if (filter.search) {
       const searchLower = filter.search.toLowerCase();
-      if (!schuetze?.name?.toLowerCase().includes(searchLower) &&
+      const schuetzeName = schuetze?.firstName && schuetze?.lastName 
+        ? `${schuetze.firstName} ${schuetze.lastName}` 
+        : schuetze?.name || '';
+      if (!schuetzeName.toLowerCase().includes(searchLower) &&
           !disziplin?.name?.toLowerCase().includes(searchLower) &&
           !verein?.name?.toLowerCase().includes(searchLower)) {
         return false;
@@ -217,12 +224,22 @@ export default function KMAdminMeldungen() {
               <tbody>
                 {filteredMeldungen.map(meldung => {
                   const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
+                  if (!schuetze) console.log('Schütze nicht gefunden für ID:', meldung.schuetzeId);
+                  else console.log('Schütze gefunden:', schuetze);
                   const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
+                  console.log('Meldung disziplinId:', meldung.disziplinId, 'Gefundene Disziplin:', disziplin);
                   const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
                   const verein = clubs.find(c => c.id === vereinId);
 
                   // Berechne Altersklasse
                   let altersklasse = 'Unbekannt';
+                  console.log('Altersklasse-Debug:', {
+                    birthYear: schuetze?.birthYear,
+                    gender: schuetze?.gender,
+                    disziplin: disziplin?.name,
+                    auflage: disziplin?.auflage
+                  });
+                  
                   if (schuetze?.birthYear && schuetze?.gender && disziplin) {
                     try {
                       const { calculateKMWettkampfklasse } = require('@/types/km');

@@ -21,7 +21,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch KSV Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) und Kreismeisterschafts (KM) App. (Stand: 05.08.2025, Web-Version 0.9.9.8, App-Version 0.9.1.0, KM-System 1.0.0)
+            Funktionen und Bedienung der Rundenwettkampf (RWK) und Kreismeisterschafts (KM) App. (Stand: 15.01.2025, Web-Version 0.9.9.9, App-Version 0.9.1.0, KM-System 1.0.0)
           </p>
         </div>
       </div>
@@ -469,11 +469,11 @@ export default function HandbuchPage() {
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
                 <li><a href="#km-einleitung" className="text-primary hover:underline">1. Einleitung KM-System</a></li>
-                <li><a href="#km-datenverwaltung" className="text-primary hover:underline">2. Datenverwaltung-Strategie</a></li>
-                <li><a href="#km-meldungen" className="text-primary hover:underline">3. Meldungen erstellen</a></li>
+                <li><a href="#km-meldungen" className="text-primary hover:underline">2. Meldungen erstellen</a></li>
+                <li><a href="#km-startlisten" className="text-primary hover:underline">3. Startlisten-System</a></li>
                 <li><a href="#km-mannschaften" className="text-primary hover:underline">4. Mannschaftsbildung</a></li>
-                <li><a href="#km-admin" className="text-primary hover:underline">5. Admin-Funktionen</a></li>
-                <li><a href="#km-wettkampfklassen" className="text-primary hover:underline">6. Wettkampfklassen</a></li>
+                <li><a href="#km-wettkampfklassen" className="text-primary hover:underline">5. Wettkampfklassen</a></li>
+                <li><a href="#km-vm-ergebnisse" className="text-primary hover:underline">6. VM-Ergebnisse</a></li>
               </ul>
             </CardContent>
           </Card>
@@ -499,52 +499,12 @@ export default function HandbuchPage() {
             </Card>
           </section>
           
-          <Separator className="my-6" />
-          
-          <section id="km-datenverwaltung" className="space-y-4 scroll-mt-20">
-            <h2 className="text-3xl font-semibold text-primary border-b pb-2">2. Datenverwaltung-Strategie</h2>
-            <Card>
-              <CardHeader><CardTitle className="text-xl text-accent">Empfohlene Datenpflege-Strategie</CardTitle></CardHeader>
-              <CardContent>
-                <div className="bg-blue-50 p-4 rounded-md border border-blue-200 mb-4">
-                  <h4 className="font-medium text-blue-800 mb-2">📋 Beschluss für Sitzung mit Präsident/Kreissportleiterin:</h4>
-                  <div className="space-y-3 text-blue-700">
-                    <div>
-                      <strong>Einmalig:</strong>
-                      <ul className="list-disc pl-5 mt-1">
-                        <li>Aktueller Excel-Import als Grundlage (einmalig)</li>
-                        <li>RWK-Teilnehmer 2024/25 bleiben geschützt (wegen laufender Saison)</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <strong>Danach:</strong>
-                      <ul className="list-disc pl-5 mt-1">
-                        <li>Vereinsvertreter pflegen selbst ihre Mitglieder</li>
-                        <li>Eigenverantwortung: Wer nicht pflegt, hat unordentliche Listen</li>
-                        <li>Kein Problem für andere - jeder Verein sieht nur seine eigenen</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-                
-                <h4 className="font-semibold mt-4 mb-2">Mehrfach-Vereinsmitgliedschaft</h4>
-                <p>Schützen können in verschiedenen Vereinen für verschiedene Disziplinen starten:</p>
-                <div className="bg-gray-50 p-3 rounded-md mt-2">
-                  <p className="text-sm"><strong>Beispiel:</strong> Max Mustermann</p>
-                  <ul className="list-disc pl-5 text-sm mt-1">
-                    <li>RWK für Verein A</li>
-                    <li>Luftgewehr Freihand für Verein B</li>
-                    <li>Luftgewehr Auflage für Verein C</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
+
           
           <Separator className="my-6" />
           
           <section id="km-meldungen" className="space-y-4 scroll-mt-20">
-            <h2 className="text-3xl font-semibold text-primary border-b pb-2">3. Meldungen erstellen</h2>
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">2. Meldungen erstellen</h2>
             <Card>
               <CardHeader><CardTitle className="text-xl text-accent">Meldungsformular bedienen</CardTitle></CardHeader>
               <CardContent>
@@ -566,6 +526,43 @@ export default function HandbuchPage() {
                     <li><strong>Auflage vs. Freihand:</strong> Verschiedene Wettkampfklassen (Senioren bei Auflage)</li>
                     <li><strong>Mehrfachauswahl:</strong> Ein Schütze kann in mehreren Disziplinen gemeldet werden</li>
                   </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="km-startlisten" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">3. Startlisten-System</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Intelligente Startlisten-Generierung</CardTitle></CardHeader>
+              <CardContent>
+                <div className="bg-green-50 p-4 rounded-md border border-green-200 mb-4">
+                  <h4 className="font-medium text-green-800 mb-2">🎯 Startlisten-Assistent (Neu in Version 0.9.9.9)</h4>
+                  <p className="text-green-700">Das neue Startlisten-System generiert automatisch optimierte Startlisten mit KI-Unterstützung und berücksichtigt alle Besonderheiten des Schießsports.</p>
+                </div>
+                
+                <h4 className="font-semibold mb-2">Funktionen:</h4>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>Altersklassen-System:</strong> Automatische Schießzeit-Berechnung basierend auf Alter (Schüler: 20 Schuss, andere: 40 Schuss)</li>
+                  <li><strong>Anlagensystem-Unterscheidung:</strong> Zuganlagen vs. Elektronische Anlagen (Disag, Meyton) mit angepassten Zeiten</li>
+                  <li><strong>KI-Optimierung:</strong> Intelligente Verteilung der Schützen auf Stände und Zeiten</li>
+                  <li><strong>Gewehr-Sharing:</strong> Automatische Berücksichtigung von geteilten Gewehren mit Zeitpuffern</li>
+                  <li><strong>Konfiguration speichern:</strong> Wiederverwendbare Einstellungen für nächste Jahre</li>
+                  <li><strong>Startlisten bearbeiten:</strong> Nachträgliche Anpassungen möglich</li>
+                  <li><strong>PDF/Excel Export:</strong> Mit RWK-Logo für professionelle Dokumente</li>
+                </ul>
+                
+                <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
+                  <h4 className="font-medium text-blue-800 mb-2">📋 Workflow für Sportleiterin:</h4>
+                  <ol className="list-decimal pl-5 space-y-1 text-blue-700">
+                    <li>Meldungen prüfen und VM-Ergebnisse kontrollieren</li>
+                    <li>Startlisten-Assistent: Wettkampf konfigurieren</li>
+                    <li>Automatische Generierung mit KI-Optimierung</li>
+                    <li>Manuelle Anpassungen bei Bedarf</li>
+                    <li>PDF-Export für Aushang und Versand</li>
+                  </ol>
                 </div>
               </CardContent>
             </Card>
@@ -603,38 +600,12 @@ export default function HandbuchPage() {
             </Card>
           </section>
           
-          <Separator className="my-6" />
-          
-          <section id="km-admin" className="space-y-4 scroll-mt-20">
-            <h2 className="text-3xl font-semibold text-primary border-b pb-2">5. Admin-Funktionen</h2>
-            <Card>
-              <CardHeader><CardTitle className="text-xl text-accent">KM-Administration</CardTitle></CardHeader>
-              <CardContent>
-                <h4 className="font-semibold mb-2">Verfügbare Admin-Funktionen:</h4>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>System initialisieren:</strong> Wettkampfklassen und Disziplinen für neue Saison</li>
-                  <li><strong>Meldungsübersicht:</strong> Alle Meldungen mit Filterung nach Verein/Disziplin</li>
-                  <li><strong>Live-Statistiken:</strong> Teilnehmerzahlen, LM-Meldungen, VM-Ergebnisse</li>
-                  <li><strong>PDF-Export:</strong> Meldelisten, Startlisten, LM-Meldungen</li>
-                  <li><strong>Datenbereinigung:</strong> Excel-Importe und Duplikate entfernen</li>
-                </ul>
-                
-                <div className="bg-red-50 p-3 rounded-md border border-red-200 mt-4">
-                  <h4 className="font-medium text-red-800 mb-2">🔧 Datenbereinigung:</h4>
-                  <p className="text-red-700 text-sm">Zwei Buttons für saubere Datenverwaltung:</p>
-                  <ul className="list-disc pl-5 text-sm text-red-700 mt-1">
-                    <li><strong>Excel-Importe löschen (rot):</strong> Entfernt alle Schützen mit createdAt</li>
-                    <li><strong>Duplikate entfernen (orange):</strong> Bevorzugt RWK-Teilnehmer bei gleichem Namen</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
+
           
           <Separator className="my-6" />
           
           <section id="km-wettkampfklassen" className="space-y-4 scroll-mt-20">
-            <h2 className="text-3xl font-semibold text-primary border-b pb-2">6. Wettkampfklassen</h2>
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">5. Wettkampfklassen</h2>
             <Card>
               <CardHeader>
                 <CardTitle className="text-xl text-accent flex items-center justify-between">
@@ -678,6 +649,35 @@ export default function HandbuchPage() {
                       <li>Senioren VI: ≥ 81 Jahre</li>
                     </ul>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="km-vm-ergebnisse" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">6. VM-Ergebnisse</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Vereinsmeisterschafts-Ergebnisse</CardTitle></CardHeader>
+              <CardContent>
+                <p>VM-Ergebnisse sind wichtig für die Qualifikation zur Landesmeisterschaft und die Startlisten-Sortierung.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">VM-Ergebnisse-Übersicht:</h4>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>Qualifikationslimits 2025:</strong> Automatische Prüfung gegen LM-Limits</li>
+                  <li><strong>Status-Anzeige:</strong> OK, Fraglich oder VM fehlt</li>
+                  <li><strong>Filter-Funktionen:</strong> Nach Disziplin und Status filterbar</li>
+                  <li><strong>Excel-Export:</strong> Für weitere Bearbeitung und Archivierung</li>
+                </ul>
+                
+                <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 mt-4">
+                  <h4 className="font-medium text-yellow-800 mb-2">⚠️ Wichtige Hinweise:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-yellow-700">
+                    <li><strong>Durchmeldungen:</strong> Benötigen zwingend VM-Ergebnis</li>
+                    <li><strong>LM-Teilnahme:</strong> VM-Ergebnis muss Qualifikationslimit erreichen</li>
+                    <li><strong>Startlisten-Sortierung:</strong> VM-Ergebnisse werden für optimale Verteilung genutzt</li>
+                  </ul>
                 </div>
               </CardContent>
             </Card>
