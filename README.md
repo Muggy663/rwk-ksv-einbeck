@@ -4,7 +4,7 @@
 
 Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
-[![Version](https://img.shields.io/badge/Version-0.9.9.9-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-0.10.0-blue?style=for-the-badge)](#)
 [![Android App](https://img.shields.io/badge/Android_App-0.9.1.0-success?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -56,7 +56,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 | Platform | Version | Status | Download |
 |----------|---------|--------|---------|
-| **Web App** | 0.9.9.9 | ✅ Produktiv | Vercel Deployment |
+| **Web App** | 0.10.0 | 🔄 Beta | Vercel Deployment |
 | **Android App** | 0.9.1.0 | ✅ Produktiv | Google Play Store |
 | **iOS App** | - | ❌ Nicht geplant | Unrentabel |
 
@@ -169,7 +169,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
-- **Web-Version 0.9.9.9** - KM-Ergebnisse: Duplikate-Fix und bessere Rückmeldungen
+- **Web-Version 0.10.0** - Große Code-Bereinigung: Debug-Funktionen entfernt, Projekt optimiert, Syntax-Fehler behoben
 - **App-Version 0.9.1.0** - Erste offizielle Version der nativen Android-App
 
 *Entwickelt mit ❤️ für den deutschen Schießsport*

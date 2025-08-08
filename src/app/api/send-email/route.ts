@@ -19,7 +19,6 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if Resend is available
     if (!resend) {
       return NextResponse.json({ 
         success: false, 
@@ -49,7 +48,6 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
-    // Anhänge verarbeiten
     const attachments = [];
     for (const [key, value] of formData.entries()) {
       if (key.startsWith('attachment-') && value instanceof File) {
@@ -61,7 +59,6 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // E-Mail-Signatur aus Datenbank laden
     let signature = `---
 WICHTIGER HINWEIS: 
 Bitte antworten Sie NICHT auf diese E-Mail.
@@ -76,19 +73,19 @@ Rundenwettkampfleiter KSVE Einbeck`;
       if (settingsDoc.exists()) {
         signature = settingsDoc.data().signature || signature;
       }
-
+    } catch (error) {
+      // Use default signature if loading fails
+    }
     
-    // E-Mail-Inhalt mit anpassbarer Signatur
     const emailContent = `${message}
 
 ${signature}`.trim();
     
-    // Batch-Versand für bessere Zustellbarkeit (Optimiert: 25 Empfänger)
     const batchSize = 25;
     const results = [];
     const errors = [];
     
-
+    for (let i = 0; i < recipients.length; i += batchSize) {
       const batch = recipients.slice(i, i + batchSize);
       
       try {
@@ -103,7 +100,6 @@ ${signature}`.trim();
         };
         
         const result = await resend.emails.send(emailData);
-
         
         results.push({
           batchNumber: Math.floor(i/batchSize) + 1,
@@ -112,11 +108,7 @@ ${signature}`.trim();
           success: true
         });
         
-        // Pause zwischen Batches (60 Sekunden für bessere Zustellbarkeit)
-
-        
       } catch (error) {
-        console.error(`❌ Batch ${Math.floor(i/batchSize) + 1} Fehler:`, error);
         errors.push({
           batchNumber: Math.floor(i/batchSize) + 1,
           recipients: batch.map(r => r.email),
@@ -125,7 +117,6 @@ ${signature}`.trim();
       }
     }
 
-    
     const successfulRecipients = results.reduce((sum, batch) => sum + batch.recipients, 0);
     const failedRecipients = errors.reduce((sum, batch) => sum + batch.recipients.length, 0);
     
@@ -144,8 +135,6 @@ ${signature}`.trim();
     });
     
   } catch (error) {
-    console.error('E-Mail-Versand-Fehler:', error);
-    
     return NextResponse.json({
       success: false,
       message: 'E-Mail konnte nicht versendet werden. Bitte versuchen Sie es später erneut.'

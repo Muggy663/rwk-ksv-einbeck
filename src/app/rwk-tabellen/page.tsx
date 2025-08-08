@@ -1010,7 +1010,30 @@ function RwkTabellenPageComponent() {
         shooterData.totalScore = currentTotal; shooterData.roundsShot = roundsShotCount;
         if (shooterData.roundsShot > 0 && shooterData.totalScore !== null) shooterData.averageScore = parseFloat((shooterData.totalScore / shooterData.roundsShot).toFixed(2));
       });
-      const rankedShooters = Array.from(shootersMap.values())
+      // Entferne Duplikate basierend auf Name+Team, behalte den mit den meisten Scores
+      const shootersByName = new Map();
+      Array.from(shootersMap.values()).forEach(shooter => {
+        const key = `${shooter.shooterName}-${shooter.teamName}`;
+        if (!shootersByName.has(key)) {
+          shootersByName.set(key, []);
+        }
+        shootersByName.get(key).push(shooter);
+      });
+      
+      const deduplicatedShooters = [];
+      shootersByName.forEach(shooters => {
+        if (shooters.length === 1) {
+          deduplicatedShooters.push(shooters[0]);
+        } else {
+          // Behalte den mit den meisten Scores
+          const best = shooters.reduce((best, current) => 
+            current.roundsShot > best.roundsShot ? current : best
+          );
+          deduplicatedShooters.push(best);
+        }
+      });
+      
+      const rankedShooters = deduplicatedShooters
         .filter(s => s.roundsShot > 0) 
         .sort((a, b) => {
           // Erst nach Gesamtpunkten
@@ -1053,24 +1076,12 @@ function RwkTabellenPageComponent() {
       return;
     }
     
-    // Cache aktivieren um Quota zu schonen
-    const cacheKey = `rwk-data-${selectedCompetition.year}-${selectedCompetition.discipline}-${activeTab}-${selectedIndividualLeagueFilter}`;
-    const cachedData = sessionStorage.getItem(cacheKey);
+    // Cache nur für Team-Daten, nicht für Einzelschützen
+    const cacheKey = `rwk-teams-${selectedCompetition.year}-${selectedCompetition.discipline}`;
     
-    if (cachedData && !loadingData) {
-      try {
-        const parsed = JSON.parse(cachedData);
-        if (parsed.timestamp && Date.now() - parsed.timestamp < 300000) { // 5 Minuten Cache
-
-          if (parsed.teamData) setTeamData(parsed.teamData);
-          if (parsed.filteredIndividualData) setFilteredIndividualData(parsed.filteredIndividualData);
-          if (parsed.topMaleShooter) setTopMaleShooter(parsed.topMaleShooter);
-          if (parsed.topFemaleShooter) setTopFemaleShooter(parsed.topFemaleShooter);
-          return;
-        }
-      } catch (e) {
-
-      }
+    // Cache für Einzelschützen deaktivieren um Probleme zu vermeiden
+    if (activeTab === 'einzelschützen') {
+      sessionStorage.removeItem(cacheKey);
     }
     
 
@@ -1115,15 +1126,14 @@ function RwkTabellenPageComponent() {
         setTopFemaleShooter(null);
       }
       
-      // Cache speichern
-      const cacheData = {
-        timestamp: Date.now(),
-        teamData: fetchedTeamData,
-        filteredIndividualData,
-        topMaleShooter,
-        topFemaleShooter
-      };
-      sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      // Cache nur für Team-Daten speichern
+      if (activeTab === 'mannschaften') {
+        const cacheData = {
+          timestamp: Date.now(),
+          teamData: fetchedTeamData
+        };
+        sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      }
 
     } catch (err: any) {
       console.error('RWK DEBUG: Failed to load RWK data in loadData:', err);

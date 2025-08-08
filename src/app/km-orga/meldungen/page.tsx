@@ -35,7 +35,6 @@ export default function KMAdminMeldungen() {
       
       if (meldungenRes.ok) {
         const data = await meldungenRes.json();
-
         setMeldungen(data.data || []);
       }
 
@@ -46,9 +45,6 @@ export default function KMAdminMeldungen() {
 
       if (disziplinenRes.ok) {
         const data = await disziplinenRes.json();
-
-
-
         setDisziplinen(data.data || []);
       }
 
@@ -69,6 +65,8 @@ export default function KMAdminMeldungen() {
     try {
       const response = await fetch(`/api/km/meldungen/${meldungId}`, {
         method: 'DELETE'
+      });
+      
       if (response.ok) {
         toast({ title: 'Erfolg', description: 'Meldung gelöscht' });
         loadData();
@@ -82,9 +80,7 @@ export default function KMAdminMeldungen() {
     const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
     const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
     const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
-    const verein = clubs.find(c => c.id === vereinId);
-
-    // Filter anwenden
+    
     if (filter.verein && vereinId !== filter.verein) return false;
     if (filter.disziplin && meldung.disziplinId !== filter.disziplin) return false;
     if (filter.search) {
@@ -92,14 +88,17 @@ export default function KMAdminMeldungen() {
       const schuetzeName = schuetze?.firstName && schuetze?.lastName 
         ? `${schuetze.firstName} ${schuetze.lastName}` 
         : schuetze?.name || '';
+      const verein = clubs.find(c => c.id === vereinId);
+      
       if (!schuetzeName.toLowerCase().includes(searchLower) &&
           !disziplin?.name?.toLowerCase().includes(searchLower) &&
           !verein?.name?.toLowerCase().includes(searchLower)) {
         return false;
       }
     }
-
     return true;
+  });
+
   if (loading) {
     return (
       <div className="container py-8 max-w-6xl mx-auto">
@@ -108,6 +107,7 @@ export default function KMAdminMeldungen() {
           <p className="text-lg text-gray-600">Lade alle KM-Meldungen...</p>
         </div>
       </div>
+    );
   }
 
   if (!hasFullAccess) {
@@ -118,6 +118,7 @@ export default function KMAdminMeldungen() {
           <Link href="/km-orga" className="text-primary hover:text-primary/80">← Zurück</Link>
         </div>
       </div>
+    );
   }
 
   return (
@@ -138,7 +139,6 @@ export default function KMAdminMeldungen() {
         </select>
       </div>
 
-      {/* Filter */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Filter</CardTitle>
@@ -195,7 +195,6 @@ export default function KMAdminMeldungen() {
         </CardContent>
       </Card>
 
-      {/* Meldungen Tabelle */}
       <Card>
         <CardHeader>
           <CardTitle>Meldungen ({filteredMeldungen.length})</CardTitle>
@@ -204,44 +203,23 @@ export default function KMAdminMeldungen() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Schütze</th>
-                  <th className="text-left p-2">Verein</th>
-                  <th className="text-left p-2">Disziplin</th>
-                  <th className="text-left p-2">Altersklasse</th>
-                  <th className="text-left p-2">LM</th>
-                  <th className="text-left p-2">VM-Ringe</th>
-                  <th className="text-left p-2">Meldedatum</th>
-                  <th className="text-left p-2">Aktionen</th>
+                <tr className="border-b bg-gray-50">
+                  <th className="p-2 text-left">Schütze</th>
+                  <th className="p-2 text-left">Verein</th>
+                  <th className="p-2 text-left">Disziplin</th>
+                  <th className="p-2 text-left">Klasse</th>
+                  <th className="p-2 text-left">LM</th>
+                  <th className="p-2 text-left">VM</th>
+                  <th className="p-2 text-left">Datum</th>
+                  <th className="p-2 text-left">Aktionen</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredMeldungen.map(meldung => {
                   const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-
-
                   const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-
                   const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
                   const verein = clubs.find(c => c.id === vereinId);
-
-                  // Berechne Altersklasse
-                  let altersklasse = 'Unbekannt';
-
-                    birthYear: schuetze?.birthYear,
-                    gender: schuetze?.gender,
-                    disziplin: disziplin?.name,
-                    auflage: disziplin?.auflage
-                  if (schuetze?.birthYear && schuetze?.gender && disziplin) {
-                    try {
-                      const { calculateKMWettkampfklasse } = require('@/types/km');
-                      altersklasse = calculateKMWettkampfklasse(
-                        2026, 
-                        disziplin.auflage || false
-                    } catch (error) {
-                      console.warn('Altersklasse calculation failed:', error);
-                    }
-                  }
 
                   return (
                     <tr key={meldung.id} className="border-b hover:bg-gray-50">
@@ -260,7 +238,7 @@ export default function KMAdminMeldungen() {
                       </td>
                       <td className="p-2">
                         <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                          {altersklasse}
+                          Klasse
                         </span>
                       </td>
                       <td className="p-2">
@@ -300,6 +278,7 @@ export default function KMAdminMeldungen() {
                         </div>
                       </td>
                     </tr>
+                  );
                 })}
               </tbody>
             </table>
@@ -313,4 +292,5 @@ export default function KMAdminMeldungen() {
         </CardContent>
       </Card>
     </div>
+  );
 }
