@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.10.1 (09.08.2025)</span>
+              <span>Web-Version: 0.10.1a (09.08.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -36,8 +36,48 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.10.1 - Schützen-Verwaltung für Vereinsvertreter</CardTitle>
+              <CardTitle className="text-xl">Version 0.10.1a - Ersatzschützen & PDF-Verbesserungen</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
+            </div>
+            <CardDescription>09.08.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Ersatzschützen-System nach RWK-Ordnung §12, PDF-Logos und Disziplin-Optimierungen.</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-amber-900 mb-2">🔄 Ersatzschützen-System v0.10.1a</h4>
+              <div className="text-xs text-amber-700">
+                Vollständige Umsetzung der RWK-Ordnung §12 für Ersatzschützen
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🔄 <strong>Ersatzschützen-Verwaltung:</strong> Admin-Seite für Ersatzschützen nach RWK-Ordnung §12</li>
+              <li>⚙️ <strong>Ersatz-Typen:</strong> Neuer Schütze oder Einzelschütze → Team mit Ergebnis-Transfer</li>
+              <li>🏆 <strong>Ersatz-Badge:</strong> "Ersatz ab DG1" wird in RWK-Tabellen angezeigt</li>
+              <li>🖼️ <strong>PDF-Logos:</strong> Logo2.png in allen PDF-Exporten oben rechts</li>
+              <li>📄 <strong>Erweiterte PDFs:</strong> Mannschafts-PDFs zeigen Schützen unter jedem Team</li>
+              <li>🎯 <strong>Disziplin-Bereinigung:</strong> "Kleinkaliber" ohne Abkürzungen, LGS = Luftgewehr Freihand</li>
+              <li>💨 <strong>Luftdruck-Kategorie:</strong> Luftgewehr + Luftpistole zusammengefasst wie Kleinkaliber</li>
+              <li>🏆 <strong>KK Pistole Ehrungen:</strong> Separate Gesamtsieger-Urkunden für KK Pistole</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-amber-800">🔄 Ersatzschützen-System</span>
+                  <p className="text-xs text-amber-600 mt-1">RWK-Ordnung §12 vollständig umgesetzt</p>
+                </div>
+                <span className="bg-amber-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.10.1a
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.10.1 - Schützen-Verwaltung für Vereinsvertreter</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>09.08.2025</CardDescription>
           </CardHeader>

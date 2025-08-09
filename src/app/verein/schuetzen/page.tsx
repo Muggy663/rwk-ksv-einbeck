@@ -351,6 +351,7 @@ export default function VereinSchuetzenPage() {
       const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterToDelete.id);
       batch.delete(shooterDocRef);
 
+      // 1. Entferne aus Teams
       const teamsToUpdateQuery = query(
         collection(db, TEAMS_COLLECTION),
         where("clubId", "==", activeClubId),
@@ -359,6 +360,20 @@ export default function VereinSchuetzenPage() {
       const teamsToUpdateSnap = await getDocs(teamsToUpdateQuery);
       teamsToUpdateSnap.forEach(teamDoc => {
         batch.update(teamDoc.ref, { shooterIds: arrayRemove(shooterToDelete.id) });
+      });
+      
+      // 2. Markiere rwk_scores als "gelöscht" statt löschen
+      const scoresQuery = query(
+        collection(db, 'rwk_scores'),
+        where('shooterId', '==', shooterToDelete.id)
+      );
+      const scoresSnap = await getDocs(scoresQuery);
+      scoresSnap.forEach(scoreDoc => {
+        batch.update(scoreDoc.ref, { 
+          shooterDeleted: true,
+          deletedAt: new Date(),
+          shooterName: shooterToDelete.name + ' (gelöscht)'
+        });
       });
       
       await batch.commit();

@@ -277,11 +277,14 @@ export async function fetchBestOverallShooters(seasonId: string) {
     // Ligen nach Typ gruppieren
     const normalLeagueIds = [];
     const pistolLeagueIds = [];
+    const kkPistolLeagueIds = [];
     
     leaguesSnapshot.forEach(leagueDoc => {
       const leagueData = leagueDoc.data();
       if (leagueData.type.includes('SP')) {
         pistolLeagueIds.push(leagueDoc.id);
+      } else if (leagueData.type.includes('KKP')) {
+        kkPistolLeagueIds.push(leagueDoc.id);
       } else {
         normalLeagueIds.push(leagueDoc.id);
       }
@@ -291,6 +294,7 @@ export async function fetchBestOverallShooters(seasonId: string) {
     let bestMale = null;
     let bestFemale = null;
     let bestPistol = null;
+    let bestKKPistol = null;
     
     // Vercel hat Probleme mit zu vielen gleichzeitigen Firestore-Abfragen
     // Daher führen wir die Abfragen nacheinander aus
@@ -304,10 +308,16 @@ export async function fetchBestOverallShooters(seasonId: string) {
       bestPistol = await fetchBestShooterByGender(pistolLeagueIds, 'all', seasonData.name);
     }
     
+    // Bester Schütze für KK Pistole
+    if (kkPistolLeagueIds.length > 0) {
+      bestKKPistol = await fetchBestShooterByGender(kkPistolLeagueIds, 'all', seasonData.name);
+    }
+    
     return {
       bestMale,
       bestFemale,
-      bestPistol
+      bestPistol,
+      bestKKPistol
     };
   } catch (error) {
     console.error('Fehler beim Abrufen der besten Schützen:', error);
@@ -399,7 +409,17 @@ async function fetchBestShooterByGender(leagueIds: string[], gender: 'male' | 'f
     if (leagueSnap.exists()) {
       const leagueData = leagueSnap.data();
       bestShooter.discipline = getDisciplineName(leagueData.type);
-      bestShooter.category = gender === 'male' ? 'Bester Schütze' : gender === 'female' ? 'Beste Dame' : 'Bester Sportpistolenschütze';
+      if (gender === 'male') {
+        bestShooter.category = 'Bester Schütze';
+      } else if (gender === 'female') {
+        bestShooter.category = 'Beste Dame';
+      } else if (leagueData.type.includes('SP')) {
+        bestShooter.category = 'Bester Sportpistolenschütze';
+      } else if (leagueData.type.includes('KKP')) {
+        bestShooter.category = 'Bester KK Pistolenschütze';
+      } else {
+        bestShooter.category = 'Bester Schütze';
+      }
       bestShooter.season = seasonName;
     }
     
@@ -418,6 +438,7 @@ function getDisciplineName(type: string): string {
   if (type.startsWith('LGA')) return 'Luftgewehr Auflage';
   if (type.startsWith('LP')) return 'Luftpistole';
   if (type.startsWith('LPA')) return 'Luftpistole Auflage';
+  if (type.startsWith('KKP')) return 'KK Pistole';
   if (type.startsWith('KK')) return 'Kleinkaliber';
   if (type.startsWith('KKA')) return 'Kleinkaliber Auflage';
   if (type.startsWith('SP')) return 'Sportpistole';

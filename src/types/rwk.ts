@@ -1,5 +1,5 @@
 // src/types/rwk.ts
-export type FirestoreLeagueSpecificDiscipline = 'KK' | 'KKP' | 'KKG' | 'LG' | 'LGA' | 'LP' | 'LPA';
+export type FirestoreLeagueSpecificDiscipline = 'KK' | 'KKP' | 'KKG' | 'LG' | 'LGA' | 'LGS' | 'LP' | 'LPA';
 
 export interface Season {
   id: string;
@@ -214,7 +214,7 @@ export interface LeagueUpdateEntry {
 }
 
 // UI-spezifische Typen
-export type UIDisciplineSelection = 'KK' | 'LG' | 'LP';
+export type UIDisciplineSelection = 'KK' | 'LG';
 
 export interface UIDisciplineFilterOption {
   value: UIDisciplineSelection;
@@ -342,9 +342,8 @@ export interface VereinContextType {
 export const MAX_SHOOTERS_PER_TEAM = 3;
 
 export const uiDisciplineFilterOptions: UIDisciplineFilterOption[] = [
-  { value: 'KK', label: 'Kleinkaliber (KK, KKP, KKG)', firestoreTypes: ['KK', 'KKP', 'KKG'] },
-  { value: 'LG', label: 'Luftgewehr (LG, LGA)', firestoreTypes: ['LG', 'LGA'] },
-  { value: 'LP', label: 'Luftpistole (LP, LPA)', firestoreTypes: ['LP', 'LPA'] },
+  { value: 'KK', label: 'Kleinkaliber', firestoreTypes: ['KK', 'KKP', 'KKG'] },
+  { value: 'LG', label: 'Luftdruck', firestoreTypes: ['LG', 'LGA', 'LGS', 'LP', 'LPA'] },
 ];
 
 export const leagueDisciplineOptions: LeagueDisciplineOption[] = [
@@ -353,21 +352,20 @@ export const leagueDisciplineOptions: LeagueDisciplineOption[] = [
   { value: 'KKG', label: 'Kleinkaliber Gewehr (Gruppe)' },
   { value: 'LG', label: 'Luftgewehr' },
   { value: 'LGA', label: 'Luftgewehr Auflage' },
+  { value: 'LGS', label: 'Luftgewehr Freihand' },
   { value: 'LP', label: 'Luftpistole' },
   { value: 'LPA', label: 'Luftpistole Auflage' },
 ];
 
 export function getUIDisciplineValueFromSpecificType(specificType: FirestoreLeagueSpecificDiscipline): UIDisciplineSelection {
   if (['KK', 'KKP', 'KKG'].includes(specificType)) return 'KK';
-  if (['LG', 'LGA'].includes(specificType)) return 'LG';
-  if (['LP', 'LPA'].includes(specificType)) return 'LP';
+  if (['LG', 'LGA', 'LGS', 'LP', 'LPA'].includes(specificType)) return 'LG';
   return 'KK';
 }
 
 export function getDisciplineCategory(leagueType?: FirestoreLeagueSpecificDiscipline): string | null {
   if (!leagueType) return null;
   if (['KK', 'KKP', 'KKG'].includes(leagueType)) return 'KK';
-  if (['LG', 'LGA'].includes(leagueType)) return 'LG';
-  if (['LP', 'LPA'].includes(leagueType)) return 'LP';
+  if (['LG', 'LGA', 'LGS', 'LP', 'LPA'].includes(leagueType)) return 'LG';
   return null;
 }

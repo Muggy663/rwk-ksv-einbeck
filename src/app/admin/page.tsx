@@ -347,6 +347,7 @@ export default function AdminDashboardPage() {
                 <Link href="/admin/results" passHref><Button className="w-full">Erfassen</Button></Link>
                 <Link href="/admin/edit-results" passHref><Button variant="outline" className="w-full">Bearbeiten/Löschen</Button></Link>
                 <Link href="/admin/missing-results" passHref><Button variant="outline" className="w-full col-span-2 mt-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200">Fehlende Ergebnisse prüfen</Button></Link>
+                <Link href="/admin/substitutions" passHref><Button variant="outline" className="w-full col-span-2 mt-2 bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200">🔄 Ersatzschützen verwalten</Button></Link>
             </div>
           </CardContent>
         </Card>
@@ -483,11 +484,29 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              PDF-Exporte und andere Systemfunktionen.
+              PDF-Exporte, Backups und andere Systemfunktionen.
             </CardDescription>
              <div className="space-y-2">
               <Link href="/admin/exports" passHref>
                 <Button className="w-full" variant="outline">PDF: Ergebnislisten & Urkunden</Button>
+              </Link>
+              <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                <p className="text-sm font-medium text-blue-800 mb-2">📊 RWK Backup vor Migration</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <a href="/api/export/rwk-backup?year=2025&discipline=KK" download>
+                      📥 KK 2025
+                    </a>
+                  </Button>
+                  <Button asChild variant="outline" size="sm">
+                    <a href="/api/export/rwk-backup?year=2025&discipline=LG" download>
+                      📥 LG 2025
+                    </a>
+                  </Button>
+                </div>
+              </div>
+              <Link href="/admin/migration" passHref>
+                <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">🔄 Schützen-Migration</Button>
               </Link>
               <Link href="/admin/cleanup" passHref>
                 <Button className="w-full" variant="outline">Datenbereinigung</Button>

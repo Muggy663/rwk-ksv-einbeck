@@ -1752,7 +1752,7 @@ function RwkTabellenPageComponent() {
                                 individualLeagueShooters: shooterData
                               };
                               
-                              // Generiere PDF mit den geladenen Daten
+                              // Generiere PDF mit den geladenen Daten und Logo
                               try {
                                 await generateShootersPDFFixed(
                                   tempLeague, 
@@ -1887,7 +1887,7 @@ function RwkTabellenPageComponent() {
                         {/* Spezielle Option für KK Gewehr Ehrungen */}
                         {selectedCompetition?.discipline === 'KK' && (
                           <SelectItem value="KK_GEWEHR_EHRUNGEN" className="bg-amber-50 text-amber-800 font-medium">
-                            🏆 Alle KK Gewehr Auflage (für Ehrungen)
+                            🏆 Alle KK Gewehr Auflage
                           </SelectItem>
                         )}
                         {availableLeaguesForIndividualFilter
@@ -1976,7 +1976,7 @@ function RwkTabellenPageComponent() {
                 {!topFemaleShooter && !loadingData && (<Card className="shadow-lg"><CardHeader><CardTitle className="text-accent">Keine Beste Dame</CardTitle></CardHeader><CardContent><p className="text-muted-foreground">Für die aktuelle Auswahl konnte keine beste Dame ermittelt werden.</p></CardContent></Card>)}
               </div>
               <Card className="shadow-lg">
-                <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage - Ehrungen)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
+                <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
                     <Table>

@@ -15,6 +15,7 @@ import { de } from 'date-fns/locale';
 import { fetchEvents } from '@/lib/services/calendar-service';
 import { cleanupExpiredEvents } from '@/lib/services/event-cleanup';
 import { newsService } from '@/lib/services/news-service';
+import { MaintenanceBanner } from '@/components/ui/maintenance-banner';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
@@ -154,6 +155,14 @@ export default function HomePage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto">
+      {/* Wartungshinweis - bei Bedarf aktivieren */}
+      <MaintenanceBanner 
+        show={true} // ← AKTIVIERT für Test
+        message="⚠️ WICHTIG: Luftdruck RWK-Anmeldungen STOPP bis Montag früh! Wartungsarbeiten geplant - Anmeldungen könnten verloren gehen. Bitte warten!"
+        type="maintenance"
+      />
+      
+
       {/* Logo und Willkommenstext */}
       <section className="text-center mb-12">
         <Image

@@ -417,6 +417,20 @@ export default function CertificatesPage() {
         });
       }
       
+      // Bester KK Pistolenschütze
+      if (bestShooters.bestKKPistol) {
+        certificates.push({
+          type: 'shooter',
+          season: seasonName,
+          discipline: bestShooters.bestKKPistol.discipline,
+          category: 'Gesamtwertung',
+          recipientName: bestShooters.bestKKPistol.name,
+          score: bestShooters.bestKKPistol.totalScore.toString(),
+          rank: 1,
+          date: `Einbeck, ${currentDate}`
+        });
+      }
+      
       // Urkunden generieren
       if (certificates.length === 0) {
         toast({

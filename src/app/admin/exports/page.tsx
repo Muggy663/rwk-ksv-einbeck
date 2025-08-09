@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileDown, Printer, Award } from 'lucide-react';
-import { PDFButton } from '@/components/ui/pdf-button';
+import { PDFButton } from '@/components/ui/pdf-export-button-new';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';

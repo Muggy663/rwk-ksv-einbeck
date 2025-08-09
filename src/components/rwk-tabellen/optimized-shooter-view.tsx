@@ -189,16 +189,23 @@ export function OptimizedShooterView({
                             </Button>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
-                            {shooter.teamName}
-                            {shooter.teamOutOfCompetition && (
-                              <span 
-                                className="ml-2 text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium cursor-help"
-                                title={shooter.teamOutOfCompetitionReason || 'Außer Konkurrenz'}
-                                aria-label={`Außer Konkurrenz: ${shooter.teamOutOfCompetitionReason || 'Keine Begründung angegeben'}`}
-                              >
-                                AK
-                              </span>
-                            )}
+                            <div className="flex items-center gap-2">
+                              <span>{shooter.teamName}</span>
+                              {shooter.teamOutOfCompetition && (
+                                <span 
+                                  className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium cursor-help"
+                                  title={shooter.teamOutOfCompetitionReason || 'Außer Konkurrenz'}
+                                  aria-label={`Außer Konkurrenz: ${shooter.teamOutOfCompetitionReason || 'Keine Begründung angegeben'}`}
+                                >
+                                  AK
+                                </span>
+                              )}
+                              {shooter.isSubstitute && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-medium">
+                                  Ersatz ab DG{shooter.substitutionInfo?.fromRound || '?'}
+                                </span>
+                              )}
+                            </div>
                           </TableCell>
                           
                           {Array.from({ length: numRounds }, (_, i) => (
