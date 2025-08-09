@@ -22,8 +22,6 @@ export default function EditEventPage() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id') || '';
   
-
-  
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
@@ -38,7 +36,6 @@ export default function EditEventPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Lade Termin-Details
   useEffect(() => {
     if (!id) {
       toast({
@@ -60,7 +57,6 @@ export default function EditEventPage() {
           const data = eventDoc.data();
           setTitle(data.title || '');
           
-          // Datum formatieren
           if (data.date) {
             const eventDate = data.date.toDate();
             setDate(eventDate.toISOString().split('T')[0]);
@@ -74,7 +70,6 @@ export default function EditEventPage() {
           setLeagueId(data.leagueId || '');
           setLeagueName(data.leagueName || '');
           
-          // Lade Ligen
           const leaguesQuery = query(collection(db, 'rwk_leagues'));
           const leaguesSnapshot = await getDocs(leaguesQuery);
           const leaguesData = leaguesSnapshot.docs.map(doc => ({
@@ -106,7 +101,6 @@ export default function EditEventPage() {
     loadEvent();
   }, [id, toast, router]);
 
-  // Funktion zum Speichern des Termins
   const handleSave = async () => {
     if (!id || !title || !date || !time || !location || !leagueId) {
       toast({
@@ -121,8 +115,6 @@ export default function EditEventPage() {
     
     try {
       const eventRef = doc(db, 'events', id);
-      
-      // Datum konvertieren
       const eventDate = new Date(date);
       
       await updateDoc(eventRef, {
@@ -156,6 +148,18 @@ export default function EditEventPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="container py-8 max-w-3xl mx-auto">
+        <div className="space-y-4">
+          <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-8 max-w-3xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
@@ -168,157 +172,142 @@ export default function EditEventPage() {
         </Link>
       </div>
       
-      {isLoading ? (
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-3/4" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
+      <Card>
+        <CardHeader>
+          <CardTitle>Termin-Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="title">Titel *</Label>
+              <Input 
+                id="title" 
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)} 
+                placeholder="Titel des Termins"
+                required
+              />
             </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Termin-Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="title">Titel *</Label>
+                <Label htmlFor="date">Datum *</Label>
                 <Input 
-                  id="title" 
-                  value={title} 
-                  onChange={(e) => setTitle(e.target.value)} 
-                  placeholder="Titel des Termins"
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="date">Datum *</Label>
-                  <Input 
-                    id="date" 
-                    type="date" 
-                    value={date} 
-                    onChange={(e) => setDate(e.target.value)} 
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="time">Uhrzeit *</Label>
-                  <Input 
-                    id="time" 
-                    type="time" 
-                    value={time} 
-                    onChange={(e) => setTime(e.target.value)} 
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="location">Ort *</Label>
-                <Input 
-                  id="location" 
-                  value={location} 
-                  onChange={(e) => setLocation(e.target.value)} 
-                  placeholder="Ort des Termins"
+                  id="date" 
+                  type="date" 
+                  value={date} 
+                  onChange={(e) => setDate(e.target.value)} 
                   required
                 />
               </div>
               
               <div>
-                <Label htmlFor="description">Beschreibung</Label>
-                <Textarea 
-                  id="description" 
-                  value={description} 
-                  onChange={(e) => setDescription(e.target.value)} 
-                  placeholder="Beschreibung des Termins"
-                  rows={3}
+                <Label htmlFor="time">Uhrzeit *</Label>
+                <Input 
+                  id="time" 
+                  type="time" 
+                  value={time} 
+                  onChange={(e) => setTime(e.target.value)} 
+                  required
                 />
               </div>
-              
+            </div>
+            
+            <div>
+              <Label htmlFor="location">Ort *</Label>
+              <Input 
+                id="location" 
+                value={location} 
+                onChange={(e) => setLocation(e.target.value)} 
+                placeholder="Ort des Termins"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="description">Beschreibung</Label>
+              <Textarea 
+                id="description" 
+                value={description} 
+                onChange={(e) => setDescription(e.target.value)} 
+                placeholder="Beschreibung des Termins"
+                rows={3}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="league">Liga *</Label>
+              <Select
+                value={leagueId}
+                onValueChange={(value) => {
+                  setLeagueId(value);
+                  const league = leagues.find(l => l.id === value);
+                  if (league) {
+                    setLeagueName(league.name);
+                  }
+                }}
+              >
+                <SelectTrigger id="league">
+                  <SelectValue placeholder="Liga auswählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {leagues.map(league => (
+                    <SelectItem key={league.id} value={league.id}>
+                      {league.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="league">Liga *</Label>
+                <Label htmlFor="type">Typ *</Label>
                 <Select
-                  value={leagueId}
-                  onValueChange={(value) => {
-                    setLeagueId(value);
-                    const league = leagues.find(l => l.id === value);
-                    if (league) {
-                      setLeagueName(league.name);
-                    }
-                  }}
+                  value={type}
+                  onValueChange={setType}
                 >
-                  <SelectTrigger id="league">
-                    <SelectValue placeholder="Liga auswählen" />
+                  <SelectTrigger id="type">
+                    <SelectValue placeholder="Typ auswählen" />
                   </SelectTrigger>
                   <SelectContent>
-                    {leagues.map(league => (
-                      <SelectItem key={league.id} value={league.id}>
-                        {league.name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="durchgang">Durchgang</SelectItem>
+                    <SelectItem value="kreismeisterschaft">Kreismeisterschaft</SelectItem>
+                    <SelectItem value="sitzung">Sitzung</SelectItem>
+                    <SelectItem value="sonstiges">Sonstiges</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="type">Typ *</Label>
-                  <Select
-                    value={type}
-                    onValueChange={setType}
-                  >
-                    <SelectTrigger id="type">
-                      <SelectValue placeholder="Typ auswählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="durchgang">Durchgang</SelectItem>
-                      <SelectItem value="kreismeisterschaft">Kreismeisterschaft</SelectItem>
-                      <SelectItem value="sitzung">Sitzung</SelectItem>
-                      <SelectItem value="sonstiges">Sonstiges</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex items-center space-x-2 pt-8">
-                  <Switch
-                    id="kreisverband"
-                    checked={isKreisverband}
-                    onCheckedChange={setIsKreisverband}
-                  />
-                  <Label htmlFor="kreisverband">Kreisverband-Termin</Label>
-                </div>
-              </div>
-              
-              <div className="flex justify-end pt-4">
-                <Button 
-                  onClick={handleSave} 
-                  disabled={isSaving}
-                  className="w-full md:w-auto"
-                >
-                  {isSaving ? (
-                    "Speichern..."
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Termin speichern
-                    </>
-                  )}
-                </Button>
+              <div className="flex items-center space-x-2 pt-8">
+                <Switch
+                  id="kreisverband"
+                  checked={isKreisverband}
+                  onCheckedChange={setIsKreisverband}
+                />
+                <Label htmlFor="kreisverband">Kreisverband-Termin</Label>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            
+            <div className="flex justify-end pt-4">
+              <Button 
+                onClick={handleSave} 
+                disabled={isSaving}
+                className="w-full md:w-auto"
+              >
+                {isSaving ? (
+                  "Speichern..."
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Termin speichern
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

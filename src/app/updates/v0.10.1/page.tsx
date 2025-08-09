@@ -5,11 +5,9 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle, Users, Edit, Shield, Sync } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Users, Edit, Shield, RefreshCw } from 'lucide-react';
 
 export default function Update0101Page() {
-
-  
   return (
     <div className="container py-8 max-w-4xl mx-auto">
       <div className="mb-6">
@@ -73,7 +71,7 @@ export default function Update0101Page() {
                 </div>
                 
                 <div className="flex items-start gap-3">
-                  <Sync className="h-5 w-5 text-orange-600 mt-0.5" />
+                  <RefreshCw className="h-5 w-5 text-orange-600 mt-0.5" />
                   <div>
                     <h4 className="font-semibold">Duale Synchronisation</h4>
                     <p className="text-sm text-muted-foreground">
@@ -173,7 +171,7 @@ export default function Update0101Page() {
             <p className="mb-3">Die neue Schützen-Verwaltung ist verfügbar unter:</p>
             <div className="bg-gray-100 rounded-lg p-3 font-mono text-sm">
               <Link href="/verein/schuetzen" className="text-primary hover:underline">
-                http://localhost:3000/verein/schuetzen
+                /verein/schuetzen
               </Link>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
