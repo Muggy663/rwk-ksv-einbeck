@@ -14,14 +14,15 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { db } from '@/lib/firebase/config';
-import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
-import { collection, query, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, Timestamp, collection, query, getDocs } from 'firebase/firestore';
 
 export default function EditEventPage() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get('id') || '';
+  
+
   
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');

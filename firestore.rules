@@ -289,7 +289,7 @@ match /users/{userId} {
     match /km_vm_ergebnisse/{document} {
       allow read, write: if true;
     }
-    
+
     // KM-Ergebnisse - Temporär offen
     match /km_ergebnisse/{document} {
       allow read, write: if true;
