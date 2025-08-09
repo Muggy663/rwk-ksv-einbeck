@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.10.0 (06.08.2025)</span>
+              <span>Web-Version: 0.10.1 (09.08.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -36,41 +36,57 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.10.0 - Projekt-Aufräumung & Code-Bereinigung</CardTitle>
+              <CardTitle className="text-xl">Version 0.10.1 - Schützen-Verwaltung für Vereinsvertreter</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
             </div>
+            <CardDescription>09.08.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständige Schützen-Verwaltung für Vereinsvertreter mit Mannschaftszuordnung und km_shooters Synchronisation.</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-blue-900 mb-2">🎯 Schützen-Verwaltung v0.10.1</h4>
+              <div className="text-xs text-blue-700">
+                Vereinsvertreter können jetzt vollständig Schützen verwalten
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🎯 <strong>Schützen anlegen:</strong> Vereinsvertreter können neue Schützen erstellen</li>
+              <li>✏️ <strong>Schützen bearbeiten:</strong> Alle Daten (Name, Geschlecht, Geburtsjahr, Mitgliedsnummer) editierbar</li>
+              <li>👥 <strong>Mannschaftszuordnung:</strong> Direkte Zuordnung zu Teams beim Anlegen</li>
+              <li>🔄 <strong>Duale Synchronisation:</strong> Automatische Speicherung in rwk_shooters + km_shooters</li>
+              <li>⚖️ <strong>Regelvalidierung:</strong> Ein Schütze pro Saison/Disziplin nur einem Team</li>
+              <li>🔍 <strong>Erweiterte Suche:</strong> Filter nach Mannschaftsmitgliedern</li>
+              <li>🎨 <strong>Verbessertes Design:</strong> Emojis, bessere Typografie, peppigere UI</li>
+              <li>🛡️ <strong>Berechtigungen:</strong> Nur autorisierte Vereinsvertreter können bearbeiten</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-blue-800">🎯 Schützen-Verwaltung</span>
+                  <p className="text-xs text-blue-600 mt-1">Vollständige CRUD-Operationen + Mannschaftszuordnung</p>
+                </div>
+                <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.10.1
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl">Version 0.10.0 - Projekt-Aufräumung & Code-Bereinigung</CardTitle>
             <CardDescription>06.08.2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Große Aufräumung des Projekts: Debug-Funktionen entfernt, überflüssige Dateien gelöscht, produktionsreife Version.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🧹 Projekt-Aufräumung & Code-Bereinigung v0.10.0</h4>
-              <div className="text-xs text-green-700">
-                Saubere, schlanke und produktionsreife Version
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>🗑️ <strong>Debug-Funktionen entfernt:</strong> Komplette /debug Seiten und API-Routen gelöscht</li>
-              <li>📄 <strong>40+ MD-Dateien gelöscht:</strong> Entwicklungsdokumentation, Chat-Protokolle, Planungsdokumente</li>
-              <li>🔇 <strong>Alle Console.log entfernt:</strong> Keine Debug-Ausgaben mehr im Produktionscode</li>
-              <li>📁 <strong>Projektstruktur bereinigt:</strong> Nur noch relevante Dateien und Ordner</li>
-              <li>🧹 <strong>Überflüssige Dateien gelöscht:</strong> Text-Dateien, Backups, temporäre Dokumente</li>
-              <li>⚡ <strong>Schlanker Code:</strong> Deutlich reduzierte Projektgröße</li>
-              <li>🏭 <strong>Code-Bereinigung:</strong> Saubere, professionelle Codebasis</li>
-              <li>✨ <strong>Version 0.10.0:</strong> Großes Cleanup-Update</li>
-              <li>🔧 <strong>Favicon-Problem behoben:</strong> 500 Internal Server Error behoben</li>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li>🗑️ Debug-Funktionen entfernt</li>
+              <li>📄 40+ MD-Dateien gelöscht</li>
+              <li>🔇 Console.log entfernt</li>
+              <li>📁 Projektstruktur bereinigt</li>
+              <li>🔧 Favicon-Problem behoben</li>
             </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🧹 Projekt-Aufräumung</span>
-                  <p className="text-xs text-green-600 mt-1">Debug-Funktionen entfernt + 40+ Dateien gelöscht + Code-Bereinigung</p>
-                </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.10.0
-                </span>
-              </div>
-            </div>
           </CardContent>
         </Card>
         
@@ -80,6 +96,9 @@ export default function UpdatesPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <Link href="/updates/v0.10" className="text-primary hover:text-primary/80 flex items-center">
+                Version 0.10.0 <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
               <Link href="/updates/v0.9" className="text-primary hover:text-primary/80 flex items-center">
                 Version 0.9.0 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>

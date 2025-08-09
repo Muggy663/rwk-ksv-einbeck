@@ -88,6 +88,7 @@ export default function VereinMannschaftenPage() {
   const [allClubsGlobal, setAllClubsGlobal] = useState<Club[]>([]); // For club name lookup
 
   const [allClubShootersForDialog, setAllClubShootersForDialog] = useState<Shooter[]>([]);
+  const [allClubShootersForDisplay, setAllClubShootersForDisplay] = useState<Shooter[]>([]);
   const [allTeamsForValidation, setAllTeamsForValidation] = useState<TeamValidationInfo[]>([]);
 
   const [isLoadingPageData, setIsLoadingPageData] = useState(true);
@@ -257,10 +258,40 @@ export default function VereinMannschaftenPage() {
 
     if (activeClubId && selectedSeasonId) { // Only fetch if both are set
       fetchTeamsForClubAndSeason();
+      // Lade auch Schützen für Anzeige
+      fetchShootersForDisplay();
     } else {
       setTeamsOfActiveClub([]); // Clear teams if no active club or season
+      setAllClubShootersForDisplay([]);
     }
   }, [activeClubId, selectedSeasonId, selectedLeagueIdFilter, fetchTeamsForClubAndSeason]);
+
+  const fetchShootersForDisplay = async () => {
+    if (!activeClubId) return;
+    
+    try {
+      const shootersQuery = query(
+        collection(db, SHOOTERS_COLLECTION), 
+        orderBy("name", "asc")
+      );
+      const shootersSnapshot = await getDocs(shootersQuery);
+      
+      const allShooters = shootersSnapshot.docs.map(d => ({ 
+        id: d.id, 
+        ...d.data(), 
+        teamIds: (d.data().teamIds || []) as string[] 
+      } as Shooter));
+      
+      const clubShooters = allShooters.filter(shooter => {
+        const shooterClubId = shooter.clubId || shooter.rwkClubId || (shooter as any).kmClubId;
+        return shooterClubId === activeClubId;
+      });
+      
+      setAllClubShootersForDisplay(clubShooters);
+    } catch (error) {
+      console.error('Fehler beim Laden der Schützen für Anzeige:', error);
+    }
+  };
 
 
   // Effect 5: Fetch data for the dialog (shooters of the club, all teams for year for validation)
@@ -285,19 +316,13 @@ export default function VereinMannschaftenPage() {
       const clubDoc = await getFirestoreDoc(doc(db, 'clubs', clubIdForDialog));
       const clubName = clubDoc.exists() ? clubDoc.data()?.name : null;
       
-      // Lade RWK-Schützen (mit clubId)
+      // Lade alle RWK-Schützen und filtere client-seitig
       const shootersQuery = query(
         collection(db, SHOOTERS_COLLECTION), 
-        where("clubId", "==", clubIdForDialog), 
         orderBy("name", "asc")
       );
       
-      // Lade Excel-importierte Schützen (mit kmClubId als Vereinsname)
-      const kmShootersQuery = clubName ? query(
-        collection(db, SHOOTERS_COLLECTION), 
-        where("kmClubId", "==", clubName), 
-        orderBy("name", "asc")
-      ) : null;
+      const kmShootersQuery = null; // Nicht mehr nötig, da wir alle laden
       const teamsForYearQuery = query(collection(db, TEAMS_COLLECTION), where("competitionYear", "==", compYearForDialog));
 
       const promises = [
@@ -311,32 +336,22 @@ export default function VereinMannschaftenPage() {
       
       const results = await Promise.all(promises);
       const shootersSnapshot = results[0];
-      const kmShootersSnapshot = kmShootersQuery ? results[1] : { docs: [] };
-      const teamsForYearSnapshot = kmShootersQuery ? results[2] : results[1];
+      const teamsForYearSnapshot = results[1];
 
-      const rwkShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data(), teamIds: (d.data().teamIds || []) as string[] } as Shooter));
-      const kmShooters = kmShootersSnapshot.docs.map(d => {
-        const data = d.data();
-        // Für Excel-Importe: Vollständigen Namen aus firstName + name zusammensetzen
-        const fullName = data.firstName && data.name ? 
-          `${data.firstName} ${data.name}` : 
-          data.name || `${data.firstName || ''} ${data.lastName || ''}`.trim();
-        
-        return { 
-          id: d.id, 
-          ...data, 
-          name: fullName,
-          teamIds: (data.teamIds || []) as string[] 
-        } as Shooter;
+      // Alle Schützen laden und nach Verein filtern
+      const allShooters = shootersSnapshot.docs.map(d => ({ 
+        id: d.id, 
+        ...d.data(), 
+        teamIds: (d.data().teamIds || []) as string[] 
+      } as Shooter));
+      
+      // Filtere nach clubId/rwkClubId/kmClubId
+      const clubShooters = allShooters.filter(shooter => {
+        const shooterClubId = shooter.clubId || shooter.rwkClubId || (shooter as any).kmClubId;
+        return shooterClubId === clubIdForDialog;
       });
       
-      // Kombiniere und entferne Duplikate
-      const allShooters = [...rwkShooters, ...kmShooters];
-      const uniqueShooters = allShooters.filter((shooter, index, self) => 
-        index === self.findIndex(s => s.id === shooter.id)
-      );
-      
-      setAllClubShootersForDialog(uniqueShooters);
+      setAllClubShootersForDialog(clubShooters);
 
 
       const leagueMap = new Map(allLeagues.map(l => [l.id, l]));
@@ -636,14 +651,30 @@ export default function VereinMannschaftenPage() {
         }
       }
       
-      // Nur gültige Schützen aktualisieren
+      // Nur gültige Schützen aktualisieren - auch in km_shooters für Sync
       validShootersToAdd.forEach(shooterId => {
         const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
         batch.update(shooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
+        
+        // Auto-Integration: Auch km_shooters aktualisieren
+        try {
+          const kmShooterDocRef = doc(db, 'km_shooters', shooterId);
+          batch.update(kmShooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
+        } catch (error) {
+          // km_shooters Dokument existiert nicht - das ist ok
+        }
       });
       validShootersToRemove.forEach(shooterId => {
         const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
         batch.update(shooterDocRef, { teamIds: arrayRemove(teamIdForShooterUpdates) });
+        
+        // Auto-Integration: Auch km_shooters aktualisieren
+        try {
+          const kmShooterDocRef = doc(db, 'km_shooters', shooterId);
+          batch.update(kmShooterDocRef, { teamIds: arrayRemove(teamIdForShooterUpdates) });
+        } catch (error) {
+          // km_shooters Dokument existiert nicht - das ist ok
+        }
       });
       
       await batch.commit();
@@ -953,7 +984,14 @@ export default function VereinMannschaftenPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-center hidden md:table-cell">{team.competitionYear}</TableCell>
-                    <TableCell className="text-center">{team.shooterIds?.length || 0} / {MAX_SHOOTERS_PER_TEAM}</TableCell>
+                    <TableCell className="text-center">
+                      {(() => {
+                        const availableShooters = (team.shooterIds || []).filter(shooterId => 
+                          allClubShootersForDisplay.some(shooter => shooter.id === shooterId)
+                        ).length;
+                        return `${availableShooters} / ${MAX_SHOOTERS_PER_TEAM}`;
+                      })()}
+                    </TableCell>
                     {isVereinsvertreter && (
                       <TableCell className="text-right space-x-1">
                         <Button variant="ghost" size="icon" onClick={() => handleEditTeam(team)} disabled={isSubmittingForm || isDeletingTeam}><Edit className="h-4 w-4" /></Button>

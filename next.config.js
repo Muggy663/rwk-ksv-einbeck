@@ -64,5 +64,10 @@ module.exports = withSentryConfig(
     widenClientFileUpload: true,
     disableLogger: true,
     automaticVercelMonitors: true,
+    sourcemaps: {
+      disable: false,
+      deleteSourcemapsAfterUpload: true,
+    },
+    hideSourceMaps: true,
   }
 );

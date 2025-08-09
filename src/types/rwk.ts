@@ -61,6 +61,7 @@ export interface Shooter {
   birthYear?: number;
   birthDate?: Date;
   clubId?: string;
+  rwkClubId?: string;
   email?: string;
   phone?: string;
   isActive?: boolean;

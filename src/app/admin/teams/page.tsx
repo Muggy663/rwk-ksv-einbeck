@@ -3,7 +3,7 @@
 import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Users, Loader2, AlertTriangle, InfoIcon, UserPlus } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Users, Loader2, AlertTriangle, InfoIcon, UserPlus, ChevronDown, ChevronRight } from 'lucide-react';
 import { TeamStatusBadge } from '@/components/ui/team-status-badge';
 import {
   Table,
@@ -124,6 +124,11 @@ export default function AdminTeamsPage() {
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
   const [substitutionDialogOpen, setSubstitutionDialogOpen] = useState(false);
   const [selectedTeamForSubstitution, setSelectedTeamForSubstitution] = useState<Team | null>(null);
+  
+  // Aufklappbare Schützen-Anzeige
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+  const [teamShooters, setTeamShooters] = useState<Map<string, Shooter[]>>(new Map());
+  const [loadingShooters, setLoadingShooters] = useState<Set<string>>(new Set());
 
   const fetchInitialData = useCallback(async () => {
     setIsLoadingData(true);
@@ -296,7 +301,11 @@ export default function AdminTeamsPage() {
     setIsLoadingShootersForDialog(true);
     setIsLoadingValidationData(true);
     try {
-      const shootersQuery = query(collection(db, SHOOTERS_COLLECTION), where("clubId", "==", clubIdToFetch), orderBy("name", "asc"));
+      // Lade nur RWK-Schützen aus rwk_shooters Collection
+      const shootersQuery = query(
+        collection(db, SHOOTERS_COLLECTION), 
+        orderBy("name", "asc")
+      );
       const teamsForYearQuery = query(collection(db, TEAMS_COLLECTION), where("competitionYear", "==", compYearToFetch));
       
       const [shootersSnapshot, teamsForYearSnapshot] = await Promise.all([
@@ -304,13 +313,38 @@ export default function AdminTeamsPage() {
         getDocs(teamsForYearQuery),
       ]);
 
-      // Force fresh data - ignore any cached teamIds
-      const fetchedShooters = shootersSnapshot.docs.map(d => {
+      // Lade auch km_shooters als Fallback für alte Team-Zuordnungen
+      let kmShootersSnapshot;
+      try {
+        kmShootersSnapshot = await getDocs(query(collection(db, 'km_shooters')));
+      } catch {
+        kmShootersSnapshot = { docs: [] };
+      }
+      
+      // Kombiniere rwk_shooters und km_shooters
+      const rwkShooters = shootersSnapshot.docs.map(d => {
         const data = d.data();
-
-        return { id: d.id, ...data, teamIds: data.teamIds || [] } as Shooter;
+        return { id: d.id, ...data, teamIds: data.teamIds || [], source: 'rwk' } as Shooter;
       });
-      setAvailableClubShooters(fetchedShooters);
+      
+      const kmShooters = kmShootersSnapshot.docs.map(d => {
+        const data = d.data();
+        return { id: d.id, ...data, teamIds: data.teamIds || [], source: 'km' } as Shooter;
+      });
+      
+      const allShooters = [...rwkShooters, ...kmShooters];
+      
+      const fetchedShooters = allShooters.filter(shooter => {
+        const shooterClubId = shooter.clubId || shooter.rwkClubId || (shooter as any).kmClubId;
+        return shooterClubId === clubIdToFetch;
+      });
+      
+      // Entferne Duplikate (bevorzuge rwk_shooters)
+      const uniqueShooters = fetchedShooters.filter((shooter, index, self) => 
+        index === self.findIndex(s => s.id === shooter.id && (shooter.source === 'rwk' || !self.some(other => other.id === s.id && other.source === 'rwk')))
+      );
+      
+      setAvailableClubShooters(uniqueShooters);
 
       
       const leagueMap = new Map(allLeagues.map(l => [l.id, l.type]));
@@ -666,6 +700,66 @@ export default function AdminTeamsPage() {
     return allLeagues.find(l => l.id === leagueId)?.name || 'Unbek. Liga';
   };
 
+  const toggleTeamExpansion = async (teamId: string, shooterIds: string[]) => {
+    const newExpanded = new Set(expandedTeams);
+    
+    if (expandedTeams.has(teamId)) {
+      newExpanded.delete(teamId);
+    } else {
+      newExpanded.add(teamId);
+      
+      // Lade Schützen nur wenn noch nicht geladen
+      if (!teamShooters.has(teamId) && shooterIds.length > 0) {
+        setLoadingShooters(prev => new Set(prev).add(teamId));
+        
+        try {
+          const shooterPromises = shooterIds.map(async (shooterId) => {
+            // Prüfe rwk_shooters
+            const rwkShooterDoc = await getFirestoreDoc(doc(db, SHOOTERS_COLLECTION, shooterId));
+            if (rwkShooterDoc.exists()) {
+              return { id: rwkShooterDoc.id, ...rwkShooterDoc.data() } as Shooter;
+            }
+            
+            // Prüfe km_shooters als Fallback
+            try {
+              const kmShooterDoc = await getFirestoreDoc(doc(db, 'km_shooters', shooterId));
+              if (kmShooterDoc.exists()) {
+                    return { id: kmShooterDoc.id, ...kmShooterDoc.data() } as Shooter;
+              }
+            } catch (kmError) {
+              // km_shooters nicht verfügbar
+            }
+            
+            // Zeige auch nicht gefundene IDs als Platzhalter
+            return { 
+              id: shooterId, 
+              name: `Schütze nicht gefunden (ID: ${shooterId.substring(0, 8)}...)`,
+              firstName: 'Nicht',
+              lastName: 'gefunden',
+              gender: 'unknown',
+              birthYear: null
+            } as Shooter;
+          });
+          
+          const shooters = await Promise.all(shooterPromises);
+          console.log(`DEBUG: Team ${teamId} - ${shooters.length} Schützen geladen:`, shooters.map(s => s.name));
+          setTeamShooters(prev => new Map(prev).set(teamId, shooters));
+        } catch (error) {
+          console.error('Fehler beim Laden der Schützen:', error);
+          toast({ title: "Fehler", description: "Schützen konnten nicht geladen werden.", variant: "destructive" });
+        } finally {
+          setLoadingShooters(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(teamId);
+            return newSet;
+          });
+        }
+      }
+    }
+    
+    setExpandedTeams(newExpanded);
+  };
+
   if (isLoadingData) { 
     return <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <p className="ml-2">Lade Basisdaten...</p></div>;
   }
@@ -765,55 +859,109 @@ export default function AdminTeamsPage() {
               <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Verein</TableHead><TableHead>Liga</TableHead><TableHead>Jahr</TableHead><TableHead className="text-center">Schützen</TableHead><TableHead className="text-right">Aktionen</TableHead></TableRow></TableHeader>
               <TableBody>
                 {teamsForDisplay.map((team) => (
-                  <TableRow key={team.id}>
-                    <TableCell>
-                      {team.name}
-                      <TeamStatusBadge 
-                        outOfCompetition={team.outOfCompetition} 
-                        className="ml-2" 
-                      />
-                    </TableCell>
-                    <TableCell>{getClubName(team.clubId)}</TableCell>
-                    <TableCell>
-                      {getLeagueName(team.leagueId)}
-                      {team.leagueType && (
-                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                          {team.leagueType}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{team.competitionYear}</TableCell>
-                    <TableCell className="text-center">{team.shooterIds?.length || 0} / {MAX_SHOOTERS_PER_TEAM}</TableCell>
-                    <TableCell className="text-right space-x-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEditTeam(team)} aria-label="Mannschaft bearbeiten"><Edit className="h-4 w-4" /></Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => {
-                          setSelectedTeamForSubstitution(team);
-                          setSubstitutionDialogOpen(true);
-                        }} 
-                        aria-label="Ersatzschütze hinzufügen"
-                        className="text-blue-600 hover:text-blue-700"
-                      >
-                        <UserPlus className="h-4 w-4" />
-                      </Button>
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" onClick={() => handleDeleteConfirmation(team)} aria-label="Mannschaft löschen"><Trash2 className="h-4 w-4" /></Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>Mannschaft löschen?</AlertDialogTitle><AlertDialogDescription>Möchten Sie "{teamToDelete?.name}" wirklich löschen? Dies entfernt auch die Zuordnung der Schützen zu dieser Mannschaft.</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel onClick={() => setTeamToDelete(null)}>Abbrechen</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleDeleteTeam} disabled={isDeletingTeam} className="bg-destructive hover:bg-destructive/90">
-                                {isDeletingTeam && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Löschen
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    </TableCell>
-                  </TableRow>
+                  <React.Fragment key={team.id}>
+                    <TableRow>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleTeamExpansion(team.id, team.shooterIds || [])}
+                            className="h-6 w-6 p-0"
+                            disabled={!team.shooterIds?.length}
+                          >
+                            {expandedTeams.has(team.id) ? 
+                              <ChevronDown className="h-4 w-4" /> : 
+                              <ChevronRight className="h-4 w-4" />
+                            }
+                          </Button>
+                          {team.name}
+                          <TeamStatusBadge 
+                            outOfCompetition={team.outOfCompetition} 
+                            className="ml-2" 
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell>{getClubName(team.clubId)}</TableCell>
+                      <TableCell>
+                        {getLeagueName(team.leagueId)}
+                        {team.leagueType && (
+                          <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                            {team.leagueType}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>{team.competitionYear}</TableCell>
+                      <TableCell className="text-center">{team.shooterIds?.length || 0} / {MAX_SHOOTERS_PER_TEAM}</TableCell>
+                      <TableCell className="text-right space-x-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleEditTeam(team)} aria-label="Mannschaft bearbeiten"><Edit className="h-4 w-4" /></Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => {
+                            setSelectedTeamForSubstitution(team);
+                            setSubstitutionDialogOpen(true);
+                          }} 
+                          aria-label="Ersatzschütze hinzufügen"
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
+                         <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" onClick={() => handleDeleteConfirmation(team)} aria-label="Mannschaft löschen"><Trash2 className="h-4 w-4" /></Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader><AlertDialogTitle>Mannschaft löschen?</AlertDialogTitle><AlertDialogDescription>Möchten Sie "{teamToDelete?.name}" wirklich löschen? Dies entfernt auch die Zuordnung der Schützen zu dieser Mannschaft.</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setTeamToDelete(null)}>Abbrechen</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteTeam} disabled={isDeletingTeam} className="bg-destructive hover:bg-destructive/90">
+                                  {isDeletingTeam && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Löschen
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                    {expandedTeams.has(team.id) && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="bg-muted/30 p-4">
+                          {loadingShooters.has(team.id) ? (
+                            <div className="flex items-center justify-center py-4">
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              <span className="text-sm text-muted-foreground">Lade Schützen...</span>
+                            </div>
+                          ) : teamShooters.has(team.id) ? (
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-sm">Gemeldete Schützen ({teamShooters.get(team.id)?.length || 0}):</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                {teamShooters.get(team.id)?.map((shooter) => (
+                                  <div key={shooter.id} className={`flex items-center gap-2 p-2 rounded border ${
+                                    shooter.name?.includes('nicht gefunden') ? 'bg-red-50 border-red-200' : 'bg-background'
+                                  }`}>
+                                    <div className="text-sm">
+                                      <div className={`font-medium ${
+                                        shooter.name?.includes('nicht gefunden') ? 'text-red-600' : ''
+                                      }`}>
+                                        {shooter.firstName && shooter.lastName ? `${shooter.firstName} ${shooter.lastName}` : shooter.name}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {shooter.gender === 'male' ? 'M' : shooter.gender === 'female' ? 'W' : '?'} • {shooter.birthYear || 'Jg. N/A'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )) || []}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-muted-foreground text-center py-4">
+                              Keine Schützen zugeordnet
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
@@ -1011,8 +1159,8 @@ export default function AdminTeamsPage() {
                                 disabled={finalIsDisabled}
                             />
                             <Label htmlFor={`admin-team-shooter-assign-${shooter.id}`} className={`font-normal cursor-pointer flex-grow ${finalIsDisabled ? 'opacity-50 cursor-not-allowed' : '' }`}>
-                                {shooter.name}
-                                <span className='text-xs text-muted-foreground ml-1'>(Schnitt Vorjahr: folgt)</span>
+                                {shooter.firstName && shooter.lastName ? `${shooter.firstName} ${shooter.lastName}` : shooter.name}
+                                <span className='text-xs text-muted-foreground ml-1'>({shooter.gender === 'male' ? 'M' : 'W'}, {shooter.birthYear || 'Jg. N/A'})</span>
                                 {finalIsDisabled && <span className="text-xs text-destructive ml-1">{disableReason}</span>}
                             </Label>
                             </div>

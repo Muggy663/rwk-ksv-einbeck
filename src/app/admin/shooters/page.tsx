@@ -4,7 +4,7 @@
 import React, { useState, useEffect, FormEvent, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, UserCircle as UserIcon, Loader2, AlertTriangle } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, UserCircle as UserIcon, Loader2, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -111,6 +111,10 @@ export default function AdminShootersPage() {
   const [isLoadingTeamsForDialog, setIsLoadingTeamsForDialog] = useState(false);
   const [selectedTeamIdsInForm, setSelectedTeamIdsInForm] = useState<string[]>([]);
 
+  // Sortierung
+  const [sortField, setSortField] = useState<'lastName' | 'firstName' | 'clubId' | 'gender' | 'birthYear' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
 
   const fetchInitialData = useCallback(async () => {
 
@@ -173,14 +177,19 @@ export default function AdminShootersPage() {
 
     setIsLoadingClubSpecificData(true);
     try {
-      let shootersQuery;
-      if (selectedClubIdFilter === ALL_CLUBS_FILTER_VALUE) {
-        shootersQuery = query(collection(db, SHOOTERS_COLLECTION), orderBy("lastName", "asc"), orderBy("firstName", "asc"));
-      } else {
-        shootersQuery = query(collection(db, SHOOTERS_COLLECTION), where("clubId", "==", selectedClubIdFilter), orderBy("lastName", "asc"), orderBy("firstName", "asc"));
-      }
+      // Lade alle Schützen da wir mehrere clubId Felder haben
+      const shootersQuery = query(collection(db, SHOOTERS_COLLECTION), orderBy("lastName", "asc"), orderBy("firstName", "asc"));
       const shootersSnapshot = await getDocs(shootersQuery);
-      const fetchedShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data(), teamIds: (d.data().teamIds || []) } as Shooter));
+      let fetchedShooters = shootersSnapshot.docs.map(d => ({ id: d.id, ...d.data(), teamIds: (d.data().teamIds || []) } as Shooter));
+      
+      // Client-seitige Filterung
+      if (selectedClubIdFilter !== ALL_CLUBS_FILTER_VALUE) {
+        fetchedShooters = fetchedShooters.filter(shooter => {
+          const clubId = shooter.clubId || shooter.rwkClubId || (shooter as any).kmClubId;
+          return clubId === selectedClubIdFilter;
+        });
+      }
+      
       setShootersOfActiveClub(fetchedShooters);
 
     } catch (error) {
@@ -350,15 +359,22 @@ export default function AdminShootersPage() {
 
     try {
       const shootersColRef = collection(db, SHOOTERS_COLLECTION);
-      let qDuplicateName = query(shootersColRef, where("name", "==", combinedName), where("clubId", "==", currentShooter.clubId));
+      // Prüfe Duplikate sowohl mit clubId als auch rwkClubId
+      let qDuplicateName = query(shootersColRef, where("name", "==", combinedName));
       if (formMode === 'edit' && currentShooter.id) {
-        qDuplicateName = query(shootersColRef, where("name", "==", combinedName), where("clubId", "==", currentShooter.clubId), where(documentId(), "!=", currentShooter.id));
+        qDuplicateName = query(shootersColRef, where("name", "==", combinedName), where(documentId(), "!=", currentShooter.id));
       }
       const duplicateSnap = await getDocs(qDuplicateName);
-      if (!duplicateSnap.empty) {
+      const duplicateInSameClub = duplicateSnap.docs.some(doc => {
+        const data = doc.data();
+        const shooterClubId = data.clubId || data.rwkClubId;
+        return shooterClubId === currentShooter.clubId;
+      });
+      if (duplicateInSameClub) {
         toast({ title: "Doppelter Schütze", description: `Ein Schütze mit dem Namen "${combinedName}" existiert bereits in diesem Verein.`, variant: "destructive"});
         setIsFormSubmitting(false); return;
       }
+
 
       const batch = writeBatch(db);
       if (formMode === 'new') {
@@ -393,20 +409,36 @@ export default function AdminShootersPage() {
           firstName: currentShooter.firstName.trim(),
           lastName: currentShooter.lastName.trim(),
           name: combinedName,
-          clubId: currentShooter.clubId as string,
+          clubId: currentShooter.clubId,
           gender: currentShooter.gender || 'male',
           teamIds: selectedTeamIdsInForm,
         };
+        
+        // Debug: Prüfe ob clubId gesetzt ist
+        console.log('DEBUG: Speichere Schütze mit clubId:', currentShooter.clubId);
         
         // Nur birthYear hinzufügen wenn es einen Wert hat
         if (currentShooter.birthYear && !isNaN(parseInt(currentShooter.birthYear.toString()))) {
           shooterDataForSave.birthYear = parseInt(currentShooter.birthYear.toString());
         }
+        // Speichere in rwk_shooters
         batch.set(newShooterRef, shooterDataForSave);
+        
+        // Auto-Integration: Speichere auch in km_shooters für KM-Meldungen
+        const kmShooterRef = doc(collection(db, 'km_shooters'), newShooterRef.id);
+        const kmShooterData = {
+          ...shooterDataForSave,
+          kmClubId: shooterDataForSave.clubId, // Für KM-Kompatibilität
+          rwkClubId: shooterDataForSave.clubId, // Für RWK-Kompatibilität
+          syncedAt: new Date(),
+          source: 'rwk_admin'
+        };
+        batch.set(kmShooterRef, kmShooterData);
+        
         selectedTeamIdsInForm.forEach(teamId => {
           batch.update(doc(db, TEAMS_COLLECTION, teamId), { shooterIds: arrayUnion(newShooterRef.id) });
         });
-        toast({ title: "Schütze erstellt", description: `${shooterDataForSave.name} wurde angelegt.` });
+        toast({ title: "Schütze erstellt", description: `${shooterDataForSave.name} wurde in beiden Systemen angelegt.` });
 
       } else if (formMode === 'edit' && currentShooter.id) {
         const shooterDocRef = doc(db, SHOOTERS_COLLECTION, currentShooter.id);
@@ -495,9 +527,10 @@ export default function AdminShootersPage() {
     );
   };
 
-  const getClubName = useCallback((clubId?: string | null): string => {
-    if (!clubId) return 'N/A';
-    return allClubsGlobal.find(c => c.id === clubId)?.name || 'Unbek. Verein';
+  const getClubName = useCallback((shooter: Shooter): string => {
+    const clubId = shooter.clubId || shooter.rwkClubId || (shooter as any).kmClubId;
+    if (!clubId) return 'Kein Verein';
+    return allClubsGlobal.find(c => c.id === clubId)?.name || 'Unbekannter Verein';
   }, [allClubsGlobal]);
 
   const getTeamInfoForShooter = useCallback((shooter: Shooter): string => {
@@ -525,6 +558,64 @@ export default function AdminShootersPage() {
     if (selectedClubIdFilter === ALL_CLUBS_FILTER_VALUE) return 'aller Vereine';
     return allClubsGlobal.find(c => c.id === selectedClubIdFilter)?.name || 'Unbekannt';
   }, [selectedClubIdFilter, allClubsGlobal]);
+
+  // Sortierte Schützen
+  const sortedShooters = useMemo(() => {
+    if (!sortField) return shootersOfActiveClub;
+    
+    return [...shootersOfActiveClub].sort((a, b) => {
+      let aValue: string | number = '';
+      let bValue: string | number = '';
+      
+      switch (sortField) {
+        case 'lastName':
+          aValue = a.lastName || '';
+          bValue = b.lastName || '';
+          break;
+        case 'firstName':
+          aValue = a.firstName || '';
+          bValue = b.firstName || '';
+          break;
+        case 'clubId':
+          aValue = getClubName(a);
+          bValue = getClubName(b);
+          break;
+        case 'gender':
+          aValue = a.gender === 'male' ? 'M' : (a.gender === 'female' ? 'W' : 'N/A');
+          bValue = b.gender === 'male' ? 'M' : (b.gender === 'female' ? 'W' : 'N/A');
+          break;
+        case 'birthYear':
+          aValue = a.birthYear || 0;
+          bValue = b.birthYear || 0;
+          break;
+      }
+      
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        const comparison = aValue.localeCompare(bValue);
+        return sortDirection === 'asc' ? comparison : -comparison;
+      }
+      
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      
+      return 0;
+    });
+  }, [shootersOfActiveClub, sortField, sortDirection, getClubName]);
+
+  const handleSort = (field: 'lastName' | 'firstName' | 'clubId' | 'gender' | 'birthYear') => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: 'lastName' | 'firstName' | 'clubId' | 'gender' | 'birthYear') => {
+    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  };
 
   if (isLoading) {
     return <div className="flex justify-center items-center py-10"><Loader2 className="h-12 w-12 animate-spin text-primary" /> <p className="ml-3">Lade Basisdaten...</p></div>;
@@ -572,7 +663,7 @@ export default function AdminShootersPage() {
        <Card className="shadow-md">
         <CardHeader>
           <CardTitle>
-            Schützen für {selectedClubNameForTitle}
+            Schützen für {selectedClubNameForTitle} ({shootersOfActiveClub.length})
           </CardTitle>
           <CardDescription>
             Verwalten Sie hier die Schützen. Die Zuweisung zu Mannschaften kann hier beim Anlegen oder über die Mannschaftsverwaltung erfolgen.
@@ -585,16 +676,39 @@ export default function AdminShootersPage() {
            ) : shootersOfActiveClub.length > 0 ? (
              <Table>
               <TableHeader><TableRow>
-                  <TableHead>Nachname</TableHead><TableHead>Vorname</TableHead>
-                  <TableHead>Verein</TableHead><TableHead>Geschlecht</TableHead>
-                  <TableHead>Jahrgang</TableHead><TableHead>Altersklasse 2026</TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('lastName')} className="h-auto p-0 font-semibold hover:bg-transparent">
+                      Nachname {getSortIcon('lastName')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('firstName')} className="h-auto p-0 font-semibold hover:bg-transparent">
+                      Vorname {getSortIcon('firstName')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('clubId')} className="h-auto p-0 font-semibold hover:bg-transparent">
+                      Verein {getSortIcon('clubId')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('gender')} className="h-auto p-0 font-semibold hover:bg-transparent">
+                      Geschlecht {getSortIcon('gender')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('birthYear')} className="h-auto p-0 font-semibold hover:bg-transparent">
+                      Jahrgang {getSortIcon('birthYear')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>Altersklasse 2026</TableHead>
                   <TableHead>Mannschaften</TableHead><TableHead className="text-right">Aktionen</TableHead>
               </TableRow></TableHeader>
               <TableBody>
-                {shootersOfActiveClub.map((shooter) => (
+                {sortedShooters.map((shooter) => (
                   <TableRow key={shooter.id}>
                     <TableCell>{shooter.lastName}</TableCell><TableCell>{shooter.firstName}</TableCell>
-                    <TableCell>{getClubName(shooter.clubId)}</TableCell>
+                    <TableCell>{getClubName(shooter)}</TableCell>
                     <TableCell>{shooter.gender === 'male' ? 'M' : (shooter.gender === 'female' ? 'W' : 'N/A')}</TableCell>
                     <TableCell>{shooter.birthYear || '-'}</TableCell>
                     <TableCell className="text-xs">{shooter.birthYear && shooter.gender ? calculateAgeClass(shooter.birthYear, shooter.gender as 'male' | 'female', 2026) : '-'}</TableCell>
