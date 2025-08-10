@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.11.1 (15.01.2025)</span>
+              <span>Web-Version: 0.11.1 (10.08.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -39,7 +39,7 @@ export default function UpdatesPage() {
               <CardTitle className="text-xl">Version 0.11.1 - Admin-Verbesserungen & PDF-Fixes</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
             </div>
-            <CardDescription>15.01.2025</CardDescription>
+            <CardDescription>10.08.2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Admin-Bereich optimiert: Ergebniserfassung-Filter, PDF-Exports vereinfacht, Mannschaftsführer-Übersicht korrigiert.</p>
