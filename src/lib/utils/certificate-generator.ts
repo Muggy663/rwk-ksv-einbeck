@@ -111,13 +111,17 @@ export class CertificateGenerator {
       // Entferne "RWK" aus dem Saisonnamen, wenn es vorhanden ist
       const seasonName = options.season.replace('RWK ', '');
       
-      this.doc.text(`Beim Rundenwettkampf ${seasonName}`, this.pageWidth / 2, this.margin + 65, { align: 'center' });
-      // Disziplin nur einmal anzeigen, nicht doppelt
-      this.doc.text(`${options.category}`, this.pageWidth / 2, this.margin + 80, { align: 'center' });
+      // Für Gesamtsieger keine Disziplin in der ersten Zeile, da sie in der Kategorie steht
+      const isOverallWinner = options.category.includes('Bester') || options.category.includes('Beste');
+      const firstLineText = isOverallWinner ? 
+        `Beim Rundenwettkampf ${seasonName}` : 
+        `Beim Rundenwettkampf ${seasonName} ${options.discipline}`;
+      this.doc.text(firstLineText, this.pageWidth / 2, this.margin + 65, { align: 'center' });
       
-      // "errang"
+      // "wurde" für Gesamtsieger, "errang" für Liga-Plätze
       this.doc.setFontSize(14);
-      this.doc.text('errang', this.pageWidth / 2, this.margin + 95, { align: 'center' });
+      const verbText = options.category.includes('Bester') || options.category.includes('Beste') ? 'wurde' : 'errang';
+      this.doc.text(verbText, this.pageWidth / 2, this.margin + 80, { align: 'center' });
       
       // Empfänger (Schütze oder Mannschaft)
       this.doc.setFontSize(18);
@@ -126,24 +130,44 @@ export class CertificateGenerator {
       if (options.teamMembersWithScores && options.teamMembersWithScores.length > 0) {
         // Team-Urkunde: Nur Teamname ohne Klammern
         const cleanName = options.recipientName.replace(/\s*\([^)]*\)/g, '');
-        this.doc.text(cleanName, this.pageWidth / 2, this.margin + 110, { align: 'center' });
+        this.doc.text(cleanName, this.pageWidth / 2, this.margin + 95, { align: 'center' });
       } else {
         // Einzelschützen-Urkunde: Name und Verein untereinander
-        const match = options.recipientName.match(/^(.+?)\s*\((.+)\)$/);
-        if (match) {
-          const shooterName = match[1].trim();
-          const teamName = match[2].trim();
-          
-          this.doc.text(shooterName, this.pageWidth / 2, this.margin + 110, { align: 'center' });
+        const lines = options.recipientName.split('\n');
+        if (lines.length > 1) {
+          // Mehrzeiliger Name (für Gesamtsieger)
+          this.doc.text(lines[0], this.pageWidth / 2, this.margin + 95, { align: 'center' });
           this.doc.setFontSize(14);
           this.doc.setFont('helvetica', 'normal');
-          this.doc.text(teamName, this.pageWidth / 2, this.margin + 125, { align: 'center' });
+          this.doc.text(lines[1], this.pageWidth / 2, this.margin + 110, { align: 'center' });
           
-          // "mit" hinzufügen
+          // "mit" und Ergebnis in separaten Zeilen
           this.doc.setFontSize(14);
-          this.doc.text('mit', this.pageWidth / 2, this.margin + 140, { align: 'center' });
+          this.doc.setFont('helvetica', 'normal');
+          this.doc.text('mit', this.pageWidth / 2, this.margin + 125, { align: 'center' });
+          
+          this.doc.setFontSize(16);
+          this.doc.setFont('helvetica', 'bold');
+          this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 140, { align: 'center' });
+          this.doc.text(`${options.category}`, this.pageWidth / 2, this.margin + 155, { align: 'center' });
         } else {
-          this.doc.text(options.recipientName, this.pageWidth / 2, this.margin + 110, { align: 'center' });
+          // Normale Einzelschützen-Urkunde
+          const match = options.recipientName.match(/^(.+?)\s*\((.+)\)$/);
+          if (match) {
+            const shooterName = match[1].trim();
+            const teamName = match[2].trim();
+            
+            this.doc.text(shooterName, this.pageWidth / 2, this.margin + 95, { align: 'center' });
+            this.doc.setFontSize(14);
+            this.doc.setFont('helvetica', 'normal');
+            this.doc.text(teamName, this.pageWidth / 2, this.margin + 110, { align: 'center' });
+            
+            // "mit" hinzufügen
+            this.doc.setFontSize(14);
+            this.doc.text('mit', this.pageWidth / 2, this.margin + 125, { align: 'center' });
+          } else {
+            this.doc.text(options.recipientName, this.pageWidth / 2, this.margin + 95, { align: 'center' });
+          }
         }
       }
       
@@ -151,7 +175,7 @@ export class CertificateGenerator {
       if (options.teamMembersWithScores && options.teamMembersWithScores.length > 0) {
         this.doc.setFontSize(11);
         this.doc.setFont('helvetica', 'normal');
-        let yPos = this.margin + 120;
+        let yPos = this.margin + 105;
         
         options.teamMembersWithScores.forEach(member => {
           this.doc.text(`${member.name} (${member.totalScore} Ring)`, this.pageWidth / 2, yPos, { align: 'center' });
@@ -169,7 +193,7 @@ export class CertificateGenerator {
       } else if (options.teamMembers && options.teamMembers.length > 0) {
         this.doc.setFontSize(11);
         this.doc.setFont('helvetica', 'normal');
-        let yPos = this.margin + 120;
+        let yPos = this.margin + 105;
         
         options.teamMembers.forEach(member => {
           this.doc.text(member, this.pageWidth / 2, yPos, { align: 'center' });
@@ -185,14 +209,17 @@ export class CertificateGenerator {
         this.doc.setFontSize(16);
         this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, yPos + 25, { align: 'center' });
       } else {
-        // Ergebnis (für Einzelschützen)
-        this.doc.setFontSize(16);
-        this.doc.setFont('helvetica', 'bold');
-        this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 155, { align: 'center' });
-        
-        // Platzierung
-        this.doc.setFontSize(16);
-        this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, this.margin + 170, { align: 'center' });
+        // Normale Einzelschützen-Urkunde (nicht Gesamtsieger)
+        if (!options.recipientName.includes('\n')) {
+          // Ergebnis (für Einzelschützen)
+          this.doc.setFontSize(16);
+          this.doc.setFont('helvetica', 'bold');
+          this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 140, { align: 'center' });
+          
+          // Platzierung
+          this.doc.setFontSize(16);
+          this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, this.margin + 155, { align: 'center' });
+        }
       }
       
       // Verband in Grün - kompakter positioniert

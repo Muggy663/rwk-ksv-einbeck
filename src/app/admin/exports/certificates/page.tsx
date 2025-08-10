@@ -404,8 +404,8 @@ export default function CertificatesPage() {
           type: 'shooter',
           season: seasonName,
           discipline: bestShooters.bestMale.discipline,
-          category: 'Gesamtwertung',
-          recipientName: bestShooters.bestMale.name,
+          category: bestShooters.bestMale.category,
+          recipientName: bestShooters.bestMale.displayName || bestShooters.bestMale.name,
           score: bestShooters.bestMale.totalScore.toString(),
           rank: 1,
           date: `Einbeck, ${currentDate}`
@@ -418,8 +418,8 @@ export default function CertificatesPage() {
           type: 'shooter',
           season: seasonName,
           discipline: bestShooters.bestFemale.discipline,
-          category: 'Gesamtwertung',
-          recipientName: bestShooters.bestFemale.name,
+          category: bestShooters.bestFemale.category,
+          recipientName: bestShooters.bestFemale.displayName || bestShooters.bestFemale.name,
           score: bestShooters.bestFemale.totalScore.toString(),
           rank: 1,
           date: `Einbeck, ${currentDate}`
@@ -432,8 +432,8 @@ export default function CertificatesPage() {
           type: 'shooter',
           season: seasonName,
           discipline: bestShooters.bestPistol.discipline,
-          category: 'Gesamtwertung',
-          recipientName: bestShooters.bestPistol.name,
+          category: bestShooters.bestPistol.category,
+          recipientName: bestShooters.bestPistol.displayName || bestShooters.bestPistol.name,
           score: bestShooters.bestPistol.totalScore.toString(),
           rank: 1,
           date: `Einbeck, ${currentDate}`
@@ -446,8 +446,8 @@ export default function CertificatesPage() {
           type: 'shooter',
           season: seasonName,
           discipline: bestShooters.bestKKPistol.discipline,
-          category: 'Gesamtwertung',
-          recipientName: bestShooters.bestKKPistol.name,
+          category: bestShooters.bestKKPistol.category,
+          recipientName: bestShooters.bestKKPistol.displayName || bestShooters.bestKKPistol.name,
           score: bestShooters.bestKKPistol.totalScore.toString(),
           rank: 1,
           date: `Einbeck, ${currentDate}`

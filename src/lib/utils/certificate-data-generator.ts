@@ -93,8 +93,25 @@ export async function fetchTopShooters(leagueId: string, topCount: number = 3) {
       return shooter;
     });
     
-    // Schützen nach Gesamtergebnis sortieren
-    shooters.sort((a, b) => b.totalScore - a.totalScore);
+    // Schützen nach Gesamtergebnis sortieren, bei Gleichstand nach letztem Durchgang
+    shooters.sort((a, b) => {
+      // Primär nach Gesamtergebnis
+      if (b.totalScore !== a.totalScore) {
+        return b.totalScore - a.totalScore;
+      }
+      
+      // Bei Gleichstand: Nach letztem verfügbaren Durchgang sortieren
+      for (let round = 5; round >= 1; round--) {
+        const aScore = a.results[`dg${round}`] || 0;
+        const bScore = b.results[`dg${round}`] || 0;
+        
+        if (bScore !== aScore) {
+          return bScore - aScore;
+        }
+      }
+      
+      return 0; // Komplett gleich
+    });
     
     // Nur die Top-Schützen zurückgeben
     const topShooters = shooters.slice(0, topCount);
@@ -485,6 +502,10 @@ async function fetchBestShooterByGender(leagueIds: string[], gender: 'male' | 'f
       } else {
         bestShooter.category = 'Bester Schütze';
       }
+      
+      // Team-Info für bessere Anzeige hinzufügen
+      bestShooter.displayName = bestShooter.teamName ? 
+        `${bestShooter.name}\n${bestShooter.teamName}` : bestShooter.name;
       bestShooter.season = seasonName;
     }
     

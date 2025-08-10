@@ -57,6 +57,8 @@ export default function UpdatesPage() {
               <li>⏰ <strong>Session-Timer verbessert:</strong> Bessere Synchronisation zwischen Timer-Anzeige und tatsächlicher Session</li>
               <li>🔄 <strong>Vereinsvertreter-Ansicht:</strong> Mannschaftsführer in eigenen Ligen statt nur eigener Verein</li>
               <li>🎮 <strong>Bearbeitungsmodus:</strong> Toggle für Admin-Ergebniserfassung - AUS für Filterung, AN für Bearbeitung</li>
+              <li>🏅 <strong>Urkunden-Verbesserungen:</strong> Tie-Breaking nach letztem Durchgang, Gesamtsieger-Layout optimiert, "wurde" statt "errang"</li>
+              <li>⌨️ <strong>Ergebniserfassung UX:</strong> Enter-Taste zum Hinzufügen, automatische Schützen-Auswahl beim Durchgangswechsel</li>
               <li>🛠️ <strong>Code-Bereinigung:</strong> Entfernte nicht funktionierende PDF-Export-Logik</li>
             </ul>
             <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
