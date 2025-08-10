@@ -75,7 +75,7 @@ export default function Update0101Page() {
                   <div>
                     <h4 className="font-semibold">Duale Synchronisation</h4>
                     <p className="text-sm text-muted-foreground">
-                      Automatische Speicherung in rwk_shooters + km_shooters
+                      Automatische Speicherung in shooters + km_shooters
                     </p>
                   </div>
                 </div>
@@ -144,7 +144,7 @@ export default function Update0101Page() {
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h4 className="font-semibold text-green-900 mb-2">Datenbank-Synchronisation</h4>
                 <ul className="text-sm text-green-800 space-y-1">
-                  <li>• Automatische Speicherung in rwk_shooters Collection</li>
+                  <li>• Automatische Speicherung in shooters Collection</li>
                   <li>• Parallele Speicherung in km_shooters für KM-Meldungen</li>
                   <li>• Konsistente Datenstruktur zwischen beiden Systemen</li>
                 </ul>

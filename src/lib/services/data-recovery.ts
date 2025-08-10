@@ -39,7 +39,7 @@ export async function recoverTeamShooterConnections(clubId: string): Promise<Rec
     const teamIds = new Set(teamsSnapshot.docs.map(doc => doc.id));
     
     // 3. Alle Schützen des Vereins laden
-    const shootersQuery = query(collection(db, 'rwk_shooters'), where('clubId', '==', clubId));
+    const shootersQuery = query(collection(db, 'shooters'), where('clubId', '==', clubId));
     const shootersSnapshot = await getDocs(shootersQuery);
     const shooterIds = new Set(shootersSnapshot.docs.map(doc => doc.id));
     
@@ -174,7 +174,7 @@ export async function verifyDataIntegrity(clubId: string): Promise<{
   const teamIds = new Set(teamsSnapshot.docs.map(doc => doc.id));
   
   // Schützen des Vereins
-  const shootersQuery = query(collection(db, 'rwk_shooters'), where('clubId', '==', clubId));
+  const shootersQuery = query(collection(db, 'shooters'), where('clubId', '==', clubId));
   const shootersSnapshot = await getDocs(shootersQuery);
   const shooterIds = new Set(shootersSnapshot.docs.map(doc => doc.id));
   

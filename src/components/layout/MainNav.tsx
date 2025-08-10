@@ -52,31 +52,36 @@ export function MainNav() {
   const isAdmin = user && user.email === 'admin@rwk-einbeck.de';
   const isVereinsvertreterOrMannschaftsfuehrer = user && user.email !== 'admin@rwk-einbeck.de';
 
-  // Timer-Logik
+  // Timer-Logik - vereinfacht
   useEffect(() => {
-    if (!user || !resetInactivityTimer) return;
+    if (!user) return;
     
     // Timer aktualisieren
     const timer = setInterval(() => {
       setTimeLeft(prev => Math.max(0, prev - 1));
     }, 1000);
     
-    // Timer zurücksetzen bei Benutzeraktivität
+    return () => {
+      clearInterval(timer);
+    };
+  }, [user]);
+  
+  // Separate Aktivitäts-Behandlung
+  useEffect(() => {
+    if (!user || !resetInactivityTimer) return;
+    
     const handleUserActivity = () => {
-      resetInactivityTimer();
-      setTimeLeft(10 * 60);
+      setTimeLeft(10 * 60); // Timer visuell zurücksetzen
     };
     
-    // Event-Listener für Benutzeraktivität
     const activityEvents = ['mousedown', 'keypress', 'scroll', 'touchstart'];
     activityEvents.forEach(event => {
-      window.addEventListener(event, handleUserActivity);
+      window.addEventListener(event, handleUserActivity, true);
     });
     
     return () => {
-      clearInterval(timer);
       activityEvents.forEach(event => {
-        window.removeEventListener(event, handleUserActivity);
+        window.removeEventListener(event, handleUserActivity, true);
       });
     };
   }, [user, resetInactivityTimer]);
@@ -225,48 +230,16 @@ export function MainNav() {
           </>
         )}
 
-        {isVereinsvertreterOrMannschaftsfuehrer && (
-          <>
-            {vereinsvertreterRoutes.map((route) => (
-              <Link
-                key={route.href}
-                href={route.href}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary flex items-center",
-                  route.active ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                {route.icon}
-                {route.label}
-              </Link>
-            ))}
-            
-            {mannschaftsfuehrerRoutes.map((route) => (
-              <Link
-                key={route.href}
-                href={route.href}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary flex items-center",
-                  route.active ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                {route.icon}
-                {route.label}
-              </Link>
-            ))}
-          </>
-        )}
-
         {user && (
           <Link
             href="/dashboard-auswahl"
             className={cn(
               "text-sm font-medium transition-colors hover:text-primary flex items-center",
-              pathname === '/dashboard-auswahl' ? "text-primary" : "text-muted-foreground"
+              pathname === '/dashboard-auswahl' || pathname.startsWith('/admin') || pathname.startsWith('/verein') || pathname.startsWith('/km') ? "text-primary" : "text-muted-foreground"
             )}
           >
             <Settings className="h-4 w-4 mr-2" />
-            KM
+            Arbeitsbereich
           </Link>
         )}
 

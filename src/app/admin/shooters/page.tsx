@@ -55,7 +55,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
-const SHOOTERS_COLLECTION = "rwk_shooters";
+const SHOOTERS_COLLECTION = "shooters";
 const TEAMS_COLLECTION = "rwk_teams";
 const CLUBS_COLLECTION = "clubs";
 const LEAGUES_COLLECTION = "rwk_leagues"; // Used to get league types for validation
@@ -421,24 +421,13 @@ export default function AdminShootersPage() {
         if (currentShooter.birthYear && !isNaN(parseInt(currentShooter.birthYear.toString()))) {
           shooterDataForSave.birthYear = parseInt(currentShooter.birthYear.toString());
         }
-        // Speichere in rwk_shooters
+        // Speichere in shooters Collection
         batch.set(newShooterRef, shooterDataForSave);
-        
-        // Auto-Integration: Speichere auch in km_shooters für KM-Meldungen
-        const kmShooterRef = doc(collection(db, 'km_shooters'), newShooterRef.id);
-        const kmShooterData = {
-          ...shooterDataForSave,
-          kmClubId: shooterDataForSave.clubId, // Für KM-Kompatibilität
-          rwkClubId: shooterDataForSave.clubId, // Für RWK-Kompatibilität
-          syncedAt: new Date(),
-          source: 'rwk_admin'
-        };
-        batch.set(kmShooterRef, kmShooterData);
         
         selectedTeamIdsInForm.forEach(teamId => {
           batch.update(doc(db, TEAMS_COLLECTION, teamId), { shooterIds: arrayUnion(newShooterRef.id) });
         });
-        toast({ title: "Schütze erstellt", description: `${shooterDataForSave.name} wurde in beiden Systemen angelegt.` });
+        toast({ title: "Schütze erstellt", description: `${shooterDataForSave.name} wurde angelegt.` });
 
       } else if (formMode === 'edit' && currentShooter.id) {
         const shooterDocRef = doc(db, SHOOTERS_COLLECTION, currentShooter.id);
@@ -701,7 +690,8 @@ export default function AdminShootersPage() {
                       Jahrgang {getSortIcon('birthYear')}
                     </Button>
                   </TableHead>
-                  <TableHead>Altersklasse 2026</TableHead>
+                  <TableHead>AK Auflage 2026</TableHead>
+                  <TableHead>AK Freihand 2026</TableHead>
                   <TableHead>Mannschaften</TableHead><TableHead className="text-right">Aktionen</TableHead>
               </TableRow></TableHeader>
               <TableBody>
@@ -711,7 +701,8 @@ export default function AdminShootersPage() {
                     <TableCell>{getClubName(shooter)}</TableCell>
                     <TableCell>{shooter.gender === 'male' ? 'M' : (shooter.gender === 'female' ? 'W' : 'N/A')}</TableCell>
                     <TableCell>{shooter.birthYear || '-'}</TableCell>
-                    <TableCell className="text-xs">{shooter.birthYear && shooter.gender ? calculateAgeClass(shooter.birthYear, shooter.gender as 'male' | 'female', 2026) : '-'}</TableCell>
+                    <TableCell className="text-xs">{shooter.birthYear && shooter.gender ? calculateAgeClass(shooter.birthYear, shooter.gender as 'male' | 'female', 2026, 'auflage') : '-'}</TableCell>
+                    <TableCell className="text-xs">{shooter.birthYear && shooter.gender ? calculateAgeClass(shooter.birthYear, shooter.gender as 'male' | 'female', 2026, 'freihand') : '-'}</TableCell>
                     <TableCell className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button variant="ghost" size="icon" onClick={() => handleEditShooter(shooter)} disabled={isFormSubmitting || isDeleting} aria-label="Schütze bearbeiten"><Edit className="h-4 w-4" /></Button>
@@ -805,9 +796,10 @@ export default function AdminShootersPage() {
                     placeholder="z.B. 1990"
                   />
                   {currentShooter.birthYear && currentShooter.gender && (
-                    <p className="text-xs text-muted-foreground">
-                      Altersklasse 2026: {calculateAgeClass(currentShooter.birthYear, currentShooter.gender as 'male' | 'female', 2026)}
-                    </p>
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p>AK Auflage 2026: {calculateAgeClass(currentShooter.birthYear, currentShooter.gender as 'male' | 'female', 2026, 'auflage')}</p>
+                      <p>AK Freihand 2026: {calculateAgeClass(currentShooter.birthYear, currentShooter.gender as 'male' | 'female', 2026, 'freihand')}</p>
+                    </div>
                   )}
                 </div>
 

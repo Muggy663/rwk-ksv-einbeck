@@ -653,9 +653,25 @@ function RwkTabellenPageComponent() {
           let roundResultsTemp: { [key: string]: number[] } = {};
           for (let r = 1; r <= numRoundsForCompetition; r++) roundResultsTemp[`dg${r}`] = [];
           
-          // Gruppiere Scores nach Schützen für Team-Berechnung
+          // Duplikat-Filterung für Team-Scores
+          const teamScoresArray = teamScores.map(score => ({ ...score }));
+          const teamDuplicateMap = new Map();
+          teamScoresArray.forEach(score => {
+            const key = `${score.shooterId}|${score.durchgang}|${score.competitionYear}|${score.leagueType}`;
+            if (!teamDuplicateMap.has(key)) {
+              teamDuplicateMap.set(key, score);
+            } else {
+              const existing = teamDuplicateMap.get(key);
+              if (score.entryTimestamp && existing.entryTimestamp && 
+                  score.entryTimestamp.seconds > existing.entryTimestamp.seconds) {
+                teamDuplicateMap.set(key, score);
+              }
+            }
+          });
+          
+          // Gruppiere bereinigte Scores nach Schützen für Team-Berechnung
           const scoresByShooter = new Map<string, ScoreEntry[]>();
-          teamScores.forEach(score => {
+          Array.from(teamDuplicateMap.values()).forEach(score => {
             if (!scoresByShooter.has(score.shooterId)) scoresByShooter.set(score.shooterId, []);
             scoresByShooter.get(score.shooterId)!.push(score);
           });
@@ -939,7 +955,7 @@ function RwkTabellenPageComponent() {
           const batchSize = 30;
           for (let i = 0; i < allShooterIds.length; i += batchSize) {
             const batch = allShooterIds.slice(i, i + batchSize);
-            const shootersQuery = query(collection(db, "rwk_shooters"), where(documentId(), "in", batch));
+            const shootersQuery = query(collection(db, "shooters"), where(documentId(), "in", batch));
             const shootersSnapshot = await getDocs(shootersQuery);
             shootersSnapshot.docs.forEach(doc => {
               const shooterData = doc.data() as Shooter;
@@ -1362,7 +1378,7 @@ function RwkTabellenPageComponent() {
       
       for (const shooterId of validShooterIds) {
         try {
-          const shooterDocRef = doc(db, "rwk_shooters", shooterId);
+          const shooterDocRef = doc(db, "shooters", shooterId);
           const shooterSnap = await getDoc(shooterDocRef);
           
           if (shooterSnap.exists()) {
@@ -1385,7 +1401,7 @@ function RwkTabellenPageComponent() {
               displayName // Speichere den zusammengesetzten Namen separat
             });
           } else {
-            console.warn(`❌ Schütze ${shooterId} nicht in rwk_shooters gefunden - suche in Scores...`);
+            console.warn(`❌ Schütze ${shooterId} nicht in shooters gefunden - suche in Scores...`);
             
             // TEST-MODUS: Suche Namen in bestehenden Scores
             try {
@@ -1401,9 +1417,9 @@ function RwkTabellenPageComponent() {
                 const nameFromScore = scoreData.shooterName;
 
                 
-                // Erstelle rwk_shooters Eintrag
+                // Erstelle shooters Eintrag
                 try {
-                  const shooterDocRef = doc(db, "rwk_shooters", shooterId);
+                  const shooterDocRef = doc(db, "shooters", shooterId);
                   const nameParts = nameFromScore.split(' ');
                   const shooterData = {
                     name: nameFromScore,

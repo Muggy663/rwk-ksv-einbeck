@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     let schuetzen = [];
     try {
-      const schuetzenSnapshot = await getDocs(collection(db, 'km_shooters'));
+      const schuetzenSnapshot = await getDocs(collection(db, 'shooters'));
       schuetzen = schuetzenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     } catch (error) {
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     
     for (const meldung of meldungen) {
       const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-      const vereinId = schuetze?.kmClubId || meldung.clubId || 'unknown';
+      const vereinId = schuetze?.clubId || schuetze?.kmClubId || meldung.clubId || 'unknown';
       const disziplinId = meldung.disziplinId || 'unknown';
       const key = `${vereinId}_${disziplinId}`;
 

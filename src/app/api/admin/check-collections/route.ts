@@ -3,7 +3,7 @@ import { collection, getDocs, limit, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
 const COLLECTIONS_TO_CHECK = [
-  'rwk_shooters',
+  'shooters',
   'rwk_scores', 
   'rwk_results_2025',
   'rwk_teams'

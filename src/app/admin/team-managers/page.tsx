@@ -201,7 +201,7 @@ export default function TeamManagersPage() {
             leagueId: teamData.leagueId || '',
             leagueName: league?.name || 'Keine Liga zugewiesen',
             seasonId: teamData.seasonId,
-            seasonName: `${season?.year || ''} ${season?.discipline || ''}`,
+            seasonName: season?.name || `${season?.competitionYear || ''} ${season?.discipline || ''}` || 'Unbekannte Saison',
             managerName: managerName,
             managerEmail: managerEmail,
             managerPhone: managerPhone
@@ -299,7 +299,7 @@ export default function TeamManagersPage() {
   
   const getSeasonName = (seasonId: string) => {
     const season = seasons.find(s => s.id === seasonId);
-    return season ? `${season.year} ${season.discipline}` : 'Unbekannte Saison';
+    return season ? (season.name || `${season.competitionYear || ''} ${season.discipline || ''}`) : 'Unbekannte Saison';
   };
   
   return (

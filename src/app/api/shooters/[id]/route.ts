@@ -18,7 +18,7 @@ export async function PATCH(
     
     updateData.updatedAt = new Date();
 
-    await updateDoc(doc(db, 'rwk_shooters', params.id), updateData);
+    await updateDoc(doc(db, 'shooters', params.id), updateData);
 
     return NextResponse.json({
       success: true,

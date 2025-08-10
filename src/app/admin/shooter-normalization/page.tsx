@@ -71,14 +71,14 @@ export default function ShooterNormalizationPage() {
         let batchQuery;
         if (lastDoc) {
           batchQuery = query(
-            collection(db, 'rwk_shooters'),
+            collection(db, 'shooters'),
             orderBy('name'),
             startAfter(lastDoc),
             limit(500)
           );
         } else {
           batchQuery = query(
-            collection(db, 'rwk_shooters'),
+            collection(db, 'shooters'),
             orderBy('name'),
             limit(500)
           );
@@ -192,7 +192,7 @@ export default function ShooterNormalizationPage() {
     setIsProcessing(true);
     try {
       // Alle Schützen laden (nicht nur Excel)
-      const shootersSnapshot = await getDocs(collection(db, "rwk_shooters"));
+      const shootersSnapshot = await getDocs(collection(db, "shooters"));
       const allShooters = shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
       const batch = writeBatch(db);
@@ -207,7 +207,7 @@ export default function ShooterNormalizationPage() {
           const cleanedName = currentName.replace(firstName, '').trim();
           
           if (cleanedName !== currentName) {
-            const shooterRef = doc(db, "rwk_shooters", shooter.id);
+            const shooterRef = doc(db, "shooters", shooter.id);
             batch.update(shooterRef, {
               name: cleanedName
             });
@@ -268,7 +268,7 @@ export default function ShooterNormalizationPage() {
             lastName = parts.slice(1).join(' ');
           }
           
-          const shooterRef = doc(db, "rwk_shooters", shooter.id);
+          const shooterRef = doc(db, "shooters", shooter.id);
           const updateData: any = {
             firstName: firstName,
             lastName: lastName,
@@ -317,7 +317,7 @@ export default function ShooterNormalizationPage() {
       for (const plan of normalizationPlans) {
         if (plan.action === 'skip') continue;
         
-        const shooterRef = doc(db, "rwk_shooters", plan.shooterId);
+        const shooterRef = doc(db, "shooters", plan.shooterId);
         
         if (plan.action === 'delete') {
           batch.delete(shooterRef);

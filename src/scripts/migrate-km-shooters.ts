@@ -12,8 +12,8 @@ const db = getFirestore(app);
 export async function migrateKMShooters() {
 
   
-  // 1. Alle rwk_shooters laden
-  const shootersSnap = await getDocs(collection(db, 'rwk_shooters'));
+  // 1. Alle shooters laden
+  const shootersSnap = await getDocs(collection(db, 'shooters'));
   const batch = writeBatch(db);
   
   let kmCount = 0;
@@ -38,7 +38,7 @@ export async function migrateKMShooters() {
         isActive: shooter.isActive,
         createdAt: shooter.createdAt || new Date(),
         migratedAt: new Date(),
-        migratedFrom: 'rwk_shooters'
+        migratedFrom: 'shooters'
       });
       kmCount++;
     } else if (shooter.clubId) {

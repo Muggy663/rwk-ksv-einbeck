@@ -62,7 +62,7 @@ const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
 const CLUBS_COLLECTION = "clubs";
 const TEAMS_COLLECTION = "rwk_teams";
-const SHOOTERS_COLLECTION = "rwk_shooters";
+const SHOOTERS_COLLECTION = "shooters";
 const ALL_CLUBS_FILTER_VALUE = "__ALL_CLUBS__";
 const ALL_LEAGUES_FILTER_VALUE = "__ALL_LEAGUES__";
 
@@ -120,6 +120,7 @@ export default function AdminTeamsPage() {
   
   const [persistedShooterIdsForTeam, setPersistedShooterIdsForTeam] = useState<string[]>([]);
   const [selectedShooterIdsInForm, setSelectedShooterIdsInForm] = useState<string[]>([]);
+  const [shooterSearchTerm, setShooterSearchTerm] = useState<string>('');
   
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
   const [substitutionDialogOpen, setSubstitutionDialogOpen] = useState(false);
@@ -301,7 +302,7 @@ export default function AdminTeamsPage() {
     setIsLoadingShootersForDialog(true);
     setIsLoadingValidationData(true);
     try {
-      // Lade nur RWK-Schützen aus rwk_shooters Collection
+      // Lade nur RWK-Schützen aus shooters Collection
       const shootersQuery = query(
         collection(db, SHOOTERS_COLLECTION), 
         orderBy("name", "asc")
@@ -321,7 +322,7 @@ export default function AdminTeamsPage() {
         kmShootersSnapshot = { docs: [] };
       }
       
-      // Kombiniere rwk_shooters und km_shooters
+      // Kombiniere shooters und km_shooters
       const rwkShooters = shootersSnapshot.docs.map(d => {
         const data = d.data();
         return { id: d.id, ...data, teamIds: data.teamIds || [], source: 'rwk' } as Shooter;
@@ -339,7 +340,7 @@ export default function AdminTeamsPage() {
         return shooterClubId === clubIdToFetch;
       });
       
-      // Entferne Duplikate (bevorzuge rwk_shooters)
+      // Entferne Duplikate (bevorzuge shooters)
       const uniqueShooters = fetchedShooters.filter((shooter, index, self) => 
         index === self.findIndex(s => s.id === shooter.id && (shooter.source === 'rwk' || !self.some(other => other.id === s.id && other.source === 'rwk')))
       );
@@ -551,8 +552,10 @@ export default function AdminTeamsPage() {
         where("clubId", "==", teamDataToSave.clubId),
         where("competitionYear", "==", teamDataToSave.competitionYear),
       ];
-      if (teamDataToSave.leagueId && typeof teamDataToSave.leagueId === 'string' && teamDataToSave.leagueId.trim() !== "") {
-        baseDuplicateConditions.push(where("leagueId", "==", teamDataToSave.leagueId));
+      
+      // Füge leagueType zur Duplikat-Prüfung hinzu, damit gleiche Namen in verschiedenen Disziplinen erlaubt sind
+      if (teamDataToSave.leagueType) {
+        baseDuplicateConditions.push(where("leagueType", "==", teamDataToSave.leagueType));
       }
 
       if (formMode === 'edit' && currentTeam.id) {
@@ -562,7 +565,7 @@ export default function AdminTeamsPage() {
       }
       const duplicateSnapshot = await getDocs(duplicateQuery);
       if (!duplicateSnapshot.empty) {
-        toast({ title: "Doppelter Mannschaftsname", description: `Eine Mannschaft mit diesem Namen existiert bereits für diesen Verein, dieses Wettkampfjahr ${teamDataToSave.leagueId ? 'und diese Liga' : ''}.`, variant: "destructive", duration: 7000});
+        toast({ title: "Doppelter Mannschaftsname", description: `Eine Mannschaft mit diesem Namen existiert bereits für diesen Verein und dieses Wettkampfjahr in derselben Disziplin.`, variant: "destructive", duration: 7000});
         setIsSubmittingForm(false); return; 
       }
 
@@ -643,10 +646,22 @@ export default function AdminTeamsPage() {
             setAvailableClubShooters([]);
             setSelectedShooterIdsInForm([]);
             setPersistedShooterIdsForTeam([]);
+            setShooterSearchTerm('');
         }
         return updatedTeam;
     });
   };
+
+  const filteredShooters = useMemo(() => {
+    if (!shooterSearchTerm.trim()) return availableClubShooters;
+    const searchLower = shooterSearchTerm.toLowerCase();
+    return availableClubShooters.filter(shooter => {
+      const fullName = shooter.firstName && shooter.lastName 
+        ? `${shooter.firstName} ${shooter.lastName}`.toLowerCase()
+        : (shooter.name || '').toLowerCase();
+      return fullName.includes(searchLower);
+    });
+  }, [availableClubShooters, shooterSearchTerm]);
 
  const handleShooterSelectionChange = (shooterId: string, isChecked: boolean) => {
     if (isSubmittingForm || isLoadingShootersForDialog || isLoadingValidationData) return;
@@ -714,7 +729,7 @@ export default function AdminTeamsPage() {
         
         try {
           const shooterPromises = shooterIds.map(async (shooterId) => {
-            // Prüfe rwk_shooters
+            // Prüfe shooters
             const rwkShooterDoc = await getFirestoreDoc(doc(db, SHOOTERS_COLLECTION, shooterId));
             if (rwkShooterDoc.exists()) {
               return { id: rwkShooterDoc.id, ...rwkShooterDoc.data() } as Shooter;
@@ -974,11 +989,10 @@ export default function AdminTeamsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) {setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAvailableClubShooters([]);} setIsFormOpen(open); }}>
+      <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) {setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAvailableClubShooters([]); setShooterSearchTerm('');} setIsFormOpen(open); }}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto">
           <form onSubmit={(e) => {
             e.preventDefault();
-
             handleSubmitTeamForm(e);
           }}>
             <DialogHeader>
@@ -1105,12 +1119,22 @@ export default function AdminTeamsPage() {
                     <Label>Schützen für diese Mannschaft auswählen</Label>
                     <span className="text-sm text-muted-foreground">{selectedShooterIdsInForm.length} / {MAX_SHOOTERS_PER_TEAM} ausgewählt</span>
                   </div>
+                  {availableClubShooters.length > 0 && (
+                    <div className="mb-2">
+                      <Input
+                        placeholder="Schützen suchen..."
+                        value={shooterSearchTerm}
+                        onChange={(e) => setShooterSearchTerm(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                  )}
                   {isLoadingShootersForDialog || isLoadingValidationData ? (
                      <div className="flex items-center justify-center p-4 h-40 border rounded-md bg-muted/30"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="ml-2">Lade Schützen...</p></div>
                   ) : availableClubShooters.length > 0 ? (
                     <ScrollArea className="h-32 md:h-40 rounded-md border p-2 bg-muted/20">
                       <div className="space-y-1">
-                      {availableClubShooters.map(shooter => {
+                      {filteredShooters.map(shooter => {
                         if (!shooter || !shooter.id) return null; 
                         const isSelected = selectedShooterIdsInForm.includes(shooter.id);
                         
@@ -1187,7 +1211,7 @@ export default function AdminTeamsPage() {
               </div>
             )}
             <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAvailableClubShooters([]);}} className="w-full sm:w-auto">Abbrechen</Button>
+              <Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAvailableClubShooters([]); setShooterSearchTerm('');}} className="w-full sm:w-auto">Abbrechen</Button>
               <Button 
                 type="button"
                 disabled={isSubmittingForm}

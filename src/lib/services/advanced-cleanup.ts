@@ -47,7 +47,7 @@ export async function diagnoseDatabaseInconsistencies(clubId: string): Promise<C
     const teamsSnapshot = await getDocs(teamsQuery);
     const existingTeamIds = new Set(teamsSnapshot.docs.map(doc => doc.id));
     
-    const shootersQuery = query(collection(db, 'rwk_shooters'));
+    const shootersQuery = query(collection(db, 'shooters'));
     const shootersSnapshot = await getDocs(shootersQuery);
     const existingShooterIds = new Set(shootersSnapshot.docs.map(doc => doc.id));
 

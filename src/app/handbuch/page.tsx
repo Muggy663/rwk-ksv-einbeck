@@ -21,7 +21,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch KSV Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) und Kreismeisterschafts (KM) App. (Stand: 15.01.2025, Web-Version 0.9.9.9, App-Version 0.9.1.0, KM-System 1.0.0)
+            Funktionen und Bedienung der Rundenwettkampf (RWK) und Kreismeisterschafts (KM) App. (Stand: 15.01.2025, Web-Version 0.11.1, App-Version 0.9.1.0, KM-System 1.0.0)
           </p>
         </div>
       </div>

@@ -50,7 +50,7 @@ export async function POST() {
     
     // 2. Finde Schützen mit gleichen Namen aber verschiedenen IDs
     console.log('\n👤 Suche Schützen-Duplikate...');
-    const shootersSnapshot = await getDocs(collection(db, 'rwk_shooters'));
+    const shootersSnapshot = await getDocs(collection(db, 'shooters'));
     const shooters = shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
     // Bekannte Problemfälle
@@ -97,12 +97,12 @@ export async function POST() {
         for (const shooter of matchingShooters) {
           if (shooter.id !== bestShooter.id) {
             try {
-              await deleteDoc(doc(db, 'rwk_shooters', shooter.id));
+              await deleteDoc(doc(db, 'shooters', shooter.id));
               console.log(`🗑️ Schütze gelöscht: ${shooter.id}`);
               
               results.push({ 
                 name: duplicate.name, 
-                collection: 'rwk_shooters', 
+                collection: 'shooters', 
                 action: 'deleted_duplicate_shooter',
                 removed: 1 
               });

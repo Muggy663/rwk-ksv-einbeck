@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     // 1. Lade alle Meldungen und Schützen
     const [meldungenSnapshot, schuetzenSnapshot] = await Promise.all([
       getDocs(collection(db, 'km_meldungen')),
-      getDocs(collection(db, 'rwk_shooters'))
+      getDocs(collection(db, 'shooters'))
     ]);
     
     const meldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

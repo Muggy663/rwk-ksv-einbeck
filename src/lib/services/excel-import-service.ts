@@ -46,7 +46,7 @@ export interface ExcelMember {
 }
 
 export async function importMembersFromExcel(members: ExcelMember[]) {
-
+  const TARGET_CLUB = 'SV Salzderhelden';
   
   const results = {
     imported: 0,
@@ -54,16 +54,27 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
     errors: [] as string[]
   };
 
-  // Lade bestehende Vereine
+  // Filtere nur SV Salzderhelden
+  const filteredMembers = members.filter(m => m.verein === TARGET_CLUB);
+  console.log(`Gefiltert: ${filteredMembers.length} von ${members.length} für ${TARGET_CLUB}`);
 
+  // Lade bestehende Vereine und Schützen
   const clubsSnapshot = await getDocs(collection(db, 'clubs'));
   const existingClubs = new Map(
     clubsSnapshot.docs.map(doc => [doc.data().name, doc.id])
   );
 
+  // Lade bestehende Schützen für Duplikat-Prüfung
+  const shootersSnapshot = await getDocs(collection(db, 'shooters'));
+  const existingShooters = new Set(
+    shootersSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return `${data.name}_${data.clubId || data.kmClubId || data.rwkClubId}`;
+    })
+  );
 
-  for (let i = 0; i < members.length; i++) {
-    const member = members[i];
+  for (let i = 0; i < filteredMembers.length; i++) {
+    const member = filteredMembers[i];
 
     
     try {
@@ -100,20 +111,34 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
       // Geschlechts-Erkennung
       const gender = guessGender(member.vorname);
 
-      // Erstelle Schütze mit getrennter KM-Vereinszuordnung
+      const shooterName = `${member.vorname} ${member.name}`;
+      const duplicateKey = `${shooterName}_${clubId}`;
+      
+      // Prüfe auf Duplikat
+      if (existingShooters.has(duplicateKey)) {
+        console.log(`Überspringe Duplikat: ${shooterName}`);
+        results.skipped++;
+        continue;
+      }
 
-      const docRef = await addDoc(collection(db, 'rwk_shooters'), {
-        name: `${member.vorname} ${member.name}`,
-        kmClubId: clubId,        // Für Kreismeisterschaft
-        rwkClubId: null,         // Nicht automatisch für RWK
+      // Erstelle Schütze für SV Salzderhelden
+      const docRef = await addDoc(collection(db, 'shooters'), {
+        firstName: member.vorname,
+        lastName: member.name,
+        name: shooterName,
+        clubId: clubId,           // Direkt für RWK
+        kmClubId: clubId,         // Auch für KM
         birthYear,
-        gender: gender === 'unknown' ? null : gender,
+        gender: gender === 'unknown' ? 'male' : gender,
         mitgliedsnummer: member.mitgliedsnummer,
+        teamIds: [],
         isActive: true,
         createdAt: new Date(),
         importedAt: new Date(),
-        genderGuessed: gender === 'unknown'
+        source: 'excel_import'
       });
+      
+      existingShooters.add(duplicateKey);
 
 
       results.imported++;
@@ -122,5 +147,6 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
     }
   }
 
+  console.log(`Import abgeschlossen: ${results.imported} importiert, ${results.skipped} übersprungen`);
   return results;
 }

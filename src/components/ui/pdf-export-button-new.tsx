@@ -95,20 +95,36 @@ export function PDFButton({
     doc.setFontSize(12);
     doc.text(`Stand: ${format(new Date(), 'dd.MM.yyyy', { locale: de })}`, 14, 28);
     
-    const headers = ['Platz', 'Mannschaft'];
+    const headers = ['Platz', 'Mannschaft/Schütze'];
     for (let i = 1; i <= data.numRounds; i++) {
       headers.push(`DG ${i}`);
     }
     headers.push('Gesamt', 'Schnitt');
     
-    const tableData = data.teams.map((team: any) => {
-      const row = [team.rank, team.name];
+    const tableData: any[] = [];
+    
+    data.teams.forEach((team: any) => {
+      // Mannschaftszeile
+      const teamRow = [team.rank, team.name];
       for (let i = 1; i <= data.numRounds; i++) {
-        row.push(team.roundResults[`dg${i}`] || '-');
+        teamRow.push(team.roundResults[`dg${i}`] || '-');
       }
-      row.push(team.totalScore || '-');
-      row.push(team.averageScore ? team.averageScore.toFixed(2) : '-');
-      return row;
+      teamRow.push(team.totalScore || '-');
+      teamRow.push(team.averageScore ? team.averageScore.toFixed(2) : '-');
+      tableData.push(teamRow);
+      
+      // Einzelschützen unter der Mannschaft
+      if (team.shooters && team.shooters.length > 0) {
+        team.shooters.forEach((shooter: any) => {
+          const shooterRow = ['', `  • ${shooter.name}`]; // Einrückung mit Bullet
+          for (let i = 1; i <= data.numRounds; i++) {
+            shooterRow.push(shooter.results[`dg${i}`] || '-');
+          }
+          shooterRow.push(shooter.totalScore || '-');
+          shooterRow.push(shooter.averageScore ? shooter.averageScore.toFixed(2) : '-');
+          tableData.push(shooterRow);
+        });
+      }
     });
     
     doc.autoTable({
@@ -117,7 +133,19 @@ export function PDFButton({
       startY: 35,
       headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [240, 240, 240] },
-      styles: { fontSize: 10, cellPadding: 3 }
+      styles: { fontSize: 9, cellPadding: 2 },
+      didParseCell: function(data: any) {
+        // Mannschaftszeilen fett formatieren
+        if (data.row.index % 2 === 0 && data.column.index === 1 && !data.cell.text[0].startsWith('  •')) {
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fillColor = [220, 220, 220];
+        }
+        // Schützenzeilen einrücken
+        if (data.column.index === 1 && data.cell.text[0].startsWith('  •')) {
+          data.cell.styles.fontSize = 8;
+          data.cell.styles.textColor = [100, 100, 100];
+        }
+      }
     });
     
     doc.save(fileName);

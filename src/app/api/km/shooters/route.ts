@@ -1,10 +1,22 @@
-import { NextResponse } from 'next/server';
-import { collection, getDocs } from 'firebase/firestore';
+import { NextRequest, NextResponse } from 'next/server';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const shootersSnap = await getDocs(collection(db, 'km_shooters'));
+    const { searchParams } = new URL(request.url);
+    const clubId = searchParams.get('clubId');
+    
+    let shootersQuery;
+    if (clubId) {
+      // Filtere nach clubId für Vereinsvertreter
+      shootersQuery = query(collection(db, 'shooters'), where('clubId', '==', clubId));
+    } else {
+      // Alle Schützen für Admin
+      shootersQuery = collection(db, 'shooters');
+    }
+    
+    const shootersSnap = await getDocs(shootersQuery);
     const shooters = shootersSnap.docs.map(doc => ({
       id: doc.id,
       ...doc.data()

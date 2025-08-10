@@ -22,7 +22,7 @@ import { auditLogService } from '@/lib/services/audit-service';
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
 const TEAMS_COLLECTION = "rwk_teams";
-const SHOOTERS_COLLECTION = "rwk_shooters";
+const SHOOTERS_COLLECTION = "shooters";
 const SCORES_COLLECTION = "rwk_scores";
 const CLUBS_COLLECTION = "clubs";
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
@@ -449,7 +449,7 @@ export default function VereinErgebnissePage() {
                 additionalShooters.push(shooterData);
 
               } else {
-                console.warn(`❌ Dropdown: Schütze ${shooterId} nicht in rwk_shooters - suche in Scores...`);
+                console.warn(`❌ Dropdown: Schütze ${shooterId} nicht in shooters - suche in Scores...`);
                 
                 // TEST-MODUS: Suche Namen in bestehenden Scores
                 try {
@@ -465,7 +465,7 @@ export default function VereinErgebnissePage() {
                     const nameFromScore = scoreData.shooterName;
 
                     
-                    // Erstelle rwk_shooters Eintrag
+                    // Erstelle shooters Eintrag
                     try {
                       const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
                       const nameParts = nameFromScore.split(' ');
@@ -653,7 +653,7 @@ export default function VereinErgebnissePage() {
           // Zu Batch hinzufügen statt einzeln speichern
           batch.set(scoreDocRef, scoreData);
           
-          // Prüfe und erstelle fehlenden Schützen-Eintrag in rwk_shooters
+          // Prüfe und erstelle fehlenden Schützen-Eintrag in shooters
           try {
             const shooterDocRef = doc(db, SHOOTERS_COLLECTION, entry.shooterId);
             const shooterSnap = await getFirestoreDoc(shooterDocRef);

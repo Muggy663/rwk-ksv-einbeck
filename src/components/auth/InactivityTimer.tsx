@@ -1,41 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Clock } from 'lucide-react';
 
 export function InactivityTimer() {
-  const { resetInactivityTimer } = useAuth();
-  const [timeLeft, setTimeLeft] = useState(10 * 60); // 10 Minuten in Sekunden
-  
-  useEffect(() => {
-    // Timer aktualisieren
-    const timer = setInterval(() => {
-      setTimeLeft(prev => Math.max(0, prev - 1));
-    }, 1000);
-    
-    // Timer zurücksetzen bei Benutzeraktivität
-    const handleUserActivity = () => {
-      if (resetInactivityTimer) {
-        resetInactivityTimer();
-        setTimeLeft(10 * 60);
-      }
-    };
-    
-    // Event-Listener für Benutzeraktivität
-    const activityEvents = ['mousedown', 'keypress', 'scroll', 'touchstart'];
-    activityEvents.forEach(event => {
-      window.addEventListener(event, handleUserActivity);
-    });
-    
-    return () => {
-      clearInterval(timer);
-      activityEvents.forEach(event => {
-        window.removeEventListener(event, handleUserActivity);
-      });
-    };
-  }, [resetInactivityTimer]);
+  const { resetInactivityTimer, timeLeft = 0 } = useAuth();
   
   // Zeit formatieren (mm:ss)
   const minutes = Math.floor(timeLeft / 60);
@@ -46,12 +17,7 @@ export function InactivityTimer() {
     <Button 
       variant="ghost" 
       size="sm" 
-      onClick={() => {
-        if (resetInactivityTimer) {
-          resetInactivityTimer();
-          setTimeLeft(10 * 60);
-        }
-      }}
+      onClick={resetInactivityTimer}
       className="text-xs flex items-center gap-1"
     >
       <Clock className="h-3 w-3" />

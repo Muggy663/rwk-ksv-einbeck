@@ -15,7 +15,7 @@ export default function SimpleCopyPage() {
       const { collection, getDocs, writeBatch, doc } = await import('firebase/firestore');
       const { db } = await import('@/lib/firebase/config');
 
-      const shootersSnap = await getDocs(collection(db, 'rwk_shooters'));
+      const shootersSnap = await getDocs(collection(db, 'shooters'));
       setStatus(`📊 ${shootersSnap.docs.length} Schützen gefunden`);
 
       const batch = writeBatch(db);
@@ -27,7 +27,7 @@ export default function SimpleCopyPage() {
         batch.set(kmRef, {
           ...data,
           migratedAt: new Date(),
-          migratedFrom: 'rwk_shooters'
+          migratedFrom: 'shooters'
         });
         count++;
       });
@@ -45,7 +45,7 @@ export default function SimpleCopyPage() {
     <div className="p-8">
       <h1 className="text-2xl mb-4">🔄 Schützen-Migration</h1>
       <Button onClick={copyData} disabled={copying}>
-        {copying ? 'Kopiere...' : 'rwk_shooters → km_shooters kopieren'}
+        {copying ? 'Kopiere...' : 'shooters → km_shooters kopieren'}
       </Button>
       <p className="mt-4 whitespace-pre-wrap">{status}</p>
     </div>

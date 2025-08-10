@@ -107,19 +107,51 @@ export default function TeamManagersPage() {
           return;
         }
 
-        // 2. Teams basierend auf der ausgewählten Liga (oder allen Ligen der Saison) laden
+        // 2. Erst eigene Teams finden, um die Ligen zu ermitteln, in denen der Verein schießt
+        let ownTeamsQuery = query(
+          collection(db, 'rwk_teams'),
+          where('leagueId', 'in', leagueIds)
+        );
+        
+        if (userPermissions && userPermissions.clubId) {
+          ownTeamsQuery = query(
+            collection(db, 'rwk_teams'),
+            where('leagueId', 'in', leagueIds),
+            where('clubId', '==', userPermissions.clubId)
+          );
+        }
+        
+        const ownTeamsSnapshot = await getDocs(ownTeamsQuery);
+        const ownLeagueIds = [...new Set(ownTeamsSnapshot.docs.map(doc => doc.data().leagueId))];
+        
+        if (ownLeagueIds.length === 0) {
+          setTeamManagers([]);
+          setFilteredManagers([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        // 3. Alle Teams in den Ligen laden, in denen der eigene Verein auch schießt
         let teamsQuery;
         if (selectedLeague) {
-          // Wenn eine spezifische Liga ausgewählt ist
-          teamsQuery = query(
-            collection(db, 'rwk_teams'),
-            where('leagueId', '==', selectedLeague)
-          );
+          // Wenn eine spezifische Liga ausgewählt ist, prüfe ob der Verein in dieser Liga schießt
+          if (ownLeagueIds.includes(selectedLeague)) {
+            teamsQuery = query(
+              collection(db, 'rwk_teams'),
+              where('leagueId', '==', selectedLeague)
+            );
+          } else {
+            // Verein schießt nicht in dieser Liga
+            setTeamManagers([]);
+            setFilteredManagers([]);
+            setIsLoading(false);
+            return;
+          }
         } else {
-          // Wenn "Alle Ligen" ausgewählt ist (selectedLeague ist leer)
+          // Alle Teams in Ligen, in denen der Verein schießt
           teamsQuery = query(
             collection(db, 'rwk_teams'),
-            where('leagueId', 'in', leagueIds)
+            where('leagueId', 'in', ownLeagueIds)
           );
         }
 
@@ -130,10 +162,7 @@ export default function TeamManagersPage() {
           const teamData = doc.data();
           const leagueName = leaguesMap.get(teamData.leagueId) || 'Unbekannte Liga';
 
-          // Berechtigungsprüfung, falls vorhanden
-          if (userPermissions && userPermissions.clubId && teamData.clubId !== userPermissions.clubId) {
-            return; // Überspringe Teams, die nicht zum Verein des Benutzers gehören
-          }
+          // Keine Berechtigungsprüfung mehr - zeige alle Teams in den relevanten Ligen
 
           const managerInfo: TeamManager = {
             id: doc.id,
@@ -195,7 +224,7 @@ export default function TeamManagersPage() {
         <div>
           <h1 className="text-3xl font-bold text-primary">Mannschaftsführer</h1>
           <p className="text-muted-foreground">
-            Übersicht aller Mannschaftsführer in aktiven Ligen.
+            Übersicht aller Mannschaftsführer in Ligen, in denen Ihr Verein auch schießt.
           </p>
         </div>
       </div>

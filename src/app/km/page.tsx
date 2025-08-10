@@ -47,7 +47,7 @@ export default function KMDashboard() {
         const { collection, getDocs } = await import('firebase/firestore');
         const { db } = await import('@/lib/firebase/config');
         
-        const shootersSnapshot = await getDocs(collection(db, 'rwk_shooters'));
+        const shootersSnapshot = await getDocs(collection(db, 'shooters'));
         schuetzen = shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setSchuetzen(schuetzen);
 
@@ -211,6 +211,9 @@ export default function KMDashboard() {
                 </Link>
                 <Link href="/km/uebersicht" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors shadow-md hover:shadow-lg">
                   📊 Alle Meldungen
+                </Link>
+                <Link href="/km/altersklassen" className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors shadow-md hover:shadow-lg">
+                  📋 Altersklassen
                 </Link>
                 {hasFullAccess && (
                   <Link href="/km/init" className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors shadow-md hover:shadow-lg">

@@ -260,7 +260,7 @@ export default function KMMannschaften() {
                   </div>
                 ) : (
                   mannschaften.map(mannschaft => {
-                    const verein = clubs.find(c => c.id === mannschaft.vereinId);
+                    const verein = clubs.find(c => c.id === mannschaft.vereinId || c.id === mannschaft.clubId);
                     const disziplin = disziplinen.find(d => d.id === mannschaft.disziplinId);
                     const teamSchuetzen = mannschaft.schuetzenIds.map(id => 
                       schuetzen.find(s => s.id === id)
@@ -271,10 +271,10 @@ export default function KMMannschaften() {
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <h3 className="font-semibold">
-                              {verein?.name} - {disziplin?.name}
+                              {verein?.name || `Verein-ID: ${mannschaft.vereinId || mannschaft.clubId}`} - {disziplin?.name || 'Luftgewehr'}
                             </h3>
                             <p className="text-sm text-gray-600">
-                              {mannschaft.wettkampfklassen.join(', ')}
+                              {mannschaft.wettkampfklassen?.length > 0 ? mannschaft.wettkampfklassen.join(', ') : 'Herren/Damen'}
                             </p>
                           </div>
                           <Button 
@@ -289,12 +289,10 @@ export default function KMMannschaften() {
                         <div className="space-y-2">
                           {teamSchuetzen.map((schuetze, index) => {
                             // Finde die entsprechende Meldung für VM-Ergebnis
-                            const meldung = mannschaft.schuetzenIds.map(id => 
-                              // Hier müssten wir die Meldungen laden, vereinfacht nehmen wir Dummy-Daten
-                              ({ schuetzeId: id, vmErgebnis: { ringe: schuetze?.id === 'Q8PpA33rtoTf1sPGB6vf' ? 356 : 
-                                schuetze?.name?.includes('Langnickel') ? 333.6 : 
-                                schuetze?.name?.includes('Leiding') ? 245 : 0 } })
-                            ).find(m => m.schuetzeId === schuetze?.id);
+                            const meldung = meldungen.find(m => 
+                              m.schuetzeId === schuetze?.id && 
+                              m.disziplinId === mannschaft.disziplinId
+                            );
                             
                             return (
                             <div key={schuetze?.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
@@ -306,7 +304,7 @@ export default function KMMannschaften() {
                                   } ({schuetze?.birthYear}, {schuetze?.gender === 'male' ? 'm' : schuetze?.gender === 'female' ? 'w' : '?'})
                                 </span>
                                 <div className="text-xs text-green-600 font-medium">
-                                  VM: {meldung?.vmErgebnis?.ringe || '?'} Ringe
+                                  VM: {meldung?.vmErgebnis?.ringe ? `${meldung.vmErgebnis.ringe} Ringe` : 'Noch kein VM-Ergebnis'}
                                 </div>
                               </div>
                               {editingTeam === mannschaft.id && (
@@ -332,7 +330,7 @@ export default function KMMannschaften() {
                             <div className="space-y-2 max-h-32 overflow-y-auto">
                               {schuetzen
                                 .filter(s => !mannschaft.schuetzenIds.includes(s.id))
-                                .filter(s => s.kmClubId === mannschaft.vereinId) // Nur gleicher Verein
+                                .filter(s => s.clubId === mannschaft.vereinId || s.kmClubId === mannschaft.vereinId) // Beide clubId Felder prüfen
                                 .filter(s => {
                                   // Nur Schützen die für diese Disziplin gemeldet sind
                                   return meldungen.some(m => 
@@ -340,14 +338,7 @@ export default function KMMannschaften() {
                                     m.disziplinId === mannschaft.disziplinId
                                   );
                                 })
-                                .filter(s => {
-                                  // Nur passende Altersklasse
-                                  if (!s.birthYear || !s.gender) return false;
-                                  const age = 2026 - s.birthYear;
-                                  const ageGroup = age <= 40 ? 'I' : age <= 50 ? 'II' : 'Senior';
-                                  return mannschaft.wettkampfklassen.some(wk => wk.includes(ageGroup));
-                                })
-                                .slice(0, 10)
+                                .slice(0, 10) // Entferne Altersklassen-Filter für mehr Flexibilität
                                 .map(schuetze => (
                                   <button
                                     key={schuetze.id}
@@ -368,7 +359,7 @@ export default function KMMannschaften() {
                                 ))}
                               {schuetzen.filter(s => 
                                 !mannschaft.schuetzenIds.includes(s.id) && 
-                                s.kmClubId === mannschaft.vereinId &&
+                                (s.clubId === mannschaft.vereinId || s.kmClubId === mannschaft.vereinId) &&
                                 meldungen.some(m => m.schuetzeId === s.id && m.disziplinId === mannschaft.disziplinId)
                               ).length === 0 && (
                                 <div className="text-xs text-gray-500 p-2">

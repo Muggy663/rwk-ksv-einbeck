@@ -21,7 +21,7 @@ import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
 const TEAMS_COLLECTION = "rwk_teams";
-const SHOOTERS_COLLECTION = "rwk_shooters";
+const SHOOTERS_COLLECTION = "shooters";
 const SCORES_COLLECTION = "rwk_scores";
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
@@ -277,6 +277,13 @@ export default function AdminResultsPage() {
     }
   }, [selectedTeamId, selectedRound, shootersOfSelectedTeam, pendingScores, justSavedScoreIdentifiers, existingScoresForTeamAndRound, isLoadingExistingScores, editMode]);
 
+  // Separater Effekt für automatische Schützen-Auswahl
+  useEffect(() => {
+    if (!selectedShooterId && availableShootersForDropdown.length > 0) {
+      setSelectedShooterId(availableShootersForDropdown[0].id);
+    }
+  }, [availableShootersForDropdown, selectedShooterId]);
+
   const handleAddToList = () => {
     if (!user) { toast({ title: "Nicht angemeldet", variant: "destructive" }); return; }
     if (!selectedShooterId || !selectedRound || !score || !selectedSeasonId || !selectedLeagueId || !selectedTeamId ) {
@@ -520,7 +527,30 @@ export default function AdminResultsPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="score">Ergebnis (Ringe)</Label>
-              <Input id="score" type="number" value={score} onChange={(e) => setScore(e.target.value)} placeholder="z.B. 285" disabled={!selectedShooterId}/>
+              <Input 
+                id="score" 
+                type="number" 
+                value={score} 
+                onChange={(e) => setScore(e.target.value)} 
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+                    e.preventDefault();
+                    if (selectedShooterId && selectedRound && score && !isSubmittingScores && !isLoadingExistingScores) {
+                      handleAddToList();
+                      // Automatisch nächsten Schützen auswählen
+                      const currentIndex = availableShootersForDropdown.findIndex(s => s.id === selectedShooterId);
+                      if (currentIndex !== -1 && currentIndex < availableShootersForDropdown.length - 1) {
+                        const nextShooter = availableShootersForDropdown[currentIndex + 1];
+                        setSelectedShooterId(nextShooter.id);
+                      } else {
+                        setSelectedShooterId('');
+                      }
+                    }
+                  }
+                }}
+                placeholder="z.B. 285" 
+                disabled={!selectedShooterId}
+              />
             </div>
           </div>
           <div className="space-y-3 pt-2">

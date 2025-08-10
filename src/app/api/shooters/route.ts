@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       importedAt: new Date()
     };
 
-    const docRef = await addDoc(collection(db, 'rwk_shooters'), shooterData);
+    const docRef = await addDoc(collection(db, 'shooters'), shooterData);
 
     return NextResponse.json({
       success: true,
@@ -69,12 +69,12 @@ export async function GET(request: NextRequest) {
         console.warn('km_shooters Collection nicht gefunden');
       }
     } else {
-      // Für RWK: Lade RWK-Schützen
-      const rwkSnapshot = await getDocs(collection(db, 'rwk_shooters'));
-      let shooters = rwkSnapshot.docs.map(doc => ({
+      // Für RWK: Lade zentrale Schützen
+      const shootersSnapshot = await getDocs(collection(db, 'shooters'));
+      let shooters = shootersSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        source: 'rwk'
+        source: 'central'
       }));
       
       // Filtere nach Verein wenn clubId angegeben
@@ -111,7 +111,7 @@ export async function DELETE(request: NextRequest) {
     
     if (action === 'cleanup-duplicates') {
 
-      const snapshot = await getDocs(collection(db, 'rwk_shooters'));
+      const snapshot = await getDocs(collection(db, 'shooters'));
       const shooters = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
       
       // Finde Duplikate (gleicher Name)
@@ -136,7 +136,7 @@ export async function DELETE(request: NextRequest) {
       if (toDelete.length > 0) {
         const batch = writeBatch(db);
         toDelete.forEach(s => {
-          batch.delete(doc(db, 'rwk_shooters', s.id));
+          batch.delete(doc(db, 'shooters', s.id));
         });
         
         await batch.commit();
@@ -150,8 +150,8 @@ export async function DELETE(request: NextRequest) {
     
     if (action === 'cleanup-imports') {
 
-      // Lösche rwk_shooters mit createdAt (Excel-Importe)
-      const snapshot = await getDocs(collection(db, 'rwk_shooters'));
+      // Lösche shooters mit createdAt (Excel-Importe)
+      const snapshot = await getDocs(collection(db, 'shooters'));
 
       
       const shooters = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
@@ -164,7 +164,7 @@ export async function DELETE(request: NextRequest) {
         // Verwende Batch für bessere Performance
         const batch = writeBatch(db);
         toDelete.forEach(s => {
-          batch.delete(doc(db, 'rwk_shooters', s.id));
+          batch.delete(doc(db, 'shooters', s.id));
         });
         
         await batch.commit();

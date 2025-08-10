@@ -9,12 +9,12 @@ export async function POST() {
     const batch = writeBatch(db);
     let deletedCount = 0;
     
-    // 1. Lösche alle rwk_shooters
-    const rwkShootersSnapshot = await getDocs(collection(db, 'rwk_shooters'));
-    console.log(`📊 Gefunden: ${rwkShootersSnapshot.size} rwk_shooters`);
+    // 1. Lösche alle shooters
+    const shootersSnapshot = await getDocs(collection(db, 'shooters'));
+    console.log(`📊 Gefunden: ${shootersSnapshot.size} shooters`);
     
-    rwkShootersSnapshot.docs.forEach(docSnap => {
-      batch.delete(doc(db, 'rwk_shooters', docSnap.id));
+    shootersSnapshot.docs.forEach(docSnap => {
+      batch.delete(doc(db, 'shooters', docSnap.id));
       deletedCount++;
     });
     
@@ -36,7 +36,7 @@ export async function POST() {
       success: true,
       message: `Bereinigung abgeschlossen: ${deletedCount} Schützen gelöscht`,
       details: {
-        rwk_shooters_deleted: rwkShootersSnapshot.size,
+        shooters_deleted: shootersSnapshot.size,
         km_shooters_deleted: kmShootersSnapshot.size,
         total_deleted: deletedCount
       }

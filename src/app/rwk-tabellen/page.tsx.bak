@@ -1134,7 +1134,7 @@ function RwkTabellenPageComponent() {
       });
 
       // Lade Schützen-Infos
-      const shootersQuery = query(collection(db, "rwk_shooters"), where(documentId(), "in", validShooterIds));
+      const shootersQuery = query(collection(db, "shooters"), where(documentId(), "in", validShooterIds));
       const shootersSnapshot = await getDocs(shootersQuery);
       const shooterInfos = new Map<string, Shooter>();
       shootersSnapshot.docs.forEach(shooterDoc => {

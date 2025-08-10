@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import type { Shooter, KMDisziplin, KMMeldung } from '@/types';
-import { calculateKMWettkampfklasse } from '@/types/km';
 import { getStartVereinForDisziplin } from '@/lib/services/km-startrechte-service';
 import { useKMAuth } from '@/hooks/useKMAuth';
 
@@ -43,7 +42,7 @@ export default function KMMeldungen() {
   const loadData = async () => {
     try {
       const [shootersRes, disziplinenRes, meldungenRes, clubsRes] = await Promise.all([
-        fetch('/api/shooters?includeMembers=true'), // Lade alle Schützen + Mitglieder für KM
+        fetch('/api/km/shooters'), // Zentrale shooters collection
         fetch('/api/km/disziplinen'),
         fetch('/api/km/meldungen'),
         fetch('/api/clubs')
@@ -296,7 +295,34 @@ export default function KMMeldungen() {
     if (!schuetze.birthYear || !schuetze.gender) {
       return 'Daten unvollständig - bitte nachtragen';
     }
-    return calculateKMWettkampfklasse(schuetze.birthYear, schuetze.gender as 'male' | 'female', 2026, auflage);
+    
+    const sportjahr = 2026; // Sportjahr KM 2026
+    const age = sportjahr - schuetze.birthYear;
+    const gender = schuetze.gender;
+    
+    if (auflage) {
+      // Auflage: Schüler und Senioren-Klassen
+      if (age >= 12 && age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
+      if (age < 41) return 'Nicht teilnahmeberechtigt';
+      if (age <= 50) return 'Senioren 0'; // 41-50 gemischt
+      if (age <= 60) return gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
+      if (age <= 65) return gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
+      if (age <= 70) return gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
+      if (age <= 75) return gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
+      if (age <= 80) return gender === 'male' ? 'Senioren V m' : 'Seniorinnen V';
+      return gender === 'male' ? 'Senioren VI m' : 'Seniorinnen VI';
+    } else {
+      // Freihand
+      if (age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
+      if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
+      if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+      if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+      if (age <= 40) return gender === 'male' ? 'Herren I' : 'Damen I';
+      if (age <= 50) return gender === 'male' ? 'Herren II' : 'Damen II';
+      if (age <= 60) return gender === 'male' ? 'Herren III' : 'Damen III';
+      if (age <= 70) return gender === 'male' ? 'Herren IV' : 'Damen IV';
+      return gender === 'male' ? 'Herren V' : 'Damen V';
+    }
   };
 
   if (loading) {
@@ -527,8 +553,9 @@ export default function KMMeldungen() {
                       {(() => {
                         const schuetze = schuetzen.find(s => s.id === selectedSchuetze);
                         if (!schuetze) return '';
-                        const age = 2026 - schuetze.birthYear;
-                        return `Alter 2026: ${age} Jahre, ${schuetze.gender === 'male' ? 'Männlich' : 'Weiblich'}`;
+                        const sportjahr = 2026; // Sportjahr KM 2026
+                        const age = sportjahr - schuetze.birthYear;
+                        return `Alter Sportjahr ${sportjahr}: ${age} Jahre, ${schuetze.gender === 'male' ? 'Männlich' : 'Weiblich'}`;
                       })()}
                     </div>
                   </div>

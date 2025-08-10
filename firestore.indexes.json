@@ -207,7 +207,7 @@
       ]
     },
     {
-      "collectionGroup": "rwk_shooters",
+      "collectionGroup": "shooters",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -225,7 +225,7 @@
       ]
     },
     {
-      "collectionGroup": "rwk_shooters",
+      "collectionGroup": "shooters",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -239,7 +239,7 @@
       ]
     },
     {
-      "collectionGroup": "rwk_shooters",
+      "collectionGroup": "shooters",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -257,7 +257,7 @@
       ]
     },
     {
-      "collectionGroup": "rwk_shooters",
+      "collectionGroup": "shooters",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -271,7 +271,7 @@
       ]
     },
     {
-      "collectionGroup": "rwk_shooters",
+      "collectionGroup": "shooters",
       "queryScope": "COLLECTION",
       "fields": [
         {

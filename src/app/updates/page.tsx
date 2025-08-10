@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.10.1a (09.08.2025)</span>
+              <span>Web-Version: 0.11.1 (15.01.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -32,12 +32,73 @@ export default function UpdatesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.11.1 - Admin-Verbesserungen & PDF-Fixes</CardTitle>
+              <Badge variant="default" className="bg-green-600">Neu</Badge>
+            </div>
+            <CardDescription>15.01.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Admin-Bereich optimiert: Ergebniserfassung-Filter, PDF-Exports vereinfacht, Mannschaftsführer-Übersicht korrigiert.</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-blue-900 mb-2">🔧 Admin-Optimierungen v0.11.1</h4>
+              <div className="text-xs text-blue-700">
+                Verbesserte Benutzerführung und korrigierte Funktionen
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🎯 <strong>Ergebniserfassung-Filter:</strong> Teams/Schützen mit vollständigen Ergebnissen werden ausgeblendet (alte Logik reaktiviert)</li>
+              <li>📄 <strong>PDF-Exports vereinfacht:</strong> Admin-Exports leitet direkt zu Urkunden weiter, funktionsfähige PDF-Buttons</li>
+              <li>👥 <strong>Mannschaftsführer korrigiert:</strong> Keine "undefined undefined" mehr, korrekte Saison-Namen</li>
+              <li>🏆 <strong>Urkunden-Button verschoben:</strong> Von System zu Saisonverwaltung für bessere Auffindbarkeit</li>
+              <li>⏰ <strong>Session-Timer verbessert:</strong> Bessere Synchronisation zwischen Timer-Anzeige und tatsächlicher Session</li>
+              <li>🔄 <strong>Vereinsvertreter-Ansicht:</strong> Mannschaftsführer in eigenen Ligen statt nur eigener Verein</li>
+              <li>🎮 <strong>Bearbeitungsmodus:</strong> Toggle für Admin-Ergebniserfassung - AUS für Filterung, AN für Bearbeitung</li>
+              <li>🛠️ <strong>Code-Bereinigung:</strong> Entfernte nicht funktionierende PDF-Export-Logik</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-blue-800">🔧 Admin-Optimierungen</span>
+                  <p className="text-xs text-blue-600 mt-1">Filter, PDFs & Benutzerführung</p>
+                </div>
+                <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.11.1
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.11.0 - Große Datenbank-Migration</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>11.01.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">KM-System Vollendung: Altersklassen-Übersicht, Navigation vereinheitlicht, Logout-Timer korrigiert.</p>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li>📋 <strong>Altersklassen-Übersicht:</strong> Neue Seite /km/altersklassen</li>
+              <li>🎯 <strong>Korrekte Altersklassen:</strong> Auflage (Schüler 12-14, Senioren 41+)</li>
+              <li>📊 <strong>KM-Mitglieder CRUD:</strong> Vollständige Verwaltung</li>
+              <li>🔄 <strong>Navigation vereinheitlicht:</strong> "Arbeitsbereich" statt "Dashboard"</li>
+              <li>⏰ <strong>Logout-Timer korrigiert:</strong> Timer-Reset bei Aktivität</li>
+              <li>🛠️ <strong>API-Bereinigung:</strong> km_shooters zu shooters migriert</li>
+            </ul>
+          </CardContent>
+        </Card>
+        
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-xl">Version 0.10.1a - Ersatzschützen & PDF-Verbesserungen</CardTitle>
-              <Badge variant="default" className="bg-green-600">Neu</Badge>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>09.08.2025</CardDescription>
           </CardHeader>
@@ -59,57 +120,23 @@ export default function UpdatesPage() {
               <li>💨 <strong>Luftdruck-Kategorie:</strong> Luftgewehr + Luftpistole zusammengefasst wie Kleinkaliber</li>
               <li>🏆 <strong>KK Pistole Ehrungen:</strong> Separate Gesamtsieger-Urkunden für KK Pistole</li>
             </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-amber-800">🔄 Ersatzschützen-System</span>
-                  <p className="text-xs text-amber-600 mt-1">RWK-Ordnung §12 vollständig umgesetzt</p>
-                </div>
-                <span className="bg-amber-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.10.1a
-                </span>
-              </div>
-            </div>
           </CardContent>
         </Card>
         
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.10.1 - Schützen-Verwaltung für Vereinsvertreter</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
+            <CardTitle className="text-xl">Version 0.10.1 - Schützen-Verwaltung für Vereinsvertreter</CardTitle>
             <CardDescription>09.08.2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Vollständige Schützen-Verwaltung für Vereinsvertreter mit Mannschaftszuordnung und km_shooters Synchronisation.</p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-blue-900 mb-2">🎯 Schützen-Verwaltung v0.10.1</h4>
-              <div className="text-xs text-blue-700">
-                Vereinsvertreter können jetzt vollständig Schützen verwalten
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
+            <ul className="list-disc pl-5 space-y-1 text-sm">
               <li>🎯 <strong>Schützen anlegen:</strong> Vereinsvertreter können neue Schützen erstellen</li>
-              <li>✏️ <strong>Schützen bearbeiten:</strong> Alle Daten (Name, Geschlecht, Geburtsjahr, Mitgliedsnummer) editierbar</li>
-              <li>👥 <strong>Mannschaftszuordnung:</strong> Direkte Zuordnung zu Teams beim Anlegen</li>
-              <li>🔄 <strong>Duale Synchronisation:</strong> Automatische Speicherung in rwk_shooters + km_shooters</li>
-              <li>⚖️ <strong>Regelvalidierung:</strong> Ein Schütze pro Saison/Disziplin nur einem Team</li>
-              <li>🔍 <strong>Erweiterte Suche:</strong> Filter nach Mannschaftsmitgliedern</li>
-              <li>🎨 <strong>Verbessertes Design:</strong> Emojis, bessere Typografie, peppigere UI</li>
-              <li>🛡️ <strong>Berechtigungen:</strong> Nur autorisierte Vereinsvertreter können bearbeiten</li>
+              <li>✏️ <strong>Schützen bearbeiten:</strong> Alle Daten editierbar</li>
+              <li>👥 <strong>Mannschaftszuordnung:</strong> Direkte Zuordnung zu Teams</li>
+              <li>🔄 <strong>Duale Synchronisation:</strong> shooters + km_shooters</li>
+              <li>⚖️ <strong>Regelvalidierung:</strong> Ein Schütze pro Saison/Disziplin</li>
             </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-blue-800">🎯 Schützen-Verwaltung</span>
-                  <p className="text-xs text-blue-600 mt-1">Vollständige CRUD-Operationen + Mannschaftszuordnung</p>
-                </div>
-                <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.10.1
-                </span>
-              </div>
-            </div>
           </CardContent>
         </Card>
         
@@ -130,7 +157,7 @@ export default function UpdatesPage() {
           </CardContent>
         </Card>
         
-        <Card className="shadow-sm hover:shadow-md transition-shadow md:col-span-2">
+        <Card className="shadow-sm hover:shadow-md transition-shadow md:col-span-2 lg:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-xl">Ältere Versionen</CardTitle>
           </CardHeader>

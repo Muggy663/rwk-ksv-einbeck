@@ -64,12 +64,13 @@ import {
   getDoc as getFirestoreDoc,
   arrayRemove,
   arrayUnion,
-  Timestamp
+  Timestamp,
+  setDoc
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
-const SHOOTERS_COLLECTION = "rwk_shooters";
+const SHOOTERS_COLLECTION = "shooters";
 const TEAMS_COLLECTION = "rwk_teams";
 const CLUBS_COLLECTION = "clubs";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -411,43 +412,43 @@ export default function VereinSchuetzenPage() {
         setIsFormSubmitting(false); return;
       }
 
-      const batch = writeBatch(db);
-
       if (formMode === 'new') {
         const newShooterRef = doc(collection(db, SHOOTERS_COLLECTION));
-        const shooterDataForSave: Omit<Shooter, 'id'> = {
+        const shooterDataForSave: any = {
           firstName: currentShooter.firstName.trim(),
           lastName: currentShooter.lastName.trim(),
           name: combinedName,
           clubId: activeClubId,
           gender: currentShooter.gender || 'male',
           teamIds: selectedTeamIdsInForm || [],
-          birthYear: currentShooter.birthYear,
-          mitgliedsnummer: currentShooter.mitgliedsnummer || null,
-          isActive: true,
-          genderGuessed: false,
-          createdAt: new Date(),
-          importedAt: new Date()
+          isActive: true
         };
-        batch.set(newShooterRef, shooterDataForSave);
         
-        // Auto-Integration: Speichere auch in km_shooters für KM-Meldungen
-        const kmShooterRef = doc(collection(db, 'km_shooters'), newShooterRef.id);
-        const kmShooterData = {
-          ...shooterDataForSave,
-          kmClubId: activeClubId,
-          rwkClubId: activeClubId,
-          syncedAt: new Date(),
-          source: 'verein_admin'
-        };
-        batch.set(kmShooterRef, kmShooterData);
+        // Nur Felder hinzufügen, die nicht undefined sind
+        if (currentShooter.birthYear && !isNaN(currentShooter.birthYear)) {
+          shooterDataForSave.birthYear = currentShooter.birthYear;
+        }
+        if (currentShooter.mitgliedsnummer && currentShooter.mitgliedsnummer.trim()) {
+          shooterDataForSave.mitgliedsnummer = currentShooter.mitgliedsnummer.trim();
+        }
+        
+        console.log('VSP DEBUG: Creating shooter with data:', shooterDataForSave);
+        await setDoc(newShooterRef, shooterDataForSave);
+        console.log('VSP DEBUG: Shooter created successfully');
 
-        (selectedTeamIdsInForm || []).forEach(teamId => {
-           const teamInfo = teamsOfSelectedClubInDialog.find(t => t.id === teamId);
-           if(teamInfo && (teamInfo.currentShooterCount || 0) < MAX_SHOOTERS_PER_TEAM) {
-             batch.update(doc(db, TEAMS_COLLECTION, teamId), { shooterIds: arrayUnion(newShooterRef.id) });
-           }
-        });
+        // Team-Zuordnungen einzeln hinzufügen
+        for (const teamId of selectedTeamIdsInForm || []) {
+          const teamInfo = teamsOfSelectedClubInDialog.find(t => t.id === teamId);
+          if (teamInfo && (teamInfo.currentShooterCount || 0) < MAX_SHOOTERS_PER_TEAM) {
+            try {
+              console.log(`VSP DEBUG: Adding shooter ${newShooterRef.id} to team ${teamId}`);
+              await updateDoc(doc(db, TEAMS_COLLECTION, teamId), { shooterIds: arrayUnion(newShooterRef.id) });
+              console.log(`VSP DEBUG: Successfully added shooter to team ${teamId}`);
+            } catch (error) {
+              console.error(`VSP DEBUG: Error adding shooter to team ${teamId}:`, error);
+            }
+          }
+        }
         toast({ title: "🎯 Schütze erstellt", description: `${shooterDataForSave.name} wurde in beiden Systemen angelegt!` });
 
       } else if (formMode === 'edit' && currentShooter.id) {
@@ -458,14 +459,17 @@ export default function VereinSchuetzenPage() {
           name: combinedName,
           gender: currentShooter.gender || 'male',
         };
-        batch.update(shooterDocRef, updateData);
+        console.log('VSP DEBUG: Updating shooter with data:', updateData);
+        await updateDoc(shooterDocRef, updateData);
+        console.log('VSP DEBUG: Shooter updated successfully');
         toast({ title: "Schütze aktualisiert", description: `${combinedName} wurde aktualisiert.` });
       }
       
-      await batch.commit();
+      console.log('VSP DEBUG: All operations completed successfully');
       setIsFormOpen(false); setCurrentShooter(null); setSelectedTeamIdsInForm([]);
       fetchPageDataForActiveClub();
     } catch (error: any) {
+      console.error('VSP DEBUG: Error in shooter creation:', error);
       toast({ title: `Fehler beim Speichern`, description: error.message || "Ein unbekannter Fehler.", variant: "destructive" });
     } finally {
       setIsFormSubmitting(false);

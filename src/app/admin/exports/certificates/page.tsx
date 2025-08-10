@@ -27,6 +27,7 @@ export default function CertificatesPage() {
   const [numTopShooters, setNumTopShooters] = useState<number>(3);
   const [numTopTeams, setNumTopTeams] = useState<number>(2);
   const [generateOverallBest, setGenerateOverallBest] = useState<boolean>(false);
+  const [ceremonyDate, setCeremonyDate] = useState<string>('');
 
   // Lade verfügbare Saisons
   useEffect(() => {
@@ -186,7 +187,9 @@ export default function CertificatesPage() {
         description: 'Die Urkunden werden generiert. Dies kann einen Moment dauern.',
       });
       
-      const currentDate = format(new Date(), 'dd. MMMM yyyy', { locale: de });
+      const currentDate = ceremonyDate ? 
+        format(new Date(ceremonyDate), 'dd. MMMM yyyy', { locale: de }) : 
+        format(new Date(), 'dd. MMMM yyyy', { locale: de });
       const certificates = [];
       
       // Liga-Informationen abrufen
@@ -209,7 +212,8 @@ export default function CertificatesPage() {
             season: shooter.season.replace('RWK ', ''), // "RWK" entfernen
             discipline: shooter.discipline,
             category: leagueName, // Verwende den tatsächlichen Liga-Namen
-            recipientName: shooter.name, // Ohne Verein in Klammern
+            recipientName: shooter.name, // Nur Name
+            teamName: shooter.teamName, // Mannschaftsname separat
             clubName: shooter.clubName, // Verein separat speichern
             score: shooter.totalScore.toString(),
             rank: shooter.rank,
@@ -221,7 +225,6 @@ export default function CertificatesPage() {
       // Top-Teams abrufen und Urkunden generieren
       if (numTopTeams > 0) {
         const topTeams = await fetchTopTeams(selectedLeague, numTopTeams);
-
         
         for (const team of topTeams) {
           certificates.push({
@@ -261,13 +264,22 @@ export default function CertificatesPage() {
           }
           
           if (cert.type === 'team') {
+            // Duplikate aus teamMembersWithScores entfernen
+            const uniqueMembers = cert.teamMembersWithScores ? 
+              cert.teamMembersWithScores.filter((member, index, arr) => 
+                arr.findIndex(m => m.name === member.name) === index
+              ) : [];
+            
+            // Berechne das korrekte Gesamtergebnis
+            const correctScore = uniqueMembers.reduce((sum, member) => sum + member.totalScore, 0);
+            
             certificateGenerator.generateCertificate({
               season: cert.season,
               discipline: cert.discipline,
               category: cert.category,
               recipientName: cert.recipientName,
-              teamMembersWithScores: cert.teamMembersWithScores,
-              score: cert.score,
+              teamMembersWithScores: uniqueMembers,
+              score: correctScore.toString(),
               rank: cert.rank,
               date: cert.date
             });
@@ -276,7 +288,7 @@ export default function CertificatesPage() {
               season: cert.season,
               discipline: cert.discipline,
               category: cert.category,
-              recipientName: cert.recipientName,
+              recipientName: cert.teamName ? `${cert.recipientName} (${cert.teamName})` : cert.recipientName,
               score: cert.score,
               rank: cert.rank,
               date: cert.date
@@ -293,13 +305,22 @@ export default function CertificatesPage() {
           const certificateGenerator = new CertificateGenerator({ orientation: 'portrait' });
           
           if (cert.type === 'team') {
+            // Duplikate aus teamMembersWithScores entfernen
+            const uniqueMembers = cert.teamMembersWithScores ? 
+              cert.teamMembersWithScores.filter((member, index, arr) => 
+                arr.findIndex(m => m.name === member.name) === index
+              ) : [];
+            
+            // Berechne das korrekte Gesamtergebnis
+            const correctScore = uniqueMembers.reduce((sum, member) => sum + member.totalScore, 0);
+            
             certificateGenerator.generateCertificate({
               season: cert.season,
               discipline: cert.discipline,
               category: cert.category,
               recipientName: cert.recipientName,
-              teamMembersWithScores: cert.teamMembersWithScores,
-              score: cert.score,
+              teamMembersWithScores: uniqueMembers,
+              score: correctScore.toString(),
               rank: cert.rank,
               date: cert.date
             });
@@ -311,7 +332,7 @@ export default function CertificatesPage() {
               season: cert.season,
               discipline: cert.discipline,
               category: cert.category,
-              recipientName: cert.recipientName,
+              recipientName: cert.teamName ? `${cert.recipientName} (${cert.teamName})` : cert.recipientName,
               score: cert.score,
               rank: cert.rank,
               date: cert.date
@@ -359,7 +380,9 @@ export default function CertificatesPage() {
         description: 'Die Urkunden für Gesamtsieger werden generiert. Dies kann einen Moment dauern.',
       });
       
-      const currentDate = format(new Date(), 'dd. MMMM yyyy', { locale: de });
+      const currentDate = ceremonyDate ? 
+        format(new Date(ceremonyDate), 'dd. MMMM yyyy', { locale: de }) : 
+        format(new Date(), 'dd. MMMM yyyy', { locale: de });
       const certificates = [];
       
       // Beste Schützen über alle Ligen hinweg abrufen
@@ -599,6 +622,20 @@ export default function CertificatesPage() {
           </div>
 
           <div className="space-y-4">
+            <div>
+              <Label htmlFor="ceremony-date">Datum der Siegerehrung</Label>
+              <input
+                id="ceremony-date"
+                type="date"
+                value={ceremonyDate}
+                onChange={(e) => setCeremonyDate(e.target.value)}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Leer lassen für heutiges Datum ({format(new Date(), 'dd.MM.yyyy')})
+              </p>
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="num-shooters">Anzahl Top-Schützen (0 = keine)</Label>
@@ -682,6 +719,20 @@ export default function CertificatesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="ceremony-date-overall">Datum der Siegerehrung</Label>
+            <input
+              id="ceremony-date-overall"
+              type="date"
+              value={ceremonyDate}
+              onChange={(e) => setCeremonyDate(e.target.value)}
+              disabled={loading}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
+            />
+            <p className="text-xs text-gray-500 mt-1 mb-4">
+              Leer lassen für heutiges Datum ({format(new Date(), 'dd.MM.yyyy')})
+            </p>
+          </div>
           <div>
             <Label htmlFor="season-select-overall">Saison</Label>
             <Select

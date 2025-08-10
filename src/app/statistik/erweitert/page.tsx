@@ -69,7 +69,7 @@ export default function ExtendedStatisticsPage() {
     setIsLoading(true);
     try {
       // Suche nach Schützen in der Firestore-Datenbank
-      const shootersRef = collection(db, 'rwk_shooters');
+      const shootersRef = collection(db, 'shooters');
       const q = query(
         shootersRef,
         where('name', '>=', searchTerm),

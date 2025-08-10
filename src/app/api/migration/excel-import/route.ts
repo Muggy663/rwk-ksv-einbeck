@@ -30,7 +30,12 @@ export async function POST(request: NextRequest) {
     const clubs = new Map();
     clubsSnapshot.docs.forEach(doc => {
       const clubData = doc.data();
-      clubs.set(clubData.name, doc.id);
+      const originalName = clubData.name;
+      const normalizedName = originalName.trim().replace(/\s+/g, ' ');
+      // Alle Varianten speichern
+      clubs.set(originalName, doc.id);
+      clubs.set(originalName.trim(), doc.id);
+      clubs.set(normalizedName, doc.id);
     });
     
     let imported = 0;
@@ -50,7 +55,7 @@ export async function POST(request: NextRequest) {
       try {
         // Excel-Format: A=Mitgliedsnummer, B=Verein, C=Titel, D=Name, E=Vorname, F=Nachsatz, G=Geburtsdatum
         const mitgliedsnummer = row[0] ? String(row[0]).padStart(4, '0') : null; // Führende 0 hinzufügen
-        const vereinName = row[1] ? String(row[1]).trim() : '';
+        const vereinName = row[1] ? String(row[1]).trim().replace(/\s+/g, ' ') : '';
         const titel = row[2] ? String(row[2]).trim() : '';
         const nachname = row[3] ? String(row[3]).trim() : '';
         const vorname = row[4] ? String(row[4]).trim() : '';
@@ -63,9 +68,22 @@ export async function POST(request: NextRequest) {
           continue;
         }
         
-        // Verein-ID finden
-        const clubId = clubs.get(vereinName);
+        // Verein-ID finden (mit flexiblem Matching)
+        let clubId = clubs.get(vereinName);
         if (!clubId) {
+          // Versuche mit Leerzeichen am Ende
+          clubId = clubs.get(vereinName + ' ');
+        }
+        if (!clubId) {
+          // Versuche ohne Leerzeichen am Ende
+          clubId = clubs.get(vereinName.replace(/ +$/, ''));
+        }
+        if (!clubId && vereinName === 'SC Naensen e.V.') {
+          // Spezial-Fallback für SC Naensen
+          clubId = clubs.get('SC Naensen e.V. ');
+        }
+        if (!clubId) {
+          console.log(`❌ Verein nicht gefunden: "${vereinName}" (Länge: ${vereinName.length})`);
           errors.push(`Zeile ${i + 1}: Verein "${vereinName}" nicht gefunden`);
           skipped++;
           continue;
@@ -88,19 +106,7 @@ export async function POST(request: NextRequest) {
         
         const fullName = `${vorname} ${nachname}`;
         
-        // Prüfe auf Duplikate
-        const duplicateQuery = query(
-          collection(db, 'rwk_shooters'),
-          where('name', '==', fullName),
-          where('clubId', '==', clubId)
-        );
-        const duplicateSnap = await getDocs(duplicateQuery);
-        
-        if (!duplicateSnap.empty) {
-          errors.push(`Zeile ${i + 1}: Schütze "${fullName}" bereits vorhanden`);
-          skipped++;
-          continue;
-        }
+        // Keine Duplikats-Prüfung - Doppelmitgliedschaften erlaubt
         
         // Schütze erstellen
         const shooterData = {
@@ -121,7 +127,7 @@ export async function POST(request: NextRequest) {
           ...(birthYear && { birthYear: birthYear })
         };
         
-        await addDoc(collection(db, 'rwk_shooters'), shooterData);
+        await addDoc(collection(db, 'shooters'), shooterData);
         imported++;
         
         if (imported % 50 === 0) {

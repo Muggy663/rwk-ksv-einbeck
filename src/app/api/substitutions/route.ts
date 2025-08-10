@@ -37,12 +37,12 @@ export async function POST(request: NextRequest) {
 
       const batch = writeBatch(db);
       
-      const originalShooterRef = doc(db, 'rwk_shooters', substitution.originalShooterId);
+      const originalShooterRef = doc(db, 'shooters', substitution.originalShooterId);
       batch.update(originalShooterRef, {
         teamIds: arrayRemove(teamId)
       });
       
-      const replacementShooterRef = doc(db, 'rwk_shooters', substitution.replacementShooterId);
+      const replacementShooterRef = doc(db, 'shooters', substitution.replacementShooterId);
       batch.update(replacementShooterRef, {
         teamIds: arrayUnion(teamId)
       });

@@ -49,7 +49,7 @@ export default function DashboardAuswahl() {
   return (
     <div className="container py-8 max-w-6xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-primary mb-2">Dashboard auswählen</h1>
+        <h1 className="text-3xl font-bold text-primary mb-2">Arbeitsbereich auswählen</h1>
         <p className="text-muted-foreground">
           Willkommen {user.displayName || user.email}! Wählen Sie Ihren Arbeitsbereich:
         </p>
@@ -129,13 +129,13 @@ export default function DashboardAuswahl() {
                     {isKMOrganisator ? (
                       <Link href="/km-orga" className="flex-1">
                         <Button className="w-full">
-                          KM-Orga Dashboard öffnen
+                          KM-Orga Bereich öffnen
                         </Button>
                       </Link>
                     ) : (
                       <Link href="/km" className="flex-1">
                         <Button className="w-full">
-                          KM Dashboard öffnen
+                          KM Bereich öffnen
                         </Button>
                       </Link>
                     )}

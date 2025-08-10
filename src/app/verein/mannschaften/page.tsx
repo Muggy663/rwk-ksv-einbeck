@@ -52,7 +52,7 @@ import { GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES, leagueDisciplineOptions, MAX_SH
 import { db } from '@/lib/firebase/config';
 import {
   collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query,
-  where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayUnion, arrayRemove, Timestamp
+  where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayUnion, arrayRemove, Timestamp, setDoc
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -61,7 +61,7 @@ const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
 const CLUBS_COLLECTION = "clubs";
 const TEAMS_COLLECTION = "rwk_teams";
-const SHOOTERS_COLLECTION = "rwk_shooters";
+const SHOOTERS_COLLECTION = "shooters";
 
 export default function VereinMannschaftenPage() {
   const {
@@ -495,14 +495,17 @@ export default function VereinMannschaftenPage() {
   
   const handleSubmitTeamForm = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!isVereinsvertreter) { toast({ title: "Keine Berechtigung", variant: "destructive" }); setIsSubmittingForm(false); return; }
-
-
+    
+    if (!isVereinsvertreter) { 
+      toast({ title: "Keine Berechtigung", variant: "destructive" }); 
+      setIsSubmittingForm(false); 
+      return; 
+    }
 
     if (!currentTeam || !currentTeam.name?.trim() || !activeClubId || !selectedSeasonId) {
-      console.warn("VMP SUBMIT VALIDATION FAILED: Missing required fields.", { currentTeam, activeClubId, selectedSeasonId });
       toast({ title: "Ungültige Eingabe", description: "Name der Mannschaft, Verein und Saison sind erforderlich.", variant: "destructive" });
-      setIsSubmittingForm(false); return;
+      setIsSubmittingForm(false); 
+      return;
     }
 
     const currentSeasonForSubmit = allSeasons.find(s => s.id === selectedSeasonId);
@@ -572,9 +575,10 @@ export default function VereinMannschaftenPage() {
         where("clubId", "==", teamDataToSave.clubId),
         where("competitionYear", "==", teamDataToSave.competitionYear),
       ];
-      if (teamDataToSave.leagueId && typeof teamDataToSave.leagueId === 'string' && teamDataToSave.leagueId.trim() !== "") {
-         // For VVs, leagueId is initially null, so this part is mostly for SuperAdmin context
-         // For VVs, we mainly check for duplicate name within club and year
+      
+      // Füge leagueType zur Duplikat-Prüfung hinzu, damit gleiche Namen in verschiedenen Disziplinen erlaubt sind
+      if (teamDataToSave.leagueType) {
+        baseDuplicateConditions.push(where("leagueType", "==", teamDataToSave.leagueType));
       }
 
       if (formMode === 'edit' && currentTeam.id) {
@@ -585,10 +589,10 @@ export default function VereinMannschaftenPage() {
       const duplicateSnapshot = await getDocs(duplicateQuery);
       if (!duplicateSnapshot.empty) {
         toast({ title: "Doppelter Mannschaftsname", description: `Eine Mannschaft mit diesem Namen existiert bereits für diesen Verein und dieses Wettkampfjahr.`, variant: "destructive", duration: 8000});
-        setIsSubmittingForm(false); return; 
+        setIsSubmittingForm(false); 
+        return; 
       }
 
-      const batch = writeBatch(db);
       let teamIdForShooterUpdates: string = currentTeam.id || '';
       
       const originalShooterIds = formMode === 'edit' ? persistedShooterIdsForTeam : [];
@@ -596,95 +600,80 @@ export default function VereinMannschaftenPage() {
       const shootersToAdd = selectedShooterIdsInForm.filter(id => !originalShooterIds.includes(id));
       const shootersToRemove = originalShooterIds.filter(id => !selectedShooterIdsInForm.includes(id) && allClubShootersForDialog.some(s => s.id === id));
       
-
-
-
-      
+      // SCHRITT 1: Team erstellen/aktualisieren
       if (formMode === 'new') {
         const newTeamRef = doc(collection(db, TEAMS_COLLECTION)); 
         teamIdForShooterUpdates = newTeamRef.id;
         const { id, ...dataForNewTeam } = teamDataToSave; 
-        batch.set(newTeamRef, {...dataForNewTeam, shooterIds: selectedShooterIdsInForm, leagueId: null, leagueType: currentTeam.leagueType }); // Explizit leagueId: null für VV
+        const teamData = {...dataForNewTeam, shooterIds: selectedShooterIdsInForm, leagueId: null, leagueType: currentTeam.leagueType || null };
+        await setDoc(newTeamRef, teamData);
         toast({ title: "Mannschaft erstellt", description: `"${dataForNewTeam.name}" wurde erfolgreich angelegt.` });
       } else if (formMode === 'edit' && currentTeam.id) {
         teamIdForShooterUpdates = currentTeam.id;
         const teamDocRef = doc(db, TEAMS_COLLECTION, teamIdForShooterUpdates);
         const { id, ...dataForTeamUpdate } = teamDataToSave; 
-        batch.update(teamDocRef, {...dataForTeamUpdate, shooterIds: selectedShooterIdsInForm} as Partial<Team>); 
+        await updateDoc(teamDocRef, {...dataForTeamUpdate, shooterIds: selectedShooterIdsInForm} as Partial<Team>);
         toast({ title: "Mannschaft aktualisiert", description: `"${dataForTeamUpdate.name}" wurde erfolgreich aktualisiert.` });
       } else {
         setIsSubmittingForm(false);
-        throw new Error("VMP DEBUG: handleSubmit - Invalid form mode or missing team ID for edit.");
+        throw new Error("Invalid form mode or missing team ID for edit.");
       }
       
-      // Nur existierende Schützen-Dokumente aktualisieren
+      // SCHRITT 2: Schützen aktualisieren
       const validShootersToAdd = [];
       const validShootersToRemove = [];
       
-      // Prüfe shootersToAdd - auch Excel-importierte Schützen berücksichtigen
+      // Prüfe shootersToAdd
       for (const shooterId of shootersToAdd) {
         try {
           const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
           const shooterDoc = await getFirestoreDoc(shooterDocRef);
           if (shooterDoc.exists()) {
             validShootersToAdd.push(shooterId);
-          } else {
-            console.warn(`VMP DEBUG: Shooter document ${shooterId} does not exist, skipping update`);
           }
         } catch (error) {
-          console.warn(`VMP DEBUG: Error checking shooter ${shooterId}:`, error);
+          console.warn(`Error checking shooter ${shooterId}:`, error);
         }
       }
       
-      // Prüfe shootersToRemove - auch Excel-importierte Schützen berücksichtigen
+      // Prüfe shootersToRemove
       for (const shooterId of shootersToRemove) {
         try {
           const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
           const shooterDoc = await getFirestoreDoc(shooterDocRef);
           if (shooterDoc.exists()) {
             validShootersToRemove.push(shooterId);
-          } else {
-            console.warn(`VMP DEBUG: Shooter document ${shooterId} does not exist, skipping update`);
           }
         } catch (error) {
-          console.warn(`VMP DEBUG: Error checking shooter ${shooterId}:`, error);
+          console.warn(`Error checking shooter ${shooterId}:`, error);
         }
       }
       
-      // Nur gültige Schützen aktualisieren - auch in km_shooters für Sync
-      validShootersToAdd.forEach(shooterId => {
-        const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
-        batch.update(shooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
-        
-        // Auto-Integration: Auch km_shooters aktualisieren
+      // SCHRITT 3: Schützen einzeln aktualisieren
+      for (const shooterId of validShootersToAdd) {
         try {
-          const kmShooterDocRef = doc(db, 'km_shooters', shooterId);
-          batch.update(kmShooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
+          const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
+          await updateDoc(shooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
         } catch (error) {
-          // km_shooters Dokument existiert nicht - das ist ok
+          console.error(`Error adding team to shooter ${shooterId}:`, error);
         }
-      });
-      validShootersToRemove.forEach(shooterId => {
-        const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
-        batch.update(shooterDocRef, { teamIds: arrayRemove(teamIdForShooterUpdates) });
-        
-        // Auto-Integration: Auch km_shooters aktualisieren
-        try {
-          const kmShooterDocRef = doc(db, 'km_shooters', shooterId);
-          batch.update(kmShooterDocRef, { teamIds: arrayRemove(teamIdForShooterUpdates) });
-        } catch (error) {
-          // km_shooters Dokument existiert nicht - das ist ok
-        }
-      });
+      }
       
-      await batch.commit();
+      for (const shooterId of validShootersToRemove) {
+        try {
+          const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
+          await updateDoc(shooterDocRef, { teamIds: arrayRemove(teamIdForShooterUpdates) });
+        } catch (error) {
+          console.error(`Error removing team from shooter ${shooterId}:`, error);
+        }
+      }
       setIsFormOpen(false);
       setCurrentTeam(null);
       setSelectedShooterIdsInForm([]);
       setPersistedShooterIdsForTeam([]);
       fetchTeamsForClubAndSeason(); // Refetch teams
     } catch (error: any) {
-      console.error("VMP DEBUG: handleSubmit - Error saving team or updating shooters: ", error);
+      console.error("Error saving team or updating shooters:", error);
       const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
       toast({ title: `Fehler beim ${action}`, description: error.message || "Unbekannter Fehler", variant: "destructive" });
     } finally {

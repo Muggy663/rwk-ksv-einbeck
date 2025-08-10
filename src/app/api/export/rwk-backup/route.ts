@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     
     // 2. Lade Teams und Schützen
     const teamsSnapshot = await getDocs(collection(db, 'rwk_teams'));
-    const shootersSnapshot = await getDocs(collection(db, 'rwk_shooters'));
+    const shootersSnapshot = await getDocs(collection(db, 'shooters'));
     const clubsSnapshot = await getDocs(collection(db, 'clubs'));
     const leaguesSnapshot = await getDocs(collection(db, 'rwk_leagues'));
     

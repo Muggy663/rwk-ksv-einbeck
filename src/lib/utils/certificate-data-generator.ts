@@ -36,9 +36,30 @@ export async function fetchTopShooters(leagueId: string, topCount: number = 3) {
     const scoresSnapshot = await getDocs(scoresQuery);
     const shootersMap = new Map();
     
-    // Ergebnisse nach Schützen gruppieren
+    // Duplikat-Filterung: Sammle alle Scores und entferne Duplikate
+    const scoresArray = [];
     scoresSnapshot.forEach(scoreDoc => {
-      const scoreData = scoreDoc.data();
+      scoresArray.push({ id: scoreDoc.id, ...scoreDoc.data() });
+    });
+    
+    // Duplikate entfernen basierend auf shooterId + durchgang + competitionYear + leagueType
+    const duplicateMap = new Map();
+    scoresArray.forEach(score => {
+      const key = `${score.shooterId}|${score.durchgang}|${score.competitionYear}|${score.leagueType}`;
+      if (!duplicateMap.has(key)) {
+        duplicateMap.set(key, score);
+      } else {
+        // Bei Duplikaten den neueren Eintrag behalten (falls entryTimestamp vorhanden)
+        const existing = duplicateMap.get(key);
+        if (score.entryTimestamp && existing.entryTimestamp && 
+            score.entryTimestamp.seconds > existing.entryTimestamp.seconds) {
+          duplicateMap.set(key, score);
+        }
+      }
+    });
+    
+    // Ergebnisse nach Schützen gruppieren (nur eindeutige Scores)
+    Array.from(duplicateMap.values()).forEach(scoreData => {
       const shooterId = scoreData.shooterId;
       const durchgang = scoreData.durchgang;
       
@@ -146,6 +167,27 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
       );
       
       const scoresSnapshot = await getDocs(scoresQuery);
+      
+      // Duplikat-Filterung für Team-Scores
+      const teamScoresArray = [];
+      scoresSnapshot.forEach(scoreDoc => {
+        teamScoresArray.push({ id: scoreDoc.id, ...scoreDoc.data() });
+      });
+      
+      const teamDuplicateMap = new Map();
+      teamScoresArray.forEach(score => {
+        const key = `${score.shooterId}|${score.durchgang}|${score.competitionYear}|${score.leagueType}`;
+        if (!teamDuplicateMap.has(key)) {
+          teamDuplicateMap.set(key, score);
+        } else {
+          const existing = teamDuplicateMap.get(key);
+          if (score.entryTimestamp && existing.entryTimestamp && 
+              score.entryTimestamp.seconds > existing.entryTimestamp.seconds) {
+            teamDuplicateMap.set(key, score);
+          }
+        }
+      });
+      
       const roundResults = {};
       
       // Durchgangsergebnisse initialisieren
@@ -153,9 +195,8 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
         roundResults[`dg${i}`] = null;
       }
       
-      // Ergebnisse nach Durchgang gruppieren
-      scoresSnapshot.forEach(scoreDoc => {
-        const scoreData = scoreDoc.data();
+      // Ergebnisse nach Durchgang gruppieren (nur eindeutige Scores)
+      Array.from(teamDuplicateMap.values()).forEach(scoreData => {
         const durchgang = scoreData.durchgang;
         
         if (durchgang >= 1 && durchgang <= numRounds) {
@@ -180,13 +221,12 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
       
       const averageScore = numScoredRounds > 0 ? totalScore / numScoredRounds : 0;
       
-      // Teammitglieder direkt aus den bereits geladenen Scores extrahieren
+      // Teammitglieder aus den bereits gefilterten Scores extrahieren
       const teamMembers = [];
       const shootersMap = new Map();
       
-      // Alle Scores für das Team durchgehen und Schützen sammeln
-      scoresSnapshot.forEach(scoreDoc => {
-        const scoreData = scoreDoc.data();
+      // Alle eindeutigen Scores für das Team durchgehen und Schützen sammeln
+      Array.from(teamDuplicateMap.values()).forEach(scoreData => {
         const shooterId = scoreData.shooterId;
         const shooterName = scoreData.shooterName;
         
@@ -207,8 +247,11 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
         }
       });
       
-      // Schützen in Array umwandeln
-      shootersMap.forEach(shooter => {
+      // Schützen in Array umwandeln und nach totalScore sortieren
+      const sortedShooters = Array.from(shootersMap.values())
+        .sort((a, b) => b.totalScore - a.totalScore);
+      
+      sortedShooters.forEach(shooter => {
         teamMembers.push({
           name: shooter.name,
           totalScore: shooter.totalScore,
@@ -217,25 +260,28 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
         });
       });
       
+      // Korrigiere totalScore basierend auf den tatsächlichen Teammitgliedern
+      const correctedTotalScore = teamMembers.reduce((sum, member) => sum + member.totalScore, 0);
+      
       teams.push({
         id: teamDoc.id,
         name: teamData.name,
         clubName: teamData.clubName || '',
         roundResults,
-        totalScore,
-        averageScore,
+        totalScore: correctedTotalScore, // Verwende das korrigierte Ergebnis
+        averageScore: teamMembers.length > 0 ? correctedTotalScore / teamMembers.length : 0,
         teamMembers: teamMembers.map(member => member.name),
         teamMembersWithScores: teamMembers
       });
     }
     
-    // Teams nach Gesamtergebnis sortieren
+    // Teams nach dem korrigierten Gesamtergebnis sortieren
     teams.sort((a, b) => b.totalScore - a.totalScore);
     
     // Nur die Top-Teams zurückgeben
     const topTeams = teams.slice(0, topCount);
     
-    // Zusätzliche Informationen hinzufügen
+    // Zusätzliche Informationen hinzufügen und Rangplätze neu vergeben
     return topTeams.map((team, index) => ({
       ...team,
       rank: index + 1,
@@ -350,11 +396,30 @@ async function fetchBestShooterByGender(leagueIds: string[], gender: 'male' | 'f
       allScores = [...allScores, ...scoresSnapshot.docs];
     }
     
+    // Duplikat-Filterung für Gesamtsieger
+    const overallScoresArray = [];
+    allScores.forEach(scoreDoc => {
+      overallScoresArray.push({ id: scoreDoc.id, ...scoreDoc.data() });
+    });
+    
+    const overallDuplicateMap = new Map();
+    overallScoresArray.forEach(score => {
+      const key = `${score.shooterId}|${score.durchgang}|${score.competitionYear}|${score.leagueType}`;
+      if (!overallDuplicateMap.has(key)) {
+        overallDuplicateMap.set(key, score);
+      } else {
+        const existing = overallDuplicateMap.get(key);
+        if (score.entryTimestamp && existing.entryTimestamp && 
+            score.entryTimestamp.seconds > existing.entryTimestamp.seconds) {
+          overallDuplicateMap.set(key, score);
+        }
+      }
+    });
+    
     const shootersMap = new Map();
     
-    // Ergebnisse nach Schützen gruppieren
-    allScores.forEach(scoreDoc => {
-      const scoreData = scoreDoc.data();
+    // Ergebnisse nach Schützen gruppieren (nur eindeutige Scores)
+    Array.from(overallDuplicateMap.values()).forEach(scoreData => {
       const shooterId = scoreData.shooterId;
       const shooterGender = scoreData.shooterGender || 'unknown';
       

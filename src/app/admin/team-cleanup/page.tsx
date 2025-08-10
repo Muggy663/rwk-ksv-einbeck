@@ -37,7 +37,7 @@ export default function TeamCleanupPage() {
       const teamsSnapshot = await getDocs(collection(db, "rwk_teams"));
       const allTeams = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       
-      const shootersSnapshot = await getDocs(collection(db, "rwk_shooters"));
+      const shootersSnapshot = await getDocs(collection(db, "shooters"));
       const allShooters = shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Shooter));
       const validShooterIds = new Set(allShooters.map(s => s.id));
 

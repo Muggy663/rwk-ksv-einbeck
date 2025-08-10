@@ -119,14 +119,33 @@ export class CertificateGenerator {
       this.doc.setFontSize(14);
       this.doc.text('errang', this.pageWidth / 2, this.margin + 95, { align: 'center' });
       
-      // Empfänger (Schütze oder Mannschaft) - ohne Klammern
+      // Empfänger (Schütze oder Mannschaft)
       this.doc.setFontSize(18);
       this.doc.setFont('helvetica', 'bold');
       
-      // Entferne Klammern aus dem Namen
-      const cleanName = options.recipientName.replace(/\s*\([^)]*\)/g, '');
-      
-      this.doc.text(cleanName, this.pageWidth / 2, this.margin + 110, { align: 'center' });
+      if (options.teamMembersWithScores && options.teamMembersWithScores.length > 0) {
+        // Team-Urkunde: Nur Teamname ohne Klammern
+        const cleanName = options.recipientName.replace(/\s*\([^)]*\)/g, '');
+        this.doc.text(cleanName, this.pageWidth / 2, this.margin + 110, { align: 'center' });
+      } else {
+        // Einzelschützen-Urkunde: Name und Verein untereinander
+        const match = options.recipientName.match(/^(.+?)\s*\((.+)\)$/);
+        if (match) {
+          const shooterName = match[1].trim();
+          const teamName = match[2].trim();
+          
+          this.doc.text(shooterName, this.pageWidth / 2, this.margin + 110, { align: 'center' });
+          this.doc.setFontSize(14);
+          this.doc.setFont('helvetica', 'normal');
+          this.doc.text(teamName, this.pageWidth / 2, this.margin + 125, { align: 'center' });
+          
+          // "mit" hinzufügen
+          this.doc.setFontSize(14);
+          this.doc.text('mit', this.pageWidth / 2, this.margin + 140, { align: 'center' });
+        } else {
+          this.doc.text(options.recipientName, this.pageWidth / 2, this.margin + 110, { align: 'center' });
+        }
+      }
       
       // Teammitglieder mit Einzelergebnissen (falls vorhanden)
       if (options.teamMembersWithScores && options.teamMembersWithScores.length > 0) {
@@ -169,11 +188,11 @@ export class CertificateGenerator {
         // Ergebnis (für Einzelschützen)
         this.doc.setFontSize(16);
         this.doc.setFont('helvetica', 'bold');
-        this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 125, { align: 'center' });
+        this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 155, { align: 'center' });
         
         // Platzierung
         this.doc.setFontSize(16);
-        this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, this.margin + 140, { align: 'center' });
+        this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, this.margin + 170, { align: 'center' });
       }
       
       // Verband in Grün - kompakter positioniert

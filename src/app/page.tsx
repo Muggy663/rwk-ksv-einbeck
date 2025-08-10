@@ -157,8 +157,8 @@ export default function HomePage() {
     <div className="container py-8 max-w-7xl mx-auto">
       {/* Wartungshinweis - bei Bedarf aktivieren */}
       <MaintenanceBanner 
-        show={true} // ← AKTIVIERT für Test
-        message="⚠️ WICHTIG: Luftdruck RWK-Anmeldungen STOPP bis Montag früh! Wartungsarbeiten geplant - Anmeldungen könnten verloren gehen. Bitte warten!"
+        show={false} // ← DEAKTIVIERT
+        message=""
         type="maintenance"
       />
       

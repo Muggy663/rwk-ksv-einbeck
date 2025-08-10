@@ -95,7 +95,7 @@ export default function HandzettelGeneratorPage() {
         } as Team));
         
         const shootersQuery = query(
-          collection(db, 'rwk_shooters'),
+          collection(db, 'shooters'),
           orderBy('name', 'asc')
         );
         const shootersSnapshot = await getDocs(shootersQuery);

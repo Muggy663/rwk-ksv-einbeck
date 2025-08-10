@@ -19,9 +19,9 @@ async function executeMigration() {
   console.log('🚀 Starte KM-Schützen Migration...');
   
   try {
-    // 1. Alle rwk_shooters laden
-    const shootersSnap = await getDocs(collection(db, 'rwk_shooters'));
-    console.log(`📊 Gefunden: ${shootersSnap.docs.length} Schützen in rwk_shooters`);
+    // 1. Alle shooters laden
+    const shootersSnap = await getDocs(collection(db, 'shooters'));
+    console.log(`📊 Gefunden: ${shootersSnap.docs.length} Schützen in shooters`);
     
     const batch = writeBatch(db);
     let kmCount = 0;
@@ -48,7 +48,7 @@ async function executeMigration() {
           createdAt: shooter.createdAt || new Date(),
           importedAt: shooter.importedAt || null,
           migratedAt: new Date(),
-          migratedFrom: 'rwk_shooters'
+          migratedFrom: 'shooters'
         });
         kmCount++;
       } 

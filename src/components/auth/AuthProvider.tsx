@@ -25,17 +25,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const { toast } = useToast();
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [timeLeft, setTimeLeft] = useState(10 * 60); // 10 Minuten in Sekunden
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Funktion zum Zurücksetzen des Inaktivitäts-Timers
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimerRef.current) {
       clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
     }
     
     // Nur Timer setzen, wenn ein Benutzer angemeldet ist
     if (user) {
+      setTimeLeft(10 * 60); // Reset countdown
+      
+      // Countdown Timer
+      countdownTimerRef.current = setInterval(() => {
+        setTimeLeft(prev => Math.max(0, prev - 1));
+      }, 1000);
+      
+      // Logout Timer
       inactivityTimerRef.current = setTimeout(() => {
-        // Benutzer nach Inaktivität abmelden
         signOut();
         toast({ 
           title: "Automatische Abmeldung", 
@@ -51,15 +65,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!user) return;
     
     // Benutzeraktivitäten überwachen
-    const activityEvents = ['mousedown', 'keypress', 'scroll', 'touchstart'];
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click', 'focus', 'blur'];
     
     const handleUserActivity = () => {
-      resetInactivityTimer();
+      if (user) {
+        resetInactivityTimer();
+      }
     };
     
     // Event-Listener hinzufügen
     activityEvents.forEach(event => {
-      window.addEventListener(event, handleUserActivity);
+      window.addEventListener(event, handleUserActivity, true);
     });
     
     // Initial Timer setzen
@@ -69,6 +85,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => {
       if (inactivityTimerRef.current) {
         clearTimeout(inactivityTimerRef.current);
+      }
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
       }
       
       activityEvents.forEach(event => {
@@ -158,6 +177,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         clearTimeout(inactivityTimerRef.current);
         inactivityTimerRef.current = null;
       }
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
       
       await signOutUser();
       // setUser(null) und fetchUserAppPermissions(null) werden durch onAuthStateChanged getriggert
@@ -221,6 +244,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     loadingAppPermissions, // Permissions loading state
     appPermissionsError,
     resetInactivityTimer, // Exportiere die Funktion zum Zurücksetzen des Timers
+    timeLeft, // Expose timeLeft for InactivityTimer
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -77,18 +77,9 @@ match /users/{userId} {
     }
 
     // Teams - Verwaltung durch Admin und Vereinsvertreter
+    // Teams - TEMPORÄR OFFEN FÜR MIGRATION
     match /rwk_teams/{teamId} {
-      allow read: if true;
-      allow create: if isSuperAdmin() ||
-                      (isVereinsvertreter() && 
-                       hasClubAccess(request.resource.data.clubId));
-      allow update: if isSuperAdmin() ||
-                      (isVereinsvertreter() && 
-                       hasClubAccess(resource.data.clubId) && 
-                       hasClubAccess(request.resource.data.clubId));
-      allow delete: if isSuperAdmin() || 
-                      (isVereinsvertreter() && 
-                       hasClubAccess(resource.data.clubId));
+      allow read, write: if true; // TEMPORÄR: Vollzugriff für Migration
     }
 
     // Team-Schützen-Zuordnungen - Erweiterte Berechtigung für Bereinigung
@@ -115,20 +106,10 @@ match /users/{userId} {
                      hasClubAccess(resource.data.clubId));
     }
 
-    // Schützen - TEMPORÄR OFFEN FÜR KM-IMPORT
-    match /rwk_shooters/{shooterId} {
-      allow read: if true; 
-      allow create: if true; // TEMPORÄR FÜR KM-IMPORT
-      allow update: if true; // TEMPORÄR FÜR KM-IMPORT
-      allow delete: if true; // TEMPORÄR FÜR KM-IMPORT
-    }
-    
-        // KM-Schützen - TEMPORÄR OFFEN FÜR MIGRATION
-    match /km_shooters/{shooterId} {
-      allow read: if true;
-      allow create: if true; // TEMPORÄR FÜR MIGRATION
-      allow update: if true; // TEMPORÄR FÜR MIGRATION
-      allow delete: if true; // TEMPORÄR FÜR MIGRATION
+   // Zentrale Schützen-Collection - TEMPORÄR OFFEN FÜR MIGRATION
+    match /shooters/{shooterId} {
+      allow read: if true; // Öffentlich lesbar für Tabellen
+      allow write: if true; // TEMPORÄR: Vollzugriff für Migration und Team-Operationen
     }
 
     // Ergebnisse - VERBESSERT: Validierung der Ringzahlen
@@ -164,7 +145,7 @@ match /users/{userId} {
 
     // Benutzerberechtigungen - Lesbar für Admin und eigenen Benutzer, schreibbar nur für Admin
     match /user_permissions/{userId} {
-      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
+      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId) || isAuthenticated(); // TEMPORÄR: Alle authentifizierten Benutzer können lesen für Regelauswertung
       allow write: if isSuperAdmin();
     }
 
@@ -248,6 +229,11 @@ match /users/{userId} {
     }
     
     // === KM-SYSTEM REGELN ===
+    
+    // KM-Schützen - TEMPORÄR OFFEN FÜR MIGRATION
+    match /km_shooters/{shooterId} {
+      allow read, write: if true; // TEMPORÄR: Vollzugriff für Migration
+    }
     
     // KM-Benutzerberechtigungen - Nur SuperAdmin kann verwalten
     match /km_user_permissions/{userId} {

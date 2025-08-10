@@ -143,7 +143,7 @@ export default function MigrationPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="mb-4">Löscht alle bestehenden Schützen aus rwk_shooters und km_shooters</p>
+          <p className="mb-4">Löscht alle bestehenden Schützen aus shooters und km_shooters</p>
           <Button 
             onClick={handleCleanup} 
             disabled={loading || step >= 2}

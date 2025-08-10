@@ -313,6 +313,12 @@ export default function AdminDashboardPage() {
                   Liga-Einstellungen
                 </Button>
               </Link>
+              <Link href="/admin/exports/certificates" passHref>
+                <Button variant="outline" className="w-full col-span-2">
+                  <Award className="mr-2 h-4 w-4" />
+                  Urkunden erstellen
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -487,9 +493,6 @@ export default function AdminDashboardPage() {
               PDF-Exporte, Backups und andere Systemfunktionen.
             </CardDescription>
              <div className="space-y-2">
-              <Link href="/admin/exports" passHref>
-                <Button className="w-full" variant="outline">PDF: Ergebnislisten & Urkunden</Button>
-              </Link>
               <div className="bg-blue-50 p-3 rounded border border-blue-200">
                 <p className="text-sm font-medium text-blue-800 mb-2">📊 RWK Backup vor Migration</p>
                 <div className="grid grid-cols-2 gap-2">

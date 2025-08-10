@@ -42,14 +42,24 @@ export interface Team {
   id: string;
   name: string;
   clubId: string;
-  leagueId: string;
+  leagueId?: string | null; // Kann null sein bei VV-erstellten Teams
+  leagueType?: FirestoreLeagueSpecificDiscipline | null; // Disziplin auch ohne Liga-Zuweisung
+  seasonId: string;
   competitionYear: number;
   shooterIds: string[];
-  teamLeader?: string;
-  teamLeaderEmail?: string;
-  teamLeaderPhone?: string;
+  captainName?: string;
+  captainEmail?: string;
+  captainPhone?: string;
+  teamLeader?: string; // Legacy
+  teamLeaderEmail?: string; // Legacy
+  teamLeaderPhone?: string; // Legacy
   outOfCompetition?: boolean;
   outOfCompetitionReason?: string;
+}
+
+export interface TeamValidationInfo extends Team {
+  leagueCompetitionYear?: number;
+  currentShooterCount: number;
 }
 
 export interface Shooter {
@@ -57,6 +67,7 @@ export interface Shooter {
   name: string;
   firstName?: string;
   lastName?: string;
+  title?: string;
   gender: 'male' | 'female' | 'unknown';
   birthYear?: number;
   birthDate?: Date;
@@ -65,6 +76,7 @@ export interface Shooter {
   email?: string;
   phone?: string;
   isActive?: boolean;
+  teamIds?: string[]; // Array der Team-IDs, in denen der Schütze ist
   // KM-spezifische Felder
   mitgliedsnummer?: string;
   sondergenehmigung?: boolean; // Für Schützen unter 12 Jahren
@@ -82,24 +94,48 @@ export interface AgeClass {
 }
 
 // Funktion zur Berechnung der Altersklasse
-export function calculateAgeClass(birthYear: number, gender: 'male' | 'female', competitionYear: number = 2026): string {
+export function calculateAgeClass(birthYear: number, gender: 'male' | 'female', competitionYear: number = 2026, discipline?: 'auflage' | 'freihand'): string {
   const age = competitionYear - birthYear;
   const genderSuffix = gender === 'male' ? ' m' : ' w';
   
-  if (age <= 12) return 'Schüler' + genderSuffix;
-  if (age <= 17) return 'Jugend' + genderSuffix;
-  if (age <= 20) return 'Junioren A' + genderSuffix;
-  if (age <= 22) return 'Junioren B' + genderSuffix;
-  if (age <= 41) return gender === 'male' ? 'Herren I' : 'Damen I';
-  if (age <= 51) return gender === 'male' ? 'Herren II' : 'Damen II';
-  if (age <= 61) return gender === 'male' ? 'Herren III' : 'Damen III';
-  if (age <= 71) return gender === 'male' ? 'Herren IV' : 'Damen IV';
-  if (age <= 76) return gender === 'male' ? 'Senioren 0' : 'Seniorinnen 0';
-  if (age <= 81) return gender === 'male' ? 'Senioren I' : 'Seniorinnen I';
-  if (age <= 86) return gender === 'male' ? 'Senioren II' : 'Seniorinnen II';
-  if (age <= 91) return gender === 'male' ? 'Senioren III' : 'Seniorinnen III';
-  if (age <= 96) return gender === 'male' ? 'Senioren IV' : 'Seniorinnen IV';
-  return gender === 'male' ? 'Senioren V' : 'Seniorinnen V';
+  // Basis-Altersklassen (für Freihand oder wenn keine Disziplin angegeben)
+  if (!discipline || discipline === 'freihand') {
+    if (age <= 12) return 'Schüler' + genderSuffix;
+    if (age <= 17) return 'Jugend' + genderSuffix;
+    if (age <= 20) return 'Junioren A' + genderSuffix;
+    if (age <= 22) return 'Junioren B' + genderSuffix;
+    if (age <= 41) return gender === 'male' ? 'Herren I' : 'Damen I';
+    if (age <= 51) return gender === 'male' ? 'Herren II' : 'Damen II';
+    if (age <= 61) return gender === 'male' ? 'Herren III' : 'Damen III';
+    if (age <= 71) return gender === 'male' ? 'Herren IV' : 'Damen IV';
+    if (age <= 76) return gender === 'male' ? 'Senioren 0' : 'Seniorinnen 0';
+    if (age <= 81) return gender === 'male' ? 'Senioren I' : 'Seniorinnen I';
+    if (age <= 86) return gender === 'male' ? 'Senioren II' : 'Seniorinnen II';
+    if (age <= 91) return gender === 'male' ? 'Senioren III' : 'Seniorinnen III';
+    if (age <= 96) return gender === 'male' ? 'Senioren IV' : 'Seniorinnen IV';
+    return gender === 'male' ? 'Senioren V' : 'Seniorinnen V';
+  }
+  
+  // Auflage-spezifische Altersklassen (erweiterte Seniorenklassen)
+  if (discipline === 'auflage') {
+    if (age <= 12) return 'Schüler' + genderSuffix;
+    if (age <= 17) return 'Jugend' + genderSuffix;
+    if (age <= 20) return 'Junioren A' + genderSuffix;
+    if (age <= 22) return 'Junioren B' + genderSuffix;
+    if (age <= 41) return gender === 'male' ? 'Herren I' : 'Damen I';
+    if (age <= 51) return gender === 'male' ? 'Herren II' : 'Damen II';
+    if (age <= 61) return gender === 'male' ? 'Herren III' : 'Damen III';
+    if (age <= 71) return gender === 'male' ? 'Herren IV' : 'Damen IV';
+    // Auflage hat erweiterte Seniorenklassen ab 60+
+    if (age <= 65) return gender === 'male' ? 'Senioren A' : 'Seniorinnen A';
+    if (age <= 70) return gender === 'male' ? 'Senioren B' : 'Seniorinnen B';
+    if (age <= 75) return gender === 'male' ? 'Senioren C' : 'Seniorinnen C';
+    if (age <= 80) return gender === 'male' ? 'Senioren D' : 'Seniorinnen D';
+    if (age <= 85) return gender === 'male' ? 'Senioren E' : 'Seniorinnen E';
+    return gender === 'male' ? 'Senioren F' : 'Seniorinnen F';
+  }
+  
+  return '-';
 }
 
 export function getBirthYearFromAge(age: number, competitionYear: number = 2026): number {

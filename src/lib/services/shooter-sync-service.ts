@@ -1,11 +1,11 @@
-// Automatische Synchronisation zwischen km_shooters und rwk_shooters
+// Automatische Synchronisation zwischen km_shooters und shooters
 import { doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
 export class ShooterSyncService {
   
   // Schütze in beide Collections erstellen
-  static async createShooter(shooterData: any, sourceCollection: 'km_shooters' | 'rwk_shooters') {
+  static async createShooter(shooterData: any, sourceCollection: 'km_shooters' | 'shooters') {
     const shooterId = shooterData.id || doc(db, 'temp').id;
     
     try {
@@ -17,7 +17,7 @@ export class ShooterSyncService {
       });
       
       // In Ziel-Collection synchronisieren
-      const targetCollection = sourceCollection === 'km_shooters' ? 'rwk_shooters' : 'km_shooters';
+      const targetCollection = sourceCollection === 'km_shooters' ? 'shooters' : 'km_shooters';
       await setDoc(doc(db, targetCollection, shooterId), {
         ...shooterData,
         createdAt: new Date(),
@@ -34,7 +34,7 @@ export class ShooterSyncService {
   }
   
   // Schütze in beide Collections aktualisieren
-  static async updateShooter(shooterId: string, updateData: any, sourceCollection: 'km_shooters' | 'rwk_shooters') {
+  static async updateShooter(shooterId: string, updateData: any, sourceCollection: 'km_shooters' | 'shooters') {
     try {
       const syncData = {
         ...updateData,
@@ -46,7 +46,7 @@ export class ShooterSyncService {
       await updateDoc(doc(db, sourceCollection, shooterId), syncData);
       
       // In Ziel-Collection synchronisieren
-      const targetCollection = sourceCollection === 'km_shooters' ? 'rwk_shooters' : 'km_shooters';
+      const targetCollection = sourceCollection === 'km_shooters' ? 'shooters' : 'km_shooters';
       await updateDoc(doc(db, targetCollection, shooterId), {
         ...syncData,
         syncedFrom: sourceCollection
@@ -60,13 +60,13 @@ export class ShooterSyncService {
   }
   
   // Schütze aus beiden Collections löschen
-  static async deleteShooter(shooterId: string, sourceCollection: 'km_shooters' | 'rwk_shooters') {
+  static async deleteShooter(shooterId: string, sourceCollection: 'km_shooters' | 'shooters') {
     try {
       // Aus Quell-Collection löschen
       await deleteDoc(doc(db, sourceCollection, shooterId));
       
       // Aus Ziel-Collection synchronisieren
-      const targetCollection = sourceCollection === 'km_shooters' ? 'rwk_shooters' : 'km_shooters';
+      const targetCollection = sourceCollection === 'km_shooters' ? 'shooters' : 'km_shooters';
       await deleteDoc(doc(db, targetCollection, shooterId));
       
 

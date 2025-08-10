@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.10.1a"; // Ersatzschützen-System & PDF-Logos
+  const version = "0.11.0"; // Große Datenbank-Migration
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

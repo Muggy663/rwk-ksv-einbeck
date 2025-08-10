@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const [meldungenSnapshot, disziplinenSnapshot, schuetzenSnapshot, vereineSnapshot, mannschaftenSnapshot] = await Promise.all([
       getDocs(query(collection(db, 'km_meldungen'), where('saison', '==', saison))),
       getDocs(collection(db, 'km_disziplinen')),
-      getDocs(collection(db, 'rwk_shooters')),
+      getDocs(collection(db, 'shooters')),
       getDocs(collection(db, 'clubs')),
       getDocs(query(collection(db, 'km_mannschaften'), where('saison', '==', saison)))
     ]);

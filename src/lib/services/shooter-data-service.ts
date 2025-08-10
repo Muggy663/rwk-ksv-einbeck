@@ -45,17 +45,23 @@ export async function fetchShooterDataForCompetition(
         const initialResults: { [key: string]: number | null } = {};
         for (let r = 1; r <= numRounds; r++) initialResults[`dg${r}`] = null;
         
-        // Lade erweiterte Schützendaten aus rwk_shooters
+        // Lade erweiterte Schützendaten aus shooters
         let shooterDetails = shooterDetailsCache.get(score.shooterId);
         if (!shooterDetails) {
           try {
-            const shooterDoc = await getDoc(doc(db, 'rwk_shooters', score.shooterId));
+            const shooterDoc = await getDoc(doc(db, 'shooters', score.shooterId));
             if (shooterDoc.exists()) {
               shooterDetails = shooterDoc.data();
               shooterDetailsCache.set(score.shooterId, shooterDetails);
+            } else {
+              // Schütze existiert nicht mehr - verwende Fallback-Daten
+              shooterDetails = null;
+              shooterDetailsCache.set(score.shooterId, null);
             }
           } catch (error) {
-            console.warn(`Could not load shooter details for ${score.shooterId}:`, error);
+            console.error(`Fehler beim Laden von Schütze ${score.shooterId}:`, error);
+            shooterDetails = null;
+            shooterDetailsCache.set(score.shooterId, null);
           }
         }
         

@@ -14,7 +14,7 @@ export async function GET() {
     };
     
     // 1. Schützen zählen
-    const shootersSnapshot = await getDocs(collection(db, 'rwk_shooters'));
+    const shootersSnapshot = await getDocs(collection(db, 'shooters'));
     results.shooters.total = shootersSnapshot.size;
     
     // 2. Vereine laden

@@ -28,6 +28,7 @@ export interface AuthContextType {
   loadingAppPermissions: boolean;
   appPermissionsError: string | null;
   resetInactivityTimer?: () => void;
+  timeLeft?: number;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

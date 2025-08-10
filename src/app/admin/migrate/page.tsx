@@ -16,8 +16,8 @@ export default function MigratePage() {
       const { collection, getDocs, writeBatch, doc } = await import('firebase/firestore');
       const { db } = await import('@/lib/firebase/config');
 
-      // 1. Alle rwk_shooters laden
-      const shootersSnap = await getDocs(collection(db, 'rwk_shooters'));
+      // 1. Alle shooters laden
+      const shootersSnap = await getDocs(collection(db, 'shooters'));
       setStatus(`📊 Gefunden: ${shootersSnap.docs.length} Schützen`);
 
       const batch = writeBatch(db);
@@ -46,7 +46,7 @@ export default function MigratePage() {
           createdAt: shooter.createdAt || new Date(),
           importedAt: shooter.importedAt || null,
           migratedAt: new Date(),
-          migratedFrom: 'rwk_shooters'
+          migratedFrom: 'shooters'
         });
         kmCount++;
         

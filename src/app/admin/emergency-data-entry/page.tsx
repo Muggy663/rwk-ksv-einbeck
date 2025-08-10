@@ -109,7 +109,7 @@ export default function EmergencyDataEntryPage() {
       const validShooters = quickShooters.filter(s => s.name.trim() && s.clubId);
       
       for (const shooter of validShooters) {
-        const shooterRef = doc(collection(db, 'rwk_shooters'));
+        const shooterRef = doc(collection(db, 'shooters'));
         batch.set(shooterRef, {
           name: shooter.name.trim(),
           clubId: shooter.clubId,
@@ -155,7 +155,7 @@ export default function EmergencyDataEntryPage() {
         const shooterIds: string[] = [];
         
         for (const shooterName of validShooterNames) {
-          const shooterRef = doc(collection(db, 'rwk_shooters'));
+          const shooterRef = doc(collection(db, 'shooters'));
           shooterIds.push(shooterRef.id);
           
           batch.set(shooterRef, {

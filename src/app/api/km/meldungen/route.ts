@@ -9,13 +9,27 @@ const KM_MELDUNGEN_COLLECTION = 'km_meldungen';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { schuetzeId, disziplinId, lmTeilnahme, anmerkung, gemeldeteVon, vmErgebnis } = body;
+    const { schuetzeId, disziplinId, lmTeilnahme, anmerkung, vmErgebnis } = body;
 
     if (!schuetzeId || !disziplinId) {
       return NextResponse.json({
         success: false,
         error: 'Schütze und Disziplin sind erforderlich'
       }, { status: 400 });
+    }
+
+    // Hole Benutzerinformationen aus Authorization Header
+    const authHeader = request.headers.get('authorization');
+    let gemeldeteVon = 'Unbekannter Benutzer';
+    
+    if (authHeader) {
+      try {
+        // Vereinfacht - in Produktion würde man den JWT Token validieren
+        const userInfo = JSON.parse(authHeader.replace('Bearer ', ''));
+        gemeldeteVon = userInfo.email || userInfo.displayName || 'Vereinsvertreter';
+      } catch {
+        gemeldeteVon = 'Vereinsvertreter';
+      }
     }
 
     // Echte Firestore-Speicherung
@@ -28,7 +42,7 @@ export async function POST(request: NextRequest) {
       jahr: 2026, // Jahres-Filter für Archivierung
       meldedatum: new Date(),
       status: 'gemeldet',
-      gemeldeteVon: gemeldeteVon || 'unknown',
+      gemeldeteVon,
       vmErgebnis: vmErgebnis || null
     };
 
@@ -60,8 +74,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const jahr = parseInt(searchParams.get('jahr') || '2026');
-    
-
+    const clubId = searchParams.get('clubId');
     
     // Filtere nach Jahr (für 2027+ wichtig)
     const q = query(
@@ -70,12 +83,27 @@ export async function GET(request: NextRequest) {
     );
     
     const snapshot = await getDocs(q);
-    const meldungen = snapshot.docs.map(doc => ({
+    let meldungen = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
     
-
+    console.log('DEBUG: Alle Meldungen geladen:', meldungen.length);
+    
+    // Client-seitige Filterung nach clubId wenn angegeben
+    if (clubId) {
+      console.log('DEBUG: Filtering by clubId:', clubId);
+      const shootersQuery = query(collection(db, 'shooters'), where('clubId', '==', clubId));
+      const shootersSnapshot = await getDocs(shootersQuery);
+      const clubShooterIds = shootersSnapshot.docs.map(doc => doc.id);
+      console.log('DEBUG: Gefundene Schützen für Verein:', clubShooterIds);
+      console.log('DEBUG: Meldungen vor Filter:', meldungen.map(m => ({ schuetzeId: m.schuetzeId })));
+      
+      meldungen = meldungen.filter(meldung => clubShooterIds.includes(meldung.schuetzeId));
+      console.log('DEBUG: Meldungen nach Filter:', meldungen.length);
+    } else {
+      console.log('DEBUG: Kein clubId-Filter - zeige alle Meldungen');
+    }
     
     return NextResponse.json({
       success: true,

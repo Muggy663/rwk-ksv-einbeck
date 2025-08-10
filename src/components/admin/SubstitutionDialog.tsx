@@ -55,7 +55,7 @@ export function SubstitutionDialog({
       // Lade aktuelle Mannschaftsschützen
       if (team.shooterIds && team.shooterIds.length > 0) {
         const shootersQuery = query(
-          collection(db, 'rwk_shooters'),
+          collection(db, 'shooters'),
           where('__name__', 'in', team.shooterIds)
         );
         const shootersSnapshot = await getDocs(shootersQuery);
@@ -68,7 +68,7 @@ export function SubstitutionDialog({
 
       // Lade verfügbare Schützen (alle Schützen des Vereins, die nicht in der Mannschaft sind)
       const allShootersQuery = query(
-        collection(db, 'rwk_shooters'),
+        collection(db, 'shooters'),
         where('clubId', '==', team.clubId)
       );
       const allShootersSnapshot = await getDocs(allShootersQuery);
@@ -211,13 +211,13 @@ export function SubstitutionDialog({
       const shooterBatch = writeBatch(db);
       
       // Entferne Team-ID vom ursprünglichen Schützen
-      const originalShooterRef = doc(db, 'rwk_shooters', selectedOriginalShooter);
+      const originalShooterRef = doc(db, 'shooters', selectedOriginalShooter);
       shooterBatch.update(originalShooterRef, {
         teamIds: arrayRemove(team.id)
       });
       
       // Füge Team-ID zum Ersatzschützen hinzu
-      const replacementShooterRef = doc(db, 'rwk_shooters', selectedReplacementShooter);
+      const replacementShooterRef = doc(db, 'shooters', selectedReplacementShooter);
       shooterBatch.update(replacementShooterRef, {
         teamIds: arrayUnion(team.id)
       });

@@ -1,50 +1,41 @@
 // src/hooks/useKMAuth.ts
 import { useState, useEffect } from 'react';
-import { useAuthContext } from '@/components/auth/AuthContext';
-import { kmAuthService } from '@/lib/services/km-auth-service';
+import { useAuth } from '@/hooks/use-auth';
 
 export function useKMAuth() {
-  const { user, loading: authLoading } = useAuthContext();
-  const [kmPermission, setKmPermission] = useState(false);
-  const [userClubIds, setUserClubIds] = useState<string[]>([]);
-  const [userRole, setUserRole] = useState<string>('');
+  const { user, loading: authLoading, userAppPermissions } = useAuth();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadKMPermissions = async () => {
-      if (!user?.uid || authLoading) {
-        setLoading(authLoading);
-        return;
-      }
+    if (!authLoading) {
+      setLoading(false);
+    }
+  }, [authLoading]);
 
-      try {
-        const permission = await kmAuthService.checkKMPermission(user.uid);
+  // Vereinsvertreter und km_organisator haben KM-Zugriff
+  const hasKMAccess = !authLoading && (
+    user?.email === 'admin@rwk-einbeck.de' ||
+    userAppPermissions?.role === 'vereinsvertreter' ||
+    userAppPermissions?.role === 'km_organisator'
+  );
 
-        setKmPermission(permission.hasAccess);
-        setUserClubIds(permission.clubIds || []);
-        setUserRole(permission.role || '');
-      } catch (error) {
-        console.error('Error loading KM permissions:', error);
-        setKmPermission(false);
-        setUserClubIds([]);
-        setUserRole('');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadKMPermissions();
-  }, [user?.uid, authLoading]);
+  const userRole = user?.email === 'admin@rwk-einbeck.de' ? 'admin' : userAppPermissions?.role || '';
+  const userClubIds = userAppPermissions?.clubId ? [userAppPermissions.clubId] : [];
 
   return {
-    hasKMAccess: kmPermission,
-    isActive: kmPermission,
+    hasKMAccess,
+    isActive: hasKMAccess,
     loading,
     userClubIds,
     userRole,
     // Admin-spezifische Checks
     isKMAdmin: userRole === 'admin',
     isKMOrganisator: userRole === 'km_organisator',
-    hasFullAccess: userRole === 'admin' || userRole === 'km_organisator'
+    hasFullAccess: userRole === 'admin' || userRole === 'km_organisator',
+    // Für KM-Übersicht Kompatibilität
+    userPermission: {
+      role: userRole,
+      clubIds: userClubIds
+    }
   };
 }

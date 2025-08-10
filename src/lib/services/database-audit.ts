@@ -27,7 +27,7 @@ export async function auditDatabase(clubId?: string): Promise<DatabaseAuditResul
     'rwk_scores',
     'rwk_team_shooters', 
     'rwk_teams',
-    'rwk_shooters',
+    'shooters',
     'rwk_clubs',
     'rwk_seasons',
     'rwk_leagues'
@@ -40,7 +40,7 @@ export async function auditDatabase(clubId?: string): Promise<DatabaseAuditResul
       let q = query(collection(db, collectionName));
       
       // Für vereinsspezifische Collections Filter hinzufügen
-      if (clubId && ['rwk_teams', 'rwk_shooters'].includes(collectionName)) {
+      if (clubId && ['rwk_teams', 'shooters'].includes(collectionName)) {
         q = query(collection(db, collectionName), where('clubId', '==', clubId));
       }
       
@@ -125,7 +125,7 @@ export function analyzeCriticalDataLoss(auditResult: DatabaseAuditResult): {
     severity = 'critical';
   }
   
-  if (auditResult.collections['rwk_shooters']?.isEmpty) {
+  if (auditResult.collections['shooters']?.isEmpty) {
     issues.push('KRITISCH: Alle Schützen wurden gelöscht');
     recommendations.push('Schützen müssen aus Backup wiederhergestellt werden');
     severity = 'critical';

@@ -1,31 +1,36 @@
-// src/app/api/km/meldungen/[id]/route.ts
+// src/app/api/km/mannschaften/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/config';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 
-export async function DELETE(
+export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const { id } = params;
+    const body = await request.json();
+    const { schuetzenIds } = body;
 
     if (!id) {
       return NextResponse.json({
         success: false,
-        error: 'Meldungs-ID fehlt'
+        error: 'Mannschafts-ID fehlt'
       }, { status: 400 });
     }
 
-    await deleteDoc(doc(db, 'km_meldungen', id));
+    await updateDoc(doc(db, 'km_mannschaften', id), {
+      schuetzenIds: schuetzenIds || [],
+      updatedAt: new Date()
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'Meldung erfolgreich gelöscht'
+      message: 'Mannschaft erfolgreich aktualisiert'
     });
 
   } catch (error) {
-    console.error('Fehler beim Löschen der Meldung:', error);
+    console.error('Fehler beim Aktualisieren der Mannschaft:', error);
     return NextResponse.json({
       success: false,
       error: `Fehler: ${error.message}`

@@ -51,7 +51,7 @@ export async function safeDiagnoseDatabaseInconsistencies(clubId: string): Promi
     const activeTeamIds = new Set(activeTeamsSnapshot.docs.map(doc => doc.id));
 
     // Alle Schützen des Vereins laden
-    const shootersQuery = query(collection(db, 'rwk_shooters'), where('clubId', '==', clubId));
+    const shootersQuery = query(collection(db, 'shooters'), where('clubId', '==', clubId));
     const shootersSnapshot = await getDocs(shootersQuery);
     const existingShooterIds = new Set(shootersSnapshot.docs.map(doc => doc.id));
 

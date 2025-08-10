@@ -33,7 +33,7 @@ export async function generateMannschaftenForVerein(
   
   // Lade Schützen-Daten
   const schuetzenQuery = query(
-    collection(db, 'rwk_shooters'),
+    collection(db, 'shooters'),
     where('clubId', '==', vereinId)
   );
   
