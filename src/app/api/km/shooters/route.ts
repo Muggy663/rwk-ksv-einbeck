@@ -4,8 +4,7 @@ import { db } from '@/lib/firebase/config';
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const clubId = searchParams.get('clubId');
+    const clubId = request.nextUrl.searchParams.get('clubId');
     
     let shootersQuery;
     if (clubId) {
