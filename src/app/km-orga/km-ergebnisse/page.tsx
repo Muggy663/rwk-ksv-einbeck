@@ -44,16 +44,17 @@ export default function KMErgebnissePage() {
     const loadData = async () => {
       try {
         // Lade Daten über API
-        const [meldungenRes, ergebnisseRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
+        const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
           fetch('/api/km/meldungen?jahr=2026'),
-          fetch('/api/km/ergebnisse'),
           fetch('/api/km/shooters'),
           fetch('/api/km/disziplinen'),
           fetch('/api/clubs')
         ]);
         
+        // Lade VM-Ergebnisse direkt aus Firebase da kein API-Endpunkt existiert
+        const kmErgebnisseSnapshot = await getDocs(collection(db, 'km_vm_ergebnisse'));
+        
         const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
-        const ergebnisseData = ergebnisseRes.ok ? (await ergebnisseRes.json()).data || [] : [];
         const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
         const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
         const clubsData = clubsRes.ok ? (await clubsRes.json()).data || [] : [];
@@ -63,12 +64,13 @@ export default function KMErgebnissePage() {
 
         // KM-Ergebnisse Map erstellen
         const kmErgebnisseMap = new Map();
-        ergebnisseData.forEach(ergebnis => {
-          kmErgebnisseMap.set(ergebnis.meldung_id, {
-            ringe: ergebnis.ergebnis_ringe,
-            teiler: ergebnis.ergebnis_teiler,
-            platz_disziplin: ergebnis.platz_disziplin,
-            platz_altersklasse: ergebnis.platz_altersklasse
+        kmErgebnisseSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          kmErgebnisseMap.set(data.meldung_id, {
+            ringe: data.ergebnis_ringe,
+            teiler: data.ergebnis_teiler,
+            platz_disziplin: data.platz_disziplin,
+            platz_altersklasse: data.platz_altersklasse
           });
         });
 

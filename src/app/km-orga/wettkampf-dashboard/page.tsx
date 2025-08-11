@@ -32,19 +32,21 @@ export default function WettkampfDashboardPage() {
     
     const loadWettkampfStatus = async () => {
       try {
-        // Lade Daten über API statt direkten Firebase-Zugriff
-        const [meldungenRes, ergebnisseRes] = await Promise.all([
-          fetch('/api/km/meldungen?jahr=2026'),
-          fetch('/api/km/ergebnisse')
+        // Lade Daten über API und Firebase
+        const [meldungenRes] = await Promise.all([
+          fetch('/api/km/meldungen?jahr=2026')
         ]);
         
         const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
-        const ergebnisseData = ergebnisseRes.ok ? (await ergebnisseRes.json()).data || [] : [];
+        
+        // Lade VM-Ergebnisse direkt aus Firebase
+        const kmErgebnisseSnapshot = await getDocs(collection(db, 'km_vm_ergebnisse'));
         
         // Ergebnisse-Map erstellen
         const ergebnisseMap = new Map();
-        ergebnisseData.forEach(ergebnis => {
-          ergebnisseMap.set(ergebnis.meldung_id, true);
+        kmErgebnisseSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          ergebnisseMap.set(data.meldung_id, true);
         });
         
         // Lade Disziplinen und Schützen über API

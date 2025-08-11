@@ -35,25 +35,90 @@ export default function ErgebnislistenPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // KM-Ergebnisse laden
-        const kmErgebnisseSnapshot = await getDocs(collection(db, 'km_ergebnisse'));
-        const meldungenSnapshot = await getDocs(collection(db, 'km_meldungen'));
+        // KM-Ergebnisse laden (aus km_vm_ergebnisse)
+        const kmErgebnisseSnapshot = await getDocs(collection(db, 'km_vm_ergebnisse'));
+        const meldungenRes = await fetch('/api/km/meldungen?jahr=2026');
+        const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
+        
+        // Lade zusätzliche Daten über API
+        const [schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
+          fetch('/api/km/shooters'),
+          fetch('/api/km/disziplinen'),
+          fetch('/api/clubs')
+        ]);
+        
+        const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
+        const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
+        const clubsData = clubsRes.ok ? (await clubsRes.json()).data || [] : [];
+        
+        // Maps für Namen-Auflösung
+        const schuetzenMap = new Map();
+        const disziplinenMap = new Map();
+        const clubsMap = new Map();
+        
+        schuetzenData.forEach(schuetze => {
+          const fullName = schuetze.firstName && schuetze.lastName 
+            ? `${schuetze.firstName} ${schuetze.lastName}`
+            : schuetze.name || 'Unbekannt';
+          schuetzenMap.set(schuetze.id, {
+            name: fullName,
+            clubId: schuetze.kmClubId || schuetze.rwkClubId || schuetze.clubId
+          });
+        });
+        
+        disziplinenData.forEach(disziplin => {
+          disziplinenMap.set(disziplin.id, disziplin.name);
+        });
+        
+        clubsData.forEach(club => {
+          clubsMap.set(club.id, club.name);
+        });
         
         // Meldungen-Map für zusätzliche Infos
         const meldungenMap = new Map();
-        meldungenSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          if (data.schuetzen && Array.isArray(data.schuetzen)) {
-            data.schuetzen.forEach((schuetze: any) => {
-              const meldungId = `${doc.id}-${schuetze.id}`;
-              meldungenMap.set(meldungId, {
-                schuetzenName: schuetze.name,
-                vereinsname: data.vereinsname,
-                disziplin: data.disziplin,
-                altersklasse: data.wettkampfklasse || 'Unbekannt'
-              });
-            });
+        meldungenData.forEach(meldung => {
+          const schuetze = schuetzenMap.get(meldung.schuetzeId);
+          const disziplinName = disziplinenMap.get(meldung.disziplinId) || 'Unbekannt';
+          const vereinName = schuetze && schuetze.clubId ? clubsMap.get(schuetze.clubId) || 'Unbekannt' : 'Unbekannt';
+          
+          // Berechne Altersklasse wie in der Meldungen-Seite
+          let altersklasse = 'Erwachsene';
+          if (schuetze) {
+            const schuetzeDetail = schuetzenData.find(s => s.id === meldung.schuetzeId);
+            if (schuetzeDetail?.birthYear) {
+              const age = 2026 - schuetzeDetail.birthYear;
+              const isAuflage = disziplinName?.toLowerCase().includes('auflage');
+              const isMale = schuetzeDetail.gender === 'male';
+              
+              if (age <= 14) altersklasse = 'Schüler';
+              else if (age <= 16) altersklasse = 'Jugend';
+              else if (age <= 18) altersklasse = `Junioren II ${isMale ? 'm' : 'w'}`;
+              else if (age <= 20) altersklasse = `Junioren I ${isMale ? 'm' : 'w'}`;
+              else if (isAuflage) {
+                if (age <= 40) altersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
+                else if (age <= 50) altersklasse = 'Senioren 0';
+                else if (age <= 60) altersklasse = 'Senioren I';
+                else if (age <= 65) altersklasse = 'Senioren II';
+                else if (age <= 70) altersklasse = 'Senioren III';
+                else if (age <= 75) altersklasse = 'Senioren IV';
+                else if (age <= 80) altersklasse = 'Senioren V';
+                else altersklasse = 'Senioren VI';
+              } else {
+                if (age <= 40) altersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
+                else if (age <= 50) altersklasse = `${isMale ? 'Herren' : 'Damen'} II`;
+                else if (age <= 60) altersklasse = `${isMale ? 'Herren' : 'Damen'} III`;
+                else if (age <= 70) altersklasse = `${isMale ? 'Herren' : 'Damen'} IV`;
+                else altersklasse = `${isMale ? 'Herren' : 'Damen'} V`;
+              }
+            }
           }
+          
+          meldungenMap.set(meldung.id, {
+            schuetzenName: schuetze ? schuetze.name : 'Unbekannt',
+            vereinsname: vereinName,
+            disziplin: disziplinName,
+            altersklasse: altersklasse
+          });
         });
 
         const ergebnisseData: ErgebnisEintrag[] = [];
