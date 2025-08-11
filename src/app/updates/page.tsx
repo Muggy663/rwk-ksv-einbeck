@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.11.3 (11.08.2025)</span>
+              <span>Web-Version: 0.11.4 (31.08.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -36,8 +36,52 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.3 - Orga-Bereich gefixt und optimiert</CardTitle>
+              <CardTitle className="text-xl">Version 0.11.4 - Meyton Shootmaster Integration</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
+            </div>
+            <CardDescription>31.08.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständige Integration mit Meyton Shootmaster: Startlisten-Export im David21-Format mit korrekten Altersklassen und individuellen Wettkampf-IDs.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🎯 Meyton Integration v0.11.4</h4>
+              <div className="text-xs text-green-700">
+                Professioneller Export für elektronische Schießanlagen
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🎯 <strong>Meyton Export (Beta):</strong> Startlisten-Export im David21-Format für Meyton Shootmaster</li>
+              <li>🏆 <strong>Korrekte Altersklassen:</strong> Klassen-IDs aus Firebase-Datenbank (Herren I = ID 10)</li>
+              <li>⏰ <strong>Individuelle Wettkampf-IDs:</strong> Jeder Starter bekommt eigene ID basierend auf Startzeit</li>
+              <li>🎨 <strong>UTF-8 Encoding:</strong> Korrekte Darstellung von Umlauten (ü, ä, ö)</li>
+              <li>📊 <strong>Echte Daten:</strong> Geburtsjahre, Altersklassen und Disziplinen aus Firebase</li>
+              <li>🔢 <strong>Disziplin-Codes:</strong> Korrekte Meyton-Codes (10110040 für LG 40 Schuss)</li>
+              <li>🏟️ <strong>Stand-Zuordnung:</strong> Schießstände werden korrekt exportiert</li>
+              <li>⚙️ <strong>Durchgangs-Berechnung:</strong> Automatische DG-Nummer basierend auf Startzeit</li>
+              <li>💾 <strong>Datenbank-Speicherung:</strong> Meyton-Daten werden persistent gespeichert</li>
+              <li>🕐 <strong>Wechselzeit-Anzeige:</strong> Zeitplan zeigt Durchgangsdauer + Wechselzeit</li>
+              <li>🔄 <strong>Chunk-Loading Fix:</strong> Startlisten-URLs funktionieren ohne JavaScript-Fehler</li>
+              <li>📋 <strong>Meyton-Klassen Collection:</strong> Zentrale Verwaltung der Altersklassen-IDs</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🎯 Meyton Integration</span>
+                  <p className="text-xs text-green-600 mt-1">Shootmaster Export & Altersklassen</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.11.4
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.11.3 - Orga-Bereich gefixt und optimiert</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>11.08.2025</CardDescription>
           </CardHeader>

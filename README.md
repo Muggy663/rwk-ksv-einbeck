@@ -4,7 +4,7 @@
 
 Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
-[![Version](https://img.shields.io/badge/Version-0.11.3-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-0.11.4-blue?style=for-the-badge)](#)
 [![Android App](https://img.shields.io/badge/Android_App-0.9.1.0-success?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -56,7 +56,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 | Platform | Version | Status | Download |
 |----------|---------|--------|---------|
-| **Web App** | 0.11.3 | 🔄 Beta | Vercel Deployment |
+| **Web App** | 0.11.4 | 🔄 Beta | Vercel Deployment |
 | **Android App** | 0.9.1.0 | ✅ Produktiv | Google Play Store |
 | **iOS App** | - | ❌ Nicht geplant | Unrentabel |
 
@@ -169,6 +169,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
+- **Web-Version 0.11.4** - Meyton Shootmaster Integration: Vollständiger Export im David21-Format, korrekte Altersklassen-IDs, individuelle Wettkampf-IDs, UTF-8 Encoding
 - **Web-Version 0.11.3** - Orga-Bereich gefixt und optimiert: Startlisten-Tool, sortierbare Tabellen, VM-Ergebnisse, Zurück-Buttons, Altersklassen-Fix
 - **Web-Version 0.11.2** - Saisonwechsel & PDF-Export: Vollständige Auf-/Abstiegsanalyse, PDF-Export mit Logo, Pistole/2.Kreisklasse-Logik, Vergleichsberechnungen
 - **Web-Version 0.11.1** - Admin-Verbesserungen & PDF-Fixes: Ergebniserfassung-Filter, PDF-Exports, Mannschaftsführer-Korrekturen, Session-Timer

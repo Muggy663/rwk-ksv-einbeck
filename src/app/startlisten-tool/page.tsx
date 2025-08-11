@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Download, Users, Clock, Target, Save, FileText, Plus, Brain } from 'lucide-react';
+import { ArrowLeft, Download, Users, Clock, Target, Save, FileText, Plus, Brain, Upload } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { doc, getDoc, collection, getDocs, addDoc, updateDoc } from 'firebase/firestore';
 import { analyzeStartlist, optimizeStartlist, type KIAnalyse } from '@/lib/services/startlisten-ki-service';
+import { David21Service } from '@/lib/services/david21-service';
+import { MeytonMappingService } from '@/lib/services/meyton-mapping-service';
 
 interface Starter {
   id: string;
@@ -294,9 +296,27 @@ export default function StartlistenToolPage() {
   };
 
   const handleStarterChange = (starterId: string, field: 'stand' | 'startzeit', value: string) => {
-    const neueStartliste = startliste.map(s => 
-      s.id === starterId ? { ...s, [field]: value } : s
-    );
+    const neueStartliste = startliste.map(s => {
+      if (s.id === starterId) {
+        const updated = { ...s, [field]: value };
+        
+        // Durchgang basierend auf Startzeit berechnen
+        if (field === 'startzeit' && config) {
+          const [configHours, configMinutes] = config.startUhrzeit.split(':').map(Number);
+          const [starterHours, starterMinutes] = value.split(':').map(Number);
+          const configTotalMinutes = configHours * 60 + configMinutes;
+          const starterTotalMinutes = starterHours * 60 + starterMinutes;
+          const diffMinutes = starterTotalMinutes - configTotalMinutes;
+          
+          // Durchgang basierend auf 60-Minuten-Intervallen (vereinfacht)
+          const durchgang = Math.floor(diffMinutes / 60) + 1;
+          updated.durchgang = Math.max(1, durchgang);
+        }
+        
+        return updated;
+      }
+      return s;
+    });
     setStartliste(neueStartliste);
     
     // KI-Analyse nach Änderung aktualisieren
@@ -347,6 +367,198 @@ export default function StartlistenToolPage() {
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
       toast({ title: 'Fehler', description: 'Startliste konnte nicht gespeichert werden.', variant: 'destructive' });
+    }
+  };
+
+  const exportToDavid21 = async () => {
+    try {
+      if (!config || startliste.length === 0) {
+        toast({ title: 'Fehler', description: 'Keine Startliste zum Exportieren vorhanden.', variant: 'destructive' });
+        return;
+      }
+
+      // Lade alle benötigten Daten aus Firebase
+      const [schuetzenSnapshot, meldungenSnapshot, disziplinenSnapshot, meytonKlassenSnapshot] = await Promise.all([
+        getDocs(collection(db, 'shooters')),
+        getDocs(collection(db, 'km_meldungen')),
+        getDocs(collection(db, 'km_disziplinen')),
+        getDocs(collection(db, 'meyton_klassen'))
+      ]);
+      
+      // Schützen-Map
+      const schuetzenMap = {};
+      schuetzenSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        schuetzenMap[data.name] = {
+          id: doc.id,
+          birthYear: data.birthYear,
+          gender: data.gender
+        };
+      });
+      
+      // Meldungen-Map für echte Altersklassen
+      const meldungenMap = {};
+      meldungenSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.schuetzeId) {
+          meldungenMap[data.schuetzeId] = {
+            altersklasse: data.altersklasse,
+            disziplinId: data.disziplinId
+          };
+        }
+      });
+      
+      // Disziplinen-Map
+      const disziplinenMap = {};
+      disziplinenSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        disziplinenMap[doc.id] = {
+          name: data.name,
+          spoNummer: data.spoNummer
+        };
+      });
+      
+      // Meyton-Klassen-Map
+      const meytonKlassenMap = {};
+      meytonKlassenSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        meytonKlassenMap[data.klassenName] = {
+          id: data.klassenId,
+          minAlter: data.minAlter,
+          maxAlter: data.maxAlter,
+          geschlecht: data.geschlecht
+        };
+      });
+
+      // Konvertiere Startliste zu David21 Format mit echten Daten
+      const david21Entries = startliste.map((starter, index) => {
+        const schuetze = schuetzenMap[starter.name];
+        const meldung = schuetze ? meldungenMap[schuetze.id] : null;
+        const disziplin = meldung ? disziplinenMap[meldung.disziplinId] : null;
+        
+        const geschlecht = schuetze?.gender === 'female' ? 'W' : 'M';
+        const geburtsjahr = schuetze?.birthYear || 1990;
+        const echteAltersklasse = meldung?.altersklasse || starter.altersklasse;
+        const echteDisziplin = disziplin?.name || starter.disziplin;
+        const spoNummer = disziplin?.spoNummer || '1.10';
+        
+
+        
+        return {
+          startNummer: index + 1,
+          nachname: starter.name.split(' ').slice(-1)[0] || starter.name,
+          vorname: starter.name.split(' ').slice(0, -1).join(' ') || starter.name,
+          vereinsNummer: vereine.findIndex(v => v.name === starter.verein) + 1 || 99,
+          vereinsName: starter.verein,
+          geburtsjahr,
+          geschlecht,
+          wettkampfklasse: echteAltersklasse,
+          disziplin: echteDisziplin,
+          startzeit: starter.startzeit || config.startUhrzeit,
+          stand: starter.stand, // Stand aus Startliste
+          // Meyton-spezifische Felder
+          klassenId: MeytonMappingService.getKlassenId(echteAltersklasse, geschlecht, geburtsjahr),
+          disziplinCode: MeytonMappingService.getDisziplinCodeBySpoNummer(spoNummer)
+        };
+      });
+
+      // Disziplin-Code für CTL-Datei (aber Klassen-ID für Wettkampf-ID)
+      const ersteDisziplin = david21Entries[0];
+      const disziplinCode = ersteDisziplin?.disziplinCode?.includes('10110') ? 'K72' : 
+                           ersteDisziplin?.disziplinCode?.includes('10210') ? 'K20' : 'K72';
+      
+      // Generiere TXT Datei mit korrekter Wettkampf-ID basierend auf Startzeit
+      const datum = new Date(config.startDatum);
+      const year = datum.getFullYear().toString().slice(-2);
+      const month = (datum.getMonth() + 1).toString().padStart(2, '0');
+      const day = datum.getDate().toString().padStart(2, '0');
+      const startzeit = david21Entries[0]?.startzeit || config.startUhrzeit;
+      // Generiere individuelle Wettkampf-IDs für jeden Starter
+      const entriesWithIds = david21Entries.map(entry => {
+        // Korrekte Klassen-ID aus Firebase-Datenbank
+        const meytonKlasse = meytonKlassenMap[entry.wettkampfklasse];
+        const klassenId = meytonKlasse?.id || 10; // Fallback auf Herren I
+        
+        // Debug-Ausgabe
+        console.log(`Starter: ${entry.nachname}, Altersklasse: ${entry.wettkampfklasse}, Klassen-ID: ${klassenId}`);
+        
+        const individualWettkampfId = `W111_K${klassenId}_${year}${month}${day}_${entry.startzeit?.replace(':', '') || config.startUhrzeit.replace(':', '')}`;
+        
+        return {
+          ...entry,
+          individualWettkampfId,
+          klassenId
+        };
+      });
+      
+      // Speichere Meyton-Daten in der Startliste
+      const updatedStartliste = startliste.map((starter, index) => {
+        const entry = entriesWithIds[index];
+        return {
+          ...starter,
+          meytonData: {
+            startNummer: entry.startNummer,
+            klassenId: entry.klassenId,
+            disziplinCode: entry.disziplinCode,
+            wettkampfId: entry.individualWettkampfId,
+            geburtsjahr: entry.geburtsjahr
+          }
+        };
+      });
+      
+      // Aktualisiere Startliste in Firebase
+      const urlParams = new URLSearchParams(window.location.search);
+      const startlisteId = urlParams.get('startlisteId');
+      if (startlisteId) {
+        await updateDoc(doc(db, 'km_startlisten', startlisteId), {
+          startliste: updatedStartliste,
+          meytonExport: {
+            datum: new Date(),
+            teilnehmer: entriesWithIds.length,
+            disziplinCode,
+            baseWettkampfId: `W111_${disziplinCode}_${year}${month}${day}`
+          }
+        });
+      }
+      
+      const txtContent = David21Service.generateStartlist(entriesWithIds);
+      
+      // Generiere CTL Datei
+      const ctlContent = David21Service.generateControlFile(
+        'VW111',
+        disziplinCode,
+        new Date(config.startDatum),
+        config.startUhrzeit,
+        david21Entries.length
+      );
+
+      // Dateinamen generieren
+      const baseFilename = David21Service.generateFilename(
+        'VW111',
+        disziplinCode,
+        new Date(config.startDatum),
+        config.startUhrzeit,
+        'TXT'
+      );
+
+      // Download TXT Datei (Meyton Format)
+      David21Service.downloadFile(txtContent, baseFilename, 'text/plain');
+      
+      // Download CTL Datei
+      David21Service.downloadFile(
+        ctlContent, 
+        baseFilename.replace('.TXT', '.CTL'), 
+        'text/plain'
+      );
+      
+      toast({ 
+        title: '📤 Meyton Export', 
+        description: `${david21Entries.length} Starter für Meyton Shootmaster exportiert (${baseFilename}).`,
+        duration: 4000
+      });
+    } catch (error) {
+      console.error('Meyton-Export Fehler:', error);
+      toast({ title: 'Fehler', description: 'Meyton-Export fehlgeschlagen.', variant: 'destructive' });
     }
   };
 
@@ -504,7 +716,8 @@ export default function StartlistenToolPage() {
                   <p className="text-sm font-medium mb-1">Zeitplan</p>
                   <p className="text-xs text-muted-foreground">
                     Start: {config.startUhrzeit} Uhr<br/>
-                    Durchgang: {config.durchgangsDauer} Min
+                    Durchgang: {config.durchgangsDauer} Min<br/>
+                    Wechselzeit: {config.wechselzeit || 0} Min
                   </p>
                 </div>
               </div>
@@ -541,6 +754,10 @@ export default function StartlistenToolPage() {
                   <Button variant="outline" onClick={exportToPDF} disabled={startliste.length === 0}>
                     <Download className="h-4 w-4 mr-2" />
                     PDF Export
+                  </Button>
+                  <Button variant="outline" onClick={exportToDavid21} disabled={startliste.length === 0}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Meyton Export (Beta)
                   </Button>
                 </div>
               </div>
@@ -593,9 +810,16 @@ export default function StartlistenToolPage() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Generierte Startliste ({startliste.length})</CardTitle>
-                  <Button onClick={exportToPDF} variant="outline">
-                    PDF Export
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={exportToPDF} variant="outline">
+                      <Download className="h-4 w-4 mr-2" />
+                      PDF Export
+                    </Button>
+                    <Button onClick={exportToDavid21} variant="outline">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Meyton Export (Beta)
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>

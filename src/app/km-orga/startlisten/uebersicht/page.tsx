@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { Edit, Play, Trash2, Plus, Calendar, MapPin, Target, Eye, ArrowLeft } from 'lucide-react';
+import { Edit, Play, Trash2, Plus, Calendar, MapPin, Target, Eye, ArrowLeft, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { David21ImportDialog } from '@/components/David21ImportDialog';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, deleteDoc, doc, orderBy, query } from 'firebase/firestore';
 import { useKMAuth } from '@/hooks/useKMAuth';
@@ -346,6 +347,16 @@ export default function StartlistenUebersichtPage() {
                         >
                           PDF Export
                         </Button>
+                        <David21ImportDialog 
+                          wettkampfId={`VW111_${liste.id.substring(0, 8)}`}
+                          onImport={(results) => {
+                            console.log('Importierte Ergebnisse:', results);
+                            toast({ 
+                              title: '✅ Import erfolgreich', 
+                              description: `${results.length} Ergebnisse für Startliste ${liste.id.substring(0, 8)} importiert` 
+                            });
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
