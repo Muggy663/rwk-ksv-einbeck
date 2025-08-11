@@ -55,7 +55,7 @@ export default function UpdatesPage() {
               <li>🏆 <strong>VM-Ergebnisse:</strong> Vereinsmeisterschafts-Ringe werden korrekt in Mannschaften angezeigt</li>
               <li>🔙 <strong>Navigation:</strong> Zurück-Buttons in allen KM-Orga Unterseiten hinzugefügt</li>
               <li>🎨 <strong>Altersklassen-Fix:</strong> "Erwachsene Erwachsene" durch korrekte Berechnung ersetzt</li>
-              <li>⚙️ <strong>Gewehr-Sharing:</strong> Verbesserte Erkennung für "Teilt sich ein Gewehr mit Marcel Leiding"</li>
+              <li>⚙️ <strong>Gewehr-Sharing:</strong> Verbesserte Erkennung für geteilte Gewehre</li>
               <li>📋 <strong>Startgebühren:</strong> Jahr 2026 als Standard, API-Endpunkte statt direkter Firebase-Zugriff</li>
               <li>🔄 <strong>Chunk-Loading Fix:</strong> Alte Startlisten-URLs leiten korrekt weiter ohne Fehler</li>
               <li>📱 <strong>Editierbare Startliste:</strong> Stand, Durchgang und Startzeit direkt bearbeitbar</li>
