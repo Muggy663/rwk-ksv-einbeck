@@ -99,6 +99,8 @@ export default function AdminShootersPage() {
   
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [shooterToDelete, setShooterToDelete] = useState<Shooter | null>(null);
+  const [selectedShootersForDelete, setSelectedShootersForDelete] = useState<string[]>([]);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentShooter, setCurrentShooter] = useState<Partial<Shooter> & { id?: string } | null>(null);
@@ -647,6 +649,16 @@ export default function AdminShootersPage() {
           <Button onClick={handleAddNewShooter} disabled={allClubsGlobal.length === 0}>
             <PlusCircle className="mr-2 h-5 w-5" /> Neuen Schützen anlegen
           </Button>
+          {selectedShootersForDelete.length > 0 && (
+            <Button 
+              variant="destructive" 
+              onClick={() => setIsBulkDeleteOpen(true)}
+              disabled={isFormSubmitting || isDeleting}
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> 
+              {selectedShootersForDelete.length} Schützen löschen
+            </Button>
+          )}
         </div>
       </div>
        <Card className="shadow-md">
@@ -692,7 +704,23 @@ export default function AdminShootersPage() {
                   </TableHead>
                   <TableHead>AK Auflage 2026</TableHead>
                   <TableHead>AK Freihand 2026</TableHead>
-                  <TableHead>Mannschaften</TableHead><TableHead className="text-right">Aktionen</TableHead>
+                  <TableHead>Mannschaften</TableHead>
+                  <TableHead className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Checkbox 
+                        checked={selectedShootersForDelete.length === sortedShooters.length && sortedShooters.length > 0}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedShootersForDelete(sortedShooters.map(s => s.id));
+                          } else {
+                            setSelectedShootersForDelete([]);
+                          }
+                        }}
+                        disabled={isFormSubmitting || isDeleting || sortedShooters.length === 0}
+                      />
+                      Aktionen
+                    </div>
+                  </TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {sortedShooters.map((shooter) => (
@@ -705,6 +733,17 @@ export default function AdminShootersPage() {
                     <TableCell className="text-xs">{shooter.birthYear && shooter.gender ? calculateAgeClass(shooter.birthYear, shooter.gender as 'male' | 'female', 2026, 'freihand') : '-'}</TableCell>
                     <TableCell className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
                     <TableCell className="text-right space-x-1">
+                      <Checkbox 
+                        checked={selectedShootersForDelete.includes(shooter.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedShootersForDelete(prev => [...prev, shooter.id]);
+                          } else {
+                            setSelectedShootersForDelete(prev => prev.filter(id => id !== shooter.id));
+                          }
+                        }}
+                        disabled={isFormSubmitting || isDeleting}
+                      />
                       <Button variant="ghost" size="icon" onClick={() => handleEditShooter(shooter)} disabled={isFormSubmitting || isDeleting} aria-label="Schütze bearbeiten"><Edit className="h-4 w-4" /></Button>
                        <AlertDialog open={isAlertOpen && shooterToDelete?.id === shooter.id} onOpenChange={(open) => {if(!open)setShooterToDelete(null); setIsAlertOpen(open);}}>
                           <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" onClick={() => handleDeleteConfirmation(shooter)} disabled={isFormSubmitting || isDeleting} aria-label="Schütze löschen"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
@@ -883,6 +922,68 @@ export default function AdminShootersPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Delete Dialog */}
+      <AlertDialog open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mehrere Schützen löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie wirklich {selectedShootersForDelete.length} Schützen löschen? 
+              Dies entfernt sie auch aus allen zugeordneten Mannschaften.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsBulkDeleteOpen(false)}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={async () => {
+                setIsDeleting(true);
+                try {
+                  const batch = writeBatch(db);
+                  
+                  for (const shooterId of selectedShootersForDelete) {
+                    const shooter = shootersOfActiveClub.find(s => s.id === shooterId);
+                    if (!shooter) continue;
+                    
+                    const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
+                    batch.delete(shooterDocRef);
+                    
+                    (shooter.teamIds || []).forEach(teamId => {
+                      if (teamId && typeof teamId === 'string' && teamId.trim() !== '') {
+                        const teamDocRef = doc(db, TEAMS_COLLECTION, teamId);
+                        batch.update(teamDocRef, { shooterIds: arrayRemove(shooterId) });
+                      }
+                    });
+                  }
+                  
+                  await batch.commit();
+                  toast({ 
+                    title: "Schützen gelöscht", 
+                    description: `${selectedShootersForDelete.length} Schützen wurden erfolgreich entfernt.` 
+                  });
+                  setSelectedShootersForDelete([]);
+                  fetchPageDataForActiveClub();
+                } catch (error: any) {
+                  console.error('Bulk delete error:', error);
+                  toast({ 
+                    title: "Fehler beim Löschen", 
+                    description: error.message || "Die Schützen konnten nicht gelöscht werden.", 
+                    variant: "destructive" 
+                  });
+                } finally {
+                  setIsDeleting(false);
+                  setIsBulkDeleteOpen(false);
+                }
+              }}
+              disabled={isDeleting} 
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 
+              {selectedShootersForDelete.length} Schützen löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

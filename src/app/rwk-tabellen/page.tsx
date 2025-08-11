@@ -490,7 +490,7 @@ function RwkTabellenPageComponent() {
 
       
       // Füge manuelle Jahre hinzu (für abgeschlossene Saisons)
-      const manualYears = [2025];
+      const manualYears = [2025, 2026];
       manualYears.forEach(year => years.add(year));
       
       const sortedYears = Array.from(years).sort((a, b) => b - a);

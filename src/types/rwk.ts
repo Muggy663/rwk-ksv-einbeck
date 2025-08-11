@@ -100,39 +100,28 @@ export function calculateAgeClass(birthYear: number, gender: 'male' | 'female', 
   
   // Basis-Altersklassen (für Freihand oder wenn keine Disziplin angegeben)
   if (!discipline || discipline === 'freihand') {
-    if (age <= 12) return 'Schüler' + genderSuffix;
-    if (age <= 17) return 'Jugend' + genderSuffix;
-    if (age <= 20) return 'Junioren A' + genderSuffix;
-    if (age <= 22) return 'Junioren B' + genderSuffix;
-    if (age <= 41) return gender === 'male' ? 'Herren I' : 'Damen I';
-    if (age <= 51) return gender === 'male' ? 'Herren II' : 'Damen II';
-    if (age <= 61) return gender === 'male' ? 'Herren III' : 'Damen III';
-    if (age <= 71) return gender === 'male' ? 'Herren IV' : 'Damen IV';
-    if (age <= 76) return gender === 'male' ? 'Senioren 0' : 'Seniorinnen 0';
-    if (age <= 81) return gender === 'male' ? 'Senioren I' : 'Seniorinnen I';
-    if (age <= 86) return gender === 'male' ? 'Senioren II' : 'Seniorinnen II';
-    if (age <= 91) return gender === 'male' ? 'Senioren III' : 'Seniorinnen III';
-    if (age <= 96) return gender === 'male' ? 'Senioren IV' : 'Seniorinnen IV';
-    return gender === 'male' ? 'Senioren V' : 'Seniorinnen V';
+    if (age <= 14) return 'Schüler' + genderSuffix;
+    if (age <= 16) return 'Jugend' + genderSuffix;
+    if (age <= 18) return 'Junioren II' + genderSuffix;
+    if (age <= 20) return 'Junioren I' + genderSuffix;
+    if (age <= 40) return gender === 'male' ? 'Herren I' : 'Damen I';
+    if (age <= 50) return gender === 'male' ? 'Herren II' : 'Damen II';
+    if (age <= 60) return gender === 'male' ? 'Herren III' : 'Damen III';
+    if (age <= 70) return gender === 'male' ? 'Herren IV' : 'Damen IV';
+    return gender === 'male' ? 'Herren V' : 'Damen V';
   }
   
-  // Auflage-spezifische Altersklassen (erweiterte Seniorenklassen)
+  // Auflage-spezifische Altersklassen (nur Schüler 12-14 und Senioren ab 41)
   if (discipline === 'auflage') {
-    if (age <= 12) return 'Schüler' + genderSuffix;
-    if (age <= 17) return 'Jugend' + genderSuffix;
-    if (age <= 20) return 'Junioren A' + genderSuffix;
-    if (age <= 22) return 'Junioren B' + genderSuffix;
-    if (age <= 41) return gender === 'male' ? 'Herren I' : 'Damen I';
-    if (age <= 51) return gender === 'male' ? 'Herren II' : 'Damen II';
-    if (age <= 61) return gender === 'male' ? 'Herren III' : 'Damen III';
-    if (age <= 71) return gender === 'male' ? 'Herren IV' : 'Damen IV';
-    // Auflage hat erweiterte Seniorenklassen ab 60+
-    if (age <= 65) return gender === 'male' ? 'Senioren A' : 'Seniorinnen A';
-    if (age <= 70) return gender === 'male' ? 'Senioren B' : 'Seniorinnen B';
-    if (age <= 75) return gender === 'male' ? 'Senioren C' : 'Seniorinnen C';
-    if (age <= 80) return gender === 'male' ? 'Senioren D' : 'Seniorinnen D';
-    if (age <= 85) return gender === 'male' ? 'Senioren E' : 'Seniorinnen E';
-    return gender === 'male' ? 'Senioren F' : 'Seniorinnen F';
+    if (age >= 12 && age <= 14) return 'Schüler' + genderSuffix;
+    if (age >= 41 && age <= 50) return gender === 'male' ? 'Senioren 0' : 'Seniorinnen 0';
+    if (age >= 51 && age <= 60) return gender === 'male' ? 'Senioren I' : 'Seniorinnen I';
+    if (age >= 61 && age <= 65) return gender === 'male' ? 'Senioren II' : 'Seniorinnen II';
+    if (age >= 66 && age <= 70) return gender === 'male' ? 'Senioren III' : 'Seniorinnen III';
+    if (age >= 71 && age <= 75) return gender === 'male' ? 'Senioren IV' : 'Seniorinnen IV';
+    if (age >= 76 && age <= 80) return gender === 'male' ? 'Senioren V' : 'Seniorinnen V';
+    if (age >= 81) return gender === 'male' ? 'Senioren VI' : 'Seniorinnen VI';
+    return '-'; // Alle anderen Altersgruppen nicht für Auflage zugelassen
   }
   
   return '-';

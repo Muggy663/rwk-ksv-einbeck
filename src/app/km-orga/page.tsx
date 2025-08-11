@@ -247,17 +247,22 @@ export default function KMAdminDashboard() {
             <div className="space-y-3">
               <Link href="/km-orga/km-ergebnisse">
                 <Button className="w-full bg-orange-600 hover:bg-orange-700">
-                  🏅 Ergebnisse eingeben
+                  ✏️ Ergebnisse manuell eingeben
+                </Button>
+              </Link>
+              <Link href="/km-orga/david21">
+                <Button variant="outline" className="w-full">
+                  🎯 Meyton Import (Shootmaster)
+                </Button>
+              </Link>
+              <Link href="/km-orga/ergebnisse-korrektur">
+                <Button variant="outline" className="w-full">
+                  🔧 Ergebnisse korrigieren
                 </Button>
               </Link>
               <Link href="/km-orga/ergebnislisten">
                 <Button variant="outline" className="w-full">
                   📄 Ergebnislisten erstellen
-                </Button>
-              </Link>
-              <Link href="/km-orga/wettkampf-dashboard">
-                <Button variant="outline" className="w-full">
-                  📊 Live-Dashboard
                 </Button>
               </Link>
             </div>
