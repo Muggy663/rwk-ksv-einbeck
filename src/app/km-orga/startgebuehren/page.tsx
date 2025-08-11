@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileText, Calculator } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs } from 'firebase/firestore';
+
 import Link from 'next/link';
+import { useKMAuth } from '@/hooks/useKMAuth';
 
 interface StartgebührData {
   verein: string;
@@ -25,66 +25,69 @@ interface StartgebührData {
 
 export default function StartgebührenPage() {
   const { toast } = useToast();
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const { hasKMAccess, loading: authLoading } = useKMAuth();
+  const [selectedYear, setSelectedYear] = useState('2026');
   const [startgebühren, setStartgebühren] = useState<StartgebührData[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAbgesagte, setShowAbgesagte] = useState(false);
 
-  const availableYears = Array.from({length: 5}, (_, i) => (new Date().getFullYear() - i).toString());
+  const availableYears = Array.from({length: 5}, (_, i) => (2026 + i).toString());
 
   useEffect(() => {
-    loadData();
-  }, [selectedYear]);
+    if (hasKMAccess && !authLoading) {
+      loadData();
+    }
+  }, [selectedYear, hasKMAccess, authLoading]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [clubsSnapshot, disziplinenSnapshot, meldungenSnapshot, schuetzenSnapshot] = await Promise.all([
-        getDocs(collection(db, 'clubs')),
-        getDocs(collection(db, 'km_disziplinen')),
-        getDocs(collection(db, 'km_meldungen')),
-        getDocs(collection(db, 'km_shooters'))
+      const [clubsRes, disziplinenRes, meldungenRes, schuetzenRes] = await Promise.all([
+        fetch('/api/clubs'),
+        fetch('/api/km/disziplinen'),
+        fetch(`/api/km/meldungen?jahr=${selectedYear}`),
+        fetch('/api/km/shooters')
+      ]);
+
+      const [clubsData, disziplinenData, meldungenData, schuetzenData] = await Promise.all([
+        clubsRes.ok ? clubsRes.json() : { data: [] },
+        disziplinenRes.ok ? disziplinenRes.json() : { data: [] },
+        meldungenRes.ok ? meldungenRes.json() : { data: [] },
+        schuetzenRes.ok ? schuetzenRes.json() : { data: [] }
       ]);
 
       const vereinsMap: {[id: string]: string} = {};
-      clubsSnapshot.docs.forEach(doc => {
-        vereinsMap[doc.id] = doc.data().name;
+      (clubsData.data || []).forEach((club: any) => {
+        vereinsMap[club.id] = club.name;
       });
 
       const disziplinenMap: {[id: string]: string} = {};
-      disziplinenSnapshot.docs.forEach(doc => {
-        disziplinenMap[doc.id] = doc.data().name;
+      (disziplinenData.data || []).forEach((disziplin: any) => {
+        disziplinenMap[disziplin.id] = disziplin.name;
       });
 
       const schuetzenMap: {[id: string]: any} = {};
-      schuetzenSnapshot.docs.forEach(doc => {
-        schuetzenMap[doc.id] = doc.data();
+      (schuetzenData.data || []).forEach((schuetze: any) => {
+        schuetzenMap[schuetze.id] = schuetze;
       });
 
       const startgebührenMap: {[vereinId: string]: StartgebührData} = {};
       
-      // Lade auch Startlisten für Absagen-Info
-      const startlistenSnapshot = await getDocs(collection(db, 'km_startlisten'));
+      // Lade auch Startlisten für Absagen-Info (vereinfacht)
       const abgesagteStarter = new Set<string>();
-      
-      startlistenSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if (data.abgesagte) {
-          data.abgesagte.forEach((id: string) => abgesagteStarter.add(id));
-        }
-      });
 
-      meldungenSnapshot.docs.forEach(doc => {
-        const meldung = doc.data();
-        const meldungsDatum = meldung.createdAt?.toDate() || new Date();
-        
-        if (meldungsDatum.getFullYear().toString() !== selectedYear) return;
+      (meldungenData.data || []).forEach((meldung: any) => {
 
         const schuetze = schuetzenMap[meldung.schuetzeId];
         if (!schuetze) return;
 
-        const vereinId = schuetze.kmClubId || schuetze.rwkClubId;
+        const vereinId = schuetze.kmClubId || schuetze.rwkClubId || schuetze.clubId;
         const vereinName = vereinsMap[vereinId] || 'Unbekannt';
+        
+        if (!vereinId) {
+          console.log('Schütze ohne Verein:', schuetze);
+          return;
+        }
         const disziplinName = disziplinenMap[meldung.disziplinId] || 'Unbekannt';
 
         if (!startgebührenMap[vereinId]) {
@@ -102,7 +105,7 @@ export default function StartgebührenPage() {
           ? `${schuetze.firstName} ${schuetze.lastName}` 
           : schuetze.name || 'Unbekannt';
         
-        if (abgesagteStarter.has(doc.id)) {
+        if (abgesagteStarter.has(meldung.id)) {
           // Abgesagter Starter
           if (!startgebührenMap[vereinId].abgesagt[disziplinName]) {
             startgebührenMap[vereinId].abgesagt[disziplinName] = [];
@@ -211,6 +214,28 @@ export default function StartgebührenPage() {
   };
 
   const gesamtStarter = startgebühren.reduce((sum, sg) => sum + sg.gesamt, 0);
+
+  if (authLoading) {
+    return (
+      <div className="container py-8 max-w-6xl mx-auto">
+        <div className="flex items-center justify-center py-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mr-3"></div>
+          <p>Lade...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasKMAccess) {
+    return (
+      <div className="container py-8 max-w-6xl mx-auto">
+        <div className="text-center py-10">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Zugriff verweigert</h1>
+          <Link href="/km-orga" className="text-primary hover:text-primary/80">← Zurück</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8 max-w-6xl mx-auto">

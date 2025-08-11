@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { useKMAuth } from '@/hooks/useKMAuth';
 
 export default function KMAdminMitglieder() {
@@ -18,6 +19,7 @@ export default function KMAdminMitglieder() {
   const [filter, setFilter] = useState({ verein: '', search: '', showIncomplete: false });
   const [showAddForm, setShowAddForm] = useState(false);
   const [newShooter, setNewShooter] = useState<any>({});
+  const [sortConfig, setSortConfig] = useState<{key: string, direction: 'asc' | 'desc'} | null>(null);
 
   useEffect(() => {
     if (hasFullAccess && !authLoading) {
@@ -141,7 +143,27 @@ export default function KMAdminMitglieder() {
     return club?.name || 'Unbekannt';
   };
 
-  const filteredShooters = shooters.filter(shooter => {
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortValue = (shooter: any, key: string) => {
+    switch (key) {
+      case 'firstName': return shooter.firstName || shooter.name?.split(' ')[0] || '';
+      case 'lastName': return shooter.lastName || shooter.name?.split(' ').slice(1).join(' ') || '';
+      case 'verein': return getClubName(shooter);
+      case 'birthYear': return shooter.birthYear || 0;
+      case 'gender': return shooter.gender || 'unknown';
+      case 'mitgliedsnummer': return shooter.mitgliedsnummer || '';
+      default: return '';
+    }
+  };
+
+  const filteredAndSortedShooters = shooters.filter(shooter => {
     // Vereinsfilter
     if (filter.verein) {
       const clubId = shooter.kmClubId || shooter.rwkClubId || shooter.clubId;
@@ -169,6 +191,22 @@ export default function KMAdminMitglieder() {
     }
 
     return true;
+  }).sort((a, b) => {
+    if (!sortConfig) return 0;
+    
+    const aValue = getSortValue(a, sortConfig.key);
+    const bValue = getSortValue(b, sortConfig.key);
+    
+    if (sortConfig.key === 'birthYear') {
+      return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+    }
+    
+    const aStr = String(aValue).toLowerCase();
+    const bStr = String(bValue).toLowerCase();
+    
+    if (aStr < bStr) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aStr > bStr) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
   });
 
   if (loading) {
@@ -196,6 +234,11 @@ export default function KMAdminMitglieder() {
   return (
     <div className="container py-8 max-w-6xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
+        <Link href="/km-orga">
+          <Button variant="outline">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-primary">👥 Alle KM-Mitglieder</h1>
           <p className="text-muted-foreground">Verwaltung aller Schützen für die Kreismeisterschaft</p>
@@ -318,24 +361,36 @@ export default function KMAdminMitglieder() {
       {/* Mitglieder Tabelle */}
       <Card>
         <CardHeader>
-          <CardTitle>Mitglieder ({filteredShooters.length})</CardTitle>
+          <CardTitle>Mitglieder ({filteredAndSortedShooters.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left p-2">Vorname</th>
-                  <th className="text-left p-2">Nachname</th>
-                  <th className="text-left p-2">Verein</th>
-                  <th className="text-left p-2">Geburtsjahr</th>
-                  <th className="text-left p-2">Geschlecht</th>
-                  <th className="text-left p-2">Mitgl.-Nr.</th>
+                  <th className="text-left p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('firstName')}>
+                    Vorname {sortConfig?.key === 'firstName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th className="text-left p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('lastName')}>
+                    Nachname {sortConfig?.key === 'lastName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th className="text-left p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('verein')}>
+                    Verein {sortConfig?.key === 'verein' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th className="text-left p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('birthYear')}>
+                    Geburtsjahr {sortConfig?.key === 'birthYear' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th className="text-left p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('gender')}>
+                    Geschlecht {sortConfig?.key === 'gender' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th className="text-left p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('mitgliedsnummer')}>
+                    Mitgl.-Nr. {sortConfig?.key === 'mitgliedsnummer' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                  </th>
                   <th className="text-left p-2">Aktionen</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredShooters.map(shooter => (
+                {filteredAndSortedShooters.map(shooter => (
                   <tr key={shooter.id} className="border-b hover:bg-gray-50">
                     <td className="p-2">
                       {editingId === shooter.id ? (
@@ -451,7 +506,7 @@ export default function KMAdminMitglieder() {
               </tbody>
             </table>
             
-            {filteredShooters.length === 0 && (
+            {filteredAndSortedShooters.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 Keine Mitglieder gefunden
               </div>

@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trophy, AlertTriangle, CheckCircle, Filter, Download } from 'lucide-react';
+import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { validateQualifications } from '@/lib/services/startlisten-ki-service';
+import { useKMAuth } from '@/hooks/useKMAuth';
 
 interface VMMeldung {
   id: string;
@@ -26,6 +28,7 @@ interface VMMeldung {
 
 export default function VMUebersichtPage() {
   const { toast } = useToast();
+  const { hasKMAccess, loading: authLoading } = useKMAuth();
   const [meldungen, setMeldungen] = useState<VMMeldung[]>([]);
   const [filteredMeldungen, setFilteredMeldungen] = useState<VMMeldung[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,8 +61,10 @@ export default function VMUebersichtPage() {
   };
 
   useEffect(() => {
-    loadVMMeldungen();
-  }, []);
+    if (hasKMAccess && !authLoading) {
+      loadVMMeldungen();
+    }
+  }, [hasKMAccess, authLoading]);
 
   useEffect(() => {
     filterMeldungen();
@@ -96,7 +101,7 @@ export default function VMUebersichtPage() {
         const processedMeldungen = meldungenData.data?.map((m: any) => {
           const schuetze = schuetzenMap.get(m.schuetzeId);
           const disziplin = disziplinenMap.get(m.disziplinId);
-          const club = clubsMap.get(schuetze?.kmClubId || schuetze?.rwkClubId);
+          const club = clubsMap.get(schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId);
           
           const processedMeldung = {
             id: m.id,
@@ -194,12 +199,24 @@ export default function VMUebersichtPage() {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="container py-8 max-w-6xl mx-auto">
         <div className="flex items-center justify-center py-10">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mr-3"></div>
           <p>Lade VM-Übersicht...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasKMAccess) {
+    return (
+      <div className="container py-8 max-w-6xl mx-auto">
+        <div className="text-center py-10">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Zugriff verweigert</h1>
+          <p className="text-muted-foreground mb-4">Sie haben keine Berechtigung für das KM-System.</p>
+          <Link href="/" className="text-primary hover:text-primary/80">← Zur Startseite</Link>
         </div>
       </div>
     );
@@ -216,11 +233,16 @@ export default function VMUebersichtPage() {
   return (
     <div className="container py-8 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-primary">🏆 VM-Ergebnisse Übersicht</h1>
-          <p className="text-muted-foreground">
-            Vereinsmeisterschaft-Ergebnisse und Qualifikationen für die KM 2026
-          </p>
+        <div className="flex items-center gap-4">
+          <Link href="/km-orga">
+            <Button variant="outline">← Zurück</Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-primary">🏆 VM-Ergebnisse Übersicht</h1>
+            <p className="text-muted-foreground">
+              Vereinsmeisterschaft-Ergebnisse und Qualifikationen für die KM 2026
+            </p>
+          </div>
         </div>
         <Button onClick={exportVMUebersicht}>
           <Download className="h-4 w-4 mr-2" />

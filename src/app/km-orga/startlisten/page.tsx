@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Save, Calendar, Clock, MapPin, Target, Users } from 'lucide-react';
+import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
@@ -186,11 +187,16 @@ export default function StartlistenPage() {
 
   return (
     <div className="container py-8 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-primary">📄 Startlisten generieren</h1>
-        <p className="text-muted-foreground">
-          Konfigurieren Sie die Wettkampf-Parameter für die automatische Startlisten-Generierung
-        </p>
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/km-orga">
+          <Button variant="outline">← Zurück</Button>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold text-primary">📄 Startlisten generieren</h1>
+          <p className="text-muted-foreground">
+            Konfigurieren Sie die Wettkampf-Parameter für die automatische Startlisten-Generierung
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-6">

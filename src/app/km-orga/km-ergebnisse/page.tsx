@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Save, Trophy, Medal, Upload, FileText } from 'lucide-react';
+import { Save, Trophy, Medal, Upload, FileText, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useKMAuth } from '@/hooks/useKMAuth';
+import Link from 'next/link';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
 
@@ -27,6 +29,7 @@ interface Meldung {
 
 export default function KMErgebnissePage() {
   const { toast } = useToast();
+  const { hasKMAccess, loading: authLoading } = useKMAuth();
   const [meldungen, setMeldungen] = useState<Meldung[]>([]);
   const [selectedDisziplin, setSelectedDisziplin] = useState<string>('');
   const [disziplinen, setDisziplinen] = useState<string[]>([]);
@@ -36,82 +39,86 @@ export default function KMErgebnissePage() {
   const [inputValues, setInputValues] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
+    if (!hasKMAccess || authLoading) return;
+    
     const loadData = async () => {
       try {
-        // Meldungen laden
-        const meldungenSnapshot = await getDocs(collection(db, 'km_meldungen'));
-        const meldungenData: Meldung[] = [];
+        // Lade Daten über API
+        const [meldungenRes, ergebnisseRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
+          fetch('/api/km/meldungen?jahr=2026'),
+          fetch('/api/km/ergebnisse'),
+          fetch('/api/km/shooters'),
+          fetch('/api/km/disziplinen'),
+          fetch('/api/clubs')
+        ]);
+        
+        const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
+        const ergebnisseData = ergebnisseRes.ok ? (await ergebnisseRes.json()).data || [] : [];
+        const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
+        const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
+        const clubsData = clubsRes.ok ? (await clubsRes.json()).data || [] : [];
+        
+        const meldungenDataProcessed: Meldung[] = [];
         const disziplinenSet = new Set<string>();
 
-        // KM-Ergebnisse laden (verwende km_vm_ergebnisse als Fallback)
-        const kmErgebnisseSnapshot = await getDocs(collection(db, 'km_vm_ergebnisse'));
+        // KM-Ergebnisse Map erstellen
         const kmErgebnisseMap = new Map();
-        kmErgebnisseSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          kmErgebnisseMap.set(data.meldung_id, {
-            ringe: data.ergebnis_ringe,
-            teiler: data.ergebnis_teiler,
-            platz_disziplin: data.platz_disziplin,
-            platz_altersklasse: data.platz_altersklasse
+        ergebnisseData.forEach(ergebnis => {
+          kmErgebnisseMap.set(ergebnis.meldung_id, {
+            ringe: ergebnis.ergebnis_ringe,
+            teiler: ergebnis.ergebnis_teiler,
+            platz_disziplin: ergebnis.platz_disziplin,
+            platz_altersklasse: ergebnis.platz_altersklasse
           });
         });
 
-        // Lade auch Schützen, Disziplinen und Vereine für Namen-Auflösung
-        const schuetzenSnapshot = await getDocs(collection(db, 'km_shooters'));
-        const disziplinenSnapshot = await getDocs(collection(db, 'km_disziplinen'));
-        const clubsSnapshot = await getDocs(collection(db, 'clubs'));
-        
+        // Maps für Namen-Auflösung
         const schuetzenMap = new Map();
         const disziplinenMap = new Map();
         const clubsMap = new Map();
         
-        schuetzenSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-
-          const fullName = data.firstName && data.lastName 
-            ? `${data.firstName} ${data.lastName}`
-            : data.name || 'Unbekannt';
-          schuetzenMap.set(doc.id, {
+        schuetzenData.forEach(schuetze => {
+          const fullName = schuetze.firstName && schuetze.lastName 
+            ? `${schuetze.firstName} ${schuetze.lastName}`
+            : schuetze.name || 'Unbekannt';
+          schuetzenMap.set(schuetze.id, {
             name: fullName,
-            clubId: data.kmClubId || data.rwkClubId || data.clubId
+            clubId: schuetze.kmClubId || schuetze.rwkClubId || schuetze.clubId
           });
         });
         
-        disziplinenSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          disziplinenMap.set(doc.id, data.name);
+        disziplinenData.forEach(disziplin => {
+          disziplinenMap.set(disziplin.id, disziplin.name);
         });
         
-        clubsSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          clubsMap.set(doc.id, data.name);
+        clubsData.forEach(club => {
+          clubsMap.set(club.id, club.name);
         });
 
-        meldungenSnapshot.docs.forEach(doc => {
-          const data = doc.data();
+        meldungenData.forEach(meldung => {
 
-          const schuetze = schuetzenMap.get(data.schuetzeId);
+          const schuetze = schuetzenMap.get(meldung.schuetzeId);
 
-          const disziplinName = disziplinenMap.get(data.disziplinId) || 'Unbekannte Disziplin';
+          const disziplinName = disziplinenMap.get(meldung.disziplinId) || 'Unbekannte Disziplin';
           
           // Verwende vereinsname aus Meldung oder lade über clubId
-          let vereinsname = data.vereinsname || 'Unbekannter Verein';
-          if (!data.vereinsname && schuetze && schuetze.clubId) {
+          let vereinsname = meldung.vereinsname || 'Unbekannter Verein';
+          if (!meldung.vereinsname && schuetze && schuetze.clubId) {
             vereinsname = clubsMap.get(schuetze.clubId) || 'Unbekannter Verein';
           }
 
           
-          meldungenData.push({
-            id: doc.id,
+          meldungenDataProcessed.push({
+            id: meldung.id,
             schuetzenName: schuetze ? schuetze.name : 'Unbekannter Schütze',
             vereinsname: vereinsname,
             disziplin: disziplinName,
-            kmErgebnis: kmErgebnisseMap.get(doc.id)
+            kmErgebnis: kmErgebnisseMap.get(meldung.id)
           });
           disziplinenSet.add(disziplinName);
         });
 
-        setMeldungen(meldungenData);
+        setMeldungen(meldungenDataProcessed);
         setDisziplinen(Array.from(disziplinenSet).sort());
 
       } catch (error) {
@@ -122,7 +129,7 @@ export default function KMErgebnissePage() {
       }
     };
     loadData();
-  }, [toast]);
+  }, [hasKMAccess, authLoading, toast]);
 
   const handleErgebnisChange = (meldungId: string, field: 'ringe' | 'teiler', value: string) => {
     setMeldungen(prev => prev.map(m => {
@@ -247,7 +254,7 @@ export default function KMErgebnissePage() {
     ? meldungen.filter(m => m.disziplin === selectedDisziplin)
     : meldungen;
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="container py-8 max-w-6xl mx-auto">
         <div className="flex items-center justify-center py-10">
@@ -258,13 +265,31 @@ export default function KMErgebnissePage() {
     );
   }
 
+  if (!hasKMAccess) {
+    return (
+      <div className="container py-8 max-w-6xl mx-auto">
+        <div className="text-center py-10">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Zugriff verweigert</h1>
+          <Link href="/km-orga" className="text-primary hover:text-primary/80">← Zurück</Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-8 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-primary">🏆 KM-Ergebnisse erfassen</h1>
-        <p className="text-muted-foreground">
-          Kreismeisterschafts-Ergebnisse nach dem Wettkampf erfassen für automatische Ergebnislisten
-        </p>
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/km-orga">
+          <Button variant="outline">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold text-primary">🏆 KM-Ergebnisse erfassen</h1>
+          <p className="text-muted-foreground">
+            Kreismeisterschafts-Ergebnisse nach dem Wettkampf erfassen für automatische Ergebnislisten
+          </p>
+        </div>
       </div>
 
       <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">

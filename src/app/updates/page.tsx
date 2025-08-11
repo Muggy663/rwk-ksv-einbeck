@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.11.1 (10.08.2025)</span>
+              <span>Web-Version: 0.11.3 (11.08.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -36,8 +36,95 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.1 - Admin-Verbesserungen & PDF-Fixes</CardTitle>
+              <CardTitle className="text-xl">Version 0.11.3 - Orga-Bereich gefixt und optimiert</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
+            </div>
+            <CardDescription>11.08.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">KM-Orga Bereich vollständig überarbeitet: Startlisten-Tool, sortierbare Tabellen, VM-Ergebnisse und Zurück-Buttons.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🛠️ Orga-Optimierungen v0.11.3</h4>
+              <div className="text-xs text-green-700">
+                Komplette Überarbeitung des KM-Organisationsbereichs
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🎯 <strong>Startlisten-Tool:</strong> Neues einheitliches Tool ersetzt alte Generieren-Seite mit verbesserter UX</li>
+              <li>📊 <strong>Sortierbare Tabellen:</strong> Alle KM-Mitglieder-Spalten sind jetzt klickbar sortierbar</li>
+              <li>🏆 <strong>VM-Ergebnisse:</strong> Vereinsmeisterschafts-Ringe werden korrekt in Mannschaften angezeigt</li>
+              <li>🔙 <strong>Navigation:</strong> Zurück-Buttons in allen KM-Orga Unterseiten hinzugefügt</li>
+              <li>🎨 <strong>Altersklassen-Fix:</strong> "Erwachsene Erwachsene" durch korrekte Berechnung ersetzt</li>
+              <li>⚙️ <strong>Gewehr-Sharing:</strong> Verbesserte Erkennung für "Teilt sich ein Gewehr mit Marcel Leiding"</li>
+              <li>📋 <strong>Startgebühren:</strong> Jahr 2026 als Standard, API-Endpunkte statt direkter Firebase-Zugriff</li>
+              <li>🔄 <strong>Chunk-Loading Fix:</strong> Alte Startlisten-URLs leiten korrekt weiter ohne Fehler</li>
+              <li>📱 <strong>Editierbare Startliste:</strong> Stand, Durchgang und Startzeit direkt bearbeitbar</li>
+              <li>🎯 <strong>KI-Analyse:</strong> Konflikterkennung und Empfehlungen für Startlisten integriert</li>
+              <li>🔐 <strong>Berechtigungen:</strong> KM-Orga Seiten verwenden sichere API-Endpunkte statt direkten Firebase-Zugriff</li>
+              <li>📅 <strong>RWK-Tabellen:</strong> Abgeschlossene Saisons (2025) werden jetzt korrekt angezeigt</li>
+              <li>🛠️ <strong>Bugfixes:</strong> Select.Item Fehler, Syntax-Fehler und Chunk-Loading Probleme behoben</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🛠️ Orga-Optimierungen</span>
+                  <p className="text-xs text-green-600 mt-1">Startlisten, Tabellen & Navigation</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.11.3
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.11.2 - Saisonwechsel & PDF-Export</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>11.01.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständige Auf-/Abstiegsanalyse mit automatischen Vergleichen und professionellem PDF-Export.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🏆 Saisonwechsel-System v0.11.2</h4>
+              <div className="text-xs text-green-700">
+                Komplette Auf-/Abstiegslogik nach RWK-Ordnung mit PDF-Export
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🏆 <strong>Auf-/Abstiegsanalyse:</strong> Vollständige Implementierung der RWK-Ordnung §16 mit automatischen Vergleichen</li>
+              <li>📊 <strong>Vergleichsberechnungen:</strong> Zweiter vs. Vorletzter höhere Liga, Vorletzter vs. Zweiter niedrigere Liga</li>
+              <li>📄 <strong>PDF-Export:</strong> Professioneller Export im Querformat mit RWK Logo und Farbkodierung</li>
+              <li>🎯 <strong>Pistole-Logik:</strong> Keine Auf-/Abstiege in offener Kleinkaliber Pistole Klasse</li>
+              <li>📉 <strong>2. Kreisklasse:</strong> Korrekte Behandlung als niedrigste Liga ohne Abstiegsmöglichkeit</li>
+              <li>🎨 <strong>Farbkodierung:</strong> Grün für Aufstieg, Rot für Abstieg in PDF-Tabellen</li>
+              <li>📋 <strong>Multi-Liga-Übersicht:</strong> Alle Ligen gleichzeitig analysieren und vergleichen</li>
+              <li>⚙️ <strong>Abmeldungen:</strong> Separate Auswahl für "nach Meldeschluss abgemeldet" und "nicht mehr gemeldet"</li>
+              <li>🔢 <strong>Ringzahlen-Anzeige:</strong> Gesamtergebnisse in Tabellen für bessere Transparenz</li>
+              <li>🖼️ <strong>Logo-Integration:</strong> RWK Einbeck Logo oben rechts in allen PDF-Exporten</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🏆 Saisonwechsel-System</span>
+                  <p className="text-xs text-green-600 mt-1">Auf-/Abstieg & PDF-Export</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.11.2
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.11.1 - Admin-Verbesserungen & PDF-Fixes</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>10.08.2025</CardDescription>
           </CardHeader>
@@ -81,7 +168,7 @@ export default function UpdatesPage() {
               <CardTitle className="text-xl">Version 0.11.0 - Große Datenbank-Migration</CardTitle>
               <Badge variant="outline">Vorherige</Badge>
             </div>
-            <CardDescription>11.01.2025</CardDescription>
+            <CardDescription>10.08.2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">KM-System Vollendung: Altersklassen-Übersicht, Navigation vereinheitlicht, Logout-Timer korrigiert.</p>

@@ -4,10 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Clock, Trophy, Users, Target, CheckCircle, AlertCircle } from 'lucide-react';
+import { Clock, Trophy, Users, Target, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useKMAuth } from '@/hooks/useKMAuth';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 
 interface WettkampfStatus {
   disziplin: string;
@@ -19,42 +22,51 @@ interface WettkampfStatus {
 
 export default function WettkampfDashboardPage() {
   const { toast } = useToast();
+  const { hasKMAccess, loading: authLoading } = useKMAuth();
   const [wettkampfStatus, setWettkampfStatus] = useState<WettkampfStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [aktuelleZeit, setAktuelleZeit] = useState(new Date());
 
   useEffect(() => {
+    if (!hasKMAccess || authLoading) return;
+    
     const loadWettkampfStatus = async () => {
       try {
-        // Meldungen laden
-        const meldungenSnapshot = await getDocs(collection(db, 'km_meldungen'));
-        const kmErgebnisseSnapshot = await getDocs(collection(db, 'km_vm_ergebnisse'));
+        // Lade Daten über API statt direkten Firebase-Zugriff
+        const [meldungenRes, ergebnisseRes] = await Promise.all([
+          fetch('/api/km/meldungen?jahr=2026'),
+          fetch('/api/km/ergebnisse')
+        ]);
+        
+        const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
+        const ergebnisseData = ergebnisseRes.ok ? (await ergebnisseRes.json()).data || [] : [];
         
         // Ergebnisse-Map erstellen
         const ergebnisseMap = new Map();
-        kmErgebnisseSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          ergebnisseMap.set(data.meldung_id, true);
+        ergebnisseData.forEach(ergebnis => {
+          ergebnisseMap.set(ergebnis.meldung_id, true);
         });
         
-        // Lade Disziplinen und Schützen für Namensauflösung
-        const [disziplinenSnapshot, schuetzenSnapshot] = await Promise.all([
-          getDocs(collection(db, 'km_disziplinen')),
-          getDocs(collection(db, 'km_shooters'))
+        // Lade Disziplinen und Schützen über API
+        const [disziplinenRes, schuetzenRes] = await Promise.all([
+          fetch('/api/km/disziplinen'),
+          fetch('/api/km/shooters')
         ]);
         
+        const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
+        const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
+        
         const disziplinenMap = new Map();
-        disziplinenSnapshot.docs.forEach(doc => {
-          disziplinenMap.set(doc.id, doc.data().name);
+        disziplinenData.forEach(disziplin => {
+          disziplinenMap.set(disziplin.id, disziplin.name);
         });
         
         const schuetzenMap = new Map();
-        schuetzenSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          const name = data.firstName && data.lastName 
-            ? `${data.firstName} ${data.lastName}` 
-            : data.name || 'Unbekannt';
-          schuetzenMap.set(doc.id, name);
+        schuetzenData.forEach(schuetze => {
+          const name = schuetze.firstName && schuetze.lastName 
+            ? `${schuetze.firstName} ${schuetze.lastName}` 
+            : schuetze.name || 'Unbekannt';
+          schuetzenMap.set(schuetze.id, name);
         });
         
         // Status pro Disziplin berechnen
@@ -64,10 +76,9 @@ export default function WettkampfDashboardPage() {
           fehlendStarter: string[];
         }>();
         
-        meldungenSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          const disziplinName = disziplinenMap.get(data.disziplinId) || 'Unbekannt';
-          const schuetzeName = schuetzenMap.get(data.schuetzeId) || 'Unbekannt';
+        meldungenData.forEach(meldung => {
+          const disziplinName = disziplinenMap.get(meldung.disziplinId) || 'Unbekannt';
+          const schuetzeName = schuetzenMap.get(meldung.schuetzeId) || 'Unbekannt';
           
           if (!statusMap.has(disziplinName)) {
             statusMap.set(disziplinName, {
@@ -80,7 +91,7 @@ export default function WettkampfDashboardPage() {
           const status = statusMap.get(disziplinName)!;
           status.gesamtStarter++;
           
-          if (ergebnisseMap.has(doc.id)) {
+          if (ergebnisseMap.has(meldung.id)) {
             status.erfassteErgebnisse++;
           } else {
             status.fehlendStarter.push(schuetzeName);
@@ -113,13 +124,13 @@ export default function WettkampfDashboardPage() {
     }, 60000);
     
     return () => clearInterval(zeitInterval);
-  }, [toast]);
+  }, [hasKMAccess, authLoading, toast]);
 
   const gesamtStarter = wettkampfStatus.reduce((sum, status) => sum + status.gesamtStarter, 0);
   const gesamtErfasst = wettkampfStatus.reduce((sum, status) => sum + status.erfassteErgebnisse, 0);
   const gesamtFortschritt = gesamtStarter > 0 ? (gesamtErfasst / gesamtStarter) * 100 : 0;
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="container py-8 max-w-7xl mx-auto">
         <div className="flex items-center justify-center py-10">
@@ -130,25 +141,43 @@ export default function WettkampfDashboardPage() {
     );
   }
 
+  if (!hasKMAccess) {
+    return (
+      <div className="container py-8 max-w-7xl mx-auto">
+        <div className="text-center py-10">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Zugriff verweigert</h1>
+          <Link href="/km-orga" className="text-primary hover:text-primary/80">← Zurück</Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-primary">🏆 Wettkampf-Dashboard</h1>
-        <p className="text-muted-foreground">
-          Live-Status des Kreismeisterschafts-Wettkampfs
-        </p>
-        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            {aktuelleZeit.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
-          </div>
-          <div className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            {gesamtStarter} Starter gesamt
-          </div>
-          <div className="flex items-center gap-1">
-            <Trophy className="h-4 w-4" />
-            {gesamtErfasst} Ergebnisse erfasst
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/km-orga">
+          <Button variant="outline">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold text-primary">🏆 Wettkampf-Dashboard</h1>
+          <p className="text-muted-foreground">
+            Live-Status des Kreismeisterschafts-Wettkampfs
+          </p>
+          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              {aktuelleZeit.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
+            </div>
+            <div className="flex items-center gap-1">
+              <Users className="h-4 w-4" />
+              {gesamtStarter} Starter gesamt
+            </div>
+            <div className="flex items-center gap-1">
+              <Trophy className="h-4 w-4" />
+              {gesamtErfasst} Ergebnisse erfasst
+            </div>
           </div>
         </div>
       </div>

@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Download, Trophy, Medal, FileText } from 'lucide-react';
+import { Download, Trophy, Medal, FileText, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
@@ -239,10 +240,10 @@ export default function ErgebnislistenPage() {
 
   // Filtere Ergebnisse für Anzeige
   let filteredErgebnisse = ergebnisse;
-  if (selectedDisziplin) {
+  if (selectedDisziplin && selectedDisziplin !== 'ALL_DISCIPLINES') {
     filteredErgebnisse = filteredErgebnisse.filter(e => e.disziplin === selectedDisziplin);
   }
-  if (selectedAltersklasse) {
+  if (selectedAltersklasse && selectedAltersklasse !== 'ALL_ALTERSKLASSEN') {
     filteredErgebnisse = filteredErgebnisse.filter(e => e.altersklasse === selectedAltersklasse);
   }
 
@@ -259,8 +260,13 @@ export default function ErgebnislistenPage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/km-orga">
+          <Button variant="outline">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold text-primary">🏆 Ergebnislisten</h1>
           <p className="text-muted-foreground">
             Automatisch generierte Ergebnislisten nach Disziplin und Altersklasse
@@ -290,7 +296,7 @@ export default function ErgebnislistenPage() {
                   <SelectValue placeholder="Alle Disziplinen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Alle Disziplinen</SelectItem>
+                  <SelectItem value="ALL_DISCIPLINES">Alle Disziplinen</SelectItem>
                   {disziplinen.map(d => (
                     <SelectItem key={d} value={d}>{d}</SelectItem>
                   ))}
@@ -303,7 +309,7 @@ export default function ErgebnislistenPage() {
                   <SelectValue placeholder="Alle Altersklassen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Alle Altersklassen</SelectItem>
+                  <SelectItem value="ALL_ALTERSKLASSEN">Alle Altersklassen</SelectItem>
                   {altersklassen.map(a => (
                     <SelectItem key={a} value={a}>{a}</SelectItem>
                   ))}

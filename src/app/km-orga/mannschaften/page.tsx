@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { useKMAuth } from '@/hooks/useKMAuth';
 
 export default function KMAdminMannschaften() {
@@ -14,6 +15,7 @@ export default function KMAdminMannschaften() {
   const [schuetzen, setSchuetzen] = useState<any[]>([]);
   const [disziplinen, setDisziplinen] = useState<any[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
+  const [meldungen, setMeldungen] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
@@ -27,11 +29,12 @@ export default function KMAdminMannschaften() {
 
   const loadData = async () => {
     try {
-      const [mannschaftenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
+      const [mannschaftenRes, schuetzenRes, disziplinenRes, clubsRes, meldungenRes] = await Promise.all([
         fetch('/api/km/mannschaften'),
         fetch('/api/km/shooters'),
         fetch('/api/km/disziplinen'),
-        fetch('/api/clubs')
+        fetch('/api/clubs'),
+        fetch('/api/km/meldungen?jahr=2026')
       ]);
       
       if (mannschaftenRes.ok) {
@@ -52,6 +55,11 @@ export default function KMAdminMannschaften() {
       if (clubsRes.ok) {
         const data = await clubsRes.json();
         setClubs(data.data || []);
+      }
+
+      if (meldungenRes.ok) {
+        const data = await meldungenRes.json();
+        setMeldungen(data.data || []);
       }
     } catch (error) {
       toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden', variant: 'destructive' });
@@ -163,6 +171,11 @@ export default function KMAdminMannschaften() {
   return (
     <div className="container py-8 max-w-7xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
+        <Link href="/km-orga">
+          <Button variant="outline">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-primary">🏆 Alle KM-Mannschaften</h1>
           <p className="text-muted-foreground">Verwaltung aller Teams für die Kreismeisterschaft 2026</p>
@@ -288,7 +301,10 @@ export default function KMAdminMannschaften() {
                                   } ({schuetze?.birthYear}, {schuetze?.gender === 'male' ? 'm' : schuetze?.gender === 'female' ? 'w' : '?'})
                                 </span>
                                 <div className="text-xs text-green-600 font-medium">
-                                  VM: ? Ringe
+                                  VM: {(() => {
+                                    const meldung = meldungen.find(m => m.schuetzeId === schuetze?.id && m.disziplinId === mannschaft.disziplinId);
+                                    return meldung?.vmErgebnis?.ringe || '?';
+                                  })()} Ringe
                                 </div>
                               </div>
                               {editingTeam === mannschaft.id && (

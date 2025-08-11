@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.11.1"; // Admin-Verbesserungen & PDF-Fixes
+  const version = "0.11.3"; // Orga-Bereich gefixt und optimiert
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

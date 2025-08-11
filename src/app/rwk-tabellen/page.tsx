@@ -489,6 +489,10 @@ function RwkTabellenPageComponent() {
       
 
       
+      // Füge manuelle Jahre hinzu (für abgeschlossene Saisons)
+      const manualYears = [2025];
+      manualYears.forEach(year => years.add(year));
+      
       const sortedYears = Array.from(years).sort((a, b) => b - a);
 
       return sortedYears.length > 0 ? sortedYears : [new Date().getFullYear()];
@@ -507,7 +511,7 @@ function RwkTabellenPageComponent() {
         collection(db, "seasons"),
         where("competitionYear", "==", year),
         where("type", "in", [uiDiscipline, uiDiscipline.toUpperCase(), uiDiscipline.toLowerCase()]),
-        where("status", "==", "Laufend"),
+        where("status", "in", ["Laufend", "Abgeschlossen"]),
         limit(1)
       );
       const seasonsSnapForRounds = await getDocs(seasonsQuery);
@@ -548,12 +552,12 @@ function RwkTabellenPageComponent() {
       const qSeasons = query(seasonsColRef, 
         where("competitionYear", "==", config.year), 
         where("type", "in", [config.discipline, config.discipline.toUpperCase(), config.discipline.toLowerCase()]), 
-        where("status", "==", "Laufend") // Only "Laufend" seasons
+        where("status", "in", ["Laufend", "Abgeschlossen"]) // "Laufend" OR "Abgeschlossen" seasons
       );
       const seasonsSnapshot = await getDocs(qSeasons);
 
       if (seasonsSnapshot.empty) {
-        console.warn(`RWK DEBUG: No 'Laufend' seasons found for year ${config.year} and UI discipline ${config.discipline}.`);
+        console.warn(`RWK DEBUG: No 'Laufend' or 'Abgeschlossen' seasons found for year ${config.year} and UI discipline ${config.discipline}.`);
         return { id: `${config.year}-${config.discipline}`, config, leagues: [] };
       }
       const laufendeSeasonIds = seasonsSnapshot.docs.map(sDoc => sDoc.id).filter(id => !!id);

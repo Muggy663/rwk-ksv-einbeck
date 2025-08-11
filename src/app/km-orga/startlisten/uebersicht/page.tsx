@@ -5,10 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { Edit, Play, Trash2, Plus, Calendar, MapPin, Target, Eye } from 'lucide-react';
+import { Edit, Play, Trash2, Plus, Calendar, MapPin, Target, Eye, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, deleteDoc, doc, orderBy, query } from 'firebase/firestore';
+import { useKMAuth } from '@/hooks/useKMAuth';
 
 interface StartlistConfig {
   id: string;
@@ -33,6 +34,7 @@ interface GespeicherteStartliste {
 
 export default function StartlistenUebersichtPage() {
   const { toast } = useToast();
+  const { hasKMAccess, loading: authLoading } = useKMAuth();
   const [configs, setConfigs] = useState<StartlistConfig[]>([]);
   const [startlisten, setStartlisten] = useState<GespeicherteStartliste[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,8 @@ export default function StartlistenUebersichtPage() {
   const [activeTab, setActiveTab] = useState<'configs' | 'startlisten'>('configs');
 
   useEffect(() => {
+    if (!hasKMAccess || authLoading) return;
+    
     const loadData = async () => {
       try {
         // Konfigurationen laden
@@ -80,7 +84,7 @@ export default function StartlistenUebersichtPage() {
       }
     };
     loadData();
-  }, [toast]);
+  }, [hasKMAccess, authLoading, toast]);
 
   const handleDelete = async (configId: string) => {
     if (!confirm('Konfiguration wirklich löschen?')) return;
@@ -116,7 +120,7 @@ export default function StartlistenUebersichtPage() {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="container py-8 max-w-6xl mx-auto">
         <div className="flex items-center justify-center py-10">
@@ -127,10 +131,27 @@ export default function StartlistenUebersichtPage() {
     );
   }
 
+  if (!hasKMAccess) {
+    return (
+      <div className="container py-8 max-w-6xl mx-auto">
+        <div className="text-center py-10">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Zugriff verweigert</h1>
+          <p className="text-muted-foreground mb-4">Sie haben keine Berechtigung für das KM-System.</p>
+          <Link href="/" className="text-primary hover:text-primary/80">← Zur Startseite</Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-8 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <div>
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/km-orga">
+          <Button variant="outline">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold text-primary">📄 Startlisten-Übersicht</h1>
           <p className="text-muted-foreground">
             Konfigurationen und gespeicherte Startlisten verwalten
@@ -195,11 +216,6 @@ export default function StartlistenUebersichtPage() {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <Link href={`/km-orga/startlisten/generieren/${config.id}`}>
-                      <Button variant="outline" size="sm" title="Startliste generieren">
-                        <Play className="h-4 w-4" />
-                      </Button>
-                    </Link>
                     <Button variant="outline" size="sm" onClick={() => handleDelete(config.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -239,7 +255,7 @@ export default function StartlistenUebersichtPage() {
                     <span className="text-xs text-muted-foreground">
                       Erstellt: {config.createdAt.toLocaleDateString('de-DE')}
                     </span>
-                    <Link href={`/km-orga/startlisten/generieren/${config.id}`}>
+                    <Link href={`/startlisten-tool?id=${config.id}`}>
                       <Button>
                         <Play className="h-4 w-4 mr-2" />
                         Startlisten generieren

@@ -124,6 +124,9 @@ export default function KMAdminMeldungen() {
   return (
     <div className="container py-8 max-w-6xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
+        <Link href="/km-orga">
+          <Button variant="outline">← Zurück</Button>
+        </Link>
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-primary">📋 Alle KM-Meldungen {selectedYear}</h1>
           <p className="text-muted-foreground">Verwaltung aller Meldungen zur Kreismeisterschaft {selectedYear}</p>
@@ -238,7 +241,36 @@ export default function KMAdminMeldungen() {
                       </td>
                       <td className="p-2">
                         <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                          Klasse
+                          {(() => {
+                            if (!schuetze?.birthYear) return 'Unbekannt';
+                            
+                            const age = selectedYear - schuetze.birthYear;
+                            const isAuflage = disziplin?.name?.toLowerCase().includes('auflage');
+                            const isMale = schuetze.gender === 'male';
+                            
+                            if (age <= 14) return 'Schüler';
+                            if (age <= 16) return 'Jugend';
+                            if (age <= 18) return `Junioren II ${isMale ? 'm' : 'w'}`;
+                            if (age <= 20) return `Junioren I ${isMale ? 'm' : 'w'}`;
+                            
+                            if (isAuflage) {
+                              if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
+                              if (age <= 50) return 'Senioren 0';
+                              if (age <= 60) return 'Senioren I';
+                              if (age <= 65) return 'Senioren II';
+                              if (age <= 70) return 'Senioren III';
+                              if (age <= 75) return 'Senioren IV';
+                              if (age <= 80) return 'Senioren V';
+                              return 'Senioren VI';
+                            } else {
+                              if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
+                              if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;
+                              if (age <= 60) return `${isMale ? 'Herren' : 'Damen'} III`;
+                              if (age <= 70) return `${isMale ? 'Herren' : 'Damen'} IV`;
+                              return `${isMale ? 'Herren' : 'Damen'} V`;
+                            }
+                          })()
+                          }
                         </span>
                       </td>
                       <td className="p-2">
