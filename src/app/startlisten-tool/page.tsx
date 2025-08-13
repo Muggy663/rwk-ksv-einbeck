@@ -378,12 +378,20 @@ export default function StartlistenToolPage() {
       }
 
       // Lade alle benötigten Daten aus Firebase
-      const [schuetzenSnapshot, meldungenSnapshot, disziplinenSnapshot, meytonKlassenSnapshot] = await Promise.all([
+      const [schuetzenSnapshot, meldungenSnapshot, disziplinenSnapshot] = await Promise.all([
         getDocs(collection(db, 'shooters')),
         getDocs(collection(db, 'km_meldungen')),
-        getDocs(collection(db, 'km_disziplinen')),
-        getDocs(collection(db, 'meyton_klassen'))
+        getDocs(collection(db, 'km_disziplinen'))
       ]);
+      
+      // Versuche Meyton-Klassen zu laden, falls vorhanden
+      let meytonKlassenSnapshot;
+      try {
+        meytonKlassenSnapshot = await getDocs(collection(db, 'meyton_klassen'));
+      } catch (error) {
+        console.warn('Meyton-Klassen Collection nicht gefunden, verwende Fallback-Mapping');
+        meytonKlassenSnapshot = { docs: [] };
+      }
       
       // Schützen-Map
       const schuetzenMap = {};
@@ -418,17 +426,29 @@ export default function StartlistenToolPage() {
         };
       });
       
-      // Meyton-Klassen-Map
+      // Meyton-Klassen-Map (mit Fallback auf MeytonMappingService)
       const meytonKlassenMap = {};
-      meytonKlassenSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        meytonKlassenMap[data.klassenName] = {
-          id: data.klassenId,
-          minAlter: data.minAlter,
-          maxAlter: data.maxAlter,
-          geschlecht: data.geschlecht
-        };
-      });
+      if (meytonKlassenSnapshot.docs.length > 0) {
+        meytonKlassenSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          meytonKlassenMap[data.klassenName] = {
+            id: data.klassenId,
+            minAlter: data.minAlter,
+            maxAlter: data.maxAlter,
+            geschlecht: data.geschlecht
+          };
+        });
+      } else {
+        // Fallback: Verwende MeytonMappingService
+        MeytonMappingService.KLASSEN.forEach(klasse => {
+          meytonKlassenMap[klasse.name] = {
+            id: klasse.id,
+            minAlter: klasse.minAlter,
+            maxAlter: klasse.maxAlter,
+            geschlecht: klasse.geschlecht
+          };
+        });
+      }
 
       // Konvertiere Startliste zu David21 Format mit echten Daten
       const david21Entries = startliste.map((starter, index) => {
@@ -541,15 +561,17 @@ export default function StartlistenToolPage() {
         'TXT'
       );
 
-      // Download TXT Datei (Meyton Format)
+      // Download TXT Datei (Meyton Format) - ZUERST
       David21Service.downloadFile(txtContent, baseFilename, 'text/plain');
       
-      // Download CTL Datei
-      David21Service.downloadFile(
-        ctlContent, 
-        baseFilename.replace('.TXT', '.CTL'), 
-        'text/plain'
-      );
+      // Download CTL Datei mit Verzögerung
+      setTimeout(() => {
+        David21Service.downloadFile(
+          ctlContent, 
+          baseFilename.replace('.TXT', '.CTL'), 
+          'text/plain'
+        );
+      }, 500);
       
       toast({ 
         title: '📤 Meyton Export', 
@@ -568,36 +590,125 @@ export default function StartlistenToolPage() {
       const { default: autoTable } = await import('jspdf-autotable');
       
       const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
+      
+      // Header mit Logo-Platz
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Kreismeisterschaft 2026', pageWidth / 2, 25, { align: 'center' });
       
       doc.setFontSize(16);
-      doc.text('Startliste Kreismeisterschaft', 20, 20);
-      doc.setFontSize(12);
-      doc.text(`Datum: ${new Date(config?.startDatum || '').toLocaleDateString('de-DE')}`, 20, 30);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Kreisschützenverband Einbeck e.V.', pageWidth / 2, 35, { align: 'center' });
       
-      const tableData = startliste.map((s, index) => [
-        (index + 1).toString(),
-        s.name,
-        s.verein,
-        s.altersklasse,
-        `Stand ${s.stand}`,
-        s.startzeit || '',
-        `DG ${s.durchgang}`,
-        s.hinweise || ''
-      ]);
-      
-      autoTable(doc, {
-        startY: 40,
-        head: [['#', 'Name', 'Verein', 'Klasse', 'Stand', 'Zeit', 'DG', 'Hinweis']],
-        body: tableData,
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [66, 139, 202] },
-        margin: { left: 20, right: 20 }
+      // Wettkampf-Details
+      const datum = new Date(config?.startDatum || '').toLocaleDateString('de-DE', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       });
       
-      const fileName = `Startliste_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.setFontSize(12);
+      doc.text(`Datum: ${datum}`, 20, 55);
+      doc.text(`Beginn: ${config?.startUhrzeit || ''} Uhr`, 20, 65);
+      doc.text(`Disziplinen: ${config?.disziplinen?.join(', ') || ''}`, 20, 75);
+      doc.text(`Teilnehmer: ${startliste.length}`, pageWidth - 20, 55, { align: 'right' });
+      doc.text(`Stände: ${config?.verfuegbareStaende?.join(', ') || ''}`, pageWidth - 20, 65, { align: 'right' });
+      
+      // Gruppiere nach Disziplinen
+      const nachDisziplin = startliste.reduce((acc, starter) => {
+        if (!acc[starter.disziplin]) acc[starter.disziplin] = [];
+        acc[starter.disziplin].push(starter);
+        return acc;
+      }, {} as {[key: string]: typeof startliste});
+      
+      let currentY = 90;
+      
+      Object.entries(nachDisziplin).forEach(([disziplin, starter], disziplinIndex) => {
+        // Neue Seite für jede Disziplin (außer der ersten)
+        if (disziplinIndex > 0) {
+          doc.addPage();
+          currentY = 30;
+        }
+        
+        // Disziplin-Überschrift
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(disziplin, 20, currentY);
+        currentY += 15;
+        
+        // Sortiere Starter nach Startzeit und Stand
+        const sortierteStarter = starter.sort((a, b) => {
+          if (a.startzeit !== b.startzeit) return (a.startzeit || '').localeCompare(b.startzeit || '');
+          return parseInt(a.stand || '0') - parseInt(b.stand || '0');
+        });
+        
+        const tableData = sortierteStarter.map((s, index) => [
+          (index + 1).toString(),
+          s.name,
+          s.verein,
+          s.altersklasse,
+          `Stand ${s.stand}`,
+          s.startzeit || '',
+          s.hinweise || ''
+        ]);
+        
+        autoTable(doc, {
+          startY: currentY,
+          head: [['Nr.', 'Name', 'Verein', 'Altersklasse', 'Stand', 'Startzeit', 'Hinweise']],
+          body: tableData,
+          styles: { 
+            fontSize: 9,
+            cellPadding: 3
+          },
+          headStyles: { 
+            fillColor: [41, 128, 185],
+            textColor: 255,
+            fontStyle: 'bold'
+          },
+          alternateRowStyles: {
+            fillColor: [245, 245, 245]
+          },
+          margin: { left: 20, right: 20 },
+          columnStyles: {
+            0: { cellWidth: 15 },
+            1: { cellWidth: 45 },
+            2: { cellWidth: 35 },
+            3: { cellWidth: 30 },
+            4: { cellWidth: 20 },
+            5: { cellWidth: 25 },
+            6: { cellWidth: 30 }
+          }
+        });
+        
+        currentY = (doc as any).lastAutoTable.finalY + 20;
+      });
+      
+      // Footer auf jeder Seite
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text(
+          `Erstellt am ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE')} - RWK Einbeck App v0.11.4`,
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: 'center' }
+        );
+        doc.text(`Seite ${i} von ${totalPages}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
+      }
+      
+      const fileName = `Startliste_KM_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
       
-      toast({ title: 'PDF erstellt', description: `${fileName} wurde heruntergeladen.` });
+      toast({ 
+        title: '📄 PDF erstellt', 
+        description: `${fileName} wurde heruntergeladen (${startliste.length} Teilnehmer).`,
+        duration: 4000
+      });
     } catch (error) {
       console.error('PDF-Export Fehler:', error);
       toast({ title: 'Fehler', description: 'PDF konnte nicht erstellt werden.', variant: 'destructive' });
@@ -627,13 +738,18 @@ export default function StartlistenToolPage() {
         </div>
       </div>
 
-      {/* KI-Analyse Panel */}
-      {showKiPanel && kiAnalyse && (
-        <Card className="mb-6">
+      {/* KI-Analyse Panel - Automatisch anzeigen bei Problemen */}
+      {kiAnalyse && (kiAnalyse.score < 100 || showKiPanel) && (
+        <Card className={`mb-6 ${kiAnalyse.score < 80 ? 'border-red-300 bg-red-50' : kiAnalyse.score < 95 ? 'border-yellow-300 bg-yellow-50' : 'border-green-300 bg-green-50'}`}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className={`flex items-center gap-2 ${kiAnalyse.score < 80 ? 'text-red-700' : kiAnalyse.score < 95 ? 'text-yellow-700' : 'text-green-700'}`}>
               <Brain className="h-5 w-5" />
               KI-Analyse - Qualität: {kiAnalyse.score}%
+              {kiAnalyse.score < 100 && (
+                <span className="text-sm font-normal">
+                  ({kiAnalyse.konflikte.length} Konflikte, {kiAnalyse.empfehlungen.length} Empfehlungen)
+                </span>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -741,11 +857,14 @@ export default function StartlistenToolPage() {
                     Speichern
                   </Button>
                   <Button 
-                    variant={kiAnalyse?.score && kiAnalyse.score < 80 ? "destructive" : "secondary"}
+                    variant={kiAnalyse?.score && kiAnalyse.score < 80 ? "destructive" : kiAnalyse?.score && kiAnalyse.score < 95 ? "default" : "secondary"}
                     onClick={() => setShowKiPanel(!showKiPanel)}
                   >
                     <Brain className="h-4 w-4 mr-2" />
                     KI-Analyse ({kiAnalyse?.score || 0}%)
+                    {kiAnalyse && kiAnalyse.score < 100 && (
+                      <span className="ml-1 text-xs">⚠️</span>
+                    )}
                   </Button>
                   <Button variant="outline" onClick={handleKiReanalyse}>
                     <Brain className="h-4 w-4 mr-2" />
@@ -753,7 +872,7 @@ export default function StartlistenToolPage() {
                   </Button>
                   <Button variant="outline" onClick={exportToPDF} disabled={startliste.length === 0}>
                     <Download className="h-4 w-4 mr-2" />
-                    PDF Export
+                    📄 Startlisten-PDF
                   </Button>
                   <Button variant="outline" onClick={exportToDavid21} disabled={startliste.length === 0}>
                     <Upload className="h-4 w-4 mr-2" />
@@ -839,7 +958,16 @@ export default function StartlistenToolPage() {
                           s.id !== starter.id && s.stand === starter.stand && s.startzeit === starter.startzeit
                         ).length > 0;
                         
-                        const bgColor = gleicheZeitStand ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200';
+                        // Prüfe Gewehr-Sharing Konflikte
+                        const gewehrSharingKonflikt = starter.hinweise?.includes('Gewehr geteilt') && 
+                          startliste.filter(s => 
+                            s.id !== starter.id && 
+                            s.hinweise?.includes('Gewehr geteilt') && 
+                            s.stand === starter.stand && 
+                            s.startzeit === starter.startzeit
+                          ).length > 0;
+                        
+                        const bgColor = (gleicheZeitStand || gewehrSharingKonflikt) ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200';
                         
                         return (
                           <div key={starter.id} className={`grid grid-cols-12 gap-2 p-2 ${bgColor} rounded text-sm items-center`}>
@@ -887,9 +1015,10 @@ export default function StartlistenToolPage() {
                                 <div className="text-xs text-blue-600">{starter.anmerkung}</div>
                               )}
                             </div>
-                            {gleicheZeitStand && (
+                            {(gleicheZeitStand || gewehrSharingKonflikt) && (
                               <div className="col-span-12 text-xs text-red-600 font-medium mt-1">
-                                ⚠️ Konflikt: Gleicher Stand zur gleichen Zeit
+                                ⚠️ Konflikt: {gleicheZeitStand ? 'Gleicher Stand zur gleichen Zeit' : ''}
+                                {gewehrSharingKonflikt ? 'Gewehr-Sharing zur gleichen Zeit nicht möglich' : ''}
                               </div>
                             )}
                           </div>

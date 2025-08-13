@@ -214,15 +214,24 @@ export default function KMUebersicht() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {data.disziplinen.slice(0, 5).map((disziplin: any) => {
-                const count = data.meldungen.filter((m: any) => m.disziplinId === disziplin.id).length;
-                return (
+              {data.disziplinen
+                .map((disziplin: any) => ({
+                  ...disziplin,
+                  count: data.meldungen.filter((m: any) => m.disziplinId === disziplin.id).length
+                }))
+                .filter((disziplin: any) => disziplin.count > 0)
+                .slice(0, 10)
+                .map((disziplin: any) => (
                   <div key={disziplin.id} className="flex justify-between">
                     <span className="text-sm">{disziplin.spoNummer} - {disziplin.name}</span>
-                    <span className="font-medium">{count}</span>
+                    <span className="font-medium">{disziplin.count}</span>
                   </div>
-                );
-              })}
+                ))}
+              {data.disziplinen.filter((d: any) => 
+                data.meldungen.filter((m: any) => m.disziplinId === d.id).length > 0
+              ).length === 0 && (
+                <p className="text-sm text-gray-500">Noch keine Meldungen vorhanden</p>
+              )}
             </div>
           </CardContent>
         </Card>

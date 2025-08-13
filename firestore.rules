@@ -281,6 +281,12 @@ match /users/{userId} {
       allow read, write: if true;
     }
 
+    // Meyton-Klassen für Export
+    match /meyton_klassen/{document} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+    
     // Fallback-Regel: Alles andere verbieten
     match /{document=**} {
       allow read, write: if false;

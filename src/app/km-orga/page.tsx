@@ -192,7 +192,7 @@ export default function KMAdminDashboard() {
           <CardContent>
             <div className="space-y-3">
               <Link href="/km-orga/meldungen">
-                <Button className="w-full">📄 Alle Meldungen (4)</Button>
+                <Button className="w-full">📄 Alle Meldungen</Button>
               </Link>
               <Link href="/km-orga/vm-uebersicht">
                 <Button variant="outline" className="w-full">🏆 VM-Ergebnisse prüfen</Button>
@@ -223,7 +223,7 @@ export default function KMAdminDashboard() {
               </Link>
               <Link href="/km-orga/startlisten/uebersicht">
                 <Button variant="outline" className="w-full">
-                  📁 Gespeicherte Startlisten (1)
+                  📁 Gespeicherte Startlisten
                 </Button>
               </Link>
               <div className="text-xs text-green-700 bg-green-100 p-2 rounded">
