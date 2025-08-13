@@ -101,13 +101,12 @@ export default function StartlistenToolPage() {
           const data = doc.data();
           const schuetze = schuetzen[data.schuetzeId];
           const disziplinName = disziplinen[data.disziplinId];
-          const disziplinData = Object.values(disziplinen).find(d => d.name === disziplinName);
           
-          // Altersklasse korrekt berechnen
+          // Berechne Altersklasse wie in KM-Meldungen Seite
           let altersklasse = 'Unbekannt';
           if (schuetze?.birthYear) {
             const age = (configData.saison || 2026) - schuetze.birthYear;
-            const isAuflage = disziplinData?.name?.toLowerCase().includes('auflage');
+            const isAuflage = disziplinName?.toLowerCase().includes('auflage');
             const isMale = schuetze.gender === 'male';
             
             if (age <= 14) altersklasse = 'Schüler';
@@ -206,10 +205,13 @@ export default function StartlistenToolPage() {
       return acc;
     }, {} as {[key: string]: Starter[]});
 
-    Object.values(nachDisziplin).forEach(starter => {
+    Object.entries(nachDisziplin).forEach(([disziplinName, starter]) => {
       const sortiertStarter = starter.sort((a, b) => a.name.localeCompare(b.name));
       
+      // Jede Disziplin startet mit Stand 0 und eigener Zeit
       let standIndex = 0;
+      let disziplinStartzeit = currentTime;
+      let disziplinDurchgang = durchgang;
       
       // Finde Gewehr-Sharing-Paare (verbesserte Erkennung)
       const gewehrSharing = new Map<string, string[]>();
@@ -272,6 +274,16 @@ export default function StartlistenToolPage() {
           });
           
           standIndex = (standIndex + 1) % staendeAnzahl;
+          
+          // Berechne neue Startzeit wenn alle Stände belegt sind (nach Gewehr-Sharing)
+          if (standIndex === 0) {
+            const [hours, minutes] = disziplinStartzeit.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes + config.durchgangsDauer + config.wechselzeit;
+            const newHours = Math.floor(totalMinutes / 60);
+            const newMinutes = totalMinutes % 60;
+            disziplinStartzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
+            disziplinDurchgang++;
+          }
         } else {
           // Einzelschütze
           const einzelStarter = gruppe[0];
@@ -285,12 +297,22 @@ export default function StartlistenToolPage() {
           startlisteEntries.push({
             ...einzelStarter,
             stand: config.verfuegbareStaende[standIndex],
-            startzeit: currentTime,
-            durchgang,
+            startzeit: disziplinStartzeit,
+            durchgang: disziplinDurchgang,
             hinweise
           });
 
           standIndex = (standIndex + 1) % staendeAnzahl;
+          
+          // Berechne neue Startzeit wenn alle Stände belegt sind
+          if (standIndex === 0) {
+            const [hours, minutes] = disziplinStartzeit.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes + config.durchgangsDauer + config.wechselzeit;
+            const newHours = Math.floor(totalMinutes / 60);
+            const newMinutes = totalMinutes % 60;
+            disziplinStartzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
+            disziplinDurchgang++;
+          }
         }
       });
     });
@@ -699,7 +721,9 @@ export default function StartlistenToolPage() {
           
           doc.setFontSize(10);
           doc.setFont('helvetica', 'normal');
-          doc.text(`Start ${globalStartNummer} am: ${datum} um ${startzeit} Uhr im Schützenhaus der ESG Einbeck`, 20, currentY);
+          const austragungsVerein = vereine.find(v => v.id === config.austragungsort);
+          const austragungsort = austragungsVerein ? austragungsVerein.name : 'ESG Einbeck';
+          doc.text(`Start ${globalStartNummer} am: ${datum} um ${startzeit} Uhr im Schützenhaus ${austragungsort}`, 20, currentY);
           currentY += 7;
           doc.text(`Schießzeit pro Durchgang = ${config?.durchgangsDauer || 50} Minuten`, 20, currentY);
           currentY += 10;
@@ -743,9 +767,10 @@ export default function StartlistenToolPage() {
             }
             const einzelMannschaft = istMannschaft ? 'M' : 'E';
             
-            // LM: Suche ursprüngliche Meldung für lmTeilnahme
+            // LM: Suche ursprüngliche Meldung für lmTeilnahme und Altersklasse
             const originalMeldung = meldungen.find(m => m.name === s.name && m.disziplin === s.disziplin);
             const lmTeilnahme = originalMeldung?.lmTeilnahme === true;
+            const korrekteAltersklasse = originalMeldung?.altersklasse || s.altersklasse;
             
             return [
               s.stand || 'N/A',
@@ -753,7 +778,7 @@ export default function StartlistenToolPage() {
               nachname,
               vorname,
               s.verein,
-              s.altersklasse.split(' ')[0],
+              korrekteAltersklasse,
               einzelMannschaft,
               lmTeilnahme ? 'J' : 'N'
             ];
@@ -869,7 +894,17 @@ export default function StartlistenToolPage() {
                   {kiAnalyse.konflikte.map((konflikt, index) => (
                     <div key={index} className="text-xs p-2 bg-red-50 border border-red-200 rounded">
                       <div className="font-medium">{konflikt.titel}</div>
-                      <div className="text-red-600">{konflikt.beschreibung}</div>
+                      <div className="text-red-600 mb-2">{konflikt.beschreibung}</div>
+                      {konflikt.loesungsvorschlaege && (
+                        <div className="mt-2">
+                          <div className="font-medium text-blue-700 mb-1">💡 Lösungsvorschläge:</div>
+                          <ul className="text-blue-600 space-y-1">
+                            {konflikt.loesungsvorschlaege.map((vorschlag, i) => (
+                              <li key={i} className="text-xs">• {vorschlag}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {kiAnalyse.konflikte.length === 0 && (

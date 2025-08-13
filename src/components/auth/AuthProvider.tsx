@@ -120,8 +120,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           // Fehlerprüfung basierend auf Rolle und clubId
           if (permissionData.role !== 'vereinsvertreter' && permissionData.role !== 'mannschaftsfuehrer') {
             setAppPermissionsError("Benutzer hat keine gültige Rolle (Vereinsvertreter/Mannschaftsführer).");
-          } else if (!permissionData.clubId || typeof permissionData.clubId !== 'string' || permissionData.clubId.trim() === '') {
-            // Angepasst für eine einzelne clubId
+          } else if ((!permissionData.clubId || typeof permissionData.clubId !== 'string' || permissionData.clubId.trim() === '') && 
+                     (!permissionData.clubIds || !Array.isArray(permissionData.clubIds) || permissionData.clubIds.length === 0)) {
+            // Prüfe sowohl clubId (singular) als auch clubIds (plural)
             setAppPermissionsError("Benutzer ist keinem gültigen Verein zugewiesen.");
           }
         } else {

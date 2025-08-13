@@ -20,7 +20,20 @@ export function useKMAuth() {
   );
 
   const userRole = user?.email === 'admin@rwk-einbeck.de' ? 'admin' : userAppPermissions?.role || '';
-  const userClubIds = userAppPermissions?.clubId ? [userAppPermissions.clubId] : [];
+  
+  // Für km_organisator: Alle Vereine, für vereinsvertreter: Nur zugewiesene
+  let userClubIds = [];
+  if (userRole === 'admin' || userRole === 'km_organisator') {
+    // Admin und KM-Organisator sehen alle Vereine - keine Filterung
+    userClubIds = [];
+  } else {
+    // Vereinsvertreter: Verwende representedClubs, clubIds oder clubId
+    userClubIds = userAppPermissions?.representedClubs || 
+                  userAppPermissions?.clubIds || 
+                  (userAppPermissions?.clubId ? [userAppPermissions.clubId] : []);
+  }
+  
+
 
   return {
     hasKMAccess,

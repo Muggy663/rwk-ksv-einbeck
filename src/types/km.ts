@@ -82,7 +82,8 @@ export function calculateKMWettkampfklasse(
   birthYear: number, 
   gender: 'male' | 'female', 
   saison: number = 2026,
-  auflage: boolean = false
+  auflage: boolean = false,
+  spoNummer?: string
 ): string {
   // Sportjahr = Kalenderjahr - Alter im Sportjahr ist entscheidend
   const age = saison - birthYear;
@@ -103,6 +104,15 @@ export function calculateKMWettkampfklasse(
   
   // Auflage-Wettkampfklassen - NUR für Schüler und ab Senioren 0
   if (age <= 14) return 'Schüler' + suffix; // Schüler dürfen Auflage
+  
+  // Ausnahme für Disziplin 1.41 (KK-Gewehr Auflage 50m) - kreisintern dürfen alle Altersklassen teilnehmen
+  if (spoNummer === '1.41' && age >= 15 && age <= 40) {
+    if (age <= 16) return 'Jugend' + suffix;
+    if (age <= 18) return 'Junioren II' + suffix;
+    if (age <= 20) return 'Junioren I' + suffix;
+    return (gender === 'male' ? 'Herren' : 'Damen') + ' I';
+  }
+  
   if (age <= 40) return 'NICHT STARTBERECHTIGT - Auflage erst ab 41 Jahren';
   
   // Ab 41 Jahren: Senioren-Klassen für Auflage

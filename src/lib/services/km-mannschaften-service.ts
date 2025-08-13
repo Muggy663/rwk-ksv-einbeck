@@ -54,22 +54,46 @@ export async function generateMannschaftenForVerein(
     const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
     if (!schuetze || !schuetze.birthYear || !schuetze.gender) continue;
     
+    // Ermittle ob es eine Auflage-Disziplin ist
+    const disziplinenSnapshot = await getDocs(collection(db, 'km_disziplinen'));
+    const disziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const disziplin = disziplinen.find(d => d.id === disziplinId);
+    const istAuflage = disziplin?.auflage || false;
+    const spoNummer = disziplin?.spoNummer;
+    
     const wettkampfklasse = calculateKMWettkampfklasse(
       schuetze.birthYear, 
       schuetze.gender as 'male' | 'female', 
-      2026
+      2026,
+      istAuflage,
+      spoNummer
     );
     
     // Finde passende Regel für diese Wettkampfklasse
     let gruppenKey = wettkampfklasse;
     
     // Spezielle Gruppierungen für gemischte Senioren
-    if (wettkampfklasse.includes('Senioren I') || wettkampfklasse.includes('Senioren II')) {
-      gruppenKey = 'Senioren_I_II';
-    } else if (wettkampfklasse.includes('Senioren III') || wettkampfklasse.includes('Senioren IV') || 
-               wettkampfklasse.includes('Senioren V') || wettkampfklasse.includes('Senioren VI')) {
-      gruppenKey = 'Senioren_III_VI';
-    } else if (wettkampfklasse.includes('Schüler')) {
+    if (istAuflage) {
+      // Auflage: Senioren-Klassen getrennt behandeln
+      if (wettkampfklasse.includes('Senioren 0')) {
+        gruppenKey = 'Senioren_0';
+      } else if (wettkampfklasse.includes('Senioren I') || wettkampfklasse.includes('Senioren II')) {
+        gruppenKey = 'Senioren_I_II';
+      } else if (wettkampfklasse.includes('Senioren III') || wettkampfklasse.includes('Senioren IV') || 
+                 wettkampfklasse.includes('Senioren V') || wettkampfklasse.includes('Senioren VI')) {
+        gruppenKey = 'Senioren_III_VI';
+      }
+    } else {
+      // Freihand: Standard-Gruppierung
+      if (wettkampfklasse.includes('Senioren I') || wettkampfklasse.includes('Senioren II')) {
+        gruppenKey = 'Senioren_I_II';
+      } else if (wettkampfklasse.includes('Senioren III') || wettkampfklasse.includes('Senioren IV') || 
+                 wettkampfklasse.includes('Senioren V') || wettkampfklasse.includes('Senioren VI')) {
+        gruppenKey = 'Senioren_III_VI';
+      }
+    }
+    
+    if (wettkampfklasse.includes('Schüler')) {
       gruppenKey = 'Schueler';
     } else if (wettkampfklasse.includes('Jugend')) {
       gruppenKey = 'Jugend';

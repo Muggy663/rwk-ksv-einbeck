@@ -27,6 +27,8 @@ export default function KMMitglieder() {
   const [currentShooter, setCurrentShooter] = useState<any>(null);
   const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedClubId, setSelectedClubId] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (hasKMAccess && !authLoading) {
@@ -36,13 +38,6 @@ export default function KMMitglieder() {
 
   const loadSchuetzen = async () => {
     try {
-      const clubId = userClubIds[0];
-      if (!clubId) {
-        setSchuetzen([]);
-        setLoading(false);
-        return;
-      }
-
       // Lade Schützen und Vereine parallel
       const [shootersSnapshot, clubsSnapshot] = await Promise.all([
         getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
@@ -61,10 +56,12 @@ export default function KMMitglieder() {
 
       setClubs(allClubs);
 
-      // Client-seitige Filterung nach Verein
-      const vereinsSchuetzen = allSchuetzen.filter(s => 
-        s.clubId === clubId || s.kmClubId === clubId
-      );
+      // Client-seitige Filterung nach ALLEN berechtigten Vereinen
+      const vereinsSchuetzen = userClubIds.length === 0 
+        ? allSchuetzen // Admin/KM-Organisator sieht alle
+        : allSchuetzen.filter(s => 
+            userClubIds.includes(s.clubId) || userClubIds.includes(s.kmClubId)
+          );
 
       setSchuetzen(vereinsSchuetzen);
     } catch (error) {
@@ -116,11 +113,10 @@ export default function KMMitglieder() {
   });
 
   const handleAddNew = () => {
-    const clubId = userClubIds[0];
     setCurrentShooter({
       firstName: '',
       lastName: '',
-      clubId: clubId,
+      clubId: userClubIds[0] || '', // Standard: erster Verein
       gender: 'male',
       birthYear: '',
       teamIds: []
@@ -224,16 +220,51 @@ export default function KMMitglieder() {
             </Button>
           </Link>
         </div>
-        <h1 className="text-3xl font-bold text-primary">👥 KM-Mitglieder</h1>
-        <p className="text-muted-foreground">
-          Übersicht aller registrierten KM-Schützen
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">👥 KM-Mitglieder</h1>
+            <p className="text-muted-foreground">
+              Übersicht aller registrierten KM-Schützen
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Suchen:</label>
+              <Input
+                type="text"
+                placeholder="Name suchen..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-48"
+              />
+            </div>
+            {userClubIds.length > 1 && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Verein:</label>
+                <select 
+                  value={selectedClubId} 
+                  onChange={(e) => setSelectedClubId(e.target.value)}
+                  className="border rounded px-3 py-1"
+                >
+                  <option value="">Alle Vereine</option>
+                  {userClubIds.map(clubId => {
+                    const club = clubs.find(c => c.id === clubId);
+                    return club ? (
+                      <option key={club.id} value={club.id}>{club.name}</option>
+                    ) : null;
+                  })}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>Alle KM-Schützen ({sortedSchuetzen.length})</CardTitle>
+            <CardTitle>Alle KM-Schützen ({sortedSchuetzen.filter(s => !selectedClubId || (s.clubId || s.kmClubId) === selectedClubId).filter(s => !searchTerm || `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase().includes(searchTerm.toLowerCase())).length})</CardTitle>
             <Button onClick={handleAddNew}>
               <PlusCircle className="h-4 w-4 mr-2" />
               Neuen Schützen anlegen
@@ -277,7 +308,14 @@ export default function KMMitglieder() {
                 </tr>
               </thead>
               <tbody>
-                {sortedSchuetzen.map(schuetze => (
+                {sortedSchuetzen
+                  .filter(schuetze => !selectedClubId || (schuetze.clubId || schuetze.kmClubId) === selectedClubId)
+                  .filter(schuetze => {
+                    if (!searchTerm) return true;
+                    const fullName = `${schuetze.firstName || ''} ${schuetze.lastName || ''}`.toLowerCase();
+                    return fullName.includes(searchTerm.toLowerCase());
+                  })
+                  .map(schuetze => (
                   <tr key={schuetze.id} className="border-b hover:bg-gray-50">
                     <td className="p-2">{schuetze.firstName || '-'}</td>
                     <td className="p-2 font-medium">{schuetze.lastName || '-'}</td>
@@ -362,7 +400,7 @@ export default function KMMitglieder() {
 
 
 
-          {sortedSchuetzen.length === 0 && (
+          {sortedSchuetzen.filter(s => !selectedClubId || (s.clubId || s.kmClubId) === selectedClubId).filter(s => !searchTerm || `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
             <div className="text-center py-8 text-gray-500">
               Keine KM-Schützen gefunden
             </div>
@@ -395,6 +433,19 @@ export default function KMMitglieder() {
                   required
                 />
               </div>
+            </div>
+            <div>
+              <Label htmlFor="clubId">Verein</Label>
+              <Select value={currentShooter?.clubId || ''} onValueChange={(value) => setCurrentShooter(prev => ({ ...prev, clubId: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Verein auswählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clubs.map(club => (
+                    <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

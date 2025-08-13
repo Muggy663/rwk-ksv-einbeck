@@ -15,6 +15,7 @@ export interface UserPermission {
   displayName?: string;
   role: 'vereinsvertreter' | 'mannschaftsfuehrer' | null;
   clubId: string | null;
+  clubIds?: string[]; // Für mehrere Vereine
 }
 
 export interface AuthContextType {

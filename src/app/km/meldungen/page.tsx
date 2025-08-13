@@ -9,12 +9,17 @@ import Link from 'next/link';
 import type { Shooter, KMDisziplin, KMMeldung } from '@/types';
 import { getStartVereinForDisziplin } from '@/lib/services/km-startrechte-service';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { useAuthContext } from '@/components/auth/AuthContext';
 
 export default function KMMeldungen() {
   const { toast } = useToast();
   const { userClubIds, isMultiClub } = useKMAuth();
+  const { user } = useAuthContext();
+  const [meldeModus, setMeldeModus] = useState<'schuetze-disziplinen' | 'disziplin-schuetzen'>('schuetze-disziplinen');
   const [selectedSchuetze, setSelectedSchuetze] = useState('');
+  const [selectedSchuetzen, setSelectedSchuetzen] = useState<string[]>([]);
   const [selectedDisziplinen, setSelectedDisziplinen] = useState<string[]>([]);
+  const [selectedDisziplin, setSelectedDisziplin] = useState('');
   const [selectedClub, setSelectedClub] = useState('');
   const [schuetzenSuche, setSchuetzenSuche] = useState('');
   const [lmTeilnahme, setLmTeilnahme] = useState<{[key: string]: boolean}>({});
@@ -159,22 +164,31 @@ export default function KMMeldungen() {
   };
   
   const handleBulkSubmit = async () => {
-    if (pendingMeldungen.length === 0) return;
+    console.log('handleBulkSubmit called, pending:', pendingMeldungen.length);
+    if (pendingMeldungen.length === 0) {
+      console.log('No pending meldungen, returning');
+      return;
+    }
     
+    console.log('Starting bulk submit...');
     setIsSubmitting(true);
     try {
-      const promises = pendingMeldungen.map(meldung => 
-        fetch('/api/km/meldungen', {
+      console.log('Creating promises for', pendingMeldungen.length, 'meldungen');
+      const promises = pendingMeldungen.map((meldung, index) => {
+        console.log(`Creating promise ${index + 1}:`, meldung);
+        return fetch('/api/km/meldungen', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...meldung,
-            gemeldeteVon: 'current-user'
-          })
-        })
-      );
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${JSON.stringify({ email: user?.email, displayName: user?.displayName })}`
+          },
+          body: JSON.stringify(meldung)
+        });
+      });
       
+      console.log('Waiting for all promises...');
       const results = await Promise.all(promises);
+      console.log('All promises resolved:', results.length);
       const successful = results.filter(r => r.ok).length;
       
       if (successful === pendingMeldungen.length) {
@@ -188,8 +202,10 @@ export default function KMMeldungen() {
         toast({ title: 'Teilweise Fehler', description: `${successful}/${pendingMeldungen.length} Meldungen gespeichert`, variant: 'destructive' });
       }
     } catch (error) {
+      console.error('Bulk submit error:', error);
       toast({ title: 'Fehler', description: 'Speichern fehlgeschlagen', variant: 'destructive' });
     } finally {
+      console.log('Bulk submit finished, setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
@@ -220,7 +236,10 @@ export default function KMMeldungen() {
         const vmData = vmErgebnisse[selectedDisziplinen[0]];
         const response = await fetch(`/api/km/meldungen/${editingMeldung.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${JSON.stringify({ email: user?.email, displayName: user?.displayName })}`
+          },
           body: JSON.stringify({
             lmTeilnahme: lmTeilnahme[selectedDisziplinen[0]] || false,
             anmerkung,
@@ -247,13 +266,15 @@ export default function KMMeldungen() {
           const vmData = vmErgebnisse[disziplinId];
           return fetch('/api/km/meldungen', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${JSON.stringify({ email: user?.email, displayName: user?.displayName })}`
+            },
             body: JSON.stringify({
               schuetzeId: selectedSchuetze,
               disziplinId,
               lmTeilnahme: lmTeilnahme[disziplinId] || false,
               anmerkung,
-              gemeldeteVon: 'current-user',
               vmErgebnis: vmData?.ringe ? {
                 ringe: parseFloat(vmData.ringe),
                 datum: new Date(vmData.datum || Date.now()),
@@ -291,7 +312,7 @@ export default function KMMeldungen() {
     }
   };
 
-  const getWettkampfklasse = (schuetze: Shooter, auflage: boolean = false) => {
+  const getWettkampfklasse = (schuetze: Shooter, auflage: boolean = false, spoNummer?: string) => {
     if (!schuetze.birthYear || !schuetze.gender) {
       return 'Daten unvollständig - bitte nachtragen';
     }
@@ -303,6 +324,15 @@ export default function KMMeldungen() {
     if (auflage) {
       // Auflage: Schüler und Senioren-Klassen
       if (age >= 12 && age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
+      
+      // Ausnahme für Disziplin 1.41 - kreisintern dürfen alle Altersklassen teilnehmen
+      if (spoNummer === '1.41' && age >= 15 && age <= 40) {
+        if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
+        if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+        if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+        return gender === 'male' ? 'Herren I' : 'Damen I';
+      }
+      
       if (age < 41) return 'Nicht teilnahmeberechtigt';
       if (age <= 50) return 'Senioren 0'; // 41-50 gemischt
       if (age <= 60) return gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
@@ -354,9 +384,45 @@ export default function KMMeldungen() {
           <Card>
             <CardHeader>
               <CardTitle>Meldungsformular</CardTitle>
-              <CardDescription>Wählen Sie einen Schützen und die gewünschten Disziplinen</CardDescription>
+              <CardDescription>
+                {meldeModus === 'schuetze-disziplinen' 
+                  ? 'Wählen Sie einen Schützen und die gewünschten Disziplinen'
+                  : 'Wählen Sie eine Disziplin und die gewünschten Schützen'
+                }
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Melde-Modus Tabs */}
+              <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <button
+                  onClick={() => {
+                    setMeldeModus('schuetze-disziplinen');
+                    setSelectedSchuetzen([]);
+                    setSelectedDisziplin('');
+                  }}
+                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    meldeModus === 'schuetze-disziplinen'
+                      ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+                >
+                  👤 Schütze → Disziplinen
+                </button>
+                <button
+                  onClick={() => {
+                    setMeldeModus('disziplin-schuetzen');
+                    setSelectedSchuetze('');
+                    setSelectedDisziplinen([]);
+                  }}
+                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    meldeModus === 'disziplin-schuetzen'
+                      ? 'bg-white dark:bg-gray-700 text-primary shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+                >
+                  🎯 Disziplin → Schützen
+                </button>
+              </div>
               {/* Vereinsfilter */}
               <div>
                 <label className="block text-sm font-medium mb-2">Verein filtern (optional)</label>
@@ -364,13 +430,13 @@ export default function KMMeldungen() {
                   value={selectedClub} 
                   onChange={(e) => {
                     setSelectedClub(e.target.value);
-                    setSelectedSchuetze(''); // Reset Schützen-Auswahl
+                    setSelectedSchuetze('');
+                    setSelectedSchuetzen([]);
                   }}
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 >
-                  <option value="">-- Alle meine Vereine --</option>
-                  {clubs
-                    .filter(club => userClubIds.includes(club.id)) // Nur berechtigte Vereine
+                  <option value="">Alle Vereine</option>
+                  {(userClubIds.length > 0 ? clubs.filter(club => userClubIds.includes(club.id)) : clubs)
                     .map(club => (
                       <option key={club.id} value={club.id}>
                         {club.name}
@@ -379,7 +445,10 @@ export default function KMMeldungen() {
                 </select>
               </div>
 
-              {/* Schützen-Auswahl */}
+              {meldeModus === 'schuetze-disziplinen' ? (
+                <>{/* Bestehender Schütze → Disziplinen Modus */}
+
+                {/* Schützen-Auswahl */}
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Schütze auswählen
@@ -524,7 +593,7 @@ export default function KMMeldungen() {
                       const disziplin = disziplinen.find(d => d.id === disziplinId);
                       if (!schuetze || !disziplin) return null;
                       
-                      const wettkampfklasse = getWettkampfklasse(schuetze, disziplin.auflage);
+                      const wettkampfklasse = getWettkampfklasse(schuetze, disziplin.auflage, disziplin.spoNummer);
                       
                       return (
                         <div key={disziplinId} className="p-3 bg-blue-50 border border-blue-200 rounded">
@@ -538,7 +607,10 @@ export default function KMMeldungen() {
                               </div>
                               {disziplin.auflage && (
                                 <div className="text-xs text-blue-500 mt-1">
-                                  Senioren-Klassen ab 41 Jahren
+                                  {disziplin.spoNummer === '1.41' 
+                                    ? 'Kreisintern: Alle Altersklassen erlaubt (Sonderregelung)'
+                                    : 'Senioren-Klassen ab 41 Jahren'
+                                  }
                                 </div>
                               )}
                             </div>
@@ -699,7 +771,7 @@ export default function KMMeldungen() {
                               <input
                                 type="radio"
                                 name={`lm_${disziplinId}`}
-                                checked={lmTeilnahme[disziplinId] === false}
+                                checked={lmTeilnahme[disziplinId] !== true}
                                 onChange={() => setLmTeilnahme(prev => ({...prev, [disziplinId]: false}))}
                               />
                               <span className="text-purple-900 dark:text-purple-100">Nein</span>
@@ -712,24 +784,320 @@ export default function KMMeldungen() {
                 </div>
               )}
 
-              {/* Gewehr-Sharing */}
-              <div>
-                <label className="block text-sm font-medium mb-2">🔫 Gewehr-Sharing (Optional)</label>
-                <div className="p-3 bg-orange-50 border border-orange-200 rounded mb-3">
-                  <p className="text-sm text-orange-700 mb-2">
-                    Falls mehrere Schützen sich ein Gewehr teilen müssen, geben Sie hier die Details an.
-                  </p>
-                  <div className="text-xs text-orange-600">
-                    Beispiel: "2 Schützen, 1 Gewehr" oder "Max Mustermann und ich teilen uns ein Gewehr"
+                {/* Gewehr-Sharing */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">🔫 Gewehr-Sharing (Optional)</label>
+                  <div className="p-3 bg-orange-50 border border-orange-200 rounded mb-3">
+                    <p className="text-sm text-orange-700 mb-2">
+                      Falls mehrere Schützen sich ein Gewehr teilen müssen, geben Sie hier die Details an.
+                    </p>
+                    <div className="text-xs text-orange-600">
+                      Beispiel: "2 Schützen, 1 Gewehr" oder "Max Mustermann und ich teilen uns ein Gewehr"
+                    </div>
                   </div>
+                  <textarea
+                    value={anmerkung}
+                    onChange={(e) => setAnmerkung(e.target.value)}
+                    placeholder="z.B. 2 Schützen, 1 Gewehr - bitte zeitlich versetzen"
+                    className="w-full p-2 border border-gray-300 rounded h-20"
+                  />
                 </div>
-                <textarea
-                  value={anmerkung}
-                  onChange={(e) => setAnmerkung(e.target.value)}
-                  placeholder="z.B. 2 Schützen, 1 Gewehr - bitte zeitlich versetzen"
-                  className="w-full p-2 border border-gray-300 rounded h-20"
-                />
-              </div>
+                </>
+              ) : (
+                <>{/* Neuer Disziplin → Schützen Modus */}
+                {/* Disziplinen-Auswahl */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Disziplin auswählen</label>
+                  <select 
+                    value={selectedDisziplin} 
+                    onChange={(e) => {
+                      setSelectedDisziplin(e.target.value);
+                      setSelectedSchuetzen([]);
+                    }}
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  >
+                    <option value="">-- Disziplin wählen --</option>
+                    {disziplinen.map(disziplin => (
+                      <option key={disziplin.id} value={disziplin.id}>
+                        {disziplin.spoNummer} - {disziplin.name}
+                        {disziplin.nurVereinsmeisterschaft ? ' (VM)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Mehrfach-Schützen-Auswahl */}
+                {selectedDisziplin && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Schützen auswählen (Mehrfachauswahl)
+                      {selectedClub && (
+                        <span className="text-sm text-gray-500 ml-2">
+                          (gefiltert nach {clubs.find(c => c.id === selectedClub)?.name})
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Schütze suchen..."
+                      value={schuetzenSuche}
+                      onChange={(e) => setSchuetzenSuche(e.target.value)}
+                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 mb-2"
+                    />
+                    <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800">
+                      {schuetzen
+                        .filter(schuetze => {
+                          if (!schuetze.name) return false;
+                          const schuetzeClubIds = [
+                            schuetze.rwkClubId,
+                            schuetze.clubId, 
+                            schuetze.kmClubId,
+                            ...(schuetze.kmStartrechte ? Object.values(schuetze.kmStartrechte) : [])
+                          ].filter(Boolean);
+                          const hasAccess = schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
+                          if (!hasAccess) return false;
+                          if (selectedClub && !schuetzeClubIds.includes(selectedClub)) return false;
+                          if (schuetzenSuche) {
+                            const searchTerm = schuetzenSuche.toLowerCase();
+                            const fullName = schuetze.firstName && schuetze.lastName 
+                              ? `${schuetze.firstName} ${schuetze.lastName}` 
+                              : schuetze.name;
+                            return fullName.toLowerCase().includes(searchTerm);
+                          }
+                          return true;
+                        })
+                        .sort((a, b) => {
+                          const getLastName = (schuetze) => {
+                            if (schuetze.lastName) return schuetze.lastName;
+                            if (schuetze.name) {
+                              const parts = schuetze.name.trim().split(' ');
+                              return parts.length >= 2 ? parts.pop() : schuetze.name;
+                            }
+                            return '';
+                          };
+                          return getLastName(a).localeCompare(getLastName(b));
+                        })
+                        .map(schuetze => {
+                          const club = clubs.find(c => c.id === (schuetze.rwkClubId || schuetze.clubId || schuetze.kmClubId));
+                          const birthYearDisplay = schuetze.birthYear || 'Jahrgang fehlt';
+                          const genderDisplay = schuetze.gender === 'male' ? 'm' : schuetze.gender === 'female' ? 'w' : 'Geschlecht fehlt';
+                          
+                          let displayName;
+                          if (schuetze.firstName && schuetze.lastName) {
+                            displayName = `${schuetze.lastName}, ${schuetze.firstName}`;
+                          } else if (schuetze.name) {
+                            const nameParts = schuetze.name.trim().split(' ');
+                            if (nameParts.length >= 2) {
+                              const lastName = nameParts.pop();
+                              const firstName = nameParts.join(' ');
+                              displayName = `${lastName}, ${firstName}`;
+                            } else {
+                              displayName = schuetze.name;
+                            }
+                          } else {
+                            displayName = 'Unbekannt';
+                          }
+                          
+                          return (
+                            <label key={schuetze.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedSchuetzen.includes(schuetze.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedSchuetzen(prev => [...prev, schuetze.id]);
+                                  } else {
+                                    setSelectedSchuetzen(prev => prev.filter(id => id !== schuetze.id));
+                                  }
+                                }}
+                              />
+                              <span className="text-sm">
+                                {displayName} ({birthYearDisplay}, {genderDisplay}) - {club?.name || 'Verein unbekannt'}
+                              </span>
+                            </label>
+                          );
+                        })}
+                    </div>
+                    {selectedSchuetzen.length > 0 && (
+                      <div className="mt-2 text-sm text-green-600">
+                        {selectedSchuetzen.length} Schützen ausgewählt
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Wettkampfklassen für ausgewählte Schützen */}
+                {selectedDisziplin && selectedSchuetzen.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Wettkampfklassen der ausgewählten Schützen</label>
+                    <div className="space-y-2">
+                      {selectedSchuetzen.map(schuetzeId => {
+                        const schuetze = schuetzen.find(s => s.id === schuetzeId);
+                        const disziplin = disziplinen.find(d => d.id === selectedDisziplin);
+                        if (!schuetze || !disziplin) return null;
+                        
+                        const wettkampfklasse = getWettkampfklasse(schuetze, disziplin.auflage, disziplin.spoNummer);
+                        const displayName = schuetze.firstName && schuetze.lastName 
+                          ? `${schuetze.firstName} ${schuetze.lastName}`
+                          : schuetze.name;
+                        
+                        return (
+                          <div key={schuetzeId} className="p-3 bg-blue-50 border border-blue-200 rounded">
+                            <div className="font-medium text-blue-900">
+                              {displayName}: {wettkampfklasse}
+                            </div>
+                            <div className="text-sm text-blue-600">
+                              {disziplin.name} {disziplin.auflage ? '(Auflage)' : '(Freihand)'}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* VM-Ergebnis pro Schütze */}
+                {selectedDisziplin && selectedSchuetzen.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">VM-Ergebnisse (einzeln pro Schütze)</h4>
+                    <div className="space-y-4">
+                      {selectedSchuetzen.map(schuetzeId => {
+                        const schuetze = schuetzen.find(s => s.id === schuetzeId);
+                        const disziplin = disziplinen.find(d => d.id === selectedDisziplin);
+                        if (!schuetze || !disziplin) return null;
+                        
+                        const displayName = schuetze.firstName && schuetze.lastName 
+                          ? `${schuetze.firstName} ${schuetze.lastName}`
+                          : schuetze.name;
+                        
+                        const vmKey = `${schuetzeId}_${selectedDisziplin}`;
+                        const vmData = vmErgebnisse[vmKey] || { ringe: '', datum: '', bemerkung: '' };
+                        
+                        return (
+                          <div key={schuetzeId} className="p-4 bg-blue-50 border border-blue-200 rounded">
+                            <h5 className="font-medium text-blue-900 mb-2">
+                              {displayName} - {disziplin.name} {disziplin.nurVereinsmeisterschaft ? '(Erforderlich)' : '(Optional)'}
+                            </h5>
+                            <p className="text-sm text-blue-700 mb-3">
+                              {disziplin.nurVereinsmeisterschaft 
+                                ? 'Da diese Disziplin nur durchgemeldet wird, ist das VM-Ergebnis erforderlich.'
+                                : 'VM-Ergebnis als Qualifikation für die Kreismeisterschaft (empfohlen).'}
+                            </p>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-sm font-medium mb-1 text-blue-900 dark:text-blue-100">
+                                  Ringe {disziplin.nurVereinsmeisterschaft && '*'}
+                                </label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="600"
+                                  step="0.1"
+                                  value={vmData.ringe}
+                                  onChange={(e) => setVmErgebnisse(prev => ({
+                                    ...prev,
+                                    [vmKey]: { ...vmData, ringe: e.target.value }
+                                  }))}
+                                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                  placeholder="z.B. 385.7 (mit Nachkommastelle)"
+                                  required={disziplin.nurVereinsmeisterschaft}
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-1 text-blue-900 dark:text-blue-100">
+                                  Datum {disziplin.nurVereinsmeisterschaft && '*'}
+                                </label>
+                                <input
+                                  type="date"
+                                  value={vmData.datum}
+                                  onChange={(e) => setVmErgebnisse(prev => ({
+                                    ...prev,
+                                    [vmKey]: { ...vmData, datum: e.target.value }
+                                  }))}
+                                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                  required={disziplin.nurVereinsmeisterschaft}
+                                />
+                              </div>
+                            </div>
+                            <div className="mt-3">
+                              <label className="block text-sm font-medium mb-1 text-blue-900 dark:text-blue-100">Bemerkung (Optional)</label>
+                              <input
+                                type="text"
+                                value={vmData.bemerkung}
+                                onChange={(e) => setVmErgebnisse(prev => ({
+                                  ...prev,
+                                  [vmKey]: { ...vmData, bemerkung: e.target.value }
+                                }))}
+                                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                placeholder="z.B. Vereinsmeisterschaft 2025"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* LM-Teilnahme pro Schütze */}
+                {selectedDisziplin && selectedSchuetzen.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Landesmeisterschaft-Teilnahme (einzeln pro Schütze)</label>
+                    <div className="space-y-3">
+                      {selectedSchuetzen.map(schuetzeId => {
+                        const schuetze = schuetzen.find(s => s.id === schuetzeId);
+                        if (!schuetze) return null;
+                        
+                        const displayName = schuetze.firstName && schuetze.lastName 
+                          ? `${schuetze.firstName} ${schuetze.lastName}`
+                          : schuetze.name;
+                        
+                        const lmKey = `${schuetzeId}_${selectedDisziplin}`;
+                        
+                        return (
+                          <div key={schuetzeId} className="p-3 bg-purple-50 border border-purple-200 rounded">
+                            <h5 className="font-medium text-purple-900 mb-2">
+                              {displayName}
+                            </h5>
+                            <div className="flex items-center space-x-4">
+                              <label className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  name={`lm_${lmKey}`}
+                                  checked={lmTeilnahme[lmKey] === true}
+                                  onChange={() => setLmTeilnahme(prev => ({...prev, [lmKey]: true}))}
+                                />
+                                <span className="text-purple-900 dark:text-purple-100">Ja</span>
+                              </label>
+                              <label className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  name={`lm_${lmKey}`}
+                                  checked={lmTeilnahme[lmKey] === false || lmTeilnahme[lmKey] === undefined}
+                                  onChange={() => setLmTeilnahme(prev => ({...prev, [lmKey]: false}))}
+                                />
+                                <span className="text-purple-900 dark:text-purple-100">Nein</span>
+                              </label>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Anmerkung */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Anmerkung (Optional)</label>
+                  <textarea
+                    value={anmerkung}
+                    onChange={(e) => setAnmerkung(e.target.value)}
+                    placeholder="z.B. Gewehr-Sharing oder sonstige Hinweise"
+                    className="w-full p-2 border border-gray-300 rounded h-20"
+                  />
+                </div>
+                </>
+              )}
 
 
 
@@ -759,19 +1127,65 @@ export default function KMMeldungen() {
                   </>
                 ) : (
                   <>
-                    <Button 
-                      onClick={handleAddToPending}
-                      disabled={!selectedSchuetze || selectedDisziplinen.length === 0}
-                    >
-                      📋 Zu Zwischenspeicher ({selectedDisziplinen.length || 0})
-                    </Button>
-                    <Button 
-                      onClick={handleSubmit}
-                      disabled={!selectedSchuetze || selectedDisziplinen.length === 0 || isSubmitting}
-                      variant="outline"
-                    >
-                      {isSubmitting ? 'Speichere...' : 'Direkt speichern'}
-                    </Button>
+                    {meldeModus === 'schuetze-disziplinen' ? (
+                      <>
+                        <Button 
+                          onClick={handleAddToPending}
+                          disabled={!selectedSchuetze || selectedDisziplinen.length === 0}
+                        >
+                          📋 Zu Zwischenspeicher ({selectedDisziplinen.length || 0})
+                        </Button>
+                        <Button 
+                          onClick={handleSubmit}
+                          disabled={!selectedSchuetze || selectedDisziplinen.length === 0 || isSubmitting}
+                          variant="outline"
+                        >
+                          {isSubmitting ? 'Speichere...' : 'Direkt speichern'}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        onClick={() => {
+                          if (!selectedDisziplin || selectedSchuetzen.length === 0) {
+                            toast({ title: 'Fehler', description: 'Bitte Disziplin und mindestens einen Schützen auswählen', variant: 'destructive' });
+                            return;
+                          }
+                          
+                          // Erstelle Meldungen für alle ausgewählten Schützen
+                          const newPending = selectedSchuetzen.map(schuetzeId => {
+                            const lmKey = `${schuetzeId}_${selectedDisziplin}`;
+                            const vmKey = `${schuetzeId}_${selectedDisziplin}`;
+                            const vmData = vmErgebnisse[vmKey];
+                            console.log('LM Key:', lmKey, 'Value:', lmTeilnahme[lmKey]);
+                            return {
+                              schuetzeId,
+                              disziplinId: selectedDisziplin,
+                              lmTeilnahme: lmTeilnahme[lmKey] === true, // Explizit true oder false
+                              anmerkung,
+                              vmErgebnis: vmData?.ringe ? {
+                                ringe: parseFloat(vmData.ringe),
+                                datum: new Date(vmData.datum || Date.now()),
+                                bemerkung: vmData.bemerkung || ''
+                              } : undefined
+                            };
+                          });
+                          
+                          console.log('New pending:', newPending);
+                          setPendingMeldungen(prev => [...prev, ...newPending]);
+                          
+                          // Reset
+                          setSelectedSchuetzen([]);
+                          setSelectedDisziplin('');
+                          setLmTeilnahme({});
+                          setAnmerkung('');
+                          
+                          toast({ title: 'Hinzugefügt', description: `${newPending.length} Meldungen zum Zwischenspeicher hinzugefügt` });
+                        }}
+                        disabled={!selectedDisziplin || selectedSchuetzen.length === 0}
+                      >
+                        📋 {selectedSchuetzen.length} Schützen zu Zwischenspeicher
+                      </Button>
+                    )}
                     <Link href="/km">
                       <Button variant="outline">Zurück</Button>
                     </Link>
@@ -808,7 +1222,7 @@ export default function KMMeldungen() {
                   <div className="flex gap-2">
                     <Button 
                       onClick={handleBulkSubmit}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || pendingMeldungen.length === 0}
                       className="bg-green-600 hover:bg-green-700"
                     >
                       {isSubmitting ? 'Speichere...' : `${pendingMeldungen.length} Meldungen speichern`}
@@ -833,7 +1247,26 @@ export default function KMMeldungen() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {meldungen.slice(0, 5).map((meldung, index) => {
+                {meldungen
+                  .filter(meldung => {
+                    // Wenn userClubIds leer ist (Admin/KM-Organisator), zeige alle
+                    if (userClubIds.length === 0) return true;
+                    
+                    // Zeige nur Meldungen der eigenen Vereine
+                    const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
+                    if (!schuetze) return false;
+                    
+                    const schuetzeClubIds = [
+                      schuetze.rwkClubId,
+                      schuetze.clubId, 
+                      schuetze.kmClubId,
+                      ...(schuetze.kmStartrechte ? Object.values(schuetze.kmStartrechte) : [])
+                    ].filter(Boolean);
+                    
+                    return schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
+                  })
+                  .slice(0, 5)
+                  .map((meldung, index) => {
                   const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
                   const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
                   const colors = ['blue', 'green', 'orange', 'purple', 'red'];
@@ -849,7 +1282,7 @@ export default function KMMeldungen() {
                           }
                         </div>
                         <div className="text-gray-500">
-                          {disziplin?.spoNummer} {disziplin?.name} • {schuetze ? getWettkampfklasse(schuetze, disziplin?.auflage) : 'N/A'}
+                          {disziplin?.spoNummer} {disziplin?.name} • {schuetze ? getWettkampfklasse(schuetze, disziplin?.auflage, disziplin?.spoNummer) : 'N/A'}
                           {meldung.vmErgebnis?.ringe && (
                             <span className="ml-2 text-green-600 font-medium">
                               • VM: {meldung.vmErgebnis.ringe} Ringe
@@ -875,7 +1308,16 @@ export default function KMMeldungen() {
                     </div>
                   );
                 })}
-                {meldungen.length === 0 && (
+                {meldungen.filter(meldung => {
+                  if (userClubIds.length === 0) return true; // Admin/KM-Organisator sieht alle
+                  const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
+                  if (!schuetze) return false;
+                  const schuetzeClubIds = [
+                    schuetze.rwkClubId, schuetze.clubId, schuetze.kmClubId,
+                    ...(schuetze.kmStartrechte ? Object.values(schuetze.kmStartrechte) : [])
+                  ].filter(Boolean);
+                  return schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
+                }).length === 0 && (
                   <div className="text-sm text-gray-500 text-center py-4">
                     Noch keine Meldungen vorhanden
                   </div>
@@ -884,7 +1326,23 @@ export default function KMMeldungen() {
               
               <div className="mt-4 pt-4 border-t">
                 <div className="text-sm text-gray-600">
-                  {meldungen.length} Meldung{meldungen.length !== 1 ? 'en' : ''} gesamt
+                  {meldungen.filter(meldung => {
+                    const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
+                    if (!schuetze) return false;
+                    const schuetzeClubIds = [
+                      schuetze.rwkClubId, schuetze.clubId, schuetze.kmClubId,
+                      ...(schuetze.kmStartrechte ? Object.values(schuetze.kmStartrechte) : [])
+                    ].filter(Boolean);
+                    return schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
+                  }).length} eigene Meldung{meldungen.filter(meldung => {
+                    const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
+                    if (!schuetze) return false;
+                    const schuetzeClubIds = [
+                      schuetze.rwkClubId, schuetze.clubId, schuetze.kmClubId,
+                      ...(schuetze.kmStartrechte ? Object.values(schuetze.kmStartrechte) : [])
+                    ].filter(Boolean);
+                    return schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
+                  }).length !== 1 ? 'en' : ''}
                 </div>
               </div>
             </CardContent>

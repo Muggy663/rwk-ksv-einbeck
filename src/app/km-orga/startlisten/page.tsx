@@ -69,21 +69,31 @@ export default function StartlistenPage() {
         }));
         setVereine(clubsData);
 
-        // KM-Disziplinen laden
-        const kmDisziplinenSnapshot = await getDocs(collection(db, 'km_disziplinen'));
-        const disziplinenData = kmDisziplinenSnapshot.docs
-          .map(doc => ({
-            id: doc.id,
-            spoNummer: doc.data().spoNummer,
-            name: doc.data().name,
-            schiesszeit_minuten: doc.data().schiesszeit_minuten || 90,
-            schiesszeit_zuganlagen: doc.data().schiesszeit_zuganlagen,
-            schiesszeit_andere: doc.data().schiesszeit_andere,
-            schusszahlen: doc.data().schusszahlen,
-            auflage: doc.data().auflage || false
-          }))
-          .sort((a, b) => (a.spoNummer || 0) - (b.spoNummer || 0));
-        setDisziplinen(disziplinenData);
+        // KM-Disziplinen laden - verwende die API statt direkten Firebase-Zugriff
+        const disziplinenResponse = await fetch('/api/km/disziplinen');
+        const disziplinenResult = await disziplinenResponse.json();
+        console.log('Loaded disziplinen from API:', disziplinenResult.data?.length || 0);
+        const disziplin141 = disziplinenResult.data?.find(d => d.spoNummer === '1.41');
+        console.log('Found 1.41:', disziplin141);
+        if (disziplinenResult.success && disziplinenResult.data) {
+          const disziplinenData = disziplinenResult.data
+            .map(d => ({
+              id: d.id,
+              spoNummer: d.spoNummer,
+              name: d.name,
+              schiesszeit_minuten: d.schiesszeit_minuten || 90,
+              schiesszeit_zuganlagen: d.schiesszeit_zuganlagen,
+              schiesszeit_andere: d.schiesszeit_andere,
+              schusszahlen: d.schusszahlen,
+              auflage: d.auflage || false
+            }))
+            .sort((a, b) => {
+              const aNum = parseFloat(a.spoNummer) || 0;
+              const bNum = parseFloat(b.spoNummer) || 0;
+              return aNum - bNum;
+            });
+          setDisziplinen(disziplinenData);
+        }
       } catch (error) {
         console.error('Fehler beim Laden der Daten:', error);
         toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden.', variant: 'destructive' });
@@ -312,8 +322,8 @@ export default function StartlistenPage() {
                   const count = disziplinen.filter(d => {
                     const disziplinName = d.name?.toLowerCase() || '';
                     switch(kategorie.key) {
-                      case 'luftdruck': return disziplinName.includes('luftgewehr') || disziplinName.includes('luftpistole') || disziplinName.includes('10m luftpistole') || disziplinName.includes('10 m luftpistole');
-                      case 'kleinkaliber': return (disziplinName.includes('kk') || disziplinName.includes('kleinkaliber') || disziplinName.includes('pistole') || disziplinName.includes('pistol')) && !disziplinName.includes('100m') && !disziplinName.includes('50m') && !disziplinName.includes('luftpistole') && !disziplinName.includes('lichtpistole');
+                      case 'luftdruck': return disziplinName.includes('luftgewehr') || disziplinName.includes('luftpistole') || disziplinName.includes('10m luftpistole') || disziplinName.includes('10 m luftpistole') || d.spoNummer?.startsWith('1.1');
+                      case 'kleinkaliber': return (disziplinName.includes('kk') || disziplinName.includes('kleinkaliber') || (disziplinName.includes('pistole') || disziplinName.includes('pistol')) && !disziplinName.includes('luftpistole') || d.spoNummer?.startsWith('1.4')) && !disziplinName.includes('100m') && true && !disziplinName.includes('luftpistole') && !disziplinName.includes('lichtpistole');
                       case 'licht': return disziplinName.includes('licht');
                       case 'blasrohr': return disziplinName.includes('blasrohr');
                       case 'andere': return (!disziplinName.includes('luftgewehr') && !disziplinName.includes('luftpistole') && !disziplinName.includes('licht') && !disziplinName.includes('blasrohr')) && (disziplinName.includes('100m') || (!disziplinName.includes('kk') && !disziplinName.includes('kleinkaliber') && !disziplinName.includes('pistole') && !disziplinName.includes('pistol')));
@@ -357,8 +367,8 @@ export default function StartlistenPage() {
                       const disziplinName = d.name?.toLowerCase() || '';
                       
                       switch(activeTab) {
-                        case 'luftdruck': return disziplinName.includes('luftgewehr') || disziplinName.includes('luftpistole') || disziplinName.includes('10m luftpistole') || disziplinName.includes('10 m luftpistole');
-                        case 'kleinkaliber': return (disziplinName.includes('kk') || disziplinName.includes('kleinkaliber') || disziplinName.includes('pistole') || disziplinName.includes('pistol')) && !disziplinName.includes('100m') && !disziplinName.includes('50m') && !disziplinName.includes('luftpistole') && !disziplinName.includes('lichtpistole');
+                        case 'luftdruck': return disziplinName.includes('luftgewehr') || disziplinName.includes('luftpistole') || disziplinName.includes('10m luftpistole') || disziplinName.includes('10 m luftpistole') || d.spoNummer?.toString().startsWith('1.1');
+                        case 'kleinkaliber': return (disziplinName.includes('kk') || disziplinName.includes('kleinkaliber') || (disziplinName.includes('pistole') || disziplinName.includes('pistol')) && !disziplinName.includes('luftpistole') || d.spoNummer?.startsWith('1.4') || d.spoNummer?.startsWith('1.6') || d.spoNummer?.startsWith('1.8') || d.spoNummer?.startsWith('2.')) && !disziplinName.includes('100m') && !disziplinName.includes('luftpistole') && !disziplinName.includes('lichtpistole');
                         case 'licht': return disziplinName.includes('licht');
                         case 'blasrohr': return disziplinName.includes('blasrohr');
                         case 'andere': return (!disziplinName.includes('luftgewehr') && !disziplinName.includes('luftpistole') && !disziplinName.includes('licht') && !disziplinName.includes('blasrohr')) && (disziplinName.includes('100m') || (!disziplinName.includes('kk') && !disziplinName.includes('kleinkaliber') && !disziplinName.includes('pistole') && !disziplinName.includes('pistol')));

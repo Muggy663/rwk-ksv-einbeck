@@ -35,9 +35,9 @@ export default function KMMannschaften() {
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [meldungen, setMeldungen] = useState<any[]>([]);
+  const [selectedClubId, setSelectedClubId] = useState('');
 
   useEffect(() => {
-
     if (hasKMAccess && !authLoading) {
       loadData();
     }
@@ -52,7 +52,24 @@ export default function KMMannschaften() {
         const mannschaftenRes = await fetch('/api/km/mannschaften');
         if (mannschaftenRes.ok) {
           const data = await mannschaftenRes.json();
-
+          console.log('🔍 Loaded mannschaften:', data.data?.length || 0);
+          console.log('🔍 All mannschaften:', data.data);
+          console.log('🔍 User club IDs:', userClubIds);
+          
+          // Debug jede Mannschaft einzeln
+          (data.data || []).forEach((m, i) => {
+            console.log(`Mannschaft ${i+1}:`, {
+              vereinId: m.vereinId,
+              clubId: m.clubId,
+              matchesFilter: userClubIds.includes(m.vereinId || m.clubId)
+            });
+          });
+          
+          const filtered = (data.data || []).filter(m => 
+            userClubIds.includes(m.vereinId || m.clubId)
+          );
+          console.log('🔍 Filtered mannschaften:', filtered.length, filtered);
+          
           setMannschaften(data.data || []);
         } else {
           console.warn('⚠️ Mannschaften API returned:', mannschaftenRes.status);
@@ -142,8 +159,30 @@ export default function KMMannschaften() {
           title: '✅ Erfolg', 
           description: result.message || `${result.generated || 0} Mannschaften generiert`
         });
-        // Sofort Daten neu laden
-        await loadData();
+        
+        // Debug-Info anzeigen
+        if (result.debugInfo && result.debugInfo.length > 0) {
+          console.log('🔍 Debug Info:', result.debugInfo);
+          result.debugInfo.forEach((info, i) => {
+            if (info.type === 'grouping') {
+              console.log(`🔍 Gruppierung: ${info.name} → ${info.klasse} → ${info.gruppenKey}`);
+            } else {
+              console.log(`Team ${i+1}:`, {
+                shooters: info.shooterNames,
+                classes: info.uniqueKlassen,
+                rejected: info.rejected,
+                teamSize: info.teamSize,
+                auflage: info.istAuflage,
+                spoNummer: info.spoNummer
+              });
+            }
+          });
+        }
+        
+        // Warte kurz und lade dann Daten neu
+        setTimeout(async () => {
+          await loadData();
+        }, 1000);
       } else {
         toast({ 
           title: '❌ Fehler', 
@@ -174,7 +213,7 @@ export default function KMMannschaften() {
       if (response.ok) {
         toast({ title: 'Erfolg', description: 'Mannschaft aktualisiert' });
         loadData();
-        setEditingTeam(null);
+        // setEditingTeam(null); // Entfernt - Bearbeitungsmodus bleibt aktiv
       } else {
         toast({ title: 'Fehler', description: 'Aktualisierung fehlgeschlagen', variant: 'destructive' });
       }
@@ -208,11 +247,34 @@ export default function KMMannschaften() {
 
   return (
     <div className="container py-8 max-w-6xl mx-auto">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/km" className="text-primary hover:text-primary/80">← Zurück</Link>
-        <div>
-          <h1 className="text-3xl font-bold text-primary">👥 Mannschaften KM 2026</h1>
-          <p className="text-muted-foreground">Automatische Generierung und manuelle Anpassung</p>
+      <div className="mb-6">
+        <div className="flex items-center gap-4 mb-4">
+          <Link href="/km" className="text-primary hover:text-primary/80">← Zurück</Link>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">👥 Mannschaften KM 2026</h1>
+            <p className="text-muted-foreground">Automatische Generierung und manuelle Anpassung</p>
+          </div>
+          
+          {userClubIds.length > 1 && (
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Verein:</label>
+              <select 
+                value={selectedClubId} 
+                onChange={(e) => setSelectedClubId(e.target.value)}
+                className="border rounded px-3 py-1"
+              >
+                <option value="">Alle Vereine</option>
+                {userClubIds.map(clubId => {
+                  const club = clubs.find(c => c.id === clubId);
+                  return club ? (
+                    <option key={club.id} value={club.id}>{club.name}</option>
+                  ) : null;
+                })}
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
@@ -226,26 +288,63 @@ export default function KMMannschaften() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="mb-4">
-                <Button 
-                  onClick={generateMannschaften}
-                  disabled={isGenerating || loading}
-                  className="relative"
-                >
-                  {isGenerating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Generiere Mannschaften...
-                    </>
-                  ) : (
-                    '🚀 Mannschaften automatisch generieren'
-                  )}
-                </Button>
-                {mannschaften.length > 0 && (
-                  <p className="text-sm text-gray-600 mt-2">
-                    {mannschaften.length} Mannschaften vorhanden
-                  </p>
-                )}
+              <div className="mb-4 space-y-3">
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={generateMannschaften}
+                    disabled={isGenerating || loading}
+                    className="relative"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Generiere Mannschaften...
+                      </>
+                    ) : (
+                      '🚀 Automatisch generieren'
+                    )}
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      // Erstelle eine leere Mannschaft
+                      const newTeam = {
+                        vereinId: userClubIds[0] || 'unknown',
+                        disziplinId: 'zBXMDsVZkxZdELRID66m', // Standard: 1.41
+                        wettkampfklassen: ['Unbekannt'],
+                        schuetzenIds: [],
+                        name: 'Neue Mannschaft',
+                        saison: '2026'
+                      };
+                      
+                      fetch('/api/km/mannschaften', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newTeam)
+                      }).then(res => {
+                        if (res.ok) {
+                          toast({ title: 'Erfolg', description: 'Leere Mannschaft erstellt' });
+                          loadData();
+                        }
+                      });
+                    }}
+                  >
+                    ➕ Mannschaft manuell erstellen
+                  </Button>
+                </div>
+                {(() => {
+                  const filteredMannschaften = mannschaften.filter(m => {
+                    if (userClubIds.length === 0) return true;
+                    const clubMatch = userClubIds.includes(m.vereinId || m.clubId);
+                    const selectedClubMatch = !selectedClubId || (m.vereinId || m.clubId) === selectedClubId;
+                    return clubMatch && selectedClubMatch;
+                  });
+                  return filteredMannschaften.length > 0 && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      {filteredMannschaften.length} {userClubIds.length === 0 ? 'Mannschaften' : 'eigene Mannschaften'} vorhanden
+                    </p>
+                  );
+                })()}
                 {isGenerating && (
                   <p className="text-sm text-blue-600 mt-2 animate-pulse">
                     🔄 Erstelle Teams und lade Daten neu...
@@ -259,7 +358,17 @@ export default function KMMannschaften() {
                     Noch keine Mannschaften generiert. Klicken Sie "Automatisch generieren".
                   </div>
                 ) : (
-                  mannschaften.map(mannschaft => {
+                  mannschaften
+                    .filter(mannschaft => {
+                      // Wenn userClubIds leer ist (Admin/KM-Organisator), zeige alle
+                      if (userClubIds.length === 0) return true;
+                      // Zeige nur Mannschaften der eigenen Vereine
+                      const clubMatch = userClubIds.includes(mannschaft.vereinId || mannschaft.clubId);
+                      // Zusätzlicher Filter nach ausgewähltem Verein
+                      const selectedClubMatch = !selectedClubId || (mannschaft.vereinId || mannschaft.clubId) === selectedClubId;
+                      return clubMatch && selectedClubMatch;
+                    })
+                    .map(mannschaft => {
                     const verein = clubs.find(c => c.id === mannschaft.vereinId || c.id === mannschaft.clubId);
                     const disziplin = disziplinen.find(d => d.id === mannschaft.disziplinId);
                     const teamSchuetzen = mannschaft.schuetzenIds.map(id => 
@@ -282,7 +391,7 @@ export default function KMMannschaften() {
                             variant="outline"
                             onClick={() => setEditingTeam(editingTeam === mannschaft.id ? null : mannschaft.id)}
                           >
-                            {editingTeam === mannschaft.id ? 'Abbrechen' : 'Bearbeiten'}
+                            {editingTeam === mannschaft.id ? 'Fertig' : 'Bearbeiten'}
                           </Button>
                         </div>
 

@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.11.4 (31.08.2025)</span>
+              <span>Web-Version: 0.11.5 (13.08.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -36,10 +36,56 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.4 - Meyton Shootmaster Integration</CardTitle>
+              <CardTitle className="text-xl">Version 0.11.5 - KM-Bereich: Mehrvereine-Support</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
             </div>
-            <CardDescription>31.08.2025</CardDescription>
+            <CardDescription>14.08.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">KM-Bereich Optimierung: Mehrvereine-Support für Vereinsvertreter, optimierte Mannschafts-Generierung und Auflage-Mannschaftsregeln.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">👥 KM-Mehrvereine v0.11.5</h4>
+              <div className="text-xs text-green-700">
+                Vereinsvertreter können mehrere Vereine gleichzeitig verwalten
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>👥 <strong>Mehrvereine-Support:</strong> representedClubs Array für Vereinsvertreter mit mehreren Vereinen</li>
+              <li>🎯 <strong>KM-Übersicht Dropdown:</strong> Vereinsauswahl wenn mehrere Vereine berechtigt sind</li>
+              <li>⚙️ <strong>Optimierte Mannschafts-Generierung:</strong> Einfache Logik nach Altersklassen und VM-Ergebnis</li>
+              <li>🏆 <strong>Auflage-Mannschaftsregeln:</strong> Gemischte Teams (m+w) bei Auflage, getrennt bei Freihand</li>
+              <li>📋 <strong>KM-Meldungen verbessert:</strong> VM-Ergebnis individuell pro Schütze, LM-Teilnahme</li>
+              <li>👥 <strong>KM-Mitglieder erweitert:</strong> Suchfeld, Vereine-Dropdown, alle berechtigten Vereine</li>
+              <li>🔧 <strong>KM-Mannschaften optimiert:</strong> Vereinsgetrennte Generierung, "Fertig" statt "Abbrechen"</li>
+              <li>📊 <strong>Inline-Bearbeitung:</strong> Direkte Bearbeitung in KM-Übersicht (LM, VM-Ringe, Anmerkung)</li>
+              <li>🔍 <strong>Suchfunktion:</strong> Live-Suche in Namen für bessere Übersicht</li>
+              <li>🎯 <strong>Startlisten-Tool:</strong> Disziplin 1.41 unter Kleinkaliber, korrekte Zeitberechnung</li>
+              <li>📄 <strong>PDF-Export:</strong> Korrekte Altersklassen aus Meldungen, dynamischer Austragungsort</li>
+              <li>🐛 <strong>Bugfixes:</strong> Performance-Optimierung, korrekte Vereinsfilterung</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">👥 KM-Mehrvereine</span>
+                  <p className="text-xs text-green-600 mt-1">Vereinsvertreter & Mannschaften</p>
+                </div>
+                <Link href="/updates/v0.11.5">
+                  <span className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 cursor-pointer">
+                    🚀 v0.11.5
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.11.4 - Meyton Shootmaster Integration</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>12.08.2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Vollständige Integration mit Meyton Shootmaster: Startlisten-Export im David21-Format mit korrekten Altersklassen und individuellen Wettkampf-IDs.</p>
@@ -69,7 +115,7 @@ export default function UpdatesPage() {
                   <span className="font-medium text-green-800">🎯 Meyton Integration</span>
                   <p className="text-xs text-green-600 mt-1">Shootmaster Export & Altersklassen</p>
                 </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs">
                   🚀 v0.11.4
                 </span>
               </div>
