@@ -69,14 +69,16 @@ export default function StartlistenToolPage() {
           disziplinen[doc.id] = doc.data().name;
         });
         
-        // KM-Meldungen laden für Altersklassen
+        // KM-Meldungen laden für Altersklassen und LM-Teilnahme
         const kmMeldungenSnapshot = await getDocs(collection(db, 'km_meldungen'));
         const kmAltersklassen = {};
+        const kmMeldungenData = {};
         kmMeldungenSnapshot.docs.forEach(doc => {
           const data = doc.data();
           if (data.schuetzeId && data.altersklasse) {
             kmAltersklassen[data.schuetzeId] = data.altersklasse;
           }
+          kmMeldungenData[doc.id] = data;
         });
         
         // Schützen laden
@@ -136,7 +138,8 @@ export default function StartlistenToolPage() {
             verein: vereine[schuetze?.clubId] || 'Unbekannt',
             disziplin: disziplinName,
             altersklasse: altersklasse,
-            anmerkung: data.anmerkung || ''
+            anmerkung: data.anmerkung || '',
+            lmTeilnahme: data.lmTeilnahme === true
           };
         });
         
@@ -378,10 +381,11 @@ export default function StartlistenToolPage() {
       }
 
       // Lade alle benötigten Daten aus Firebase
-      const [schuetzenSnapshot, meldungenSnapshot, disziplinenSnapshot] = await Promise.all([
+      const [schuetzenSnapshot, meldungenSnapshot, disziplinenSnapshot, mannschaftenSnapshot] = await Promise.all([
         getDocs(collection(db, 'shooters')),
         getDocs(collection(db, 'km_meldungen')),
-        getDocs(collection(db, 'km_disziplinen'))
+        getDocs(collection(db, 'km_disziplinen')),
+        getDocs(collection(db, 'km_mannschaften'))
       ]);
       
       // Versuche Meyton-Klassen zu laden, falls vorhanden
@@ -393,11 +397,11 @@ export default function StartlistenToolPage() {
         meytonKlassenSnapshot = { docs: [] };
       }
       
-      // Schützen-Map
-      const schuetzenMap = {};
+      // Schützen-Map für PDF Export
+      const schuetzenMapPDF = {};
       schuetzenSnapshot.docs.forEach(doc => {
         const data = doc.data();
-        schuetzenMap[data.name] = {
+        schuetzenMapPDF[data.name] = {
           id: doc.id,
           birthYear: data.birthYear,
           gender: data.gender
@@ -589,33 +593,57 @@ export default function StartlistenToolPage() {
       const { default: jsPDF } = await import('jspdf');
       const { default: autoTable } = await import('jspdf-autotable');
       
+      // Lade Mannschaften für E/M Erkennung
+      const [schuetzenSnapshot, mannschaftenSnapshot] = await Promise.all([
+        getDocs(collection(db, 'shooters')),
+        getDocs(collection(db, 'km_mannschaften'))
+      ]);
+      
+      // Schützen-Map für PDF Export
+      const schuetzenMapPDF = {};
+      schuetzenSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        schuetzenMapPDF[data.name] = {
+          id: doc.id,
+          birthYear: data.birthYear,
+          gender: data.gender
+        };
+      });
+      
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
       
-      // Header mit Logo-Platz
-      doc.setFontSize(20);
+      // Erste Seite - Vollständige Titelseite
+      doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('Kreismeisterschaft 2026', pageWidth / 2, 25, { align: 'center' });
+      doc.text('KREISSCHÜTZENVERBAND', pageWidth / 2, 40, { align: 'center' });
+      doc.text('EINBECK e.V.', pageWidth / 2, 55, { align: 'center' });
       
+      // Logo laden und einfügen
+      try {
+        const logoImg = new Image();
+        logoImg.src = '/images/logo2.png';
+        await new Promise((resolve) => {
+          logoImg.onload = resolve;
+          logoImg.onerror = resolve;
+        });
+        doc.addImage(logoImg, 'PNG', pageWidth / 2 - 25, 70, 50, 50);
+      } catch (error) {
+        console.warn('Logo konnte nicht geladen werden:', error);
+      }
+      
+      doc.setFontSize(20);
+      doc.text(`Kreisverbandsmeisterschaft ${config?.saison || 2025}`, pageWidth / 2, 140, { align: 'center' });
+      
+      doc.setFontSize(18);
+      doc.text('Startlisten', pageWidth / 2, 160, { align: 'center' });
+      
+      // Disziplinen mit Bullet-Points
       doc.setFontSize(16);
       doc.setFont('helvetica', 'normal');
-      doc.text('Kreisschützenverband Einbeck e.V.', pageWidth / 2, 35, { align: 'center' });
-      
-      // Wettkampf-Details
-      const datum = new Date(config?.startDatum || '').toLocaleDateString('de-DE', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      
-      doc.setFontSize(12);
-      doc.text(`Datum: ${datum}`, 20, 55);
-      doc.text(`Beginn: ${config?.startUhrzeit || ''} Uhr`, 20, 65);
-      doc.text(`Disziplinen: ${config?.disziplinen?.join(', ') || ''}`, 20, 75);
-      doc.text(`Teilnehmer: ${startliste.length}`, pageWidth - 20, 55, { align: 'right' });
-      doc.text(`Stände: ${config?.verfuegbareStaende?.join(', ') || ''}`, pageWidth - 20, 65, { align: 'right' });
+      const disziplinText = config?.disziplinen?.join(' • ') || '';
+      doc.text(disziplinText, pageWidth / 2, 190, { align: 'center' });
       
       // Gruppiere nach Disziplinen
       const nachDisziplin = startliste.reduce((acc, starter) => {
@@ -624,66 +652,147 @@ export default function StartlistenToolPage() {
         return acc;
       }, {} as {[key: string]: typeof startliste});
       
-      let currentY = 90;
+      const datum = new Date(config?.startDatum || '').toLocaleDateString('de-DE', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
       
+      let globalStartNummer = 1;
       Object.entries(nachDisziplin).forEach(([disziplin, starter], disziplinIndex) => {
-        // Neue Seite für jede Disziplin (außer der ersten)
-        if (disziplinIndex > 0) {
+        
+        // Gruppiere nach Startzeiten
+        const nachStartzeit = starter.reduce((acc, s) => {
+          const zeit = s.startzeit || config?.startUhrzeit || '14:00';
+          if (!acc[zeit]) acc[zeit] = [];
+          acc[zeit].push(s);
+          return acc;
+        }, {} as {[key: string]: typeof starter});
+        
+        let globalStartNummer = 1;
+        Object.entries(nachStartzeit).forEach(([startzeit, starterGruppe], startzeitIndex) => {
           doc.addPage();
-          currentY = 30;
-        }
-        
-        // Disziplin-Überschrift
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text(disziplin, 20, currentY);
-        currentY += 15;
-        
-        // Sortiere Starter nach Startzeit und Stand
-        const sortierteStarter = starter.sort((a, b) => {
-          if (a.startzeit !== b.startzeit) return (a.startzeit || '').localeCompare(b.startzeit || '');
-          return parseInt(a.stand || '0') - parseInt(b.stand || '0');
-        });
-        
-        const tableData = sortierteStarter.map((s, index) => [
-          (index + 1).toString(),
-          s.name,
-          s.verein,
-          s.altersklasse,
-          `Stand ${s.stand}`,
-          s.startzeit || '',
-          s.hinweise || ''
-        ]);
-        
-        autoTable(doc, {
-          startY: currentY,
-          head: [['Nr.', 'Name', 'Verein', 'Altersklasse', 'Stand', 'Startzeit', 'Hinweise']],
-          body: tableData,
-          styles: { 
-            fontSize: 9,
-            cellPadding: 3
-          },
-          headStyles: { 
-            fillColor: [41, 128, 185],
-            textColor: 255,
-            fontStyle: 'bold'
-          },
-          alternateRowStyles: {
-            fillColor: [245, 245, 245]
-          },
-          margin: { left: 20, right: 20 },
-          columnStyles: {
-            0: { cellWidth: 15 },
-            1: { cellWidth: 45 },
-            2: { cellWidth: 35 },
-            3: { cellWidth: 30 },
-            4: { cellWidth: 20 },
-            5: { cellWidth: 25 },
-            6: { cellWidth: 30 }
+          
+          // Header für Startlisten-Seiten
+          try {
+            const logoImg = new Image();
+            logoImg.src = '/images/logo2.png';
+            doc.addImage(logoImg, 'PNG', 15, 10, 20, 20);
+          } catch (error) {
+            console.warn('Logo konnte nicht geladen werden');
           }
+          
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.text('KREISSCHÜTZENVERBAND EINBECK e.V.', 40, 15);
+          doc.text('- Kreisschießsportleiterin -', 40, 22);
+          
+          doc.setFont('helvetica', 'normal');
+          doc.line(40, 25, pageWidth - 20, 25);
+          let currentY = 35;
+          
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.text(disziplin, 20, currentY);
+          currentY += 10;
+          
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Start ${globalStartNummer} am: ${datum} um ${startzeit} Uhr im Schützenhaus der ESG Einbeck`, 20, currentY);
+          currentY += 7;
+          doc.text(`Schießzeit pro Durchgang = ${config?.durchgangsDauer || 50} Minuten`, 20, currentY);
+          currentY += 10;
+          
+          globalStartNummer++;
+          
+          // Sortiere nach Stand und Name
+          const sortierteStarter = starterGruppe.sort((a, b) => {
+            const standA = parseInt(a.stand || '999');
+            const standB = parseInt(b.stand || '999');
+            if (standA !== standB) return standA - standB;
+            return a.name.localeCompare(b.name);
+          });
+          
+          // Erkenne Mannschaften (3er Gruppen mit gleichem Stand/Zeit)
+          const mannschaftsGruppen = new Map();
+          sortierteStarter.forEach(s => {
+            const key = `${s.stand}_${s.startzeit}`;
+            if (!mannschaftsGruppen.has(key)) mannschaftsGruppen.set(key, []);
+            mannschaftsGruppen.get(key).push(s);
+          });
+          
+          const tableData = sortierteStarter.map((s) => {
+            const vereinsNr = vereine.findIndex(v => v.name === s.verein) + 1;
+            const mitgliedsNr = `08-${vereinsNr.toString().padStart(3, '0')}-0001`;
+            
+            const nameParts = s.name.split(' ');
+            const nachname = nameParts[nameParts.length - 1];
+            const vorname = nameParts.slice(0, -1).join(' ');
+            
+            // E/M: Prüfe ob Schütze in Mannschaft (aus km_mannschaften)
+            const schuetze = schuetzenMapPDF[s.name];
+            let istMannschaft = false;
+            if (schuetze?.id) {
+              mannschaftenSnapshot.docs.forEach(doc => {
+                const mannschaftData = doc.data();
+                if (mannschaftData.schuetzenIds?.includes(schuetze.id)) {
+                  istMannschaft = true;
+                }
+              });
+            }
+            const einzelMannschaft = istMannschaft ? 'M' : 'E';
+            
+            // LM: Suche ursprüngliche Meldung für lmTeilnahme
+            const originalMeldung = meldungen.find(m => m.name === s.name && m.disziplin === s.disziplin);
+            const lmTeilnahme = originalMeldung?.lmTeilnahme === true;
+            
+            return [
+              s.stand || 'N/A',
+              mitgliedsNr,
+              nachname,
+              vorname,
+              s.verein,
+              s.altersklasse.split(' ')[0],
+              einzelMannschaft,
+              lmTeilnahme ? 'J' : 'N'
+            ];
+          });
+          
+          autoTable(doc, {
+            startY: currentY,
+            head: [['Stand', 'Mitglieds-Nr.', 'Name', 'Vorname', 'Verein', 'WKl', 'E / M', 'LM']],
+            body: tableData,
+            styles: { 
+              fontSize: 8,
+              cellPadding: 2
+            },
+            headStyles: { 
+              fillColor: [255, 255, 255],
+              textColor: 0,
+              fontStyle: 'bold',
+              lineWidth: 0.5,
+              lineColor: [0, 0, 0]
+            },
+            bodyStyles: {
+              lineWidth: 0.5,
+              lineColor: [0, 0, 0]
+            },
+            margin: { left: 20, right: 20 },
+            columnStyles: {
+              0: { cellWidth: 15 },
+              1: { cellWidth: 25 },
+              2: { cellWidth: 30 },
+              3: { cellWidth: 25 },
+              4: { cellWidth: 35 },
+              5: { cellWidth: 15 },
+              6: { cellWidth: 15 },
+              7: { cellWidth: 15 }
+            }
+          });
+          
+          currentY = (doc as any).lastAutoTable.finalY + 15;
         });
-        
-        currentY = (doc as any).lastAutoTable.finalY + 20;
       });
       
       // Footer auf jeder Seite
