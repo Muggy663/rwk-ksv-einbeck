@@ -95,54 +95,63 @@ export default function StartlistenToolPage() {
           vereine[doc.id] = doc.data().name;
         });
         
-        // Meldungen laden
+        // Meldungen laden - nur echte KM-Meldungen
         const meldungenSnapshot = await getDocs(collection(db, 'km_meldungen'));
-        const allMeldungen = meldungenSnapshot.docs.map(doc => {
-          const data = doc.data();
-          const schuetze = schuetzen[data.schuetzeId];
-          const disziplinName = disziplinen[data.disziplinId];
-          
-          // Berechne Altersklasse wie in KM-Meldungen Seite
-          let altersklasse = 'Unbekannt';
-          if (schuetze?.birthYear) {
-            const age = (configData.saison || 2026) - schuetze.birthYear;
-            const isAuflage = disziplinName?.toLowerCase().includes('auflage');
-            const isMale = schuetze.gender === 'male';
+        const allMeldungen = meldungenSnapshot.docs
+          .filter(doc => doc.data().schuetzeId && doc.data().disziplinId) // Nur vollständige Meldungen
+          .map(doc => {
+            const data = doc.data();
+            const schuetze = schuetzen[data.schuetzeId];
+            const disziplinName = disziplinen[data.disziplinId];
             
-            if (age <= 14) altersklasse = 'Schüler';
-            else if (age <= 16) altersklasse = 'Jugend';
-            else if (age <= 18) altersklasse = `Junioren II ${isMale ? 'm' : 'w'}`;
-            else if (age <= 20) altersklasse = `Junioren I ${isMale ? 'm' : 'w'}`;
-            else if (isAuflage) {
-              if (age <= 40) altersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
-              else if (age <= 50) altersklasse = 'Senioren 0';
-              else if (age <= 60) altersklasse = 'Senioren I';
-              else if (age <= 65) altersklasse = 'Senioren II';
-              else if (age <= 70) altersklasse = 'Senioren III';
-              else if (age <= 75) altersklasse = 'Senioren IV';
-              else if (age <= 80) altersklasse = 'Senioren V';
-              else altersklasse = 'Senioren VI';
-            } else {
-              if (age <= 40) altersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
-              else if (age <= 50) altersklasse = `${isMale ? 'Herren' : 'Damen'} II`;
-              else if (age <= 60) altersklasse = `${isMale ? 'Herren' : 'Damen'} III`;
-              else if (age <= 70) altersklasse = `${isMale ? 'Herren' : 'Damen'} IV`;
-              else altersklasse = `${isMale ? 'Herren' : 'Damen'} V`;
+            // Nur Meldungen mit gültigen Schützen und Disziplinen
+            if (!schuetze || !disziplinName) return null;
+            
+            // Berechne Altersklasse wie in KM-Meldungen Seite
+            let altersklasse = 'Unbekannt';
+            if (schuetze?.birthYear) {
+              const age = (configData.saison || 2026) - schuetze.birthYear;
+              const isAuflage = disziplinName?.toLowerCase().includes('auflage');
+              const isMale = schuetze.gender === 'male';
+              
+              if (age <= 14) altersklasse = 'Schüler';
+              else if (age <= 16) altersklasse = 'Jugend';
+              else if (age <= 18) altersklasse = `Junioren II ${isMale ? 'm' : 'w'}`;
+              else if (age <= 20) altersklasse = `Junioren I ${isMale ? 'm' : 'w'}`;
+              else if (isAuflage) {
+                if (age <= 40) altersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
+                else if (age <= 50) altersklasse = 'Senioren 0';
+                else if (age <= 60) altersklasse = 'Senioren I';
+                else if (age <= 65) altersklasse = 'Senioren II';
+                else if (age <= 70) altersklasse = 'Senioren III';
+                else if (age <= 75) altersklasse = 'Senioren IV';
+                else if (age <= 80) altersklasse = 'Senioren V';
+                else altersklasse = 'Senioren VI';
+              } else {
+                if (age <= 40) altersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
+                else if (age <= 50) altersklasse = `${isMale ? 'Herren' : 'Damen'} II`;
+                else if (age <= 60) altersklasse = `${isMale ? 'Herren' : 'Damen'} III`;
+                else if (age <= 70) altersklasse = `${isMale ? 'Herren' : 'Damen'} IV`;
+                else altersklasse = `${isMale ? 'Herren' : 'Damen'} V`;
+              }
             }
-          }
-          
-          return {
-            id: doc.id,
-            name: schuetze?.name || 'Unbekannt',
-            verein: vereine[schuetze?.clubId] || 'Unbekannt',
-            disziplin: disziplinName,
-            altersklasse: altersklasse,
-            anmerkung: data.anmerkung || '',
-            lmTeilnahme: data.lmTeilnahme === true
-          };
-        });
+            
+            return {
+              id: doc.id,
+              name: schuetze?.name || 'Unbekannt',
+              verein: vereine[schuetze?.clubId] || 'Unbekannt',
+              disziplin: disziplinName,
+              altersklasse: altersklasse,
+              anmerkung: data.anmerkung || '',
+              lmTeilnahme: data.lmTeilnahme === true
+            };
+          })
+          .filter(Boolean); // Entferne null-Werte
         
-        const meldungenData = allMeldungen.filter(m => configData.disziplinen.includes(m.disziplin));
+        // Filtere nur Meldungen für die konfigurierte Saison und Disziplinen
+        const meldungenData = allMeldungen.filter(m => 
+          configData.disziplinen.includes(m.disziplin)
+        );
         setMeldungen(meldungenData);
         
         // Vereine für Export
@@ -170,7 +179,7 @@ export default function StartlistenToolPage() {
         } else {
           // Automatische Startlisten-Generierung mit KI-Optimierung
           if (meldungenData.length > 0) {
-            const basisStartliste = generiereStartliste();
+            const basisStartliste = await generiereStartliste();
             const optimierteStartliste = optimizeStartlist(basisStartliste, configData);
             setStartliste(optimierteStartliste);
             
@@ -189,16 +198,59 @@ export default function StartlistenToolPage() {
     loadData();
   }, [configId]);
 
-  const generiereStartliste = (): Starter[] => {
+  const generiereStartliste = async (): Starter[] => {
     if (!config || meldungen.length === 0) return [];
     
     const startlisteEntries: Starter[] = [];
     const staendeAnzahl = config.verfuegbareStaende.length;
-    let currentTime = config.startUhrzeit;
     let durchgang = 1;
 
+    // Lade Mannschaften, Meldungen, Schützen und Disziplinen aus Datenbank
+    const [mannschaftenSnapshot, kmMeldungenSnapshot, schuetzenSnapshot, disziplinenSnapshot] = await Promise.all([
+      getDocs(collection(db, 'km_mannschaften')),
+      getDocs(collection(db, 'km_meldungen')),
+      getDocs(collection(db, 'shooters')),
+      getDocs(collection(db, 'km_disziplinen'))
+    ]);
+    
+    // Filtere Mannschaften für die richtige Saison
+    const saisonStr = (config.saison || 2026).toString();
+    const mannschaften = mannschaftenSnapshot.docs
+      .filter(doc => doc.data().saison === saisonStr)
+      .map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Filtere Meldungen für die richtige Saison  
+    const kmMeldungen = kmMeldungenSnapshot.docs
+      .filter(doc => doc.data().saison === saisonStr)
+      .map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Globale Stand-Zeit-Matrix zur Konfliktprüfung
+    const standZeitMatrix = new Set<string>();
+    
+    // Verwende nur die echten KM-Meldungen für die Startliste
+    const echteKmMeldungen = kmMeldungen.map(meldung => {
+      const schuetze = schuetzenSnapshot.docs.find(doc => doc.id === meldung.schuetzeId)?.data();
+      const disziplin = disziplinenSnapshot.docs.find(doc => doc.id === meldung.disziplinId)?.data();
+      
+      if (!schuetze || !disziplin) {
+        return null;
+      }
+      
+      return {
+        id: meldung.id || `meldung_${Date.now()}_${Math.random()}`,
+        name: schuetze.name,
+        verein: schuetze.clubId ? 'Verein' : 'Unbekannt',
+        disziplin: disziplin.name,
+        altersklasse: 'Berechnet',
+        anmerkung: meldung.anmerkung || '',
+        lmTeilnahme: meldung.lmTeilnahme === true
+      };
+    }).filter(Boolean);
+    
+
+    
     // Gruppiere nach Disziplinen
-    const nachDisziplin = meldungen.reduce((acc, starter) => {
+    const nachDisziplin = echteKmMeldungen.reduce((acc, starter) => {
       const key = starter.disziplin;
       if (!acc[key]) acc[key] = [];
       acc[key].push(starter);
@@ -206,115 +258,175 @@ export default function StartlistenToolPage() {
     }, {} as {[key: string]: Starter[]});
 
     Object.entries(nachDisziplin).forEach(([disziplinName, starter]) => {
-      const sortiertStarter = starter.sort((a, b) => a.name.localeCompare(b.name));
-      
-      // Jede Disziplin startet mit Stand 0 und eigener Zeit
-      let standIndex = 0;
-      let disziplinStartzeit = currentTime;
-      let disziplinDurchgang = durchgang;
-      
-      // Finde Gewehr-Sharing-Paare (verbesserte Erkennung)
-      const gewehrSharing = new Map<string, string[]>();
-      sortiertStarter.forEach(s => {
-        if (s.anmerkung) {
-          const anmerkung = s.anmerkung.toLowerCase();
-          if ((anmerkung.includes('gewehr') && anmerkung.includes('teil')) || 
-              (anmerkung.includes('teilt') && anmerkung.includes('gewehr'))) {
-            // Extrahiere Namen aus Anmerkung wie "Teilt sich ein Gewehr mit Marcel Leiding"
-            const nameMatches = s.anmerkung.match(/mit\s+([A-Za-z]+\s+[A-Za-z]+)/i) || 
-                               s.anmerkung.match(/([A-Za-z]+\s+[A-Za-z]+)(?=\s|$)/g);
-            if (nameMatches) {
-              const partnerName = nameMatches[0].replace(/^mit\s+/i, '').trim();
-              const key = [s.name, partnerName].sort().join('_');
-              if (!gewehrSharing.has(key)) gewehrSharing.set(key, []);
-              gewehrSharing.get(key)!.push(s.name, partnerName);
-            }
-          }
-        }
+      // 1. Finde Mannschaften für diese Disziplin
+      const disziplinMannschaften = mannschaften.filter(m => {
+        // Finde Disziplin-Name für diese Mannschaft
+        const disziplinDoc = disziplinenSnapshot.docs.find(d => d.id === m.disziplinId);
+        const mannschaftDisziplin = disziplinDoc?.data()?.name;
+        return mannschaftDisziplin === disziplinName;
       });
       
-      // Gruppiere Starter
-      const gewehrGroups = sortiertStarter.reduce((acc, s) => {
-        let key = `solo_${s.id}`;
+
+      
+      // 2. Mannschaften + Einzelschützen optimal auf Durchgänge verteilen
+      // Sammle alle Schützen-IDs die bereits in Mannschaften sind
+      const mannschaftsSchuetzenIds = new Set();
+      disziplinMannschaften.forEach(m => {
+        m.schuetzenIds?.forEach(id => mannschaftsSchuetzenIds.add(id));
+      });
+      
+      const einzelSchuetzen = starter.filter(s => {
+        // Prüfe über ursprüngliche Meldung
+        const kmMeldung = kmMeldungen.find(m => m.id === s.id);
         
-        for (const [groupKey, namen] of gewehrSharing.entries()) {
-          if (namen.includes(s.name)) {
-            key = `sharing_${groupKey}`;
-            break;
-          }
+        // Nur Einzelschütze wenn schuetzeId NICHT in Mannschaften
+        return kmMeldung && !mannschaftsSchuetzenIds.has(kmMeldung.schuetzeId);
+      }).sort((a, b) => a.name.localeCompare(b.name));
+      
+      let einzelSchuetzenIndex = 0;
+      let currentDurchgangBelegt = 0;
+      
+
+      
+      // Verarbeite alle Mannschaften und Einzelschützen zusammen
+      disziplinMannschaften.forEach((mannschaft, mannschaftIndex) => {
+        const mannschaftStarter = starter.filter(s => {
+          // Direkte ID-Prüfung über die ursprüngliche Meldung
+          const kmMeldung = kmMeldungen.find(m => m.id === s.id);
+          const isInTeam = mannschaft.schuetzenIds?.includes(kmMeldung?.schuetzeId);
+
+          return isInTeam;
+        });
+        
+
+        
+        // Prüfe ob Mannschaft in aktuellen Durchgang passt
+        if (currentDurchgangBelegt + mannschaftStarter.length > staendeAnzahl) {
+          durchgang++;
+          currentDurchgangBelegt = 0;
         }
         
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(s);
-        return acc;
-      }, {} as {[key: string]: Starter[]});
-
-      Object.values(gewehrGroups).forEach(gruppe => {
-        const schiesszeit = config.durchgangsDauer;
+        // Alle Mannschafts-Schützen zur gleichen Zeit (gleicher Durchgang)
+        const [hours, minutes] = config.startUhrzeit.split(':').map(Number);
+        const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * (config.durchgangsDauer + config.wechselzeit));
+        const newHours = Math.floor(totalMinutes / 60);
+        const newMinutes = totalMinutes % 60;
+        const startzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
         
-        if (gruppe.length > 1) {
-          // Gewehr-Sharing: Gleicher Stand, unterschiedliche Durchgänge
-          const gruppenStand = config.verfuegbareStaende[standIndex];
+        mannschaftStarter.forEach((s, index) => {
+          // Finde nächsten freien Stand
+          let standIndex = currentDurchgangBelegt + index;
+          let testStand = config.verfuegbareStaende[standIndex % staendeAnzahl];
+          let testKey = `${testStand}_${startzeit}`;
           
-          gruppe.forEach((s, index) => {
-            const individualDurchgang = durchgang + index;
-            const [hours, minutes] = config.startUhrzeit.split(':').map(Number);
-            const totalMinutes = hours * 60 + minutes + ((individualDurchgang - 1) * (schiesszeit + config.wechselzeit));
-            const newHours = Math.floor(totalMinutes / 60);
-            const newMinutes = totalMinutes % 60;
-            const individualStartzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
-
-            startlisteEntries.push({
-              ...s,
-              stand: gruppenStand,
-              startzeit: individualStartzeit,
-              durchgang: individualDurchgang,
-              hinweise: 'Gewehr geteilt'
-            });
-          });
-          
-          standIndex = (standIndex + 1) % staendeAnzahl;
-          
-          // Berechne neue Startzeit wenn alle Stände belegt sind (nach Gewehr-Sharing)
-          if (standIndex === 0) {
-            const [hours, minutes] = disziplinStartzeit.split(':').map(Number);
-            const totalMinutes = hours * 60 + minutes + config.durchgangsDauer + config.wechselzeit;
-            const newHours = Math.floor(totalMinutes / 60);
-            const newMinutes = totalMinutes % 60;
-            disziplinStartzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
-            disziplinDurchgang++;
+          while (standZeitMatrix.has(testKey)) {
+            standIndex++;
+            testStand = config.verfuegbareStaende[standIndex % staendeAnzahl];
+            testKey = `${testStand}_${startzeit}`;
           }
-        } else {
-          // Einzelschütze
-          const einzelStarter = gruppe[0];
-          let hinweise = '';
-          if (einzelStarter.anmerkung) {
-            if (einzelStarter.anmerkung.toLowerCase().includes('sondergenehmigung')) hinweise = 'Sondergenehmigung';
-            else if (einzelStarter.anmerkung.toLowerCase().includes('behinderung')) hinweise = 'Behinderung';
-            else if (einzelStarter.anmerkung.toLowerCase().includes('auflage')) hinweise = 'Nur Auflage';
-          }
+          
+          standZeitMatrix.add(testKey);
           
           startlisteEntries.push({
-            ...einzelStarter,
-            stand: config.verfuegbareStaende[standIndex],
-            startzeit: disziplinStartzeit,
-            durchgang: disziplinDurchgang,
-            hinweise
+            ...s,
+            id: `${s.id}_mannschaft_${mannschaftIndex}_${index}`, // Eindeutige ID
+            stand: testStand,
+            startzeit,
+            durchgang,
+            hinweise: `Mannschaft ${mannschaftIndex + 1}`
           });
-
-          standIndex = (standIndex + 1) % staendeAnzahl;
-          
-          // Berechne neue Startzeit wenn alle Stände belegt sind
-          if (standIndex === 0) {
-            const [hours, minutes] = disziplinStartzeit.split(':').map(Number);
-            const totalMinutes = hours * 60 + minutes + config.durchgangsDauer + config.wechselzeit;
+        });
+        currentDurchgangBelegt += mannschaftStarter.length;
+        
+        // Fülle Durchgang mit Einzelschützen auf wenn nächste Mannschaft nicht mehr passt
+        const naechsteMannschaft = disziplinMannschaften[mannschaftIndex + 1];
+        if (!naechsteMannschaft || currentDurchgangBelegt + 3 > staendeAnzahl) {
+          // Keine weitere Mannschaft oder sie passt nicht mehr - fülle auf
+          while (currentDurchgangBelegt < staendeAnzahl && einzelSchuetzenIndex < einzelSchuetzen.length) {
+            const s = einzelSchuetzen[einzelSchuetzenIndex];
+            const [hours, minutes] = config.startUhrzeit.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * (config.durchgangsDauer + config.wechselzeit));
             const newHours = Math.floor(totalMinutes / 60);
             const newMinutes = totalMinutes % 60;
-            disziplinStartzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
-            disziplinDurchgang++;
+            const startzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
+            
+            let hinweise = 'Einzelschütze';
+            if (s.anmerkung?.toLowerCase().includes('sondergenehmigung')) hinweise = 'Sondergenehmigung';
+            else if (s.anmerkung?.toLowerCase().includes('behinderung')) hinweise = 'Behinderung';
+            
+            // Finde nächsten freien Stand
+            let standIndex = currentDurchgangBelegt;
+            let testStand = config.verfuegbareStaende[standIndex % staendeAnzahl];
+            let testKey = `${testStand}_${startzeit}`;
+            
+            while (standZeitMatrix.has(testKey)) {
+              standIndex++;
+              testStand = config.verfuegbareStaende[standIndex % staendeAnzahl];
+              testKey = `${testStand}_${startzeit}`;
+            }
+            
+            standZeitMatrix.add(testKey);
+            
+            startlisteEntries.push({
+              ...s,
+              id: `${s.id}_einzelschuetze_${einzelSchuetzenIndex}`, // Eindeutige ID
+              stand: testStand,
+              startzeit,
+              durchgang,
+              hinweise
+            });
+            currentDurchgangBelegt++;
+            einzelSchuetzenIndex++;
           }
         }
+        
       });
+      
+      // Restliche Einzelschützen in neue Durchgänge
+      while (einzelSchuetzenIndex < einzelSchuetzen.length) {
+        // Neuer Durchgang wenn nötig
+        if (currentDurchgangBelegt >= staendeAnzahl) {
+          durchgang++;
+          currentDurchgangBelegt = 0;
+        }
+        
+        const s = einzelSchuetzen[einzelSchuetzenIndex];
+        const [hours, minutes] = config.startUhrzeit.split(':').map(Number);
+        const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * (config.durchgangsDauer + config.wechselzeit));
+        const newHours = Math.floor(totalMinutes / 60);
+        const newMinutes = totalMinutes % 60;
+        const startzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
+        
+        let hinweise = 'Einzelschütze';
+        if (s.anmerkung?.toLowerCase().includes('sondergenehmigung')) hinweise = 'Sondergenehmigung';
+        else if (s.anmerkung?.toLowerCase().includes('behinderung')) hinweise = 'Behinderung';
+        
+        // Finde nächsten freien Stand
+        let standIndex = currentDurchgangBelegt;
+        let testStand = config.verfuegbareStaende[standIndex % staendeAnzahl];
+        let testKey = `${testStand}_${startzeit}`;
+        
+        while (standZeitMatrix.has(testKey)) {
+          standIndex++;
+          testStand = config.verfuegbareStaende[standIndex % staendeAnzahl];
+          testKey = `${testStand}_${startzeit}`;
+        }
+        
+        standZeitMatrix.add(testKey);
+        
+        startlisteEntries.push({
+          ...s,
+          id: `${s.id}_restlich_${einzelSchuetzenIndex}`, // Eindeutige ID
+          stand: testStand,
+          startzeit,
+          durchgang,
+          hinweise
+        });
+        currentDurchgangBelegt++;
+        einzelSchuetzenIndex++;
+      }
+      
+
     });
 
     return startlisteEntries;
@@ -478,7 +590,7 @@ export default function StartlistenToolPage() {
 
       // Konvertiere Startliste zu David21 Format mit echten Daten
       const david21Entries = startliste.map((starter, index) => {
-        const schuetze = schuetzenMap[starter.name];
+        const schuetze = schuetzenMapPDF[starter.name];
         const meldung = schuetze ? meldungenMap[schuetze.id] : null;
         const disziplin = meldung ? disziplinenMap[meldung.disziplinId] : null;
         
@@ -615,10 +727,12 @@ export default function StartlistenToolPage() {
       const { default: jsPDF } = await import('jspdf');
       const { default: autoTable } = await import('jspdf-autotable');
       
-      // Lade Mannschaften für E/M Erkennung
-      const [schuetzenSnapshot, mannschaftenSnapshot] = await Promise.all([
+      // Lade Mannschaften und Disziplinen für E/M Erkennung und SPO-Nummern
+      const [schuetzenSnapshot, mannschaftenSnapshot, disziplinenSnapshot, kmMeldungenSnapshot] = await Promise.all([
         getDocs(collection(db, 'shooters')),
-        getDocs(collection(db, 'km_mannschaften'))
+        getDocs(collection(db, 'km_mannschaften')),
+        getDocs(collection(db, 'km_disziplinen')),
+        getDocs(collection(db, 'km_meldungen'))
       ]);
       
       // Schützen-Map für PDF Export
@@ -628,7 +742,8 @@ export default function StartlistenToolPage() {
         schuetzenMapPDF[data.name] = {
           id: doc.id,
           birthYear: data.birthYear,
-          gender: data.gender
+          gender: data.gender,
+          mitgliedsnummer: data.mitgliedsnummer
         };
       });
       
@@ -667,10 +782,11 @@ export default function StartlistenToolPage() {
       const disziplinText = config?.disziplinen?.join(' • ') || '';
       doc.text(disziplinText, pageWidth / 2, 190, { align: 'center' });
       
-      // Gruppiere nach Disziplinen
-      const nachDisziplin = startliste.reduce((acc, starter) => {
-        if (!acc[starter.disziplin]) acc[starter.disziplin] = [];
-        acc[starter.disziplin].push(starter);
+      // Gruppiere nur nach Startzeiten (keine Disziplin-Gruppierung)
+      const nachStartzeit = startliste.reduce((acc, s) => {
+        const zeit = s.startzeit || config?.startUhrzeit || '14:00';
+        if (!acc[zeit]) acc[zeit] = [];
+        acc[zeit].push(s);
         return acc;
       }, {} as {[key: string]: typeof startliste});
       
@@ -682,45 +798,45 @@ export default function StartlistenToolPage() {
       });
       
       let globalStartNummer = 1;
-      Object.entries(nachDisziplin).forEach(([disziplin, starter], disziplinIndex) => {
-        
-        // Gruppiere nach Startzeiten
-        const nachStartzeit = starter.reduce((acc, s) => {
-          const zeit = s.startzeit || config?.startUhrzeit || '14:00';
-          if (!acc[zeit]) acc[zeit] = [];
-          acc[zeit].push(s);
-          return acc;
-        }, {} as {[key: string]: typeof starter});
-        
-        let globalStartNummer = 1;
-        Object.entries(nachStartzeit).forEach(([startzeit, starterGruppe], startzeitIndex) => {
+      let isFirstStart = true;
+      let currentY = 35;
+      
+      Object.entries(nachStartzeit).forEach(([startzeit, starterGruppe], startzeitIndex) => {
+        if (isFirstStart) {
           doc.addPage();
+          isFirstStart = false;
+        } else {
+          // Prüfe ob neue Seite nötig ist
+          if (currentY > pageHeight - 100) {
+            doc.addPage();
+            currentY = 35;
+          } else {
+            currentY += 20; // Abstand zwischen Starts
+          }
+        }
           
-          // Header für Startlisten-Seiten
-          try {
-            const logoImg = new Image();
-            logoImg.src = '/images/logo2.png';
-            doc.addImage(logoImg, 'PNG', 15, 10, 20, 20);
-          } catch (error) {
-            console.warn('Logo konnte nicht geladen werden');
+          // Header nur bei neuer Seite
+          if (currentY < 50) {
+            try {
+              const logoImg = new Image();
+              logoImg.src = '/images/logo2.png';
+              doc.addImage(logoImg, 'PNG', 15, 10, 20, 20);
+            } catch (error) {
+              console.warn('Logo konnte nicht geladen werden');
+            }
+            
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('KREISSCHÜTZENVERBAND EINBECK e.V.', 40, 15);
+            doc.text('- Kreisschießsportleiterin -', 40, 22);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.line(40, 25, pageWidth - 20, 25);
+            currentY = 35;
           }
           
-          doc.setFontSize(12);
+          doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
-          doc.text('KREISSCHÜTZENVERBAND EINBECK e.V.', 40, 15);
-          doc.text('- Kreisschießsportleiterin -', 40, 22);
-          
-          doc.setFont('helvetica', 'normal');
-          doc.line(40, 25, pageWidth - 20, 25);
-          let currentY = 35;
-          
-          doc.setFontSize(14);
-          doc.setFont('helvetica', 'bold');
-          doc.text(disziplin, 20, currentY);
-          currentY += 10;
-          
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
           const austragungsVerein = vereine.find(v => v.id === config.austragungsort);
           const austragungsort = austragungsVerein ? austragungsVerein.name : 'ESG Einbeck';
           doc.text(`Start ${globalStartNummer} am: ${datum} um ${startzeit} Uhr im Schützenhaus ${austragungsort}`, 20, currentY);
@@ -729,7 +845,6 @@ export default function StartlistenToolPage() {
           currentY += 10;
           
           globalStartNummer++;
-          
           // Sortiere nach Stand und Name
           const sortierteStarter = starterGruppe.sort((a, b) => {
             const standA = parseInt(a.stand || '999');
@@ -738,24 +853,27 @@ export default function StartlistenToolPage() {
             return a.name.localeCompare(b.name);
           });
           
-          // Erkenne Mannschaften (3er Gruppen mit gleichem Stand/Zeit)
-          const mannschaftsGruppen = new Map();
-          sortierteStarter.forEach(s => {
-            const key = `${s.stand}_${s.startzeit}`;
-            if (!mannschaftsGruppen.has(key)) mannschaftsGruppen.set(key, []);
-            mannschaftsGruppen.get(key).push(s);
-          });
+
           
           const tableData = sortierteStarter.map((s) => {
-            const vereinsNr = vereine.findIndex(v => v.name === s.verein) + 1;
-            const mitgliedsNr = `08-${vereinsNr.toString().padStart(3, '0')}-0001`;
+            // Finde Schütze für echte Mitgliedsnummer mit korrektem 0-Präfix
+            const schuetze = schuetzenMapPDF[s.name];
+            let mitgliedsNr = '08-000-0000';
+            if (schuetze?.mitgliedsnummer) {
+              const mitgliedsNummerStr = schuetze.mitgliedsnummer.toString();
+              if (mitgliedsNummerStr.length >= 7) {
+                // Format: 8017017 -> 08-017-017
+                const teil1 = mitgliedsNummerStr.substring(1, 4).padStart(3, '0');
+                const teil2 = mitgliedsNummerStr.substring(4).padStart(3, '0');
+                mitgliedsNr = `08-${teil1}-${teil2}`;
+              }
+            }
             
             const nameParts = s.name.split(' ');
             const nachname = nameParts[nameParts.length - 1];
             const vorname = nameParts.slice(0, -1).join(' ');
             
             // E/M: Prüfe ob Schütze in Mannschaft (aus km_mannschaften)
-            const schuetze = schuetzenMapPDF[s.name];
             let istMannschaft = false;
             if (schuetze?.id) {
               mannschaftenSnapshot.docs.forEach(doc => {
@@ -771,6 +889,9 @@ export default function StartlistenToolPage() {
             const originalMeldung = meldungen.find(m => m.name === s.name && m.disziplin === s.disziplin);
             const lmTeilnahme = originalMeldung?.lmTeilnahme === true;
             const korrekteAltersklasse = originalMeldung?.altersklasse || s.altersklasse;
+            // Hole SPO-Nummer direkt aus Disziplinen-Datenbank
+            const disziplinDoc = disziplinenSnapshot.docs.find(d => d.data().name === s.disziplin);
+            const spoNummer = disziplinDoc?.data().spoNummer || '1.41';
             
             return [
               s.stand || 'N/A',
@@ -778,6 +899,7 @@ export default function StartlistenToolPage() {
               nachname,
               vorname,
               s.verein,
+              spoNummer,
               korrekteAltersklasse,
               einzelMannschaft,
               lmTeilnahme ? 'J' : 'N'
@@ -786,39 +908,46 @@ export default function StartlistenToolPage() {
           
           autoTable(doc, {
             startY: currentY,
-            head: [['Stand', 'Mitglieds-Nr.', 'Name', 'Vorname', 'Verein', 'WKl', 'E / M', 'LM']],
+            head: [['Stand', 'Mitgl.-Nr.', 'Name', 'Vorname', 'Verein', 'Disz.', 'WKl', 'E/M', 'LM']],
             body: tableData,
             styles: { 
-              fontSize: 8,
-              cellPadding: 2
+              fontSize: 9,
+              cellPadding: 2,
+              textColor: [0, 0, 0],
+              fillColor: [255, 255, 255],
+              valign: 'middle',
+              halign: 'left',
+              minCellHeight: 12,
+              cellHeight: 12
             },
             headStyles: { 
-              fillColor: [255, 255, 255],
-              textColor: 0,
+              fillColor: [220, 220, 220],
+              textColor: [0, 0, 0],
               fontStyle: 'bold',
-              lineWidth: 0.5,
+              lineWidth: 1,
               lineColor: [0, 0, 0]
             },
             bodyStyles: {
-              lineWidth: 0.5,
-              lineColor: [0, 0, 0]
+              lineWidth: 0.8,
+              lineColor: [0, 0, 0],
+              textColor: [0, 0, 0]
             },
-            margin: { left: 20, right: 20 },
+            margin: { left: 5, right: 5 },
             columnStyles: {
               0: { cellWidth: 15 },
               1: { cellWidth: 25 },
-              2: { cellWidth: 30 },
+              2: { cellWidth: 25 },
               3: { cellWidth: 25 },
-              4: { cellWidth: 35 },
-              5: { cellWidth: 15 },
-              6: { cellWidth: 15 },
-              7: { cellWidth: 15 }
+              4: { cellWidth: 40 },
+              5: { cellWidth: 12 },
+              6: { cellWidth: 25 },
+              7: { cellWidth: 12 },
+              8: { cellWidth: 12 }
             }
           });
           
-          currentY = (doc as any).lastAutoTable.finalY + 15;
+          currentY = (doc as any).lastAutoTable.finalY;
         });
-      });
       
       // Footer auf jeder Seite
       const totalPages = doc.getNumberOfPages();
@@ -835,7 +964,8 @@ export default function StartlistenToolPage() {
         doc.text(`Seite ${i} von ${totalPages}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
       }
       
-      const fileName = `Startliste_KM_${new Date().toISOString().split('T')[0]}.pdf`;
+      const veranstaltungsDatum = new Date(config?.startDatum || new Date()).toISOString().split('T')[0];
+      const fileName = `Startliste_KM_${veranstaltungsDatum}.pdf`;
       doc.save(fileName);
       
       toast({ 
@@ -989,8 +1119,8 @@ export default function StartlistenToolPage() {
               <div className="flex justify-between items-center">
                 <CardTitle>Meldungen ({meldungen.length})</CardTitle>
                 <div className="flex gap-2">
-                  <Button onClick={() => {
-                    const generierte = generiereStartliste();
+                  <Button onClick={async () => {
+                    const generierte = await generiereStartliste();
                     setStartliste(generierte);
                   }} disabled={meldungen.length === 0}>
                     <Target className="h-4 w-4 mr-2" />
@@ -1097,7 +1227,7 @@ export default function StartlistenToolPage() {
                         if (a.startzeit !== b.startzeit) return (a.startzeit || '').localeCompare(b.startzeit || '');
                         return a.name.localeCompare(b.name);
                       })
-                      .map(starter => {
+                      .map((starter, index) => {
                         const gleicheZeitStand = startliste.filter(s => 
                           s.id !== starter.id && s.stand === starter.stand && s.startzeit === starter.startzeit
                         ).length > 0;
@@ -1114,7 +1244,7 @@ export default function StartlistenToolPage() {
                         const bgColor = (gleicheZeitStand || gewehrSharingKonflikt) ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200';
                         
                         return (
-                          <div key={starter.id} className={`grid grid-cols-12 gap-2 p-2 ${bgColor} rounded text-sm items-center`}>
+                          <div key={`${starter.id}-${index}`} className={`grid grid-cols-12 gap-2 p-2 ${bgColor} rounded text-sm items-center group`}>
                             <div className="col-span-3">
                               <div className="font-medium">{starter.name}</div>
                               <div className="text-xs text-muted-foreground">{starter.verein}</div>
@@ -1154,10 +1284,24 @@ export default function StartlistenToolPage() {
                             <div className="col-span-1 text-center">
                               <Badge variant="secondary" className="text-xs">DG {starter.durchgang}</Badge>
                             </div>
-                            <div className="col-span-2">
+                            <div className="col-span-2 relative">
                               {starter.anmerkung && (
                                 <div className="text-xs text-blue-600">{starter.anmerkung}</div>
                               )}
+                              <button 
+                                onClick={() => {
+                                  const neueStartliste = startliste.filter(s => s.id !== starter.id);
+                                  setStartliste(neueStartliste);
+                                  if (config) {
+                                    const neueAnalyse = analyzeStartlist(meldungen, neueStartliste, config);
+                                    setKiAnalyse(neueAnalyse);
+                                  }
+                                }}
+                                className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 text-xs w-4 h-4 flex items-center justify-center"
+                                title="Starter entfernen"
+                              >
+                                ×
+                              </button>
                             </div>
                             {(gleicheZeitStand || gewehrSharingKonflikt) && (
                               <div className="col-span-12 text-xs text-red-600 font-medium mt-1">

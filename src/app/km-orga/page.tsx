@@ -200,6 +200,9 @@ export default function KMAdminDashboard() {
               <Link href="/km-orga/meldungen/statistik">
                 <Button variant="outline" className="w-full">📊 Statistiken</Button>
               </Link>
+              <Link href="/km-orga/mannschaften">
+                <Button variant="outline" className="w-full">👥 Mannschaften verwalten</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -286,9 +289,6 @@ export default function KMAdminDashboard() {
               </Link>
               <Link href="/km-orga/startgebuehren">
                 <Button variant="outline" className="w-full">💰 Startgebühren-Übersicht</Button>
-              </Link>
-              <Link href="/km-orga/mannschaften">
-                <Button variant="outline" className="w-full">Mannschaften verwalten</Button>
               </Link>
               {!isOrganisator && (
                 <Link href="/km-orga/mitglieder/import">

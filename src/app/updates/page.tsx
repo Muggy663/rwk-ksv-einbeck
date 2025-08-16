@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.11.5 (13.08.2025)</span>
+              <span>Web-Version: 0.11.6 (16.08.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -36,8 +36,54 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.5 - KM-Bereich: Mehrvereine-Support</CardTitle>
+              <CardTitle className="text-xl">Version 0.11.6 - Startlisten-Optimierung & Mannschafts-Integration</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
+            </div>
+            <CardDescription>16.08.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Startlisten-Generierung optimiert: Intelligente Mannschafts-Integration, papier-sparende PDFs und Duplikat-Bereinigung.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🎯 Startlisten-Optimierung v0.11.6</h4>
+              <div className="text-xs text-green-700">
+                Intelligente Mannschafts-Verteilung und papier-sparende PDF-Generierung
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>👥 <strong>Mannschafts-Integration:</strong> Automatische Erkennung von Mannschafts-Mitgliedern aus km_mannschaften</li>
+              <li>🎯 <strong>Optimale Durchgangs-Verteilung:</strong> Mannschaften zeitgleich, Einzelschützen füllen Lücken auf</li>
+              <li>⚡ <strong>Intelligente Stand-Zuweisung:</strong> Automatische Konfliktauflösung bei Stand-Zeit-Überschneidungen</li>
+              <li>📄 <strong>Papier-sparende PDFs:</strong> Mehrere Starts pro Seite mit optimiertem Layout</li>
+              <li>📅 <strong>Veranstaltungsdatum im Dateinamen:</strong> PDF-Dateien werden nach Wettkampfdatum benannt</li>
+              <li>🔧 <strong>Duplikat-Bereinigung:</strong> Verhindert doppelte Starter in der Startliste (47 = 47)</li>
+              <li>👥 <strong>Mannschaften-Verwaltung verschoben:</strong> Jetzt unter "Meldungen & Vorbereitung"</li>
+              <li>🗑️ <strong>Dezente Löschen-Funktion:</strong> Starter können per Hover-Button entfernt werden</li>
+              <li>🎯 <strong>Saubere Datenquelle:</strong> Startlisten basieren ausschließlich auf echten km_meldungen</li>
+              <li>🔄 <strong>Saison-Filter:</strong> Korrekte Filterung nach Saison für Meldungen und Mannschaften</li>
+              <li>🆔 <strong>Eindeutige IDs:</strong> Verhindert React-Warnings bei doppelten Schützen-Namen</li>
+              <li>🐛 <strong>Debug-Bereinigung:</strong> Alle Console-Logs für Produktionsversion entfernt</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🎯 Startlisten-Optimierung</span>
+                  <p className="text-xs text-green-600 mt-1">Mannschaften & Papier-sparend</p>
+                </div>
+                <Link href="/updates/v0.11.6">
+                  <span className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 cursor-pointer">
+                    🚀 v0.11.6
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.11.5 - KM-Bereich: Mehrvereine-Support</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>14.08.2025</CardDescription>
           </CardHeader>
