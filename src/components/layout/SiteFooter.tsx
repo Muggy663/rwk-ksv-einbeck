@@ -22,6 +22,14 @@ export function SiteFooter() {
             <Link href="/copyright" className="text-muted-foreground hover:text-primary underline">
               Copyright
             </Link>
+            <Link 
+              href="http://www.ksv-einbeck.de/index.htm" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-muted-foreground hover:text-primary underline"
+            >
+              KSV Einbeck
+            </Link>
           </div>
         </div>
         <div className="text-center text-sm text-muted-foreground md:text-right">
