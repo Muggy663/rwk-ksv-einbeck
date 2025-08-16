@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.11.6"; // Startlisten-Optimierung & Mannschafts-Integration
+  const version = "0.11.7"; // KM-Orga Meldungen: Papier-Meldungen digital erfassen
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

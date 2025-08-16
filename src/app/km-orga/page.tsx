@@ -127,8 +127,8 @@ export default function KMAdminDashboard() {
                       <li>• Beachtet Gewehr-Sharing (wenn 2 Schützen 1 Gewehr teilen)</li>
                     </ul>
                   </div>
-                  <Link href="/km-orga/startlisten">
-                    <Button size="sm" className="w-full md:w-auto bg-green-600 hover:bg-green-700">✨ Startlisten-Assistent starten</Button>
+                  <Link href="/km-orga/startlisten/uebersicht">
+                    <Button size="sm" className="w-full md:w-auto bg-green-600 hover:bg-green-700">🎯 Startlisten-Verwaltung</Button>
                   </Link>
                 </div>
               </div>
@@ -219,14 +219,9 @@ export default function KMAdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <Link href="/km-orga/startlisten">
-                <Button className="w-full bg-green-600 hover:bg-green-700">
-                  ✨ Neue Startliste erstellen
-                </Button>
-              </Link>
               <Link href="/km-orga/startlisten/uebersicht">
-                <Button variant="outline" className="w-full">
-                  📁 Gespeicherte Startlisten
+                <Button className="w-full bg-green-600 hover:bg-green-700">
+                  🎯 Startlisten-Verwaltung
                 </Button>
               </Link>
               <div className="text-xs text-green-700 bg-green-100 p-2 rounded">

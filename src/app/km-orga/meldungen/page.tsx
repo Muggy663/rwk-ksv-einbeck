@@ -3,8 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import { useKMAuth } from '@/hooks/useKMAuth';
 
 export default function KMAdminMeldungen() {
@@ -17,6 +23,16 @@ export default function KMAdminMeldungen() {
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(2026);
   const [filter, setFilter] = useState({ verein: '', disziplin: '', search: '' });
+  const [showMeldungsDialog, setShowMeldungsDialog] = useState(false);
+  const [meldungsForm, setMeldungsForm] = useState({
+    vereinId: '',
+    schuetzeId: '',
+    disziplinIds: [] as string[],
+    vmErgebnis: '',
+    lmTeilnahme: false,
+    anmerkung: ''
+  });
+  const [vereinSchuetzen, setVereinSchuetzen] = useState<any[]>([]);
 
   useEffect(() => {
     if (hasFullAccess && !authLoading) {
@@ -56,6 +72,76 @@ export default function KMAdminMeldungen() {
       toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden', variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadVereinSchuetzen = async (vereinId: string) => {
+    if (!vereinId) {
+      setVereinSchuetzen([]);
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/km/shooters?clubId=${vereinId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setVereinSchuetzen(data.data || []);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Vereinsschützen:', error);
+    }
+  };
+
+  const submitMeldung = async () => {
+    if (!meldungsForm.vereinId || !meldungsForm.schuetzeId || meldungsForm.disziplinIds.length === 0) {
+      toast({ title: 'Fehler', description: 'Bitte alle Pflichtfelder ausfüllen', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      for (const disziplinId of meldungsForm.disziplinIds) {
+        const meldungData = {
+          schuetzeId: meldungsForm.schuetzeId,
+          disziplinId,
+          saison: selectedYear.toString(),
+          jahr: selectedYear,
+          lmTeilnahme: meldungsForm.lmTeilnahme,
+          anmerkung: meldungsForm.anmerkung,
+          vmErgebnis: meldungsForm.vmErgebnis ? { ringe: parseInt(meldungsForm.vmErgebnis) } : null,
+          status: 'gemeldet',
+          meldedatum: new Date(),
+          gemeldeteVon: 'km-orga'
+        };
+
+        const response = await fetch('/api/km/meldungen', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(meldungData)
+        });
+
+        if (!response.ok) {
+          throw new Error('Meldung fehlgeschlagen');
+        }
+      }
+
+      toast({ 
+        title: 'Erfolg', 
+        description: `${meldungsForm.disziplinIds.length} Meldung(en) erfolgreich erstellt` 
+      });
+      
+      setShowMeldungsDialog(false);
+      setMeldungsForm({
+        vereinId: '',
+        schuetzeId: '',
+        disziplinIds: [],
+        vmErgebnis: '',
+        lmTeilnahme: false,
+        anmerkung: ''
+      });
+      setVereinSchuetzen([]);
+      loadData();
+    } catch (error) {
+      toast({ title: 'Fehler', description: 'Meldung konnte nicht erstellt werden', variant: 'destructive' });
     }
   };
 
@@ -131,6 +217,10 @@ export default function KMAdminMeldungen() {
           <h1 className="text-3xl font-bold text-primary">📋 Alle KM-Meldungen {selectedYear}</h1>
           <p className="text-muted-foreground">Verwaltung aller Meldungen zur Kreismeisterschaft {selectedYear}</p>
         </div>
+        <Button onClick={() => setShowMeldungsDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Meldung für Verein erstellen
+        </Button>
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(parseInt(e.target.value))}
@@ -323,6 +413,128 @@ export default function KMAdminMeldungen() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Meldungs-Dialog */}
+      <Dialog open={showMeldungsDialog} onOpenChange={setShowMeldungsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>📋 Neue Meldung für Verein erstellen</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Verein auswählen *</Label>
+              <Select 
+                value={meldungsForm.vereinId} 
+                onValueChange={(value) => {
+                  setMeldungsForm(prev => ({ ...prev, vereinId: value, schuetzeId: '' }));
+                  loadVereinSchuetzen(value);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Verein wählen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {clubs.map(club => (
+                    <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {meldungsForm.vereinId && (
+              <div>
+                <Label>Schütze auswählen *</Label>
+                <Select 
+                  value={meldungsForm.schuetzeId} 
+                  onValueChange={(value) => setMeldungsForm(prev => ({ ...prev, schuetzeId: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Schütze wählen..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vereinSchuetzen.map(schuetze => (
+                      <SelectItem key={schuetze.id} value={schuetze.id}>
+                        {schuetze.firstName && schuetze.lastName 
+                          ? `${schuetze.firstName} ${schuetze.lastName}` 
+                          : schuetze.name
+                        }
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div>
+              <Label>Disziplinen auswählen *</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto border rounded p-2">
+                {disziplinen.map(disziplin => (
+                  <div key={disziplin.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={disziplin.id}
+                      checked={meldungsForm.disziplinIds.includes(disziplin.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setMeldungsForm(prev => ({
+                            ...prev,
+                            disziplinIds: [...prev.disziplinIds, disziplin.id]
+                          }));
+                        } else {
+                          setMeldungsForm(prev => ({
+                            ...prev,
+                            disziplinIds: prev.disziplinIds.filter(id => id !== disziplin.id)
+                          }));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={disziplin.id} className="text-sm">
+                      {disziplin.spoNummer} - {disziplin.name}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>VM-Ergebnis (Ringe)</Label>
+                <Input 
+                  type="number"
+                  placeholder="z.B. 385"
+                  value={meldungsForm.vmErgebnis}
+                  onChange={(e) => setMeldungsForm(prev => ({ ...prev, vmErgebnis: e.target.value }))}
+                />
+              </div>
+              <div className="flex items-center space-x-2 mt-6">
+                <Checkbox 
+                  id="lmTeilnahme"
+                  checked={meldungsForm.lmTeilnahme}
+                  onCheckedChange={(checked) => setMeldungsForm(prev => ({ ...prev, lmTeilnahme: !!checked }))}
+                />
+                <Label htmlFor="lmTeilnahme">LM-Teilnahme</Label>
+              </div>
+            </div>
+
+            <div>
+              <Label>Anmerkungen</Label>
+              <Input 
+                placeholder="Besondere Wünsche oder Hinweise..."
+                value={meldungsForm.anmerkung}
+                onChange={(e) => setMeldungsForm(prev => ({ ...prev, anmerkung: e.target.value }))}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setShowMeldungsDialog(false)}>
+                Abbrechen
+              </Button>
+              <Button onClick={submitMeldung}>
+                Meldung erstellen
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

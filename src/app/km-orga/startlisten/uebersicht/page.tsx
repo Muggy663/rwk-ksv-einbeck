@@ -155,13 +155,13 @@ export default function StartlistenUebersichtPage() {
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-primary">📄 Startlisten-Übersicht</h1>
           <p className="text-muted-foreground">
-            Konfigurationen und gespeicherte Startlisten verwalten
+            Austragungsorte und gespeicherte Startlisten verwalten
           </p>
         </div>
         <Link href="/km-orga/startlisten">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Neue Konfiguration
+            Neuen Austragungsort erstellen
           </Button>
         </Link>
       </div>
@@ -172,7 +172,7 @@ export default function StartlistenUebersichtPage() {
           variant={activeTab === 'configs' ? 'default' : 'outline'}
           onClick={() => setActiveTab('configs')}
         >
-          Konfigurationen ({configs.length})
+          Austragungsorte ({configs.length})
         </Button>
         <Button 
           variant={activeTab === 'startlisten' ? 'default' : 'outline'}
@@ -185,11 +185,11 @@ export default function StartlistenUebersichtPage() {
       {activeTab === 'configs' && configs.length === 0 ? (
         <Card>
           <CardContent className="text-center py-10">
-            <p className="text-muted-foreground mb-4">Noch keine Konfigurationen vorhanden.</p>
+            <p className="text-muted-foreground mb-4">Noch keine Austragungsorte vorhanden.</p>
             <Link href="/km-orga/startlisten">
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Erste Konfiguration erstellen
+                Ersten Austragungsort erstellen
               </Button>
             </Link>
           </CardContent>
