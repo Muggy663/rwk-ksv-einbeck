@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.11.7 (16.08.2025)</span>
+              <span>Web-Version: 0.11.7a (19.08.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.1.0 (31.07.2025)</span>
@@ -36,10 +36,10 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.7 - KM-Orga Meldungen: Papier-Meldungen digital erfassen</CardTitle>
+              <CardTitle className="text-xl">Version 0.11.7a - KM-Orga Passwort-Änderung & Startlisten-Fixes</CardTitle>
               <Badge variant="default" className="bg-green-600">Neu</Badge>
             </div>
-            <CardDescription>16.08.2025</CardDescription>
+            <CardDescription>19.08.2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Neue Funktionalität für KM-Organisatoren: Button "Meldung für Verein erstellen" ermöglicht digitale Erfassung von Papier-Meldungen.</p>
@@ -66,12 +66,12 @@ export default function UpdatesPage() {
             <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
               <div className="flex items-center justify-between">
                 <div className="text-sm">
-                  <span className="font-medium text-green-800">📋 Papier-Meldungen digital</span>
-                  <p className="text-xs text-green-600 mt-1">Workflow für KM-Organisatoren</p>
+                  <span className="font-medium text-green-800">🔑 KM-Orga Passwort-Änderung</span>
+                  <p className="text-xs text-green-600 mt-1">Passwort & Startlisten-Fixes</p>
                 </div>
-                <Link href="/updates/v0.11.7">
+                <Link href="/updates/v0.11.7a">
                   <span className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 cursor-pointer">
-                    🚀 v0.11.7
+                    🚀 v0.11.7a
                   </span>
                 </Link>
               </div>

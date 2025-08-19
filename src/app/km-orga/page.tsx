@@ -285,6 +285,9 @@ export default function KMAdminDashboard() {
               <Link href="/km-orga/startgebuehren">
                 <Button variant="outline" className="w-full">💰 Startgebühren-Übersicht</Button>
               </Link>
+              <Link href="/change-password">
+                <Button variant="outline" className="w-full">🔑 Passwort ändern</Button>
+              </Link>
               {!isOrganisator && (
                 <Link href="/km-orga/mitglieder/import">
                   <Button variant="outline" className="w-full">Mitglieder importieren</Button>
