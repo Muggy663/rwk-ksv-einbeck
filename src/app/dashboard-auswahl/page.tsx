@@ -70,9 +70,9 @@ export default function DashboardAuswahl() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <h4 className="font-semibold text-blue-900 mb-2">Funktionen</h4>
-                <div className="text-sm text-blue-700 space-y-1">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Funktionen</h4>
+                <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
                   <div>• Ligatabellen und Ergebnisse</div>
                   <div>• Schützen- und Teamverwaltung</div>
                   <div>• Rundenwettkampf-Organisation</div>
@@ -115,9 +115,9 @@ export default function DashboardAuswahl() {
             <div className="space-y-4">
               {hasKMAccess ? (
                 <>
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <h4 className="font-semibold text-green-900 mb-2">Funktionen</h4>
-                    <div className="text-sm text-green-700 space-y-1">
+                  <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                    <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2">Funktionen</h4>
+                    <div className="text-sm text-green-700 dark:text-green-200 space-y-1">
                       <div>• KM-Meldungen erstellen</div>
                       <div>• Mannschaftsbildung</div>
                       <div>• VM-Ergebnisse erfassen</div>
@@ -149,9 +149,9 @@ export default function DashboardAuswahl() {
                   </div>
                 </>
               ) : (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <h4 className="font-semibold text-gray-900 mb-2">Kein Zugang</h4>
-                  <p className="text-sm text-gray-600">
+                <div className="bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Kein Zugang</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     Sie haben derzeit keine Berechtigung für das KM-System.
                   </p>
                 </div>

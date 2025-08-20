@@ -3,12 +3,12 @@
 import * as React from "react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-
 import { Moon, Sun, Monitor } from "lucide-react";
 
 export function ModeToggle() {
   const { setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
@@ -23,8 +23,6 @@ export function ModeToggle() {
     );
   }
 
-  const [isOpen, setIsOpen] = React.useState(false);
-  
   return (
     <div className="relative">
       <Button 
