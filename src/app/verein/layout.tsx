@@ -150,21 +150,21 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
 
     if (!user) {
       // This should ideally be handled by AuthProvider, but as a safeguard
-      console.warn("VereinLayout DEBUG: No user, redirecting to login (this should ideally not happen if AuthProvider handles it).");
+      // No user, redirecting to login
       router.push('/login'); // Consider if this redirect is still needed or handled by AuthProvider
       return;
     }
     
     // Super-Admin should not be in /verein layout, redirect them
     if (user.email === ADMIN_EMAIL) {
-      console.warn("VereinLayout DEBUG: Super-Admin detected, redirecting to /admin/dashboard.");
+      // Super-Admin detected, redirecting to /admin/dashboard
       router.push('/admin');
       return; 
     }
 
     // Handle errors from AuthProvider first
     if (authProviderPermissionError) {
-      console.warn("VereinLayout DEBUG: Error from AuthProvider:", authProviderPermissionError);
+      // Error from AuthProvider
       setDerivedPermissionError(authProviderPermissionError);
       setUserPermissionForContext(null);
       setAssignedClubIdArray([]);
@@ -172,7 +172,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
     }
 
     if (!userAppPermissions) {
-      console.warn(`VereinLayout DEBUG: No userAppPermissions document found for UID: ${user.uid}. This user might not be configured for club access.`);
+      // No userAppPermissions document found
       setDerivedPermissionError("Keine Berechtigungen für diesen Benutzer in Firestore gefunden. Bitte kontaktieren Sie den Administrator.");
       setUserPermissionForContext(null);
       setAssignedClubIdArray([]);
@@ -218,13 +218,13 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
           
           setDerivedPermissionError(null);
         } else {
-          console.warn("VereinLayout DEBUG: Role is valid, but no valid clubs assigned.", { role, clubId, representedClubs });
+          // Role is valid, but no valid clubs assigned
           setDerivedPermissionError("Benutzer hat Rolle, aber keinen gültigen Verein zugewiesen.");
           setUserPermissionForContext(userAppPermissions);
           setAssignedClubIdArray([]);
         }
       } else {
-        console.warn(`VereinLayout DEBUG: Role is not valid for Verein area or missing. Role: '${role || 'unbekannt'}'`);
+        // Role is not valid for Verein area or missing
         setDerivedPermissionError(`Ihre Rolle '${role || 'Unbekannt'}' hat keinen Zugriff auf den Vereinsbereich oder es fehlt eine Vereinszuweisung.`);
         setUserPermissionForContext(userAppPermissions); // Store for potential role display in error
         setAssignedClubIdArray([]);
@@ -297,7 +297,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
   
   // Fallback, if userPermissionForContext is still false after loading (should ideally be caught by derivedPermissionError)
   if (userPermissionForContext === false) { 
-     console.warn("VereinLayout DEBUG: Rendering fallback because userPermissionForContext is still 'false' after loading and no error.");
+     // Rendering fallback because userPermissionForContext is still 'false' after loading
       return (
           <div className="flex min-h-[calc(100vh-theme(spacing.16))]">
              <main className="flex-1 p-8 flex justify-center items-center">
