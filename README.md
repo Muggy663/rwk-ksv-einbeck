@@ -57,7 +57,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 | Platform | Version | Status | Download |
 |----------|---------|--------|---------|
 | **Web App** | 0.11.7 | 🔄 Beta | Vercel Deployment |
-| **Android App** | 0.9.1.0 | ✅ Produktiv | Google Play Store |
+| **Android App** | 0.9.4.1 | ✅ Produktiv | Google Play Store |
 | **iOS App** | - | ❌ Nicht geplant | Unrentabel |
 
 ## 🎯 Zielgruppe
