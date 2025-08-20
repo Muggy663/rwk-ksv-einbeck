@@ -34,7 +34,7 @@ export function SiteFooter() {
         </div>
         <div className="text-center text-sm text-muted-foreground md:text-right">
           <p>Web-Version {version} <span className="text-xs bg-primary/10 text-primary px-1 py-0.5 rounded">Beta</span></p>
-          <p className="text-xs mt-1">App-Version 0.9.4.0</p>
+          <p className="text-xs mt-1">App-Version 0.9.4.1</p>
         </div>
       </div>
     </footer>

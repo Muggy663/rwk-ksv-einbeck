@@ -39,7 +39,7 @@ export default function KMAdminDashboard() {
   const isOrganisator = userRole === 'km_organisator';
 
   return (
-    <div className="container py-8 max-w-7xl mx-auto">
+    <div className="container py-4 px-2 max-w-full mx-auto">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-primary">🏆 KM-Orga-Dashboard</h1>
         <p className="text-muted-foreground">
@@ -49,7 +49,7 @@ export default function KMAdminDashboard() {
       </div>
 
       {/* Ausführliche Anleitung für Sportleiterin */}
-      <Card className="mb-8 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+      <Card className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -73,9 +73,9 @@ export default function KMAdminDashboard() {
         </CardHeader>
         {isInstructionOpen && (
         <CardContent>
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Schritt 1 */}
-            <div className="bg-white p-4 rounded-lg border border-blue-200">
+            <div className="bg-white p-3 rounded-lg border border-blue-200">
               <div className="flex items-start gap-4">
                 <div className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold flex-shrink-0">1</div>
                 <div className="flex-1">
@@ -100,7 +100,7 @@ export default function KMAdminDashboard() {
             </div>
             
             {/* Schritt 2 */}
-            <div className="bg-white p-4 rounded-lg border border-green-200">
+            <div className="bg-white p-3 rounded-lg border border-green-200">
               <div className="flex items-start gap-4">
                 <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold flex-shrink-0">2</div>
                 <div className="flex-1">
@@ -135,7 +135,7 @@ export default function KMAdminDashboard() {
             </div>
             
             {/* Schritt 3 */}
-            <div className="bg-white p-4 rounded-lg border border-orange-200">
+            <div className="bg-white p-3 rounded-lg border border-orange-200">
               <div className="flex items-start gap-4">
                 <div className="bg-orange-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold flex-shrink-0">3</div>
                 <div className="flex-1">
@@ -178,7 +178,7 @@ export default function KMAdminDashboard() {
         )}
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Meldungen & Vorbereitung */}
         <Card className="hover:shadow-md transition-shadow border-blue-200">
           <CardHeader>

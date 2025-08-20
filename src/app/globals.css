@@ -123,16 +123,22 @@
   }
   
   /* Mobile Navigation Menu Fix */
-  .mobile-nav [role="menu"] {
+  [data-radix-popper-content-wrapper] {
     position: fixed !important;
     top: 60px !important;
-    left: 10px !important;
     right: 10px !important;
+    left: auto !important;
     max-width: calc(100vw - 20px) !important;
+    transform: none !important;
+  }
+  
+  [data-radix-popper-content-wrapper] [role="menu"] {
     background: hsl(var(--background)) !important;
     border: 1px solid hsl(var(--border)) !important;
     border-radius: 8px !important;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+    width: 250px !important;
+    max-width: calc(100vw - 20px) !important;
   }
   
   /* Buttons am unteren Rand sicher positionieren */

@@ -1,13 +1,18 @@
 // src/components/AppVersionChecker.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { checkAndClearOnUpdate } from '@/utils/appVersion';
 
 export function AppVersionChecker() {
+  const [mounted, setMounted] = useState(false);
+  
   useEffect(() => {
-    checkAndClearOnUpdate();
-  }, []);
+    setMounted(true);
+    if (mounted) {
+      checkAndClearOnUpdate();
+    }
+  }, [mounted]);
 
   return null;
 }

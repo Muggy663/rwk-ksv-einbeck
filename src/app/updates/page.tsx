@@ -23,7 +23,7 @@ export default function UpdatesPage() {
               <span>Web-Version: 0.11.7a (19.08.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
-              <span>App-Version: 0.9.4.0 (19.08.2025)</span>
+              <span>App-Version: 0.9.4.1 (19.08.2025)</span>
             </Badge>
             <Badge variant="default" className="text-xs py-1 px-2 bg-green-600">
               <span>🌐 Live: rwk-einbeck.de</span>

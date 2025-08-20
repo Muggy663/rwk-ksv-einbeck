@@ -154,7 +154,7 @@ export function MainNav() {
   const vereinsvertreterRoutes: RouteItem[] = [
     {
       href: '/verein/dashboard',
-      label: 'RWK',
+      label: 'Vereinsbereich',
       icon: <User className="h-4 w-4 mr-2" />,
       active: pathname === '/verein/dashboard' || pathname.startsWith('/verein/'),
     },
@@ -290,7 +290,7 @@ export function MainNav() {
               <Menu className="h-6 w-6" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 mr-4">
+          <DropdownMenuContent align="end" side="left" className="w-56">
             <DropdownMenuLabel>Navigation</DropdownMenuLabel>
             <DropdownMenuSeparator />
             

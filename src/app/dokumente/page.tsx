@@ -225,6 +225,10 @@ export default function DokumentePage() {
           </TabsContent>
 
           <TabsContent value="ligalisten" className="space-y-4">
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold mb-2">Ligalisten</h2>
+              <div className="h-px bg-border mb-4"></div>
+            </div>
             <Card>
               <CardHeader>
                 <div className="flex flex-col gap-6">
@@ -316,7 +320,10 @@ export default function DokumentePage() {
           </TabsContent>
 
           <TabsContent value="ordnungen" className="space-y-4">
-            <h2 className="text-xl font-semibold mb-4">Regelwerke & Hilfen</h2>
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold mb-2">Regelwerke & Hilfen</h2>
+              <div className="h-px bg-border mb-4"></div>
+            </div>
             {ordnungen.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-muted-foreground">

@@ -119,7 +119,7 @@ export default function KMDashboard() {
   };
   
   return (
-    <div className="container py-8 max-w-7xl mx-auto">
+    <div className="container py-4 px-2 max-w-full mx-auto">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold text-primary">🏆 Kreismeisterschaften {selectedYear}</h1>
@@ -164,7 +164,7 @@ export default function KMDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4">
         {/* Hauptfunktionen */}
         <Card className="border-2 border-primary/20 shadow-lg hover:shadow-xl transition-all duration-200">
           <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20">
@@ -202,7 +202,7 @@ export default function KMDashboard() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 <Link href="/km/meldungen" className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors shadow-md hover:shadow-lg">
                   📋 Schützen melden
                 </Link>
@@ -381,7 +381,7 @@ export default function KMDashboard() {
       </div>
 
       {/* Info-Bereich */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="mt-6 grid grid-cols-1 gap-4">
         <Card className="border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20">
           <CardContent className="p-6">
             <div className="flex items-start gap-3">
