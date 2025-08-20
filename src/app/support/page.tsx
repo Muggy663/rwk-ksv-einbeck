@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { HelpCircle, Send, Loader2, Upload, CheckCircle } from 'lucide-react';
+import { HelpCircle, Send, Loader2, Upload, CheckCircle, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
@@ -373,7 +373,59 @@ export default function SupportPage() {
           </CardContent>
         </Card>
       )}
-       <p className="text-center text-sm text-muted-foreground max-w-md mx-auto mt-6">
+      {/* Konto-Löschung Sektion */}
+      <Card className="shadow-lg max-w-2xl mx-auto border-destructive/20">
+        <CardHeader>
+          <CardTitle className="text-2xl text-destructive flex items-center gap-2">
+            <HelpCircle className="h-6 w-6" />
+            Konto löschen
+          </CardTitle>
+          <CardDescription>
+            Beantragen Sie die Löschung Ihres Kontos und aller zugehörigen Daten
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-muted p-4 rounded-lg">
+            <h3 className="font-semibold mb-2">So beantragen Sie die Kontolöschung:</h3>
+            <ol className="list-decimal list-inside space-y-1 text-sm">
+              <li>Senden Sie eine E-Mail an: <strong>rwk-leiter-ksve@gmx.de</strong></li>
+              <li>Betreff: "Kontolöschung RWK App"</li>
+              <li>Geben Sie Ihre registrierte E-Mail-Adresse an</li>
+              <li>Bestätigen Sie Ihre Identität durch Angabe Ihres Vereins</li>
+            </ol>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-2">Welche Daten werden gelöscht:</h3>
+            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+              <li>Ihr Benutzerkonto und Anmeldedaten</li>
+              <li>Persönliche Kontaktdaten (E-Mail, Telefon)</li>
+              <li>Login-Berechtigung und Zugriff auf die App</li>
+              <li>Persönliche Einstellungen und Präferenzen</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-2">Welche Daten bleiben erhalten:</h3>
+            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+              <li>Wettkampfergebnisse und Tabellenstände (anonymisiert)</li>
+              <li>Historische RWK- und KM-Daten für Vereinsstatistiken</li>
+              <li>Mannschaftszugehörigkeiten (Name wird anonymisiert)</li>
+              <li>Daten, die für Wettkampfintegrität erforderlich sind</li>
+            </ul>
+          </div>
+
+          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+            <h3 className="font-semibold mb-2 text-yellow-800">Bearbeitungszeit:</h3>
+            <p className="text-sm text-yellow-700">
+              Ihr Löschungsantrag wird innerhalb von 30 Tagen bearbeitet. 
+              Wettkampfdaten bleiben anonymisiert für Tabellenintegrität erhalten.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <p className="text-center text-sm text-muted-foreground max-w-md mx-auto mt-6">
         Wir bemühen uns, deine Anfrage so schnell wie möglich zu bearbeiten.
       </p>
     </div>

@@ -107,7 +107,29 @@ npm run build:capacitor
 
 ## 📸 Screenshots
 
-*Screenshots werden in Kürze hinzugefügt*
+### 🏠 Startseite & Navigation
+<div align="center">
+  <img src="screenshots-play-store/01_Startseite.png" alt="Startseite" width="300">
+  <img src="screenshots-play-store/03_Mobile-Navigation.png" alt="Mobile Navigation" width="300">
+</div>
+
+### 🏆 RWK-Tabellen & Wettkampf-Management
+<div align="center">
+  <img src="screenshots-play-store/02_RWK-Tabellen.png" alt="RWK Tabellen" width="300">
+  <img src="screenshots-play-store/08_RWK-Tabellen-Detail.png" alt="RWK Tabellen Detail" width="300">
+</div>
+
+### 🎯 Vereinsbereich & KM-System
+<div align="center">
+  <img src="screenshots-play-store/04_Vereinsbereich.png" alt="Vereinsbereich" width="300">
+  <img src="screenshots-play-store/05_KM-Meldungen.png" alt="KM Meldungen" width="300">
+</div>
+
+### 📊 Dashboard & Dokumente
+<div align="center">
+  <img src="screenshots-play-store/07_Dashboard-Auswahl.png" alt="Dashboard Auswahl" width="300">
+  <img src="screenshots-play-store/06_Dokumente.png" alt="Dokumente" width="300">
+</div>
 
 ## 🏆 Erfolgsgeschichte
 
