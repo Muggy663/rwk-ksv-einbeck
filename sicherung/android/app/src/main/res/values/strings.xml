@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RWK Einbeck</string>
+    <string name="title_activity_main">RWK Einbeck</string>
+    <string name="package_name">de.rwk.einbeck</string>
+    <string name="custom_url_scheme">de.rwk.einbeck</string>
+</resources>

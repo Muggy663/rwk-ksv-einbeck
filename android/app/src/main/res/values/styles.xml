@@ -13,14 +13,6 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
-        <!-- Navigation Bar sichtbar lassen -->
-        <item name="android:windowTranslucentNavigation">false</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:navigationBarColor">@android:color/white</item>
-        <!-- Status Bar Konfiguration -->
-        <item name="android:statusBarColor">@android:color/white</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
     </style>
 
 

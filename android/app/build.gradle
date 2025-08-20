@@ -7,8 +7,8 @@ android {
         applicationId "de.rwk.einbeck"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
-        versionName "0.9.3.0"
+        versionCode 5
+        versionName "0.9.3.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,30 +16,11 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    // Signierungskonfiguration für den Play Store
-    // WICHTIG: Erstellen Sie zuerst einen Keystore mit dem keytool-Befehl
-    // und ersetzen Sie die Platzhalter durch Ihre tatsächlichen Passwörter
-    /*
-    signingConfigs {
-        release {
-            storeFile file("rwk-einbeck-key.keystore")
-            storePassword "IHR_KEYSTORE_PASSWORT"
-            keyAlias "rwk-einbeck"
-            keyPassword "IHR_KEY_PASSWORT"
-        }
-    }
-    */
-    
     buildTypes {
-        debug {
-            archivesBaseName = "RWK-Einbeck-v${defaultConfig.versionName}"
-        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             archivesBaseName = "RWK-Einbeck-v${defaultConfig.versionName}"
-            // Aktivieren Sie die Signierung, wenn der Keystore erstellt wurde
-            // signingConfig signingConfigs.release
         }
     }
 }
