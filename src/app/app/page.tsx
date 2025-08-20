@@ -118,7 +118,7 @@ export default function AppPage() {
                    .catch(err => console.error('Fehler beim Zählen des Downloads:', err));
                }}
              >
-              <a href="https://github.com/Muggy663/rwk-einbeck/releases/download/v0.9.4.0/RWK-Einbeck-v0.9.4.0-release.apk" download>
+              <a href="https://github.com/Muggy663/rwk-einbeck/releases/download/v0.9.4/RWK-Einbeck-v0.9.4.0-debug.apk" download>
                  <Download className="h-5 w-5 mr-2" />
                  APK herunterladen (6.3 MB)
                </a>
