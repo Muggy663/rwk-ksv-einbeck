@@ -5,7 +5,7 @@
 Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
 [![Version](https://img.shields.io/badge/Version-0.11.7a-blue?style=for-the-badge)](#)
-[![Android App](https://img.shields.io/badge/Android_App-0.9.1.0-success?style=for-the-badge)](#)
+[![Android App](https://img.shields.io/badge/Android_App-0.9.4.1-success?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
 ## ✨ Highlights
@@ -170,6 +170,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 
 **Aktuelle Versionen:**
 - **Web-Version 0.11.7a** - KM-Orga Passwort-Änderung: Passwort-Änderung im KM-Orga Bereich hinzugefügt, Startlisten-Tool Altersklassen-Fix, Disziplin 1.41 unter Kleinkaliber
+- **App-Version 0.9.4.1** - Mobile-Optimierung & Stabilität: Update-Benachrichtigung, Mobile Navigation korrigiert, KM-Dashboard optimiert, React Hydration-Fehler behoben
 - **Web-Version 0.11.6** - Startlisten-Optimierung & Mannschafts-Integration: Intelligente Mannschafts-Integration, papier-sparende PDFs, Duplikat-Bereinigung, dezente Löschen-Funktion
 - **Web-Version 0.11.5** - KM-Bereich: Mehrvereine-Support & Mannschafts-Optimierung: Vereinsvertreter können mehrere Vereine verwalten, optimierte Mannschafts-Generierung, Auflage-Mannschaftsregeln
 - **Web-Version 0.11.4** - Meyton Shootmaster Integration: Vollständiger Export im David21-Format, korrekte Altersklassen-IDs, individuelle Wettkampf-IDs, UTF-8 Encoding
@@ -178,6 +179,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 - **Web-Version 0.11.1** - Admin-Verbesserungen & PDF-Fixes: Ergebniserfassung-Filter, PDF-Exports, Mannschaftsführer-Korrekturen, Session-Timer
 - **Web-Version 0.11.0** - Große Datenbank-Migration: Zentrale Schützen-Sammlung, Duplikat-Bereinigung, KM-Berechtigungen, Team-Erstellung optimiert
 - **Web-Version 0.10.0** - Große Code-Bereinigung: Debug-Funktionen entfernt, Projekt optimiert, Syntax-Fehler behoben
+- **App-Version 0.9.4.1** - Mobile-Optimierung & Stabilität: Update-System, Navigation-Fixes, Touch-Optimierungen
 - **App-Version 0.9.1.0** - Erste offizielle Version der nativen Android-App
 
 *Entwickelt mit ❤️ für den deutschen Schießsport*

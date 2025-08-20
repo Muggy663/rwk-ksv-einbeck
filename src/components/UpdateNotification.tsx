@@ -68,9 +68,8 @@ export function UpdateNotification() {
     }
   };
 
-  if (!mounted || !updateAvailable || dismissed || !latestRelease) {
-    return null;
-  }
+  // Update-Benachrichtigung deaktiviert
+  return null;
 
   return (
     <Card className="mb-4 border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">

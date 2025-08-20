@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
 import { Moon, Sun, Monitor } from "lucide-react";
 
 export function ModeToggle() {
@@ -23,29 +23,55 @@ export function ModeToggle() {
     );
   }
 
+  const [isOpen, setIsOpen] = React.useState(false);
+  
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="w-9 h-9">
-          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Theme wechseln</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          <Sun className="mr-2 h-4 w-4" />
-          <span>Hell</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          <Moon className="mr-2 h-4 w-4" />
-          <span>Dunkel</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          <Monitor className="mr-2 h-4 w-4" />
-          <span>System</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="relative">
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="w-9 h-9"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+        <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        <span className="sr-only">Theme wechseln</span>
+      </Button>
+      
+      {isOpen && (
+        <div className="absolute top-10 right-0 w-32 bg-background border border-border rounded-lg shadow-lg z-50">
+          <button
+            onClick={() => {
+              setTheme("light");
+              setIsOpen(false);
+            }}
+            className="flex items-center w-full p-2 hover:bg-accent rounded-t-lg"
+          >
+            <Sun className="mr-2 h-4 w-4" />
+            <span>Hell</span>
+          </button>
+          <button
+            onClick={() => {
+              setTheme("dark");
+              setIsOpen(false);
+            }}
+            className="flex items-center w-full p-2 hover:bg-accent"
+          >
+            <Moon className="mr-2 h-4 w-4" />
+            <span>Dunkel</span>
+          </button>
+          <button
+            onClick={() => {
+              setTheme("system");
+              setIsOpen(false);
+            }}
+            className="flex items-center w-full p-2 hover:bg-accent rounded-b-lg"
+          >
+            <Monitor className="mr-2 h-4 w-4" />
+            <span>System</span>
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

@@ -36,8 +36,52 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">App-Version 0.9.4.1 - Mobile-Optimierung & Stabilität</CardTitle>
+              <Badge variant="default" className="bg-blue-600">App-Update</Badge>
+            </div>
+            <CardDescription>19.08.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Mobile-Optimierung und Stabilitätsverbesserungen: Update-System, Navigation-Fixes und Touch-Optimierungen für bessere App-Erfahrung.</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-blue-900 mb-2">📱 Mobile-Optimierung v0.9.4.1</h4>
+              <div className="text-xs text-blue-700">
+                Bessere mobile Bedienung und automatische Updates
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🔔 <strong>Update-Benachrichtigung:</strong> Automatische Prüfung auf neue Versionen mit GitHub API</li>
+              <li>📱 <strong>Play Store Integration:</strong> Intelligente Weiterleitung - Play Store für App Store Updates, APK für Sideload</li>
+              <li>🗑️ <strong>Auto-Cleanup:</strong> Speicher wird bei App-Updates automatisch geleert (localStorage, sessionStorage, Cache)</li>
+              <li>📱 <strong>Mobile Navigation:</strong> Hamburger-Menü öffnet sich korrekt im Bildschirm, keine Radix-Abhängigkeiten</li>
+              <li>🎯 <strong>KM-Orga Optimierung:</strong> Kompakte Darstellung für mobile Geräte, einspaltige Layouts</li>
+              <li>📄 <strong>Dokumente-Seite:</strong> Bessere Trennung zwischen Kategorien mit Trennlinien</li>
+              <li>🏠 <strong>KM-Dashboard:</strong> Mobile-optimierte Layouts, kompaktere Button-Anordnung</li>
+              <li>⚛️ <strong>React Stabilität:</strong> Hydration-Fehler behoben, mounted State für Client-Komponenten</li>
+              <li>🌙 <strong>Theme-Toggle:</strong> Vereinfachter Dark/Light Mode Wechsel ohne Tooltip-Wrapper</li>
+              <li>🔧 <strong>Navigation:</strong> "Vereinsbereich" statt "RWK", Updates-Punkt im Mobile-Menü sichtbar</li>
+              <li>📱 <strong>Touch-Optimierung:</strong> Bessere Bedienung auf Touchscreens, größere Klickbereiche</li>
+              <li>🎯 <strong>Version-Management:</strong> Zentrale Versionsverwaltung, automatische Versionsnummer-Updates</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-blue-800">📱 Mobile-Optimierung</span>
+                  <p className="text-xs text-blue-600 mt-1">Navigation, Updates & Touch-UX</p>
+                </div>
+                <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                  📱 v0.9.4.1
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
               <CardTitle className="text-xl">Version 0.11.7a - KM-Orga Passwort-Änderung & Startlisten-Fixes</CardTitle>
-              <Badge variant="default" className="bg-green-600">Neu</Badge>
+              <Badge variant="outline">Web-Update</Badge>
             </div>
             <CardDescription>19.08.2025</CardDescription>
           </CardHeader>
