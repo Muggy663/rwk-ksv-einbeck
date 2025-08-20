@@ -27,14 +27,6 @@ import {
   AlertTriangle,
   Newspaper
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 interface RouteItem {
   href: string;
@@ -47,16 +39,14 @@ export function MainNav() {
   const pathname = usePathname();
   const { user, loading, signOut, resetInactivityTimer } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
-  const [timeLeft, setTimeLeft] = useState<number>(10 * 60); // 10 Minuten in Sekunden
+  const [timeLeft, setTimeLeft] = useState<number>(10 * 60);
 
   const isAdmin = user && user.email === 'admin@rwk-einbeck.de';
   const isVereinsvertreterOrMannschaftsfuehrer = user && user.email !== 'admin@rwk-einbeck.de';
 
-  // Timer-Logik - vereinfacht
   useEffect(() => {
     if (!user) return;
     
-    // Timer aktualisieren
     const timer = setInterval(() => {
       setTimeLeft(prev => Math.max(0, prev - 1));
     }, 1000);
@@ -66,12 +56,11 @@ export function MainNav() {
     };
   }, [user]);
   
-  // Separate Aktivitäts-Behandlung
   useEffect(() => {
     if (!user || !resetInactivityTimer) return;
     
     const handleUserActivity = () => {
-      setTimeLeft(10 * 60); // Timer visuell zurücksetzen
+      setTimeLeft(10 * 60);
     };
     
     const activityEvents = ['mousedown', 'keypress', 'scroll', 'touchstart'];
@@ -86,7 +75,6 @@ export function MainNav() {
     };
   }, [user, resetInactivityTimer]);
   
-  // Zeit formatieren (mm:ss)
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
@@ -160,9 +148,6 @@ export function MainNav() {
     },
   ];
 
-  const mannschaftsfuehrerRoutes: RouteItem[] = [];
-
-  // Vereinfachte Navigation gemäß Anforderungen für Version 0.7.1
   return (
     <nav className="flex items-center space-x-4 lg:space-x-6">
       {/* Desktop Navigation */}
@@ -243,7 +228,6 @@ export function MainNav() {
           </Link>
         )}
 
-        {/* Timer und Logout */}
         <div className="flex items-center space-x-2 ml-4">
           {user && resetInactivityTimer && (
             <Button 
@@ -283,193 +267,72 @@ export function MainNav() {
       </div>
 
       {/* Mobile Navigation */}
-      <div className="md:hidden">
-        <DropdownMenu open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 mt-2">
-            <DropdownMenuLabel>Navigation</DropdownMenuLabel>
-            <DropdownMenuSeparator />
+      <div className="md:hidden relative">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          <Menu className="h-6 w-6" />
+        </Button>
+        
+        {isMobileMenuOpen && (
+          <div className="absolute top-12 right-0 w-64 bg-background border border-border rounded-lg shadow-lg z-50">
+            <div className="p-3 border-b border-border">
+              <h3 className="font-semibold">Navigation</h3>
+            </div>
             
-            {routes.map((route) => (
-              <DropdownMenuItem key={route.href} asChild>
+            <div className="p-2 space-y-1">
+              {routes.map((route) => (
                 <Link
+                  key={route.href}
                   href={route.href}
                   className={cn(
-                    "flex items-center",
-                    route.active ? "text-primary" : "text-muted-foreground"
+                    "flex items-center p-2 rounded hover:bg-accent w-full",
+                    route.active ? "text-primary bg-accent" : "text-muted-foreground"
                   )}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {route.icon}
                   {route.label}
                 </Link>
-              </DropdownMenuItem>
-            ))}
-            
-            {isAdmin && (
-              <>
-                <DropdownMenuSeparator />
-                {adminRoutes.map((route) => (
-                  <DropdownMenuItem key={route.href} asChild>
-                    <Link
-                      href={route.href}
-                      className={cn(
-                        "flex items-center",
-                        route.active ? "text-primary" : "text-muted-foreground"
-                      )}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {route.icon}
-                      {route.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </>
-            )}
-            
-            {isVereinsvertreterOrMannschaftsfuehrer && (
-              <>
-                <DropdownMenuSeparator />
-                {vereinsvertreterRoutes.map((route) => (
-                  <DropdownMenuItem key={route.href} asChild>
-                    <Link
-                      href={route.href}
-                      className={cn(
-                        "flex items-center",
-                        route.active ? "text-primary" : "text-muted-foreground"
-                      )}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {route.icon}
-                      {route.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-                
-                {mannschaftsfuehrerRoutes.map((route) => (
-                  <DropdownMenuItem key={route.href} asChild>
-                    <Link
-                      href={route.href}
-                      className={cn(
-                        "flex items-center",
-                        route.active ? "text-primary" : "text-muted-foreground"
-                      )}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {route.icon}
-                      {route.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-                
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/verein/ergebnisse"
-                    className="flex items-center"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Edit3 className="h-4 w-4 mr-2" />
-                    Ergebnisse erfassen
-                  </Link>
-                </DropdownMenuItem>
-                
-                {/* Vereinfachte Terminverwaltung - nur ein Menüpunkt */}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/termine"
-                    className="flex items-center"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <CalendarDays className="h-4 w-4 mr-2" />
-                    Terminkalender
-                  </Link>
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/protests"
-                    className="flex items-center"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <AlertTriangle className="h-4 w-4 mr-2" />
-                    Proteste
-                  </Link>
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/news"
-                    className="flex items-center"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Newspaper className="h-4 w-4 mr-2" />
-                    News
-                  </Link>
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/notifications"
-                    className="flex items-center"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Bell className="h-4 w-4 mr-2" />
-                    Benachrichtigungen
-                  </Link>
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/einstellungen"
-                    className="flex items-center"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Einstellungen
-                  </Link>
-                </DropdownMenuItem>
-              </>
-            )}
-            
-            {user ? (
-              <>
-                <DropdownMenuSeparator />
-                {user && resetInactivityTimer && (
-                  <DropdownMenuItem onClick={() => {
-                    resetInactivityTimer();
-                    setTimeLeft(10 * 60);
-                  }}>
-                    <Clock className="h-4 w-4 mr-2" />
-                    {formattedTime}
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => { signOut(); setIsMobileMenuOpen(false); }}>
+              ))}
+              
+              {user && (
+                <Link
+                  href="/dashboard-auswahl"
+                  className="flex items-center p-2 rounded hover:bg-accent w-full"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Arbeitsbereich
+                </Link>
+              )}
+              
+              {user ? (
+                <button
+                  onClick={() => {
+                    signOut();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="flex items-center p-2 rounded hover:bg-accent w-full text-left"
+                >
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link
-                    href="/login"
-                    className="flex items-center"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Login
-                  </Link>
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center p-2 rounded hover:bg-accent w-full"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );

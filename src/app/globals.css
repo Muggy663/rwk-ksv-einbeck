@@ -131,6 +131,7 @@
     max-width: calc(100vw - 20px) !important;
     transform: none !important;
     z-index: 9999 !important;
+    pointer-events: auto !important;
   }
   
   [data-radix-popper-content-wrapper] [role="menu"] {
@@ -140,6 +141,7 @@
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
     width: 250px !important;
     max-width: calc(100vw - 20px) !important;
+    pointer-events: auto !important;
   }
   
   /* Buttons am unteren Rand sicher positionieren */
