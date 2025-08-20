@@ -290,7 +290,7 @@ export function MainNav() {
               <Menu className="h-6 w-6" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" side="left" className="w-56">
+          <DropdownMenuContent align="end" className="w-56 mt-2">
             <DropdownMenuLabel>Navigation</DropdownMenuLabel>
             <DropdownMenuSeparator />
             
