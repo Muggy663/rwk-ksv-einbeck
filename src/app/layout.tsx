@@ -18,6 +18,8 @@ import { SkipLink } from '@/components/ui/skip-link';
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { AppUpdateChecker } from '@/components/app-update-checker';
 import { NativeAppProvider } from '@/components/ui/native-app-detector';
+import { AppVersionChecker } from '@/components/AppVersionChecker';
+import { UpdateNotification } from '@/components/UpdateNotification';
 // import { SentryClientInit } from '@/components/sentry-client-init';
 
 
@@ -60,6 +62,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta name="robots" content="noarchive" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
+        <AppVersionChecker />
         {/* Mobile Status Bar Overlay */}
         <div className="mobile-header-overlay"></div>
         <ThemeProvider
@@ -93,6 +96,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </header>
           <main id="main-content" tabIndex={-1} className="flex-grow focus:outline-none">
             <div className="container mt-4">
+              <UpdateNotification />
               <AppUpdateChecker />
             </div>
             {children}
