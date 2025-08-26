@@ -593,7 +593,7 @@ export default function CertificatesPage() {
                 <SelectContent>
                   {seasons.map(season => (
                     <SelectItem key={season.id} value={season.id}>
-                      {season.name.replace('RWK ', '')}
+                      {season.name.replace('RWK ', '').replace('Kleinkaliber ', '').replace('Luftdruck ', '')}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -746,7 +746,7 @@ export default function CertificatesPage() {
               <SelectContent>
                 {seasons.map(season => (
                   <SelectItem key={season.id} value={season.id}>
-                    {season.name.replace('RWK ', '')}
+                    {season.name.replace('RWK ', '').replace('Kleinkaliber ', '').replace('Luftdruck ', '')}
                   </SelectItem>
                 ))}
               </SelectContent>

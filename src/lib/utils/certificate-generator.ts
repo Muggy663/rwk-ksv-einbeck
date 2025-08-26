@@ -108,14 +108,19 @@ export class CertificateGenerator {
       this.doc.setFontSize(16);
       this.doc.setFont('helvetica', 'normal');
       
-      // Entferne "RWK" aus dem Saisonnamen, wenn es vorhanden ist
-      const seasonName = options.season.replace('RWK ', '');
+      // Entferne "RWK" und doppelte Disziplin-Namen aus dem Saisonnamen
+      const seasonName = options.season
+        .replace('RWK ', '')
+        .replace(/Kleinkaliber\s+Kleinkaliber/g, 'Kleinkaliber')
+        .replace(/Luftdruck\s+Luftdruck/g, 'Luftdruck');
       
       // Für Gesamtsieger keine Disziplin in der ersten Zeile, da sie in der Kategorie steht
       const isOverallWinner = options.category.includes('Bester') || options.category.includes('Beste');
-      const firstLineText = isOverallWinner ? 
-        `Beim Rundenwettkampf ${seasonName}` : 
-        `Beim Rundenwettkampf ${seasonName} ${options.discipline}`;
+      
+      // Entferne auch doppelte Disziplin-Namen aus options.discipline
+      const cleanDiscipline = options.discipline.replace(/Kleinkaliber\s+Kleinkaliber/g, 'Kleinkaliber').replace(/Luftdruck\s+Luftdruck/g, 'Luftdruck');
+      
+      const firstLineText = `Beim Rundenwettkampf ${seasonName}`;
       this.doc.text(firstLineText, this.pageWidth / 2, this.margin + 65, { align: 'center' });
       
       // "wurde" für Gesamtsieger, "errang" für Liga-Plätze

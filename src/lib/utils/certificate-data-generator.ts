@@ -121,7 +121,7 @@ export async function fetchTopShooters(leagueId: string, topCount: number = 3) {
       ...shooter,
       rank: index + 1,
       league: leagueData.name,
-      discipline: getDisciplineName(leagueData.type),
+      discipline: getDisciplineName(leagueData.type).replace(/Kleinkaliber\s+Kleinkaliber/g, 'Kleinkaliber').replace(/Luftdruck\s+Luftdruck/g, 'Luftdruck'),
       category: leagueData.category || 'Offene Gruppe',
       season: seasonData.name
     }));
@@ -303,7 +303,7 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
       ...team,
       rank: index + 1,
       league: leagueData.name,
-      discipline: getDisciplineName(leagueData.type),
+      discipline: getDisciplineName(leagueData.type).replace(/Kleinkaliber\s+Kleinkaliber/g, 'Kleinkaliber').replace(/Luftdruck\s+Luftdruck/g, 'Luftdruck'),
       category: leagueData.category || 'Offene Gruppe',
       season: seasonData.name
     }));
@@ -490,7 +490,7 @@ async function fetchBestShooterByGender(leagueIds: string[], gender: 'male' | 'f
     
     if (leagueSnap.exists()) {
       const leagueData = leagueSnap.data();
-      bestShooter.discipline = getDisciplineName(leagueData.type);
+      bestShooter.discipline = getDisciplineName(leagueData.type).replace(/Kleinkaliber\s+Kleinkaliber/g, 'Kleinkaliber').replace(/Luftdruck\s+Luftdruck/g, 'Luftdruck');
       if (gender === 'male') {
         bestShooter.category = 'Bester Schütze';
       } else if (gender === 'female') {
