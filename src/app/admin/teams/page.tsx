@@ -232,9 +232,12 @@ export default function AdminTeamsPage() {
         return;
       }
 
+      // Optimierte Query mit seasonId als Hauptfilter (sehr selektiv)
       let qConstraints: any[] = [
-        where("competitionYear", "==", selectedSeasonData.competitionYear),
+        where("seasonId", "==", effectiveSeasonId), // Hauptfilter: seasonId (sehr selektiv)
       ];
+      
+      // Weitere Filter nur wenn nötig
       if (selectedClubIdFilter !== ALL_CLUBS_FILTER_VALUE) {
         qConstraints.push(where("clubId", "==", selectedClubIdFilter));
       }
@@ -244,15 +247,21 @@ export default function AdminTeamsPage() {
         qConstraints.push(where("leagueId", "==", selectedLeagueIdFilter));
       }
       
+      // Einfache Query - Composite Index macht es blitzschnell
       const teamsQuery = query(
         collection(db, TEAMS_COLLECTION), 
         ...qConstraints, 
-        orderBy("name", "asc"),
-        limit(TEAMS_PER_PAGE) // Nur 20 Teams pro Abfrage
+        orderBy("name", "asc")
+        // Kein limit() - Index optimiert die Performance
       );
       
       const querySnapshot = await getDocs(teamsQuery);
-      const fetchedTeams = querySnapshot.docs.map(d => ({ id: d.id, ...d.data(), shooterIds: d.data().shooterIds || [] } as Team));
+      const fetchedTeams = querySnapshot.docs.map(d => ({ 
+        id: d.id, 
+        ...d.data(), 
+        shooterIds: d.data().shooterIds || [] 
+      } as Team));
+      
       setTeamsForDisplay(fetchedTeams);
       
       // Cache für Background Sync speichern

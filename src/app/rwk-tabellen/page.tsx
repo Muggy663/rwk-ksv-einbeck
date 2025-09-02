@@ -400,8 +400,8 @@ function RwkTabellenPageComponent() {
   });
 
   // States for filters and data
-  const [availableYearsFromDb, setAvailableYearsFromDb] = useState<number[]>([]);
-  const [isLoadingInitialYears, setIsLoadingInitialYears] = useState(true);
+  const [availableCompetitions, setAvailableCompetitions] = useState<CompetitionDisplayConfig[]>([]);
+  const [isLoadingInitialCompetitions, setIsLoadingInitialCompetitions] = useState(true);
   
   const [selectedCompetition, setSelectedCompetition] = useState<CompetitionDisplayConfig | null>(null);
   const [activeTab, setActiveTab] = useState<'mannschaften' | 'einzelschützen'>('mannschaften');
@@ -463,43 +463,53 @@ function RwkTabellenPageComponent() {
   const initialDisciplineFromParams = useMemo(() => urlParams.discipline as UIDisciplineSelection | null, [urlParams.discipline]);
   const initialLeagueIdFromParams = useMemo(() => urlParams.league, [urlParams.league]);
 
-  const fetchAvailableYearsFromSeasons = useCallback(async (): Promise<number[]> => {
-
+  const fetchAvailableCompetitions = useCallback(async (): Promise<CompetitionDisplayConfig[]> => {
     try {
-      // Query for seasons with status "Laufend" to determine available years
       const seasonsColRef = collection(db, 'seasons');
       const q = query(seasonsColRef,
-        where("status", "==", "Laufend"),
+        where("status", "in", ["Laufend", "Abgeschlossen"]),
         orderBy('competitionYear', 'desc')
       );
 
       const seasonsSnapshot = await getDocs(q);
-      const years = new Set<number>();
-      const availableDisciplines = new Set<string>();
+      const laufendCompetitions: CompetitionDisplayConfig[] = [];
+      const abgeschlossenCompetitions: CompetitionDisplayConfig[] = [];
       
       seasonsSnapshot.forEach(docData => {
         const seasonData = docData.data() as Season;
-        if (seasonData.competitionYear) years.add(seasonData.competitionYear);
-        
-        // Store discipline types (lowercase for consistent comparison)
-        if (seasonData.type) {
-          availableDisciplines.add(seasonData.type.toLowerCase());
+        if (seasonData.competitionYear && seasonData.type) {
+          const uiDiscipline = getUIDisciplineValueFromSpecificType(seasonData.type as FirestoreLeagueSpecificDiscipline);
+          const disciplineLabel = uiDisciplineFilterOptions.find(d => d.value === uiDiscipline)?.label || uiDiscipline;
+          
+          const competition = {
+            year: seasonData.competitionYear,
+            discipline: uiDiscipline,
+            displayName: `${seasonData.competitionYear} ${disciplineLabel}`
+          };
+          
+          if (seasonData.status === "Laufend") {
+            laufendCompetitions.push(competition);
+          } else {
+            abgeschlossenCompetitions.push(competition);
+          }
         }
       });
       
-
+      // Prioritize "Laufend" competitions, then "Abgeschlossen"
+      const allCompetitions = [...laufendCompetitions, ...abgeschlossenCompetitions];
       
-      // Füge manuelle Jahre hinzu (für abgeschlossene Saisons)
-      const manualYears = [2025, 2026];
-      manualYears.forEach(year => years.add(year));
+      // Remove duplicates
+      const uniqueCompetitions = allCompetitions.filter((comp, index, self) => 
+        index === self.findIndex(c => c.year === comp.year && c.discipline === comp.discipline)
+      );
       
-      const sortedYears = Array.from(years).sort((a, b) => b - a);
-
-      return sortedYears.length > 0 ? sortedYears : [new Date().getFullYear()];
+      return uniqueCompetitions.length > 0 ? uniqueCompetitions : [
+        { year: new Date().getFullYear(), discipline: 'KK', displayName: `${new Date().getFullYear()} Kleinkaliber` }
+      ];
     } catch (err: any) {
-      console.error('RWK DEBUG: Error fetching available years:', err);
-      toast({ title: "Fehler", description: `Verfügbare Jahre konnten nicht geladen werden: ${err.message}`, variant: "destructive" });
-      return [new Date().getFullYear()];
+      console.error('RWK DEBUG: Error fetching available competitions:', err);
+      toast({ title: "Fehler", description: `Verfügbare Wettkämpfe konnten nicht geladen werden: ${err.message}`, variant: "destructive" });
+      return [{ year: new Date().getFullYear(), discipline: 'KK', displayName: `${new Date().getFullYear()} Kleinkaliber` }];
     }
   }, [toast]);
 
@@ -549,31 +559,27 @@ function RwkTabellenPageComponent() {
 
     try {
       const seasonsColRef = collection(db, "seasons");
+      const selectedUIDiscOption = uiDisciplineFilterOptions.find(opt => opt.value === config.discipline);
+      const firestoreTypesToQuery = selectedUIDiscOption ? selectedUIDiscOption.firestoreTypes : [config.discipline];
+      
       const qSeasons = query(seasonsColRef, 
         where("competitionYear", "==", config.year), 
-        where("type", "in", [config.discipline, config.discipline.toUpperCase(), config.discipline.toLowerCase()]), 
-        where("status", "in", ["Laufend", "Abgeschlossen"]) // "Laufend" OR "Abgeschlossen" seasons
+        where("type", "in", firestoreTypesToQuery), 
+        where("status", "in", ["Laufend", "Abgeschlossen"])
       );
       const seasonsSnapshot = await getDocs(qSeasons);
 
       if (seasonsSnapshot.empty) {
-        console.warn(`RWK DEBUG: No 'Laufend' or 'Abgeschlossen' seasons found for year ${config.year} and UI discipline ${config.discipline}.`);
+        console.warn(`RWK DEBUG: No seasons found for year ${config.year} and discipline ${config.discipline} with types ${firestoreTypesToQuery.join(', ')}.`);
         return { id: `${config.year}-${config.discipline}`, config, leagues: [] };
       }
-      const laufendeSeasonIds = seasonsSnapshot.docs.map(sDoc => sDoc.id).filter(id => !!id);
-      if (laufendeSeasonIds.length === 0) return { id: `${config.year}-${config.discipline}`, config, leagues: [] };
-
-      const selectedUIDiscOption = uiDisciplineFilterOptions.find(opt => opt.value === config.discipline);
-      const firestoreDisciplinesToQuery: FirestoreLeagueSpecificDiscipline[] = selectedUIDiscOption ? selectedUIDiscOption.firestoreTypes : [];
-      if (firestoreDisciplinesToQuery.length === 0) {
-        console.warn(`RWK DEBUG: No specific Firestore discipline types for UI discipline: ${config.discipline}`);
-        return { id: `${config.year}-${config.discipline}`, config, leagues: [] };
-      }
+      const seasonIds = seasonsSnapshot.docs.map(sDoc => sDoc.id).filter(id => !!id);
+      if (seasonIds.length === 0) return { id: `${config.year}-${config.discipline}`, config, leagues: [] };
 
       const leaguesColRef = collection(db, "rwk_leagues");
       const qLeagues = query(leaguesColRef, 
-        where("seasonId", "in", laufendeSeasonIds), 
-        where("type", "in", firestoreDisciplinesToQuery), 
+        where("seasonId", "in", seasonIds), 
+        where("type", "in", firestoreTypesToQuery), 
         orderBy("order", "asc")
       );
       const leaguesSnapshot = await getDocs(qLeagues);
@@ -606,7 +612,7 @@ function RwkTabellenPageComponent() {
       const allScoresQuery = query(
         collection(db, "rwk_scores"),
         where("competitionYear", "==", config.year),
-        where("leagueType", "in", firestoreDisciplinesToQuery)
+        where("leagueType", "in", firestoreTypesToQuery)
       );
       const allScoresSnapshot = await getDocs(allScoresQuery);
       const scoresByTeam = new Map<string, ScoreEntry[]>();
@@ -1167,97 +1173,58 @@ function RwkTabellenPageComponent() {
 
   // Effect for initial load and when URL parameters change
   useEffect(() => {
-
-    setIsLoadingInitialYears(true);
+    setIsLoadingInitialCompetitions(true);
     let isMounted = true;
   
-    fetchAvailableYearsFromSeasons().then(dbYears => {
+    fetchAvailableCompetitions().then(competitions => {
       if (!isMounted) return;
-      setAvailableYearsFromDb(dbYears);
-      setIsLoadingInitialYears(false);
+      setAvailableCompetitions(competitions);
+      setIsLoadingInitialCompetitions(false);
   
-      let yearToSet: number;
-      const currentActualYear = new Date().getFullYear();
-      const validUIDisciplines = uiDisciplineFilterOptions.map(opt => opt.value);
-      let disciplineToSet: UIDisciplineSelection = uiDisciplineFilterOptions[0]?.value || 'KK';
+      // Find matching competition from URL params or use first "Laufend" competition
+      let competitionToSet = competitions[0]; // Default fallback
       
-      if (initialYearFromParams && !isNaN(parseInt(initialYearFromParams))) {
+      if (initialYearFromParams && initialDisciplineFromParams) {
         const yearFromParam = parseInt(initialYearFromParams);
-        yearToSet = dbYears.includes(yearFromParam) ? yearFromParam : (dbYears.includes(currentActualYear) ? currentActualYear : (dbYears[0] || currentActualYear));
+        const matchingCompetition = competitions.find(comp => 
+          comp.year === yearFromParam && comp.discipline === initialDisciplineFromParams
+        );
+        if (matchingCompetition) {
+          competitionToSet = matchingCompetition;
+        }
       } else {
-        yearToSet = dbYears.includes(currentActualYear) ? currentActualYear : (dbYears[0] || currentActualYear);
+        // Default to first "Laufend" competition if no URL params
+        competitionToSet = competitions[0];
       }
-      
-      if (initialDisciplineFromParams && validUIDisciplines.includes(initialDisciplineFromParams)) {
-          disciplineToSet = initialDisciplineFromParams;
-      }
-      
-      const disciplineLabelObj = uiDisciplineFilterOptions.find(d => d.value === disciplineToSet);
-      const disciplineLabel = disciplineLabelObj ? disciplineLabelObj.label.replace(/\s*\(.*\)\s*$/, '').trim() : disciplineToSet;
-
-      const newSelectedCompetition: CompetitionDisplayConfig = {
-        year: yearToSet,
-        discipline: disciplineToSet,
-        displayName: `${yearToSet} ${disciplineLabel}`,
-      };
 
       // Only update if different to prevent loops
-      if (JSON.stringify(newSelectedCompetition) !== JSON.stringify(selectedCompetition)) {
-
-          setSelectedCompetition(newSelectedCompetition);
-      } else {
-
+      if (!selectedCompetition || 
+          selectedCompetition.year !== competitionToSet.year || 
+          selectedCompetition.discipline !== competitionToSet.discipline) {
+        setSelectedCompetition(competitionToSet);
       }
 
       if (initialLeagueIdFromParams) {
         setOpenAccordionItems([initialLeagueIdFromParams]);
-        // Context-Aware Navigation: Setze Liga-Filter für Einzelschützen wenn aus URL
         setSelectedIndividualLeagueFilter(initialLeagueIdFromParams);
         setLastClickedLeagueId(initialLeagueIdFromParams);
-      } else {
-        // If no specific league in URL, ensure all accordions are open by default (handled in another effect)
       }
-      
-      // Normalize URL if params were missing or defaulted
-      const currentParams = new URLSearchParams(window.location.search);
-      let needsUrlUpdate = false;
-      if (currentParams.get('year') !== yearToSet.toString()) {
-          currentParams.set('year', yearToSet.toString());
-          needsUrlUpdate = true;
-      }
-      if (currentParams.get('discipline') !== disciplineToSet) {
-          currentParams.set('discipline', disciplineToSet);
-          needsUrlUpdate = true;
-      }
-      // Liga-Parameter beibehalten wenn vorhanden
-      if (initialLeagueIdFromParams && currentParams.get('league') !== initialLeagueIdFromParams) {
-        currentParams.set('league', initialLeagueIdFromParams);
-        needsUrlUpdate = true;
-      }
-      
-      if (needsUrlUpdate) {
-
-         router.replace(`/rwk-tabellen?${currentParams.toString()}`, { scroll: false });
-      }
-
-
     }).catch(err => {
         if (!isMounted) return;
-        console.error("RWK DEBUG: Error in initial useEffect (fetchAvailableYears):", err);
-        setIsLoadingInitialYears(false);
-        setError("Fehler beim Initialisieren der Jahresauswahl.");
+        console.error("RWK DEBUG: Error in initial useEffect (fetchAvailableCompetitions):", err);
+        setIsLoadingInitialCompetitions(false);
+        setError("Fehler beim Initialisieren der Wettkampfauswahl.");
     });
     return () => { isMounted = false; };
-  }, [fetchAvailableYearsFromSeasons, initialYearFromParams, initialDisciplineFromParams, initialLeagueIdFromParams, router, selectedCompetition]); // Removed searchParams from dependencies
+  }, [fetchAvailableCompetitions, initialYearFromParams, initialDisciplineFromParams, initialLeagueIdFromParams]);
 
 
   // Effect to load data when selectedCompetition, activeTab, or league filter changes
   useEffect(() => {
-    if (selectedCompetition && !isLoadingInitialYears) { 
-
+    if (selectedCompetition && !isLoadingInitialCompetitions) { 
       loadData();
     }
-  }, [selectedCompetition, activeTab, selectedIndividualLeagueFilter, loadData, isLoadingInitialYears]); // loadData is memoized
+  }, [selectedCompetition, activeTab, selectedIndividualLeagueFilter, loadData, isLoadingInitialCompetitions]);
   
   // Speichern der Filtereinstellungen im localStorage
   useEffect(() => {
@@ -1298,24 +1265,21 @@ function RwkTabellenPageComponent() {
   }, [teamData, initialLeagueIdFromParams]);
 
 
-  const handleYearChange = useCallback((yearString: string) => {
-    const year = parseInt(yearString, 10);
-    if (!selectedCompetition || selectedCompetition.year === year || isNaN(year) || loadingData) return;
+  const handleCompetitionChange = useCallback((competitionKey: string) => {
+    const competition = availableCompetitions.find(comp => 
+      `${comp.year}-${comp.discipline}` === competitionKey
+    );
+    
+    if (!competition || loadingData) return;
 
-    // Update URL, this will trigger the main useEffect to update selectedCompetition
-    router.replace(`/rwk-tabellen?year=${year.toString()}&discipline=${selectedCompetition.discipline}`, { scroll: false });
-    setOpenAccordionItems([]); // Reset open accordions on year change
-    setSelectedIndividualLeagueFilter(""); // Reset league filter
-  }, [selectedCompetition, router, loadingData]);
-
-  const handleDisciplineChange = useCallback((discipline: UIDisciplineSelection) => {
-    if (!selectedCompetition || selectedCompetition.discipline === discipline || loadingData) return;
-
-    // Update URL, this will trigger the main useEffect to update selectedCompetition
-    router.replace(`/rwk-tabellen?year=${selectedCompetition.year}&discipline=${discipline}`, { scroll: false });
-    setOpenAccordionItems([]); // Reset open accordions on discipline change
-    setSelectedIndividualLeagueFilter(""); // Reset league filter
-  }, [selectedCompetition, router, loadingData]);
+    // Update state immediately
+    setSelectedCompetition(competition);
+    setOpenAccordionItems([]);
+    setSelectedIndividualLeagueFilter("");
+    
+    // Update URL
+    router.replace(`/rwk-tabellen?year=${competition.year}&discipline=${competition.discipline}`, { scroll: false });
+  }, [availableCompetitions, router, loadingData]);
 
 
   const handleAccordionValueChange = useCallback((value: string[]) => {
@@ -1559,7 +1523,7 @@ function RwkTabellenPageComponent() {
   }, [teamData]);
 
   // Conditional rendering for loading initial config
-  if (isLoadingInitialYears || !selectedCompetition) {
+  if (isLoadingInitialCompetitions || !selectedCompetition) {
     return <RwkTabellenPageLoadingSkeleton title={pageTitle || 'Lade Konfiguration...'} />;
   }
 
@@ -1572,32 +1536,23 @@ function RwkTabellenPageComponent() {
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Select 
-            value={selectedCompetition.year.toString()} 
-            onValueChange={handleYearChange} 
-            disabled={availableYearsFromDb.length === 0 || loadingData}
+            value={selectedCompetition ? `${selectedCompetition.year}-${selectedCompetition.discipline}` : ""} 
+            onValueChange={handleCompetitionChange} 
+            disabled={availableCompetitions.length === 0 || loadingData}
           >
-            <SelectTrigger className="w-full sm:w-[180px] shadow-md" aria-label="Jahr auswählen">
-              <SelectValue placeholder={availableYearsFromDb.length === 0 ? "Keine Jahre" : "Jahr wählen"} />
+            <SelectTrigger className="w-full sm:w-[300px] shadow-md" aria-label="Wettkampf auswählen">
+              <SelectValue placeholder={availableCompetitions.length === 0 ? "Keine Wettkämpfe" : "Wettkampf wählen"} />
             </SelectTrigger>
             <SelectContent>
-              {availableYearsFromDb.length > 0 ? (
-                availableYearsFromDb.map(year => <SelectItem key={year} value={year.toString()}>{year}</SelectItem>)
+              {availableCompetitions.length > 0 ? (
+                availableCompetitions.map(comp => (
+                  <SelectItem key={`${comp.year}-${comp.discipline}`} value={`${comp.year}-${comp.discipline}`}>
+                    {comp.displayName}
+                  </SelectItem>
+                ))
               ) : (
-                <SelectItem value="NO_YEARS_PLACEHOLDER_RWK" disabled>Keine Saisons aktiv</SelectItem>
+                <SelectItem value="NO_COMPETITIONS_PLACEHOLDER_RWK" disabled>Keine Wettkämpfe verfügbar</SelectItem>
               )}
-            </SelectContent>
-          </Select>
-          <Select 
-            value={selectedCompetition.discipline} 
-            onValueChange={value => handleDisciplineChange(value as UIDisciplineSelection)} 
-            disabled={loadingData || uiDisciplineFilterOptions.length === 0}
-          >
-            <SelectTrigger className="w-full sm:w-[220px] shadow-md" aria-label="Disziplin auswählen">
-              <SelectValue placeholder={uiDisciplineFilterOptions.length === 0 ? "Keine Disziplinen" : "Disziplin wählen"} />
-            </SelectTrigger>
-            <SelectContent>
-              {uiDisciplineFilterOptions.map(disc => <SelectItem key={disc.value} value={disc.value}>{disc.label}</SelectItem>)}
-              {uiDisciplineFilterOptions.length === 0 && <SelectItem value="NO_DISCIPLINES_PLACEHOLDER_RWK" disabled>Keine Disziplinen</SelectItem>}
             </SelectContent>
           </Select>
         </div>

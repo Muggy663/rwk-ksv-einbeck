@@ -1,5 +1,5 @@
 // src/types/rwk.ts
-export type FirestoreLeagueSpecificDiscipline = 'KK' | 'KKP' | 'KKG' | 'LG' | 'LGA' | 'LGS' | 'LP' | 'LPA';
+export type FirestoreLeagueSpecificDiscipline = 'KK' | 'KKP' | 'KKG' | 'LG' | 'LGA' | 'LGS' | 'LP' | 'LPA' | 'LD';
 
 export interface Season {
   id: string;
@@ -368,7 +368,7 @@ export const MAX_SHOOTERS_PER_TEAM = 3;
 
 export const uiDisciplineFilterOptions: UIDisciplineFilterOption[] = [
   { value: 'KK', label: 'Kleinkaliber', firestoreTypes: ['KK', 'KKP', 'KKG'] },
-  { value: 'LG', label: 'Luftdruck', firestoreTypes: ['LG', 'LGA', 'LGS', 'LP', 'LPA'] },
+  { value: 'LG', label: 'Luftdruck', firestoreTypes: ['LG', 'LGA', 'LGS', 'LP', 'LPA', 'LD'] },
 ];
 
 export const leagueDisciplineOptions: LeagueDisciplineOption[] = [
@@ -384,13 +384,13 @@ export const leagueDisciplineOptions: LeagueDisciplineOption[] = [
 
 export function getUIDisciplineValueFromSpecificType(specificType: FirestoreLeagueSpecificDiscipline): UIDisciplineSelection {
   if (['KK', 'KKP', 'KKG'].includes(specificType)) return 'KK';
-  if (['LG', 'LGA', 'LGS', 'LP', 'LPA'].includes(specificType)) return 'LG';
+  if (['LG', 'LGA', 'LGS', 'LP', 'LPA', 'LD'].includes(specificType)) return 'LG';
   return 'KK';
 }
 
 export function getDisciplineCategory(leagueType?: FirestoreLeagueSpecificDiscipline): string | null {
   if (!leagueType) return null;
   if (['KK', 'KKP', 'KKG'].includes(leagueType)) return 'KK';
-  if (['LG', 'LGA', 'LGS', 'LP', 'LPA'].includes(leagueType)) return 'LG';
+  if (['LG', 'LGA', 'LGS', 'LP', 'LPA', 'LD'].includes(leagueType)) return 'LG';
   return null;
 }

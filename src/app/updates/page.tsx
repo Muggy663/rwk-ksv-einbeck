@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.11.9 (02.09.2025)</span>
+              <span>Web-Version: 0.12.0 (02.09.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.4.1 (02.09.2025)</span>
@@ -80,8 +80,50 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.12.0 - RWK-Tabellen & Admin-Teams Optimierung</CardTitle>
+              <Badge variant="default" className="bg-green-600">Aktuell</Badge>
+            </div>
+            <CardDescription>02.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Große Verbesserungen der Filterlogik: Ein Dropdown statt zwei separate, bessere Priorisierung von "Laufend" Saisons und Behebung des 20-Teams-Limits.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🎯 Filter-Optimierung v0.12.0</h4>
+              <div className="text-xs text-green-700">
+                Intelligente Wettkampfauswahl und vollständige Mannschaftsanzeige
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🎯 <strong>Ein Dropdown statt zwei:</strong> RWK-Tabellen zeigen nur gültige Jahr+Disziplin-Kombinationen ("2025 Kleinkaliber", "2026 Luftdruck")</li>
+              <li>🚫 <strong>Keine ungültigen Kombinationen:</strong> Verhindert "2026 Kleinkaliber" oder "2025 Luftdruck" - nur echte Datenbank-Einträge</li>
+              <li>⭐ <strong>"Laufend" priorisiert:</strong> Aktuelle Saisons werden vor "Abgeschlossenen" angezeigt und als Standard gewählt</li>
+              <li>🔍 <strong>Korrekte Firestore-Abfragen:</strong> Verwendet richtige firestoreTypes (LG → ['LG', 'LGA', 'LP', 'LPA', 'LD']) für vollständige Ergebnisse</li>
+              <li>👥 <strong>20-Teams-Limit behoben:</strong> Admin-Teams zeigt jetzt alle 35+ Mannschaften statt nur 20 durch entferntes TEAMS_PER_PAGE-Limit</li>
+              <li>🔄 <strong>Sofortiges Laden:</strong> Wettkampfwechsel lädt Daten sofort ohne Endlosschleifen durch korrigierte useEffect Dependencies</li>
+              <li>📊 <strong>Bessere Performance:</strong> Optimierte Abfragen mit korrekten Composite Indexes für schnellere Ladezeiten</li>
+              <li>🎮 <strong>Verbesserte UX:</strong> Dropdown-Auswahl führt zu sofortiger Titel- und Inhalts-Änderung ohne Verzögerung</li>
+              <li>🔧 <strong>Code-Bereinigung:</strong> Entfernte doppelte Filter-Logik und vereinfachte Handler-Funktionen</li>
+              <li>✅ <strong>Konsistente Daten:</strong> Alle Mannschaften werden korrekt geladen und angezeigt ohne Paginierung-Probleme</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🎯 Filter-Optimierung</span>
+                  <p className="text-xs text-green-600 mt-1">Ein Dropdown & 20-Teams-Limit Fix</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.12.0
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
               <CardTitle className="text-xl">Version 0.11.9 - FAQ-Suche für RWK-Ordnung: Intelligente Hilfe</CardTitle>
-              <Badge variant="outline">Web-Update</Badge>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>02.09.2025</CardDescription>
           </CardHeader>

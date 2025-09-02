@@ -4,7 +4,7 @@
 
 Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
-[![Version](https://img.shields.io/badge/Version-0.11.9-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-0.12.0-blue?style=for-the-badge)](#)
 [![Android App](https://img.shields.io/badge/Android_App-0.9.4.1-success?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -56,7 +56,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 | Platform | Version | Status | Download |
 |----------|---------|--------|---------|
-| **Web App** | 0.11.9 | 🔄 Beta | Vercel Deployment |
+| **Web App** | 0.12.0 | 🔄 Beta | Vercel Deployment |
 | **Android App** | 0.9.4.1 | ✅ Produktiv | Google Play Store |
 | **iOS App** | - | ❌ Nicht geplant | Unrentabel |
 
@@ -191,6 +191,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
+- **Web-Version 0.12.0** - RWK-Tabellen & Admin-Teams Optimierung: Ein Dropdown statt zwei separate, "Laufend" Saisons priorisiert, 20-Teams-Limit behoben, korrekte Firestore-Abfragen für vollständige Ergebnisse
 - **Web-Version 0.11.9** - FAQ-Suche für RWK-Ordnung: Über 50 häufige Fragen mit intelligenter Suche, Fuzzy-Matching und Tippfehler-Toleranz für optimale Benutzerfreundlichkeit
 - **Web-Version 0.11.8** - Zeitungsbericht-Generator: Schützen-Namen Fix und vereinfachte Vereinsname-Anzeige für saubere Ausgabe
 - **Web-Version 0.11.7a** - KM-Orga Passwort-Änderung: Passwort-Änderung im KM-Orga Bereich hinzugefügt, Startlisten-Tool Altersklassen-Fix, Disziplin 1.41 unter Kleinkaliber
