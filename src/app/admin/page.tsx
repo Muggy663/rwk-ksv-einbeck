@@ -319,6 +319,11 @@ export default function AdminDashboardPage() {
                   Urkunden erstellen
                 </Button>
               </Link>
+              <Link href="/admin/seasons/zeitungsbericht" passHref>
+                <Button variant="outline" className="w-full col-span-2">
+                  📰 Zeitungsbericht
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

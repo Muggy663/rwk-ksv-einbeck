@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.11.7a"; // KM-Orga Passwort-Änderung & Startlisten-Fixes
+  const version = "0.11.8"; // Zeitungsbericht-Generator: Schützen-Namen Fix
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

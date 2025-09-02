@@ -20,10 +20,10 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.11.7a (19.08.2025)</span>
+              <span>Web-Version: 0.11.8 (02.09.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
-              <span>App-Version: 0.9.4.1 (19.08.2025)</span>
+              <span>App-Version: 0.9.4.1 (02.09.2025)</span>
             </Badge>
             <Badge variant="default" className="text-xs py-1 px-2 bg-green-600">
               <span>🌐 Live: rwk-einbeck.de</span>
@@ -80,8 +80,45 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.7a - KM-Orga Passwort-Änderung & Startlisten-Fixes</CardTitle>
+              <CardTitle className="text-xl">Version 0.11.8 - Zeitungsbericht-Generator: Schützen-Namen Fix</CardTitle>
               <Badge variant="outline">Web-Update</Badge>
+            </div>
+            <CardDescription>02.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Zeitungsbericht-Generator optimiert: Schützen-Namen werden jetzt korrekt aus der Datenbank geladen und Vereinsnamen-Anzeige vereinfacht.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">📰 Zeitungsbericht-Fix v0.11.8</h4>
+              <div className="text-xs text-green-700">
+                Korrekte Schützen-Namen und vereinfachte Vereinsname-Anzeige
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>👥 <strong>Schützen-Namen Fix:</strong> teamMembersWithScores wird korrekt als Fallback zu teamMembers genutzt</li>
+              <li>🏢 <strong>Vereinsname-Vereinfachung:</strong> Leere Klammern entfernt - nur noch Mannschaftsname wird angezeigt</li>
+              <li>📰 <strong>Saubere Ausgabe:</strong> "SV Dörrigsen I - 4375 Ringe (Kreisoberliga)" statt "SV Dörrigsen I () - 4375 Ringe"</li>
+              <li>🎯 <strong>Bessere Lesbarkeit:</strong> Vereinsname ist bereits im Mannschaftsnamen enthalten</li>
+              <li>🔧 <strong>Code-Optimierung:</strong> Vereinfachte Logik ohne redundante Vereinsname-Extraktion</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">📰 Zeitungsbericht-Fix</span>
+                  <p className="text-xs text-green-600 mt-1">Schützen-Namen & Vereinsname</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.11.8
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.11.7a - KM-Orga Passwort-Änderung & Startlisten-Fixes</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>19.08.2025</CardDescription>
           </CardHeader>

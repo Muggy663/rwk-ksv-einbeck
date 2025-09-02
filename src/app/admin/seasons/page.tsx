@@ -258,6 +258,9 @@ export default function AdminSeasonsPage() {
                         <Button variant="outline" size="sm" onClick={() => navigateToLeagues(season.id)} className="text-xs">
                           <Eye className="mr-1 h-3 w-3" /> Ligen
                         </Button>
+                        <Button variant="outline" size="sm" onClick={() => router.push(`/admin/seasons/zeitungsbericht?seasonId=${season.id}`)} className="text-xs">
+                          📰 Zeitungsbericht
+                        </Button>
                         <div className="flex gap-1">
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(season)} aria-label="Saison bearbeiten">
                             <Edit className="h-4 w-4" />
