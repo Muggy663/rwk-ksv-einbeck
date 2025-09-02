@@ -1,5 +1,5 @@
 // src/utils/appVersion.ts
-export const APP_VERSION = '0.11.8';
+export const APP_VERSION = '0.11.9';
 
 export function checkAndClearOnUpdate() {
   if (typeof window === 'undefined') return;

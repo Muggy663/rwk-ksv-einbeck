@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.11.8 (02.09.2025)</span>
+              <span>Web-Version: 0.11.9 (02.09.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.4.1 (02.09.2025)</span>
@@ -80,8 +80,52 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.8 - Zeitungsbericht-Generator: Schützen-Namen Fix</CardTitle>
+              <CardTitle className="text-xl">Version 0.11.9 - FAQ-Suche für RWK-Ordnung: Intelligente Hilfe</CardTitle>
               <Badge variant="outline">Web-Update</Badge>
+            </div>
+            <CardDescription>02.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Umfassende FAQ-Suche für die RWK-Ordnung: Über 50 häufige Fragen mit intelligenter Suche, Fuzzy-Matching und Tippfehler-Toleranz.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🔍 FAQ-System v0.11.9</h4>
+              <div className="text-xs text-green-700">
+                Intelligente Hilfe für alle Fragen zur RWK-Ordnung
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🔍 <strong>50+ FAQ-Einträge:</strong> Alle wichtigen Fragen zu RWK-Ordnung, Klasseneinteilung, Terminen und Regeln</li>
+              <li>🤖 <strong>Intelligente Suche:</strong> Findet auch bei Tippfehlern und Umlauten die richtigen Antworten</li>
+              <li>📝 <strong>Fuzzy-Matching:</strong> "schiessen" findet "schießen", "schuetze" findet "Schütze"</li>
+              <li>🔄 <strong>Synonym-Erkennung:</strong> "Liga", "Klasse", "Klasseneinteilung" - alles wird gefunden</li>
+              <li>📊 <strong>Score-basierte Sortierung:</strong> Beste Treffer zuerst, relevante Ergebnisse priorisiert</li>
+              <li>📱 <strong>Benutzerfreundlich:</strong> Suche ab 1 Zeichen, "Alle FAQs anzeigen" Button</li>
+              <li>📍 <strong>Paragraph-Referenzen:</strong> Jede Antwort mit korrekter §-Nummer der RWK-Ordnung</li>
+              <li>🎯 <strong>Zielgruppen-optimiert:</strong> Besonders für ältere und hilfbedürftige Benutzer entwickelt</li>
+              <li>💬 <strong>Natürliche Sprache:</strong> "Wann ist Luftdruck?", "Was brauche ich?", "Wer darf mitmachen?"</li>
+              <li>🔗 <strong>Integriert in RWK-Ordnung:</strong> Direkt auf /rwk-ordnung verfügbar</li>
+              <li>💰 <strong>Kostenlos:</strong> Keine externen APIs, läuft komplett auf Vercel Free Tier</li>
+              <li>⚡ <strong>Schnell:</strong> Sofortige Antworten ohne Ladezeiten</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🔍 FAQ-System</span>
+                  <p className="text-xs text-green-600 mt-1">Intelligente Hilfe & 50+ Fragen</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.11.9
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.11.8 - Zeitungsbericht-Generator: Schützen-Namen Fix</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>02.09.2025</CardDescription>
           </CardHeader>

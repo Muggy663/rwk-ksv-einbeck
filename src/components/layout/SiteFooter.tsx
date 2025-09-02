@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.11.8"; // Zeitungsbericht-Generator: Schützen-Namen Fix
+  const version = "0.11.9"; // FAQ-Suche für RWK-Ordnung: Intelligente Hilfe für alle Fragen
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">
@@ -12,7 +12,7 @@ export function SiteFooter() {
           <p className="text-sm leading-loose text-muted-foreground">
             © 2025{currentYear > 2025 ? `-${currentYear}` : ''} Marcel Bünger für den KSV Einbeck. Alle Rechte vorbehalten.
           </p>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs mt-2">
             <Link href="/impressum" className="text-muted-foreground hover:text-primary underline">
               Impressum
             </Link>
@@ -31,6 +31,9 @@ export function SiteFooter() {
               KSV Einbeck
             </Link>
           </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            Entwickelt mit ❤️ für den deutschen Schießsport
+          </p>
         </div>
         <div className="text-center text-sm text-muted-foreground md:text-right">
           <p>Web-Version {version} <span className="text-xs bg-primary/10 text-primary px-1 py-0.5 rounded">Beta</span></p>

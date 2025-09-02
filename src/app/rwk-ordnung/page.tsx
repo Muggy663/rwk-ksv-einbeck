@@ -4,6 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ScrollText } from 'lucide-react';
+import { FAQSearch } from '@/components/rwk-ordnung/faq-search';
 
 export default function RwkOrdnungPage() {
   return (
@@ -18,10 +19,12 @@ export default function RwkOrdnungPage() {
         </div>
       </div>
 
+      <FAQSearch />
+
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl text-accent">Rundenwettkampfordnung des Kreisschützenverbandes Einbeck</CardTitle>
-          <CardDescription className="text-xs text-muted-foreground">Ausgestellt am 27. September 1982 – Überarbeitet Januar 2025</CardDescription>
+          <CardDescription className="text-xs text-muted-foreground">Ausgestellt am 27. September 1982 – Überarbeitet August 2025</CardDescription>
         </CardHeader>
         <CardContent className="prose prose-sm sm:prose-base lg:prose-lg prose-headings:text-accent prose-strong:text-foreground dark:prose-invert text-foreground space-y-3 max-w-none overflow-x-auto">
           <div className="text-center mb-6">
@@ -199,6 +202,7 @@ export default function RwkOrdnungPage() {
           <div>
             <h4 id="section-13" className="font-semibold text-md !text-primary mt-3">13. Siegerehrung</h4>
             <p>Sieger des Rundenwettkampfes ist jeweils die Mannschaft und in der Einzelwertung der Schütze, mit der höchsten Gesamtringzahl.</p>
+            <p>Bei Ringgleichheit entscheidet zur Platzierung die höhere letzte Serie. Ist auch diese gleich, zählt die höhere vorletzte Serie, und so weiter. Sollte auch so keine Entscheidung getroffen werden können, gilt die Sportordnung des Deutschen Schützenbundes (DSB) in ihrer jeweils gültigen Fassung.</p>
             <p>Die Damen, die in der offenen Klasse bzw. in gemischten Mannschaften mitschießen, werden von der Kreisdamenleiterin separat geführt und geehrt. Das Mannschaftsergebnis bleibt davon ausgenommen.</p>
             <p>In der Einzelwertung werden Urkunden an die Sieger ausgegeben. Als Auszeichnung erhält die Siegermannschaft einen Wanderpokal und eine Urkunde. Der Pokal muss bei der nächsten Siegerehrung zurückgegeben werden.</p>
             <p>Wird der Wanderpokal nicht rechtzeitig zurückgegeben, wird ein Strafgeld von 25,00€ dem Verein in Rechnung gestellt. Sollte der Pokal verloren gehen, wird ein Strafgeld von 50,00€ verhängt.</p>
