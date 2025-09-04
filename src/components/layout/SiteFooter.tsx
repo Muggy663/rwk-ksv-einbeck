@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.12.0"; // RWK-Tabellen & Admin-Teams Optimierung: Ein Dropdown statt zwei separate
+  const version = "0.12.1"; // Mobile UX & Performance Revolution: Voice Input, Pull-to-Refresh, Micro-Animations
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

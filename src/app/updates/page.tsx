@@ -20,7 +20,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.12.0 (02.09.2025)</span>
+              <span>Web-Version: 0.12.1 (02.09.2025)</span>
             </Badge>
             <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
               <span>App-Version: 0.9.4.1 (02.09.2025)</span>
@@ -80,8 +80,52 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.12.0 - RWK-Tabellen & Admin-Teams Optimierung</CardTitle>
+              <CardTitle className="text-xl">Version 0.12.1 - Mobile UX & Performance Revolution</CardTitle>
               <Badge variant="default" className="bg-green-600">Aktuell</Badge>
+            </div>
+            <CardDescription>02.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Komplette Mobile-Optimierung mit nativen App-Features: Voice Input, Pull-to-Refresh, Micro-Animations und Enhanced Dark Mode für professionelle Benutzererfahrung.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">📱 Mobile-First Revolution v0.12.1</h4>
+              <div className="text-xs text-green-700">
+                Native App-Gefühl mit Voice Input, Gesten und Micro-Animations
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📱 <strong>Responsive Dialog System:</strong> Mobile Fullscreen, Tablet angepasst, Desktop optimiert - Speichern-Button nie mehr versteckt</li>
+              <li>🛡️ <strong>Safe Area Management:</strong> Perfekte Statusleisten-Integration, keine Überlappungen mehr auf allen Geräten</li>
+              <li>🎤 <strong>Voice Input für Ergebnisse:</strong> "185 Ringe" sprechen statt tippen - Deutsche Zahlenerkennung mit Browser Web Speech API</li>
+              <li>⚡ <strong>Pull-to-Refresh:</strong> Native Mobile-Geste wie Instagram - Nach unten ziehen zum Aktualisieren</li>
+              <li>💀 <strong>Skeleton Loading:</strong> Animierte Platzhalter statt Spinner für bessere Ladewahrnehmung</li>
+              <li>📊 <strong>Lazy Loading Tabellen:</strong> Nur sichtbare Daten laden - Performance-Boost bei großen Listen</li>
+              <li>🔄 <strong>Optimistic Updates:</strong> Sofortige UI-Reaktionen - App fühlt sich schneller an</li>
+              <li>🎨 <strong>Micro-Animations:</strong> Hover-Effekte, Button-Feedback, Stagger-Animationen für professionelles Gefühl</li>
+              <li>🌙 <strong>Enhanced Dark Mode:</strong> Verbesserte Farbpalette, Glow-Effekte, bessere Schatten und Kontraste</li>
+              <li>🤖 <strong>Android-Optimierungen:</strong> 48px Touch-Targets, Ripple-Effekte, Keyboard-Fixes, Hardware-Beschleunigung</li>
+              <li>🏗️ <strong>Mobile Layout System:</strong> Komplette Architektur für alle Bildschirmgrößen mit automatischer Geräteerkennung</li>
+              <li>⚡ <strong>Performance:</strong> Alle Features kostenlos mit Browser-APIs - keine externen Abhängigkeiten</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">📱 Mobile UX Revolution</span>
+                  <p className="text-xs text-green-600 mt-1">Voice Input, Gesten & Animations</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.12.1
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.12.0 - RWK-Tabellen & Admin-Teams Optimierung</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>02.09.2025</CardDescription>
           </CardHeader>

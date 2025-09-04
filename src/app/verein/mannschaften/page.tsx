@@ -21,6 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { GlobalResponsiveDialog } from '@/components/ui/global-responsive-dialog-wrapper';
+import { MobilePageWrapper } from '@/components/ui/mobile-page-wrapper';
+import { MobileFormWrapper } from '@/components/ui/mobile-form-wrapper';
 import {
   Dialog,
   DialogClose,
@@ -837,6 +840,10 @@ export default function VereinMannschaftenPage() {
   const currentSelectedSeasonName = allSeasons.find(s => s.id === selectedSeasonId)?.name;
 
   return (
+    <MobilePageWrapper 
+      title="Meine Mannschaften"
+      description={isVereinsvertreter ? "Verwalten Sie hier die Mannschaften Ihres Vereins." : "Übersicht der Mannschaften Ihres Vereins."}
+    >
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div className="flex items-center">
@@ -1018,27 +1025,55 @@ export default function VereinMannschaftenPage() {
       </Card>
 
       {isFormOpen && currentTeam && activeClubId && isVereinsvertreter && (
-        <Dialog open={isFormOpen} onOpenChange={(open) => { 
-          if (!open) {
-            setCurrentTeam(null); 
-            setSelectedShooterIdsInForm([]); 
-            setPersistedShooterIdsForTeam([]); 
-            setAllClubShootersForDialog([]);
-            setTeamStrength("");
-            setSuggestedTeamName("");
-            setShooterSearchQuery("");
-          } 
-          setIsFormOpen(open); 
-        }}>
-          <DialogContent className="sm:max-w-2xl"> {/* Increased width */}
-            <form onSubmit={handleSubmitTeamForm}>
-              <DialogHeader>
-                <DialogTitle>{formMode === 'new' ? 'Neue Mannschaft anlegen' : 'Mannschaft bearbeiten'}</DialogTitle>
-                <DialogDescriptionComponent>
-                  Für Verein: {activeClubName || 'Unbekannt'}. Saison: {allSeasons.find(s => s.id === (formMode === 'new' ? selectedSeasonId : currentTeam?.seasonId ))?.name || 'Saison wählen'}
-                </DialogDescriptionComponent>
-              </DialogHeader>
-              <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
+        <GlobalResponsiveDialog 
+          open={isFormOpen} 
+          onOpenChange={(open) => { 
+            if (!open) {
+              setCurrentTeam(null); 
+              setSelectedShooterIdsInForm([]); 
+              setPersistedShooterIdsForTeam([]); 
+              setAllClubShootersForDialog([]);
+              setTeamStrength("");
+              setSuggestedTeamName("");
+              setShooterSearchQuery("");
+            } 
+            setIsFormOpen(open); 
+          }}
+          title={formMode === 'new' ? 'Neue Mannschaft anlegen' : 'Mannschaft bearbeiten'}
+          description={`Für Verein: ${activeClubName || 'Unbekannt'}. Saison: ${allSeasons.find(s => s.id === (formMode === 'new' ? selectedSeasonId : currentTeam?.seasonId ))?.name || 'Saison wählen'}`}
+          size="lg"
+          footer={
+            <div className="flex flex-col sm:flex-row gap-2 w-full">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => { 
+                  setIsFormOpen(false); 
+                  setCurrentTeam(null); 
+                  setSelectedShooterIdsInForm([]); 
+                  setPersistedShooterIdsForTeam([]); 
+                  setAllClubShootersForDialog([]); 
+                }}
+                className="flex-1 sm:flex-none"
+              >
+                Abbrechen
+              </Button>
+              {isVereinsvertreter && (
+                <Button 
+                  type="submit" 
+                  disabled={isSubmittingForm || isLoadingDialogData}
+                  className="flex-1 sm:flex-none"
+                  form="team-form"
+                >
+                  {(isSubmittingForm || isLoadingDialogData) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 
+                  Speichern
+                </Button>
+              )}
+            </div>
+          }
+        >
+          <form id="team-form" onSubmit={handleSubmitTeamForm}>
+            <div className="space-y-4">
                 <Alert variant="default" className="mb-4 bg-blue-50 border-blue-300 text-blue-700">
                     <InfoIcon className="h-4 w-4 text-blue-600" />
                     <UiAlertDescription>
@@ -1291,18 +1326,12 @@ export default function VereinMannschaftenPage() {
                         <Input id="vvm-teamCompYearDialog" value={currentTeam?.competitionYear?.toString() || allSeasons.find(s => s.id === selectedSeasonId)?.competitionYear?.toString() || ''} disabled className="bg-muted/50" />
                     </div>
                 </div>
-              </div>
-              <DialogFooter className="pt-6">
-                 <DialogClose asChild><Button type="button" variant="outline" onClick={() => { setIsFormOpen(false); setCurrentTeam(null); setSelectedShooterIdsInForm([]); setPersistedShooterIdsForTeam([]); setAllClubShootersForDialog([]); }}>Abbrechen</Button></DialogClose>
-                 {isVereinsvertreter && (
-                    <Button type="submit" disabled={isSubmittingForm || isLoadingDialogData}>{(isSubmittingForm || isLoadingDialogData) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Speichern</Button>
-                )}
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+            </div>
+          </form>
+        </GlobalResponsiveDialog>
       )}
     </div>
+    </MobilePageWrapper>
   );
 }
 

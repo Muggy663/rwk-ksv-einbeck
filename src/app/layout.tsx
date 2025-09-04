@@ -7,6 +7,9 @@ import { Toaster } from '@/components/ui/toaster';
 import Script from 'next/script';
 import { MainNav } from '@/components/layout/MainNav';
 import { SiteFooter } from '@/components/layout/SiteFooter';
+import { MobileLayout, MobileHeader, MobileContent, MobileBottomNav } from '@/components/layout/MobileLayout';
+import { MobileNavigation } from '@/components/mobile/MobileNavigation';
+import { AndroidLayoutFix } from '@/components/mobile/AndroidLayoutFix';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Metadata } from 'next';
@@ -46,9 +49,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="de" suppressHydrationWarning>
       <head>
         <Script src="/disable-onboarding.js" strategy="beforeInteractive" />
-        <meta name="theme-color" content="#1f2937" />
+        <meta name="theme-color" content="#f5f3e6" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="apple-mobile-web-app-title" content="RWK Einbeck" />
         <link rel="apple-touch-icon" href="/images/logo.png" />
         <link rel="icon" href="/images/logo.png" />
@@ -72,41 +76,49 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <NativeAppProvider>
         <AuthProvider>
           <ClubProvider>
-            <div className="min-h-screen flex flex-col">
-            <SkipLink targetId="main-content" />
-          <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:bg-background/95 dark:border-border">
-            <div className="container flex h-14 items-center justify-between">
-              <Link href="/" className="flex items-center space-x-2">
-                <Image 
-                  src="/images/logo.png" 
-                  alt="KSV Einbeck Logo Klein" 
-                  width={40} 
-                  height={40}
-                  className="rounded-md"
-                  style={{ width: 40, height: 40 }}
-                  data-ai-hint="club logo"
-                />
-                <span className="hidden font-bold sm:inline-block text-lg text-foreground">RWK Einbeck</span>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <ModeToggle />
-                <MainNav />
-              </div>
-            </div>
-          </header>
-          <main id="main-content" tabIndex={-1} className="flex-grow focus:outline-none">
-            <div className="container mt-4">
-              <AppUpdateChecker />
-            </div>
-            {children}
-          </main>
-          <SiteFooter />
-          <Toaster />
-          <ServiceWorkerRegistration />
-
-          <OfflineIndicator />
-          {/* <SentryClientInit /> */}
-            </div>
+            <MobileLayout>
+              <SkipLink targetId="main-content" />
+              
+              <MobileHeader>
+                <Link href="/" className="flex items-center space-x-2">
+                  <Image 
+                    src="/images/logo.png" 
+                    alt="KSV Einbeck Logo Klein" 
+                    width={40} 
+                    height={40}
+                    className="rounded-md"
+                    style={{ width: 40, height: 40 }}
+                    data-ai-hint="club logo"
+                  />
+                  <span className="hidden font-bold sm:inline-block text-lg text-foreground">RWK Einbeck</span>
+                </Link>
+                <div className="flex items-center space-x-2">
+                  <ModeToggle />
+                  <div className="hidden md:block">
+                    <MainNav />
+                  </div>
+                </div>
+              </MobileHeader>
+              
+              <MobileContent>
+                <div className="container">
+                  <AppUpdateChecker />
+                </div>
+                <main id="main-content" tabIndex={-1} className="focus:outline-none">
+                  {children}
+                </main>
+                <SiteFooter />
+              </MobileContent>
+              
+              <MobileBottomNav>
+                <MobileNavigation />
+              </MobileBottomNav>
+              
+              <AndroidLayoutFix />
+              <Toaster />
+              <ServiceWorkerRegistration />
+              <OfflineIndicator />
+            </MobileLayout>
           </ClubProvider>
         </AuthProvider>
         </NativeAppProvider>

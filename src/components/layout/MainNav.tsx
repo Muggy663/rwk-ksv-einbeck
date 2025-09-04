@@ -106,7 +106,7 @@ export function MainNav() {
     },
     {
       href: '/dokumente',
-      label: 'Dokumente',
+      label: 'Dateien',
       icon: <FileText className="h-4 w-4 mr-2" />,
       active: pathname === '/dokumente',
     },
@@ -152,7 +152,13 @@ export function MainNav() {
     <nav className="flex items-center space-x-4 lg:space-x-6">
       {/* Desktop Navigation */}
       <div className="hidden md:flex md:items-center md:space-x-4">
-        {routes.map((route) => (
+        {routes.filter(route => {
+          // Updates nur für Admins
+          if (route.href === '/updates') {
+            return isAdmin;
+          }
+          return true;
+        }).map((route) => (
           <Link
             key={route.href}
             href={route.href}
@@ -165,6 +171,20 @@ export function MainNav() {
             {route.label}
           </Link>
         ))}
+        
+        {/* Admin-only Updates Link */}
+        {isAdmin && (
+          <Link
+            href="/updates"
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary flex items-center",
+              pathname === '/updates' ? "text-primary" : "text-muted-foreground"
+            )}
+          >
+            <Bell className="h-4 w-4 mr-2" />
+            Updates
+          </Link>
+        )}
 
         {isAdmin && adminRoutes.map((route) => (
           <Link
@@ -283,7 +303,13 @@ export function MainNav() {
             </div>
             
             <div className="p-2 space-y-1">
-              {routes.map((route) => (
+              {routes.filter(route => {
+                // Updates nur für Admins
+                if (route.href === '/updates') {
+                  return isAdmin;
+                }
+                return true;
+              }).map((route) => (
                 <Link
                   key={route.href}
                   href={route.href}
@@ -297,6 +323,21 @@ export function MainNav() {
                   {route.label}
                 </Link>
               ))}
+              
+              {/* Admin-only Updates Link */}
+              {isAdmin && (
+                <Link
+                  href="/updates"
+                  className={cn(
+                    "flex items-center p-2 rounded hover:bg-accent w-full",
+                    pathname === '/updates' ? "text-primary bg-accent" : "text-muted-foreground"
+                  )}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Bell className="h-4 w-4 mr-2" />
+                  Updates
+                </Link>
+              )}
               
               {user && (
                 <Link

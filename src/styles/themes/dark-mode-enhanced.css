@@ -1,0 +1,255 @@
+/* src/styles/themes/dark-mode-enhanced.css */
+
+/* Enhanced Dark Mode mit besseren Farben */
+.dark {
+  /* Verbesserte Hintergrund-Farben */
+  --background: 222 84% 4.9%;
+  --foreground: 210 40% 98%;
+  
+  /* Karten und Oberflächen */
+  --card: 222 84% 6%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 84% 6%;
+  --popover-foreground: 210 40% 98%;
+  
+  /* Primärfarben - wärmeres Grün */
+  --primary: 142 76% 36%;
+  --primary-foreground: 355 7% 97%;
+  
+  /* Sekundärfarben - wärmere Töne */
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+  
+  /* Muted - besserer Kontrast */
+  --muted: 217 33% 15%;
+  --muted-foreground: 215 20% 70%;
+  
+  /* Accent - warmer Ton */
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 40% 98%;
+  
+  /* Borders - subtiler */
+  --border: 217 33% 20%;
+  --input: 217 33% 18%;
+  
+  /* Ring - helleres Grün */
+  --ring: 142 76% 36%;
+  
+  /* Destructive */
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 210 40% 98%;
+  
+  /* Success - angepasst */
+  --success: 142 76% 36%;
+  --success-foreground: 210 40% 98%;
+  
+  /* Warning */
+  --warning: 38 92% 50%;
+  --warning-foreground: 222 84% 4.9%;
+  
+  /* Info */
+  --info: 217 91% 60%;
+  --info-foreground: 222 84% 4.9%;
+}
+
+/* Dark Mode spezifische Verbesserungen */
+.dark {
+  /* Bessere Schatten */
+  --shadow-color: 222 84% 2%;
+  --shadow-elevation-low: 0 1px 2px 0 hsl(var(--shadow-color) / 0.05);
+  --shadow-elevation-medium: 0 4px 6px -1px hsl(var(--shadow-color) / 0.1), 0 2px 4px -1px hsl(var(--shadow-color) / 0.06);
+  --shadow-elevation-high: 0 10px 15px -3px hsl(var(--shadow-color) / 0.1), 0 4px 6px -2px hsl(var(--shadow-color) / 0.05);
+  
+  /* Glow-Effekte */
+  --glow-primary: 142 76% 36% / 0.3;
+  --glow-secondary: 217 91% 60% / 0.2;
+}
+
+/* Dark Mode Komponenten-Styles */
+.dark .card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: var(--shadow-elevation-low);
+}
+
+.dark .card:hover {
+  box-shadow: var(--shadow-elevation-medium);
+  transition: box-shadow 0.2s ease;
+}
+
+/* Dark Mode Buttons */
+.dark button {
+  border-color: hsl(var(--border));
+}
+
+.dark button:hover {
+  background: hsl(var(--accent));
+  border-color: hsl(var(--border));
+}
+
+.dark .btn-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 0 0 0 hsl(var(--glow-primary));
+  transition: all 0.2s ease;
+}
+
+.dark .btn-primary:hover {
+  box-shadow: 0 0 20px hsl(var(--glow-primary));
+  transform: translateY(-1px);
+}
+
+/* Dark Mode Inputs */
+.dark input,
+.dark textarea,
+.dark select {
+  background: hsl(var(--input));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 2px hsl(var(--glow-primary));
+}
+
+/* Dark Mode Tables */
+.dark table {
+  background: hsl(var(--card));
+}
+
+.dark th {
+  background: hsl(var(--muted));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.dark td {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.dark tr:hover {
+  background: hsl(var(--muted) / 0.5);
+}
+
+/* Dark Mode Dialogs */
+.dark [role="dialog"] {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: var(--shadow-elevation-high);
+}
+
+/* Dark Mode Navigation */
+.dark .mobile-header {
+  background: hsl(var(--background) / 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.dark .mobile-bottom-nav {
+  background: hsl(var(--background) / 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid hsl(var(--border));
+}
+
+/* Dark Mode Badges */
+.dark .badge {
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+.dark .badge-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.dark .badge-success {
+  background: hsl(var(--success));
+  color: hsl(var(--success-foreground));
+}
+
+.dark .badge-warning {
+  background: hsl(var(--warning));
+  color: hsl(var(--warning-foreground));
+}
+
+.dark .badge-destructive {
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+}
+
+/* Dark Mode Skeleton */
+.dark .skeleton {
+  background: linear-gradient(90deg, 
+    hsl(var(--muted)) 25%, 
+    hsl(var(--muted) / 0.5) 50%, 
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Dark Mode Scrollbars */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+/* Dark Mode Selection */
+.dark ::selection {
+  background: hsl(var(--primary) / 0.3);
+  color: hsl(var(--foreground));
+}
+
+/* Dark Mode Focus */
+.dark *:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Dark Mode Links */
+.dark a {
+  color: hsl(var(--primary));
+}
+
+.dark a:hover {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+/* Dark Mode Code */
+.dark code {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+/* Dark Mode Tooltips */
+.dark .tooltip {
+  background: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border: 1px solid hsl(var(--border));
+  box-shadow: var(--shadow-elevation-medium);
+}

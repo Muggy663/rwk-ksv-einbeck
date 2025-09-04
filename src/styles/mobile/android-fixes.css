@@ -1,0 +1,226 @@
+/* src/styles/mobile/android-fixes.css */
+
+/* Android-spezifische Button-Fixes */
+@media (max-width: 768px) {
+  /* Alle Buttons Touch-optimiert */
+  button, .btn, [role="button"] {
+    min-height: 48px !important;
+    min-width: 48px !important;
+    padding: 12px 16px !important;
+    font-size: 16px !important;
+    border-radius: 8px !important;
+    touch-action: manipulation !important;
+  }
+  
+  /* Icon-Buttons größer */
+  button[data-size="icon"], .btn-icon {
+    min-width: 48px !important;
+    min-height: 48px !important;
+    padding: 12px !important;
+  }
+  
+  /* Small Buttons trotzdem Touch-tauglich */
+  button[data-size="sm"], .btn-sm {
+    min-height: 44px !important;
+    padding: 10px 14px !important;
+    font-size: 14px !important;
+  }
+  
+  /* Floating Action Button */
+  .fab {
+    position: fixed;
+    bottom: calc(var(--safe-area-bottom) + 80px);
+    right: 16px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+  }
+  
+  /* Button-Gruppen horizontal scrollbar */
+  .button-group {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 8px 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .button-group button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  
+  /* Dropdown-Buttons volle Breite */
+  .select-trigger, [role="combobox"] {
+    width: 100% !important;
+    min-height: 48px !important;
+    padding: 12px 16px !important;
+    font-size: 16px !important;
+  }
+  
+  /* Form-Buttons am Ende */
+  .form-actions {
+    position: sticky;
+    bottom: 0;
+    background: hsl(var(--background));
+    border-top: 1px solid hsl(var(--border));
+    padding: 16px;
+    padding-bottom: calc(16px + var(--safe-area-bottom));
+    margin: 0 -16px -16px -16px;
+  }
+  
+  .form-actions .button-row {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .form-actions button {
+    flex: 1;
+    min-height: 52px !important;
+    font-weight: 600;
+  }
+}
+
+/* Android Keyboard Fixes */
+@media (max-width: 768px) {
+  /* Verhindere Zoom bei Input-Focus */
+  input, textarea, select {
+    font-size: 16px !important;
+    transform-origin: left top;
+    transition: none !important;
+  }
+  
+  /* Keyboard-Overlay-Fix */
+  .keyboard-open {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .keyboard-open .mobile-content {
+    padding-bottom: 0;
+  }
+  
+  /* Input-Felder größer */
+  input, textarea, select {
+    min-height: 48px !important;
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+  }
+  
+  /* Checkbox/Radio größer */
+  input[type="checkbox"], input[type="radio"] {
+    width: 24px !important;
+    height: 24px !important;
+    margin: 12px !important;
+  }
+}
+
+/* Android Navigation Fixes */
+@media (max-width: 768px) {
+  /* Bottom Navigation sicher */
+  .mobile-bottom-nav {
+    background: hsl(var(--background));
+    border-top: 1px solid hsl(var(--border));
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  }
+  
+  /* Navigation Buttons */
+  .mobile-bottom-nav button {
+    min-height: 56px !important;
+    padding: 8px 4px !important;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  /* Tab-Buttons */
+  .tabs-trigger {
+    min-height: 48px !important;
+    padding: 12px 20px !important;
+    font-size: 16px !important;
+  }
+}
+
+/* Android Scroll-Fixes */
+@media (max-width: 768px) {
+  /* Smooth Scrolling */
+  * {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Scroll-Container */
+  .scroll-area, .overflow-auto {
+    overscroll-behavior: contain;
+  }
+  
+  /* Pull-to-Refresh Indikator */
+  .ptr-indicator {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: hsl(var(--primary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transition: top 0.3s ease;
+  }
+  
+  .ptr-active .ptr-indicator {
+    top: 20px;
+  }
+}
+
+/* Android Performance Optimierungen */
+@media (max-width: 768px) {
+  /* Hardware-Beschleunigung */
+  .card, .dialog-content, .mobile-header, .mobile-bottom-nav {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Animationen reduzieren */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  /* Touch-Feedback */
+  button:active, .btn:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+  
+  /* Ripple-Effekt */
+  .ripple {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+  }
+  
+  .ripple:active::after {
+    width: 200px;
+    height: 200px;
+  }
+}
