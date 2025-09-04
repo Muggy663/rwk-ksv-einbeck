@@ -49,6 +49,14 @@
   padding-left: var(--safe-area-left);
 }
 
+.pt-safe-area-top {
+  padding-top: var(--status-bar-height);
+}
+
+.pb-safe-area-bottom {
+  padding-bottom: var(--nav-bar-height);
+}
+
 /* Mobile-First Header */
 .mobile-header {
   position: fixed;

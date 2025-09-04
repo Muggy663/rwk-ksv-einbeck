@@ -88,17 +88,22 @@
 }
 
 /* Primary Buttons - Dunkler Text auf hellem Grün */
-.dark button[class*="bg-primary"],
+.dark .bg-primary,
+.dark button.bg-primary,
+.dark [class*="bg-primary"],
 .dark .btn-primary {
-  background: hsl(var(--primary)) !important;
-  color: hsl(var(--primary-foreground)) !important;
-  border: 1px solid hsl(var(--primary));
+  background: hsl(142 76% 50%) !important;
+  color: hsl(222 84% 4.9%) !important;
+  border: 1px solid hsl(142 76% 50%) !important;
 }
 
-.dark button[class*="bg-primary"]:hover,
+.dark .bg-primary:hover,
+.dark button.bg-primary:hover,
+.dark [class*="bg-primary"]:hover,
 .dark .btn-primary:hover {
-  background: hsl(var(--primary) / 0.9) !important;
-  color: hsl(var(--primary-foreground)) !important;
+  background: hsl(142 76% 45%) !important;
+  color: hsl(222 84% 4.9%) !important;
+  border: 1px solid hsl(142 76% 45%) !important;
 }
 
 /* Ghost Buttons - Besserer Kontrast */

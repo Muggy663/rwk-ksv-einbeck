@@ -8,13 +8,13 @@ import { PlusCircle, Edit, Trash2, Users as TeamsIcon, Loader2, AlertTriangle, I
 import { BackButton } from '@/components/ui/back-button';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  MobileTable as Table,
+  MobileTableBody as TableBody,
+  MobileTableCell as TableCell,
+  MobileTableHead as TableHead,
+  MobileTableHeader as TableHeader,
+  MobileTableRow as TableRow,
+} from "@/components/ui/mobile-table";
 import {
   MobileSelect as Select,
   MobileSelectContent as SelectContent,
@@ -960,19 +960,16 @@ export default function VereinMannschaftenPage() {
             <TableBody>
                 {teamsOfActiveClub.map((team) => (
                 <TableRow key={team.id}>
-                    <TableCell className="font-medium">
-                      <div>{team.name}</div>
-                      <div className="text-xs text-muted-foreground sm:hidden mt-1">
-                        {getLeagueNameDisplay(team.leagueId)} • {team.competitionYear}
-                      </div>
+                    <TableCell label="Name" className="font-medium">
+                      {team.name}
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">{getLeagueNameDisplay(team.leagueId)}</TableCell>
-                    <TableCell className="text-center">
+                    <TableCell label="Liga" hideOnMobile>{getLeagueNameDisplay(team.leagueId)}</TableCell>
+                    <TableCell label="Typ" className="text-center">
                       <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-medium">
                         {getLeagueTypeDisplay(team)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell label="AK" className="text-center">
                       {team.outOfCompetition ? (
                         <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded font-medium">
                           AK
@@ -981,8 +978,8 @@ export default function VereinMannschaftenPage() {
                         <span className="text-xs text-gray-400">-</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-center hidden md:table-cell">{team.competitionYear}</TableCell>
-                    <TableCell className="text-center">
+                    <TableCell label="Jahr" hideOnMobile>{team.competitionYear}</TableCell>
+                    <TableCell label="Schützen" className="text-center">
                       {(() => {
                         const availableShooters = (team.shooterIds || []).filter(shooterId => 
                           allClubShootersForDisplay.some(shooter => shooter.id === shooterId)

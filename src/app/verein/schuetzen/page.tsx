@@ -7,13 +7,13 @@ import { PlusCircle, Edit, Trash2, Loader2, AlertTriangle, UserCircle as UserIco
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { BackButton } from '@/components/ui/back-button';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  MobileTable as Table,
+  MobileTableBody as TableBody,
+  MobileTableCell as TableCell,
+  MobileTableHead as TableHead,
+  MobileTableHeader as TableHeader,
+  MobileTableRow as TableRow,
+} from "@/components/ui/mobile-table";
 import {
   Select,
   SelectContent,
@@ -696,17 +696,17 @@ export default function VereinSchuetzenPage() {
                   })
                   .map((shooter) => (
                 <TableRow key={shooter.id}>
-                    <TableCell>
+                    <TableCell label="Nachname">
                       <div>
                         {shooter.title && <span className="text-xs text-gray-500">{shooter.title} </span>}
                         <span>{shooter.lastName || (shooter.name ? shooter.name.split(' ').slice(-1)[0] : '-')}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell label="Vorname">
                       <span>{shooter.firstName || (shooter.name ? shooter.name.split(' ').slice(0, -1).join(' ') : '-')}</span>
                     </TableCell>
-                    <TableCell>{shooter.gender === 'female' ? 'Weiblich' : (shooter.gender === 'male' ? 'Männlich' : 'N/A')}</TableCell>
-                    <TableCell className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
+                    <TableCell label="Geschlecht">{shooter.gender === 'female' ? 'Weiblich' : (shooter.gender === 'male' ? 'Männlich' : 'N/A')}</TableCell>
+                    <TableCell label="Mannschaften" className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
                     {isVereinsvertreter && (
                       <TableCell className="text-right space-x-1">
                         <Button variant="ghost" size="icon" onClick={() => handleEditShooter(shooter)} disabled={isFormSubmitting || isDeleting}><Edit className="h-4 w-4" /></Button>
