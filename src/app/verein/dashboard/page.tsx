@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { ClubSwitcher } from '@/components/ui/club-switcher';
 import { InteractiveGuide } from '@/components/onboarding/InteractiveGuide';
+import { BackButton } from '@/components/ui/back-button';
 
 export default function VereinDashboardPage() {
   const { user } = useAuth();
@@ -107,7 +108,10 @@ export default function VereinDashboardPage() {
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-primary mb-4">Vereins-Dashboard</h1>
+          <div className="flex items-center mb-4">
+            <BackButton className="mr-2" fallbackHref="/dashboard-auswahl" />
+            <h1 className="text-4xl font-bold text-primary">Vereins-Dashboard</h1>
+          </div>
           <div className="mb-4">
             <ClubSwitcher />
             <p className="text-xs text-muted-foreground mt-1 sm:hidden">
@@ -122,20 +126,20 @@ export default function VereinDashboardPage() {
           </p>
         </div>
         
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 w-full max-w-md">
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-full">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-full flex-shrink-0">
                 <Sparkles className="h-6 w-6 text-blue-600" />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-blue-900">Neu hier?</h3>
                 <p className="text-sm text-blue-700 mb-3">
                   Lassen Sie sich durch die wichtigsten Funktionen führen
                 </p>
-                <Button onClick={startGuide} className="bg-blue-600 hover:bg-blue-700">
-                  <Play className="mr-2 h-4 w-4" />
-                  Erste Schritte starten
+                <Button onClick={startGuide} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm">
+                  <Play className="mr-2 h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Erste Schritte</span>
                 </Button>
               </div>
             </div>
@@ -158,9 +162,9 @@ export default function VereinDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full h-12 text-base font-semibold">
+            <Button asChild className="w-full h-12 text-sm font-semibold">
               <Link href="/verein/mannschaften">
-                Mannschaften verwalten
+                <span className="truncate">Mannschaften verwalten</span>
               </Link>
             </Button>
           </CardContent>
@@ -180,9 +184,9 @@ export default function VereinDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full h-12 text-base font-semibold">
+            <Button asChild className="w-full h-12 text-sm font-semibold">
               <Link href="/verein/schuetzen">
-                Schützen verwalten
+                <span className="truncate">Schützen verwalten</span>
               </Link>
             </Button>
           </CardContent>
@@ -202,8 +206,10 @@ export default function VereinDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full h-12 text-base font-semibold">
-              <Link href="/verein/ergebnisse">Ergebnisse erfassen</Link>
+            <Button asChild className="w-full h-12 text-sm font-semibold">
+              <Link href="/verein/ergebnisse">
+                <span className="truncate">Ergebnisse erfassen</span>
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -222,9 +228,9 @@ export default function VereinDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full h-12 text-base font-semibold">
+            <Button asChild className="w-full h-12 text-sm font-semibold">
               <Link href="/verein/handtabellen">
-                Handtabellen erstellen
+                <span className="truncate">Handtabellen erstellen</span>
               </Link>
             </Button>
           </CardContent>
@@ -244,8 +250,10 @@ export default function VereinDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline" className="w-full h-12 text-base">
-              <Link href="/termine">Termine anzeigen</Link>
+            <Button asChild variant="outline" className="w-full h-12 text-sm">
+              <Link href="/termine">
+                <span className="truncate">Termine anzeigen</span>
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -264,8 +272,10 @@ export default function VereinDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline" className="w-full h-12 text-base">
-              <Link href="/change-password">Passwort ändern</Link>
+            <Button asChild variant="outline" className="w-full h-12 text-sm">
+              <Link href="/change-password">
+                <span className="truncate">Passwort ändern</span>
+              </Link>
             </Button>
           </CardContent>
         </Card>

@@ -5,6 +5,7 @@ import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'rea
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Users as TeamsIcon, Loader2, AlertTriangle, InfoIcon } from 'lucide-react';
+import { BackButton } from '@/components/ui/back-button';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import {
   Table,
@@ -15,12 +16,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  MobileSelect as Select,
+  MobileSelectContent as SelectContent,
+  MobileSelectItem as SelectItem,
+  MobileSelectTrigger as SelectTrigger,
+  MobileSelectValue as SelectValue,
+} from "@/components/ui/mobile-select";
 import { GlobalResponsiveDialog } from '@/components/ui/global-responsive-dialog-wrapper';
 import { MobilePageWrapper } from '@/components/ui/mobile-page-wrapper';
 import { MobileFormWrapper } from '@/components/ui/mobile-form-wrapper';
@@ -847,6 +848,7 @@ export default function VereinMannschaftenPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div className="flex items-center">
+          <BackButton className="mr-2" fallbackHref="/verein/dashboard" />
           <h1 className="text-2xl font-semibold text-primary">Meine Mannschaften</h1>
           <HelpTooltip 
             text="Hier können Sie Mannschaften für Ihren Verein anlegen und verwalten." 

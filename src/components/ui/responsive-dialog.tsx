@@ -34,12 +34,12 @@ export function ResponsiveDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
           className={cn(
-            "fixed inset-0 z-50 bg-background",
+            "fixed inset-x-0 top-0 bottom-0 z-50 bg-background",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
             "duration-300 ease-out",
             "flex flex-col",
-            "safe-area-inset",
+            "mobile-content",
             className
           )}
           hideCloseButton
@@ -64,13 +64,13 @@ export function ResponsiveDialog({
           </div>
 
           {/* Mobile Content */}
-          <div className="flex-1 overflow-y-auto p-4 pb-safe">
+          <div className="flex-1 overflow-y-auto p-4">
             {children}
           </div>
 
           {/* Mobile Footer */}
           {footer && (
-            <div className="border-t bg-background/95 backdrop-blur-sm p-4 pb-safe sticky bottom-0">
+            <div className="border-t bg-background/95 backdrop-blur-sm p-4 sticky bottom-0">
               {footer}
             </div>
           )}

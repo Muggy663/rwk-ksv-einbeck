@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
     label: 'Stats',
   },
   {
-    href: '/verein',
+    href: '/dashboard-auswahl',
     icon: Users,
     label: 'Verein',
     requiresAuth: true,

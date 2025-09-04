@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Loader2, AlertTriangle, UserCircle as UserIcon } from 'lucide-react';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
+import { BackButton } from '@/components/ui/back-button';
 import {
   Table,
   TableBody,
@@ -571,6 +572,7 @@ export default function VereinSchuetzenPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <div className="flex items-center">
+            <BackButton className="mr-2" fallbackHref="/verein/dashboard" />
             <h1 className="text-3xl font-bold text-primary">🎯 Vereinsschützen</h1>
             <HelpTooltip 
               text="Hier können Sie Schützen für Ihren Verein anlegen und verwalten." 

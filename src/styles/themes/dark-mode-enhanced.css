@@ -12,9 +12,9 @@
   --popover: 222 84% 6%;
   --popover-foreground: 210 40% 98%;
   
-  /* Primärfarben - wärmeres Grün */
-  --primary: 142 76% 36%;
-  --primary-foreground: 355 7% 97%;
+  /* Primärfarben - helleres Grün für besseren Kontrast */
+  --primary: 142 76% 50%;
+  --primary-foreground: 222 84% 4.9%;
   
   /* Sekundärfarben - wärmere Töne */
   --secondary: 217 33% 17%;
@@ -77,7 +77,7 @@
   transition: box-shadow 0.2s ease;
 }
 
-/* Dark Mode Buttons */
+/* Dark Mode Buttons - Verbesserte Sichtbarkeit */
 .dark button {
   border-color: hsl(var(--border));
 }
@@ -87,16 +87,28 @@
   border-color: hsl(var(--border));
 }
 
+/* Primary Buttons - Dunkler Text auf hellem Grün */
+.dark button[class*="bg-primary"],
 .dark .btn-primary {
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  box-shadow: 0 0 0 0 hsl(var(--glow-primary));
-  transition: all 0.2s ease;
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border: 1px solid hsl(var(--primary));
 }
 
+.dark button[class*="bg-primary"]:hover,
 .dark .btn-primary:hover {
-  box-shadow: 0 0 20px hsl(var(--glow-primary));
-  transform: translateY(-1px);
+  background: hsl(var(--primary) / 0.9) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+/* Ghost Buttons - Besserer Kontrast */
+.dark button[class*="ghost"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark button[class*="ghost"]:hover {
+  background: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
 }
 
 /* Dark Mode Inputs */
