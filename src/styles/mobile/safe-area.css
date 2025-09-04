@@ -10,7 +10,7 @@
   
   /* Status Bar Height Fallbacks */
   --status-bar-height: max(var(--safe-area-top), 24px);
-  --nav-bar-height: max(var(--safe-area-bottom), 48px);
+  --nav-bar-height: max(var(--safe-area-bottom), 72px);
   
   /* App Layout Heights */
   --app-header-height: 64px;
