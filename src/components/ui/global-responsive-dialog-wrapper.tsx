@@ -56,18 +56,18 @@ export function GlobalResponsiveDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`${sizeClasses[size]} max-h-[90vh] flex flex-col ${className || ''}`}>
+      <DialogContent className={`${sizeClasses[size]} ${className || ''}`}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         
-        <div className="flex-1 overflow-y-auto pr-2">
+        <div className="space-y-4">
           {children}
         </div>
         
         {footer && (
-          <DialogFooter className="border-t pt-4 mt-4">
+          <DialogFooter>
             {footer}
           </DialogFooter>
         )}
