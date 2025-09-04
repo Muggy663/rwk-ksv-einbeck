@@ -59,11 +59,15 @@ export default function DashboardAuswahl() {
         {/* RWK Dashboard */}
         <Card className={`shadow-lg hover:shadow-xl transition-shadow ${isKMOrganisator && !isRWKAdmin ? 'opacity-50' : ''}`}>
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl flex items-center gap-2">
-              🎯 Vereinsbereich
-              {isRWKAdmin && <Badge variant="default">Admin</Badge>}
-              {isVereinsvertreter && <Badge variant="secondary">Vereinsvertreter</Badge>}
-            </CardTitle>
+            <div>
+              <CardTitle className="text-xl mb-2">
+                🎯 Vereinsbereich
+              </CardTitle>
+              <div className="flex flex-wrap gap-1">
+                {isRWKAdmin && <Badge variant="default">Admin</Badge>}
+                {isVereinsvertreter && <Badge variant="secondary">Vereinsvertreter</Badge>}
+              </div>
+            </div>
             <CardDescription>
               Vereinsverwaltung für Rundenwettkämpfe und Mannschaften
             </CardDescription>
@@ -101,12 +105,16 @@ export default function DashboardAuswahl() {
         {/* KM Dashboard */}
         <Card className={`shadow-lg hover:shadow-xl transition-shadow ${!hasKMAccess ? 'opacity-60' : ''}`}>
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl flex items-center gap-2">
-              🏆 Kreismeisterschaften
-              {isKMAdmin && <Badge variant="default">KM-Admin</Badge>}
-              {isKMOrganisator && <Badge variant="secondary">KM-Organisator</Badge>}
-              {hasKMAccess && !hasFullAccess && <Badge variant="outline">Vereinsvertreter</Badge>}
-            </CardTitle>
+            <div>
+              <CardTitle className="text-xl mb-2">
+                🏆 Kreismeisterschaften
+              </CardTitle>
+              <div className="flex flex-wrap gap-1">
+                {isKMAdmin && <Badge variant="default">KM-Admin</Badge>}
+                {isKMOrganisator && <Badge variant="secondary">KM-Organisator</Badge>}
+                {hasKMAccess && !hasFullAccess && <Badge variant="outline">Vereinsvertreter</Badge>}
+              </div>
+            </div>
             <CardDescription>
               Kreismeisterschafts-System für Meldungen und Organisation
             </CardDescription>
