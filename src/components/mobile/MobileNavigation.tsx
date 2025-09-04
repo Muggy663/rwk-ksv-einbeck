@@ -4,9 +4,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Trophy, FileText, User, BarChart3 } from 'lucide-react';
+import { Home, Users, Trophy, BarChart3, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
+import { MobileBurgerMenu } from './MobileBurgerMenu';
 
 interface NavItem {
   href: string;
@@ -37,16 +38,6 @@ const navItems: NavItem[] = [
     label: 'Verein',
     requiresAuth: true,
   },
-  {
-    href: '/dokumente',
-    icon: FileText,
-    label: 'Dateien',
-  },
-  {
-    href: '/login',
-    icon: User,
-    label: 'Login',
-  },
 ];
 
 export function MobileNavigation() {
@@ -59,8 +50,8 @@ export function MobileNavigation() {
     return true;
   });
 
-  const itemsToShow = filteredItems.length;
-  const gridCols = itemsToShow <= 4 ? 'grid-cols-4' : itemsToShow === 5 ? 'grid-cols-5' : 'grid-cols-6';
+  const itemsToShow = filteredItems.length + 1; // +1 für Burger-Menü
+  const gridCols = 'grid-cols-5'; // Immer 5 Spalten: 4 Hauptmenüs + Burger
 
   return (
     <div className={`grid ${gridCols} gap-1 w-full max-w-lg mx-auto`}>
@@ -89,6 +80,12 @@ export function MobileNavigation() {
           </Link>
         );
       })}
+      
+      {/* Burger Menu */}
+      <div className="flex flex-col items-center justify-center py-2 px-1">
+        <MobileBurgerMenu />
+        <span className="text-xs font-medium text-muted-foreground mt-1">Menü</span>
+      </div>
     </div>
   );
 }

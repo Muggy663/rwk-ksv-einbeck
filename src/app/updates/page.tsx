@@ -4,8 +4,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ArrowRight } from 'lucide-react';
+import { VersionBadge, LiveBadge } from '@/components/ui/version-badge';
 
 export default function UpdatesPage() {
   return (
@@ -19,15 +19,13 @@ export default function UpdatesPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-              <span>Web-Version: 0.12.1 (02.09.2025)</span>
-            </Badge>
-            <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
-              <span>App-Version: 0.9.4.1 (02.09.2025)</span>
-            </Badge>
-            <Badge variant="default" className="text-xs py-1 px-2 bg-green-600">
-              <span>🌐 Live: rwk-einbeck.de</span>
-            </Badge>
+            <VersionBadge className="border-green-300 bg-green-50 text-green-700">
+              Web-Version: 0.12.2 (03.09.2025)
+            </VersionBadge>
+            <VersionBadge className="border-blue-300 bg-blue-50 text-blue-700">
+              App-Version: 0.9.4.1 (02.09.2025)
+            </VersionBadge>
+            <LiveBadge />
           </div>
         </div>
       </div>
@@ -80,8 +78,52 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.12.1 - Mobile UX & Performance Revolution</CardTitle>
+              <CardTitle className="text-xl">Version 0.12.2 - Mobile Navigation & Code Quality</CardTitle>
               <Badge variant="default" className="bg-green-600">Aktuell</Badge>
+            </div>
+            <CardDescription>03.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Mobile Navigation Revolution: Burger-Menü mit Safe Area Support, mobile-optimierte Tabellen, Dark Mode Button-Fixes und wiederverwendbare Komponenten für bessere Code-Qualität.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🍔 Mobile Navigation Revolution v0.12.2</h4>
+              <div className="text-xs text-green-700">
+                Burger-Menü, Safe Areas und mobile Tabellen für perfekte App-Erfahrung
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🍔 <strong>Burger-Menü mit Safe Area:</strong> Alle Menüpunkte erreichbar, respektiert Android-Navigationsleiste, slide-in Animation</li>
+              <li>📱 <strong>Mobile-optimierte Tabellen:</strong> Card-Layout auf kleinen Bildschirmen, Labels für bessere Übersicht, versteckte Spalten</li>
+              <li>🌌 <strong>Dark Mode Button-Fix:</strong> Lesbare Buttons mit dunklem Text auf hellem Grün, keine grün-auf-grün Probleme mehr</li>
+              <li>📱 <strong>Dialog-Positionierung:</strong> Mobile Dialoge bleiben im Viewport, keine abgeschnittenen Fenster mehr</li>
+              <li>⬅️ <strong>Zurück-Buttons:</strong> Universelle BackButton-Komponente für alle Login-Bereiche mit Fallback-Navigation</li>
+              <li>📱 <strong>Safe Area Management:</strong> Status- und Navigationsleisten werden korrekt respektiert, 72px Fallback für ältere Geräte</li>
+              <li>🔄 <strong>Wiederverwendbare Komponenten:</strong> VersionBadge-Komponenten für bessere Code-Qualität und Wartbarkeit</li>
+              <li>📱 <strong>Mobile-First Dropdowns:</strong> Select-Komponenten optimiert für Touch-Bedienung, keine Positionierungsprobleme</li>
+              <li>📋 <strong>Dashboard Layout-Fixes:</strong> Badge-Überlauf behoben, Button-Text passt in Rahmen, responsive Card-Layouts</li>
+              <li>🔗 <strong>Navigation-Fix:</strong> Verein-Button führt zu Dashboard-Auswahl statt 404-Fehler</li>
+              <li>📝 <strong>README Bereinigung:</strong> Installation/Entwickler-Sektionen entfernt (interne App)</li>
+              <li>⚙️ <strong>Code-Qualität:</strong> Gemini-Vorschläge umgesetzt, sauberer und wartbarer Code</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🍔 Mobile Navigation</span>
+                  <p className="text-xs text-green-600 mt-1">Burger-Menü & Safe Areas</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v0.12.2
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.12.1 - Mobile UX & Performance Revolution</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>02.09.2025</CardDescription>
           </CardHeader>

@@ -611,13 +611,21 @@ export default function VereinMannschaftenPage() {
         const { id, ...dataForNewTeam } = teamDataToSave; 
         const teamData = {...dataForNewTeam, shooterIds: selectedShooterIdsInForm, leagueId: null, leagueType: currentTeam.leagueType || null };
         await setDoc(newTeamRef, teamData);
-        toast({ title: "Mannschaft erstellt", description: `"${dataForNewTeam.name}" wurde erfolgreich angelegt.` });
+        toast({ 
+          title: "✅ Mannschaft erfolgreich erstellt!", 
+          description: `"${dataForNewTeam.name}" wurde angelegt und ist jetzt in der Liste sichtbar.`,
+          duration: 5000
+        });
       } else if (formMode === 'edit' && currentTeam.id) {
         teamIdForShooterUpdates = currentTeam.id;
         const teamDocRef = doc(db, TEAMS_COLLECTION, teamIdForShooterUpdates);
         const { id, ...dataForTeamUpdate } = teamDataToSave; 
         await updateDoc(teamDocRef, {...dataForTeamUpdate, shooterIds: selectedShooterIdsInForm} as Partial<Team>);
-        toast({ title: "Mannschaft aktualisiert", description: `"${dataForTeamUpdate.name}" wurde erfolgreich aktualisiert.` });
+        toast({ 
+          title: "✅ Mannschaft erfolgreich gespeichert!", 
+          description: `"${dataForTeamUpdate.name}" wurde aktualisiert und Änderungen sind sofort sichtbar.`,
+          duration: 5000
+        });
       } else {
         setIsSubmittingForm(false);
         throw new Error("Invalid form mode or missing team ID for edit.");

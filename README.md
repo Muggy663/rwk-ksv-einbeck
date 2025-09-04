@@ -4,7 +4,7 @@
 
 Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
-[![Version](https://img.shields.io/badge/Version-0.12.1-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-0.12.2-blue?style=for-the-badge)](#)
 [![Android App](https://img.shields.io/badge/Android_App-0.9.4.1-success?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -56,7 +56,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 | Platform | Version | Status | Download |
 |----------|---------|--------|---------|
-| **Web App** | 0.12.1 | 🔄 Beta | Vercel Deployment |
+| **Web App** | 0.12.2 | 🔄 Beta | Vercel Deployment |
 | **Android App** | 0.9.4.1 | ✅ Produktiv | Google Play Store |
 | **iOS App** | - | ❌ Nicht geplant | Unrentabel |
 
@@ -66,6 +66,17 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - **Kreisverbände** für KM-Organisation
 - **Schießsport-Organisatoren**
 - **Wettkampfleiter** und Vereinsvorstände
+
+## 🎯 Besondere Features
+
+- **🎤 Voice Input**: "185 Ringe" sprechen statt tippen - Deutsche Zahlenerkennung
+- **⚡ Pull-to-Refresh**: Native Mobile-Geste wie Instagram zum Aktualisieren
+- **🔄 Optimistic Updates**: Sofortige UI-Reaktionen für schnelleres Gefühl
+- **🎯 Meyton Integration**: Export für elektronische Schießanlagen im David21-Format
+- **📊 Live-Tabellen**: Automatische Berechnung nach RWK-Ordnung mit Auf-/Abstieg
+- **🏆 KM-System**: Vollständige Kreismeisterschafts-Verwaltung mit Startlisten
+- **📱 Progressive Web App**: Funktioniert offline, installierbar wie native App
+- **🌙 Enhanced Dark Mode**: Professionelle Farbpalette mit Glow-Effekten
 
 ## 🌟 Warum RWK Einbeck App?
 
@@ -83,27 +94,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - Automatische E-Mail-Rundschreiben
 - Zentrale Cloud-Datenbank
 
-## 🚀 Installation & Setup
 
-```bash
-# Repository klonen
-git clone https://github.com/Muggy663/rwk-einbeck.git
-cd rwk-einbeck
-
-# Dependencies installieren
-npm install
-
-# Environment Setup
-cp .env.example .env.local
-# Firebase Config in .env.local eintragen
-
-# Development Server starten
-npm run dev
-# App läuft auf http://localhost:3000
-
-# Android App builden
-npm run build:capacitor
-```
 
 ## 📸 Screenshots
 
@@ -137,22 +128,10 @@ npm run build:capacitor
 - **200+ Schützen** registriert
 - **99.9% Uptime** seit Launch
 - **0 Datenverluste** durch Cloud-Backup
+- **50+ FAQ-Einträge** für Benutzerfreundlichkeit
+- **Native Android App** im Google Play Store
 
-## 🔧 Für Entwickler
 
-```bash
-# Repository klonen
-git clone https://github.com/Muggy663/rwk-einbeck.git
-
-# Dependencies installieren
-npm install
-
-# Development Server starten
-npm run dev
-
-# Android App builden
-npm run build:capacitor
-```
 
 ## 📞 Support & Kontakt
 
@@ -191,6 +170,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
+- **Web-Version 0.12.2** - Mobile Navigation & Code Quality: Burger-Menü mit Safe Area, Mobile-optimierte Tabellen, Dark Mode Button-Fixes, Dialog-Positionierung und wiederverwendbare Komponenten
 - **Web-Version 0.12.1** - Mobile UX & Performance Revolution: Voice Input, Pull-to-Refresh, Micro-Animations, Enhanced Dark Mode, Responsive Dialogs und Android-Optimierungen für native App-Erfahrung
 - **Web-Version 0.12.0** - RWK-Tabellen & Admin-Teams Optimierung: Ein Dropdown statt zwei separate, "Laufend" Saisons priorisiert, 20-Teams-Limit behoben, korrekte Firestore-Abfragen für vollständige Ergebnisse
 - **Web-Version 0.11.9** - FAQ-Suche für RWK-Ordnung: Über 50 häufige Fragen mit intelligenter Suche, Fuzzy-Matching und Tippfehler-Toleranz für optimale Benutzerfreundlichkeit
