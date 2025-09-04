@@ -12,7 +12,6 @@ import {
   FileBarChart, 
   Home, 
   LogOut, 
-  Menu, 
   ShieldCheck, 
   User, 
   BookOpen,
@@ -38,7 +37,7 @@ interface RouteItem {
 export function MainNav() {
   const pathname = usePathname();
   const { user, loading, signOut, resetInactivityTimer } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+
   const [timeLeft, setTimeLeft] = useState<number>(10 * 60);
 
   const isAdmin = user && user.email === 'admin@rwk-einbeck.de';
@@ -286,95 +285,7 @@ export function MainNav() {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
-      <div className="md:hidden relative">
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
-        
-        {isMobileMenuOpen && (
-          <div className="absolute top-12 right-0 w-64 bg-background border border-border rounded-lg shadow-lg z-50">
-            <div className="p-3 border-b border-border">
-              <h3 className="font-semibold">Navigation</h3>
-            </div>
-            
-            <div className="p-2 space-y-1">
-              {routes.filter(route => {
-                // Updates nur für Admins
-                if (route.href === '/updates') {
-                  return isAdmin;
-                }
-                return true;
-              }).map((route) => (
-                <Link
-                  key={route.href}
-                  href={route.href}
-                  className={cn(
-                    "flex items-center p-2 rounded hover:bg-accent w-full",
-                    route.active ? "text-primary bg-accent" : "text-muted-foreground"
-                  )}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {route.icon}
-                  {route.label}
-                </Link>
-              ))}
-              
-              {/* Admin-only Updates Link */}
-              {isAdmin && (
-                <Link
-                  href="/updates"
-                  className={cn(
-                    "flex items-center p-2 rounded hover:bg-accent w-full",
-                    pathname === '/updates' ? "text-primary bg-accent" : "text-muted-foreground"
-                  )}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Bell className="h-4 w-4 mr-2" />
-                  Updates
-                </Link>
-              )}
-              
-              {user && (
-                <Link
-                  href="/dashboard-auswahl"
-                  className="flex items-center p-2 rounded hover:bg-accent w-full"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Arbeitsbereich
-                </Link>
-              )}
-              
-              {user ? (
-                <button
-                  onClick={() => {
-                    signOut();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="flex items-center p-2 rounded hover:bg-accent w-full text-left"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </button>
-              ) : (
-                <Link
-                  href="/login"
-                  className="flex items-center p-2 rounded hover:bg-accent w-full"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Login
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+
     </nav>
   );
 }

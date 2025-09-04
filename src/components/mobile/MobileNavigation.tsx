@@ -40,7 +40,7 @@ const navItems: NavItem[] = [
   {
     href: '/dokumente',
     icon: FileText,
-    label: 'Docs',
+    label: 'Dateien',
   },
   {
     href: '/login',

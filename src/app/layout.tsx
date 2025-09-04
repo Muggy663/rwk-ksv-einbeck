@@ -65,7 +65,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta name="author" content="KSV Einbeck" />
         <meta name="robots" content="noarchive" />
       </head>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.className} app-container`} suppressHydrationWarning>
         <AppVersionChecker />
         {/* Mobile Status Bar Overlay */}
         <div className="mobile-header-overlay"></div>
