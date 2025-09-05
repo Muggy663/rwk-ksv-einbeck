@@ -63,7 +63,7 @@ export function MobileBurgerMenu() {
 
       {/* Menu Panel */}
       <div className={cn(
-        "fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-background border-l shadow-lg z-50 transform transition-transform duration-300 ease-in-out pb-20",
+        "fixed right-0 top-0 h-screen w-72 sm:w-80 max-w-[90vw] bg-background border-l shadow-lg z-50 transform transition-transform duration-300 ease-in-out pt-safe-area-top pb-safe-area-bottom",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
         <div className="flex flex-col h-full">
@@ -89,8 +89,8 @@ export function MobileBurgerMenu() {
                     href={item.href}
                     onClick={closeMenu}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors",
-                      "text-sm font-medium",
+                      "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full",
+                      "text-sm font-medium whitespace-nowrap",
                       isActive 
                         ? "text-primary bg-primary/10" 
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"

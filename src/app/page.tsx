@@ -185,7 +185,7 @@ export default function HomePage() {
       <Separator className="my-6" />
 
       {/* Play Store Beta-Test */}
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="mb-6">
         <Link href="/app" className="block">
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
             <div className="flex items-center">
@@ -210,28 +210,7 @@ export default function HomePage() {
             </div>
           </div>
         </Link>
-        
-        <Link href="/app" className="block">
-          <div className="bg-gradient-to-r from-green-500 to-green-700 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
-            <div className="flex items-center">
-              <div className="bg-white p-3 rounded-full mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
-                  <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
-                  <path d="M12 18h.01"/>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">📱 Android App (Direkt)</h2>
-                <p style={{color: 'white'}}>APK-Download - Jetzt verfügbar bis Play Store Launch</p>
-              </div>
-              <div className="text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m9 18 6-6-6-6"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </Link>
+
       </div>
 
       {/* Karten-Grid */}
