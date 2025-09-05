@@ -63,7 +63,7 @@ export function MobileBurgerMenu() {
 
       {/* Menu Panel */}
       <div className={cn(
-        "fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-background border-l shadow-lg z-50 transform transition-transform duration-300 ease-in-out",
+        "fixed right-0 top-0 h-full w-80 max-w-[85vw] bg-background border-l shadow-lg z-50 transform transition-transform duration-300 ease-in-out pb-20",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
         <div className="flex flex-col h-full">
@@ -110,7 +110,7 @@ export function MobileBurgerMenu() {
           {/* Footer with safe area */}
           <div className="p-4 border-t pb-safe-area-bottom">
             <p className="text-xs text-muted-foreground text-center">
-              RWK Einbeck App v0.12.2
+              RWK Einbeck App v0.13.0
             </p>
           </div>
         </div>

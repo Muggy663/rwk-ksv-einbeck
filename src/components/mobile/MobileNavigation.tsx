@@ -50,8 +50,7 @@ export function MobileNavigation() {
     return true;
   });
 
-  const itemsToShow = filteredItems.length + 1; // +1 für Burger-Menü
-  const gridCols = 'grid-cols-5'; // Immer 5 Spalten: 4 Hauptmenüs + Burger
+  const gridCols = `grid-cols-${filteredItems.length}`;
 
   return (
     <div className={`grid ${gridCols} gap-1 w-full max-w-lg mx-auto`}>
@@ -80,12 +79,6 @@ export function MobileNavigation() {
           </Link>
         );
       })}
-      
-      {/* Burger Menu */}
-      <div className="flex flex-col items-center justify-center py-2 px-1">
-        <MobileBurgerMenu />
-        <span className="text-xs font-medium text-muted-foreground mt-1">Menü</span>
-      </div>
     </div>
   );
 }

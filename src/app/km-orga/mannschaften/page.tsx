@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { MannschaftsbildungService } from '@/lib/services/mannschaftsbildung-service';
 
 export default function KMAdminMannschaften() {
   const { toast } = useToast();
@@ -124,6 +125,27 @@ export default function KMAdminMannschaften() {
 
   const updateMannschaft = async (mannschaftId: string, newSchuetzenIds: string[]) => {
     try {
+      // Validiere Mannschaft mit den neuen Regeln
+      const mannschaft = mannschaften.find(m => m.id === mannschaftId);
+      if (mannschaft && newSchuetzenIds.length > 0) {
+        const teamSchuetzen = newSchuetzenIds.map(id => schuetzen.find(s => s.id === id)).filter(Boolean);
+        const validation = await MannschaftsbildungService.validateMannschaft(teamSchuetzen, mannschaft.disziplinId);
+        
+        if (!validation.valid) {
+          toast({ 
+            title: '⚠️ Regelverstoß', 
+            description: validation.errors.join(', '), 
+            variant: 'destructive' 
+          });
+          return;
+        }
+      }
+
+      // Sofort State aktualisieren (optimistic update)
+      setMannschaften(prev => prev.map(m => 
+        m.id === mannschaftId ? { ...m, schuetzenIds: newSchuetzenIds } : m
+      ));
+
       const response = await fetch(`/api/km/mannschaften/${mannschaftId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -131,11 +153,15 @@ export default function KMAdminMannschaften() {
       });
 
       if (response.ok) {
-        toast({ title: 'Erfolg', description: 'Mannschaft aktualisiert' });
+        toast({ title: '✅ Erfolg', description: 'Mannschaft aktualisiert und validiert' });
+      } else {
+        // Rollback bei Fehler
         loadData();
-        setEditingTeam(null);
+        toast({ title: 'Fehler', description: 'Aktualisierung fehlgeschlagen', variant: 'destructive' });
       }
     } catch (error) {
+      // Rollback bei Fehler
+      loadData();
       toast({ title: 'Fehler', description: 'Aktualisierung fehlgeschlagen', variant: 'destructive' });
     }
   };
@@ -306,14 +332,54 @@ export default function KMAdminMannschaften() {
                                     return meldung?.vmErgebnis?.ringe || '?';
                                   })()} Ringe
                                 </div>
+                                <div className="text-xs text-blue-600">
+                                  AK: {(() => {
+                                    if (!schuetze?.birthYear || !schuetze?.gender) return 'Unbekannt';
+                                    
+                                    const disziplin = disziplinen.find(d => d.id === mannschaft.disziplinId);
+                                    if (!disziplin) return 'Unbekannt';
+                                    
+                                    const age = 2026 - schuetze.birthYear;
+                                    const gender = schuetze.gender;
+                                    const istAuflage = disziplin.auflage;
+                                    
+                                    if (istAuflage) {
+                                      if (age <= 14) return gender === 'male' ? 'Schüler m' : 'Schüler w';
+                                      else if (disziplin.spoNummer === '1.41' && age >= 15 && age <= 40) {
+                                        if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
+                                        else if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+                                        else if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+                                        else return gender === 'male' ? 'Herren I' : 'Damen I';
+                                      }
+                                      else if (age < 41) return 'Nicht berechtigt';
+                                      else if (age <= 50) return 'Senioren 0';
+                                      else if (age <= 60) return gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
+                                      else if (age <= 65) return gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
+                                      else if (age <= 70) return gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
+                                      else if (age <= 75) return gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
+                                      else if (age <= 80) return gender === 'male' ? 'Senioren V m' : 'Seniorinnen V';
+                                      else return gender === 'male' ? 'Senioren VI m' : 'Seniorinnen VI';
+                                    } else {
+                                      if (age <= 14) return gender === 'male' ? 'Schüler m' : 'Schüler w';
+                                      else if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
+                                      else if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+                                      else if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+                                      else if (age <= 40) return gender === 'male' ? 'Herren I' : 'Damen I';
+                                      else if (age <= 50) return gender === 'male' ? 'Herren II' : 'Damen II';
+                                      else if (age <= 60) return gender === 'male' ? 'Herren III' : 'Damen III';
+                                      else if (age <= 70) return gender === 'male' ? 'Herren IV' : 'Damen IV';
+                                      else return gender === 'male' ? 'Herren V' : 'Damen V';
+                                    }
+                                  })()} 
+                                </div>
                               </div>
                               {editingTeam === mannschaft.id && (
                                 <Button 
                                   size="sm" 
                                   variant="destructive"
-                                  onClick={() => {
+                                  onClick={async () => {
                                     const newIds = mannschaft.schuetzenIds.filter(id => id !== schuetze?.id);
-                                    updateMannschaft(mannschaft.id, newIds);
+                                    await updateMannschaft(mannschaft.id, newIds);
                                   }}
                                 >
                                   Entfernen
@@ -325,12 +391,125 @@ export default function KMAdminMannschaften() {
 
                         {editingTeam === mannschaft.id && (
                           <div className="mt-4 p-3 bg-blue-50 rounded">
-                            <h4 className="font-medium mb-2">Schütze hinzufügen:</h4>
+                            <h4 className="font-medium mb-2">Schütze hinzufügen für {mannschaft.wettkampfklassen.join(', ')}: (Verfügbar: {schuetzen
+                              .filter(s => {
+                                if (mannschaft.schuetzenIds.includes(s.id)) return false;
+                                const isInOtherTeam = mannschaften.some(m => 
+                                  m.id !== mannschaft.id && 
+                                  m.disziplinId === mannschaft.disziplinId && 
+                                  m.schuetzenIds.includes(s.id)
+                                );
+                                return !isInOtherTeam;
+                              })
+                              .filter(s => {
+                                const schuetzeClubId = s.kmClubId || s.rwkClubId || s.clubId;
+                                if (schuetzeClubId !== mannschaft.vereinId) return false;
+                                // Nur gemeldete Schützen zählen
+                                const hasMeldung = meldungen.some(m => 
+                                  m.schuetzeId === s.id && 
+                                  m.disziplinId === mannschaft.disziplinId
+                                );
+                                return hasMeldung;
+                              }).length})</h4>
                             <div className="space-y-2 max-h-32 overflow-y-auto">
                               {schuetzen
-                                .filter(s => !mannschaft.schuetzenIds.includes(s.id))
-                                .filter(s => s.kmClubId === mannschaft.vereinId)
-                                .slice(0, 10)
+                                .filter(s => {
+                                  // Nicht bereits in dieser Mannschaft
+                                  if (mannschaft.schuetzenIds.includes(s.id)) return false;
+                                  // Nicht in irgendeiner anderen Mannschaft für diese Disziplin
+                                  const isInOtherTeam = mannschaften.some(m => 
+                                    m.id !== mannschaft.id && 
+                                    m.disziplinId === mannschaft.disziplinId && 
+                                    m.schuetzenIds.includes(s.id)
+                                  );
+                                  return !isInOtherTeam;
+                                })
+                                .filter(s => {
+                                  const schuetzeClubId = s.kmClubId || s.rwkClubId || s.clubId;
+                                  if (schuetzeClubId !== mannschaft.vereinId) return false;
+                                  // Nur Schützen die für diese Disziplin gemeldet sind
+                                  const hasMeldung = meldungen.some(m => 
+                                    m.schuetzeId === s.id && 
+                                    m.disziplinId === mannschaft.disziplinId
+                                  );
+                                  if (!hasMeldung) return false;
+                                  
+                                  // Korrekte Altersklassen-Kompatibilität
+                                  const schuetzeAge = 2026 - s.birthYear;
+                                  const disziplin = disziplinen.find(d => d.id === mannschaft.disziplinId);
+                                  const isAuflage = disziplin?.name?.toLowerCase().includes('auflage');
+                                  
+                                  // Berechne Altersklasse des Schützen
+                                  let schuetzeKlasse = '';
+                                  if (schuetzeAge <= 14) {
+                                    schuetzeKlasse = 'Schüler';
+                                  } else if (schuetzeAge <= 16) {
+                                    schuetzeKlasse = 'Jugend';
+                                  } else if (schuetzeAge <= 18) {
+                                    schuetzeKlasse = s.gender === 'male' ? 'Junioren II m' : 'Juniorinnen II';
+                                  } else if (schuetzeAge <= 20) {
+                                    schuetzeKlasse = s.gender === 'male' ? 'Junioren I m' : 'Juniorinnen I';
+                                  } else if (isAuflage) {
+                                    if (schuetzeAge <= 40) {
+                                      schuetzeKlasse = s.gender === 'male' ? 'Herren I' : 'Damen I';
+                                    } else if (schuetzeAge <= 50) {
+                                      schuetzeKlasse = 'Senioren 0';
+                                    } else if (schuetzeAge <= 60) {
+                                      schuetzeKlasse = s.gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
+                                    } else if (schuetzeAge <= 65) {
+                                      schuetzeKlasse = s.gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
+                                    } else if (schuetzeAge <= 70) {
+                                      schuetzeKlasse = s.gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
+                                    } else {
+                                      schuetzeKlasse = s.gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
+                                    }
+                                  } else {
+                                    if (schuetzeAge <= 40) {
+                                      schuetzeKlasse = s.gender === 'male' ? 'Herren I' : 'Damen I';
+                                    } else if (schuetzeAge <= 50) {
+                                      schuetzeKlasse = s.gender === 'male' ? 'Herren II' : 'Damen II';
+                                    } else if (schuetzeAge <= 60) {
+                                      schuetzeKlasse = s.gender === 'male' ? 'Herren III' : 'Damen III';
+                                    } else {
+                                      schuetzeKlasse = s.gender === 'male' ? 'Herren IV' : 'Damen IV';
+                                    }
+                                  }
+                                  
+                                  // Altersklassen-Regeln nur für Auflage-Disziplinen
+                                  if (!isAuflage) {
+                                    // Freihand: Alle Altersklassen dürfen zusammen
+                                    return true;
+                                  }
+                                  
+                                  // Auflage: Spezielle Regeln
+                                  const teamKlassen = mannschaft.wettkampfklassen;
+                                  
+                                  // Senioren 0 nur mit Senioren 0
+                                  if (teamKlassen.includes('Senioren 0')) {
+                                    return schuetzeKlasse === 'Senioren 0';
+                                  }
+                                  
+                                  // Senioren I+II dürfen zusammen
+                                  if (teamKlassen.some(k => k.includes('Senioren I') || k.includes('Senioren II'))) {
+                                    return schuetzeKlasse.includes('Senioren I') || schuetzeKlasse.includes('Senioren II');
+                                  }
+                                  
+                                  // Senioren III+ dürfen alle zusammen (III, IV, V, VI)
+                                  if (teamKlassen.some(k => k.includes('Senioren III') || k.includes('Senioren IV') || k.includes('Senioren V'))) {
+                                    return schuetzeKlasse.includes('Senioren III') || 
+                                           schuetzeKlasse.includes('Senioren IV') || 
+                                           schuetzeKlasse.includes('Senioren V') || 
+                                           schuetzeKlasse.includes('Senioren VI');
+                                  }
+                                  
+                                  // Herren/Damen I dürfen mit gleicher Stufe
+                                  return teamKlassen.some(teamKlasse => {
+                                    const teamBase = teamKlasse.replace('innen', 'en').replace(/ [mw]$/, '');
+                                    const schuetzeBase = schuetzeKlasse.replace('innen', 'en').replace(/ [mw]$/, '');
+                                    return teamBase === schuetzeBase;
+                                  });
+                                })
+                                .slice(0, 15)
                                 .map(schuetze => (
                                   <button
                                     key={schuetze.id}
@@ -346,7 +525,13 @@ export default function KMAdminMannschaften() {
                                       ? `${schuetze.firstName} ${schuetze.lastName}`
                                       : schuetze.name || 'Unbekannt'
                                     } ({schuetze.birthYear}, {schuetze.gender === 'male' ? 'm' : 'w'})
-                                    <div className="text-xs text-gray-500">Gleicher Verein</div>
+                                    <div className="text-xs text-gray-500">
+                                      {(() => {
+                                        const clubId = schuetze.kmClubId || schuetze.rwkClubId || schuetze.clubId;
+                                        const club = clubs.find(c => c.id === clubId);
+                                        return club?.name || 'Unbekannter Verein';
+                                      })()}
+                                    </div>
                                   </button>
                                 ))}
                             </div>
@@ -384,6 +569,26 @@ export default function KMAdminMannschaften() {
                   </div>
                   <div className="text-sm text-purple-600">Disziplinen aktiv</div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                Mannschaftsregeln
+                <Link href="/km/mannschaftsregeln">
+                  <Button size="sm" variant="outline">⚙️ Regeln bearbeiten</Button>
+                </Link>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-2">
+              <div className="p-3 bg-blue-50 rounded">
+                <p className="font-medium text-blue-800 mb-2">ℹ️ Aktuelle Regeln werden automatisch angewendet</p>
+                <p className="text-blue-700 text-xs">
+                  Die Mannschaftsbildung erfolgt nach den konfigurierten Altersklassen-Kombinationen.
+                  Bei Regeländerungen werden Teams automatisch validiert.
+                </p>
               </div>
             </CardContent>
           </Card>

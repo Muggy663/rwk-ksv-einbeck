@@ -21,7 +21,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <VersionBadge className="border-green-300 bg-green-50 text-green-700">
-              Web-Version: 0.12.2 (03.09.2025)
+              Web-Version: 0.13.0 (05.09.2025)
             </VersionBadge>
             <VersionBadge className="border-blue-300 bg-blue-50 text-blue-700">
               App-Version: 0.9.4.1 (02.09.2025)
@@ -32,6 +32,50 @@ export default function UpdatesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 0.13.0 - KM-Mannschaftsregeln & Optimierungen</CardTitle>
+              <Badge variant="default" className="bg-green-600">Aktuell</Badge>
+            </div>
+            <CardDescription>05.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständige KM-Mannschaftsregeln-Verwaltung: Drag & Drop Altersklassen-Kombinationen, Disziplin-spezifische Regeln, Live-Validierung und korrekte Altersklassen-Berechnung.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">⚙️ Mannschaftsregeln-System v0.13.0</h4>
+              <div className="text-xs text-green-700">
+                Intelligente Regelkonfiguration mit Drag & Drop Interface
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>⚙️ <strong>Mannschaftsregeln-Verwaltung:</strong> Neue Seite /km/mannschaftsregeln für Konfiguration automatischer Mannschaftsbildung</li>
+              <li>🎯 <strong>Drag & Drop Altersklassen:</strong> Intuitive Zuordnung von Altersklassen zu Kombinationen per Drag & Drop</li>
+              <li>📋 <strong>Disziplin-spezifische Regeln:</strong> Mehrfachauswahl von Altersklassen-Kombinationen pro Disziplin mit Checkbox-Interface</li>
+              <li>🔄 <strong>Live-Validierung:</strong> Automatische Regelprüfung beim Bearbeiten von Mannschaften mit sofortiger Fehlermeldung</li>
+              <li>🎯 <strong>Korrekte Altersklassen:</strong> Einheitliche Berechnung wie in /km/uebersicht für konsistente Anzeige</li>
+              <li>⚡ <strong>Optimistische Updates:</strong> Sofortige UI-Reaktionen beim Entfernen von Schützen mit Rollback bei Fehlern</li>
+              <li>🔍 <strong>Intelligente Filterung:</strong> Nur kompatible Schützen werden in der Auswahl angezeigt</li>
+              <li>🗂️ <strong>System Config Integration:</strong> Zentrale Speicherung in system_config Collection</li>
+              <li>🛠️ <strong>MannschaftsbildungService:</strong> Neue Service-Klasse für Regelvalidierung und Kompatibilitätsprüfung</li>
+              <li>🎨 <strong>Benutzerfreundliches Interface:</strong> Übersichtliche Altersklassen-Anzeige mit visueller Rückmeldung</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">⚙️ Mannschaftsregeln-System</span>
+                  <p className="text-xs text-green-600 mt-1">Drag & Drop & Live-Validierung</p>
+                </div>
+                <Link href="/updates/v0.13.0">
+                  <span className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 cursor-pointer">
+                    🚀 v0.13.0
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
@@ -80,7 +124,7 @@ export default function UpdatesPage() {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-xl">Version 0.12.2 - Mobile Navigation & Code Quality</CardTitle>
-              <Badge variant="default" className="bg-green-600">Aktuell</Badge>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>03.09.2025</CardDescription>
           </CardHeader>

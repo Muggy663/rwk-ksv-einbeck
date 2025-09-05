@@ -1,0 +1,125 @@
+{
+  "mannschaftsregeln": {
+    "version": "1.0",
+    "lastUpdated": "2025-01-02",
+    "description": "Regeln für die automatische Mannschaftsbildung bei Kreismeisterschaften",
+    
+    "grundregeln": {
+      "mannschaftsgroesse": 3,
+      "minTeilnehmer": 3,
+      "maxTeilnehmer": 3,
+      "ersatzschuetzen": false
+    },
+    
+    "altersklassenRegeln": {
+      "auflage": {
+        "description": "Regeln für Auflage-Disziplinen (LG Auflage, KK Auflage)",
+        "erlaubteKombinationen": [
+          {
+            "name": "Senioren 0",
+            "klassen": ["Senioren 0"],
+            "beschreibung": "Nur Senioren 0 untereinander"
+          },
+          {
+            "name": "Senioren I+II",
+            "klassen": ["Senioren I m", "Seniorinnen I", "Senioren II m", "Seniorinnen II"],
+            "beschreibung": "Senioren I und II dürfen zusammen"
+          },
+          {
+            "name": "Senioren III+",
+            "klassen": ["Senioren III m", "Seniorinnen III", "Senioren IV m", "Seniorinnen IV", "Senioren V m", "Seniorinnen V", "Senioren VI m", "Seniorinnen VI"],
+            "beschreibung": "Alle Senioren ab III dürfen zusammen"
+          },
+          {
+            "name": "Herren/Damen I",
+            "klassen": ["Herren I", "Damen I"],
+            "beschreibung": "Herren und Damen I dürfen zusammen"
+          },
+          {
+            "name": "Jugend",
+            "klassen": ["Schüler", "Jugend", "Junioren II m", "Juniorinnen II", "Junioren I m", "Juniorinnen I"],
+            "beschreibung": "Alle Jugendklassen dürfen zusammen"
+          }
+        ]
+      },
+      
+      "freihand": {
+        "description": "Regeln für Freihand-Disziplinen (LG, LP, KK)",
+        "erlaubteKombinationen": [
+          {
+            "name": "Alle Altersklassen",
+            "klassen": ["*"],
+            "beschreibung": "Bei Freihand dürfen alle Altersklassen zusammen"
+          }
+        ]
+      }
+    },
+    
+    "vereinsregeln": {
+      "gleicheVereinePflicht": true,
+      "beschreibung": "Mannschaftsmitglieder müssen aus dem gleichen Verein sein",
+      "ausnahmen": []
+    },
+    
+    "disziplinRegeln": {
+      "gleicheDisziplinPflicht": true,
+      "beschreibung": "Alle Mannschaftsmitglieder müssen für die gleiche Disziplin gemeldet sein"
+    },
+    
+    "sortierungsRegeln": {
+      "prioritaet": [
+        "vmErgebnis_desc",
+        "altersklasse_asc", 
+        "name_asc"
+      ],
+      "beschreibung": "Reihenfolge: Beste VM-Ergebnisse zuerst, dann nach Altersklasse, dann alphabetisch"
+    },
+    
+    "spezialRegeln": {
+      "gewehrSharing": {
+        "aktiv": true,
+        "beschreibung": "Berücksichtigung wenn 2 Schützen sich ein Gewehr teilen",
+        "zeitabstand": 60,
+        "zeitabstandEinheit": "minuten"
+      },
+      
+      "startlistenOptimierung": {
+        "vereineGetrennt": true,
+        "beschreibung": "Mannschaften desselben Vereins nicht im gleichen Durchgang"
+      }
+    },
+    
+    "validierungsRegeln": {
+      "minMeldungenFuerMannschaft": 3,
+      "maxMannschaftenProVereinProDisziplin": 10,
+      "warnungBeiUnvollstaendigerMannschaft": true
+    }
+  },
+  
+  "beispiele": {
+    "gueltigeMannschaften": [
+      {
+        "disziplin": "LG Auflage",
+        "verein": "ESG Einbeck", 
+        "schuetzen": [
+          {"name": "Max Mustermann", "altersklasse": "Senioren I m", "vmErgebnis": 385},
+          {"name": "Anna Beispiel", "altersklasse": "Seniorinnen II", "vmErgebnis": 380},
+          {"name": "Peter Test", "altersklasse": "Senioren II m", "vmErgebnis": 375}
+        ],
+        "regel": "Senioren I+II dürfen zusammen"
+      }
+    ],
+    
+    "ungueltigeMannschaften": [
+      {
+        "disziplin": "LG Auflage",
+        "verein": "ESG Einbeck",
+        "schuetzen": [
+          {"name": "Hans Senior", "altersklasse": "Senioren 0", "vmErgebnis": 390},
+          {"name": "Fritz Alt", "altersklasse": "Senioren I m", "vmErgebnis": 385}
+        ],
+        "fehler": "Senioren 0 darf nur mit Senioren 0 zusammen"
+      }
+    ]
+  }
+}

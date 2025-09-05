@@ -4,7 +4,7 @@
 
 Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
-[![Version](https://img.shields.io/badge/Version-0.12.2-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-0.13.0-blue?style=for-the-badge)](#)
 [![Android App](https://img.shields.io/badge/Android_App-0.9.4.1-success?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -170,6 +170,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
+- **Web-Version 0.13.0** - KM-Mannschaftsregeln & Optimierungen: Vollständige Mannschaftsregeln-Verwaltung mit Drag & Drop, Altersklassen-Kombinationen, Disziplin-spezifische Regeln, optimistische Updates und korrekte Altersklassen-Berechnung
 - **Web-Version 0.12.2** - Mobile Navigation & Code Quality: Burger-Menü mit Safe Area, Mobile-optimierte Tabellen, Dark Mode Button-Fixes, Dialog-Positionierung und wiederverwendbare Komponenten
 - **Web-Version 0.12.1** - Mobile UX & Performance Revolution: Voice Input, Pull-to-Refresh, Micro-Animations, Enhanced Dark Mode, Responsive Dialogs und Android-Optimierungen für native App-Erfahrung
 - **Web-Version 0.12.0** - RWK-Tabellen & Admin-Teams Optimierung: Ein Dropdown statt zwei separate, "Laufend" Saisons priorisiert, 20-Teams-Limit behoben, korrekte Firestore-Abfragen für vollständige Ergebnisse

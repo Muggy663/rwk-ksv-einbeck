@@ -42,6 +42,7 @@ export default function StartlistenToolPage() {
   const [vereine, setVereine] = useState<Array<{id: string, name: string}>>([]);
   const [kiAnalyse, setKiAnalyse] = useState<KIAnalyse | null>(null);
   const [showKiPanel, setShowKiPanel] = useState(false);
+  const [sortierung, setSortierung] = useState<string>('durchgang-stand');
 
   useEffect(() => {
     if (!configId) return;
@@ -139,7 +140,7 @@ export default function StartlistenToolPage() {
             return {
               id: doc.id,
               name: schuetze?.name || 'Unbekannt',
-              verein: vereine[schuetze?.clubId] || 'Unbekannt',
+              verein: vereine[schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId] || 'Unbekannt',
               disziplin: disziplinName,
               altersklasse: altersklasse,
               anmerkung: data.anmerkung || '',
@@ -205,12 +206,13 @@ export default function StartlistenToolPage() {
     const staendeAnzahl = config.verfuegbareStaende.length;
     let durchgang = 1;
 
-    // Lade Mannschaften, Meldungen, Schützen und Disziplinen aus Datenbank
-    const [mannschaftenSnapshot, kmMeldungenSnapshot, schuetzenSnapshot, disziplinenSnapshot] = await Promise.all([
+    // Lade Mannschaften, Meldungen, Schützen, Disziplinen und Vereine aus Datenbank
+    const [mannschaftenSnapshot, kmMeldungenSnapshot, schuetzenSnapshot, disziplinenSnapshot, vereineSnapshot] = await Promise.all([
       getDocs(collection(db, 'km_mannschaften')),
       getDocs(collection(db, 'km_meldungen')),
       getDocs(collection(db, 'shooters')),
-      getDocs(collection(db, 'km_disziplinen'))
+      getDocs(collection(db, 'km_disziplinen')),
+      getDocs(collection(db, 'clubs'))
     ]);
     
     // Filtere Mannschaften für die richtige Saison
@@ -239,7 +241,11 @@ export default function StartlistenToolPage() {
       return {
         id: meldung.id || `meldung_${Date.now()}_${Math.random()}`,
         name: schuetze.name,
-        verein: schuetze.clubId ? 'Verein' : 'Unbekannt',
+        verein: (() => {
+          const clubId = schuetze.kmClubId || schuetze.rwkClubId || schuetze.clubId;
+          const club = vereineSnapshot.docs.find(doc => doc.id === clubId);
+          return club?.data()?.name || 'Unbekannt';
+        })(),
         disziplin: disziplin.name,
         altersklasse: 'Berechnet',
         anmerkung: meldung.anmerkung || '',
@@ -302,6 +308,73 @@ export default function StartlistenToolPage() {
         
         // Prüfe ob Mannschaft in aktuellen Durchgang passt
         if (currentDurchgangBelegt + mannschaftStarter.length > staendeAnzahl) {
+          durchgang++;
+          currentDurchgangBelegt = 0;
+        }
+        
+        // Prüfe ob bereits eine Mannschaft desselben Vereins in diesem Durchgang schießt
+        const vereinBereitsImDurchgang = startlisteEntries.some(entry => 
+          entry.durchgang === durchgang && 
+          entry.verein === ((() => {
+            const clubId = schuetzenSnapshot.docs.find(doc => 
+              mannschaft.schuetzenIds?.includes(doc.id)
+            )?.data()?.kmClubId || 
+            schuetzenSnapshot.docs.find(doc => 
+              mannschaft.schuetzenIds?.includes(doc.id)
+            )?.data()?.rwkClubId || 
+            schuetzenSnapshot.docs.find(doc => 
+              mannschaft.schuetzenIds?.includes(doc.id)
+            )?.data()?.clubId;
+            const club = vereineSnapshot.docs.find(doc => doc.id === clubId);
+            return club?.data()?.name;
+          })()
+        ));
+        
+        // Wenn Verein bereits im Durchgang, versuche Durchgang mit anderen zu füllen
+        if (vereinBereitsImDurchgang) {
+          // Fülle aktuellen Durchgang mit Einzelschützen oder anderen Mannschaften auf
+          const restplaetze = staendeAnzahl - currentDurchgangBelegt;
+          let aufgefuellt = 0;
+          
+          // Versuche mit Einzelschützen aufzufüllen
+          while (aufgefuellt < restplaetze && einzelSchuetzenIndex < einzelSchuetzen.length) {
+            const s = einzelSchuetzen[einzelSchuetzenIndex];
+            const [hours, minutes] = config.startUhrzeit.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * (config.durchgangsDauer + config.wechselzeit));
+            const newHours = Math.floor(totalMinutes / 60);
+            const newMinutes = totalMinutes % 60;
+            const startzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
+            
+            let hinweise = 'Einzelschütze';
+            if (s.anmerkung?.toLowerCase().includes('sondergenehmigung')) hinweise = 'Sondergenehmigung';
+            else if (s.anmerkung?.toLowerCase().includes('behinderung')) hinweise = 'Behinderung';
+            
+            let standIndex = currentDurchgangBelegt + aufgefuellt;
+            let testStand = config.verfuegbareStaende[standIndex % staendeAnzahl];
+            let testKey = `${testStand}_${startzeit}`;
+            
+            while (standZeitMatrix.has(testKey)) {
+              standIndex++;
+              testStand = config.verfuegbareStaende[standIndex % staendeAnzahl];
+              testKey = `${testStand}_${startzeit}`;
+            }
+            
+            standZeitMatrix.add(testKey);
+            
+            startlisteEntries.push({
+              ...s,
+              id: `${s.id}_fueller_${einzelSchuetzenIndex}`,
+              stand: testStand,
+              startzeit,
+              durchgang,
+              hinweise: `${hinweise} (Auffüller)`
+            });
+            
+            aufgefuellt++;
+            einzelSchuetzenIndex++;
+          }
+          
+          // Springe zum nächsten Durchgang für die aktuelle Mannschaft
           durchgang++;
           currentDurchgangBelegt = 0;
         }
@@ -934,15 +1007,15 @@ export default function StartlistenToolPage() {
             },
             margin: { left: 5, right: 5 },
             columnStyles: {
-              0: { cellWidth: 15 },
-              1: { cellWidth: 25 },
-              2: { cellWidth: 25 },
-              3: { cellWidth: 25 },
-              4: { cellWidth: 40 },
-              5: { cellWidth: 12 },
-              6: { cellWidth: 25 },
-              7: { cellWidth: 12 },
-              8: { cellWidth: 12 }
+              0: { cellWidth: 12 },
+              1: { cellWidth: 22 },
+              2: { cellWidth: 22 },
+              3: { cellWidth: 22 },
+              4: { cellWidth: 35 },
+              5: { cellWidth: 10 },
+              6: { cellWidth: 20 },
+              7: { cellWidth: 10 },
+              8: { cellWidth: 10 }
             }
           });
           
@@ -1216,17 +1289,116 @@ export default function StartlistenToolPage() {
                 </div>
               </CardHeader>
               <CardContent>
+                <div className="mb-4">
+                  <Select value={sortierung} onValueChange={setSortierung}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Sortierung wählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="durchgang-stand">Durchgang → Stand → Zeit</SelectItem>
+                      <SelectItem value="startzeit-stand">Startzeit → Stand → Name</SelectItem>
+                      <SelectItem value="name-alphabetisch">Name (A-Z)</SelectItem>
+                      <SelectItem value="verein-name">Verein → Name</SelectItem>
+                      <SelectItem value="disziplin-name">Disziplin → Name</SelectItem>
+                      <SelectItem value="altersklasse-name">Altersklasse → Name</SelectItem>
+                      <SelectItem value="stand-zeit">Stand → Startzeit</SelectItem>
+                      <SelectItem value="mannschaft-einzeln">Mannschaften → Einzelschützen</SelectItem>
+                      <SelectItem value="hinweise-name">Hinweise → Name</SelectItem>
+                      <SelectItem value="geburtsjahr-name">Geburtsjahr → Name</SelectItem>
+                      <SelectItem value="geschlecht-name">Geschlecht → Name</SelectItem>
+                      <SelectItem value="lm-teilnahme">LM-Teilnahme → Name</SelectItem>
+                      <SelectItem value="mitgliedsnummer">Mitgliedsnummer</SelectItem>
+                      <SelectItem value="verein-durchgang">Verein → Durchgang → Stand</SelectItem>
+                      <SelectItem value="zufaellig">Zufällig</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="overflow-x-auto">
                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {(selectedDisziplin === 'alle' ? startliste : startliste.filter(s => s.disziplin === selectedDisziplin))
-                      .sort((a, b) => {
-                        if (a.durchgang !== b.durchgang) return (a.durchgang || 1) - (b.durchgang || 1);
-                        const standA = parseInt(a.stand || '0');
-                        const standB = parseInt(b.stand || '0');
-                        if (standA !== standB) return standA - standB;
-                        if (a.startzeit !== b.startzeit) return (a.startzeit || '').localeCompare(b.startzeit || '');
-                        return a.name.localeCompare(b.name);
-                      })
+                    {(() => {
+                      const gefiltert = selectedDisziplin === 'alle' ? startliste : startliste.filter(s => s.disziplin === selectedDisziplin);
+                      const sortiert = gefiltert.sort((a, b) => {
+                        switch (sortierung) {
+                          case 'durchgang-stand':
+                            if (a.durchgang !== b.durchgang) return (a.durchgang || 1) - (b.durchgang || 1);
+                            const standA = parseInt(a.stand || '0');
+                            const standB = parseInt(b.stand || '0');
+                            if (standA !== standB) return standA - standB;
+                            if (a.startzeit !== b.startzeit) return (a.startzeit || '').localeCompare(b.startzeit || '');
+                            return a.name.localeCompare(b.name);
+                          case 'startzeit-stand':
+                            if (a.startzeit !== b.startzeit) return (a.startzeit || '').localeCompare(b.startzeit || '');
+                            const standA2 = parseInt(a.stand || '0');
+                            const standB2 = parseInt(b.stand || '0');
+                            if (standA2 !== standB2) return standA2 - standB2;
+                            return a.name.localeCompare(b.name);
+                          case 'name-alphabetisch':
+                            return a.name.localeCompare(b.name);
+                          case 'verein-name':
+                            if (a.verein !== b.verein) return a.verein.localeCompare(b.verein);
+                            return a.name.localeCompare(b.name);
+                          case 'disziplin-name':
+                            if (a.disziplin !== b.disziplin) return a.disziplin.localeCompare(b.disziplin);
+                            return a.name.localeCompare(b.name);
+                          case 'altersklasse-name':
+                            if (a.altersklasse !== b.altersklasse) return a.altersklasse.localeCompare(b.altersklasse);
+                            return a.name.localeCompare(b.name);
+                          case 'stand-zeit':
+                            const standA3 = parseInt(a.stand || '0');
+                            const standB3 = parseInt(b.stand || '0');
+                            if (standA3 !== standB3) return standA3 - standB3;
+                            if (a.startzeit !== b.startzeit) return (a.startzeit || '').localeCompare(b.startzeit || '');
+                            return a.name.localeCompare(b.name);
+                          case 'mannschaft-einzeln':
+                            const aIstMannschaft = a.hinweise?.includes('Mannschaft') ? 0 : 1;
+                            const bIstMannschaft = b.hinweise?.includes('Mannschaft') ? 0 : 1;
+                            if (aIstMannschaft !== bIstMannschaft) return aIstMannschaft - bIstMannschaft;
+                            return a.name.localeCompare(b.name);
+                          case 'hinweise-name':
+                            const hinweisA = a.hinweise || 'ZZZ';
+                            const hinweisB = b.hinweise || 'ZZZ';
+                            if (hinweisA !== hinweisB) return hinweisA.localeCompare(hinweisB);
+                            return a.name.localeCompare(b.name);
+                          case 'geburtsjahr-name':
+                            const jahrA = parseInt(a.altersklasse.match(/\d{4}/) || '1990');
+                            const jahrB = parseInt(b.altersklasse.match(/\d{4}/) || '1990');
+                            if (jahrA !== jahrB) return jahrB - jahrA;
+                            return a.name.localeCompare(b.name);
+                          case 'geschlecht-name':
+                            const geschlechtA = a.altersklasse.includes('Damen') || a.altersklasse.includes('w') ? 'W' : 'M';
+                            const geschlechtB = b.altersklasse.includes('Damen') || b.altersklasse.includes('w') ? 'W' : 'M';
+                            if (geschlechtA !== geschlechtB) return geschlechtA.localeCompare(geschlechtB);
+                            return a.name.localeCompare(b.name);
+                          case 'lm-teilnahme':
+                            const lmA = a.lmTeilnahme ? 0 : 1;
+                            const lmB = b.lmTeilnahme ? 0 : 1;
+                            if (lmA !== lmB) return lmA - lmB;
+                            return a.name.localeCompare(b.name);
+                          case 'mitgliedsnummer':
+                            return a.name.localeCompare(b.name);
+                          case 'verein-durchgang':
+                            if (a.verein !== b.verein) return a.verein.localeCompare(b.verein);
+                            if (a.durchgang !== b.durchgang) return (a.durchgang || 1) - (b.durchgang || 1);
+                            const standA4 = parseInt(a.stand || '0');
+                            const standB4 = parseInt(b.stand || '0');
+                            return standA4 - standB4;
+                          case 'zufaellig':
+                            return Math.random() - 0.5;
+                          default:
+                            return a.name.localeCompare(b.name);
+                        }
+                      });
+                      
+                      // Durchgänge nach Sortierung neu berechnen für Übersicht
+                      if (sortierung !== 'durchgang-stand' && config) {
+                        const staendeAnzahl = config.verfuegbareStaende.length;
+                        sortiert.forEach((starter, index) => {
+                          starter.durchgang = Math.floor(index / staendeAnzahl) + 1;
+                        });
+                      }
+                      
+                      return sortiert;
+                    })()
                       .map((starter, index) => {
                         const gleicheZeitStand = startliste.filter(s => 
                           s.id !== starter.id && s.stand === starter.stand && s.startzeit === starter.startzeit

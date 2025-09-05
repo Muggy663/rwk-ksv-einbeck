@@ -2,424 +2,289 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { useAuthContext } from '@/components/auth/AuthContext';
 
 export default function KMDashboard() {
-  const [isClient, setIsClient] = useState(false);
+  const { hasKMAccess, userRole, loading } = useKMAuth();
   const { user } = useAuthContext();
-  const { hasKMAccess, isKMAdmin, isKMOrganisator, hasFullAccess, userRole, loading: authLoading } = useKMAuth();
+  const [isInstructionOpen, setIsInstructionOpen] = useState(false);
   const [stats, setStats] = useState({ vereine: 0, meldungen: 0, mitglieder: 0, rwkTeilnehmer: 0 });
   const [selectedYear, setSelectedYear] = useState(2026);
-  const [recentMeldungen, setRecentMeldungen] = useState([]);
-  const [schuetzen, setSchuetzen] = useState([]);
-  const [disziplinen, setDisziplinen] = useState([]);
-  const [loading, setLoading] = useState(true);
   
   React.useEffect(() => {
-    setIsClient(true);
     loadDashboardData();
-  }, [selectedYear]); // Reload wenn Jahr ändert
+  }, [selectedYear]);
   
   const loadDashboardData = async () => {
     try {
-      let meldungen = [];
-      let schuetzen = [];
-      let clubs = [];
-      
-      // 1. Lade Meldungen für ausgewähltes Jahr
-      try {
-        const meldungenRes = await fetch(`/api/km/meldungen?jahr=${selectedYear}`);
-        if (meldungenRes.ok) {
-          const data = await meldungenRes.json();
-          meldungen = data.data || [];
-          setRecentMeldungen(meldungen.slice(0, 3));
-
-        }
-      } catch (error) {
-
-      }
-      
-      // 2. Lade Schützen (direkt aus Firestore)
-      try {
-        const { collection, getDocs } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase/config');
+      const meldungenRes = await fetch(`/api/km/meldungen?jahr=${selectedYear}`);
+      if (meldungenRes.ok) {
+        const data = await meldungenRes.json();
+        const meldungen = data.data || [];
         
-        const shootersSnapshot = await getDocs(collection(db, 'shooters'));
-        schuetzen = shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setSchuetzen(schuetzen);
-
-      } catch (error) {
-
+        const uniqueVereine = new Set();
+        meldungen.forEach(meldung => {
+          const schuetze = meldung.schuetzeId;
+          if (schuetze) uniqueVereine.add(schuetze);
+        });
+        
+        setStats({
+          vereine: uniqueVereine.size,
+          meldungen: meldungen.length,
+          mitglieder: 0,
+          rwkTeilnehmer: 0
+        });
       }
-      
-      // 3. Lade Clubs (optional)
-      try {
-        const clubsRes = await fetch('/api/clubs');
-        if (clubsRes.ok) {
-          const data = await clubsRes.json();
-          clubs = data.data || [];
-
-        }
-      } catch (error) {
-
-      }
-      
-      // 4. Lade Disziplinen (optional)
-      try {
-        const disziplinenRes = await fetch('/api/km/disziplinen');
-        if (disziplinenRes.ok) {
-          const data = await disziplinenRes.json();
-          setDisziplinen(data.data || []);
-
-        }
-      } catch (error) {
-
-      }
-      
-      // 5. Berechne Statistiken
-      const uniqueVereine = new Set();
-      meldungen.forEach(meldung => {
-        if (meldung.clubId) {
-          uniqueVereine.add(meldung.clubId);
-        } else {
-          const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-          if (schuetze) {
-            const vereinId = schuetze.clubId || schuetze.kmClubId || schuetze.rwkClubId;
-            if (vereinId) uniqueVereine.add(vereinId);
-          }
-        }
-      });
-      
-      const rwkTeilnehmer = schuetzen.filter(s => s.clubId && !s.kmClubId).length;
-      
-      setStats({
-        vereine: uniqueVereine.size,
-        meldungen: meldungen.length,
-        mitglieder: schuetzen.length,
-        rwkTeilnehmer
-      });
     } catch (error) {
-      console.error('💥 Dashboard-Fehler:', error);
-    } finally {
-      setLoading(false);
+      console.error('Dashboard-Fehler:', error);
     }
   };
-  
-  const handleCleanup = async () => {
-    if (confirm('Excel-Importe löschen? (Nur Schützen mit createdAt werden gelöscht)')) {
-      const res = await fetch('/api/shooters?action=cleanup-imports', { method: 'DELETE' });
-      if (res.ok) {
-        const result = await res.json();
-        alert(result.message);
-      }
-    }
-  };
+
+  if (loading) {
+    return (
+      <div className="container py-8 max-w-6xl mx-auto">
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+          <p className="text-lg text-gray-600">Lade KM-Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasKMAccess) {
+    return (
+      <div className="container py-8 max-w-6xl mx-auto">
+        <div className="text-center py-10">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Zugriff verweigert</h1>
+          <p className="text-gray-600 mb-4">Sie haben keine Berechtigung für das KM-System.</p>
+          <Link href="/" className="text-primary hover:text-primary/80">← Zur Startseite</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const isVerein = userRole === 'verein';
   
   return (
     <div className="container py-4 px-2 max-w-full mx-auto">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-primary">🏆 Kreismeisterschaften {selectedYear}</h1>
-          <p className="text-muted-foreground">
-            Hallo {user?.displayName || user?.email}! Digitale Meldungen zu den Kreismeisterschaften des KSV Einbeck
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {userRole && (
-            <Badge variant="outline" className="text-xs py-1 px-2 border-blue-300 bg-blue-50 text-blue-700">
-              {userRole === 'admin' ? 'Admin' : 
-               userRole === 'km_organisator' ? 'KM-Organisator' : 
-               'Vereinsvertreter'}
-            </Badge>
-          )}
-          {isKMAdmin && (
-            <Link href="/admin">
-              <button className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-colors">
-                🎯 RWK Admin
-              </button>
-            </Link>
-          )}
-          {isKMOrganisator && (
-            <Link href="/km-orga">
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
-                🏆 KM-Orga
-              </button>
-            </Link>
-          )}
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm font-medium"
-          >
-            <option value={2026}>KM 2026</option>
-            <option value={2027}>KM 2027</option>
-            <option value={2028}>KM 2028</option>
-          </select>
-          <Badge variant="outline" className="text-xs py-1 px-2 border-green-300 bg-green-50 text-green-700">
-            <span>✅ Produktiv</span>
-          </Badge>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-primary">🏆 KM-Dashboard</h1>
+        <p className="text-muted-foreground">
+          Hallo {user?.displayName || user?.email}! Kreismeisterschafts-Meldungen für Ihren Verein
+          {userRole && <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{userRole === 'admin' ? 'Admin' : userRole === 'km_organisator' ? 'KM-Organisator' : 'Vereinsvertreter'}</span>}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {/* Hauptfunktionen */}
-        <Card className="border-2 border-primary/20 shadow-lg hover:shadow-xl transition-all duration-200">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20">
-            <CardTitle className="text-2xl flex items-center gap-3 text-primary">
-              📝 Meldungen verwalten
-            </CardTitle>
-            <CardDescription className="text-base">Schützen für die Kreismeisterschaft melden</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              <div className="bg-blue-50 dark:bg-blue-950/50 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-4">
-                <h4 className="font-bold text-blue-900 dark:text-blue-100 mb-3 text-lg">📊 Status</h4>
-                <div className="text-blue-700 dark:text-blue-200 space-y-2">
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                      <span>Lade Statistiken...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2 font-medium">
-                        <span className="text-green-600 dark:text-green-400">✓</span>
-                        <span>{stats.meldungen} Schützen gemeldet</span>
-                      </div>
-                      <div className="flex items-center gap-2 font-medium">
-                        <span className="text-green-600 dark:text-green-400">✓</span>
-                        <span>{stats.vereine} Vereine aktiv</span>
-                      </div>
-                      <div className="flex items-center gap-2 font-medium text-orange-700 dark:text-orange-300">
-                        <span>⏰</span>
-                        <span>Meldeschluss: 15.12.2025</span>
-                      </div>
-                    </>
-                  )}
+      {/* Anleitung für Vereinsvertreter */}
+      <Card className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-blue-800 flex items-center gap-2">
+                📚 Anleitung: KM-Meldungen für Ihren Verein
+              </CardTitle>
+              <CardDescription className="text-blue-700">
+                So melden Sie Ihre Schützen zur Kreismeisterschaft an - einfach und digital!
+              </CardDescription>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setIsInstructionOpen(!isInstructionOpen)}
+              className="text-blue-700 hover:text-blue-900"
+            >
+              {isInstructionOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {isInstructionOpen ? 'Einklappen' : 'Anleitung anzeigen'}
+            </Button>
+          </div>
+        </CardHeader>
+        {isInstructionOpen && (
+        <CardContent>
+          <div className="space-y-4">
+            <div className="bg-white p-3 rounded-lg border border-blue-200">
+              <div className="flex items-start gap-4">
+                <div className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold flex-shrink-0">1</div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-blue-900 mb-2">📝 Schützen melden</h3>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Melden Sie Ihre Schützen für die verschiedenen Disziplinen an. Das System berechnet automatisch die Altersklassen.
+                  </p>
+                  <Link href="/km/meldungen">
+                    <Button size="sm" className="w-full md:w-auto">📋 Schützen melden</Button>
+                  </Link>
                 </div>
               </div>
-              
-              <div className="grid grid-cols-1 gap-3">
-                <Link href="/km/meldungen" className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors shadow-md hover:shadow-lg">
-                  📋 Schützen melden
-                </Link>
-                <Link href="/km/mannschaften" className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors shadow-md hover:shadow-lg">
-                  👥 Mannschaften
-                </Link>
-                <Link href="/km/uebersicht" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors shadow-md hover:shadow-lg">
-                  📊 Alle Meldungen
-                </Link>
-                <Link href="/km/altersklassen" className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors shadow-md hover:shadow-lg">
-                  📋 Altersklassen
-                </Link>
-                {hasFullAccess && (
-                  <Link href="/km/init" className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors shadow-md hover:shadow-lg">
-                    ⚙️ System Init
+            </div>
+            
+            <div className="bg-white p-3 rounded-lg border border-green-200">
+              <div className="flex items-start gap-4">
+                <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold flex-shrink-0">2</div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-green-900 mb-2">👥 Mannschaften verwalten</h3>
+                  <p className="text-sm text-green-700 mb-3">
+                    Erstellen Sie Mannschaften für Ihre gemeldeten Schützen. Pro Mannschaft sind 3 Schützen erforderlich.
+                  </p>
+                  <Link href="/km/mannschaften">
+                    <Button size="sm" className="w-full md:w-auto bg-green-600 hover:bg-green-700">👥 Mannschaften</Button>
                   </Link>
-                )}
+                </div>
               </div>
+            </div>
+            
+            <div className="bg-white p-3 rounded-lg border border-orange-200">
+              <div className="flex items-start gap-4">
+                <div className="bg-orange-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold flex-shrink-0">3</div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-orange-900 mb-2">📊 Übersicht behalten</h3>
+                  <p className="text-sm text-orange-700 mb-3">
+                    Behalten Sie den Überblick über alle Ihre Meldungen und prüfen Sie die Altersklassen-Einteilung.
+                  </p>
+                  <Link href="/km/uebersicht">
+                    <Button size="sm" className="w-full md:w-auto bg-orange-600 hover:bg-orange-700">📊 Alle Meldungen</Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-6 p-4 bg-green-100 border border-green-300 rounded-lg">
+            <h4 className="font-semibold text-green-800 mb-2">✅ Wichtige Hinweise</h4>
+            <ul className="text-sm text-green-700 space-y-1">
+              <li>• Meldeschluss: 15. Dezember 2025</li>
+              <li>• VM-Ergebnisse (Vereinsmeisterschaft) können nachgetragen werden</li>
+              <li>• Altersklassen werden automatisch nach Geburtsjahr berechnet</li>
+              <li>• Bei Fragen wenden Sie sich an die KM-Organisatoren</li>
+            </ul>
+          </div>
+        </CardContent>
+        )}
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Meldungen & Verwaltung */}
+        <Card className="hover:shadow-md transition-shadow border-blue-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-800">
+              📋 Meldungen & Verwaltung
+            </CardTitle>
+            <CardDescription>
+              Schützen für die Kreismeisterschaft melden und verwalten
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Link href="/km/meldungen">
+                <Button className="w-full">📄 Schützen melden</Button>
+              </Link>
+              <Link href="/km/uebersicht">
+                <Button variant="outline" className="w-full">📊 Alle Meldungen</Button>
+              </Link>
+              <Link href="/km/mannschaften">
+                <Button variant="outline" className="w-full">👥 Mannschaften</Button>
+              </Link>
+              <Link href="/km/altersklassen">
+                <Button variant="outline" className="w-full">📋 Altersklassen</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-green-200 dark:border-green-800 shadow-lg hover:shadow-xl transition-all duration-200">
-          <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/50 dark:to-green-900/50">
-            <CardTitle className="text-2xl flex items-center gap-3 text-green-700 dark:text-green-300">
+        {/* Mitgliederverwaltung */}
+        <Card className="hover:shadow-md transition-shadow border-green-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-800">
               👥 Mitgliederverwaltung
             </CardTitle>
-            <CardDescription className="text-base">Schützen und Vereinsmitglieder verwalten</CardDescription>
+            <CardDescription>
+              Schützen und Vereinsmitglieder verwalten
+            </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              <div className="bg-green-50 dark:bg-green-950/50 border-2 border-green-200 dark:border-green-800 rounded-xl p-4">
-                <h4 className="font-bold text-green-900 dark:text-green-100 mb-3 text-lg">🛠️ Funktionen</h4>
-                <div className="text-green-700 dark:text-green-200 space-y-2">
-                  <div className="flex items-center gap-2 font-medium">
-                    <span>📝</span>
-                    <span>Mitglieder bearbeiten und verwalten</span>
-                  </div>
-                  <div className="flex items-center gap-2 font-medium">
-                    <span>➕</span>
-                    <span>Neue Schützen anlegen</span>
-                  </div>
-                  <div className="flex items-center gap-2 font-medium">
-                    <span>🗑️</span>
-                    <span>Schützen löschen</span>
-                  </div>
-                </div>
-              </div>
-              
-              {hasFullAccess && (
-                <div className="bg-red-50 dark:bg-red-950/50 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
-                  <h4 className="font-bold text-red-900 dark:text-red-100 mb-3 text-lg flex items-center gap-2">
-                    <span>⚠️</span>
-                    <span>Admin-Tools</span>
-                  </h4>
-                  <div className="text-red-700 dark:text-red-200 mb-4">
-                    <p className="font-medium">Datenbereinigung für Duplikate</p>
-                  </div>
-                  {isClient && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <button 
-                        onClick={handleCleanup}
-                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
-                      >
-                        🗑️ Excel-Importe löschen
-                      </button>
-                      <button 
-                        onClick={async () => {
-                          if (confirm('Duplikate entfernen?\n\nRWK-Teilnehmer werden bevorzugt behalten.\nImportierte Duplikate werden gelöscht.')) {
-                            const res = await fetch('/api/shooters?action=cleanup-duplicates', { method: 'DELETE' });
-                            if (res.ok) {
-                              const result = await res.json();
-                              alert(`Erfolg: ${result.message}`);
-                              loadDashboardData();
-                            } else {
-                              alert('Fehler beim Entfernen der Duplikate');
-                            }
-                          }
-                        }}
-                        className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
-                      >
-                        🔄 Duplikate entfernen
-                      </button>
-                      <button 
-                        onClick={async () => {
-                          const res = await fetch('/api/km/update-year', { method: 'POST' });
-                          const result = await res.json();
-                          alert(result.message);
-                          loadDashboardData();
-                        }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
-                      >
-                        📅 Jahr-Fix 2026
-                      </button>
-                      <button 
-                        onClick={async () => {
-                          const res = await fetch('/api/km/fix-schuetze-links', { method: 'POST' });
-                          const result = await res.json();
-                          alert(result.message);
-                          loadDashboardData();
-                        }}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
-                      >
-                        🔗 Namen-Fix
-                      </button>
-                      <button 
-                        onClick={async () => {
-                          const res = await fetch('/api/debug/team-shooters', { method: 'GET' });
-                          if (res.ok) {
-                            const result = await res.json();
-
-                            alert(`Debug-Info in Konsole:\n${result.summary}`);
-                          }
-                        }}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
-                      >
-                        🔍 Team-Debug
-                      </button>
-                    </div>
-                  )}
-                </div>
+          <CardContent>
+            <div className="space-y-3">
+              <Link href="/km/mitglieder">
+                <Button className="w-full bg-green-600 hover:bg-green-700">👥 Mitglieder verwalten</Button>
+              </Link>
+              {(userRole === 'admin' || userRole === 'km_organisator') && (
+                <>
+                  <Link href="/km/mannschaftsregeln">
+                    <Button variant="outline" className="w-full">⚙️ Mannschaftsregeln</Button>
+                  </Link>
+                  <Link href="/km/init">
+                    <Button variant="outline" className="w-full">⚙️ System Init</Button>
+                  </Link>
+                  <Link href="/change-password">
+                    <Button variant="outline" className="w-full">🔑 Passwort ändern</Button>
+                  </Link>
+                </>
               )}
-              
-              <div className="pt-2">
-                <Link href="/km/mitglieder" className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-lg font-bold text-lg text-center transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2">
-                  <span>👥</span>
-                  <span>Mitglieder verwalten</span>
-                </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Statistiken */}
+        <Card className="hover:shadow-md transition-shadow border-orange-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-800">
+              📊 Statistiken & Übersicht
+            </CardTitle>
+            <CardDescription>
+              Aktuelle Zahlen zur Kreismeisterschaft {selectedYear}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="bg-orange-50 p-3 rounded border border-orange-100">
+                <div className="text-orange-700 space-y-2">
+                  <div className="flex items-center gap-2 font-medium">
+                    <span>📊</span>
+                    <span>{stats.meldungen} Schützen gemeldet</span>
+                  </div>
+                  <div className="flex items-center gap-2 font-medium">
+                    <span>🏆</span>
+                    <span>{stats.vereine} Vereine aktiv</span>
+                  </div>
+                  <div className="flex items-center gap-2 font-medium text-orange-700">
+                    <span>⏰</span>
+                    <span>Meldeschluss: 15.12.2025</span>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Admin-Bereich */}
-        {hasFullAccess && (
-          <Card className="border-2 border-purple-200 dark:border-purple-800 shadow-lg hover:shadow-xl transition-all duration-200">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950/50 dark:to-purple-900/50">
-              <CardTitle className="text-2xl flex items-center gap-3 text-purple-700 dark:text-purple-300">
-                ⚙️ KM-Administration
+        {/* Admin-Funktionen */}
+        {(userRole === 'admin' || userRole === 'km_organisator') && (
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                ⚙️ Admin-Funktionen
               </CardTitle>
-              <CardDescription className="text-base">Verwaltung für KM-Organisatoren</CardDescription>
+              <CardDescription>
+                Erweiterte Verwaltungsfunktionen
+              </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
-              <div className="space-y-6">
-                <div className="bg-purple-50 dark:bg-purple-950/50 border-2 border-purple-200 dark:border-purple-800 rounded-xl p-4">
-                  <h4 className="font-bold text-purple-900 dark:text-purple-100 mb-3 text-lg">📈 Übersicht</h4>
-                  <div className="text-purple-700 dark:text-purple-200 space-y-2">
-                    <div className="flex items-center gap-2 font-medium">
-                      <span>📊</span>
-                      <span>8 Vereine gemeldet</span>
-                    </div>
-                    <div className="flex items-center gap-2 font-medium">
-                      <span>🏆</span>
-                      <span>127 Gesamtmeldungen</span>
-                    </div>
-                    <div className="flex items-center gap-2 font-medium">
-                      <span>📅</span>
-                      <span>Startplan: In Bearbeitung</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Link href="/km/admin" className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold text-center transition-colors shadow-md hover:shadow-lg">
-                    🎛️ Admin-Dashboard
+            <CardContent>
+              <div className="space-y-3">
+                {userRole === 'admin' && (
+                  <Link href="/admin">
+                    <Button variant="outline" className="w-full">🎯 RWK Admin</Button>
                   </Link>
-                  <button className="border-2 border-purple-200 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/50 px-6 py-3 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg">
-                    📊 Statistiken
-                  </button>
-                </div>
+                )}
+                {(userRole === 'admin' || userRole === 'km_organisator') && (
+                  <Link href="/km-orga">
+                    <Button variant="outline" className="w-full">🏆 KM-Orga</Button>
+                  </Link>
+                )}
               </div>
             </CardContent>
           </Card>
         )}
-
-
-      </div>
-
-      {/* Info-Bereich */}
-      <div className="mt-6 grid grid-cols-1 gap-4">
-        <Card className="border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-3">
-              <div className="text-3xl">✅</div>
-              <div>
-                <h3 className="font-bold text-green-900 dark:text-green-100 text-lg mb-2">Produktionsreif</h3>
-                <p className="text-green-700 dark:text-green-200 leading-relaxed">
-                  Das KM-System ist vollständig funktional und produktionsreif. 
-                  Alle Meldungen werden korrekt gespeichert und verarbeitet.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-3">
-              <div className="text-3xl">📋</div>
-              <div>
-                <h3 className="font-bold text-blue-900 dark:text-blue-100 text-lg mb-2">Sportordnung</h3>
-                <p className="text-blue-700 dark:text-blue-200 mb-3 leading-relaxed">
-                  Wettkampfklassen und Disziplinen nach DSB-Sportordnung
-                </p>
-                <a 
-                  href="https://dsb.de/fileadmin/dsb/sportordnung/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
-                >
-                  <span>📖</span>
-                  <span>DSB-Sportordnung öffnen</span>
-                  <span>↗</span>
-                </a>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

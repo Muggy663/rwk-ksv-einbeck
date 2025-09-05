@@ -287,6 +287,11 @@ match /users/{userId} {
       allow write: if isSuperAdmin();
     }
     
+    // System-Konfiguration (Mannschaftsregeln etc.) - TEMPORÄR OFFEN
+    match /system_config/{document} {
+      allow read, write: if true;
+    }
+    
     // Fallback-Regel: Alles andere verbieten
     match /{document=**} {
       allow read, write: if false;

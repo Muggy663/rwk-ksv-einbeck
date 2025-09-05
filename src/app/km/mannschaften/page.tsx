@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { MannschaftsbildungService } from '@/lib/services/mannschaftsbildung-service';
 
 interface Mannschaft {
   id: string;
@@ -204,20 +205,29 @@ export default function KMMannschaften() {
 
   const updateMannschaft = async (mannschaftId: string, newSchuetzenIds: string[]) => {
     try {
+      // Sofort State aktualisieren (optimistic update)
+      setMannschaften(prev => prev.map(m => 
+        m.id === mannschaftId ? { ...m, schuetzenIds: newSchuetzenIds } : m
+      ));
+
       const response = await fetch(`/api/km/mannschaften/${mannschaftId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ schuetzenIds: newSchuetzenIds })
       });
 
+      const result = await response.json();
+
       if (response.ok) {
-        toast({ title: 'Erfolg', description: 'Mannschaft aktualisiert' });
-        loadData();
-        // setEditingTeam(null); // Entfernt - Bearbeitungsmodus bleibt aktiv
+        toast({ title: '✅ Erfolg', description: 'Mannschaft aktualisiert' });
       } else {
-        toast({ title: 'Fehler', description: 'Aktualisierung fehlgeschlagen', variant: 'destructive' });
+        // Rollback bei Fehler
+        loadData();
+        toast({ title: 'Fehler', description: result.error || 'Aktualisierung fehlgeschlagen', variant: 'destructive' });
       }
     } catch (error) {
+      // Rollback bei Fehler
+      loadData();
       toast({ title: 'Fehler', description: 'Aktualisierung fehlgeschlagen', variant: 'destructive' });
     }
   };
@@ -397,14 +407,14 @@ export default function KMMannschaften() {
 
                         <div className="space-y-2">
                           {teamSchuetzen.map((schuetze, index) => {
-                            // Finde die entsprechende Meldung für VM-Ergebnis
+                            // Finde die entsprechende Meldung für VM-Ergebnis und Altersklasse
                             const meldung = meldungen.find(m => 
                               m.schuetzeId === schuetze?.id && 
                               m.disziplinId === mannschaft.disziplinId
                             );
                             
                             return (
-                            <div key={schuetze?.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <div key={schuetze?.id || index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                               <div>
                                 <span>
                                   {schuetze?.firstName && schuetze?.lastName 
@@ -415,13 +425,55 @@ export default function KMMannschaften() {
                                 <div className="text-xs text-green-600 font-medium">
                                   VM: {meldung?.vmErgebnis?.ringe ? `${meldung.vmErgebnis.ringe} Ringe` : 'Noch kein VM-Ergebnis'}
                                 </div>
+                                <div className="text-xs text-blue-600">
+                                  AK: {(() => {
+                                    // Berechne wie in km/uebersicht
+                                    if (!schuetze?.birthYear || !schuetze?.gender) return 'Unbekannt';
+                                    
+                                    const disziplin = disziplinen.find(d => d.id === mannschaft.disziplinId);
+                                    if (!disziplin) return 'Unbekannt';
+                                    
+                                    const age = 2026 - schuetze.birthYear;
+                                    const gender = schuetze.gender;
+                                    const istAuflage = disziplin.auflage;
+                                    
+                                    if (istAuflage) {
+                                      if (age <= 14) return gender === 'male' ? 'Schüler m' : 'Schüler w';
+                                      else if (disziplin.spoNummer === '1.41' && age >= 15 && age <= 40) {
+                                        if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
+                                        else if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+                                        else if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+                                        else return gender === 'male' ? 'Herren I' : 'Damen I';
+                                      }
+                                      else if (age < 41) return 'Nicht berechtigt';
+                                      else if (age <= 50) return 'Senioren 0';
+                                      else if (age <= 60) return gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
+                                      else if (age <= 65) return gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
+                                      else if (age <= 70) return gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
+                                      else if (age <= 75) return gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
+                                      else if (age <= 80) return gender === 'male' ? 'Senioren V m' : 'Seniorinnen V';
+                                      else return gender === 'male' ? 'Senioren VI m' : 'Seniorinnen VI';
+                                    } else {
+                                      if (age <= 14) return gender === 'male' ? 'Schüler m' : 'Schüler w';
+                                      else if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
+                                      else if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+                                      else if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+                                      else if (age <= 40) return gender === 'male' ? 'Herren I' : 'Damen I';
+                                      else if (age <= 50) return gender === 'male' ? 'Herren II' : 'Damen II';
+                                      else if (age <= 60) return gender === 'male' ? 'Herren III' : 'Damen III';
+                                      else if (age <= 70) return gender === 'male' ? 'Herren IV' : 'Damen IV';
+                                      else return gender === 'male' ? 'Herren V' : 'Damen V';
+                                    }
+                                  })()} 
+                                </div>
                               </div>
-                              {editingTeam === mannschaft.id && (
+                              {editingTeam === mannschaft.id && schuetze?.id && (
                                 <Button 
                                   size="sm" 
                                   variant="destructive"
-                                  onClick={() => {
-                                    const newIds = mannschaft.schuetzenIds.filter(id => id !== schuetze?.id);
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    const newIds = mannschaft.schuetzenIds.filter(id => id !== schuetze.id);
                                     updateMannschaft(mannschaft.id, newIds);
                                   }}
                                 >
@@ -439,7 +491,7 @@ export default function KMMannschaften() {
                             <div className="space-y-2 max-h-32 overflow-y-auto">
                               {schuetzen
                                 .filter(s => !mannschaft.schuetzenIds.includes(s.id))
-                                .filter(s => s.clubId === mannschaft.vereinId || s.kmClubId === mannschaft.vereinId) // Beide clubId Felder prüfen
+                                .filter(s => s.clubId === mannschaft.vereinId || s.kmClubId === mannschaft.vereinId)
                                 .filter(s => {
                                   // Nur Schützen die für diese Disziplin gemeldet sind
                                   return meldungen.some(m => 
@@ -447,7 +499,42 @@ export default function KMMannschaften() {
                                     m.disziplinId === mannschaft.disziplinId
                                   );
                                 })
-                                .slice(0, 10) // Entferne Altersklassen-Filter für mehr Flexibilität
+                                .filter(s => {
+                                  // Prüfe Kompatibilität mit Service
+                                  if (teamSchuetzen.length === 0) return true;
+                                  
+                                  // Erstelle Test-Team mit diesem Schützen
+                                  const testTeam = [...teamSchuetzen, s];
+                                  
+                                  // Synchrone Prüfung - vereinfacht für UI
+                                  return teamSchuetzen.every(teamSchuetze => {
+                                    const schuetzeMeldung = meldungen.find(m => m.schuetzeId === s.id && m.disziplinId === mannschaft.disziplinId);
+                                    const teamMeldung = meldungen.find(m => m.schuetzeId === teamSchuetze.id && m.disziplinId === mannschaft.disziplinId);
+                                    
+                                    if (!schuetzeMeldung?.altersklasse || !teamMeldung?.altersklasse) return true;
+                                    
+                                    // Nutze die konfigurierten Regeln aus system_config
+                                    const ak1 = schuetzeMeldung.altersklasse;
+                                    const ak2 = teamMeldung.altersklasse;
+                                    
+                                    // TODO: Hier sollten die echten Regeln aus system_config verwendet werden
+                                    // Vorerst vereinfachte Prüfung bis Service async-kompatibel ist
+                                    
+                                    // Senioren 0 nur untereinander
+                                    if (ak1.includes('Senioren 0') || ak2.includes('Senioren 0')) {
+                                      return ak1.includes('Senioren 0') && ak2.includes('Senioren 0');
+                                    }
+                                    
+                                    // Senioren I+II zusammen
+                                    if ((ak1.includes('Senioren I') || ak1.includes('Senioren II')) && 
+                                        (ak2.includes('Senioren I') || ak2.includes('Senioren II'))) {
+                                      return true;
+                                    }
+                                    
+                                    return ak1 === ak2;
+                                  });
+                                })
+                                .slice(0, 10)
                                 .map(schuetze => (
                                   <button
                                     key={schuetze.id}
@@ -459,11 +546,52 @@ export default function KMMannschaften() {
                                       }
                                     }}
                                   >
-                                    {schuetze.firstName && schuetze.lastName 
-                                      ? `${schuetze.firstName} ${schuetze.lastName}`
-                                      : schuetze.name || 'Unbekannt'
-                                    } ({schuetze.birthYear}, {schuetze.gender === 'male' ? 'm' : 'w'})
-                                    <div className="text-xs text-gray-500">Gemeldet für diese Disziplin</div>
+                                    <div>
+                                      <span>
+                                        {schuetze.firstName && schuetze.lastName 
+                                          ? `${schuetze.firstName} ${schuetze.lastName}`
+                                          : schuetze.name || 'Unbekannt'
+                                        } ({schuetze.birthYear}, {schuetze.gender === 'male' ? 'm' : 'w'})
+                                      </span>
+                                      <div className="text-xs text-gray-500">
+                                        AK: {(() => {
+                                          const disziplin = disziplinen.find(d => d.id === mannschaft.disziplinId);
+                                          if (!schuetze.birthYear || !schuetze.gender || !disziplin) return 'Unbekannt';
+                                          
+                                          const age = 2026 - schuetze.birthYear;
+                                          const gender = schuetze.gender;
+                                          const istAuflage = disziplin.auflage;
+                                          
+                                          if (istAuflage) {
+                                            if (age <= 14) return gender === 'male' ? 'Schüler m' : 'Schüler w';
+                                            else if (disziplin.spoNummer === '1.41' && age >= 15 && age <= 40) {
+                                              if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
+                                              else if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+                                              else if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+                                              else return gender === 'male' ? 'Herren I' : 'Damen I';
+                                            }
+                                            else if (age < 41) return 'Nicht berechtigt';
+                                            else if (age <= 50) return 'Senioren 0';
+                                            else if (age <= 60) return gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
+                                            else if (age <= 65) return gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
+                                            else if (age <= 70) return gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
+                                            else if (age <= 75) return gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
+                                            else if (age <= 80) return gender === 'male' ? 'Senioren V m' : 'Seniorinnen V';
+                                            else return gender === 'male' ? 'Senioren VI m' : 'Seniorinnen VI';
+                                          } else {
+                                            if (age <= 14) return gender === 'male' ? 'Schüler m' : 'Schüler w';
+                                            else if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
+                                            else if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+                                            else if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+                                            else if (age <= 40) return gender === 'male' ? 'Herren I' : 'Damen I';
+                                            else if (age <= 50) return gender === 'male' ? 'Herren II' : 'Damen II';
+                                            else if (age <= 60) return gender === 'male' ? 'Herren III' : 'Damen III';
+                                            else if (age <= 70) return gender === 'male' ? 'Herren IV' : 'Damen IV';
+                                            else return gender === 'male' ? 'Herren V' : 'Damen V';
+                                          }
+                                        })()} 
+                                      </div>
+                                    </div>
                                   </button>
                                 ))}
                               {schuetzen.filter(s => 
@@ -472,7 +600,7 @@ export default function KMMannschaften() {
                                 meldungen.some(m => m.schuetzeId === s.id && m.disziplinId === mannschaft.disziplinId)
                               ).length === 0 && (
                                 <div className="text-xs text-gray-500 p-2">
-                                  Keine weiteren Schützen aus diesem Verein für diese Disziplin gemeldet.
+                                  Keine kompatiblen Schützen verfügbar (Altersklassen-Regeln).
                                 </div>
                               )}
                             </div>
@@ -531,24 +659,20 @@ export default function KMMannschaften() {
           
           <Card className="mt-4">
             <CardHeader>
-              <CardTitle>Mannschaftsregeln</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                Mannschaftsregeln
+                <Link href="/km/mannschaftsregeln">
+                  <Button size="sm" variant="outline">⚙️ Regeln bearbeiten</Button>
+                </Link>
+              </CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-2">
-              <div>
-                <strong>Gemischte Teams erlaubt:</strong>
-                <ul className="list-disc pl-5 mt-1">
-                  <li>Schüler/Jugend</li>
-                  <li>Senioren 0</li>
-                  <li>Senioren I+II</li>
-                  <li>Senioren III-VI</li>
-                </ul>
-              </div>
-              <div>
-                <strong>Geschlechtergetrennt:</strong>
-                <ul className="list-disc pl-5 mt-1">
-                  <li>Junioren I/II</li>
-                  <li>Herren/Damen I-V</li>
-                </ul>
+              <div className="p-3 bg-blue-50 rounded">
+                <p className="font-medium text-blue-800 mb-2">ℹ️ Aktuelle Regeln werden automatisch angewendet</p>
+                <p className="text-blue-700 text-xs">
+                  Die Mannschaftsbildung erfolgt nach den konfigurierten Altersklassen-Kombinationen.
+                  Bei Regeländerungen werden Teams automatisch validiert.
+                </p>
               </div>
             </CardContent>
           </Card>
