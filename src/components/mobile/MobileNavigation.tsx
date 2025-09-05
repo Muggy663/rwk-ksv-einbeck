@@ -4,7 +4,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Trophy, BarChart3, Menu } from 'lucide-react';
+import { Home, Users, Trophy, BarChart3, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { MobileBurgerMenu } from './MobileBurgerMenu';
@@ -36,6 +36,12 @@ const navItems: NavItem[] = [
     href: '/dashboard-auswahl',
     icon: Users,
     label: 'Verein',
+    requiresAuth: true,
+  },
+  {
+    href: '/km',
+    icon: FileText,
+    label: 'KM',
     requiresAuth: true,
   },
 ];

@@ -9,6 +9,7 @@ import { MainNav } from '@/components/layout/MainNav';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { MobileLayout, MobileHeader, MobileContent, MobileBottomNav } from '@/components/layout/MobileLayout';
 import { MobileNavigation } from '@/components/mobile/MobileNavigation';
+import { MobileBurgerMenu } from '@/components/mobile/MobileBurgerMenu';
 import { AndroidLayoutFix } from '@/components/mobile/AndroidLayoutFix';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -97,6 +98,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   <div className="hidden md:block">
                     <MainNav />
                   </div>
+                  <div className="md:hidden">
+                    <MobileBurgerMenu />
+                  </div>
                 </div>
               </MobileHeader>
               
@@ -110,7 +114,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 <SiteFooter />
               </MobileContent>
               
-              <MobileBottomNav>
+              <MobileBottomNav className="pb-safe-area-bottom">
                 <MobileNavigation />
               </MobileBottomNav>
               
