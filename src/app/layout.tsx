@@ -7,8 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import Script from 'next/script';
 import { MainNav } from '@/components/layout/MainNav';
 import { SiteFooter } from '@/components/layout/SiteFooter';
-import { MobileLayout, MobileHeader, MobileContent, MobileBottomNav } from '@/components/layout/MobileLayout';
-import { MobileNavigation } from '@/components/mobile/MobileNavigation';
+import { MobileLayout, MobileHeader, MobileContent } from '@/components/layout/MobileLayout';
 import { MobileBurgerMenu } from '@/components/mobile/MobileBurgerMenu';
 import { AndroidLayoutFix } from '@/components/mobile/AndroidLayoutFix';
 import Link from 'next/link';
@@ -114,9 +113,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 <SiteFooter />
               </MobileContent>
               
-              <MobileBottomNav className="pb-safe-area-bottom">
-                <MobileNavigation />
-              </MobileBottomNav>
+
               
               <AndroidLayoutFix />
               <Toaster />
