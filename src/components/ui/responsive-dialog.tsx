@@ -34,17 +34,18 @@ export function ResponsiveDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent 
           className={cn(
-            "fixed top-0 left-0 right-0 bottom-0 z-50 bg-background",
+            "fixed inset-0 z-50 bg-background",
+            "pt-safe-area-top pb-safe-area-bottom",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
             "duration-300 ease-out",
-            "flex flex-col max-h-screen overflow-hidden",
+            "flex flex-col h-screen overflow-hidden",
             className
           )}
           hideCloseButton
         >
           {/* Mobile Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur-sm sticky top-0 z-10">
+          <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur-sm shrink-0 z-10">
             <Button
               variant="ghost"
               size="icon"

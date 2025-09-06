@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Home, Users, Trophy, FileText, User, BarChart3, Calendar, BookOpen, MessageSquare } from 'lucide-react'
+import { Menu, X, Home, Users, Trophy, FileText, User, BarChart3, Calendar, BookOpen, MessageSquare, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
@@ -30,7 +30,7 @@ const allNavItems: NavItem[] = [
 export function MobileBurgerMenu() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
 
   const filteredItems = allNavItems.filter(item => {
     if (item.requiresAuth && !user) return false
@@ -104,13 +104,31 @@ export function MobileBurgerMenu() {
                   </Link>
                 )
               })}
+              
+              {/* Logout Button for authenticated users */}
+              {user && (
+                <button
+                  onClick={() => {
+                    logout()
+                    closeMenu()
+                  }}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full",
+                    "text-sm font-medium whitespace-nowrap",
+                    "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <LogOut className="h-5 w-5 text-muted-foreground" />
+                  Logout
+                </button>
+              )}
             </nav>
           </div>
 
           {/* Footer with safe area */}
           <div className="p-4 border-t pb-safe-area-bottom">
             <p className="text-xs text-muted-foreground text-center">
-              RWK Einbeck App v0.13.0
+              RWK Einbeck App v0.13.1
             </p>
           </div>
         </div>
