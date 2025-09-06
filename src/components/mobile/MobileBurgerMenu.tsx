@@ -30,7 +30,7 @@ const allNavItems: NavItem[] = [
 export function MobileBurgerMenu() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
-  const { user, logout } = useAuth()
+  const { user, signOut } = useAuth()
 
   const filteredItems = allNavItems.filter(item => {
     if (item.requiresAuth && !user) return false
@@ -109,7 +109,7 @@ export function MobileBurgerMenu() {
               {user && (
                 <button
                   onClick={() => {
-                    logout()
+                    signOut()
                     closeMenu()
                   }}
                   className={cn(
