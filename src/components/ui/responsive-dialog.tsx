@@ -30,20 +30,23 @@ export function ResponsiveDialog({
   const { isMobile, isTablet } = useMobileDetection();
 
   if (isMobile) {
+    if (!open) return null;
+    
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent 
-          className={cn(
-            "fixed inset-0 z-50 bg-background",
-            "pt-safe-area-top pb-safe-area-bottom",
-            "data-[state=open]:animate-in data-[state=closed]:animate-out",
-            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
-            "duration-300 ease-out",
-            "flex flex-col h-screen overflow-hidden",
-            className
-          )}
-          hideCloseButton
-        >
+      <>
+        {/* Overlay */}
+        <div 
+          className="fixed inset-0 z-40 bg-black/50" 
+          onClick={() => onOpenChange(false)}
+        />
+        
+        {/* Mobile Dialog */}
+        <div className={cn(
+          "fixed inset-0 z-50 bg-background",
+          "flex flex-col overflow-hidden",
+          "pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
+          className
+        )}>
           {/* Mobile Header */}
           <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur-sm shrink-0 z-10">
             <Button
@@ -57,7 +60,11 @@ export function ResponsiveDialog({
             <div className="flex-1 text-center">
               <h2 className="text-lg font-semibold truncate">{title}</h2>
               {description && (
-                <p className="text-sm text-muted-foreground truncate">{description}</p>
+                <div className="text-xs text-muted-foreground">
+                  {description.split('. ').map((part, index) => (
+                    <div key={index} className="truncate">{part}{index === 0 ? '' : ''}</div>
+                  ))}
+                </div>
               )}
             </div>
             <div className="w-9" /> {/* Spacer for centering */}
@@ -74,8 +81,8 @@ export function ResponsiveDialog({
               {footer}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </>
     );
   }
 

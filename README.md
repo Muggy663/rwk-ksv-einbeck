@@ -170,7 +170,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
-- **Web-Version 0.13.1** - Mobile Navigation & Dialog Fixes: Burger-Menü mit Logout-Button, Android Safe Areas für Dialoge, entfernte redundante untere Navigation, verbesserte mobile Benutzerfreundlichkeit
+- **Web-Version 0.13.1** - Mobile Navigation & Dialog Fixes: Burger-Menü mit Logout-Button, Android Safe Areas für Dialoge, korrekte Dialog-Positionierung, entfernte redundante untere Navigation, verbesserte mobile Benutzerfreundlichkeit
 - **Web-Version 0.13.0** - KM-Mannschaftsregeln & Optimierungen: Vollständige Mannschaftsregeln-Verwaltung mit Drag & Drop, Altersklassen-Kombinationen, Disziplin-spezifische Regeln, optimistische Updates und korrekte Altersklassen-Berechnung
 - **Web-Version 0.12.2** - Mobile Navigation & Code Quality: Burger-Menü mit Safe Area, Mobile-optimierte Tabellen, Dark Mode Button-Fixes, Dialog-Positionierung und wiederverwendbare Komponenten
 - **Web-Version 0.12.1** - Mobile UX & Performance Revolution: Voice Input, Pull-to-Refresh, Micro-Animations, Enhanced Dark Mode, Responsive Dialogs und Android-Optimierungen für native App-Erfahrung

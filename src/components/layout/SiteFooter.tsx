@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "0.13.1"; // Mobile Navigation & Dialog Fixes: Burger-Menü, Logout-Button, Android Safe Areas
+  const version = "0.13.1"; // Mobile Navigation & Dialog Fixes: Burger-Menü mit Logout-Button, Android Safe Areas für Dialoge, korrekte Dialog-Positionierung
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">
