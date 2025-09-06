@@ -44,7 +44,7 @@ export function ResponsiveDialog({
         <div className={cn(
           "fixed inset-0 z-50 bg-background",
           "flex flex-col overflow-hidden",
-          "pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
+          "pt-[env(safe-area-inset-top)]",
           className
         )}>
           {/* Mobile Header */}
@@ -71,13 +71,13 @@ export function ResponsiveDialog({
           </div>
 
           {/* Mobile Content */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
             {children}
           </div>
 
           {/* Mobile Footer */}
           {footer && (
-            <div className="border-t bg-background/95 backdrop-blur-sm p-4 sticky bottom-0">
+            <div className="border-t bg-background/95 backdrop-blur-sm p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sticky bottom-0">
               {footer}
             </div>
           )}
