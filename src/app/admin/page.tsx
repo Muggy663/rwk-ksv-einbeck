@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AdminStats } from '@/components/admin/AdminStats';
+import { BackButton } from '@/components/ui/back-button';
 
 interface AgendaItem {
   text: string;
@@ -275,9 +276,12 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Verwaltung der Rundenwettkämpfe.</p>
+        <div className="flex items-center">
+          <BackButton className="mr-2" fallbackHref="/" />
+          <div>
+            <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Verwaltung der Rundenwettkämpfe.</p>
+          </div>
         </div>
         <Link href="/km-orga">
           <Button variant="outline">

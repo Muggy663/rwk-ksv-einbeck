@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { HelpCircle, Send, Loader2, Upload, CheckCircle, Trash2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { BackButton } from '@/components/ui/back-button';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -233,6 +234,7 @@ export default function SupportPage() {
   return (
     <div className="space-y-8">
       <div className="flex items-center space-x-3">
+        <BackButton className="mr-2" fallbackHref="/" />
         <HelpCircle className="h-10 w-10 text-primary" />
         <div>
           <h1 className="text-4xl font-bold text-primary">Kontakt & Support</h1>

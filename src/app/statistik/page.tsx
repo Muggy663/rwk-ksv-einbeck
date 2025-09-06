@@ -5,11 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { BarChart3, Users, ArrowRight, LineChart, TrendingUp } from 'lucide-react';
+import { BackButton } from '@/components/ui/back-button';
 
 export default function StatistikPage() {
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-primary">Statistik-Dashboard</h1>
+      <div className="flex items-center mb-6">
+        <BackButton className="mr-2" fallbackHref="/" />
+        <h1 className="text-3xl font-bold text-primary">Statistik-Dashboard</h1>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>

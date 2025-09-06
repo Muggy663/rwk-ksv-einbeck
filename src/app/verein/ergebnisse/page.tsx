@@ -4,13 +4,28 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  MobileSelect as Select,
+  MobileSelectContent as SelectContent,
+  MobileSelectItem as SelectItem,
+  MobileSelectTrigger as SelectTrigger,
+  MobileSelectValue as SelectValue,
+} from "@/components/ui/mobile-select";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  MobileTable as Table,
+  MobileTableBody as TableBody,
+  MobileTableCell as TableCell,
+  MobileTableHead as TableHead,
+  MobileTableHeader as TableHeader,
+  MobileTableRow as TableRow,
+} from "@/components/ui/mobile-table";
 import { CheckSquare, Save, Plus, Trash2, Loader, AlertCircle, Building } from 'lucide-react';
+import { VoiceInputButton } from '@/components/ui/voice-input-button';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
+import { BackButton } from '@/components/ui/back-button';
 import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, FirestoreLeagueSpecificDiscipline, Club, LeagueUpdateEntry, UserPermission } from '@/types/rwk';
 import { leagueDisciplineOptions } from '@/types/rwk';
 import { useVereinAuth } from '@/app/verein/layout'; 
@@ -830,8 +845,9 @@ export default function VereinErgebnissePage() {
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="space-y-2">
         <div className="flex items-center">
+          <BackButton className="mr-2" fallbackHref="/verein/dashboard" />
           <h1 className="text-2xl font-semibold text-primary">Ergebniserfassung</h1>
           <HelpTooltip 
             text="Hier können Sie Ergebnisse für Mannschaften erfassen und speichern." 
@@ -967,57 +983,72 @@ export default function VereinErgebnissePage() {
               <div className="flex items-center">
                 <Label htmlFor="vver-score">Ergebnis (Ringe)</Label>
                 <HelpTooltip 
-                  text="Geben Sie das Ergebnis in Ringen ein. Je nach Disziplin sind Werte zwischen 0-300 oder 0-400 möglich." 
+                  text="Geben Sie das Ergebnis in Ringen ein oder nutzen Sie die Spracheingabe. Je nach Disziplin sind Werte zwischen 0-300 oder 0-400 möglich." 
                   className="ml-2"
                 />
               </div>
-              <Input 
-                id="vver-score" 
-                type="number" 
-                value={score} 
-                style={{ MozAppearance: 'textfield' }}
-                className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setScore(value);
-                  
-                  // Live-Validierung der Ringzahlen
-                  if (value && selectedLeagueId) {
-                    const scoreVal = parseInt(value);
-                    let maxPossibleScore = 300;
-                    const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
-                    const selectedLeagueObject = allLeagues.find(l => l.id === selectedLeagueId);
+              <div className="flex gap-2">
+                <Input 
+                  id="vver-score" 
+                  type="number" 
+                  value={score} 
+                  style={{ MozAppearance: 'textfield' }}
+                  className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setScore(value);
                     
-                    if (selectedLeagueObject && fourHundredPointDisciplines.includes(selectedLeagueObject.type)) {
-                      maxPossibleScore = 400;
+                    // Live-Validierung der Ringzahlen
+                    if (value && selectedLeagueId) {
+                      const scoreVal = parseInt(value);
+                      let maxPossibleScore = 300;
+                      const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
+                      const selectedLeagueObject = allLeagues.find(l => l.id === selectedLeagueId);
+                      
+                      if (selectedLeagueObject && fourHundredPointDisciplines.includes(selectedLeagueObject.type)) {
+                        maxPossibleScore = 400;
+                      }
+                      
+                      if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) {
+                        e.target.setCustomValidity(`Bitte geben Sie eine gültige Ringzahl zwischen 0 und ${maxPossibleScore} ein.`);
+                      } else {
+                        e.target.setCustomValidity('');
+                      }
                     }
-                    
-                    if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) {
-                      e.target.setCustomValidity(`Bitte geben Sie eine gültige Ringzahl zwischen 0 und ${maxPossibleScore} ein.`);
-                    } else {
-                      e.target.setCustomValidity('');
+                  }}
+                  placeholder="z.B. 285" 
+                  disabled={!selectedShooterId}
+                  className={score && selectedLeagueId ? (
+                    (() => {
+                      const scoreVal = parseInt(score);
+                      let maxPossibleScore = 300;
+                      const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
+                      const selectedLeagueObject = allLeagues.find(l => l.id === selectedLeagueId);
+                      
+                      if (selectedLeagueObject && fourHundredPointDisciplines.includes(selectedLeagueObject.type)) {
+                        maxPossibleScore = 400;
+                      }
+                      
+                      return (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) 
+                        ? "border-red-500 focus:ring-red-500" 
+                        : "border-green-500 focus:ring-green-500";
+                    })()
+                  ) : ""}
+                />
+                <VoiceInputButton
+                  onResult={(text) => {
+                    // Extrahiere Zahlen aus der Spracheingabe
+                    const numbers = text.match(/\d+/g);
+                    if (numbers && numbers.length > 0) {
+                      const extractedScore = numbers[0];
+                      setScore(extractedScore);
                     }
-                  }
-                }}
-                placeholder="z.B. 285" 
-                disabled={!selectedShooterId}
-                className={score && selectedLeagueId ? (
-                  (() => {
-                    const scoreVal = parseInt(score);
-                    let maxPossibleScore = 300;
-                    const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
-                    const selectedLeagueObject = allLeagues.find(l => l.id === selectedLeagueId);
-                    
-                    if (selectedLeagueObject && fourHundredPointDisciplines.includes(selectedLeagueObject.type)) {
-                      maxPossibleScore = 400;
-                    }
-                    
-                    return (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) 
-                      ? "border-red-500 focus:ring-red-500" 
-                      : "border-green-500 focus:ring-green-500";
-                  })()
-                ) : ""}
-              />
+                  }}
+                  disabled={!selectedShooterId}
+                  size="default"
+                  className="shrink-0"
+                />
+              </div>
               {score && selectedLeagueId && (() => {
                 const scoreVal = parseInt(score);
                 let maxPossibleScore = 300;
@@ -1043,7 +1074,7 @@ export default function VereinErgebnissePage() {
                 className="ml-2"
               />
             </div>
-            <RadioGroup value={resultType} onValueChange={(value) => setResultType(value as "regular" | "pre" | "post")} className="flex space-x-4">
+            <RadioGroup value={resultType} onValueChange={(value) => setResultType(value as "regular" | "pre" | "post")} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
               <div className="flex items-center space-x-2"><RadioGroupItem value="regular" id="vver-r-regular" /><Label htmlFor="vver-r-regular">Regulär</Label></div>
               <div className="flex items-center space-x-2"><RadioGroupItem value="pre" id="vver-r-pre" /><Label htmlFor="vver-r-pre">Vorschießen</Label></div>
               <div className="flex items-center space-x-2"><RadioGroupItem value="post" id="vver-r-post" /><Label htmlFor="vver-r-post">Nachschießen</Label></div>

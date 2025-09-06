@@ -5,11 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Separator } from '@/components/ui/separator';
 import { ScrollText } from 'lucide-react';
 import { FAQSearch } from '@/components/rwk-ordnung/faq-search';
+import { BackButton } from '@/components/ui/back-button';
 
 export default function RwkOrdnungPage() {
   return (
     <div className="space-y-8 container mx-auto px-4 py-8 max-w-full overflow-x-hidden">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:space-x-3 mb-8">
+        <BackButton className="mr-2" fallbackHref="/" />
         <ScrollText className="h-8 w-8 sm:h-10 sm:w-10 text-primary flex-shrink-0" />
         <div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary break-words">Rundenwettkampfordnung</h1>

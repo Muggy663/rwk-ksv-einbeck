@@ -8,6 +8,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { useAuthContext } from '@/components/auth/AuthContext';
+import { BackButton } from '@/components/ui/back-button';
 
 export default function KMDashboard() {
   const { hasKMAccess, userRole, loading } = useKMAuth();
@@ -73,7 +74,10 @@ export default function KMDashboard() {
   return (
     <div className="container py-4 px-2 max-w-full mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-primary">🏆 KM-Dashboard</h1>
+        <div className="flex items-center mb-2">
+          <BackButton className="mr-2" fallbackHref="/" />
+          <h1 className="text-3xl font-bold text-primary">🏆 KM-Dashboard</h1>
+        </div>
         <p className="text-muted-foreground">
           Hallo {user?.displayName || user?.email}! Kreismeisterschafts-Meldungen für Ihren Verein
           {userRole && <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{userRole === 'admin' ? 'Admin' : userRole === 'km_organisator' ? 'KM-Organisator' : 'Vereinsvertreter'}</span>}

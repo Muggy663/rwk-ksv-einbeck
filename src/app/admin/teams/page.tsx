@@ -57,6 +57,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { SubstitutionDialog } from '@/components/admin/SubstitutionDialog';
+import { BackButton } from '@/components/ui/back-button';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -792,7 +793,10 @@ export default function AdminTeamsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div className="flex items-center justify-between w-full md:w-auto">
-          <h1 className="text-2xl font-semibold text-primary">Mannschaftsverwaltung (Admin)</h1>
+          <div className="flex items-center">
+            <BackButton className="mr-2 md:hidden" fallbackHref="/admin" />
+            <h1 className="text-2xl font-semibold text-primary">Mannschaftsverwaltung (Admin)</h1>
+          </div>
           <Link href="/admin" className="md:hidden">
             <Button variant="outline" size="sm">
               Zurück
@@ -800,11 +804,14 @@ export default function AdminTeamsPage() {
           </Link>
         </div>
         <div className="flex flex-col sm:flex-row items-end gap-2 w-full md:w-auto">
-          <Link href="/admin" className="hidden md:block">
-            <Button variant="outline" size="sm">
-              Zurück zum Dashboard
-            </Button>
-          </Link>
+          <div className="hidden md:flex items-center">
+            <BackButton className="mr-2" fallbackHref="/admin" />
+            <Link href="/admin">
+              <Button variant="outline" size="sm">
+                Zurück zum Dashboard
+              </Button>
+            </Link>
+          </div>
            <div className="w-full sm:w-auto space-y-1.5">
             <Label htmlFor="saison-select-admin-teams">Saison</Label>
             <Select value={selectedSeasonId} onValueChange={(val) => { setSelectedSeasonId(val); setSelectedLeagueIdFilter(ALL_LEAGUES_FILTER_VALUE); setTeamsForDisplay([]); }}>

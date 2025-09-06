@@ -245,6 +245,7 @@ export default function HandbuchPage() {
                     <li><strong>Ligaauswahl:</strong> Nur Ligen, in denen der ausgewählte/zugewiesene Verein im gewählten Wettkampfjahr Mannschaften gemeldet hat.</li>
                     <li><strong>Mannschaftsauswahl:</strong> Alle Mannschaften der ausgewählten Liga (eigene und gegnerische), damit Ergebnisse für Begegnungen eingetragen werden können.</li>
                     <li><strong>Schützenauswahl:</strong> Schützen der ausgewählten Mannschaft.</li>
+                    <li><strong>Voice Input (Neu):</strong> Sprechen Sie "185 Ringe" statt zu tippen - Deutsche Zahlenerkennung für schnellere Eingabe.</li>
                     <li>Die Ergebnisse werden zunächst in einer Liste gesammelt, bevor Sie sie endgültig speichern. Bereits erfasste Schützen werden aus der Auswahlliste entfernt. Das System prüft automatisch, ob die eingegebenen Ringzahlen gültig sind. Es wird auch gespeichert, wer das Ergebnis eingetragen hat.</li>
                 </ul>
             </CardContent>

@@ -6,6 +6,7 @@ import { LoginForm } from '@/components/auth/LoginForm';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
+import { BackButton } from '@/components/ui/back-button';
 
 export default function LoginPage() {
   const { user, loading } = useAuth();
@@ -52,5 +53,12 @@ export default function LoginPage() {
     );
   }
   
-  return <LoginForm />;
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center">
+        <BackButton className="mr-2" fallbackHref="/" />
+      </div>
+      <LoginForm />
+    </div>
+  );
 }

@@ -91,6 +91,7 @@ import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { SubstitutionBadge } from '@/components/ui/substitution-badge';
+import { BackButton } from '@/components/ui/back-button';
 
 const EXCLUDED_TEAM_NAME_PART = 'einzel'; // Case-insensitive check later
 
@@ -1531,6 +1532,7 @@ function RwkTabellenPageComponent() {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="flex items-center space-x-3">
+          <BackButton className="mr-2" fallbackHref="/" />
           <TableIconLucide className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold text-primary">{pageTitle}</h1>
         </div>

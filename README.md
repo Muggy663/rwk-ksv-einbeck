@@ -4,7 +4,7 @@
 
 Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
-[![Version](https://img.shields.io/badge/Version-0.13.1-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-0.13.3-blue?style=for-the-badge)](#)
 [![Android App](https://img.shields.io/badge/Android_App-0.9.4.1-success?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -56,7 +56,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 | Platform | Version | Status | Download |
 |----------|---------|--------|---------|
-| **Web App** | 0.12.2 | 🔄 Beta | Vercel Deployment |
+| **Web App** | 0.13.3 | 🔄 Beta | Vercel Deployment |
 | **Android App** | 0.9.4.1 | ✅ Produktiv | Google Play Store |
 | **iOS App** | - | ❌ Nicht geplant | Unrentabel |
 
@@ -77,6 +77,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - **🏆 KM-System**: Vollständige Kreismeisterschafts-Verwaltung mit Startlisten
 - **📱 Progressive Web App**: Funktioniert offline, installierbar wie native App
 - **🌙 Enhanced Dark Mode**: Professionelle Farbpalette mit Glow-Effekten
+- **🔙 BackButton Navigation**: Einheitliche Zurück-Navigation auf allen Seiten
 
 ## 🌟 Warum RWK Einbeck App?
 
@@ -170,6 +171,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
+- **Web-Version 0.13.3** - Navigation & Benutzerfreundlichkeit: Systematische BackButtons auf allen Seiten, einheitliche Zurück-Navigation, mobile Optimierung, intelligente Fallbacks, konsistente Positionierung
 - **Web-Version 0.13.1** - Mobile Navigation & Dialog Fixes: Burger-Menü mit Logout-Button, Android Safe Areas für Dialoge, korrekte Dialog-Positionierung, entfernte redundante untere Navigation, verbesserte mobile Benutzerfreundlichkeit
 - **Web-Version 0.13.0** - KM-Mannschaftsregeln & Optimierungen: Vollständige Mannschaftsregeln-Verwaltung mit Drag & Drop, Altersklassen-Kombinationen, Disziplin-spezifische Regeln, optimistische Updates und korrekte Altersklassen-Berechnung
 - **Web-Version 0.12.2** - Mobile Navigation & Code Quality: Burger-Menü mit Safe Area, Mobile-optimierte Tabellen, Dark Mode Button-Fixes, Dialog-Positionierung und wiederverwendbare Komponenten

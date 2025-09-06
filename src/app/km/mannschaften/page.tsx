@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { MannschaftsbildungService } from '@/lib/services/mannschaftsbildung-service';
+import { BackButton } from '@/components/ui/back-button';
 
 interface Mannschaft {
   id: string;
@@ -259,7 +260,7 @@ export default function KMMannschaften() {
     <div className="container py-8 max-w-6xl mx-auto">
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-4">
-          <Link href="/km" className="text-primary hover:text-primary/80">← Zurück</Link>
+          <BackButton className="mr-2" fallbackHref="/km" />
         </div>
         <div className="flex items-center justify-between">
           <div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { AlertCircle, CalendarPlus, Download, FileDown, Pencil } from 'lucide-react';
+import { BackButton } from '@/components/ui/back-button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -297,7 +298,10 @@ export default function TerminePage() {
   return (
     <div className="container py-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-        <h1 className="text-3xl font-bold text-primary mb-4 md:mb-0">Terminkalender</h1>
+        <div className="flex items-center mb-4 md:mb-0">
+          <BackButton className="mr-2" fallbackHref="/" />
+          <h1 className="text-3xl font-bold text-primary">Terminkalender</h1>
+        </div>
         <div className="flex flex-col sm:flex-row gap-2">
           {user && (
             <>

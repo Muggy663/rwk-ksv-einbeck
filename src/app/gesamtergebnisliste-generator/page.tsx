@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { BarChart3, Printer, ArrowLeft, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { BackButton } from '@/components/ui/back-button';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import type { Season, League, Team } from '@/types/rwk';
@@ -132,6 +133,7 @@ export default function GesamtergebnislisteGeneratorPage() {
     <div className="container mx-auto py-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3">
+          <BackButton className="mr-2" fallbackHref="/dokumente" />
           <BarChart3 className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-2xl font-semibold text-primary">Gesamtergebnisliste-Generator</h1>

@@ -10,6 +10,7 @@ import type { Shooter, KMDisziplin, KMMeldung } from '@/types';
 import { getStartVereinForDisziplin } from '@/lib/services/km-startrechte-service';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { useAuthContext } from '@/components/auth/AuthContext';
+import { BackButton } from '@/components/ui/back-button';
 
 export default function KMMeldungen() {
   const { toast } = useToast();
@@ -370,7 +371,7 @@ export default function KMMeldungen() {
   return (
     <div className="container py-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/km" className="text-primary hover:text-primary/80">← Zurück</Link>
+        <BackButton className="mr-2" fallbackHref="/km" />
         <div>
           <h1 className="text-3xl font-bold text-primary">📝 Schützen zur KM 2026 melden</h1>
           <p className="text-muted-foreground">

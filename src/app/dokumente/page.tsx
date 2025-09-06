@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { DocumentCard } from './DocumentCard';
 import { Document } from '@/lib/services/document-service';
 import { useAuth } from '@/hooks/use-auth';
+import { BackButton } from '@/components/ui/back-button';
 
 export default function DokumentePage() {
   const [activeTab, setActiveTab] = useState<string>('ausschreibungen');
@@ -165,9 +166,12 @@ export default function DokumentePage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-primary">Dokumente & Ausschreibungen</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Offizielle Dokumente und Formulare des KSV Einbeck</p>
+        <div className="flex items-center">
+          <BackButton className="mr-2" fallbackHref="/" />
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-primary">Dokumente & Ausschreibungen</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Offizielle Dokumente und Formulare des KSV Einbeck</p>
+          </div>
         </div>
         <SearchBar 
           onSearch={(query) => setSearchQuery(query)} 

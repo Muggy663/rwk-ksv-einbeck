@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FileText, Download, Printer, ArrowLeft, BarChart3 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { BackButton } from '@/components/ui/back-button';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
@@ -143,6 +144,7 @@ export default function HandzettelGeneratorPage() {
     <div className="container mx-auto py-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3">
+          <BackButton className="mr-2" fallbackHref="/dokumente" />
           <FileText className="h-8 w-8 text-primary" />
           <div>
             <h1 className="text-2xl font-semibold text-primary">Handzettel-Generator</h1>
