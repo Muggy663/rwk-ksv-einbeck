@@ -21,7 +21,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch KSV Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK) und Kreismeisterschafts (KM) App. (Stand: 02.09.2025, Web-Version 0.13.1, App-Version 0.9.4.1, KM-System 1.0.0)
+            Funktionen und Bedienung der Rundenwettkampf (RWK), Kreismeisterschafts (KM) und Vereinssoftware. (Stand: 11.09.2025, Web-Version 1.5.8, App-Version 0.9.4.1, Vereinssoftware 1.5.8)
           </p>
         </div>
       </div>
@@ -49,6 +49,17 @@ export default function HandbuchPage() {
         >
           <Trophy className="h-4 w-4" />
           <span>Kreismeisterschaften (KM)</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('vereinssoftware')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+            activeTab === 'vereinssoftware' 
+              ? 'bg-background text-primary shadow-sm' 
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <BookOpenCheck className="h-4 w-4" />
+          <span>Vereinssoftware</span>
         </button>
       </div>
 
@@ -686,6 +697,322 @@ export default function HandbuchPage() {
           
           <Separator className="my-6" />
           <p className="text-center text-sm text-muted-foreground"><em>KM-Handbuch wird parallel zur Entwicklung aktualisiert.</em></p>
+        </>
+      )}
+      
+      {activeTab === 'vereinssoftware' && (
+        <>
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl text-accent">Vereinssoftware - Benutzerhandbuch</CardTitle>
+              <CardDescription>Version 1.5.8 - SEPA, Jubiläen & Lizenzen-Management</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <ul className="list-disc list-inside pl-4 space-y-1">
+                <li><a href="#vs-einleitung" className="text-primary hover:underline">1. Was ist die Vereinssoftware?</a></li>
+                <li><a href="#vs-mitgliederverwaltung" className="text-primary hover:underline">2. Mitglieder verwalten</a></li>
+                <li><a href="#vs-beitraege" className="text-primary hover:underline">3. Beiträge & SEPA-Lastschrift</a></li>
+                <li><a href="#vs-jubilaeen" className="text-primary hover:underline">4. Geburtstage & Jubiläen</a></li>
+                <li><a href="#vs-lizenzen" className="text-primary hover:underline">5. Lizenzen & Ausbildungen</a></li>
+                <li><a href="#vs-aufgaben" className="text-primary hover:underline">6. Aufgaben für den Vorstand</a></li>
+                <li><a href="#vs-suche" className="text-primary hover:underline">7. Globale Suche nutzen</a></li>
+              </ul>
+            </CardContent>
+          </Card>
+          
+          <Separator className="my-6" />
+          
+          <section id="vs-einleitung" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">1. Was ist die Vereinssoftware?</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Moderne Vereinsverwaltung für Schützenvereine</CardTitle></CardHeader>
+              <CardContent>
+                <p>Die Vereinssoftware hilft Ihnen dabei, Ihren Schützenverein digital zu verwalten. Sie können Mitglieder erfassen, Beiträge verwalten, Jubiläen planen und vieles mehr.</p>
+                
+                <div className="mt-4 bg-green-50 p-3 rounded-md border border-green-200">
+                  <h4 className="font-medium text-green-800 mb-2">✨ Das können Sie mit der Vereinssoftware v1.5.8 machen:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-green-700">
+                    <li><strong>👥 Mitglieder verwalten:</strong> Alle Daten an einem Ort - Name, Adresse, Geburtstag, E-Mail</li>
+                    <li><strong>💳 SEPA-Beiträge:</strong> Multi-Bank-Export für automatische Lastschrift-Zahlungen</li>
+                    <li><strong>🎂 Jubiläen planen:</strong> Geburtstage & Vereinsjubiläen mit 5-Jahres-Vorausplanung</li>
+                    <li><strong>🏆 Lizenzen & Ausbildungen:</strong> 8 Schießsport-Lizenzen mit Ablauf-Überwachung</li>
+                    <li><strong>👔 12 Vorstandspositionen:</strong> Von 1. Vorsitzender bis Kassenprüfer verwalten</li>
+                    <li><strong>📋 Aufgaben verwalten:</strong> To-Do-Listen für Vorstand mit Prioritäten</li>
+                    <li><strong>🔍 Alles finden:</strong> Globale Suche über alle Bereiche</li>
+                    <li><strong>⚖️ Vereinsrecht:</strong> Protokolle, Wahlen & Compliance-Management</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
+                  <h4 className="font-medium text-blue-800 mb-2">🎯 Für wen ist das gedacht?</h4>
+                  <p className="text-blue-700">Die Vereinssoftware ist perfekt für Vereinsvorstände, Kassenwarte und Geschäftsführer, die ihren Verein modern und effizient verwalten möchten.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="vs-mitgliederverwaltung" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">2. Mitglieder verwalten</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Alle Mitgliederdaten an einem Ort</CardTitle></CardHeader>
+              <CardContent>
+                <p>In der Mitgliederverwaltung können Sie alle wichtigen Daten Ihrer Vereinsmitglieder erfassen und bearbeiten.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">So funktioniert es:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Neues Mitglied anlegen:</strong> Klicken Sie auf "Mitglied hinzufügen" und füllen Sie das Formular aus</li>
+                  <li><strong>Daten bearbeiten:</strong> Klicken Sie bei einem Mitglied auf "Bearbeiten" und ändern Sie die Daten</li>
+                  <li><strong>Mitglied suchen:</strong> Nutzen Sie das Suchfeld, um schnell ein bestimmtes Mitglied zu finden</li>
+                  <li><strong>Status ändern:</strong> Setzen Sie Mitglieder auf "Inaktiv" wenn sie austreten</li>
+                </ol>
+                
+                <h4 className="font-semibold mt-4 mb-2">Diese Daten können Sie erfassen:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <h5 className="font-medium mb-2">📋 Grunddaten:</h5>
+                    <ul className="list-disc pl-5 text-sm space-y-1">
+                      <li>Vor- und Nachname</li>
+                      <li>Geburtstag</li>
+                      <li>Geschlecht (für Wettkämpfe wichtig)</li>
+                      <li>Mitgliedsnummer</li>
+                    </ul>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <h5 className="font-medium mb-2">📍 Kontaktdaten:</h5>
+                    <ul className="list-disc pl-5 text-sm space-y-1">
+                      <li>Straße und Hausnummer</li>
+                      <li>Postleitzahl und Ort</li>
+                      <li>Telefonnummer</li>
+                      <li>E-Mail-Adresse</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="vs-beitraege" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">3. Beiträge & SEPA-Lastschrift</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Automatische Beitragsverwaltung</CardTitle></CardHeader>
+              <CardContent>
+                <p>Mit der SEPA-Lastschrift können Sie Mitgliedsbeiträge automatisch einziehen. Das spart Zeit und reduziert Zahlungsausfälle.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">So richten Sie SEPA ein:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>SEPA-Mandate sammeln:</strong> Lassen Sie Ihre Mitglieder ein SEPA-Mandat unterschreiben</li>
+                  <li><strong>Daten erfassen:</strong> Tragen Sie IBAN und Mandatsdatum in die Software ein</li>
+                  <li><strong>Beiträge festlegen:</strong> Definieren Sie die Beitragshöhe für jedes Mitglied</li>
+                  <li><strong>Lastschrift erstellen:</strong> Die Software erstellt automatisch die SEPA-Datei für Ihre Bank</li>
+                </ol>
+                
+                <div className="bg-green-50 p-3 rounded-md border border-green-200 mt-4">
+                  <h4 className="font-medium text-green-800 mb-2">💰 Vorteile der SEPA-Lastschrift:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-green-700">
+                    <li><strong>Automatisch:</strong> Beiträge werden pünktlich eingezogen</li>
+                    <li><strong>Weniger Arbeit:</strong> Keine manuellen Überweisungen mehr nötig</li>
+                    <li><strong>Übersichtlich:</strong> Sie sehen sofort, wer bezahlt hat und wer nicht</li>
+                    <li><strong>Mahnwesen:</strong> Automatische Erinnerungen bei offenen Beiträgen</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="vs-jubilaeen" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">4. Geburtstage & Jubiläen</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Nie wieder einen Geburtstag vergessen</CardTitle></CardHeader>
+              <CardContent>
+                <p>Die Software hilft Ihnen dabei, alle wichtigen Geburtstage und Vereinsjubiläen im Blick zu behalten.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">Das macht die Software für Sie:</h4>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>Geburtstage anzeigen:</strong> Wer hat diesen Monat Geburtstag?</li>
+                  <li><strong>Jubiläen berechnen:</strong> Wer ist seit 25, 40 oder 50 Jahren im Verein?</li>
+                  <li><strong>Ehrungen planen:</strong> Welche Ehrungen stehen in den nächsten Jahren an?</li>
+                  <li><strong>Urkunden erstellen:</strong> Automatische Jubiläums-Urkunden mit Vereinslogo</li>
+                </ul>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="bg-blue-50 p-3 rounded-md">
+                    <h5 className="font-medium text-blue-800 mb-2">🎂 Geburtstags-Ehrungen:</h5>
+                    <ul className="list-disc pl-5 text-sm text-blue-700">
+                      <li>18 Jahre: Glückwunschkarte</li>
+                      <li>50 Jahre: Besondere Ehrung</li>
+                      <li>60, 70 Jahre: Gutschein</li>
+                      <li>Ab 70: Alle 5 Jahre</li>
+                    </ul>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded-md">
+                    <h5 className="font-medium text-green-800 mb-2">🏆 Vereins-Jubiläen:</h5>
+                    <ul className="list-disc pl-5 text-sm text-green-700">
+                      <li>10 Jahre: Bronze-Ehrennadel</li>
+                      <li>25 Jahre: Silber-Ehrennadel</li>
+                      <li>40 Jahre: Gold-Ehrennadel</li>
+                      <li>50+ Jahre: Besondere Ehrungen</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 mt-4">
+                  <h4 className="font-medium text-yellow-800 mb-2">📅 5-Jahres-Planung:</h4>
+                  <p className="text-yellow-700">Sie können bis zu 5 Jahre im Voraus planen und sehen, welche Ehrungen in den kommenden Jahren anstehen. So können Sie rechtzeitig Urkunden bestellen und Feiern organisieren.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="vs-lizenzen" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">5. Lizenzen & Ausbildungen</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Schießsport-Lizenzen im Blick behalten</CardTitle></CardHeader>
+              <CardContent>
+                <p>Viele Schützen haben verschiedene Lizenzen und Ausbildungen, die regelmäßig erneuert werden müssen. Die Software hilft Ihnen dabei, den Überblick zu behalten.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">Diese Lizenzen & Ausbildungen können Sie verwalten (v1.5.8):</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <h5 className="font-medium mb-2">🎯 8 Echte Schießsport-Ausbildungen:</h5>
+                    <ul className="list-disc pl-5 text-sm space-y-1">
+                      <li>Waffensachkunde</li>
+                      <li>Schieß- und Standaufsicht</li>
+                      <li>JugendBasisLizenz</li>
+                      <li>Schießsportleiter</li>
+                      <li>Fachschießsportleiter</li>
+                      <li>Trainer C Basis</li>
+                      <li>Kampfrichter B</li>
+                      <li>Trainer C Leistung</li>
+                    </ul>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <h5 className="font-medium mb-2">👔 12 Vorstandspositionen:</h5>
+                    <ul className="list-disc pl-5 text-sm space-y-1">
+                      <li>1./2. Vorsitzender</li>
+                      <li>Kassenwart</li>
+                      <li>Schriftführer</li>
+                      <li>Schießwart</li>
+                      <li>Jugendwart</li>
+                      <li>Damenwart</li>
+                      <li>Zeugwart</li>
+                      <li>Pressewart</li>
+                      <li>Beisitzer</li>
+                      <li>Ehrenvorsitzender</li>
+                      <li>Kassenprüfer</li>
+                      <li>+ DSB-Lizenznummern</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="bg-red-50 p-3 rounded-md border border-red-200 mt-4">
+                  <h4 className="font-medium text-red-800 mb-2">⚠️ Automatische 90-Tage-Warnung (v1.5.8):</h4>
+                  <p className="text-red-700">Die Software warnt Sie automatisch 90 Tage vor Ablauf mit Status-Ampel: <strong>Grün</strong> (aktiv), <strong>Gelb</strong> (läuft bald ab), <strong>Rot</strong> (abgelaufen). Live-Statistiken zeigen Ihnen sofort, welche Lizenzen Aufmerksamkeit benötigen.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="vs-aufgaben" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">6. Aufgaben für den Vorstand</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">To-Do-Listen für bessere Organisation</CardTitle></CardHeader>
+              <CardContent>
+                <p>Mit dem Aufgaben-Management können Sie wichtige Vereinsaufgaben planen, verteilen und verfolgen.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">So funktioniert es:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Aufgabe erstellen:</strong> Beschreiben Sie, was gemacht werden muss</li>
+                  <li><strong>Zuständigkeit festlegen:</strong> Wer soll die Aufgabe erledigen?</li>
+                  <li><strong>Frist setzen:</strong> Bis wann muss die Aufgabe erledigt sein?</li>
+                  <li><strong>Priorität wählen:</strong> Ist es dringend oder kann es warten?</li>
+                  <li><strong>Status verfolgen:</strong> Ist die Aufgabe erledigt oder noch offen?</li>
+                </ol>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div className="bg-red-50 p-3 rounded-md">
+                    <h5 className="font-medium text-red-800 mb-2">🔴 Hoch:</h5>
+                    <ul className="list-disc pl-5 text-sm text-red-700">
+                      <li>Jahreshauptversammlung</li>
+                      <li>Steuererklärung</li>
+                      <li>Versicherung erneuern</li>
+                    </ul>
+                  </div>
+                  <div className="bg-yellow-50 p-3 rounded-md">
+                    <h5 className="font-medium text-yellow-800 mb-2">🟡 Mittel:</h5>
+                    <ul className="list-disc pl-5 text-sm text-yellow-700">
+                      <li>Vereinszeitung erstellen</li>
+                      <li>Schießstand renovieren</li>
+                      <li>Neue Mitglieder werben</li>
+                    </ul>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded-md">
+                    <h5 className="font-medium text-green-800 mb-2">🟢 Niedrig:</h5>
+                    <ul className="list-disc pl-5 text-sm text-green-700">
+                      <li>Website aktualisieren</li>
+                      <li>Archiv sortieren</li>
+                      <li>Vereinsausflug planen</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="vs-suche" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">7. Globale Suche nutzen</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Alles finden mit einem Klick</CardTitle></CardHeader>
+              <CardContent>
+                <p>Die globale Suche hilft Ihnen dabei, schnell alles zu finden - egal ob Mitglieder, Aufgaben, Beiträge oder andere Vereinsdaten.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">So nutzen Sie die Suche:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Suchfeld finden:</strong> Das Suchfeld steht oben in der Navigation</li>
+                  <li><strong>Begriff eingeben:</strong> Tippen Sie ein, was Sie suchen (Name, Aufgabe, etc.)</li>
+                  <li><strong>Ergebnisse anschauen:</strong> Die Software zeigt Ihnen passende Treffer</li>
+                  <li><strong>Direkt hinspringen:</strong> Klicken Sie auf ein Ergebnis, um direkt dorthin zu gelangen</li>
+                </ol>
+                
+                <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
+                  <h4 className="font-medium text-blue-800 mb-2">🔍 Das können Sie suchen:</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
+                      <li><strong>Mitglieder:</strong> "Hans Müller" oder "Müller"</li>
+                      <li><strong>Aufgaben:</strong> "Jahreshauptversammlung"</li>
+                      <li><strong>Beiträge:</strong> "SEPA" oder "Lastschrift"</li>
+                      <li><strong>Jubiläen:</strong> "Geburtstag" oder "Ehrung"</li>
+                    </ul>
+                    <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
+                      <li><strong>Lizenzen:</strong> "Sportschütze" oder "Jagdschein"</li>
+                      <li><strong>Bereiche:</strong> "Dashboard" oder "Statistik"</li>
+                      <li><strong>Funktionen:</strong> "Backup" oder "Export"</li>
+                      <li><strong>Und vieles mehr...</strong></li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="bg-green-50 p-3 rounded-md border border-green-200 mt-4">
+                  <h4 className="font-medium text-green-800 mb-2">💡 Tipp:</h4>
+                  <p className="text-green-700">Die Suche ist sehr intelligent - sie findet auch Ergebnisse, wenn Sie sich bei der Schreibweise nicht ganz sicher sind. Probieren Sie es einfach aus!</p>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          <p className="text-center text-sm text-muted-foreground"><em>Dieses Handbuch wird regelmäßig aktualisiert, wenn neue Funktionen hinzukommen.</em></p>
         </>
       )}
     </div>

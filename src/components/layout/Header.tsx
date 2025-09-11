@@ -4,7 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { MainNav } from './MainNav';
 import { useAuth } from '@/hooks/use-auth';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { GlobalSearch } from '@/components/GlobalSearch';
 
 export function Header() {
   const { user } = useAuth();
@@ -25,9 +26,14 @@ export function Header() {
             />
             <span className="hidden font-bold sm:inline-block text-lg">RWK Einbeck</span>
           </Link>
-          <ThemeToggle />
         </div>
-        <div className="flex-grow">
+        
+        <div className="flex-1 max-w-lg mx-4 min-w-0">
+          <GlobalSearch />
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <ThemeToggle />
           <MainNav />
         </div>
       </div>

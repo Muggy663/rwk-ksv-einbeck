@@ -14,35 +14,24 @@ export default function KMDashboard() {
   const { hasKMAccess, userRole, loading } = useKMAuth();
   const { user } = useAuthContext();
   const [isInstructionOpen, setIsInstructionOpen] = useState(false);
-  const [stats, setStats] = useState({ vereine: 0, meldungen: 0, mitglieder: 0, rwkTeilnehmer: 0 });
-  const [selectedYear, setSelectedYear] = useState(2026);
+  const [aktivesJahr, setAktivesJahr] = useState({ jahr: 2026, meldeschluss: '15.12.2025' });
+  const [isLoadingJahr, setIsLoadingJahr] = useState(true);
   
   React.useEffect(() => {
-    loadDashboardData();
-  }, [selectedYear]);
+    loadAktivesJahr();
+  }, []);
   
-  const loadDashboardData = async () => {
+  const loadAktivesJahr = async () => {
     try {
-      const meldungenRes = await fetch(`/api/km/meldungen?jahr=${selectedYear}`);
-      if (meldungenRes.ok) {
-        const data = await meldungenRes.json();
-        const meldungen = data.data || [];
-        
-        const uniqueVereine = new Set();
-        meldungen.forEach(meldung => {
-          const schuetze = meldung.schuetzeId;
-          if (schuetze) uniqueVereine.add(schuetze);
-        });
-        
-        setStats({
-          vereine: uniqueVereine.size,
-          meldungen: meldungen.length,
-          mitglieder: 0,
-          rwkTeilnehmer: 0
-        });
+      const response = await fetch('/api/km/aktuelles-jahr');
+      if (response.ok) {
+        const data = await response.json();
+        setAktivesJahr(data.data);
       }
     } catch (error) {
-      console.error('Dashboard-Fehler:', error);
+      console.error('Fehler beim Laden des aktuellen Jahres:', error);
+    } finally {
+      setIsLoadingJahr(false);
     }
   };
 
@@ -234,27 +223,20 @@ export default function KMDashboard() {
         <Card className="hover:shadow-md transition-shadow border-orange-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-orange-800">
-              📊 Statistiken & Übersicht
+              📊 Aktuelle Kreismeisterschaft
             </CardTitle>
             <CardDescription>
-              Aktuelle Zahlen zur Kreismeisterschaft {selectedYear}
+              KM {aktivesJahr.jahr} - Wichtige Informationen
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="bg-orange-50 p-3 rounded border border-orange-100">
                 <div className="text-orange-700 space-y-2">
-                  <div className="flex items-center gap-2 font-medium">
-                    <span>📊</span>
-                    <span>{stats.meldungen} Schützen gemeldet</span>
-                  </div>
-                  <div className="flex items-center gap-2 font-medium">
-                    <span>🏆</span>
-                    <span>{stats.vereine} Vereine aktiv</span>
-                  </div>
+
                   <div className="flex items-center gap-2 font-medium text-orange-700">
                     <span>⏰</span>
-                    <span>Meldeschluss: 15.12.2025</span>
+                    <span>Meldeschluss: {aktivesJahr.meldeschluss}</span>
                   </div>
                 </div>
               </div>

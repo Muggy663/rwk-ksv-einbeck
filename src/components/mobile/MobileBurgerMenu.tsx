@@ -128,7 +128,10 @@ export function MobileBurgerMenu() {
           {/* Footer with safe area */}
           <div className="p-4 border-t pb-safe-area-bottom">
             <p className="text-xs text-muted-foreground text-center">
-              RWK Einbeck App v0.13.1
+              RWK Einbeck App v1.5.8
+            </p>
+            <p className="text-xs text-muted-foreground text-center mt-1">
+              SEPA, Jubiläen & Lizenzen
             </p>
           </div>
         </div>

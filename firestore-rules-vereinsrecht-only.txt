@@ -1,0 +1,22 @@
+// NUR DIESE REGELN ZU DEN BESTEHENDEN HINZUFÜGEN:
+
+// VEREINSRECHT - TEMPORÄRE ENTWICKLUNGS-REGELN (OFFEN)
+match /vereinsrecht_protokolle/{document} {
+  allow read, write: if request.auth != null;
+}
+
+match /vereinsrecht_wahlen/{document} {
+  allow read, write: if request.auth != null;
+}
+
+match /vereinsrecht_satzung/{document} {
+  allow read, write: if request.auth != null;
+}
+
+match /vereinsrecht_compliance/{document} {
+  allow read, write: if request.auth != null;
+}
+
+match /vereinsrecht_spenden/{document} {
+  allow read, write: if request.auth != null;
+}

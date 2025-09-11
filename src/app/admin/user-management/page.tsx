@@ -22,9 +22,11 @@ const CLUBS_COLLECTION = "clubs";
 const USER_PERMISSIONS_COLLECTION = "user_permissions";
 
 const ROLES_OPTIONS = [
-  { value: 'vereinsvertreter', label: 'Vereinsvertreter' },
-  { value: 'mannschaftsfuehrer', label: 'Mannschaftsführer' },
-  { value: 'km_organisator', label: 'KM-Organisator' },
+  { value: 'vereinsvertreter', label: 'Vereinsvertreter (RWK + KM)' },
+  { value: 'vereinsvorstand', label: 'Vereinsvorstand (RWK + KM + Vereinssoftware)' },
+  { value: 'mannschaftsfuehrer', label: 'Mannschaftsführer (nur RWK)' },
+  { value: 'km_organisator', label: 'KM-Organisator (nur KM)' },
+  { value: 'vereins_admin', label: 'Vereins-Admin (nur Vereinssoftware)' },
   { value: 'NO_ROLE', label: 'Keine Rolle / Rolle entfernen' },
 ];
 
@@ -150,7 +152,7 @@ export default function AdminUserManagementPage() {
     const roleToSet = formData.role === 'NO_ROLE' ? null : formData.role;
     const clubIdToSet = formData.selectedClubIds.length > 0 ? formData.selectedClubIds[0] : null;
     
-    if ((roleToSet === 'vereinsvertreter' || roleToSet === 'mannschaftsfuehrer') && !clubIdToSet) {
+    if ((roleToSet === 'vereinsvertreter' || roleToSet === 'vereinsvorstand' || roleToSet === 'mannschaftsfuehrer' || roleToSet === 'vereins_admin') && !clubIdToSet) {
       toast({ title: "Fehlende Vereinszuweisung", description: `Für die Rolle '${roleToSet}' muss ein Verein ausgewählt werden.`, variant: "destructive" }); return;
     }
     

@@ -197,36 +197,62 @@ export default function AdminDashboardPage() {
       status: "Erledigt (v0.7.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.7.0"
     },
     
-    // Ziel: Version 0.7.1 (Fehlerbehebungen & UX-Verbesserungen)
+    // Version 1.5.5 (KM-Jahresverwaltung & Inline-Bearbeitung) - Neu abgeschlossen
+    {
+      text: "KM-Jahresverwaltung: Jahre anlegen, Meldeschlüsse verwalten und Status ändern.",
+      status: "Erledigt (v1.5.5)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "1.5.5", isMajor: true
+    },
+    {
+      text: "Jahresspezifische Collections: km_meldungen_JAHR_DISZIPLIN für bessere Organisation.",
+      status: "Erledigt (v1.5.5)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "1.5.5"
+    },
+    {
+      text: "Automatische Firestore Rules für alle KM-Jahre (Wildcard-Pattern).",
+      status: "Erledigt (v1.5.5)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "1.5.5"
+    },
+    {
+      text: "Inline-Bearbeitung in KM-Meldungen-Tabelle: LM-Teilnahme, VM-Ergebnis direkt ändern.",
+      status: "Erledigt (v1.5.5)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "1.5.5"
+    },
+    {
+      text: "Migration-System für bestehende KM-Daten in neue Collections.",
+      status: "Erledigt (v1.5.5)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "1.5.5"
+    },
+    {
+      text: "Dynamisches Jahr-Loading: Alle KM-Bereiche arbeiten automatisch mit aktivem Jahr.",
+      status: "Erledigt (v1.5.5)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "1.5.5"
+    },
+    
+    // Ziel: Version 1.5.6 (Nächste Verbesserungen)
     {
       text: "Standard-Statistik-Seite korrigieren, insbesondere den Mannschaftsvergleich.",
-      status: "Als Nächstes (v0.7.1)", icon: AlertCircle, iconColor: "text-destructive", versionTarget: "0.7.1", isMajor: true
+      status: "Als Nächstes (v1.5.6)", icon: AlertCircle, iconColor: "text-destructive", versionTarget: "1.5.6", isMajor: true
     },
     {
       text: "\"Erste Schritte starten\"-Button mit Funktionalität versehen.",
-      status: "Offen (v0.7.1)", icon: ShieldQuestion, iconColor: "text-purple-600", versionTarget: "0.7.1"
+      status: "Offen (v1.5.6)", icon: ShieldQuestion, iconColor: "text-purple-600", versionTarget: "1.5.6"
     },
     {
       text: "\"Passwort ändern\"-Funktion implementieren.",
-      status: "Offen (v0.7.1)", icon: KeyRound, iconColor: "text-purple-600", versionTarget: "0.7.1"
+      status: "Offen (v1.5.6)", icon: KeyRound, iconColor: "text-purple-600", versionTarget: "1.5.6"
     },
     {
       text: "Vereinfachung der Benutzeroberfläche (Navigation, Terminkalender, etc.).",
-      status: "Offen (v0.7.1)", icon: Settings, iconColor: "text-purple-600", versionTarget: "0.7.1"
+      status: "Offen (v1.5.6)", icon: Settings, iconColor: "text-purple-600", versionTarget: "1.5.6"
     },
 
-    // Ziel: Version 0.8.0 (Beta-Phase)
+    // Ziel: Version 1.6.0 (Nächste Major-Version)
     {
       text: "Benachrichtigungssystem für neue Ergebnisse und wichtige Ereignisse.", 
-      status: "Zukunft (v0.8.0)", icon: MessagesSquare, iconColor: "text-muted-foreground", versionTarget: "0.8.0", isMajor: true
+      status: "Zukunft (v1.6.0)", icon: MessagesSquare, iconColor: "text-muted-foreground", versionTarget: "1.6.0", isMajor: true
     },
     {
       text: "Erweiterte Benutzerberechtigungen und Vereinfachung der Benutzerverwaltung.", 
-      status: "Zukunft (v0.8.0)", icon: UserCog, iconColor: "text-muted-foreground", versionTarget: "0.8.0"
+      status: "Zukunft (v1.6.0)", icon: UserCog, iconColor: "text-muted-foreground", versionTarget: "1.6.0"
     },
     {
       text: "Automatischer Saisonabschluss / Auf- und Abstieg (komplex).", 
-      status: "In Vorbereitung (v0.8.0)", icon: Trophy, iconColor: "text-blue-600", versionTarget: "0.8.0"
+      status: "In Vorbereitung (v1.6.0)", icon: Trophy, iconColor: "text-blue-600", versionTarget: "1.6.0"
     },
     
     // Zukunft (Nach Beta / v1.0+)

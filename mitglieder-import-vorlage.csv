@@ -1,0 +1,4 @@
+Vorname;Nachname;Mitgliedsnummer;Strasse;PLZ;Ort;Email;Telefon;Mobil;Geburtstag;Geschlecht;Vereinseintritt;DSB-Eintritt;Status
+Max;Mustermann;001;Musterstraße 1;12345;Musterstadt;max@verein.de;05551-123456;0170-123456;01.01.1990;M;01.01.2010;01.01.2011;aktiv
+Anna;Schmidt;002;Beispielweg 5;12345;Musterstadt;anna@verein.de;05551-987654;0170-987654;15.03.1985;W;15.03.2015;;aktiv
+Peter;Weber;003;Teststraße 10;12345;Musterstadt;peter@verein.de;05551-555666;;20.06.1978;M;01.06.2005;01.06.2006;inaktiv

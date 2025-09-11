@@ -13,9 +13,11 @@ export interface UserPermission {
   uid: string;
   email: string;
   displayName?: string;
-  role: 'vereinsvertreter' | 'mannschaftsfuehrer' | null;
+  role: 'vereinsvertreter' | 'mannschaftsfuehrer' | 'vereinsvorstand' | null;
+  roles?: string[]; // Multi-Role-System: ['vereinsvertreter', 'km_access', 'vereinssoftware']
   clubId: string | null;
   clubIds?: string[]; // Für mehrere Vereine
+  representedClubs?: string[]; // Für KM-Zugang
 }
 
 export interface AuthContextType {

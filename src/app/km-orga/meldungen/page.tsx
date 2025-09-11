@@ -34,6 +34,8 @@ export default function KMAdminMeldungen() {
   });
   const [schuetzenSearch, setSchuetzenSearch] = useState('');
   const [vereinSchuetzen, setVereinSchuetzen] = useState<any[]>([]);
+  const [editingMeldung, setEditingMeldung] = useState<string | null>(null);
+  const [editData, setEditData] = useState<any>({});
 
   useEffect(() => {
     if (hasFullAccess && !authLoading) {
@@ -148,6 +150,29 @@ export default function KMAdminMeldungen() {
       loadData();
     } catch (error) {
       toast({ title: 'Fehler', description: 'Meldung konnte nicht erstellt werden', variant: 'destructive' });
+    }
+  };
+
+  const updateMeldung = async (meldungId: string) => {
+    try {
+      const response = await fetch(`/api/km/meldungen/${meldungId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lmTeilnahme: editData.lmTeilnahme,
+          vmErgebnis: editData.vmRinge ? { ringe: parseFloat(editData.vmRinge) } : null,
+          anmerkung: editData.anmerkung || ''
+        })
+      });
+      
+      if (response.ok) {
+        toast({ title: 'Erfolg', description: 'Meldung aktualisiert' });
+        setEditingMeldung(null);
+        setEditData({});
+        loadData();
+      }
+    } catch (error) {
+      toast({ title: 'Fehler', description: 'Update fehlgeschlagen', variant: 'destructive' });
     }
   };
 
@@ -373,21 +398,41 @@ export default function KMAdminMeldungen() {
                         </span>
                       </td>
                       <td className="p-2">
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          meldung.lmTeilnahme 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          {meldung.lmTeilnahme ? 'Ja' : 'Nein'}
-                        </span>
+                        {editingMeldung === meldung.id ? (
+                          <input
+                            type="checkbox"
+                            checked={editData.lmTeilnahme || false}
+                            onChange={(e) => setEditData(prev => ({...prev, lmTeilnahme: e.target.checked}))}
+                            className="w-4 h-4"
+                          />
+                        ) : (
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            meldung.lmTeilnahme 
+                              ? 'bg-green-100 text-green-700' 
+                              : 'bg-gray-100 text-gray-700'
+                          }`}>
+                            {meldung.lmTeilnahme ? 'Ja' : 'Nein'}
+                          </span>
+                        )}
                       </td>
                       <td className="p-2">
-                        {meldung.vmErgebnis?.ringe ? (
-                          <span className="text-green-600 font-medium">
-                            {meldung.vmErgebnis.ringe}
-                          </span>
+                        {editingMeldung === meldung.id ? (
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={editData.vmRinge || ''}
+                            onChange={(e) => setEditData(prev => ({...prev, vmRinge: e.target.value}))}
+                            className="w-20 p-1 border rounded text-sm"
+                            placeholder="Ringe"
+                          />
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          meldung.vmErgebnis?.ringe ? (
+                            <span className="text-green-600 font-medium">
+                              {meldung.vmErgebnis.ringe}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )
                         )}
                       </td>
                       <td className="p-2 text-xs text-gray-500">
@@ -395,17 +440,47 @@ export default function KMAdminMeldungen() {
                       </td>
                       <td className="p-2">
                         <div className="flex gap-1">
-                          <Link href={`/km/meldungen?edit=${meldung.id}`}>
-                            <button className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-300 rounded">
-                              ✏️
-                            </button>
-                          </Link>
-                          <button 
-                            onClick={() => deleteMeldung(meldung.id)}
-                            className="text-red-600 hover:text-red-800 text-xs px-2 py-1 border border-red-300 rounded"
-                          >
-                            🗑️
-                          </button>
+                          {editingMeldung === meldung.id ? (
+                            <>
+                              <button 
+                                onClick={() => updateMeldung(meldung.id)}
+                                className="text-green-600 hover:text-green-800 text-xs px-2 py-1 border border-green-300 rounded"
+                              >
+                                ✓
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setEditingMeldung(null);
+                                  setEditData({});
+                                }}
+                                className="text-gray-600 hover:text-gray-800 text-xs px-2 py-1 border border-gray-300 rounded"
+                              >
+                                ✕
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button 
+                                onClick={() => {
+                                  setEditingMeldung(meldung.id);
+                                  setEditData({
+                                    lmTeilnahme: meldung.lmTeilnahme,
+                                    vmRinge: meldung.vmErgebnis?.ringe || '',
+                                    anmerkung: meldung.anmerkung || ''
+                                  });
+                                }}
+                                className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-300 rounded"
+                              >
+                                ✏️
+                              </button>
+                              <button 
+                                onClick={() => deleteMeldung(meldung.id)}
+                                className="text-red-600 hover:text-red-800 text-xs px-2 py-1 border border-red-300 rounded"
+                              >
+                                🗑️
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

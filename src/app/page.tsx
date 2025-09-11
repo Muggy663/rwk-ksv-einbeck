@@ -15,7 +15,7 @@ import { de } from 'date-fns/locale';
 import { fetchEvents } from '@/lib/services/calendar-service';
 import { cleanupExpiredEvents } from '@/lib/services/event-cleanup';
 import { newsService } from '@/lib/services/news-service';
-import { MaintenanceBanner } from '@/components/ui/maintenance-banner';
+import { MaintenanceBanner } from '@/components/MaintenanceBanner';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
@@ -155,31 +155,41 @@ export default function HomePage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      {/* Wartungshinweis - bei Bedarf aktivieren */}
-      <MaintenanceBanner 
-        show={false} // ← DEAKTIVIERT
-        message=""
-        type="maintenance"
-      />
+      {/* Wartungshinweis für Rollen-System Update */}
+      <MaintenanceBanner />
       
 
-      {/* Logo und Willkommenstext */}
-      <section className="text-center mb-12">
-        <Image
-          src="/images/logo.png"
-          alt="KSV Einbeck Logo"
-          width={150}
-          height={150}
-          className="mx-auto mb-6 rounded-lg shadow-md"
-          style={{ width: 150, height: 150 }}
-          priority
-        />
-        <h1 className="text-4xl font-bold text-primary mb-2">
-          Willkommen beim Rundenwettkampf KSV Einbeck
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Aktuelle Ergebnisse, Tabellen und Informationen zu den Rundenwettkämpfen des Kreisschützenverbandes Einbeck e.V.
-        </p>
+      {/* Hero-Section mit modernem Design */}
+      <section className="relative text-center mb-16 overflow-hidden">
+        {/* Animierter Hintergrund */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 animate-pulse" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.1),transparent_50%)] animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,119,198,0.1),transparent_50%)] animate-pulse" style={{ animationDelay: '2s' }} />
+        
+        <div className="relative z-10">
+          {/* Logo mit Glow-Effekt */}
+          <div className="relative mb-8">
+            <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" style={{ width: 180, height: 180, margin: 'auto' }} />
+            <Image
+              src="/images/logo.png"
+              alt="KSV Einbeck Logo"
+              width={150}
+              height={150}
+              className="relative mx-auto rounded-lg shadow-2xl"
+              style={{ width: 150, height: 150 }}
+              priority
+            />
+          </div>
+          
+          {/* Kraftvolle Headline */}
+          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent mb-4 animate-fade-in">
+            Willkommen beim Rundenwettkampf KSV Einbeck
+          </h1>
+          
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Aktuelle Ergebnisse, Tabellen und Informationen zu den Rundenwettkämpfen des Kreisschützenverbandes Einbeck e.V.
+          </p>
+        </div>
       </section>
 
       <Separator className="my-6" />
@@ -213,13 +223,15 @@ export default function HomePage() {
 
       </div>
 
-      {/* Karten-Grid */}
+      {/* Feature-Cards mit modernem Design */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         {/* Letzte Ergebnis-Updates */}
-        <Card className="md:col-span-2 shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="md:col-span-2 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-background via-background to-primary/5 border-primary/20 hover:border-primary/40">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <ListChecks className="h-7 w-7 text-primary" />
+              <div className="p-2 bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors">
+                <ListChecks className="h-7 w-7 text-primary animate-pulse" />
+              </div>
               <CardTitle className="text-2xl text-primary font-bold">Letzte Ergebnis-Updates</CardTitle>
             </div>
             <CardDescription className="text-muted-foreground dark:text-muted-foreground">
@@ -244,8 +256,8 @@ export default function HomePage() {
                     : `/rwk-tabellen?year=${update.competitionYear}&league=${update.leagueId}`;
                   
                   return (
-                    <li key={update.id} className="p-4 bg-muted/50 rounded-md shadow-sm hover:bg-muted/70 transition-colors">
-                      <Link href={linkHref} className="block hover:text-primary">
+                    <li key={update.id} className="p-4 bg-gradient-to-r from-muted/30 to-muted/50 rounded-lg shadow-sm hover:shadow-md hover:from-primary/10 hover:to-primary/5 transition-all duration-300 border border-transparent hover:border-primary/20">
+                      <Link href={linkHref} className="block hover:text-primary group">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                           <p className="text-md font-medium text-foreground dark:text-foreground">
                             Ergebnisse in der Liga <strong className="text-primary dark:text-primary">{update.leagueName} {uiDiscDisplayLabel ? `(${uiDiscDisplayLabel})` : ''}</strong> ({update.competitionYear}) hinzugefügt.
@@ -269,10 +281,12 @@ export default function HomePage() {
         </Card>
         
         {/* Nächste Termine */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-background via-background to-secondary/5 border-secondary/20 hover:border-secondary/40">
           <CardHeader>
             <CardTitle className="text-lg flex items-center">
-              <CalendarDays className="mr-2 h-5 w-5" />
+              <div className="p-1 bg-secondary/10 rounded-md hover:bg-secondary/20 transition-colors mr-2">
+                <CalendarDays className="h-5 w-5 text-secondary" />
+              </div>
               Nächste 3 Termine
             </CardTitle>
             <CardDescription>
@@ -290,7 +304,7 @@ export default function HomePage() {
                 {upcomingEvents.map((event, index) => {
                   const isToday = new Date(event.date).toDateString() === new Date().toDateString();
                   return (
-                    <div key={event.id || index} className={`flex flex-col space-y-1 pb-3 border-b last:border-0 ${isToday ? 'bg-primary/10 p-2 rounded-md' : ''}`}>
+                    <div key={event.id || index} className={`flex flex-col space-y-1 pb-3 border-b last:border-0 hover:bg-muted/30 transition-colors rounded-md p-2 ${isToday ? 'bg-gradient-to-r from-primary/20 to-primary/10 border-primary/30' : ''}`}>
                       <div className="flex justify-between items-start">
                         <span className={`font-medium ${isToday ? 'text-primary font-bold' : ''}`}>
                           {isToday && '🔥 '}{event.title}
@@ -336,10 +350,12 @@ export default function HomePage() {
         </Card>
         
         {/* RWK-News */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-background via-background to-accent/5 border-accent/20 hover:border-accent/40">
           <CardHeader>
             <CardTitle className="text-lg flex items-center">
-              <Newspaper className="mr-2 h-5 w-5" />
+              <div className="p-1 bg-accent/10 rounded-md hover:bg-accent/20 transition-colors mr-2">
+                <Newspaper className="h-5 w-5 text-accent" />
+              </div>
               Neuigkeiten
             </CardTitle>
             <CardDescription>
@@ -355,7 +371,7 @@ export default function HomePage() {
             ) : latestNews.length > 0 ? (
               <div className="space-y-3">
                 {latestNews.slice(0, 2).map((article) => (
-                  <div key={article.id} className="border-b last:border-0 pb-3 last:pb-0">
+                  <div key={article.id} className="border-b last:border-0 pb-3 last:pb-0 hover:bg-muted/20 transition-colors rounded-md p-2 -m-2">
                     <h4 className="font-medium text-sm line-clamp-2">{article.title}</h4>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                       {article.excerpt || article.content.substring(0, 100) + '...'}

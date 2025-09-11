@@ -1,0 +1,902 @@
+[
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Bernhard",
+      "lastName": "Drewes"
+    },
+    "update": {
+      "strasse": "Domeierstr. 19",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "001",
+      "updatedAt": "2025-09-07T13:32:13.938Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Hans-Gert",
+      "lastName": "Weseloh"
+    },
+    "update": {
+      "strasse": "Oleburg 12",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "002",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Ingo",
+      "lastName": "Müller"
+    },
+    "update": {
+      "strasse": "Knochenhauerstr. 32",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "003",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Horst",
+      "lastName": "Tinnefeld"
+    },
+    "update": {
+      "strasse": "Fichtestr. 10",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "004",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Eckhard",
+      "lastName": "Schmidt"
+    },
+    "update": {
+      "strasse": "Beethovenstr. 29",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "005",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Uwe",
+      "lastName": "Arlt"
+    },
+    "update": {
+      "strasse": "Odagser Hauptstr. 19",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "006",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Ursula",
+      "lastName": "Grönke"
+    },
+    "update": {
+      "strasse": "Beethovenstr. 1a",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "007",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Beate",
+      "lastName": "Menzel"
+    },
+    "update": {
+      "strasse": "Bundesstr. 38",
+      "plz": "37627",
+      "ort": "Lenne",
+      "email": "menzel@live.de",
+      "mitgliedsnummer": "008",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Reiner",
+      "lastName": "Schoppe"
+    },
+    "update": {
+      "strasse": "Schützenstr. 38",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "aschoppe@gmx.net",
+      "mitgliedsnummer": "009",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Elias",
+      "lastName": "Michalik"
+    },
+    "update": {
+      "strasse": "Offenbachstr. 30",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "elias.michalik@gmx.de",
+      "mitgliedsnummer": "010",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Paul",
+      "lastName": "Borodycz"
+    },
+    "update": {
+      "strasse": "Holiger Weg 12",
+      "plz": "37574",
+      "ort": "Einbeck – Wenzen",
+      "email": "esmiralda@live.de",
+      "mitgliedsnummer": "011",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Frank",
+      "lastName": "Rosenthal"
+    },
+    "update": {
+      "strasse": "Gänselandweg 5",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "fr1410@web.de",
+      "mitgliedsnummer": "012",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Friedel",
+      "lastName": "Schimpf"
+    },
+    "update": {
+      "strasse": "Hansestr. 1",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "frie_schi@t-online.de",
+      "mitgliedsnummer": "013",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Helmut",
+      "lastName": "Meyer"
+    },
+    "update": {
+      "strasse": "Waldstr. 16",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "helmutmeyer.einbeck@web.de",
+      "mitgliedsnummer": "014",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Inge",
+      "lastName": "Kriegsmann"
+    },
+    "update": {
+      "strasse": "Grimsehlstr. 5",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "inge@kriegsmann-consulting.de",
+      "mitgliedsnummer": "015",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Monika",
+      "lastName": "Lachstädter"
+    },
+    "update": {
+      "strasse": "Einbecker Weg 5",
+      "plz": "37586",
+      "ort": "Dassel-Hilwartshausen",
+      "email": "j.lachstaedter@t-online.de",
+      "mitgliedsnummer": "016",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Jens",
+      "lastName": "Lachstädter"
+    },
+    "update": {
+      "strasse": "Einbecker Weg 5",
+      "plz": "37586",
+      "ort": "Dassel-Hilwartshausen",
+      "email": "j.lachstaedter@t-online.de",
+      "mitgliedsnummer": "017",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Erik",
+      "lastName": "Lachstädter"
+    },
+    "update": {
+      "strasse": "Einbecker Weg 5",
+      "plz": "37586",
+      "ort": "Dassel-Hilwartshausen",
+      "email": "j.lachstaedter@t-online.de",
+      "mitgliedsnummer": "018",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Patrick",
+      "lastName": "Jaeger"
+    },
+    "update": {
+      "strasse": "Hannover",
+      "plz": "",
+      "ort": "jaeger_patrik@web.de",
+      "email": "",
+      "mitgliedsnummer": "019",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Julien",
+      "lastName": "Bünger"
+    },
+    "update": {
+      "strasse": "Beethovenstraße 20",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "Julien1194@web.de",
+      "mitgliedsnummer": "020",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Karl-Arthur",
+      "lastName": "Aurin"
+    },
+    "update": {
+      "strasse": "Unbekannt",
+      "plz": "37574",
+      "ort": "Einbeck - Greene",
+      "email": "karl-arthur.aurin@outlook.de",
+      "mitgliedsnummer": "021",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Kerstin",
+      "lastName": "Hundertmark"
+    },
+    "update": {
+      "strasse": "Reinserturmweg 5",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "kerstin.hundertmark@gmx.de",
+      "mitgliedsnummer": "022",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Karsten",
+      "lastName": "Reinert"
+    },
+    "update": {
+      "strasse": "Reinserturmweg 5",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "023",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Klaus",
+      "lastName": "Klapproth"
+    },
+    "update": {
+      "strasse": "Neddenstr. 4",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "Klaus.Klapproth@gmx.de",
+      "mitgliedsnummer": "024",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Alexander",
+      "lastName": "Kloss"
+    },
+    "update": {
+      "strasse": "Negenborner Weg 58",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "klossalexander@aol.com",
+      "mitgliedsnummer": "025",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Martin",
+      "lastName": "Baselt"
+    },
+    "update": {
+      "strasse": "Sonnenblick 10",
+      "plz": "37632",
+      "ort": "Eimen",
+      "email": "ksve@baselt.de",
+      "mitgliedsnummer": "026",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Leon",
+      "lastName": "Loresch"
+    },
+    "update": {
+      "strasse": "Am Wasserbruch 7",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "leonloresch@gmail.com",
+      "mitgliedsnummer": "027",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Lisa",
+      "lastName": "Russinow"
+    },
+    "update": {
+      "strasse": "Lessingstr. 23",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "lisarussinow@mail.ru",
+      "mitgliedsnummer": "028",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Lucia",
+      "lastName": "Hentschel"
+    },
+    "update": {
+      "strasse": "Teichenweg 1B",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "lucia.hentschel@alice.de",
+      "mitgliedsnummer": "029",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Wilfried",
+      "lastName": "Hentschel"
+    },
+    "update": {
+      "strasse": "Teichenweg 1B",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "030",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Stephanie",
+      "lastName": "Bünger"
+    },
+    "update": {
+      "strasse": "Luisenstr. 10",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "031",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Marcel",
+      "lastName": "Bünger"
+    },
+    "update": {
+      "strasse": "Luisenstr. 10",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "marcel.buenger@gmx.de",
+      "mitgliedsnummer": "032",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Nikita",
+      "lastName": "Dykun"
+    },
+    "update": {
+      "strasse": "Breil 6",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "marina_design_@ukr.net",
+      "mitgliedsnummer": "033",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Monika",
+      "lastName": "Witte"
+    },
+    "update": {
+      "strasse": "Am Klee 4",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "mw290650@aol.com",
+      "mitgliedsnummer": "034",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Nathalie",
+      "lastName": "Buchhage"
+    },
+    "update": {
+      "strasse": "Teichenweg 1",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "nathalie.buchhage@gmail.com",
+      "mitgliedsnummer": "035",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Sven",
+      "lastName": "Buchhage"
+    },
+    "update": {
+      "strasse": "Teichenweg 1",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "036",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Reiner",
+      "lastName": "Goebel"
+    },
+    "update": {
+      "strasse": "Gleiwitzer Str. 6",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "reiner.goebel@t-online.de",
+      "mitgliedsnummer": "040",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Kerstin",
+      "lastName": "Guttmann"
+    },
+    "update": {
+      "strasse": "Hainsteinhof 14",
+      "plz": "37079",
+      "ort": "Göttingen",
+      "email": "rk.guttmann@web.de",
+      "mitgliedsnummer": "041",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Olivia",
+      "lastName": "Mau"
+    },
+    "update": {
+      "strasse": "Negenborner Weg 114",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "042",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Sara",
+      "lastName": "Mau"
+    },
+    "update": {
+      "strasse": "Negenborner Weg 114",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "043",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Julius",
+      "lastName": "Mau"
+    },
+    "update": {
+      "strasse": "Negenborner Weg 114",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "044",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Sigrid",
+      "lastName": "Wulff"
+    },
+    "update": {
+      "strasse": "Schützenstr. 19",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "schrader-sigrid@t-online.de",
+      "mitgliedsnummer": "045",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Harald",
+      "lastName": "Wulff"
+    },
+    "update": {
+      "strasse": "Schützenstr. 19",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "046",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Thomas",
+      "lastName": "Jaeger"
+    },
+    "update": {
+      "strasse": "Grimsehlstr. 5",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "thomas.jaeger.64@gmx.de",
+      "mitgliedsnummer": "047",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Ulrike",
+      "lastName": "Jaeger"
+    },
+    "update": {
+      "strasse": "37574 Einbeck",
+      "plz": "",
+      "ort": "u.jaeger910@gmail.com",
+      "email": "",
+      "mitgliedsnummer": "048",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Stefan",
+      "lastName": "Beumer"
+    },
+    "update": {
+      "strasse": "Marktplatz 16 - 18",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "vorstandssekretariat@sparkasse-einbeck.de",
+      "mitgliedsnummer": "049",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Annika",
+      "lastName": "Schoppe"
+    },
+    "update": {
+      "strasse": "Schützenstr. 38",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "Aschoppe@arcor.de",
+      "mitgliedsnummer": "050",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Ludwig",
+      "lastName": "Wiesemüller"
+    },
+    "update": {
+      "strasse": "Königsberger Stieg 7",
+      "plz": "37574",
+      "ort": "Einbeck - Billerbeck",
+      "email": "wiesemueller300@gmail.com",
+      "mitgliedsnummer": "051",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Dirk",
+      "lastName": "Heinemeyer"
+    },
+    "update": {
+      "strasse": "Stuckenbreite 5a",
+      "plz": "37574",
+      "ort": "Einbeck - Avendshausen",
+      "email": "dheinemeyer75@gmail.com",
+      "mitgliedsnummer": "052",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Daniela",
+      "lastName": "Coors"
+    },
+    "update": {
+      "strasse": "Bismarckstr. 4a",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "053",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Marcel",
+      "lastName": "Leiding"
+    },
+    "update": {
+      "strasse": "Bismarckstr. 4a",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "054",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Martina",
+      "lastName": "Reinert"
+    },
+    "update": {
+      "strasse": "Hagebuttenstr. 9",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "055",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Hans-Jürgen",
+      "lastName": "Reinert"
+    },
+    "update": {
+      "strasse": "Hagebuttenstr. 9",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "056",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Regine",
+      "lastName": "Reinert"
+    },
+    "update": {
+      "strasse": "Reinserturmweg 5",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "057",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Andrej",
+      "lastName": "Sawtschenko"
+    },
+    "update": {
+      "strasse": "Albert-Einstein-Straße 7",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "058",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Antonia",
+      "lastName": "Weber"
+    },
+    "update": {
+      "strasse": "Neddenstr. 28",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "W",
+      "mitgliedsnummer": "059",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Carolin",
+      "lastName": "Weber"
+    },
+    "update": {
+      "strasse": "Neddenstr. 28",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "060",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Cecile",
+      "lastName": "Aylin Dogan"
+    },
+    "update": {
+      "strasse": "Mühlenbergstr. 31",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "061",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Ronja",
+      "lastName": "Raue"
+    },
+    "update": {
+      "strasse": "Kantor-Hase-Weg 5",
+      "plz": "37574",
+      "ort": "Einbeck",
+      "email": "",
+      "mitgliedsnummer": "062",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  },
+  {
+    "where": {
+      "clubId": "1icqJ91FFStTBn6ORukx",
+      "firstName": "Ingrid",
+      "lastName": "Drechsel"
+    },
+    "update": {
+      "strasse": "Einbecker Weg 5",
+      "plz": "37586",
+      "ort": "Dassel-Hilwartshausen",
+      "email": "",
+      "mitgliedsnummer": "063",
+      "updatedAt": "2025-09-07T13:32:13.939Z"
+    }
+  }
+]

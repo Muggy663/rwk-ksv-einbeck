@@ -1,0 +1,6 @@
+// TEMPORÄRE REGEL FÜR ENTWICKLUNG - FÜGE DAS ZU DEN BESTEHENDEN REGELN HINZU:
+
+// Multi-Tenant Club-Struktur - TEMPORÄR OFFEN FÜR ENTWICKLUNG
+match /clubs/{clubId}/{document=**} {
+  allow read, write: if true;
+}

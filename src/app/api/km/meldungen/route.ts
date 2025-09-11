@@ -4,7 +4,23 @@ import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
 import type { KMMeldung } from '@/types/km';
 
-const KM_MELDUNGEN_COLLECTION = 'km_meldungen';
+const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => `km_meldungen_${jahr}_${disziplinKuerzel.toLowerCase()}`;
+
+// Disziplin-ID zu Kürzel Mapping
+const getDisziplinKuerzel = async (disziplinId: string): Promise<string> => {
+  try {
+    const disziplinDoc = await getDocs(query(collection(db, 'km_disziplinen'), where('__name__', '==', disziplinId)));
+    if (!disziplinDoc.empty) {
+      const disziplin = disziplinDoc.docs[0].data();
+      const name = disziplin.name?.toLowerCase() || '';
+      if (name.includes('kleinkaliber') || name.includes('kk')) return 'kk';
+      if (name.includes('luftdruck') || name.includes('ld') || name.includes('luftgewehr') || name.includes('lg') || name.includes('luftpistole') || name.includes('lp')) return 'ld';
+    }
+  } catch (e) {
+    console.warn('Fallback Disziplin-Kürzel:', e);
+  }
+  return 'ld'; // Fallback
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,21 +48,36 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Hole aktuelles Jahr
+    let aktivesJahr = 2026; // Fallback
+    try {
+      const jahreQuery = query(collection(db, 'km_jahre'), where('status', '==', 'aktiv'));
+      const jahreSnapshot = await getDocs(jahreQuery);
+      if (!jahreSnapshot.empty) {
+        aktivesJahr = jahreSnapshot.docs[0].data().jahr;
+      }
+    } catch (e) {
+      console.warn('Fallback auf Jahr 2026:', e);
+    }
+
+    // Hole Disziplin-Kürzel
+    const disziplinKuerzel = await getDisziplinKuerzel(disziplinId);
+
     // Echte Firestore-Speicherung
     const meldung = {
       schuetzeId,
       disziplinId,
       lmTeilnahme: !!lmTeilnahme,
       anmerkung: anmerkung || '',
-      saison: '2026',
-      jahr: 2026, // Jahres-Filter für Archivierung
+      saison: aktivesJahr.toString(),
+      jahr: aktivesJahr, // Dynamisches Jahr
       meldedatum: new Date(),
       status: 'gemeldet',
       gemeldeteVon,
       vmErgebnis: vmErgebnis || null
     };
 
-    const docRef = await addDoc(collection(db, KM_MELDUNGEN_COLLECTION), meldung);
+    const docRef = await addDoc(collection(db, getKMMeldungenCollection(aktivesJahr, disziplinKuerzel)), meldung);
 
     return NextResponse.json({
       success: true,
@@ -76,17 +107,34 @@ export async function GET(request: NextRequest) {
     const jahr = parseInt(searchParams.get('jahr') || '2026');
     const clubId = searchParams.get('clubId');
     
-    // Filtere nach Jahr (für 2027+ wichtig)
-    const q = query(
-      collection(db, KM_MELDUNGEN_COLLECTION),
-      where('jahr', '==', jahr)
-    );
+    // Alle Disziplinen für ein Jahr laden
+    const collections = ['kk', 'ld'];
+    let alleMeldungen = [];
     
-    const snapshot = await getDocs(q);
-    let meldungen = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    console.log('DEBUG: Suche in Jahr:', jahr);
+    
+    for (const disziplin of collections) {
+      try {
+        const collectionName = getKMMeldungenCollection(jahr, disziplin);
+        console.log('DEBUG: Lade Collection:', collectionName);
+        
+        const q = query(collection(db, collectionName));
+        const snapshot = await getDocs(q);
+        
+        console.log(`DEBUG: Collection ${collectionName} hat ${snapshot.docs.length} Dokumente`);
+        
+        const meldungen = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          _collection: disziplin
+        }));
+        alleMeldungen.push(...meldungen);
+      } catch (e) {
+        console.error(`DEBUG: Fehler bei Collection ${disziplin}:`, e.message);
+      }
+    }
+    
+    let meldungen = alleMeldungen;
     
     console.log('DEBUG: Alle Meldungen geladen:', meldungen.length);
     

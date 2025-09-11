@@ -14,8 +14,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Metadata } from 'next';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
-import { ThemeProvider } from '@/components/theme-provider';
-import { ModeToggle } from '@/components/ui/mode-toggle';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { GlobalSearch } from '@/components/GlobalSearch';
 import { SkipLink } from '@/components/ui/skip-link';
 
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
@@ -69,10 +70,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <AppVersionChecker />
         {/* Mobile Status Bar Overlay */}
         <div className="mobile-header-overlay"></div>
-        <ThemeProvider
-          attribute="class"
-          disableTransitionOnChange
-        >
+        <ThemeProvider>
         <NativeAppProvider>
         <AuthProvider>
           <ClubProvider>
@@ -92,8 +90,15 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   />
                   <span className="hidden font-bold sm:inline-block text-lg text-foreground">RWK Einbeck</span>
                 </Link>
+                
+                <div className="flex-1 max-w-md mx-4 hidden md:block">
+                  <div className="global-search-container">
+                    <GlobalSearch />
+                  </div>
+                </div>
+                
                 <div className="flex items-center space-x-2">
-                  <ModeToggle />
+                  <ThemeToggle />
                   <div className="hidden md:block">
                     <MainNav />
                   </div>

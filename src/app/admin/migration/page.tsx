@@ -3,270 +3,299 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Upload, Trash2, CheckCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { collection, query, where, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 
 export default function MigrationPage() {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [file, setFile] = useState(null);
-  const [step, setStep] = useState(1);
+  const [migrationStatus, setMigrationStatus] = useState('');
+  const [isRunning, setIsRunning] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
 
-  const handleValidation = async () => {
-    setLoading(true);
+  const migrateShootersToClubs = async () => {
+    setIsRunning(true);
+    setMigrationStatus('Starte Migration...');
+    
     try {
-      const response = await fetch('/api/migration/validate');
-      const data = await response.json();
-      setResult(data);
-      toast({ 
-        title: '🔍 Validierung abgeschlossen', 
-        description: data.message 
-      });
+      // Lade alle Clubs
+      const clubsSnapshot = await getDocs(collection(db, 'clubs'));
+      
+      for (const clubDoc of clubsSnapshot.docs) {
+        const clubId = clubDoc.id;
+        const clubData = clubDoc.data();
+        
+        setMigrationStatus(`Migriere Club: ${clubData.name}`);
+        
+        // Lade alle Shooters für diesen Club
+        const shootersQuery = query(
+          collection(db, 'shooters'),
+          where('clubId', '==', clubId)
+        );
+        const shootersSnapshot = await getDocs(shootersQuery);
+        
+        setProgress({ current: 0, total: shootersSnapshot.docs.length });
+        
+        let migrated = 0;
+        
+        for (const shooterDoc of shootersSnapshot.docs) {
+          const shooterData = shooterDoc.data();
+          
+          // Erstelle Mitglied in neuer Collection
+          const memberData = {
+            // Basis-Daten
+            name: shooterData.name || '',
+            vorname: shooterData.name?.split(' ')[0] || '',
+            firstName: shooterData.name?.split(' ')[0] || '',
+            lastName: shooterData.name?.split(' ').slice(1).join(' ') || '',
+            
+            // Mitgliedsdaten
+            mitgliedsnummer: shooterData.memberNumber || '',
+            
+            // Adresse
+            strasse: shooterData.address || '',
+            plz: shooterData.zipCode || '',
+            ort: shooterData.city || '',
+            
+            // Kontakt
+            email: shooterData.email || '',
+            telefon: shooterData.phone || '',
+            mobil: shooterData.mobile || '',
+            
+            // Daten
+            geburtstag: shooterData.geburtstag || shooterData.birthday || '',
+            geburtsdatum: shooterData.geburtstag || shooterData.birthday || '',
+            birthYear: shooterData.birthYear || null,
+            
+            // Vereinsdaten
+            vereinseintritt: shooterData.vereinseintritt || shooterData.clubEntry || '',
+            eintrittsdatum: shooterData.vereinseintritt || shooterData.clubEntry || '',
+            dsbeintritt: shooterData.dsbeintritt || shooterData.dsbEntry || '',
+            
+            // Status
+            isActive: shooterData.isActive !== false,
+            status: shooterData.isActive !== false ? 'aktiv' : 'inaktiv',
+            
+            // Geschlecht
+            gender: shooterData.gender || 'male',
+            geschlecht: shooterData.gender || 'male',
+            
+            // Meta-Daten
+            clubId: clubId,
+            originalShooterId: shooterDoc.id,
+            migriert: true,
+            erstelltAm: new Date(),
+            aktualisiertAm: new Date()
+          };
+          
+          // Speichere in neue Collection
+          const memberRef = doc(db, `clubs/${clubId}/mitglieder`, shooterDoc.id);
+          await setDoc(memberRef, memberData);
+          
+          migrated++;
+          setProgress({ current: migrated, total: shootersSnapshot.docs.length });
+        }
+        
+        setMigrationStatus(`Club ${clubData.name}: ${migrated} Mitglieder migriert`);
+      }
+      
+      setMigrationStatus('Migration erfolgreich abgeschlossen!');
+      
     } catch (error) {
-      toast({ 
-        title: 'Fehler', 
-        description: 'Validierung fehlgeschlagen', 
-        variant: 'destructive' 
-      });
+      console.error('Migration Fehler:', error);
+      setMigrationStatus(`Fehler: ${error.message}`);
     } finally {
-      setLoading(false);
+      setIsRunning(false);
     }
   };
 
-  const handleCleanup = async () => {
-    if (!confirm('⚠️ ACHTUNG: Dies löscht ALLE Schützen unwiderruflich!\n\nNur nach RWK-Abschluss ausführen!\n\nFortfahren?')) {
-      return;
-    }
-
-    setLoading(true);
+  const updateMissingData = async () => {
+    setIsRunning(true);
+    setMigrationStatus('Aktualisiere fehlende Daten...');
+    
     try {
-      const response = await fetch('/api/migration/shooters-cleanup', {
-        method: 'POST'
-      });
-      const data = await response.json();
+      const clubId = '1icqJ91FFStTBn6ORukx'; // Einbeck Club ID
       
-      if (data.success) {
-        setResult(data);
-        setStep(2);
-        toast({ 
-          title: '🧹 Bereinigung erfolgreich', 
-          description: data.message 
-        });
-      } else {
-        toast({ 
-          title: 'Fehler', 
-          description: data.error, 
-          variant: 'destructive' 
-        });
+      // Lade alle Shooters
+      const shootersQuery = query(
+        collection(db, 'shooters'),
+        where('clubId', '==', clubId)
+      );
+      const shootersSnapshot = await getDocs(shootersQuery);
+      
+      // Lade alle Mitglieder
+      const membersSnapshot = await getDocs(collection(db, `clubs/${clubId}/mitglieder`));
+      
+      let updated = 0;
+      
+      for (const memberDoc of membersSnapshot.docs) {
+        const memberData = memberDoc.data();
+        const originalShooterId = memberData.originalShooterId;
+        
+        if (originalShooterId) {
+          const shooterDoc = shootersSnapshot.docs.find(doc => doc.id === originalShooterId);
+          
+          if (shooterDoc) {
+            const shooterData = shooterDoc.data();
+            console.log('Checking member:', memberData.name);
+            console.log('Shooter SEPA data:', shooterData.sepa);
+            console.log('Member SEPA data:', memberData.sepa);
+            const updates = {};
+            
+            // Fehlende Daten ergänzen mit tatsächlichen Shooter-Feldnamen
+            if ((!memberData.vorname || memberData.vorname === '') && shooterData.firstName) {
+              updates.vorname = shooterData.firstName;
+            }
+            if ((!memberData.firstName || memberData.firstName === '') && shooterData.firstName) {
+              updates.firstName = shooterData.firstName;
+            }
+            if ((!memberData.lastName || memberData.lastName === '') && shooterData.lastName) {
+              updates.lastName = shooterData.lastName;
+            }
+            if ((!memberData.mitgliedsnummer || memberData.mitgliedsnummer === '') && shooterData.mitgliedsnummer) {
+              updates.mitgliedsnummer = shooterData.mitgliedsnummer;
+            }
+            if (shooterData.strasse && (!memberData.strasse || memberData.strasse === '')) {
+              updates.strasse = shooterData.strasse;
+            }
+            if (shooterData.plz && (!memberData.plz || memberData.plz === '')) {
+              updates.plz = shooterData.plz;
+            }
+            if (shooterData.ort && (!memberData.ort || memberData.ort === '')) {
+              updates.ort = shooterData.ort;
+            }
+            if (shooterData.email && (!memberData.email || memberData.email === '')) {
+              updates.email = shooterData.email;
+            }
+            if (shooterData.telefon && (!memberData.telefon || memberData.telefon === '')) {
+              updates.telefon = shooterData.telefon;
+            }
+            if (shooterData.mobil && (!memberData.mobil || memberData.mobil === '')) {
+              updates.mobil = shooterData.mobil;
+            }
+            if (shooterData.birthYear && (!memberData.birthYear || memberData.birthYear === null)) {
+              updates.birthYear = shooterData.birthYear;
+            }
+            if (shooterData.gender && (!memberData.gender || memberData.gender === '')) {
+              updates.gender = shooterData.gender;
+              updates.geschlecht = shooterData.gender;
+            }
+            
+            // SEPA-Daten aus Shooters migrieren (aus sepa Objekt) - nur wenn echte Daten vorhanden
+            if (shooterData.sepa && (shooterData.sepa.iban && shooterData.sepa.iban !== '') && (!memberData.sepa?.iban || memberData.sepa?.iban === '')) {
+              const currentSepa = memberData.sepa || {};
+              updates.sepa = {
+                ...currentSepa,
+                iban: shooterData.sepa.iban || '',
+                bic: shooterData.sepa.bic || '',
+                kontoinhaber: shooterData.sepa.kontoinhaber || `${shooterData.firstName} ${shooterData.lastName}`,
+                mandatsreferenz: shooterData.sepa.mandatsreferenz || `SGI-${shooterData.mitgliedsnummer || 'XXX'}-2025`,
+                mandatsdatum: shooterData.sepa.mandatsdatum || new Date().toISOString().split('T')[0],
+                verwendungszweck: 'Mitgliedsbeitrag'
+              };
+            }
+            
+            if (Object.keys(updates).length > 0) {
+              updates.aktualisiertAm = new Date();
+              
+              const memberRef = doc(db, `clubs/${clubId}/mitglieder`, memberDoc.id);
+              await updateDoc(memberRef, updates);
+              updated++;
+            }
+          }
+        }
       }
-    } catch (error) {
-      toast({ 
-        title: 'Fehler', 
-        description: 'Verbindungsfehler', 
-        variant: 'destructive' 
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleImport = async () => {
-    if (!file) {
-      toast({ 
-        title: 'Fehler', 
-        description: 'Bitte Excel-Datei auswählen', 
-        variant: 'destructive' 
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
       
-      const response = await fetch('/api/migration/excel-import', {
-        method: 'POST',
-        body: formData
-      });
-      const data = await response.json();
+      setMigrationStatus(`${updated} Mitglieder aktualisiert!`);
       
-      if (data.success) {
-        setResult(data);
-        setStep(3);
-        toast({ 
-          title: '📊 Import erfolgreich', 
-          description: data.message 
-        });
-      } else {
-        toast({ 
-          title: 'Fehler', 
-          description: data.error, 
-          variant: 'destructive' 
-        });
-      }
     } catch (error) {
-      toast({ 
-        title: 'Fehler', 
-        description: 'Import fehlgeschlagen', 
-        variant: 'destructive' 
-      });
+      console.error('Update Fehler:', error);
+      setMigrationStatus(`Fehler: ${error.message}`);
     } finally {
-      setLoading(false);
+      setIsRunning(false);
     }
   };
 
   return (
-    <div className="container py-8 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">🔄 Schützen-Migration</h1>
-        <p className="text-muted-foreground">
-          Komplette Bereinigung und Neu-Import aller Schützen
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-primary mb-4">Daten-Migration</h1>
+        <p className="text-lg text-muted-foreground">
+          Migration von shooters Collection zu clubs/{'{clubId}'}/mitglieder
         </p>
       </div>
 
-      <Alert className="mb-6 border-red-500 bg-red-50">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription className="font-medium">
-          ⚠️ NUR NACH RWK-ABSCHLUSS AUSFÜHREN! Diese Aktion löscht alle bestehenden Schützen unwiderruflich.
-        </AlertDescription>
-      </Alert>
-
-      {/* Schritt 1: Bereinigung */}
-      <Card className={`mb-6 ${step >= 2 ? 'border-green-500 bg-green-50' : ''}`}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {step >= 2 ? <CheckCircle className="h-5 w-5 text-green-600" /> : <Trash2 className="h-5 w-5" />}
-            Schritt 1: Daten-Bereinigung
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4">Löscht alle bestehenden Schützen aus shooters und km_shooters</p>
-          <Button 
-            onClick={handleCleanup} 
-            disabled={loading || step >= 2}
-            variant={step >= 2 ? "outline" : "destructive"}
-          >
-            {step >= 2 ? '✅ Bereinigung abgeschlossen' : '🧹 Alle Schützen löschen'}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Schritt 2: Excel-Import */}
-      <Card className={`mb-6 ${step >= 3 ? 'border-green-500 bg-green-50' : step === 2 ? 'border-blue-500' : 'opacity-50'}`}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {step >= 3 ? <CheckCircle className="h-5 w-5 text-green-600" /> : <Upload className="h-5 w-5" />}
-            Schritt 2: Excel-Import
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <p className="mb-2">Excel-Format:</p>
-            <div className="text-sm bg-gray-100 p-3 rounded font-mono">
-              A1: Mitgliedsnummer (wird mit 0 aufgefüllt)<br/>
-              B1: Verein<br/>
-              C1: Akad. Titel<br/>
-              D1: Name (Nachname)<br/>
-              E1: Vorname<br/>
-              F1: Nachsatz<br/>
-              G1: Geburtsdatum
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <input 
-              type="file" 
-              accept=".xlsx,.xls" 
-              onChange={(e) => setFile(e.target.files[0])}
-              disabled={step < 2 || step >= 3}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-            <Button 
-              onClick={handleImport} 
-              disabled={loading || !file || step < 2 || step >= 3}
-              variant={step >= 3 ? "outline" : "default"}
-            >
-              {step >= 3 ? '✅ Import abgeschlossen' : '📊 Excel importieren'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Schritt 3: Validierung */}
-      <Card className={step >= 3 ? 'border-green-500 bg-green-50' : 'opacity-50'}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5" />
-            Schritt 3: Validierung
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4">Automatische Validierung und manuelle Prüfung:</p>
-          {step >= 3 && (
-            <div className="space-y-4">
-              <Button 
-                onClick={async () => {
-                  setLoading(true);
-                  try {
-                    const response = await fetch('/api/migration/validate');
-                    const data = await response.json();
-                    setResult(data);
-                    toast({ title: '🔍 Validierung abgeschlossen', description: data.message });
-                  } catch (error) {
-                    toast({ title: 'Fehler', description: 'Validierung fehlgeschlagen', variant: 'destructive' });
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                disabled={loading}
-                className="w-full"
-              >
-                🔍 System validieren
-              </Button>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <Button asChild variant="outline" size="sm">
-                  <a href="/admin/shooters" target="_blank">🎯 Schützen prüfen</a>
-                </Button>
-                <Button asChild variant="outline" size="sm">
-                  <a href="/verein/schuetzen" target="_blank">🏢 Vereinsansicht</a>
-                </Button>
-                <Button asChild variant="outline" size="sm">
-                  <a href="/rwk-tabellen" target="_blank">📊 RWK-Tabellen</a>
-                </Button>
-                <Button asChild variant="outline" size="sm">
-                  <a href="/km/meldungen" target="_blank">📝 KM-Meldungen</a>
-                </Button>
-              </div>
-            </div>
-          )}
-          {step < 3 && (
-            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-              <li>Alle Schützen korrekt importiert</li>
-              <li>Vereinszuordnungen stimmen</li>
-              <li>RWK-Tabellen funktionieren</li>
-              <li>KM-Meldungen funktionieren</li>
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Ergebnis-Anzeige */}
-      {result && (
-        <Card className="mt-6 bg-blue-50 border-blue-500">
+      <div className="grid gap-6">
+        <Card>
           <CardHeader>
-            <CardTitle>📊 Ergebnis</CardTitle>
+            <CardTitle>🔄 Vollständige Migration</CardTitle>
           </CardHeader>
           <CardContent>
-            <pre className="text-sm bg-white p-4 rounded overflow-auto">
-              {JSON.stringify(result, null, 2)}
-            </pre>
+            <p className="mb-4">
+              Migriert alle Shooter-Daten in die neue Multi-Tenant Struktur.
+              Erstellt für jeden Club eine separate mitglieder Collection.
+            </p>
+            <Button 
+              onClick={migrateShootersToClubs}
+              disabled={isRunning}
+              className="w-full"
+            >
+              {isRunning ? 'Migration läuft...' : 'Vollständige Migration starten'}
+            </Button>
           </CardContent>
         </Card>
-      )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>📝 Fehlende Daten ergänzen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">
+              Ergänzt fehlende Daten in bereits migrierten Mitgliedern 
+              aus der ursprünglichen shooters Collection.
+            </p>
+            <Button 
+              onClick={updateMissingData}
+              disabled={isRunning}
+              variant="outline"
+              className="w-full"
+            >
+              {isRunning ? 'Update läuft...' : 'Fehlende Daten ergänzen'}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {progress.total > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>📊 Fortschritt</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-2">
+                <div className="flex justify-between text-sm">
+                  <span>Fortschritt</span>
+                  <span>{progress.current} / {progress.total}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>📋 Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded font-mono text-sm">
+              {migrationStatus || 'Bereit für Migration...'}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -51,9 +51,17 @@ export default function KMUebersicht() {
         }
       }
       
+      // Hole aktuelles Jahr
+      const jahresRes = await fetch('/api/km/aktuelles-jahr');
+      let aktivesJahr = 2026;
+      if (jahresRes.ok) {
+        const jahresData = await jahresRes.json();
+        aktivesJahr = jahresData.data.jahr;
+      }
+      
       // Lade alle Daten parallel
       const [meldungenRes, schuetzenRes] = await Promise.all([
-        fetch('/api/km/meldungen'),
+        fetch(`/api/km/meldungen?jahr=${aktivesJahr}`),
         fetch('/api/km/shooters')
       ]);
       

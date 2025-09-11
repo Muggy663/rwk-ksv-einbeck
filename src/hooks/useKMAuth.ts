@@ -12,11 +12,14 @@ export function useKMAuth() {
     }
   }, [authLoading]);
 
-  // Vereinsvertreter und km_organisator haben KM-Zugriff
+  // Multi-Role-System: Prüfe sowohl alte Rolle als auch neue Rollen-Array
   const hasKMAccess = !authLoading && (
     user?.email === 'admin@rwk-einbeck.de' ||
     userAppPermissions?.role === 'vereinsvertreter' ||
-    userAppPermissions?.role === 'km_organisator'
+    userAppPermissions?.role === 'vereinsvorstand' ||
+    userAppPermissions?.role === 'km_organisator' ||
+    userAppPermissions?.roles?.includes('km_access') ||
+    userAppPermissions?.roles?.includes('vereinsvertreter')
   );
 
   const userRole = user?.email === 'admin@rwk-einbeck.de' ? 'admin' : userAppPermissions?.role || '';

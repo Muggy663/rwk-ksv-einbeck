@@ -1,0 +1,59 @@
+// NEUE FIRESTORE-REGELN FÜR MULTI-TENANT STRUKTUR
+// Diese Regeln zu den bestehenden hinzufügen:
+
+// Hilfsfunktion für Club-ID aus User-Permissions
+function getUserClubId(uid) {
+  return get(/databases/$(database)/documents/user_permissions/$(uid)).data.clubId;
+}
+
+// Multi-Tenant Club-Struktur - Nur eigene Vereinsdaten sichtbar
+match /clubs/{clubId}/{document=**} {
+  allow read, write: if request.auth != null && 
+    getUserClubId(request.auth.uid) == clubId;
+}
+
+// Spezifische Regeln für verschiedene Club-Collections
+match /clubs/{clubId}/mitglieder/{memberId} {
+  allow read, write: if request.auth != null && 
+    getUserClubId(request.auth.uid) == clubId;
+}
+
+match /clubs/{clubId}/vereinsrecht_protokolle/{protocolId} {
+  allow read, write: if request.auth != null && 
+    getUserClubId(request.auth.uid) == clubId;
+}
+
+match /clubs/{clubId}/vereinsrecht_wahlen/{electionId} {
+  allow read, write: if request.auth != null && 
+    getUserClubId(request.auth.uid) == clubId;
+}
+
+match /clubs/{clubId}/vereinsrecht_satzung/{documentId} {
+  allow read, write: if request.auth != null && 
+    getUserClubId(request.auth.uid) == clubId;
+}
+
+match /clubs/{clubId}/vereinsrecht_compliance/{complianceId} {
+  allow read, write: if request.auth != null && 
+    getUserClubId(request.auth.uid) == clubId;
+}
+
+match /clubs/{clubId}/vereinsrecht_spenden/{donationId} {
+  allow read, write: if request.auth != null && 
+    getUserClubId(request.auth.uid) == clubId;
+}
+
+match /clubs/{clubId}/finanzen/{financeId} {
+  allow read, write: if request.auth != null && 
+    getUserClubId(request.auth.uid) == clubId;
+}
+
+match /clubs/{clubId}/aufgaben/{taskId} {
+  allow read, write: if request.auth != null && 
+    getUserClubId(request.auth.uid) == clubId;
+}
+
+// WICHTIG: Bestehende globale Collections (RWK/KM) bleiben unverändert
+// /shooters/{id} - Global für RWK/KM
+// /rwk_teams/{id} - Global für RWK
+// /km_meldungen_2026_kk/{id} - Global für KM

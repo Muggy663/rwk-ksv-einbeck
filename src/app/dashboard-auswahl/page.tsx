@@ -40,6 +40,9 @@ export default function DashboardAuswahl() {
 
   const isRWKAdmin = userAppPermissions?.role === 'admin' || userAppPermissions?.role === 'superadmin';
   const isVereinsvertreter = userAppPermissions?.role === 'vereinsvertreter' || userAppPermissions?.role === 'club_representative';
+  const isVereinsvorstand = userAppPermissions?.role === 'vereinsvorstand';
+  
+  // Debug entfernt - verhindert Endlosschleife
   
   // Debug Auth reduziert
   if (!hasKMAccess) {
@@ -55,21 +58,22 @@ export default function DashboardAuswahl() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* RWK Dashboard */}
         <Card className={`shadow-lg hover:shadow-xl transition-shadow ${isKMOrganisator && !isRWKAdmin ? 'opacity-50' : ''}`}>
           <CardHeader className="pb-4">
             <div>
               <CardTitle className="text-xl mb-2">
-                🎯 Vereinsbereich
+                🎯 Rundenwettkampf
               </CardTitle>
               <div className="flex flex-wrap gap-1">
                 {isRWKAdmin && <Badge variant="default">Admin</Badge>}
                 {isVereinsvertreter && <Badge variant="secondary">Vereinsvertreter</Badge>}
+                {isVereinsvorstand && <Badge variant="secondary">Vereinsvorstand</Badge>}
               </div>
             </div>
             <CardDescription>
-              Vereinsverwaltung für Rundenwettkämpfe und Mannschaften
+              Rundenwettkampf-Verwaltung für Ligen und Mannschaften
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -87,7 +91,7 @@ export default function DashboardAuswahl() {
               <div className="flex gap-2">
                 <Link href={isRWKAdmin ? "/admin" : "/verein/dashboard"} className="flex-1">
                   <Button className="w-full" disabled={isKMOrganisator && !isRWKAdmin}>
-                    Vereinsbereich öffnen
+                    RWK-Bereich öffnen
                   </Button>
                 </Link>
                 {isRWKAdmin && (
@@ -167,6 +171,114 @@ export default function DashboardAuswahl() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Vereinssoftware - NUR für Vereinsvorstand und Admin */}
+        {(isVereinsvorstand || userAppPermissions?.role === 'vereins_admin' || isRWKAdmin || user?.email === 'admin@rwk-einbeck.de') ? (
+          <Card className="shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-4">
+              <div>
+                <CardTitle className="text-xl mb-2">
+                  👥 Vereinssoftware
+                  <Badge className="ml-2 bg-orange-500 text-white text-xs">BETA</Badge>
+                </CardTitle>
+                <div className="flex flex-wrap gap-1">
+                  {(isRWKAdmin || user?.email === 'admin@rwk-einbeck.de') && <Badge variant="default">Super-Admin</Badge>}
+                  {isVereinsvorstand && <Badge variant="secondary">Vereinsvorstand</Badge>}
+                  {userAppPermissions?.role === 'vereins_admin' && <Badge variant="secondary">Vereins-Admin</Badge>}
+                  {isVereinsvertreter && <Badge variant="secondary">Vereinsvertreter</Badge>}
+                </div>
+              </div>
+              <CardDescription>
+                Vollständige Vereinsverwaltung für moderne Schützenvereine
+                <br />
+                <span className="text-orange-600 text-sm font-medium">
+                  ⚠️ In aktiver Entwicklung - Neue Features werden laufend hinzugefügt
+                </span>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                  <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2">Verfügbare Funktionen v1.5.8</h4>
+                  <div className="text-sm text-green-700 dark:text-green-200 space-y-1">
+                    <div>• 👥 Vollständige Mitgliederverwaltung (99 Mitglieder)</div>
+                    <div>• 💳 SEPA-Lastschrift & Multi-Bank-Export</div>
+                    <div>• 🎂 Geburtstage & Jubiläen-System</div>
+                    <div>• 🏆 Lizenzen & Ausbildungen (8 Schießsport-Lizenzen)</div>
+                    <div>• 👔 12 Vorstandspositionen mit Ablauf-Überwachung</div>
+                    <div>• ⚖️ Vereinsrecht-Modul (Protokolle, Wahlen)</div>
+                    <div>• 📋 Aufgaben-Management für Vorstand</div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <a href="/vereinssoftware">
+                    <Button className="w-full">
+                      Vereinssoftware öffnen
+                    </Button>
+                  </a>
+                  <a href="/demo/vereinssoftware">
+                    <Button className="w-full" variant="outline">
+                      Demo ansehen
+                    </Button>
+                  </a>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="shadow-lg border-2 border-dashed border-gray-300 bg-gray-50 dark:bg-gray-900/20">
+            <CardHeader className="pb-4">
+              <div>
+                <CardTitle className="text-xl mb-2 text-gray-500">
+                  👥 Vereinssoftware
+                  <Badge className="ml-2 bg-orange-500 text-white text-xs">BETA</Badge>
+                </CardTitle>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="outline" className="text-orange-600 border-orange-300">
+                    🔒 Freischaltung erforderlich
+                  </Badge>
+                </div>
+              </div>
+              <CardDescription className="text-gray-400">
+                Vollständige Vereinsverwaltung für moderne Schützenvereine
+                <br />
+                <span className="text-orange-500 text-sm font-medium">
+                  ⚠️ In aktiver Entwicklung - Neue Features werden laufend hinzugefügt
+                </span>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                  <h4 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">Verfügbare Funktionen v1.5.8</h4>
+                  <div className="text-sm text-orange-700 dark:text-orange-200 space-y-1">
+                    <div>• 👥 Vollständige Mitgliederverwaltung</div>
+                    <div>• 💳 SEPA-Lastschrift & Multi-Bank-Export</div>
+                    <div>• 🎂 Geburtstage & Jubiläen-System</div>
+                    <div>• 🏆 Lizenzen & Ausbildungen-Management</div>
+                    <div>• ⚖️ Vereinsrecht-Modul (Protokolle, Wahlen)</div>
+                    <div>• 📋 Aufgaben-Management für Vorstand</div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Button disabled className="w-full bg-gray-300 text-gray-500 cursor-not-allowed">
+                    Freischaltung erforderlich
+                  </Button>
+                  <a href="/demo/vereinssoftware">
+                    <Button className="w-full" variant="outline">
+                      Demo ansehen
+                    </Button>
+                  </a>
+                  <p className="text-xs text-gray-400 mt-2 text-center">
+                    Kontaktieren Sie den Admin für Freischaltung!
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
 

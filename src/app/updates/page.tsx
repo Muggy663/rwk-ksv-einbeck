@@ -21,7 +21,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <VersionBadge className="border-green-300 bg-green-50 text-green-700">
-              Web-Version: 0.13.0 (05.09.2025)
+              Web-Version: 1.5.8 (11.09.2025)
             </VersionBadge>
             <VersionBadge className="border-blue-300 bg-blue-50 text-blue-700">
               App-Version: 0.9.4.1 (02.09.2025)
@@ -35,44 +35,213 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.13.0 - KM-Mannschaftsregeln & Optimierungen</CardTitle>
+              <CardTitle className="text-xl">Version 1.5.8 - SEPA, Jubiläen & Lizenzen-Management</CardTitle>
               <Badge variant="default" className="bg-green-600">Aktuell</Badge>
             </div>
-            <CardDescription>05.09.2025</CardDescription>
+            <CardDescription>11.09.2025</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="mb-4">Vollständige KM-Mannschaftsregeln-Verwaltung: Drag & Drop Altersklassen-Kombinationen, Disziplin-spezifische Regeln, Live-Validierung und korrekte Altersklassen-Berechnung.</p>
+            <p className="mb-4">Vollständige SEPA-Lastschrift Integration, funktionale Geburtstage & Jubiläen-Verwaltung und professionelles Lizenzen & Ausbildungen-Management mit Multi-Tenant Firestore-Integration.</p>
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">⚙️ Mannschaftsregeln-System v0.13.0</h4>
+              <h4 className="font-semibold text-green-900 mb-2">💳 SEPA, 🎂 Jubiläen & 🏆 Lizenzen-Management v1.5.8</h4>
               <div className="text-xs text-green-700">
-                Intelligente Regelkonfiguration mit Drag & Drop Interface
+                Professionelle SEPA-Lastschrift, Geburtstage/Jubiläen-Verwaltung und vollständiges Lizenzen & Ausbildungen-System
               </div>
             </div>
             <ul className="list-disc pl-5 space-y-1">
-              <li>⚙️ <strong>Mannschaftsregeln-Verwaltung:</strong> Neue Seite /km/mannschaftsregeln für Konfiguration automatischer Mannschaftsbildung</li>
-              <li>🎯 <strong>Drag & Drop Altersklassen:</strong> Intuitive Zuordnung von Altersklassen zu Kombinationen per Drag & Drop</li>
-              <li>📋 <strong>Disziplin-spezifische Regeln:</strong> Mehrfachauswahl von Altersklassen-Kombinationen pro Disziplin mit Checkbox-Interface</li>
-              <li>🔄 <strong>Live-Validierung:</strong> Automatische Regelprüfung beim Bearbeiten von Mannschaften mit sofortiger Fehlermeldung</li>
-              <li>🎯 <strong>Korrekte Altersklassen:</strong> Einheitliche Berechnung wie in /km/uebersicht für konsistente Anzeige</li>
-              <li>⚡ <strong>Optimistische Updates:</strong> Sofortige UI-Reaktionen beim Entfernen von Schützen mit Rollback bei Fehlern</li>
-              <li>🔍 <strong>Intelligente Filterung:</strong> Nur kompatible Schützen werden in der Auswahl angezeigt</li>
-              <li>🗂️ <strong>System Config Integration:</strong> Zentrale Speicherung in system_config Collection</li>
-              <li>🛠️ <strong>MannschaftsbildungService:</strong> Neue Service-Klasse für Regelvalidierung und Kompatibilitätsprüfung</li>
-              <li>🎨 <strong>Benutzerfreundliches Interface:</strong> Übersichtliche Altersklassen-Anzeige mit visueller Rückmeldung</li>
+              <li>💳 <strong>SEPA-Lastschrift Integration:</strong> Vollständige SEPA-Mandate-Verwaltung mit automatischer BIC-Berechnung aus IBAN</li>
+              <li>🏦 <strong>Multi-Bank-Export:</strong> Sparkasse, Volksbank, Commerzbank, Deutsche Bank Formate für Online-Banking</li>
+              <li>📋 <strong>Erweiterte Beitragsliste:</strong> Zahlungsart-Dropdown (SEPA, Überweisung, Bar, Dauerauftrag) mit SEPA-Mandate-Anzeige</li>
+              <li>📄 <strong>Professionelle Mahnbriefe:</strong> PDF-Generator mit Schützenbruder/Schützenschwester-Anrede und 14-Tage-Zahlungsfrist</li>
+              <li>🏦 <strong>SEPA-Mandate-Übersicht:</strong> Vollständige Mandate-Verwaltung mit Bankname-Anzeige und Status-Tracking</li>
+              <li>💰 <strong>Vereinseinstellungen:</strong> Gläubiger-ID, Vereinsdaten und Bankverbindung konfigurierbar pro Verein</li>
+              <li>📊 <strong>Automatische BIC-Berechnung:</strong> Deutsche Banken werden automatisch aus IBAN erkannt (Sparkasse, VR-Bank, etc.)</li>
+              <li>📄 <strong>SEPA-XML Export:</strong> Standardkonformer Export für alle deutschen Banken mit korrekten Mandatsreferenzen</li>
+              <li>💸 <strong>Mahnwesen:</strong> Vollständige Bankdaten in Mahnbriefen mit Empfänger, IBAN, BIC und Verwendungszweck</li>
+              <li>🎯 <strong>Praxistauglich:</strong> Alle Mock-Funktionen entfernt, nur noch echte Features für den Vereinsalltag</li>
+              <li>📱 <strong>CSV-Import:</strong> SEPA-Daten können per CSV importiert werden mit automatischer Zuordnung zu Mitgliedern</li>
+              <li>🔧 <strong>Beitragsberechnung:</strong> Korrekte Jahresbeiträge nach konfigurierten Beitragssätzen statt Mock-Daten</li>
+              <li>🎂 <strong>Geburtstage & Jubiläen:</strong> Funktionale Verwaltung mit korrekter Altersberechnung und Vereinsjahren aus Eintrittsdatum</li>
+              <li>🏆 <strong>Jubiläen-Konfiguration:</strong> Individuell konfigurierbare Bronze/Silber/Gold-Ehrungen für Vereinsjubiläen</li>
+              <li>🎉 <strong>Geburtstag-Aktionen:</strong> Konfigurierbare Karten/Gutscheine für besondere Geburtstage (18, 50, 60, 70+)</li>
+              <li>📋 <strong>Getrennte Listen:</strong> Saubere Trennung zwischen Geburtstag-Aktionen und Vereinsjubiläen</li>
+              <li>🏆 <strong>Lizenzen & Ausbildungen:</strong> 8 echte Schießsport-Ausbildungen (Waffensachkunde bis Trainer C Leistung)</li>
+              <li>👥 <strong>12 Vorstandspositionen:</strong> Vollständige Verwaltung von 1. Vorsitzender bis Kassenprüfer</li>
+              <li>⚠️ <strong>Automatische Ablauf-Überwachung:</strong> 90-Tage-Warnung vor Ablauf mit Status-Ampel (Grün/Gelb/Rot)</li>
+              <li>🏆 <strong>DSB-Lizenznummern:</strong> Vollständige Integration für professionelle Lizenz-Verwaltung</li>
+              <li>📊 <strong>Live-Statistiken:</strong> Mitglieder, Lizenzen, Ausbildungen und Ablauf-Warnungen</li>
+              <li>🏢 <strong>Multi-Tenant Firestore:</strong> Club-spezifische Datentrennung mit clubs/{clubId}/mitglieder</li>
+              <li>📝 <strong>PDF-Export & Echtzeit:</strong> Professionelle Listen zum Drucken mit sofortiger Synchronisation</li>
             </ul>
             <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
               <div className="flex items-center justify-between">
                 <div className="text-sm">
-                  <span className="font-medium text-green-800">⚙️ Mannschaftsregeln-System</span>
-                  <p className="text-xs text-green-600 mt-1">Drag & Drop & Live-Validierung</p>
+                  <span className="font-medium text-green-800">💳 SEPA, 🎂 Jubiläen & 🏆 Lizenzen</span>
+                  <p className="text-xs text-green-600 mt-1">Multi-Bank + Geburtstage + Ausbildungen</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v1.5.8
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.5.7 - Multi-Tenant Vereinssoftware Revolution</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>10.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständiges Vereinsrecht-Modul mit Protokoll-Management, Wahlen-System, Satzungsverwaltung und Gemeinnützigkeits-Compliance für moderne Schützenvereine.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">⚖️ Vereinsrecht-Modul v1.5.6</h4>
+              <div className="text-xs text-green-700">
+                Digitale Vereinsführung mit Protokollen, Wahlen und Compliance
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📄 <strong>Protokoll-Management:</strong> Vollständige Sitzungsprotokolle mit Tagesordnung, Anwesenden und Beschlüssen digital erstellen</li>
+              <li>🗳️ <strong>Wahlen-System:</strong> Digitale Vereinswahlen mit Kandidaten-Verwaltung, Abstimmung und Ergebnis-Auswertung</li>
+              <li>📜 <strong>Satzungsverwaltung:</strong> Vereinssatzung, Geschäftsordnungen und Regelwerke zentral verwalten mit Versionierung</li>
+              <li>🛡️ <strong>Gemeinnützigkeits-Compliance:</strong> Compliance-Überwachung, Spendenverwaltung und Tätigkeitsberichte</li>
+              <li>🔄 <strong>Status-Workflow:</strong> Protokolle von Entwurf → Fertig → Versendet mit automatischer Statusverfolgung</li>
+              <li>✏️ <strong>Live-Bearbeitung:</strong> Tagesordnungspunkte, Anwesende und Beschlüsse direkt hinzufügen und bearbeiten</li>
+              <li>📊 <strong>Dashboard-Integration:</strong> Vereinsrecht-Modul vollständig in Vereinssoftware-Dashboard integriert</li>
+              <li>🔥 <strong>Firebase-Integration:</strong> Alle APIs funktional mit Firestore-Backend und Echtzeit-Synchronisation</li>
+              <li>📱 <strong>Responsive Design:</strong> Vollständig mobile-optimiert für Tablet und Smartphone-Nutzung</li>
+              <li>🔍 <strong>Such- & Filterfunktionen:</strong> Intelligente Suche durch alle Protokolle, Wahlen und Dokumente</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">⚖️ Vereinsrecht-Modul</span>
+                  <p className="text-xs text-green-600 mt-1">Protokolle, Wahlen & Compliance</p>
                 </div>
                 <Link href="/updates/v0.13.0">
                   <span className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 cursor-pointer">
-                    🚀 v0.13.0
+                    🚀 v1.5.6
                   </span>
                 </Link>
               </div>
             </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.5.5 - KM-Jahresverwaltung & Inline-Bearbeitung</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>10.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">KM-Jahresverwaltung mit automatischen Collections, Inline-Bearbeitung in Meldungen-Tabelle und Migration-System für bestehende Daten.</p>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li>📅 <strong>KM-Jahresverwaltung:</strong> Jahre anlegen, Meldeschlüsse verwalten und Status ändern</li>
+              <li>🗂️ <strong>Jahresspezifische Collections:</strong> km_meldungen_JAHR_DISZIPLIN für bessere Organisation</li>
+              <li>✏️ <strong>Inline-Bearbeitung:</strong> LM-Teilnahme und VM-Ergebnis direkt in Tabelle ändern</li>
+              <li>🚀 <strong>Migration-System:</strong> Bestehende KM-Daten automatisch migrieren</li>
+            </ul>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.5.4 - Globale Suche & Dark Mode</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>08.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Aufgaben-Management für Vorstand, globale Suche über alle Bereiche, vollständiger Dark Mode mit System-Integration und erweiterte Tabellen-Suche.</p>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li>📋 <strong>Aufgaben-Management:</strong> To-Do-Listen für Vorstand mit Prioritäten und Fälligkeitsdaten</li>
+              <li>🔍 <strong>Globale Suche:</strong> Intelligente Suche über Mitglieder, Aufgaben, Finanzen und alle Vereinsbereiche</li>
+              <li>🌙 <strong>Vollständiger Dark Mode:</strong> System-Integration mit automatischem Wechsel und verbesserter Farbpalette</li>
+              <li>📋 <strong>Erweiterte Tabellen-Suche:</strong> Live-Suche in allen Mitglieder- und Vereinstabellen</li>
+            </ul>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.5.3 - Erweiterte Vereinsfunktionen</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>05.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vorstandsposten-Verwaltung, Jubiläums-Urkunden Generator und erweiterte Statistik-Dashboards für professionelle Vereinsführung.</p>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li>👔 <strong>Vorstandsposten-Verwaltung:</strong> 12 offizielle Positionen mit Amtszeiten und Verantwortlichkeiten</li>
+              <li>🏆 <strong>Jubiläums-Urkunden Generator:</strong> Automatische Urkunden mit ESG-Logo und digitaler Unterschrift</li>
+              <li>📈 <strong>Statistik-Dashboard:</strong> Erweiterte Mitglieder-Auswertungen mit Grafiken und Trends</li>
+              <li>👥 <strong>Gender-spezifische Anreden:</strong> SCHÜTZENBRUDER/SCHÜTZENSCHWESTER für korrekte Urkunden</li>
+            </ul>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.5.2 - SEPA & Lizenzen Integration</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>02.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">SEPA-Lastschrift in Beitragsverwaltung, Lizenzen & Ausbildungen mit echten Schießsport-Ausbildungen und Ablauf-Überwachung.</p>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li>💳 <strong>SEPA-Lastschrift Integration:</strong> Vollständige SEPA-Mandate-Verwaltung in der Beitragsverwaltung</li>
+              <li>🏆 <strong>Lizenzen & Ausbildungen:</strong> 8 echte Schießsport-Ausbildungen mit Ablaufdaten und Erinnerungen</li>
+              <li>⏰ <strong>Ablauf-Überwachung:</strong> Automatische Benachrichtigungen bei ablaufenden Lizenzen und Ausbildungen</li>
+              <li>🏢 <strong>Vereinsfunktionen erweitert:</strong> Kassenwart-Tools und erweiterte Mitgliederverwaltung</li>
+            </ul>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.5.1 - Mobile Navigation & Dialog Fixes</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>30.08.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Burger-Menü mit Logout-Button, Android Safe Areas für Dialoge, korrekte Dialog-Positionierung und verbesserte mobile Benutzerfreundlichkeit.</p>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li>🍔 <strong>Burger-Menü mit Logout:</strong> Vollständige Navigation mit Logout-Button für mobile Geräte</li>
+              <li>📱 <strong>Android Safe Areas:</strong> Dialoge respektieren Statusleiste und Navigationsleiste korrekt</li>
+              <li>💬 <strong>Dialog-Positionierung:</strong> Keine abgeschnittenen Fenster mehr auf mobilen Geräten</li>
+              <li>📱 <strong>Mobile UX verbessert:</strong> Entfernte redundante untere Navigation für sauberes Design</li>
+            </ul>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.5.0 - Vereinssoftware Revolution</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>15.01.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständige Mitgliederverwaltung mit 99 Geburtstagen, Eintrittsdaten-Import, individualisierbare Jubiläen-Konfiguration und 5-Jahres-Vorausplanung.</p>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+              <li>🏠 <strong>Vollständige Mitgliederverwaltung:</strong> 99 importierte Geburtstage und 90 Vereins-/DSB-Eintritte</li>
+              <li>🎂 <strong>Individualisierbare Jubiläen:</strong> Konfigurierbare Jubiläums-Jahre für alle Vereine</li>
+              <li>📅 <strong>5-Jahres-Vorausplanung:</strong> 2023-2030 Ehrungen mit exakter tagesgenauen Altersberechnung</li>
+              <li>📊 <strong>Professionelle Mitgliederdatenbank:</strong> Import-Funktionen und Statistik-Dashboard</li>
+            </ul>
           </CardContent>
         </Card>
         

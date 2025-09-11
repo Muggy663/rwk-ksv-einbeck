@@ -301,6 +301,30 @@ export default function KMAdminDashboard() {
           </CardContent>
         </Card>
 
+        {/* KM-Jahresverwaltung */}
+        <Card className="hover:shadow-md transition-shadow border-purple-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-purple-800">
+              📅 KM-Jahresverwaltung
+            </CardTitle>
+            <CardDescription>
+              Jahre anlegen, Meldeschlüsse verwalten und Status ändern
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Link href="/km-orga/jahre">
+                <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                  📅 Jahre verwalten
+                </Button>
+              </Link>
+              <div className="text-xs text-purple-700 bg-purple-100 p-2 rounded">
+                💡 Hier können Sie neue KM-Jahre anlegen und Meldeschlüsse festlegen
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* System-Verwaltung - nur für echte Admins */}
         {!isOrganisator && (
           <Card className="hover:shadow-md transition-shadow border-orange-200">
