@@ -70,7 +70,7 @@ export default function UpdatesPage() {
               <li>⚠️ <strong>Automatische Ablauf-Überwachung:</strong> 90-Tage-Warnung vor Ablauf mit Status-Ampel (Grün/Gelb/Rot)</li>
               <li>🏆 <strong>DSB-Lizenznummern:</strong> Vollständige Integration für professionelle Lizenz-Verwaltung</li>
               <li>📊 <strong>Live-Statistiken:</strong> Mitglieder, Lizenzen, Ausbildungen und Ablauf-Warnungen</li>
-              <li>🏢 <strong>Multi-Tenant Firestore:</strong> Club-spezifische Datentrennung mit clubs/{clubId}/mitglieder</li>
+              <li>🏢 <strong>Multi-Tenant Firestore:</strong> Club-spezifische Datentrennung mit clubs/[clubId]/mitglieder</li>
               <li>📝 <strong>PDF-Export & Echtzeit:</strong> Professionelle Listen zum Drucken mit sofortiger Synchronisation</li>
             </ul>
             <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
