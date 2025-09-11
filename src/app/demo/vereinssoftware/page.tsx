@@ -67,24 +67,24 @@ export default function VereinssoftwareDemo() {
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 lg:gap-4">
               <a href="/dashboard-auswahl">
                 <Button variant="outline" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Zurück
+                  <ArrowLeft className="h-4 w-4 lg:mr-2" />
+                  <span className="hidden lg:inline">Zurück</span>
                 </Button>
               </a>
-              <h1 className="text-2xl font-bold text-primary">👥 Vereinssoftware Demo</h1>
-              <Badge className="bg-orange-500 text-white">DEMO</Badge>
+              <h1 className="text-lg lg:text-2xl font-bold text-primary">👥 <span className="hidden sm:inline">Vereinssoftware</span> Demo</h1>
+              <Badge className="bg-orange-500 text-white text-xs">DEMO</Badge>
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative">
+              <div className="relative hidden md:block">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Globale Suche..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-48 lg:w-64"
                 />
               </div>
             </div>
@@ -93,9 +93,55 @@ export default function VereinssoftwareDemo() {
       </div>
 
       <div className="container mx-auto px-4 py-6">
+        {/* Mobile Navigation Tabs */}
+        <div className="block lg:hidden mb-6">
+          <div className="flex overflow-x-auto gap-2 pb-2">
+            <Button
+              variant={activeSection === 'dashboard' ? 'default' : 'outline'}
+              size="sm"
+              className="whitespace-nowrap"
+              onClick={() => setActiveSection('dashboard')}
+            >
+              📊 Dashboard
+            </Button>
+            <Button
+              variant={activeSection === 'members' ? 'default' : 'outline'}
+              size="sm"
+              className="whitespace-nowrap"
+              onClick={() => setActiveSection('members')}
+            >
+              👥 Mitglieder
+            </Button>
+            <Button
+              variant={activeSection === 'beitraege' ? 'default' : 'outline'}
+              size="sm"
+              className="whitespace-nowrap"
+              onClick={() => setActiveSection('beitraege')}
+            >
+              💳 SEPA
+            </Button>
+            <Button
+              variant={activeSection === 'jubilaeen' ? 'default' : 'outline'}
+              size="sm"
+              className="whitespace-nowrap"
+              onClick={() => setActiveSection('jubilaeen')}
+            >
+              🎂 Jubiläen
+            </Button>
+            <Button
+              variant={activeSection === 'lizenzen' ? 'default' : 'outline'}
+              size="sm"
+              className="whitespace-nowrap"
+              onClick={() => setActiveSection('lizenzen')}
+            >
+              🏆 Lizenzen
+            </Button>
+          </div>
+        </div>
+
         <div className="flex gap-6">
-          {/* Sidebar Navigation */}
-          <div className="w-64 space-y-2">
+          {/* Desktop Sidebar Navigation */}
+          <div className="hidden lg:block w-64 space-y-2">
             <Button
               variant={activeSection === 'dashboard' ? 'default' : 'ghost'}
               className="w-full justify-start"
@@ -134,7 +180,7 @@ export default function VereinssoftwareDemo() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {/* Dashboard */}
             {activeSection === 'dashboard' && (
               <div className="space-y-6">
@@ -146,7 +192,7 @@ export default function VereinssoftwareDemo() {
                 </div>
 
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                   <Card>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -194,7 +240,7 @@ export default function VereinssoftwareDemo() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">💳 SEPA-Beitragsverwaltung v1.5.8</CardTitle>
@@ -241,9 +287,9 @@ export default function VereinssoftwareDemo() {
             {/* Mitglieder */}
             {activeSection === 'members' && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">👥 Mitgliederverwaltung</h2>
-                  <Button>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <h2 className="text-xl sm:text-2xl font-bold">👥 Mitgliederverwaltung</h2>
+                  <Button className="w-full sm:w-auto">
                     <Plus className="h-4 w-4 mr-2" />
                     Mitglied hinzufügen
                   </Button>
@@ -252,7 +298,7 @@ export default function VereinssoftwareDemo() {
                 <Card>
                   <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                      <table className="w-full">
+                      <table className="w-full min-w-[600px]">
                         <thead>
                           <tr className="border-b bg-muted/50">
                             <th className="text-left p-4">Name</th>
@@ -306,21 +352,21 @@ export default function VereinssoftwareDemo() {
             {/* Beiträge & SEPA */}
             {activeSection === 'beitraege' && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">💳 Beiträge & SEPA-Lastschrift</h2>
-                  <div className="flex gap-2">
-                    <Button variant="outline">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <h2 className="text-xl sm:text-2xl font-bold">💳 Beiträge & SEPA</h2>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
                       <Download className="h-4 w-4 mr-2" />
-                      SEPA-XML Export
+                      <span className="hidden sm:inline">SEPA-XML </span>Export
                     </Button>
-                    <Button variant="outline">
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
                       <FileText className="h-4 w-4 mr-2" />
                       Mahnbriefe
                     </Button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                   <Card>
                     <CardContent className="p-4">
                       <div className="text-2xl font-bold text-green-600">{stats.paidMembers}</div>
@@ -403,15 +449,15 @@ export default function VereinssoftwareDemo() {
             {/* Jubiläen */}
             {activeSection === 'jubilaeen' && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">🎂 Geburtstage & Jubiläen</h2>
-                  <Button variant="outline">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <h2 className="text-xl sm:text-2xl font-bold">🎂 Geburtstage & Jubiläen</h2>
+                  <Button variant="outline" className="w-full sm:w-auto">
                     <Download className="h-4 w-4 mr-2" />
                     Urkunden generieren
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <Card>
                     <CardContent className="p-4">
                       <div className="text-2xl font-bold text-orange-600">{mockJubilaeen.length}</div>
@@ -439,7 +485,7 @@ export default function VereinssoftwareDemo() {
                   <CardContent>
                     <div className="space-y-4">
                       {mockJubilaeen.map((jubilae, index) => (
-                        <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-4">
                           <div className="flex items-center gap-4">
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                               jubilae.kategorie === 'Gold' ? 'bg-yellow-100 text-yellow-800' :
@@ -455,14 +501,14 @@ export default function VereinssoftwareDemo() {
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="flex flex-col sm:text-right gap-2">
                             <p className="text-sm font-medium">{new Date(jubilae.datum).toLocaleDateString('de-DE')}</p>
-                            <Button size="sm" variant="outline" className="mt-2">
-                              🏆 Urkunde erstellen
+                            <Button size="sm" variant="outline" className="w-full sm:w-auto">
+                              🏆 <span className="hidden sm:inline">Urkunde </span>erstellen
                             </Button>
                           </div>
                         </div>
-                      ))}
+                      ))
                     </div>
                   </CardContent>
                 </Card>
@@ -472,15 +518,15 @@ export default function VereinssoftwareDemo() {
             {/* Lizenzen & Ausbildungen */}
             {activeSection === 'lizenzen' && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">🏆 Lizenzen & Ausbildungen</h2>
-                  <Button>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <h2 className="text-xl sm:text-2xl font-bold">🏆 Lizenzen & Ausbildungen</h2>
+                  <Button className="w-full sm:w-auto">
                     <Plus className="h-4 w-4 mr-2" />
                     Neue Ausbildung
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                   <Card>
                     <CardContent className="p-4">
                       <div className="text-2xl font-bold text-blue-600">{mockLizenzen.length}</div>
@@ -525,29 +571,29 @@ export default function VereinssoftwareDemo() {
                   {mockLizenzen.map(lizenz => (
                     <Card key={lizenz.id} className="border-l-4 border-l-blue-500">
                       <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-3 gap-3">
+                          <div className="flex-1">
                             <h3 className="font-semibold text-lg">
                               {lizenz.firstName} {lizenz.lastName}
                             </h3>
-                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600">
                               <span>#{lizenz.mitgliedsnummer}</span>
                               {lizenz.vereinsfunktion && (
-                                <Badge variant="outline">{lizenz.vereinsfunktion}</Badge>
+                                <Badge variant="outline" className="text-xs">{lizenz.vereinsfunktion}</Badge>
                               )}
                               {lizenz.lizenznummer && (
-                                <span className="font-mono bg-gray-100 px-2 py-1 rounded">
+                                <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs">
                                   {lizenz.lizenznummer}
                                 </span>
                               )}
                             </div>
                           </div>
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" className="w-full sm:w-auto">
                             Bearbeiten
                           </Button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                           {lizenz.ausbildungen.map((ausbildung, index) => (
                             <div key={index} className="bg-gray-50 rounded-lg p-3">
                               <div className="flex items-center justify-between mb-2">

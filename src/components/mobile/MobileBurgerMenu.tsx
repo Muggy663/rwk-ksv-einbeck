@@ -130,9 +130,6 @@ export function MobileBurgerMenu() {
             <p className="text-xs text-muted-foreground text-center">
               RWK Einbeck App v1.5.8
             </p>
-            <p className="text-xs text-muted-foreground text-center mt-1">
-              SEPA, Jubiläen & Lizenzen
-            </p>
           </div>
         </div>
       </div>
