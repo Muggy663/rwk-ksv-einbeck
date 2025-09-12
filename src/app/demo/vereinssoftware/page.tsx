@@ -508,7 +508,7 @@ export default function VereinssoftwareDemo() {
                             </Button>
                           </div>
                         </div>
-                      ))
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
