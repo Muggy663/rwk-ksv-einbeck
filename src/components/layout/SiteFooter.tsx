@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.5.8"; // SEPA-Beitragsverwaltung & Jubiläen-System: Vollständige SEPA-Lastschrift Integration mit automatischer BIC-Berechnung, Multi-Bank-Export-Formate, erweiterte Beitragsliste mit Zahlungsart-Dropdown, SEPA-Mandate-Übersicht, Mahnbrief-Generator, funktionale Geburtstage & Jubiläen-Verwaltung
+  const version = "1.5.9"; // Vereinsbereich UX-Verbesserungen: Aufklappbare Mannschaftsdetails mit Schützen-Anzeige, bereits ausgewählte Schützen im Dialog sichtbar
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

@@ -4,7 +4,7 @@
 import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Users as TeamsIcon, Loader2, AlertTriangle, InfoIcon } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Users as TeamsIcon, Loader2, AlertTriangle, InfoIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { BackButton } from '@/components/ui/back-button';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import {
@@ -113,6 +113,11 @@ export default function VereinMannschaftenPage() {
   const [teamStrength, setTeamStrength] = useState<string>("");
   const [suggestedTeamName, setSuggestedTeamName] = useState<string>("");
   const [shooterSearchQuery, setShooterSearchQuery] = useState<string>("");
+  
+  // Aufklappbare Schützen-Anzeige (aus Admin übernommen)
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+  const [teamShooters, setTeamShooters] = useState<Map<string, Shooter[]>>(new Map());
+  const [loadingShooters, setLoadingShooters] = useState<Set<string>>(new Set());
 
   const isVereinsvertreter = userPermission?.role === 'vereinsvertreter';
 
@@ -803,6 +808,65 @@ export default function VereinMannschaftenPage() {
     return allClubsGlobal.find(c => c.id === clubId)?.name || 'Unbek. Verein';
   };
 
+  const toggleTeamExpansion = async (teamId: string, shooterIds: string[]) => {
+    const newExpanded = new Set(expandedTeams);
+    
+    if (expandedTeams.has(teamId)) {
+      newExpanded.delete(teamId);
+    } else {
+      newExpanded.add(teamId);
+      
+      // Lade Schützen nur wenn noch nicht geladen
+      if (!teamShooters.has(teamId) && shooterIds.length > 0) {
+        setLoadingShooters(prev => new Set(prev).add(teamId));
+        
+        try {
+          const shooterPromises = shooterIds.map(async (shooterId) => {
+            // Prüfe shooters
+            const rwkShooterDoc = await getFirestoreDoc(doc(db, SHOOTERS_COLLECTION, shooterId));
+            if (rwkShooterDoc.exists()) {
+              return { id: rwkShooterDoc.id, ...rwkShooterDoc.data() } as Shooter;
+            }
+            
+            // Prüfe km_shooters als Fallback
+            try {
+              const kmShooterDoc = await getFirestoreDoc(doc(db, 'km_shooters', shooterId));
+              if (kmShooterDoc.exists()) {
+                return { id: kmShooterDoc.id, ...kmShooterDoc.data() } as Shooter;
+              }
+            } catch (kmError) {
+              // km_shooters nicht verfügbar
+            }
+            
+            // Zeige auch nicht gefundene IDs als Platzhalter
+            return { 
+              id: shooterId, 
+              name: `Schütze nicht gefunden (ID: ${shooterId.substring(0, 8)}...)`,
+              firstName: 'Nicht',
+              lastName: 'gefunden',
+              gender: 'unknown',
+              birthYear: null
+            } as Shooter;
+          });
+          
+          const shooters = await Promise.all(shooterPromises);
+          setTeamShooters(prev => new Map(prev).set(teamId, shooters));
+        } catch (error) {
+          console.error('Fehler beim Laden der Schützen:', error);
+          toast({ title: "Fehler", description: "Schützen konnten nicht geladen werden.", variant: "destructive" });
+        } finally {
+          setLoadingShooters(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(teamId);
+            return newSet;
+          });
+        }
+      }
+    }
+    
+    setExpandedTeams(newExpanded);
+  };
+
   if (loadingPermissions || isLoadingPageData) {
     return (
       <div className="space-y-6">
@@ -967,10 +1031,25 @@ export default function VereinMannschaftenPage() {
             </TableRow></TableHeader>
             <TableBody>
                 {teamsOfActiveClub.map((team) => (
-                <TableRow key={team.id}>
-                    <TableCell label="Name" className="font-medium">
-                      {team.name}
-                    </TableCell>
+                  <React.Fragment key={team.id}>
+                    <TableRow>
+                      <TableCell label="Name" className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleTeamExpansion(team.id, team.shooterIds || [])}
+                            className="h-6 w-6 p-0"
+                            disabled={!team.shooterIds?.length}
+                          >
+                            {expandedTeams.has(team.id) ? 
+                              <ChevronDown className="h-4 w-4" /> : 
+                              <ChevronRight className="h-4 w-4" />
+                            }
+                          </Button>
+                          {team.name}
+                        </div>
+                      </TableCell>
                     <TableCell label="Liga" hideOnMobile>{getLeagueNameDisplay(team.leagueId)}</TableCell>
                     <TableCell label="Typ" className="text-center">
                       <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded font-medium">
@@ -1012,7 +1091,46 @@ export default function VereinMannschaftenPage() {
                         </AlertDialog>
                       </TableCell>
                     )}
-                </TableRow>
+                    </TableRow>
+                    {expandedTeams.has(team.id) && (
+                      <TableRow>
+                        <TableCell colSpan={isVereinsvertreter ? 7 : 6} className="bg-muted/30 p-4">
+                          {loadingShooters.has(team.id) ? (
+                            <div className="flex items-center justify-center py-4">
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              <span className="text-sm text-muted-foreground">Lade Schützen...</span>
+                            </div>
+                          ) : teamShooters.has(team.id) ? (
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-sm">Gemeldete Schützen ({teamShooters.get(team.id)?.length || 0}):</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                {teamShooters.get(team.id)?.map((shooter) => (
+                                  <div key={shooter.id} className={`flex items-center gap-2 p-2 rounded border ${
+                                    shooter.name?.includes('nicht gefunden') ? 'bg-red-50 border-red-200' : 'bg-background'
+                                  }`}>
+                                    <div className="text-sm">
+                                      <div className={`font-medium ${
+                                        shooter.name?.includes('nicht gefunden') ? 'text-red-600' : ''
+                                      }`}>
+                                        {shooter.firstName && shooter.lastName ? `${shooter.firstName} ${shooter.lastName}` : shooter.name}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {shooter.gender === 'male' ? 'M' : shooter.gender === 'female' ? 'W' : '?'} • {shooter.birthYear || 'Jg. N/A'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )) || []}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-muted-foreground text-center py-4">
+                              Keine Schützen zugeordnet
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
                 ))}
             </TableBody></Table>
           )}
@@ -1221,6 +1339,32 @@ export default function VereinMannschaftenPage() {
                     <Label className="text-base font-medium">Schützen für diese Mannschaft auswählen</Label>
                     <span className="text-sm text-muted-foreground">{selectedShooterIdsInForm.length} / {MAX_SHOOTERS_PER_TEAM} ausgewählt</span>
                   </div>
+                  
+                  {/* Anzeige der bereits ausgewählten Schützen */}
+                  {selectedShooterIdsInForm.length > 0 && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <h4 className="text-sm font-medium text-blue-800 mb-2">Bereits ausgewählte Schützen ({selectedShooterIdsInForm.length}):</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedShooterIdsInForm.map(shooterId => {
+                          const shooter = allClubShootersForDialog.find(s => s.id === shooterId);
+                          if (!shooter) return null;
+                          return (
+                            <div key={shooterId} className="flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                              <span>{shooter.firstName && shooter.lastName ? `${shooter.firstName} ${shooter.lastName}` : shooter.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleShooterSelectionChange(shooterId, false)}
+                                className="ml-1 text-blue-600 hover:text-blue-800"
+                                disabled={isSubmittingForm || isLoadingDialogData}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="mb-2">
                     <Input

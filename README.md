@@ -142,7 +142,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 | Platform | Version | Status | Download |
 |----------|---------|--------|---------|
-| **Web App** | 1.5.8 | ✅ Produktiv | Vercel Deployment |
+| **Web App** | 1.5.9 | ✅ Produktiv | Vercel Deployment |
 | **Android App** | 0.9.4.1 | ✅ Produktiv | Google Play Store |
 | **iOS App** | - | ❌ Nicht geplant | Unrentabel |
 
@@ -261,6 +261,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
+- **Web-Version 1.5.9** - Vereinsbereich UX-Verbesserungen: Aufklappbare Mannschaftsdetails in der Übersicht mit Schützen-Anzeige, bereits ausgewählte Schützen im Dialog sichtbar mit direkter Entfernungsmöglichkeit, konsistente UX zwischen Admin- und Vereinsbereich
 - **Web-Version 1.5.8** - SEPA-Beitragsverwaltung, Jubiläen-System & Lizenzen-Management: Vollständige SEPA-Lastschrift Integration mit automatischer BIC-Berechnung aus IBAN, Multi-Bank-Export-Formate (Sparkasse, Volksbank, Commerzbank, Deutsche Bank), erweiterte Beitragsliste mit Zahlungsart-Dropdown, SEPA-Mandate-Übersicht, Mahnbrief-Generator mit Schützenbruder-Anrede, funktionale Geburtstage & Jubiläen-Verwaltung mit korrekter Altersberechnung, vollständiges Lizenzen & Ausbildungen-Management mit 8 echten Schießsport-Ausbildungen, 12 Vorstandspositionen, automatischer Ablauf-Überwachung und Multi-Tenant Firestore-Integration
 - **Web-Version 1.5.7** - Multi-Tenant Vereinssoftware Revolution: Vollständige Umstellung aller 6 Vereinssoftware-Bereiche auf Multi-Tenant Architektur mit club-spezifischen Collections (/clubs/{clubId}/), sortierbare Tabellen in allen Bereichen, saubere Datentrennung zwischen RWK/KM und Vereinssoftware, 1022 Schützen aus 16 Vereinen erfolgreich migriert
 - **Web-Version 1.5.6** - Vereinsrecht-Modul Grundfunktionen: Vollständiges Protokoll-Management mit Tagesordnung und Beschlüssen, digitales Wahlen-System, Satzungsverwaltung mit Versionierung, Gemeinnützigkeits-Compliance und Status-Workflows für moderne Vereinsführung

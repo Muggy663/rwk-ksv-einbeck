@@ -21,7 +21,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch KSV Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK), Kreismeisterschafts (KM) und Vereinssoftware. (Stand: 11.09.2025, Web-Version 1.5.8, App-Version 0.9.4.1, Vereinssoftware 1.5.8)
+            Funktionen und Bedienung der Rundenwettkampf (RWK), Kreismeisterschafts (KM) und Vereinssoftware. (Stand: 14.09.2025, Web-Version 1.5.9, App-Version 0.9.4.1, Vereinssoftware 1.5.9)
           </p>
         </div>
       </div>
@@ -705,7 +705,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Vereinssoftware - Benutzerhandbuch</CardTitle>
-              <CardDescription>Version 1.5.8 - SEPA, Jubiläen & Lizenzen-Management</CardDescription>
+              <CardDescription>Version 1.5.9 - Vereinsbereich UX-Verbesserungen</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">

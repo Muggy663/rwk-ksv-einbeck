@@ -21,7 +21,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <VersionBadge className="border-green-300 bg-green-50 text-green-700">
-              Web-Version: 1.5.8 (11.09.2025)
+              Web-Version: 1.5.9 (14.09.2025)
             </VersionBadge>
             <VersionBadge className="border-blue-300 bg-blue-50 text-blue-700">
               App-Version: 0.9.4.1 (02.09.2025)
@@ -35,21 +35,30 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 1.5.8 - SEPA, Jubiläen & Lizenzen-Management</CardTitle>
+              <CardTitle className="text-xl">Version 1.5.9 - Vereinsbereich UX-Verbesserungen</CardTitle>
               <Badge variant="default" className="bg-green-600">Aktuell</Badge>
             </div>
-            <CardDescription>11.09.2025</CardDescription>
+            <CardDescription>14.09.2025</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="mb-4">Vollständige SEPA-Lastschrift Integration, funktionale Geburtstage & Jubiläen-Verwaltung und professionelles Lizenzen & Ausbildungen-Management mit Multi-Tenant Firestore-Integration.</p>
+            <p className="mb-4">Vereinsbereich UX-Verbesserungen: Aufklappbare Mannschaftsdetails in der Übersicht mit Schützen-Anzeige und bereits ausgewählte Schützen im Dialog sichtbar mit direkter Entfernungsmöglichkeit.</p>
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">💳 SEPA, 🎂 Jubiläen & 🏆 Lizenzen-Management v1.5.8</h4>
+              <h4 className="font-semibold text-green-900 mb-2">📱 Vereinsbereich UX-Verbesserungen v1.5.9</h4>
               <div className="text-xs text-green-700">
-                Professionelle SEPA-Lastschrift, Geburtstage/Jubiläen-Verwaltung und vollständiges Lizenzen & Ausbildungen-System
+                Aufklappbare Mannschaftsdetails und bessere Schützen-Auswahl im Dialog
               </div>
             </div>
             <ul className="list-disc pl-5 space-y-1">
-              <li>💳 <strong>SEPA-Lastschrift Integration:</strong> Vollständige SEPA-Mandate-Verwaltung mit automatischer BIC-Berechnung aus IBAN</li>
+              <li>🔽 <strong>Aufklappbare Mannschaftsdetails:</strong> Chevron-Button neben jedem Mannschaftsnamen zum Anzeigen aller gemeldeten Schützen</li>
+              <li>👥 <strong>Schützen-Anzeige in Übersicht:</strong> Grid-Layout mit Namen, Geschlecht und Geburtsjahr wie im Admin-Bereich</li>
+              <li>📱 <strong>Bereits ausgewählte Schützen im Dialog:</strong> Blaue Box oberhalb der Schützen-Suche zeigt alle bereits ausgewählten Schützen</li>
+              <li>❌ <strong>Direktes Entfernen:</strong> Jeder ausgewählte Schütze hat ein "×" zum sofortigen Entfernen ohne Scrollen</li>
+              <li>🔄 <strong>Konsistente UX:</strong> Gleiche Funktionalität wie im Admin-Bereich für einheitliche Bedienung</li>
+              <li>📱 <strong>Mobile-responsive:</strong> Funktioniert perfekt auf allen Geräten mit Touch-optimierten Buttons</li>
+              <li>⚡ <strong>On-demand Laden:</strong> Schützen-Daten werden erst beim ersten Aufklappen geladen für bessere Performance</li>
+              <li>🔍 <strong>Fallback für nicht gefundene Schützen:</strong> Zeigt Platzhalter für ungültige Schützen-IDs</li>
+              <li>📊 <strong>Zähler-Anzeige:</strong> "Bereits ausgewählte Schützen (3):" zeigt immer die aktuelle Anzahl</li>
+              <li>🎯 <strong>Beta-Tester Feedback umgesetzt:</strong> Direkte Antwort auf Benutzer-Wünsche für bessere Übersicht</li>
               <li>🏦 <strong>Multi-Bank-Export:</strong> Sparkasse, Volksbank, Commerzbank, Deutsche Bank Formate für Online-Banking</li>
               <li>📋 <strong>Erweiterte Beitragsliste:</strong> Zahlungsart-Dropdown (SEPA, Überweisung, Bar, Dauerauftrag) mit SEPA-Mandate-Anzeige</li>
               <li>📄 <strong>Professionelle Mahnbriefe:</strong> PDF-Generator mit Schützenbruder/Schützenschwester-Anrede und 14-Tage-Zahlungsfrist</li>
@@ -76,11 +85,11 @@ export default function UpdatesPage() {
             <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
               <div className="flex items-center justify-between">
                 <div className="text-sm">
-                  <span className="font-medium text-green-800">💳 SEPA, 🎂 Jubiläen & 🏆 Lizenzen</span>
-                  <p className="text-xs text-green-600 mt-1">Multi-Bank + Geburtstage + Ausbildungen</p>
+                  <span className="font-medium text-green-800">📱 Vereinsbereich UX-Verbesserungen</span>
+                  <p className="text-xs text-green-600 mt-1">Aufklappbare Details + Schützen-Dialog</p>
                 </div>
                 <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v1.5.8
+                  🚀 v1.5.9
                 </span>
               </div>
             </div>
@@ -90,7 +99,7 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 1.5.7 - Multi-Tenant Vereinssoftware Revolution</CardTitle>
+              <CardTitle className="text-xl">Version 1.5.8 - SEPA, Jubiläen & Lizenzen-Management</CardTitle>
               <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>10.09.2025</CardDescription>
