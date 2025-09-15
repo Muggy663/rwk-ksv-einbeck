@@ -25,11 +25,33 @@ const nextConfig = {
     ],
   },
   // Lösung für das undici-Problem mit privaten Klassenfeldern
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       undici: false, // Deaktiviert undici und verwendet den Node.js-Fetch
     };
+    
+    // Firebase Admin SDK nur auf Server-Seite verfügbar machen
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        child_process: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        util: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+      };
+    }
+    
     return config;
   },
   // Favicon-Konfiguration

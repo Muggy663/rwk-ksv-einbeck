@@ -1,4 +1,9 @@
 // src/lib/firebase/admin.ts
+// Firebase Admin SDK - NUR für Server-Side API Routes!
+if (typeof window !== 'undefined') {
+  throw new Error('Firebase Admin SDK kann nur server-seitig verwendet werden!');
+}
+
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
