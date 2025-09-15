@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 
 const KM_JAHRE_COLLECTION = 'km_jahre';
 
 export async function GET(request: NextRequest) {
   try {
     // Hole das aktive Jahr
-    const q = query(
-      collection(db, KM_JAHRE_COLLECTION),
-      where('status', '==', 'aktiv'),
-      limit(1)
-    );
-    
-    const snapshot = await getDocs(q);
+    const snapshot = await adminDb.collection(KM_JAHRE_COLLECTION)
+      .where('status', '==', 'aktiv')
+      .limit(1)
+      .get();
     
     if (snapshot.empty) {
       // Fallback: aktuelles Jahr

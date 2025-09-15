@@ -1,7 +1,7 @@
 // src/app/api/km/meldungen/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, addDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import type { KMMeldung } from '@/types/km';
 
 const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => `km_meldungen_${jahr}_${disziplinKuerzel.toLowerCase()}`;
@@ -9,10 +9,10 @@ const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => `km
 // Disziplin-ID zu Kürzel Mapping
 const getDisziplinKuerzel = async (disziplinId: string): Promise<string> => {
   try {
-    const disziplinDoc = await getDocs(query(collection(db, 'km_disziplinen'), where('__name__', '==', disziplinId)));
-    if (!disziplinDoc.empty) {
-      const disziplin = disziplinDoc.docs[0].data();
-      const name = disziplin.name?.toLowerCase() || '';
+    const disziplinDoc = await adminDb.collection('km_disziplinen').doc(disziplinId).get();
+    if (disziplinDoc.exists) {
+      const disziplin = disziplinDoc.data();
+      const name = disziplin?.name?.toLowerCase() || '';
       if (name.includes('kleinkaliber') || name.includes('kk')) return 'kk';
       if (name.includes('luftdruck') || name.includes('ld') || name.includes('luftgewehr') || name.includes('lg') || name.includes('luftpistole') || name.includes('lp')) return 'ld';
     }
@@ -51,8 +51,7 @@ export async function POST(request: NextRequest) {
     // Hole aktuelles Jahr
     let aktivesJahr = 2026; // Fallback
     try {
-      const jahreQuery = query(collection(db, 'km_jahre'), where('status', '==', 'aktiv'));
-      const jahreSnapshot = await getDocs(jahreQuery);
+      const jahreSnapshot = await adminDb.collection('km_jahre').where('status', '==', 'aktiv').get();
       if (!jahreSnapshot.empty) {
         aktivesJahr = jahreSnapshot.docs[0].data().jahr;
       }
@@ -77,7 +76,10 @@ export async function POST(request: NextRequest) {
       vmErgebnis: vmErgebnis || null
     };
 
-    const docRef = await addDoc(collection(db, getKMMeldungenCollection(aktivesJahr, disziplinKuerzel)), meldung);
+    const docRef = await adminDb.collection(getKMMeldungenCollection(aktivesJahr, disziplinKuerzel)).add({
+      ...meldung,
+      meldedatum: FieldValue.serverTimestamp()
+    });
 
     return NextResponse.json({
       success: true,
@@ -118,8 +120,7 @@ export async function GET(request: NextRequest) {
         const collectionName = getKMMeldungenCollection(jahr, disziplin);
         console.log('DEBUG: Lade Collection:', collectionName);
         
-        const q = query(collection(db, collectionName));
-        const snapshot = await getDocs(q);
+        const snapshot = await adminDb.collection(collectionName).get();
         
         console.log(`DEBUG: Collection ${collectionName} hat ${snapshot.docs.length} Dokumente`);
         
@@ -141,8 +142,7 @@ export async function GET(request: NextRequest) {
     // Client-seitige Filterung nach clubId wenn angegeben
     if (clubId) {
       console.log('DEBUG: Filtering by clubId:', clubId);
-      const shootersQuery = query(collection(db, 'shooters'), where('clubId', '==', clubId));
-      const shootersSnapshot = await getDocs(shootersQuery);
+      const shootersSnapshot = await adminDb.collection('shooters').where('clubId', '==', clubId).get();
       const clubShooterIds = shootersSnapshot.docs.map(doc => doc.id);
       console.log('DEBUG: Gefundene Schützen für Verein:', clubShooterIds);
       console.log('DEBUG: Meldungen vor Filter:', meldungen.map(m => ({ schuetzeId: m.schuetzeId })));

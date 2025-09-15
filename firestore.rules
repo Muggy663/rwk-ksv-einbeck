@@ -2,58 +2,131 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-// Users Collection - Admin kann Login-Daten lesen
-match /users/{userId} {
-  allow read: if request.auth != null && (
-    request.auth.uid == userId || 
-    (exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) &&
-     get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == 'superadmin')
-  );
-}
 
-    // === Globale Hilfsfunktionen ===
+    // === HELPER FUNCTIONS (Neue 3-Ebenen-Architektur) ===
+    
+    // 👑 Globale Rollen
     function isSuperAdmin() {
       return request.auth != null && request.auth.token.email == 'admin@rwk-einbeck.de';
     }
+    
+    function isSystemAdmin() {
+      return isAuthenticated() && getUserRole() == 'system_admin';
+    }
+    
+    function isDataManager() {
+      return isAuthenticated() && getUserRole() == 'data_manager';
+    }
 
+    // 🎯 KV-Rollen (Neue Struktur)
+    function isKvWettkampfleiter(kvId) {
+      return isAuthenticated() && getUserKvRole(kvId) == 'kv_wettkampfleiter';
+    }
+    
+    function isKvKmOrga(kvId) {
+      return isAuthenticated() && getUserKvRole(kvId) == 'kv_km_orga';
+    }
+    
+    function isKvPressewart(kvId) {
+      return isAuthenticated() && getUserKvRole(kvId) == 'kv_pressewart';
+    }
+    
+    function isKvKampfrichter(kvId) {
+      return isAuthenticated() && getUserKvRole(kvId) == 'kv_kampfrichter';
+    }
+
+    // 🏢 Vereins-Rollen (Neue granulare Struktur)
+    function isVereinsrolle(clubId, role) {
+      let permissions = getUserPermissions();
+      return isAuthenticated() && 
+             permissions != null && 
+             permissions.clubRoles != null &&
+             permissions.clubRoles[clubId] == role;
+    }
+
+    function isSportleiter(clubId) { 
+      return isVereinsrolle(clubId, 'sportleiter'); 
+    }
+    
+    function isKassenwart(clubId) { 
+      return isVereinsrolle(clubId, 'kassenwart'); 
+    }
+    
+    function isSchriftfuehrer(clubId) { 
+      return isVereinsrolle(clubId, 'schriftfuehrer'); 
+    }
+    
+    function isVorstand(clubId) { 
+      return isVereinsrolle(clubId, 'vorstand'); 
+    }
+    
+    function isJugendwart(clubId) { 
+      return isVereinsrolle(clubId, 'jugendwart'); 
+    }
+    
+    function isDamenwart(clubId) { 
+      return isVereinsrolle(clubId, 'damenwart'); 
+    }
+    
+    function isZeugwart(clubId) { 
+      return isVereinsrolle(clubId, 'zeugwart'); 
+    }
+    
+    function isPressewart(clubId) { 
+      return isVereinsrolle(clubId, 'pressewart'); 
+    }
+
+    // 🔧 Basis-Funktionen
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isVereinsvertreter() {
-      return isAuthenticated() && 
-             get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == 'vereinsvertreter';
+    function getUserPermissions() {
+      return get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data;
     }
-    
-    function isVereinsvorstand() {
-      return isAuthenticated() && 
-             get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == 'vereinsvorstand';
+
+    function getUserRole() {
+      let permissions = getUserPermissions();
+      return permissions != null && permissions.platformRole != null ? permissions.platformRole : 
+             (permissions != null ? permissions.role : null); // Fallback für Migration
+    }
+
+    function getUserKvRole(kvId) {
+      let permissions = getUserPermissions();
+      return permissions.kvRoles != null ? permissions.kvRoles[kvId] : null;
     }
 
     function hasClubAccess(clubId) {
-      return isAuthenticated() && 
-             get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubId == clubId;
+      return isSuperAdmin() || 
+             isVorstand(clubId) || 
+             isSportleiter(clubId) || 
+             isKassenwart(clubId) || 
+             isSchriftfuehrer(clubId) ||
+             isJugendwart(clubId) ||
+             isDamenwart(clubId) ||
+             isZeugwart(clubId) ||
+             isPressewart(clubId);
     }
 
-    // Admin-Berechtigung für Datenbereinigung
-    function hasAdminCleanupAccess() {
-      return isSuperAdmin();
+    // Legacy-Funktionen (für Übergangszeit)
+    function isVereinsvertreter() {
+      return isAuthenticated() && getUserRole() == 'vereinsvertreter';
+    }
+    
+    function isVereinsvorstand() {
+      return isAuthenticated() && getUserRole() == 'vereinsvorstand';
     }
 
-    // Validierung für Ringzahlen basierend auf Liga-Einstellungen
-    function isValidRingCount(rings) {
-      return rings is number && rings >= 0 && rings <= 600; // Max 600 für alle Disziplinen
-    }
-
-    // Hilfsfunktion für Club-ID aus User-Permissions (Multi-Tenant)
     function getUserClubId(uid) {
       return get(/databases/$(database)/documents/user_permissions/$(uid)).data.clubId;
     }
 
-    // === Regeln für Collections ===
+    function isValidRingCount(rings) {
+      return rings is number && rings >= 0 && rings <= 600;
+    }
 
-    // Öffentlich lesbare, nur von Admin schreibbare Collections
+    // === ÖFFENTLICHE BEREICHE (Tabellen bleiben öffentlich) ===
+    
     match /seasons/{season} {
       allow read: if true;
       allow write: if isSuperAdmin();
@@ -61,7 +134,7 @@ match /users/{userId} {
 
     match /clubs/{club} {
       allow read: if true;
-      allow write: if true; // TEMPORÄR FÜR KM-IMPORT
+      allow write: if isSuperAdmin();
     }
 
     match /rwk_leagues/{league} {
@@ -69,62 +142,37 @@ match /users/{userId} {
       allow write: if isSuperAdmin();
     }
 
-    match /newsItems/{newsItem} { 
+    match /shooters/{shooter} {
+      allow read: if true;
+      allow create: if isSuperAdmin() || isAuthenticated(); // Neue Schützen anlegen
+      allow update: if isSuperAdmin() || 
+                    isVereinsvertreter() || // Legacy
+                    isVereinsvorstand() || // Legacy
+                    isAuthenticated(); // Für Team-Zuordnungen
+      allow delete: if isSuperAdmin();
+    }
+
+    match /newsItems/{news} {
       allow read: if true;
       allow write: if isSuperAdmin();
     }
 
-    // Regeln für events-Sammlung
-    match /events/{eventId} {
+    match /rwk_news/{news} {
       allow read: if true;
-      allow create, update: if request.auth != null && 
-        (isSuperAdmin() ||
-         get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == "mannschaftsfuehrer" || 
-         get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == "vereinsvertreter" ||
-         get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == "vereinsvorstand");
-      allow delete: if request.auth != null && 
-        (isSuperAdmin() || 
-         resource.data.createdBy == request.auth.uid);
+      allow write: if isSuperAdmin();
     }
 
-    // Teams - Verwaltung durch Admin und Vereinsvertreter
-    // Teams - TEMPORÄR OFFEN FÜR MIGRATION
-    match /rwk_teams/{teamId} {
-      allow read, write: if true; // TEMPORÄR: Vollzugriff für Migration
+    // === RWK-SYSTEM (Hybrid-Sicherheit) ===
+    
+    match /rwk_teams/{team} {
+      allow read: if true; // Öffentlich für Tabellen
+      allow write: if isSuperAdmin() || 
+                   isVereinsvertreter() || // Legacy - MUSS funktionieren
+                   isVereinsvorstand() || // Legacy - MUSS funktionieren
+                   isAuthenticated(); // TEMPORÄR für alle anderen
     }
 
-    // Team-Schützen-Zuordnungen - Erweiterte Berechtigung für Bereinigung
-    match /rwk_team_shooters/{assignmentId} {
-      allow read: if true;
-      allow create: if isAuthenticated();
-      allow update: if isSuperAdmin() || 
-                    (isVereinsvertreter() && 
-                     hasClubAccess(resource.data.clubId));
-      allow delete: if hasAdminCleanupAccess() || 
-                    (isVereinsvertreter() && 
-                     hasClubAccess(resource.data.clubId));
-    }
-
-    // Regeln für rwk_shooter_team_assignments
-    match /rwk_shooter_team_assignments/{assignmentId} {
-      allow read: if true;
-      allow create: if isAuthenticated();
-      allow update: if isSuperAdmin() || 
-                    (isVereinsvertreter() && 
-                     hasClubAccess(resource.data.clubId));
-      allow delete: if hasAdminCleanupAccess() || 
-                    (isVereinsvertreter() && 
-                     hasClubAccess(resource.data.clubId));
-    }
-
-   // Zentrale Schützen-Collection - TEMPORÄR OFFEN FÜR MIGRATION
-    match /shooters/{shooterId} {
-      allow read: if true; // Öffentlich lesbar für Tabellen
-      allow write: if true; // TEMPORÄR: Vollzugriff für Migration und Team-Operationen
-    }
-
-    // Ergebnisse - VERBESSERT: Validierung der Ringzahlen
-    match /rwk_scores/{scoreId} {
+    match /rwk_scores/{score} {
       allow read: if true;
       allow create: if isAuthenticated() && 
                     isValidRingCount(request.resource.data.totalRinge) &&
@@ -132,20 +180,287 @@ match /users/{userId} {
                     request.resource.data.durchgang >= 1 &&
                     request.resource.data.durchgang <= 5;
       allow update: if isSuperAdmin();
-      allow delete: if hasAdminCleanupAccess() || 
-                    (isVereinsvertreter() && 
-                     hasClubAccess(resource.data.clubId));
+      allow delete: if isSuperAdmin() || 
+                    isVereinsvertreter() || // Legacy
+                    (resource.data.clubId != null && hasClubAccess(resource.data.clubId));
     }
 
-    // Liga-Updates - Lesbar für alle, schreibbar und aktualisierbar für authentifizierte Benutzer
-    match /league_updates/{updateId} { 
+    match /rwk_team_shooters/{assignment} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isSuperAdmin() || 
+                    isVereinsvertreter() || // Legacy
+                    isVereinsvorstand() || // Legacy
+                    isAuthenticated(); // TEMPORÄR für Team-Operationen
+      allow delete: if isSuperAdmin() || 
+                    isVereinsvertreter() || // Legacy
+                    isVereinsvorstand() || // Legacy
+                    isAuthenticated(); // TEMPORÄR für Team-Operationen
+    }
+
+    match /rwk_shooter_team_assignments/{assignment} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isSuperAdmin() || 
+                    isVereinsvertreter() || // Legacy
+                    isVereinsvorstand() || // Legacy
+                    isAuthenticated(); // TEMPORÄR für Team-Operationen
+      allow delete: if isSuperAdmin() || 
+                    isVereinsvertreter() || // Legacy
+                    isVereinsvorstand() || // Legacy
+                    isAuthenticated(); // TEMPORÄR für Team-Operationen
+    }
+
+    // === KM-SYSTEM (Granulare Kontrolle) ===
+    
+    match /km_meldungen/{meldung} {
+      allow read: if true;
+      allow write: if isSuperAdmin() || 
+                   isVereinsvertreter() || // Legacy
+                   isVereinsvorstand() || // Legacy
+                   (resource.data.clubId != null && (
+                     isSportleiter(resource.data.clubId) ||
+                     isVorstand(resource.data.clubId)
+                   ));
+    }
+
+    match /km_startlisten/{startliste} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_ergebnisse/{ergebnis} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_wettkampfklassen/{document} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_disziplinen/{document} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_mannschaften/{document} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_startlisten_configs/{document} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_vm_ergebnisse/{document} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_user_permissions/{userId} {
+      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
+      allow write: if isSuperAdmin();
+    }
+
+    match /meyton_klassen/{document} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /system_config/{document} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_jahre/{document=**} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // Alle KM-Meldungen Collections (Regex-Pattern)
+    match /{collection}/{document=**} {
+      allow read: if true && collection.matches('km_meldungen_.*');
+      allow write: if (isSuperAdmin() || 
+                      isVereinsvertreter() || // Legacy
+                      isVereinsvorstand() || // Legacy
+                      isAuthenticated()) && collection.matches('km_meldungen_.*'); // TEMPORÄR für API-Zugriff
+    }
+
+    // === VEREINSSOFTWARE (Multi-Tenant + Granular) ===
+    
+    // Mitglieder - Erweiterte Lesezugriffe für verschiedene Rollen
+    match /clubs/{clubId}/mitglieder/{member} {
+      allow read: if isSuperAdmin() || 
+                  isVereinsvertreter() || // Legacy - TEMPORÄR
+                  isVereinsvorstand() || // Legacy - TEMPORÄR
+                  isVorstand(clubId) || 
+                  isKassenwart(clubId) || 
+                  isSchriftfuehrer(clubId) ||
+                  isSportleiter(clubId) || // Für Mannschaftsplanung
+                  isJugendwart(clubId) ||
+                  isDamenwart(clubId);
+      allow write: if isSuperAdmin() || 
+                   isVereinsvertreter() || // Legacy - TEMPORÄR
+                   isVereinsvorstand() || // Legacy - TEMPORÄR
+                   isVorstand(clubId) || 
+                   isKassenwart(clubId);
+    }
+
+    // Finanzen & Beiträge - Nur Kassenwart + Vorstand
+    match /clubs/{clubId}/finanzen/{finance} {
+      allow read, write: if isSuperAdmin() || 
+                         isVereinsvertreter() || // Legacy - TEMPORÄR
+                         isVereinsvorstand() || // Legacy - TEMPORÄR
+                         isVorstand(clubId) || 
+                         isKassenwart(clubId);
+    }
+
+    match /clubs/{clubId}/beitraege/{beitrag} {
+      allow read, write: if isSuperAdmin() || 
+                         isVereinsvertreter() || // Legacy - TEMPORÄR
+                         isVereinsvorstand() || // Legacy - TEMPORÄR
+                         isVorstand(clubId) || 
+                         isKassenwart(clubId);
+    }
+
+    // Protokolle - Schriftführer + Vorstand (Kassenwart kann lesen)
+    match /clubs/{clubId}/protokolle/{protokoll} {
+      allow read: if isSuperAdmin() || 
+                  isVereinsvertreter() || // Legacy - TEMPORÄR
+                  isVereinsvorstand() || // Legacy - TEMPORÄR
+                  isVorstand(clubId) || 
+                  isSchriftfuehrer(clubId) ||
+                  isKassenwart(clubId); // Kann Protokolle lesen
+      allow write: if isSuperAdmin() || 
+                   isVereinsvertreter() || // Legacy - TEMPORÄR
+                   isVereinsvorstand() || // Legacy - TEMPORÄR
+                   isVorstand(clubId) || 
+                   isSchriftfuehrer(clubId);
+    }
+
+    match /clubs/{clubId}/vereinsrecht_protokolle/{protokoll} {
+      allow read: if isSuperAdmin() || 
+                  isVereinsvertreter() || // Legacy - TEMPORÄR
+                  isVereinsvorstand() || // Legacy - TEMPORÄR
+                  isVorstand(clubId) || 
+                  isSchriftfuehrer(clubId) ||
+                  isKassenwart(clubId);
+      allow write: if isSuperAdmin() || 
+                   isVereinsvertreter() || // Legacy - TEMPORÄR
+                   isVereinsvorstand() || // Legacy - TEMPORÄR
+                   isVorstand(clubId) || 
+                   isSchriftfuehrer(clubId);
+    }
+
+    // Aufgaben - Nur Vorstand
+    match /clubs/{clubId}/aufgaben/{task} {
+      allow read, write: if isSuperAdmin() || 
+                         isVereinsvertreter() || // Legacy - TEMPORÄR
+                         isVereinsvorstand() || // Legacy - TEMPORÄR
+                         isVorstand(clubId);
+    }
+
+    // Lizenzen & Jubiläen - Vorstand + spezielle Rollen
+    match /clubs/{clubId}/lizenzen/{lizenz} {
+      allow read, write: if isSuperAdmin() || 
+                         isVereinsvertreter() || // Legacy - TEMPORÄR
+                         isVereinsvorstand() || // Legacy - TEMPORÄR
+                         isVorstand(clubId);
+    }
+
+    match /clubs/{clubId}/jubilaeen/{jubilaeum} {
+      allow read, write: if isSuperAdmin() || 
+                         isVereinsvertreter() || // Legacy - TEMPORÄR
+                         isVereinsvorstand() || // Legacy - TEMPORÄR
+                         isVorstand(clubId);
+    }
+
+    // Catch-all für alle anderen Club-Collections
+    match /clubs/{clubId}/{document=**} {
+      allow read: if isSuperAdmin() || 
+                  isVereinsvertreter() || // Legacy - TEMPORÄR
+                  isVereinsvorstand() || // Legacy - TEMPORÄR
+                  hasClubAccess(clubId);
+      allow write: if isSuperAdmin() || 
+                   isVereinsvertreter() || // Legacy - TEMPORÄR
+                   isVereinsvorstand() || // Legacy - TEMPORÄR
+                   isVorstand(clubId);
+    }
+
+    // === LEGACY COLLECTIONS (Vereinsrecht ohne Multi-Tenant) ===
+    
+    match /vereinsrecht_protokolle/{document} {
+      allow read, write: if isSuperAdmin() || isVereinsvertreter() || isVereinsvorstand();
+    }
+
+    match /vereinsrecht_wahlen/{document} {
+      allow read, write: if isSuperAdmin() || isVereinsvertreter() || isVereinsvorstand();
+    }
+
+    match /vereinsrecht_satzung/{document} {
+      allow read, write: if isSuperAdmin() || isVereinsvertreter() || isVereinsvorstand();
+    }
+
+    match /vereinsrecht_compliance/{document} {
+      allow read, write: if isSuperAdmin() || isVereinsvertreter() || isVereinsvorstand();
+    }
+
+    match /vereinsrecht_spenden/{document} {
+      allow read, write: if isSuperAdmin() || isVereinsvertreter() || isVereinsvorstand();
+    }
+
+    // === SYSTEM & ADMIN ===
+    
+    match /user_permissions/{userId} {
+      allow read: if isSuperAdmin() || 
+                  (isAuthenticated() && request.auth.uid == userId) ||
+                  isAuthenticated(); // TEMPORÄR für Regelauswertung
+      allow write: if isSuperAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isSuperAdmin() || 
+                  (isAuthenticated() && request.auth.uid == userId);
+      allow write: if isSuperAdmin();
+    }
+
+    // === EVENTS & LEGACY ===
+    
+    match /events/{event} {
+      allow read: if true;
+      allow create, update: if isAuthenticated() && 
+        (isSuperAdmin() ||
+         getUserRole() == "mannschaftsfuehrer" || 
+         getUserRole() == "vereinsvertreter" ||
+         getUserRole() == "vereinsvorstand");
+      allow delete: if isSuperAdmin() || 
+                    (isAuthenticated() && resource.data.createdBy == request.auth.uid);
+    }
+
+    match /league_updates/{update} {
       allow read: if true;
       allow create, update: if isAuthenticated();
       allow delete: if isSuperAdmin();
     }
 
-    // Support-Tickets - VERBESSERT: Rate Limiting
-    match /support_tickets/{ticketId} {
+    match /team_substitutions/{substitution} {
+      allow read: if true;
+      allow create: if isSuperAdmin() ||
+                      (isVereinsvertreter() && 
+                       getUserClubId(request.auth.uid) == request.resource.data.clubId);
+      allow update: if isSuperAdmin() ||
+                      (isVereinsvertreter() && 
+                       getUserClubId(request.auth.uid) == resource.data.clubId);
+      allow delete: if isSuperAdmin() ||
+                      (isVereinsvertreter() && 
+                       getUserClubId(request.auth.uid) == resource.data.clubId);
+    }
+
+    // === SUPPORT & MISC ===
+    
+    match /support_tickets/{ticket} {
       allow create: if true && 
                     request.resource.data.email is string &&
                     request.resource.data.name is string &&
@@ -154,42 +469,26 @@ match /users/{userId} {
       allow read, update, delete: if isSuperAdmin();
     }
 
-    // Benutzerberechtigungen - Lesbar für Admin und eigenen Benutzer, schreibbar nur für Admin
-    match /user_permissions/{userId} {
-      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId) || isAuthenticated(); // TEMPORÄR: Alle authentifizierten Benutzer können lesen für Regelauswertung
-      allow write: if isSuperAdmin();
-    }
-
-    // Audit-Logs - Lesbar für Admin, schreibbar für authentifizierte Benutzer
-    match /audit_logs/{logId} {
+    match /audit_logs/{log} {
       allow read: if isSuperAdmin();
       allow create: if isAuthenticated();
-      allow update, delete: if false; // Audit-Logs sollten nie geändert oder gelöscht werden
+      allow update, delete: if false;
     }
 
-    // Dokumente - Lesbar für alle, schreibbar nur für Admin
-    match /documents/{documentId} {
+    match /documents/{doc} {
       allow read: if true;
       allow write: if isSuperAdmin();
     }
-    
-    // RWK-News - Lesbar für alle, schreibbar nur für Admin
-    match /rwk_news/{newsId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-    
-    // Proteste - Lesbar für Admin und Ersteller, schreibbar für authentifizierte Benutzer
-    match /protests/{protestId} {
+
+    match /protests/{protest} {
       allow read: if isSuperAdmin() || 
-                    (isAuthenticated() && resource.data.submittedBy == request.auth.token.email);
+                  (isAuthenticated() && resource.data.submittedBy == request.auth.token.email);
       allow create: if isAuthenticated();
       allow update: if isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
-    
-    // Push-Notification Subscriptions
-    match /notification_subscriptions/{subscriptionId} {
+
+    match /notification_subscriptions/{subscription} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && 
@@ -197,202 +496,34 @@ match /users/{userId} {
       allow delete: if isAuthenticated() && 
                     (resource.data.userEmail == request.auth.token.email || isSuperAdmin());
     }
-    
-    // Notifications History
-    match /notifications/{notificationId} {
+
+    match /notifications/{notification} {
       allow read: if isSuperAdmin();
       allow create: if isAuthenticated();
     }
-    
-    // E-Mail Kontakte
-    match /email_contacts/{contactId} {
+
+    match /email_contacts/{contact} {
       allow read, write: if isSuperAdmin();
-    }
-    
-    // Admin-Einstellungen
-    match /admin_settings/{settingId} {
-      allow read, write: if isSuperAdmin();
-    }
-    
-    // Team-Substitutions - Verwaltung durch Admin und Vereinsvertreter
-    match /team_substitutions/{substitutionId} {
-      allow read: if true;
-      allow create: if isSuperAdmin() ||
-                      (isVereinsvertreter() && 
-                       hasClubAccess(request.resource.data.clubId));
-      allow update: if isSuperAdmin() ||
-                      (isVereinsvertreter() && 
-                       hasClubAccess(resource.data.clubId));
-      allow delete: if isSuperAdmin() ||
-                      (isVereinsvertreter() && 
-                       hasClubAccess(resource.data.clubId));
     }
 
-    // App-Statistiken - Lesbar für alle, schreibbar auch ohne Auth für Download-Zähler
-    match /app_stats/{statId} {
+    match /admin_settings/{setting} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /app_stats/{stat} {
       allow read: if true;
-      allow write: if true; // Erlaubt Download-Zähler ohne Auth
-    }
-    
-    // Download-Zähler - Komplett offen für API-Operationen
-    match /download_stats/{document} {
-      allow read, write: if true;
-    }
-    
-    // === KM-SYSTEM REGELN ===
-    
-    // KM-Benutzerberechtigungen - Nur SuperAdmin kann verwalten
-    match /km_user_permissions/{userId} {
-      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
-      allow write: if isSuperAdmin();
-    }
-    
-    // KM-Wettkampfklassen - Temporär komplett offen
-    match /km_wettkampfklassen/{document} {
-      allow read, write: if true;
-    }
-    
-    // KM-Disziplinen - Temporär komplett offen
-    match /km_disziplinen/{document} {
-      allow read, write: if true;
-    }
-    
-    // KM-Meldungen - Temporär offen
-    match /km_meldungen/{document} {
-      allow read, write: if true;
-    }
-    
-    // KM-Mannschaften - Temporär offen
-    match /km_mannschaften/{document} {
-      allow read: if true; // Explizit für API-Operationen
       allow write: if true;
-      allow create: if true;
     }
+
+    match /download_stats/{stat} {
+      allow read, write: if true;
+    }
+
+    // === FALLBACK ===
     
-    match /km_startlisten_configs/{document} {
-      allow read, write: if true;
-    }
-    
-    match /km_startlisten/{document} {
-      allow read, write: if true;
-    }
-    
-    match /km_vm_ergebnisse/{document} {
-      allow read, write: if true;
-    }
-
-    // KM-Ergebnisse - Temporär offen
-    match /km_ergebnisse/{document} {
-      allow read, write: if true;
-    }
-
-    // Meyton-Klassen für Export
-    match /meyton_klassen/{document} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-    
-    // System-Konfiguration (Mannschaftsregeln etc.) - TEMPORÄR OFFEN
-    match /system_config/{document} {
-      allow read, write: if true;
-    }
-
-    // Alle KM-Meldungen Collections (Regex-Pattern)
-    match /{collection}/{document=**} {
-      allow read, write: if true && collection.matches('km_meldungen_.*');
-    }
-
-    match /km_jahre/{document=**} {
-      allow read, write: if true;
-    }
-
-    // === MULTI-TENANT CLUB-STRUKTUR (NEU) ===
-    
-    // Multi-Tenant Club-Struktur - Nur eigene Vereinsdaten sichtbar
-    match /clubs/{clubId}/{document=**} {
-      allow read, write: if request.auth != null && 
-        getUserClubId(request.auth.uid) == clubId;
-    }
-
-    // Spezifische Regeln für verschiedene Club-Collections
-    match /clubs/{clubId}/mitglieder/{memberId} {
-      allow read, write: if request.auth != null && 
-        getUserClubId(request.auth.uid) == clubId;
-    }
-
-    match /clubs/{clubId}/vereinsrecht_protokolle/{protocolId} {
-      allow read, write: if request.auth != null && 
-        getUserClubId(request.auth.uid) == clubId;
-    }
-
-    match /clubs/{clubId}/vereinsrecht_wahlen/{electionId} {
-      allow read, write: if request.auth != null && 
-        getUserClubId(request.auth.uid) == clubId;
-    }
-
-    match /clubs/{clubId}/vereinsrecht_satzung/{documentId} {
-      allow read, write: if request.auth != null && 
-        getUserClubId(request.auth.uid) == clubId;
-    }
-
-    match /clubs/{clubId}/vereinsrecht_compliance/{complianceId} {
-      allow read, write: if request.auth != null && 
-        getUserClubId(request.auth.uid) == clubId;
-    }
-
-    match /clubs/{clubId}/vereinsrecht_spenden/{donationId} {
-      allow read, write: if request.auth != null && 
-        getUserClubId(request.auth.uid) == clubId;
-    }
-
-    match /clubs/{clubId}/finanzen/{financeId} {
-      allow read, write: if request.auth != null && 
-        getUserClubId(request.auth.uid) == clubId;
-    }
-
-    match /clubs/{clubId}/aufgaben/{taskId} {
-      allow read, write: if request.auth != null && 
-        getUserClubId(request.auth.uid) == clubId;
-    }
-
-    // VEREINSRECHT - TEMPORÄRE ENTWICKLUNGS-REGELN (OFFEN) - LEGACY
-    match /vereinsrecht_protokolle/{document} {
-      allow read, write: if true;
-    }
-
-    match /vereinsrecht_wahlen/{document} {
-      allow read, write: if true;
-    }
-
-    match /vereinsrecht_satzung/{document} {
-      allow read, write: if true;
-    }
-
-    match /vereinsrecht_compliance/{document} {
-      allow read, write: if true;
-    }
-
-    match /vereinsrecht_spenden/{document} {
-      allow read, write: if true;
-    }
-
-   // Fallback-Regel: Alles andere verbieten
+    // Alles andere verbieten
     match /{document=**} {
       allow read, write: if false;
     }
-  
-  // TEMPORÄRE REGEL FÜR ENTWICKLUNG - FÜGE DAS ZU DEN BESTEHENDEN REGELN HINZU:
-
-// Multi-Tenant Club-Struktur - TEMPORÄR OFFEN FÜR ENTWICKLUNG
-match /clubs/{clubId}/{document=**} {
-  allow read, write: if true;
-}
-
-// TEMPORÄR - ganz oben in die Rules
-match /clubs/{clubId}/{document=**} {
-  allow read, write: if true;
-}
-
-
   }
 }

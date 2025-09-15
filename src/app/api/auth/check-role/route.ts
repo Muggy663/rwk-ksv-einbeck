@@ -1,8 +1,6 @@
 // src/app/api/auth/check-role/route.ts
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 
 // Diese Konfiguration verhindert die statische Generierung dieser Route
 export const dynamic = 'force-dynamic';
@@ -25,22 +23,23 @@ export async function GET(request: Request) {
     }
     
     try {
-      // Token verifizieren
-      const decodedToken = await auth.verifyIdToken(token);
+      // Token verifizieren mit Admin SDK
+      const admin = await import('firebase-admin/auth');
+      const decodedToken = await admin.getAuth().verifyIdToken(token);
       const uid = decodedToken.uid;
       
       // Benutzerberechtigungen aus Firestore laden
-      const userPermissionsDoc = await getDoc(doc(db, 'user_permissions', uid));
+      const userPermissionsDoc = await adminDb.collection('user_permissions').doc(uid).get();
       
-      if (!userPermissionsDoc.exists()) {
+      if (!userPermissionsDoc.exists) {
         return NextResponse.json({ role: null, authenticated: true }, { status: 200 });
       }
       
       const userPermissions = userPermissionsDoc.data();
       
       return NextResponse.json({
-        role: userPermissions.role || null,
-        clubId: userPermissions.clubId || null,
+        role: userPermissions?.role || null,
+        clubId: userPermissions?.clubId || null,
         authenticated: true
       }, { status: 200 });
     } catch (error) {

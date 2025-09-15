@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const KM_JAHRE_COLLECTION = 'km_jahre';
 
@@ -21,11 +21,11 @@ export async function POST(request: NextRequest) {
       meldeschluss,
       status: status || 'vorbereitung',
       beschreibung: beschreibung || '',
-      erstelltAm: new Date(),
-      aktualisiertAm: new Date()
+      erstelltAm: FieldValue.serverTimestamp(),
+      aktualisiertAm: FieldValue.serverTimestamp()
     };
 
-    const docRef = await addDoc(collection(db, KM_JAHRE_COLLECTION), kmJahr);
+    const docRef = await adminDb.collection(KM_JAHRE_COLLECTION).add(kmJahr);
 
     return NextResponse.json({
       success: true,
@@ -44,12 +44,10 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const q = query(
-      collection(db, KM_JAHRE_COLLECTION),
-      orderBy('jahr', 'desc')
-    );
+    const snapshot = await adminDb.collection(KM_JAHRE_COLLECTION)
+      .orderBy('jahr', 'desc')
+      .get();
     
-    const snapshot = await getDocs(q);
     const jahre = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()

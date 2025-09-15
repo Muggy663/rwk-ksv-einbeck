@@ -1,6 +1,5 @@
 // src/lib/services/km-disziplinen-service.ts
-import { db } from '@/lib/firebase/config';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 
 // Altersklassen-Definitionen
 export const ALTERSKLASSEN = [
@@ -134,19 +133,18 @@ const DISZIPLINEN_2026 = [
 ];
 
 export async function generateDisziplinen2026(): Promise<void> {
-  const collectionRef = collection(db, 'km_disziplinen');
+  const collectionRef = adminDb.collection('km_disziplinen');
   
   // Lösche ALLE bestehenden Disziplinen für komplette Neu-Erstellung
-  const existingSnapshot = await getDocs(collectionRef);
-  const { deleteDoc, doc } = await import('firebase/firestore');
+  const existingSnapshot = await collectionRef.get();
   
   for (const docSnap of existingSnapshot.docs) {
-    await deleteDoc(doc(db, 'km_disziplinen', docSnap.id));
+    await docSnap.ref.delete();
   }
   
   // Erstelle alle Disziplinen neu mit auflage-Flag
   for (const disziplin of DISZIPLINEN_2026) {
-    await addDoc(collectionRef, {
+    await collectionRef.add({
       ...disziplin,
       saison: '2026',
       createdAt: new Date()
@@ -155,7 +153,7 @@ export async function generateDisziplinen2026(): Promise<void> {
 }
 
 export async function getAllDisziplinen() {
-  const snapshot = await getDocs(collection(db, 'km_disziplinen'));
+  const snapshot = await adminDb.collection('km_disziplinen').get();
   const disziplinen = snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()

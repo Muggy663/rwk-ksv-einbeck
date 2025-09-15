@@ -1,50 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where, updateDoc, doc, writeBatch, arrayRemove, arrayUnion } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
   try {
     const { action, substitutionId, teamId } = await request.json();
 
     if (action === 'apply_substitution') {
-      const substitutionDoc = await getDocs(
-        query(collection(db, 'team_substitutions'), where('__name__', '==', substitutionId))
-      );
+      const substitutionDoc = await adminDb.collection('team_substitutions').doc(substitutionId).get();
       
-      if (substitutionDoc.empty) {
+      if (!substitutionDoc.exists) {
         return NextResponse.json({ error: 'Substitution nicht gefunden' }, { status: 404 });
       }
 
-      const substitution = { id: substitutionDoc.docs[0].id, ...substitutionDoc.docs[0].data() };
+      const substitution = { id: substitutionDoc.id, ...substitutionDoc.data() };
 
-      const teamDoc = await getDocs(
-        query(collection(db, 'rwk_teams'), where('__name__', '==', teamId))
-      );
+      const teamDoc = await adminDb.collection('rwk_teams').doc(teamId).get();
       
-      if (teamDoc.empty) {
+      if (!teamDoc.exists) {
         return NextResponse.json({ error: 'Team nicht gefunden' }, { status: 404 });
       }
 
-      const team = { id: teamDoc.docs[0].id, ...teamDoc.docs[0].data() };
+      const team = { id: teamDoc.id, ...teamDoc.data() };
 
       const updatedShooterIds = team.shooterIds.map((id: string) => 
         id === substitution.originalShooterId ? substitution.replacementShooterId : id
       );
 
-      await updateDoc(doc(db, 'rwk_teams', teamId), {
+      await adminDb.collection('rwk_teams').doc(teamId).update({
         shooterIds: updatedShooterIds
       });
 
-      const batch = writeBatch(db);
+      const batch = adminDb.batch();
       
-      const originalShooterRef = doc(db, 'shooters', substitution.originalShooterId);
+      const originalShooterRef = adminDb.collection('shooters').doc(substitution.originalShooterId);
       batch.update(originalShooterRef, {
-        teamIds: arrayRemove(teamId)
+        teamIds: FieldValue.arrayRemove(teamId)
       });
       
-      const replacementShooterRef = doc(db, 'shooters', substitution.replacementShooterId);
+      const replacementShooterRef = adminDb.collection('shooters').doc(substitution.replacementShooterId);
       batch.update(replacementShooterRef, {
-        teamIds: arrayUnion(teamId)
+        teamIds: FieldValue.arrayUnion(teamId)
       });
 
       await batch.commit();

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, addDoc, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,12 +25,12 @@ export async function POST(request: NextRequest) {
       status: 'Geplant',
       beschreibung: beschreibung || '',
       gewinner: null,
-      erstelltAm: new Date(),
+      erstelltAm: FieldValue.serverTimestamp(),
       erstelltVon: 'current-user', // TODO: Aus Auth holen
-      aktualisiertAm: new Date()
+      aktualisiertAm: FieldValue.serverTimestamp()
     };
 
-    const docRef = await addDoc(collection(db, 'vereinsrecht_wahlen'), wahl);
+    const docRef = await adminDb.collection('vereinsrecht_wahlen').add(wahl);
 
     return NextResponse.json({
       success: true,
@@ -53,20 +53,15 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const jahr = searchParams.get('jahr');
 
-    let q = query(
-      collection(db, 'vereinsrecht_wahlen'),
-      orderBy('datum', 'desc')
-    );
+    let query = adminDb.collection('vereinsrecht_wahlen').orderBy('datum', 'desc');
 
     if (status) {
-      q = query(
-        collection(db, 'vereinsrecht_wahlen'),
-        where('status', '==', status),
-        orderBy('datum', 'desc')
-      );
+      query = adminDb.collection('vereinsrecht_wahlen')
+        .where('status', '==', status)
+        .orderBy('datum', 'desc');
     }
 
-    const snapshot = await getDocs(q);
+    const snapshot = await query.get();
     const wahlen = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()

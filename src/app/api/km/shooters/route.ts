@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { collection, getDocs, query, where, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { adminDb } from '@/lib/firebase/admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,13 +10,13 @@ export async function GET(request: NextRequest) {
     let shootersQuery;
     if (clubId) {
       // Filtere nach clubId für Vereinsvertreter
-      shootersQuery = query(collection(db, 'shooters'), where('clubId', '==', clubId));
+      shootersQuery = adminDb.collection('shooters').where('clubId', '==', clubId);
     } else {
       // Alle Schützen für Admin
-      shootersQuery = collection(db, 'shooters');
+      shootersQuery = adminDb.collection('shooters');
     }
     
-    const shootersSnap = await getDocs(shootersQuery);
+    const shootersSnap = await shootersQuery.get();
     const shooters = shootersSnap.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
     const shooterData = await request.json();
     
     // Add new shooter to Firestore
-    const docRef = await addDoc(collection(db, 'shooters'), shooterData);
+    const docRef = await adminDb.collection('shooters').add(shooterData);
     
     return NextResponse.json({ 
       success: true, 

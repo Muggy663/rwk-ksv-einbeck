@@ -1,14 +1,11 @@
 // src/app/api/km/update-year/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 
 export async function POST(request: NextRequest) {
   try {
-
-    
     // Lade alle Meldungen
-    const snapshot = await getDocs(collection(db, 'km_meldungen'));
+    const snapshot = await adminDb.collection('km_meldungen').get();
     let updated = 0;
     let skipped = 0;
     
@@ -17,18 +14,14 @@ export async function POST(request: NextRequest) {
       
       // Nur updaten wenn jahr fehlt
       if (!data.jahr) {
-        await updateDoc(doc(db, 'km_meldungen', docSnap.id), {
+        await docSnap.ref.update({
           jahr: 2026
         });
         updated++;
-
       } else {
         skipped++;
-
       }
     }
-    
-
     
     return NextResponse.json({
       success: true,

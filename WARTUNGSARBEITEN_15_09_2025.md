@@ -3,9 +3,7 @@
 ## 📋 Checkliste für den 15.09.2025
 
 ### 🔒 1. Login-Sperre aktivieren
-- [ ] **LoginBlocker aktivieren** in Login-Seite einbauen
-- [ ] **Komponente:** `/src/components/LoginBlocker.tsx` (bereits erstellt)
-- [ ] **Aktivierung:** LoginBlocker in `/src/app/login/page.tsx` einbauen
+- [x] **ÜBERSPRUNGEN** - Verzicht auf Login-Blocker für direktere Migration
 
 ### 👥 2. Benutzerrollen umstellen
 

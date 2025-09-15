@@ -1,5 +1,5 @@
-import { db } from '@/lib/firebase/config';
-import { doc, getDoc, setDoc, increment } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const COUNTER_DOC_ID = 'app_downloads';
 const COUNTER_COLLECTION = 'app_stats';
@@ -10,8 +10,8 @@ const COUNTER_COLLECTION = 'app_stats';
  */
 export async function setDownloadCount(count: number): Promise<void> {
   try {
-    const counterRef = doc(db, COUNTER_COLLECTION, COUNTER_DOC_ID);
-    await setDoc(counterRef, { count }, { merge: true });
+    const counterRef = adminDb.collection(COUNTER_COLLECTION).doc(COUNTER_DOC_ID);
+    await counterRef.set({ count }, { merge: true });
 
   } catch (error) {
     console.error('Fehler beim Setzen des Download-Zählers:', error);
@@ -24,13 +24,13 @@ export async function setDownloadCount(count: number): Promise<void> {
  */
 export async function incrementDownloadCounter(): Promise<number> {
   try {
-    const counterRef = doc(db, COUNTER_COLLECTION, COUNTER_DOC_ID);
+    const counterRef = adminDb.collection(COUNTER_COLLECTION).doc(COUNTER_DOC_ID);
     
     // Aktualisiere den Zähler mit Firestore-Increment
-    await setDoc(counterRef, { count: increment(1) }, { merge: true });
+    await counterRef.set({ count: FieldValue.increment(1) }, { merge: true });
     
     // Hole den aktuellen Wert
-    const updatedDoc = await getDoc(counterRef);
+    const updatedDoc = await counterRef.get();
     return updatedDoc.data()?.count || 0;
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Download-Zählers:', error);
@@ -43,14 +43,14 @@ export async function incrementDownloadCounter(): Promise<number> {
  */
 export async function getDownloadCount(): Promise<number> {
   try {
-    const counterRef = doc(db, COUNTER_COLLECTION, COUNTER_DOC_ID);
-    const counterDoc = await getDoc(counterRef);
+    const counterRef = adminDb.collection(COUNTER_COLLECTION).doc(COUNTER_DOC_ID);
+    const counterDoc = await counterRef.get();
     
-    if (counterDoc.exists()) {
-      return counterDoc.data().count || 0;
+    if (counterDoc.exists) {
+      return counterDoc.data()?.count || 0;
     } else {
       // Erstelle das Dokument, falls es noch nicht existiert
-      await setDoc(counterRef, { count: 0 });
+      await counterRef.set({ count: 0 });
       return 0;
     }
   } catch (error) {

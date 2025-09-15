@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, addDoc, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,13 +25,13 @@ export async function POST(request: NextRequest) {
       anwesende: anwesende || [],
       beschluesse: [],
       status: 'Entwurf',
-      erstelltAm: new Date(),
+      erstelltAm: FieldValue.serverTimestamp(),
       erstelltVon: 'current-user', // TODO: Aus Auth holen
-      aktualisiertAm: new Date()
+      aktualisiertAm: FieldValue.serverTimestamp()
     };
 
     console.log('Attempting to save to Firestore:', protokoll);
-    const docRef = await addDoc(collection(db, 'vereinsrecht_protokolle'), protokoll);
+    const docRef = await adminDb.collection('vereinsrecht_protokolle').add(protokoll);
     console.log('Successfully saved with ID:', docRef.id);
 
     return NextResponse.json({
@@ -62,20 +62,15 @@ export async function GET(request: NextRequest) {
     const typ = searchParams.get('typ');
     const jahr = searchParams.get('jahr');
 
-    let q = query(
-      collection(db, 'vereinsrecht_protokolle'),
-      orderBy('datum', 'desc')
-    );
+    let query = adminDb.collection('vereinsrecht_protokolle').orderBy('datum', 'desc');
 
     if (typ) {
-      q = query(
-        collection(db, 'vereinsrecht_protokolle'),
-        where('typ', '==', typ),
-        orderBy('datum', 'desc')
-      );
+      query = adminDb.collection('vereinsrecht_protokolle')
+        .where('typ', '==', typ)
+        .orderBy('datum', 'desc');
     }
 
-    const snapshot = await getDocs(q);
+    const snapshot = await query.get();
     const protokolle = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()

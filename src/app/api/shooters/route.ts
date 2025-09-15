@@ -1,7 +1,7 @@
 // src/app/api/shooters/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, deleteDoc, doc, writeBatch, addDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,11 +27,11 @@ export async function POST(request: NextRequest) {
       rwkClubId: null,
       isActive: true,
       genderGuessed: false,
-      createdAt: new Date(),
-      importedAt: new Date()
+      createdAt: FieldValue.serverTimestamp(),
+      importedAt: FieldValue.serverTimestamp()
     };
 
-    const docRef = await addDoc(collection(db, 'shooters'), shooterData);
+    const docRef = await adminDb.collection('shooters').add(shooterData);
 
     return NextResponse.json({
       success: true,
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     if (includeMembers) {
       // Für KM: Lade nur KM-Schützen
       try {
-        const kmSnapshot = await getDocs(collection(db, 'km_shooters'));
+        const kmSnapshot = await adminDb.collection('km_shooters').get();
         allShooters = kmSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       }
     } else {
       // Für RWK: Lade zentrale Schützen
-      const shootersSnapshot = await getDocs(collection(db, 'shooters'));
+      const shootersSnapshot = await adminDb.collection('shooters').get();
       let shooters = shootersSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -104,14 +104,11 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-
     const url = new URL(request.url);
     const action = url.searchParams.get('action');
-
     
     if (action === 'cleanup-duplicates') {
-
-      const snapshot = await getDocs(collection(db, 'shooters'));
+      const snapshot = await adminDb.collection('shooters').get();
       const shooters = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
       
       // Finde Duplikate (gleicher Name)
@@ -131,12 +128,10 @@ export async function DELETE(request: NextRequest) {
         }
       });
       
-
-      
       if (toDelete.length > 0) {
-        const batch = writeBatch(db);
+        const batch = adminDb.batch();
         toDelete.forEach(s => {
-          batch.delete(doc(db, 'shooters', s.id));
+          batch.delete(adminDb.collection('shooters').doc(s.id));
         });
         
         await batch.commit();
@@ -149,26 +144,21 @@ export async function DELETE(request: NextRequest) {
     }
     
     if (action === 'cleanup-imports') {
-
       // Lösche shooters mit createdAt (Excel-Importe)
-      const snapshot = await getDocs(collection(db, 'shooters'));
-
-      
+      const snapshot = await adminDb.collection('shooters').get();
       const shooters = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
       
       // Lösche nur Schützen mit createdAt (= Excel-Importe)
       const toDelete = shooters.filter(s => s.createdAt);
-
       
       if (toDelete.length > 0) {
         // Verwende Batch für bessere Performance
-        const batch = writeBatch(db);
+        const batch = adminDb.batch();
         toDelete.forEach(s => {
-          batch.delete(doc(db, 'shooters', s.id));
+          batch.delete(adminDb.collection('shooters').doc(s.id));
         });
         
         await batch.commit();
-
       }
       
       return NextResponse.json({

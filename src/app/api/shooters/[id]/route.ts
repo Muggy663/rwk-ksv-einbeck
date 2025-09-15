@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { doc, updateDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function PATCH(
   request: NextRequest,
@@ -16,9 +16,9 @@ export async function PATCH(
     if (gender !== undefined) updateData.gender = gender;
     if (mitgliedsnummer !== undefined) updateData.mitgliedsnummer = mitgliedsnummer;
     
-    updateData.updatedAt = new Date();
+    updateData.updatedAt = FieldValue.serverTimestamp();
 
-    await updateDoc(doc(db, 'shooters', params.id), updateData);
+    await adminDb.collection('shooters').doc(params.id).update(updateData);
 
     return NextResponse.json({
       success: true,

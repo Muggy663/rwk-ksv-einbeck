@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { doc, updateDoc, deleteDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 
 export async function PATCH(
   request: NextRequest,
@@ -13,8 +12,7 @@ export async function PATCH(
     // Hole aktuelles Jahr
     let aktivesJahr = 2026;
     try {
-      const jahreQuery = query(collection(db, 'km_jahre'), where('status', '==', 'aktiv'));
-      const jahreSnapshot = await getDocs(jahreQuery);
+      const jahreSnapshot = await adminDb.collection('km_jahre').where('status', '==', 'aktiv').get();
       if (!jahreSnapshot.empty) {
         aktivesJahr = jahreSnapshot.docs[0].data().jahr;
       }
@@ -28,17 +26,17 @@ export async function PATCH(
     
     for (const collectionName of collections) {
       try {
-        const docRef = doc(db, collectionName, params.id);
-        const docSnap = await getDoc(docRef);
+        const docRef = adminDb.collection(collectionName).doc(params.id);
+        const docSnap = await docRef.get();
         
-        if (docSnap.exists()) {
+        if (docSnap.exists) {
           const updateData: any = {};
           
           if (lmTeilnahme !== undefined) updateData.lmTeilnahme = lmTeilnahme;
           if (vmErgebnis !== undefined) updateData.vmErgebnis = vmErgebnis;
           if (anmerkung !== undefined) updateData.anmerkung = anmerkung;
           
-          await updateDoc(docRef, updateData);
+          await docRef.update(updateData);
           docFound = true;
           break;
         }
@@ -77,8 +75,7 @@ export async function DELETE(
     // Hole aktuelles Jahr
     let aktivesJahr = 2026;
     try {
-      const jahreQuery = query(collection(db, 'km_jahre'), where('status', '==', 'aktiv'));
-      const jahreSnapshot = await getDocs(jahreQuery);
+      const jahreSnapshot = await adminDb.collection('km_jahre').where('status', '==', 'aktiv').get();
       if (!jahreSnapshot.empty) {
         aktivesJahr = jahreSnapshot.docs[0].data().jahr;
       }
@@ -92,11 +89,11 @@ export async function DELETE(
     
     for (const collectionName of collections) {
       try {
-        const docRef = doc(db, collectionName, params.id);
-        const docSnap = await getDoc(docRef);
+        const docRef = adminDb.collection(collectionName).doc(params.id);
+        const docSnap = await docRef.get();
         
-        if (docSnap.exists()) {
-          await deleteDoc(docRef);
+        if (docSnap.exists) {
+          await docRef.delete();
           docFound = true;
           break;
         }

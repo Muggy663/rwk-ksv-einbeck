@@ -1,11 +1,10 @@
 // src/app/api/clubs/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
   try {
-    const snapshot = await getDocs(collection(db, 'clubs'));
+    const snapshot = await adminDb.collection('clubs').get();
     const clubs = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()

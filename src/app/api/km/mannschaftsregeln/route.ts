@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET() {
   try {
-    const docRef = doc(db, 'system_config', 'mannschaftsregeln');
-    const docSnap = await getDoc(docRef);
+    const docRef = adminDb.collection('system_config').doc('mannschaftsregeln');
+    const docSnap = await docRef.get();
     
-    if (docSnap.exists()) {
+    if (docSnap.exists) {
       return NextResponse.json({ regeln: docSnap.data() });
     } else {
       // Erstelle Standard-Regeln und speichere sie
@@ -26,7 +25,7 @@ export async function GET() {
       };
       
       // Speichere die Standard-Regeln
-      await setDoc(docRef, defaultRegeln);
+      await docRef.set(defaultRegeln);
       
       return NextResponse.json({ regeln: defaultRegeln });
     }
@@ -42,8 +41,8 @@ export async function POST(request: NextRequest) {
     
     regeln.lastUpdated = new Date().toISOString();
     
-    const docRef = doc(db, 'system_config', 'mannschaftsregeln');
-    await setDoc(docRef, regeln);
+    const docRef = adminDb.collection('system_config').doc('mannschaftsregeln');
+    await docRef.set(regeln);
     
     return NextResponse.json({ success: true, message: 'Mannschaftsregeln gespeichert' });
   } catch (error) {

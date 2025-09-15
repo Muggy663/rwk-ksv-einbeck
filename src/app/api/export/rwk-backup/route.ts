@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 import * as XLSX from 'xlsx';
 
 export const dynamic = 'force-dynamic';
@@ -14,17 +13,15 @@ export async function GET(request: NextRequest) {
     console.log(`📊 BACKUP: Exportiere ${discipline} ${year}...`);
     
     // 1. Lade alle Scores für das Jahr und die Disziplin
-    const scoresQuery = query(
-      collection(db, 'rwk_scores'),
-      where('competitionYear', '==', parseInt(year))
-    );
-    const scoresSnapshot = await getDocs(scoresQuery);
+    const scoresSnapshot = await adminDb.collection('rwk_scores')
+      .where('competitionYear', '==', parseInt(year))
+      .get();
     
     // 2. Lade Teams und Schützen
-    const teamsSnapshot = await getDocs(collection(db, 'rwk_teams'));
-    const shootersSnapshot = await getDocs(collection(db, 'shooters'));
-    const clubsSnapshot = await getDocs(collection(db, 'clubs'));
-    const leaguesSnapshot = await getDocs(collection(db, 'rwk_leagues'));
+    const teamsSnapshot = await adminDb.collection('rwk_teams').get();
+    const shootersSnapshot = await adminDb.collection('shooters').get();
+    const clubsSnapshot = await adminDb.collection('clubs').get();
+    const leaguesSnapshot = await adminDb.collection('rwk_leagues').get();
     
     // 3. Erstelle Maps für schnelle Lookups
     const teams = new Map();

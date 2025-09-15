@@ -1,4 +1,5 @@
-import { Inter } from 'next/font/google';
+// Temporarily disabled Google Fonts due to build timeout
+// import { Inter } from 'next/font/google';
 import './globals.css';
 import '@/components/ui/heading-styles.css';
 import { AuthProvider } from '@/components/auth/AuthProvider';
@@ -27,7 +28,7 @@ import { AppVersionChecker } from '@/components/AppVersionChecker';
 // import { SentryClientInit } from '@/components/sentry-client-init';
 
 
-const inter = Inter({ subsets: ['latin'] });
+// const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'RWK App Einbeck',
@@ -66,7 +67,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta name="author" content="KSV Einbeck" />
         <meta name="robots" content="noarchive" />
       </head>
-      <body className={`${inter.className} app-container`} suppressHydrationWarning>
+      <body className="font-sans app-container" suppressHydrationWarning>
         <AppVersionChecker />
         {/* Mobile Status Bar Overlay */}
         <div className="mobile-header-overlay"></div>

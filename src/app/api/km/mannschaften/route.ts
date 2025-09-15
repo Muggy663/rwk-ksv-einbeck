@@ -1,20 +1,17 @@
 // src/app/api/km/mannschaften/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const KM_MANNSCHAFTEN_COLLECTION = 'km_mannschaften';
 
 export async function GET(request: NextRequest) {
   try {
-
-    const snapshot = await getDocs(collection(db, KM_MANNSCHAFTEN_COLLECTION));
+    const snapshot = await adminDb.collection(KM_MANNSCHAFTEN_COLLECTION).get();
     const mannschaften = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
-    
-
 
     return NextResponse.json({
       success: true,
@@ -44,10 +41,10 @@ export async function POST(request: NextRequest) {
       schuetzenIds: schuetzenIds || [],
       name: name || '',
       saison: saison || '2026',
-      createdAt: new Date()
+      createdAt: FieldValue.serverTimestamp()
     };
 
-    const docRef = await addDoc(collection(db, KM_MANNSCHAFTEN_COLLECTION), mannschaft);
+    const docRef = await adminDb.collection(KM_MANNSCHAFTEN_COLLECTION).add(mannschaft);
 
     return NextResponse.json({
       success: true,

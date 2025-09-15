@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { doc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { adminDb } from '@/lib/firebase/admin';
 
 const IDS_TO_DELETE = [
   'bU6uW8ee6b86cyaN7txc', // Jürgen Wauker Duplikat
@@ -15,7 +14,7 @@ export async function POST() {
   
   for (const id of IDS_TO_DELETE) {
     try {
-      await deleteDoc(doc(db, 'rwk_scores', id));
+      await adminDb.collection('rwk_scores').doc(id).delete();
       results.push({ id, status: 'deleted' });
     } catch (error) {
       results.push({ id, status: 'error', error: error.message });

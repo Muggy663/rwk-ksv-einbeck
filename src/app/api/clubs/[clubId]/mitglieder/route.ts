@@ -1,7 +1,7 @@
 // src/app/api/clubs/[clubId]/mitglieder/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function GET(
   request: NextRequest,
@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     const mitgliederCollection = `clubs/${params.clubId}/mitglieder`;
-    const snapshot = await getDocs(collection(db, mitgliederCollection));
+    const snapshot = await adminDb.collection(mitgliederCollection).get();
     
     const mitglieder = snapshot.docs.map(doc => ({
       id: doc.id,
@@ -31,11 +31,11 @@ export async function POST(
     const data = await request.json();
     const mitgliederCollection = `clubs/${params.clubId}/mitglieder`;
     
-    const docRef = await addDoc(collection(db, mitgliederCollection), {
+    const docRef = await adminDb.collection(mitgliederCollection).add({
       ...data,
       clubId: params.clubId,
-      erstelltAm: new Date(),
-      aktualisiertAm: new Date()
+      erstelltAm: FieldValue.serverTimestamp(),
+      aktualisiertAm: FieldValue.serverTimestamp()
     });
 
     return NextResponse.json({ success: true, id: docRef.id });
