@@ -257,7 +257,7 @@ export default function GesamtergebnislisteGeneratorPage() {
               height: '500px'
             }}>
               <div className="flex justify-between items-center mb-4">
-                <img src={`${window.location.origin}/images/logo.png`} alt="Logo" className="w-12 h-12 object-contain" />
+                <img src={typeof window !== 'undefined' ? `${window.location.origin}/images/logo.png` : '/images/logo.png'} alt="Logo" className="w-12 h-12 object-contain" />
                 <div className="text-center flex-1">
                   <h1 className="text-lg font-bold">Kreisschützenverband Einbeck</h1>
                   <h2 className="text-md">Gesamtergebnisliste - {availableLeagues.find(l => l.id === selectedLeagueId)?.name || 'Liga'}</h2>
