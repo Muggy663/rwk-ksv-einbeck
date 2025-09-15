@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
-import { ALTERSKLASSEN, getSchiesszeit } from '@/lib/services/km-disziplinen-service';
+import { ALTERSKLASSEN, getSchiesszeit } from '@/lib/constants/km-constants';
 
 interface StartlistConfig {
   id?: string;
