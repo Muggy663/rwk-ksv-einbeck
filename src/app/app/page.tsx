@@ -5,41 +5,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Download, Smartphone, Shield, Zap, Loader2 } from 'lucide-react';
-import { getDownloadCount } from '@/lib/services/download-counter';
+// Removed direct import to avoid Admin SDK in browser
 
 export default function AppPage() {
   const [downloadCount, setDownloadCount] = useState<number | null>(null);
   
   useEffect(() => {
-    // Lade den aktuellen Download-Zähler
-    getDownloadCount()
-      .then(count => {
-        // Wenn der Zähler 0 ist, setze ihn auf 1, da wir wissen, dass es Downloads gab
-        if (count === 0) {
-          fetch('/api/set-download-count', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ count: 1 })
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              setDownloadCount(1);
-            } else {
-              setDownloadCount(count);
-            }
-          })
-          .catch(err => {
-            console.error('Fehler beim Setzen des Download-Zählers:', err);
-            setDownloadCount(count);
-          });
+    // Lade den aktuellen Download-Zähler über API
+    fetch('/api/increment-download')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          setDownloadCount(data.count || 1);
         } else {
-          setDownloadCount(count);
+          setDownloadCount(1);
         }
       })
       .catch(err => {
         console.error('Fehler beim Laden des Download-Zählers:', err);
-        setDownloadCount(0);
+        setDownloadCount(1);
       });
   }, []);
   return (
