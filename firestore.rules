@@ -46,6 +46,11 @@ match /users/{userId} {
       return rings is number && rings >= 0 && rings <= 600; // Max 600 für alle Disziplinen
     }
 
+    // Hilfsfunktion für Club-ID aus User-Permissions (Multi-Tenant)
+    function getUserClubId(uid) {
+      return get(/databases/$(database)/documents/user_permissions/$(uid)).data.clubId;
+    }
+
     // === Regeln für Collections ===
 
     // Öffentlich lesbare, nur von Admin schreibbare Collections
@@ -301,30 +306,93 @@ match /users/{userId} {
       allow read, write: if true;
     }
 
-    // VEREINSRECHT - TEMPORÄRE ENTWICKLUNGS-REGELN (OFFEN)
+    // === MULTI-TENANT CLUB-STRUKTUR (NEU) ===
+    
+    // Multi-Tenant Club-Struktur - Nur eigene Vereinsdaten sichtbar
+    match /clubs/{clubId}/{document=**} {
+      allow read, write: if request.auth != null && 
+        getUserClubId(request.auth.uid) == clubId;
+    }
+
+    // Spezifische Regeln für verschiedene Club-Collections
+    match /clubs/{clubId}/mitglieder/{memberId} {
+      allow read, write: if request.auth != null && 
+        getUserClubId(request.auth.uid) == clubId;
+    }
+
+    match /clubs/{clubId}/vereinsrecht_protokolle/{protocolId} {
+      allow read, write: if request.auth != null && 
+        getUserClubId(request.auth.uid) == clubId;
+    }
+
+    match /clubs/{clubId}/vereinsrecht_wahlen/{electionId} {
+      allow read, write: if request.auth != null && 
+        getUserClubId(request.auth.uid) == clubId;
+    }
+
+    match /clubs/{clubId}/vereinsrecht_satzung/{documentId} {
+      allow read, write: if request.auth != null && 
+        getUserClubId(request.auth.uid) == clubId;
+    }
+
+    match /clubs/{clubId}/vereinsrecht_compliance/{complianceId} {
+      allow read, write: if request.auth != null && 
+        getUserClubId(request.auth.uid) == clubId;
+    }
+
+    match /clubs/{clubId}/vereinsrecht_spenden/{donationId} {
+      allow read, write: if request.auth != null && 
+        getUserClubId(request.auth.uid) == clubId;
+    }
+
+    match /clubs/{clubId}/finanzen/{financeId} {
+      allow read, write: if request.auth != null && 
+        getUserClubId(request.auth.uid) == clubId;
+    }
+
+    match /clubs/{clubId}/aufgaben/{taskId} {
+      allow read, write: if request.auth != null && 
+        getUserClubId(request.auth.uid) == clubId;
+    }
+
+    // VEREINSRECHT - TEMPORÄRE ENTWICKLUNGS-REGELN (OFFEN) - LEGACY
     match /vereinsrecht_protokolle/{document} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
 
     match /vereinsrecht_wahlen/{document} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
 
     match /vereinsrecht_satzung/{document} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
 
     match /vereinsrecht_compliance/{document} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
 
     match /vereinsrecht_spenden/{document} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
-       
+
    // Fallback-Regel: Alles andere verbieten
     match /{document=**} {
       allow read, write: if false;
     }
+  
+  // TEMPORÄRE REGEL FÜR ENTWICKLUNG - FÜGE DAS ZU DEN BESTEHENDEN REGELN HINZU:
+
+// Multi-Tenant Club-Struktur - TEMPORÄR OFFEN FÜR ENTWICKLUNG
+match /clubs/{clubId}/{document=**} {
+  allow read, write: if true;
+}
+
+// TEMPORÄR - ganz oben in die Rules
+match /clubs/{clubId}/{document=**} {
+  allow read, write: if true;
+}
+
+
   }
 }
