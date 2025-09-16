@@ -52,3 +52,7 @@ ui-debug.log
 fix-*.js
 migrate-*.js
 update-*.js
+
+# Sentry
+.env.sentry-build-plugin
+.sentryclirc

@@ -155,9 +155,9 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
       return;
     }
     
-    // Super-Admin should not be in /verein layout, redirect them
-    if (user.email === ADMIN_EMAIL) {
-      // Super-Admin detected, redirecting to /admin/dashboard
+    // Super-Admin can access verein layout if they have club roles
+    if (user.email === ADMIN_EMAIL && !userAppPermissions?.clubRoles) {
+      // Super-Admin without club roles, redirecting to /admin/dashboard
       router.push('/admin');
       return; 
     }
@@ -179,13 +179,25 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
     } else {
       const { role, clubId, representedClubs } = userAppPermissions;
 
-
-      const allowedRoles = ['vereinsvertreter', 'mannschaftsfuehrer'];
-      if (role && allowedRoles.includes(role)) {
-        // Multi-Verein-Support: representedClubs hat Priorität
-        const clubIds = representedClubs && representedClubs.length > 0 
-          ? representedClubs 
-          : (clubId && typeof clubId === 'string' && clubId.trim() !== '' ? [clubId] : []);
+      // Direkte Prüfung für SPORTLEITER
+      const isSportleiter = userAppPermissions.clubRoles && 
+                           Object.values(userAppPermissions.clubRoles).includes('SPORTLEITER');
+      const isVorstand = userAppPermissions.clubRoles && 
+                        Object.values(userAppPermissions.clubRoles).includes('VORSTAND');
+      const hasValidRole = isSportleiter || isVorstand || 
+                          role === 'vereinsvertreter' || role === 'mannschaftsfuehrer';
+      
+      if (hasValidRole) {
+        // Multi-Verein-Support: representedClubs hat Priorität, dann clubRoles, dann clubId
+        let clubIds: string[] = [];
+        
+        if (representedClubs && representedClubs.length > 0) {
+          clubIds = representedClubs;
+        } else if (userAppPermissions.clubRoles && Object.keys(userAppPermissions.clubRoles).length > 0) {
+          clubIds = Object.keys(userAppPermissions.clubRoles);
+        } else if (clubId && typeof clubId === 'string' && clubId.trim() !== '') {
+          clubIds = [clubId];
+        }
           
         if (clubIds.length > 0) {
 
@@ -225,7 +237,8 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
         }
       } else {
         // Role is not valid for Verein area or missing
-        setDerivedPermissionError(`Ihre Rolle '${role || 'Unbekannt'}' hat keinen Zugriff auf den Vereinsbereich oder es fehlt eine Vereinszuweisung.`);
+        const roleInfo = role || (userAppPermissions.clubRoles ? Object.values(userAppPermissions.clubRoles).join(', ') : 'Keine Rollen gefunden');
+        setDerivedPermissionError(`Benutzer hat keine gültige Rolle für den Vereinsbereich. Benötigt: SPORTLEITER, VORSTAND oder Legacy-Rollen. Aktuelle Rollen: ${roleInfo}`);
         setUserPermissionForContext(userAppPermissions); // Store for potential role display in error
         setAssignedClubIdArray([]);
       }

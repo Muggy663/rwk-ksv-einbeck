@@ -4,6 +4,11 @@ import { useClubId } from '@/hooks/useClubId';
 
 export type ClubRole = 'SPORTLEITER' | 'VORSTAND' | 'KASSENWART' | 'SCHRIFTFUEHRER' | 'JUGENDWART' | 'DAMENWART' | 'ZEUGWART' | 'PRESSEWART' | 'TRAINER' | 'AUSBILDER' | 'VEREINSSCHUETZE' | 'EHRENMITGLIED';
 
+// Helper function for consistent license checking
+const hasValidLicense = (licenseValue: any): boolean => {
+  return licenseValue === true || licenseValue === 'true' || licenseValue === 1 || licenseValue === '1';
+};
+
 export function useClubPermissions() {
   const { user, userAppPermissions } = useAuthContext();
   const { clubId } = useClubId();
@@ -30,8 +35,8 @@ export function useClubPermissions() {
   const canAccessLicenses = hasClubRole(['VORSTAND', 'TRAINER', 'AUSBILDER']);
   const canAccessJubilees = hasClubRole(['VORSTAND', 'SCHRIFTFUEHRER']);
 
-  // Vereinssoftware-Lizenz prüfen (Kaufprodukt)
-  const hasVereinssoftwareLicense = userAppPermissions?.vereinssoftwareLicense === true;
+  // Vereinssoftware-Lizenz prüfen (Kaufprodukt) - konsistente Prüfung
+  const hasVereinssoftwareLicense = hasValidLicense(userAppPermissions?.vereinssoftwareLicense);
   
   // Allgemeiner Vereinssoftware-Zugriff (nur mit Lizenz)
   const canAccessClubArea = () => {

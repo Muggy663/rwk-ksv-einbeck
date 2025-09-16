@@ -39,8 +39,9 @@ export default function DashboardAuswahl() {
   }
 
   const isRWKAdmin = userAppPermissions?.role === 'superadmin' || user?.email === 'admin@rwk-einbeck.de';
-  const isVereinsvertreter = userAppPermissions?.role === 'vereinsvertreter' || userAppPermissions?.role === 'club_representative';
-  const isVereinsvorstand = userAppPermissions?.role === 'vereinsvorstand';
+  // Legacy-Rollen für Rückwärtskompatibilität
+  const isLegacyVereinsvertreter = userAppPermissions?.role === 'vereinsvertreter' || userAppPermissions?.role === 'club_representative';
+  const isLegacyVereinsvorstand = userAppPermissions?.role === 'vereinsvorstand';
   
   // Neue Club-Rollen
   const hasClubRoles = userAppPermissions?.clubRoles && Object.keys(userAppPermissions.clubRoles).length > 0;
@@ -135,36 +136,36 @@ export default function DashboardAuswahl() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* RWK Dashboard */}
-        <Card className={`shadow-lg hover:shadow-xl transition-shadow ${isKMOrganisator && !isRWKAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}>
+        <Card className={`shadow-lg hover:shadow-xl transition-shadow ${isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand ? 'opacity-50 cursor-not-allowed' : ''}`}>
           <CardHeader className="pb-4">
             <div>
               <CardTitle className="text-xl mb-2">
                 <span className="hidden sm:inline">🎯 Rundenwettkampf</span>
                 <span className="sm:hidden">🎯 RWK</span>
-                {isKMOrganisator && !isRWKAdmin && <span className="text-red-500 ml-2">🚫</span>}
+                {isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand && <span className="text-red-500 ml-2">🚫</span>}
               </CardTitle>
               <div className="flex flex-wrap gap-1">
                 {isRWKAdmin && <Badge variant="default">Superadmin</Badge>}
                 {isSportleiter && !isRWKAdmin && <Badge variant="secondary">Sportleiter</Badge>}
                 {isVorstand && !isRWKAdmin && <Badge variant="secondary">Vorstand</Badge>}
-                {isKMOrganisator && !isRWKAdmin && <Badge variant="destructive">Gesperrt für KM-Orga</Badge>}
-                {!hasClubRoles && !isRWKAdmin && (isVereinsvertreter || isVereinsvorstand) && <Badge variant="destructive">Migration erforderlich</Badge>}
+                {isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand && <Badge variant="destructive">Gesperrt für reine KM-Orga</Badge>}
+                {!hasClubRoles && !isRWKAdmin && (isLegacyVereinsvertreter || isLegacyVereinsvorstand) && <Badge variant="destructive">Migration erforderlich</Badge>}
               </div>
             </div>
             <CardDescription>
-              {isKMOrganisator && !isRWKAdmin ? 
-                'Als KM-Organisator haben Sie keinen Zugang zum Rundenwettkampf-System' :
+              {isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand ? 
+                'Als reiner KM-Organisator haben Sie keinen Zugang zum Rundenwettkampf-System' :
                 'Rundenwettkampf-Verwaltung für Ligen und Mannschaften'
               }
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {isKMOrganisator && !isRWKAdmin ? (
+              {isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand ? (
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
                   <h4 className="font-semibold text-red-900 dark:text-red-100 mb-2">Zugang gesperrt</h4>
                   <div className="text-sm text-red-700 dark:text-red-200">
-                    KM-Organisatoren konzentrieren sich auf die Kreismeisterschaften und haben keinen Zugang zum RWK-System.
+                    Reine KM-Organisatoren konzentrieren sich auf die Kreismeisterschaften und haben keinen Zugang zum RWK-System.
                   </div>
                 </div>
               ) : (
@@ -180,12 +181,12 @@ export default function DashboardAuswahl() {
               )}
               
               <div className="flex gap-2">
-                {isKMOrganisator && !isRWKAdmin ? (
+                {isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand ? (
                   <Button className="w-full" disabled>
-                    Gesperrt für KM-Orga
+                    Gesperrt für reine KM-Orga
                   </Button>
                 ) : (
-                  <Link href={isRWKAdmin ? "/admin" : "/verein/dashboard"} className="flex-1">
+                  <Link href={isRWKAdmin ? "/admin" : (isSportleiter || isVorstand || isLegacyVereinsvertreter || isLegacyVereinsvorstand) ? "/verein/dashboard" : "/"} className="flex-1">
                     <Button className="w-full">
                       RWK-Bereich öffnen
                     </Button>
@@ -271,7 +272,7 @@ export default function DashboardAuswahl() {
         </Card>
 
         {/* Vereinssoftware - Mit Lizenz-Check */}
-        {(userAppPermissions?.vereinssoftwareLicense || isRWKAdmin || user?.email === 'admin@rwk-einbeck.de') ? (
+        {(userAppPermissions?.vereinssoftwareLicense === true || userAppPermissions?.vereinssoftwareLicense === 'true' || isRWKAdmin || user?.email === 'admin@rwk-einbeck.de') ? (
           <Card className="shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="pb-4">
               <div>
@@ -281,7 +282,7 @@ export default function DashboardAuswahl() {
                 </CardTitle>
                 <div className="flex flex-wrap gap-1">
                   {isRWKAdmin && <Badge variant="default">Superadmin</Badge>}
-                  {userAppPermissions?.vereinssoftwareLicense && !isRWKAdmin && <Badge variant="secondary">Lizenziert</Badge>}
+                  {(userAppPermissions?.vereinssoftwareLicense === true || userAppPermissions?.vereinssoftwareLicense === 'true') && !isRWKAdmin && <Badge variant="secondary">Lizenziert</Badge>}
                   {!isRWKAdmin && (
                     <>
                       {isVorstand && <Badge variant="outline">Vorstand</Badge>}

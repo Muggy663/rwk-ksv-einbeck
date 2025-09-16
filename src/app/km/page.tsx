@@ -69,7 +69,7 @@ export default function KMDashboard() {
         </div>
         <p className="text-muted-foreground">
           Hallo {user?.displayName || user?.email}! Kreismeisterschafts-Meldungen für Ihren Verein
-          {userRole && <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{userRole === 'admin' ? 'Admin' : userRole === 'km_organisator' ? 'KM-Organisator' : 'Vereinsvertreter'}</span>}
+          {userRole && <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{userRole === 'admin' ? 'Admin' : userRole === 'km_organisator' ? 'KM-Organisator' : userRole === 'verein' ? 'Sportleiter' : 'Vereinsvertreter'}</span>}
         </p>
       </div>
 

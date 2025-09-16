@@ -45,9 +45,11 @@ export function useKMAuth() {
                    platformRole === 'SUPER_ADMIN' ? 'admin' :
                    userAppPermissions?.role === 'superadmin' ? 'admin' :
                    isKVWettkampfleiter ? 'km_organisator' :
-                   isKVKmOrga ? 'km_access' :
-                   isSportleiter ? 'sportleiter' :
-                   isVorstand ? 'vorstand' :
+                   isKVKmOrga ? 'km_organisator' :
+                   isSportleiter || isVorstand ? 'verein' :
+                   // Legacy-Fallback
+                   userAppPermissions?.role === 'vereinsvertreter' ? 'verein' :
+                   userAppPermissions?.role === 'vereinsvorstand' ? 'verein' :
                    userAppPermissions?.role || '';
   
   // Für km_organisator: Alle Vereine, für vereinsvertreter: Nur zugewiesene
@@ -56,8 +58,9 @@ export function useKMAuth() {
     // Admin und KM-Organisator sehen alle Vereine - keine Filterung
     userClubIds = [];
   } else {
-    // Vereinsvertreter: Verwende representedClubs, clubIds oder clubId
+    // Vereinsvertreter: Verwende representedClubs, clubRoles, clubIds oder clubId
     userClubIds = userAppPermissions?.representedClubs || 
+                  Object.keys(clubRoles) ||
                   userAppPermissions?.clubIds || 
                   (userAppPermissions?.clubId ? [userAppPermissions.clubId] : []);
   }

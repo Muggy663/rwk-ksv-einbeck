@@ -125,11 +125,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const permissionData = docSnap.data() as UserPermission;
 
           setUserAppPermissions(permissionData);
-          // Fehlerprüfung basierend auf Rolle und clubId
-          if (permissionData.role !== 'vereinsvertreter' && permissionData.role !== 'mannschaftsfuehrer') {
-            setAppPermissionsError("Benutzer hat keine gültige Rolle (Vereinsvertreter/Mannschaftsführer).");
+          // Fehlerprüfung basierend auf neuen und alten Rollen
+          const hasLegacyRole = permissionData.role === 'vereinsvertreter' || permissionData.role === 'mannschaftsfuehrer';
+          const hasClubRole = permissionData.clubRoles && Object.values(permissionData.clubRoles).some(role => 
+            ['SPORTLEITER', 'VORSTAND', 'KASSENWART', 'SCHRIFTFUEHRER'].includes(role)
+          );
+          const hasKvRole = permissionData.kvRole && ['KV_WETTKAMPFLEITER', 'KV_KM_ORGA'].includes(permissionData.kvRole);
+          
+          if (!hasLegacyRole && !hasClubRole && !hasKvRole) {
+            setAppPermissionsError("Benutzer hat keine gültige Rolle (SPORTLEITER, VORSTAND, Vereinsvertreter oder Mannschaftsführer).");
           } else if ((!permissionData.clubId || typeof permissionData.clubId !== 'string' || permissionData.clubId.trim() === '') && 
-                     (!permissionData.clubIds || !Array.isArray(permissionData.clubIds) || permissionData.clubIds.length === 0)) {
+                     (!permissionData.clubIds || !Array.isArray(permissionData.clubIds) || permissionData.clubIds.length === 0) &&
+                     (!permissionData.clubRoles || Object.keys(permissionData.clubRoles).length === 0) &&
+                     (!permissionData.representedClubs || permissionData.representedClubs.length === 0)) {
             // Prüfe sowohl clubId (singular) als auch clubIds (plural)
             setAppPermissionsError("Benutzer ist keinem gültigen Verein zugewiesen.");
           }

@@ -416,7 +416,6 @@ export default function VereinSchuetzenPage() {
         throw new Error(result.error || 'Löschen fehlgeschlagen');
       }
     } catch (error: any) {
-      console.error('Fehler beim Löschen des Schützen:', error);
       
       let errorMessage = "Unbekannter Fehler beim Löschen.";
       let errorTitle = "Fehler beim Löschen";
@@ -504,7 +503,7 @@ export default function VereinSchuetzenPage() {
             try {
               await updateDoc(doc(db, TEAMS_COLLECTION, teamId), { shooterIds: arrayUnion(newShooterRef.id) });
             } catch (error) {
-              console.error(`Fehler beim Hinzufügen zur Mannschaft ${teamId}:`, error);
+              // Fehler beim Hinzufügen zur Mannschaft - wird ignoriert
             }
           }
         }
@@ -526,7 +525,6 @@ export default function VereinSchuetzenPage() {
       setIsFormOpen(false); setCurrentShooter(null); setSelectedTeamIdsInForm([]);
       fetchPageDataForActiveClub();
     } catch (error: any) {
-      console.error('Fehler beim Speichern des Schützen:', error);
       toast({ title: `Fehler beim Speichern`, description: error.message || "Ein unbekannter Fehler.", variant: "destructive" });
     } finally {
       setIsFormSubmitting(false);
@@ -537,6 +535,45 @@ export default function VereinSchuetzenPage() {
     setCurrentShooter(prev => prev ? ({ ...prev, [field]: value }) : null);
   };
 
+  // Helper functions for team validation
+  const isTeamFull = (team: any): boolean => {
+    return (team.currentShooterCount || 0) >= MAX_SHOOTERS_PER_TEAM;
+  };
+
+  const hasConflictingTeamSelection = (teamId: string, teamBeingChanged: any): boolean => {
+    const categoryOfTeamBeingChanged = teamBeingChanged.leagueType;
+    const yearOfTeamBeingChanged = teamBeingChanged.leagueCompetitionYear;
+
+    if (!categoryOfTeamBeingChanged || yearOfTeamBeingChanged === undefined) {
+      return false;
+    }
+
+    return selectedTeamIdsInForm.some(id => {
+      if (id === teamId) return false;
+      const otherTeam = teamsOfSelectedClubInDialog.find(t => t.id === id);
+      return otherTeam && 
+             otherTeam.leagueType === categoryOfTeamBeingChanged && 
+             otherTeam.leagueCompetitionYear === yearOfTeamBeingChanged;
+    });
+  };
+
+  const getDisableReason = (team: any, isSelected: boolean): { disabled: boolean; reason: string } => {
+    if (isTeamFull(team) && !isSelected) {
+      return { disabled: true, reason: "(Voll)" };
+    }
+    
+    if (!isSelected && hasConflictingTeamSelection(team.id, team)) {
+      const categoryLabel = team.leagueType || "Kategorie";
+      const year = team.leagueCompetitionYear || "Jahr";
+      return { 
+        disabled: true, 
+        reason: `(bereits ${categoryLabel}-Team ${year} gewählt)` 
+      };
+    }
+    
+    return { disabled: false, reason: "" };
+  };
+
   const handleTeamSelectionChangeInForm = (teamId: string, checked: boolean) => {
     if (!isVereinsvertreter || isFormSubmitting || isLoadingTeamsForDialog) return;
     
@@ -544,25 +581,25 @@ export default function VereinSchuetzenPage() {
     if (!teamBeingChanged) return;
 
     if (checked) { 
-      if ((teamBeingChanged.currentShooterCount || 0) >= MAX_SHOOTERS_PER_TEAM) {
-        toast({ title: "Mannschaft voll", variant: "warning" }); return; 
+      if (isTeamFull(teamBeingChanged)) {
+        toast({ title: "Mannschaft voll", variant: "warning" }); 
+        return; 
       }
-      const categoryOfTeamBeingChanged = teamBeingChanged.leagueType;
-      const yearOfTeamBeingChanged = teamBeingChanged.leagueCompetitionYear;
-
-      if (categoryOfTeamBeingChanged && yearOfTeamBeingChanged !== undefined) {
-        const conflict = selectedTeamIdsInForm.some(id => {
-          if (id === teamId) return false;
-          const otherTeam = teamsOfSelectedClubInDialog.find(t => t.id === id);
-          return otherTeam && otherTeam.leagueType === categoryOfTeamBeingChanged && otherTeam.leagueCompetitionYear === yearOfTeamBeingChanged;
+      
+      if (hasConflictingTeamSelection(teamId, teamBeingChanged)) {
+        toast({ 
+          title: "Regelverstoß", 
+          description: `Schütze kann pro Saison/Disziplinkategorie nur einem Team angehören.`, 
+          variant: "destructive", 
+          duration: 7000 
         });
-        if (conflict) {
-          toast({ title: "Regelverstoß", description: `Schütze kann pro Saison/Disziplinkategorie nur einem Team angehören.`, variant: "destructive", duration: 7000 });
-          return;
-        }
+        return;
       }
     }
-    setSelectedTeamIdsInForm(prev => checked ? [...prev, teamId] : prev.filter(id => id !== teamId));
+    
+    setSelectedTeamIdsInForm(prev => 
+      checked ? [...prev, teamId] : prev.filter(id => id !== teamId)
+    );
   };
 
   const handleSort = (column: string) => {
@@ -689,7 +726,7 @@ export default function VereinSchuetzenPage() {
            }).length === 0 && (
             <div className="p-4 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <AlertTriangle className="mx-auto h-8 w-8 text-primary/70 mb-2" />
-              <p>Keine Schützen gefunden, die <span className="font-mono bg-muted px-1 rounded">{shooterSearchQuery}</span> enthalten.</p>
+              <p>Keine Schützen gefunden, die <span className="font-mono bg-muted px-1 rounded">{shooterSearchQuery.replace(/[<>&"']/g, (char) => ({'<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#x27;'}[char] || char))}</span> enthalten.</p>
             </div>
           )}
           {!isLoadingClubSpecificData && shootersOfActiveClub.length > 0 && (
@@ -763,7 +800,7 @@ export default function VereinSchuetzenPage() {
                     </TableCell>
                     <TableCell label="Geschlecht">{shooter.gender === 'female' ? 'Weiblich' : (shooter.gender === 'male' ? 'Männlich' : 'N/A')}</TableCell>
                     <TableCell label="Mannschaften" className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
-                    {isVereinsvertreter && (
+                    {(isVereinsvertreter || isSportleiter || isVorstand) && (
                       <TableCell className="text-right space-x-1">
                         <Button variant="ghost" size="icon" onClick={() => handleEditShooter(shooter)} disabled={isFormSubmitting || isDeleting}><Edit className="h-4 w-4" /></Button>
                         <AlertDialog open={isAlertOpen && shooterToDelete?.id === shooter.id} onOpenChange={(open) => {if(!open) setShooterToDelete(null); setIsAlertOpen(open);}}>
@@ -827,7 +864,7 @@ export default function VereinSchuetzenPage() {
                       className="ml-2"
                     />
                   </div>
-                  <Input id="vsp-lastName-dialog" value={currentShooter.lastName || ''} onChange={(e) => handleFormInputChange('lastName', e.target.value)} required disabled={!isVereinsvertreter && formMode ==='edit'} />
+                  <Input id="vsp-lastName-dialog" value={currentShooter.lastName || ''} onChange={(e) => handleFormInputChange('lastName', e.target.value)} required disabled={!(isVereinsvertreter || isSportleiter || isVorstand) && formMode ==='edit'} />
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center">
@@ -837,7 +874,7 @@ export default function VereinSchuetzenPage() {
                       className="ml-2"
                     />
                   </div>
-                  <Input id="vsp-firstName-dialog" value={currentShooter.firstName || ''} onChange={(e) => handleFormInputChange('firstName', e.target.value)} required disabled={!isVereinsvertreter && formMode ==='edit'}/>
+                  <Input id="vsp-firstName-dialog" value={currentShooter.firstName || ''} onChange={(e) => handleFormInputChange('firstName', e.target.value)} required disabled={!(isVereinsvertreter || isSportleiter || isVorstand) && formMode ==='edit'}/>
                 </div>
                 <div className="space-y-1.5"> <Label htmlFor="vsp-clubDisplay-dialog">Verein</Label> <Input id="vsp-clubDisplay-dialog" value={activeClubName || ''} disabled className="bg-muted/50" /> </div>
                 <div className="space-y-1.5">
@@ -848,7 +885,7 @@ export default function VereinSchuetzenPage() {
                       className="ml-2"
                     />
                   </div>
-                  <Select value={currentShooter.gender || 'male'} onValueChange={(v) => handleFormInputChange('gender', v as 'male' | 'female')} disabled={!isVereinsvertreter && formMode ==='edit'}>
+                  <Select value={currentShooter.gender || 'male'} onValueChange={(v) => handleFormInputChange('gender', v as 'male' | 'female')} disabled={!(isVereinsvertreter || isSportleiter || isVorstand) && formMode ==='edit'}>
                     <SelectTrigger id="vsp-gender-dialog"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="male">Männlich</SelectItem><SelectItem value="female">Weiblich</SelectItem></SelectContent>
                   </Select>
@@ -885,7 +922,7 @@ export default function VereinSchuetzenPage() {
                   />
                 </div>
 
-                {formMode === 'new' && activeClubId && isVereinsvertreter && (
+                {formMode === 'new' && activeClubId && (isVereinsvertreter || isSportleiter || isVorstand) && (
                   <div className="space-y-2 pt-3 border-t mt-3">
                     <div className="flex items-center">
                       <Label className="text-base font-medium">Mannschaften für "{activeClubName}" zuordnen (Optional)</Label>
@@ -904,28 +941,7 @@ export default function VereinSchuetzenPage() {
                             if(!team || !team.id) return null;
                             const isSelected = selectedTeamIdsInForm.includes(team.id);
                             
-                            let isDisabled = false;
-                            let disableReason = "";
-                            const teamIsFull = (team.currentShooterCount || 0) >= MAX_SHOOTERS_PER_TEAM;
-
-                            if (teamIsFull && !isSelected) {
-                                isDisabled = true; disableReason = "(Voll)";
-                            } else if (!isSelected) {
-                                const categoryOfCurrentTeamDialog = team.leagueType;
-                                const yearOfCurrentTeamDialog = team.leagueCompetitionYear;
-                                if (categoryOfCurrentTeamDialog && yearOfCurrentTeamDialog !== undefined) {
-                                    const conflictExists = selectedTeamIdsInForm.some(selectedTeamIdInForm => {
-                                        const otherSelectedTeamData = teamsOfSelectedClubInDialog.find(t => t.id === selectedTeamIdInForm);
-                                        return otherSelectedTeamData &&
-                                               otherSelectedTeamData.leagueType === categoryOfCurrentTeamDialog &&
-                                               otherSelectedTeamData.leagueCompetitionYear === yearOfCurrentTeamDialog;
-                                    });
-                                    if (conflictExists) {
-                                        isDisabled = true;
-                                        disableReason = `(bereits ${categoryOfCurrentTeamDialog}-Team ${yearOfCurrentTeamDialog} gewählt)`;
-                                    }
-                                }
-                            }
+                            const { disabled: isDisabled, reason: disableReason } = getDisableReason(team, isSelected);
                             const leagueTypeLabel = team.leagueType ? (leagueDisciplineOptions.find(opt => opt.value === team.leagueType)?.label || team.leagueType) : "Liga-los";
                             return (
                               <div key={team.id} className="flex items-center space-x-3 p-1.5 hover:bg-muted/50 rounded-md">
