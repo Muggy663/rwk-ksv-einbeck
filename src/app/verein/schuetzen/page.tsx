@@ -122,6 +122,8 @@ export default function VereinSchuetzenPage() {
   const [selectedTeamIdsInForm, setSelectedTeamIdsInForm] = useState<string[]>([]);
 
   const isVereinsvertreter = useMemo(() => userPermission?.role === 'vereinsvertreter', [userPermission]);
+  const isSportleiter = useMemo(() => userPermission?.clubRoles && Object.values(userPermission.clubRoles).includes('SPORTLEITER'), [userPermission]);
+  const isVorstand = useMemo(() => userPermission?.clubRoles && Object.values(userPermission.clubRoles).includes('VORSTAND'), [userPermission]);
 
   // Effect 1: Fetch all clubs globally once for name lookups
   const fetchAllClubsAndLeaguesGlobal = useCallback(async () => {

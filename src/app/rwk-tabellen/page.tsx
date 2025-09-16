@@ -840,9 +840,9 @@ function RwkTabellenPageComponent() {
                 }
             });
         });
-        // Filtere und sortiere Schützen
+        // Filtere und sortiere Schützen - zeige alle Schützen, auch ohne Ergebnisse
         leagueDisplay.individualLeagueShooters = Array.from(leagueShootersMap.values())
-            .filter(s => s.roundsShot > 0) // Only shooters with actual scores
+            // Entferne Filter für roundsShot > 0, um alle Schützen zu zeigen
             .sort((a, b) => {
               // Schützen "außer Konkurrenz" immer nach Schützen in Wertung
               if (a.teamOutOfCompetition && !b.teamOutOfCompetition) return 1;
@@ -916,6 +916,74 @@ function RwkTabellenPageComponent() {
 
     
     try {
+      // Lade zuerst alle Teams der Liga, um alle Schützen zu bekommen
+      let teamsQuery;
+      if (filterByLeagueId === "KK_GEWEHR_EHRUNGEN") {
+        // Lade alle Teams für KK Gewehr Auflage Ligen
+        const seasonsQuery = query(
+          collection(db, "seasons"),
+          where("competitionYear", "==", config.year),
+          where("type", "in", ["KK", "KKG"])
+        );
+        const seasonsSnapshot = await getDocs(seasonsQuery);
+        const seasonIds = seasonsSnapshot.docs.map(doc => doc.id);
+        
+        if (seasonIds.length > 0) {
+          const leaguesQuery = query(
+            collection(db, "rwk_leagues"),
+            where("seasonId", "in", seasonIds)
+          );
+          const leaguesSnapshot = await getDocs(leaguesQuery);
+          const leagueIds = leaguesSnapshot.docs.map(doc => doc.id);
+          
+          if (leagueIds.length > 0) {
+            teamsQuery = query(
+              collection(db, "rwk_teams"),
+              where("leagueId", "in", leagueIds),
+              where("competitionYear", "==", config.year)
+            );
+          }
+        }
+      } else if (filterByLeagueId === "LGA_GESAMTLISTE") {
+        // Direkte Liga-IDs für Luftdruck-Ligen verwenden
+        const luftdruckLeagueIds = ["vOHbDJw7mktQI53Mzs5d", "wxotHc2CVAa4kflVhaPd", "YLpb9AklRcU7mpF870vP", "sTcYhFYKOmJ6AJ5w3IyN"];
+        console.log('🔍 Debug LGA_GESAMTLISTE - Verwende Liga-IDs:', luftdruckLeagueIds);
+        
+        teamsQuery = query(
+          collection(db, "rwk_teams"),
+          where("leagueId", "in", luftdruckLeagueIds),
+          where("competitionYear", "==", config.year)
+        );
+      } else {
+        teamsQuery = query(
+          collection(db, "rwk_teams"),
+          where("leagueId", "==", filterByLeagueId),
+          where("competitionYear", "==", config.year)
+        );
+      }
+      
+      if (!teamsQuery) {
+        console.warn('RWK DEBUG: Keine Teams-Query für Liga-Filter');
+        return [];
+      }
+      
+      const teamsSnapshot = await getDocs(teamsQuery);
+      const allShooterIdsFromTeams = new Set<string>();
+      const teamInfoMap = new Map<string, any>();
+      
+      teamsSnapshot.docs.forEach(teamDoc => {
+        const teamData = teamDoc.data();
+        teamInfoMap.set(teamDoc.id, teamData);
+        if (teamData.shooterIds && Array.isArray(teamData.shooterIds)) {
+          teamData.shooterIds.forEach(shooterId => {
+            if (shooterId && typeof shooterId === 'string') {
+              allShooterIdsFromTeams.add(shooterId);
+            }
+          });
+        }
+      });
+      
+      // Jetzt lade Scores für diese Schützen
       const scoresColRef = collection(db, "rwk_scores");
       let scoresQueryConstraints: any[] = [where("competitionYear", "==", config.year)];
       
@@ -927,10 +995,16 @@ function RwkTabellenPageComponent() {
       
       // Spezialfall: KK Gewehr Ehrungen - alle KK Gewehr Auflage Ligen
       if (filterByLeagueId === "KK_GEWEHR_EHRUNGEN") {
-
         scoresQueryConstraints = [
           where("competitionYear", "==", config.year),
           where("leagueType", "in", ["KK", "KKG"]) // KK Gewehr Auflage
+        ];
+      } else if (filterByLeagueId === "LGA_GESAMTLISTE") {
+        // Verwende die spezifischen Liga-IDs für Scores
+        const luftdruckLeagueIds = ["vOHbDJw7mktQI53Mzs5d", "wxotHc2CVAa4kflVhaPd", "YLpb9AklRcU7mpF870vP", "sTcYhFYKOmJ6AJ5w3IyN"];
+        scoresQueryConstraints = [
+          where("competitionYear", "==", config.year),
+          where("leagueId", "in", luftdruckLeagueIds)
         ];
       } else {
         // Filtere nach spezifischer Liga-ID
@@ -950,13 +1024,29 @@ function RwkTabellenPageComponent() {
       
 
       
-      // Optional: Zeige die ersten 3 leagueTypes zur Diagnose
+      // Debug: Zeige alle leagueTypes zur Diagnose
       const leagueTypes = [...new Set(allScores.map(s => s.leagueType))];
-
+      console.log('🔍 Debug - Gefundene leagueTypes:', leagueTypes);
+      console.log('🔍 Debug - Anzahl Scores:', allScores.length);
+      console.log('🔍 Debug - Filter:', filterByLeagueId);
+      
+      // Wenn keine Scores gefunden, prüfe alle Scores für dieses Jahr
+      if (allScores.length === 0) {
+        const allScoresQuery = query(
+          collection(db, "rwk_scores"),
+          where("competitionYear", "==", config.year)
+        );
+        const allScoresSnapshot = await getDocs(allScoresQuery);
+        const allYearLeagueTypes = [...new Set(allScoresSnapshot.docs.map(doc => doc.data().leagueType))];
+        console.log('🔍 Debug - Alle leagueTypes für Jahr', config.year, ':', allYearLeagueTypes);
+      }
 
       const shootersMap = new Map<string, IndividualShooterDisplayData>();
-      // Lade alle einzigartigen Schützen-IDs für bessere Namensauflösung
-      const allShooterIds = [...new Set(allScores.map(s => s.shooterId).filter(Boolean))];
+      // Kombiniere Schützen aus Teams und Scores
+      const allShooterIds = [...new Set([
+        ...Array.from(allShooterIdsFromTeams),
+        ...allScores.map(s => s.shooterId).filter(Boolean)
+      ])];
       const shooterNamesMap = new Map<string, string>();
       
       // Batch-lade Schützen-Infos für bessere Namen (mit IN-Limit Handling)
@@ -986,14 +1076,52 @@ function RwkTabellenPageComponent() {
         }
       }
       
+      // Erstelle Einträge für alle Schützen aus Teams (auch ohne Ergebnisse)
+      for (const shooterId of allShooterIdsFromTeams) {
+        if (!shootersMap.has(shooterId)) {
+          const initialResults: { [key: string]: number | null } = {};
+          for (let r = 1; r <= numRoundsForCompetition; r++) initialResults[`dg${r}`] = null;
+          
+          // Finde Team-Info für diesen Schützen
+          let teamName = "Unbek. Team";
+          let teamOutOfCompetition = false;
+          let teamOutOfCompetitionReason = undefined;
+          let leagueId = filterByLeagueId;
+          let leagueType = undefined;
+          
+          for (const [teamId, teamData] of teamInfoMap) {
+            if (teamData.shooterIds && teamData.shooterIds.includes(shooterId)) {
+              teamName = teamData.name || "Unbek. Team";
+              teamOutOfCompetition = teamData.outOfCompetition || false;
+              teamOutOfCompetitionReason = teamData.outOfCompetitionReason;
+              leagueId = teamData.leagueId;
+              leagueType = teamData.leagueType;
+              break;
+            }
+          }
+          
+          const shooterName = shooterNamesMap.get(shooterId) || `Schütze ${shooterId.substring(0,8)}`;
+          
+          const shooterData = {
+            shooterId, shooterName,
+            shooterGender: 'unknown', teamName,
+            results: initialResults, totalScore: 0, averageScore: null, roundsShot: 0,
+            competitionYear: config.year, leagueId, leagueType,
+            teamOutOfCompetition, teamOutOfCompetitionReason,
+          };
+          shootersMap.set(shooterId, shooterData);
+        }
+      }
+      
+      // Jetzt füge Ergebnisse hinzu
       for (const score of allScores) {
         if (!score.shooterId) continue;
         let currentShooterData = shootersMap.get(score.shooterId);
         if (!currentShooterData) {
+          // Schütze nicht in Teams gefunden, erstelle trotzdem Eintrag
           const initialResults: { [key: string]: number | null } = {};
           for (let r = 1; r <= numRoundsForCompetition; r++) initialResults[`dg${r}`] = null;
           
-          // Verwende verbesserten Namen falls verfügbar
           const shooterName = shooterNamesMap.get(score.shooterId) || score.shooterName || "Unbek. Schütze";
           
           currentShooterData = {
@@ -1061,7 +1189,8 @@ function RwkTabellenPageComponent() {
       });
       
       const rankedShooters = deduplicatedShooters
-        .filter(s => s.roundsShot > 0) 
+        // Zeige alle Schützen, auch ohne Ergebnisse
+        // .filter(s => s.roundsShot > 0) // Entfernt, um alle Schützen zu zeigen 
         .sort((a, b) => {
           // Erst nach Gesamtpunkten
           const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
@@ -1861,10 +1990,15 @@ function RwkTabellenPageComponent() {
                         <SelectValue placeholder="-- Bitte Liga auswählen --" />
                       </SelectTrigger>
                       <SelectContent>
-                        {/* Spezielle Option für KK Gewehr Ehrungen */}
+                        {/* Spezielle Optionen für Gesamtlisten */}
                         {selectedCompetition?.discipline === 'KK' && (
                           <SelectItem value="KK_GEWEHR_EHRUNGEN" className="bg-amber-50 text-amber-800 font-medium">
                             🏆 Alle KK Gewehr Auflage
+                          </SelectItem>
+                        )}
+                        {(selectedCompetition?.discipline === 'LG' || selectedCompetition?.discipline === 'LP') && (
+                          <SelectItem value="LGA_GESAMTLISTE" className="bg-amber-50 text-amber-800 font-medium">
+                            🏆 Alle Luftdruck Auflage (Gesamtliste)
                           </SelectItem>
                         )}
                         {availableLeaguesForIndividualFilter
@@ -1953,7 +2087,7 @@ function RwkTabellenPageComponent() {
                 {!topFemaleShooter && !loadingData && (<Card className="shadow-lg"><CardHeader><CardTitle className="text-accent">Keine Beste Dame</CardTitle></CardHeader><CardContent><p className="text-muted-foreground">Für die aktuelle Auswahl konnte keine beste Dame ermittelt werden.</p></CardContent></Card>)}
               </div>
               <Card className="shadow-lg">
-                <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
+                <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage)' : selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? '(🏆 Alle Luftdruck Auflage)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
                     <Table>
