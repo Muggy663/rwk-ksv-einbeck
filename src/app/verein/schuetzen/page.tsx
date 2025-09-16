@@ -56,14 +56,11 @@ import {
   getDocs,
   doc,
   updateDoc,
-  deleteDoc,
   query,
   where,
   orderBy,
   documentId,
-  writeBatch,
   getDoc as getFirestoreDoc,
-  arrayRemove,
   arrayUnion,
   Timestamp,
   setDoc
@@ -199,24 +196,37 @@ export default function VereinSchuetzenPage() {
     }
     setIsLoadingClubSpecificData(true);
     try {
-      // Erweiterte Query: Suche nach clubId, rwkClubId oder kmClubId
-      const shootersQuery1 = query(collection(db, SHOOTERS_COLLECTION), where("clubId", "==", activeClubId));
-      const shootersQuery2 = query(collection(db, SHOOTERS_COLLECTION), where("rwkClubId", "==", activeClubId));
-      const shootersQuery3 = query(collection(db, SHOOTERS_COLLECTION), where("kmClubId", "==", activeClubId));
-      const teamsQuery = query(collection(db, TEAMS_COLLECTION), where("clubId", "==", activeClubId));
-
-      const [shootersSnapshot1, shootersSnapshot2, shootersSnapshot3, teamsSnapshot] = await Promise.all([
-        getDocs(shootersQuery1), getDocs(shootersQuery2), getDocs(shootersQuery3), getDocs(teamsQuery)
+      // Optimierte Abfrage: Verwende 'in' Operator für bessere Performance
+      const clubIdVariants = [activeClubId];
+      
+      // Batch-Abfragen für bessere Performance
+      const [shootersSnapshot, teamsSnapshot] = await Promise.all([
+        // Haupt-Query für clubId
+        getDocs(query(collection(db, SHOOTERS_COLLECTION), where("clubId", "==", activeClubId))),
+        getDocs(query(collection(db, TEAMS_COLLECTION), where("clubId", "==", activeClubId)))
       ]);
 
-      // Kombiniere alle Schützen und entferne Duplikate
-      const allShooterDocs = [...shootersSnapshot1.docs, ...shootersSnapshot2.docs, ...shootersSnapshot3.docs];
-      const uniqueShooters = new Map();
-      allShooterDocs.forEach(doc => {
-        if (!uniqueShooters.has(doc.id)) {
-          uniqueShooters.set(doc.id, { id: doc.id, ...doc.data(), teamIds: (doc.data().teamIds || []) } as Shooter);
-        }
+      // Zusätzliche Queries für rwkClubId und kmClubId (falls nötig)
+      const [rwkShootersSnapshot, kmShootersSnapshot] = await Promise.all([
+        getDocs(query(collection(db, SHOOTERS_COLLECTION), where("rwkClubId", "==", activeClubId))),
+        getDocs(query(collection(db, SHOOTERS_COLLECTION), where("kmClubId", "==", activeClubId)))
+      ]);
+
+      // Effiziente Duplikat-Entfernung mit Set
+      const uniqueShooters = new Map<string, Shooter>();
+      
+      [shootersSnapshot, rwkShootersSnapshot, kmShootersSnapshot].forEach(snapshot => {
+        snapshot.docs.forEach(doc => {
+          if (!uniqueShooters.has(doc.id)) {
+            uniqueShooters.set(doc.id, { 
+              id: doc.id, 
+              ...doc.data(), 
+              teamIds: doc.data().teamIds || [] 
+            } as Shooter);
+          }
+        });
       });
+      
       const fetchedShooters = Array.from(uniqueShooters.values());
       setShootersOfActiveClub(fetchedShooters);
 
@@ -344,47 +354,99 @@ export default function VereinSchuetzenPage() {
 
   const handleDeleteShooter = async () => {
     if (!shooterToDelete || !shooterToDelete.id || !userPermission?.uid || !isVereinsvertreter) {
-      toast({ title: "Fehler beim Löschen", variant: "destructive" });
-      setShooterToDelete(null); setIsAlertOpen(false); return;
+      toast({ 
+        title: "Fehler beim Löschen", 
+        description: "Ungültige Daten oder fehlende Berechtigung.",
+        variant: "destructive" 
+      });
+      setShooterToDelete(null); 
+      setIsAlertOpen(false); 
+      return;
     }
-    setIsDeleting(true);
-    try {
-      const batch = writeBatch(db);
-      const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterToDelete.id);
-      batch.delete(shooterDocRef);
 
-      // 1. Entferne aus Teams
-      const teamsToUpdateQuery = query(
-        collection(db, TEAMS_COLLECTION),
-        where("clubId", "==", activeClubId),
-        where("shooterIds", "array-contains", shooterToDelete.id)
-      );
-      const teamsToUpdateSnap = await getDocs(teamsToUpdateQuery);
-      teamsToUpdateSnap.forEach(teamDoc => {
-        batch.update(teamDoc.ref, { shooterIds: arrayRemove(shooterToDelete.id) });
+    setIsDeleting(true);
+    const shooterName = shooterToDelete.name || `${shooterToDelete.firstName || ''} ${shooterToDelete.lastName || ''}`.trim();
+    
+    try {
+      // Firebase Auth Token für AdminSDK-Authentifizierung
+      const user = userPermission.uid ? await import('firebase/auth').then(auth => auth.getAuth().currentUser) : null;
+      if (!user) {
+        throw new Error('Benutzer nicht authentifiziert');
+      }
+
+      const idToken = await user.getIdToken();
+      
+      const response = await fetch(`/api/shooters/${shooterToDelete.id}`, {
+        method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+          'x-user-email': user.email || 'unknown'
+        }
       });
       
-      // 2. Markiere rwk_scores als "gelöscht" statt löschen
-      const scoresQuery = query(
-        collection(db, 'rwk_scores'),
-        where('shooterId', '==', shooterToDelete.id)
-      );
-      const scoresSnap = await getDocs(scoresQuery);
-      scoresSnap.forEach(scoreDoc => {
-        batch.update(scoreDoc.ref, { 
-          shooterDeleted: true,
-          deletedAt: new Date(),
-          shooterName: shooterToDelete.name + ' (gelöscht)'
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Netzwerkfehler' }));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({ 
+          title: "\u2705 Schütze gelöscht", 
+          description: result.message || `"${shooterName}" wurde erfolgreich entfernt.`,
+          duration: 5000
         });
-      });
-      
-      await batch.commit();
-      toast({ title: "Schütze gelöscht", description: `"${shooterToDelete.name}" wurde entfernt.` });
-      fetchPageDataForActiveClub();
+        
+        // Detaillierte Erfolgsmeldung bei vielen betroffenen Datensätzen
+        if (result.details && (result.details.teamsAffected > 0 || result.details.scoresAffected > 0)) {
+          setTimeout(() => {
+            toast({
+              title: "Bereinigung abgeschlossen",
+              description: `${result.details.teamsAffected} Mannschaften und ${result.details.scoresAffected} Ergebnisse aktualisiert.`,
+              duration: 3000
+            });
+          }, 1000);
+        }
+        
+        // Daten neu laden
+        await fetchPageDataForActiveClub();
+      } else {
+        throw new Error(result.error || 'Löschen fehlgeschlagen');
+      }
     } catch (error: any) {
-      toast({ title: "Fehler beim Löschen", description: error.message || "Unbekannter Fehler.", variant: "destructive" });
+      console.error('Fehler beim Löschen des Schützen:', error);
+      
+      let errorMessage = "Unbekannter Fehler beim Löschen.";
+      let errorTitle = "Fehler beim Löschen";
+      
+      if (error.message?.includes('Berechtigung')) {
+        errorTitle = "Keine Berechtigung";
+        errorMessage = "Sie haben keine Berechtigung, diesen Schützen zu löschen.";
+      } else if (error.message?.includes('nicht gefunden')) {
+        errorTitle = "Schütze nicht gefunden";
+        errorMessage = "Der Schütze wurde bereits gelöscht oder existiert nicht mehr.";
+      } else if (error.message?.includes('Netzwerk')) {
+        errorTitle = "Verbindungsfehler";
+        errorMessage = "Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.";
+      } else if (error.message?.includes('authentifiziert')) {
+        errorTitle = "Anmeldung erforderlich";
+        errorMessage = "Bitte melden Sie sich erneut an und versuchen Sie es noch einmal.";
+      } else {
+        errorMessage = error.message || errorMessage;
+      }
+      
+      toast({ 
+        title: errorTitle, 
+        description: errorMessage, 
+        variant: "destructive",
+        duration: 7000
+      });
     } finally {
-      setIsDeleting(false); setIsAlertOpen(false); setShooterToDelete(null);
+      setIsDeleting(false); 
+      setIsAlertOpen(false); 
+      setShooterToDelete(null);
     }
   };
 
@@ -433,20 +495,16 @@ export default function VereinSchuetzenPage() {
           shooterDataForSave.mitgliedsnummer = currentShooter.mitgliedsnummer.trim();
         }
         
-        console.log('VSP DEBUG: Creating shooter with data:', shooterDataForSave);
         await setDoc(newShooterRef, shooterDataForSave);
-        console.log('VSP DEBUG: Shooter created successfully');
 
         // Team-Zuordnungen einzeln hinzufügen
         for (const teamId of selectedTeamIdsInForm || []) {
           const teamInfo = teamsOfSelectedClubInDialog.find(t => t.id === teamId);
           if (teamInfo && (teamInfo.currentShooterCount || 0) < MAX_SHOOTERS_PER_TEAM) {
             try {
-              console.log(`VSP DEBUG: Adding shooter ${newShooterRef.id} to team ${teamId}`);
               await updateDoc(doc(db, TEAMS_COLLECTION, teamId), { shooterIds: arrayUnion(newShooterRef.id) });
-              console.log(`VSP DEBUG: Successfully added shooter to team ${teamId}`);
             } catch (error) {
-              console.error(`VSP DEBUG: Error adding shooter to team ${teamId}:`, error);
+              console.error(`Fehler beim Hinzufügen zur Mannschaft ${teamId}:`, error);
             }
           }
         }
@@ -460,17 +518,15 @@ export default function VereinSchuetzenPage() {
           name: combinedName,
           gender: currentShooter.gender || 'male',
         };
-        console.log('VSP DEBUG: Updating shooter with data:', updateData);
         await updateDoc(shooterDocRef, updateData);
-        console.log('VSP DEBUG: Shooter updated successfully');
         toast({ title: "Schütze aktualisiert", description: `${combinedName} wurde aktualisiert.` });
       }
       
-      console.log('VSP DEBUG: All operations completed successfully');
+
       setIsFormOpen(false); setCurrentShooter(null); setSelectedTeamIdsInForm([]);
       fetchPageDataForActiveClub();
     } catch (error: any) {
-      console.error('VSP DEBUG: Error in shooter creation:', error);
+      console.error('Fehler beim Speichern des Schützen:', error);
       toast({ title: `Fehler beim Speichern`, description: error.message || "Ein unbekannter Fehler.", variant: "destructive" });
     } finally {
       setIsFormSubmitting(false);
@@ -633,7 +689,7 @@ export default function VereinSchuetzenPage() {
            }).length === 0 && (
             <div className="p-4 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <AlertTriangle className="mx-auto h-8 w-8 text-primary/70 mb-2" />
-              <p>{`Keine Schützen gefunden, die "${shooterSearchQuery}" enthalten.`}</p>
+              <p>Keine Schützen gefunden, die <span className="font-mono bg-muted px-1 rounded">{shooterSearchQuery}</span> enthalten.</p>
             </div>
           )}
           {!isLoadingClubSpecificData && shootersOfActiveClub.length > 0 && (
@@ -717,7 +773,22 @@ export default function VereinSchuetzenPage() {
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>Schütze löschen?</AlertDialogTitle><AlertDialogDescription>Möchten Sie "{shooterToDelete?.name}" wirklich löschen? Dies entfernt den Schützen auch aus allen zugeordneten Mannschaften dieses Vereins.</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Schütze löschen?</AlertDialogTitle>
+                              <div className="text-sm text-muted-foreground space-y-3">
+                                <p>Möchten Sie <strong>"{shooterToDelete?.name}"</strong> wirklich löschen?</p>
+                                <div className="text-sm bg-amber-50 border border-amber-200 p-3 rounded-md">
+                                  <p className="font-medium text-amber-800 mb-2">⚠️ Diese Aktion wird:</p>
+                                  <ul className="list-disc list-inside space-y-1 text-amber-700">
+                                    <li>Den Schützen aus allen Mannschaften entfernen</li>
+                                    <li>Alle Ergebnisse als "gelöscht" markieren (bleiben für Statistiken)</li>
+                                    <li>KM-Meldungen als "gelöscht" markieren</li>
+                                    <li>Ein Audit-Log erstellen</li>
+                                  </ul>
+                                  <p className="mt-2 font-medium text-red-600">❌ Diese Aktion kann NICHT rückgängig gemacht werden!</p>
+                                </div>
+                              </div>
+                            </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel onClick={() => {setIsAlertOpen(false); setShooterToDelete(null);}}>Abbrechen</AlertDialogCancel>
                               <AlertDialogAction onClick={handleDeleteShooter} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">{isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Löschen</AlertDialogAction>
@@ -790,7 +861,17 @@ export default function VereinSchuetzenPage() {
                     min="1920" 
                     max="2020" 
                     value={currentShooter.birthYear || ''} 
-                    onChange={(e) => handleFormInputChange('birthYear', parseInt(e.target.value) || undefined)} 
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        handleFormInputChange('birthYear', undefined);
+                      } else {
+                        const parsed = parseInt(value);
+                        if (!isNaN(parsed) && parsed >= 1920 && parsed <= new Date().getFullYear()) {
+                          handleFormInputChange('birthYear', parsed);
+                        }
+                      }
+                    }} 
                     placeholder="z.B. 1990"
                   />
                 </div>

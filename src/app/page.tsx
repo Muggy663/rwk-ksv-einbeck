@@ -155,8 +155,7 @@ export default function HomePage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      {/* Wartungshinweis für Rollen-System Update */}
-      <MaintenanceBanner />
+      {/* Wartungshinweis entfernt - System ist live */}
       
 
       {/* Hero-Section mit modernem Design */}
@@ -182,8 +181,9 @@ export default function HomePage() {
           </div>
           
           {/* Kraftvolle Headline */}
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent mb-4 animate-fade-in">
-            Willkommen beim Rundenwettkampf KSV Einbeck
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent mb-4 animate-fade-in">
+            <span className="block sm:hidden">RWK KSV Einbeck</span>
+            <span className="hidden sm:block">Willkommen beim Rundenwettkampf KSV Einbeck</span>
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">

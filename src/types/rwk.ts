@@ -177,12 +177,16 @@ export interface UserPermission {
   uid: string;
   email: string;
   displayName?: string;
-  role: 'admin' | 'vereinsvertreter' | 'mannschaftsfuehrer';
+  role?: 'admin' | 'vereinsvertreter' | 'mannschaftsfuehrer' | 'km_orga';
   clubId?: string;
-  representedClubs?: string[]; // Array von Club-IDs für Multi-Verein-Support
-  isActive: boolean;
+  representedClubs?: string[];
+  isActive?: boolean;
   createdAt?: Date;
   lastLogin?: Date;
+  // Neue 3-Ebenen-Struktur
+  platformRole?: string;
+  kvRoles?: Record<string, string>;
+  clubRoles?: Record<string, string>;
 }
 
 export interface SupportTicket {

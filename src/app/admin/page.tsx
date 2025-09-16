@@ -400,11 +400,16 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Benutzer anlegen (manuell in Firebase Auth), Rollen und Vereinszuweisungen in der App verwalten.
+              Neue 3-Tier-Rollensystem: Platform, KV und Club-Rollen verwalten.
             </CardDescription>
-            <Link href="/admin/user-management" passHref>
-              <Button className="w-full" variant="outline">Benutzer verwalten</Button>
-            </Link>
+            <div className="space-y-2">
+              <Link href="/admin/user-management" passHref>
+                <Button className="w-full" variant="outline">👥 Benutzer & Rollen</Button>
+              </Link>
+              <Link href="/admin/license-management" passHref>
+                <Button className="w-full" variant="outline">💎 Vereinssoftware-Lizenzen</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
 

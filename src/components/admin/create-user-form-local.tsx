@@ -25,8 +25,11 @@ export function CreateUserFormLocal({ clubs, onUserCreated }: CreateUserFormLoca
     uid: '',
     email: '',
     displayName: '',
-    role: '',
-    clubId: ''
+    platformRole: 'NO_PLATFORM_ROLE',
+    kvRole: 'NO_KV_ROLE',
+    clubRole: 'NO_CLUB_ROLE',
+    clubId: '',
+    vereinssoftwareLicense: false
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,7 +44,7 @@ export function CreateUserFormLocal({ clubs, onUserCreated }: CreateUserFormLoca
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.uid || !formData.email || !formData.role) {
+    if (!formData.uid || !formData.email) {
       toast({
         title: "Fehlende Angaben",
         description: "Bitte füllen Sie alle erforderlichen Felder aus.",
@@ -50,10 +53,10 @@ export function CreateUserFormLocal({ clubs, onUserCreated }: CreateUserFormLoca
       return;
     }
 
-    if ((formData.role === 'vereinsvertreter' || formData.role === 'mannschaftsfuehrer') && !formData.clubId) {
+    if (formData.clubRole !== 'NO_CLUB_ROLE' && (!formData.clubId || formData.clubId === 'NO_CLUB')) {
       toast({
         title: "Verein erforderlich",
-        description: `Für die Rolle "${formData.role}" muss ein Verein ausgewählt werden.`,
+        description: `Für Club-Rollen muss ein Verein ausgewählt werden.`,
         variant: "destructive"
       });
       return;
@@ -62,16 +65,42 @@ export function CreateUserFormLocal({ clubs, onUserCreated }: CreateUserFormLoca
     setIsSubmitting(true);
 
     try {
-      // Speichere die Berechtigungen in Firestore
+      // Speichere die Berechtigungen in Firestore (3-Tier-System)
       const userPermissionRef = doc(db, 'user_permissions', formData.uid.trim());
-      await setDoc(userPermissionRef, {
+      const permissionData: any = {
         uid: formData.uid.trim(),
         email: formData.email.trim(),
         displayName: formData.displayName.trim() || null,
-        role: formData.role,
-        clubId: formData.clubId || null,
         lastUpdated: Timestamp.now(),
-      });
+        updatedAt: Timestamp.now(),
+        migrationVersion: '1.5.9',
+      };
+      
+      // Platform-Rolle
+      if (formData.platformRole !== 'NO_PLATFORM_ROLE') {
+        permissionData.platformRole = formData.platformRole;
+      }
+      
+      // KV-Rolle
+      if (formData.kvRole !== 'NO_KV_ROLE') {
+        permissionData.kvRole = formData.kvRole;
+      }
+      
+      // Club-Rolle
+      if (formData.clubRole !== 'NO_CLUB_ROLE' && formData.clubId && formData.clubId !== 'NO_CLUB') {
+        permissionData.clubRoles = {
+          [formData.clubId]: formData.clubRole
+        };
+        permissionData.representedClubs = [formData.clubId];
+      }
+      
+      // Vereinssoftware-Lizenz
+      if (formData.vereinssoftwareLicense) {
+        permissionData.vereinssoftwareLicense = true;
+        permissionData.vereinssoftwareLicenseActivatedAt = Timestamp.now();
+      }
+      
+      await setDoc(userPermissionRef, permissionData);
       
       toast({
         title: "Berechtigungen gespeichert",
@@ -83,8 +112,11 @@ export function CreateUserFormLocal({ clubs, onUserCreated }: CreateUserFormLoca
         uid: '',
         email: '',
         displayName: '',
-        role: '',
-        clubId: ''
+        platformRole: 'NO_PLATFORM_ROLE',
+        kvRole: 'NO_KV_ROLE',
+        clubRole: 'NO_CLUB_ROLE',
+        clubId: '',
+        vereinssoftwareLicense: false
       });
       
       // Callback zur Aktualisierung der Benutzerliste
@@ -164,35 +196,81 @@ export function CreateUserFormLocal({ clubs, onUserCreated }: CreateUserFormLoca
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* 3-Tier-Rollen-System */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="role">Rolle *</Label>
+              <Label htmlFor="platformRole">🌐 Platform-Rolle</Label>
               <Select
-                value={formData.role}
-                onValueChange={(value) => handleSelectChange('role', value)}
-                required
+                value={formData.platformRole}
+                onValueChange={(value) => handleSelectChange('platformRole', value)}
               >
-                <SelectTrigger id="role">
-                  <SelectValue placeholder="Rolle auswählen" />
+                <SelectTrigger id="platformRole">
+                  <SelectValue placeholder="Platform-Rolle" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="vereinsvertreter">Vereinsvertreter</SelectItem>
-                  <SelectItem value="mannschaftsfuehrer">Mannschaftsführer</SelectItem>
+                  <SelectItem value="NO_PLATFORM_ROLE">Keine Platform-Rolle</SelectItem>
+                  <SelectItem value="SUPER_ADMIN">🔥 Super Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="clubId">Verein</Label>
+              <Label htmlFor="kvRole">🏆 KV-Rolle</Label>
+              <Select
+                value={formData.kvRole}
+                onValueChange={(value) => handleSelectChange('kvRole', value)}
+              >
+                <SelectTrigger id="kvRole">
+                  <SelectValue placeholder="KV-Rolle" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NO_KV_ROLE">Keine KV-Rolle</SelectItem>
+                  <SelectItem value="KV_WETTKAMPFLEITER">🏆 KV-Wettkampfleiter</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="clubRole">🎯 Club-Rolle</Label>
+              <Select
+                value={formData.clubRole}
+                onValueChange={(value) => handleSelectChange('clubRole', value)}
+              >
+                <SelectTrigger id="clubRole">
+                  <SelectValue placeholder="Club-Rolle" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NO_CLUB_ROLE">Keine Club-Rolle</SelectItem>
+                  <SelectItem value="SPORTLEITER">🎯 Sportleiter</SelectItem>
+                  <SelectItem value="VORSTAND">👔 Vorstand</SelectItem>
+                  <SelectItem value="KASSENWART">💰 Kassenwart</SelectItem>
+                  <SelectItem value="SCHRIFTFUEHRER">📝 Schriftführer</SelectItem>
+                  <SelectItem value="JUGENDWART">🧒 Jugendwart</SelectItem>
+                  <SelectItem value="DAMENWART">👩 Damenwart</SelectItem>
+                  <SelectItem value="ZEUGWART">🔧 Zeugwart</SelectItem>
+                  <SelectItem value="PRESSEWART">📰 Pressewart</SelectItem>
+                  <SelectItem value="TRAINER">🏃 Trainer</SelectItem>
+                  <SelectItem value="AUSBILDER">🎓 Ausbilder</SelectItem>
+                  <SelectItem value="VEREINSSCHUETZE">🎯 Vereinsschütze</SelectItem>
+                  <SelectItem value="EHRENMITGLIED">🏅 Ehrenmitglied</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="clubId">🏠 Verein</Label>
               <Select
                 value={formData.clubId}
                 onValueChange={(value) => handleSelectChange('clubId', value)}
-                disabled={!formData.role || clubs.length === 0}
+                disabled={clubs.length === 0}
               >
                 <SelectTrigger id="clubId">
                   <SelectValue placeholder="Verein auswählen" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="NO_CLUB">Kein Verein</SelectItem>
                   {clubs.map(club => (
                     <SelectItem key={club.id} value={club.id}>
                       {club.name}
@@ -200,6 +278,22 @@ export function CreateUserFormLocal({ clubs, onUserCreated }: CreateUserFormLoca
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>💰 Vereinssoftware-Lizenz</Label>
+              <div className="flex items-center space-x-2 pt-2">
+                <input 
+                  type="checkbox" 
+                  id="vereinssoftwareLicense"
+                  checked={formData.vereinssoftwareLicense}
+                  onChange={(e) => setFormData(prev => ({ ...prev, vereinssoftwareLicense: e.target.checked }))}
+                  className="rounded"
+                />
+                <Label htmlFor="vereinssoftwareLicense" className="text-sm">
+                  Vereinssoftware-Lizenz aktivieren
+                </Label>
+              </div>
             </div>
           </div>
           

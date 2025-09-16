@@ -50,20 +50,21 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
       // Benutzerberechtigungen laden
       const usersQuery = query(collection(db, 'user_permissions'), orderBy('email', 'asc'));
       const snapshot = await getDocs(usersQuery);
-      const fetchedUsers = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        uid: doc.id
-      })) as UserPermission[];
+      const fetchedUsers = snapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('User data for', data.email, ':', data);
+        return {
+          ...data,
+          uid: doc.id
+        };
+      }) as UserPermission[];
       
-      // Letzte Login-Daten laden
+      // Letzte Login-Daten laden (nur für SuperAdmins)
       const usersWithLoginData = await Promise.all(
         fetchedUsers.map(async (user) => {
           try {
-            // Versuche, die Login-Daten aus der users-Collection zu laden
-
             const userDocRef = doc(db, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
-
             
             if (userDoc.exists()) {
               const userData = userDoc.data();
@@ -73,9 +74,15 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
               };
             }
           } catch (error) {
-            console.error(`Error fetching login data for user ${user.uid}:`, error);
+            // Berechtigungsfehler ignorieren - Login-Daten sind optional
+            if (error.code !== 'permission-denied') {
+              console.error(`Error fetching login data for user ${user.uid}:`, error);
+            }
           }
-          return user;
+          return {
+            ...user,
+            lastLogin: null
+          };
         })
       );
       
@@ -162,17 +169,53 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
     return clubIds.length;
   };
 
-  const getRoleBadge = (role: string | null) => {
-    if (!role) return <Badge variant="outline">Keine Rolle</Badge>;
+  const getRoleBadge = (user: UserPermission) => {
+    const roles = [];
     
-    switch (role) {
-      case 'vereinsvertreter':
-        return <Badge variant="default" className="bg-blue-500">Vereinsvertreter</Badge>;
-      case 'mannschaftsfuehrer':
-        return <Badge variant="default" className="bg-green-500">Mannschaftsführer</Badge>;
-      default:
-        return <Badge variant="secondary">{role}</Badge>;
+    // Platform-Rolle
+    if (user.platformRole) {
+      roles.push(<Badge key="platform" variant="default" className="bg-red-500">{user.platformRole}</Badge>);
     }
+    
+    // Legacy-Rolle
+    if (user.role) {
+      switch (user.role) {
+        case 'vereinsvertreter':
+          roles.push(<Badge key="legacy" variant="default" className="bg-blue-500">Vereinsvertreter</Badge>);
+          break;
+        case 'mannschaftsfuehrer':
+          roles.push(<Badge key="legacy" variant="default" className="bg-green-500">Mannschaftsführer</Badge>);
+          break;
+        case 'km_orga':
+          roles.push(<Badge key="legacy" variant="default" className="bg-purple-500">KM-Orga</Badge>);
+          break;
+        default:
+          roles.push(<Badge key="legacy" variant="secondary">{user.role}</Badge>);
+      }
+    }
+    
+    // KM-Zugang durch representedClubs (auch ohne explizite Rolle)
+    if (!user.role && user.representedClubs && user.representedClubs.length > 0) {
+      roles.push(<Badge key="km-access" variant="outline" className="bg-purple-100">KM-Zugang ({user.representedClubs.length} Vereine)</Badge>);
+    }
+    
+    // KV-Rollen
+    if (user.kvRoles) {
+      Object.entries(user.kvRoles).forEach(([kvId, role]) => {
+        roles.push(<Badge key={`kv-${kvId}`} variant="outline" className="bg-yellow-100">{role}</Badge>);
+      });
+    }
+    
+    // Club-Rollen
+    if (user.clubRoles) {
+      Object.entries(user.clubRoles).forEach(([clubId, role]) => {
+        const club = clubs.find(c => c.id === clubId);
+        const clubName = club ? club.name.substring(0, 10) : clubId.substring(0, 8);
+        roles.push(<Badge key={`club-${clubId}`} variant="outline" className="bg-green-100">{role} ({clubName})</Badge>);
+      });
+    }
+    
+    return roles.length > 0 ? <div className="flex flex-wrap gap-1">{roles}</div> : <Badge variant="outline">Keine Rolle</Badge>;
   };
 
   const formatLastLogin = (lastLogin: any) => {
@@ -239,7 +282,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
                     <TableRow key={user.uid}>
                       <TableCell className="font-medium">{user.email}</TableCell>
                       <TableCell>{user.displayName || '-'}</TableCell>
-                      <TableCell>{getRoleBadge(user.role)}</TableCell>
+                      <TableCell>{getRoleBadge(user)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <span>{getClubNames(user)}</span>

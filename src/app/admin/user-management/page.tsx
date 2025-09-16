@@ -21,22 +21,43 @@ import Link from 'next/link';
 const CLUBS_COLLECTION = "clubs";
 const USER_PERMISSIONS_COLLECTION = "user_permissions";
 
-const ROLES_OPTIONS = [
-  { value: 'vereinsvertreter', label: 'Vereinsvertreter (RWK + KM)' },
-  { value: 'vereinsvorstand', label: 'Vereinsvorstand (RWK + KM + Vereinssoftware)' },
-  { value: 'mannschaftsfuehrer', label: 'Mannschaftsführer (nur RWK)' },
-  { value: 'km_organisator', label: 'KM-Organisator (nur KM)' },
-  { value: 'vereins_admin', label: 'Vereins-Admin (nur Vereinssoftware)' },
-  { value: 'NO_ROLE', label: 'Keine Rolle / Rolle entfernen' },
+// Neue 3-Tier-Architektur
+const PLATFORM_ROLES = [
+  { value: 'SUPER_ADMIN', label: '🔥 Super Admin (Vollzugriff)' },
+  { value: 'NO_PLATFORM_ROLE', label: 'Keine Platform-Rolle' },
+];
+
+const KV_ROLES = [
+  { value: 'KV_WETTKAMPFLEITER', label: '🏆 KV-Wettkampfleiter (KM-System)' },
+  { value: 'NO_KV_ROLE', label: 'Keine KV-Rolle' },
+];
+
+const CLUB_ROLES = [
+  { value: 'SPORTLEITER', label: '🎯 Sportleiter (RWK + KM)' },
+  { value: 'VORSTAND', label: '👔 Vorstand (Alle Bereiche)' },
+  { value: 'KASSENWART', label: '💰 Kassenwart (Finanzen)' },
+  { value: 'SCHRIFTFUEHRER', label: '📝 Schriftführer (Protokolle)' },
+  { value: 'JUGENDWART', label: '🧒 Jugendwart' },
+  { value: 'DAMENWART', label: '👩 Damenwart' },
+  { value: 'ZEUGWART', label: '🔧 Zeugwart' },
+  { value: 'PRESSEWART', label: '📰 Pressewart' },
+  { value: 'TRAINER', label: '🏃 Trainer' },
+  { value: 'AUSBILDER', label: '🎓 Ausbilder' },
+  { value: 'VEREINSSCHUETZE', label: '🎯 Vereinsschütze' },
+  { value: 'EHRENMITGLIED', label: '🏅 Ehrenmitglied' },
+  { value: 'NO_CLUB_ROLE', label: 'Keine Club-Rolle' },
 ];
 
 interface UserPermissionFormData {
   uid: string;
   email: string;
   displayName: string;
-  role: string;
-  selectedClubId: string; // Legacy - Hauptverein
-  selectedClubIds: string[]; // Multi-Verein-Support
+  platformRole: string;
+  kvRole: string;
+  selectedClubId: string;
+  clubRole: string;
+  selectedClubIds: string[];
+  vereinssoftwareLicense: boolean;
 }
 
 export default function AdminUserManagementPage() {
@@ -47,9 +68,12 @@ export default function AdminUserManagementPage() {
     uid: '',
     email: '',
     displayName: '',
-    role: 'NO_ROLE',
+    platformRole: 'NO_PLATFORM_ROLE',
+    kvRole: 'NO_KV_ROLE',
     selectedClubId: '',
+    clubRole: 'NO_CLUB_ROLE',
     selectedClubIds: [],
+    vereinssoftwareLicense: false,
   });
   
   const [allClubs, setAllClubs] = useState<Club[]>([]);
@@ -57,7 +81,7 @@ export default function AdminUserManagementPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingDetails, setIsFetchingDetails] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [activeTab, setActiveTab] = useState("create");
+  const [activeTab, setActiveTab] = useState("edit");
 
   useEffect(() => {
     const fetchClubs = async () => {
@@ -79,7 +103,7 @@ export default function AdminUserManagementPage() {
   const fetchAndSetExistingPermissions = useCallback(async (uidToFetch: string) => {
     if (!uidToFetch.trim()) {
       setFormData(prev => ({
-        ...prev, email: '', displayName: '', role: 'NO_ROLE', selectedClubId: '',
+        ...prev, email: '', displayName: '', platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE', selectedClubId: '',
       }));
       return;
     }
@@ -93,14 +117,17 @@ export default function AdminUserManagementPage() {
           uid: uidToFetch.trim(),
           email: data.email || '',
           displayName: data.displayName || '',
-          role: data.role || 'NO_ROLE',
-          selectedClubId: data.clubId || '',
+          platformRole: (data as any).platformRole || 'NO_PLATFORM_ROLE',
+          kvRole: (data as any).kvRole || 'NO_KV_ROLE',
+          clubRole: Object.values((data as any).clubRoles || {})[0] || 'NO_CLUB_ROLE',
+          selectedClubId: data.clubId || Object.keys((data as any).clubRoles || {})[0] || '',
           selectedClubIds: data.representedClubs || (data.clubId ? [data.clubId] : []),
+          vereinssoftwareLicense: (data as any).vereinssoftwareLicense || false,
         });
         toast({title: "Benutzerdaten geladen", description: `Berechtigungen für UID ${uidToFetch.trim()} geladen.`});
       } else {
         setFormData(prev => ({
-          ...prev, uid: uidToFetch.trim(), email: '', displayName: '', role: 'NO_ROLE', selectedClubId: '',
+          ...prev, uid: uidToFetch.trim(), email: '', displayName: '', platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE', selectedClubId: '',
         }));
         toast({title: "Neuer Benutzer?", description: `Keine Berechtigungen für UID ${uidToFetch.trim()} gefunden. Bitte E-Mail und Anzeigenamen eintragen.`, variant: "default"});
       }
@@ -117,7 +144,7 @@ export default function AdminUserManagementPage() {
       fetchAndSetExistingPermissions(formData.uid);
     } else if (formData.uid.trim().length === 0) {
         setFormData(prev => ({
-        ...prev, email: '', displayName: '', role: 'NO_ROLE', selectedClubId: '',
+        ...prev, email: '', displayName: '', platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE', selectedClubId: '',
       }));
     }
   }, [formData.uid, fetchAndSetExistingPermissions]);
@@ -127,14 +154,8 @@ export default function AdminUserManagementPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: keyof Pick<UserPermissionFormData, 'role' | 'selectedClubId'>, value: string) => {
-    if (name === 'role' && value === 'km_organisator') {
-      // Automatisch alle Vereine für KM-Organisator auswählen
-      const allClubIds = allClubs.map(club => club.id);
-      setFormData(prev => ({ ...prev, [name]: value, selectedClubIds: allClubIds }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+  const handleSelectChange = (name: keyof Pick<UserPermissionFormData, 'selectedClubId'>, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmitPermissions = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -146,48 +167,69 @@ export default function AdminUserManagementPage() {
       toast({ title: "UID fehlt", description: "Bitte User-ID (UID) eingeben.", variant: "warning" }); return;
     }
     if (!formData.email.trim()) {
-      toast({ title: "E-Mail fehlt", description: "Bitte E-Mail des Benutzers eingeben (wird in user_permissions gespeichert).", variant: "warning" }); return;
+      toast({ title: "E-Mail fehlt", description: "Bitte E-Mail des Benutzers eingeben.", variant: "warning" }); return;
     }
 
-    const roleToSet = formData.role === 'NO_ROLE' ? null : formData.role;
-    const clubIdToSet = formData.selectedClubIds.length > 0 ? formData.selectedClubIds[0] : null;
-    
-    if ((roleToSet === 'vereinsvertreter' || roleToSet === 'vereinsvorstand' || roleToSet === 'mannschaftsfuehrer' || roleToSet === 'vereins_admin') && !clubIdToSet) {
-      toast({ title: "Fehlende Vereinszuweisung", description: `Für die Rolle '${roleToSet}' muss ein Verein ausgewählt werden.`, variant: "destructive" }); return;
-    }
-    
-    // KM-Organisator braucht keinen spezifischen Verein
-    if (roleToSet === 'km_organisator') {
-      // Setze alle Vereine für KM-Organisator
-      const allClubIds = allClubs.map(club => club.id);
-      setFormData(prev => ({ ...prev, selectedClubIds: allClubIds }));
+    // Validierung: Club-Rollen benötigen Vereinszuweisung
+    if (formData.clubRole !== 'NO_CLUB_ROLE' && formData.selectedClubIds.length === 0) {
+      toast({ title: "Fehlende Vereinszuweisung", description: `Club-Rolle '${formData.clubRole}' benötigt mindestens einen Verein.`, variant: "destructive" }); return;
     }
 
     setIsSubmitting(true);
     try {
       const userPermissionRef = doc(db, USER_PERMISSIONS_COLLECTION, formData.uid.trim());
-      const permissionData: UserPermission = {
+      
+      // Neue 3-Tier-Struktur
+      const permissionData: any = {
         uid: formData.uid.trim(),
         email: formData.email.trim(),
         displayName: formData.displayName.trim() || null,
-        role: roleToSet as UserPermission['role'],
-        clubId: clubIdToSet,
-        representedClubs: formData.selectedClubIds.length > 0 ? formData.selectedClubIds : undefined,
         lastUpdated: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        migrationVersion: '1.5.9',
       };
+      
+      // Platform-Rolle
+      if (formData.platformRole !== 'NO_PLATFORM_ROLE') {
+        permissionData.platformRole = formData.platformRole;
+      }
+      
+      // KV-Rolle
+      if (formData.kvRole !== 'NO_KV_ROLE') {
+        permissionData.kvRole = formData.kvRole;
+      }
+      
+      // Club-Rolle (Multi-Verein)
+      if (formData.clubRole !== 'NO_CLUB_ROLE' && formData.selectedClubIds.length > 0) {
+        const clubRoles: Record<string, string> = {};
+        formData.selectedClubIds.forEach(clubId => {
+          clubRoles[clubId] = formData.clubRole;
+        });
+        permissionData.clubRoles = clubRoles;
+        permissionData.representedClubs = formData.selectedClubIds;
+        permissionData.clubId = formData.selectedClubIds[0]; // Hauptverein
+      }
+      
+      // Vereinssoftware-Lizenz
+      if (formData.vereinssoftwareLicense) {
+        permissionData.vereinssoftwareLicense = true;
+        permissionData.vereinssoftwareLicenseActivatedAt = Timestamp.now();
+      }
 
       await setDoc(userPermissionRef, permissionData, { merge: true });
-      toast({ title: "Berechtigungen gespeichert", description: `Berechtigungen für UID ${formData.uid.trim()} erfolgreich in Firestore gespeichert.` });
+      toast({ title: "✅ Berechtigungen gespeichert", description: `3-Tier-Rollen für ${formData.email} erfolgreich gespeichert.` });
       
+      // Form zurücksetzen
       setFormData({
-        uid: '', email: '', displayName: '', role: 'NO_ROLE', selectedClubId: '', selectedClubIds: [],
+        uid: '', email: '', displayName: '', 
+        platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE',
+        selectedClubId: '', selectedClubIds: [], vereinssoftwareLicense: false,
       });
       
-      // Aktualisiere die Benutzerliste
       setRefreshTrigger(prev => prev + 1);
 
     } catch (error: any) {
-      console.error("Error saving permissions to Firestore:", error);
+      console.error("Error saving permissions:", error);
       toast({ title: "Fehler beim Speichern", description: error.message || "Unbekannter Fehler.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
@@ -199,9 +241,12 @@ export default function AdminUserManagementPage() {
       uid: user.uid,
       email: user.email || '',
       displayName: user.displayName || '',
-      role: user.role || 'NO_ROLE',
-      selectedClubId: user.clubId || '',
+      platformRole: (user as any).platformRole || 'NO_PLATFORM_ROLE',
+      kvRole: (user as any).kvRole || 'NO_KV_ROLE',
+      clubRole: Object.values((user as any).clubRoles || {})[0] || 'NO_CLUB_ROLE',
+      selectedClubId: user.clubId || Object.keys((user as any).clubRoles || {})[0] || '',
       selectedClubIds: user.representedClubs || (user.clubId ? [user.clubId] : []),
+      vereinssoftwareLicense: (user as any).vereinssoftwareLicense || false,
     });
     setActiveTab("edit");
   };
@@ -229,10 +274,11 @@ export default function AdminUserManagementPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsTrigger value="edit">🎯 Rollen zuweisen</TabsTrigger>
           <TabsTrigger value="create">Neuen Benutzer erstellen</TabsTrigger>
-          <TabsTrigger value="edit">Berechtigungen bearbeiten</TabsTrigger>
           <TabsTrigger value="list">Benutzerübersicht</TabsTrigger>
+          <TabsTrigger value="migrate">🔄 Rollen-Migration</TabsTrigger>
         </TabsList>
         
         <TabsContent value="create" className="space-y-4">
@@ -242,11 +288,12 @@ export default function AdminUserManagementPage() {
         <TabsContent value="edit" className="space-y-4">
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-xl text-primary">Berechtigungen für Benutzer zuweisen/ändern</CardTitle>
+              <CardTitle className="text-xl text-primary">🎯 Neue 3-Tier-Rollenverwaltung</CardTitle>
               <CardDescription>
-                Weisen Sie einem Benutzer (identifiziert durch seine UID) eine Rolle und einen Verein zu.
-                Die Berechtigungen werden in Firestore (`user_permissions` Collection) gespeichert.
-                E-Mail und Anzeigename dienen hier zur Referenz und sollten mit Firebase Auth übereinstimmen.
+                <strong>Platform-Rollen:</strong> System-weite Berechtigungen (SUPER_ADMIN)<br/>
+                <strong>KV-Rollen:</strong> Kreisverband-Berechtigungen (KV_WETTKAMPFLEITER)<br/>
+                <strong>Club-Rollen:</strong> Vereins-spezifische Rollen (SPORTLEITER, VORSTAND, etc.)<br/>
+                <strong>Lizenzen:</strong> Kostenpflichtige Module (Vereinssoftware)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -268,28 +315,101 @@ export default function AdminUserManagementPage() {
                 
                 {isFetchingDetails && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Lade bestehende Berechtigungen...</div>}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                {/* 3-Tier-Rollen-System */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="roleSelect">Rolle zuweisen</Label>
+                    <Label htmlFor="platformRoleSelect">🌐 Platform-Rolle</Label>
                     <Select 
-                      value={formData.role} 
-                      onValueChange={(value) => handleSelectChange('role', value)}
+                      value={formData.platformRole} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, platformRole: value }))}
                     >
-                      <SelectTrigger id="roleSelect"><SelectValue placeholder="Rolle auswählen" /></SelectTrigger>
+                      <SelectTrigger id="platformRoleSelect"><SelectValue placeholder="Platform-Rolle" /></SelectTrigger>
                       <SelectContent>
-                        {ROLES_OPTIONS.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                        {PLATFORM_ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  <div className="space-y-1.5">
+                    <Label htmlFor="kvRoleSelect">🏆 KV-Rolle</Label>
+                    <Select 
+                      value={formData.kvRole} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, kvRole: value }))}
+                    >
+                      <SelectTrigger id="kvRoleSelect"><SelectValue placeholder="KV-Rolle" /></SelectTrigger>
+                      <SelectContent>
+                        {KV_ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <Label htmlFor="clubRoleSelect">🎯 Club-Rolle</Label>
+                    <Select 
+                      value={formData.clubRole} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, clubRole: value }))}
+                    >
+                      <SelectTrigger id="clubRoleSelect"><SelectValue placeholder="Club-Rolle" /></SelectTrigger>
+                      <SelectContent>
+                        {CLUB_ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <Label>💰 Vereinssoftware-Lizenz</Label>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="vereinssoftwareLicense"
+                        checked={formData.vereinssoftwareLicense}
+                        onChange={(e) => setFormData(prev => ({ ...prev, vereinssoftwareLicense: e.target.checked }))}
+                        className="rounded"
+                      />
+                      <Label htmlFor="vereinssoftwareLicense" className="text-sm">
+                        Vereinssoftware-Lizenz aktivieren
+                      </Label>
+                    </div>
+                  </div>
                 
                   <div className="space-y-1.5">
-                    <MultiClubSelector
-                      clubs={allClubs}
-                      selectedClubIds={formData.selectedClubIds}
-                      onSelectionChange={(clubIds) => setFormData(prev => ({ ...prev, selectedClubIds: clubIds }))}
-                      disabled={isLoadingClubs}
-                    />
-                    <p className="text-xs text-muted-foreground">Der erste ausgewählte Verein wird als Hauptverein gesetzt</p>
+                    <Label>🏠 Vereine auswählen (Multi-Verein)</Label>
+                    <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
+                      {allClubs.map(club => (
+                        <div key={club.id} className="flex items-center space-x-2 py-1">
+                          <input 
+                            type="checkbox" 
+                            id={`club-${club.id}`}
+                            checked={formData.selectedClubIds.includes(club.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData(prev => ({ 
+                                  ...prev, 
+                                  selectedClubIds: [...prev.selectedClubIds, club.id],
+                                  selectedClubId: prev.selectedClubIds.length === 0 ? club.id : prev.selectedClubId
+                                }));
+                              } else {
+                                const newIds = formData.selectedClubIds.filter(id => id !== club.id);
+                                setFormData(prev => ({ 
+                                  ...prev, 
+                                  selectedClubIds: newIds,
+                                  selectedClubId: newIds.length > 0 ? newIds[0] : ''
+                                }));
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <Label htmlFor={`club-${club.id}`} className="text-sm cursor-pointer">
+                            {club.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Club-Rollen benötigen mindestens einen Verein. Erster Verein = Hauptverein.
+                    </p>
                   </div>
                 </div>
                 
@@ -314,6 +434,127 @@ export default function AdminUserManagementPage() {
             onEditUser={handleEditUser} 
             refreshTrigger={refreshTrigger} 
           />
+        </TabsContent>
+        
+        <TabsContent value="migrate" className="space-y-4">
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-xl text-primary">🔄 Rollen-Migration</CardTitle>
+              <CardDescription>
+                <strong>Basis-Migration:</strong> Fügt neue Rollen hinzu, behält Legacy-Rollen.<br/>
+                <strong>Finale Migration:</strong> Entfernt alle Legacy-Rollen, nur noch 3-Tier-System.<br/>
+                • vereinsvertreter → SPORTLEITER<br/>
+                • vereinsvorstand → VORSTAND<br/>
+                • mannschaftsfuehrer → SPORTLEITER<br/>
+                • km_organisator → KV_WETTKAMPFLEITER
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <Button 
+                  onClick={async () => {
+                    console.log('🚀 Migration-Button geklickt');
+                    setIsSubmitting(true);
+                    try {
+                      const response = await fetch('/api/admin/migrate-roles', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                      });
+                      
+                      if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                      }
+                      
+                      const result = await response.json();
+                      
+                      if (result.success) {
+                        toast({ title: "✅ Migration erfolgreich", description: result.message });
+                        setRefreshTrigger(prev => prev + 1);
+                      } else {
+                        toast({ title: "❌ Migration fehlgeschlagen", description: result.error, variant: "destructive" });
+                      }
+                    } catch (error: any) {
+                      toast({ title: "❌ Fehler", description: error.message, variant: "destructive" });
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                  className="w-full"
+                  size="lg"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  🚀 Basis-Migration starten
+                </Button>
+                
+                <Button 
+                  onClick={async () => {
+                    setIsSubmitting(true);
+                    try {
+                      const response = await fetch('/api/admin/assign-roles', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'assign_sample_roles' })
+                      });
+                      
+                      const result = await response.json();
+                      
+                      if (result.success) {
+                        toast({ title: "✅ Rollen zugewiesen", description: result.message });
+                        setRefreshTrigger(prev => prev + 1);
+                      } else {
+                        toast({ title: "❌ Fehler", description: result.error, variant: "destructive" });
+                      }
+                    } catch (error: any) {
+                      toast({ title: "❌ Fehler", description: error.message, variant: "destructive" });
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                  className="w-full"
+                  variant="outline"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  🎯 Beispiel-Rollen zuweisen
+                </Button>
+                
+                <Button 
+                  onClick={async () => {
+                    if (!confirm('⚠️ FINALE MIGRATION: Alle Legacy-Rollen werden entfernt und durch neue 3-Tier-Rollen ersetzt. Fortfahren?')) return;
+                    
+                    setIsSubmitting(true);
+                    try {
+                      const response = await fetch('/api/admin/final-migration', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                      });
+                      
+                      const result = await response.json();
+                      
+                      if (result.success) {
+                        toast({ title: "✅ Finale Migration erfolgreich", description: result.message });
+                        console.log('Migration Log:', result.migrationLog);
+                        console.log('Stats:', result.stats);
+                        setRefreshTrigger(prev => prev + 1);
+                      } else {
+                        toast({ title: "❌ Migration fehlgeschlagen", description: result.error, variant: "destructive" });
+                      }
+                    } catch (error: any) {
+                      toast({ title: "❌ Fehler", description: error.message, variant: "destructive" });
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  🔥 FINALE MIGRATION (Legacy-Rollen entfernen)
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

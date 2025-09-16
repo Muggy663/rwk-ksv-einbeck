@@ -7,12 +7,26 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { useClubId } from '@/hooks/useClubId';
+import { useClubPermissions } from '@/hooks/useClubPermissions';
+import { AccessDenied } from '@/components/ui/access-denied';
 import { collection, query, where, getDocs, orderBy, doc, updateDoc, deleteDoc, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function MitgliederPage() {
   const { user } = useAuthContext();
   const { clubId, loading: clubLoading } = useClubId();
+  const { canAccessMembers, userClubRole, hasLegacyAccess } = useClubPermissions();
+  
+  // Berechtigungsprüfung
+  if (!clubLoading && !canAccessMembers && !hasLegacyAccess) {
+    return (
+      <AccessDenied 
+        requiredRole="Vorstand, Kassenwart, Schriftführer oder Sportleiter"
+        currentRole={userClubRole || 'Keine Berechtigung'}
+        message="Sie haben keine Berechtigung zur Mitgliederverwaltung."
+      />
+    );
+  }
   const [members, setMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -336,7 +350,7 @@ export default function MitgliederPage() {
     }
   };
 
-  if (loading) {
+  if (loading || clubLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center py-10">

@@ -13,7 +13,7 @@ export interface UserPermission {
   uid: string;
   email: string;
   displayName?: string;
-  role: 'vereinsvertreter' | 'mannschaftsfuehrer' | 'vereinsvorstand' | null;
+  role: 'vereinsvertreter' | 'mannschaftsfuehrer' | 'vereinsvorstand' | 'superadmin' | null;
   roles?: string[]; // Multi-Role-System: ['vereinsvertreter', 'km_access', 'vereinssoftware']
   clubId: string | null;
   clubIds?: string[]; // Für mehrere Vereine

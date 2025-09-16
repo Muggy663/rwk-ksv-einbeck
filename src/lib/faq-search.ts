@@ -407,6 +407,176 @@ const faqDatabase: FAQItem[] = [
     answer: "Nein, der Rechtsweg ist ausgeschlossen. Alle Streitigkeiten werden vereinsintern durch die Sportkommission entschieden.",
     section: "§19 Schlussbemerkung",
     keywords: ["rechtsweg", "gericht", "klagen", "ausgeschlossen", "sportkommission"]
+  },
+
+  // === ROLLEN-SYSTEM & BERECHTIGUNGEN ===
+  {
+    id: "was-ist-rollensystem",
+    question: "Was ist das neue Rollen-System?",
+    answer: "Das neue 3-Tier-Rollen-System teilt Berechtigungen in Platform-Rollen (SUPER_ADMIN), KV-Rollen (KV_WETTKAMPFLEITER) und Club-Rollen (VORSTAND, SPORTLEITER, KASSENWART, SCHRIFTFUEHRER) auf. Jede Rolle hat spezifische Zugriffe.",
+    section: "Rollen-System",
+    keywords: ["rollen", "system", "3-tier", "platform", "kv", "club", "berechtigungen"]
+  },
+  {
+    id: "welche-club-rollen",
+    question: "Welche Club-Rollen gibt es?",
+    answer: "Basis-Rollen: VORSTAND (Vollzugriff), SPORTLEITER (RWK+KM), KASSENWART (Finanzen+Mitglieder), SCHRIFTFUEHRER (Protokolle+Mitglieder-Lesezugriff). Erweiterte Rollen: JUGENDWART, DAMENWART, ZEUGWART, PRESSEWART, TRAINER, AUSBILDER, VEREINSSCHUETZE, EHRENMITGLIED.",
+    section: "Rollen-System",
+    keywords: ["club", "rollen", "vorstand", "sportleiter", "kassenwart", "schriftfuehrer", "jugendwart", "damenwart"]
+  },
+  {
+    id: "was-darf-vorstand",
+    question: "Was darf der Vorstand?",
+    answer: "Der Vorstand hat Vollzugriff auf alle Vereinssoftware-Bereiche: Mitgliederverwaltung, Finanzen & SEPA, Geburtstage & Jubiläen, Lizenzen & Ausbildungen, Vereinsrecht & Protokolle, Aufgaben-Management. Zusätzlich RWK- und KM-Zugriff.",
+    section: "Rollen-System",
+    keywords: ["vorstand", "vollzugriff", "mitglieder", "finanzen", "sepa", "protokolle", "aufgaben"]
+  },
+  {
+    id: "was-darf-kassenwart",
+    question: "Was darf der Kassenwart?",
+    answer: "Der Kassenwart kann Mitglieder verwalten, SEPA-Lastschrift & Beiträge verwalten, Geburtstage & Jubiläen verwalten und Finanz-Statistiken einsehen. Kein Zugriff auf Protokolle oder Aufgaben-Management.",
+    section: "Rollen-System",
+    keywords: ["kassenwart", "mitglieder", "sepa", "beiträge", "finanzen", "jubiläen", "statistiken"]
+  },
+  {
+    id: "was-darf-schriftfuehrer",
+    question: "Was darf der Schriftführer?",
+    answer: "Der Schriftführer hat Lesezugriff auf Mitglieder, kann Vereinsrecht & Protokolle verwalten, Sitzungen verwalten und Wahlen & Beschlüsse durchführen. Kein Zugriff auf Finanzen oder Aufgaben-Management.",
+    section: "Rollen-System",
+    keywords: ["schriftfuehrer", "protokolle", "vereinsrecht", "sitzungen", "wahlen", "beschlüsse"]
+  },
+  {
+    id: "was-darf-sportleiter",
+    question: "Was darf der Sportleiter?",
+    answer: "Der Sportleiter hat Lesezugriff auf Mitglieder (für Mannschaftsplanung), kann Lizenzen & Ausbildungen verwalten, Sport-Statistiken einsehen und hat Vollzugriff auf RWK- und KM-Bereiche.",
+    section: "Rollen-System",
+    keywords: ["sportleiter", "mitglieder", "lesezugriff", "lizenzen", "ausbildungen", "rwk", "km"]
+  },
+  {
+    id: "was-darf-jugendwart",
+    question: "Was darf der Jugendwart?",
+    answer: "Der Jugendwart kann Jugend-Mitglieder verwalten, Jugend-Ausbildungen planen, Jugend-Statistiken einsehen und Jugend-Wettkämpfe organisieren. Spezialisiert auf den Nachwuchsbereich.",
+    section: "Rollen-System",
+    keywords: ["jugendwart", "jugend", "mitglieder", "ausbildungen", "nachwuchs", "wettkämpfe"]
+  },
+  {
+    id: "was-darf-damenwart",
+    question: "Was darf der Damenwart?",
+    answer: "Der Damenwart kann Damen-Mitglieder verwalten, Damen-Events organisieren, Damen-Statistiken einsehen und Damen-Termine planen. Spezialisiert auf den Damenbereich.",
+    section: "Rollen-System",
+    keywords: ["damenwart", "damen", "events", "termine", "statistiken", "organisieren"]
+  },
+  {
+    id: "was-darf-zeugwart",
+    question: "Was darf der Zeugwart?",
+    answer: "Der Zeugwart kann Waffen & Ausrüstung verwalten, Inventar führen, Wartungspläne erstellen und Anschaffungen verwalten. Zuständig für die technische Ausstattung des Vereins.",
+    section: "Rollen-System",
+    keywords: ["zeugwart", "waffen", "ausrüstung", "inventar", "wartung", "anschaffungen"]
+  },
+  {
+    id: "was-darf-pressewart",
+    question: "Was darf der Pressewart?",
+    answer: "Der Pressewart kann Vereins-News schreiben, Berichte erstellen, Foto-Verwaltung betreiben und Öffentlichkeitsarbeit machen. Zuständig für die Außendarstellung des Vereins.",
+    section: "Rollen-System",
+    keywords: ["pressewart", "news", "berichte", "fotos", "öffentlichkeitsarbeit", "außendarstellung"]
+  },
+  {
+    id: "was-darf-trainer",
+    question: "Was darf der Trainer?",
+    answer: "Der Trainer kann Training durchführen, Lizenzen verwalten, Trainings-Statistiken einsehen und Leistungsanalysen erstellen. Spezialisiert auf die sportliche Entwicklung.",
+    section: "Rollen-System",
+    keywords: ["trainer", "training", "lizenzen", "statistiken", "leistung", "entwicklung"]
+  },
+  {
+    id: "was-darf-ausbilder",
+    question: "Was darf der Ausbilder?",
+    answer: "Der Ausbilder kann fortgeschrittene Schulungen durchführen, Prüfungen abnehmen, Ausbilder-Lizenzen verwalten und Ausbildungs-Statistiken einsehen. Höhere Qualifikationsstufe als Trainer.",
+    section: "Rollen-System",
+    keywords: ["ausbilder", "schulungen", "prüfungen", "lizenzen", "qualifikation", "fortgeschritten"]
+  },
+  {
+    id: "was-darf-vereinsschuetze",
+    question: "Was darf der Vereinsschütze?",
+    answer: "Der Vereinsschütze kann eigene Daten einsehen, eigene Lizenzen verwalten, eigene Statistiken einsehen und Termine einsehen. Basis-Mitglied mit Lesezugriff auf eigene Daten.",
+    section: "Rollen-System",
+    keywords: ["vereinsschütze", "eigene", "daten", "lizenzen", "statistiken", "termine", "basis"]
+  },
+  {
+    id: "was-darf-ehrenmitglied",
+    question: "Was darf das Ehrenmitglied?",
+    answer: "Das Ehrenmitglied kann Vereinsgeschichte einsehen, Ehrungen verwalten, historische Daten einsehen und Jubiläums-Termine verwalten. Spezieller Status für verdiente Mitglieder.",
+    section: "Rollen-System",
+    keywords: ["ehrenmitglied", "geschichte", "ehrungen", "historisch", "jubiläum", "verdient"]
+  },
+  {
+    id: "vereinssoftware-lizenz",
+    question: "Was ist die Vereinssoftware-Lizenz?",
+    answer: "Die Vereinssoftware ist ein kostenpflichtiges Zusatzmodul. Es gibt 3-monatige kostenlose Testlizenzen und Vollversionen. Ohne Lizenz ist kein Zugriff auf die Vereinssoftware möglich. Kontakt: rwk-leiter-ksve@gmx.de",
+    section: "Rollen-System",
+    keywords: ["vereinssoftware", "lizenz", "kostenpflichtig", "test", "vollversion", "kontakt"]
+  },
+  {
+    id: "wie-rolle-bekommen",
+    question: "Wie bekomme ich eine Rolle zugewiesen?",
+    answer: "Rollen werden vom Vereinsvorstand oder Super-Admin zugewiesen. Kontaktieren Sie Ihren Vereinsvorstand oder den RWK-Leiter (rwk-leiter-ksve@gmx.de) für Rollenzuweisungen.",
+    section: "Rollen-System",
+    keywords: ["rolle", "zuweisen", "vorstand", "admin", "kontakt", "rwk-leiter"]
+  },
+  {
+    id: "mehrere-rollen",
+    question: "Kann ich mehrere Rollen haben?",
+    answer: "Ja, Sie können mehrere Club-Rollen gleichzeitig haben (z.B. KASSENWART und JUGENDWART). Jede Rolle erweitert Ihre Berechtigungen. Der Vorstand hat automatisch Zugriff auf alle Bereiche.",
+    section: "Rollen-System",
+    keywords: ["mehrere", "rollen", "gleichzeitig", "erweitert", "berechtigungen", "kombinieren"]
+  },
+  {
+    id: "multi-verein",
+    question: "Kann ich für mehrere Vereine Rollen haben?",
+    answer: "Ja, das Multi-Verein-System ermöglicht es, für verschiedene Vereine unterschiedliche Rollen zu haben. Zum Beispiel SPORTLEITER in Verein A und KASSENWART in Verein B.",
+    section: "Rollen-System",
+    keywords: ["multi", "verein", "mehrere", "verschiedene", "unterschiedlich", "system"]
+  },
+  {
+    id: "bereiche-nicht-sichtbar",
+    question: "Warum sehe ich bestimmte Bereiche nicht?",
+    answer: "Sie sehen nur die Bereiche, für die Sie berechtigt sind. Ihre aktuelle Rolle bestimmt die sichtbaren Bereiche. Kontaktieren Sie den Vorstand für weitere Berechtigungen.",
+    section: "Rollen-System",
+    keywords: ["bereiche", "nicht", "sichtbar", "berechtigt", "rolle", "bestimmt", "vorstand"]
+  },
+  {
+    id: "legacy-rollen",
+    question: "Was passiert mit alten Rollen wie 'vereinsvertreter'?",
+    answer: "Alte Rollen (vereinsvertreter, mannschaftsführer) funktionieren weiterhin, werden aber schrittweise auf das neue System migriert. Vereinsvertreter werden zu SPORTLEITER, Vereinsvorstand zu VORSTAND.",
+    section: "Rollen-System",
+    keywords: ["legacy", "alt", "vereinsvertreter", "mannschaftsführer", "migration", "sportleiter"]
+  },
+  {
+    id: "kv-rollen",
+    question: "Was sind KV-Rollen?",
+    answer: "KV-Rollen sind Kreisverband-Rollen wie KV_WETTKAMPFLEITER (Vollzugriff RWK & KM), KV_KM_ORGA (KM-Vollzugriff), KV_PRESSEWART (News schreiben) und KV_KAMPFRICHTER (KM-Ergebnisse). Für Kreisverband-Funktionen.",
+    section: "Rollen-System",
+    keywords: ["kv", "kreisverband", "wettkampfleiter", "km", "orga", "pressewart", "kampfrichter"]
+  },
+  {
+    id: "platform-rollen",
+    question: "Was sind Platform-Rollen?",
+    answer: "Platform-Rollen sind system-weite Rollen wie SUPER_ADMIN (Vollzugriff auf alles), SYSTEM_ADMIN (technische Wartung) und DATA_MANAGER (Import/Export). Nur für System-Administratoren.",
+    section: "Rollen-System",
+    keywords: ["platform", "system", "super", "admin", "wartung", "data", "manager", "import"]
+  },
+  {
+    id: "datentrennung-vereine",
+    question: "Können andere Vereine meine Daten sehen?",
+    answer: "Nein, das Multi-Tenant-System sorgt für strikte Datentrennung. Verein A kann nicht auf Daten von Verein B zugreifen. Jeder Verein hat seine eigenen, getrennten Daten.",
+    section: "Rollen-System",
+    keywords: ["datentrennung", "multi", "tenant", "strikte", "getrennt", "sicherheit", "privat"]
+  },
+  {
+    id: "url-sicherheit",
+    question: "Was ist URL-Level Security?",
+    answer: "URL-Level Security blockiert direkte Zugriffe auf Seiten ohne entsprechende Berechtigung. Auch wenn Sie den direkten Link kennen, können Sie ohne passende Rolle nicht auf geschützte Bereiche zugreifen.",
+    section: "Rollen-System",
+    keywords: ["url", "security", "sicherheit", "blockiert", "direkt", "link", "geschützt", "berechtigung"]
   }
 ];
 

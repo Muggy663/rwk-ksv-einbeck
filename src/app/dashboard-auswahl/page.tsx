@@ -38,9 +38,84 @@ export default function DashboardAuswahl() {
     );
   }
 
-  const isRWKAdmin = userAppPermissions?.role === 'admin' || userAppPermissions?.role === 'superadmin';
+  const isRWKAdmin = userAppPermissions?.role === 'superadmin' || user?.email === 'admin@rwk-einbeck.de';
   const isVereinsvertreter = userAppPermissions?.role === 'vereinsvertreter' || userAppPermissions?.role === 'club_representative';
   const isVereinsvorstand = userAppPermissions?.role === 'vereinsvorstand';
+  
+  // Neue Club-Rollen
+  const hasClubRoles = userAppPermissions?.clubRoles && Object.keys(userAppPermissions.clubRoles).length > 0;
+  const clubRolesList = hasClubRoles ? Object.values(userAppPermissions.clubRoles) : [];
+  const isSportleiter = clubRolesList.includes('SPORTLEITER');
+  const isVorstand = clubRolesList.includes('VORSTAND');
+  const isKassenwart = clubRolesList.includes('KASSENWART');
+  const isSchriftfuehrer = clubRolesList.includes('SCHRIFTFUEHRER');
+  const isJugendwart = clubRolesList.includes('JUGENDWART');
+  const isDamenwart = clubRolesList.includes('DAMENWART');
+  const isZeugwart = clubRolesList.includes('ZEUGWART');
+  const isPressewart = clubRolesList.includes('PRESSEWART');
+  const isTrainer = clubRolesList.includes('TRAINER');
+  const isAusbilder = clubRolesList.includes('AUSBILDER');
+  const isVereinsschuetze = clubRolesList.includes('VEREINSSCHUETZE');
+  const isEhrenmitglied = clubRolesList.includes('EHRENMITGLIED');
+  
+  // Rollen-spezifische Bereiche für Vereinssoftware (Phase 2)
+  const getVereinssoftwareBereiche = () => {
+    if (isVorstand) {
+      return ['👥 Alle Mitgliederverwaltung', '💰 Vollzugriff Finanzen & SEPA', '🎂 Geburtstage & Jubiläen', '🏆 Lizenzen & Ausbildungen', '⚖️ Vereinsrecht & Protokolle', '📋 Aufgaben-Management'];
+    }
+    if (isKassenwart) {
+      return ['👥 Mitgliederverwaltung', '💰 SEPA-Lastschrift & Beiträge', '🎂 Geburtstage & Jubiläen', '📊 Finanz-Statistiken'];
+    }
+    if (isSchriftfuehrer) {
+      return ['👥 Mitglieder (Lesezugriff)', '⚖️ Vereinsrecht & Protokolle', '📋 Sitzungsverwaltung', '🗳️ Wahlen & Beschlüsse'];
+    }
+    if (isSportleiter) {
+      return ['👥 Mitglieder (Lesezugriff)', '🏆 Lizenzen & Ausbildungen', '📊 Sport-Statistiken'];
+    }
+    // Phase 2 Rollen
+    if (isJugendwart) {
+      return ['🧒 Jugend-Mitglieder verwalten', '🏆 Jugend-Ausbildungen', '📊 Jugend-Statistiken', '🏅 Jugend-Wettkämpfe'];
+    }
+    if (isDamenwart) {
+      return ['👩 Damen-Mitglieder verwalten', '🎉 Damen-Events organisieren', '📊 Damen-Statistiken', '📅 Damen-Termine'];
+    }
+    if (isZeugwart) {
+      return ['🔧 Waffen & Ausrüstung verwalten', '📊 Inventar führen', '🔍 Wartungspläne', '💰 Anschaffungen'];
+    }
+    if (isPressewart) {
+      return ['📰 Vereins-News schreiben', '📝 Berichte erstellen', '📷 Foto-Verwaltung', '🌐 Öffentlichkeitsarbeit'];
+    }
+    if (isTrainer) {
+      return ['🏃 Training durchführen', '🏆 Lizenzen verwalten', '📊 Trainings-Statistiken', '🎯 Leistungsanalyse'];
+    }
+    if (isAusbilder) {
+      return ['🎓 Fortgeschrittene Schulungen', '📝 Prüfungen abnehmen', '🏆 Ausbilder-Lizenzen', '📊 Ausbildungs-Statistiken'];
+    }
+    if (isVereinsschuetze) {
+      return ['👥 Eigene Daten einsehen', '🏆 Eigene Lizenzen', '📊 Eigene Statistiken', '📅 Termine einsehen'];
+    }
+    if (isEhrenmitglied) {
+      return ['🏅 Vereinsgeschichte einsehen', '📜 Ehrungen verwalten', '📊 Historische Daten', '📅 Jubiläums-Termine'];
+    }
+    return ['👥 Basis-Funktionen'];
+  };
+  
+  const getRollenBeschreibung = () => {
+    if (isVorstand) return 'Vollzugriff auf alle Vereinssoftware-Bereiche';
+    if (isKassenwart) return 'Finanz- und Mitgliederverwaltung';
+    if (isSchriftfuehrer) return 'Protokolle und Mitglieder-Lesezugriff';
+    if (isSportleiter) return 'Sport-Bereiche und Mitglieder-Lesezugriff';
+    // Phase 2 Beschreibungen
+    if (isJugendwart) return 'Jugendbereich und Nachwuchsförderung';
+    if (isDamenwart) return 'Damenbereich und Events';
+    if (isZeugwart) return 'Waffen, Ausrüstung und Inventar';
+    if (isPressewart) return 'Öffentlichkeitsarbeit und Berichterstattung';
+    if (isTrainer) return 'Training und Leistungsentwicklung';
+    if (isAusbilder) return 'Ausbildung und Prüfungswesen';
+    if (isVereinsschuetze) return 'Eigene Daten und Vereinsinformationen';
+    if (isEhrenmitglied) return 'Vereinsgeschichte und Ehrungen';
+    return 'Basis-Zugriff auf Vereinssoftware';
+  };
   
   // Debug entfernt - verhindert Endlosschleife
   
@@ -60,40 +135,62 @@ export default function DashboardAuswahl() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* RWK Dashboard */}
-        <Card className={`shadow-lg hover:shadow-xl transition-shadow ${isKMOrganisator && !isRWKAdmin ? 'opacity-50' : ''}`}>
+        <Card className={`shadow-lg hover:shadow-xl transition-shadow ${isKMOrganisator && !isRWKAdmin ? 'opacity-50 cursor-not-allowed' : ''}`}>
           <CardHeader className="pb-4">
             <div>
               <CardTitle className="text-xl mb-2">
-                🎯 Rundenwettkampf
+                <span className="hidden sm:inline">🎯 Rundenwettkampf</span>
+                <span className="sm:hidden">🎯 RWK</span>
+                {isKMOrganisator && !isRWKAdmin && <span className="text-red-500 ml-2">🚫</span>}
               </CardTitle>
               <div className="flex flex-wrap gap-1">
-                {isRWKAdmin && <Badge variant="default">Admin</Badge>}
-                {isVereinsvertreter && <Badge variant="secondary">Vereinsvertreter</Badge>}
-                {isVereinsvorstand && <Badge variant="secondary">Vereinsvorstand</Badge>}
+                {isRWKAdmin && <Badge variant="default">Superadmin</Badge>}
+                {isSportleiter && !isRWKAdmin && <Badge variant="secondary">Sportleiter</Badge>}
+                {isVorstand && !isRWKAdmin && <Badge variant="secondary">Vorstand</Badge>}
+                {isKMOrganisator && !isRWKAdmin && <Badge variant="destructive">Gesperrt für KM-Orga</Badge>}
+                {!hasClubRoles && !isRWKAdmin && (isVereinsvertreter || isVereinsvorstand) && <Badge variant="destructive">Migration erforderlich</Badge>}
               </div>
             </div>
             <CardDescription>
-              Rundenwettkampf-Verwaltung für Ligen und Mannschaften
+              {isKMOrganisator && !isRWKAdmin ? 
+                'Als KM-Organisator haben Sie keinen Zugang zum Rundenwettkampf-System' :
+                'Rundenwettkampf-Verwaltung für Ligen und Mannschaften'
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Funktionen</h4>
-                <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
-                  <div>• Ligatabellen und Ergebnisse</div>
-                  <div>• Schützen- und Teamverwaltung</div>
-                  <div>• Rundenwettkampf-Organisation</div>
-                  {isRWKAdmin && <div>• Admin-Funktionen</div>}
+              {isKMOrganisator && !isRWKAdmin ? (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                  <h4 className="font-semibold text-red-900 dark:text-red-100 mb-2">Zugang gesperrt</h4>
+                  <div className="text-sm text-red-700 dark:text-red-200">
+                    KM-Organisatoren konzentrieren sich auf die Kreismeisterschaften und haben keinen Zugang zum RWK-System.
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Funktionen</h4>
+                  <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
+                    <div>• Ligatabellen und Ergebnisse</div>
+                    <div>• Schützen- und Teamverwaltung</div>
+                    <div>• Rundenwettkampf-Organisation</div>
+                    {isRWKAdmin && <div>• Admin-Funktionen</div>}
+                  </div>
+                </div>
+              )}
               
               <div className="flex gap-2">
-                <Link href={isRWKAdmin ? "/admin" : "/verein/dashboard"} className="flex-1">
-                  <Button className="w-full" disabled={isKMOrganisator && !isRWKAdmin}>
-                    RWK-Bereich öffnen
+                {isKMOrganisator && !isRWKAdmin ? (
+                  <Button className="w-full" disabled>
+                    Gesperrt für KM-Orga
                   </Button>
-                </Link>
+                ) : (
+                  <Link href={isRWKAdmin ? "/admin" : "/verein/dashboard"} className="flex-1">
+                    <Button className="w-full">
+                      RWK-Bereich öffnen
+                    </Button>
+                  </Link>
+                )}
                 {isRWKAdmin && (
                   <Link href="/dashboard-auswahl">
                     <Button variant="outline" size="sm">
@@ -115,8 +212,9 @@ export default function DashboardAuswahl() {
               </CardTitle>
               <div className="flex flex-wrap gap-1">
                 {isKMAdmin && <Badge variant="default">KM-Admin</Badge>}
-                {isKMOrganisator && <Badge variant="secondary">KM-Organisator</Badge>}
-                {hasKMAccess && !hasFullAccess && <Badge variant="outline">Vereinsvertreter</Badge>}
+                {(isKMOrganisator || hasFullAccess) && <Badge variant="secondary">KM-Organisator</Badge>}
+                {hasKMAccess && !hasFullAccess && (isSportleiter || isVorstand) && <Badge variant="outline">{isSportleiter ? 'Sportleiter' : 'Vorstand'}</Badge>}
+                {hasKMAccess && !hasFullAccess && !hasClubRoles && <Badge variant="outline">Legacy-Benutzer</Badge>}
               </div>
             </div>
             <CardDescription>
@@ -138,7 +236,7 @@ export default function DashboardAuswahl() {
                   </div>
                   
                   <div className="flex gap-2">
-                    {isKMOrganisator ? (
+                    {(isKMOrganisator || hasFullAccess) ? (
                       <Link href="/km-orga" className="flex-1">
                         <Button className="w-full">
                           KM-Orga Bereich öffnen
@@ -172,8 +270,8 @@ export default function DashboardAuswahl() {
           </CardContent>
         </Card>
 
-        {/* Vereinssoftware - NUR für Vereinsvorstand und Admin */}
-        {(isVereinsvorstand || userAppPermissions?.role === 'vereins_admin' || isRWKAdmin || user?.email === 'admin@rwk-einbeck.de') ? (
+        {/* Vereinssoftware - Mit Lizenz-Check */}
+        {(userAppPermissions?.vereinssoftwareLicense || isRWKAdmin || user?.email === 'admin@rwk-einbeck.de') ? (
           <Card className="shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="pb-4">
               <div>
@@ -182,10 +280,24 @@ export default function DashboardAuswahl() {
                   <Badge className="ml-2 bg-orange-500 text-white text-xs">BETA</Badge>
                 </CardTitle>
                 <div className="flex flex-wrap gap-1">
-                  {(isRWKAdmin || user?.email === 'admin@rwk-einbeck.de') && <Badge variant="default">Super-Admin</Badge>}
-                  {isVereinsvorstand && <Badge variant="secondary">Vereinsvorstand</Badge>}
-                  {userAppPermissions?.role === 'vereins_admin' && <Badge variant="secondary">Vereins-Admin</Badge>}
-                  {isVereinsvertreter && <Badge variant="secondary">Vereinsvertreter</Badge>}
+                  {isRWKAdmin && <Badge variant="default">Superadmin</Badge>}
+                  {userAppPermissions?.vereinssoftwareLicense && !isRWKAdmin && <Badge variant="secondary">Lizenziert</Badge>}
+                  {!isRWKAdmin && (
+                    <>
+                      {isVorstand && <Badge variant="outline">Vorstand</Badge>}
+                      {isKassenwart && <Badge variant="outline">Kassenwart</Badge>}
+                      {isSchriftfuehrer && <Badge variant="outline">Schriftführer</Badge>}
+                      {isSportleiter && <Badge variant="outline">Sportleiter</Badge>}
+                      {isJugendwart && <Badge variant="outline">Jugendwart</Badge>}
+                      {isDamenwart && <Badge variant="outline">Damenwart</Badge>}
+                      {isZeugwart && <Badge variant="outline">Zeugwart</Badge>}
+                      {isPressewart && <Badge variant="outline">Pressewart</Badge>}
+                      {isTrainer && <Badge variant="outline">Trainer</Badge>}
+                      {isAusbilder && <Badge variant="outline">Ausbilder</Badge>}
+                      {isVereinsschuetze && <Badge variant="outline">Vereinsschütze</Badge>}
+                      {isEhrenmitglied && <Badge variant="outline">Ehrenmitglied</Badge>}
+                    </>
+                  )}
                 </div>
               </div>
               <CardDescription>
@@ -199,15 +311,18 @@ export default function DashboardAuswahl() {
             <CardContent>
               <div className="space-y-4">
                 <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                  <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2">Verfügbare Funktionen v1.5.8</h4>
+                  <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2">
+                    Ihre Bereiche ({isVorstand ? 'Vorstand' : isKassenwart ? 'Kassenwart' : isSchriftfuehrer ? 'Schriftführer' : isSportleiter ? 'Sportleiter' : isJugendwart ? 'Jugendwart' : isDamenwart ? 'Damenwart' : isZeugwart ? 'Zeugwart' : isPressewart ? 'Pressewart' : isTrainer ? 'Trainer' : isAusbilder ? 'Ausbilder' : isVereinsschuetze ? 'Vereinsschütze' : isEhrenmitglied ? 'Ehrenmitglied' : 'Benutzer'})
+                  </h4>
                   <div className="text-sm text-green-700 dark:text-green-200 space-y-1">
-                    <div>• 👥 Vollständige Mitgliederverwaltung (99 Mitglieder)</div>
-                    <div>• 💳 SEPA-Lastschrift & Multi-Bank-Export</div>
-                    <div>• 🎂 Geburtstage & Jubiläen-System</div>
-                    <div>• 🏆 Lizenzen & Ausbildungen (8 Schießsport-Lizenzen)</div>
-                    <div>• 👔 12 Vorstandspositionen mit Ablauf-Überwachung</div>
-                    <div>• ⚖️ Vereinsrecht-Modul (Protokolle, Wahlen)</div>
-                    <div>• 📋 Aufgaben-Management für Vorstand</div>
+                    {getVereinssoftwareBereiche().map((bereich, index) => (
+                      <div key={index}>• {bereich}</div>
+                    ))}
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-700">
+                    <p className="text-xs text-green-600 dark:text-green-300 italic">
+                      {getRollenBeschreibung()}
+                    </p>
                   </div>
                 </div>
                 
@@ -236,7 +351,7 @@ export default function DashboardAuswahl() {
                 </CardTitle>
                 <div className="flex flex-wrap gap-1">
                   <Badge variant="outline" className="text-orange-600 border-orange-300">
-                    🔒 Freischaltung erforderlich
+                    🔒 Lizenz erforderlich
                   </Badge>
                 </div>
               </div>
@@ -244,15 +359,15 @@ export default function DashboardAuswahl() {
                 Vollständige Vereinsverwaltung für moderne Schützenvereine
                 <br />
                 <span className="text-orange-500 text-sm font-medium">
-                  ⚠️ In aktiver Entwicklung - Neue Features werden laufend hinzugefügt
+                  💰 Kostenpflichtiges Zusatzmodul
                 </span>
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
-                  <h4 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">Verfügbare Funktionen v1.5.8</h4>
-                  <div className="text-sm text-orange-700 dark:text-orange-200 space-y-1">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Funktionen</h4>
+                  <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
                     <div>• 👥 Vollständige Mitgliederverwaltung</div>
                     <div>• 💳 SEPA-Lastschrift & Multi-Bank-Export</div>
                     <div>• 🎂 Geburtstage & Jubiläen-System</div>
@@ -264,15 +379,10 @@ export default function DashboardAuswahl() {
                 
                 <div className="space-y-2">
                   <Button disabled className="w-full bg-gray-300 text-gray-500 cursor-not-allowed">
-                    Freischaltung erforderlich
+                    Lizenz erforderlich
                   </Button>
-                  <a href="/demo/vereinssoftware">
-                    <Button className="w-full" variant="outline">
-                      Demo ansehen
-                    </Button>
-                  </a>
-                  <p className="text-xs text-gray-400 mt-2 text-center">
-                    Kontaktieren Sie den Admin für Freischaltung!
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Kontakt: <strong>rwk-leiter-ksve@gmx.de</strong>
                   </p>
                 </div>
               </div>

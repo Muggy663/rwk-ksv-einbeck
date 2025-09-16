@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuthContext } from '@/components/auth/AuthContext';
+import { useClubPermissions } from '@/hooks/useClubPermissions';
+import { AccessDenied } from '@/components/ui/access-denied';
 import { collection, query, where, getDocs, doc, updateDoc, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useClubId } from '@/hooks/useClubId';
@@ -15,6 +17,18 @@ import { getClubCollection, CLUB_COLLECTIONS } from '@/lib/utils/club-utils';
 export default function BeitraegeVerwaltungPage() {
   const { user, userAppPermissions } = useAuthContext();
   const { clubId, loading: clubLoading } = useClubId();
+  const { canAccessFinances, userClubRole, hasLegacyAccess } = useClubPermissions();
+  
+  // Berechtigungsprüfung
+  if (!clubLoading && !canAccessFinances && !hasLegacyAccess) {
+    return (
+      <AccessDenied 
+        requiredRole="Vorstand oder Kassenwart"
+        currentRole={userClubRole || 'Keine Berechtigung'}
+        message="Sie haben keine Berechtigung zur Beitragsverwaltung."
+      />
+    );
+  }
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userClub, setUserClub] = useState(null);
@@ -923,7 +937,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
     offeneBeitraege: members.filter(m => m.isActive && m.beitragsstatus === 'offen').reduce((sum, m) => sum + (m.jahresbeitrag || 0), 0)
   };
 
-  if (loading) {
+  if (loading || clubLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center py-10">

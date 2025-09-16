@@ -99,8 +99,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const fetchUserAppPermissions = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
       if (firebaseUser.email === ADMIN_EMAIL) {
-        // Super-Admin benötigt keine spezifischen App-Permissions aus Firestore
-        setUserAppPermissions(null);
+        // Super-Admin: Erstelle virtuelle Permissions
+        setUserAppPermissions({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          role: 'superadmin',
+          roles: ['superadmin', 'vereinsvertreter', 'km_access', 'vereinssoftware'],
+          clubId: null,
+          clubIds: [],
+          representedClubs: []
+        });
         setAppPermissionsError(null);
         setLoadingAppPermissions(false);
         return;
