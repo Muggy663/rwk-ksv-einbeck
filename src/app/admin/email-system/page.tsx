@@ -95,13 +95,43 @@ export default function EmailSystemPage() {
           // Prüfe ob E-Mail bereits existiert
           const existingContact = loadedContacts.find(c => c.email === data.email);
           if (!existingContact) {
+            // Bestimme Rolle aus neuen Club-Rollen oder Legacy-Rolle
+            let userRole = data.role || 'app_benutzer';
+            let groups = [userRole];
+            
+            // Neue Club-Rollen prüfen
+            if (data.clubRoles && Object.keys(data.clubRoles).length > 0) {
+              const clubRoleValues = Object.values(data.clubRoles);
+              if (clubRoleValues.includes('SPORTLEITER')) {
+                userRole = 'sportleiter';
+                groups = ['sportleiter', 'vereinsvertreter'];
+              } else if (clubRoleValues.includes('VORSTAND')) {
+                userRole = 'vorstand';
+                groups = ['vorstand', 'vereinsvertreter'];
+              } else if (clubRoleValues.includes('KASSENWART')) {
+                userRole = 'kassenwart';
+                groups = ['kassenwart', 'vereinsvertreter'];
+              } else if (clubRoleValues.includes('SCHRIFTFUEHRER')) {
+                userRole = 'schriftfuehrer';
+                groups = ['schriftfuehrer', 'vereinsvertreter'];
+              }
+            }
+            
+            // KV-Rollen prüfen
+            if (data.kvRole) {
+              if (data.kvRole === 'KV_WETTKAMPFLEITER') {
+                userRole = 'kv_wettkampfleiter';
+                groups = ['kv_wettkampfleiter', 'vereinsvertreter'];
+              }
+            }
+            
             loadedContacts.push({
               id: `user_${doc.id}`,
               name: data.displayName,
               email: data.email,
-              groups: [data.role || 'app_benutzer'],
+              groups: groups,
               isActive: data.isActive !== false,
-              role: data.role,
+              role: userRole,
               clubName: data.clubName
             });
           }
@@ -120,7 +150,7 @@ export default function EmailSystemPage() {
   };
 
   const loadGroups = async () => {
-    // Standard-Gruppen
+    // Standard-Gruppen (erweitert für neue Rollen)
     const defaultGroups: EmailGroup[] = [
       {
         id: 'alle',
@@ -129,21 +159,39 @@ export default function EmailSystemPage() {
         contactIds: []
       },
       {
-        id: 'mannschaftsfuehrer',
-        name: 'Mannschaftsführer',
-        description: 'Alle Mannschaftsführer',
+        id: 'vereinsvertreter',
+        name: 'Vereinsvertreter',
+        description: 'Alle Vereinsvertreter (inkl. neue Rollen)',
         contactIds: []
       },
       {
-        id: 'vereinsvertreter',
-        name: 'Vereinsvertreter',
-        description: 'Alle Vereinsvertreter',
+        id: 'sportleiter',
+        name: 'Sportleiter',
+        description: 'Alle Sportleiter',
         contactIds: []
       },
       {
         id: 'vorstand',
         name: 'Vorstand',
         description: 'Vorstandsmitglieder',
+        contactIds: []
+      },
+      {
+        id: 'kassenwart',
+        name: 'Kassenwarte',
+        description: 'Alle Kassenwarte',
+        contactIds: []
+      },
+      {
+        id: 'kv_wettkampfleiter',
+        name: 'KV-Wettkampfleiter',
+        description: 'Kreisverband Wettkampfleiter',
+        contactIds: []
+      },
+      {
+        id: 'mannschaftsfuehrer',
+        name: 'Mannschaftsführer (Legacy)',
+        description: 'Legacy Mannschaftsführer',
         contactIds: []
       }
     ];
@@ -186,12 +234,18 @@ export default function EmailSystemPage() {
     switch (groupId) {
       case 'alle':
         return filteredContacts;
-      case 'mannschaftsfuehrer':
-        return filteredContacts.filter(c => c.role === 'mannschaftsfuehrer');
       case 'vereinsvertreter':
-        return filteredContacts.filter(c => c.role === 'vereinsvertreter');
+        return filteredContacts.filter(c => c.groups.includes('vereinsvertreter'));
+      case 'sportleiter':
+        return filteredContacts.filter(c => c.role === 'sportleiter');
       case 'vorstand':
         return filteredContacts.filter(c => c.groups.includes('vorstand'));
+      case 'kassenwart':
+        return filteredContacts.filter(c => c.role === 'kassenwart');
+      case 'kv_wettkampfleiter':
+        return filteredContacts.filter(c => c.role === 'kv_wettkampfleiter');
+      case 'mannschaftsfuehrer':
+        return filteredContacts.filter(c => c.role === 'mannschaftsfuehrer');
       default:
         return [];
     }

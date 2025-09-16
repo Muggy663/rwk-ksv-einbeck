@@ -425,6 +425,25 @@ service cloud.firestore {
       allow write: if canWriteClub(clubId);
     }
 
+    // === E-MAIL SYSTEM ===
+    
+    match /email_contacts/{document} {
+      allow read, write: if request.auth != null && (
+        // Super-Admin
+        request.auth.token.email == 'admin@rwk-einbeck.de' ||
+        // Benutzer mit Admin-Berechtigung in user_permissions
+        exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.keys().hasAny(['role', 'clubRoles', 'kvRole']) &&
+        (
+          get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == 'superadmin' ||
+          get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.kvRole in ['KV_WETTKAMPFLEITER'] ||
+          get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles != null &&
+          get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles.keys().size() > 0 &&
+          get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles.values().hasAny(['SPORTLEITER', 'VORSTAND'])
+        )
+      );
+    }
+
     // === SYSTEM & ADMIN ===
     
     match /user_permissions/{userId} {
