@@ -4,7 +4,6 @@
 /node_modules
 /.pnp
 .pnp.js
-.yarn/install-state.gz
 
 # testing
 /coverage
@@ -27,6 +26,9 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
+.env.production
+.env.development
 
 # vercel
 .vercel
@@ -34,5 +36,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-# Sentry Config File
-.env.sentry-build-plugin
+
+# Firebase
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.firebase/
+
+# Admin SDK Keys - NIEMALS COMMITTEN!
+*firebase-adminsdk*.json
+*service-account*.json
+*private-key*.json
+
+# Migration Scripts mit Credentials
+fix-*.js
+migrate-*.js
+update-*.js

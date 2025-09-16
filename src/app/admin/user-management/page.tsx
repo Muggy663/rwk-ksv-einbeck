@@ -521,6 +521,40 @@ export default function AdminUserManagementPage() {
                 
                 <Button 
                   onClick={async () => {
+                    if (!confirm('🔧 KV_KM_ORGA KORREKTUR: Nur 3 Benutzer sollen KV_KM_ORGA behalten (test-orga, stephanie.buenger, sportleitung-ksv-einbeck). Fortfahren?')) return;
+                    
+                    setIsSubmitting(true);
+                    try {
+                      const response = await fetch('/api/admin/fix-kv-roles', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                      });
+                      
+                      const result = await response.json();
+                      
+                      if (result.success) {
+                        toast({ title: "✅ KV_KM_ORGA Rollen korrigiert", description: result.message });
+                        console.log('Fix Log:', result.log);
+                        console.log('Stats:', result.stats);
+                        setRefreshTrigger(prev => prev + 1);
+                      } else {
+                        toast({ title: "❌ Korrektur fehlgeschlagen", description: result.error, variant: "destructive" });
+                      }
+                    } catch (error: any) {
+                      toast({ title: "❌ Fehler", description: error.message, variant: "destructive" });
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  🔧 KV_KM_ORGA Rollen korrigieren (nur 3 behalten)
+                </Button>
+                
+                <Button 
+                  onClick={async () => {
                     if (!confirm('⚠️ FINALE MIGRATION: Alle Legacy-Rollen werden entfernt und durch neue 3-Tier-Rollen ersetzt. Fortfahren?')) return;
                     
                     setIsSubmitting(true);

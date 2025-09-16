@@ -194,13 +194,19 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
       }
     }
     
-    // KM-Zugang durch representedClubs (auch ohne explizite Rolle)
-    if (!user.role && user.representedClubs && user.representedClubs.length > 0) {
-      roles.push(<Badge key="km-access" variant="outline" className="bg-purple-100">KM-Zugang ({user.representedClubs.length} Vereine)</Badge>);
+    // KM-Zugang durch representedClubs oder SPORTLEITER-Rolle
+    const hasKmAccess = (user.representedClubs && user.representedClubs.length > 0) || 
+                       (user.clubRoles && Object.values(user.clubRoles).includes('SPORTLEITER'));
+    const clubCount = user.representedClubs?.length || (user.clubRoles ? Object.keys(user.clubRoles).length : 0);
+    
+    if (hasKmAccess && !user.role) {
+      roles.push(<Badge key="km-access" variant="outline" className="bg-purple-100">KM-Zugang ({clubCount} Vereine)</Badge>);
     }
     
-    // KV-Rollen
-    if (user.kvRoles) {
+    // KV-Rollen (neue Struktur hat Priorität)
+    if (user.kvRole) {
+      roles.push(<Badge key="kv-new" variant="outline" className="bg-yellow-100">{user.kvRole}</Badge>);
+    } else if (user.kvRoles) {
       Object.entries(user.kvRoles).forEach(([kvId, role]) => {
         roles.push(<Badge key={`kv-${kvId}`} variant="outline" className="bg-yellow-100">{role}</Badge>);
       });
