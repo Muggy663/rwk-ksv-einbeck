@@ -194,6 +194,7 @@ service cloud.firestore {
       return isSuperAdmin() || 
              isVorstand(clubId) || 
              isKassenwart(clubId) ||
+             isSportleiter(clubId) || // SPORTLEITER kann Mitglieder bearbeiten
              hasLegacyClubAccess(clubId); // Legacy
     }
 
@@ -443,6 +444,47 @@ service cloud.firestore {
         )
       );
     }
+
+    match /email_history/{document} {
+      allow read, write: if isSuperAdmin() || 
+                         (isAuthenticated() && getUserPermissions() != null && 
+                          (getUserPermissions().kvRole == 'KV_WETTKAMPFLEITER' ||
+                           (getUserPermissions().clubRoles != null && 
+                            getUserPermissions().clubRoles.values().hasAny(['SPORTLEITER', 'VORSTAND']))));
+    }
+
+    match /email_templates/{document} {
+      allow read, write: if isSuperAdmin() || 
+                         (isAuthenticated() && getUserPermissions() != null && 
+                          (getUserPermissions().kvRole == 'KV_WETTKAMPFLEITER' ||
+                           (getUserPermissions().clubRoles != null && 
+                            getUserPermissions().clubRoles.values().hasAny(['SPORTLEITER', 'VORSTAND']))));
+    }
+
+    match /admin_settings/{document} {
+      allow read, write: if request.auth.token.email == 'admin@rwk-einbeck.de';
+    }
+
+    match /system_config/{document} {
+      allow read, write: if request.auth.token.email == 'admin@rwk-einbeck.de';
+    }
+
+    match /app_stats/{document} {
+      allow read, write: if request.auth.token.email == 'admin@rwk-einbeck.de';
+    }
+
+    // === SUPPORT SYSTEM ===
+    
+    match /support_sessions/{document} {
+      allow read: if isSuperAdmin() || 
+                  (isAuthenticated() && resource.data.clubId != null && hasClubAccess(resource.data.clubId));
+      allow create: if isAuthenticated() && hasClubAccess(request.resource.data.clubId);
+      allow update: if isSuperAdmin() || 
+                    (isAuthenticated() && resource.data.clubId != null && hasClubAccess(resource.data.clubId));
+      allow delete: if isSuperAdmin();
+    }
+
+
 
     // === SYSTEM & ADMIN ===
     

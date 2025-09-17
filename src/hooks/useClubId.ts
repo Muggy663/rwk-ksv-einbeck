@@ -23,6 +23,36 @@ export function useClubId() {
       }
 
       try {
+        // Prüfe zuerst Support-Zugang oder Dev-Zugang für Super-Admin
+        if (currentUser.email === 'admin@rwk-einbeck.de') {
+          const { doc, getDoc, collection, getDocs, query, limit } = await import('firebase/firestore');
+          const { db } = await import('@/lib/firebase/config');
+          
+          const userPermissionsDoc = await getDoc(doc(db, 'user_permissions', currentUser.uid));
+          if (userPermissionsDoc.exists()) {
+            const data = userPermissionsDoc.data();
+            
+            // Support-Zugang prüfen
+            if (data.supportClubAccess && data.supportClubAccess.expiresAt.toDate() > new Date()) {
+              setClubId(data.supportClubAccess.clubId);
+              setLoading(false);
+              return;
+            }
+            
+            // Entwicklungs-Zugang für Super-Admin
+            if (data.devClubId) {
+              setClubId(data.devClubId);
+              setLoading(false);
+              return;
+            }
+          }
+          
+          // Kein Zugang verfügbar
+          setClubId(null);
+          setLoading(false);
+          return;
+        }
+        
         const userClubId = await getUserClubId(currentUser.uid);
         setClubId(userClubId);
       } catch (error) {

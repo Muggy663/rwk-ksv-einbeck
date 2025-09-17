@@ -519,6 +519,9 @@ export default function AdminDashboardPage() {
               <Link href="/admin/email-logs" passHref>
                 <Button className="w-full" variant="outline">E-Mail-Logs</Button>
               </Link>
+              <Link href="/admin/support-access" passHref>
+                <Button className="w-full" variant="outline">🛠️ Support-Zugang</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

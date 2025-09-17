@@ -21,7 +21,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch KSV Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK), Kreismeisterschafts (KM) und Vereinssoftware. (Stand: 15.09.2025, Web-Version 1.6.0, App-Version 0.9.4.1, Vereinssoftware 1.6.0)
+            Funktionen und Bedienung der Rundenwettkampf (RWK), Kreismeisterschafts (KM) und Vereinssoftware. (Stand: 17.09.2025, Web-Version 1.7.0, App-Version 0.9.4.1, Vereinssoftware 1.7.0)
           </p>
         </div>
       </div>
@@ -705,7 +705,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Vereinssoftware - Benutzerhandbuch</CardTitle>
-              <CardDescription>Version 1.6.0 - Rollen-System Revolution</CardDescription>
+              <CardDescription>Version 1.7.0 - Support-System & Development-Tools</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
@@ -716,6 +716,7 @@ export default function HandbuchPage() {
                 <li><a href="#vs-lizenzen" className="text-primary hover:underline">5. Lizenzen & Ausbildungen</a></li>
                 <li><a href="#vs-aufgaben" className="text-primary hover:underline">6. Aufgaben für den Vorstand</a></li>
                 <li><a href="#vs-suche" className="text-primary hover:underline">7. Globale Suche nutzen</a></li>
+                <li><a href="#vs-support" className="text-primary hover:underline">8. Support anfordern (NEU v1.7.0)</a></li>
               </ul>
             </CardContent>
           </Card>
@@ -1006,6 +1007,57 @@ export default function HandbuchPage() {
                 <div className="bg-green-50 p-3 rounded-md border border-green-200 mt-4">
                   <h4 className="font-medium text-green-800 mb-2">💡 Tipp:</h4>
                   <p className="text-green-700">Die Suche ist sehr intelligent - sie findet auch Ergebnisse, wenn Sie sich bei der Schreibweise nicht ganz sicher sind. Probieren Sie es einfach aus!</p>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="vs-support" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">8. Support anfordern (NEU v1.7.0)</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Temporären Support-Zugang generieren</CardTitle></CardHeader>
+              <CardContent>
+                <p>Wenn Sie Hilfe benötigen, können Sie dem Support-Team temporären Zugang zu Ihren Vereinsdaten gewähren.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">So funktioniert das Support-System:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Support-Code generieren:</strong> Gehen Sie zu "Support anfordern" in der Vereinssoftware</li>
+                  <li><strong>6-stelligen Code erhalten:</strong> Die Software erstellt automatisch einen sicheren Code</li>
+                  <li><strong>Code an Support senden:</strong> Senden Sie den Code per E-Mail an rwk-leiter-ksve@gmx.de</li>
+                  <li><strong>Support-Team hilft:</strong> Das Team kann 24 Stunden lang auf Ihre Daten zugreifen</li>
+                  <li><strong>Automatischer Ablauf:</strong> Der Code läuft nach 24h automatisch ab</li>
+                </ol>
+                
+                <div className="bg-green-50 p-3 rounded-md border border-green-200 mt-4">
+                  <h4 className="font-medium text-green-800 mb-2">✅ Vorteile des Support-Systems:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-green-700">
+                    <li><strong>Schnelle Hilfe:</strong> Support-Team kann direkt in Ihren Daten arbeiten</li>
+                    <li><strong>Sicher:</strong> Code ist nur 24 Stunden gültig</li>
+                    <li><strong>Kontrolliert:</strong> Sie können den Code jederzeit deaktivieren</li>
+                    <li><strong>Protokolliert:</strong> Alle Support-Zugriffe werden dokumentiert</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
+                  <h4 className="font-medium text-blue-800 mb-2">🔒 Datenschutz & Sicherheit:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-blue-700">
+                    <li><strong>DSGVO-konform:</strong> Alle Zugriffe werden protokolliert</li>
+                    <li><strong>Zeitlich begrenzt:</strong> Zugang läuft automatisch nach 24h ab</li>
+                    <li><strong>Jederzeit kündbar:</strong> Sie können den Code sofort deaktivieren</li>
+                    <li><strong>Transparenz:</strong> Sie sehen alle Support-Aktivitäten</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 mt-4">
+                  <h4 className="font-medium text-yellow-800 mb-2">💡 Wann sollten Sie Support anfordern?</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-yellow-700">
+                    <li>Bei technischen Problemen mit der Software</li>
+                    <li>Wenn Daten nicht korrekt angezeigt werden</li>
+                    <li>Bei Fragen zur Bedienung komplexer Funktionen</li>
+                    <li>Wenn Sie Hilfe beim Import von Daten benötigen</li>
+                  </ul>
                 </div>
               </CardContent>
             </Card>

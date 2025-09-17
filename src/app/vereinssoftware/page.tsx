@@ -25,30 +25,26 @@ export default function VereinssoftwarePage() {
   const [membersLoaded, setMembersLoaded] = useState(false);
 
   useEffect(() => {
-    const effectiveClubId = clubId || (user?.email === 'admin@rwk-einbeck.de' ? '1icqJ91FFStTBn6ORukx' : null);
-    
-    if (user && effectiveClubId && !clubLoading) {
-      loadMembersFromClubCollection(effectiveClubId);
-    } else if (user && !effectiveClubId && !clubLoading) {
-      loadMembersBasic();
+    if (user && clubId && !clubLoading) {
+      loadMembersFromClubCollection(clubId);
     }
   }, [user, clubId, clubLoading]);
 
-  const loadMembersFromClubCollection = async (effectiveClubId = clubId) => {
-    if (!effectiveClubId) return;
+  const loadMembersFromClubCollection = async () => {
+    if (!clubId) return;
     
     try {
       // Lade Club-Daten
-      const clubQuery = query(collection(db, 'clubs'), where('__name__', '==', effectiveClubId));
+      const clubQuery = query(collection(db, 'clubs'), where('__name__', '==', clubId));
       const clubSnapshot = await getDocs(clubQuery);
       
       if (!clubSnapshot.empty) {
         const clubData = clubSnapshot.docs[0].data();
-        setUserClub({ id: effectiveClubId, ...clubData });
+        setUserClub({ id: clubId, ...clubData });
       }
       
       // Lade Mitglieder aus club-spezifischer Collection
-      const mitgliederCollection = getClubCollection(effectiveClubId, CLUB_COLLECTIONS.MITGLIEDER);
+      const mitgliederCollection = getClubCollection(clubId, CLUB_COLLECTIONS.MITGLIEDER);
       const mitgliederSnapshot = await getDocs(collection(db, mitgliederCollection));
       
       const membersList = mitgliederSnapshot.docs.map(doc => {
@@ -233,13 +229,51 @@ export default function VereinssoftwarePage() {
     return <AccessDenied requiredRoles={['SPORTLEITER', 'VORSTAND', 'KASSENWART', 'SCHRIFTFUEHRER']} />;
   }
 
-  if (loading) {
+  if (loading || clubLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center py-10">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
             <p>Lade Vereinsdaten...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Kein Zugang verfügbar
+  if (!clubId) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6 text-center">
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Kein Zugang</h2>
+          <p className="text-gray-600 mb-6">
+            Sie haben derzeit keinen Zugang zur Vereinssoftware.
+          </p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h3 className="font-semibold text-blue-800 mb-2">Mögliche Lösungen:</h3>
+            <ul className="text-sm text-blue-700 text-left space-y-1">
+              <li>• Support-Code vom Verein anfordern</li>
+              <li>• Vereinsrolle vom Vorstand zuweisen lassen</li>
+              <li>• Kontakt mit dem Support aufnehmen</li>
+            </ul>
+          </div>
+          <div className="space-y-3">
+            <a href="/admin/support-access">
+              <button className="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 mb-2">
+                🔑 Support-Code eingeben
+              </button>
+            </a>
+            <a href="/dashboard-auswahl">
+              <button className="w-full bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700">
+                ← Zurück zum Dashboard
+              </button>
+            </a>
+            <p className="text-xs text-gray-500 text-center">
+              Support: <strong>rwk-leiter-ksve@gmx.de</strong>
+            </p>
           </div>
         </div>
       </div>
@@ -576,6 +610,8 @@ export default function VereinssoftwarePage() {
             </CardContent>
           </Card>
         )}
+        
+
       </div>
 
       {/* Mitgliederliste */}

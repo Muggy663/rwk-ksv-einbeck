@@ -392,6 +392,49 @@ export default function DashboardAuswahl() {
         )}
       </div>
 
+      {/* Support-Bereich */}
+      <div className="mt-8 pt-6 border-t">
+        <h2 className="text-xl font-semibold text-center mb-4 text-muted-foreground">🛠️ Support & Hilfe</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          {/* Support anfordern - Für Vereine */}
+          {!isRWKAdmin && (
+            <Card className="border-red-200 bg-red-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg text-red-800">🆘 Support anfordern</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-red-700 mb-3">
+                  Temporären Support-Zugang für das Support-Team generieren
+                </p>
+                <Link href="/vereinssoftware/support">
+                  <Button className="w-full bg-red-600 hover:bg-red-700">
+                    Support-Code generieren
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Support-Zugang - Für Admin */}
+          {isRWKAdmin && (
+            <Card className="border-blue-200 bg-blue-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg text-blue-800">🔑 Support-Zugang</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-blue-700 mb-3">
+                  Support-Code eingeben für temporären Vereinszugang
+                </p>
+                <Link href="/admin/support-access">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                    Support-Code eingeben
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
 
     </div>
   );

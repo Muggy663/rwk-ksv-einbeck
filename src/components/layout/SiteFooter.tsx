@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.6.0"; // Rollen-System Revolution: 3-Tier-Rollensystem mit Platform/KV/Club-Rollen, URL-Level Security, granulare Firestore-Regeln, Multi-Verein-Support, Lizenz-Management
+  const version = "1.7.0"; // Support-System & Development-Tools: Vollständiges Support-Code-System, benutzerfreundliche Fehlermeldungen, Development-Club mit Testdaten, Prioritäten-System, Admin-Tools
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

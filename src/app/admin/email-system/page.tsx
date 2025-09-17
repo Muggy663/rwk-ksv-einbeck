@@ -541,7 +541,7 @@ export default function EmailSystemPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Gruppen {selectedLeague !== 'alle' && <span className="text-xs text-muted-foreground">(gefiltert nach Liga)</span>}</Label>
+                  <Label>Gruppen</Label>
                   <div className="space-y-2 mt-2 max-h-40 overflow-y-auto">
                     {groups.map(group => (
                       <div key={group.id} className="flex items-center space-x-2">

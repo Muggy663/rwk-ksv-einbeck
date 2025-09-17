@@ -37,7 +37,7 @@ export default function ManageContactsPage() {
     name: '',
     email: '',
     group: 'sportleiter',
-    role: 'vereinsvertreter'
+    role: 'sportleiter'
   });
 
   useEffect(() => {
@@ -124,7 +124,7 @@ export default function ManageContactsPage() {
       
       setIsDialogOpen(false);
       setEditingContact(null);
-      setFormData({ name: '', email: '', group: 'sportleiter', role: 'vereinsvertreter' });
+      setFormData({ name: '', email: '', group: 'sportleiter', role: 'sportleiter' });
       await loadContacts();
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
@@ -169,7 +169,7 @@ export default function ManageContactsPage() {
 
   const handleAddNew = () => {
     setEditingContact(null);
-    setFormData({ name: '', email: '', group: 'sportleiter', role: 'vereinsvertreter' });
+    setFormData({ name: '', email: '', group: 'sportleiter', role: 'sportleiter' });
     setIsDialogOpen(true);
   };
 
@@ -220,6 +220,10 @@ export default function ManageContactsPage() {
                 <SelectContent>
                   <SelectItem value="alle">Alle Gruppen</SelectItem>
                   <SelectItem value="sportleiter">Sportleiter</SelectItem>
+                  <SelectItem value="vorstand">Vorstand</SelectItem>
+                  <SelectItem value="kassenwart">Kassenwart</SelectItem>
+                  <SelectItem value="schriftfuehrer">Schriftführer</SelectItem>
+                  <SelectItem value="kv_wettkampfleiter">KV-Wettkampfleiter</SelectItem>
                   <SelectItem value="admins">Admins</SelectItem>
                 </SelectContent>
               </Select>
@@ -312,6 +316,10 @@ export default function ManageContactsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="sportleiter">Sportleiter</SelectItem>
+                  <SelectItem value="vorstand">Vorstand</SelectItem>
+                  <SelectItem value="kassenwart">Kassenwart</SelectItem>
+                  <SelectItem value="schriftfuehrer">Schriftführer</SelectItem>
+                  <SelectItem value="kv_wettkampfleiter">KV-Wettkampfleiter</SelectItem>
                   <SelectItem value="admins">Admins</SelectItem>
                 </SelectContent>
               </Select>
@@ -323,8 +331,13 @@ export default function ManageContactsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="vereinsvertreter">Vereinsvertreter</SelectItem>
-                  <SelectItem value="mannschaftsfuehrer">Mannschaftsführer</SelectItem>
+                  <SelectItem value="sportleiter">Sportleiter</SelectItem>
+                  <SelectItem value="vorstand">Vorstand</SelectItem>
+                  <SelectItem value="kassenwart">Kassenwart</SelectItem>
+                  <SelectItem value="schriftfuehrer">Schriftführer</SelectItem>
+                  <SelectItem value="kv_wettkampfleiter">KV-Wettkampfleiter</SelectItem>
+                  <SelectItem value="vereinsvertreter">Vereinsvertreter (Legacy)</SelectItem>
+                  <SelectItem value="mannschaftsfuehrer">Mannschaftsführer (Legacy)</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>

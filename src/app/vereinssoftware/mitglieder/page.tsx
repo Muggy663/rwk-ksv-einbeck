@@ -10,7 +10,7 @@ import { useClubId } from '@/hooks/useClubId';
 import { useClubPermissions } from '@/hooks/useClubPermissions';
 import { AccessDenied } from '@/components/ui/access-denied';
 import { collection, query, where, getDocs, orderBy, doc, updateDoc, deleteDoc, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/config';
 
 export default function MitgliederPage() {
   const { user } = useAuthContext();
