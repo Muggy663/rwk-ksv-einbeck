@@ -211,16 +211,6 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
   <img src="screenshots-play-store/06_Dokumente.png" alt="Dokumente" width="300">
 </div>
 
-## 🏆 Erfolgsgeschichte
-
-- **15+ Vereine** nutzen die App aktiv
-- **200+ Schützen** registriert
-- **99.9% Uptime** seit Launch
-- **0 Datenverluste** durch Cloud-Backup
-- **50+ FAQ-Einträge** für Benutzerfreundlichkeit
-- **Native Android App** im Google Play Store
-
-
 
 ## 📞 Support & Kontakt
 
