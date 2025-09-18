@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { BackButton } from '@/components/ui/back-button';
 
 interface TeamManager {
   id: string;
@@ -28,7 +29,7 @@ interface TeamManager {
 
 export default function TeamManagersPage() {
   const { toast } = useToast();
-  const { user, userPermissions } = useAuth();
+  const { user, userAppPermissions } = useAuth();
   const [seasons, setSeasons] = useState<Array<{ id: string; name: string; year: number }>>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>('');
   const [leagues, setLeagues] = useState<Array<{ id: string; name: string }>>([]);
@@ -113,11 +114,11 @@ export default function TeamManagersPage() {
           where('leagueId', 'in', leagueIds)
         );
         
-        if (userPermissions && userPermissions.clubId) {
+        if (userAppPermissions && userAppPermissions.clubId) {
           ownTeamsQuery = query(
             collection(db, 'rwk_teams'),
             where('leagueId', 'in', leagueIds),
-            where('clubId', '==', userPermissions.clubId)
+            where('clubId', '==', userAppPermissions.clubId)
           );
         }
         
@@ -197,7 +198,7 @@ export default function TeamManagersPage() {
 
     fetchLeaguesAndManagers();
     // Abhängigkeiten: Führt diesen Effekt bei Änderungen der Saison oder der Liga aus
-  }, [selectedSeason, selectedLeague, userPermissions, toast]);
+  }, [selectedSeason, selectedLeague, userAppPermissions, toast]);
 
   // --- Effekt zur clientseitigen Filterung (Suche) ---
   useEffect(() => {
@@ -221,11 +222,14 @@ export default function TeamManagersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-primary">Mannschaftsführer</h1>
-          <p className="text-muted-foreground">
-            Übersicht aller Mannschaftsführer in Ligen, in denen Ihr Verein auch schießt.
-          </p>
+        <div className="flex items-center">
+          <BackButton className="mr-2" fallbackHref="/verein/dashboard" />
+          <div>
+            <h1 className="text-3xl font-bold text-primary">Mannschaftsführer</h1>
+            <p className="text-muted-foreground">
+              Übersicht aller Mannschaftsführer in Ligen, in denen Ihr Verein auch schießt.
+            </p>
+          </div>
         </div>
       </div>
 

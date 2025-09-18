@@ -142,7 +142,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 | Platform | Version | Status | Download |
 |----------|---------|--------|---------|
-| **Web App** | 1.7.1.1 | ✅ Produktiv | Vercel Deployment |
+| **Web App** | 1.7.2 | ✅ Produktiv | Vercel Deployment |
 | **Android App** | 0.9.4.1 | ✅ Produktiv | Google Play Store |
 | **iOS App** | - | ❌ Nicht geplant | Unrentabel |
 
@@ -251,6 +251,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
+- **Web-Version 1.7.2** - Mobile Fixes & Team-Manager: Burger-Menü Touch-Fix verhindert versehentliches Öffnen, Für Vereine Scrolling-Problem behoben, Team-Manager Seite korrigiert mit BackButton und Auth-Fix
 - **Web-Version 1.7.1.2** - Header Navigation Fix: MutationObserver verhindert Header-Verschwinden beim Navigieren auf Mobile, stabilere Navigation zwischen Dashboard-Bereichen
 - **Web-Version 1.7.1.1** - Vereinssoftware Mobile UX: Vollständige Mobile-Optimierung aller Vereinssoftware-Bereiche mit BackButtons, responsive Card-Layouts für Mitgliederverwaltung, mobile-freundliche Header und Navigation, konsistente Zurück-Navigation zu jeweiligen Dashboards, Header-Optimierung für Mobile (RWK KSV Einbeck Text entfernt, globale Suche erweitert), Footer-Fix für abgeschnittene Versionsnummern
 - **Web-Version 1.7.1** - Mobile UX Revolution: Vollständige Mobile-Optimierung aller KM-Bereiche mit responsiven Card-Layouts statt Tabellen, mobile-freundliche Button-Anordnung (vertikal statt horizontal), verbesserte Sichtbarkeit von Formularen und Aktions-Buttons, Dark Mode Fixes für farbige Dialog-Boxen, aktualisierte Onboarding-Inhalte mit 2024/25 Saison-Bezug, optimierte Navigation im Burger-Menü ("Dashboard" statt "Verein")

@@ -295,7 +295,7 @@ export default function VereinDashboardPage() {
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="w-full h-12 text-sm">
-              <Link href="/verein/mannschaftsfuehrer">
+              <Link href="/verein/team-managers">
                 <span className="truncate">Rolle verwalten</span>
               </Link>
             </Button>

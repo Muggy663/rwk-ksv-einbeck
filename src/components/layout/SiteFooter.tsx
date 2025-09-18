@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.7.1.2"; // Header Navigation Fix: MutationObserver verhindert Header-Verschwinden beim Navigieren auf Mobile
+  const version = "1.7.2"; // Mobile Fixes & Team-Manager: Burger-Menü Touch-Fix, Für Vereine Scrolling-Fix, Team-Manager Seite korrigiert
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">
