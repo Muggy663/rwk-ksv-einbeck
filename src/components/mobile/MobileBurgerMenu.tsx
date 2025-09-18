@@ -91,13 +91,13 @@ export function MobileBurgerMenu() {
                       "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full",
                       "text-sm font-medium whitespace-nowrap",
                       isActive 
-                        ? "text-primary bg-primary/10" 
+                        ? "text-primary-foreground bg-primary dark:text-white dark:bg-primary" 
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
                   >
                     <Icon className={cn(
                       "h-5 w-5",
-                      isActive ? "text-primary" : "text-muted-foreground"
+                      isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground"
                     )} />
                     {item.label}
                   </Link>
