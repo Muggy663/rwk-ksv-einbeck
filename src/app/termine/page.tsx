@@ -299,7 +299,7 @@ export default function TerminePage() {
     <div className="container py-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div className="flex items-center mb-4 md:mb-0">
-          <BackButton className="mr-2" fallbackHref="/" />
+          <BackButton className="mr-2 hidden lg:block" fallbackHref="/" />
           <h1 className="text-3xl font-bold text-primary">Terminkalender</h1>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">

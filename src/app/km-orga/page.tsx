@@ -43,7 +43,7 @@ export default function KMAdminDashboard() {
     <div className="container py-4 px-2 max-w-full mx-auto">
       <div className="mb-6">
         <div className="flex items-center mb-2">
-          <BackButton className="mr-2" fallbackHref="/admin" />
+          <BackButton className="mr-2" fallbackHref="/dashboard-auswahl" />
           <h1 className="text-3xl font-bold text-primary">🏆 KM-Orga-Dashboard</h1>
         </div>
         <p className="text-muted-foreground">

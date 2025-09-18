@@ -129,7 +129,7 @@ export function MobileBurgerMenu() {
           {/* Footer with safe area */}
           <div className="p-4 border-t pb-safe-area-bottom">
             <p className="text-xs text-muted-foreground text-center">
-              RWK KSV Einbeck v1.7.1 Beta
+              RWK KSV Einbeck v1.7.1.1 Beta
             </p>
           </div>
         </div>

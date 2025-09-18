@@ -38,7 +38,7 @@ const vereinNavItems = [
   { href: '/verein/handtabellen', label: 'Handtabellen', icon: FileText },
   { href: '/termine', label: 'Terminkalender', icon: CalendarDays },
   { href: '/termine/add', label:'Termin hinzufügen', icon: CalendarDays },
-  { href: '/verein/team-managers', label: 'Mannschaftsführer', icon: UserCog },
+  { href: '/admin/team-managers', label: 'Mannschaftsführer', icon: UserCog },
 ];
 
 export default function VereinLayout({ children }: VereinLayoutProps) {
@@ -327,12 +327,10 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
   
   return (
     <VereinContext.Provider value={contextValue}>
-      <div className="min-h-[calc(100vh-theme(spacing.16))]">
-        <main className="p-6 lg:p-8 bg-muted/20 overflow-y-auto">
-          {/* Passwort-Änderungsdialog (nicht als Aufforderung) */}
-          {user && <PasswordChangePrompt />}
-          {children}
-        </main>
+      <div className="p-6 lg:p-8 bg-muted/20">
+        {/* Passwort-Änderungsdialog (nicht als Aufforderung) */}
+        {user && <PasswordChangePrompt />}
+        {children}
       </div>
     </VereinContext.Provider>
   );

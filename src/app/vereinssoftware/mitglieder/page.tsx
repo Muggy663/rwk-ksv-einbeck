@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { BackButton } from '@/components/ui/back-button';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { useClubId } from '@/hooks/useClubId';
 import { useClubPermissions } from '@/hooks/useClubPermissions';
@@ -366,15 +367,11 @@ export default function MitgliederPage() {
   return (
     <div className="w-full px-4 py-8">
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-4xl font-bold text-primary">Mitgliederverwaltung</h1>
-          <a href="/vereinssoftware">
-            <Button variant="outline">
-              Zurück zur Übersicht
-            </Button>
-          </a>
+        <div className="flex items-center mb-4">
+          <BackButton className="mr-2" fallbackHref="/vereinssoftware" />
+          <h1 className="text-2xl lg:text-4xl font-bold text-primary">Mitgliederverwaltung</h1>
         </div>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-base lg:text-lg text-muted-foreground">
           {userClub ? `Mitglieder von ${userClub.name}` : 'Vereinsmitglieder verwalten'}
         </p>
       </div>
@@ -602,19 +599,11 @@ export default function MitgliederPage() {
       {/* Mitgliederliste */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Mitgliederliste ({filteredMembers.length})</CardTitle>
-            <Input
-              type="text"
-              placeholder="Schnellsuche..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-64"
-            />
-          </div>
+          <CardTitle>Mitgliederliste ({filteredMembers.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="w-full overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="hidden lg:block w-full overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b bg-muted/50">
@@ -843,6 +832,124 @@ export default function MitgliederPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+          
+          {/* Mobile Cards */}
+          <div className="lg:hidden space-y-4">
+            {filteredMembers.map(member => (
+              <Card key={member.id} className="border">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="font-semibold text-lg">{member.firstName} {member.lastName}</h3>
+                      <p className="text-sm text-muted-foreground">Mitgl.-Nr. {member.mitgliedsnummer || '-'}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Badge variant={member.isActive ? 'default' : 'destructive'}>
+                        {member.isActive ? 'Aktiv' : 'Inaktiv'}
+                      </Badge>
+                      <Badge variant={member.gender === 'female' ? 'secondary' : 'outline'}>
+                        {member.gender === 'male' ? 'M' : 'W'}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm">
+                    {member.email && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground w-16">E-Mail:</span>
+                        <span>{member.email}</span>
+                      </div>
+                    )}
+                    {(member.telefon || member.mobil) && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground w-16">Telefon:</span>
+                        <span>{member.telefon || member.mobil}</span>
+                      </div>
+                    )}
+                    {(member.strasse || member.ort) && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground w-16">Adresse:</span>
+                        <span>{member.strasse}, {member.plz} {member.ort}</span>
+                      </div>
+                    )}
+                    {member.geburtstag && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground w-16">Geboren:</span>
+                        <span>{new Date(member.geburtstag).toLocaleDateString('de-DE')} (Alter: {member.alter})</span>
+                      </div>
+                    )}
+                    {member.vereinseintritt && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground w-16">Eintritt:</span>
+                        <span>{new Date(member.vereinseintritt).getFullYear()}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-col gap-2 mt-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditingMember(editingMember === member.id ? null : member.id)}
+                      className="w-full"
+                    >
+                      {editingMember === member.id ? 'Fertig' : 'Bearbeiten'}
+                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          if (confirm(`${member.firstName} ${member.lastName} als ausgetreten markieren?`)) {
+                            try {
+                              const mitgliederCollection = `clubs/${userClub?.id}/mitglieder`;
+                              const memberRef = doc(db, mitgliederCollection, member.id);
+                              await updateDoc(memberRef, { 
+                                isActive: false,
+                                austrittsdatum: new Date().toISOString().split('T')[0],
+                                updatedAt: new Date()
+                              });
+                              setMembers(prev => prev.map(m => 
+                                m.id === member.id ? { ...m, isActive: false } : m
+                              ));
+                              alert('Mitglied als ausgetreten markiert');
+                            } catch (error) {
+                              console.error('Fehler:', error);
+                              alert('Fehler beim Markieren als ausgetreten');
+                            }
+                          }
+                        }}
+                        className="flex-1"
+                      >
+                        Austritt
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={async () => {
+                          if (confirm(`${member.firstName} ${member.lastName} ENDGÜLTIG löschen?\n\nDies kann nicht rückgängig gemacht werden!`)) {
+                            try {
+                              const mitgliederCollection = `clubs/${userClub?.id}/mitglieder`;
+                              const memberRef = doc(db, mitgliederCollection, member.id);
+                              await deleteDoc(memberRef);
+                              setMembers(prev => prev.filter(m => m.id !== member.id));
+                              alert('Mitglied endgültig gelöscht');
+                            } catch (error) {
+                              console.error('Fehler beim Löschen:', error);
+                              alert('Fehler beim Löschen des Mitglieds');
+                            }
+                          }
+                        }}
+                        className="flex-1"
+                      >
+                        Löschen
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </CardContent>
       </Card>

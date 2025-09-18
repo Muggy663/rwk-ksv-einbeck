@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { BackButton } from '@/components/ui/back-button';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { useClubId } from '@/hooks/useClubId';
 import { collection, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
@@ -255,13 +256,11 @@ export default function AufgabenManagementPage() {
   return (
     <div className="w-full px-4 py-8">
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-4xl font-bold text-primary">📋 Aufgaben-Management</h1>
-          <a href="/vereinssoftware">
-            <Button variant="outline">Zurück zur Übersicht</Button>
-          </a>
+        <div className="flex items-center mb-4">
+          <BackButton className="mr-2" fallbackHref="/vereinssoftware" />
+          <h1 className="text-2xl lg:text-4xl font-bold text-primary">📋 Aufgaben-Management</h1>
         </div>
-        <p className="text-lg text-muted-foreground">Vorstand-Dashboard mit To-Do-Listen</p>
+        <p className="text-base lg:text-lg text-muted-foreground">Vorstand-Dashboard mit To-Do-Listen</p>
       </div>
 
       {/* Tab Navigation */}

@@ -303,7 +303,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center">
-          <BackButton className="mr-2" fallbackHref="/" />
+          <BackButton className="mr-2" fallbackHref="/dashboard-auswahl" />
           <div>
             <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
             <p className="text-muted-foreground">Verwaltung der Rundenwettkämpfe.</p>

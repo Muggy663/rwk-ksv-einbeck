@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { BackButton } from '@/components/ui/back-button';
 import { UrkundenGenerator } from '@/components/urkunden/UrkundenGenerator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 
@@ -174,15 +175,11 @@ export default function JubilaeenPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-4xl font-bold text-primary">Geburtstage & Jubiläen</h1>
-          <a href="/vereinssoftware">
-            <Button variant="outline">
-              Zurück zur Übersicht
-            </Button>
-          </a>
+        <div className="flex items-center mb-4">
+          <BackButton className="mr-2" fallbackHref="/vereinssoftware" />
+          <h1 className="text-2xl lg:text-4xl font-bold text-primary">Geburtstage & Jubiläen</h1>
         </div>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-base lg:text-lg text-muted-foreground">
           Konfiguration für SGi Einbeck - individuell anpassbar
         </p>
       </div>

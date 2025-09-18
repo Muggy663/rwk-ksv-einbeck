@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { BackButton } from '@/components/ui/back-button';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { useClubId } from '@/hooks/useClubId';
 import { useClubPermissions } from '@/hooks/useClubPermissions';
@@ -283,12 +284,10 @@ export default function VereinssoftwarePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-primary mb-4">Vereinssoftware</h1>
-        <a href="/dashboard-auswahl" className="block mb-4">
-          <Button variant="outline" className="w-full sm:w-auto">
-            Zurück zum Dashboard
-          </Button>
-        </a>
+        <div className="flex items-center mb-4">
+          <BackButton className="mr-2" fallbackHref="/dashboard-auswahl" />
+          <h1 className="text-4xl font-bold text-primary">Vereinssoftware</h1>
+        </div>
         <div className="text-muted-foreground">
           <p className="text-lg mb-2">
             {userClub ? `Vereinsverwaltung für ${userClub.name}` : 'Vollständige Vereinsverwaltung für moderne Schützenvereine'}

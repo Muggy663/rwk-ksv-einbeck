@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { BackButton } from '@/components/ui/back-button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { ArrowLeft, AlertTriangle, Calendar, Award, Plus } from 'lucide-react';
 import { useAuthContext } from '@/components/auth/AuthContext';
@@ -216,13 +217,8 @@ export default function LizenzenPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
-            <a href="/vereinssoftware">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Zurück
-              </Button>
-            </a>
-            <h1 className="text-4xl font-bold text-primary">Lizenzen & Ausbildungen</h1>
+            <BackButton className="mr-2" fallbackHref="/vereinssoftware" />
+            <h1 className="text-2xl lg:text-4xl font-bold text-primary">Lizenzen & Ausbildungen</h1>
           </div>
           <div className="flex gap-2">
             <Button className="no-print" onClick={() => setIsNewTrainingDialogOpen(true)}>

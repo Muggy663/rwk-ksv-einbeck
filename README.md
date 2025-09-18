@@ -142,7 +142,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 | Platform | Version | Status | Download |
 |----------|---------|--------|---------|
-| **Web App** | 1.7.1 | ✅ Produktiv | Vercel Deployment |
+| **Web App** | 1.7.1.1 | ✅ Produktiv | Vercel Deployment |
 | **Android App** | 0.9.4.1 | ✅ Produktiv | Google Play Store |
 | **iOS App** | - | ❌ Nicht geplant | Unrentabel |
 
@@ -251,6 +251,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
+- **Web-Version 1.7.1.1** - Vereinssoftware Mobile UX: Vollständige Mobile-Optimierung aller Vereinssoftware-Bereiche mit BackButtons, responsive Card-Layouts für Mitgliederverwaltung, mobile-freundliche Header und Navigation, konsistente Zurück-Navigation zu jeweiligen Dashboards, Header-Optimierung für Mobile (RWK KSV Einbeck Text entfernt, globale Suche erweitert), Footer-Fix für abgeschnittene Versionsnummern
 - **Web-Version 1.7.1** - Mobile UX Revolution: Vollständige Mobile-Optimierung aller KM-Bereiche mit responsiven Card-Layouts statt Tabellen, mobile-freundliche Button-Anordnung (vertikal statt horizontal), verbesserte Sichtbarkeit von Formularen und Aktions-Buttons, Dark Mode Fixes für farbige Dialog-Boxen, aktualisierte Onboarding-Inhalte mit 2024/25 Saison-Bezug, optimierte Navigation im Burger-Menü ("Dashboard" statt "Verein")
 - **Web-Version 1.7.0** - Support-System & Development-Tools: Vollständiges Support-Code-System mit temporärem Vereinszugang, benutzerfreundliche Fehlermeldungen bei fehlendem Zugang, Development-Club mit 20 Test-Mitgliedern für Entwicklung, Prioritäten-System (Support-Code > Development-Club > Fehlermeldung), Admin-Tools für Development-Setup
 - **Web-Version 1.6.0** - Rollen-System Revolution: 3-Tier-Rollensystem mit Platform/KV/Club-Rollen, URL-Level Security, granulare Firestore-Regeln, Multi-Verein-Support, Lizenz-Management, finale Migration aller Legacy-Rollen abgeschlossen
