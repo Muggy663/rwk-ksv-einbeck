@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.7.0"; // Support-System & Development-Tools: Vollständiges Support-Code-System, benutzerfreundliche Fehlermeldungen, Development-Club mit Testdaten, Prioritäten-System, Admin-Tools
+  const version = "1.7.1"; // Mobile UX Revolution: Vollständige Mobile-Optimierung aller KM-Bereiche, responsive Card-Layouts, mobile-freundliche Button-Anordnung, Dark Mode Fixes
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">
