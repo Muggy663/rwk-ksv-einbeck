@@ -78,6 +78,46 @@
 
 /* Mobile App Fixes - Enhanced with Safe Area System */
 @media (max-width: 768px) {
+  /* Header Force Visibility Fix - Stronger Rules */
+  header, .site-header, [role="banner"] {
+    display: block !important;
+    visibility: visible !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 9999 !important;
+    opacity: 1 !important;
+    transform: none !important;
+    height: auto !important;
+    min-height: 64px !important;
+  }
+  
+  /* Prevent any component from hiding the header */
+  * {
+    --header-display: block !important;
+  }
+  
+  /* Force header container to be visible */
+  .flex.h-16.items-center {
+    display: flex !important;
+    visibility: visible !important;
+  }
+  
+  /* Absolute force for header - highest priority */
+  body header,
+  body .site-header,
+  body [data-header],
+  .app-container header {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 99999 !important;
+    transform: translateY(0) !important;
+    height: auto !important;
+    min-height: 64px !important;
+  }
+  
   /* Status Bar Overlay Fix */
   body {
     padding-top: var(--safe-area-top) !important;

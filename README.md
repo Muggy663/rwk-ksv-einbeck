@@ -251,6 +251,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
+- **Web-Version 1.7.1.2** - Header Navigation Fix: MutationObserver verhindert Header-Verschwinden beim Navigieren auf Mobile, stabilere Navigation zwischen Dashboard-Bereichen
 - **Web-Version 1.7.1.1** - Vereinssoftware Mobile UX: Vollständige Mobile-Optimierung aller Vereinssoftware-Bereiche mit BackButtons, responsive Card-Layouts für Mitgliederverwaltung, mobile-freundliche Header und Navigation, konsistente Zurück-Navigation zu jeweiligen Dashboards, Header-Optimierung für Mobile (RWK KSV Einbeck Text entfernt, globale Suche erweitert), Footer-Fix für abgeschnittene Versionsnummern
 - **Web-Version 1.7.1** - Mobile UX Revolution: Vollständige Mobile-Optimierung aller KM-Bereiche mit responsiven Card-Layouts statt Tabellen, mobile-freundliche Button-Anordnung (vertikal statt horizontal), verbesserte Sichtbarkeit von Formularen und Aktions-Buttons, Dark Mode Fixes für farbige Dialog-Boxen, aktualisierte Onboarding-Inhalte mit 2024/25 Saison-Bezug, optimierte Navigation im Burger-Menü ("Dashboard" statt "Verein")
 - **Web-Version 1.7.0** - Support-System & Development-Tools: Vollständiges Support-Code-System mit temporärem Vereinszugang, benutzerfreundliche Fehlermeldungen bei fehlendem Zugang, Development-Club mit 20 Test-Mitgliedern für Entwicklung, Prioritäten-System (Support-Code > Development-Club > Fehlermeldung), Admin-Tools für Development-Setup

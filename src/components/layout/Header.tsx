@@ -8,9 +8,31 @@ import { GlobalSearch } from '@/components/GlobalSearch';
 import { Button } from '@/components/ui/button';
 import { LogOut, LogIn } from 'lucide-react';
 import { MobileBurgerMenu } from '@/components/mobile/MobileBurgerMenu';
+import { useEffect } from 'react';
 
 export function Header() {
   const { user, signOut } = useAuth();
+  
+  useEffect(() => {
+    const handleRouteChange = () => {
+      // Ensure header stays visible during navigation
+      const header = document.querySelector('header');
+      if (header) {
+        header.style.display = 'block';
+        header.style.visibility = 'visible';
+        header.style.opacity = '1';
+      }
+    };
+    
+    // Run immediately and on any DOM changes
+    handleRouteChange();
+    
+    // Listen for navigation events
+    const observer = new MutationObserver(handleRouteChange);
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    return () => observer.disconnect();
+  }, []);
   
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
