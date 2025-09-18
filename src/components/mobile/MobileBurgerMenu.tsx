@@ -62,11 +62,9 @@ export function MobileBurgerMenu() {
         />
       )}
 
-      {/* Menu Panel */}
-      <div className={cn(
-        "fixed right-0 top-0 h-screen w-72 sm:w-80 max-w-[90vw] bg-background border-l shadow-lg z-50 transform transition-transform duration-300 ease-in-out pt-safe-area-top pb-safe-area-bottom",
-        isOpen ? "translate-x-0" : "translate-x-full"
-      )}>
+      {/* Menu Panel - Only render when open */}
+      {isOpen && (
+        <div className="fixed right-0 top-0 h-screen w-72 sm:w-80 max-w-[90vw] bg-background border-l shadow-lg z-50 transform transition-transform duration-300 ease-in-out pt-safe-area-top pb-safe-area-bottom translate-x-0">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
@@ -133,7 +131,8 @@ export function MobileBurgerMenu() {
             </p>
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </>
   )
 }

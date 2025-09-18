@@ -44,7 +44,7 @@ const FeatureCard = ({ title, items }: FeatureCardProps) => (
 
 export default function FuerVereinePage() {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl min-h-screen overflow-x-hidden">
       <div className="flex items-center space-x-3 mb-8">
         <BackButton className="mr-2" fallbackHref="/" />
         <div>
@@ -56,7 +56,7 @@ export default function FuerVereinePage() {
       </div>
 
       {/* Hero Section */}
-      <header className="text-center mb-16">
+      <section className="text-center mb-16">
         <div className="relative mb-8">
           <Image
             src="/images/logo.png"
@@ -97,7 +97,7 @@ export default function FuerVereinePage() {
             </Link>
           </Button>
         </div>
-      </header>
+      </section>
 
       <Separator className="my-12" />
 
