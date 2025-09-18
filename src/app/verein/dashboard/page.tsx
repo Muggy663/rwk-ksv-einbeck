@@ -290,13 +290,13 @@ export default function VereinDashboardPage() {
             </div>
             <CardTitle className="text-xl">Mannschaftsführer</CardTitle>
             <CardDescription className="text-base">
-              Verwalten Sie Ihre Rolle als Mannschaftsführer
+              Kontaktdaten aller Mannschaftsführer in Ihren Ligen
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="w-full h-12 text-sm">
               <Link href="/verein/team-managers">
-                <span className="truncate">Rolle verwalten</span>
+                <span className="truncate">Kontakte anzeigen</span>
               </Link>
             </Button>
           </CardContent>

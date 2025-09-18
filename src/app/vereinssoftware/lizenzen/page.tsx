@@ -191,7 +191,7 @@ export default function LizenzenPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-2 md:px-4 py-4 md:py-8">
         <div className="flex items-center justify-center py-10">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
@@ -213,64 +213,66 @@ export default function LizenzenPage() {
         }
       `}</style>
       
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
+    <div className="container mx-auto px-2 md:px-4 py-4 md:py-8">
+      <div className="mb-4 md:mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-3">
+          <div className="flex items-center gap-2 md:gap-4">
             <BackButton className="mr-2" fallbackHref="/vereinssoftware" />
-            <h1 className="text-2xl lg:text-4xl font-bold text-primary">Lizenzen & Ausbildungen</h1>
+            <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-primary">Lizenzen & Ausbildungen</h1>
           </div>
           <div className="flex gap-2">
-            <Button className="no-print" onClick={() => setIsNewTrainingDialogOpen(true)}>
+            <Button className="no-print text-sm" onClick={() => setIsNewTrainingDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Neue Ausbildung
+              <span className="hidden sm:inline">Neue Ausbildung</span>
+              <span className="sm:hidden">Neu</span>
             </Button>
-            <Button variant="outline" onClick={() => window.print()} className="no-print">
-              Liste drucken
+            <Button variant="outline" onClick={() => window.print()} className="no-print text-sm">
+              <span className="hidden sm:inline">Liste drucken</span>
+              <span className="sm:hidden">Drucken</span>
             </Button>
           </div>
         </div>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-sm md:text-lg text-muted-foreground">
           Verwaltung von Lizenzen, Ausbildungen und Ablaufdaten
         </p>
       </div>
 
       {/* Statistiken */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 mb-4 md:mb-8">
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{stats.totalMembers}</div>
-            <p className="text-sm text-gray-600">Mitglieder gesamt</p>
+          <CardContent className="p-2 md:p-4">
+            <div className="text-lg md:text-2xl font-bold text-blue-600">{stats.totalMembers}</div>
+            <p className="text-xs md:text-sm text-gray-600">Mitglieder gesamt</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">{stats.withLicense}</div>
-            <p className="text-sm text-gray-600">Mit Lizenz</p>
+          <CardContent className="p-2 md:p-4">
+            <div className="text-lg md:text-2xl font-bold text-purple-600">{stats.withLicense}</div>
+            <p className="text-xs md:text-sm text-gray-600">Mit Lizenz</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">{stats.totalAusbildungen}</div>
-            <p className="text-sm text-gray-600">Ausbildungen</p>
+          <CardContent className="p-2 md:p-4">
+            <div className="text-lg md:text-2xl font-bold text-green-600">{stats.totalAusbildungen}</div>
+            <p className="text-xs md:text-sm text-gray-600">Ausbildungen</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-indigo-600">{stats.withAusbildung}</div>
-            <p className="text-sm text-gray-600">Mit Ausbildung</p>
+          <CardContent className="p-2 md:p-4">
+            <div className="text-lg md:text-2xl font-bold text-indigo-600">{stats.withAusbildung}</div>
+            <p className="text-xs md:text-sm text-gray-600">Mit Ausbildung</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-yellow-600">{stats.expiringSoon}</div>
-            <p className="text-sm text-gray-600">Läuft bald ab</p>
+          <CardContent className="p-2 md:p-4">
+            <div className="text-lg md:text-2xl font-bold text-yellow-600">{stats.expiringSoon}</div>
+            <p className="text-xs md:text-sm text-gray-600">Läuft bald ab</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-red-600">{stats.expired}</div>
-            <p className="text-sm text-gray-600">Abgelaufen</p>
+          <CardContent className="p-2 md:p-4">
+            <div className="text-lg md:text-2xl font-bold text-red-600">{stats.expired}</div>
+            <p className="text-xs md:text-sm text-gray-600">Abgelaufen</p>
           </CardContent>
         </Card>
       </div>
@@ -304,19 +306,19 @@ export default function LizenzenPage() {
           <div className="space-y-4">
             {members.map(member => (
               <Card key={member.id} className="border-l-4 border-l-blue-500">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
+                <CardContent className="p-3 md:p-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-3 gap-2">
                     <div>
-                      <h3 className="font-semibold text-lg">
+                      <h3 className="font-semibold text-base md:text-lg">
                         {member.firstName} {member.lastName}
                       </h3>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-600">
                         <span>#{member.mitgliedsnummer}</span>
                         {member.vereinsfunktion && (
-                          <Badge variant="outline">{member.vereinsfunktion}</Badge>
+                          <Badge variant="outline" className="text-xs">{member.vereinsfunktion}</Badge>
                         )}
                         {member.lizenznummer && (
-                          <span className="font-mono bg-gray-100 px-2 py-1 rounded">
+                          <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs">
                             {member.lizenznummer}
                           </span>
                         )}
@@ -327,6 +329,7 @@ export default function LizenzenPage() {
                         <Button 
                           variant="outline" 
                           size="sm"
+                          className="text-xs md:text-sm"
                           onClick={() => setSelectedMember(member)}
                         >
                           Bearbeiten
@@ -527,11 +530,11 @@ export default function LizenzenPage() {
 
                   {/* Ausbildungen */}
                   {member.ausbildungen.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
                       {member.ausbildungen.map(ausbildung => (
-                        <div key={ausbildung.id} className="bg-gray-50 rounded-lg p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-medium text-sm">{ausbildung.bezeichnung}</h4>
+                        <div key={ausbildung.id} className="bg-gray-50 rounded-lg p-2 md:p-3">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between mb-2 gap-1">
+                            <h4 className="font-medium text-xs md:text-sm">{ausbildung.bezeichnung}</h4>
                             {getStatusBadge(ausbildung.status)}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-gray-600">

@@ -164,7 +164,7 @@ export default function DokumentePage() {
   ));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center">
           <BackButton className="mr-2" fallbackHref="/" />
@@ -191,15 +191,15 @@ export default function DokumentePage() {
         </Card>
       ) : (
         <Tabs defaultValue="ausschreibungen" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8">
-            <TabsTrigger value="ausschreibungen">Ausschreibungen</TabsTrigger>
-            <TabsTrigger value="formulare">Formulare</TabsTrigger>
-            <TabsTrigger value="ligalisten">Ligalisten</TabsTrigger>
-            <TabsTrigger value="ordnungen">Regelwerke & Hilfen</TabsTrigger>
+          <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-1 md:gap-2 mb-4 md:mb-8 h-auto">
+            <TabsTrigger value="ausschreibungen" className="text-xs md:text-sm px-2 py-2 md:px-3 md:py-2.5">Ausschreibungen</TabsTrigger>
+            <TabsTrigger value="formulare" className="text-xs md:text-sm px-2 py-2 md:px-3 md:py-2.5">Formulare</TabsTrigger>
+            <TabsTrigger value="ligalisten" className="text-xs md:text-sm px-2 py-2 md:px-3 md:py-2.5">Ligalisten</TabsTrigger>
+            <TabsTrigger value="ordnungen" className="text-xs md:text-sm px-2 py-2 md:px-3 md:py-2.5">Regelwerke</TabsTrigger>
           </TabsList>
 
           <TabsContent value="ausschreibungen" className="space-y-4">
-            <h2 className="text-xl font-semibold mb-4">Aktuelle Ausschreibungen</h2>
+            <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Aktuelle Ausschreibungen</h2>
             {ausschreibungen.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-muted-foreground">
@@ -214,7 +214,7 @@ export default function DokumentePage() {
           </TabsContent>
 
           <TabsContent value="formulare" className="space-y-4">
-            <h2 className="text-xl font-semibold mb-4">Formulare</h2>
+            <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Formulare</h2>
             {formulare.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-muted-foreground">
@@ -230,26 +230,26 @@ export default function DokumentePage() {
 
           <TabsContent value="ligalisten" className="space-y-4">
             <div className="mb-4">
-              <h2 className="text-xl font-semibold mb-2">Ligalisten</h2>
+              <h2 className="text-lg md:text-xl font-semibold mb-2">Ligalisten</h2>
               <div className="h-px bg-border mb-4"></div>
             </div>
             <Card>
               <CardHeader>
                 <div className="flex flex-col gap-6">
-                  <CardTitle className="text-xl">Ligalisten & Handtabellen</CardTitle>
+                  <CardTitle className="text-lg md:text-xl">Ligalisten & Handtabellen</CardTitle>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="border-2 border-primary/20 hover:border-primary/40 transition-colors">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-muted rounded-lg">
-                            <FileText className="h-8 w-8 text-primary" />
+                      <CardContent className="p-3 md:p-6">
+                        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
+                          <div className="p-2 md:p-3 bg-muted rounded-lg">
+                            <FileText className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                           </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg mb-2">Durchgangs-Meldebögen</h3>
-                            <p className="text-sm text-muted-foreground mb-4">Erstellen Sie Handzettel für einzelne Durchgänge mit allen Mannschaften</p>
+                          <div className="flex-1 text-center md:text-left">
+                            <h3 className="font-semibold text-base md:text-lg mb-2">Durchgangs-Meldebögen</h3>
+                            <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">Erstellen Sie Handzettel für einzelne Durchgänge mit allen Mannschaften</p>
                             <Link href="/handzettel-generator">
-                              <Button className="w-full">
+                              <Button className="w-full text-sm">
                                 <FileText className="h-4 w-4 mr-2" />
                                 Handzettel erstellen
                               </Button>
@@ -260,16 +260,16 @@ export default function DokumentePage() {
                     </Card>
                     
                     <Card className="border-2 border-primary/20 hover:border-primary/40 transition-colors">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-muted rounded-lg">
-                            <BarChart3 className="h-8 w-8 text-primary" />
+                      <CardContent className="p-3 md:p-6">
+                        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
+                          <div className="p-2 md:p-3 bg-muted rounded-lg">
+                            <BarChart3 className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                           </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg mb-2">Gesamtergebnislisten</h3>
-                            <p className="text-sm text-muted-foreground mb-4">Erstellen Sie Übersichten für alle 5 Durchgänge einer Liga</p>
+                          <div className="flex-1 text-center md:text-left">
+                            <h3 className="font-semibold text-base md:text-lg mb-2">Gesamtergebnislisten</h3>
+                            <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">Erstellen Sie Übersichten für alle 5 Durchgänge einer Liga</p>
                             <Link href="/gesamtergebnisliste-generator">
-                              <Button className="w-full">
+                              <Button className="w-full text-sm">
                                 <BarChart3 className="h-4 w-4 mr-2" />
                                 Gesamtergebnisliste erstellen
                               </Button>
@@ -280,18 +280,20 @@ export default function DokumentePage() {
                     </Card>
                   </div>
                   
-                  <div className="flex items-center gap-2 bg-muted/30 p-3 rounded-md w-fit">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <Select value={selectedYear} onValueChange={setSelectedYear}>
-                      <SelectTrigger className="w-[120px] h-8 text-sm">
-                        <SelectValue placeholder="Jahr wählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {years.map(year => (
-                          <SelectItem key={year} value={year}>{year}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-2 bg-muted/30 p-3 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <Select value={selectedYear} onValueChange={setSelectedYear}>
+                        <SelectTrigger className="w-[120px] h-8 text-sm">
+                          <SelectValue placeholder="Jahr wählen" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {years.map(year => (
+                            <SelectItem key={year} value={year}>{year}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <span className="text-xs text-muted-foreground">Jahr für hochgeladene Dokumente filtern</span>
                   </div>
                 </div>
@@ -325,7 +327,7 @@ export default function DokumentePage() {
 
           <TabsContent value="ordnungen" className="space-y-4">
             <div className="mb-4">
-              <h2 className="text-xl font-semibold mb-2">Regelwerke & Hilfen</h2>
+              <h2 className="text-lg md:text-xl font-semibold mb-2">Regelwerke & Hilfen</h2>
               <div className="h-px bg-border mb-4"></div>
             </div>
             {ordnungen.length === 0 ? (

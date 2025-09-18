@@ -15,22 +15,25 @@ export default function HandbuchPage() {
   const [activeTab, setActiveTab] = useState('rwk');
 
   return (
-    <div className="space-y-8 container mx-auto px-4 py-8">
-      <div className="flex items-center space-x-3 mb-8">
-        <BookOpenCheck className="h-10 w-10 text-primary" />
-        <div>
-          <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch KSV Einbeck App</h1>
-          <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK), Kreismeisterschafts (KM) und Vereinssoftware. (Stand: 20.09.2025, Web-Version 1.7.1, App-Version 0.9.4.1, Vereinssoftware 1.7.1)
+    <div className="space-y-4 md:space-y-8 container mx-auto px-2 md:px-4 py-4 md:py-8 max-w-full overflow-x-hidden">
+      <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-3 mb-4 md:mb-8">
+        <BookOpenCheck className="h-8 w-8 md:h-10 md:w-10 text-primary mx-auto md:mx-0" />
+        <div className="text-center md:text-left">
+          <h1 className="text-xl md:text-4xl font-bold text-primary leading-tight">Benutzerhandbuch KSV Einbeck</h1>
+          <p className="text-sm md:text-lg text-muted-foreground mt-1 md:mt-0">
+            Funktionen und Bedienung der RWK, KM und Vereinssoftware.
+          </p>
+          <p className="text-xs md:text-sm text-muted-foreground mt-1">
+            Stand: 20.09.2025, Web-Version 1.7.1, App-Version 0.9.4.1
           </p>
         </div>
       </div>
       
       {/* Tab Navigation */}
-      <div className="flex space-x-1 mb-6 bg-muted p-1 rounded-lg">
+      <div className="flex flex-col md:flex-row space-y-1 md:space-y-0 md:space-x-1 mb-4 md:mb-6 bg-muted p-2 md:p-1 rounded-lg">
         <button
           onClick={() => setActiveTab('rwk')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors w-full md:w-auto ${
             activeTab === 'rwk' 
               ? 'bg-background text-primary shadow-sm' 
               : 'text-muted-foreground hover:text-foreground'
@@ -41,7 +44,7 @@ export default function HandbuchPage() {
         </button>
         <button
           onClick={() => setActiveTab('km')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors w-full md:w-auto ${
             activeTab === 'km' 
               ? 'bg-background text-primary shadow-sm' 
               : 'text-muted-foreground hover:text-foreground'
@@ -52,7 +55,7 @@ export default function HandbuchPage() {
         </button>
         <button
           onClick={() => setActiveTab('vereinssoftware')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors w-full md:w-auto ${
             activeTab === 'vereinssoftware' 
               ? 'bg-background text-primary shadow-sm' 
               : 'text-muted-foreground hover:text-foreground'
@@ -66,10 +69,10 @@ export default function HandbuchPage() {
       {activeTab === 'rwk' && (
         <>
           <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle id="inhaltsverzeichnis" className="text-2xl text-accent scroll-mt-24">Inhaltsverzeichnis</CardTitle>
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle id="inhaltsverzeichnis" className="text-lg md:text-2xl text-accent scroll-mt-24">Inhaltsverzeichnis</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+        <CardContent className="space-y-2 text-xs md:text-sm px-3 md:px-6">
             <ul className="list-disc list-inside pl-4 space-y-1">
                 <li><a href="#einleitung" className="text-primary hover:underline">1. Einleitung</a>
                     <ul className="list-circle list-inside pl-6 text-xs">
@@ -127,10 +130,10 @@ export default function HandbuchPage() {
 
       {/* Section 1: Einleitung */}
       <section id="einleitung" className="space-y-4 scroll-mt-20">
-        <h2 className="text-3xl font-semibold text-primary border-b pb-2">1. Einleitung</h2>
+        <h2 className="text-xl md:text-3xl font-semibold text-primary border-b pb-2">1. Einleitung</h2>
         <Card>
-            <CardHeader><CardTitle id="zweck-der-anwendung" className="text-xl text-accent scroll-mt-24">Zweck der Anwendung</CardTitle></CardHeader>
-            <CardContent><p>Die RWK Einbeck App dient zur digitalen Verwaltung und übersichtlichen Darstellung der Rundenwettkämpfe des Kreisschützenverbandes Einbeck. Sie ermöglicht die Pflege wichtiger Daten (wie Saisons, Ligen, Vereine, Mannschaften und Schützen), die einfache Erfassung von Ergebnissen sowie die Anzeige von aktuellen Tabellen und Ranglisten.</p></CardContent>
+            <CardHeader className="pb-3 md:pb-6"><CardTitle id="zweck-der-anwendung" className="text-lg md:text-xl text-accent scroll-mt-24">Zweck der Anwendung</CardTitle></CardHeader>
+            <CardContent className="px-3 md:px-6 text-sm md:text-base"><p>Die RWK Einbeck App dient zur digitalen Verwaltung und übersichtlichen Darstellung der Rundenwettkämpfe des Kreisschützenverbandes Einbeck. Sie ermöglicht die Pflege wichtiger Daten (wie Saisons, Ligen, Vereine, Mannschaften und Schützen), die einfache Erfassung von Ergebnissen sowie die Anzeige von aktuellen Tabellen und Ranglisten.</p></CardContent>
         </Card>
         <Card>
             <CardHeader><CardTitle id="zielgruppen" className="text-xl text-accent scroll-mt-24">Zielgruppen</CardTitle></CardHeader>
@@ -149,7 +152,7 @@ export default function HandbuchPage() {
 
       {/* Section 2: Erste Schritte */}
       <section id="erste-schritte" className="space-y-4 scroll-mt-20">
-        <h2 className="text-3xl font-semibold text-primary border-b pb-2">2. Erste Schritte</h2>
+        <h2 className="text-xl md:text-3xl font-semibold text-primary border-b pb-2">2. Erste Schritte</h2>
         
         <Card className="border-primary/20 shadow-lg">
             <CardHeader>

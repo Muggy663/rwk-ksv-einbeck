@@ -952,22 +952,22 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
   }
 
   return (
-    <div className="w-full px-4 py-8">
-      <div className="mb-8">
+    <div className="w-full px-2 md:px-4 py-4 md:py-8">
+      <div className="mb-4 md:mb-8">
         <div className="flex items-center mb-4">
           <BackButton className="mr-2" fallbackHref="/vereinssoftware" />
-          <h1 className="text-2xl lg:text-4xl font-bold text-primary">💰 Beitragsverwaltung</h1>
+          <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-primary">💰 Beitragsverwaltung</h1>
         </div>
-        <p className="text-base lg:text-lg text-muted-foreground">
+        <p className="text-sm md:text-base lg:text-lg text-muted-foreground">
           {userClub ? `Beitragsverwaltung für ${userClub.name}` : 'Beitragsverwaltung'}
         </p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="mb-6">
-        <div className="flex border-b">
+      <div className="mb-4 md:mb-6">
+        <div className="flex border-b overflow-x-auto">
           <button
-            className={`px-4 py-2 font-medium ${
+            className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap ${
               activeTab === 'uebersicht'
                 ? 'border-b-2 border-primary text-primary'
                 : 'text-gray-600 hover:text-gray-800'
@@ -977,7 +977,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
             Übersicht
           </button>
           <button
-            className={`px-4 py-2 font-medium ${
+            className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap ${
               activeTab === 'sepa'
                 ? 'border-b-2 border-primary text-primary'
                 : 'text-gray-600 hover:text-gray-800'
@@ -987,7 +987,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
             SEPA-Lastschrift
           </button>
           <button
-            className={`px-4 py-2 font-medium ${
+            className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap ${
               activeTab === 'mandate'
                 ? 'border-b-2 border-primary text-primary'
                 : 'text-gray-600 hover:text-gray-800'
@@ -1002,11 +1002,11 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
       {activeTab === 'uebersicht' && (
         <div>
           {/* Statistiken */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 md:gap-4 mb-4 md:mb-8">
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-primary">{statistiken.gesamt}</div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Aktive Mitglieder</p>
+          <CardContent className="p-2 md:p-4">
+            <div className="text-lg md:text-2xl font-bold text-primary">{statistiken.gesamt}</div>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Aktive Mitglieder</p>
           </CardContent>
         </Card>
         <Card>

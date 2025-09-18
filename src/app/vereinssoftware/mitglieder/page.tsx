@@ -365,55 +365,55 @@ export default function MitgliederPage() {
   }
 
   return (
-    <div className="w-full px-4 py-8">
-      <div className="mb-8">
+    <div className="w-full px-2 md:px-4 py-4 md:py-8">
+      <div className="mb-4 md:mb-8">
         <div className="flex items-center mb-4">
           <BackButton className="mr-2" fallbackHref="/vereinssoftware" />
-          <h1 className="text-2xl lg:text-4xl font-bold text-primary">Mitgliederverwaltung</h1>
+          <h1 className="text-xl md:text-2xl lg:text-4xl font-bold text-primary">Mitgliederverwaltung</h1>
         </div>
-        <p className="text-base lg:text-lg text-muted-foreground">
+        <p className="text-sm md:text-base lg:text-lg text-muted-foreground">
           {userClub ? `Mitglieder von ${userClub.name}` : 'Vereinsmitglieder verwalten'}
         </p>
       </div>
 
       {/* Statistiken */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 md:gap-4 mb-4 md:mb-8">
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-primary">{members.length}</div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Gesamt</p>
+          <CardContent className="p-2 md:p-4">
+            <div className="text-lg md:text-2xl font-bold text-primary">{members.length}</div>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Gesamt</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent className="p-2 md:p-4">
+            <div className="text-lg md:text-2xl font-bold text-green-600">
               {members.filter(m => m.isActive).length}
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Aktiv</p>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Aktiv</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-red-600">
+          <CardContent className="p-2 md:p-4">
+            <div className="text-lg md:text-2xl font-bold text-red-600">
               {members.filter(m => !m.isActive).length}
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Inaktiv</p>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Inaktiv</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">
+          <CardContent className="p-2 md:p-4">
+            <div className="text-lg md:text-2xl font-bold text-purple-600">
               {members.filter(m => m.email).length}
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Mit E-Mail</p>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Mit E-Mail</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">
+          <CardContent className="p-2 md:p-4">
+            <div className="text-lg md:text-2xl font-bold text-orange-600">
               {members.filter(m => m.mitgliedsnummer).length}
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Mit Mitgl.-Nr.</p>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Mit Mitgl.-Nr.</p>
           </CardContent>
         </Card>
       </div>

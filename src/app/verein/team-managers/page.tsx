@@ -220,20 +220,20 @@ export default function TeamManagersPage() {
   }, [searchTerm, teamManagers]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <BackButton className="mr-2" fallbackHref="/verein/dashboard" />
           <div>
-            <h1 className="text-3xl font-bold text-primary">Mannschaftsführer</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl md:text-3xl font-bold text-primary">Mannschaftsführer</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Übersicht aller Mannschaftsführer in Ligen, in denen Ihr Verein auch schießt.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 grid-cols-1 md:grid-cols-3">
         {/* Saison-Filter */}
         <div>
           <Label htmlFor="season-select">Saison</Label>
@@ -309,47 +309,88 @@ export default function TeamManagersPage() {
               {filteredManagers.length} Mannschaftsführer gefunden
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Team</TableHead>
-                  <TableHead>Liga</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Kontakt</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredManagers.map(manager => (
-                  <TableRow key={manager.id}>
-                    <TableCell className="font-medium">{manager.teamName}</TableCell>
-                    <TableCell>{manager.leagueName}</TableCell>
-                    <TableCell>
-                      {manager.captainName || manager.managerName || 'Nicht angegeben'}
-                    </TableCell>
-                    <TableCell>
+          <CardContent className="p-3 md:p-6">
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Team</TableHead>
+                    <TableHead>Liga</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Kontakt</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredManagers.map(manager => (
+                    <TableRow key={manager.id}>
+                      <TableCell className="font-medium">{manager.teamName}</TableCell>
+                      <TableCell>{manager.leagueName}</TableCell>
+                      <TableCell>
+                        {manager.captainName || manager.managerName || 'Nicht angegeben'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {(manager.captainEmail || manager.managerEmail) && (
+                            <div className="flex items-center text-sm">
+                              <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span>{manager.captainEmail || manager.managerEmail}</span>
+                            </div>
+                          )}
+                          {(manager.captainPhone || manager.managerPhone) && (
+                            <div className="flex items-center text-sm">
+                              <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                              <span>{manager.captainPhone || manager.managerPhone}</span>
+                            </div>
+                          )}
+                          {!manager.captainEmail && !manager.managerEmail && !manager.captainPhone && !manager.managerPhone && (
+                            <span className="text-sm text-muted-foreground">Keine Kontaktdaten</span>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
+              {filteredManagers.map(manager => (
+                <Card key={manager.id} className="border">
+                  <CardContent className="p-3">
+                    <div className="space-y-2">
+                      <div>
+                        <h3 className="font-medium text-sm">{manager.teamName}</h3>
+                        <p className="text-xs text-muted-foreground">{manager.leagueName}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {manager.captainName || manager.managerName || 'Nicht angegeben'}
+                        </p>
+                      </div>
                       <div className="space-y-1">
                         {(manager.captainEmail || manager.managerEmail) && (
-                          <div className="flex items-center text-sm">
-                            <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <div className="flex items-center text-xs">
+                            <Mail className="h-3 w-3 mr-2 text-muted-foreground" />
                             <span>{manager.captainEmail || manager.managerEmail}</span>
                           </div>
                         )}
                         {(manager.captainPhone || manager.managerPhone) && (
-                          <div className="flex items-center text-sm">
-                            <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <div className="flex items-center text-xs">
+                            <Phone className="h-3 w-3 mr-2 text-muted-foreground" />
                             <span>{manager.captainPhone || manager.managerPhone}</span>
                           </div>
                         )}
                         {!manager.captainEmail && !manager.managerEmail && !manager.captainPhone && !manager.managerPhone && (
-                          <span className="text-sm text-muted-foreground">Keine Kontaktdaten</span>
+                          <span className="text-xs text-muted-foreground">Keine Kontaktdaten</span>
                         )}
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </CardContent>
         </Card>
       ) : (
