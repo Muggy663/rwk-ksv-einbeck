@@ -116,6 +116,12 @@ export function MainNav() {
       active: pathname === '/handbuch',
     },
     {
+      href: '/fuer-vereine',
+      label: 'Vereine',
+      icon: <MessageSquare className="h-4 w-4 mr-2" />,
+      active: pathname === '/fuer-vereine',
+    },
+    {
       href: '/support',
       label: 'Support',
       icon: <MessageSquare className="h-4 w-4 mr-2" />,
@@ -150,7 +156,7 @@ export function MainNav() {
   return (
     <nav className="flex items-center space-x-4 lg:space-x-6">
       {/* Desktop Navigation */}
-      <div className="hidden md:flex md:items-center md:space-x-4">
+      <div className="hidden lg:flex lg:items-center lg:space-x-2">
         {routes.filter(route => {
           // Updates nur für Admins
           if (route.href === '/updates') {
@@ -162,7 +168,7 @@ export function MainNav() {
             key={route.href}
             href={route.href}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary flex items-center",
+              "text-sm font-medium transition-colors hover:text-primary flex items-center whitespace-nowrap",
               route.active ? "text-primary" : "text-muted-foreground"
             )}
           >

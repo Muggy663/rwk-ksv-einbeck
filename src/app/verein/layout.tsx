@@ -327,45 +327,8 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
   
   return (
     <VereinContext.Provider value={contextValue}>
-      <div className="flex min-h-[calc(100vh-theme(spacing.16))]">
-        <aside className="w-60 bg-background border-r p-4 shadow-md hidden md:block">
-          <div className="flex items-center space-x-2 mb-6">
-            <Building className="h-7 w-7 text-primary" />
-            <h2 className="text-xl font-semibold text-primary">Mein Verein</h2>
-          </div>
-          <nav className="space-y-1">
-            {vereinNavItems.map((item) => {
-              const isItemActive = pathname === item.href || (item.href !== '/verein/dashboard' && pathname.startsWith(item.href));
-              return (
-                <Link 
-                    key={item.href} 
-                    href={item.href} 
-                    className={cn(
-                        "flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors", 
-                        isItemActive
-                            ? 'bg-accent text-accent-foreground' 
-                            : 'text-muted-foreground'
-                    )}
-                >
-                    <item.icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-          <Separator className="my-6" />
-          <div className="space-y-2 mb-4">
-            {/* Passwort-Button entfernt, da er jetzt auf der Hilfeseite ist */}
-          </div>
-          <Button variant="outline" onClick={() => router.push('/')} className="w-full mb-2">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Zur Startseite
-          </Button>
-          
-          {user && <Button variant="outline" onClick={handleLogout} className="w-full text-destructive hover:text-destructive/80 hover:bg-destructive/10">
-            <LogOut className="mr-2 h-4 w-4" /> Logout
-          </Button>}
-        </aside>
-        <main className="flex-1 p-6 lg:p-8 bg-muted/20 overflow-y-auto">
+      <div className="min-h-[calc(100vh-theme(spacing.16))]">
+        <main className="p-6 lg:p-8 bg-muted/20 overflow-y-auto">
           {/* Passwort-Änderungsdialog (nicht als Aufforderung) */}
           {user && <PasswordChangePrompt />}
           {children}

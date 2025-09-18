@@ -1103,12 +1103,13 @@ export default function KMMeldungen() {
 
 
               {/* Buttons */}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 {editingMeldung ? (
                   <>
                     <Button 
                       onClick={handleSubmit}
                       disabled={!selectedSchuetze || selectedDisziplinen.length === 0 || isSubmitting}
+                      className="w-full sm:w-auto"
                     >
                       {isSubmitting ? 'Speichere...' : 'Meldung aktualisieren'}
                     </Button>
@@ -1122,6 +1123,7 @@ export default function KMMeldungen() {
                         setAnmerkung('');
                         setVmErgebnisse({});
                       }}
+                      className="w-full sm:w-auto"
                     >
                       Abbrechen
                     </Button>
@@ -1133,13 +1135,15 @@ export default function KMMeldungen() {
                         <Button 
                           onClick={handleAddToPending}
                           disabled={!selectedSchuetze || selectedDisziplinen.length === 0}
+                          className="w-full sm:w-auto"
                         >
-                          📋 Zu Zwischenspeicher ({selectedDisziplinen.length || 0})
+                          📋 Zwischenspeichern ({selectedDisziplinen.length || 0})
                         </Button>
                         <Button 
                           onClick={handleSubmit}
                           disabled={!selectedSchuetze || selectedDisziplinen.length === 0 || isSubmitting}
                           variant="outline"
+                          className="w-full sm:w-auto"
                         >
                           {isSubmitting ? 'Speichere...' : 'Direkt speichern'}
                         </Button>
@@ -1183,12 +1187,13 @@ export default function KMMeldungen() {
                           toast({ title: 'Hinzugefügt', description: `${newPending.length} Meldungen zum Zwischenspeicher hinzugefügt` });
                         }}
                         disabled={!selectedDisziplin || selectedSchuetzen.length === 0}
+                        className="w-full sm:w-auto"
                       >
                         📋 {selectedSchuetzen.length} Schützen zu Zwischenspeicher
                       </Button>
                     )}
-                    <Link href="/km">
-                      <Button variant="outline">Zurück</Button>
+                    <Link href="/km" className="w-full sm:w-auto">
+                      <Button variant="outline" className="w-full">Zurück</Button>
                     </Link>
                   </>
                 )}
@@ -1220,17 +1225,18 @@ export default function KMMeldungen() {
                       );
                     })}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button 
                       onClick={handleBulkSubmit}
                       disabled={isSubmitting || pendingMeldungen.length === 0}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                     >
                       {isSubmitting ? 'Speichere...' : `${pendingMeldungen.length} Meldungen speichern`}
                     </Button>
                     <Button 
                       variant="outline"
                       onClick={() => setPendingMeldungen([])}
+                      className="w-full sm:w-auto"
                     >
                       Alle löschen
                     </Button>

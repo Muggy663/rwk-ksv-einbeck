@@ -283,14 +283,12 @@ export default function VereinssoftwarePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-4xl font-bold text-primary">Vereinssoftware</h1>
-          <a href="/dashboard-auswahl">
-            <Button variant="outline">
-              Zurück zum Dashboard
-            </Button>
-          </a>
-        </div>
+        <h1 className="text-4xl font-bold text-primary mb-4">Vereinssoftware</h1>
+        <a href="/dashboard-auswahl" className="block mb-4">
+          <Button variant="outline" className="w-full sm:w-auto">
+            Zurück zum Dashboard
+          </Button>
+        </a>
         <div className="text-muted-foreground">
           <p className="text-lg mb-2">
             {userClub ? `Vereinsverwaltung für ${userClub.name}` : 'Vollständige Vereinsverwaltung für moderne Schützenvereine'}
@@ -339,13 +337,13 @@ export default function VereinssoftwarePage() {
       </div>
 
       {/* Info-Box über Rollen-System */}
-      <Card className="mb-6 bg-blue-50 border-blue-200">
+      <Card className="mb-6 bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <div className="text-blue-600 text-lg">🎯</div>
+            <div className="text-blue-600 dark:text-blue-400 text-lg">🎯</div>
             <div className="text-sm">
-              <p className="font-medium text-blue-900 mb-1">Rollen-basierte Bereiche:</p>
-              <p className="text-blue-800">
+              <p className="font-medium text-blue-900 dark:text-blue-200 mb-1">Rollen-basierte Bereiche:</p>
+              <p className="text-blue-800 dark:text-blue-300">
                 Sie sehen nur die Bereiche, für die Sie berechtigt sind. Ihre aktuelle Rolle: 
                 <strong>{Object.values(userAppPermissions?.clubRoles || {}).join(', ') || 'Keine Rolle'}</strong>. 
                 Kontaktieren Sie den Vorstand für weitere Berechtigungen.

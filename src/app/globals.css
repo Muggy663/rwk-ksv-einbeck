@@ -93,27 +93,7 @@
     padding-top: var(--safe-area-top);
   }
   
-  .mobile-layout {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .desktop-layout {
-    min-height: 100vh;
-  }
-  
-  .desktop-header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    height: var(--app-header-height);
-  }
-  
-  .desktop-content {
-    flex: 1;
-    padding: 24px;
-  }
+
   
   /* Capacitor App spezifische Fixes */
   .capacitor-app body {

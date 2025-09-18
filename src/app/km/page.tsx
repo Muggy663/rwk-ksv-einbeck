@@ -89,10 +89,10 @@ export default function KMDashboard() {
               variant="ghost" 
               size="sm" 
               onClick={() => setIsInstructionOpen(!isInstructionOpen)}
-              className="text-blue-700 hover:text-blue-900"
+              className="text-blue-700 hover:text-blue-900 flex-shrink-0 min-w-fit"
             >
-              {isInstructionOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              {isInstructionOpen ? 'Einklappen' : 'Anleitung anzeigen'}
+              {isInstructionOpen ? <ChevronUp className="h-4 w-4 mr-1" /> : <ChevronDown className="h-4 w-4 mr-1" />}
+              <span className="whitespace-nowrap">{isInstructionOpen ? 'Einklappen' : 'Anleitung anzeigen'}</span>
             </Button>
           </div>
         </CardHeader>

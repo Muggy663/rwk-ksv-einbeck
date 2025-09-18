@@ -77,7 +77,8 @@ export default function KMAltersklassen() {
                 ⚠️ Nicht teilnahmeberechtigt: 15-40 Jahre (Geburtsjahre 1986-2011)
               </p>
             </div>
-            <div className="overflow-x-auto">
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-gray-50">
@@ -100,6 +101,21 @@ export default function KMAltersklassen() {
                 </tbody>
               </table>
             </div>
+            
+            {/* Mobile Cards */}
+            <div className="sm:hidden space-y-2">
+              {auflageKlassen.map((klasse, index) => (
+                <div key={index} className={`p-3 border rounded ${klasse.gemischt ? 'bg-green-50 border-green-200' : 'bg-white'}`}>
+                  <div className="font-medium text-sm">
+                    {klasse.name}
+                    {klasse.gemischt && <span className="ml-2 text-xs text-green-600">(gemischt)</span>}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    Alter: {klasse.alter} • Geburtsjahre: {klasse.geburtsjahre}
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
@@ -114,7 +130,8 @@ export default function KMAltersklassen() {
                 ✅ Alle Altersgruppen teilnahmeberechtigt
               </p>
             </div>
-            <div className="overflow-x-auto">
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-gray-50">
@@ -133,6 +150,18 @@ export default function KMAltersklassen() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            
+            {/* Mobile Cards */}
+            <div className="sm:hidden space-y-2">
+              {freihandKlassen.map((klasse, index) => (
+                <div key={index} className="p-3 border rounded bg-white">
+                  <div className="font-medium text-sm">{klasse.name}</div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    Alter: {klasse.alter} • Geburtsjahre: {klasse.geburtsjahre}
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

@@ -21,7 +21,7 @@ export default function HandbuchPage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Benutzerhandbuch KSV Einbeck App</h1>
           <p className="text-lg text-muted-foreground">
-            Funktionen und Bedienung der Rundenwettkampf (RWK), Kreismeisterschafts (KM) und Vereinssoftware. (Stand: 17.09.2025, Web-Version 1.7.0, App-Version 0.9.4.1, Vereinssoftware 1.7.0)
+            Funktionen und Bedienung der Rundenwettkampf (RWK), Kreismeisterschafts (KM) und Vereinssoftware. (Stand: 20.09.2025, Web-Version 1.7.1, App-Version 0.9.4.1, Vereinssoftware 1.7.1)
           </p>
         </div>
       </div>
@@ -152,15 +152,15 @@ export default function HandbuchPage() {
         <h2 className="text-3xl font-semibold text-primary border-b pb-2">2. Erste Schritte</h2>
         
         <Card className="border-primary/20 shadow-lg">
-            <CardHeader className="bg-primary/5">
-              <CardTitle id="login" className="text-xl text-primary scroll-mt-24">Zugang zur App</CardTitle>
+            <CardHeader>
+              <CardTitle id="login" className="text-xl text-accent scroll-mt-24">Zugang zur App</CardTitle>
             </CardHeader>
             <CardContent>
                 <p>Der Zugang zur App erfolgt über die Login-Seite mittels E-Mail-Adresse und Passwort.</p>
                 
-                <div className="mt-4 bg-blue-50 p-3 rounded-md border border-blue-100">
-                  <p className="font-medium text-blue-800">Wichtig: Benutzerkonten werden ausschließlich vom Rundenwettkampfleiter angelegt. Eine Selbstregistrierung ist nicht möglich.</p>
-                  <p className="mt-1 text-blue-700">Wenn Sie einen Zugang benötigen, wenden Sie sich bitte per E-Mail an: <strong>rwk-leiter-ksve@gmx.de</strong></p>
+                <div className="mt-4 bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-100 dark:border-blue-800">
+                  <p className="font-medium text-blue-800 dark:text-blue-200">Wichtig: Benutzerkonten werden ausschließlich vom Rundenwettkampfleiter angelegt. Eine Selbstregistrierung ist nicht möglich.</p>
+                  <p className="mt-1 text-blue-700 dark:text-blue-300">Wenn Sie einen Zugang benötigen, wenden Sie sich bitte per E-Mail an: <strong>rwk-leiter-ksve@gmx.de</strong></p>
                 </div>
                 
                 <h4 className="font-medium mt-4 mb-2">Passwort ändern</h4>
@@ -201,10 +201,10 @@ export default function HandbuchPage() {
             <CardContent>
                 <p>Nach dem Login mit den vom Rundenwettkampfleiter erhaltenen Zugangsdaten kommt der Benutzer in den "Vereinsbereich". Hier kann er nur die Daten seines eigenen Vereins sehen und bearbeiten. Was genau er tun darf, hängt von seiner Rolle ab - entweder als "Vereinsvertreter" oder als "Mannschaftsführer".</p>
                 
-                <div className="mt-4 bg-blue-50 p-3 rounded-md border border-blue-100">
-                  <h4 className="font-medium text-blue-800 mb-2">🏢 Multi-Verein-System (Neu in Version 0.9.9)</h4>
-                  <p className="text-blue-700">Falls Sie mehreren Vereinen zugeordnet sind, erscheint nach dem Login eine <strong>Club-Auswahl-Seite</strong>. Wählen Sie den gewünschten Verein aus.</p>
-                  <p className="text-blue-700 mt-1">In der Navigation finden Sie einen <strong>Club-Switcher</strong>, mit dem Sie jederzeit zwischen Ihren Vereinen wechseln können. Ihre Auswahl wird gespeichert.</p>
+                <div className="mt-4 bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-100 dark:border-blue-800">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🏢 Multi-Verein-System (Neu in Version 0.9.9)</h4>
+                  <p className="text-blue-700 dark:text-blue-300">Falls Sie mehreren Vereinen zugeordnet sind, erscheint nach dem Login eine <strong>Club-Auswahl-Seite</strong>. Wählen Sie den gewünschten Verein aus.</p>
+                  <p className="text-blue-700 dark:text-blue-300 mt-1">In der Navigation finden Sie einen <strong>Club-Switcher</strong>, mit dem Sie jederzeit zwischen Ihren Vereinen wechseln können. Ihre Auswahl wird gespeichert.</p>
                 </div>
                 
                 <p className="mt-2">Auf allen Seiten (Mannschaften, Schützen, Ergebnisse) sehen Sie automatisch nur die Daten des aktuell ausgewählten Vereins. Der Name Ihres Vereins wird oben auf der Seite angezeigt.</p>
@@ -414,10 +414,10 @@ export default function HandbuchPage() {
             <CardContent>
               <p>Die RWK Einbeck App ist jetzt auch als native Android-App verfügbar für bessere Performance und einfachere Nutzung.</p>
               
-              <div className="bg-green-50 p-3 rounded-md border border-green-200 mb-4">
-                <h4 className="font-medium text-green-800 mb-2">📱 Neue Android-App (Version 0.9.1.0)</h4>
-                <p className="text-green-700">Die native Android-App bietet alle Funktionen der Web-App mit verbesserter Performance und einfacherer Installation.</p>
-                <p className="text-green-700 mt-1"><strong>Neu in Version 0.9.1.0:</strong> Verbesserte PDF-Anzeige und Statusleisten-Fix</p>
+              <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800 mb-4">
+                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">📱 Neue Android-App (Version 0.9.4.1)</h4>
+                <p className="text-green-700 dark:text-green-300">Die native Android-App bietet alle Funktionen der Web-App mit verbesserter Performance und einfacherer Installation.</p>
+                <p className="text-green-700 dark:text-green-300 mt-1"><strong>Neu in Version 0.9.4.1:</strong> Mobile-Optimierung & Stabilität mit Update-Benachrichtigung</p>
               </div>
               
               <ul className="list-disc pl-5 space-y-1 mt-2">
@@ -430,19 +430,19 @@ export default function HandbuchPage() {
                 <li><strong>Versionierungsstrategie:</strong> Web-App (0.9.9.x) und Native App (0.9.x.y) haben unterschiedliche Versionsnummern</li>
               </ul>
               
-              <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
-                <h4 className="font-medium text-blue-800 mb-2">Hybride Versionierungsstrategie:</h4>
-                <p className="text-blue-700 mb-2">Ab Version 0.9.9.6/0.9.1.0 verwenden wir eine hybride Versionierungsstrategie:</p>
-                <ul className="list-disc pl-5 space-y-1 text-blue-700">
-                  <li><strong>Web-App:</strong> 0.9.9.x - Aktuelle Version: 0.9.9.6</li>
-                  <li><strong>Native App:</strong> 0.9.x.y - Aktuelle Version: 0.9.1.0</li>
+              <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
+                <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Hybride Versionierungsstrategie:</h4>
+                <p className="text-blue-700 dark:text-blue-300 mb-2">Ab Version 0.9.9.6/0.9.4.1 verwenden wir eine hybride Versionierungsstrategie:</p>
+                <ul className="list-disc pl-5 space-y-1 text-blue-700 dark:text-blue-300">
+                  <li><strong>Web-App:</strong> 1.7.0 - Aktuelle Version: 1.7.0</li>
+                  <li><strong>Native App:</strong> 0.9.x.y - Aktuelle Version: 0.9.4.1</li>
                 </ul>
-                <p className="text-blue-700 mt-2">Dies ermöglicht unabhängige Entwicklungszyklen für Web und App, während die Hauptversion (0.9) synchron bleibt.</p>
+                <p className="text-blue-700 dark:text-blue-300 mt-2">Dies ermöglicht unabhängige Entwicklungszyklen für Web und App, während die Hauptversion synchron bleibt.</p>
               </div>
               
-              <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
-                <h4 className="font-medium text-blue-800 mb-2">Installation Schritt-für-Schritt:</h4>
-                <ol className="list-decimal pl-5 space-y-1 text-blue-700">
+              <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
+                <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Installation Schritt-für-Schritt:</h4>
+                <ol className="list-decimal pl-5 space-y-1 text-blue-700 dark:text-blue-300">
                   <li>APK-Datei mit Chrome-Browser herunterladen</li>
                   <li>Bei Warnung "Unbekannte App" auf "Trotzdem installieren" tippen</li>
                   <li>RWK-App-Icon antippen und loslegen!</li>
@@ -498,9 +498,9 @@ export default function HandbuchPage() {
               <CardHeader><CardTitle className="text-xl text-accent">Zweck des KM-Moduls</CardTitle></CardHeader>
               <CardContent>
                 <p>Das Kreismeisterschafts-Modul digitalisiert den bisher papierbasierten Meldeprozess für die jährlichen Kreismeisterschaften des KSV Einbeck.</p>
-                <div className="mt-4 bg-green-50 p-3 rounded-md border border-green-200">
-                  <h4 className="font-medium text-green-800 mb-2">🎯 Hauptvorteile:</h4>
-                  <ul className="list-disc pl-5 space-y-1 text-green-700">
+                <div className="mt-4 bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800">
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">🎯 Hauptvorteile:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-green-700 dark:text-green-300">
                     <li><strong>75% Zeitersparnis:</strong> Von 40-60h auf 8-15h Gesamtaufwand</li>
                     <li><strong>Automatische Wettkampfklassen-Berechnung</strong> nach DSB-Sportordnung</li>
                     <li><strong>Echtzeit-Validierung</strong> verhindert Fehler bei der Eingabe</li>
@@ -531,9 +531,9 @@ export default function HandbuchPage() {
                   <li><strong>Anmerkungen:</strong> Besondere Wünsche (z.B. "nicht mit Ehemann zusammen")</li>
                 </ol>
                 
-                <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 mt-4">
-                  <h4 className="font-medium text-yellow-800 mb-2">⚠️ Wichtige Hinweise:</h4>
-                  <ul className="list-disc pl-5 space-y-1 text-yellow-700">
+                <div className="bg-yellow-50 dark:bg-yellow-950/50 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 mt-4">
+                  <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⚠️ Wichtige Hinweise:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-yellow-700 dark:text-yellow-300">
                     <li><strong>Sportjahr = Kalenderjahr:</strong> Alter in 2026 ist entscheidend für KM 2026</li>
                     <li><strong>Auflage vs. Freihand:</strong> Verschiedene Wettkampfklassen (Senioren bei Auflage)</li>
                     <li><strong>Mehrfachauswahl:</strong> Ein Schütze kann in mehreren Disziplinen gemeldet werden</li>
@@ -550,9 +550,9 @@ export default function HandbuchPage() {
             <Card>
               <CardHeader><CardTitle className="text-xl text-accent">Intelligente Startlisten-Generierung</CardTitle></CardHeader>
               <CardContent>
-                <div className="bg-green-50 p-4 rounded-md border border-green-200 mb-4">
-                  <h4 className="font-medium text-green-800 mb-2">🎯 Startlisten-Assistent (Neu in Version 0.9.9.9)</h4>
-                  <p className="text-green-700">Das neue Startlisten-System generiert automatisch optimierte Startlisten mit KI-Unterstützung und berücksichtigt alle Besonderheiten des Schießsports.</p>
+                <div className="bg-green-50 dark:bg-green-950/50 p-4 rounded-md border border-green-200 dark:border-green-800 mb-4">
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">🎯 Startlisten-Assistent (Neu in Version 0.9.9.9)</h4>
+                  <p className="text-green-700 dark:text-green-300">Das neue Startlisten-System generiert automatisch optimierte Startlisten mit KI-Unterstützung und berücksichtigt alle Besonderheiten des Schießsports.</p>
                 </div>
                 
                 <h4 className="font-semibold mb-2">Funktionen:</h4>
@@ -566,9 +566,9 @@ export default function HandbuchPage() {
                   <li><strong>PDF/Excel Export:</strong> Mit RWK-Logo für professionelle Dokumente</li>
                 </ul>
                 
-                <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
-                  <h4 className="font-medium text-blue-800 mb-2">📋 Workflow für Sportleiterin:</h4>
-                  <ol className="list-decimal pl-5 space-y-1 text-blue-700">
+                <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">📋 Workflow für Sportleiterin:</h4>
+                  <ol className="list-decimal pl-5 space-y-1 text-blue-700 dark:text-blue-300">
                     <li>Meldungen prüfen und VM-Ergebnisse kontrollieren</li>
                     <li>Startlisten-Assistent: Wettkampf konfigurieren</li>
                     <li>Automatische Generierung mit KI-Optimierung</li>
@@ -591,18 +591,18 @@ export default function HandbuchPage() {
                 
                 <h4 className="font-semibold mt-4 mb-2">Mannschaftsregeln:</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-green-50 p-3 rounded-md">
-                    <h5 className="font-medium text-green-800 mb-2">Gemischte Mannschaften erlaubt:</h5>
-                    <ul className="list-disc pl-5 text-sm text-green-700">
+                  <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-green-800 dark:text-green-200 mb-2">Gemischte Mannschaften erlaubt:</h5>
+                    <ul className="list-disc pl-5 text-sm text-green-700 dark:text-green-300">
                       <li>Schüler/Jugend</li>
                       <li>Senioren 0</li>
                       <li>Senioren I+II</li>
                       <li>Senioren III-VI</li>
                     </ul>
                   </div>
-                  <div className="bg-blue-50 p-3 rounded-md">
-                    <h5 className="font-medium text-blue-800 mb-2">Geschlechtergetrennt:</h5>
-                    <ul className="list-disc pl-5 text-sm text-blue-700">
+                  <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Geschlechtergetrennt:</h5>
+                    <ul className="list-disc pl-5 text-sm text-blue-700 dark:text-blue-300">
                       <li>Junioren I/II</li>
                       <li>Herren/Damen I-V</li>
                     </ul>
@@ -683,9 +683,9 @@ export default function HandbuchPage() {
                   <li><strong>Excel-Export:</strong> Für weitere Bearbeitung und Archivierung</li>
                 </ul>
                 
-                <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 mt-4">
-                  <h4 className="font-medium text-yellow-800 mb-2">⚠️ Wichtige Hinweise:</h4>
-                  <ul className="list-disc pl-5 space-y-1 text-yellow-700">
+                <div className="bg-yellow-50 dark:bg-yellow-950/50 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 mt-4">
+                  <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⚠️ Wichtige Hinweise:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-yellow-700 dark:text-yellow-300">
                     <li><strong>Durchmeldungen:</strong> Benötigen zwingend VM-Ergebnis</li>
                     <li><strong>LM-Teilnahme:</strong> VM-Ergebnis muss Qualifikationslimit erreichen</li>
                     <li><strong>Startlisten-Sortierung:</strong> VM-Ergebnisse werden für optimale Verteilung genutzt</li>
@@ -705,7 +705,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Vereinssoftware - Benutzerhandbuch</CardTitle>
-              <CardDescription>Version 1.7.0 - Support-System & Development-Tools</CardDescription>
+              <CardDescription>Version 1.7.1 - Mobile UX Revolution & Support-System</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
@@ -730,9 +730,9 @@ export default function HandbuchPage() {
               <CardContent>
                 <p>Die Vereinssoftware hilft Ihnen dabei, Ihren Schützenverein digital zu verwalten. Sie können Mitglieder erfassen, Beiträge verwalten, Jubiläen planen und vieles mehr.</p>
                 
-                <div className="mt-4 bg-green-50 p-3 rounded-md border border-green-200">
-                  <h4 className="font-medium text-green-800 mb-2">✨ Das können Sie mit der Vereinssoftware v1.5.8 machen:</h4>
-                  <ul className="list-disc pl-5 space-y-1 text-green-700">
+                <div className="mt-4 bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800">
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">✨ Das können Sie mit der Vereinssoftware v1.5.8 machen:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-green-700 dark:text-green-300">
                     <li><strong>👥 Mitglieder verwalten:</strong> Alle Daten an einem Ort - Name, Adresse, Geburtstag, E-Mail</li>
                     <li><strong>💳 SEPA-Beiträge:</strong> Multi-Bank-Export für automatische Lastschrift-Zahlungen</li>
                     <li><strong>🎂 Jubiläen planen:</strong> Geburtstage & Vereinsjubiläen mit 5-Jahres-Vorausplanung</li>
@@ -744,9 +744,9 @@ export default function HandbuchPage() {
                   </ul>
                 </div>
                 
-                <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
-                  <h4 className="font-medium text-blue-800 mb-2">🎯 Für wen ist das gedacht?</h4>
-                  <p className="text-blue-700">Die Vereinssoftware ist perfekt für Vereinsvorstände, Kassenwarte und Geschäftsführer, die ihren Verein modern und effizient verwalten möchten.</p>
+                <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🎯 Für wen ist das gedacht?</h4>
+                  <p className="text-blue-700 dark:text-blue-300">Die Vereinssoftware ist perfekt für Vereinsvorstände, Kassenwarte und Geschäftsführer, die ihren Verein modern und effizient verwalten möchten.</p>
                 </div>
               </CardContent>
             </Card>
@@ -811,9 +811,9 @@ export default function HandbuchPage() {
                   <li><strong>Lastschrift erstellen:</strong> Die Software erstellt automatisch die SEPA-Datei für Ihre Bank</li>
                 </ol>
                 
-                <div className="bg-green-50 p-3 rounded-md border border-green-200 mt-4">
-                  <h4 className="font-medium text-green-800 mb-2">💰 Vorteile der SEPA-Lastschrift:</h4>
-                  <ul className="list-disc pl-5 space-y-1 text-green-700">
+                <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800 mt-4">
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">💰 Vorteile der SEPA-Lastschrift:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-green-700 dark:text-green-300">
                     <li><strong>Automatisch:</strong> Beiträge werden pünktlich eingezogen</li>
                     <li><strong>Weniger Arbeit:</strong> Keine manuellen Überweisungen mehr nötig</li>
                     <li><strong>Übersichtlich:</strong> Sie sehen sofort, wer bezahlt hat und wer nicht</li>
@@ -842,18 +842,18 @@ export default function HandbuchPage() {
                 </ul>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="bg-blue-50 p-3 rounded-md">
-                    <h5 className="font-medium text-blue-800 mb-2">🎂 Geburtstags-Ehrungen:</h5>
-                    <ul className="list-disc pl-5 text-sm text-blue-700">
+                  <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🎂 Geburtstags-Ehrungen:</h5>
+                    <ul className="list-disc pl-5 text-sm text-blue-700 dark:text-blue-300">
                       <li>18 Jahre: Glückwunschkarte</li>
                       <li>50 Jahre: Besondere Ehrung</li>
                       <li>60, 70 Jahre: Gutschein</li>
                       <li>Ab 70: Alle 5 Jahre</li>
                     </ul>
                   </div>
-                  <div className="bg-green-50 p-3 rounded-md">
-                    <h5 className="font-medium text-green-800 mb-2">🏆 Vereins-Jubiläen:</h5>
-                    <ul className="list-disc pl-5 text-sm text-green-700">
+                  <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-green-800 dark:text-green-200 mb-2">🏆 Vereins-Jubiläen:</h5>
+                    <ul className="list-disc pl-5 text-sm text-green-700 dark:text-green-300">
                       <li>10 Jahre: Bronze-Ehrennadel</li>
                       <li>25 Jahre: Silber-Ehrennadel</li>
                       <li>40 Jahre: Gold-Ehrennadel</li>
@@ -862,9 +862,9 @@ export default function HandbuchPage() {
                   </div>
                 </div>
                 
-                <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 mt-4">
-                  <h4 className="font-medium text-yellow-800 mb-2">📅 5-Jahres-Planung:</h4>
-                  <p className="text-yellow-700">Sie können bis zu 5 Jahre im Voraus planen und sehen, welche Ehrungen in den kommenden Jahren anstehen. So können Sie rechtzeitig Urkunden bestellen und Feiern organisieren.</p>
+                <div className="bg-yellow-50 dark:bg-slate-800 p-3 rounded-md border border-yellow-200 dark:border-slate-600 mt-4">
+                  <h4 className="font-medium text-yellow-800 dark:text-slate-200 mb-2">📅 5-Jahres-Planung:</h4>
+                  <p className="text-yellow-700 dark:text-slate-200">Sie können bis zu 5 Jahre im Voraus planen und sehen, welche Ehrungen in den kommenden Jahren anstehen. So können Sie rechtzeitig Urkunden bestellen und Feiern organisieren.</p>
                 </div>
               </CardContent>
             </Card>
@@ -913,9 +913,9 @@ export default function HandbuchPage() {
                   </div>
                 </div>
                 
-                <div className="bg-red-50 p-3 rounded-md border border-red-200 mt-4">
-                  <h4 className="font-medium text-red-800 mb-2">⚠️ Automatische 90-Tage-Warnung (v1.5.8):</h4>
-                  <p className="text-red-700">Die Software warnt Sie automatisch 90 Tage vor Ablauf mit Status-Ampel: <strong>Grün</strong> (aktiv), <strong>Gelb</strong> (läuft bald ab), <strong>Rot</strong> (abgelaufen). Live-Statistiken zeigen Ihnen sofort, welche Lizenzen Aufmerksamkeit benötigen.</p>
+                <div className="bg-red-50 dark:bg-red-900/30 p-3 rounded-md border border-red-200 dark:border-red-700 mt-4">
+                  <h4 className="font-medium text-red-800 dark:text-red-100 mb-2">⚠️ Automatische 90-Tage-Warnung (v1.5.8):</h4>
+                  <p className="text-red-700 dark:text-red-200">Die Software warnt Sie automatisch 90 Tage vor Ablauf mit Status-Ampel: <strong>Grün</strong> (aktiv), <strong>Gelb</strong> (läuft bald ab), <strong>Rot</strong> (abgelaufen). Live-Statistiken zeigen Ihnen sofort, welche Lizenzen Aufmerksamkeit benötigen.</p>
                 </div>
               </CardContent>
             </Card>
@@ -940,25 +940,25 @@ export default function HandbuchPage() {
                 </ol>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                  <div className="bg-red-50 p-3 rounded-md">
-                    <h5 className="font-medium text-red-800 mb-2">🔴 Hoch:</h5>
-                    <ul className="list-disc pl-5 text-sm text-red-700">
+                  <div className="bg-red-50 dark:bg-red-900/30 p-3 rounded-md">
+                    <h5 className="font-medium text-red-800 dark:text-red-100 mb-2">🔴 Hoch:</h5>
+                    <ul className="list-disc pl-5 text-sm text-red-700 dark:text-red-200">
                       <li>Jahreshauptversammlung</li>
                       <li>Steuererklärung</li>
                       <li>Versicherung erneuern</li>
                     </ul>
                   </div>
-                  <div className="bg-yellow-50 p-3 rounded-md">
-                    <h5 className="font-medium text-yellow-800 mb-2">🟡 Mittel:</h5>
-                    <ul className="list-disc pl-5 text-sm text-yellow-700">
+                  <div className="bg-yellow-50 dark:bg-slate-800 p-3 rounded-md">
+                    <h5 className="font-medium text-yellow-800 dark:text-slate-200 mb-2">🟡 Mittel:</h5>
+                    <ul className="list-disc pl-5 text-sm text-yellow-700 dark:text-slate-200">
                       <li>Vereinszeitung erstellen</li>
                       <li>Schießstand renovieren</li>
                       <li>Neue Mitglieder werben</li>
                     </ul>
                   </div>
-                  <div className="bg-green-50 p-3 rounded-md">
-                    <h5 className="font-medium text-green-800 mb-2">🟢 Niedrig:</h5>
-                    <ul className="list-disc pl-5 text-sm text-green-700">
+                  <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-green-800 dark:text-green-200 mb-2">🟢 Niedrig:</h5>
+                    <ul className="list-disc pl-5 text-sm text-green-700 dark:text-green-300">
                       <li>Website aktualisieren</li>
                       <li>Archiv sortieren</li>
                       <li>Vereinsausflug planen</li>
@@ -986,16 +986,16 @@ export default function HandbuchPage() {
                   <li><strong>Direkt hinspringen:</strong> Klicken Sie auf ein Ergebnis, um direkt dorthin zu gelangen</li>
                 </ol>
                 
-                <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
-                  <h4 className="font-medium text-blue-800 mb-2">🔍 Das können Sie suchen:</h4>
+                <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🔍 Das können Sie suchen:</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
+                    <ul className="list-disc pl-5 text-sm text-blue-700 dark:text-blue-300 space-y-1">
                       <li><strong>Mitglieder:</strong> "Hans Müller" oder "Müller"</li>
                       <li><strong>Aufgaben:</strong> "Jahreshauptversammlung"</li>
                       <li><strong>Beiträge:</strong> "SEPA" oder "Lastschrift"</li>
                       <li><strong>Jubiläen:</strong> "Geburtstag" oder "Ehrung"</li>
                     </ul>
-                    <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
+                    <ul className="list-disc pl-5 text-sm text-blue-700 dark:text-blue-300 space-y-1">
                       <li><strong>Lizenzen:</strong> "Sportschütze" oder "Jagdschein"</li>
                       <li><strong>Bereiche:</strong> "Dashboard" oder "Statistik"</li>
                       <li><strong>Funktionen:</strong> "Backup" oder "Export"</li>
@@ -1004,9 +1004,9 @@ export default function HandbuchPage() {
                   </div>
                 </div>
                 
-                <div className="bg-green-50 p-3 rounded-md border border-green-200 mt-4">
-                  <h4 className="font-medium text-green-800 mb-2">💡 Tipp:</h4>
-                  <p className="text-green-700">Die Suche ist sehr intelligent - sie findet auch Ergebnisse, wenn Sie sich bei der Schreibweise nicht ganz sicher sind. Probieren Sie es einfach aus!</p>
+                <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800 mt-4">
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">💡 Tipp:</h4>
+                  <p className="text-green-700 dark:text-green-300">Die Suche ist sehr intelligent - sie findet auch Ergebnisse, wenn Sie sich bei der Schreibweise nicht ganz sicher sind. Probieren Sie es einfach aus!</p>
                 </div>
               </CardContent>
             </Card>
@@ -1030,9 +1030,9 @@ export default function HandbuchPage() {
                   <li><strong>Automatischer Ablauf:</strong> Der Code läuft nach 24h automatisch ab</li>
                 </ol>
                 
-                <div className="bg-green-50 p-3 rounded-md border border-green-200 mt-4">
-                  <h4 className="font-medium text-green-800 mb-2">✅ Vorteile des Support-Systems:</h4>
-                  <ul className="list-disc pl-5 space-y-1 text-green-700">
+                <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800 mt-4">
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">✅ Vorteile des Support-Systems:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-green-700 dark:text-green-300">
                     <li><strong>Schnelle Hilfe:</strong> Support-Team kann direkt in Ihren Daten arbeiten</li>
                     <li><strong>Sicher:</strong> Code ist nur 24 Stunden gültig</li>
                     <li><strong>Kontrolliert:</strong> Sie können den Code jederzeit deaktivieren</li>
@@ -1040,9 +1040,9 @@ export default function HandbuchPage() {
                   </ul>
                 </div>
                 
-                <div className="bg-blue-50 p-3 rounded-md border border-blue-200 mt-4">
-                  <h4 className="font-medium text-blue-800 mb-2">🔒 Datenschutz & Sicherheit:</h4>
-                  <ul className="list-disc pl-5 space-y-1 text-blue-700">
+                <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🔒 Datenschutz & Sicherheit:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-blue-700 dark:text-blue-300">
                     <li><strong>DSGVO-konform:</strong> Alle Zugriffe werden protokolliert</li>
                     <li><strong>Zeitlich begrenzt:</strong> Zugang läuft automatisch nach 24h ab</li>
                     <li><strong>Jederzeit kündbar:</strong> Sie können den Code sofort deaktivieren</li>
@@ -1050,9 +1050,9 @@ export default function HandbuchPage() {
                   </ul>
                 </div>
                 
-                <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 mt-4">
-                  <h4 className="font-medium text-yellow-800 mb-2">💡 Wann sollten Sie Support anfordern?</h4>
-                  <ul className="list-disc pl-5 space-y-1 text-yellow-700">
+                <div className="bg-yellow-50 dark:bg-slate-800 p-3 rounded-md border border-yellow-200 dark:border-slate-600 mt-4">
+                  <h4 className="font-medium text-yellow-800 dark:text-slate-200 mb-2">💡 Wann sollten Sie Support anfordern?</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-yellow-700 dark:text-slate-200">
                     <li>Bei technischen Problemen mit der Software</li>
                     <li>Wenn Daten nicht korrekt angezeigt werden</li>
                     <li>Bei Fragen zur Bedienung komplexer Funktionen</li>

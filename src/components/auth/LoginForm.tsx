@@ -147,9 +147,18 @@ export function LoginForm() {
           </form>
         </CardContent>
         <CardFooter className="text-center text-sm">
-          <p className="text-muted-foreground">
-            Bei Problemen mit der Anmeldung wenden Sie sich bitte an den Administrator.
-          </p>
+          <div className="w-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <p className="text-blue-700 dark:text-blue-300">
+              Bei Problemen mit der Anmeldung oder noch kein Zugang? Kontaktieren Sie uns per E-Mail an{' '}
+              <a href="mailto:rwk-leiter-ksve@gmx.de" className="underline font-medium">
+                rwk-leiter-ksve@gmx.de
+              </a>{' '}
+              oder über unser{' '}
+              <a href="/support" className="underline font-medium">
+                Support-Formular
+              </a>.
+            </p>
+          </div>
         </CardFooter>
       </Card>
     </div>

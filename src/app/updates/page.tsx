@@ -21,7 +21,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <VersionBadge className="border-green-300 bg-green-50 text-green-700">
-              Web-Version: 1.5.9 (14.09.2025)
+              Web-Version: 1.7.1 (20.09.2025)
             </VersionBadge>
             <VersionBadge className="border-blue-300 bg-blue-50 text-blue-700">
               App-Version: 0.9.4.1 (02.09.2025)
@@ -35,8 +35,134 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 1.5.9 - Vereinsbereich UX-Verbesserungen</CardTitle>
+              <CardTitle className="text-xl">Version 1.7.1 - Mobile UX Revolution</CardTitle>
               <Badge variant="default" className="bg-green-600">Aktuell</Badge>
+            </div>
+            <CardDescription>20.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständige Mobile-Optimierung aller KM-Bereiche mit responsiven Card-Layouts, mobile-freundliche Button-Anordnung und verbesserte Sichtbarkeit von Formularen und Aktions-Buttons.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">📱 Mobile UX Revolution v1.7.1</h4>
+              <div className="text-xs text-green-700">
+                Responsive Design und optimierte mobile Bedienung
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📱 <strong>KM-Bereiche Mobile-Optimierung:</strong> Alle KM-Tabellen durch responsive Card-Layouts ersetzt für bessere mobile Lesbarkeit</li>
+              <li>🔘 <strong>Button-Layout Fixes:</strong> Buttons stapeln sich vertikal auf mobilen Geräten statt horizontal gequetscht zu werden</li>
+              <li>👁️ <strong>Verbesserte Sichtbarkeit:</strong> "Neuen Schützen anlegen" Button unter Titel platziert, nicht mehr seitlich versteckt</li>
+              <li>🎨 <strong>Dark Mode Fixes:</strong> Farbige Dialog-Boxen in "Erste Schritte" Tour haben jetzt korrekte Kontraste im Dark Mode</li>
+              <li>📋 <strong>Formular-Optimierung:</strong> Mitgliederverwaltung Formulare sind prominent sichtbar mit grünen Rahmen und Labels</li>
+              <li>🗂️ <strong>Responsive Tabellen:</strong> Desktop behält Tabellen, Mobile zeigt Cards - beste UX für jedes Gerät</li>
+              <li>🎯 <strong>Navigation Updates:</strong> Burger-Menü zeigt "Dashboard" statt "Verein" für klarere Navigation</li>
+              <li>📝 <strong>Aktualisierte Inhalte:</strong> Onboarding-Tour mit aktuellen 2024/25 Saison-Informationen und realistischen Beispielen</li>
+              <li>🔄 <strong>Vereinssoftware Layout:</strong> "Zurück zum Dashboard" Button unter Titel für bessere mobile Bedienung</li>
+              <li>📊 <strong>KM-Altersklassen:</strong> Mobile Card-Layout für bessere Übersicht der Wettkampfklassen auf kleinen Bildschirmen</li>
+              <li>👥 <strong>KM-Mannschaften:</strong> Responsive Button-Anordnung und "Regeln bearbeiten" unter Titel statt daneben</li>
+              <li>🎯 <strong>Konsistente UX:</strong> Alle Bereiche folgen dem gleichen responsive Design-Prinzip für einheitliche Bedienung</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">📱 Mobile UX Revolution</span>
+                  <p className="text-xs text-green-600 mt-1">Responsive Cards & Button-Layouts</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v1.7.1
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.7.0 - Support-System & Development-Tools</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>18.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständiges Support-Code-System mit temporärem Vereinszugang, benutzerfreundliche Fehlermeldungen bei fehlendem Zugang und Development-Club mit 20 Test-Mitgliedern für Entwicklung.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🛠️ Support-System & Development-Tools v1.7.0</h4>
+              <div className="text-xs text-green-700">
+                Professionelles Support-System und Development-Umgebung
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🔑 <strong>Support-Code-System:</strong> Temporärer Vereinszugang für Support-Team mit zeitlich begrenzten Codes</li>
+              <li>🏢 <strong>Development-Club:</strong> Separater Test-Verein mit 20 Mitgliedern für sichere Entwicklung</li>
+              <li>⚠️ <strong>Benutzerfreundliche Fehlermeldungen:</strong> Klare Anweisungen bei fehlendem Zugang statt technischer Fehler</li>
+              <li>🎯 <strong>Prioritäten-System:</strong> Support-Code > Development-Club > Fehlermeldung für optimale UX</li>
+              <li>🔧 <strong>Admin-Tools:</strong> Vereinfachte Development-Setup-Tools für schnellere Entwicklung</li>
+              <li>📱 <strong>Mobile-Optimierung:</strong> Support-Dialoge funktionieren perfekt auf allen Geräten</li>
+              <li>🔒 <strong>Sicherheit:</strong> Support-Codes sind zeitlich begrenzt und automatisch ablaufend</li>
+              <li>🎮 <strong>Development-Workflow:</strong> Separate Umgebung verhindert Produktionsdaten-Konflikte</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🛠️ Support-System & Development</span>
+                  <p className="text-xs text-green-600 mt-1">Support-Codes & Test-Umgebung</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v1.7.0
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.6.0 - Rollen-System Revolution</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>15.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Komplettes 3-Tier-Rollensystem mit Platform/KV/Club-Rollen, URL-Level Security, granulare Firestore-Regeln und Multi-Verein-Support mit finalem Abschluss der Legacy-Rollen-Migration.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🔐 Rollen-System Revolution v1.6.0</h4>
+              <div className="text-xs text-green-700">
+                Professionelles 3-Tier-Rollensystem mit granularer Sicherheit
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>🏗️ <strong>3-Tier-Rollensystem:</strong> Platform-Rollen (SUPERADMIN), KV-Rollen (KM_ADMIN, KM_ORGA), Club-Rollen (SPORTLEITER, VORSTAND, etc.)</li>
+              <li>🔒 <strong>URL-Level Security:</strong> Jede Route prüft spezifische Berechtigungen, keine unautorisierten Zugriffe mehr</li>
+              <li>🛡️ <strong>Granulare Firestore-Regeln:</strong> Datenbank-Level Sicherheit mit rollen-spezifischen Zugriffskontrollen</li>
+              <li>🏢 <strong>Multi-Verein-Support:</strong> Ein Benutzer kann mehrere Vereine gleichzeitig verwalten</li>
+              <li>📋 <strong>Lizenz-Management:</strong> Vereinssoftware-Lizenzen pro Verein mit automatischer Zugriffskontrolle</li>
+              <li>🔄 <strong>Legacy-Migration abgeschlossen:</strong> Alle alten "vereinsvertreter" und "vereinsvorstand" Rollen migriert</li>
+              <li>⚡ <strong>Performance-Optimierung:</strong> Effiziente Rollen-Abfragen mit Caching</li>
+              <li>🎯 <strong>Benutzerfreundlich:</strong> Automatische Weiterleitung basierend auf Berechtigungen</li>
+              <li>📊 <strong>Admin-Dashboard:</strong> Vollständige Rollen-Verwaltung für Administratoren</li>
+              <li>🔧 <strong>Development-Tools:</strong> Rollen-Debugging und Berechtigungs-Analyse</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🔐 Rollen-System Revolution</span>
+                  <p className="text-xs text-green-600 mt-1">3-Tier-System & Security</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v1.6.0
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.5.9 - Vereinsbereich UX-Verbesserungen</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>14.09.2025</CardDescription>
           </CardHeader>
@@ -298,611 +424,24 @@ export default function UpdatesPage() {
           </CardContent>
         </Card>
         
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.12.2 - Mobile Navigation & Code Quality</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>03.09.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Mobile Navigation Revolution: Burger-Menü mit Safe Area Support, mobile-optimierte Tabellen, Dark Mode Button-Fixes und wiederverwendbare Komponenten für bessere Code-Qualität.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🍔 Mobile Navigation Revolution v0.12.2</h4>
-              <div className="text-xs text-green-700">
-                Burger-Menü, Safe Areas und mobile Tabellen für perfekte App-Erfahrung
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>🍔 <strong>Burger-Menü mit Safe Area:</strong> Alle Menüpunkte erreichbar, respektiert Android-Navigationsleiste, slide-in Animation</li>
-              <li>📱 <strong>Mobile-optimierte Tabellen:</strong> Card-Layout auf kleinen Bildschirmen, Labels für bessere Übersicht, versteckte Spalten</li>
-              <li>🌌 <strong>Dark Mode Button-Fix:</strong> Lesbare Buttons mit dunklem Text auf hellem Grün, keine grün-auf-grün Probleme mehr</li>
-              <li>📱 <strong>Dialog-Positionierung:</strong> Mobile Dialoge bleiben im Viewport, keine abgeschnittenen Fenster mehr</li>
-              <li>⬅️ <strong>Zurück-Buttons:</strong> Universelle BackButton-Komponente für alle Login-Bereiche mit Fallback-Navigation</li>
-              <li>📱 <strong>Safe Area Management:</strong> Status- und Navigationsleisten werden korrekt respektiert, 72px Fallback für ältere Geräte</li>
-              <li>🔄 <strong>Wiederverwendbare Komponenten:</strong> VersionBadge-Komponenten für bessere Code-Qualität und Wartbarkeit</li>
-              <li>📱 <strong>Mobile-First Dropdowns:</strong> Select-Komponenten optimiert für Touch-Bedienung, keine Positionierungsprobleme</li>
-              <li>📋 <strong>Dashboard Layout-Fixes:</strong> Badge-Überlauf behoben, Button-Text passt in Rahmen, responsive Card-Layouts</li>
-              <li>🔗 <strong>Navigation-Fix:</strong> Verein-Button führt zu Dashboard-Auswahl statt 404-Fehler</li>
-              <li>📝 <strong>README Bereinigung:</strong> Installation/Entwickler-Sektionen entfernt (interne App)</li>
-              <li>⚙️ <strong>Code-Qualität:</strong> Gemini-Vorschläge umgesetzt, sauberer und wartbarer Code</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🍔 Mobile Navigation</span>
-                  <p className="text-xs text-green-600 mt-1">Burger-Menü & Safe Areas</p>
-                </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.12.2
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
         
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.12.1 - Mobile UX & Performance Revolution</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>02.09.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Komplette Mobile-Optimierung mit nativen App-Features: Voice Input, Pull-to-Refresh, Micro-Animations und Enhanced Dark Mode für professionelle Benutzererfahrung.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">📱 Mobile-First Revolution v0.12.1</h4>
-              <div className="text-xs text-green-700">
-                Native App-Gefühl mit Voice Input, Gesten und Micro-Animations
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>📱 <strong>Responsive Dialog System:</strong> Mobile Fullscreen, Tablet angepasst, Desktop optimiert - Speichern-Button nie mehr versteckt</li>
-              <li>🛡️ <strong>Safe Area Management:</strong> Perfekte Statusleisten-Integration, keine Überlappungen mehr auf allen Geräten</li>
-              <li>🎤 <strong>Voice Input für Ergebnisse:</strong> "185 Ringe" sprechen statt tippen - Deutsche Zahlenerkennung mit Browser Web Speech API</li>
-              <li>⚡ <strong>Pull-to-Refresh:</strong> Native Mobile-Geste wie Instagram - Nach unten ziehen zum Aktualisieren</li>
-              <li>💀 <strong>Skeleton Loading:</strong> Animierte Platzhalter statt Spinner für bessere Ladewahrnehmung</li>
-              <li>📊 <strong>Lazy Loading Tabellen:</strong> Nur sichtbare Daten laden - Performance-Boost bei großen Listen</li>
-              <li>🔄 <strong>Optimistic Updates:</strong> Sofortige UI-Reaktionen - App fühlt sich schneller an</li>
-              <li>🎨 <strong>Micro-Animations:</strong> Hover-Effekte, Button-Feedback, Stagger-Animationen für professionelles Gefühl</li>
-              <li>🌙 <strong>Enhanced Dark Mode:</strong> Verbesserte Farbpalette, Glow-Effekte, bessere Schatten und Kontraste</li>
-              <li>🤖 <strong>Android-Optimierungen:</strong> 48px Touch-Targets, Ripple-Effekte, Keyboard-Fixes, Hardware-Beschleunigung</li>
-              <li>🏗️ <strong>Mobile Layout System:</strong> Komplette Architektur für alle Bildschirmgrößen mit automatischer Geräteerkennung</li>
-              <li>⚡ <strong>Performance:</strong> Alle Features kostenlos mit Browser-APIs - keine externen Abhängigkeiten</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">📱 Mobile UX Revolution</span>
-                  <p className="text-xs text-green-600 mt-1">Voice Input, Gesten & Animations</p>
-                </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.12.1
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
         
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.12.0 - RWK-Tabellen & Admin-Teams Optimierung</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>02.09.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Große Verbesserungen der Filterlogik: Ein Dropdown statt zwei separate, bessere Priorisierung von "Laufend" Saisons und Behebung des 20-Teams-Limits.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🎯 Filter-Optimierung v0.12.0</h4>
-              <div className="text-xs text-green-700">
-                Intelligente Wettkampfauswahl und vollständige Mannschaftsanzeige
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>🎯 <strong>Ein Dropdown statt zwei:</strong> RWK-Tabellen zeigen nur gültige Jahr+Disziplin-Kombinationen ("2025 Kleinkaliber", "2026 Luftdruck")</li>
-              <li>🚫 <strong>Keine ungültigen Kombinationen:</strong> Verhindert "2026 Kleinkaliber" oder "2025 Luftdruck" - nur echte Datenbank-Einträge</li>
-              <li>⭐ <strong>"Laufend" priorisiert:</strong> Aktuelle Saisons werden vor "Abgeschlossenen" angezeigt und als Standard gewählt</li>
-              <li>🔍 <strong>Korrekte Firestore-Abfragen:</strong> Verwendet richtige firestoreTypes (LG → ['LG', 'LGA', 'LP', 'LPA', 'LD']) für vollständige Ergebnisse</li>
-              <li>👥 <strong>20-Teams-Limit behoben:</strong> Admin-Teams zeigt jetzt alle 35+ Mannschaften statt nur 20 durch entferntes TEAMS_PER_PAGE-Limit</li>
-              <li>🔄 <strong>Sofortiges Laden:</strong> Wettkampfwechsel lädt Daten sofort ohne Endlosschleifen durch korrigierte useEffect Dependencies</li>
-              <li>📊 <strong>Bessere Performance:</strong> Optimierte Abfragen mit korrekten Composite Indexes für schnellere Ladezeiten</li>
-              <li>🎮 <strong>Verbesserte UX:</strong> Dropdown-Auswahl führt zu sofortiger Titel- und Inhalts-Änderung ohne Verzögerung</li>
-              <li>🔧 <strong>Code-Bereinigung:</strong> Entfernte doppelte Filter-Logik und vereinfachte Handler-Funktionen</li>
-              <li>✅ <strong>Konsistente Daten:</strong> Alle Mannschaften werden korrekt geladen und angezeigt ohne Paginierung-Probleme</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🎯 Filter-Optimierung</span>
-                  <p className="text-xs text-green-600 mt-1">Ein Dropdown & 20-Teams-Limit Fix</p>
-                </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.12.0
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
         
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.9 - FAQ-Suche für RWK-Ordnung: Intelligente Hilfe</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>02.09.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Umfassende FAQ-Suche für die RWK-Ordnung: Über 50 häufige Fragen mit intelligenter Suche, Fuzzy-Matching und Tippfehler-Toleranz.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🔍 FAQ-System v0.11.9</h4>
-              <div className="text-xs text-green-700">
-                Intelligente Hilfe für alle Fragen zur RWK-Ordnung
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>🔍 <strong>50+ FAQ-Einträge:</strong> Alle wichtigen Fragen zu RWK-Ordnung, Klasseneinteilung, Terminen und Regeln</li>
-              <li>🤖 <strong>Intelligente Suche:</strong> Findet auch bei Tippfehlern und Umlauten die richtigen Antworten</li>
-              <li>📝 <strong>Fuzzy-Matching:</strong> "schiessen" findet "schießen", "schuetze" findet "Schütze"</li>
-              <li>🔄 <strong>Synonym-Erkennung:</strong> "Liga", "Klasse", "Klasseneinteilung" - alles wird gefunden</li>
-              <li>📊 <strong>Score-basierte Sortierung:</strong> Beste Treffer zuerst, relevante Ergebnisse priorisiert</li>
-              <li>📱 <strong>Benutzerfreundlich:</strong> Suche ab 1 Zeichen, "Alle FAQs anzeigen" Button</li>
-              <li>📍 <strong>Paragraph-Referenzen:</strong> Jede Antwort mit korrekter §-Nummer der RWK-Ordnung</li>
-              <li>🎯 <strong>Zielgruppen-optimiert:</strong> Besonders für ältere und hilfbedürftige Benutzer entwickelt</li>
-              <li>💬 <strong>Natürliche Sprache:</strong> "Wann ist Luftdruck?", "Was brauche ich?", "Wer darf mitmachen?"</li>
-              <li>🔗 <strong>Integriert in RWK-Ordnung:</strong> Direkt auf /rwk-ordnung verfügbar</li>
-              <li>💰 <strong>Kostenlos:</strong> Keine externen APIs, läuft komplett auf Vercel Free Tier</li>
-              <li>⚡ <strong>Schnell:</strong> Sofortige Antworten ohne Ladezeiten</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🔍 FAQ-System</span>
-                  <p className="text-xs text-green-600 mt-1">Intelligente Hilfe & 50+ Fragen</p>
-                </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.11.9
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
+
+
         
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.8 - Zeitungsbericht-Generator: Schützen-Namen Fix</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>02.09.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Zeitungsbericht-Generator optimiert: Schützen-Namen werden jetzt korrekt aus der Datenbank geladen und Vereinsnamen-Anzeige vereinfacht.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">📰 Zeitungsbericht-Fix v0.11.8</h4>
-              <div className="text-xs text-green-700">
-                Korrekte Schützen-Namen und vereinfachte Vereinsname-Anzeige
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>👥 <strong>Schützen-Namen Fix:</strong> teamMembersWithScores wird korrekt als Fallback zu teamMembers genutzt</li>
-              <li>🏢 <strong>Vereinsname-Vereinfachung:</strong> Leere Klammern entfernt - nur noch Mannschaftsname wird angezeigt</li>
-              <li>📰 <strong>Saubere Ausgabe:</strong> "SV Dörrigsen I - 4375 Ringe (Kreisoberliga)" statt "SV Dörrigsen I () - 4375 Ringe"</li>
-              <li>🎯 <strong>Bessere Lesbarkeit:</strong> Vereinsname ist bereits im Mannschaftsnamen enthalten</li>
-              <li>🔧 <strong>Code-Optimierung:</strong> Vereinfachte Logik ohne redundante Vereinsname-Extraktion</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">📰 Zeitungsbericht-Fix</span>
-                  <p className="text-xs text-green-600 mt-1">Schützen-Namen & Vereinsname</p>
-                </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.11.8
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
         
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.7a - KM-Orga Passwort-Änderung & Startlisten-Fixes</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>19.08.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Neue Funktionalität für KM-Organisatoren: Button "Meldung für Verein erstellen" ermöglicht digitale Erfassung von Papier-Meldungen.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">📋 Papier-Meldungen digital v0.11.7</h4>
-              <div className="text-xs text-green-700">
-                Workflow für die digitale Erfassung von Papier-Meldungen optimiert
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>➕ <strong>"Meldung für Verein erstellen" Button:</strong> Neuer Dialog auf /km-orga/meldungen</li>
-              <li>🏢 <strong>Verein auswählen:</strong> Dropdown mit allen verfügbaren Vereinen</li>
-              <li>👤 <strong>Schütze auswählen:</strong> Automatische Filterung nach gewähltem Verein</li>
-              <li>🎯 <strong>Disziplinen wählen:</strong> Mehrfachauswahl mit Checkboxen für alle Disziplinen</li>
-              <li>🏆 <strong>VM-Ergebnis:</strong> Optionale Eingabe der Vereinsmeisterschafts-Ringzahl</li>
-              <li>🏅 <strong>LM-Teilnahme:</strong> Ja/Nein Checkbox für Landesmeisterschafts-Qualifikation</li>
-              <li>📝 <strong>Anmerkungen:</strong> Textfeld für besondere Wünsche und Hinweise</li>
-              <li>🔄 <strong>Automatisches Laden:</strong> Vereinsschützen werden nach Vereinsauswahl geladen</li>
-              <li>📋 <strong>Mehrfach-Meldungen:</strong> Ein Schütze kann für mehrere Disziplinen gemeldet werden</li>
-              <li>✅ <strong>Validierung:</strong> Pflichtfelder werden vor Speicherung geprüft</li>
-              <li>🏷️ <strong>Nachverfolgung:</strong> Meldungen werden als "gemeldeteVon: km-orga" markiert</li>
-              <li>⚡ <strong>Live-Update:</strong> Meldungsliste wird sofort nach Erstellung aktualisiert</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🔑 KM-Orga Passwort-Änderung</span>
-                  <p className="text-xs text-green-600 mt-1">Passwort & Startlisten-Fixes</p>
-                </div>
-                <Link href="/updates/v0.11.7a">
-                  <span className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 cursor-pointer">
-                    🚀 v0.11.7a
-                  </span>
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
         
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.6 - Startlisten-Optimierung & Mannschafts-Integration</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>16.08.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Startlisten-Generierung optimiert: Intelligente Mannschafts-Integration, papier-sparende PDFs und Duplikat-Bereinigung.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🎯 Startlisten-Optimierung v0.11.6</h4>
-              <div className="text-xs text-green-700">
-                Intelligente Mannschafts-Verteilung und papier-sparende PDF-Generierung
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>👥 <strong>Mannschafts-Integration:</strong> Automatische Erkennung von Mannschafts-Mitgliedern aus km_mannschaften</li>
-              <li>🎯 <strong>Optimale Durchgangs-Verteilung:</strong> Mannschaften zeitgleich, Einzelschützen füllen Lücken auf</li>
-              <li>⚡ <strong>Intelligente Stand-Zuweisung:</strong> Automatische Konfliktauflösung bei Stand-Zeit-Überschneidungen</li>
-              <li>📄 <strong>Papier-sparende PDFs:</strong> Mehrere Starts pro Seite mit optimiertem Layout</li>
-              <li>📅 <strong>Veranstaltungsdatum im Dateinamen:</strong> PDF-Dateien werden nach Wettkampfdatum benannt</li>
-              <li>🔧 <strong>Duplikat-Bereinigung:</strong> Verhindert doppelte Starter in der Startliste (47 = 47)</li>
-              <li>👥 <strong>Mannschaften-Verwaltung verschoben:</strong> Jetzt unter "Meldungen & Vorbereitung"</li>
-              <li>🗑️ <strong>Dezente Löschen-Funktion:</strong> Starter können per Hover-Button entfernt werden</li>
-              <li>🎯 <strong>Saubere Datenquelle:</strong> Startlisten basieren ausschließlich auf echten km_meldungen</li>
-              <li>🔄 <strong>Saison-Filter:</strong> Korrekte Filterung nach Saison für Meldungen und Mannschaften</li>
-              <li>🆔 <strong>Eindeutige IDs:</strong> Verhindert React-Warnings bei doppelten Schützen-Namen</li>
-              <li>🐛 <strong>Debug-Bereinigung:</strong> Alle Console-Logs für Produktionsversion entfernt</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🎯 Startlisten-Optimierung</span>
-                  <p className="text-xs text-green-600 mt-1">Mannschaften & Papier-sparend</p>
-                </div>
-                <Link href="/updates/v0.11.6">
-                  <span className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 cursor-pointer">
-                    🚀 v0.11.6
-                  </span>
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
         
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.5 - KM-Bereich: Mehrvereine-Support</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>14.08.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">KM-Bereich Optimierung: Mehrvereine-Support für Vereinsvertreter, optimierte Mannschafts-Generierung und Auflage-Mannschaftsregeln.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">👥 KM-Mehrvereine v0.11.5</h4>
-              <div className="text-xs text-green-700">
-                Vereinsvertreter können mehrere Vereine gleichzeitig verwalten
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>👥 <strong>Mehrvereine-Support:</strong> representedClubs Array für Vereinsvertreter mit mehreren Vereinen</li>
-              <li>🎯 <strong>KM-Übersicht Dropdown:</strong> Vereinsauswahl wenn mehrere Vereine berechtigt sind</li>
-              <li>⚙️ <strong>Optimierte Mannschafts-Generierung:</strong> Einfache Logik nach Altersklassen und VM-Ergebnis</li>
-              <li>🏆 <strong>Auflage-Mannschaftsregeln:</strong> Gemischte Teams (m+w) bei Auflage, getrennt bei Freihand</li>
-              <li>📋 <strong>KM-Meldungen verbessert:</strong> VM-Ergebnis individuell pro Schütze, LM-Teilnahme</li>
-              <li>👥 <strong>KM-Mitglieder erweitert:</strong> Suchfeld, Vereine-Dropdown, alle berechtigten Vereine</li>
-              <li>🔧 <strong>KM-Mannschaften optimiert:</strong> Vereinsgetrennte Generierung, "Fertig" statt "Abbrechen"</li>
-              <li>📊 <strong>Inline-Bearbeitung:</strong> Direkte Bearbeitung in KM-Übersicht (LM, VM-Ringe, Anmerkung)</li>
-              <li>🔍 <strong>Suchfunktion:</strong> Live-Suche in Namen für bessere Übersicht</li>
-              <li>🎯 <strong>Startlisten-Tool:</strong> Disziplin 1.41 unter Kleinkaliber, korrekte Zeitberechnung</li>
-              <li>📄 <strong>PDF-Export:</strong> Korrekte Altersklassen aus Meldungen, dynamischer Austragungsort</li>
-              <li>🐛 <strong>Bugfixes:</strong> Performance-Optimierung, korrekte Vereinsfilterung</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">👥 KM-Mehrvereine</span>
-                  <p className="text-xs text-green-600 mt-1">Vereinsvertreter & Mannschaften</p>
-                </div>
-                <Link href="/updates/v0.11.5">
-                  <span className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 cursor-pointer">
-                    🚀 v0.11.5
-                  </span>
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.4 - Meyton Shootmaster Integration</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>12.08.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Vollständige Integration mit Meyton Shootmaster: Startlisten-Export im David21-Format mit korrekten Altersklassen und individuellen Wettkampf-IDs.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🎯 Meyton Integration v0.11.4</h4>
-              <div className="text-xs text-green-700">
-                Professioneller Export für elektronische Schießanlagen
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>🎯 <strong>Meyton Export (Beta):</strong> Startlisten-Export im David21-Format für Meyton Shootmaster</li>
-              <li>🏆 <strong>Korrekte Altersklassen:</strong> Klassen-IDs aus Firebase-Datenbank (Herren I = ID 10)</li>
-              <li>⏰ <strong>Individuelle Wettkampf-IDs:</strong> Jeder Starter bekommt eigene ID basierend auf Startzeit</li>
-              <li>🎨 <strong>UTF-8 Encoding:</strong> Korrekte Darstellung von Umlauten (ü, ä, ö)</li>
-              <li>📊 <strong>Echte Daten:</strong> Geburtsjahre, Altersklassen und Disziplinen aus Firebase</li>
-              <li>🔢 <strong>Disziplin-Codes:</strong> Korrekte Meyton-Codes (10110040 für LG 40 Schuss)</li>
-              <li>🏟️ <strong>Stand-Zuordnung:</strong> Schießstände werden korrekt exportiert</li>
-              <li>⚙️ <strong>Durchgangs-Berechnung:</strong> Automatische DG-Nummer basierend auf Startzeit</li>
-              <li>💾 <strong>Datenbank-Speicherung:</strong> Meyton-Daten werden persistent gespeichert</li>
-              <li>🕐 <strong>Wechselzeit-Anzeige:</strong> Zeitplan zeigt Durchgangsdauer + Wechselzeit</li>
-              <li>🔄 <strong>Chunk-Loading Fix:</strong> Startlisten-URLs funktionieren ohne JavaScript-Fehler</li>
-              <li>📋 <strong>Meyton-Klassen Collection:</strong> Zentrale Verwaltung der Altersklassen-IDs</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🎯 Meyton Integration</span>
-                  <p className="text-xs text-green-600 mt-1">Shootmaster Export & Altersklassen</p>
-                </div>
-                <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.11.4
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.3 - Orga-Bereich gefixt und optimiert</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>11.08.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">KM-Orga Bereich vollständig überarbeitet: Startlisten-Tool, sortierbare Tabellen, VM-Ergebnisse und Zurück-Buttons.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🛠️ Orga-Optimierungen v0.11.3</h4>
-              <div className="text-xs text-green-700">
-                Komplette Überarbeitung des KM-Organisationsbereichs
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>🎯 <strong>Startlisten-Tool:</strong> Neues einheitliches Tool ersetzt alte Generieren-Seite mit verbesserter UX</li>
-              <li>📊 <strong>Sortierbare Tabellen:</strong> Alle KM-Mitglieder-Spalten sind jetzt klickbar sortierbar</li>
-              <li>🏆 <strong>VM-Ergebnisse:</strong> Vereinsmeisterschafts-Ringe werden korrekt in Mannschaften angezeigt</li>
-              <li>🔙 <strong>Navigation:</strong> Zurück-Buttons in allen KM-Orga Unterseiten hinzugefügt</li>
-              <li>🎨 <strong>Altersklassen-Fix:</strong> "Erwachsene Erwachsene" durch korrekte Berechnung ersetzt</li>
-              <li>⚙️ <strong>Gewehr-Sharing:</strong> Verbesserte Erkennung für geteilte Gewehre</li>
-              <li>📋 <strong>Startgebühren:</strong> Jahr 2026 als Standard, API-Endpunkte statt direkter Firebase-Zugriff</li>
-              <li>🔄 <strong>Chunk-Loading Fix:</strong> Alte Startlisten-URLs leiten korrekt weiter ohne Fehler</li>
-              <li>📱 <strong>Editierbare Startliste:</strong> Stand, Durchgang und Startzeit direkt bearbeitbar</li>
-              <li>🎯 <strong>KI-Analyse:</strong> Konflikterkennung und Empfehlungen für Startlisten integriert</li>
-              <li>🔐 <strong>Berechtigungen:</strong> KM-Orga Seiten verwenden sichere API-Endpunkte statt direkten Firebase-Zugriff</li>
-              <li>📅 <strong>RWK-Tabellen:</strong> Abgeschlossene Saisons (2025) werden jetzt korrekt angezeigt</li>
-              <li>🛠️ <strong>Bugfixes:</strong> Select.Item Fehler, Syntax-Fehler und Chunk-Loading Probleme behoben</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🛠️ Orga-Optimierungen</span>
-                  <p className="text-xs text-green-600 mt-1">Startlisten, Tabellen & Navigation</p>
-                </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.11.3
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.2 - Saisonwechsel & PDF-Export</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>11.01.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Vollständige Auf-/Abstiegsanalyse mit automatischen Vergleichen und professionellem PDF-Export.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🏆 Saisonwechsel-System v0.11.2</h4>
-              <div className="text-xs text-green-700">
-                Komplette Auf-/Abstiegslogik nach RWK-Ordnung mit PDF-Export
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>🏆 <strong>Auf-/Abstiegsanalyse:</strong> Vollständige Implementierung der RWK-Ordnung §16 mit automatischen Vergleichen</li>
-              <li>📊 <strong>Vergleichsberechnungen:</strong> Zweiter vs. Vorletzter höhere Liga, Vorletzter vs. Zweiter niedrigere Liga</li>
-              <li>📄 <strong>PDF-Export:</strong> Professioneller Export im Querformat mit RWK Logo und Farbkodierung</li>
-              <li>🎯 <strong>Pistole-Logik:</strong> Keine Auf-/Abstiege in offener Kleinkaliber Pistole Klasse</li>
-              <li>📉 <strong>2. Kreisklasse:</strong> Korrekte Behandlung als niedrigste Liga ohne Abstiegsmöglichkeit</li>
-              <li>🎨 <strong>Farbkodierung:</strong> Grün für Aufstieg, Rot für Abstieg in PDF-Tabellen</li>
-              <li>📋 <strong>Multi-Liga-Übersicht:</strong> Alle Ligen gleichzeitig analysieren und vergleichen</li>
-              <li>⚙️ <strong>Abmeldungen:</strong> Separate Auswahl für "nach Meldeschluss abgemeldet" und "nicht mehr gemeldet"</li>
-              <li>🔢 <strong>Ringzahlen-Anzeige:</strong> Gesamtergebnisse in Tabellen für bessere Transparenz</li>
-              <li>🖼️ <strong>Logo-Integration:</strong> RWK Einbeck Logo oben rechts in allen PDF-Exporten</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🏆 Saisonwechsel-System</span>
-                  <p className="text-xs text-green-600 mt-1">Auf-/Abstieg & PDF-Export</p>
-                </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.11.2
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.1 - Admin-Verbesserungen & PDF-Fixes</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>10.08.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Admin-Bereich optimiert: Ergebniserfassung-Filter, PDF-Exports vereinfacht, Mannschaftsführer-Übersicht korrigiert.</p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-blue-900 mb-2">🔧 Admin-Optimierungen v0.11.1</h4>
-              <div className="text-xs text-blue-700">
-                Verbesserte Benutzerführung und korrigierte Funktionen
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>🎯 <strong>Ergebniserfassung-Filter:</strong> Teams/Schützen mit vollständigen Ergebnissen werden ausgeblendet (alte Logik reaktiviert)</li>
-              <li>📄 <strong>PDF-Exports vereinfacht:</strong> Admin-Exports leitet direkt zu Urkunden weiter, funktionsfähige PDF-Buttons</li>
-              <li>👥 <strong>Mannschaftsführer korrigiert:</strong> Keine "undefined undefined" mehr, korrekte Saison-Namen</li>
-              <li>🏆 <strong>Urkunden-Button verschoben:</strong> Von System zu Saisonverwaltung für bessere Auffindbarkeit</li>
-              <li>⏰ <strong>Session-Timer verbessert:</strong> Bessere Synchronisation zwischen Timer-Anzeige und tatsächlicher Session</li>
-              <li>🔄 <strong>Vereinsvertreter-Ansicht:</strong> Mannschaftsführer in eigenen Ligen statt nur eigener Verein</li>
-              <li>🎮 <strong>Bearbeitungsmodus:</strong> Toggle für Admin-Ergebniserfassung - AUS für Filterung, AN für Bearbeitung</li>
-              <li>🏅 <strong>Urkunden-Verbesserungen:</strong> Tie-Breaking nach letztem Durchgang, Gesamtsieger-Layout optimiert, "wurde" statt "errang"</li>
-              <li>⌨️ <strong>Ergebniserfassung UX:</strong> Enter-Taste zum Hinzufügen, automatische Schützen-Auswahl beim Durchgangswechsel</li>
-              <li>🛠️ <strong>Code-Bereinigung:</strong> Entfernte nicht funktionierende PDF-Export-Logik</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-blue-800">🔧 Admin-Optimierungen</span>
-                  <p className="text-xs text-blue-600 mt-1">Filter, PDFs & Benutzerführung</p>
-                </div>
-                <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v0.11.1
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.11.0 - Große Datenbank-Migration</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>10.08.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">KM-System Vollendung: Altersklassen-Übersicht, Navigation vereinheitlicht, Logout-Timer korrigiert.</p>
-            <ul className="list-disc pl-5 space-y-1 text-sm">
-              <li>📋 <strong>Altersklassen-Übersicht:</strong> Neue Seite /km/altersklassen</li>
-              <li>🎯 <strong>Korrekte Altersklassen:</strong> Auflage (Schüler 12-14, Senioren 41+)</li>
-              <li>📊 <strong>KM-Mitglieder CRUD:</strong> Vollständige Verwaltung</li>
-              <li>🔄 <strong>Navigation vereinheitlicht:</strong> "Arbeitsbereich" statt "Dashboard"</li>
-              <li>⏰ <strong>Logout-Timer korrigiert:</strong> Timer-Reset bei Aktivität</li>
-              <li>🛠️ <strong>API-Bereinigung:</strong> km_shooters zu shooters migriert</li>
-            </ul>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 0.10.1a - Ersatzschützen & PDF-Verbesserungen</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>09.08.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Ersatzschützen-System nach RWK-Ordnung §12, PDF-Logos und Disziplin-Optimierungen.</p>
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-amber-900 mb-2">🔄 Ersatzschützen-System v0.10.1a</h4>
-              <div className="text-xs text-amber-700">
-                Vollständige Umsetzung der RWK-Ordnung §12 für Ersatzschützen
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>🔄 <strong>Ersatzschützen-Verwaltung:</strong> Admin-Seite für Ersatzschützen nach RWK-Ordnung §12</li>
-              <li>⚙️ <strong>Ersatz-Typen:</strong> Neuer Schütze oder Einzelschütze → Team mit Ergebnis-Transfer</li>
-              <li>🏆 <strong>Ersatz-Badge:</strong> "Ersatz ab DG1" wird in RWK-Tabellen angezeigt</li>
-              <li>🖼️ <strong>PDF-Logos:</strong> Logo2.png in allen PDF-Exporten oben rechts</li>
-              <li>📄 <strong>Erweiterte PDFs:</strong> Mannschafts-PDFs zeigen Schützen unter jedem Team</li>
-              <li>🎯 <strong>Disziplin-Bereinigung:</strong> "Kleinkaliber" ohne Abkürzungen, LGS = Luftgewehr Freihand</li>
-              <li>💨 <strong>Luftdruck-Kategorie:</strong> Luftgewehr + Luftpistole zusammengefasst wie Kleinkaliber</li>
-              <li>🏆 <strong>KK Pistole Ehrungen:</strong> Separate Gesamtsieger-Urkunden für KK Pistole</li>
-            </ul>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Version 0.10.1 - Schützen-Verwaltung für Vereinsvertreter</CardTitle>
-            <CardDescription>09.08.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Vollständige Schützen-Verwaltung für Vereinsvertreter mit Mannschaftszuordnung und km_shooters Synchronisation.</p>
-            <ul className="list-disc pl-5 space-y-1 text-sm">
-              <li>🎯 <strong>Schützen anlegen:</strong> Vereinsvertreter können neue Schützen erstellen</li>
-              <li>✏️ <strong>Schützen bearbeiten:</strong> Alle Daten editierbar</li>
-              <li>👥 <strong>Mannschaftszuordnung:</strong> Direkte Zuordnung zu Teams</li>
-              <li>🔄 <strong>Duale Synchronisation:</strong> shooters + km_shooters</li>
-              <li>⚖️ <strong>Regelvalidierung:</strong> Ein Schütze pro Saison/Disziplin</li>
-            </ul>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Version 0.10.0 - Projekt-Aufräumung & Code-Bereinigung</CardTitle>
-            <CardDescription>06.08.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Große Aufräumung des Projekts: Debug-Funktionen entfernt, überflüssige Dateien gelöscht, produktionsreife Version.</p>
-            <ul className="list-disc pl-5 space-y-1 text-sm">
-              <li>🗑️ Debug-Funktionen entfernt</li>
-              <li>📄 40+ MD-Dateien gelöscht</li>
-              <li>🔇 Console.log entfernt</li>
-              <li>📁 Projektstruktur bereinigt</li>
-              <li>🔧 Favicon-Problem behoben</li>
-            </ul>
-          </CardContent>
-        </Card>
+
+
         
         <Card className="shadow-sm hover:shadow-md transition-shadow md:col-span-2 lg:col-span-2">
           <CardHeader className="pb-2">
@@ -910,8 +449,14 @@ export default function UpdatesPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <Link href="/updates/v0.12" className="text-primary hover:text-primary/80 flex items-center">
+                Version 0.12.x <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+              <Link href="/updates/v0.11" className="text-primary hover:text-primary/80 flex items-center">
+                Version 0.11.x <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
               <Link href="/updates/v0.10" className="text-primary hover:text-primary/80 flex items-center">
-                Version 0.10.0 <ArrowRight className="ml-1 h-4 w-4" />
+                Version 0.10.x <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
               <Link href="/updates/v0.9" className="text-primary hover:text-primary/80 flex items-center">
                 Version 0.9.0 <ArrowRight className="ml-1 h-4 w-4" />

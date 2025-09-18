@@ -183,7 +183,7 @@ export default function HomePage() {
           {/* Kraftvolle Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent mb-4 animate-fade-in">
             <span className="block sm:hidden">RWK KSV Einbeck</span>
-            <span className="hidden sm:block">Willkommen beim Rundenwettkampf KSV Einbeck</span>
+            <span className="hidden sm:block">Willkommen beim<br />Rundenwettkampf KSV Einbeck</span>
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
@@ -194,42 +194,13 @@ export default function HomePage() {
 
       <Separator className="my-6" />
 
-      {/* Play Store Beta-Test */}
-      <div className="mb-6">
-        <Link href="/app" className="block">
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
-            <div className="flex items-center">
-              <div className="bg-white p-3 rounded-full mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
-                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                  <polyline points="14,2 14,8 20,8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                  <polyline points="10,9 9,9 8,9"/>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">🎆 Play Store Beta-Test</h2>
-                <p style={{color: 'white'}}>Werde Beta-Tester für den offiziellen Play Store Launch!</p>
-              </div>
-              <div className="text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m9 18 6-6-6-6"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </Link>
-
-      </div>
-
       {/* Feature-Cards mit modernem Design */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         {/* Letzte Ergebnis-Updates */}
         <Card className="md:col-span-2 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-background via-background to-primary/5 border-primary/20 hover:border-primary/40">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors">
+              <div className="p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
                 <ListChecks className="h-7 w-7 text-primary animate-pulse" />
               </div>
               <CardTitle className="text-2xl text-primary font-bold">Letzte Ergebnis-Updates</CardTitle>
@@ -415,6 +386,34 @@ export default function HomePage() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Play Store Beta-Test */}
+      <div className="mb-6">
+        <Link href="/app" className="block">
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
+            <div className="flex items-center">
+              <div className="bg-white p-3 rounded-full mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10,9 9,9 8,9"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">🎆 Play Store Beta-Test</h2>
+                <p style={{color: 'white'}}>Werde Beta-Tester für den offiziellen Play Store Launch!</p>
+              </div>
+              <div className="text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </Link>
       </div>
     </div>
   );

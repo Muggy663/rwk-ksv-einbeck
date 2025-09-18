@@ -300,16 +300,16 @@ export default function KMMannschaften() {
             </CardHeader>
             <CardContent>
               <div className="mb-4 space-y-3">
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button 
                     onClick={generateMannschaften}
                     disabled={isGenerating || loading}
-                    className="relative"
+                    className="relative w-full sm:w-auto"
                   >
                     {isGenerating ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Generiere Mannschaften...
+                        Generiere...
                       </>
                     ) : (
                       '🚀 Automatisch generieren'
@@ -339,8 +339,9 @@ export default function KMMannschaften() {
                         }
                       });
                     }}
+                    className="w-full sm:w-auto"
                   >
-                    ➕ Mannschaft manuell erstellen
+                    ➕ Manuell erstellen
                   </Button>
                 </div>
                 {(() => {
@@ -388,8 +389,8 @@ export default function KMMannschaften() {
 
                     return (
                       <div key={mannschaft.id} className="p-4 border rounded-lg">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+                          <div className="flex-1">
                             <h3 className="font-semibold">
                               {verein?.name || `Verein-ID: ${mannschaft.vereinId || mannschaft.clubId}`} - {disziplin?.name || 'Luftgewehr'}
                             </h3>
@@ -401,6 +402,7 @@ export default function KMMannschaften() {
                             size="sm" 
                             variant="outline"
                             onClick={() => setEditingTeam(editingTeam === mannschaft.id ? null : mannschaft.id)}
+                            className="w-full sm:w-auto"
                           >
                             {editingTeam === mannschaft.id ? 'Fertig' : 'Bearbeiten'}
                           </Button>
@@ -660,14 +662,12 @@ export default function KMMannschaften() {
           
           <Card className="mt-4">
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Mannschaftsregeln
-                <Link href="/km/mannschaftsregeln">
-                  <Button size="sm" variant="outline">⚙️ Regeln bearbeiten</Button>
-                </Link>
-              </CardTitle>
+              <CardTitle>Mannschaftsregeln</CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-2">
+              <Link href="/km/mannschaftsregeln" className="block">
+                <Button size="sm" variant="outline" className="w-full mb-3">⚙️ Regeln bearbeiten</Button>
+              </Link>
               <div className="p-3 bg-blue-50 rounded">
                 <p className="font-medium text-blue-800 mb-2">ℹ️ Aktuelle Regeln werden automatisch angewendet</p>
                 <p className="text-blue-700 text-xs">

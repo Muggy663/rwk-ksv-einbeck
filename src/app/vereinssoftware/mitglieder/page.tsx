@@ -424,135 +424,174 @@ export default function MitgliederPage() {
       {/* Suche und Aktionen */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="flex gap-4">
+          <div className="space-y-4">
             <Input
               type="text"
               placeholder="Suchen (Name, Mitgl.-Nr., E-Mail, Adresse)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
+              className="w-full"
             />
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-2 text-sm">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={showInactive}
+                    onChange={(e) => setShowInactive(e.target.checked)}
+                    className="rounded"
+                  />
+                  Ausgetretene einblenden
+                </label>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 flex-1">
+                <Button onClick={() => setEditingMember('new')} className="w-full sm:w-auto">
+                  + Neues Mitglied
+                </Button>
                 <input
-                  type="checkbox"
-                  checked={showInactive}
-                  onChange={(e) => setShowInactive(e.target.checked)}
-                  className="rounded"
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleExcelImport}
+                  accept=".csv,.txt"
+                  className="hidden"
                 />
-                Ausgetretene einblenden
-              </label>
+                <Button 
+                  onClick={() => fileInputRef.current?.click()}
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                >
+                  📊 CSV Import
+                </Button>
+                <a href="/mitglieder-import-vorlage.csv" download className="w-full sm:w-auto">
+                  <Button variant="outline" size="sm" className="w-full">
+                    📄 Vorlage
+                  </Button>
+                </a>
+              </div>
             </div>
-            <Button onClick={() => setEditingMember('new')}>
-              + Neues Mitglied
-            </Button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleExcelImport}
-              accept=".csv,.txt"
-              className="hidden"
-            />
-            <Button 
-              onClick={() => fileInputRef.current?.click()}
-              variant="outline"
-            >
-              📊 CSV Import
-            </Button>
-            <a href="/mitglieder-import-vorlage.csv" download>
-              <Button variant="outline" size="sm">
-                📄 Vorlage
-              </Button>
-            </a>
           </div>
         </CardContent>
       </Card>
 
       {/* Neues Mitglied Dialog */}
       {editingMember === 'new' && (
-        <Card className="mb-6 border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle className="text-green-800">Neues Mitglied hinzufügen</CardTitle>
+        <Card className="mb-6 border-2 border-green-300 bg-green-50 shadow-lg">
+          <CardHeader className="bg-green-100 border-b border-green-200">
+            <CardTitle className="text-green-800 text-xl">➕ Neues Mitglied hinzufügen</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input placeholder="Vorname" id="new-firstName" className="bg-white" />
-              <Input placeholder="Nachname" id="new-lastName" className="bg-white" />
-              <Input placeholder="Mitgliedsnummer" id="new-mitgliedsnummer" className="bg-white" />
-              <Input placeholder="Straße" id="new-strasse" className="bg-white" />
-              <Input placeholder="PLZ" id="new-plz" className="bg-white" />
-              <Input placeholder="Ort" id="new-ort" className="bg-white" />
-              <Input placeholder="E-Mail" type="email" id="new-email" className="bg-white" />
-              <Input placeholder="Telefon" id="new-telefon" className="bg-white" />
-              <Input placeholder="Mobil" id="new-mobil" className="bg-white" />
-              <div className="flex flex-col">
-                <label className="text-sm font-medium mb-1">Geburtstag</label>
-                <Input type="date" id="new-geburtstag" className="bg-white" />
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">Vorname *</label>
+                <Input placeholder="Vorname" id="new-firstName" className="bg-white border-green-300" />
               </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium mb-1">Geschlecht</label>
-                <select id="new-gender" className="bg-white border rounded px-3 py-2">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">Nachname *</label>
+                <Input placeholder="Nachname" id="new-lastName" className="bg-white border-green-300" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">Mitgliedsnummer</label>
+                <Input placeholder="Mitgliedsnummer" id="new-mitgliedsnummer" className="bg-white border-green-300" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">Straße</label>
+                <Input placeholder="Straße" id="new-strasse" className="bg-white border-green-300" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">PLZ</label>
+                <Input placeholder="PLZ" id="new-plz" className="bg-white border-green-300" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">Ort</label>
+                <Input placeholder="Ort" id="new-ort" className="bg-white border-green-300" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">E-Mail</label>
+                <Input placeholder="E-Mail" type="email" id="new-email" className="bg-white border-green-300" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">Telefon</label>
+                <Input placeholder="Telefon" id="new-telefon" className="bg-white border-green-300" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">Mobil</label>
+                <Input placeholder="Mobil" id="new-mobil" className="bg-white border-green-300" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">Geburtstag</label>
+                <Input type="date" id="new-geburtstag" className="bg-white border-green-300" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">Geschlecht</label>
+                <select id="new-gender" className="bg-white border border-green-300 rounded px-3 py-2 w-full">
                   <option value="male">Männlich</option>
                   <option value="female">Weiblich</option>
                 </select>
               </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium mb-1">Vereinseintritt</label>
-                <Input type="date" id="new-vereinseintritt" className="bg-white" />
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">Vereinseintritt</label>
+                <Input type="date" id="new-vereinseintritt" className="bg-white border-green-300" />
               </div>
-              <div className="flex flex-col">
-                <label className="text-sm font-medium mb-1">DSB-Eintritt</label>
-                <Input type="date" id="new-dsbeintritt" className="bg-white" />
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-green-800">DSB-Eintritt</label>
+                <Input type="date" id="new-dsbeintritt" className="bg-white border-green-300" />
               </div>
             </div>
-            <div className="flex gap-2 mt-4">
-              <Button onClick={async () => {
-                try {
-                  const firstName = document.getElementById('new-firstName').value;
-                  const lastName = document.getElementById('new-lastName').value;
-                  
-                  if (!firstName || !lastName) {
-                    alert('Vor- und Nachname sind erforderlich');
-                    return;
+            <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-green-200">
+              <Button 
+                onClick={async () => {
+                  try {
+                    const firstName = document.getElementById('new-firstName').value;
+                    const lastName = document.getElementById('new-lastName').value;
+                    
+                    if (!firstName || !lastName) {
+                      alert('Vor- und Nachname sind erforderlich');
+                      return;
+                    }
+                    
+                    const newMember = {
+                      firstName,
+                      lastName,
+                      name: `${firstName} ${lastName}`,
+                      mitgliedsnummer: document.getElementById('new-mitgliedsnummer').value || '',
+                      strasse: document.getElementById('new-strasse').value || '',
+                      plz: document.getElementById('new-plz').value || '',
+                      ort: document.getElementById('new-ort').value || '',
+                      email: document.getElementById('new-email').value || '',
+                      telefon: document.getElementById('new-telefon').value || '',
+                      mobil: document.getElementById('new-mobil').value || '',
+                      geburtstag: document.getElementById('new-geburtstag').value || '',
+                      gender: document.getElementById('new-gender').value || 'male',
+                      vereinseintritt: document.getElementById('new-vereinseintritt').value || '',
+                      dsbeintritt: document.getElementById('new-dsbeintritt').value || '',
+                      clubId: userClub.id,
+                      isActive: true,
+                      birthYear: null,
+                      alter: 0,
+                      createdAt: new Date(),
+                      updatedAt: new Date()
+                    };
+                    
+                    // Verwende club-spezifische Collection
+                    const mitgliederCollection = `clubs/${userClub.id}/mitglieder`;
+                    const docRef = await addDoc(collection(db, mitgliederCollection), newMember);
+                    setMembers(prev => [...prev, { id: docRef.id, ...newMember }]);
+                    setEditingMember(null);
+                    alert('Neues Mitglied erfolgreich hinzugefügt!');
+                  } catch (error) {
+                    console.error('Fehler:', error);
+                    alert('Fehler beim Hinzufügen des Mitglieds');
                   }
-                  
-                  const newMember = {
-                    firstName,
-                    lastName,
-                    name: `${firstName} ${lastName}`,
-                    mitgliedsnummer: document.getElementById('new-mitgliedsnummer').value || '',
-                    strasse: document.getElementById('new-strasse').value || '',
-                    plz: document.getElementById('new-plz').value || '',
-                    ort: document.getElementById('new-ort').value || '',
-                    email: document.getElementById('new-email').value || '',
-                    telefon: document.getElementById('new-telefon').value || '',
-                    mobil: document.getElementById('new-mobil').value || '',
-                    geburtstag: document.getElementById('new-geburtstag').value || '',
-                    gender: document.getElementById('new-gender').value || 'male',
-                    vereinseintritt: document.getElementById('new-vereinseintritt').value || '',
-                    dsbeintritt: document.getElementById('new-dsbeintritt').value || '',
-                    clubId: userClub.id,
-                    isActive: true,
-                    birthYear: null,
-                    alter: 0,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                  };
-                  
-                  // Verwende club-spezifische Collection
-                  const mitgliederCollection = `clubs/${userClub.id}/mitglieder`;
-                  const docRef = await addDoc(collection(db, mitgliederCollection), newMember);
-                  setMembers(prev => [...prev, { id: docRef.id, ...newMember }]);
-                  setEditingMember(null);
-                  alert('Neues Mitglied erfolgreich hinzugefügt!');
-                } catch (error) {
-                  console.error('Fehler:', error);
-                  alert('Fehler beim Hinzufügen des Mitglieds');
-                }
-              }}>
+                }}
+                className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+              >
                 ✅ Mitglied hinzufügen
               </Button>
-              <Button variant="outline" onClick={() => setEditingMember(null)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setEditingMember(null)}
+                className="w-full sm:w-auto border-green-300 text-green-700 hover:bg-green-100"
+              >
                 ❌ Abbrechen
               </Button>
             </div>

@@ -22,8 +22,9 @@ const allNavItems: NavItem[] = [
   { href: '/termine', icon: Calendar, label: 'Termine' },
   { href: '/dokumente', icon: FileText, label: 'Dateien' },
   { href: '/handbuch', icon: BookOpen, label: 'Handbuch' },
+  { href: '/fuer-vereine', icon: MessageSquare, label: 'Für Vereine' },
   { href: '/support', icon: MessageSquare, label: 'Support' },
-  { href: '/dashboard-auswahl', icon: Users, label: 'Verein', requiresAuth: true },
+  { href: '/dashboard-auswahl', icon: Users, label: 'Dashboard', requiresAuth: true },
   { href: '/login', icon: User, label: 'Login' },
 ]
 
@@ -128,7 +129,7 @@ export function MobileBurgerMenu() {
           {/* Footer with safe area */}
           <div className="p-4 border-t pb-safe-area-bottom">
             <p className="text-xs text-muted-foreground text-center">
-              RWK Einbeck App v1.7.0
+              RWK KSV Einbeck v1.7.1 Beta
             </p>
           </div>
         </div>

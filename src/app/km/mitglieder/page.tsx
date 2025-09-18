@@ -263,16 +263,15 @@ export default function KMMitglieder() {
 
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Alle KM-Schützen ({sortedSchuetzen.filter(s => !selectedClubId || (s.clubId || s.kmClubId) === selectedClubId).filter(s => !searchTerm || `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase().includes(searchTerm.toLowerCase())).length})</CardTitle>
-            <Button onClick={handleAddNew}>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Neuen Schützen anlegen
-            </Button>
-          </div>
+          <CardTitle>Alle KM-Schützen ({sortedSchuetzen.filter(s => !selectedClubId || (s.clubId || s.kmClubId) === selectedClubId).filter(s => !searchTerm || `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase().includes(searchTerm.toLowerCase())).length})</CardTitle>
+          <Button onClick={handleAddNew} className="w-full sm:w-auto mt-3">
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Neuen Schützen anlegen
+          </Button>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-gray-50">
@@ -328,13 +327,12 @@ export default function KMMitglieder() {
                     <td className="p-2">{schuetze.gender === 'male' ? 'M' : schuetze.gender === 'female' ? 'W' : '-'}</td>
                     <td className="p-2 text-xs">
                       {schuetze.birthYear && schuetze.gender ? (() => {
-                        const sportjahr = 2026; // Sportjahr KM 2026
+                        const sportjahr = 2026;
                         const age = sportjahr - schuetze.birthYear;
                         const gender = schuetze.gender;
-                        // Auflage: Schüler und Senioren-Klassen
                         if (age >= 12 && age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
-                        if (age < 41) return '-'; // 15-40 nicht teilnahmeberechtigt
-                        if (age <= 50) return 'Senioren 0'; // 41-50 gemischt
+                        if (age < 41) return '-';
+                        if (age <= 50) return 'Senioren 0';
                         if (age <= 60) return gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
                         if (age <= 65) return gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
                         if (age <= 70) return gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
@@ -345,7 +343,7 @@ export default function KMMitglieder() {
                     </td>
                     <td className="p-2 text-xs">
                       {schuetze.birthYear && schuetze.gender ? (() => {
-                        const sportjahr = 2026; // Sportjahr KM 2026
+                        const sportjahr = 2026;
                         const age = sportjahr - schuetze.birthYear;
                         const gender = schuetze.gender;
                         if (age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
@@ -396,6 +394,116 @@ export default function KMMitglieder() {
                 ))}
               </tbody>
             </table>
+          </div>
+          
+          {/* Mobile Cards */}
+          <div className="lg:hidden space-y-3">
+            {sortedSchuetzen
+              .filter(schuetze => !selectedClubId || (schuetze.clubId || schuetze.kmClubId) === selectedClubId)
+              .filter(schuetze => {
+                if (!searchTerm) return true;
+                const fullName = `${schuetze.firstName || ''} ${schuetze.lastName || ''}`.toLowerCase();
+                return fullName.includes(searchTerm.toLowerCase());
+              })
+              .map(schuetze => {
+                const clubId = schuetze.clubId || schuetze.kmClubId;
+                const club = clubs.find(c => c.id === clubId);
+                
+                return (
+                  <div key={schuetze.id} className="border rounded-lg p-4 bg-white">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="font-medium text-lg">
+                          {schuetze.firstName} {schuetze.lastName}
+                        </div>
+                        <div className="text-sm text-gray-600">{club?.name || 'Unbekannt'}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(schuetze)}>
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="destructive">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Schütze löschen?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Möchten Sie {schuetze.firstName} {schuetze.lastName} wirklich löschen?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(schuetze)}>
+                                Löschen
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                      <div>
+                        <span className="text-gray-500">Geburtsjahr:</span>
+                        <span className="ml-1 font-medium">{schuetze.birthYear || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Geschlecht:</span>
+                        <span className="ml-1 font-medium">{schuetze.gender === 'male' ? 'Männlich' : schuetze.gender === 'female' ? 'Weiblich' : '-'}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs space-y-1 mb-3">
+                      <div>
+                        <span className="text-gray-500">AK Auflage:</span>
+                        <span className="ml-1 font-medium">
+                          {schuetze.birthYear && schuetze.gender ? (() => {
+                            const age = 2026 - schuetze.birthYear;
+                            const gender = schuetze.gender;
+                            if (age >= 12 && age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
+                            if (age < 41) return '-';
+                            if (age <= 50) return 'Senioren 0';
+                            if (age <= 60) return gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
+                            if (age <= 65) return gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
+                            if (age <= 70) return gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
+                            if (age <= 75) return gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
+                            if (age <= 80) return gender === 'male' ? 'Senioren V m' : 'Seniorinnen V';
+                            return gender === 'male' ? 'Senioren VI m' : 'Seniorinnen VI';
+                          })() : '-'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">AK Freihand:</span>
+                        <span className="ml-1 font-medium">
+                          {schuetze.birthYear && schuetze.gender ? (() => {
+                            const age = 2026 - schuetze.birthYear;
+                            const gender = schuetze.gender;
+                            if (age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
+                            if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
+                            if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+                            if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+                            if (age <= 40) return gender === 'male' ? 'Herren I' : 'Damen I';
+                            if (age <= 50) return gender === 'male' ? 'Herren II' : 'Damen II';
+                            if (age <= 60) return gender === 'male' ? 'Herren III' : 'Damen III';
+                            if (age <= 70) return gender === 'male' ? 'Herren IV' : 'Damen IV';
+                            return gender === 'male' ? 'Herren V' : 'Damen V';
+                          })() : '-'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                        Aktiv
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
 
 

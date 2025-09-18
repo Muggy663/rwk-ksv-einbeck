@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { HelpCircle, Send, Loader2, Upload, CheckCircle, Trash2 } from 'lucide-react';
+import { HelpCircle, Send, Loader2, Upload, CheckCircle, Trash2, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { BackButton } from '@/components/ui/back-button';
 import { useToast } from '@/hooks/use-toast';
@@ -375,6 +376,31 @@ export default function SupportPage() {
           </CardContent>
         </Card>
       )}
+      {/* Marketing Link */}
+      <Card className="shadow-lg max-w-2xl mx-auto bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
+        <CardHeader>
+          <CardTitle className="text-2xl text-primary flex items-center gap-2">
+            <HelpCircle className="h-6 w-6" />
+            Für neue Vereine
+          </CardTitle>
+          <CardDescription>
+            Entdecken Sie, wie die RWK KSV Einbeck App Ihren Verein digitalisieren kann
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            Sind Sie Vereinsvorstand oder Schießsportleiter und möchten Ihren Verein modernisieren? 
+            Erfahren Sie mehr über unsere umfassende Lösung für Wettkampf-Management und Vereinssoftware.
+          </p>
+          <Button asChild className="w-full">
+            <Link href="/fuer-vereine">
+              Mehr erfahren - Für Vereine
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Konto-Löschung Sektion */}
       <Card className="shadow-lg max-w-2xl mx-auto border-destructive/20">
         <CardHeader>

@@ -82,18 +82,18 @@ export function InteractiveGuide({ steps, onComplete, onSkip }: InteractiveGuide
             <p className="text-sm leading-relaxed">{step.description}</p>
             
             {step.example && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-sm font-medium text-blue-800 mb-1">💡 Beispiel:</p>
-                <p className="text-sm text-blue-700">{step.example}</p>
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">💡 Beispiel:</p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">{step.example}</p>
               </div>
             )}
             
             {step.tips && step.tips.length > 0 && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <p className="text-sm font-medium text-green-800 mb-2">✨ Tipps:</p>
+              <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">✨ Tipps:</p>
                 <ul className="space-y-1">
                   {step.tips.map((tip, index) => (
-                    <li key={index} className="text-sm text-green-700 flex items-start">
+                    <li key={index} className="text-sm text-green-700 dark:text-green-300 flex items-start">
                       <span className="mr-2">•</span>
                       <span>{tip}</span>
                     </li>

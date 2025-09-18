@@ -7,21 +7,24 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
 
 export function GlobalSearch() {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
+    if (!user) return;
     if (searchTerm.length >= 2) {
       performSearch();
     } else {
       setSearchResults([]);
       setShowResults(false);
     }
-  }, [searchTerm]);
+  }, [searchTerm, user]);
 
   const performSearch = async () => {
     setIsSearching(true);
@@ -192,6 +195,26 @@ export function GlobalSearch() {
     setShowResults(true);
     setIsSearching(false);
   };
+  
+  // Wenn nicht eingeloggt, zeige vereinfachte Suche nur für Tabellen
+  if (!user) {
+    return (
+      <div className="relative">
+        <Input
+          type="text"
+          placeholder="🔍 Suche in RWK-Tabellen..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full h-10 text-base min-w-0"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && searchTerm.trim()) {
+              window.location.href = `/rwk-tabellen?search=${encodeURIComponent(searchTerm.trim())}`;
+            }
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="relative">

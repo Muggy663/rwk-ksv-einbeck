@@ -6,18 +6,13 @@ import { AuthProvider } from '@/components/auth/AuthProvider';
 import { ClubProvider } from '@/contexts/ClubContext';
 import { Toaster } from '@/components/ui/toaster';
 import Script from 'next/script';
-import { MainNav } from '@/components/layout/MainNav';
 import { SiteFooter } from '@/components/layout/SiteFooter';
-import { MobileLayout, MobileHeader, MobileContent } from '@/components/layout/MobileLayout';
-import { MobileBurgerMenu } from '@/components/mobile/MobileBurgerMenu';
+import { Header } from '@/components/layout/Header';
+import { Sidebar } from '@/components/layout/Sidebar';
 import { AndroidLayoutFix } from '@/components/mobile/AndroidLayoutFix';
-import Link from 'next/link';
-import Image from 'next/image';
 import { Metadata } from 'next';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { ThemeProvider } from '@/components/ThemeProvider';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { GlobalSearch } from '@/components/GlobalSearch';
 import { SkipLink } from '@/components/ui/skip-link';
 
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
@@ -31,7 +26,7 @@ import { AppVersionChecker } from '@/components/AppVersionChecker';
 // const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'RWK App Einbeck',
+  title: 'RWK KSV Einbeck - Live Tabellen & Wettkampf-Management',
   description: 'Die digitale Plattform für die Rundenwettkämpfe des Kreisschützenverbandes Einbeck',
   manifest: '/manifest.json',
   appleWebApp: {
@@ -75,57 +70,33 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <NativeAppProvider>
         <AuthProvider>
           <ClubProvider>
-            <MobileLayout>
+            <div className="flex h-screen">
               <SkipLink targetId="main-content" />
               
-              <MobileHeader>
-                <Link href="/" className="flex items-center space-x-2">
-                  <Image 
-                    src="/images/logo.png" 
-                    alt="KSV Einbeck Logo Klein" 
-                    width={40} 
-                    height={40}
-                    className="rounded-md"
-                    style={{ width: 40, height: 40 }}
-                    data-ai-hint="club logo"
-                  />
-                  <span className="hidden font-bold sm:inline-block text-lg text-foreground">RWK Einbeck</span>
-                </Link>
-                
-                <div className="flex-1 max-w-md mx-4 hidden md:block">
-                  <div className="global-search-container">
-                    <GlobalSearch />
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <ThemeToggle />
-                  <div className="hidden md:block">
-                    <MainNav />
-                  </div>
-                  <div className="md:hidden">
-                    <MobileBurgerMenu />
-                  </div>
-                </div>
-              </MobileHeader>
+              {/* Sidebar nur auf Desktop */}
+              <div className="hidden lg:block">
+                <Sidebar />
+              </div>
               
-              <MobileContent>
-                <div className="container">
-                  <AppUpdateChecker />
+              <div className="flex-1 flex flex-col">
+                <Header />
+                
+                <div className="flex-1 overflow-auto">
+                  <div className="container py-6">
+                    <AppUpdateChecker />
+                  </div>
+                  <main id="main-content" tabIndex={-1} className="focus:outline-none">
+                    {children}
+                  </main>
+                  <SiteFooter />
                 </div>
-                <main id="main-content" tabIndex={-1} className="focus:outline-none">
-                  {children}
-                </main>
-                <SiteFooter />
-              </MobileContent>
-              
-
+              </div>
               
               <AndroidLayoutFix />
               <Toaster />
               <ServiceWorkerRegistration />
               <OfflineIndicator />
-            </MobileLayout>
+            </div>
           </ClubProvider>
         </AuthProvider>
         </NativeAppProvider>

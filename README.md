@@ -4,7 +4,7 @@
 
 Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
-[![Version](https://img.shields.io/badge/Version-1.7.0-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-1.7.1-blue?style=for-the-badge)](#)
 [![Android App](https://img.shields.io/badge/Android_App-0.9.4.1-success?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -251,6 +251,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
+- **Web-Version 1.7.1** - Mobile UX Revolution: Vollständige Mobile-Optimierung aller KM-Bereiche mit responsiven Card-Layouts statt Tabellen, mobile-freundliche Button-Anordnung (vertikal statt horizontal), verbesserte Sichtbarkeit von Formularen und Aktions-Buttons, Dark Mode Fixes für farbige Dialog-Boxen, aktualisierte Onboarding-Inhalte mit 2024/25 Saison-Bezug, optimierte Navigation im Burger-Menü ("Dashboard" statt "Verein")
 - **Web-Version 1.7.0** - Support-System & Development-Tools: Vollständiges Support-Code-System mit temporärem Vereinszugang, benutzerfreundliche Fehlermeldungen bei fehlendem Zugang, Development-Club mit 20 Test-Mitgliedern für Entwicklung, Prioritäten-System (Support-Code > Development-Club > Fehlermeldung), Admin-Tools für Development-Setup
 - **Web-Version 1.6.0** - Rollen-System Revolution: 3-Tier-Rollensystem mit Platform/KV/Club-Rollen, URL-Level Security, granulare Firestore-Regeln, Multi-Verein-Support, Lizenz-Management, finale Migration aller Legacy-Rollen abgeschlossen
 - **Web-Version 1.5.9** - Vereinsbereich UX-Verbesserungen: Aufklappbare Mannschaftsdetails in der Übersicht mit Schützen-Anzeige, bereits ausgewählte Schützen im Dialog sichtbar mit direkter Entfernungsmöglichkeit, konsistente UX zwischen Admin- und Vereinsbereich

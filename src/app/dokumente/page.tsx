@@ -242,7 +242,7 @@ export default function DokumentePage() {
                     <Card className="border-2 border-primary/20 hover:border-primary/40 transition-colors">
                       <CardContent className="p-6">
                         <div className="flex items-center gap-4">
-                          <div className="p-3 bg-primary/10 rounded-lg">
+                          <div className="p-3 bg-muted rounded-lg">
                             <FileText className="h-8 w-8 text-primary" />
                           </div>
                           <div className="flex-1">
@@ -262,7 +262,7 @@ export default function DokumentePage() {
                     <Card className="border-2 border-primary/20 hover:border-primary/40 transition-colors">
                       <CardContent className="p-6">
                         <div className="flex items-center gap-4">
-                          <div className="p-3 bg-primary/10 rounded-lg">
+                          <div className="p-3 bg-muted rounded-lg">
                             <BarChart3 className="h-8 w-8 text-primary" />
                           </div>
                           <div className="flex-1">
@@ -307,10 +307,10 @@ export default function DokumentePage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 flex items-start">
-                      <Filter className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+                    <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-md p-3 flex items-start">
+                      <Filter className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2 mt-0.5" />
                       <div>
-                        <p className="text-sm text-blue-800">
+                        <p className="text-sm text-blue-800 dark:text-blue-200">
                           Zeige Ligalisten & Handtabellen für <span className="font-medium">{selectedYear}</span>
                         </p>
                       </div>
@@ -356,11 +356,11 @@ export default function DokumentePage() {
           </p>
           
           {!user && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md flex items-start">
-              <LogIn className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-md flex items-start">
+              <LogIn className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2 mt-0.5" />
               <div>
-                <p className="font-medium text-blue-800">Eingeschränkte Dokumente & Datenschutz</p>
-                <p className="text-sm text-blue-700">
+                <p className="font-medium text-blue-800 dark:text-blue-200">Eingeschränkte Dokumente & Datenschutz</p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
                   Einige Dokumente sind nur für angemeldete Vereinsvertreter sichtbar. In den öffentlichen Handzettel-Generatoren werden keine sensiblen Kontaktdaten der Mannschaftsführer angezeigt.
                   <Link href="/login" className="ml-1 text-primary hover:underline">Jetzt anmelden</Link>
                 </p>

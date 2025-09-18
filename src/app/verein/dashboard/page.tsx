@@ -19,74 +19,74 @@ export default function VereinDashboardPage() {
   const onboardingSteps = [
     {
       id: 'welcome',
-      title: 'Willkommen im Vereinsbereich! 🎯',
-      description: 'Hier verwalten Sie alles rund um Ihren Verein: Mannschaften erstellen, Schützen hinzufügen und Wettkampfergebnisse eintragen.',
+      title: 'Willkommen im RWK-Dashboard! 🎯',
+      description: 'Hier verwalten Sie alles für Ihren Verein: Mannschaften erstellen, Schützen hinzufügen und Wettkampfergebnisse eintragen. Das System ist vollständig funktional und wird aktiv genutzt.',
       icon: <Sparkles className="h-6 w-6 text-purple-600" />,
-      example: 'Sie sehen 6 Karten mit verschiedenen Funktionen - jede hat eine andere Farbe und Bedeutung.',
+      example: 'Sie sehen 8 Funktionsbereiche - von Mannschaften bis Passwort-Änderung. Jeder Bereich hat eine eigene Farbe.',
       tips: [
-        'Grüne und blaue Karten sind am wichtigsten',
-        'Graue Karten sind noch nicht verfügbar',
-        'Jede Karte zeigt, was Sie dort machen können'
+        'Grüne und blaue Bereiche sind die wichtigsten für den Start',
+        'Orange für Ergebnisse - das machen Sie nach jedem Wettkampf',
+        'Alle Funktionen sind sofort verfügbar und einsatzbereit'
       ]
     },
     {
       id: 'teams',
       title: 'Mannschaften - Ihr Team aufstellen 👥',
-      description: 'Hier erstellen Sie Mannschaften für verschiedene Disziplinen. Jede Mannschaft kann bis zu 3 Schützen haben.',
+      description: 'Erstellen Sie Mannschaften für verschiedene Disziplinen. Pro Mannschaft können bis zu 3 Schützen antreten. Das System unterstützt Kleinkaliber, Luftgewehr und Luftpistole.',
       icon: <Users className="h-6 w-6 text-green-600" />,
-      example: 'Erstellen Sie "SV Musterverein I" für Kleinkaliber und "SV Musterverein II" für eine zweite Mannschaft.',
+      example: 'Erstellen Sie "SV Musterverein I" für die 1. Kreisklasse KK und "SV Musterverein II" für die 2. Kreisklasse.',
       tips: [
-        'Benennung: "Vereinsname I", "Vereinsname II", etc.',
-        'Der Admin muss Ihre Mannschaft einer Liga zuweisen',
-        'Für Einzelschützen: "Vereinsname Einzel" verwenden'
+        'Benennung: "Vereinsname I", "Vereinsname II" - das ist Standard',
+        'Der RWK-Leiter weist Ihre Mannschaft der passenden Liga zu',
+        'Bei weniger als 3 Schützen: Einzelstarter-Mannschaft erstellen'
       ]
     },
     {
       id: 'shooters',
       title: 'Schützen - Ihre Vereinsmitglieder 🎯',
-      description: 'Fügen Sie alle Schützen Ihres Vereins hinzu. Sie brauchen mindestens Vor- und Nachname sowie das Geschlecht.',
+      description: 'Fügen Sie alle aktiven Schützen hinzu. Mindestens Vor- und Nachname sowie Geschlecht sind erforderlich. Das System berechnet automatisch Altersklassen.',
       icon: <Target className="h-6 w-6 text-blue-600" />,
-      example: 'Max Mustermann, männlich - dann können Sie ihn einer Mannschaft zuweisen.',
+      example: 'Max Mustermann, männlich, Jahrgang 1985 - wird automatisch als "Herren" eingestuft.',
       tips: [
         'Ein Schütze kann pro Saison nur in einer Mannschaft stehen',
-        'Bei weniger als 3 Schützen: "Einzel"-Mannschaft erstellen',
-        'Schützen werden automatisch alphabetisch sortiert'
+        'Geburtsjahr eingeben für korrekte Altersklassen-Zuordnung',
+        'Schützen können später zwischen Mannschaften gewechselt werden'
       ]
     },
     {
       id: 'results',
       title: 'Ergebnisse - Wettkampf eintragen 🏆',
-      description: 'Nach jedem Wettkampf tragen Sie hier die Schießergebnisse ein. Das System prüft automatisch die Gültigkeit.',
+      description: 'Nach jedem Wettkampf tragen Sie die Schießergebnisse ein. Das System validiert automatisch und berechnet Tabellen live. Alle Vereine nutzen diese Funktion aktiv.',
       icon: <Trophy className="h-6 w-6 text-orange-600" />,
-      example: 'Saison wählen → Liga wählen → Durchgang 1 → Mannschaft → Schütze → 285 Ringe eingeben.',
+      example: 'Saison 2024/25 → 1. Kreisklasse KK → 1. Durchgang → Ihre Mannschaft → Schütze auswählen → 285 Ringe.',
       tips: [
-        'Kleinkaliber: max. 300 Ringe, Luftgewehr: max. 400 Ringe',
-        'Sie können auch Ergebnisse für Gegner eintragen',
-        'Sammeln Sie mehrere Ergebnisse, bevor Sie speichern'
+        'KK: max. 300 Ringe, LG: max. 400 Ringe, LP: max. 300 Ringe',
+        'Sie können auch Ergebnisse der Gegner-Mannschaften eintragen',
+        'Ergebnisse werden sofort in den Live-Tabellen sichtbar'
       ]
     },
     {
-      id: 'password',
-      title: 'Sicherheit - Passwort schützen 🔐',
-      description: 'Ändern Sie regelmäßig Ihr Passwort, um die Vereinsdaten zu schützen.',
+      id: 'handtabellen',
+      title: 'Handtabellen - Wettkampf-Dokumente 📄',
+      description: 'Erstellen Sie professionelle Durchgangs-Meldebögen und Ergebnislisten. Diese Funktion wird von vielen Vereinen für offizielle Wettkämpfe genutzt.',
+      icon: <FileText className="h-6 w-6 text-indigo-600" />,
+      example: 'Generieren Sie einen Meldebogen für den 3. Durchgang mit allen Mannschaften Ihrer Liga.',
+      tips: [
+        'PDFs können direkt ausgedruckt oder per E-Mail versendet werden',
+        'Alle aktuellen Ergebnisse werden automatisch eingetragen',
+        'Ideal für Wettkampfleiter und Schriftführer'
+      ]
+    },
+    {
+      id: 'security',
+      title: 'Sicherheit & Verwaltung 🔐',
+      description: 'Halten Sie Ihr Passwort sicher und nutzen Sie die Terminverwaltung. Bei Fragen steht der Support zur Verfügung.',
       icon: <Shield className="h-6 w-6 text-red-600" />,
-      example: 'Mindestens 8 Zeichen mit Groß-/Kleinbuchstaben und Zahlen verwenden.',
+      example: 'Passwort alle 3-6 Monate ändern und Wettkampftermine im Kalender prüfen.',
       tips: [
-        'Passwort regelmäßig ändern',
-        'Niemals das Passwort weitergeben',
-        'Bei Problemen: rwk-leiter-ksve@gmx.de kontaktieren'
-      ]
-    },
-    {
-      id: 'help',
-      title: 'Hilfe & weitere Funktionen 💡',
-      description: 'Termine zeigen Wettkampfdaten, das Handbuch erklärt alles detailliert, und bei Problemen erstellen Sie ein Support-Ticket.',
-      icon: <HelpCircle className="h-6 w-6 text-purple-600" />,
-      example: 'Nächster Wettkampf am 15.07. um 14:00 Uhr - steht im Terminkalender.',
-      tips: [
-        'Handbuch hat Screenshots und Schritt-für-Schritt Anleitungen',
-        'Support-Tickets werden schnell bearbeitet',
-        'Handtabellen kommen in einem späteren Update'
+        'Starkes Passwort: Mindestens 8 Zeichen mit Zahlen und Buchstaben',
+        'Termine zeigen alle aktuellen Wettkampfdaten',
+        'Support: rwk-leiter-ksve@gmx.de - Antwort meist innerhalb 24h'
       ]
     }
   ];
@@ -110,7 +110,7 @@ export default function VereinDashboardPage() {
         <div>
           <div className="flex items-center mb-4">
             <BackButton className="mr-2" fallbackHref="/dashboard-auswahl" />
-            <h1 className="text-4xl font-bold text-primary">Vereins-Dashboard</h1>
+            <h1 className="text-4xl font-bold text-primary">RWK-Dashboard</h1>
           </div>
           <div className="mb-4">
             <ClubSwitcher />
@@ -126,18 +126,18 @@ export default function VereinDashboardPage() {
           </p>
         </div>
         
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 w-full max-w-md">
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border-blue-200 dark:border-blue-800 w-full max-w-md">
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-full flex-shrink-0">
-                <Sparkles className="h-6 w-6 text-blue-600" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-full flex-shrink-0">
+                <Sparkles className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-blue-900">Neu hier?</h3>
-                <p className="text-sm text-blue-700 mb-3">
-                  Lassen Sie sich durch die wichtigsten Funktionen führen
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100">Neu hier?</h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                  Interaktive Tour durch alle RWK-Funktionen
                 </p>
-                <Button onClick={startGuide} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm">
+                <Button onClick={startGuide} className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 w-full sm:w-auto text-sm">
                   <Play className="mr-2 h-4 w-4 flex-shrink-0" />
                   <span className="truncate">Erste Schritte</span>
                 </Button>
@@ -253,6 +253,50 @@ export default function VereinDashboardPage() {
             <Button asChild variant="outline" className="w-full h-12 text-sm">
               <Link href="/termine">
                 <span className="truncate">Termine anzeigen</span>
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-teal-500">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-teal-100 rounded-lg">
+                <Calendar className="h-6 w-6 text-teal-600" />
+              </div>
+              <Badge variant="outline">Neu</Badge>
+            </div>
+            <CardTitle className="text-xl">Termin hinzufügen</CardTitle>
+            <CardDescription className="text-base">
+              Fügen Sie neue Wettkampftermine hinzu
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="w-full h-12 text-sm">
+              <Link href="/termine/add">
+                <span className="truncate">Termin erstellen</span>
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-amber-500">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <Users className="h-6 w-6 text-amber-600" />
+              </div>
+              <Badge variant="outline">Rolle</Badge>
+            </div>
+            <CardTitle className="text-xl">Mannschaftsführer</CardTitle>
+            <CardDescription className="text-base">
+              Verwalten Sie Ihre Rolle als Mannschaftsführer
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="w-full h-12 text-sm">
+              <Link href="/verein/mannschaftsfuehrer">
+                <span className="truncate">Rolle verwalten</span>
               </Link>
             </Button>
           </CardContent>

@@ -398,12 +398,12 @@ export default function DashboardAuswahl() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
           {/* Support anfordern - Für Vereine */}
           {!isRWKAdmin && (
-            <Card className="border-red-200 bg-red-50">
+            <Card className="border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg text-red-800">🆘 Support anfordern</CardTitle>
+                <CardTitle className="text-lg text-red-800 dark:text-red-200">🆘 Support anfordern</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-red-700 mb-3">
+                <p className="text-sm text-red-700 dark:text-red-300 mb-3">
                   Temporären Support-Zugang für das Support-Team generieren
                 </p>
                 <Link href="/vereinssoftware/support">
@@ -417,12 +417,12 @@ export default function DashboardAuswahl() {
           
           {/* Support-Zugang - Für Admin */}
           {isRWKAdmin && (
-            <Card className="border-blue-200 bg-blue-50">
+            <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg text-blue-800">🔑 Support-Zugang</CardTitle>
+                <CardTitle className="text-lg text-blue-800 dark:text-blue-200">🔑 Support-Zugang</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-blue-700 mb-3">
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
                   Support-Code eingeben für temporären Vereinszugang
                 </p>
                 <Link href="/admin/support-access">
