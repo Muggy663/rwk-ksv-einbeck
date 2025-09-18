@@ -300,27 +300,26 @@ export default function AdminDashboardPage() {
 
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="px-2 md:px-4 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center">
           <BackButton className="mr-2" fallbackHref="/dashboard-auswahl" />
           <div>
-            <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Verwaltung der Rundenwettkämpfe.</p>
+            <h1 className="text-xl md:text-3xl font-bold text-primary">Admin Dashboard</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Verwaltung der Rundenwettkämpfe.</p>
           </div>
         </div>
-        <Link href="/km-orga">
-          <Button variant="outline">
+        <Link href="/km-orga" className="w-full md:w-auto">
+          <Button variant="outline" className="w-full md:w-auto">
             🏆 KM-Orga-Dashboard
           </Button>
         </Link>
-
       </div>
 
       {/* Admin-Statistiken */}
       <AdminStats />
       
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium text-accent">Saisonverwaltung</CardTitle>
@@ -330,27 +329,27 @@ export default function AdminDashboardPage() {
             <CardDescription className="mb-4">
               Saisons, Ligen und zugehörige Daten verwalten.
             </CardDescription>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-2">
               <Link href="/admin/seasons" passHref>
                 <Button className="w-full">Saisons verwalten</Button>
               </Link>
               <Link href="/admin/season-transition" passHref>
-                <Button variant="outline" className="w-full text-xs sm:text-sm">Saisonwechsel</Button>
+                <Button variant="outline" className="w-full">Saisonwechsel</Button>
               </Link>
               <Link href="/admin/league-settings">
-                <Button variant="outline" className="w-full col-span-2">
+                <Button variant="outline" className="w-full">
                   <Settings className="mr-2 h-4 w-4" />
                   Liga-Einstellungen
                 </Button>
               </Link>
               <Link href="/admin/exports/certificates" passHref>
-                <Button variant="outline" className="w-full col-span-2">
+                <Button variant="outline" className="w-full">
                   <Award className="mr-2 h-4 w-4" />
                   Urkunden erstellen
                 </Button>
               </Link>
               <Link href="/admin/seasons/zeitungsbericht" passHref>
-                <Button variant="outline" className="w-full col-span-2">
+                <Button variant="outline" className="w-full">
                   📰 Zeitungsbericht
                 </Button>
               </Link>
@@ -367,10 +366,10 @@ export default function AdminDashboardPage() {
             <CardDescription className="mb-4">
               Vereine, Mannschaften und Schützen pflegen.
             </CardDescription>
-             <div className="grid grid-cols-2 gap-2">
+             <div className="flex flex-col gap-2">
                 <Link href="/admin/clubs" passHref><Button variant="outline" className="w-full">Vereine</Button></Link>
                 <Link href="/admin/teams" passHref><Button variant="outline" className="w-full">Mannschaften</Button></Link>
-                <Link href="/admin/shooters" passHref><Button variant="outline" className="w-full col-span-2">Schützen</Button></Link>
+                <Link href="/admin/shooters" passHref><Button variant="outline" className="w-full">Schützen</Button></Link>
              </div>
           </CardContent>
         </Card>
@@ -384,11 +383,11 @@ export default function AdminDashboardPage() {
             <CardDescription className="mb-4">
               Ergebnisse der Wettkampfrunden eintragen oder bearbeiten.
             </CardDescription>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-2">
                 <Link href="/admin/results" passHref><Button className="w-full">Erfassen</Button></Link>
                 <Link href="/admin/edit-results" passHref><Button variant="outline" className="w-full">Bearbeiten/Löschen</Button></Link>
-                <Link href="/admin/missing-results" passHref><Button variant="outline" className="w-full col-span-2 mt-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200">Fehlende Ergebnisse prüfen</Button></Link>
-                <Link href="/admin/substitutions" passHref><Button variant="outline" className="w-full col-span-2 mt-2 bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200">🔄 Ersatzschützen verwalten</Button></Link>
+                <Link href="/admin/missing-results" passHref><Button variant="outline" className="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200">Fehlende Ergebnisse prüfen</Button></Link>
+                <Link href="/admin/substitutions" passHref><Button variant="outline" className="w-full bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200">🔄 Ersatzschützen verwalten</Button></Link>
             </div>
           </CardContent>
         </Card>
@@ -402,7 +401,7 @@ export default function AdminDashboardPage() {
             <CardDescription className="mb-4">
               Neue 3-Tier-Rollensystem: Platform, KV und Club-Rollen verwalten.
             </CardDescription>
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Link href="/admin/user-management" passHref>
                 <Button className="w-full" variant="outline">👥 Benutzer & Rollen</Button>
               </Link>
@@ -503,7 +502,7 @@ export default function AdminDashboardPage() {
             <CardDescription className="mb-4">
               Handzettel für Mannschaftsführer erstellen und Kommunikation verwalten.
             </CardDescription>
-             <div className="space-y-2">
+             <div className="flex flex-col gap-2">
               <Link href="/admin/handzettel" passHref>
                 <Button className="w-full">Handzettel erstellen</Button>
               </Link>
@@ -535,10 +534,10 @@ export default function AdminDashboardPage() {
             <CardDescription className="mb-4">
               PDF-Exporte, Backups und andere Systemfunktionen.
             </CardDescription>
-             <div className="space-y-2">
+             <div className="flex flex-col gap-2">
               <div className="bg-blue-50 p-3 rounded border border-blue-200">
                 <p className="text-sm font-medium text-blue-800 mb-2">📊 RWK Backup vor Migration</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-2">
                   <Button asChild variant="outline" size="sm">
                     <a href="/api/export/rwk-backup?year=2025&discipline=KK" download>
                       📥 KK 2025

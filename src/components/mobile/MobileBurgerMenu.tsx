@@ -64,7 +64,7 @@ export function MobileBurgerMenu() {
 
       {/* Menu Panel - Only render when open */}
       {isOpen && (
-        <div className="fixed right-0 top-0 h-screen w-72 sm:w-80 max-w-[90vw] bg-background border-l shadow-lg z-50 transform transition-transform duration-300 ease-in-out pt-safe-area-top pb-safe-area-bottom translate-x-0">
+        <div className="fixed right-0 top-0 h-screen w-72 sm:w-80 max-w-[85vw] bg-background border-l shadow-lg z-50 transform transition-transform duration-300 ease-in-out pt-safe-area-top pb-safe-area-bottom translate-x-0 overflow-hidden">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
@@ -75,8 +75,8 @@ export function MobileBurgerMenu() {
           </div>
 
           {/* Menu Items */}
-          <div className="flex-1 overflow-y-auto p-4 pb-safe-area-bottom">
-            <nav className="space-y-2">
+          <div className="flex-1 overflow-y-auto p-3 pb-safe-area-bottom">
+            <nav className="space-y-1">
               {filteredItems.map((item) => {
                 const Icon = item.icon
                 const isActive = pathname === item.href || 
@@ -88,18 +88,18 @@ export function MobileBurgerMenu() {
                     href={item.href}
                     onClick={closeMenu}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full",
-                      "text-sm font-medium whitespace-nowrap",
+                      "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full min-w-0",
+                      "text-sm font-medium overflow-hidden",
                       isActive 
                         ? "text-primary-foreground bg-primary dark:text-white dark:bg-primary" 
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
                   >
                     <Icon className={cn(
-                      "h-5 w-5",
+                      "h-5 w-5 flex-shrink-0",
                       isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground"
                     )} />
-                    {item.label}
+                    <span className="truncate">{item.label}</span>
                   </Link>
                 )
               })}
@@ -112,22 +112,22 @@ export function MobileBurgerMenu() {
                     closeMenu()
                   }}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full",
-                    "text-sm font-medium whitespace-nowrap",
+                    "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full min-w-0",
+                    "text-sm font-medium overflow-hidden",
                     "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
-                  <LogOut className="h-5 w-5 text-muted-foreground" />
-                  Logout
+                  <LogOut className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                  <span className="truncate">Logout</span>
                 </button>
               )}
             </nav>
           </div>
 
           {/* Footer with safe area */}
-          <div className="p-4 border-t pb-safe-area-bottom">
-            <p className="text-xs text-muted-foreground text-center">
-              RWK KSV Einbeck v1.7.2 Beta
+          <div className="p-3 border-t pb-safe-area-bottom">
+            <p className="text-xs text-muted-foreground text-center truncate">
+              RWK KSV Einbeck v1.7.3 Beta
             </p>
           </div>
         </div>

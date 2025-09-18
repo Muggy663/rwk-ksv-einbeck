@@ -613,52 +613,62 @@ export default function AdminShootersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div>
-            <h1 className="text-2xl font-semibold text-primary">Schützenverwaltung</h1>
-            {contextTeamName && !isContextTeamNameLoading && <p className="text-sm text-muted-foreground">Kontext: Schützen für Mannschaft "{contextTeamName}"</p>}
-            {queryTeamId && isContextTeamNameLoading && <p className="text-sm text-muted-foreground"><Loader2 className="inline h-4 w-4 mr-1 animate-spin" /> Lade Teamkontext...</p>}
+    <div className="px-2 md:px-4 space-y-6">
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+              <h1 className="text-xl md:text-2xl font-semibold text-primary">Schützenverwaltung</h1>
+              {contextTeamName && !isContextTeamNameLoading && <p className="text-sm text-muted-foreground">Kontext: Schützen für Mannschaft "{contextTeamName}"</p>}
+              {queryTeamId && isContextTeamNameLoading && <p className="text-sm text-muted-foreground"><Loader2 className="inline h-4 w-4 mr-1 animate-spin" /> Lade Teamkontext...</p>}
+          </div>
+          <Link href="/admin" className="md:hidden">
+            <Button variant="outline" size="sm">
+              Zurück
+            </Button>
+          </Link>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
-          <Link href="/admin">
+        <div className="flex flex-col gap-2">
+          <Link href="/admin" className="hidden md:block w-fit">
             <Button variant="outline" size="sm">
               Zurück zum Dashboard
             </Button>
           </Link>
-           <Select
-            value={selectedClubIdFilter}
-            onValueChange={(value) => {
-              setSelectedClubIdFilter(value);
-              const newPath = value === ALL_CLUBS_FILTER_VALUE ? '/admin/shooters' : `/admin/shooters?clubId=${value}${queryTeamId ? `&teamId=${queryTeamId}`: ''}`;
-              router.push(newPath, {scroll: false});
-            }}
-            disabled={allClubsGlobal.length === 0}
-           >
-            <SelectTrigger className="w-full sm:w-[220px]" aria-label="Verein filtern">
-              <SelectValue placeholder={allClubsGlobal.length > 0 ? "Verein filtern" : "Keine Vereine"}/>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_CLUBS_FILTER_VALUE}>Alle Vereine</SelectItem>
-              {allClubsGlobal.filter(c => c && typeof c.id === 'string' && c.id.trim() !== "").map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-              {allClubsGlobal.filter(c => c && typeof c.id === 'string' && c.id.trim() !== "").length === 0 &&
-                <SelectItem value="NO_CLUBS_PLACEHOLDER_ADMIN_SHOOTERS" disabled>Keine Vereine verfügbar</SelectItem>
-              }
-            </SelectContent>
-          </Select>
-          <Button onClick={handleAddNewShooter} disabled={allClubsGlobal.length === 0}>
-            <PlusCircle className="mr-2 h-5 w-5" /> Neuen Schützen anlegen
-          </Button>
-          {selectedShootersForDelete.length > 0 && (
-            <Button 
-              variant="destructive" 
-              onClick={() => setIsBulkDeleteOpen(true)}
-              disabled={isFormSubmitting || isDeleting}
-            >
-              <Trash2 className="mr-2 h-4 w-4" /> 
-              {selectedShootersForDelete.length} Schützen löschen
+          <div className="flex flex-col md:flex-row gap-2">
+             <Select
+              value={selectedClubIdFilter}
+              onValueChange={(value) => {
+                setSelectedClubIdFilter(value);
+                const newPath = value === ALL_CLUBS_FILTER_VALUE ? '/admin/shooters' : `/admin/shooters?clubId=${value}${queryTeamId ? `&teamId=${queryTeamId}`: ''}`;
+                router.push(newPath, {scroll: false});
+              }}
+              disabled={allClubsGlobal.length === 0}
+             >
+              <SelectTrigger className="w-full md:w-[220px]" aria-label="Verein filtern">
+                <SelectValue placeholder={allClubsGlobal.length > 0 ? "Verein filtern" : "Keine Vereine"}/>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_CLUBS_FILTER_VALUE}>Alle Vereine</SelectItem>
+                {allClubsGlobal.filter(c => c && typeof c.id === 'string' && c.id.trim() !== "").map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                {allClubsGlobal.filter(c => c && typeof c.id === 'string' && c.id.trim() !== "").length === 0 &&
+                  <SelectItem value="NO_CLUBS_PLACEHOLDER_ADMIN_SHOOTERS" disabled>Keine Vereine verfügbar</SelectItem>
+                }
+              </SelectContent>
+            </Select>
+            <Button onClick={handleAddNewShooter} disabled={allClubsGlobal.length === 0} className="w-full md:w-auto">
+              <PlusCircle className="mr-2 h-5 w-5" /> Neuen Schützen anlegen
             </Button>
-          )}
+            {selectedShootersForDelete.length > 0 && (
+              <Button 
+                variant="destructive" 
+                onClick={() => setIsBulkDeleteOpen(true)}
+                disabled={isFormSubmitting || isDeleting}
+                className="w-full md:w-auto"
+              >
+                <Trash2 className="mr-2 h-4 w-4" /> 
+                {selectedShootersForDelete.length} Schützen löschen
+              </Button>
+            )}
+          </div>
         </div>
       </div>
        <Card className="shadow-md">
@@ -675,7 +685,69 @@ export default function AdminShootersPage() {
            {isLoadingClubSpecificData ? (
              <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2">Lade Schützen...</p></div>
            ) : shootersOfActiveClub.length > 0 ? (
-             <Table>
+             <>
+               {/* Mobile Card Layout */}
+               <div className="block md:hidden space-y-4">
+                 {sortedShooters.map((shooter) => (
+                   <Card key={shooter.id} className="p-4">
+                     <div className="space-y-3">
+                       <div className="flex items-center justify-between">
+                         <h3 className="font-medium">{shooter.firstName} {shooter.lastName}</h3>
+                         <div className="flex items-center gap-2">
+                           <Checkbox 
+                             checked={selectedShootersForDelete.includes(shooter.id)}
+                             onCheckedChange={(checked) => {
+                               if (checked) {
+                                 setSelectedShootersForDelete(prev => [...prev, shooter.id]);
+                               } else {
+                                 setSelectedShootersForDelete(prev => prev.filter(id => id !== shooter.id));
+                               }
+                             }}
+                             disabled={isFormSubmitting || isDeleting}
+                           />
+                         </div>
+                       </div>
+                       <div className="space-y-2 text-sm">
+                         <div><span className="font-medium">Verein:</span> {getClubName(shooter)}</div>
+                         <div className="flex gap-4">
+                           <div><span className="font-medium">Geschlecht:</span> {shooter.gender === 'male' ? 'M' : (shooter.gender === 'female' ? 'W' : 'N/A')}</div>
+                           <div><span className="font-medium">Jahrgang:</span> {shooter.birthYear || '-'}</div>
+                         </div>
+                         {shooter.birthYear && shooter.gender && (
+                           <div className="text-xs text-muted-foreground">
+                             <div>AK Auflage 2026: {calculateAgeClass(shooter.birthYear, shooter.gender as 'male' | 'female', 2026, 'auflage')}</div>
+                             <div>AK Freihand 2026: {calculateAgeClass(shooter.birthYear, shooter.gender as 'male' | 'female', 2026, 'freihand')}</div>
+                           </div>
+                         )}
+                         <div><span className="font-medium">Mannschaften:</span> {getTeamInfoForShooter(shooter)}</div>
+                       </div>
+                       <div className="flex gap-2 pt-2">
+                         <Button variant="outline" size="sm" onClick={() => handleEditShooter(shooter)} disabled={isFormSubmitting || isDeleting} className="flex-1">
+                           <Edit className="h-4 w-4 mr-2" /> Bearbeiten
+                         </Button>
+                         <AlertDialog open={isAlertOpen && shooterToDelete?.id === shooter.id} onOpenChange={(open) => {if(!open)setShooterToDelete(null); setIsAlertOpen(open);}}>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm" className="flex-1 text-destructive hover:text-destructive/80" onClick={() => handleDeleteConfirmation(shooter)} disabled={isFormSubmitting || isDeleting}>
+                                <Trash2 className="h-4 w-4 mr-2" /> Löschen
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader><AlertDialogTitle>Schütze löschen?</AlertDialogTitle><AlertDialogDescription>Möchten Sie "{shooterToDelete?.name}" wirklich löschen? Dies entfernt den Schützen auch aus allen zugeordneten Mannschaften dieses Vereins.</AlertDialogDescription></AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => {setIsAlertOpen(false); setShooterToDelete(null);}}>Abbrechen</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteShooter} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">{isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Löschen</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                       </div>
+                     </div>
+                   </Card>
+                 ))}
+               </div>
+               
+               {/* Desktop Table Layout */}
+               <div className="hidden md:block">
+                 <Table>
               <TableHeader><TableRow>
                   <TableHead>
                     <Button variant="ghost" onClick={() => handleSort('lastName')} className="h-auto p-0 font-semibold hover:bg-transparent">
@@ -759,7 +831,9 @@ export default function AdminShootersPage() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+                 </Table>
+               </div>
+             </>
           ) : (
             <div className="p-6 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <UserIcon className="mx-auto h-10 w-10 text-primary/70 mb-3" />

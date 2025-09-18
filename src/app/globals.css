@@ -78,6 +78,10 @@
 
 /* Mobile App Fixes - Enhanced with Safe Area System */
 @media (max-width: 768px) {
+  /* Prevent horizontal overflow only on mobile */
+  html, body {
+    overflow-x: hidden !important;
+  }
   /* Header Force Visibility Fix - Stronger Rules */
   header, .site-header, [role="banner"] {
     display: block !important;
@@ -408,6 +412,47 @@
 }
 
 .dark .bg-red-50 {
+  background-color: #7f1d1d !important;
+  color: #fecaca !important;
+}
+
+.dark .bg-orange-50 {
+  background-color: #7c2d12 !important;
+  color: #fed7aa !important;
+}
+
+.dark .bg-purple-50 {
+  background-color: #581c87 !important;
+  color: #e9d5ff !important;
+}
+
+/* Dark Mode Colored Background with Better Text Contrast */
+.dark .bg-blue-100 {
+  background-color: #1e3a8a !important;
+  color: #dbeafe !important;
+}
+
+.dark .bg-green-100 {
+  background-color: #14532d !important;
+  color: #dcfce7 !important;
+}
+
+.dark .bg-orange-100 {
+  background-color: #7c2d12 !important;
+  color: #fed7aa !important;
+}
+
+.dark .bg-yellow-100 {
+  background-color: #713f12 !important;
+  color: #fef3c7 !important;
+}
+
+.dark .bg-purple-100 {
+  background-color: #581c87 !important;
+  color: #e9d5ff !important;
+}
+
+.dark .bg-red-100 {
   background-color: #7f1d1d !important;
   color: #fecaca !important;
 }

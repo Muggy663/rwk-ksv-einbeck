@@ -215,16 +215,23 @@ export default function AdminClubsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h1 className="text-xl sm:text-2xl font-semibold text-primary">Vereinsverwaltung</h1>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Link href="/admin">
+    <div className="px-2 md:px-4 space-y-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl md:text-2xl font-semibold text-primary">Vereinsverwaltung</h1>
+          <Link href="/admin" className="md:hidden">
+            <Button variant="outline" size="sm">
+              Zurück
+            </Button>
+          </Link>
+        </div>
+        <div className="flex flex-col md:flex-row gap-2">
+          <Link href="/admin" className="hidden md:block">
             <Button variant="outline" size="sm">
               Zurück zum Dashboard
             </Button>
           </Link>
-          <Button onClick={handleAddNew} variant="default" className="flex-1 sm:flex-none">
+          <Button onClick={handleAddNew} variant="default" className="w-full md:w-auto">
             <PlusCircle className="mr-2 h-5 w-5" /> Neuen Verein anlegen
           </Button>
         </div>
@@ -240,28 +247,25 @@ export default function AdminClubsPage() {
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
           ) : clubs.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Vereinsnr.</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Kürzel</TableHead>
-                  <TableHead className="text-right">Aktionen</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile Card Layout */}
+              <div className="block md:hidden space-y-4">
                 {clubs.map((club) => (
-                  <TableRow key={club.id}>
-                    <TableCell>{club.clubNumber || '-'}</TableCell>
-                    <TableCell>{club.name}</TableCell>
-                    <TableCell>{club.shortName || '-'}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex gap-1 justify-end">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(club)} aria-label="Verein bearbeiten">
-                          <Edit className="h-4 w-4" />
+                  <Card key={club.id} className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium">{club.name}</h3>
+                        <span className="text-sm text-muted-foreground">{club.clubNumber || 'Keine Nr.'}</span>
+                      </div>
+                      <div className="text-sm">
+                        <span className="font-medium">Kürzel:</span> {club.shortName || '-'}
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(club)} className="flex-1">
+                          <Edit className="h-4 w-4 mr-2" /> Bearbeiten
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => {
                             if (club.id) {
@@ -271,17 +275,62 @@ export default function AdminClubsPage() {
                               toast({ title: "Fehler", description: "Vereins-ID nicht gefunden, Löschen nicht möglich.", variant: "destructive"});
                             }
                           }}
-                          className="text-destructive hover:text-destructive/80"
-                          aria-label="Verein löschen"
+                          className="flex-1 text-destructive hover:text-destructive/80"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 mr-2" /> Löschen
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                  </Card>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+              
+              {/* Desktop Table Layout */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Vereinsnr.</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Kürzel</TableHead>
+                      <TableHead className="text-right">Aktionen</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {clubs.map((club) => (
+                      <TableRow key={club.id}>
+                        <TableCell>{club.clubNumber || '-'}</TableCell>
+                        <TableCell>{club.name}</TableCell>
+                        <TableCell>{club.shortName || '-'}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(club)} aria-label="Verein bearbeiten">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (club.id) {
+                                  handleDeleteConfirmation(club);
+                                } else {
+                                  console.error("FEHLER: club.id ist undefined beim Klick auf Löschen-Button für Club:", club);
+                                  toast({ title: "Fehler", description: "Vereins-ID nicht gefunden, Löschen nicht möglich.", variant: "destructive"});
+                                }
+                              }}
+                              className="text-destructive hover:text-destructive/80"
+                              aria-label="Verein löschen"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           ) : (
             <div className="p-8 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <p className="text-lg">Noch keine Vereine angelegt.</p>

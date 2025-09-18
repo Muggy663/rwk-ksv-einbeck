@@ -211,16 +211,23 @@ export default function AdminSeasonsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h1 className="text-xl sm:text-2xl font-semibold text-primary">Saisonverwaltung</h1>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Link href="/admin">
+    <div className="px-2 md:px-4 space-y-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl md:text-2xl font-semibold text-primary">Saisonverwaltung</h1>
+          <Link href="/admin" className="md:hidden">
+            <Button variant="outline" size="sm">
+              Zurück
+            </Button>
+          </Link>
+        </div>
+        <div className="flex flex-col md:flex-row gap-2">
+          <Link href="/admin" className="hidden md:block">
             <Button variant="outline" size="sm">
               Zurück zum Dashboard
             </Button>
           </Link>
-          <Button onClick={handleAddNew} variant="default" className="flex-1 sm:flex-none">
+          <Button onClick={handleAddNew} variant="default" className="w-full md:w-auto">
             <PlusCircle className="mr-2 h-5 w-5" /> Neue Saison anlegen
           </Button>
         </div>
@@ -236,45 +243,84 @@ export default function AdminSeasonsPage() {
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
           ) : seasons.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Jahr</TableHead>
-                  <TableHead>Typ</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aktionen</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile Card Layout */}
+              <div className="block md:hidden space-y-4">
                 {seasons.map((season) => (
-                  <TableRow key={season.id}>
-                    <TableCell>{season.competitionYear}</TableCell>
-                    <TableCell>{season.type}</TableCell>
-                    <TableCell>{season.name}</TableCell>
-                    <TableCell>{season.status}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex flex-col sm:flex-row gap-2 justify-end">
-                        <Button variant="outline" size="sm" onClick={() => navigateToLeagues(season.id)} className="text-xs">
-                          <Eye className="mr-1 h-3 w-3" /> Ligen
+                  <Card key={season.id} className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium">{season.name}</h3>
+                        <span className="text-sm px-2 py-1 bg-blue-100 text-blue-700 rounded">{season.status}</span>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <div><span className="font-medium">Jahr:</span> {season.competitionYear}</div>
+                        <div><span className="font-medium">Typ:</span> {season.type}</div>
+                      </div>
+                      <div className="flex flex-col gap-2 pt-2">
+                        <Button variant="outline" size="sm" onClick={() => navigateToLeagues(season.id)} className="w-full">
+                          <Eye className="mr-2 h-4 w-4" /> Ligen anzeigen
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => router.push(`/admin/seasons/zeitungsbericht?seasonId=${season.id}`)} className="text-xs">
+                        <Button variant="outline" size="sm" onClick={() => router.push(`/admin/seasons/zeitungsbericht?seasonId=${season.id}`)} className="w-full">
                           📰 Zeitungsbericht
                         </Button>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(season)} aria-label="Saison bearbeiten">
-                            <Edit className="h-4 w-4" />
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(season)} className="flex-1">
+                            <Edit className="h-4 w-4 mr-2" /> Bearbeiten
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteConfirmation(season)} className="text-destructive hover:text-destructive/80" aria-label="Saison löschen">
-                            <Trash2 className="h-4 w-4" />
+                          <Button variant="outline" size="sm" onClick={() => handleDeleteConfirmation(season)} className="flex-1 text-destructive hover:text-destructive/80">
+                            <Trash2 className="h-4 w-4 mr-2" /> Löschen
                           </Button>
                         </div>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                  </Card>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+              
+              {/* Desktop Table Layout */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Jahr</TableHead>
+                      <TableHead>Typ</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Aktionen</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {seasons.map((season) => (
+                      <TableRow key={season.id}>
+                        <TableCell>{season.competitionYear}</TableCell>
+                        <TableCell>{season.type}</TableCell>
+                        <TableCell>{season.name}</TableCell>
+                        <TableCell>{season.status}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button variant="outline" size="sm" onClick={() => navigateToLeagues(season.id)} className="text-xs">
+                              <Eye className="mr-1 h-3 w-3" /> Ligen
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => router.push(`/admin/seasons/zeitungsbericht?seasonId=${season.id}`)} className="text-xs">
+                              📰 Zeitungsbericht
+                            </Button>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => handleEdit(season)} aria-label="Saison bearbeiten">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleDeleteConfirmation(season)} className="text-destructive hover:text-destructive/80" aria-label="Saison löschen">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           ) : (
             <div className="p-8 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <p className="text-lg">Noch keine Saisons angelegt.</p>

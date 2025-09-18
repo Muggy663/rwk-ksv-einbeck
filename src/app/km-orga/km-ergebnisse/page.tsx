@@ -279,22 +279,24 @@ export default function KMErgebnissePage() {
   }
 
   return (
-    <div className="container py-8 max-w-6xl mx-auto">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/km-orga">
-          <Button variant="outline">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold text-primary">🏆 KM-Ergebnisse erfassen</h1>
-          <p className="text-muted-foreground">
-            Kreismeisterschafts-Ergebnisse nach dem Wettkampf erfassen für automatische Ergebnislisten
-          </p>
+    <div className="px-2 md:px-4 py-8 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <Link href="/km-orga">
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-xl md:text-3xl font-bold text-primary">🏆 KM-Ergebnisse erfassen</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
+              Kreismeisterschafts-Ergebnisse nach dem Wettkampf erfassen für automatische Ergebnislisten
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
         <h3 className="font-semibold text-blue-900 mb-2">ℹ️ Hinweis zur Ergebniserfassung:</h3>
         <p className="text-sm text-blue-700">
           <strong>KM-Ergebnisse</strong> sind die tatsächlichen Wettkampfergebnisse der Kreismeisterschaft. 
@@ -305,10 +307,10 @@ export default function KMErgebnissePage() {
 
       <Card className="mb-6">
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-4">
             <CardTitle>Filter & Aktionen</CardTitle>
-            <div className="flex gap-2">
-              <label className="cursor-pointer">
+            <div className="flex flex-col md:flex-row gap-2">
+              <label className="cursor-pointer w-full md:w-auto">
                 <input
                   type="file"
                   accept=".pdf"
@@ -316,7 +318,7 @@ export default function KMErgebnissePage() {
                   className="hidden"
                   disabled={importing}
                 />
-                <Button variant="outline" disabled={importing} asChild>
+                <Button variant="outline" disabled={importing} asChild className="w-full md:w-auto">
                   <span>
                     {importing ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
@@ -327,7 +329,7 @@ export default function KMErgebnissePage() {
                   </span>
                 </Button>
               </label>
-              <Button onClick={berechneAutomatischePlaetze} disabled={!selectedDisziplin || selectedDisziplin === 'ALL_DISCIPLINES'}>
+              <Button onClick={berechneAutomatischePlaetze} disabled={!selectedDisziplin || selectedDisziplin === 'ALL_DISCIPLINES'} className="w-full md:w-auto">
                 <Medal className="h-4 w-4 mr-2" />
                 Plätze berechnen
               </Button>
@@ -359,9 +361,95 @@ export default function KMErgebnissePage() {
           <CardTitle>KM-Ergebnisse ({filteredMeldungen.length} Meldungen)</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
+          {/* Mobile Card Layout */}
+          <div className="block md:hidden space-y-4">
             {filteredMeldungen.map(meldung => (
-              <div key={meldung.id} className="grid grid-cols-12 gap-3 p-3 bg-gray-50 rounded-lg items-center">
+              <Card key={meldung.id} className="p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{meldung.schuetzenName}</div>
+                      <div className="text-sm text-muted-foreground">{meldung.vereinsname}</div>
+                    </div>
+                    <Badge variant="outline">{meldung.disziplin}</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Ergebnis (Ringe.Zehntel)</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        value={inputValues[meldung.id] ?? (meldung.kmErgebnis ? `${meldung.kmErgebnis.ringe}${meldung.kmErgebnis.teiler ? ',' + meldung.kmErgebnis.teiler : ''}` : '')}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setInputValues(prev => ({ ...prev, [meldung.id]: value }));
+                          
+                          if (value && !value.endsWith(',') && !value.endsWith('.')) {
+                            const parts = value.split(/[.,]/);
+                            const ringe = parseInt(parts[0]) || 0;
+                            const teiler = parts[1] ? parseInt(parts[1]) || 0 : 0;
+                            
+                            setMeldungen(prev => prev.map(m => {
+                              if (m.id === meldung.id) {
+                                return {
+                                  ...m,
+                                  kmErgebnis: { ringe, teiler }
+                                };
+                              }
+                              return m;
+                            }));
+                          }
+                        }}
+                        onBlur={() => {
+                          const value = inputValues[meldung.id] || '';
+                          if (value) {
+                            const parts = value.split(/[.,]/);
+                            const ringe = parseInt(parts[0]) || 0;
+                            const teiler = parts[1] ? parseInt(parts[1]) || 0 : 0;
+                            
+                            setMeldungen(prev => prev.map(m => {
+                              if (m.id === meldung.id) {
+                                return {
+                                  ...m,
+                                  kmErgebnis: { ringe, teiler }
+                                };
+                              }
+                              return m;
+                            }));
+                          }
+                        }}
+                        className="flex-1"
+                        placeholder="z.B. 285,7"
+                      />
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleSave(meldung.id)}
+                        disabled={saving || !meldung.kmErgebnis?.ringe}
+                      >
+                        <Save className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  {meldung.kmErgebnis && meldung.kmErgebnis.ringe > 0 && (
+                    <div className="text-sm p-2 bg-green-50 dark:bg-green-900/30 rounded">
+                      <div className="font-medium text-green-600">
+                        Ergebnis: {meldung.kmErgebnis.ringe}{meldung.kmErgebnis.teiler > 0 ? `,${meldung.kmErgebnis.teiler}` : ''}
+                      </div>
+                      {meldung.kmErgebnis.platz_disziplin && (
+                        <div className="text-xs text-blue-600">
+                          Platz: {meldung.kmErgebnis.platz_disziplin}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+          
+          {/* Desktop Grid Layout */}
+          <div className="hidden md:block space-y-3">
+            {filteredMeldungen.map(meldung => (
+              <div key={meldung.id} className="grid grid-cols-12 gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg items-center">
                 <div className="col-span-3">
                   <div className="font-medium">{meldung.schuetzenName}</div>
                   <div className="text-sm text-muted-foreground">{meldung.vereinsname}</div>
@@ -378,7 +466,6 @@ export default function KMErgebnissePage() {
                       const value = e.target.value;
                       setInputValues(prev => ({ ...prev, [meldung.id]: value }));
                       
-                      // Parse nur wenn Wert vollständig ist
                       if (value && !value.endsWith(',') && !value.endsWith('.')) {
                         const parts = value.split(/[.,]/);
                         const ringe = parseInt(parts[0]) || 0;
@@ -396,7 +483,6 @@ export default function KMErgebnissePage() {
                       }
                     }}
                     onBlur={() => {
-                      // Beim Verlassen des Feldes final parsen
                       const value = inputValues[meldung.id] || '';
                       if (value) {
                         const parts = value.split(/[.,]/);

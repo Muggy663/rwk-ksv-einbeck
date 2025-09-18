@@ -58,7 +58,7 @@ export function LoginForm() {
 
   return (
     <div className="flex justify-center items-center py-12">
-      <Card className="w-full max-w-md shadow-2xl">
+      <Card className="w-full max-w-md mx-auto shadow-2xl">
         <CardHeader className="text-center">
           <LogIn className="mx-auto h-12 w-12 text-primary mb-4" />
           <CardTitle className="text-3xl font-bold">Anmelden</CardTitle>

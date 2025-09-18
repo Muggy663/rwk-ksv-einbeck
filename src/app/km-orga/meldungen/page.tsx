@@ -239,31 +239,35 @@ export default function KMAdminMeldungen() {
   }
 
   return (
-    <div className="container py-8 max-w-6xl mx-auto">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/km-orga">
-          <Button variant="outline">← Zurück</Button>
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-primary">📋 Alle KM-Meldungen {selectedYear}</h1>
-          <p className="text-muted-foreground">Verwaltung aller Meldungen zur Kreismeisterschaft {selectedYear}</p>
+    <div className="px-2 md:px-4 py-8 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/km-orga">
+              <Button variant="outline">← Zurück</Button>
+            </Link>
+            <div>
+              <h1 className="text-xl md:text-3xl font-bold text-primary">📋 KM-Meldungen {selectedYear}</h1>
+              <p className="text-sm md:text-base text-muted-foreground">Verwaltung aller Meldungen zur Kreismeisterschaft {selectedYear}</p>
+            </div>
+          </div>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm font-medium"
+          >
+            <option value={2026}>KM 2026</option>
+            <option value={2027}>KM 2027</option>
+            <option value={2028}>KM 2028</option>
+          </select>
         </div>
         <Button onClick={() => {
           console.log('Button clicked, setting dialog to true');
           setShowMeldungsDialog(true);
-        }}>
+        }} className="w-full h-12 text-left justify-start md:w-auto md:h-auto md:text-center md:justify-center">
           <Plus className="h-4 w-4 mr-2" />
           Meldung für Verein erstellen
         </Button>
-        <select
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm font-medium"
-        >
-          <option value={2026}>KM 2026</option>
-          <option value={2027}>KM 2027</option>
-          <option value={2028}>KM 2028</option>
-        </select>
       </div>
 
       <Card className="mb-6">
@@ -271,52 +275,55 @@ export default function KMAdminMeldungen() {
           <CardTitle>Filter</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Verein</label>
-              <select
-                value={filter.verein}
-                onChange={(e) => setFilter(prev => ({ ...prev, verein: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded text-sm"
-              >
-                <option value="">Alle Vereine</option>
-                {clubs.map(club => (
-                  <option key={club.id} value={club.id}>{club.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Disziplin</label>
-              <select
-                value={filter.disziplin}
-                onChange={(e) => setFilter(prev => ({ ...prev, disziplin: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded text-sm"
-              >
-                <option value="">Alle Disziplinen</option>
-                {disziplinen.map(disziplin => (
-                  <option key={disziplin.id} value={disziplin.id}>
-                    {disziplin.spoNummer} - {disziplin.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Suche</label>
-              <input
-                type="text"
-                value={filter.search}
-                onChange={(e) => setFilter(prev => ({ ...prev, search: e.target.value }))}
-                placeholder="Name, Disziplin, Verein..."
-                className="w-full p-2 border border-gray-300 rounded text-sm"
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 md:grid md:grid-cols-3 md:gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Verein</label>
+                <select
+                  value={filter.verein}
+                  onChange={(e) => setFilter(prev => ({ ...prev, verein: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded text-sm"
+                >
+                  <option value="">Alle Vereine</option>
+                  {clubs.map(club => (
+                    <option key={club.id} value={club.id}>{club.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Disziplin</label>
+                <select
+                  value={filter.disziplin}
+                  onChange={(e) => setFilter(prev => ({ ...prev, disziplin: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded text-sm"
+                >
+                  <option value="">Alle Disziplinen</option>
+                  {disziplinen.map(disziplin => (
+                    <option key={disziplin.id} value={disziplin.id}>
+                      {disziplin.spoNummer} - {disziplin.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Suche</label>
+                <input
+                  type="text"
+                  value={filter.search}
+                  onChange={(e) => setFilter(prev => ({ ...prev, search: e.target.value }))}
+                  placeholder="Name, Disziplin, Verein..."
+                  className="w-full p-2 border border-gray-300 rounded text-sm"
+                />
+              </div>
             </div>
           </div>
           <div className="mt-4">
             <Button 
               variant="outline" 
               onClick={() => setFilter({ verein: '', disziplin: '', search: '' })}
+              className="w-full h-12 md:w-auto md:h-auto"
             >
-              Filter zurücksetzen
+              🔄 Filter zurücksetzen
             </Button>
           </div>
         </CardContent>
@@ -327,7 +334,165 @@ export default function KMAdminMeldungen() {
           <CardTitle>Meldungen ({filteredMeldungen.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Mobile Card Layout */}
+          <div className="block md:hidden space-y-4">
+            {filteredMeldungen.map(meldung => {
+              const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
+              const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
+              const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
+              const verein = clubs.find(c => c.id === vereinId);
+
+              return (
+                <Card key={meldung.id} className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium">
+                        {schuetze?.firstName && schuetze?.lastName 
+                          ? `${schuetze.firstName} ${schuetze.lastName}`
+                          : schuetze?.name || 'Unbekannt'
+                        }
+                      </h3>
+                      <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                        {(() => {
+                          if (!schuetze?.birthYear) return 'Unbekannt';
+                          
+                          const age = selectedYear - schuetze.birthYear;
+                          const isAuflage = disziplin?.name?.toLowerCase().includes('auflage');
+                          const isMale = schuetze.gender === 'male';
+                          
+                          if (age <= 14) return 'Schüler';
+                          if (age <= 16) return 'Jugend';
+                          if (age <= 18) return `Junioren II ${isMale ? 'm' : 'w'}`;
+                          if (age <= 20) return `Junioren I ${isMale ? 'm' : 'w'}`;
+                          
+                          if (isAuflage) {
+                            if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
+                            if (age <= 50) return 'Senioren 0';
+                            if (age <= 60) return 'Senioren I';
+                            if (age <= 65) return 'Senioren II';
+                            if (age <= 70) return 'Senioren III';
+                            if (age <= 75) return 'Senioren IV';
+                            if (age <= 80) return 'Senioren V';
+                            return 'Senioren VI';
+                          } else {
+                            if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
+                            if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;
+                            if (age <= 60) return `${isMale ? 'Herren' : 'Damen'} III`;
+                            if (age <= 70) return `${isMale ? 'Herren' : 'Damen'} IV`;
+                            return `${isMale ? 'Herren' : 'Damen'} V`;
+                          }
+                        })()
+                        }
+                      </span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div><span className="font-medium">Verein:</span> {verein?.name || 'Unbekannt'}</div>
+                      <div>
+                        <span className="font-medium">Disziplin:</span> {disziplin?.spoNummer}
+                        <div className="text-xs text-gray-500">{disziplin?.name}</div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <span className="font-medium">LM:</span>
+                          {editingMeldung === meldung.id ? (
+                            <input
+                              type="checkbox"
+                              checked={editData.lmTeilnahme || false}
+                              onChange={(e) => setEditData(prev => ({...prev, lmTeilnahme: e.target.checked}))}
+                              className="w-4 h-4 ml-2"
+                            />
+                          ) : (
+                            <span className={`ml-2 px-2 py-1 rounded text-xs ${
+                              meldung.lmTeilnahme 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {meldung.lmTeilnahme ? 'Ja' : 'Nein'}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <span className="font-medium">VM:</span>
+                          {editingMeldung === meldung.id ? (
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={editData.vmRinge || ''}
+                              onChange={(e) => setEditData(prev => ({...prev, vmRinge: e.target.value}))}
+                              className="w-20 p-1 border rounded text-sm ml-2"
+                              placeholder="Ringe"
+                            />
+                          ) : (
+                            meldung.vmErgebnis?.ringe ? (
+                              <span className="text-green-600 font-medium ml-2">
+                                {meldung.vmErgebnis.ringe}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 ml-2">-</span>
+                            )
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Datum: {new Date(meldung.meldedatum?.seconds * 1000 || meldung.meldedatum).toLocaleDateString('de-DE')}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2 pt-2">
+                      {editingMeldung === meldung.id ? (
+                        <>
+                          <button 
+                            onClick={() => updateMeldung(meldung.id)}
+                            className="w-full text-green-600 hover:text-green-800 text-sm px-3 py-3 border border-green-300 rounded font-medium"
+                          >
+                            ✓ Speichern
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setEditingMeldung(null);
+                              setEditData({});
+                            }}
+                            className="w-full text-gray-600 hover:text-gray-800 text-sm px-3 py-3 border border-gray-300 rounded font-medium"
+                          >
+                            ✕ Abbrechen
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => {
+                              setEditingMeldung(meldung.id);
+                              setEditData({
+                                lmTeilnahme: meldung.lmTeilnahme,
+                                vmRinge: meldung.vmErgebnis?.ringe || '',
+                                anmerkung: meldung.anmerkung || ''
+                              });
+                            }}
+                            className="w-full text-blue-600 hover:text-blue-800 text-sm px-3 py-3 border border-blue-300 rounded font-medium"
+                          >
+                            ✏️ Bearbeiten
+                          </button>
+                          <button 
+                            onClick={() => deleteMeldung(meldung.id)}
+                            className="w-full text-red-600 hover:text-red-800 text-sm px-3 py-3 border border-red-300 rounded font-medium"
+                          >
+                            🗑️ Löschen
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+            {filteredMeldungen.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                Keine Meldungen gefunden
+              </div>
+            )}
+          </div>
+          
+          {/* Desktop Table Layout */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-gray-50">
@@ -639,12 +804,12 @@ export default function KMAdminMeldungen() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setShowMeldungsDialog(false)}>
-                Abbrechen
+            <div className="flex flex-col gap-2 pt-4 md:flex-row md:justify-end">
+              <Button variant="outline" onClick={() => setShowMeldungsDialog(false)} className="w-full h-12 md:w-auto md:h-auto">
+                ✕ Abbrechen
               </Button>
-              <Button onClick={submitMeldung}>
-                Meldung erstellen
+              <Button onClick={submitMeldung} className="w-full h-12 md:w-auto md:h-auto">
+                ✓ Meldung erstellen
               </Button>
             </div>
           </div>

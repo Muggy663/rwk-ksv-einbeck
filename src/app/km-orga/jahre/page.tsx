@@ -125,16 +125,16 @@ export default function KMJahreVerwaltung() {
   };
 
   return (
-    <div className="container py-4 px-2 max-w-6xl mx-auto">
+    <div className="px-2 md:px-4 py-4 max-w-6xl mx-auto">
       <div className="mb-6">
         <div className="flex items-center mb-2">
           <BackButton className="mr-2" fallbackHref="/km-orga" />
-          <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-            <CalendarDays className="h-8 w-8" />
+          <h1 className="text-xl md:text-3xl font-bold text-primary flex items-center gap-2">
+            <CalendarDays className="h-6 md:h-8 w-6 md:w-8" />
             KM-Jahresverwaltung
           </h1>
         </div>
-        <p className="text-muted-foreground">
+        <p className="text-sm md:text-base text-muted-foreground">
           Kreismeisterschafts-Jahre anlegen und verwalten
         </p>
       </div>
@@ -149,13 +149,13 @@ export default function KMJahreVerwaltung() {
         </CardHeader>
         <CardContent>
           {!showForm ? (
-            <Button onClick={() => setShowForm(true)}>
+            <Button onClick={() => setShowForm(true)} className="w-full md:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Jahr hinzufügen
             </Button>
           ) : (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <Label htmlFor="jahr">Jahr</Label>
                   <Input
@@ -184,9 +184,9 @@ export default function KMJahreVerwaltung() {
                   />
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={createJahr}>Erstellen</Button>
-                <Button variant="outline" onClick={() => setShowForm(false)}>Abbrechen</Button>
+              <div className="flex flex-col md:flex-row gap-2">
+                <Button onClick={createJahr} className="w-full md:w-auto">Erstellen</Button>
+                <Button variant="outline" onClick={() => setShowForm(false)} className="w-full md:w-auto">Abbrechen</Button>
               </div>
             </div>
           )}
@@ -198,7 +198,7 @@ export default function KMJahreVerwaltung() {
         {jahre.map((jahr) => (
           <Card key={jahr.id}>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     🏆 KM {jahr.jahr}
@@ -211,11 +211,12 @@ export default function KMJahreVerwaltung() {
                     {jahr.beschreibung && ` • ${jahr.beschreibung}`}
                   </CardDescription>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
                   {jahr.status === 'vorbereitung' && (
                     <Button 
                       size="sm" 
                       onClick={() => updateStatus(jahr.id, 'aktiv')}
+                      className="w-full md:w-auto"
                     >
                       Aktivieren
                     </Button>
@@ -225,6 +226,7 @@ export default function KMJahreVerwaltung() {
                       size="sm" 
                       variant="outline"
                       onClick={() => updateStatus(jahr.id, 'archiviert')}
+                      className="w-full md:w-auto"
                     >
                       Archivieren
                     </Button>
@@ -236,10 +238,11 @@ export default function KMJahreVerwaltung() {
                       // TODO: Jahr bearbeiten (Meldeschluss, Beschreibung ändern)
                       console.log('Jahr bearbeiten:', jahr.id);
                     }}
+                    className="w-full md:w-auto"
                   >
-                    <Settings className="h-4 w-4" />
+                    <Settings className="h-4 w-4 mr-2 md:mr-0" />
+                    <span className="md:hidden">Bearbeiten</span>
                   </Button>
-
                 </div>
               </div>
             </CardHeader>

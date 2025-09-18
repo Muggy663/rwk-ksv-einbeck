@@ -54,7 +54,7 @@ export default function LoginPage() {
   }
   
   return (
-    <div className="space-y-4">
+    <div className="container mx-auto max-w-2xl px-4 space-y-4">
       <div className="flex items-center">
         <BackButton className="mr-2" fallbackHref="/" />
       </div>

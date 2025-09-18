@@ -260,25 +260,25 @@ export default function AdminUserManagementPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="px-2 md:px-4 space-y-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
-          <UserCog className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold text-primary">Benutzerverwaltung & Berechtigungen</h1>
+          <UserCog className="h-6 md:h-8 w-6 md:w-8 text-primary" />
+          <h1 className="text-xl md:text-3xl font-bold text-primary">Benutzerverwaltung</h1>
         </div>
         <Link href="/admin">
-          <Button variant="outline">
+          <Button variant="outline" className="w-full md:w-auto">
             Zurück zum Dashboard
           </Button>
         </Link>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
-          <TabsTrigger value="edit">🎯 Rollen zuweisen</TabsTrigger>
-          <TabsTrigger value="create">Neuen Benutzer erstellen</TabsTrigger>
-          <TabsTrigger value="list">Benutzerübersicht</TabsTrigger>
-          <TabsTrigger value="migrate">🔄 Rollen-Migration</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
+          <TabsTrigger value="edit" className="text-xs md:text-sm">🎯 Rollen</TabsTrigger>
+          <TabsTrigger value="create" className="text-xs md:text-sm">Erstellen</TabsTrigger>
+          <TabsTrigger value="list" className="text-xs md:text-sm">Übersicht</TabsTrigger>
+          <TabsTrigger value="migrate" className="text-xs md:text-sm">🔄 Migration</TabsTrigger>
         </TabsList>
         
         <TabsContent value="create" className="space-y-4">
@@ -298,16 +298,16 @@ export default function AdminUserManagementPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmitPermissions} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                  <div className="space-y-1.5 md:col-span-1">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-1.5">
                     <Label htmlFor="uid">User-ID (UID) des Benutzers</Label>
                     <Input id="uid" name="uid" type="text" placeholder="UID aus Firebase Authentication" value={formData.uid} onChange={handleInputChange} required className="font-mono text-xs" />
                   </div>
-                  <div className="space-y-1.5 md:col-span-1">
+                  <div className="space-y-1.5">
                     <Label htmlFor="email">E-Mail des Benutzers</Label>
                     <Input id="email" name="email" type="email" placeholder="E-Mail (aus Firebase Auth)" value={formData.email} onChange={handleInputChange} required />
                   </div>
-                  <div className="space-y-1.5 md:col-span-1">
+                  <div className="space-y-1.5">
                     <Label htmlFor="displayName">Anzeigename (Optional)</Label>
                     <Input id="displayName" name="displayName" type="text" placeholder="Vorname Nachname" value={formData.displayName} onChange={handleInputChange} />
                   </div>
@@ -316,7 +316,7 @@ export default function AdminUserManagementPage() {
                 {isFetchingDetails && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Lade bestehende Berechtigungen...</div>}
 
                 {/* 3-Tier-Rollen-System */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="platformRoleSelect">🌐 Platform-Rolle</Label>
                     <Select 
@@ -357,7 +357,7 @@ export default function AdminUserManagementPage() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                   <div className="space-y-1.5">
                     <Label>💰 Vereinssoftware-Lizenz</Label>
                     <div className="flex items-center space-x-2">

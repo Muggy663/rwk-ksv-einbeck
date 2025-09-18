@@ -790,12 +790,12 @@ export default function AdminTeamsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div className="flex items-center justify-between w-full md:w-auto">
+    <div className="px-2 md:px-4 space-y-6">
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <BackButton className="mr-2 md:hidden" fallbackHref="/admin" />
-            <h1 className="text-2xl font-semibold text-primary">Mannschaftsverwaltung (Admin)</h1>
+            <BackButton className="mr-2" fallbackHref="/admin" />
+            <h1 className="text-xl md:text-2xl font-semibold text-primary">Mannschaftsverwaltung</h1>
           </div>
           <Link href="/admin" className="md:hidden">
             <Button variant="outline" size="sm">
@@ -803,66 +803,62 @@ export default function AdminTeamsPage() {
             </Button>
           </Link>
         </div>
-        <div className="flex flex-col sm:flex-row items-end gap-2 w-full md:w-auto">
-          <div className="hidden md:flex items-center">
-            <BackButton className="mr-2" fallbackHref="/admin" />
-            <Link href="/admin">
-              <Button variant="outline" size="sm">
-                Zurück zum Dashboard
-              </Button>
-            </Link>
-          </div>
-           <div className="w-full sm:w-auto space-y-1.5">
-            <Label htmlFor="saison-select-admin-teams">Saison</Label>
-            <Select value={selectedSeasonId} onValueChange={(val) => { setSelectedSeasonId(val); setSelectedLeagueIdFilter(ALL_LEAGUES_FILTER_VALUE); setTeamsForDisplay([]); }}>
-              <SelectTrigger id="saison-select-admin-teams" className="w-full sm:w-[200px]">
-                 <SelectValue placeholder={allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"} />
-              </SelectTrigger>
-              <SelectContent>
-                {allSeasons.filter(s => s && typeof s.id === 'string' && s.id.trim() !== "").map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                {allSeasons.filter(s => s.id && typeof s.id === 'string' && s.id.trim() !== "").length === 0 && 
-                  <SelectItem value="NO_SEASONS_PLACEHOLDER_ADMIN_TEAMS" disabled>Keine Saisons verfügbar</SelectItem>
-                }
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-full sm:w-auto space-y-1.5">
-            <Label htmlFor="club-filter-admin-teams">Verein</Label>
-            <Select value={selectedClubIdFilter} onValueChange={(val) => {setSelectedClubIdFilter(val); setTeamsForDisplay([]);}}>
-                <SelectTrigger id="club-filter-admin-teams" className="w-full sm:w-[220px]">
-                    <SelectValue placeholder="Alle Vereine filtern" />
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="saison-select-admin-teams">Saison</Label>
+              <Select value={selectedSeasonId} onValueChange={(val) => { setSelectedSeasonId(val); setSelectedLeagueIdFilter(ALL_LEAGUES_FILTER_VALUE); setTeamsForDisplay([]); }}>
+                <SelectTrigger id="saison-select-admin-teams">
+                   <SelectValue placeholder={allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"} />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value={ALL_CLUBS_FILTER_VALUE}>Alle Vereine</SelectItem>
-                    {allClubs.filter(c => c && typeof c.id === 'string' && c.id.trim() !== "").map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                    {allClubs.filter(c => c.id && typeof c.id === 'string' && c.id.trim() !== "").length === 0 &&
-                        <SelectItem value="NO_CLUBS_PLACEHOLDER_ADMIN_TEAMS" disabled>Keine Vereine verfügbar</SelectItem>
-                    }
+                  {allSeasons.filter(s => s && typeof s.id === 'string' && s.id.trim() !== "").map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  {allSeasons.filter(s => s.id && typeof s.id === 'string' && s.id.trim() !== "").length === 0 && 
+                    <SelectItem value="NO_SEASONS_PLACEHOLDER_ADMIN_TEAMS" disabled>Keine Saisons verfügbar</SelectItem>
+                  }
                 </SelectContent>
-            </Select>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="club-filter-admin-teams">Verein</Label>
+              <Select value={selectedClubIdFilter} onValueChange={(val) => {setSelectedClubIdFilter(val); setTeamsForDisplay([]);}}>
+                  <SelectTrigger id="club-filter-admin-teams">
+                      <SelectValue placeholder="Alle Vereine filtern" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value={ALL_CLUBS_FILTER_VALUE}>Alle Vereine</SelectItem>
+                      {allClubs.filter(c => c && typeof c.id === 'string' && c.id.trim() !== "").map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      {allClubs.filter(c => c.id && typeof c.id === 'string' && c.id.trim() !== "").length === 0 &&
+                          <SelectItem value="NO_CLUBS_PLACEHOLDER_ADMIN_TEAMS" disabled>Keine Vereine verfügbar</SelectItem>
+                      }
+                  </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="liga-filter-admin-teams">Liga</Label>
+              <Select value={selectedLeagueIdFilter} onValueChange={(val) => {setSelectedLeagueIdFilter(val); setTeamsForDisplay([]);}} disabled={!selectedSeasonId || leaguesForFilterDropdown.length === 0}>
+                  <SelectTrigger id="liga-filter-admin-teams">
+                      <SelectValue placeholder={!selectedSeasonId ? "Saison wählen" : (leaguesForFilterDropdown.length === 0 ? "Keine Ligen für Saison" : "Alle Ligen")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value={ALL_LEAGUES_FILTER_VALUE}>Alle Ligen</SelectItem>
+                      <SelectItem value="NO_LEAGUE_ASSIGNED">Nicht zugewiesen</SelectItem>
+                      {leaguesForFilterDropdown.filter(l => l && typeof l.id === 'string' && l.id.trim() !== "").map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                       {leaguesForFilterDropdown.length === 0 && selectedSeasonId &&
+                          <SelectItem value="NO_LEAGUES_FOR_SEASON_FILTER_ADMIN_TEAMS" disabled>Keine Ligen für diese Saison</SelectItem>
+                      }
+                  </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="w-full sm:w-auto space-y-1.5">
-            <Label htmlFor="liga-filter-admin-teams">Liga</Label>
-            <Select value={selectedLeagueIdFilter} onValueChange={(val) => {setSelectedLeagueIdFilter(val); setTeamsForDisplay([]);}} disabled={!selectedSeasonId || leaguesForFilterDropdown.length === 0}>
-                <SelectTrigger id="liga-filter-admin-teams" className="w-full sm:w-[220px]">
-                    <SelectValue placeholder={!selectedSeasonId ? "Saison wählen" : (leaguesForFilterDropdown.length === 0 ? "Keine Ligen für Saison" : "Alle Ligen")} />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value={ALL_LEAGUES_FILTER_VALUE}>Alle Ligen</SelectItem>
-                    <SelectItem value="NO_LEAGUE_ASSIGNED">Nicht zugewiesen</SelectItem>
-                    {leaguesForFilterDropdown.filter(l => l && typeof l.id === 'string' && l.id.trim() !== "").map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
-                     {leaguesForFilterDropdown.length === 0 && selectedSeasonId &&
-                        <SelectItem value="NO_LEAGUES_FOR_SEASON_FILTER_ADMIN_TEAMS" disabled>Keine Ligen für diese Saison</SelectItem>
-                    }
-                </SelectContent>
-            </Select>
+          <div className="flex flex-col md:flex-row gap-2">
+            <Button onClick={handleSearchTeams} disabled={!selectedSeasonId || isLoadingTeams} className="w-full">
+              {isLoadingTeams ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Users className="h-4 w-4 mr-2" />} Mannschaften suchen
+            </Button>
+            <Button onClick={handleAddNewTeam} disabled={!selectedSeasonId || selectedClubIdFilter === ALL_CLUBS_FILTER_VALUE} className="w-full">
+              <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft
+            </Button>
           </div>
-          <Button onClick={handleSearchTeams} disabled={!selectedSeasonId || isLoadingTeams} className="w-full sm:w-auto whitespace-nowrap">
-            {isLoadingTeams ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Users className="h-4 w-4 mr-2" />} Mannschaften suchen
-          </Button>
-          <Button onClick={handleAddNewTeam} disabled={!selectedSeasonId || selectedClubIdFilter === ALL_CLUBS_FILTER_VALUE} className="w-full sm:w-auto whitespace-nowrap">
-            <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft
-          </Button>
         </div>
       </div>
 
@@ -886,9 +882,119 @@ export default function AdminTeamsPage() {
                 <p>Bitte wählen Sie Filter aus und klicken Sie auf "Mannschaften suchen".</p>
              </div>
           ) : teamsForDisplay.length > 0 ? (
-            <Table>
-              <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Verein</TableHead><TableHead>Liga</TableHead><TableHead>Jahr</TableHead><TableHead className="text-center">Schützen</TableHead><TableHead className="text-right">Aktionen</TableHead></TableRow></TableHeader>
-              <TableBody>
+            <div className="block md:hidden space-y-4">
+              {teamsForDisplay.map((team) => (
+                <Card key={team.id} className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleTeamExpansion(team.id, team.shooterIds || [])}
+                        className="h-6 w-6 p-0"
+                        disabled={!team.shooterIds?.length}
+                      >
+                        {expandedTeams.has(team.id) ? 
+                          <ChevronDown className="h-4 w-4" /> : 
+                          <ChevronRight className="h-4 w-4" />
+                        }
+                      </Button>
+                      <h3 className="font-medium">{team.name}</h3>
+                      <TeamStatusBadge 
+                        outOfCompetition={team.outOfCompetition} 
+                        className="ml-2" 
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div><span className="font-medium">Verein:</span> {getClubName(team.clubId)}</div>
+                    <div>
+                      <span className="font-medium">Liga:</span> {getLeagueName(team.leagueId)}
+                      {team.leagueType && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                          {team.leagueType}
+                        </span>
+                      )}
+                    </div>
+                    <div><span className="font-medium">Jahr:</span> {team.competitionYear}</div>
+                    <div><span className="font-medium">Schützen:</span> {team.shooterIds?.length || 0} / {MAX_SHOOTERS_PER_TEAM}</div>
+                  </div>
+                  {expandedTeams.has(team.id) && (
+                    <div className="mt-4 p-3 bg-muted/30 rounded">
+                      {loadingShooters.has(team.id) ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <span className="text-sm text-muted-foreground">Lade Schützen...</span>
+                        </div>
+                      ) : teamShooters.has(team.id) ? (
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-sm">Gemeldete Schützen ({teamShooters.get(team.id)?.length || 0}):</h4>
+                          <div className="space-y-2">
+                            {teamShooters.get(team.id)?.map((shooter) => (
+                              <div key={shooter.id} className={`flex items-center gap-2 p-2 rounded border ${
+                                shooter.name?.includes('nicht gefunden') ? 'bg-red-50 border-red-200' : 'bg-background'
+                              }`}>
+                                <div className="text-sm">
+                                  <div className={`font-medium ${
+                                    shooter.name?.includes('nicht gefunden') ? 'text-red-600' : ''
+                                  }`}>
+                                    {shooter.firstName && shooter.lastName ? `${shooter.firstName} ${shooter.lastName}` : shooter.name}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {shooter.gender === 'male' ? 'M' : shooter.gender === 'female' ? 'W' : '?'} • {shooter.birthYear || 'Jg. N/A'}
+                                  </div>
+                                </div>
+                              </div>
+                            )) || []}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground text-center py-4">
+                          Keine Schützen zugeordnet
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-2 mt-4">
+                    <Button variant="outline" size="sm" onClick={() => handleEditTeam(team)} className="w-full">
+                      <Edit className="h-4 w-4 mr-2" /> Bearbeiten
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        setSelectedTeamForSubstitution(team);
+                        setSubstitutionDialogOpen(true);
+                      }} 
+                      className="w-full text-blue-600 hover:text-blue-700"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" /> Ersatzschütze
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive/80" onClick={() => handleDeleteConfirmation(team)}>
+                          <Trash2 className="h-4 w-4 mr-2" /> Löschen
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader><AlertDialogTitle>Mannschaft löschen?</AlertDialogTitle><AlertDialogDescription>Möchten Sie "{teamToDelete?.name}" wirklich löschen? Dies entfernt auch die Zuordnung der Schützen zu dieser Mannschaft.</AlertDialogDescription></AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => setTeamToDelete(null)}>Abbrechen</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDeleteTeam} disabled={isDeletingTeam} className="bg-destructive hover:bg-destructive/90">
+                            {isDeletingTeam && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Löschen
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Verein</TableHead><TableHead>Liga</TableHead><TableHead>Jahr</TableHead><TableHead className="text-center">Schützen</TableHead><TableHead className="text-right">Aktionen</TableHead></TableRow></TableHeader>
+                <TableBody>
                 {teamsForDisplay.map((team) => (
                   <React.Fragment key={team.id}>
                     <TableRow>
@@ -994,8 +1100,9 @@ export default function AdminTeamsPage() {
                     )}
                   </React.Fragment>
                 ))}
-              </TableBody>
-            </Table>
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="p-6 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <AlertTriangle className="mx-auto h-10 w-10 mb-3 text-primary/70" />

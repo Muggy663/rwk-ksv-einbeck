@@ -21,7 +21,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <VersionBadge className="border-green-300 bg-green-50 text-green-700">
-              Web-Version: 1.7.1 (20.09.2025)
+              Web-Version: 1.7.3 (18.09.2025)
             </VersionBadge>
             <VersionBadge className="border-blue-300 bg-blue-50 text-blue-700">
               App-Version: 0.9.4.1 (02.09.2025)
@@ -35,10 +35,87 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 1.7.1 - Mobile UX Revolution</CardTitle>
+              <CardTitle className="text-xl">Version 1.7.3 - Mobile UX KM-Orga</CardTitle>
               <Badge variant="default" className="bg-green-600">Aktuell</Badge>
             </div>
-            <CardDescription>20.09.2025</CardDescription>
+            <CardDescription>18.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Mobile UX KM-Orga: Header Overflow-Fix verhindert horizontales Scrollen, KM-Orga mobile Buttons optimiert mit vertikaler Anordnung, Dark Mode Text-Lesbarkeit in farbigen Boxen verbessert.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">📱 Mobile UX KM-Orga v1.7.3</h4>
+              <div className="text-xs text-green-700">
+                Header-Fixes und mobile Button-Optimierung
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📱 <strong>Header Overflow-Fix:</strong> Horizontales Scrollen auf mobilen Geräten komplett verhindert</li>
+              <li>🔘 <strong>KM-Orga mobile Buttons:</strong> Alle Buttons stapeln sich vertikal mit besseren Touch-Targets (h-12)</li>
+              <li>🎨 <strong>Dark Mode Text-Lesbarkeit:</strong> Farbige Boxen haben jetzt korrekte Textkontraste im Dark Mode</li>
+              <li>📐 <strong>Container-Optimierung:</strong> Header mit max-w-7xl und responsive Padding für alle Bildschirmgrößen</li>
+              <li>🔧 <strong>CSS-Bereinigung:</strong> Problematische Overflow-Regeln entfernt, die Desktop-Layout zerstörten</li>
+              <li>📱 <strong>Mobile Navigation:</strong> Burger-Menü mit besserer Breiten-Kontrolle und Overflow-Schutz</li>
+              <li>🎯 <strong>Touch-Optimierung:</strong> Alle KM-Orga Buttons mit einheitlicher mobiler Ausrichtung</li>
+              <li>🌙 <strong>Dark Mode Fixes:</strong> Alle farbigen Instruktions-Boxen lesbar in beiden Modi</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">📱 Mobile UX KM-Orga</span>
+                  <p className="text-xs text-green-600 mt-1">Header-Fixes & Button-Optimierung</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v1.7.3
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.7.2 - Mobile Fixes & Team-Manager</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>17.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Mobile Fixes & Team-Manager: Burger-Menü Touch-Fix verhindert versehentliches Öffnen, Für Vereine Scrolling-Problem behoben, Team-Manager Seite korrigiert mit BackButton und Auth-Fix.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">🔧 Mobile Fixes & Team-Manager v1.7.2</h4>
+              <div className="text-xs text-green-700">
+                Touch-Fixes und Team-Manager Korrekturen
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>📱 <strong>Burger-Menü Touch-Fix:</strong> Verhindert versehentliches Öffnen beim Scrollen auf mobilen Geräten</li>
+              <li>📜 <strong>Für Vereine Scrolling-Fix:</strong> Scrolling-Problem auf der Für Vereine Seite behoben</li>
+              <li>👥 <strong>Team-Manager Seite korrigiert:</strong> BackButton hinzugefügt und Auth-Fix implementiert</li>
+              <li>🔧 <strong>Navigation verbessert:</strong> Stabilere mobile Navigation ohne ungewollte Interaktionen</li>
+              <li>📱 <strong>Touch-Optimierung:</strong> Bessere Touch-Erkennung für mobile Geräte</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">🔧 Mobile Fixes & Team-Manager</span>
+                  <p className="text-xs text-green-600 mt-1">Touch-Fixes & Navigation</p>
+                </div>
+                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  🚀 v1.7.2
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.7.1 - Mobile UX Revolution</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
+            </div>
+            <CardDescription>16.09.2025</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="mb-4">Vollständige Mobile-Optimierung aller KM-Bereiche mit responsiven Card-Layouts, mobile-freundliche Button-Anordnung und verbesserte Sichtbarkeit von Formularen und Aktions-Buttons.</p>

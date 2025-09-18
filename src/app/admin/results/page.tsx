@@ -448,9 +448,9 @@ export default function AdminResultsPage() {
   }
   
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-primary">Ergebniserfassung</h1>
+    <div className="px-2 md:px-4 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <h1 className="text-xl md:text-2xl font-semibold text-primary">Ergebniserfassung</h1>
         <Link href="/admin">
           <Button variant="outline" size="sm">
             Zurück zum Dashboard
@@ -476,7 +476,7 @@ export default function AdminResultsPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <div className="space-y-2">
               <Label htmlFor="season">Saison (nur laufende)</Label>
               <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={availableRunningSeasons.length === 0}>
@@ -555,14 +555,14 @@ export default function AdminResultsPage() {
           </div>
           <div className="space-y-3 pt-2">
             <Label>Ergebnistyp</Label>
-            <RadioGroup value={resultType} onValueChange={(value) => setResultType(value as "regular" | "pre" | "post")} className="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0">
+            <RadioGroup value={resultType} onValueChange={(value) => setResultType(value as "regular" | "pre" | "post")} className="flex flex-col md:flex-row md:space-x-4 space-y-2 md:space-y-0">
               <div className="flex items-center space-x-2"><RadioGroupItem value="regular" id="r-regular" /><Label htmlFor="r-regular">Regulär</Label></div>
               <div className="flex items-center space-x-2"><RadioGroupItem value="pre" id="r-pre" /><Label htmlFor="r-pre">Vorschießen</Label></div>
               <div className="flex items-center space-x-2"><RadioGroupItem value="post" id="r-post" /><Label htmlFor="r-post">Nachschießen</Label></div>
             </RadioGroup>
           </div>
           <div className="flex justify-end pt-4">
-            <Button onClick={handleAddToList} disabled={!selectedShooterId || !selectedRound || !score || isSubmittingScores || isLoadingExistingScores}><PlusCircle className="mr-2 h-5 w-5" /> Zur Liste hinzufügen</Button>
+            <Button onClick={handleAddToList} disabled={!selectedShooterId || !selectedRound || !score || isSubmittingScores || isLoadingExistingScores} className="w-full md:w-auto"><PlusCircle className="mr-2 h-5 w-5" /> Zur Liste hinzufügen</Button>
           </div>
         </CardContent>
       </Card>
@@ -571,10 +571,37 @@ export default function AdminResultsPage() {
         <Card className="shadow-md mt-6">
           <CardHeader><CardTitle>Vorgemerkte Ergebnisse ({pendingScores.length})</CardTitle><CardDescription>Saison: {allSeasons.find(s=>s.id === selectedSeasonId)?.name || '-'} | Liga: {allLeagues.find(l=>l.id===selectedLeagueId)?.name || '-'}</CardDescription></CardHeader>
           <CardContent>
-            <Table><TableHeader><TableRow><TableHead>Schütze</TableHead><TableHead>Mannschaft</TableHead><TableHead className="text-center">DG</TableHead><TableHead className="text-center">Ringe</TableHead><TableHead>Typ</TableHead><TableHead className="text-right">Aktion</TableHead></TableRow></TableHeader>
-              <TableBody>{pendingScores.map((entry) => (<TableRow key={entry.tempId}><TableCell>{entry.shooterName}</TableCell><TableCell>{entry.teamName}</TableCell><TableCell className="text-center">{entry.durchgang}</TableCell><TableCell className="text-center">{entry.totalRinge}</TableCell><TableCell>{entry.scoreInputType === 'pre' ? 'Vorschuss' : entry.scoreInputType === 'post' ? 'Nachschuss' : 'Regulär'}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleRemoveFromList(entry.tempId)} className="text-destructive hover:text-destructive/80" disabled={isSubmittingScores}><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody>
-            </Table>
-            <div className="flex justify-end pt-6"><Button onClick={handleFinalSave} size="lg" disabled={isSubmittingScores || pendingScores.length === 0}>{isSubmittingScores && <Loader className="mr-2 h-4 w-4 animate-spin" />} Alle {pendingScores.length} Ergebnisse speichern</Button></div>
+            {/* Mobile Card Layout */}
+            <div className="block md:hidden space-y-4">
+              {pendingScores.map((entry) => (
+                <Card key={entry.tempId} className="p-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium">{entry.shooterName}</h3>
+                      <Button variant="ghost" size="sm" onClick={() => handleRemoveFromList(entry.tempId)} className="text-destructive hover:text-destructive/80" disabled={isSubmittingScores}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div><span className="font-medium">Mannschaft:</span> {entry.teamName}</div>
+                      <div className="flex gap-4">
+                        <div><span className="font-medium">DG:</span> {entry.durchgang}</div>
+                        <div><span className="font-medium">Ringe:</span> {entry.totalRinge}</div>
+                        <div><span className="font-medium">Typ:</span> {entry.scoreInputType === 'pre' ? 'Vorschuss' : entry.scoreInputType === 'post' ? 'Nachschuss' : 'Regulär'}</div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+            
+            {/* Desktop Table Layout */}
+            <div className="hidden md:block">
+              <Table><TableHeader><TableRow><TableHead>Schütze</TableHead><TableHead>Mannschaft</TableHead><TableHead className="text-center">DG</TableHead><TableHead className="text-center">Ringe</TableHead><TableHead>Typ</TableHead><TableHead className="text-right">Aktion</TableHead></TableRow></TableHeader>
+                <TableBody>{pendingScores.map((entry) => (<TableRow key={entry.tempId}><TableCell>{entry.shooterName}</TableCell><TableCell>{entry.teamName}</TableCell><TableCell className="text-center">{entry.durchgang}</TableCell><TableCell className="text-center">{entry.totalRinge}</TableCell><TableCell>{entry.scoreInputType === 'pre' ? 'Vorschuss' : entry.scoreInputType === 'post' ? 'Nachschuss' : 'Regulär'}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleRemoveFromList(entry.tempId)} className="text-destructive hover:text-destructive/80" disabled={isSubmittingScores}><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody>
+              </Table>
+            </div>
+            <div className="flex justify-end pt-6"><Button onClick={handleFinalSave} size="lg" disabled={isSubmittingScores || pendingScores.length === 0} className="w-full md:w-auto">{isSubmittingScores && <Loader className="mr-2 h-4 w-4 animate-spin" />} Alle {pendingScores.length} Ergebnisse speichern</Button></div>
           </CardContent>
         </Card>
       )}

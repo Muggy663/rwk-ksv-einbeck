@@ -145,21 +145,23 @@ export default function StartlistenUebersichtPage() {
   }
 
   return (
-    <div className="container py-8 max-w-6xl mx-auto">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/km-orga">
-          <Button variant="outline">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-primary">📄 Startlisten-Übersicht</h1>
-          <p className="text-muted-foreground">
-            Austragungsorte und gespeicherte Startlisten verwalten
-          </p>
+    <div className="px-2 md:px-4 py-8 max-w-6xl mx-auto">
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <Link href="/km-orga">
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-xl md:text-3xl font-bold text-primary">📄 Startlisten-Übersicht</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
+              Austragungsorte und gespeicherte Startlisten verwalten
+            </p>
+          </div>
         </div>
-        <Link href="/km-orga/startlisten">
-          <Button>
+        <Link href="/km-orga/startlisten" className="w-full md:w-auto">
+          <Button className="w-full h-12 text-left justify-start md:w-auto md:h-auto md:text-center md:justify-center">
             <Plus className="h-4 w-4 mr-2" />
             Neuen Austragungsort erstellen
           </Button>
@@ -167,18 +169,20 @@ export default function StartlistenUebersichtPage() {
       </div>
       
       {/* Tabs */}
-      <div className="flex space-x-1 mb-6">
+      <div className="flex flex-col gap-2 mb-6 md:flex-row md:gap-1">
         <Button 
           variant={activeTab === 'configs' ? 'default' : 'outline'}
           onClick={() => setActiveTab('configs')}
+          className="w-full h-12 text-left justify-start md:w-auto md:h-auto md:text-center md:justify-center"
         >
-          Austragungsorte ({configs.length})
+          🏢 Austragungsorte ({configs.length})
         </Button>
         <Button 
           variant={activeTab === 'startlisten' ? 'default' : 'outline'}
           onClick={() => setActiveTab('startlisten')}
+          className="w-full h-12 text-left justify-start md:w-auto md:h-auto md:text-center md:justify-center"
         >
-          Gespeicherte Startlisten ({startlisten.length})
+          📄 Gespeicherte Startlisten ({startlisten.length})
         </Button>
       </div>
 
@@ -187,7 +191,7 @@ export default function StartlistenUebersichtPage() {
           <CardContent className="text-center py-10">
             <p className="text-muted-foreground mb-4">Noch keine Austragungsorte vorhanden.</p>
             <Link href="/km-orga/startlisten">
-              <Button>
+              <Button className="w-full h-12 md:w-auto md:h-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Ersten Austragungsort erstellen
               </Button>
@@ -217,7 +221,7 @@ export default function StartlistenUebersichtPage() {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(config.id)}>
+                    <Button variant="outline" size="sm" onClick={() => handleDelete(config.id)} className="hidden md:flex">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -252,16 +256,22 @@ export default function StartlistenUebersichtPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center pt-2">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 pt-2">
                     <span className="text-xs text-muted-foreground">
                       Erstellt: {config.createdAt.toLocaleDateString('de-DE')}
                     </span>
-                    <Link href={`/startlisten-tool?id=${config.id}`}>
-                      <Button>
-                        <Play className="h-4 w-4 mr-2" />
-                        Startlisten generieren
+                    <div className="flex flex-col gap-2 w-full md:flex-row md:w-auto">
+                      <Link href={`/startlisten-tool?id=${config.id}`} className="w-full md:w-auto">
+                        <Button className="w-full h-12 text-left justify-start md:w-auto md:h-auto md:text-center md:justify-center">
+                          <Play className="h-4 w-4 mr-2" />
+                          Startlisten generieren
+                        </Button>
+                      </Link>
+                      <Button variant="outline" onClick={() => handleDelete(config.id)} className="w-full h-12 text-left justify-start md:hidden">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Löschen
                       </Button>
-                    </Link>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -297,7 +307,7 @@ export default function StartlistenUebersichtPage() {
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <Link href={`/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`}>
+                      <Link href={`/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`} className="hidden md:block">
                         <Button 
                           variant="outline" 
                           size="sm"
@@ -310,6 +320,7 @@ export default function StartlistenUebersichtPage() {
                         variant="outline" 
                         size="sm"
                         onClick={() => handleDeleteStartliste(liste.id)}
+                        className="hidden md:flex"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -336,27 +347,43 @@ export default function StartlistenUebersichtPage() {
                           return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
                         })()} Uhr
                       </span>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2 w-full md:flex-row md:w-auto">
+                        <Link href={`/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`} className="w-full md:hidden">
+                          <Button variant="outline" className="w-full h-12 text-left justify-start">
+                            <Edit className="h-4 w-4 mr-2" />
+                            Bearbeiten
+                          </Button>
+                        </Link>
                         <Button 
                           variant="outline" 
-                          size="sm"
                           onClick={() => {
                             // TODO: PDF Export der gespeicherten Startliste
                             toast({ title: 'Info', description: 'PDF-Export wird implementiert' });
                           }}
+                          className="w-full h-12 text-left justify-start md:w-auto md:h-auto md:text-center md:justify-center"
                         >
-                          PDF Export
+                          📄 PDF Export
                         </Button>
-                        <David21ImportDialog 
-                          wettkampfId={`VW111_${liste.id.substring(0, 8)}`}
-                          onImport={(results) => {
-                            console.log('Importierte Ergebnisse:', results);
-                            toast({ 
-                              title: '✅ Import erfolgreich', 
-                              description: `${results.length} Ergebnisse für Startliste ${liste.id.substring(0, 8)} importiert` 
-                            });
-                          }}
-                        />
+                        <div className="w-full md:w-auto">
+                          <David21ImportDialog 
+                            wettkampfId={`VW111_${liste.id.substring(0, 8)}`}
+                            onImport={(results) => {
+                              console.log('Importierte Ergebnisse:', results);
+                              toast({ 
+                                title: '✅ Import erfolgreich', 
+                                description: `${results.length} Ergebnisse für Startliste ${liste.id.substring(0, 8)} importiert` 
+                              });
+                            }}
+                          />
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handleDeleteStartliste(liste.id)}
+                          className="w-full h-12 text-left justify-start md:hidden"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Löschen
+                        </Button>
                       </div>
                     </div>
                   </div>
