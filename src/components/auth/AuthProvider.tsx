@@ -43,9 +43,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (user) {
       setTimeLeft(10 * 60); // Reset countdown
       
-      // Countdown Timer
+      // Countdown Timer - zurück auf 1 Sekunde für sichtbare Änderungen
       countdownTimerRef.current = setInterval(() => {
-        setTimeLeft(prev => Math.max(0, prev - 1));
+        setTimeLeft(prev => {
+          const newTime = Math.max(0, prev - 1);
+          return newTime;
+        });
       }, 1000);
       
       // Logout Timer
