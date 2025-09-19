@@ -75,10 +75,16 @@ export default function AddTerminPage() {
         const snapshot = await getDocs(clubsQuery);
         
         if (!snapshot.empty) {
-          const clubLocations = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return data.shortName ? `${data.name} (${data.shortName})` : data.name;
-          });
+          const clubLocations = snapshot.docs
+            .filter(doc => {
+              const data = doc.data();
+              return !data.name.toLowerCase().includes('development') && 
+                     !data.name.toLowerCase().includes('test');
+            })
+            .map(doc => {
+              const data = doc.data();
+              return data.shortName ? `${data.name} (${data.shortName})` : data.name;
+            });
           setLocations(clubLocations);
         } else {
           // Fallback zu Standard-Orten
@@ -231,7 +237,7 @@ export default function AddTerminPage() {
                 </div>
                 <Input 
                   id="title" 
-                  placeholder="z.B. 3. Durchgang 1. Kreisklasse KK 2024/25" 
+                  placeholder="z.B. 3. Durchgang, 1. Kreisklasse, Kleinkaliber" 
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
@@ -401,17 +407,12 @@ export default function AddTerminPage() {
                   checked={isKreisverband}
                   onCheckedChange={(checked) => setIsKreisverband(checked as boolean)}
                 />
-                <div className="grid gap-1.5 leading-none">
-                  <Label
-                    htmlFor="kreisverband"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Kreisverbandstermin
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Markieren Sie diesen Termin als offiziellen Kreisverbandstermin
-                  </p>
-                </div>
+                <Label
+                  htmlFor="kreisverband"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Kreisverbandstermin
+                </Label>
               </div>
             </div>
           </CardContent>

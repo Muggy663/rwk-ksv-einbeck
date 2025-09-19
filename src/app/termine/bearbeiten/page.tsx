@@ -26,13 +26,12 @@ export default function EditEventPage() {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [location, setLocation] = useState('');
+  const [customLocation, setCustomLocation] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState('durchgang');
   const [isKreisverband, setIsKreisverband] = useState(false);
-  const [leagueId, setLeagueId] = useState('');
-  const [leagueName, setLeagueName] = useState('');
   
-  const [leagues, setLeagues] = useState<Array<{ id: string; name: string }>>([]);
+  const [locations, setLocations] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -67,16 +66,27 @@ export default function EditEventPage() {
           setDescription(data.description || '');
           setType(data.type || 'durchgang');
           setIsKreisverband(data.isKreisverband || false);
-          setLeagueId(data.leagueId || '');
-          setLeagueName(data.leagueName || '');
           
-          const leaguesQuery = query(collection(db, 'rwk_leagues'));
-          const leaguesSnapshot = await getDocs(leaguesQuery);
-          const leaguesData = leaguesSnapshot.docs.map(doc => ({
-            id: doc.id,
-            name: doc.data().name
-          }));
-          setLeagues(leaguesData);
+          // Lade Clubs für Ort-Dropdown
+          const clubsQuery = query(collection(db, 'clubs'));
+          const clubsSnapshot = await getDocs(clubsQuery);
+          const clubLocations = clubsSnapshot.docs
+            .filter(doc => {
+              const data = doc.data();
+              return !data.name.toLowerCase().includes('development') && 
+                     !data.name.toLowerCase().includes('test');
+            })
+            .map(doc => {
+              const data = doc.data();
+              return data.shortName ? `${data.name} (${data.shortName})` : data.name;
+            });
+          setLocations(clubLocations.length > 0 ? clubLocations : [
+            "Schützenhaus Einbeck",
+            "Schützenhaus Markoldendorf",
+            "Schützenhaus Dassel",
+            "Schützenhaus Kreiensen",
+            "Schützenhaus Salzderhelden"
+          ]);
         } else {
           toast({
             title: 'Fehler',
@@ -102,7 +112,7 @@ export default function EditEventPage() {
   }, [id, toast, router]);
 
   const handleSave = async () => {
-    if (!id || !title || !date || !time || !location || !leagueId) {
+    if (!id || !title || !date || !time || !location) {
       toast({
         title: 'Fehler',
         description: 'Bitte füllen Sie alle Pflichtfelder aus.',
@@ -121,12 +131,12 @@ export default function EditEventPage() {
         title,
         date: Timestamp.fromDate(eventDate),
         time,
-        location,
+        location: location === 'other' ? customLocation : location,
         description,
         type,
         isKreisverband,
-        leagueId,
-        leagueName: leagueName || leagues.find(l => l.id === leagueId)?.name || '',
+        leagueId: 'all',
+        leagueName: 'Alle Ligen',
         updatedAt: Timestamp.now()
       });
       
@@ -184,7 +194,7 @@ export default function EditEventPage() {
                 id="title" 
                 value={title} 
                 onChange={(e) => setTitle(e.target.value)} 
-                placeholder="Titel des Termins"
+                placeholder="z.B. 3. Durchgang, 1. Kreisklasse, Kleinkaliber"
                 required
               />
             </div>
@@ -215,13 +225,29 @@ export default function EditEventPage() {
             
             <div>
               <Label htmlFor="location">Ort *</Label>
-              <Input 
-                id="location" 
-                value={location} 
-                onChange={(e) => setLocation(e.target.value)} 
-                placeholder="Ort des Termins"
-                required
-              />
+              <Select
+                value={location}
+                onValueChange={setLocation}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Ort auswählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((loc, index) => (
+                    <SelectItem key={index} value={loc}>{loc}</SelectItem>
+                  ))}
+                  <SelectItem value="other">Anderer Ort...</SelectItem>
+                </SelectContent>
+              </Select>
+              {location === 'other' && (
+                <Input
+                  className="mt-2"
+                  placeholder="Ort eingeben"
+                  value={customLocation}
+                  onChange={(e) => setCustomLocation(e.target.value)}
+                  required
+                />
+              )}
             </div>
             
             <div>
@@ -235,30 +261,7 @@ export default function EditEventPage() {
               />
             </div>
             
-            <div>
-              <Label htmlFor="league">Liga *</Label>
-              <Select
-                value={leagueId}
-                onValueChange={(value) => {
-                  setLeagueId(value);
-                  const league = leagues.find(l => l.id === value);
-                  if (league) {
-                    setLeagueName(league.name);
-                  }
-                }}
-              >
-                <SelectTrigger id="league">
-                  <SelectValue placeholder="Liga auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {leagues.map(league => (
-                    <SelectItem key={league.id} value={league.id}>
-                      {league.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -279,13 +282,15 @@ export default function EditEventPage() {
                 </Select>
               </div>
               
-              <div className="flex items-center space-x-2 pt-8">
-                <Switch
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
                   id="kreisverband"
                   checked={isKreisverband}
-                  onCheckedChange={setIsKreisverband}
+                  onChange={(e) => setIsKreisverband(e.target.checked)}
+                  className="h-4 w-4"
                 />
-                <Label htmlFor="kreisverband">Kreisverband-Termin</Label>
+                <Label htmlFor="kreisverband">Kreisverbandstermin</Label>
               </div>
             </div>
             
