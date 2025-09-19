@@ -182,8 +182,8 @@ export default function HomePage() {
           
           {/* Kraftvolle Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent mb-4 animate-fade-in">
+            <span className="block sm:hidden">RWK KSV Einbeck</span>
             <span className="hidden sm:block">Willkommen beim<br />Rundenwettkampf KSV Einbeck</span>
-            <span className="block sm:hidden">Willkommen beim<br />RWK KSV Einbeck</span>
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
