@@ -118,9 +118,11 @@ export default function VereinMannschaftenPage() {
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
   const [teamShooters, setTeamShooters] = useState<Map<string, Shooter[]>>(new Map());
   const [loadingShooters, setLoadingShooters] = useState<Set<string>>(new Set());
+  const [teamsWithResults, setTeamsWithResults] = useState<Set<string>>(new Set());
 
   const isVereinsvertreter = userPermission?.clubRoles && 
                            Object.values(userPermission.clubRoles).includes('SPORTLEITER');
+  const isAdmin = userPermission?.role === 'superadmin';
 
   // Effect 1: Set activeClubId and activeClubName based on userPermission from context
   useEffect(() => {
@@ -303,6 +305,46 @@ export default function VereinMannschaftenPage() {
     }
   };
 
+  // Check which teams have results
+  const checkTeamsWithResults = useCallback(async () => {
+    if (!selectedSeasonId || teamsOfActiveClub.length === 0) {
+      setTeamsWithResults(new Set());
+      return;
+    }
+
+    try {
+      const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
+      if (!currentSeason?.competitionYear) return;
+
+      const teamIds = teamsOfActiveClub.map(team => team.id).filter(Boolean);
+      if (teamIds.length === 0) return;
+
+      const scoresQuery = query(
+        collection(db, 'rwk_scores'),
+        where('teamId', 'in', teamIds),
+        where('competitionYear', '==', currentSeason.competitionYear)
+      );
+      
+      const scoresSnapshot = await getDocs(scoresQuery);
+      const teamsWithResultsSet = new Set<string>();
+      
+      scoresSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.teamId) {
+          teamsWithResultsSet.add(data.teamId);
+        }
+      });
+      
+      setTeamsWithResults(teamsWithResultsSet);
+    } catch (error) {
+      console.error('Fehler beim Prüfen der Ergebnisse:', error);
+    }
+  }, [selectedSeasonId, teamsOfActiveClub, allSeasons]);
+
+  useEffect(() => {
+    checkTeamsWithResults();
+  }, [checkTeamsWithResults]);
+
 
   // Effect 5: Fetch data for the dialog (shooters of the club, all teams for year for validation)
   const fetchDialogData = useCallback(async () => {
@@ -448,6 +490,18 @@ export default function VereinMannschaftenPage() {
     if (team.clubId !== activeClubId) {
       toast({ title: "Nicht autorisiert", description: "Sie können nur Mannschaften Ihres aktuell ausgewählten Vereins bearbeiten.", variant: "destructive" }); return;
     }
+    
+    // Prüfung ob Team Ergebnisse hat und Benutzer kein Admin ist
+    if (!isAdmin && teamsWithResults.has(team.id)) {
+      toast({ 
+        title: "Bearbeitung nicht möglich", 
+        description: "Diese Mannschaft hat bereits Ergebnisse eingetragen. Nur der RWK-Leiter (Admin) kann Mannschaften mit Ergebnissen bearbeiten.", 
+        variant: "destructive",
+        duration: 8000
+      }); 
+      return; 
+    }
+    
     setFormMode('edit');
     setCurrentTeam(team);
     
@@ -466,6 +520,18 @@ export default function VereinMannschaftenPage() {
   const handleDeleteConfirmation = (team: Team) => {
     if (!isVereinsvertreter) { toast({ title: "Keine Berechtigung", variant: "destructive" }); return; }
     if (team.clubId !== activeClubId) { toast({ title: "Nicht autorisiert", variant: "destructive" }); return; }
+    
+    // Prüfung ob Team Ergebnisse hat und Benutzer kein Admin ist
+    if (!isAdmin && teamsWithResults.has(team.id)) {
+      toast({ 
+        title: "Löschen nicht möglich", 
+        description: "Diese Mannschaft hat bereits Ergebnisse eingetragen. Nur der RWK-Leiter (Admin) kann Mannschaften mit Ergebnissen löschen.", 
+        variant: "destructive",
+        duration: 8000
+      }); 
+      return; 
+    }
+    
     setTeamToDelete(team);
     // setIsAlertOpen(true); // This should be handled by AlertDialogTrigger
   };
@@ -1109,9 +1175,14 @@ export default function VereinMannschaftenPage() {
                             variant="ghost" 
                             size="icon" 
                             onClick={() => handleEditTeam(team)} 
-                            disabled={isSubmittingForm || isDeletingTeam}
-                            className="h-8 w-8 hover:bg-primary/10"
-                            title="Mannschaft bearbeiten"
+                            disabled={isSubmittingForm || isDeletingTeam || (!isAdmin && teamsWithResults.has(team.id))}
+                            className={`h-8 w-8 hover:bg-primary/10 ${
+                              !isAdmin && teamsWithResults.has(team.id) ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                            title={!isAdmin && teamsWithResults.has(team.id) 
+                              ? "Bearbeitung gesperrt - Team hat Ergebnisse (nur Admin)" 
+                              : "Mannschaft bearbeiten"
+                            }
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -1120,10 +1191,15 @@ export default function VereinMannschaftenPage() {
                                 <Button 
                                   variant="ghost" 
                                   size="icon" 
-                                  className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10" 
+                                  className={`h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10 ${
+                                    !isAdmin && teamsWithResults.has(team.id) ? 'opacity-50 cursor-not-allowed' : ''
+                                  }`}
                                   onClick={() => handleDeleteConfirmation(team)} 
-                                  disabled={isSubmittingForm || isDeletingTeam}
-                                  title="Mannschaft löschen"
+                                  disabled={isSubmittingForm || isDeletingTeam || (!isAdmin && teamsWithResults.has(team.id))}
+                                  title={!isAdmin && teamsWithResults.has(team.id) 
+                                    ? "Löschen gesperrt - Team hat Ergebnisse (nur Admin)" 
+                                    : "Mannschaft löschen"
+                                  }
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>

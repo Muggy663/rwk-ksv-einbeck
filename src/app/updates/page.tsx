@@ -21,7 +21,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <VersionBadge className="border-green-300 bg-green-50 text-green-700">
-              Web-Version: 1.7.3 (18.09.2025)
+              Web-Version: 1.7.4 (20.09.2025)
             </VersionBadge>
             <VersionBadge className="border-blue-300 bg-blue-50 text-blue-700">
               App-Version: 0.9.4.1 (02.09.2025)
@@ -35,8 +35,50 @@ export default function UpdatesPage() {
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 1.7.3 - Mobile UX KM-Orga</CardTitle>
+              <CardTitle className="text-xl">Version 1.7.4 - Mannschaftsführer-Rolle Implementation</CardTitle>
               <Badge variant="default" className="bg-green-600">Aktuell</Badge>
+            </div>
+            <CardDescription>20.09.2025</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">Vollständige MANNSCHAFTSFUEHRER-Rolle mit Zugriff auf Ergebniserfassung und Mannschaftsführer-Kontakte, vereinfachte Dashboard-Auswahl durch Entfernung separater Mannschaftsführer-Karte.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">👥 Mannschaftsführer-Rolle Implementation v1.7.4</h4>
+              <div className="text-xs text-green-700">
+                3-Tier-Rollensystem und vereinfachte UX
+              </div>
+            </div>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>👥 <strong>MANNSCHAFTSFUEHRER-Rolle hinzugefügt:</strong> Vollständige Integration in das 3-Tier-Rollensystem mit granularen Berechtigungen</li>
+              <li>🏆 <strong>Ergebniserfassung-Zugriff:</strong> Mannschaftsführer können Ergebnisse für ihre Mannschaften eintragen</li>
+              <li>📞 <strong>Mannschaftsführer-Kontakte:</strong> Zugriff auf Kontaktdaten aller Mannschaftsführer in den eigenen Ligen</li>
+              <li>🔑 <strong>Passwort-Ändern-Funktion:</strong> Eigenständige Passwort-Verwaltung für Mannschaftsführer</li>
+              <li>🎨 <strong>Vereinfachte Dashboard-Auswahl:</strong> Separate Mannschaftsführer-Karte entfernt, alle nutzen Vereinsbereich</li>
+              <li>🛡️ <strong>Rollenbasierte Karten-Einschränkungen:</strong> Mannschaften/Schützen nur für Sportleiter/Vorstand sichtbar</li>
+              <li>📏 <strong>Grid-Layout optimiert:</strong> Dashboard-Auswahl von 4 auf 3 Spalten reduziert für bessere Übersicht</li>
+              <li>🔄 <strong>Einheitliche Login-Weiterleitung:</strong> Alle Benutzer werden zur Dashboard-Auswahl geleitet</li>
+            </ul>
+            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="font-medium text-green-800">👥 Mannschaftsführer-Rolle Implementation</span>
+                  <p className="text-xs text-green-600 mt-1">3-Tier-System & Vereinfachte UX</p>
+                </div>
+                <Link href="/updates/v1.7.4">
+                  <span className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 cursor-pointer">
+                    🚀 v1.7.4
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Version 1.7.3 - Mobile UX KM-Orga</CardTitle>
+              <Badge variant="outline">Vorherige</Badge>
             </div>
             <CardDescription>18.09.2025</CardDescription>
           </CardHeader>
@@ -66,43 +108,6 @@ export default function UpdatesPage() {
                 </div>
                 <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
                   🚀 v1.7.3
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Version 1.7.2 - Mobile Fixes & Team-Manager</CardTitle>
-              <Badge variant="outline">Vorherige</Badge>
-            </div>
-            <CardDescription>17.09.2025</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">Mobile Fixes & Team-Manager: Burger-Menü Touch-Fix verhindert versehentliches Öffnen, Für Vereine Scrolling-Problem behoben, Team-Manager Seite korrigiert mit BackButton und Auth-Fix.</p>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-              <h4 className="font-semibold text-green-900 mb-2">🔧 Mobile Fixes & Team-Manager v1.7.2</h4>
-              <div className="text-xs text-green-700">
-                Touch-Fixes und Team-Manager Korrekturen
-              </div>
-            </div>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>📱 <strong>Burger-Menü Touch-Fix:</strong> Verhindert versehentliches Öffnen beim Scrollen auf mobilen Geräten</li>
-              <li>📜 <strong>Für Vereine Scrolling-Fix:</strong> Scrolling-Problem auf der Für Vereine Seite behoben</li>
-              <li>👥 <strong>Team-Manager Seite korrigiert:</strong> BackButton hinzugefügt und Auth-Fix implementiert</li>
-              <li>🔧 <strong>Navigation verbessert:</strong> Stabilere mobile Navigation ohne ungewollte Interaktionen</li>
-              <li>📱 <strong>Touch-Optimierung:</strong> Bessere Touch-Erkennung für mobile Geräte</li>
-            </ul>
-            <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <span className="font-medium text-green-800">🔧 Mobile Fixes & Team-Manager</span>
-                  <p className="text-xs text-green-600 mt-1">Touch-Fixes & Navigation</p>
-                </div>
-                <span className="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                  🚀 v1.7.2
                 </span>
               </div>
             </div>

@@ -37,6 +37,7 @@ const CLUB_ROLES = [
   { value: 'VORSTAND', label: '👔 Vorstand (Alle Bereiche)' },
   { value: 'KASSENWART', label: '💰 Kassenwart (Finanzen)' },
   { value: 'SCHRIFTFUEHRER', label: '📝 Schriftführer (Protokolle)' },
+  { value: 'MANNSCHAFTSFUEHRER', label: '🏹 Mannschaftsführer (Ergebnisse)' },
   { value: 'JUGENDWART', label: '🧒 Jugendwart' },
   { value: 'DAMENWART', label: '👩 Damenwart' },
   { value: 'ZEUGWART', label: '🔧 Zeugwart' },
@@ -274,25 +275,23 @@ export default function AdminUserManagementPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
-          <TabsTrigger value="edit" className="text-xs md:text-sm">🎯 Rollen</TabsTrigger>
-          <TabsTrigger value="create" className="text-xs md:text-sm">Erstellen</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 mb-6">
+          <TabsTrigger value="edit" className="text-xs md:text-sm">🎯 Benutzer verwalten</TabsTrigger>
           <TabsTrigger value="list" className="text-xs md:text-sm">Übersicht</TabsTrigger>
           <TabsTrigger value="migrate" className="text-xs md:text-sm">🔄 Migration</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="create" className="space-y-4">
-          <CreateUserFormLocal clubs={allClubs} onUserCreated={handleUserCreated} />
-        </TabsContent>
+
         
         <TabsContent value="edit" className="space-y-4">
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-xl text-primary">🎯 Neue 3-Tier-Rollenverwaltung</CardTitle>
+              <CardTitle className="text-xl text-primary">🎯 Benutzerverwaltung</CardTitle>
               <CardDescription>
+                Benutzer anlegen und Rollen zuweisen. Kombiniert Erstellung und Rollenverwaltung in einem Formular.<br/>
                 <strong>Platform-Rollen:</strong> System-weite Berechtigungen (SUPER_ADMIN)<br/>
                 <strong>KV-Rollen:</strong> Kreisverband-Berechtigungen (KV_WETTKAMPFLEITER)<br/>
-                <strong>Club-Rollen:</strong> Vereins-spezifische Rollen (SPORTLEITER, VORSTAND, etc.)<br/>
+                <strong>Club-Rollen:</strong> Vereins-spezifische Rollen (SPORTLEITER, VORSTAND, MANNSCHAFTSFÜHRER, etc.)<br/>
                 <strong>Lizenzen:</strong> Kostenpflichtige Module (Vereinssoftware)
               </CardDescription>
             </CardHeader>

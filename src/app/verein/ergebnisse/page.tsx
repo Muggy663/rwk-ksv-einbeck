@@ -546,8 +546,19 @@ export default function VereinErgebnissePage() {
 
     
     if (!userPermission?.uid) { 
-
       toast({ title: "Fehler", description: "Benutzer nicht identifiziert.", variant: "destructive" }); 
+      return; 
+    }
+    
+    // Berechtigung prüfen
+    const isMannschaftsfuehrer = userPermission?.clubRoles && 
+      Object.values(userPermission.clubRoles).includes('MANNSCHAFTSFUEHRER');
+    const isSportleiter = userPermission?.clubRoles && 
+      Object.values(userPermission.clubRoles).includes('SPORTLEITER');
+    const isLegacyMannschaftsfuehrer = userPermission?.role === 'mannschaftsfuehrer';
+    
+    if (!isMannschaftsfuehrer && !isSportleiter && !isLegacyMannschaftsfuehrer && userPermission?.role !== 'superadmin') {
+      toast({ title: "Keine Berechtigung", description: "Sie haben keine Berechtigung zur Ergebniserfassung.", variant: "destructive" }); 
       return; 
     }
     

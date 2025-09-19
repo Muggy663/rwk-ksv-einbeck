@@ -184,7 +184,9 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
                            Object.values(userAppPermissions.clubRoles).includes('SPORTLEITER');
       const isVorstand = userAppPermissions.clubRoles && 
                         Object.values(userAppPermissions.clubRoles).includes('VORSTAND');
-      const hasValidRole = isSportleiter || isVorstand || 
+      const isMannschaftsfuehrer = userAppPermissions.clubRoles && 
+                                  Object.values(userAppPermissions.clubRoles).includes('MANNSCHAFTSFUEHRER');
+      const hasValidRole = isSportleiter || isVorstand || isMannschaftsfuehrer ||
                           role === 'vereinsvertreter' || role === 'mannschaftsfuehrer';
       
       if (hasValidRole) {
@@ -238,6 +240,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
       } else {
         // Role is not valid for Verein area or missing
         const roleInfo = role || (userAppPermissions.clubRoles ? Object.values(userAppPermissions.clubRoles).join(', ') : 'Keine Rollen gefunden');
+
         setDerivedPermissionError(`Benutzer hat keine gültige Rolle für den Vereinsbereich. Benötigt: SPORTLEITER, VORSTAND oder Legacy-Rollen. Aktuelle Rollen: ${roleInfo}`);
         setUserPermissionForContext(userAppPermissions); // Store for potential role display in error
         setAssignedClubIdArray([]);

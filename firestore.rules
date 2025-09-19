@@ -123,7 +123,11 @@ service cloud.firestore {
              (getUserPermissions().clubId == clubId || getUserPermissions().assignedClubId == clubId);
     }
     
-    function isMannschaftsfuehrer() {
+    function isMannschaftsfuehrer(clubId) {
+      return getUserClubRole(clubId) == 'MANNSCHAFTSFUEHRER';
+    }
+    
+    function isLegacyMannschaftsfuehrer() {
       return isAuthenticated() && 
              getUserPermissions() != null && 
              getUserPermissions().role == 'mannschaftsfuehrer';
@@ -185,6 +189,7 @@ service cloud.firestore {
              isKassenwart(clubId) || 
              isSchriftfuehrer(clubId) ||
              isSportleiter(clubId) || // Mannschaftsplanung
+             isMannschaftsfuehrer(clubId) || // Mannschaftsplanung
              isJugendwart(clubId) ||
              isDamenwart(clubId) ||
              hasLegacyClubAccess(clubId); // Legacy
@@ -267,7 +272,10 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthenticated() && 
                     isValidRingCount(request.resource.data.totalRinge) &&
-                    (isSuperAdmin() || isMannschaftsfuehrer() || hasLegacyClubAccess(request.resource.data.clubId));
+                    (isSuperAdmin() || 
+                     isMannschaftsfuehrer(request.resource.data.clubId) ||
+                     isLegacyMannschaftsfuehrer() || 
+                     hasLegacyClubAccess(request.resource.data.clubId));
       allow update: if isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
@@ -537,7 +545,9 @@ service cloud.firestore {
 
     match /league_updates/{update} {
       allow read: if true;
-      allow create, update: if isSuperAdmin() || isMannschaftsfuehrer() || 
+      allow create, update: if isSuperAdmin() || 
+                            isMannschaftsfuehrer(request.resource.data.clubId) ||
+                            isLegacyMannschaftsfuehrer() || 
                             hasLegacyClubAccess(request.resource.data.clubId);
       allow delete: if isSuperAdmin();
     }

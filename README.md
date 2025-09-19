@@ -4,7 +4,7 @@
 
 Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
-[![Version](https://img.shields.io/badge/Version-1.7.3-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-1.7.4-blue?style=for-the-badge)](#)
 [![Android App](https://img.shields.io/badge/Android_App-0.9.4.1-success?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -142,7 +142,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 | Platform | Version | Status | Download |
 |----------|---------|--------|---------|
-| **Web App** | 1.7.3 | ✅ Produktiv | Vercel Deployment |
+| **Web App** | 1.7.4 | ✅ Produktiv | Vercel Deployment |
 | **Android App** | 0.9.4.1 | ✅ Produktiv | Google Play Store |
 | **iOS App** | - | ❌ Nicht geplant | Unrentabel |
 
@@ -251,6 +251,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
+- **Web-Version 1.7.4** - Mannschaftsführer-Rolle Implementation: Vollständige MANNSCHAFTSFUEHRER-Rolle mit Zugriff auf Ergebniserfassung und Mannschaftsführer-Kontakte, vereinfachte Dashboard-Auswahl durch Entfernung separater Mannschaftsführer-Karte, optimierte Berechtigung im Vereinsbereich mit rollenbasierten Karten-Einschränkungen, erweiterte Firestore-Rules für granulare Mannschaftsführer-Berechtigungen
 - **Web-Version 1.7.3** - Mobile UX KM-Orga: Header Overflow-Fix verhindert horizontales Scrollen, KM-Orga mobile Buttons optimiert mit vertikaler Anordnung, Dark Mode Text-Lesbarkeit in farbigen Boxen verbessert
 - **Web-Version 1.7.2** - Mobile Fixes & Team-Manager: Burger-Menü Touch-Fix verhindert versehentliches Öffnen, Für Vereine Scrolling-Problem behoben, Team-Manager Seite korrigiert mit BackButton und Auth-Fix
 - **Web-Version 1.7.1.2** - Header Navigation Fix: MutationObserver verhindert Header-Verschwinden beim Navigieren auf Mobile, stabilere Navigation zwischen Dashboard-Bereichen

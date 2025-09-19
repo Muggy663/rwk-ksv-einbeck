@@ -42,6 +42,7 @@ export default function DashboardAuswahl() {
   // Legacy-Rollen für Rückwärtskompatibilität
   const isLegacyVereinsvertreter = userAppPermissions?.role === 'vereinsvertreter' || userAppPermissions?.role === 'club_representative';
   const isLegacyVereinsvorstand = userAppPermissions?.role === 'vereinsvorstand';
+  const isLegacyMannschaftsfuehrer = userAppPermissions?.role === 'mannschaftsfuehrer';
   
   // Neue Club-Rollen
   const hasClubRoles = userAppPermissions?.clubRoles && Object.keys(userAppPermissions.clubRoles).length > 0;
@@ -58,6 +59,7 @@ export default function DashboardAuswahl() {
   const isAusbilder = clubRolesList.includes('AUSBILDER');
   const isVereinsschuetze = clubRolesList.includes('VEREINSSCHUETZE');
   const isEhrenmitglied = clubRolesList.includes('EHRENMITGLIED');
+  const isMannschaftsfuehrer = clubRolesList.includes('MANNSCHAFTSFUEHRER');
   
   // Rollen-spezifische Bereiche für Vereinssoftware (Phase 2)
   const getVereinssoftwareBereiche = () => {
@@ -135,8 +137,11 @@ export default function DashboardAuswahl() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+
         {/* RWK Dashboard */}
-        <Card className={`shadow-lg hover:shadow-xl transition-shadow ${isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand ? 'opacity-50 cursor-not-allowed' : ''}`}>
+        {(isSportleiter || isVorstand || isMannschaftsfuehrer || isLegacyVereinsvertreter || isLegacyVereinsvorstand || isLegacyMannschaftsfuehrer || isRWKAdmin) && (
+          <Card className={`shadow-lg hover:shadow-xl transition-shadow ${isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand ? 'opacity-50 cursor-not-allowed' : ''}`}>
           <CardHeader className="pb-4">
             <div>
               <CardTitle className="text-xl mb-2">
@@ -186,7 +191,7 @@ export default function DashboardAuswahl() {
                     Gesperrt für reine KM-Orga
                   </Button>
                 ) : (
-                  <Link href={isRWKAdmin ? "/admin" : (isSportleiter || isVorstand || isLegacyVereinsvertreter || isLegacyVereinsvorstand) ? "/verein/dashboard" : "/"} className="flex-1">
+                  <Link href={isRWKAdmin ? "/admin" : "/verein/dashboard"} className="flex-1">
                     <Button className="w-full">
                       RWK-Bereich öffnen
                     </Button>
@@ -203,6 +208,7 @@ export default function DashboardAuswahl() {
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* KM Dashboard */}
         <Card className={`shadow-lg hover:shadow-xl transition-shadow ${!hasKMAccess ? 'opacity-60' : ''}`}>

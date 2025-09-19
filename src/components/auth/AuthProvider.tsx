@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           // Fehlerprüfung basierend auf neuen und alten Rollen
           const hasLegacyRole = permissionData.role === 'vereinsvertreter' || permissionData.role === 'mannschaftsfuehrer';
           const hasClubRole = permissionData.clubRoles && Object.values(permissionData.clubRoles).some(role => 
-            ['SPORTLEITER', 'VORSTAND', 'KASSENWART', 'SCHRIFTFUEHRER'].includes(role)
+            ['SPORTLEITER', 'VORSTAND', 'KASSENWART', 'SCHRIFTFUEHRER', 'MANNSCHAFTSFUEHRER'].includes(role)
           );
           const hasKvRole = permissionData.kvRole && ['KV_WETTKAMPFLEITER', 'KV_KM_ORGA'].includes(permissionData.kvRole);
           
@@ -180,7 +180,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (email === 'admin@rwk-einbeck.de') {
         window.location.href = '/dashboard-auswahl';
       } else {
-        window.location.href = '/verein/dashboard';
+        window.location.href = '/dashboard-auswahl';
       }
     } catch (err: any) {
       setError(err);

@@ -8,12 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { Users, FileText, BarChart3, Calendar, Key, Play, Sparkles, Target, Trophy, Shield, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
+import { useVereinAuth } from '@/app/verein/layout';
 import { ClubSwitcher } from '@/components/ui/club-switcher';
 import { InteractiveGuide } from '@/components/onboarding/InteractiveGuide';
 import { BackButton } from '@/components/ui/back-button';
 
 export default function VereinDashboardPage() {
   const { user } = useAuth();
+  const { userPermission } = useVereinAuth();
   const [showGuide, setShowGuide] = useState(false);
 
   const onboardingSteps = [
@@ -148,49 +150,55 @@ export default function VereinDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-green-500">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="h-6 w-6 text-green-600" />
+        {/* Mannschaften - Nur für Sportleiter/Vorstand */}
+        {(userPermission?.clubRoles && (Object.values(userPermission.clubRoles).includes('SPORTLEITER') || Object.values(userPermission.clubRoles).includes('VORSTAND')) || userPermission?.role === 'vereinsvertreter' || user?.email === 'admin@rwk-einbeck.de') && (
+          <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-green-500">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Users className="h-6 w-6 text-green-600" />
+                </div>
+                <Badge variant="secondary">Wichtig</Badge>
               </div>
-              <Badge variant="secondary">Wichtig</Badge>
-            </div>
-            <CardTitle className="text-xl">Mannschaften</CardTitle>
-            <CardDescription className="text-base">
-              Erstellen und verwalten Sie Ihre Mannschaften für die verschiedenen Ligen
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full h-12 text-sm font-semibold">
-              <Link href="/verein/mannschaften">
-                <span className="truncate">Mannschaften verwalten</span>
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+              <CardTitle className="text-xl">Mannschaften</CardTitle>
+              <CardDescription className="text-base">
+                Erstellen und verwalten Sie Ihre Mannschaften für die verschiedenen Ligen
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full h-12 text-sm font-semibold">
+                <Link href="/verein/mannschaften">
+                  <span className="truncate">Mannschaften verwalten</span>
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-blue-500">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Users className="h-6 w-6 text-blue-600" />
+        {/* Schützen - Nur für Sportleiter/Vorstand */}
+        {(userPermission?.clubRoles && (Object.values(userPermission.clubRoles).includes('SPORTLEITER') || Object.values(userPermission.clubRoles).includes('VORSTAND')) || userPermission?.role === 'vereinsvertreter' || user?.email === 'admin@rwk-einbeck.de') && (
+          <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-blue-500">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <Badge variant="secondary">Wichtig</Badge>
               </div>
-              <Badge variant="secondary">Wichtig</Badge>
-            </div>
-            <CardTitle className="text-xl">Schützen</CardTitle>
-            <CardDescription className="text-base">
-              Fügen Sie neue Schützen hinzu und bearbeiten Sie deren Stammdaten
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full h-12 text-sm font-semibold">
-              <Link href="/verein/schuetzen">
-                <span className="truncate">Schützen verwalten</span>
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+              <CardTitle className="text-xl">Schützen</CardTitle>
+              <CardDescription className="text-base">
+                Fügen Sie neue Schützen hinzu und bearbeiten Sie deren Stammdaten
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full h-12 text-sm font-semibold">
+                <Link href="/verein/schuetzen">
+                  <span className="truncate">Schützen verwalten</span>
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-orange-500">
           <CardHeader className="pb-3">
@@ -280,13 +288,14 @@ export default function VereinDashboardPage() {
           </CardContent>
         </Card>
 
+        {/* Mannschaftsführer-Kontakte - Für alle Vereinsrollen */}
         <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-amber-500">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div className="p-2 bg-amber-100 rounded-lg">
                 <Users className="h-6 w-6 text-amber-600" />
               </div>
-              <Badge variant="outline">Rolle</Badge>
+              <Badge variant="outline">Kontakte</Badge>
             </div>
             <CardTitle className="text-xl">Mannschaftsführer</CardTitle>
             <CardDescription className="text-base">
