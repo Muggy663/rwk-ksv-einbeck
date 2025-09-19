@@ -176,8 +176,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // fetchUserAppPermissions wird durch onAuthStateChanged getriggert
       toast({ title: "Erfolgreich angemeldet", description: "Willkommen zurück!" });
       
-      // Weiterleitung zur Dashboard-Auswahl
-      window.location.href = '/dashboard-auswahl';
+      // Direkte Weiterleitung basierend auf E-Mail
+      if (email === 'admin@rwk-einbeck.de') {
+        window.location.href = '/dashboard-auswahl';
+      } else {
+        window.location.href = '/verein/dashboard';
+      }
     } catch (err: any) {
       setError(err);
       toast({ title: "Anmeldefehler", description: err.message, variant: "destructive" });

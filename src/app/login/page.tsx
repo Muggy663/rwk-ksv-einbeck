@@ -14,12 +14,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      // Determine where to redirect based on user's role (email for now)
-      if (user.email === "admin@rwk-einbeck.de") {
-        router.push('/admin');
-      } else {
-        router.push('/verein/dashboard'); 
-      }
+      // Redirect to dashboard selection for all users
+      router.push('/dashboard-auswahl');
     }
   }, [user, loading, router]);
 

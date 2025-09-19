@@ -119,7 +119,8 @@ export default function VereinMannschaftenPage() {
   const [teamShooters, setTeamShooters] = useState<Map<string, Shooter[]>>(new Map());
   const [loadingShooters, setLoadingShooters] = useState<Set<string>>(new Set());
 
-  const isVereinsvertreter = userPermission?.role === 'vereinsvertreter';
+  const isVereinsvertreter = userPermission?.clubRoles && 
+                           Object.values(userPermission.clubRoles).includes('SPORTLEITER');
 
   // Effect 1: Set activeClubId and activeClubName based on userPermission from context
   useEffect(() => {
@@ -990,30 +991,52 @@ export default function VereinMannschaftenPage() {
           </Select>
         </div>
          {isVereinsvertreter && (
-            <Button
-                onClick={handleAddNewTeam}
-                disabled={!selectedSeasonId || isLoadingTeams || isSubmittingForm || !activeClubId}
-                className="w-full sm:w-auto whitespace-nowrap"
-            >
-                <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                  onClick={handleAddNewTeam}
+                  disabled={!selectedSeasonId || isLoadingTeams || isSubmittingForm || !activeClubId}
+                  className="w-full sm:w-auto whitespace-nowrap bg-green-600 hover:bg-green-700 text-white font-medium"
+                  size="default"
+              >
+                  <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft anlegen
+              </Button>
+              {(!selectedSeasonId || !activeClubId) && (
+                <p className="text-xs text-muted-foreground text-center sm:text-left">
+                  {!activeClubId ? 'Verein fehlt' : 'Saison wählen'}
+                </p>
+              )}
+            </div>
         )}
       </div>
 
       <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>
-            Mannschaften
-            {currentSelectedSeasonName && ` (${currentSelectedSeasonName})`}
-            {selectedLeagueIdFilter && ` / Liga: ${allLeagues.find(l => l.id === selectedLeagueIdFilter)?.name || 'Unbekannt'}`}
-          </CardTitle>
-          <CardDescription>
-            {isVereinsvertreter
-              ? "Verwalten Sie hier die Mannschaften Ihres Vereins."
-              : "Übersicht der Mannschaften Ihres Vereins."
-            }
-            {!selectedSeasonId && " Bitte wählen Sie zuerst eine Saison."}
-          </CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle>
+                Mannschaften
+                {currentSelectedSeasonName && ` (${currentSelectedSeasonName})`}
+                {selectedLeagueIdFilter && ` / Liga: ${allLeagues.find(l => l.id === selectedLeagueIdFilter)?.name || 'Unbekannt'}`}
+              </CardTitle>
+              <CardDescription>
+                {isVereinsvertreter
+                  ? "Verwalten Sie hier die Mannschaften Ihres Vereins."
+                  : "Übersicht der Mannschaften Ihres Vereins."
+                }
+                {!selectedSeasonId && " Bitte wählen Sie zuerst eine Saison."}
+              </CardDescription>
+            </div>
+            {isVereinsvertreter && selectedSeasonId && activeClubId && (
+              <Button
+                  onClick={handleAddNewTeam}
+                  disabled={isLoadingTeams || isSubmittingForm}
+                  className="bg-green-600 hover:bg-green-700 text-white font-medium whitespace-nowrap"
+                  size="default"
+              >
+                  <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoadingTeams && activeClubId && selectedSeasonId && <div className="flex justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2">Lade Mannschaften...</p></div>}
@@ -1026,7 +1049,12 @@ export default function VereinMannschaftenPage() {
           )}
           {!isLoadingTeams && teamsOfActiveClub.length > 0 && activeClubId && selectedSeasonId && (
             <Table><TableHeader><TableRow>
-                <TableHead>Name</TableHead><TableHead className="hidden sm:table-cell">Liga</TableHead><TableHead className="text-center">Typ</TableHead><TableHead className="text-center">AK</TableHead><TableHead className="text-center hidden md:table-cell">Jahr</TableHead><TableHead className="text-center">Schützen</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead className="hidden sm:table-cell">Liga</TableHead>
+                <TableHead className="text-center">Typ</TableHead>
+                <TableHead className="text-center">AK</TableHead>
+                <TableHead className="text-center hidden md:table-cell">Jahr</TableHead>
+                <TableHead className="text-center">Schützen</TableHead>
                 {isVereinsvertreter && <TableHead className="text-right">Aktionen</TableHead>}
             </TableRow></TableHeader>
             <TableBody>
@@ -1075,20 +1103,52 @@ export default function VereinMannschaftenPage() {
                       })()}
                     </TableCell>
                     {isVereinsvertreter && (
-                      <TableCell className="text-right space-x-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEditTeam(team)} disabled={isSubmittingForm || isDeletingTeam}><Edit className="h-4 w-4" /></Button>
-                        <AlertDialog open={!!teamToDelete && teamToDelete.id === team.id} onOpenChange={(open) => { if (!open) setTeamToDelete(null);}}>
-                          <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80" onClick={() => handleDeleteConfirmation(team)} disabled={isSubmittingForm || isDeletingTeam}><Trash2 className="h-4 w-4" /></Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>Mannschaft löschen?</AlertDialogTitle><AlertDialogDescription>Möchten Sie "{teamToDelete?.name}" wirklich löschen? Dies entfernt auch die Zuordnung der Schützen zu dieser Mannschaft.</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel onClick={() => setTeamToDelete(null)}>Abbrechen</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleDeleteTeam} disabled={isDeletingTeam} className="bg-destructive hover:bg-destructive/90">{isDeletingTeam && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Löschen</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleEditTeam(team)} 
+                            disabled={isSubmittingForm || isDeletingTeam}
+                            className="h-8 w-8 hover:bg-primary/10"
+                            title="Mannschaft bearbeiten"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog open={!!teamToDelete && teamToDelete.id === team.id} onOpenChange={(open) => { if (!open) setTeamToDelete(null);}}>
+                            <AlertDialogTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10" 
+                                  onClick={() => handleDeleteConfirmation(team)} 
+                                  disabled={isSubmittingForm || isDeletingTeam}
+                                  title="Mannschaft löschen"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Mannschaft löschen?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Möchten Sie "{teamToDelete?.name}" wirklich löschen? Dies entfernt auch die Zuordnung der Schützen zu dieser Mannschaft.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setTeamToDelete(null)}>Abbrechen</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={handleDeleteTeam} 
+                                  disabled={isDeletingTeam} 
+                                  className="bg-destructive hover:bg-destructive/90"
+                                >
+                                  {isDeletingTeam && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 
+                                  Löschen
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </TableCell>
                     )}
                     </TableRow>

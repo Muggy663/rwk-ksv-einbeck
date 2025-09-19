@@ -45,7 +45,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="de" suppressHydrationWarning>
       <head>
-        <Script src="/disable-onboarding.js" strategy="beforeInteractive" />
+
         <meta name="theme-color" content="#f5f3e6" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
