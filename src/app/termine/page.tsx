@@ -106,7 +106,7 @@ export default function TerminePage() {
         // Lade Termine für den aktuellen Monat (für den Kalender)
         const start = startOfMonth(currentMonth);
         const end = endOfMonth(currentMonth);
-        const eventsData = await fetchEvents(start, end, selectedLeague);
+        const eventsData = await fetchEvents(start, end, 'all');
 
         setEvents(eventsData);
         
@@ -116,7 +116,7 @@ export default function TerminePage() {
         const futureEnd = new Date(today);
         futureEnd.setFullYear(futureEnd.getFullYear() + 1); // Ein Jahr in die Zukunft
         
-        const allFutureEvents = await fetchEvents(today, futureEnd, selectedLeague);
+        const allFutureEvents = await fetchEvents(today, futureEnd, 'all');
 
         
         // Setze die nächsten Termine global
@@ -326,50 +326,7 @@ export default function TerminePage() {
         </div>
       </div>
       
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-          <div className="w-full sm:w-64">
-            <Label htmlFor="season-select">Saison</Label>
-            <Select
-              value={selectedSeason}
-              onValueChange={setSelectedSeason}
-              disabled={seasons.length === 0}
-            >
-              <SelectTrigger id="season-select">
-                <SelectValue placeholder="Saison auswählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {seasons.map(season => (
-                  <SelectItem key={season.id} value={season.id}>
-                    {season.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="w-full sm:w-64">
-            <Label htmlFor="league-select">Liga</Label>
-            <Select
-              value={selectedLeague}
-              onValueChange={setSelectedLeague}
-              disabled={leagues.length === 0}
-            >
-              <SelectTrigger id="league-select">
-                <SelectValue placeholder="Alle Ligen" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Ligen</SelectItem>
-                {leagues.map(league => (
-                  <SelectItem key={league.id} value={league.id}>
-                    {league.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
+
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
@@ -406,7 +363,7 @@ export default function TerminePage() {
                     hasEvent: (date) => hasEvents(date),
                   }}
                   modifiersClassNames={{
-                    hasEvent: "bg-primary/20 font-bold text-primary",
+                    hasEvent: "bg-primary/20 font-bold text-primary dark:bg-primary/30 dark:text-primary-foreground",
                   }}
                   locale={de}
                 />

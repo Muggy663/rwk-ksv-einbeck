@@ -518,10 +518,7 @@ service cloud.firestore {
     
     match /events/{event} {
       allow read: if true;
-      allow create, update: if isAuthenticated() && 
-        (isSuperAdmin() ||
-         isMannschaftsfuehrer() || 
-         hasLegacyClubAccess(resource.data.clubId));
+      allow create, update: if isAuthenticated();
       allow delete: if isSuperAdmin();
     }
 

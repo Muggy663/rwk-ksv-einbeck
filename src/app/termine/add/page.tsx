@@ -59,41 +59,9 @@ export default function AddTerminPage() {
     }
   }, [user, router, toast]);
   
-  // Lade Saisons beim ersten Rendern
-  useEffect(() => {
-    const loadSeasons = async () => {
-      const seasonsData = await fetchSeasons();
-      setSeasons(seasonsData);
-      
-      if (seasonsData.length > 0) {
-        // Finde die aktuelle Saison (Status "Laufend")
-        const currentSeason = seasonsData.find(s => s.name.includes('2025'));
-        if (currentSeason) {
-          setSelectedSeason(currentSeason.id);
-        } else {
-          setSelectedSeason(seasonsData[0].id);
-        }
-      }
-    };
-    
-    loadSeasons();
-  }, []);
+  // Entfernt - keine automatische Vorauswahl mehr
   
-  // Lade Ligen, wenn sich die Saison ändert
-  useEffect(() => {
-    const loadLeagues = async () => {
-      if (!selectedSeason) return;
-      
-      const leaguesData = await fetchLeagues(selectedSeason);
-      setLeagues(leaguesData);
-      
-      if (leaguesData.length > 0) {
-        setSelectedLeague(leaguesData[0].id);
-      }
-    };
-    
-    loadLeagues();
-  }, [selectedSeason]);
+  // Entfernt - keine automatische Vorauswahl mehr
   
   // Lade Clubs aus der Datenbank
   useEffect(() => {
@@ -141,7 +109,7 @@ export default function AddTerminPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!date || !time || !title || !selectedSeason || !selectedLeague) {
+    if (!date || !time || !title) {
       toast({
         title: 'Fehler',
         description: 'Bitte füllen Sie alle Pflichtfelder aus.',
@@ -193,17 +161,13 @@ export default function AddTerminPage() {
     }
     
     try {
-      // Finde den Namen der ausgewählten Liga
-      const selectedLeagueObj = leagues.find(league => league.id === selectedLeague);
-      const leagueName = selectedLeagueObj ? selectedLeagueObj.name : 'Unbekannte Liga';
-      
       const eventData = {
         title,
         date,
         time,
         location: finalLocation,
-        leagueId: selectedLeague,
-        leagueName,
+        leagueId: 'all',
+        leagueName: 'Alle Ligen',
         type: type as 'durchgang' | 'kreismeisterschaft' | 'sitzung' | 'sonstiges',
         description,
         isKreisverband,
@@ -267,7 +231,7 @@ export default function AddTerminPage() {
                 </div>
                 <Input 
                   id="title" 
-                  placeholder="z.B. 3. Durchgang Kreisliga Luftgewehr" 
+                  placeholder="z.B. 3. Durchgang 1. Kreisklasse KK 2024/25" 
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
@@ -377,66 +341,7 @@ export default function AddTerminPage() {
                 )}
               </div>
               
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <Label htmlFor="season">Saison</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Wählen Sie die Saison aus</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Select
-                  value={selectedSeason}
-                  onValueChange={setSelectedSeason}
-                  disabled={seasons.length === 0}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Saison auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {seasons.map(season => (
-                      <SelectItem key={season.id} value={season.id}>{season.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <Label htmlFor="league">Liga</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Wählen Sie die Liga, für die dieser Termin gilt</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Select
-                  value={selectedLeague}
-                  onValueChange={setSelectedLeague}
-                  disabled={leagues.length === 0}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Liga auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {leagues.map(league => (
-                      <SelectItem key={league.id} value={league.id}>{league.name}</SelectItem>
-                    ))}
-                    <SelectItem value="all">Alle Ligen</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+
               
               <div className="space-y-2">
                 <div className="flex items-center">
