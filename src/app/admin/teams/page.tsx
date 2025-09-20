@@ -65,6 +65,8 @@ export default function AdminTeamsPage() {
 
   const [allLeagues, setAllLeagues] = useState<League[]>([]);
   const [selectedLeagueIdFilter, setSelectedLeagueIdFilter] = useState<string>("");
+  const [sortBy, setSortBy] = useState<'name' | 'club' | 'league' | 'type'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const [teamsForDisplay, setTeamsForDisplay] = useState<Team[]>([]);
   const [allClubsGlobal, setAllClubsGlobal] = useState<Club[]>([]);
@@ -158,8 +160,12 @@ export default function AdminTeamsPage() {
         where("seasonId", "==", selectedSeasonId),
       ];
       
-      if (selectedLeagueIdFilter && selectedLeagueIdFilter !== "") {
-        qConstraints.push(where("leagueId", "==", selectedLeagueIdFilter));
+      if (selectedLeagueIdFilter && selectedLeagueIdFilter !== "" && selectedLeagueIdFilter !== "ALL_LEAGUES") {
+        if (selectedLeagueIdFilter === "NOT_ASSIGNED") {
+          // Für "Nicht zugeordnet" filtern wir client-seitig, da Firestore keine null-Abfragen in where() unterstützt
+        } else {
+          qConstraints.push(where("leagueId", "==", selectedLeagueIdFilter));
+        }
       }
       
       const teamsQuery = query(
@@ -169,11 +175,46 @@ export default function AdminTeamsPage() {
       );
       
       const querySnapshot = await getDocs(teamsQuery);
-      const fetchedTeams = querySnapshot.docs.map(d => ({ 
+      let fetchedTeams = querySnapshot.docs.map(d => ({ 
         id: d.id, 
         ...d.data(), 
         shooterIds: d.data().shooterIds || [] 
       } as Team));
+      
+      // Client-seitige Filterung für "Nicht zugeordnet"
+      if (selectedLeagueIdFilter === "NOT_ASSIGNED") {
+        fetchedTeams = fetchedTeams.filter(team => !team.leagueId);
+      }
+      
+      // Sortierung anwenden
+      fetchedTeams.sort((a, b) => {
+        let aValue: string, bValue: string;
+        
+        switch (sortBy) {
+          case 'name':
+            aValue = a.name || '';
+            bValue = b.name || '';
+            break;
+          case 'club':
+            aValue = getClubName(a.clubId);
+            bValue = getClubName(b.clubId);
+            break;
+          case 'league':
+            aValue = getLeagueNameDisplay(a.leagueId);
+            bValue = getLeagueNameDisplay(b.leagueId);
+            break;
+          case 'type':
+            aValue = getLeagueTypeDisplay(a);
+            bValue = getLeagueTypeDisplay(b);
+            break;
+          default:
+            aValue = a.name || '';
+            bValue = b.name || '';
+        }
+        
+        const comparison = aValue.localeCompare(bValue);
+        return sortOrder === 'asc' ? comparison : -comparison;
+      });
       
       setTeamsForDisplay(fetchedTeams);
       
@@ -477,6 +518,7 @@ export default function AdminTeamsPage() {
             </SelectTrigger>
             <SelectContent>
                 <SelectItem value="ALL_LEAGUES">Alle Ligen anzeigen</SelectItem>
+                <SelectItem value="NOT_ASSIGNED">Nicht zugeordnet</SelectItem>
                 {allLeagues
                     .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "" && l.seasonId === selectedSeasonId)
                     .map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)
@@ -516,10 +558,42 @@ export default function AdminTeamsPage() {
           )}
           {!isLoadingTeams && teamsForDisplay.length > 0 && selectedSeasonId && (
             <Table><TableHeader><TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="hidden sm:table-cell">Verein</TableHead>
-                <TableHead className="hidden sm:table-cell">Liga</TableHead>
-                <TableHead className="text-center">Typ</TableHead>
+                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => {
+                  if (sortBy === 'name') {
+                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                  } else {
+                    setSortBy('name');
+                    setSortOrder('asc');
+                  }
+                  handleSearchTeams();
+                }}>Name {sortBy === 'name' && (sortOrder === 'asc' ? '↑' : '↓')}</TableHead>
+                <TableHead className="hidden sm:table-cell cursor-pointer hover:bg-muted/50" onClick={() => {
+                  if (sortBy === 'club') {
+                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                  } else {
+                    setSortBy('club');
+                    setSortOrder('asc');
+                  }
+                  handleSearchTeams();
+                }}>Verein {sortBy === 'club' && (sortOrder === 'asc' ? '↑' : '↓')}</TableHead>
+                <TableHead className="hidden sm:table-cell cursor-pointer hover:bg-muted/50" onClick={() => {
+                  if (sortBy === 'league') {
+                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                  } else {
+                    setSortBy('league');
+                    setSortOrder('asc');
+                  }
+                  handleSearchTeams();
+                }}>Liga {sortBy === 'league' && (sortOrder === 'asc' ? '↑' : '↓')}</TableHead>
+                <TableHead className="text-center cursor-pointer hover:bg-muted/50" onClick={() => {
+                  if (sortBy === 'type') {
+                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                  } else {
+                    setSortBy('type');
+                    setSortOrder('asc');
+                  }
+                  handleSearchTeams();
+                }}>Typ {sortBy === 'type' && (sortOrder === 'asc' ? '↑' : '↓')}</TableHead>
                 <TableHead className="text-center hidden md:table-cell">Jahr</TableHead>
                 <TableHead className="text-center">Schützen</TableHead>
                 <TableHead className="text-right">Aktionen</TableHead>
