@@ -815,11 +815,7 @@ export default function VereinErgebnissePage() {
   };
 
   const selectedLeagueObject = leaguesForActiveClubAndSeason.find(l => l.id === selectedLeagueId);
-  let numRoundsForSelect = 5;
-  if (selectedLeagueObject) {
-    const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
-    if (fourHundredPointDisciplines.includes(selectedLeagueObject.type)) numRoundsForSelect = 4;
-  }
+  let numRoundsForSelect = 5; // Alle Disziplinen haben 5 Durchgänge
 
   if (loadingPermissions || isLoadingAssignedClubDetails) {
     return <div className="flex justify-center items-center py-12"><Loader className="h-12 w-12 animate-spin text-primary mr-3" /><p>Lade Benutzer- und Vereinsdaten...</p></div>;
