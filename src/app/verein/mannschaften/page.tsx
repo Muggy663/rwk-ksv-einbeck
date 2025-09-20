@@ -683,6 +683,32 @@ export default function VereinMannschaftenPage() {
         const { id, ...dataForNewTeam } = teamDataToSave; 
         const teamData = {...dataForNewTeam, shooterIds: selectedShooterIdsInForm, leagueId: null, leagueType: currentTeam.leagueType || null };
         await setDoc(newTeamRef, teamData);
+        
+        // E-Mail-Benachrichtigung senden
+        try {
+          const clubName = allClubsGlobal.find(c => c.id === activeClubId)?.name || 'Unbekannter Verein';
+          const seasonName = allSeasons.find(s => s.id === selectedSeasonId)?.name || 'Unbekannte Saison';
+          
+          const emailData = new FormData();
+          emailData.append('subject', `🆕 Neue Mannschaft angelegt: ${dataForNewTeam.name}`);
+          emailData.append('message', `Neue Mannschaft wurde angelegt:
+
+Mannschaft: ${dataForNewTeam.name}
+Verein: ${clubName}
+Saison: ${seasonName}
+Disziplin: ${dataForNewTeam.leagueType || 'Nicht angegeben'}
+Schützen: ${selectedShooterIdsInForm.length}
+Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
+          emailData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
+          
+          await fetch('/api/send-email', {
+            method: 'POST',
+            body: emailData
+          });
+        } catch (emailError) {
+          console.warn('E-Mail-Benachrichtigung fehlgeschlagen:', emailError);
+        }
+        
         toast({ 
           title: "✅ Mannschaft erfolgreich erstellt!", 
           description: `"${dataForNewTeam.name}" wurde angelegt und ist jetzt in der Liste sichtbar.`,

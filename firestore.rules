@@ -262,10 +262,14 @@ service cloud.firestore {
     
     match /rwk_teams/{team} {
       allow read: if true;
-      allow write: if isSuperAdmin() || 
-                   hasLegacyClubAccess(resource.data.clubId) || // Legacy
-                   isSportleiter(resource.data.clubId) ||
-                   isVorstand(resource.data.clubId);
+      allow create: if isSuperAdmin() || 
+                    hasLegacyClubAccess(request.resource.data.clubId) || // Legacy
+                    isSportleiter(request.resource.data.clubId) ||
+                    isVorstand(request.resource.data.clubId);
+      allow update, delete: if isSuperAdmin() || 
+                            hasLegacyClubAccess(resource.data.clubId) || // Legacy
+                            isSportleiter(resource.data.clubId) ||
+                            isVorstand(resource.data.clubId);
     }
 
     match /rwk_scores/{score} {

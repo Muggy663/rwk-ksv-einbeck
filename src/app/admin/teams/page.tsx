@@ -518,7 +518,7 @@ export default function AdminTeamsPage() {
             </SelectTrigger>
             <SelectContent>
                 <SelectItem value="ALL_LEAGUES">Alle Ligen anzeigen</SelectItem>
-                <SelectItem value="NOT_ASSIGNED">Nicht zugeordnet</SelectItem>
+                <SelectItem value="NOT_ASSIGNED">Nicht zugewiesen</SelectItem>
                 {allLeagues
                     .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "" && l.seasonId === selectedSeasonId)
                     .map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)
