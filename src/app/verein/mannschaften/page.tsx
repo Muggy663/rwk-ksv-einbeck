@@ -781,6 +781,9 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
       setCurrentTeam(null);
       setSelectedShooterIdsInForm([]);
       setPersistedShooterIdsForTeam([]);
+      // Cache für aufgeklappte Schützen-Anzeige leeren und neu laden erzwingen
+      setTeamShooters(new Map());
+      setExpandedTeams(new Set());
       fetchTeamsForClubAndSeason(); // Refetch teams
     } catch (error: any) {
       console.error("Error saving team or updating shooters:", error);

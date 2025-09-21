@@ -848,6 +848,9 @@ export default function AdminTeamsPage() {
               setCurrentTeam(null);
               setSelectedShooterIdsInForm([]);
               setPersistedShooterIdsForTeam([]);
+              // Cache für aufgeklappte Schützen-Anzeige leeren und neu laden erzwingen
+              setTeamShooters(new Map());
+              setExpandedTeams(new Set());
               handleSearchTeams();
             } catch (error: any) {
               console.error("Error saving team or updating shooters:", error);
