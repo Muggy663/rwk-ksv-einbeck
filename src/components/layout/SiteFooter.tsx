@@ -34,6 +34,9 @@ export function SiteFooter() {
           <p className="text-xs text-muted-foreground mt-3">
             Entwickelt mit ❤️ für den deutschen Schießsport
           </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Für beste Kompatibilität empfehlen wir Chrome, Firefox oder Edge
+          </p>
         </div>
         <div className="text-center text-sm text-muted-foreground md:text-right min-w-0 flex-shrink-0">
           <p className="whitespace-nowrap">Web-Version {version} <span className="text-xs text-red-600 dark:text-red-400 font-semibold">Beta</span></p>
