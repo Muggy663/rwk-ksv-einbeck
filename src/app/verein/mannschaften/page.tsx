@@ -891,12 +891,21 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
   };
   
   const getLeagueTypeDisplay = (team: Team): string => {
+    let type = '';
     if (team.leagueId) {
       const league = allLeagues.find(l => l.id === team.leagueId);
-      return league?.type || '-';
+      type = league?.type || '';
     }
     // Fallback: Verwende leagueType direkt vom Team
-    return team.leagueType || '-';
+    if (!type) {
+      type = team.leagueType || '-';
+    }
+    
+    // Korrigiere alte "LG" Einträge zu "LGS" für Freihand
+    if (type === 'LG') {
+      return 'LGS';
+    }
+    return type;
   };
 
   const getClubName = (clubId?: string | null): string => {

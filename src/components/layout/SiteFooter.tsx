@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.7.5.1"; // KM-Mannschaften Fix: Schützen können jetzt in verschiedenen Disziplinen antreten (LG Freihand + Auflage)
+  const version = "1.7.5.2"; // Vereinsmannschaften Fix: LGS/LGA Multi-Disziplin Support + korrekte Disziplin-Namen (LGS = Luftgewehr Stehend)
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">
