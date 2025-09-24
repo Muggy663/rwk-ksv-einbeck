@@ -64,7 +64,7 @@ import {
   arrayUnion,
   Timestamp,
   setDoc
-} from 'firebase/firestore';
+, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -253,26 +253,44 @@ export default function VereinSchuetzenPage() {
   
   // Effect 4: Fetch teams for "New Shooter" dialog's team assignment section
   const fetchTeamsForClubInDialog = useCallback(async () => {
-    if (!isFormOpen || formMode !== 'new' || !activeClubId || !isVereinsvertreter) {
+    if (!isFormOpen || formMode !== 'new' || !activeClubId || !(isVereinsvertreter || isSportleiter)) {
       setTeamsOfSelectedClubInDialog([]);
       return;
     }
     setIsLoadingTeamsForDialog(true);
     try {
-      const teamsQuery = query(collection(db, TEAMS_COLLECTION), where("clubId", "==", activeClubId), orderBy("name", "asc"));
+      // Lade alle Teams und filtere dann nach laufenden Saisons
+      const teamsQuery = query(
+        collection(db, TEAMS_COLLECTION), 
+        where("clubId", "==", activeClubId),
+        orderBy("name", "asc")
+      );
+      
+      // Lade laufende Saisons
+      const seasonsQuery = query(
+        collection(db, 'seasons'),
+        where('status', '==', 'Laufend')
+      );
+      const seasonsSnapshot = await getDocs(seasonsQuery);
+      const activeSeasonsIds = seasonsSnapshot.docs.map(doc => doc.id);
       const snapshot = await getDocs(teamsQuery);
       
-      const teamsData = snapshot.docs.map(teamDoc => {
-        const teamData = teamDoc.data() as Team;
-        const leagueInfo = allLeaguesGlobal.find(l => l.id === teamData.leagueId);
-        return {
-          ...teamData,
-          id: teamDoc.id,
-          leagueType: leagueInfo?.type,
-          leagueCompetitionYear: leagueInfo?.competitionYear,
-          currentShooterCount: (teamData.shooterIds || []).length,
-        };
-      });
+      const teamsData = snapshot.docs
+        .map(teamDoc => {
+          const teamData = teamDoc.data() as Team;
+          const leagueInfo = allLeaguesGlobal.find(l => l.id === teamData.leagueId);
+          return {
+            ...teamData,
+            id: teamDoc.id,
+            leagueType: leagueInfo?.type,
+            leagueCompetitionYear: leagueInfo?.competitionYear,
+            currentShooterCount: (teamData.shooterIds || []).length,
+          };
+        })
+        .filter(team => {
+          // Nur Teams aus laufenden Saisons anzeigen
+          return team.seasonId && activeSeasonsIds.includes(team.seasonId);
+        });
       setTeamsOfSelectedClubInDialog(teamsData);
 
       if (queryTeamId && teamsData.some(t => t.id === queryTeamId)) {
@@ -294,13 +312,13 @@ export default function VereinSchuetzenPage() {
   }, [isFormOpen, formMode, activeClubId, isVereinsvertreter, allLeaguesGlobal, queryTeamId, toast]);
 
   useEffect(() => {
-    if (isFormOpen && formMode === 'new' && activeClubId && isVereinsvertreter) {
+    if (isFormOpen && formMode === 'new' && activeClubId && (isVereinsvertreter || isSportleiter)) {
       fetchTeamsForClubInDialog();
     }
-  }, [isFormOpen, formMode, activeClubId, isVereinsvertreter, fetchTeamsForClubInDialog]);
+  }, [isFormOpen, formMode, activeClubId, isVereinsvertreter, isSportleiter, fetchTeamsForClubInDialog]);
 
   const handleAddNewShooter = () => {
-    if (!isVereinsvertreter || !activeClubId) {
+    if (!(isVereinsvertreter || isSportleiter) || !activeClubId) {
       toast({ title: "Aktion nicht erlaubt", variant: "destructive" }); return;
     }
     setFormMode('new');
@@ -319,7 +337,7 @@ export default function VereinSchuetzenPage() {
       shooter.kmClubId
     ].includes(activeClubId);
     
-    if (!isVereinsvertreter || !shooterBelongsToActiveClub) {
+    if (!(isVereinsvertreter || isSportleiter) || !shooterBelongsToActiveClub) {
       toast({ title: "Nicht autorisiert", variant: "destructive" }); return;
     }
     
@@ -347,7 +365,7 @@ export default function VereinSchuetzenPage() {
       shooter.kmClubId
     ].includes(activeClubId);
     
-    if (!isVereinsvertreter || !shooterBelongsToActiveClub) {
+    if (!(isVereinsvertreter || isSportleiter) || !shooterBelongsToActiveClub) {
       toast({ title: "Nicht autorisiert", variant: "destructive" }); return;
     }
     setShooterToDelete(shooter);
@@ -355,105 +373,46 @@ export default function VereinSchuetzenPage() {
   };
 
   const handleDeleteShooter = async () => {
-    if (!shooterToDelete || !shooterToDelete.id || !userPermission?.uid || !isVereinsvertreter) {
-      toast({ 
-        title: "Fehler beim Löschen", 
-        description: "Ungültige Daten oder fehlende Berechtigung.",
-        variant: "destructive" 
-      });
-      setShooterToDelete(null); 
-      setIsAlertOpen(false); 
-      return;
+    if (!shooterToDelete || !shooterToDelete.id || !(isVereinsvertreter || isSportleiter)) {
+      toast({ title: "Fehler", description: "Kein Schütze zum Löschen ausgewählt.", variant: "destructive" });
+      setIsAlertOpen(false); setShooterToDelete(null); return;
     }
-
     setIsDeleting(true);
-    const shooterName = shooterToDelete.name || `${shooterToDelete.firstName || ''} ${shooterToDelete.lastName || ''}`.trim();
-    
     try {
-      // Firebase Auth Token für AdminSDK-Authentifizierung
-      const user = userPermission.uid ? await import('firebase/auth').then(auth => auth.getAuth().currentUser) : null;
+      // Auth-Token holen
+      const user = await import('firebase/auth').then(auth => auth.getAuth().currentUser);
       if (!user) {
-        throw new Error('Benutzer nicht authentifiziert');
+        throw new Error('Nicht angemeldet');
       }
-
-      const idToken = await user.getIdToken();
+      const token = await user.getIdToken();
       
       const response = await fetch(`/api/shooters/${shooterToDelete.id}`, {
         method: 'DELETE',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`,
-          'x-user-email': user.email || 'unknown'
+          'Authorization': `Bearer ${token}`
         }
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Netzwerkfehler' }));
-        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-      }
       
       const result = await response.json();
       
       if (result.success) {
-        toast({ 
-          title: "\u2705 Schütze gelöscht", 
-          description: result.message || `"${shooterName}" wurde erfolgreich entfernt.`,
-          duration: 5000
-        });
-        
-        // Detaillierte Erfolgsmeldung bei vielen betroffenen Datensätzen
-        if (result.details && (result.details.teamsAffected > 0 || result.details.scoresAffected > 0)) {
-          setTimeout(() => {
-            toast({
-              title: "Bereinigung abgeschlossen",
-              description: `${result.details.teamsAffected} Mannschaften und ${result.details.scoresAffected} Ergebnisse aktualisiert.`,
-              duration: 3000
-            });
-          }, 1000);
-        }
-        
-        // Daten neu laden
-        await fetchPageDataForActiveClub();
+        toast({ title: "Schütze gelöscht", description: result.message });
+        fetchPageDataForActiveClub();
       } else {
         throw new Error(result.error || 'Löschen fehlgeschlagen');
       }
     } catch (error: any) {
-      
-      let errorMessage = "Unbekannter Fehler beim Löschen.";
-      let errorTitle = "Fehler beim Löschen";
-      
-      if (error.message?.includes('Berechtigung')) {
-        errorTitle = "Keine Berechtigung";
-        errorMessage = "Sie haben keine Berechtigung, diesen Schützen zu löschen.";
-      } else if (error.message?.includes('nicht gefunden')) {
-        errorTitle = "Schütze nicht gefunden";
-        errorMessage = "Der Schütze wurde bereits gelöscht oder existiert nicht mehr.";
-      } else if (error.message?.includes('Netzwerk')) {
-        errorTitle = "Verbindungsfehler";
-        errorMessage = "Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.";
-      } else if (error.message?.includes('authentifiziert')) {
-        errorTitle = "Anmeldung erforderlich";
-        errorMessage = "Bitte melden Sie sich erneut an und versuchen Sie es noch einmal.";
-      } else {
-        errorMessage = error.message || errorMessage;
-      }
-      
-      toast({ 
-        title: errorTitle, 
-        description: errorMessage, 
-        variant: "destructive",
-        duration: 7000
-      });
+      console.error("Error deleting shooter:", error);
+      toast({ title: "Fehler beim Löschen", description: error.message || "Der Schütze konnte nicht gelöscht werden.", variant: "destructive" });
     } finally {
-      setIsDeleting(false); 
-      setIsAlertOpen(false); 
-      setShooterToDelete(null);
+      setIsDeleting(false); setIsAlertOpen(false); setShooterToDelete(null);
     }
   };
 
   const handleSubmitShooterForm = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!isVereinsvertreter || !activeClubId) {
+    if (!(isVereinsvertreter || isSportleiter) || !activeClubId) {
       toast({ title: "Nicht autorisiert", variant: "destructive" }); setIsFormSubmitting(false); return;
     }
     if (!currentShooter || !currentShooter.lastName?.trim() || !currentShooter.firstName?.trim()) {
@@ -534,7 +493,25 @@ export default function VereinSchuetzenPage() {
   };
   
   const handleFormInputChange = (field: keyof Pick<Shooter, 'lastName' | 'firstName' | 'gender' | 'birthYear' | 'mitgliedsnummer'>, value: string | number) => {
-    setCurrentShooter(prev => prev ? ({ ...prev, [field]: value }) : null);
+    setCurrentShooter(prev => {
+      if (!prev) return null;
+      
+      // Spezielle Behandlung für birthYear
+      if (field === 'birthYear') {
+        const stringValue = value.toString();
+        if (stringValue === '') {
+          return { ...prev, [field]: undefined };
+        } else {
+          const parsed = parseInt(stringValue);
+          if (!isNaN(parsed) && parsed >= 1920 && parsed <= new Date().getFullYear()) {
+            return { ...prev, [field]: parsed };
+          }
+          return prev; // Keine Änderung bei ungültigen Werten
+        }
+      }
+      
+      return { ...prev, [field]: value };
+    });
   };
 
   // Helper functions for team validation
@@ -678,7 +655,7 @@ export default function VereinSchuetzenPage() {
           {activeClubName && <p className="text-muted-foreground">Verein: <span className="font-semibold text-primary">{activeClubName}</span></p>}
           {contextTeamName && <p className="text-xs text-muted-foreground">Kontext: Mannschaft "{contextTeamName}" {isContextTeamNameLoading && "(Lade...)"}</p>}
         </div>
-        {isVereinsvertreter && (
+        {(isVereinsvertreter || isSportleiter) && (
           <Button onClick={handleAddNewShooter} disabled={isLoadingClubSpecificData || isFormSubmitting || isDeleting} className="bg-primary hover:bg-primary/90">
             <PlusCircle className="mr-2 h-5 w-5" /> 🎯 Neuen Schützen anlegen
           </Button>
@@ -893,7 +870,7 @@ export default function VereinSchuetzenPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="vsp-birthYear-dialog">Geburtsjahr</Label>
+                  <Label htmlFor="vsp-birthYear-dialog">Geburtsjahr (für Altersklassen)</Label>
                   <Input 
                     id="vsp-birthYear-dialog" 
                     type="number" 
@@ -903,16 +880,49 @@ export default function VereinSchuetzenPage() {
                     onChange={(e) => {
                       const value = e.target.value;
                       if (value === '') {
-                        handleFormInputChange('birthYear', undefined);
+                        setCurrentShooter(prev => prev ? ({ ...prev, birthYear: undefined }) : null);
                       } else {
                         const parsed = parseInt(value);
-                        if (!isNaN(parsed) && parsed >= 1920 && parsed <= new Date().getFullYear()) {
-                          handleFormInputChange('birthYear', parsed);
+                        if (!isNaN(parsed)) {
+                          setCurrentShooter(prev => prev ? ({ ...prev, birthYear: parsed }) : null);
                         }
                       }
                     }} 
                     placeholder="z.B. 1990"
                   />
+                  {currentShooter.birthYear && currentShooter.gender && (
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p>AK Auflage 2026: {(() => {
+                        const age = 2026 - parseInt(currentShooter.birthYear.toString());
+                        const gender = currentShooter.gender;
+                        if (age <= 14) return gender === 'male' ? 'Schüler m' : 'Schüler w';
+                        else if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
+                        else if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+                        else if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+                        else if (age <= 40) return gender === 'male' ? 'Herren I' : 'Damen I';
+                        else if (age <= 50) return 'Senioren 0';
+                        else if (age <= 60) return gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
+                        else if (age <= 65) return gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
+                        else if (age <= 70) return gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
+                        else if (age <= 75) return gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
+                        else if (age <= 80) return gender === 'male' ? 'Senioren V m' : 'Seniorinnen V';
+                        else return gender === 'male' ? 'Senioren VI m' : 'Seniorinnen VI';
+                      })()}</p>
+                      <p>AK Freihand 2026: {(() => {
+                        const age = 2026 - parseInt(currentShooter.birthYear.toString());
+                        const gender = currentShooter.gender;
+                        if (age <= 14) return gender === 'male' ? 'Schüler m' : 'Schüler w';
+                        else if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
+                        else if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+                        else if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+                        else if (age <= 40) return gender === 'male' ? 'Herren I' : 'Damen I';
+                        else if (age <= 50) return gender === 'male' ? 'Herren II' : 'Damen II';
+                        else if (age <= 60) return gender === 'male' ? 'Herren III' : 'Damen III';
+                        else if (age <= 70) return gender === 'male' ? 'Herren IV' : 'Damen IV';
+                        else return gender === 'male' ? 'Herren V' : 'Damen V';
+                      })()}</p>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="vsp-mitgliedsnummer-dialog">Mitgliedsnummer</Label>
@@ -969,7 +979,7 @@ export default function VereinSchuetzenPage() {
               </div>
               <DialogFooter className="pt-4">
                  <DialogClose asChild><Button type="button" variant="outline" onClick={() => {setIsFormOpen(false); setCurrentShooter(null); setSelectedTeamIdsInForm([]); setTeamsOfSelectedClubInDialog([]);}}>Abbrechen</Button></DialogClose>
-                 {isVereinsvertreter && (
+                 {(isVereinsvertreter || isSportleiter) && (
                     <Button type="submit" disabled={isFormSubmitting || isLoadingTeamsForDialog}>
                         {(isFormSubmitting || isLoadingTeamsForDialog) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Speichern
                     </Button>

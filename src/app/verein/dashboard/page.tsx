@@ -126,6 +126,21 @@ export default function VereinDashboardPage() {
           <p className="text-sm text-muted-foreground mt-1">
             Verwalten Sie hier Ihre Mannschaften, Schützen und Ergebnisse
           </p>
+          
+          {/* Stammdaten-Hinweis */}
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <div className="p-1 bg-blue-100 rounded-full flex-shrink-0 mt-0.5">
+                <HelpCircle className="h-4 w-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-blue-900">Wichtiger Hinweis zu Schützen-Stammdaten</p>
+                <p className="text-xs text-blue-800 mt-1">
+                  Die Stammdaten der Schützen stammen vom <strong>01.08.2025</strong>. Ab diesem Zeitpunkt sind die Vereine für die Pflege und Aktualisierung der Daten selbst verantwortlich.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
         
         <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border-blue-200 dark:border-blue-800 w-full max-w-md">

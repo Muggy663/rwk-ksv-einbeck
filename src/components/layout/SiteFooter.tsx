@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.7.5.2"; // Vereinsmannschaften Fix: LGS/LGA Multi-Disziplin Support + korrekte Disziplin-Namen (LGS = Luftgewehr Stehend)
+  const version = "1.7.5.3"; // Sportleiter Schützen-Verwaltung: Vollzugriff auf Anlegen/Bearbeiten/Löschen + Geburtsjahr-Input Fix + Teams nur aus laufenden Saisons
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">
