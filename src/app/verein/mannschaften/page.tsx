@@ -846,7 +846,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
           return; 
       }
       // Disziplin-Konflikt-Prüfung
-      if (categoryOfCurrentTeam && currentTeamCompYearForValidation !== undefined) {
+      if (teamLeagueData && currentTeamCompYearForValidation !== undefined) {
           const shooterBeingChecked = allClubShootersForDialog.find(s => s.id === shooterId);
           if (shooterBeingChecked?.id && (formMode === 'new' || !persistedShooterIdsForTeam.includes(shooterId))) { 
               let conflictFound = false;
@@ -855,15 +855,15 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                   
                   const assignedTeamInfo = allTeamsForValidation.find(t => t.id === assignedTeamId);
                   if (assignedTeamInfo?.leagueCompetitionYear === currentTeamCompYearForValidation) { 
-                      const categoryOfAssignedTeam = getDisciplineCategory(assignedTeamInfo.leagueType);
-                      if (categoryOfAssignedTeam && categoryOfAssignedTeam === categoryOfCurrentTeam) {
-                          console.warn(`VMP DIALOG ShooterSelect: Conflict for ${shooterBeingChecked.name}. Already in ${assignedTeamInfo.name} (Category: ${categoryOfAssignedTeam}, Year: ${assignedTeamInfo.leagueCompetitionYear})`);
+                      // Prüfe auf exakte Disziplin, nicht Kategorie - LGS und LGA sind verschiedene Disziplinen!
+                      if (assignedTeamInfo.leagueType && assignedTeamInfo.leagueType === teamLeagueData.type) {
+                          console.warn(`VMP DIALOG ShooterSelect: Conflict for ${shooterBeingChecked.name}. Already in ${assignedTeamInfo.name} (Discipline: ${assignedTeamInfo.leagueType}, Year: ${assignedTeamInfo.leagueCompetitionYear})`);
                           conflictFound = true;
                       }
                   }
               });
               if (conflictFound) {
-                  toast({ title: "Regelverstoß", description: `${shooterBeingChecked.name} ist bereits in einem ${categoryOfCurrentTeam}-Team dieses Jahres (${currentTeamCompYearForValidation}) gemeldet.`, variant: "destructive", duration: 7000 });
+                  toast({ title: "Regelverstoß", description: `${shooterBeingChecked.name} ist bereits in einem ${teamLeagueData.type}-Team dieses Jahres (${currentTeamCompYearForValidation}) gemeldet.`, variant: "destructive", duration: 7000 });
                   return; 
               }
           }
@@ -1416,7 +1416,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                             <SelectItem value="KKG">Kleinkaliber Gewehr</SelectItem>
                             <SelectItem value="KKP">Kleinkaliber Pistole</SelectItem>
                             <SelectItem value="LGA">Luftgewehr Auflage</SelectItem>
-                            <SelectItem value="LGS">Luftgewehr Freihand</SelectItem>
+                            <SelectItem value="LGS">Luftgewehr Stehend (Freihand)</SelectItem>
                             <SelectItem value="LP">Luftpistole</SelectItem>
                           </SelectContent>
                         </Select>
@@ -1575,21 +1575,23 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                               const categoryOfCurrentTeam = getDisciplineCategory(teamLeagueData?.type);
                               const currentTeamCompYearForValidation = teamBeingEdited?.competitionYear || allSeasons.find(s => s.id === selectedSeasonId)?.competitionYear;
 
-                              if (!isSelected && teamLeagueData && categoryOfCurrentTeam && currentTeamCompYearForValidation !== undefined) {
+                              if (!isSelected && teamLeagueData && currentTeamCompYearForValidation !== undefined) {
                                 if (formMode === 'new' || !persistedShooterIdsForTeam.includes(shooter.id)) { 
-                                  let assignedToSameCategoryInYear = false;
+                                  let assignedToSameDisciplineInYear = false;
                                   (shooter.teamIds || []).forEach(assignedTeamId => {
                                     if (formMode === 'edit' && teamBeingEdited?.id === assignedTeamId) return; 
                                     
                                     const assignedTeamInfo = allTeamsForValidation.find(t => t.id === assignedTeamId);
                                     if (assignedTeamInfo?.leagueCompetitionYear === currentTeamCompYearForValidation) { 
-                                      const categoryOfAssignedTeam = getDisciplineCategory(assignedTeamInfo.leagueType);
-                                      if (categoryOfAssignedTeam && categoryOfAssignedTeam === categoryOfCurrentTeam) assignedToSameCategoryInYear = true;
+                                      // Prüfe auf exakte Disziplin, nicht Kategorie - LGS und LGA sind verschiedene Disziplinen!
+                                      if (assignedTeamInfo.leagueType && assignedTeamInfo.leagueType === teamLeagueData.type) {
+                                        assignedToSameDisciplineInYear = true;
+                                      }
                                     }
                                   });
-                                  if (assignedToSameCategoryInYear) {
+                                  if (assignedToSameDisciplineInYear) {
                                     isDisabledByDisciplineConflict = true;
-                                    disableReason = `(bereits in ${categoryOfCurrentTeam}-Team ${currentTeamCompYearForValidation})`;
+                                    disableReason = `(bereits in ${teamLeagueData.type}-Team ${currentTeamCompYearForValidation})`;
                                   }
                                 }
                               }
