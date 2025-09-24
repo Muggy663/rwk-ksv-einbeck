@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.7.5"; // Termine-System Optimierung: Vereinfachte Termin-Erstellung, alle Termine sichtbar, Firestore-Rules korrigiert, Dark Mode Kalender-Fix
+  const version = "1.7.5.1"; // KM-Mannschaften Fix: Schützen können jetzt in verschiedenen Disziplinen antreten (LG Freihand + Auflage)
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

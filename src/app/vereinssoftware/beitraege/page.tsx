@@ -42,8 +42,8 @@ export default function BeitraegeVerwaltungPage() {
     familie: { name: 'Familie', alterVon: null, alterBis: null, betrag: 200, aktiv: false }
   });
   const getDefaultVereinsEinstellungen = () => {
-    // Nur für Einbeck vorausgefüllte Daten
-    if (userClub?.name?.includes('Einbeck') || user?.email?.includes('einbeck')) {
+    // Nur für echten Einbeck Verein vorausgefüllte Daten (nicht Development Club)
+    if (userClub?.name?.includes('Einbeck') && !userClub?.name?.includes('Development') && user?.email?.includes('einbeck')) {
       return {
         glaeubigerID: 'DE12ZZZ00000340999',
         vereinsname: 'Einbecker Schützengilde von 1457 – Neugründung 1862 e.V.',
@@ -54,6 +54,21 @@ export default function BeitraegeVerwaltungPage() {
         iban: 'DE98262514250001038421',
         bic: 'NOLADE21EIN',
         bankname: 'Sparkasse Einbeck',
+        verwendungszweck: 'Mitgliedsbeitrag 2025'
+      };
+    }
+    // Beispieldaten für Development Club
+    if (userClub?.name?.includes('Development')) {
+      return {
+        glaeubigerID: 'DE12ZZZ00000999999',
+        vereinsname: 'Test Schützenverein Development e.V.',
+        adresse: 'Musterstraße 123',
+        plz: '12345',
+        ort: 'Teststadt',
+        email: 'test@schuetzenverein.de',
+        iban: 'DE89370400440532013000',
+        bic: 'COBADEFFXXX',
+        bankname: 'Commerzbank Test',
         verwendungszweck: 'Mitgliedsbeitrag 2025'
       };
     }

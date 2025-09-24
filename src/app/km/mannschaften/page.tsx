@@ -503,6 +503,15 @@ export default function KMMannschaften() {
                                   );
                                 })
                                 .filter(s => {
+                                  // Prüfe ob Schütze bereits in einer anderen Mannschaft DERSELBEN DISZIPLIN ist
+                                  const istBereitsInDieserDisziplin = mannschaften.some(otherTeam => 
+                                    otherTeam.id !== mannschaft.id && 
+                                    otherTeam.disziplinId === mannschaft.disziplinId &&
+                                    otherTeam.schuetzenIds.includes(s.id)
+                                  );
+                                  return !istBereitsInDieserDisziplin;
+                                })
+                                .filter(s => {
                                   // Prüfe Kompatibilität mit Service
                                   if (teamSchuetzen.length === 0) return true;
                                   
@@ -600,10 +609,15 @@ export default function KMMannschaften() {
                               {schuetzen.filter(s => 
                                 !mannschaft.schuetzenIds.includes(s.id) && 
                                 (s.clubId === mannschaft.vereinId || s.kmClubId === mannschaft.vereinId) &&
-                                meldungen.some(m => m.schuetzeId === s.id && m.disziplinId === mannschaft.disziplinId)
+                                meldungen.some(m => m.schuetzeId === s.id && m.disziplinId === mannschaft.disziplinId) &&
+                                !mannschaften.some(otherTeam => 
+                                  otherTeam.id !== mannschaft.id && 
+                                  otherTeam.disziplinId === mannschaft.disziplinId &&
+                                  otherTeam.schuetzenIds.includes(s.id)
+                                )
                               ).length === 0 && (
                                 <div className="text-xs text-gray-500 p-2">
-                                  Keine kompatiblen Schützen verfügbar (Altersklassen-Regeln).
+                                  Keine kompatiblen Schützen verfügbar (bereits in anderer Mannschaft dieser Disziplin oder Altersklassen-Regeln).
                                 </div>
                               )}
                             </div>
