@@ -92,7 +92,8 @@ export default function JubilaeenPage() {
             jahreImVerein,
             vereinseintritt: data.eintrittsdatum || data.vereinseintritt,
             dsbeintritt: data.dsbeintritt,
-            gender: data.gender || data.geschlecht
+            gender: data.gender || data.geschlecht,
+            isActive: data.isActive !== false
           };
         });
         
@@ -365,7 +366,7 @@ export default function JubilaeenPage() {
             <div className="text-2xl font-bold text-green-600">
               {members.filter(m => {
                 const alterImJahr = selectedYear - (m.birthYear || 0);
-                return getGeburtstagAktionCustom(alterImJahr);
+                return m.isActive && getGeburtstagAktionCustom(alterImJahr);
               }).length}
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">Geburtstag-Aktionen {selectedYear}</p>
@@ -377,7 +378,7 @@ export default function JubilaeenPage() {
               {members.filter(m => {
                 const jahreImVereinImJahr = m.vereinseintritt ? 
                   selectedYear - new Date(m.vereinseintritt).getFullYear() : 0;
-                return getJubilarAktion(jahreImVereinImJahr);
+                return m.isActive && getJubilarAktion(jahreImVereinImJahr);
               }).length}
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">Jubilar-Ehrungen {selectedYear}</p>
@@ -427,6 +428,9 @@ export default function JubilaeenPage() {
               </thead>
               <tbody>
                 {members.filter(member => {
+                  // Nur aktive Mitglieder berücksichtigen
+                  if (!member.isActive) return false;
+                  
                   // Berechne Alter für das gewählte Jahr
                   let alterImJahr = member.birthYear ? selectedYear - member.birthYear : 0;
                   
@@ -558,6 +562,9 @@ export default function JubilaeenPage() {
               </thead>
               <tbody>
                 {members.filter(member => {
+                  // Nur aktive Mitglieder berücksichtigen
+                  if (!member.isActive) return false;
+                  
                   const jahreImVereinImJahr = member.vereinseintritt ? 
                     selectedYear - new Date(member.vereinseintritt).getFullYear() : 0;
                   return getJubilarAktion(jahreImVereinImJahr);
@@ -615,6 +622,9 @@ export default function JubilaeenPage() {
             </DialogHeader>
             <UrkundenGenerator 
               jubilare={members.filter(member => {
+                // Nur aktive Mitglieder berücksichtigen
+                if (!member.isActive) return false;
+                
                 const jahreImVereinImJahr = member.vereinseintritt ? 
                   selectedYear - new Date(member.vereinseintritt).getFullYear() : 0;
                 const jubilarAktion = getJubilarAktion(jahreImVereinImJahr);

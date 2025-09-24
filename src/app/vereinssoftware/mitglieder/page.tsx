@@ -149,9 +149,9 @@ export default function MitgliederPage() {
               const heute = new Date();
               const geburtstag = new Date(data.geburtstag);
               let alter = heute.getFullYear() - geburtstag.getFullYear();
-              const hatGeburtstagGehabt = heute.getMonth() > geburtstag.getMonth() || 
-                (heute.getMonth() === geburtstag.getMonth() && heute.getDate() >= geburtstag.getDate());
-              return hatGeburtstagGehabt ? alter : alter - 1;
+              const hatGeburtstagNochNichtGehabt = heute.getMonth() < geburtstag.getMonth() || 
+                (heute.getMonth() === geburtstag.getMonth() && heute.getDate() < geburtstag.getDate());
+              return hatGeburtstagNochNichtGehabt ? alter - 1 : alter;
             })() :
             new Date().getFullYear() - (data.birthYear || 0),
           // Feldname-Mapping für migrierte Daten
