@@ -370,12 +370,13 @@ service cloud.firestore {
                          hasLegacyClubAccess(clubId);
     }
 
-    // 🎂 Geburtstage & Jubiläen - Vorstand, Kassenwart, Schriftführer
+    // 🎂 Geburtstage & Jubiläen - Vorstand, Kassenwart, Schriftführer, Sportleiter
     match /clubs/{clubId}/jubilaeen/{jubilaeum} {
       allow read, write: if isSuperAdmin() || 
                          isVorstand(clubId) ||
                          isKassenwart(clubId) ||
                          isSchriftfuehrer(clubId) ||
+                         isSportleiter(clubId) ||
                          hasLegacyClubAccess(clubId);
     }
 
@@ -384,6 +385,7 @@ service cloud.firestore {
                          isVorstand(clubId) ||
                          isKassenwart(clubId) ||
                          isSchriftfuehrer(clubId) ||
+                         isSportleiter(clubId) ||
                          hasLegacyClubAccess(clubId);
     }
 

@@ -395,10 +395,11 @@ export default function VereinssoftwarePage() {
           </Card>
         )}
         
-        {/* Geburtstage & Jubiläen - Vorstand, Kassenwart, Schriftführer */}
+        {/* Geburtstage & Jubiläen - Vorstand, Kassenwart, Schriftführer, Sportleiter */}
         {((userAppPermissions?.clubRoles && Object.values(userAppPermissions.clubRoles).includes('VORSTAND')) || 
           (userAppPermissions?.clubRoles && Object.values(userAppPermissions.clubRoles).includes('KASSENWART')) ||
           (userAppPermissions?.clubRoles && Object.values(userAppPermissions.clubRoles).includes('SCHRIFTFUEHRER')) ||
+          (userAppPermissions?.clubRoles && Object.values(userAppPermissions.clubRoles).includes('SPORTLEITER')) ||
           user?.email === 'admin@rwk-einbeck.de') && (
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
