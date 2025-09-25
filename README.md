@@ -224,7 +224,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 15. September 2025*
+*Letzte Aktualisierung: 25. September 2025*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 
@@ -251,7 +251,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
-- **Web-Version 1.7.5** - Termine-System Optimierung: Vereinfachte Termin-Erstellung ohne Liga/Saison-Zwang, alle Termine ohne Filter sichtbar, korrigierte Firestore-Rules für Mannschaftsführer-Zugriff, Dark Mode Kalender-Fix für bessere Lesbarkeit
+- **Web-Version 1.7.5.3** - Sportleiter Schützen-Vollzugriff: SPORTLEITER können jetzt Schützen anlegen/bearbeiten/löschen, Geburtsjahr-Input korrigiert, Teams nur aus laufenden Saisons, Stammdaten-Hinweis 01.08.2025 im RWK Dashboard
 - **Web-Version 1.7.4** - Mannschaftsführer-Rolle Implementation: Vollständige MANNSCHAFTSFUEHRER-Rolle mit Zugriff auf Ergebniserfassung und Mannschaftsführer-Kontakte, vereinfachte Dashboard-Auswahl durch Entfernung separater Mannschaftsführer-Karte, optimierte Berechtigung im Vereinsbereich mit rollenbasierten Karten-Einschränkungen, erweiterte Firestore-Rules für granulare Mannschaftsführer-Berechtigungen
 - **Web-Version 1.7.3** - Mobile UX KM-Orga: Header Overflow-Fix verhindert horizontales Scrollen, KM-Orga mobile Buttons optimiert mit vertikaler Anordnung, Dark Mode Text-Lesbarkeit in farbigen Boxen verbessert
 - **Web-Version 1.7.2** - Mobile Fixes & Team-Manager: Burger-Menü Touch-Fix verhindert versehentliches Öffnen, Für Vereine Scrolling-Problem behoben, Team-Manager Seite korrigiert mit BackButton und Auth-Fix
