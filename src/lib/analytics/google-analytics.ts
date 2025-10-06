@@ -54,6 +54,6 @@ export const getVisitorCount = async (): Promise<number> => {
     return data.totalUsers || 0;
   } catch (error) {
     console.warn('Could not fetch visitor count:', error);
-    return 9200; // Fallback
+    return 250; // Fallback
   }
 };

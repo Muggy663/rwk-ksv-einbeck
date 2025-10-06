@@ -1,6 +1,5 @@
 // src/components/layout/SiteFooter.tsx
 import Link from 'next/link';
-import { VisitorCounter } from '@/components/analytics/VisitorCounter';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
@@ -42,7 +41,6 @@ export function SiteFooter() {
         <div className="text-center text-sm text-muted-foreground md:text-right min-w-0 flex-shrink-0">
           <p className="whitespace-nowrap">Web-Version {version} <span className="text-xs text-red-600 dark:text-red-400 font-semibold">Beta</span></p>
           <p className="text-xs mt-1 whitespace-nowrap">App-Version 0.9.4.1</p>
-          <VisitorCounter />
         </div>
       </div>
     </footer>
