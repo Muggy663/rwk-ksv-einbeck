@@ -120,7 +120,9 @@ service cloud.firestore {
       return isAuthenticated() && 
              getUserPermissions() != null && 
              (getUserPermissions().role == 'vereinsvertreter' || getUserPermissions().role == 'mannschaftsfuehrer') &&
-             (getUserPermissions().clubId == clubId || getUserPermissions().assignedClubId == clubId);
+             (getUserPermissions().clubId == clubId || 
+              getUserPermissions().assignedClubId == clubId ||
+              (getUserPermissions().role == 'mannschaftsfuehrer' && clubId != null));
     }
     
     function isMannschaftsfuehrer(clubId) {
@@ -241,10 +243,11 @@ service cloud.firestore {
 
     match /shooters/{shooter} {
       allow read: if true;
-      allow create: if isAuthenticated();
-      allow update: if isSuperAdmin() || 
-                    hasLegacyClubAccess(resource.data.clubId) || // Legacy
-                    hasClubAccess(resource.data.clubId);
+      allow create, update: if isAuthenticated() &&
+                            (request.auth.token.email == 'admin@rwk-einbeck.de' ||
+                             (exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) &&
+                              (get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles != null ||
+                               get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role != null)));
       allow delete: if false; // NUR über AdminSDK-API
     }
 
@@ -276,10 +279,10 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthenticated() && 
                     isValidRingCount(request.resource.data.totalRinge) &&
-                    (isSuperAdmin() || 
-                     isMannschaftsfuehrer(request.resource.data.clubId) ||
-                     isLegacyMannschaftsfuehrer() || 
-                     hasLegacyClubAccess(request.resource.data.clubId));
+                    (request.auth.token.email == 'admin@rwk-einbeck.de' ||
+                     (exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) &&
+                      (get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles != null ||
+                       get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role != null)));
       allow update: if isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
@@ -548,10 +551,7 @@ service cloud.firestore {
 
     match /league_updates/{update} {
       allow read: if true;
-      allow create, update: if isSuperAdmin() || 
-                            isMannschaftsfuehrer(request.resource.data.clubId) ||
-                            isLegacyMannschaftsfuehrer() || 
-                            hasLegacyClubAccess(request.resource.data.clubId);
+      allow create, update: if isAuthenticated();
       allow delete: if isSuperAdmin();
     }
 

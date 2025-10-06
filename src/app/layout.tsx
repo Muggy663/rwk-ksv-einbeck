@@ -19,6 +19,7 @@ import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { AppUpdateChecker } from '@/components/app-update-checker';
 import { NativeAppProvider } from '@/components/ui/native-app-detector';
 import { AppVersionChecker } from '@/components/AppVersionChecker';
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 
 // import { SentryClientInit } from '@/components/sentry-client-init';
 
@@ -96,6 +97,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
               <Toaster />
               <ServiceWorkerRegistration />
               <OfflineIndicator />
+              <GoogleAnalytics />
             </div>
           </ClubProvider>
         </AuthProvider>

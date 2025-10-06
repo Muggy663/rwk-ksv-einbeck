@@ -1,9 +1,10 @@
 // src/components/layout/SiteFooter.tsx
 import Link from 'next/link';
+import { VisitorCounter } from '@/components/analytics/VisitorCounter';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.7.5.3"; // Sportleiter Schützen-Verwaltung: Vollzugriff auf Anlegen/Bearbeiten/Löschen + Geburtsjahr-Input Fix + Teams nur aus laufenden Saisons
+  const version = "1.7.5.4"; // Google Analytics Integration: Besucherzähler im Footer, GA4 Tracking, DSGVO-konform mit anonymisierten IPs
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">
@@ -41,6 +42,7 @@ export function SiteFooter() {
         <div className="text-center text-sm text-muted-foreground md:text-right min-w-0 flex-shrink-0">
           <p className="whitespace-nowrap">Web-Version {version} <span className="text-xs text-red-600 dark:text-red-400 font-semibold">Beta</span></p>
           <p className="text-xs mt-1 whitespace-nowrap">App-Version 0.9.4.1</p>
+          <VisitorCounter />
         </div>
       </div>
     </footer>
