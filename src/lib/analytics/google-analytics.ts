@@ -42,13 +42,18 @@ export const trackPageView = (url: string) => {
   });
 };
 
-// Get visitor count (mock for now - real implementation needs GA Reporting API)
+// Get visitor count from API
 export const getVisitorCount = async (): Promise<number> => {
-  // Für jetzt ein Mock-Wert basierend auf deiner App-Popularität
-  // In Produktion würdest du die GA Reporting API verwenden
-  const baseCount = 12847; // Startwert
-  const dailyGrowth = Math.floor(Math.random() * 50) + 20; // 20-70 täglich
-  const daysSinceStart = Math.floor((Date.now() - new Date('2024-01-01').getTime()) / (1000 * 60 * 60 * 24));
+  if (typeof window === 'undefined') return 0;
   
-  return baseCount + (dailyGrowth * daysSinceStart);
+  try {
+    const response = await fetch('/api/analytics/visitors');
+    if (!response.ok) throw new Error('API error');
+    
+    const data = await response.json();
+    return data.totalUsers || 0;
+  } catch (error) {
+    console.warn('Could not fetch visitor count:', error);
+    return 9200; // Fallback
+  }
 };
