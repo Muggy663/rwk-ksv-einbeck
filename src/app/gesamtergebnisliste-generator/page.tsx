@@ -202,8 +202,16 @@ export default function GesamtergebnislisteGeneratorPage() {
               <Button variant="outline" size="sm" onClick={() => {
                 const printContent = document.querySelector('.gesamt-print-area');
                 if (printContent) {
-                  const printWindow = window.open('', '_blank');
-                  printWindow?.document.write(`
+                  // Verstecktes iframe für Drucken verwenden
+                  const iframe = document.createElement('iframe');
+                  iframe.style.position = 'absolute';
+                  iframe.style.left = '-9999px';
+                  iframe.style.width = '1px';
+                  iframe.style.height = '1px';
+                  document.body.appendChild(iframe);
+                  
+                  const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                  iframeDoc?.write(`
                     <html>
                       <head>
                         <title>Gesamtergebnisliste</title>
@@ -241,8 +249,14 @@ export default function GesamtergebnislisteGeneratorPage() {
                       <body>${printContent.innerHTML}</body>
                     </html>
                   `);
-                  printWindow?.document.close();
-                  printWindow?.print();
+                  iframeDoc?.close();
+                  
+                  setTimeout(() => {
+                    iframe.contentWindow?.print();
+                    setTimeout(() => {
+                      document.body.removeChild(iframe);
+                    }, 1000);
+                  }, 500);
                 }
               }} disabled={!selectedSeasonId || !selectedLeagueId} size="sm">
                 <Printer className="mr-2 h-4 w-4" />

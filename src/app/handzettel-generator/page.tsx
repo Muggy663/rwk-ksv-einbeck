@@ -373,8 +373,16 @@ export default function HandzettelGeneratorPage() {
             <Button variant="outline" onClick={() => {
               const printContent = document.querySelector('.print-area');
               if (printContent) {
-                const printWindow = window.open('', '_blank');
-                printWindow?.document.write(`
+                // Verstecktes iframe für Drucken verwenden
+                const iframe = document.createElement('iframe');
+                iframe.style.position = 'absolute';
+                iframe.style.left = '-9999px';
+                iframe.style.width = '1px';
+                iframe.style.height = '1px';
+                document.body.appendChild(iframe);
+                
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                iframeDoc?.write(`
                   <html>
                     <head>
                       <title>Meldebogen</title>
@@ -423,9 +431,13 @@ export default function HandzettelGeneratorPage() {
                     <body>${printContent.innerHTML}</body>
                   </html>
                 `);
-                printWindow?.document.close();
+                iframeDoc?.close();
+                
                 setTimeout(() => {
-                  printWindow?.print();
+                  iframe.contentWindow?.print();
+                  setTimeout(() => {
+                    document.body.removeChild(iframe);
+                  }, 1000);
                 }, 500);
               }
             }} disabled={!selectedSeasonId || !selectedLeagueId}>
