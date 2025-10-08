@@ -260,7 +260,7 @@ export default function GesamtergebnislisteGeneratorPage() {
                 <img src={typeof window !== 'undefined' ? `${window.location.origin}/images/logo.png` : '/images/logo.png'} alt="Logo" className="w-12 h-12 object-contain" />
                 <div className="text-center flex-1">
                   <h1 className="text-lg font-bold">Kreisschützenverband Einbeck</h1>
-                  <h2 className="text-md">Gesamtergebnisliste - {availableLeagues.find(l => l.id === selectedLeagueId)?.name || 'Liga'}</h2>
+                  <h2 className="text-md">{selectedSeasonId ? seasons.find(s => s.id === selectedSeasonId)?.name || 'Rundenwettkampf' : 'Rundenwettkampf'} - {availableLeagues.find(l => l.id === selectedLeagueId)?.name || 'Liga'}</h2>
                 </div>
               </div>
 

@@ -486,10 +486,12 @@ export async function generateGesamtlistePDF(
     const shooterCount = Math.max(shooters.length, 3); // Mindestens 3 Zeilen für Schützen
     
     for (let i = 0; i < shooterCount; i++) {
-      const shooter = shooters[i] || { name: '' };
+      const shooter = shooters[i] || { name: '', displayName: '' };
+      // Verwende displayName falls vorhanden, sonst name, sonst leer
+      const shooterName = shooter.displayName || shooter.name || '';
       tableBody.push([
         { content: '', colSpan: 1 },
-        { content: shooter.name, colSpan: 1 },
+        { content: shooterName, colSpan: 1 },
         { content: '', colSpan: 1 },
         { content: '', colSpan: 1 },
         { content: '', colSpan: 1 },

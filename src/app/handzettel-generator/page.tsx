@@ -274,25 +274,24 @@ export default function HandzettelGeneratorPage() {
                 <div className="border p-2 text-xs">
                   <div className="font-bold mb-1">Ergebnisse an:</div>
                   <div>RWK-Leitung</div>
-                  <div>Kreisschützenverband Einbeck</div>
-                  <div>37574 Einbeck</div>
+                  <div>rwk-leiter-ksve@gmx.de</div>
                 </div>
                 <div className="text-center flex-1">
                   <h1 className="text-lg font-bold">Kreisschützenverband Einbeck</h1>
-                  <h2 className="text-md">KK - Rundenwettkampf 2025</h2>
+                  <h2 className="text-md">{selectedSeasonId ? seasons.find(s => s.id === selectedSeasonId)?.name || 'Rundenwettkampf' : 'Rundenwettkampf'}</h2>
                   <div className="mt-2">
-                    <span className="mr-2">(Meldebogen)</span>
-                    <span className="border px-2 py-1">◊ {selectedLeagueId ? availableLeagues.find(l => l.id === selectedLeagueId)?.name || 'Liga wählen' : 'Liga wählen'}</span>
+                    <span className="mr-2">Meldebogen für </span>
+                    <span>{selectedLeagueId ? availableLeagues.find(l => l.id === selectedLeagueId)?.name || 'Liga wählen' : 'Liga wählen'}</span>
                   </div>
                 </div>
                 <div className="flex-shrink-0">
-                  <img src="/images/logo.png" alt="Logo" className="w-16 h-16 object-contain" />
+                  <img src="/images/logo.png" alt="Logo" className="w-24 h-24 object-contain" style={{width: '100px', height: '100px'}} />
                 </div>
               </div>
 
               <div className="grid grid-cols-4 gap-4 mb-4 text-xs">
                 <div>Durchgang: <span className="font-bold">{selectedDurchgang}</span></div>
-                <div>Datum: <span className="font-bold">{wettkampfData.datum || '__.__.25'}</span></div>
+                <div>Datum: <span className="font-bold">{wettkampfData.datum ? new Date(wettkampfData.datum).toLocaleDateString('de-DE') : '__.__.25'}</span></div>
                 <div>Uhrzeit: <span className="font-bold">{wettkampfData.uhrzeit}</span></div>
                 <div>Ort: <span className="font-bold">{wettkampfData.ort || '___________'}</span></div>
               </div>
@@ -384,7 +383,7 @@ export default function HandzettelGeneratorPage() {
                         @media print { 
                           body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 11px; }
                           .print-area { width: 100% !important; height: 100% !important; transform: none !important; page-break-after: avoid; }
-                          img { width: 20px !important; height: 20px !important; }
+                          img { width: 100px !important; height: 100px !important; object-fit: contain !important; display: block !important; }
                           table { width: 100% !important; font-size: 10px !important; }
                           th, td { font-size: 10px !important; padding: 4px !important; height: 28px !important; }
                         }
@@ -425,7 +424,9 @@ export default function HandzettelGeneratorPage() {
                   </html>
                 `);
                 printWindow?.document.close();
-                printWindow?.print();
+                setTimeout(() => {
+                  printWindow?.print();
+                }, 500);
               }
             }} disabled={!selectedSeasonId || !selectedLeagueId}>
               <Printer className="mr-2 h-4 w-4" />

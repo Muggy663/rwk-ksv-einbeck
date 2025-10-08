@@ -134,7 +134,30 @@ export async function generateLeaguePDFFixed(
               }
             });
             
-            const shooterName = shooterScores[0]?.shooterName || `Schütze ${shooterId.substring(0,8)}`;
+            // Verwende den Namen aus den Scores oder lade ihn aus der Shooters-Collection
+            let shooterName = shooterScores[0]?.shooterName;
+            
+            // Falls kein Name in Scores, versuche aus Shooters-Collection zu laden
+            if (!shooterName) {
+              try {
+                const { doc, getDoc } = await import('firebase/firestore');
+                const shooterDocRef = doc(db, 'shooters', shooterId);
+                const shooterSnap = await getDoc(shooterDocRef);
+                
+                if (shooterSnap.exists()) {
+                  const shooterData = shooterSnap.data();
+                  const nameParts = [];
+                  if (shooterData.firstName) nameParts.push(shooterData.firstName);
+                  if (shooterData.lastName) nameParts.push(shooterData.lastName);
+                  shooterName = nameParts.length > 0 ? nameParts.join(' ') : (shooterData.name || `Schütze ${shooterId.substring(0,8)}`);
+                } else {
+                  shooterName = `Schütze ${shooterId.substring(0,8)}`;
+                }
+              } catch (error) {
+                console.warn(`Fehler beim Laden des Schützen ${shooterId}:`, error);
+                shooterName = `Schütze ${shooterId.substring(0,8)}`;
+              }
+            }
             
             shootersResults.push({
               shooterId,
@@ -270,7 +293,7 @@ export async function generateLeaguePDFFixed(
           shooterHeaders.push('Gesamt', 'Schnitt');
           
           const shooterRows = team.shootersResults.map(shooter => {
-            const row = ['', shooter.shooterName];
+            const row = ['', shooter.shooterName || `Schütze ${shooter.shooterId?.substring(0,8) || 'Unbekannt'}`];
             for (let i = 1; i <= numRounds; i++) {
               row.push(shooter.results[`dg${i}`] !== null ? shooter.results[`dg${i}`].toString() : '-');
             }
