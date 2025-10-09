@@ -7,20 +7,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { SubstitutionDialog } from '@/components/admin/SubstitutionDialog';
-import { UserPlus, Search, Trash2, Calendar, Users, AlertCircle } from 'lucide-react';
-import type { Team, TeamSubstitution, UserPermission } from '@/types/rwk';
+import { UserPlus, Search, Trash2, Calendar, Users, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import type { Team, TeamSubstitution, UserPermission, Season, Shooter } from '@/types/rwk';
 
 export default function SubstitutionsPage() {
   const { toast } = useToast();
   const [substitutions, setSubstitutions] = useState<TeamSubstitution[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
+  const [selectedLeagueId, setSelectedLeagueId] = useState<string>('');
+  const [selectedDiscipline, setSelectedDiscipline] = useState<string>('');
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedYear, setSelectedYear] = useState('2025');
   const [isLoading, setIsLoading] = useState(false);
+  const [leagues, setLeagues] = useState<any[]>([]);
   const [showDialog, setShowDialog] = useState(false);
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+  const [teamShooters, setTeamShooters] = useState<Map<string, Shooter[]>>(new Map());
 
   const userPermission: UserPermission = {
     uid: 'admin',
@@ -31,26 +37,86 @@ export default function SubstitutionsPage() {
   };
 
   useEffect(() => {
-    loadData();
-  }, [selectedYear]);
+    loadSeasons();
+  }, []);
+
+  useEffect(() => {
+    if (selectedSeasonId) {
+      loadData();
+    }
+  }, [selectedSeasonId]);
+
+  const loadSeasons = async () => {
+    try {
+      const seasonsQuery = query(
+        collection(db, 'seasons'),
+        orderBy('competitionYear', 'desc')
+      );
+      const seasonsSnapshot = await getDocs(seasonsQuery);
+      const seasonsData = seasonsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Season));
+      setSeasons(seasonsData);
+      
+      // Automatisch laufende Saison auswählen
+      const runningSeason = seasonsData.find(s => s.status === 'Laufend');
+      if (runningSeason) {
+        setSelectedSeasonId(runningSeason.id);
+      } else if (seasonsData.length > 0) {
+        setSelectedSeasonId(seasonsData[0].id);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Saisons:', error);
+    }
+  };
 
   const loadData = async () => {
+    if (!selectedSeasonId) return;
+    
     setIsLoading(true);
     try {
+      const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
+      if (!selectedSeason) return;
+      
+      // Lade Teams
       const teamsQuery = query(
         collection(db, 'rwk_teams'),
-        where('competitionYear', '==', parseInt(selectedYear))
+        where('seasonId', '==', selectedSeasonId)
       );
       const teamsSnapshot = await getDocs(teamsQuery);
       const teamsData = teamsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as Team));
-      setTeams(teamsData);
+      
+      // Sortiere Teams: Normale Teams zuerst, dann Einzelschützen
+      const sortedTeams = teamsData.sort((a, b) => {
+        const aIsEinzel = a.name.toLowerCase().includes('einzel');
+        const bIsEinzel = b.name.toLowerCase().includes('einzel');
+        if (aIsEinzel && !bIsEinzel) return 1;
+        if (!aIsEinzel && bIsEinzel) return -1;
+        return a.name.localeCompare(b.name);
+      });
+      
+      setTeams(sortedTeams);
+      
+      // Lade Ligen für Filter
+      const leaguesQuery = query(
+        collection(db, 'rwk_leagues'),
+        where('seasonId', '==', selectedSeasonId),
+        orderBy('order', 'asc')
+      );
+      const leaguesSnapshot = await getDocs(leaguesQuery);
+      const leaguesData = leaguesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setLeagues(leaguesData);
 
       const substitutionsQuery = query(
         collection(db, 'team_substitutions'),
-        where('competitionYear', '==', parseInt(selectedYear)),
+        where('competitionYear', '==', selectedSeason.competitionYear),
         orderBy('substitutionDate', 'desc')
       );
       const substitutionsSnapshot = await getDocs(substitutionsQuery);
@@ -100,9 +166,44 @@ export default function SubstitutionsPage() {
     sub.replacementShooterName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredTeams = teams.filter(team =>
-    team.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTeams = teams.filter(team => {
+    const matchesSearch = team.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesLeague = !selectedLeagueId || selectedLeagueId === 'all' || team.leagueId === selectedLeagueId;
+    const matchesDiscipline = !selectedDiscipline || selectedDiscipline === 'all' || team.leagueType === selectedDiscipline;
+    return matchesSearch && matchesLeague && matchesDiscipline;
+  });
+  
+  const availableDisciplines = [...new Set(teams.map(t => t.leagueType).filter(Boolean))].sort();
+
+  const toggleTeamExpansion = async (teamId: string, shooterIds: string[]) => {
+    const newExpanded = new Set(expandedTeams);
+    
+    if (expandedTeams.has(teamId)) {
+      newExpanded.delete(teamId);
+    } else {
+      newExpanded.add(teamId);
+      
+      // Lade Schützen nur wenn noch nicht geladen
+      if (!teamShooters.has(teamId) && shooterIds.length > 0) {
+        try {
+          const shooterPromises = shooterIds.map(async (shooterId) => {
+            const shooterDoc = await getDoc(doc(db, 'shooters', shooterId));
+            if (shooterDoc.exists()) {
+              return { id: shooterDoc.id, ...shooterDoc.data() } as Shooter;
+            }
+            return null;
+          });
+          
+          const shooters = (await Promise.all(shooterPromises)).filter(Boolean) as Shooter[];
+          setTeamShooters(prev => new Map(prev).set(teamId, shooters));
+        } catch (error) {
+          console.error('Fehler beim Laden der Schützen:', error);
+        }
+      }
+    }
+    
+    setExpandedTeams(newExpanded);
+  };
 
   return (
     <div className="space-y-6">
@@ -119,8 +220,8 @@ export default function SubstitutionsPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="lg:col-span-2">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -131,13 +232,42 @@ export default function SubstitutionsPage() {
                 />
               </div>
             </div>
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
+            <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Saison wählen" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2025">2025</SelectItem>
-                <SelectItem value="2024">2024</SelectItem>
+                {seasons.map(season => (
+                  <SelectItem key={season.id} value={season.id}>
+                    {season.name} {season.status === 'Laufend' && '(Laufend)'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Alle Ligen" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Ligen</SelectItem>
+                {leagues.map(league => (
+                  <SelectItem key={league.id} value={league.id}>
+                    {league.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedDiscipline} onValueChange={setSelectedDiscipline}>
+              <SelectTrigger>
+                <SelectValue placeholder="Alle Disziplinen" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Disziplinen</SelectItem>
+                {availableDisciplines.map(discipline => (
+                  <SelectItem key={discipline} value={discipline}>
+                    {discipline}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -225,28 +355,73 @@ export default function SubstitutionsPage() {
           <CardTitle>Teams ({filteredTeams.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-4">
             {filteredTeams.map((team) => (
-              <div key={team.id} className="border rounded-lg p-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-medium">{team.name}</h4>
-                    <p className="text-sm text-muted-foreground">{team.leagueName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {team.shooterIds?.length || 0} Schützen
-                    </p>
+              <div key={team.id} className="border rounded-lg">
+                <div className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2 flex-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleTeamExpansion(team.id, team.shooterIds || [])}
+                        className="h-6 w-6 p-0"
+                        disabled={!team.shooterIds?.length}
+                      >
+                        {expandedTeams.has(team.id) ? 
+                          <ChevronDown className="h-4 w-4" /> : 
+                          <ChevronRight className="h-4 w-4" />
+                        }
+                      </Button>
+                      <div>
+                        <h4 className="font-medium">{team.name}</h4>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span>{team.shooterIds?.length || 0} Schützen</span>
+                          {team.leagueType && <Badge variant="outline">{team.leagueType}</Badge>}
+                          {team.outOfCompetition && <Badge variant="secondary">AK</Badge>}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedTeam(team);
+                        setShowDialog(true);
+                      }}
+                    >
+                      <UserPlus className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedTeam(team);
-                      setShowDialog(true);
-                    }}
-                  >
-                    <UserPlus className="h-4 w-4" />
-                  </Button>
                 </div>
+                
+                {expandedTeams.has(team.id) && (
+                  <div className="border-t bg-muted/30 p-4">
+                    {teamShooters.has(team.id) ? (
+                      <div className="space-y-2">
+                        <h5 className="font-medium text-sm">Gemeldete Schützen ({teamShooters.get(team.id)?.length || 0}):</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {teamShooters.get(team.id)?.map((shooter) => (
+                            <div key={shooter.id} className="flex items-center gap-2 p-2 rounded border bg-background">
+                              <div className="text-sm">
+                                <div className="font-medium">
+                                  {shooter.firstName && shooter.lastName ? `${shooter.firstName} ${shooter.lastName}` : shooter.name}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {shooter.gender === 'male' ? 'M' : shooter.gender === 'female' ? 'W' : '?'} • {shooter.birthYear || 'Jg. N/A'}
+                                </div>
+                              </div>
+                            </div>
+                          )) || []}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground text-center py-4">
+                        Keine Schützen zugeordnet
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

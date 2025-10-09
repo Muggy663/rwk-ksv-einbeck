@@ -521,7 +521,18 @@ export default function VereinMannschaftenPage() {
     if (!isVereinsvertreter) { toast({ title: "Keine Berechtigung", variant: "destructive" }); return; }
     if (team.clubId !== activeClubId) { toast({ title: "Nicht autorisiert", variant: "destructive" }); return; }
     
-    // Prüfung ob Team Ergebnisse hat und Benutzer kein Admin ist
+    // Prüfung ob Team Liga zugewiesen hat und Benutzer kein Admin ist
+    if (!isAdmin && team.leagueId) {
+      toast({ 
+        title: "Löschen nicht möglich", 
+        description: "Diese Mannschaft hat eine Liga zugewiesen. Nur der RWK-Leiter (Admin) kann Mannschaften mit Liga-Zuweisung löschen.", 
+        variant: "destructive",
+        duration: 8000
+      }); 
+      return; 
+    }
+    
+    // Zusätzliche Prüfung ob Team Ergebnisse hat und Benutzer kein Admin ist
     if (!isAdmin && teamsWithResults.has(team.id)) {
       toast({ 
         title: "Löschen nicht möglich", 
@@ -1233,10 +1244,12 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                                     !isAdmin && teamsWithResults.has(team.id) ? 'opacity-50 cursor-not-allowed' : ''
                                   }`}
                                   onClick={() => handleDeleteConfirmation(team)} 
-                                  disabled={isSubmittingForm || isDeletingTeam || (!isAdmin && teamsWithResults.has(team.id))}
-                                  title={!isAdmin && teamsWithResults.has(team.id) 
-                                    ? "Löschen gesperrt - Team hat Ergebnisse (nur Admin)" 
-                                    : "Mannschaft löschen"
+                                  disabled={isSubmittingForm || isDeletingTeam || (!isAdmin && (team.leagueId || teamsWithResults.has(team.id)))}
+                                  title={!isAdmin && team.leagueId 
+                                    ? "Löschen gesperrt - Liga zugewiesen (nur Admin)" 
+                                    : !isAdmin && teamsWithResults.has(team.id) 
+                                      ? "Löschen gesperrt - Team hat Ergebnisse (nur Admin)" 
+                                      : "Mannschaft löschen"
                                   }
                                 >
                                   <Trash2 className="h-4 w-4" />

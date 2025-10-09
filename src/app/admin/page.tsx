@@ -459,17 +459,14 @@ export default function AdminDashboardPage() {
         
          <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Analytics & Monitoring</CardTitle> 
+            <CardTitle className="text-lg font-medium">Monitoring</CardTitle> 
             <BarChart3 className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Nutzungsstatistiken, Performance und Fehlerberichte.
+              System-Überwachung und Fehlerberichte.
             </CardDescription>
             <div className="space-y-2">
-              <Link href="/admin/analytics" passHref>
-                <Button className="w-full">Nutzer-Statistiken</Button>
-              </Link>
               <div className="text-center p-3 bg-green-50 rounded-md">
                 <p className="text-sm text-green-800 font-medium">✅ Error-Monitoring aktiv</p>
                 <p className="text-xs text-green-600">Fehler werden automatisch per E-Mail gesendet</p>

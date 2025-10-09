@@ -119,6 +119,15 @@ export default function MissingResultsPage() {
         ...doc.data()
       }));
       setScores(scoresData);
+      
+      // Lade alle Schützen für Namen-Auflösung
+      const shootersQuery = query(collection(db, 'shooters'));
+      const shootersSnapshot = await getDocs(shootersQuery);
+      const shootersData = shootersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      const shootersMap = new Map(shootersData.map(s => [s.id, s]));
 
       // Bestimme Anzahl der Durchgänge basierend auf der Liga-Disziplin
       const selectedLeagueData = leagues.find(league => league.id === selectedLeague);
@@ -129,7 +138,7 @@ export default function MissingResultsPage() {
       }
 
       // Analysiere fehlende Ergebnisse
-      analyzeResults(teamsData, scoresData);
+      analyzeResults(teamsData, scoresData, shootersMap);
     } catch (error) {
       console.error('Fehler beim Laden der Teams und Scores:', error);
       toast({
@@ -143,7 +152,7 @@ export default function MissingResultsPage() {
   };
 
   // Analysiere Ergebnisse und finde fehlende
-  const analyzeResults = (teamsData: any[], scoresData: any[]) => {
+  const analyzeResults = (teamsData: any[], scoresData: any[], shootersMap: Map<string, any>) => {
     const missing: any[] = [];
     
     // Für jeden Durchgang prüfen
@@ -152,7 +161,7 @@ export default function MissingResultsPage() {
       const isComplete = isLeagueRoundComplete(teamsData, round, scoresData);
       
       // Finde fehlende Ergebnisse für diesen Durchgang
-      const missingForRound = findMissingResults(teamsData, round, scoresData);
+      const missingForRound = findMissingResultsWithNames(teamsData, round, scoresData, shootersMap);
       
       if (missingForRound.length > 0) {
         missing.push({
@@ -164,6 +173,47 @@ export default function MissingResultsPage() {
     }
     
     setMissingResults(missing);
+  };
+  
+  // Lokale Funktion mit Schützen-Namen-Auflösung
+  const findMissingResultsWithNames = (
+    teams: any[],
+    durchgang: number,
+    allScores: any[],
+    shootersMap: Map<string, any>
+  ) => {
+    const missingResults = [];
+    
+    for (const team of teams) {
+      const shooterIds = team.shooterIds || [];
+      
+      for (const shooterId of shooterIds) {
+        const hasResult = allScores.some(score => 
+          score.shooterId === shooterId && 
+          score.durchgang === durchgang && 
+          typeof score.totalRinge === 'number' && 
+          score.totalRinge > 0
+        );
+        
+        if (!hasResult) {
+          const shooter = shootersMap.get(shooterId);
+          const shooterName = shooter 
+            ? (shooter.firstName && shooter.lastName 
+                ? `${shooter.firstName} ${shooter.lastName}` 
+                : shooter.name || 'Unbekannter Schütze')
+            : 'Unbekannter Schütze';
+          
+          missingResults.push({
+            teamId: team.id,
+            teamName: team.name || 'Unbekanntes Team',
+            shooterId,
+            shooterName
+          });
+        }
+      }
+    }
+    
+    return missingResults;
   };
 
   // Effekt zum Laden der Teams und Scores, wenn sich die ausgewählte Liga ändert
