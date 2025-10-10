@@ -14,22 +14,19 @@ const config: CapacitorConfig = {
     captureInput: true,
     // Statusleiste-Konfiguration
     backgroundColor: "#ffffff",
-    statusBarStyle: "dark",
-    statusBarOverlaysWebView: false,
+    // statusBarStyle entfernt - nicht unterstützt in dieser Version
     // Navigation Bar sichtbar lassen für Home/Zurück-Buttons
-    androidWindowSoftInputMode: "adjustResize",
-    fullScreen: false,
+    // androidWindowSoftInputMode entfernt - nicht unterstützt
+    // fullScreen: false,
     // Zusätzliche Konfiguration für bessere Navigation
-    navigationBarStyle: "dark",
-    navigationBarColor: "#ffffff",
+    // navigationBarStyle: "dark", - entfernt
+    // navigationBarColor: "#ffffff", - entfernt
     // WebView Konfiguration
     webContentsDebuggingEnabled: false,
-    // Verhindert Status Bar Überlagerung
-    statusBarOverlaysWebView: false,
     // Touch-Optimierungen
-    mixedContentMode: 'compatibility',
+    // mixedContentMode: 'compatibility', - entfernt
     // Bessere Performance
-    hardwareAccelerated: true
+    // hardwareAccelerated: true - entfernt
   }
 };
 
