@@ -10,8 +10,16 @@ const nextConfig = {
         fs: false,
         path: false,
         os: false,
+        undici: false,
       }
     }
+    
+    // Externe Pakete für Server-Side
+    config.externals = config.externals || []
+    if (isServer) {
+      config.externals.push('undici')
+    }
+    
     return config
   },
   // Vercel-spezifische Konfiguration für Tesseract.js
