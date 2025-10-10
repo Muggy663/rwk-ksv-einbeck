@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.7.5.5"; // Handzettel-Generator Logo-Fix: Logo-Anzeige beim Drucken korrigiert, deutsches Datumsformat hinzugefügt, Logo-Größe optimiert
+  const version = "1.8.0"; // Handzettel-Upload für Ergebniserfassung, PDF-Verbesserungen, optimierte Benutzeroberfläche
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

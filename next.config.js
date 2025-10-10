@@ -1,95 +1,37 @@
 /** @type {import('next').NextConfig} */
-const isCapacitor = process.env.NEXT_CONFIG === 'capacitor';
-
 const nextConfig = {
-  /* config options here */
-  ...(isCapacitor && {
-    output: 'export',
-    trailingSlash: true,
-    images: { unoptimized: true }
-  }),
-  typescript: {
-    ignoreBuildErrors: true,
+  experimental: {
+    serverComponentsExternalPackages: ['tesseract.js']
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-  },
-  // Lösung für das undici-Problem mit privaten Klassenfeldern
   webpack: (config, { isServer }) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      undici: false, // Deaktiviert undici und verwendet den Node.js-Fetch
-    };
-    
-    // Firebase Admin SDK nur auf Server-Seite verfügbar machen
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
-        child_process: false,
-        net: false,
-        tls: false,
-        crypto: false,
-        stream: false,
-        util: false,
-        url: false,
-        zlib: false,
-        http: false,
-        https: false,
-        assert: false,
-        os: false,
         path: false,
-      };
+        os: false,
+      }
     }
-    
-    return config;
+    return config
   },
-  // Favicon-Konfiguration
+  // Vercel-spezifische Konfiguration für Tesseract.js
   async headers() {
     return [
       {
-        source: '/favicon.ico',
+        source: '/(.*)',
         headers: [
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400, must-revalidate',
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'credentialless'
           },
-        ],
-      },
-    ];
-  },
-  // Aktiviere den Webpack Build Worker
-  experimental: {
-    webpackBuildWorker: true
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin'
+          }
+        ]
+      }
+    ]
   }
-};
+}
 
-// Sentry Configuration
-const { withSentryConfig } = require("@sentry/nextjs");
-
-module.exports = withSentryConfig(
-  nextConfig,
-  {
-    org: "ksv-einbeck",
-    project: "javascript-nextjs",
-    silent: !process.env.CI,
-    widenClientFileUpload: true,
-    disableLogger: true,
-    automaticVercelMonitors: true,
-    sourcemaps: {
-      disable: false,
-      deleteSourcemapsAfterUpload: true,
-    },
-    hideSourceMaps: true,
-  }
-);
+module.exports = nextConfig

@@ -9,10 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Mail, Users, FileText, Send, Plus, Trash2, Upload, Download } from 'lucide-react';
+import { Mail, Users, FileText, Send, Plus, Trash2, Upload, Download, Edit, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, addDoc, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, where, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import Link from 'next/link';
 
 interface EmailContact {
@@ -58,6 +58,14 @@ export default function EmailSystemPage() {
     email: '',
     groups: [] as string[]
   });
+  
+  // Edit Contact State
+  const [editingContact, setEditingContact] = useState<string | null>(null);
+  const [editContact, setEditContact] = useState({
+    name: '',
+    email: '',
+    groups: [] as string[]
+  });
 
   useEffect(() => {
     loadContacts();
@@ -91,7 +99,7 @@ export default function EmailSystemPage() {
       
       userPermissionsSnapshot.docs.forEach(doc => {
         const data = doc.data();
-        if (data.email && data.displayName) {
+        if (data.email && data.displayName && data.email !== 'admin@rwk-einbeck.de') {
           // Prüfe ob E-Mail bereits existiert
           const existingContact = loadedContacts.find(c => c.email === data.email);
           if (!existingContact) {
@@ -104,16 +112,19 @@ export default function EmailSystemPage() {
               const clubRoleValues = Object.values(data.clubRoles);
               if (clubRoleValues.includes('SPORTLEITER')) {
                 userRole = 'sportleiter';
-                groups = ['sportleiter', 'vereinsvertreter'];
+                groups = ['sportleiter'];
               } else if (clubRoleValues.includes('VORSTAND')) {
                 userRole = 'vorstand';
-                groups = ['vorstand', 'vereinsvertreter'];
+                groups = ['vorstand'];
               } else if (clubRoleValues.includes('KASSENWART')) {
                 userRole = 'kassenwart';
-                groups = ['kassenwart', 'vereinsvertreter'];
+                groups = ['kassenwart'];
               } else if (clubRoleValues.includes('SCHRIFTFUEHRER')) {
                 userRole = 'schriftfuehrer';
-                groups = ['schriftfuehrer', 'vereinsvertreter'];
+                groups = ['schriftfuehrer'];
+              } else if (clubRoleValues.includes('MANNSCHAFTSFUEHRER')) {
+                userRole = 'mannschaftsfuehrer';
+                groups = ['mannschaftsfuehrer'];
               }
             }
             
@@ -121,7 +132,7 @@ export default function EmailSystemPage() {
             if (data.kvRole) {
               if (data.kvRole === 'KV_WETTKAMPFLEITER') {
                 userRole = 'kv_wettkampfleiter';
-                groups = ['kv_wettkampfleiter', 'vereinsvertreter'];
+                groups = ['kv_wettkampfleiter'];
               }
             }
             
@@ -158,12 +169,7 @@ export default function EmailSystemPage() {
         description: 'Alle registrierten Benutzer',
         contactIds: []
       },
-      {
-        id: 'vereinsvertreter',
-        name: 'Vereinsvertreter',
-        description: 'Alle Vereinsvertreter (inkl. neue Rollen)',
-        contactIds: []
-      },
+
       {
         id: 'sportleiter',
         name: 'Sportleiter',
@@ -234,8 +240,7 @@ export default function EmailSystemPage() {
     switch (groupId) {
       case 'alle':
         return filteredContacts;
-      case 'vereinsvertreter':
-        return filteredContacts.filter(c => c.groups.includes('vereinsvertreter'));
+
       case 'sportleiter':
         return filteredContacts.filter(c => c.role === 'sportleiter');
       case 'vorstand':
@@ -380,6 +385,76 @@ export default function EmailSystemPage() {
     }
   };
 
+  const startEditContact = (contact: EmailContact) => {
+    if (contact.id.startsWith('email_')) {
+      setEditingContact(contact.id);
+      setEditContact({
+        name: contact.name,
+        email: contact.email,
+        groups: contact.groups
+      });
+    }
+  };
+
+  const saveEditContact = async () => {
+    if (!editingContact || !editContact.name || !editContact.email) return;
+    
+    try {
+      const docId = editingContact.replace('email_', '');
+      await updateDoc(doc(db, 'email_contacts', docId), {
+        name: editContact.name,
+        email: editContact.email,
+        groups: editContact.groups,
+        updatedAt: new Date()
+      });
+      
+      toast({
+        title: 'Kontakt aktualisiert',
+        description: `${editContact.name} wurde aktualisiert.`
+      });
+      
+      setEditingContact(null);
+      loadContacts();
+    } catch (error) {
+      toast({
+        title: 'Fehler',
+        description: 'Kontakt konnte nicht aktualisiert werden.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const deleteContact = async (contactId: string) => {
+    if (!contactId.startsWith('email_')) {
+      toast({
+        title: 'Fehler',
+        description: 'Nur manuell hinzugefügte Kontakte können gelöscht werden.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    if (!confirm('Kontakt wirklich löschen?')) return;
+    
+    try {
+      const docId = contactId.replace('email_', '');
+      await deleteDoc(doc(db, 'email_contacts', docId));
+      
+      toast({
+        title: 'Kontakt gelöscht',
+        description: 'Kontakt wurde erfolgreich gelöscht.'
+      });
+      
+      loadContacts();
+    } catch (error) {
+      toast({
+        title: 'Fehler',
+        description: 'Kontakt konnte nicht gelöscht werden.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -447,29 +522,101 @@ export default function EmailSystemPage() {
 
       {/* E-Mail verfassen */}
       {activeTab === 'compose' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
             <Card>
-              <CardHeader>
-                <CardTitle>Neue E-Mail verfassen</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Neue E-Mail</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Betreff</Label>
-                  <Input
-                    value={emailData.subject}
-                    onChange={(e) => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
-                    placeholder="z.B. Wichtige Informationen zum nächsten Wettkampf"
-                  />
+              <CardContent className="space-y-3">
+                {/* GMX-Style Header */}
+                <div className="space-y-3 border-b pb-4">
+                  <div className="grid grid-cols-12 gap-2 items-center">
+                    <Label className="col-span-2 text-sm font-medium text-right">An:</Label>
+                    <div className="col-span-10 text-sm text-muted-foreground bg-muted px-3 py-2 rounded">
+                      {(() => {
+                        let recipients = [];
+                        emailData.selectedGroups.forEach(groupId => {
+                          recipients = [...recipients, ...getContactsByGroup(groupId)];
+                        });
+                        emailData.selectedContacts.forEach(contactId => {
+                          const contact = contacts.find(c => c.id === contactId);
+                          if (contact) recipients.push(contact);
+                        });
+                        recipients = recipients.filter((contact, index, self) => 
+                          index === self.findIndex(c => c.email === contact.email)
+                        );
+                        return recipients.length > 0 
+                          ? `${recipients.length} Empfänger ausgewählt`
+                          : 'Keine Empfänger ausgewählt';
+                      })()
+                      }
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-12 gap-2 items-center">
+                    <Label className="col-span-2 text-sm font-medium text-right">Betreff:</Label>
+                    <div className="col-span-10">
+                      <Input
+                        value={emailData.subject}
+                        onChange={(e) => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
+                        placeholder="Betreff eingeben..."
+                        className="border-0 border-b border-gray-300 rounded-none focus:border-blue-500 focus:ring-0"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1 ml-20">
+                    <span className="text-xs text-muted-foreground mr-2">Vorlagen:</span>
+                    {[
+                      'Rundschreiben RWK',
+                      'Terminänderung',
+                      'Ergebnisse verfügbar'
+                    ].map(template => (
+                      <Button
+                        key={template}
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEmailData(prev => ({ ...prev, subject: template }))}
+                        className="text-xs h-5 px-2 text-blue-600 hover:bg-blue-50"
+                      >
+                        {template}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
 
-                <div>
-                  <Label>Nachricht</Label>
+                {/* GMX-Style Message Area */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEmailData(prev => ({ ...prev, message: 'Liebe Schützenfreunde,\n\n\n\nMit sportlichen Grüßen\nMarcel Bünger\nRWK-Leiter' }))}
+                        className="text-xs h-6 text-blue-600 hover:bg-blue-50"
+                      >
+                        📝 Vorlage
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEmailData(prev => ({ ...prev, message: prev.message + '\n\nMit sportlichen Grüßen\nMarcel Bünger\nRWK-Leiter' }))}
+                        className="text-xs h-6 text-blue-600 hover:bg-blue-50"
+                      >
+                        ✍️ Signatur
+                      </Button>
+                    </div>
+                  </div>
                   <Textarea
                     value={emailData.message}
                     onChange={(e) => setEmailData(prev => ({ ...prev, message: e.target.value }))}
-                    placeholder="Ihre Nachricht..."
-                    rows={8}
+                    placeholder="Nachricht eingeben..."
+                    rows={12}
+                    className="resize-none border-gray-300 focus:border-blue-500"
                   />
                 </div>
 
@@ -520,15 +667,24 @@ export default function EmailSystemPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-4">
-                  <Button 
-                    onClick={handleSendEmail} 
-                    disabled={isLoading || !emailData.subject || !emailData.message} 
-                    className="flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Send className="mr-2 h-4 w-4" />
-                    {isLoading ? 'Wird versendet...' : 'E-Mail senden'}
-                  </Button>
+                {/* GMX-Style Send Button */}
+                <div className="flex justify-between items-center pt-4 border-t">
+                  <div className="text-xs text-muted-foreground">
+                    {emailData.attachments.length > 0 && `${emailData.attachments.length} Anhang/Anhänge`}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      Entwurf speichern
+                    </Button>
+                    <Button 
+                      onClick={handleSendEmail} 
+                      disabled={isLoading || !emailData.subject || !emailData.message}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Send className="mr-2 h-4 w-4" />
+                      {isLoading ? 'Sende...' : 'Senden'}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -536,10 +692,10 @@ export default function EmailSystemPage() {
 
           <div>
             <Card>
-              <CardHeader>
-                <CardTitle>Empfänger auswählen</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Empfänger</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 <div>
                   <Label>Gruppen</Label>
                   <div className="space-y-2 mt-2 max-h-40 overflow-y-auto">
@@ -686,24 +842,83 @@ export default function EmailSystemPage() {
                 <div className="space-y-2">
                   {contacts.map(contact => (
                     <div key={contact.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <div className="font-medium">{contact.name}</div>
-                        <div className="text-sm text-muted-foreground">{contact.email}</div>
-                        <div className="flex gap-1 mt-1">
-                          {contact.groups.map(group => (
-                            <Badge key={group} variant="secondary" className="text-xs">
-                              {group}
-                            </Badge>
-                          ))}
+                      {editingContact === contact.id ? (
+                        <div className="flex-1 space-y-2">
+                          <Input
+                            value={editContact.name}
+                            onChange={(e) => setEditContact(prev => ({ ...prev, name: e.target.value }))}
+                            placeholder="Name"
+                          />
+                          <Input
+                            value={editContact.email}
+                            onChange={(e) => setEditContact(prev => ({ ...prev, email: e.target.value }))}
+                            placeholder="E-Mail"
+                          />
+                          <div className="space-y-1">
+                            <Label className="text-xs">Gruppen:</Label>
+                            <div className="flex flex-wrap gap-1">
+                              {['sportleiter', 'vorstand', 'kassenwart', 'schriftfuehrer', 'mannschaftsfuehrer', 'kv_wettkampfleiter'].map(group => (
+                                <Button
+                                  key={group}
+                                  type="button"
+                                  size="sm"
+                                  variant={editContact.groups.includes(group) ? "default" : "outline"}
+                                  onClick={() => {
+                                    setEditContact(prev => ({
+                                      ...prev,
+                                      groups: prev.groups.includes(group)
+                                        ? prev.groups.filter(g => g !== group)
+                                        : [...prev.groups, group]
+                                    }));
+                                  }}
+                                  className="text-xs h-6"
+                                >
+                                  {group}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={saveEditContact}>
+                              <Save className="h-4 w-4 mr-1" /> Speichern
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setEditingContact(null)}>
+                              <X className="h-4 w-4 mr-1" /> Abbrechen
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {contact.isActive ? (
-                          <Badge variant="outline" className="text-green-600">Aktiv</Badge>
-                        ) : (
-                          <Badge variant="secondary">Inaktiv</Badge>
-                        )}
-                      </div>
+                      ) : (
+                        <>
+                          <div>
+                            <div className="font-medium">{contact.name}</div>
+                            <div className="text-sm text-muted-foreground">{contact.email}</div>
+                            <div className="flex gap-1 mt-1">
+                              {contact.groups.map(group => (
+                                <Badge key={group} variant="secondary" className="text-xs">
+                                  {group}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {contact.isActive ? (
+                              <Badge variant="outline" className="text-green-600">Aktiv</Badge>
+                            ) : (
+                              <Badge variant="secondary">Inaktiv</Badge>
+                            )}
+                            {contact.id.startsWith('email_') && (
+                              <>
+                                <Button size="sm" variant="ghost" onClick={() => startEditContact(contact)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => deleteContact(contact.id)} className="text-red-600 hover:text-red-800">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -733,6 +948,30 @@ export default function EmailSystemPage() {
                     onChange={(e) => setNewContact(prev => ({ ...prev, email: e.target.value }))}
                     placeholder="max@example.com"
                   />
+                </div>
+                <div>
+                  <Label>Gruppen</Label>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {['sportleiter', 'vorstand', 'kassenwart', 'schriftfuehrer', 'mannschaftsfuehrer', 'kv_wettkampfleiter'].map(group => (
+                      <Button
+                        key={group}
+                        type="button"
+                        size="sm"
+                        variant={newContact.groups.includes(group) ? "default" : "outline"}
+                        onClick={() => {
+                          setNewContact(prev => ({
+                            ...prev,
+                            groups: prev.groups.includes(group)
+                              ? prev.groups.filter(g => g !== group)
+                              : [...prev.groups, group]
+                          }));
+                        }}
+                        className="text-xs h-6"
+                      >
+                        {group}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
                 <Button onClick={addNewContact} className="w-full">
                   <Plus className="mr-2 h-4 w-4" />

@@ -568,7 +568,11 @@ export default function VereinMannschaftenPage() {
       });
       
       await batch.commit();
-      toast({ title: "Mannschaft gelöscht", description: `"${teamToDelete.name}" wurde erfolgreich entfernt.` });
+      toast({ 
+        title: "✅ Mannschaft gelöscht", 
+        description: `"${teamToDelete.name}" wurde erfolgreich entfernt.`,
+        className: "border-green-500 bg-green-50"
+      });
       fetchTeamsForClubAndSeason(); // Refetch teams for the current view
     } catch (error: any) {
       console.error("VMP DEBUG: Error deleting team:", error);
@@ -723,7 +727,8 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
         toast({ 
           title: "✅ Mannschaft erfolgreich erstellt!", 
           description: `"${dataForNewTeam.name}" wurde angelegt und ist jetzt in der Liste sichtbar.`,
-          duration: 5000
+          duration: 5000,
+          className: "border-green-500 bg-green-50"
         });
       } else if (formMode === 'edit' && currentTeam.id) {
         teamIdForShooterUpdates = currentTeam.id;
@@ -733,7 +738,8 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
         toast({ 
           title: "✅ Mannschaft erfolgreich gespeichert!", 
           description: `"${dataForTeamUpdate.name}" wurde aktualisiert und Änderungen sind sofort sichtbar.`,
-          duration: 5000
+          duration: 5000,
+          className: "border-green-500 bg-green-50"
         });
       } else {
         setIsSubmittingForm(false);
@@ -1377,7 +1383,8 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                   className="flex-1 sm:flex-none"
                   form="team-form"
                 >
-                  {(isSubmittingForm || isLoadingDialogData) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 
+                  {isSubmittingForm && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isLoadingDialogData && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Speichern
                 </Button>
               )}

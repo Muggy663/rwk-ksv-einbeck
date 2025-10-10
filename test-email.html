@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>E-Mail Test</title>
+</head>
+<body>
+    <h1>E-Mail Test</h1>
+    <button onclick="testEmail()">Test E-Mail ohne Anhang</button>
+    <button onclick="testEmailWithAttachment()">Test E-Mail mit Anhang</button>
+    
+    <script>
+        async function testEmail() {
+            const formData = new FormData();
+            formData.append('subject', '🧪 Test E-Mail ohne Anhang');
+            formData.append('message', 'Dies ist eine Test-E-Mail ohne Anhang.\n\nZeitpunkt: ' + new Date().toLocaleString('de-DE'));
+            formData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
+            
+            try {
+                const response = await fetch('/api/send-email', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                alert('Ergebnis: ' + JSON.stringify(result, null, 2));
+            } catch (error) {
+                alert('Fehler: ' + error.message);
+            }
+        }
+        
+        async function testEmailWithAttachment() {
+            // Erstelle eine kleine Test-Datei
+            const testContent = 'Dies ist eine Test-Datei für den E-Mail-Anhang.\nZeitpunkt: ' + new Date().toLocaleString('de-DE');
+            const testFile = new File([testContent], 'test-handzettel.txt', { type: 'text/plain' });
+            
+            const formData = new FormData();
+            formData.append('subject', '🧪 Test E-Mail mit Anhang');
+            formData.append('message', 'Dies ist eine Test-E-Mail mit Anhang.\n\nZeitpunkt: ' + new Date().toLocaleString('de-DE'));
+            formData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
+            formData.append('attachment-0', testFile);
+            
+            try {
+                const response = await fetch('/api/send-email', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                alert('Ergebnis: ' + JSON.stringify(result, null, 2));
+            } catch (error) {
+                alert('Fehler: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

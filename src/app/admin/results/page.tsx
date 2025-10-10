@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckSquare, Save, PlusCircle, Trash2, Loader, AlertCircle, Edit, ToggleLeft, ToggleRight } from 'lucide-react';
+import { CheckSquare, Save, PlusCircle, Trash2, Loader, AlertCircle, Edit, ToggleLeft, ToggleRight, CheckCircle, Camera } from 'lucide-react';
 import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, FirestoreLeagueSpecificDiscipline, Club, LeagueUpdateEntry } from '@/types/rwk';
 import { leagueDisciplineOptions } from '@/types/rwk';
 import { useAuth } from '@/hooks/use-auth';
@@ -395,7 +395,12 @@ export default function AdminResultsPage() {
         }
 
         await batch.commit();
-        toast({ title: "Ergebnisse gespeichert" });
+        
+        toast({ 
+          title: "✅ Ergebnisse gespeichert!", 
+          description: `${pendingScores.length} Ergebnisse erfolgreich übertragen.`,
+          className: "border-green-500 bg-green-50"
+        });
         setPendingScores([]);
         setJustSavedScoreIdentifiers(prev => [...prev, ...newlySavedIdentifiers]);
         

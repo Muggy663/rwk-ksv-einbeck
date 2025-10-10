@@ -24,7 +24,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM und Vereinssoftware.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: 25.09.2025, Web-Version 1.7.5.4, App-Version 0.9.4.1
+            Stand: 10.10.2025, Web-Version 1.8.0, App-Version 0.9.4.1
           </p>
         </div>
       </div>
@@ -260,6 +260,7 @@ export default function HandbuchPage() {
                     <li><strong>Mannschaftsauswahl:</strong> Alle Mannschaften der ausgewählten Liga (eigene und gegnerische), damit Ergebnisse für Begegnungen eingetragen werden können.</li>
                     <li><strong>Schützenauswahl:</strong> Schützen der ausgewählten Mannschaft.</li>
                     <li><strong>Voice Input (Neu):</strong> Sprechen Sie "185 Ringe" statt zu tippen - Deutsche Zahlenerkennung für schnellere Eingabe.</li>
+                    <li><strong>Handzettel-Upload (NEU v1.8.0):</strong> Laden Sie Fotos der Handzettel direkt hoch - diese werden automatisch per E-Mail an den RWK-Leiter gesendet. Kein manuelles Versenden mehr nötig! Nutzen Sie die Kamera-Integration für optimale Aufnahmen.</li>
                     <li>Die Ergebnisse werden zunächst in einer Liste gesammelt, bevor Sie sie endgültig speichern. Bereits erfasste Schützen werden aus der Auswahlliste entfernt. Das System prüft automatisch, ob die eingegebenen Ringzahlen gültig sind. Es wird auch gespeichert, wer das Ergebnis eingetragen hat.</li>
                 </ul>
             </CardContent>

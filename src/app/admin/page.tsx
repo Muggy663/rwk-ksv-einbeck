@@ -506,9 +506,7 @@ export default function AdminDashboardPage() {
               <Link href="/admin/email-system" passHref>
                 <Button className="w-full" variant="outline">E-Mail-System</Button>
               </Link>
-              <Link href="/admin/manage-contacts" passHref>
-                <Button className="w-full" variant="outline">Kontakte verwalten</Button>
-              </Link>
+
               <Link href="/admin/email-settings" passHref>
                 <Button className="w-full" variant="outline">E-Mail-Einstellungen</Button>
               </Link>

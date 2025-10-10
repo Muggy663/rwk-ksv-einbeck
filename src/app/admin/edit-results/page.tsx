@@ -359,15 +359,9 @@ export default function AdminEditResultsPage() {
   };
 
   const numRoundsForSelect = useMemo(() => {
-    const currentLeague = availableLeagues.find(l => l.id === selectedLeagueId);
-    if (currentLeague) {
-      const lgLpTypes: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
-      if (lgLpTypes.includes(currentLeague.type)) {
-        return 4; // 4 Durchgänge für Luftdruck
-      }
-    }
-    return 5; // Default für KK (5 Durchgänge)
-  }, [selectedLeagueId, availableLeagues]);
+    // Alle Disziplinen haben 5 Durchgänge
+    return 5;
+  }, []);
 
 
   return (

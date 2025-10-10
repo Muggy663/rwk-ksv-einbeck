@@ -164,20 +164,99 @@ export default function DokumentePage() {
   ));
 
   return (
-    <div className="space-y-4 md:space-y-6 px-2 md:px-0">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center">
-          <BackButton className="mr-2" fallbackHref="/" />
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-primary">Dokumente & Ausschreibungen</h1>
-            <p className="text-sm md:text-base text-muted-foreground">Offizielle Dokumente und Formulare des KSV Einbeck</p>
-          </div>
+    <div className="flex gap-6">
+      {/* Sidebar Navigation */}
+      <div className="hidden md:block w-64 flex-shrink-0">
+        <div className="sticky top-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center">
+                <FileText className="h-5 w-5 mr-2" />
+                Dokumente
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <button
+                onClick={() => setActiveTab('ausschreibungen')}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                  activeTab === 'ausschreibungen' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-muted'
+                }`}
+              >
+                📋 Ausschreibungen ({ausschreibungen.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('formulare')}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                  activeTab === 'formulare' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-muted'
+                }`}
+              >
+                📝 Formulare ({formulare.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('ligalisten')}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                  activeTab === 'ligalisten' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-muted'
+                }`}
+              >
+                📊 Ligalisten ({ligalisten.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('ordnungen')}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                  activeTab === 'ordnungen' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-muted'
+                }`}
+              >
+                📖 Regelwerke ({ordnungen.length})
+              </button>
+            </CardContent>
+          </Card>
+          
+          {/* Quick Actions */}
+          <Card className="mt-4">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Schnellzugriff</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Link href="/handzettel-generator" className="block">
+                <Button variant="outline" size="sm" className="w-full justify-start text-xs">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Handzettel erstellen
+                </Button>
+              </Link>
+              <Link href="/gesamtergebnisliste-generator" className="block">
+                <Button variant="outline" size="sm" className="w-full justify-start text-xs">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Gesamtergebnisliste
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
-        <SearchBar 
-          onSearch={(query) => setSearchQuery(query)} 
-          placeholder="Dokumente durchsuchen..." 
-        />
       </div>
+      
+      {/* Main Content */}
+      <div className="flex-1 space-y-4 md:space-y-6 px-2 md:px-0">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center">
+            <BackButton className="mr-2" fallbackHref="/" />
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-primary">Dokumente & Ausschreibungen</h1>
+              <p className="text-sm md:text-base text-muted-foreground">Offizielle Dokumente und Formulare des KSV Einbeck</p>
+            </div>
+          </div>
+          <SearchBar 
+            onSearch={(query) => setSearchQuery(query)} 
+            placeholder="Dokumente durchsuchen..." 
+          />
+        </div>
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
@@ -191,11 +270,14 @@ export default function DokumentePage() {
         </Card>
       ) : (
         <Tabs defaultValue="ausschreibungen" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 gap-1 md:gap-2 mb-4 md:mb-8 h-auto">
-            <TabsTrigger value="ausschreibungen" className="text-xs md:text-sm px-2 py-2 md:px-3 md:py-2.5">Ausschreibungen</TabsTrigger>
-            <TabsTrigger value="formulare" className="text-xs md:text-sm px-2 py-2 md:px-3 md:py-2.5">Formulare</TabsTrigger>
-            <TabsTrigger value="ligalisten" className="text-xs md:text-sm px-2 py-2 md:px-3 md:py-2.5">Ligalisten</TabsTrigger>
-            <TabsTrigger value="ordnungen" className="text-xs md:text-sm px-2 py-2 md:px-3 md:py-2.5">Regelwerke</TabsTrigger>
+          {/* Mobile Tabs - nur auf kleinen Bildschirmen sichtbar */}
+          <TabsList className="grid grid-cols-2 md:hidden gap-1 mb-4 h-auto">
+            <TabsTrigger value="ausschreibungen" className="text-xs px-2 py-2">Ausschreibungen</TabsTrigger>
+            <TabsTrigger value="formulare" className="text-xs px-2 py-2">Formulare</TabsTrigger>
+          </TabsList>
+          <TabsList className="grid grid-cols-2 md:hidden gap-1 mb-4 h-auto">
+            <TabsTrigger value="ligalisten" className="text-xs px-2 py-2">Ligalisten</TabsTrigger>
+            <TabsTrigger value="ordnungen" className="text-xs px-2 py-2">Regelwerke</TabsTrigger>
           </TabsList>
 
           <TabsContent value="ausschreibungen" className="space-y-4">
@@ -383,6 +465,7 @@ export default function DokumentePage() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

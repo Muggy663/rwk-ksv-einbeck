@@ -22,10 +22,12 @@ import {
   MobileTableHeader as TableHeader,
   MobileTableRow as TableRow,
 } from "@/components/ui/mobile-table";
-import { CheckSquare, Save, Plus, Trash2, Loader, AlertCircle, Building } from 'lucide-react';
+import { CheckSquare, Save, Plus, Trash2, Loader, AlertCircle, Building, CheckCircle, Camera, Zap, AlertTriangle } from 'lucide-react';
 import { VoiceInputButton } from '@/components/ui/voice-input-button';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { BackButton } from '@/components/ui/back-button';
+import { createProgressToast } from '@/components/ui/progress-toast';
+import { HandzettelOCR, type OCRMatchResult } from '@/components/ui/handzettel-ocr';
 import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, FirestoreLeagueSpecificDiscipline, Club, LeagueUpdateEntry, UserPermission } from '@/types/rwk';
 import { leagueDisciplineOptions } from '@/types/rwk';
 import { useVereinAuth } from '@/app/verein/layout'; 
@@ -83,6 +85,8 @@ export default function VereinErgebnissePage() {
   const [isLoadingShooters, setIsLoadingShooters] = useState(false);
   const [isLoadingExistingScores, setIsLoadingExistingScores] = useState(false);
   const [isSubmittingScores, setIsSubmittingScores] = useState(false);
+  const [handzettelFiles, setHandzettelFiles] = useState<File[]>([]);
+  const [showOCR, setShowOCR] = useState(false);
 
  useEffect(() => {
 
@@ -654,6 +658,90 @@ export default function VereinErgebnissePage() {
     toast({ title: "Eintrag entfernt", variant: "destructive" });
   };
 
+  const handleOCRComplete = (ocrResults: OCRMatchResult[]) => {
+    const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
+    if (!currentSeason) return;
+
+    const parsedRound = parseInt(selectedRound);
+    
+    // Duplikat-Erkennung: Bereits vorhandene Ergebnisse filtern
+    const filteredResults = ocrResults.filter(result => {
+      // Prüfe gegen bereits gespeicherte Ergebnisse
+      const existsInDB = existingScoresForTeamAndRound.some(existing => 
+        existing.shooterId === result.shooterId && existing.durchgang === parsedRound
+      );
+      
+      // Prüfe gegen Zwischenliste
+      const existsInPending = pendingScores.some(pending => 
+        pending.shooterId === result.shooterId && pending.durchgang === parsedRound
+      );
+      
+      // Prüfe gegen gerade gespeicherte
+      const existsInJustSaved = justSavedScoreIdentifiers.some(saved => 
+        saved.shooterId === result.shooterId && saved.durchgang === parsedRound
+      );
+      
+      return !existsInDB && !existsInPending && !existsInJustSaved;
+    });
+    
+    const duplicateCount = ocrResults.length - filteredResults.length;
+    
+    const newPendingEntries = filteredResults.map(result => ({
+      tempId: `ocr-${Date.now()}-${Math.random()}`,
+      seasonId: selectedSeasonId,
+      seasonName: currentSeason.name,
+      leagueId: selectedLeagueId,
+      leagueName: allLeagues.find(l => l.id === selectedLeagueId)?.name || '',
+      leagueType: allLeagues.find(l => l.id === selectedLeagueId)?.type || 'KK',
+      teamId: result.teamId,
+      teamName: result.teamName,
+      clubId: allTeamsInSelectedLeague.find(t => t.id === result.teamId)?.clubId || '',
+      shooterId: result.shooterId,
+      shooterName: result.shooterName,
+      shooterGender: 'unknown',
+      durchgang: parsedRound,
+      totalRinge: result.score,
+      scoreInputType: (existingScoresForTeamAndRound.length > 0 ? 'post' : 'regular') as const, // Automatisch Nachschießen wenn bereits Ergebnisse vorhanden
+      competitionYear: currentSeason.competitionYear,
+      isOCRGenerated: true,
+      ocrConfidence: result.confidence,
+      ocrSource: result.ocrSource
+    }));
+
+    setPendingScores(prev => [...prev, ...newPendingEntries]);
+    setShowOCR(false);
+    
+    // Intelligente Toast-Nachricht
+    if (newPendingEntries.length > 0 && duplicateCount > 0) {
+      toast({
+        title: `🎯 ${newPendingEntries.length} neue Ergebnisse erfasst!`,
+        description: `${duplicateCount} bereits vorhandene Ergebnisse übersprungen. Perfekt für Nachschießen!`,
+        className: "border-green-500 bg-green-50"
+      });
+    } else if (newPendingEntries.length > 0) {
+      toast({
+        title: `🎯 ${newPendingEntries.length} Ergebnisse automatisch erfasst!`,
+        description: "Alle Werte wurden in die Zwischenliste eingetragen. Bitte prüfen Sie diese vor dem Speichern.",
+        className: "border-green-500 bg-green-50"
+      });
+    } else {
+      toast({
+        title: "ℹ️ Keine neuen Ergebnisse",
+        description: `Alle ${duplicateCount} erkannten Ergebnisse sind bereits vorhanden.`,
+        className: "border-blue-500 bg-blue-50"
+      });
+    }
+  };
+
+  const handleOCRError = (error: string) => {
+    setShowOCR(false);
+    toast({
+      title: "OCR-Fehler",
+      description: error,
+      variant: "destructive"
+    });
+  };
+
   const handleFinalSave = async () => {
     if (!userPermission?.uid) { toast({ title: "Fehler", description: "Benutzer nicht identifiziert.", variant: "destructive" }); return; }
     if (pendingScores.length === 0) { toast({ title: "Keine Ergebnisse", variant: "destructive" }); return; }
@@ -754,6 +842,75 @@ export default function VereinErgebnissePage() {
       // Alle Scores in einem Batch speichern
       await batch.commit();
       
+      // Handzettel-Upload verarbeiten (mehrere Dateien) mit Fortschrittsbalken
+      if (handzettelFiles.length > 0) {
+        const progressToast = createProgressToast({
+          title: "📤 Handzettel werden hochgeladen...",
+          description: `${handzettelFiles.length} Datei(en) werden verarbeitet`,
+        });
+        
+        try {
+          progressToast.start();
+          progressToast.updateProgress(10, "Dateien werden vorbereitet...");
+          
+          const uploadFormData = new FormData();
+          
+          const teamName = allTeamsInSelectedLeague.find(t => t.id === selectedTeamId)?.name || 'Unbekannt';
+          const leagueName = selectedLeagueObject?.name || 'Unbekannt';
+          
+          uploadFormData.append('subject', `📋 Handzettel-Beleg: ${teamName} - Durchgang ${selectedRound}`);
+          uploadFormData.append('message', `Handzettel-Beleg eingegangen:
+
+Mannschaft: ${teamName}
+Liga: ${leagueName}
+Durchgang: ${selectedRound}
+Anzahl Seiten: ${handzettelFiles.length}
+Zeitpunkt: ${new Date().toLocaleString('de-DE')}
+
+Die Handzettel sind als Anhang beigefügt.`);
+          uploadFormData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
+          
+          progressToast.updateProgress(30, "Dateien werden angehängt...");
+          
+          // Alle Handzettel-Dateien als Attachments hinzufügen
+          handzettelFiles.forEach((file, index) => {
+            uploadFormData.append(`attachment-${index}`, file);
+          });
+          
+          progressToast.updateProgress(60, "E-Mail wird versendet...");
+          
+          const uploadResponse = await fetch('/api/send-email', {
+            method: 'POST',
+            body: uploadFormData
+          });
+          
+          if (uploadResponse.ok) {
+            progressToast.updateProgress(100, "Upload erfolgreich abgeschlossen!");
+            toast({ 
+              title: "✅ Ergebnisse und Handzettel gesendet!", 
+              description: `${pendingScores.length} Ergebnisse gespeichert + ${handzettelFiles.length} Handzettel-Seite(n) per E-Mail an RWK-Leiter gesendet.`,
+              className: "border-green-500 bg-green-50"
+            });
+          } else {
+            throw new Error('Upload fehlgeschlagen');
+          }
+        } catch (error) {
+          console.error('Handzettel-Upload Fehler:', error);
+          progressToast.error('E-Mail-Versand fehlgeschlagen');
+          toast({ 
+            title: "✅ Ergebnisse gespeichert", 
+            description: "Handzettel-E-Mail fehlgeschlagen, aber Ergebnisse sind gesichert.",
+            className: "border-green-500 bg-green-50"
+          });
+        }
+      } else {
+        toast({ 
+          title: "✅ Ergebnisse gespeichert!", 
+          description: `${pendingScores.length} Ergebnisse erfolgreich übertragen.`,
+          className: "border-green-500 bg-green-50"
+        });
+      }
+      
       // Audit-Logs für alle gespeicherten Ergebnisse erstellen
       for (const entry of pendingScores) {
         try {
@@ -790,8 +947,8 @@ export default function VereinErgebnissePage() {
         }
       }
 
-      toast({ title: "Ergebnisse gespeichert" });
       setPendingScores([]);
+      setHandzettelFiles([]); // Reset file input
       setJustSavedScoreIdentifiers(prev => [...prev, ...newlySavedIdentifiers]);
       
       const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
@@ -1108,9 +1265,178 @@ export default function VereinErgebnissePage() {
           </CardHeader>
           <CardContent>
             <Table><TableHeader><TableRow><TableHead>Schütze</TableHead><TableHead>Mannschaft</TableHead><TableHead className="text-center">DG</TableHead><TableHead className="text-center">Ringe</TableHead><TableHead>Typ</TableHead><TableHead className="text-right">Aktion</TableHead></TableRow></TableHeader>
-              <TableBody>{pendingScores.map((entry) => (<TableRow key={entry.tempId}><TableCell>{entry.shooterName}</TableCell><TableCell>{entry.teamName}</TableCell><TableCell className="text-center">{entry.durchgang}</TableCell><TableCell className="text-center">{entry.totalRinge}</TableCell><TableCell>{entry.scoreInputType === 'pre' ? 'Vorschuss' : entry.scoreInputType === 'post' ? 'Nachschuss' : 'Regulär'}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleRemoveFromList(entry.tempId)} className="text-destructive hover:text-destructive/80" disabled={isSubmittingScores}><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody>
+              <TableBody>{pendingScores.map((entry) => {
+                const confidence = entry.ocrConfidence || 1;
+                const rowColor = entry.isOCRGenerated ? 
+                  (confidence >= 0.8 ? 'bg-green-50' : 
+                   confidence >= 0.6 ? 'bg-yellow-50' : 
+                   'bg-red-50') : '';
+                const textColor = entry.isOCRGenerated && confidence < 0.6 ? 'text-red-700 font-medium' : '';
+                
+                return (
+                  <TableRow key={entry.tempId} className={rowColor}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {entry.isOCRGenerated && (
+                          <Zap className={`h-3 w-3 ${
+                            confidence >= 0.8 ? 'text-green-500' : 
+                            confidence >= 0.6 ? 'text-yellow-500' : 
+                            'text-red-500'
+                          }`} />
+                        )}
+                        <span className={textColor}>
+                          {entry.shooterName}
+                          {entry.isOCRGenerated && confidence < 0.6 && ' ⚠️'}
+                        </span>
+                        {entry.isOCRGenerated && entry.ocrConfidence && (
+                          <span className={`text-xs font-mono ${
+                            confidence >= 0.8 ? 'text-green-600' : 
+                            confidence >= 0.6 ? 'text-yellow-600' : 
+                            'text-red-600'
+                          }`}>
+                            {Math.round(entry.ocrConfidence * 100)}%
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{entry.teamName}</TableCell>
+                    <TableCell className="text-center">{entry.durchgang}</TableCell>
+                    <TableCell className="text-center">{entry.totalRinge}</TableCell>
+                    <TableCell>{entry.scoreInputType === 'pre' ? 'Vorschuss' : entry.scoreInputType === 'post' ? 'Nachschuss' : 'Regulär'}</TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleRemoveFromList(entry.tempId)} 
+                        className="text-destructive hover:text-destructive/80" 
+                        disabled={isSubmittingScores}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}</TableBody>
             </Table>
-            <div className="flex justify-end pt-6"><Button onClick={handleFinalSave} size="lg" disabled={isSubmittingScores || pendingScores.length === 0}>{isSubmittingScores && <Loader className="mr-2 h-4 w-4 animate-spin" />} Alle {pendingScores.length} Ergebnisse speichern</Button></div>
+            
+            {/* Handzettel-Upload & OCR Bereich */}
+            <div className="mt-6 p-4 border rounded-lg bg-blue-50 border-blue-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Camera className="h-4 w-4 text-blue-600" />
+                <Label className="text-sm font-medium text-blue-800">Handzettel als Beleg hochladen (Optional)</Label>
+              </div>
+              <div className="mt-2 space-y-2">
+                <Input 
+                  type="file" 
+                  accept="image/*,application/pdf" 
+                  capture="camera"
+                  multiple
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      console.log('📁 Dateien ausgewählt:', e.target.files.length);
+                      setHandzettelFiles(Array.from(e.target.files));
+                      setShowOCR(false);
+                    }
+                  }}
+                  className="bg-white"
+                />
+                <p className="text-xs text-blue-700">
+                  📱 <strong>Mobile:</strong> Kamera öffnet sich automatisch | 📄 Mehrere Seiten möglich! Fotos werden per E-Mail an RWK-Leiter gesendet.
+                </p>
+                {handzettelFiles.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm text-green-700">
+                        <CheckCircle className="h-4 w-4" />
+                        {handzettelFiles.length} Datei(en) ausgewählt:
+                      </div>
+                      {handzettelFiles.map((file, index) => (
+                        <div key={index} className="text-xs text-green-600 ml-6">
+                          • Seite {index + 1}: {file.name}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* OCR-Button für erste Datei */}
+                    {handzettelFiles.length > 0 && selectedRound && selectedLeagueId && !showOCR && (
+                      <div className="pt-3 border-t border-blue-200">
+                        <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-3 rounded-lg border border-purple-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Zap className="h-4 w-4 text-purple-600" />
+                            <span className="text-sm font-medium text-purple-800">🧪 EXPERIMENTAL: Automatische Erkennung</span>
+                          </div>
+                          <p className="text-xs text-purple-700 mb-3">
+                            Das System kann Mannschaften, Schützen-Namen und Ringzahlen automatisch aus dem Handzettel-Foto erkennen und in die Liste eintragen. Sie müssen dann nur noch kontrollieren und speichern!
+                          </p>
+                          <div className="bg-amber-50 border border-amber-200 rounded p-2 mb-3">
+                            <p className="text-xs text-amber-700">
+                              📝 <strong>Nachschießen?</strong> Bereits vorhandene Ergebnisse werden automatisch übersprungen - Sie können denselben Handzettel mehrfach scannen!
+                            </p>
+                          </div>
+                          <Button 
+                            onClick={() => setShowOCR(true)}
+                            className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+                            size="sm"
+                          >
+                            🤖 Handzettel automatisch auslesen
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Hinweis wenn OCR-Button nicht verfügbar */}
+                    {handzettelFiles.length > 0 && (!selectedRound || !selectedLeagueId) && (
+                      <div className="pt-3 border-t border-amber-200">
+                        <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                          <div className="flex items-center gap-2 mb-1">
+                            <AlertTriangle className="h-4 w-4 text-amber-600" />
+                            <span className="text-sm font-medium text-amber-800">Automatische Erkennung nicht verfügbar</span>
+                          </div>
+                          <p className="text-xs text-amber-700">
+                            Wählen Sie zuerst <strong>Liga</strong> und <strong>Durchgang</strong> aus, dann können Sie den Handzettel automatisch auslesen lassen.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* OCR-Komponente */}
+            {showOCR && handzettelFiles.length > 0 && selectedRound && selectedLeagueId && (
+              <div className="mt-4">
+                <HandzettelOCR
+                  imageFile={handzettelFiles[0]}
+                  availableTeams={allTeamsInSelectedLeague}
+                  selectedLeagueId={selectedLeagueId}
+                  selectedRound={selectedRound}
+                  onOCRComplete={handleOCRComplete}
+                  onError={handleOCRError}
+                />
+              </div>
+            )}
+            
+            {/* OCR-Warnung für experimentelle Einträge */}
+            {pendingScores.some(p => p.isOCRGenerated) && (
+              <div className="mb-4 p-3 bg-amber-50 border-l-4 border-amber-400">
+                <div className="flex items-center">
+                  <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
+                  <p className="text-sm text-amber-700">
+                    <strong>🧪 EXPERIMENTAL:</strong> {pendingScores.filter(p => p.isOCRGenerated).length} 
+                    Einträge wurden automatisch erkannt. Bitte prüfen Sie alle Werte vor dem Speichern!
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end pt-6">
+              <Button onClick={handleFinalSave} size="lg" disabled={isSubmittingScores || pendingScores.length === 0}>
+                {isSubmittingScores && <Loader className="mr-2 h-4 w-4 animate-spin" />} 
+                Alle {pendingScores.length} Ergebnisse speichern
+                {handzettelFiles.length > 0 && ` + ${handzettelFiles.length} Handzettel-Seite(n)`}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

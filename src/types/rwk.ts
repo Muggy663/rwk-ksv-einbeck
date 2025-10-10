@@ -355,6 +355,10 @@ export interface PendingScoreEntry {
   totalRinge: number;
   scoreInputType: 'regular' | 'pre' | 'post';
   competitionYear: number;
+  // OCR-spezifische Felder
+  isOCRGenerated?: boolean;
+  ocrConfidence?: number;
+  ocrSource?: string;
 }
 
 export interface VereinContextType {

@@ -388,6 +388,52 @@ export default function HomePage() {
         </Card>
       </div>
 
+      {/* Was ist neu? - Version 1.8.0 */}
+      <Card className="mb-6 shadow-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center text-green-800 dark:text-green-200">
+            <div className="p-2 bg-green-100 dark:bg-green-800 rounded-lg mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600 dark:text-green-300">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            </div>
+            Was ist neu? Version 1.8.0
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">📸 Handzettel-Upload bei Ergebniserfassung</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">Handzettel-Fotos können jetzt direkt hochgeladen werden - kein manuelles Versenden mehr nötig</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-amber-500 dark:bg-amber-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <h4 className="font-semibold text-amber-800 dark:text-amber-200">🧪 EXPERIMENTAL: Automatische Handzettel-Erkennung</h4>
+                <p className="text-sm text-amber-700 dark:text-amber-300">OCR-System erkennt Mannschaften, Schützen und Ergebnisse automatisch aus Handzettel-Fotos - spart 95% der Eingabezeit!</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">📝 PDF-Generierung & Handzettel verbessert</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">Korrekte Schützennamen in PDFs, Handzettel-Generator Fehler behoben</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">✨ Kamera-Integration & Fortschrittsbalken</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">Mobile Kamera öffnet automatisch, Upload-Fortschritt mit visuellen Indikatoren</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Play Store Beta-Test */}
       <div className="mb-6">
         <Link href="/app" className="block">
