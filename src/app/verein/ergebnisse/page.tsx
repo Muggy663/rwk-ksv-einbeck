@@ -1027,8 +1027,93 @@ Die Handzettel sind als Anhang beigefügt.`);
         )}
       </div>
       
+      {/* OCR-Bereich GANZ OBEN - sofort sichtbar */}
+      <Card className="shadow-md border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-blue-800">
+            <Camera className="h-5 w-5" />
+            🤖 NEU: Handzettel fotografieren - Alle Ergebnisse automatisch erfassen!
+          </CardTitle>
+          <CardDescription className="text-blue-700">
+            📸 <strong>Einfach Handzettel abfotografieren</strong> statt manuell eintippen - spart 90% der Zeit!
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {!selectedLeagueId || !selectedRound ? (
+              <div className="p-4 border-2 border-dashed border-amber-300 rounded-lg bg-amber-50">
+                <div className="text-center space-y-2">
+                  <Camera className="h-8 w-8 text-amber-600 mx-auto" />
+                  <p className="text-sm font-medium text-amber-800">📋 Zuerst Liga und Durchgang auswählen!</p>
+                  <p className="text-xs text-amber-700">Dann erscheint hier die Kamera-Funktion für automatische Ergebniserfassung.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="p-3 border rounded-lg bg-green-50 border-green-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-800">✅ Bereit für OCR-Erkennung!</span>
+                  </div>
+                  <p className="text-xs text-green-700 mb-3">
+                    Liga: <strong>{allLeagues.find(l => l.id === selectedLeagueId)?.name}</strong> | 
+                    Durchgang: <strong>{selectedRound}</strong>
+                  </p>
+                  
+                  <Input 
+                    type="file" 
+                    accept="image/*,.pdf" 
+                    capture="environment"
+                    multiple
+                    onChange={async (e) => {
+                      if (e.target.files) {
+                        const files = Array.from(e.target.files);
+                        setHandzettelFiles(files);
+                        
+                        if (files.length > 0) {
+                          setShowOCR(true);
+                        }
+                      }
+                    }}
+                    className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
+                  />
+                  
+                  <div className="mt-2 text-xs text-blue-700 space-y-1">
+                    <p>📱 <strong>Handy:</strong> Kamera öffnet sich direkt (Rückkamera)</p>
+                    <p>💻 <strong>PC:</strong> Datei auswählen oder per Drag & Drop</p>
+                    <p>✅ <strong>Formate:</strong> Alle Bildformate (JPG, PNG, WEBP, etc.) + PDF</p>
+                  </div>
+                  
+                  {handzettelFiles.length > 0 && (
+                    <div className="mt-3 p-2 bg-blue-100 rounded border border-blue-200">
+                      <div className="flex items-center gap-2 text-sm text-blue-800">
+                        <Zap className="h-4 w-4" />
+                        <span>{handzettelFiles.length} Datei(en) ausgewählt - OCR läuft...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* OCR-Komponente */}
+                {showOCR && handzettelFiles.length > 0 && (
+                  <HandzettelOCR
+                    imageFile={handzettelFiles[0]}
+                    availableTeams={allTeamsInSelectedLeague}
+                    selectedLeagueId={selectedLeagueId}
+                    selectedRound={selectedRound}
+                    availableLeagues={allLeagues.map(l => ({ id: l.id, name: l.name, type: l.type }))}
+                    onOCRComplete={handleOCRComplete}
+                    onError={handleOCRError}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+      
       <Card className="shadow-md">
-        <CardHeader><CardTitle>Einzelergebnis zur Liste hinzufügen</CardTitle><CardDescription>Wählen Sie Parameter und fügen Sie Ergebnisse hinzu.</CardDescription></CardHeader>
+        <CardHeader><CardTitle>📝 Oder: Einzelergebnis manuell hinzufügen</CardTitle><CardDescription>Falls OCR nicht funktioniert - klassische Eingabe Schütze für Schütze</CardDescription></CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-2">
@@ -1255,125 +1340,7 @@ Die Handzettel sind als Anhang beigefügt.`);
         </CardContent>
       </Card>
 
-      {/* Handzettel-Upload & OCR Bereich - VOR der manuellen Eingabe */}
-      {!selectedLeagueId || !selectedRound ? (
-        <Card className="shadow-md mt-6 border-amber-200 bg-amber-50/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-amber-700">
-              <Camera className="h-5 w-5" />
-              🤖 Automatische Ergebniserfassung (OCR)
-            </CardTitle>
-            <CardDescription className="text-amber-600">
-              📋 <strong>Liga und Durchgang auswählen</strong> um die automatische Handzettel-Erkennung zu aktivieren!
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="p-4 border rounded-lg bg-amber-100 border-amber-300">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <span className="text-sm font-medium text-amber-800">Voraussetzungen für OCR-System</span>
-              </div>
-              <div className="text-sm text-amber-700 space-y-1">
-                <p>✅ <strong>Liga auswählen:</strong> {selectedLeagueId ? '✓ Gewählt' : '❌ Noch nicht gewählt'}</p>
-                <p>✅ <strong>Durchgang auswählen:</strong> {selectedRound ? '✓ Gewählt' : '❌ Noch nicht gewählt'}</p>
-                <p className="mt-2 text-xs">💡 Sobald beide Felder ausgefüllt sind, erscheint hier die Kamera-Funktion für automatische Ergebniserfassung!</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="shadow-md mt-6 border-blue-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-800">
-              <Camera className="h-5 w-5" />
-              🤖 Automatische Ergebniserfassung (OCR)
-            </CardTitle>
-            <CardDescription>
-              Fotografieren Sie den Handzettel und lassen Sie alle Ergebnisse automatisch erfassen!
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
-              <div className="flex items-center gap-2 mb-2">
-                <Camera className="h-4 w-4 text-blue-600" />
-                <Label className="text-sm font-medium text-blue-800">Handzettel fotografieren oder hochladen</Label>
-              </div>
-              <div className="mt-2 space-y-2">
-                <Input 
-                  type="file" 
-                  accept=".jpg,.jpeg,.png,.webp,.bmp,.tiff,.pdf" 
-                  capture="camera"
-                  multiple
-                  onChange={async (e) => {
-                    if (e.target.files) {
-                      console.log('📁 Dateien ausgewählt:', e.target.files.length);
-                      const files = Array.from(e.target.files);
-                      setHandzettelFiles(files);
-                      
-                      // Automatisch OCR starten
-                      if (files.length > 0 && selectedRound && selectedLeagueId) {
-                        console.log('🚀 Auto-OCR startet...');
-                        setShowOCR(true);
-                      }
-                    }
-                  }}
-                  className="bg-white"
-                />
-                <p className="text-xs text-blue-700">
-                  📱 <strong>Mobile:</strong> Kamera öffnet sich automatisch<br/>
-                  ✅ <strong>Unterstützt:</strong> JPG, JPEG, PNG, WEBP, BMP, TIFF, PDF<br/>
-                  ❌ <strong>Nicht unterstützt:</strong> RAW, HEIC
-                </p>
-                {handzettelFiles.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-green-700">
-                        <CheckCircle className="h-4 w-4" />
-                        {handzettelFiles.length} Datei(en) ausgewählt:
-                      </div>
-                      {handzettelFiles.map((file, index) => (
-                        <div key={index} className="text-xs text-green-600 ml-6">
-                          • Seite {index + 1}: {file.name}
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Auto-OCR nach Datei-Upload */}
-                    {handzettelFiles.length > 0 && selectedRound && selectedLeagueId && (
-                      <div className="pt-3 border-t border-blue-200">
-                        <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-3 rounded-lg border border-purple-200">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Zap className="h-4 w-4 text-purple-600" />
-                            <span className="text-sm font-medium text-purple-800">🤖 Automatische Erkennung startet...</span>
-                          </div>
-                          <p className="text-xs text-purple-700 mb-2">
-                            Google Vision OCR analysiert den Handzettel automatisch. Bei Fehlern wird Tesseract als Fallback verwendet.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              
-              {/* OCR-Komponente */}
-              {showOCR && handzettelFiles.length > 0 && selectedRound && selectedLeagueId && (
-                <div className="mt-4">
-                  <HandzettelOCR
-                    imageFile={handzettelFiles[0]}
-                    availableTeams={allTeamsInSelectedLeague}
-                    selectedLeagueId={selectedLeagueId}
-                    selectedRound={selectedRound}
-                    availableLeagues={allLeagues.map(l => ({ id: l.id, name: l.name, type: l.type }))}
-                    onOCRComplete={handleOCRComplete}
-                    onError={handleOCRError}
-                  />
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
 
       {pendingScores.length > 0 && (
         <Card className="shadow-md mt-6">
