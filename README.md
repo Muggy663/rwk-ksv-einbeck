@@ -256,7 +256,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 
 **Aktuelle Versionen:**
 - **Web-Version 1.8.0** - Handzettel-Upload Revolution: Ergebniserfassung mit direktem Foto-Upload per E-Mail, GMX-Style E-Mail-System, PDF-Generierung mit korrekten Schützennamen, alle Disziplinen 5 Durchgänge
-- **Web-Version 1.7.5.4** - Google Analytics Integration: Besucherzähler im Footer mit Google Analytics 4, DSGVO-konformes Tracking mit anonymisierten IPs, automatisches Page-Tracking, dezente Anzeige der Besucherzahlen
+- **Web-Version 1.7.5.4** - Google Analytics Integration (wieder entfernt in v1.7.5.5): Besucherzähler im Footer mit Google Analytics 4, DSGVO-konformes Tracking mit anonymisierten IPs, automatisches Page-Tracking, dezente Anzeige der Besucherzahlen
 - **Web-Version 1.7.5.3** - Sportleiter Schützen-Vollzugriff: SPORTLEITER können jetzt Schützen anlegen/bearbeiten/löschen, Geburtsjahr-Input korrigiert, Teams nur aus laufenden Saisons, Stammdaten-Hinweis 01.08.2025 im RWK Dashboard
 - **Web-Version 1.7.4** - Mannschaftsführer-Rolle Implementation: Vollständige MANNSCHAFTSFUEHRER-Rolle mit Zugriff auf Ergebniserfassung und Mannschaftsführer-Kontakte, vereinfachte Dashboard-Auswahl durch Entfernung separater Mannschaftsführer-Karte, optimierte Berechtigung im Vereinsbereich mit rollenbasierten Karten-Einschränkungen, erweiterte Firestore-Rules für granulare Mannschaftsführer-Berechtigungen
 - **Web-Version 1.7.3** - Mobile UX KM-Orga: Header Overflow-Fix verhindert horizontales Scrollen, KM-Orga mobile Buttons optimiert mit vertikaler Anordnung, Dark Mode Text-Lesbarkeit in farbigen Boxen verbessert

@@ -32,7 +32,9 @@ export default function MitgliederPage() {
   const [sortDirection, setSortDirection] = useState('asc');
 
   // Berechtigungsprüfung nach Hooks
-  if (!clubLoading && !canAccessMembers && !hasLegacyAccess) {
+  const hasAccess = canAccessMembers || hasLegacyAccess;
+  
+  if (!clubLoading && !hasAccess) {
     return (
       <AccessDenied 
         requiredRole="Vorstand, Kassenwart, Schriftführer oder Sportleiter"

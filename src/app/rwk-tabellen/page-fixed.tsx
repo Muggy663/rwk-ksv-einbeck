@@ -2,7 +2,10 @@
 
 // Hier ist der Teil, der ersetzt werden muss:
 
-const loadData = useCallback(async () => {
+// This file should not contain React hooks at the top level
+// Moving this to a proper React component
+export default function RWKTabellenFixed() {
+  const loadData = useCallback(async () => {
   if (!selectedCompetition) {
 
     setLoadingData(false);
@@ -109,3 +112,6 @@ const loadData = useCallback(async () => {
 
   }
 }, [selectedCompetition, activeTab, selectedIndividualLeagueFilter, calculateNumRounds, fetchCompetitionTeamData, fetchIndividualShooterData, toast]);
+
+  return <div>RWK Tabellen Fixed Component</div>;
+}

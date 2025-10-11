@@ -1,5 +1,6 @@
 // Modifizierte loadData-Funktion
-const loadData = useCallback(async () => {
+export default function RWKTabellenModified() {
+  const loadData = useCallback(async () => {
   if (!selectedCompetition) {
 
     setLoadingData(false);
@@ -81,3 +82,6 @@ const loadData = useCallback(async () => {
 
   }
 }, [selectedCompetition, activeTab, selectedIndividualLeagueFilter, calculateNumRounds, fetchCompetitionTeamData, toast]);
+
+  return <div>RWK Tabellen Modified Component</div>;
+}

@@ -96,7 +96,9 @@ export default function BeitraegeVerwaltungPage() {
   const sepaFileInputRef = useRef(null);
 
   // Berechtigungsprüfung nach Hooks
-  if (!clubLoading && !canAccessFinances && !hasLegacyAccess) {
+  const hasAccess = canAccessFinances || hasLegacyAccess;
+  
+  if (!clubLoading && !hasAccess) {
     return (
       <AccessDenied 
         requiredRole="Vorstand oder Kassenwart"

@@ -566,7 +566,8 @@ export default function UpdatesPage() {
               <Link href="/updates/v0.2" className="text-primary hover:text-primary/80 flex items-center">
                 Version 0.2.0 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
-              <Link href="/updates/v0" className="text-primary hover:text-primary/80 flex items-center">Version 0.1.0 <ArrowRight className="ml-1 h-4 w-4" />
+              <Link href="/updates/v0" className="text-primary hover:text-primary/80 flex items-center">
+                Version 0.1.0 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
             </div>
           </CardContent>

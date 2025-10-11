@@ -257,7 +257,7 @@ export default function GesamtergebnislisteGeneratorPage() {
                     }, 1000);
                   }, 500);
                 }
-              }} disabled={!selectedSeasonId || !selectedLeagueId} size="sm">
+              }} disabled={!selectedSeasonId || !selectedLeagueId}>
                 <Printer className="mr-2 h-4 w-4" />
                 Drucken
               </Button>

@@ -180,7 +180,7 @@ export default function AdminClubsPage() {
       if (!duplicateSnapshot.empty) {
         toast({
           title: "Doppelter Vereinsname",
-          description: `Ein Verein mit dem Namen "${clubDataToSave.name}" existiert bereits.`,
+          description: `Ein Verein mit dem Namen &quot;${clubDataToSave.name}&quot; existiert bereits.`,
           variant: "destructive",
         });
         setIsLoading(false);
@@ -399,7 +399,7 @@ export default function AdminClubsPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Verein löschen bestätigen</AlertDialogTitle>
               <AlertDialogDescription>
-                Möchten Sie den Verein "{clubToDelete.name}" wirklich endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                Möchten Sie den Verein &quot;{clubToDelete.name}&quot; wirklich endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
