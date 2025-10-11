@@ -409,11 +409,12 @@ export default function HomePage() {
                 <p className="text-sm text-green-700 dark:text-green-300">Handzettel-Fotos können jetzt direkt hochgeladen werden - kein manuelles Versenden mehr nötig</p>
               </div>
             </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-amber-500 dark:bg-amber-400 rounded-full mt-2 flex-shrink-0"></div>
+            <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 rounded-lg border-2 border-amber-300 dark:border-amber-600 shadow-lg animate-pulse">
+              <div className="w-3 h-3 bg-amber-500 dark:bg-amber-400 rounded-full mt-2 flex-shrink-0 animate-bounce"></div>
               <div>
-                <h4 className="font-semibold text-amber-800 dark:text-amber-200">🧪 EXPERIMENTAL: Automatische Handzettel-Erkennung</h4>
-                <p className="text-sm text-amber-700 dark:text-amber-300">OCR-System erkennt Mannschaften, Schützen und Ergebnisse automatisch aus Handzettel-Fotos - spart 95% der Eingabezeit!</p>
+                <h4 className="font-bold text-amber-800 dark:text-amber-200 text-lg">🧪 EXPERIMENTAL: Automatische Handzettel-Erkennung</h4>
+                <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">OCR-System erkennt Mannschaften, Schützen und Ergebnisse automatisch aus Handzettel-Fotos - spart 95% der Eingabezeit!</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">✨ Jetzt in der Ergebniserfassung verfügbar!</p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
