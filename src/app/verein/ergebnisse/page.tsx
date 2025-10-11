@@ -1130,10 +1130,8 @@ Die Handzettel sind als Anhang beigefügt.`);
                      'bg-red-50') : 'bg-white';
                   const textColor = entry.isOCRGenerated && confidence < 0.6 ? 'text-red-700 font-medium' : '';
                   
-                  // Schützennamen IMMER kürzen - auch nach Re-render
-                  const displayName = entry.shooterName.length > 8 
-                    ? entry.shooterName.substring(0, 8) + '...' 
-                    : entry.shooterName;
+                  // Vollständige Schützennamen anzeigen
+                  const displayName = entry.shooterName;
                   
                   return (
                     <div 

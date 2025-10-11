@@ -804,9 +804,9 @@
   }
   
   .mobile-cache-input {
-    width: 44px !important;
-    min-width: 44px !important;
-    max-width: 44px !important;
+    width: 60px !important;
+    min-width: 60px !important;
+    max-width: 60px !important;
     flex-shrink: 0 !important;
   }
   
