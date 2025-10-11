@@ -199,7 +199,7 @@ export default function StartlistenToolPage() {
     loadData();
   }, [configId]);
 
-  const generiereStartliste = async (): Starter[] => {
+  const generiereStartliste = async (): Promise<Starter[]> => {
     if (!config || meldungen.length === 0) return [];
     
     const startlisteEntries: Starter[] = [];
