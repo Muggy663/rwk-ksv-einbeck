@@ -1362,21 +1362,21 @@ Die Handzettel sind als Anhang beigefügt.`);
                 
                 return (
                   <TableRow key={entry.tempId} className={rowColor}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+                    <TableCell label="Schütze">
+                      <div className="flex items-center gap-2 min-w-0">
                         {entry.isOCRGenerated && (
-                          <Zap className={`h-3 w-3 ${
+                          <Zap className={`h-3 w-3 flex-shrink-0 ${
                             confidence >= 0.8 ? 'text-green-500' : 
                             confidence >= 0.6 ? 'text-yellow-500' : 
                             'text-red-500'
                           }`} />
                         )}
-                        <span className={textColor}>
+                        <span className={`${textColor} truncate`}>
                           {entry.shooterName}
                           {entry.isOCRGenerated && confidence < 0.6 && ' ⚠️'}
                         </span>
                         {entry.isOCRGenerated && entry.ocrConfidence && (
-                          <span className={`text-xs font-mono ${
+                          <span className={`text-xs font-mono flex-shrink-0 ${
                             confidence >= 0.8 ? 'text-green-600' : 
                             confidence >= 0.6 ? 'text-yellow-600' : 
                             'text-red-600'
@@ -1386,9 +1386,9 @@ Die Handzettel sind als Anhang beigefügt.`);
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>{entry.teamName}</TableCell>
-                    <TableCell className="text-center">{entry.durchgang}</TableCell>
-                    <TableCell className="text-center">
+                    <TableCell label="Team" hideOnMobile>{entry.teamName}</TableCell>
+                    <TableCell label="DG" className="text-center">{entry.durchgang}</TableCell>
+                    <TableCell className="text-center" label="Ringe">
                       <Input 
                         type="number" 
                         value={entry.totalRinge} 
@@ -1402,13 +1402,13 @@ Die Handzettel sind als Anhang beigefügt.`);
                             )
                           );
                         }}
-                        className="w-16 text-center"
+                        className="w-16 text-center min-w-0 max-w-16"
                         min="0"
                         max="400"
                       />
                     </TableCell>
-                    <TableCell>{entry.scoreInputType === 'pre' ? 'Vorschuss' : entry.scoreInputType === 'post' ? 'Nachschuss' : 'Regulär'}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell label="Typ" hideOnMobile>{entry.scoreInputType === 'pre' ? 'Vorschuss' : entry.scoreInputType === 'post' ? 'Nachschuss' : 'Regulär'}</TableCell>
+                    <TableCell label="Aktion" className="text-right">
                       <Button 
                         variant="ghost" 
                         size="icon" 
