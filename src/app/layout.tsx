@@ -63,7 +63,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta name="author" content="KSV Einbeck" />
         <meta name="robots" content="noarchive" />
       </head>
-      <body className="font-sans app-container" suppressHydrationWarning>
+      <body className="font-sans app-container safe-area-inset" suppressHydrationWarning>
         <AppVersionChecker />
         {/* Mobile Status Bar Overlay */}
         <div className="mobile-header-overlay"></div>
@@ -80,6 +80,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
               </div>
               
               <div className="flex-1 flex flex-col">
+                <div className="safe-area-top"></div>
                 <Header />
                 
                 <div className="flex-1 overflow-auto">

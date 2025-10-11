@@ -763,3 +763,19 @@
     padding-bottom: env(safe-area-inset-bottom, 20px);
   }
 }
+/* Safe Area Support für Mobile */
+.safe-area-inset {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-top {
+  height: env(safe-area-inset-top, 0px);
+  background: var(--background);
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .safe-area-top {
+    display: block;
+  }
+}

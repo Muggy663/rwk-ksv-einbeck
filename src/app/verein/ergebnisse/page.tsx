@@ -1115,14 +1115,83 @@ Die Handzettel sind als Anhang beigefügt.`);
       {pendingScores.length > 0 && (
         <Card className="shadow-md w-full max-w-full overflow-hidden md:hidden">
           <CardHeader><CardTitle className="text-sm sm:text-base">📋 Zwischenspeicher ({pendingScores.length})</CardTitle>
-            <CardDescription>
-              Saison: {allSeasons.find(s=>s.id === selectedSeasonId)?.name || '-'} | 
-              Liga: {allLeagues.find(l=>l.id===selectedLeagueId)?.name || '-'} 
+            <CardDescription className="text-xs truncate">
+              {allSeasons.find(s=>s.id === selectedSeasonId)?.name || '-'} | {allLeagues.find(l=>l.id===selectedLeagueId)?.name || '-'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="min-w-0 overflow-hidden">
-            <div className="w-full overflow-x-auto">
-              <Table><TableHeader><TableRow><TableHead>Schütze</TableHead><TableHead>Mannschaft</TableHead><TableHead className="text-center">DG</TableHead><TableHead className="text-center">Ringe</TableHead><TableHead>Typ</TableHead><TableHead className="text-right">Aktion</TableHead></TableRow></TableHeader>
+          <CardContent className="min-w-0 overflow-hidden p-3">
+            <div className="w-full max-w-full overflow-hidden">
+              <div className="space-y-2 portrait:block landscape:hidden md:hidden">
+                {pendingScores.map((entry) => {
+                  const confidence = entry.ocrConfidence || 1;
+                  const rowColor = entry.isOCRGenerated ? 
+                    (confidence >= 0.8 ? 'bg-green-50' : 
+                     confidence >= 0.6 ? 'bg-yellow-50' : 
+                     'bg-red-50') : 'bg-white';
+                  const textColor = entry.isOCRGenerated && confidence < 0.6 ? 'text-red-700 font-medium' : '';
+                  
+                  return (
+                    <div key={entry.tempId} className={`p-3 rounded border ${rowColor} space-y-2`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 min-w-0 flex-1">
+                          {entry.isOCRGenerated && (
+                            <Zap className={`h-3 w-3 flex-shrink-0 ${
+                              confidence >= 0.8 ? 'text-green-500' : 
+                              confidence >= 0.6 ? 'text-yellow-500' : 
+                              'text-red-500'
+                            }`} />
+                          )}
+                          <span className={`${textColor} truncate text-sm font-medium`}>
+                            {entry.shooterName.length > 15 ? entry.shooterName.substring(0, 15) + '...' : entry.shooterName}
+                          </span>
+                          {entry.isOCRGenerated && entry.ocrConfidence && (
+                            <span className={`text-xs font-mono flex-shrink-0 ${
+                              confidence >= 0.8 ? 'text-green-600' : 
+                              confidence >= 0.6 ? 'text-yellow-600' : 
+                              'text-red-600'
+                            }`}>
+                              {Math.round(entry.ocrConfidence * 100)}%
+                            </span>
+                          )}
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleRemoveFromList(entry.tempId)} 
+                          className="text-destructive hover:text-destructive/80 h-8 w-8 p-0" 
+                          disabled={isSubmittingScores}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">DG {entry.durchgang}</span>
+                        <div className="flex items-center gap-2">
+                          <Input 
+                            type="number" 
+                            value={entry.totalRinge} 
+                            onChange={(e) => {
+                              const newScore = parseInt(e.target.value) || 0;
+                              setPendingScores(prev => 
+                                prev.map(p => 
+                                  p.tempId === entry.tempId 
+                                    ? { ...p, totalRinge: newScore }
+                                    : p
+                                )
+                              );
+                            }}
+                            className="w-16 text-center text-sm"
+                            min="0"
+                            max="400"
+                          />
+                          <span className="text-xs text-muted-foreground">Ringe</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <Table className="landscape:table portrait:hidden md:table"><TableHeader><TableRow><TableHead>Schütze</TableHead><TableHead>Mannschaft</TableHead><TableHead className="text-center">DG</TableHead><TableHead className="text-center">Ringe</TableHead><TableHead>Typ</TableHead><TableHead className="text-right">Aktion</TableHead></TableRow></TableHeader>
               <TableBody>{pendingScores.map((entry) => {
                 const confidence = entry.ocrConfidence || 1;
                 const rowColor = entry.isOCRGenerated ? 
