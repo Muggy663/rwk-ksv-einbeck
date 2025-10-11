@@ -18,16 +18,6 @@ export default function MitgliederPage() {
   const { clubId, loading: clubLoading } = useClubId();
   const { canAccessMembers, userClubRole, hasLegacyAccess } = useClubPermissions();
   
-  // Berechtigungsprüfung
-  if (!clubLoading && !canAccessMembers && !hasLegacyAccess) {
-    return (
-      <AccessDenied 
-        requiredRole="Vorstand, Kassenwart, Schriftführer oder Sportleiter"
-        currentRole={userClubRole || 'Keine Berechtigung'}
-        message="Sie haben keine Berechtigung zur Mitgliederverwaltung."
-      />
-    );
-  }
   const [members, setMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +30,17 @@ export default function MitgliederPage() {
   const fileInputRef = useRef(null);
   const [sortField, setSortField] = useState('lastName');
   const [sortDirection, setSortDirection] = useState('asc');
+
+  // Berechtigungsprüfung nach Hooks
+  if (!clubLoading && !canAccessMembers && !hasLegacyAccess) {
+    return (
+      <AccessDenied 
+        requiredRole="Vorstand, Kassenwart, Schriftführer oder Sportleiter"
+        currentRole={userClubRole || 'Keine Berechtigung'}
+        message="Sie haben keine Berechtigung zur Mitgliederverwaltung."
+      />
+    );
+  }
 
   useEffect(() => {
     if (user && clubId && !clubLoading) {

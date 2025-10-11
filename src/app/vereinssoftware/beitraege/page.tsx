@@ -20,17 +20,6 @@ export default function BeitraegeVerwaltungPage() {
   const { clubId, loading: clubLoading } = useClubId();
   const { canAccessFinances, userClubRole, hasLegacyAccess } = useClubPermissions();
   
-  // Berechtigungsprüfung
-  if (!clubLoading && !canAccessFinances && !hasLegacyAccess) {
-    return (
-      <AccessDenied 
-        requiredRole="Vorstand oder Kassenwart"
-        currentRole={userClubRole || 'Keine Berechtigung'}
-        message="Sie haben keine Berechtigung zur Beitragsverwaltung."
-      />
-    );
-  }
-  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userClub, setUserClub] = useState(null);
   const [sortField, setSortField] = useState('lastName');
@@ -105,6 +94,17 @@ export default function BeitraegeVerwaltungPage() {
   });
   const fileInputRef = useRef(null);
   const sepaFileInputRef = useRef(null);
+
+  // Berechtigungsprüfung nach Hooks
+  if (!clubLoading && !canAccessFinances && !hasLegacyAccess) {
+    return (
+      <AccessDenied 
+        requiredRole="Vorstand oder Kassenwart"
+        currentRole={userClubRole || 'Keine Berechtigung'}
+        message="Sie haben keine Berechtigung zur Beitragsverwaltung."
+      />
+    );
+  }
 
   const handleSEPAImport = async (event) => {
     const file = event.target.files[0];

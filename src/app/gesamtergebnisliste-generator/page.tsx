@@ -202,7 +202,6 @@ export default function GesamtergebnislisteGeneratorPage() {
               <Button variant="outline" size="sm" onClick={() => {
                 const printContent = document.querySelector('.gesamt-print-area');
                 if (printContent) {
-                  // Verstecktes iframe für Drucken verwenden
                   const iframe = document.createElement('iframe');
                   iframe.style.position = 'absolute';
                   iframe.style.left = '-9999px';
