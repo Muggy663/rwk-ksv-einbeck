@@ -1278,8 +1278,8 @@ Die Handzettel sind als Anhang beigefügt.`);
             <div className="flex justify-end pt-6">
               <Button onClick={handleFinalSave} size="lg" disabled={isSubmittingScores || pendingScores.length === 0}>
                 {isSubmittingScores && <Loader className="mr-2 h-4 w-4 animate-spin" />} 
-                Alle {pendingScores.length} Ergebnisse speichern
-                {handzettelFiles.length > 0 && ` + ${handzettelFiles.length} Handzettel-Seite(n)`}
+                {pendingScores.length} Ergebnisse
+                {handzettelFiles.length > 0 && ` + ${handzettelFiles.length} PDF`}
               </Button>
             </div>
           </CardContent>
@@ -1615,8 +1615,8 @@ Die Handzettel sind als Anhang beigefügt.`);
             <div className="flex justify-end pt-6">
               <Button onClick={handleFinalSave} size="lg" disabled={isSubmittingScores || pendingScores.length === 0}>
                 {isSubmittingScores && <Loader className="mr-2 h-4 w-4 animate-spin" />} 
-                Alle {pendingScores.length} Ergebnisse speichern
-                {handzettelFiles.length > 0 && ` + ${handzettelFiles.length} Handzettel-Seite(n)`}
+                {pendingScores.length} Ergebnisse
+                {handzettelFiles.length > 0 && ` + ${handzettelFiles.length} PDF`}
               </Button>
             </div>
           </CardContent>
