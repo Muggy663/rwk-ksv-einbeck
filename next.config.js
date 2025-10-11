@@ -6,23 +6,32 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  webpack: (config, { isServer }) => {
+  swcMinify: false,
+  webpack: (config, { dev, isServer }) => {
+    // Komplett undici ignorieren
     config.externals = config.externals || [];
-    config.externals.push('undici');
-    
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        undici: false,
-      };
+    if (isServer) {
+      config.externals.push('undici');
     }
+    
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      undici: false,
+    };
+    
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      undici: false,
+      fs: false,
+      net: false,
+      tls: false,
+    };
+    
     return config;
   },
   experimental: {
     serverComponentsExternalPackages: ['undici'],
+    esmExternals: false,
   },
 }
 

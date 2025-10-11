@@ -21,6 +21,7 @@ export default function BeitraegeVerwaltungPage() {
   const { canAccessFinances, userClubRole, hasLegacyAccess } = useClubPermissions();
   
   const [loading, setLoading] = useState(true);
+  const [members, setMembers] = useState([]);
   const [userClub, setUserClub] = useState(null);
   const [sortField, setSortField] = useState('lastName');
   const [sortDirection, setSortDirection] = useState('asc');
@@ -140,12 +141,12 @@ export default function BeitraegeVerwaltungPage() {
         
         // Aktualisiere Mitglieder mit SEPA-Daten und speichere in Firebase
         let updated = 0;
-        const updatedMembers = [...members];
+        const updatedMembers = [...(members || [])];
         
         // Verwende Promise.all für parallele Firebase Updates
         const updatePromises = [];
         
-        members.forEach(member => {
+        (members || []).forEach(member => {
           const sepaMatch = parsedData.find(sepa => 
             (sepa.vorname.toLowerCase() === member.firstName?.toLowerCase() && 
              sepa.name.toLowerCase() === member.lastName?.toLowerCase())
@@ -457,7 +458,7 @@ export default function BeitraegeVerwaltungPage() {
   const applyImportData = async () => {
     try {
       // Aktualisiere Mitglieder mit SEPA-Daten
-      const updatedMembers = members.map(member => {
+      const updatedMembers = (members || []).map(member => {
         const importMatch = importData.find(imp => 
           imp.name.toLowerCase() === member.lastName?.toLowerCase() && 
           imp.vorname.toLowerCase() === member.firstName?.toLowerCase()
@@ -505,7 +506,7 @@ export default function BeitraegeVerwaltungPage() {
   };
 
   const generateSEPAXML = () => {
-    const sepaMembers = members.filter(m => m.sepaMandat && m.beitragsstatus === 'offen');
+    const sepaMembers = (members || []).filter(m => m.sepaMandat && m.beitragsstatus === 'offen');
     
     if (sepaMembers.length === 0) {
       alert('Keine offenen SEPA-Lastschriften gefunden');
@@ -604,7 +605,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
   };
 
   const generateSEPACSV = () => {
-    const sepaMembers = members.filter(m => m.sepaMandat && m.beitragsstatus === 'offen');
+    const sepaMembers = (members || []).filter(m => m.sepaMandat && m.beitragsstatus === 'offen');
     
     if (sepaMembers.length === 0) {
       alert('Keine offenen SEPA-Lastschriften gefunden');
@@ -622,7 +623,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
   };
 
   const generateSEPAExcel = () => {
-    const sepaMembers = members.filter(m => m.sepaMandat && m.beitragsstatus === 'offen');
+    const sepaMembers = (members || []).filter(m => m.sepaMandat && m.beitragsstatus === 'offen');
     
     if (sepaMembers.length === 0) {
       alert('Keine offenen SEPA-Lastschriften gefunden');
@@ -640,7 +641,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
   };
 
   const generateDTAUS = () => {
-    const sepaMembers = members.filter(m => m.sepaMandat && m.beitragsstatus === 'offen');
+    const sepaMembers = (members || []).filter(m => m.sepaMandat && m.beitragsstatus === 'offen');
     
     if (sepaMembers.length === 0) {
       alert('Keine offenen SEPA-Lastschriften gefunden');
@@ -666,7 +667,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
   };
 
   const generateMahnbriefe = () => {
-    const offeneMembers = members.filter(m => m.isActive && m.beitragsstatus === 'offen');
+    const offeneMembers = (members || []).filter(m => m.isActive && m.beitragsstatus === 'offen');
     
     if (offeneMembers.length === 0) {
       alert('Keine offenen Beiträge für Mahnbriefe gefunden');
@@ -809,7 +810,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
   };
 
   const generateMandateList = () => {
-    const sepaMembers = members.filter(m => m.sepaMandat);
+    const sepaMembers = (members || []).filter(m => m.sepaMandat);
     
     if (sepaMembers.length === 0) {
       alert('Keine SEPA-Mandate gefunden');
@@ -831,7 +832,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
   };
 
   const generateBankingImport = () => {
-    const sepaMembers = members.filter(m => m.sepaMandat && m.beitragsstatus === 'offen');
+    const sepaMembers = (members || []).filter(m => m.sepaMandat && m.beitragsstatus === 'offen');
     
     if (sepaMembers.length === 0) {
       alert('Keine offenen SEPA-Lastschriften gefunden');
@@ -898,7 +899,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
   };
 
   const generateBankingImportOld = () => {
-    const sepaMembers = members.filter(m => m.sepaMandat && m.beitragsstatus === 'offen');
+    const sepaMembers = (members || []).filter(m => m.sepaMandat && m.beitragsstatus === 'offen');
     
     if (sepaMembers.length === 0) {
       alert('Keine offenen SEPA-Lastschriften gefunden');
@@ -919,7 +920,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
     downloadFile(sparkassenFormat, `Sparkasse-SEPA-Sammelauftrag-${new Date().toISOString().split('T')[0]}.csv`, 'text/csv;charset=utf-8');
   };
 
-  const filteredMembers = members.filter(member => {
+  const filteredMembers = (members || []).filter(member => {
     const matchesSearch = member.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.mitgliedsnummer?.includes(searchTerm);
@@ -948,11 +949,11 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
   });
 
   const statistiken = {
-    gesamt: members.filter(m => m.isActive).length,
-    bezahlt: members.filter(m => m.isActive && m.beitragsstatus === 'bezahlt').length,
-    offen: members.filter(m => m.isActive && m.beitragsstatus === 'offen').length,
-    gesamtbeitrag: members.filter(m => m.isActive).reduce((sum, m) => sum + (m.jahresbeitrag || 0), 0),
-    offeneBeitraege: members.filter(m => m.isActive && m.beitragsstatus === 'offen').reduce((sum, m) => sum + (m.jahresbeitrag || 0), 0)
+    gesamt: (members || []).filter(m => m.isActive).length,
+    bezahlt: (members || []).filter(m => m.isActive && m.beitragsstatus === 'bezahlt').length,
+    offen: (members || []).filter(m => m.isActive && m.beitragsstatus === 'offen').length,
+    gesamtbeitrag: (members || []).filter(m => m.isActive).reduce((sum, m) => sum + (m.jahresbeitrag || 0), 0),
+    offeneBeitraege: (members || []).filter(m => m.isActive && m.beitragsstatus === 'offen').reduce((sum, m) => sum + (m.jahresbeitrag || 0), 0)
   };
 
   if (loading || clubLoading) {
@@ -1539,7 +1540,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
                 <Card>
                   <CardContent className="p-4">
                     <div className="text-2xl font-bold text-green-600">
-                      {members.filter(m => m.zahlungsart === 'sepa_lastschrift').length}
+                      {(members || []).filter(m => m.zahlungsart === 'sepa_lastschrift').length}
                     </div>
                     <p className="text-sm text-gray-600">SEPA-Lastschrift</p>
                   </CardContent>
@@ -1547,7 +1548,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
                 <Card>
                   <CardContent className="p-4">
                     <div className="text-2xl font-bold text-blue-600">
-                      {members.filter(m => m.zahlungsart === 'ueberweisung').length}
+                      {(members || []).filter(m => m.zahlungsart === 'ueberweisung').length}
                     </div>
                     <p className="text-sm text-gray-600">Überweisung</p>
                   </CardContent>
@@ -1555,7 +1556,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
                 <Card>
                   <CardContent className="p-4">
                     <div className="text-2xl font-bold text-orange-600">
-                      {members.filter(m => m.zahlungsart === 'barzahlung').length}
+                      {(members || []).filter(m => m.zahlungsart === 'barzahlung').length}
                     </div>
                     <p className="text-sm text-gray-600">Barzahlung</p>
                   </CardContent>
@@ -1563,7 +1564,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
                 <Card>
                   <CardContent className="p-4">
                     <div className="text-2xl font-bold text-purple-600">
-                      {members.filter(m => m.sepaMandat).length}
+                      {(members || []).filter(m => m.sepaMandat).length}
                     </div>
                     <p className="text-sm text-gray-600">SEPA-Mandate</p>
                   </CardContent>
@@ -1582,7 +1583,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
                     </tr>
                   </thead>
                   <tbody>
-                    {members.map(member => (
+                    {(members || []).map(member => (
                       <tr key={member.id} className="border-b hover:bg-muted/20">
                         <td className="p-3">
                           <div>
@@ -1745,7 +1746,7 @@ ${sepaMembers.map(member => `      <DrctDbtTxInf>
                     </tr>
                   </thead>
                   <tbody>
-                    {members.filter(m => m.sepaMandat).map(member => (
+                    {(members || []).filter(m => m.sepaMandat).map(member => (
                       <tr key={member.id} className="border-b hover:bg-muted/20">
                         <td className="p-3">
                           <div>
