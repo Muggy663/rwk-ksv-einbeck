@@ -20,6 +20,7 @@ interface HandzettelOCRProps {
   availableLeagues?: { id: string; name: string; type: string }[]
   onOCRComplete: (results: OCRMatchResult[]) => void
   onError: (error: string) => void
+  autoStart?: boolean
 }
 
 export interface OCRMatchResult {
@@ -38,13 +39,21 @@ export function HandzettelOCR({
   selectedLeagueId, 
   selectedRound, 
   onOCRComplete, 
-  onError 
+  onError,
+  autoStart = false
 }: HandzettelOCRProps) {
   const [isProcessing, setIsProcessing] = React.useState(false)
   const [progress, setProgress] = React.useState(0)
   const [currentStep, setCurrentStep] = React.useState("")
   const [ocrResult, setOcrResult] = React.useState<OCRResult | null>(null)
   const [matchedResults, setMatchedResults] = React.useState<OCRMatchResult[]>([])
+
+  // Auto-start OCR wenn autoStart=true
+  React.useEffect(() => {
+    if (autoStart && !isProcessing && !ocrResult) {
+      processOCR()
+    }
+  }, [autoStart])
 
   const processOCR = async () => {
     console.log('🤖 OCR gestartet mit Datei:', imageFile.name, imageFile.type)

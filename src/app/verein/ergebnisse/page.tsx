@@ -1069,17 +1069,6 @@ Die Handzettel sind als Anhang beigefügt.`);
                         const files = Array.from(e.target.files);
                         setHandzettelFiles(files);
                         setShowOCR(true);
-                        
-                        // Auto-start OCR nach kurzer Verzögerung
-                        setTimeout(() => {
-                          const ocrComponent = document.querySelector('[data-ocr-component]');
-                          if (ocrComponent) {
-                            const startButton = ocrComponent.querySelector('button');
-                            if (startButton && !startButton.disabled) {
-                              startButton.click();
-                            }
-                          }
-                        }, 500);
                       }
                     }}
                     className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
@@ -1112,6 +1101,7 @@ Die Handzettel sind als Anhang beigefügt.`);
                       availableLeagues={allLeagues.map(l => ({ id: l.id, name: l.name, type: l.type }))}
                       onOCRComplete={handleOCRComplete}
                       onError={handleOCRError}
+                      autoStart={true}
                     />
                   </div>
                 )}
@@ -1120,6 +1110,115 @@ Die Handzettel sind als Anhang beigefügt.`);
           </div>
         </CardContent>
       </Card>
+      
+      {/* Mobile: Zwischenspeicher zwischen OCR und manueller Eingabe */}
+      {pendingScores.length > 0 && (
+        <Card className="shadow-md w-full max-w-full overflow-hidden md:hidden">
+          <CardHeader><CardTitle className="text-sm sm:text-base">📋 Zwischenspeicher ({pendingScores.length})</CardTitle>
+            <CardDescription>
+              Saison: {allSeasons.find(s=>s.id === selectedSeasonId)?.name || '-'} | 
+              Liga: {allLeagues.find(l=>l.id===selectedLeagueId)?.name || '-'} 
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="min-w-0 overflow-hidden">
+            <div className="w-full overflow-x-auto">
+              <Table><TableHeader><TableRow><TableHead>Schütze</TableHead><TableHead>Mannschaft</TableHead><TableHead className="text-center">DG</TableHead><TableHead className="text-center">Ringe</TableHead><TableHead>Typ</TableHead><TableHead className="text-right">Aktion</TableHead></TableRow></TableHeader>
+              <TableBody>{pendingScores.map((entry) => {
+                const confidence = entry.ocrConfidence || 1;
+                const rowColor = entry.isOCRGenerated ? 
+                  (confidence >= 0.8 ? 'bg-green-50' : 
+                   confidence >= 0.6 ? 'bg-yellow-50' : 
+                   'bg-red-50') : '';
+                const textColor = entry.isOCRGenerated && confidence < 0.6 ? 'text-red-700 font-medium' : '';
+                
+                return (
+                  <TableRow key={entry.tempId} className={rowColor}>
+                    <TableCell label="Schütze">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {entry.isOCRGenerated && (
+                          <Zap className={`h-3 w-3 flex-shrink-0 ${
+                            confidence >= 0.8 ? 'text-green-500' : 
+                            confidence >= 0.6 ? 'text-yellow-500' : 
+                            'text-red-500'
+                          }`} />
+                        )}
+                        <span className={`${textColor} truncate`}>
+                          {entry.shooterName}
+                          {entry.isOCRGenerated && confidence < 0.6 && ' ⚠️'}
+                        </span>
+                        {entry.isOCRGenerated && entry.ocrConfidence && (
+                          <span className={`text-xs font-mono flex-shrink-0 ${
+                            confidence >= 0.8 ? 'text-green-600' : 
+                            confidence >= 0.6 ? 'text-yellow-600' : 
+                            'text-red-600'
+                          }`}>
+                            {Math.round(entry.ocrConfidence * 100)}%
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell label="Team" hideOnMobile>{entry.teamName}</TableCell>
+                    <TableCell label="DG" className="text-center">{entry.durchgang}</TableCell>
+                    <TableCell className="text-center" label="Ringe">
+                      <Input 
+                        type="number" 
+                        value={entry.totalRinge} 
+                        onChange={(e) => {
+                          const newScore = parseInt(e.target.value) || 0;
+                          setPendingScores(prev => 
+                            prev.map(p => 
+                              p.tempId === entry.tempId 
+                                ? { ...p, totalRinge: newScore }
+                                : p
+                            )
+                          );
+                        }}
+                        className="w-16 text-center min-w-0 max-w-16"
+                        min="0"
+                        max="400"
+                      />
+                    </TableCell>
+                    <TableCell label="Typ" hideOnMobile>{entry.scoreInputType === 'pre' ? 'Vorschuss' : entry.scoreInputType === 'post' ? 'Nachschuss' : 'Regulär'}</TableCell>
+                    <TableCell label="Aktion" className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleRemoveFromList(entry.tempId)} 
+                        className="text-destructive hover:text-destructive/80" 
+                        disabled={isSubmittingScores}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}</TableBody>
+              </Table>
+            </div>
+            
+            {/* OCR-Warnung für experimentelle Einträge */}
+            {pendingScores.some(p => p.isOCRGenerated) && (
+              <div className="mb-4 p-3 bg-amber-50 border-l-4 border-amber-400">
+                <div className="flex items-center">
+                  <AlertTriangle className="h-4 w-4 text-amber-500 mr-2" />
+                  <p className="text-sm text-amber-700">
+                    <strong>🧪 EXPERIMENTAL:</strong> {pendingScores.filter(p => p.isOCRGenerated).length} 
+                    Einträge wurden automatisch erkannt. Bitte prüfen Sie alle Werte vor dem Speichern!
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end pt-6">
+              <Button onClick={handleFinalSave} size="lg" disabled={isSubmittingScores || pendingScores.length === 0}>
+                {isSubmittingScores && <Loader className="mr-2 h-4 w-4 animate-spin" />} 
+                Alle {pendingScores.length} Ergebnisse speichern
+                {handzettelFiles.length > 0 && ` + ${handzettelFiles.length} Handzettel-Seite(n)`}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <Card className="shadow-md">
         <CardHeader><CardTitle>📝 Einzelergebnis manuell hinzufügen</CardTitle><CardDescription>Für zweite Handzettel oder falls OCR nicht funktioniert - klassische Eingabe</CardDescription></CardHeader>
@@ -1351,8 +1450,9 @@ Die Handzettel sind als Anhang beigefügt.`);
 
 
 
+      {/* Desktop: Zwischenspeicher am Ende */}
       {pendingScores.length > 0 && (
-        <Card className="shadow-md mt-6">
+        <Card className="shadow-md mt-6 hidden md:block">
           <CardHeader><CardTitle>Vorgemerkte Ergebnisse ({pendingScores.length})</CardTitle>
             <CardDescription>
               Saison: {allSeasons.find(s=>s.id === selectedSeasonId)?.name || '-'} | 
