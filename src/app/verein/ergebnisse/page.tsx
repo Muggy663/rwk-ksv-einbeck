@@ -1121,7 +1121,7 @@ Die Handzettel sind als Anhang beigefügt.`);
           </CardHeader>
           <CardContent className="min-w-0 overflow-hidden p-3">
             <div className="w-full max-w-full overflow-hidden">
-              <div className="space-y-2 portrait:block landscape:hidden md:hidden">
+              <div className="space-y-2 md:hidden">
                 {pendingScores.map((entry) => {
                   const confidence = entry.ocrConfidence || 1;
                   const rowColor = entry.isOCRGenerated ? 
@@ -1131,9 +1131,9 @@ Die Handzettel sind als Anhang beigefügt.`);
                   const textColor = entry.isOCRGenerated && confidence < 0.6 ? 'text-red-700 font-medium' : '';
                   
                   return (
-                    <div key={entry.tempId} className={`p-3 rounded border ${rowColor} space-y-2`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 min-w-0 flex-1">
+                    <div key={entry.tempId} className={`p-2 rounded border ${rowColor} w-full`} style={{maxWidth: '100vw', overflow: 'hidden'}}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1 min-w-0 flex-1" style={{maxWidth: 'calc(100% - 32px)'}}>
                           {entry.isOCRGenerated && (
                             <Zap className={`h-3 w-3 flex-shrink-0 ${
                               confidence >= 0.8 ? 'text-green-500' : 
@@ -1141,32 +1141,23 @@ Die Handzettel sind als Anhang beigefügt.`);
                               'text-red-500'
                             }`} />
                           )}
-                          <span className={`${textColor} truncate text-sm font-medium`}>
-                            {entry.shooterName.length > 15 ? entry.shooterName.substring(0, 15) + '...' : entry.shooterName}
+                          <span className={`${textColor} text-xs font-medium`} style={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                            {entry.shooterName.length > 10 ? entry.shooterName.substring(0, 10) + '...' : entry.shooterName}
                           </span>
-                          {entry.isOCRGenerated && entry.ocrConfidence && (
-                            <span className={`text-xs font-mono flex-shrink-0 ${
-                              confidence >= 0.8 ? 'text-green-600' : 
-                              confidence >= 0.6 ? 'text-yellow-600' : 
-                              'text-red-600'
-                            }`}>
-                              {Math.round(entry.ocrConfidence * 100)}%
-                            </span>
-                          )}
                         </div>
                         <Button 
                           variant="ghost" 
                           size="sm" 
                           onClick={() => handleRemoveFromList(entry.tempId)} 
-                          className="text-destructive hover:text-destructive/80 h-8 w-8 p-0" 
+                          className="text-destructive hover:text-destructive/80 h-6 w-6 p-0 flex-shrink-0" 
                           disabled={isSubmittingScores}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">DG {entry.durchgang}</span>
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">DG {entry.durchgang}</span>
+                        <div className="flex items-center gap-1">
                           <Input 
                             type="number" 
                             value={entry.totalRinge} 
@@ -1180,18 +1171,18 @@ Die Handzettel sind als Anhang beigefügt.`);
                                 )
                               );
                             }}
-                            className="w-16 text-center text-sm"
+                            className="w-12 text-center text-xs h-7"
                             min="0"
                             max="400"
                           />
-                          <span className="text-xs text-muted-foreground">Ringe</span>
+                          <span className="text-xs text-muted-foreground">R</span>
                         </div>
                       </div>
                     </div>
                   )
                 })}
               </div>
-              <Table className="landscape:table portrait:hidden md:table"><TableHeader><TableRow><TableHead>Schütze</TableHead><TableHead>Mannschaft</TableHead><TableHead className="text-center">DG</TableHead><TableHead className="text-center">Ringe</TableHead><TableHead>Typ</TableHead><TableHead className="text-right">Aktion</TableHead></TableRow></TableHeader>
+              <Table className="hidden md:table"><TableHeader><TableRow><TableHead>Schütze</TableHead><TableHead>Mannschaft</TableHead><TableHead className="text-center">DG</TableHead><TableHead className="text-center">Ringe</TableHead><TableHead>Typ</TableHead><TableHead className="text-right">Aktion</TableHead></TableRow></TableHeader>
               <TableBody>{pendingScores.map((entry) => {
                 const confidence = entry.ocrConfidence || 1;
                 const rowColor = entry.isOCRGenerated ? 
