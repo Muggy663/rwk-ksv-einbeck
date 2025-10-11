@@ -18,6 +18,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - 🔐 **Rollen-System** - Admin, Verein, Schütze
 - 📄 **PDF Export** - Professionelle Dokumente
 - ⚡ **Real-time Updates** - Sofortige Synchronisation
+- 🤖 **OCR Handzettel-Erkennung** - Automatische Ergebniserfassung per Foto (NEU v1.8.0)
 
 ## 🚀 Hauptfunktionen
 
@@ -25,6 +26,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - **Liga-Management** mit flexiblen Schusszahlen
 - **Mannschafts-Generierung** automatisch oder manuell
 - **Ergebnis-Eingabe** mit Validierung und Plausibilitätsprüfung
+- **OCR Handzettel-Erkennung** - Foto hochladen, automatisch auslesen (NEU v1.8.0)
 - **Live-Tabellen** mit Auf-/Abstieg und Statistiken
 - **Handzettel-Generator** für Wettkampftage
 
@@ -133,6 +135,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - **Frontend**: Next.js 14, React 18, TypeScript
 - **UI/UX**: Tailwind CSS, Radix UI, Lucide Icons
 - **Backend**: Firebase (Firestore, Auth, Functions)
+- **OCR**: Google Vision API, Tesseract.js (Fallback)
 - **Mobile**: Capacitor (Native Android App)
 - **PDF**: jsPDF, html2canvas
 - **E-Mail**: Resend API
@@ -179,6 +182,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 ### ✅ Nachher (Digital)
 - Automatische Berechnung aller Tabellen
 - Online-Meldungen mit Validierung
+- OCR-Erkennung für Handzettel
 - Fehlerfreie Punkteverteilung
 - Automatische E-Mail-Rundschreiben
 - Zentrale Cloud-Datenbank
