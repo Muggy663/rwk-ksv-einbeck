@@ -1119,9 +1119,9 @@ Die Handzettel sind als Anhang beigefügt.`);
               {allSeasons.find(s=>s.id === selectedSeasonId)?.name || '-'} | {allLeagues.find(l=>l.id===selectedLeagueId)?.name || '-'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="min-w-0 overflow-hidden p-3">
+          <CardContent className="min-w-0 max-w-full overflow-hidden p-3">
             <div className="w-full max-w-full overflow-hidden">
-              <div className="space-y-2 md:hidden">
+              <div className="space-y-2 md:hidden mobile-cache-container">
                 {pendingScores.map((entry) => {
                   const confidence = entry.ocrConfidence || 1;
                   const rowColor = entry.isOCRGenerated ? 
@@ -1130,10 +1130,18 @@ Die Handzettel sind als Anhang beigefügt.`);
                      'bg-red-50') : 'bg-white';
                   const textColor = entry.isOCRGenerated && confidence < 0.6 ? 'text-red-700 font-medium' : '';
                   
+                  // Schützennamen IMMER kürzen - auch nach Re-render
+                  const displayName = entry.shooterName.length > 8 
+                    ? entry.shooterName.substring(0, 8) + '...' 
+                    : entry.shooterName;
+                  
                   return (
-                    <div key={entry.tempId} className={`p-2 rounded border ${rowColor} w-full`} style={{maxWidth: '100vw', overflow: 'hidden'}}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1 min-w-0 flex-1" style={{maxWidth: 'calc(100% - 32px)'}}>
+                    <div 
+                      key={entry.tempId} 
+                      className={`p-2 rounded border ${rowColor} mobile-cache-card`}
+                    >
+                      <div className="flex items-center justify-between mb-2 min-w-0">
+                        <div className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden pr-2">
                           {entry.isOCRGenerated && (
                             <Zap className={`h-3 w-3 flex-shrink-0 ${
                               confidence >= 0.8 ? 'text-green-500' : 
@@ -1141,8 +1149,8 @@ Die Handzettel sind als Anhang beigefügt.`);
                               'text-red-500'
                             }`} />
                           )}
-                          <span className={`${textColor} text-xs font-medium`} style={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
-                            {entry.shooterName.length > 10 ? entry.shooterName.substring(0, 10) + '...' : entry.shooterName}
+                          <span className={`${textColor} text-xs font-medium mobile-cache-name`}>
+                            {displayName}
                           </span>
                         </div>
                         <Button 
@@ -1155,9 +1163,9 @@ Die Handzettel sind als Anhang beigefügt.`);
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">DG {entry.durchgang}</span>
-                        <div className="flex items-center gap-1">
+                      <div className="flex items-center justify-between min-w-0">
+                        <span className="text-xs text-muted-foreground flex-shrink-0">DG {entry.durchgang}</span>
+                        <div className="flex items-center gap-1 flex-shrink-0">
                           <Input 
                             type="number" 
                             value={entry.totalRinge} 
@@ -1171,11 +1179,11 @@ Die Handzettel sind als Anhang beigefügt.`);
                                 )
                               );
                             }}
-                            className="w-12 text-center text-xs h-7"
+                            className="mobile-cache-input text-center text-xs h-7"
                             min="0"
                             max="400"
                           />
-                          <span className="text-xs text-muted-foreground">R</span>
+                          <span className="text-xs text-muted-foreground flex-shrink-0">R</span>
                         </div>
                       </div>
                     </div>

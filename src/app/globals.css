@@ -779,3 +779,56 @@
     display: block;
   }
 }
+
+/* Mobile Overflow Prevention - Critical Styles */
+@media (max-width: 768px) {
+  /* Zwischenspeicher Mobile Cards - Overflow Fix */
+  .mobile-cache-container {
+    max-width: 100vw !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  
+  .mobile-cache-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  
+  .mobile-cache-name {
+    max-width: calc(100% - 50px) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  
+  .mobile-cache-input {
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  /* Force alle Container auf 100vw max */
+  .w-full {
+    max-width: 100vw !important;
+  }
+  
+  /* Prevent any element from exceeding viewport */
+  * {
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+  }
+  
+  /* Input fields strict sizing */
+  input[type="number"] {
+    max-width: 60px !important;
+  }
+  
+  /* Text truncation for all text elements */
+  span, p, div {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+}
