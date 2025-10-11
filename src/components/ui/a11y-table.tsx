@@ -15,8 +15,8 @@ interface A11yTableProps extends React.HTMLAttributes<HTMLTableElement> {
   }>;
 }
 
-export const A11yTable = forwardRef<HTMLTableElement, A11yTableProps>(
-  ({ className, caption, summary, data, columns, ...props }, ref) => {
+export const A11yTable = forwardRef<HTMLTableElement, A11yTableProps>(function A11yTable(
+  { className, caption, summary, data, columns, ...props }, ref) {
     return (
       <div className="w-full overflow-auto">
         <Table ref={ref} className={cn('w-full', className)} {...props}>

@@ -10,8 +10,8 @@ interface A11yButtonProps extends ButtonProps {
   keyboardShortcut?: string;
 }
 
-export const A11yButton = forwardRef<HTMLButtonElement, A11yButtonProps>(
-  ({ className, children, ariaLabel, tooltipText, keyboardShortcut, ...props }, ref) => {
+export const A11yButton = forwardRef<HTMLButtonElement, A11yButtonProps>(function A11yButton(
+  { className, children, ariaLabel, tooltipText, keyboardShortcut, ...props }, ref) {
     const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
       // Verbesserte Tastaturunterstützung
       if (e.key === 'Enter' || e.key === ' ') {

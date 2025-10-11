@@ -42,7 +42,7 @@ export function FAQSearch() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Frage zur RWK-Ordnung eingeben... (z.B. 'Aufstieg Kreisoberliga')"
+              placeholder="Frage zur RWK-Ordnung eingeben... (z.B. &apos;Aufstieg Kreisoberliga&apos;)"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-10"
@@ -56,7 +56,7 @@ export function FAQSearch() {
                 className="text-primary hover:text-primary/80 underline text-sm flex items-center gap-1 mx-auto"
               >
                 <BookOpen className="h-4 w-4" />
-                {showAllFAQs ? 'Häufige Fragen ausblenden' : 'Alle häufigen Fragen anzeigen'}
+                {showAllFAQs ? &apos;Häufige Fragen ausblenden&apos; : &apos;Alle häufigen Fragen anzeigen&apos;}
               </button>
             </div>
           )}
@@ -67,7 +67,7 @@ export function FAQSearch() {
         <div className="space-y-3">
           <h3 className="text-sm font-medium text-muted-foreground">
             {searchQuery.trim().length >= 2 
-              ? `${results.length} Ergebnis${results.length !== 1 ? 'se' : ''} gefunden`
+              ? `${results.length} Ergebnis${results.length !== 1 ? &apos;se&apos; : &apos;&apos;} gefunden`
               : `Häufige Fragen (${allFAQs.length})`
             }
           </h3>
@@ -106,10 +106,10 @@ export function FAQSearch() {
           <CardContent className="text-center py-8">
             <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              Keine Ergebnisse für "{searchQuery}" gefunden.
+              Keine Ergebnisse für &quot;{searchQuery}&quot; gefunden.
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Versuchen Sie andere Suchbegriffe wie "Aufstieg", "Wanderpokal" oder "Ersatzschützen".
+              Versuchen Sie andere Suchbegriffe wie &quot;Aufstieg&quot;, &quot;Wanderpokal&quot; oder &quot;Ersatzschützen&quot;.
             </p>
           </CardContent>
         </Card>
