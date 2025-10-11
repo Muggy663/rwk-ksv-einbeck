@@ -6,7 +6,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  swcMinify: false,
+  swcMinify: true,
   webpack: (config, { dev, isServer }) => {
     // Komplett undici ignorieren
     config.externals = config.externals || [];
