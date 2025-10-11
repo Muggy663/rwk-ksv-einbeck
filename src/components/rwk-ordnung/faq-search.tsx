@@ -42,7 +42,7 @@ export function FAQSearch() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Frage zur RWK-Ordnung eingeben... (z.B. &apos;Aufstieg Kreisoberliga&apos;)"
+              placeholder="Frage zur RWK-Ordnung eingeben... (z.B. 'Aufstieg Kreisoberliga')"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-10"
@@ -56,7 +56,7 @@ export function FAQSearch() {
                 className="text-primary hover:text-primary/80 underline text-sm flex items-center gap-1 mx-auto"
               >
                 <BookOpen className="h-4 w-4" />
-                {showAllFAQs ? &apos;Häufige Fragen ausblenden&apos; : &apos;Alle häufigen Fragen anzeigen&apos;}
+                {showAllFAQs ? 'Häufige Fragen ausblenden' : 'Alle häufigen Fragen anzeigen'}
               </button>
             </div>
           )}
@@ -67,7 +67,7 @@ export function FAQSearch() {
         <div className="space-y-3">
           <h3 className="text-sm font-medium text-muted-foreground">
             {searchQuery.trim().length >= 2 
-              ? `${results.length} Ergebnis${results.length !== 1 ? &apos;se&apos; : &apos;&apos;} gefunden`
+              ? `${results.length} Ergebnis${results.length !== 1 ? 'se' : ''} gefunden`
               : `Häufige Fragen (${allFAQs.length})`
             }
           </h3>
