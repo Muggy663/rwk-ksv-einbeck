@@ -274,19 +274,19 @@ export function HandzettelOCR({
   }
 
   return (
-    <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
+    <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 w-full max-w-full overflow-hidden">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-blue-800">
-          <Zap className="h-5 w-5" />
-          🧪 EXPERIMENTAL: Handzettel-OCR
+        <CardTitle className="flex items-center gap-2 text-blue-800 text-sm sm:text-base">
+          <Zap className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+          <span className="truncate">🧪 OCR-Erkennung</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 min-w-0">
         {!isProcessing && !ocrResult && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-blue-700">
-              <Camera className="h-4 w-4" />
-              <span>Bereit zum Scannen: {imageFile.name}</span>
+            <div className="flex items-center gap-2 text-sm text-blue-700 min-w-0">
+              <Camera className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">Bereit: {imageFile.name}</span>
             </div>
             <Button 
               onClick={processOCR}
@@ -295,9 +295,8 @@ export function HandzettelOCR({
               🤖 Google Vision OCR (Handschrift)
             </Button>
             <div className="text-xs text-blue-600 space-y-1">
-              <p>✅ Erkennt: Liga, Durchgang, Teams und alle Schützen-Ergebnisse</p>
-              <p>⚡ Spart 95% der manuellen Eingabe</p>
-              <p>🔍 Alle Werte werden zur Kontrolle angezeigt</p>
+              <p>✅ Erkennt: Liga, Teams, Ergebnisse</p>
+              <p>⚡ Spart 95% der Eingabe</p>
             </div>
           </div>
         )}
@@ -322,14 +321,14 @@ export function HandzettelOCR({
               <span className="font-medium">🎯 Handzettel erfolgreich gescannt!</span>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-sm">
+              <div className="min-w-0">
                 <span className="text-gray-600">Liga:</span>
-                <span className="ml-2 font-medium">
+                <span className="ml-2 font-medium truncate block sm:inline">
                   {ocrResult.liga || 'Nicht erkannt'}
                 </span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="text-gray-600">Durchgang:</span>
                 <span className={`ml-2 font-medium ${
                   ocrResult.durchgang && ocrResult.durchgang.toString() !== selectedRound 
@@ -354,10 +353,10 @@ export function HandzettelOCR({
                 Erkannte Ergebnisse ({matchedResults.length}):
               </span>
               
-              {/* Debug: Roher OCR-Text anzeigen */}
+              {/* Debug: Roher OCR-Text anzeigen - Mobile optimiert */}
               <details className="text-xs bg-gray-50 p-2 rounded border">
-                <summary className="cursor-pointer font-medium text-gray-600">🔍 Debug: OCR-Text anzeigen</summary>
-                <pre className="mt-2 whitespace-pre-wrap text-xs text-gray-700 max-h-32 overflow-y-auto">
+                <summary className="cursor-pointer font-medium text-gray-600">🔍 Debug: OCR-Text</summary>
+                <pre className="mt-2 whitespace-pre-wrap text-xs text-gray-700 max-h-32 overflow-y-auto overflow-x-hidden break-all">
                   {ocrResult.rawText}
                 </pre>
               </details>
@@ -373,14 +372,14 @@ export function HandzettelOCR({
                                     'bg-red-500';
                   
                   return (
-                    <div key={index} className={`flex items-center justify-between text-xs p-2 rounded border ${confidenceColor}`}>
-                      <span className={confidence < 0.6 ? 'font-medium text-red-700' : ''}>
+                    <div key={index} className={`flex items-center justify-between text-xs p-2 rounded border ${confidenceColor} min-w-0`}>
+                      <span className={`${confidence < 0.6 ? 'font-medium text-red-700' : ''} truncate flex-1 mr-2`}>
                         {result.shooterName}
                         {confidence < 0.6 && ' ⚠️'}
                       </span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono">{result.score}</span>
-                        <Badge className={`text-xs text-white ${badgeColor}`}>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="font-mono text-sm">{result.score}</span>
+                        <Badge className={`text-xs text-white ${badgeColor} px-1`}>
                           {Math.round(confidence * 100)}%
                         </Badge>
                       </div>

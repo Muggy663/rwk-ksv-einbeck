@@ -1008,7 +1008,7 @@ Die Handzettel sind als Anhang beigefügt.`);
   }
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-hidden">
       <div className="space-y-2">
         <div className="flex items-center">
           <BackButton className="mr-2" fallbackHref="/verein/dashboard" />
@@ -1028,18 +1028,18 @@ Die Handzettel sind als Anhang beigefügt.`);
       </div>
       
       {/* OCR-Bereich GANZ OBEN - sofort sichtbar */}
-      <Card className="shadow-md border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
+      <Card className="shadow-md border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 w-full max-w-full overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-800">
             <Camera className="h-5 w-5" />
-🤖 NEU: Handzettel fotografieren
+📸 Handzettel fotografieren
           </CardTitle>
           <CardDescription className="text-blue-700">
-            📸 Automatische Ergebniserfassung - spart 90% der Zeit!
+            🤖 Foto machen → OCR startet automatisch - spart 90% der Zeit!
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="min-w-0">
+          <div className="space-y-4 w-full max-w-full">
             {!selectedLeagueId || !selectedRound ? (
               <div className="p-4 border-2 border-dashed border-amber-300 rounded-lg bg-amber-50">
                 <div className="text-center space-y-2">
@@ -1053,33 +1053,40 @@ Die Handzettel sind als Anhang beigefügt.`);
                 <div className="p-3 border rounded-lg bg-green-50 border-green-200">
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-800">✅ Bereit für OCR-Erkennung!</span>
+                    <span className="text-sm font-medium text-green-800">📸 Handzettel fotografieren!</span>
                   </div>
                   <p className="text-xs text-green-700 mb-3">
                     Liga: <strong>{allLeagues.find(l => l.id === selectedLeagueId)?.name}</strong> | 
-                    Durchgang: <strong>{selectedRound}</strong>
+                    Durchgang: <strong>{selectedRound}</strong> | OCR startet automatisch
                   </p>
                   
                   <Input 
                     type="file" 
                     accept="image/*,.pdf" 
                     capture="environment"
-                    multiple
                     onChange={async (e) => {
-                      if (e.target.files) {
+                      if (e.target.files && e.target.files.length > 0) {
                         const files = Array.from(e.target.files);
                         setHandzettelFiles(files);
+                        setShowOCR(true);
                         
-                        if (files.length > 0) {
-                          setShowOCR(true);
-                        }
+                        // Auto-start OCR nach kurzer Verzögerung
+                        setTimeout(() => {
+                          const ocrComponent = document.querySelector('[data-ocr-component]');
+                          if (ocrComponent) {
+                            const startButton = ocrComponent.querySelector('button');
+                            if (startButton && !startButton.disabled) {
+                              startButton.click();
+                            }
+                          }
+                        }, 500);
                       }
                     }}
                     className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
                   />
                   
                   <div className="mt-2 text-xs text-blue-700 space-y-1">
-                    <p>📱 <strong>Handy:</strong> Kamera öffnet sich direkt (Rückkamera)</p>
+                    <p>📱 <strong>Handy:</strong> Foto machen → OCR startet automatisch!</p>
                     <p>💻 <strong>PC:</strong> Datei auswählen oder per Drag & Drop</p>
                     <p>✅ <strong>Formate:</strong> Alle Bildformate (JPG, PNG, WEBP, etc.) + PDF</p>
                   </div>
@@ -1088,7 +1095,7 @@ Die Handzettel sind als Anhang beigefügt.`);
                     <div className="mt-3 p-2 bg-blue-100 rounded border border-blue-200">
                       <div className="flex items-center gap-2 text-sm text-blue-800">
                         <Zap className="h-4 w-4" />
-                        <span>{handzettelFiles.length} Datei(en) ausgewählt - OCR läuft...</span>
+                        <span>📸 Foto aufgenommen - OCR startet automatisch...</span>
                       </div>
                     </div>
                   )}
@@ -1096,15 +1103,17 @@ Die Handzettel sind als Anhang beigefügt.`);
                 
                 {/* OCR-Komponente */}
                 {showOCR && handzettelFiles.length > 0 && (
-                  <HandzettelOCR
-                    imageFile={handzettelFiles[0]}
-                    availableTeams={allTeamsInSelectedLeague}
-                    selectedLeagueId={selectedLeagueId}
-                    selectedRound={selectedRound}
-                    availableLeagues={allLeagues.map(l => ({ id: l.id, name: l.name, type: l.type }))}
-                    onOCRComplete={handleOCRComplete}
-                    onError={handleOCRError}
-                  />
+                  <div data-ocr-component className="w-full max-w-full overflow-hidden">
+                    <HandzettelOCR
+                      imageFile={handzettelFiles[0]}
+                      availableTeams={allTeamsInSelectedLeague}
+                      selectedLeagueId={selectedLeagueId}
+                      selectedRound={selectedRound}
+                      availableLeagues={allLeagues.map(l => ({ id: l.id, name: l.name, type: l.type }))}
+                      onOCRComplete={handleOCRComplete}
+                      onError={handleOCRError}
+                    />
+                  </div>
                 )}
               </div>
             )}
@@ -1113,7 +1122,7 @@ Die Handzettel sind als Anhang beigefügt.`);
       </Card>
       
       <Card className="shadow-md">
-        <CardHeader><CardTitle>📝 Oder: Einzelergebnis manuell hinzufügen</CardTitle><CardDescription>Falls OCR nicht funktioniert - klassische Eingabe Schütze für Schütze</CardDescription></CardHeader>
+        <CardHeader><CardTitle>📝 Einzelergebnis manuell hinzufügen</CardTitle><CardDescription>Für zweite Handzettel oder falls OCR nicht funktioniert - klassische Eingabe</CardDescription></CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-2">
