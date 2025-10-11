@@ -1032,10 +1032,10 @@ Die Handzettel sind als Anhang beigefügt.`);
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-800">
             <Camera className="h-5 w-5" />
-            🤖 NEU: Handzettel fotografieren - Alle Ergebnisse automatisch erfassen!
+🤖 NEU: Handzettel fotografieren
           </CardTitle>
           <CardDescription className="text-blue-700">
-            📸 <strong>Einfach Handzettel abfotografieren</strong> statt manuell eintippen - spart 90% der Zeit!
+            📸 Automatische Ergebniserfassung - spart 90% der Zeit!
           </CardDescription>
         </CardHeader>
         <CardContent>
