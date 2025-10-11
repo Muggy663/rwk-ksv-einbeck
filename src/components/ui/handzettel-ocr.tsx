@@ -293,19 +293,18 @@ export function HandzettelOCR({
       <CardContent className="space-y-4 min-w-0">
         {!isProcessing && !ocrResult && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-blue-700 min-w-0">
+            <div className="flex items-center gap-2 text-sm text-blue-700 min-w-0 w-full max-w-full overflow-hidden">
               <Camera className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">Bereit: {imageFile.name}</span>
+              <span className="truncate flex-1 min-w-0">Bereit: {imageFile.name.length > 20 ? imageFile.name.substring(0, 20) + '...' : imageFile.name}</span>
             </div>
             <Button 
               onClick={processOCR}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-sm"
             >
-              🤖 Google Vision OCR (Handschrift)
+              🤖 OCR starten
             </Button>
-            <div className="text-xs text-blue-600 space-y-1">
-              <p>✅ Erkennt: Liga, Teams, Ergebnisse</p>
-              <p>⚡ Spart 95% der Eingabe</p>
+            <div className="text-xs text-blue-600">
+              <p>✅ Erkennt Liga, Teams & Ergebnisse ⚡ Spart 95% Zeit</p>
             </div>
           </div>
         )}
@@ -325,9 +324,9 @@ export function HandzettelOCR({
 
         {ocrResult && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-green-700">
-              <CheckCircle className="h-4 w-4" />
-              <span className="font-medium">🎯 Handzettel erfolgreich gescannt!</span>
+            <div className="flex items-center gap-2 text-green-700 min-w-0">
+              <CheckCircle className="h-4 w-4 flex-shrink-0" />
+              <span className="font-medium truncate">🎯 Handzettel gescannt!</span>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-sm">
@@ -351,26 +350,26 @@ export function HandzettelOCR({
             
             {/* Warnung bei Unstimmigkeiten */}
             {(ocrResult.durchgang && ocrResult.durchgang.toString() !== selectedRound) ? (
-              <div className="flex items-center gap-2 text-red-700 bg-red-50 p-2 rounded text-xs border border-red-200">
-                <AlertTriangle className="h-3 w-3" />
-                <span className="font-medium">⚠️ ACHTUNG: Handzettel stimmt nicht mit Auswahl überein!</span>
+              <div className="flex items-center gap-2 text-red-700 bg-red-50 p-2 rounded text-xs border border-red-200 w-full max-w-full overflow-hidden">
+                <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+                <span className="font-medium truncate">⚠️ ACHTUNG: Durchgang stimmt nicht überein!</span>
               </div>
             ) : null}
             
-            <div className="space-y-2">
+            <div className="space-y-2 w-full max-w-full overflow-hidden">
               <span className="text-sm font-medium text-gray-700">
                 Erkannte Ergebnisse ({matchedResults.length}):
               </span>
               
               {/* Debug: Roher OCR-Text anzeigen - Mobile optimiert */}
-              <details className="text-xs bg-gray-50 p-2 rounded border">
+              <details className="text-xs bg-gray-50 p-2 rounded border w-full max-w-full overflow-hidden">
                 <summary className="cursor-pointer font-medium text-gray-600">🔍 Debug: OCR-Text</summary>
-                <pre className="mt-2 whitespace-pre-wrap text-xs text-gray-700 max-h-32 overflow-y-auto overflow-x-hidden break-all">
+                <pre className="mt-2 whitespace-pre-wrap text-xs text-gray-700 max-h-32 overflow-y-auto overflow-x-hidden break-all w-full">
                   {ocrResult.rawText}
                 </pre>
               </details>
               
-              <div className="max-h-32 overflow-y-auto space-y-1">
+              <div className="max-h-32 overflow-y-auto space-y-1 w-full max-w-full overflow-x-hidden">
                 {matchedResults.map((result, index) => {
                   const confidence = result.confidence;
                   const confidenceColor = confidence >= 0.8 ? 'bg-green-100 border-green-300' : 
@@ -381,14 +380,14 @@ export function HandzettelOCR({
                                     'bg-red-500';
                   
                   return (
-                    <div key={index} className={`flex items-center justify-between text-xs p-2 rounded border ${confidenceColor} min-w-0`}>
-                      <span className={`${confidence < 0.6 ? 'font-medium text-red-700' : ''} truncate flex-1 mr-2`}>
+                    <div key={index} className={`flex items-center justify-between text-xs p-2 rounded border ${confidenceColor} min-w-0 w-full max-w-full overflow-hidden`}>
+                      <span className={`${confidence < 0.6 ? 'font-medium text-red-700' : ''} truncate flex-1 mr-2 min-w-0`}>
                         {result.shooterName}
                         {confidence < 0.6 && ' ⚠️'}
                       </span>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="font-mono text-sm">{result.score}</span>
-                        <Badge className={`text-xs text-white ${badgeColor} px-1`}>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <span className="font-mono text-xs">{result.score}</span>
+                        <Badge className={`text-xs text-white ${badgeColor} px-1 py-0`}>
                           {Math.round(confidence * 100)}%
                         </Badge>
                       </div>
@@ -398,9 +397,9 @@ export function HandzettelOCR({
               </div>
             </div>
             
-            <div className="flex items-center gap-2 text-amber-700 bg-amber-50 p-2 rounded text-xs">
-              <AlertTriangle className="h-3 w-3" />
-              <span>Bitte prüfen Sie alle erkannten Werte in der Zwischenliste!</span>
+            <div className="flex items-center gap-2 text-amber-700 bg-amber-50 p-2 rounded text-xs w-full max-w-full overflow-hidden">
+              <AlertTriangle className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">Bitte prüfen Sie alle erkannten Werte!</span>
             </div>
           </div>
         )}

@@ -1035,7 +1035,7 @@ Die Handzettel sind als Anhang beigefügt.`);
 📸 Handzettel fotografieren
           </CardTitle>
           <CardDescription className="text-blue-700">
-            🤖 Foto machen → OCR startet automatisch - spart 90% der Zeit!
+            🤖 Foto → OCR automatisch - spart 90% Zeit!
           </CardDescription>
         </CardHeader>
         <CardContent className="min-w-0">
@@ -1055,9 +1055,9 @@ Die Handzettel sind als Anhang beigefügt.`);
                     <CheckCircle className="h-4 w-4 text-green-600" />
                     <span className="text-sm font-medium text-green-800">📸 Handzettel fotografieren!</span>
                   </div>
-                  <p className="text-xs text-green-700 mb-3">
+                  <p className="text-xs text-green-700 mb-3 truncate">
                     Liga: <strong>{allLeagues.find(l => l.id === selectedLeagueId)?.name}</strong> | 
-                    Durchgang: <strong>{selectedRound}</strong> | OCR startet automatisch
+                    DG: <strong>{selectedRound}</strong> | OCR auto
                   </p>
                   
                   <Input 
@@ -1075,16 +1075,16 @@ Die Handzettel sind als Anhang beigefügt.`);
                   />
                   
                   <div className="mt-2 text-xs text-blue-700 space-y-1">
-                    <p>📱 <strong>Handy:</strong> Foto machen → OCR startet automatisch!</p>
-                    <p>💻 <strong>PC:</strong> Datei auswählen oder per Drag & Drop</p>
-                    <p>✅ <strong>Formate:</strong> Alle Bildformate (JPG, PNG, WEBP, etc.) + PDF</p>
+                    <p>📱 <strong>Handy:</strong> Foto → OCR automatisch</p>
+                    <p>💻 <strong>PC:</strong> Datei wählen</p>
+                    <p>✅ <strong>Formate:</strong> JPG, PNG, PDF</p>
                   </div>
                   
                   {handzettelFiles.length > 0 && (
-                    <div className="mt-3 p-2 bg-blue-100 rounded border border-blue-200">
-                      <div className="flex items-center gap-2 text-sm text-blue-800">
-                        <Zap className="h-4 w-4" />
-                        <span>📸 Foto aufgenommen - OCR startet automatisch...</span>
+                    <div className="mt-3 p-2 bg-blue-100 rounded border border-blue-200 w-full max-w-full overflow-hidden">
+                      <div className="flex items-center gap-2 text-sm text-blue-800 min-w-0">
+                        <Zap className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">📸 Foto aufgenommen - OCR startet...</span>
                       </div>
                     </div>
                   )}
