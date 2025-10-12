@@ -322,7 +322,15 @@ export default function GesamtergebnislisteGeneratorPage() {
                         <td colSpan={13} className="border p-2 text-center">Keine Mannschaften gefunden</td>
                       </tr>
                     ) : (
-                      teams.map((team) => {
+                      teams
+                        .sort((a, b) => {
+                          const aIsEinzel = a.name.toLowerCase().includes('einzel');
+                          const bIsEinzel = b.name.toLowerCase().includes('einzel');
+                          if (aIsEinzel && !bIsEinzel) return 1;
+                          if (!aIsEinzel && bIsEinzel) return -1;
+                          return a.name.localeCompare(b.name);
+                        })
+                        .map((team) => {
                         const isEinzelTeam = team.name.toLowerCase().includes('einzel');
                         const shooterCount = isEinzelTeam ? (team.shooters?.length || 1) : 3;
                         const rowSpan = shooterCount + 2;

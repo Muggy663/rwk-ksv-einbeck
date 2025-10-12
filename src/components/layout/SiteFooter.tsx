@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.8.0"; // Handzettel-Upload für Ergebniserfassung, PDF-Verbesserungen, optimierte Benutzeroberfläche
+  const version = "1.8.1"; // Mobile OCR-Optimierungen, automatische OCR-Starts, Tabellen-Overflow-Fixes
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t">

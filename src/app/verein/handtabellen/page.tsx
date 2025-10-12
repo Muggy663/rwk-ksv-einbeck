@@ -6,10 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FileText, Download, Printer, BarChart3 } from 'lucide-react';
+import { FileText, Printer, BarChart3 } from 'lucide-react';
 import { BackButton } from '@/components/ui/back-button';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
@@ -276,30 +275,29 @@ export default function VereinHandtabellenPage() {
                 <CardTitle>Vorschau</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="print-area border rounded-lg p-4 bg-white w-[210mm] h-[297mm] text-xs mx-auto overflow-hidden flex flex-col" style={{aspectRatio: '210/297'}}>
+                <div className="print-area border rounded-lg p-4 bg-white text-xs mx-auto overflow-auto flex flex-col" style={{width: '100%', maxWidth: '400px', height: '600px', transform: 'scale(0.7)', transformOrigin: 'top center'}}>
                   <div className="flex justify-between items-start mb-4">
                     <div className="border p-2 text-xs">
                       <div className="font-bold mb-1">Ergebnisse an:</div>
                       <div>RWK-Leitung</div>
-                      <div>Kreisschützenverband Einbeck</div>
-                      <div>37574 Einbeck</div>
+                      <div>rwk-leiter-ksve@gmx.de</div>
                     </div>
                     <div className="text-center flex-1">
                       <h1 className="text-lg font-bold">Kreisschützenverband Einbeck</h1>
-                      <h2 className="text-md">KK - Rundenwettkampf 2025</h2>
+                      <h2 className="text-md">{selectedSeasonId ? seasons.find(s => s.id === selectedSeasonId)?.name || 'Rundenwettkampf' : 'Rundenwettkampf'}</h2>
                       <div className="mt-2">
-                        <span className="mr-2">(Meldebogen)</span>
-                        <span className="border px-2 py-1">◊ {selectedLeagueId ? availableLeagues.find(l => l.id === selectedLeagueId)?.name || 'Liga wählen' : 'Liga wählen'}</span>
+                        <span className="mr-2">Meldebogen für </span>
+                        <span>{selectedLeagueId ? availableLeagues.find(l => l.id === selectedLeagueId)?.name || 'Liga wählen' : 'Liga wählen'}</span>
                       </div>
                     </div>
                     <div className="flex-shrink-0">
-                      <img src="/images/logo.png" alt="Logo" className="w-16 h-16 object-contain" />
+                      <img src="/images/logo.png" alt="Logo" className="w-24 h-24 object-contain" style={{width: '100px', height: '100px'}} />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-4 mb-4 text-xs">
                     <div>Durchgang: <span className="font-bold">{selectedDurchgang}</span></div>
-                    <div>Datum: <span className="font-bold">{wettkampfData.datum || '__.__.25'}</span></div>
+                    <div>Datum: <span className="font-bold">{wettkampfData.datum ? new Date(wettkampfData.datum).toLocaleDateString('de-DE') : '__.__.25'}</span></div>
                     <div>Uhrzeit: <span className="font-bold">{wettkampfData.uhrzeit}</span></div>
                     <div>Ort: <span className="font-bold">{wettkampfData.ort || '___________'}</span></div>
                   </div>
@@ -377,66 +375,36 @@ export default function VereinHandtabellenPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-wrap gap-3">
-                <Button onClick={async () => {
-                  const printContent = document.querySelector('.print-area');
-                  if (printContent) {
-                    try {
-                      const canvas = await html2canvas(printContent as HTMLElement, {
-                        scale: 2,
-                        useCORS: true,
-                        allowTaint: true
-                      });
-                      
-                      const imgData = canvas.toDataURL('image/png');
-                      const pdf = new jsPDF('p', 'mm', 'a4');
-                      const imgWidth = 210;
-                      const pageHeight = 297;
-                      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                      
-                      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-                      pdf.save(`Meldebogen_${selectedDurchgang}DG_${wettkampfData.datum || 'unbekannt'}.pdf`);
-                      
-                      toast({
-                        title: 'PDF erstellt',
-                        description: 'Der Meldebogen wurde als PDF heruntergeladen.'
-                      });
-                    } catch (error) {
-                      console.error('PDF-Fehler:', error);
-                      toast({
-                        title: 'Fehler',
-                        description: 'PDF konnte nicht erstellt werden.',
-                        variant: 'destructive'
-                      });
-                    }
-                  }
-                }} disabled={!selectedSeasonId || !selectedLeagueId}>
-                  <Download className="mr-2 h-4 w-4" />
-                  PDF herunterladen
-                </Button>
-                
+
                 <Button variant="outline" onClick={() => {
                   const printContent = document.querySelector('.print-area');
                   if (printContent) {
-                    const printWindow = window.open('', '_blank');
-                    printWindow?.document.write(`
+                    const iframe = document.createElement('iframe');
+                    iframe.style.position = 'absolute';
+                    iframe.style.left = '-9999px';
+                    iframe.style.width = '1px';
+                    iframe.style.height = '1px';
+                    document.body.appendChild(iframe);
+                    
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                    iframeDoc?.write(`
                       <html>
                         <head>
                           <title>Meldebogen</title>
                           <style>
-                            @page { size: A4 portrait; margin: 5mm; }
+                            @page { size: A4 portrait; margin: 8mm; }
                             @media print { 
-                              body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; height: 100vh; }
-                              .print-area { width: 100% !important; height: 100% !important; transform: none !important; }
+                              * { color: black !important; background: white !important; }
+                              body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 11px; color: black !important; background: white !important; }
+                              .print-area { width: 100% !important; height: 100% !important; transform: none !important; color: black !important; background: white !important; }
+                              table { width: 100% !important; font-size: 10px !important; color: black !important; }
+                              th, td { font-size: 10px !important; padding: 4px !important; height: 28px !important; color: black !important; background: white !important; }
+                              .bg-yellow-100 { background-color: #fef3c7 !important; }
                             }
-                            @media screen and (max-width: 768px) {
-                              body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10px; }
-                              .print-area { width: 100% !important; height: auto !important; transform: scale(0.8) !important; }
-                              table { font-size: 8px !important; }
-                            }
-                            body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; height: 100vh; }
-                            .print-area { width: 210mm; height: 297mm; display: flex; flex-direction: column; }
+                            body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; height: 100vh; color: black; background: white; }
+                            .print-area { width: 210mm; height: 297mm; display: flex; flex-direction: column; transform: scale(1); transform-origin: top left; color: black; background: white; }
                             table { border-collapse: collapse; width: 100%; flex: 1; }
-                            th, td { border: 1px solid black; padding: 4px; text-align: left; }
+                            th, td { border: 1px solid black; padding: 4px; text-align: left; color: black; }
                             .bg-yellow-100 { background-color: #fef3c7; }
                             .border { border: 1px solid black; }
                             .font-bold { font-weight: bold; }
@@ -459,8 +427,14 @@ export default function VereinHandtabellenPage() {
                         <body>${printContent.innerHTML}</body>
                       </html>
                     `);
-                    printWindow?.document.close();
-                    printWindow?.print();
+                    iframeDoc?.close();
+                    
+                    setTimeout(() => {
+                      iframe.contentWindow?.print();
+                      setTimeout(() => {
+                        document.body.removeChild(iframe);
+                      }, 1000);
+                    }, 500);
                   }
                 }} disabled={!selectedSeasonId || !selectedLeagueId}>
                   <Printer className="mr-2 h-4 w-4" />
@@ -518,7 +492,63 @@ export default function VereinHandtabellenPage() {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>Gesamtergebnisliste (5 Durchgänge)</CardTitle>
-                <Button variant="outline" onClick={() => window.print()} disabled={!selectedSeasonId || !selectedLeagueId} size="sm">
+                <Button variant="outline" onClick={() => {
+                  const printContent = document.querySelector('.gesamt-print-area');
+                  if (printContent) {
+                    const iframe = document.createElement('iframe');
+                    iframe.style.position = 'absolute';
+                    iframe.style.left = '-9999px';
+                    iframe.style.width = '1px';
+                    iframe.style.height = '1px';
+                    document.body.appendChild(iframe);
+                    
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                    iframeDoc?.write(`
+                      <html>
+                        <head>
+                          <title>Gesamtergebnisliste</title>
+                          <style>
+                            @page { size: A4 landscape; margin: 8mm; }
+                            @media print { 
+                              * { color: black !important; background: white !important; }
+                              body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10px; color: black !important; background: white !important; }
+                              .gesamt-print-area { width: 100% !important; height: 100% !important; transform: none !important; color: black !important; background: white !important; }
+                              table { width: 100% !important; font-size: 8px !important; color: black !important; }
+                              th, td { font-size: 8px !important; padding: 2px !important; color: black !important; background: white !important; }
+                              .bg-yellow-100 { background-color: #fef3c7 !important; }
+                              .bg-gray-100 { background-color: #f3f4f6 !important; }
+                            }
+                            body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10px; color: black; background: white; }
+                            table { border-collapse: collapse; width: 100%; }
+                            th, td { border: 1px solid black; padding: 2px; text-align: left; color: black; }
+                            .bg-yellow-100 { background-color: #fef3c7; }
+                            .bg-gray-100 { background-color: #f3f4f6; }
+                            .border { border: 1px solid black; }
+                            .font-bold { font-weight: bold; }
+                            .text-center { text-align: center; }
+                            .text-xs { font-size: 8px; }
+                            .italic { font-style: italic; }
+                            .flex { display: flex; }
+                            .justify-between { justify-content: space-between; }
+                            .items-center { align-items: center; }
+                            .flex-1 { flex: 1; }
+                            .mb-4 { margin-bottom: 16px; }
+                            img { width: 60px !important; height: 60px !important; object-fit: contain !important; }
+                          </style>
+                        </head>
+                        <body>${printContent.innerHTML}</body>
+                      </html>
+                    `);
+                    iframeDoc?.close();
+                    
+                    setTimeout(() => {
+                      iframe.contentWindow?.print();
+                      setTimeout(() => {
+                        document.body.removeChild(iframe);
+                      }, 1000);
+                    }, 500);
+                  }
+                }} disabled={!selectedSeasonId || !selectedLeagueId} size="sm">
                   <Printer className="mr-2 h-4 w-4" />
                   Drucken
                 </Button>
@@ -583,7 +613,15 @@ export default function VereinHandtabellenPage() {
                           <td colSpan={13} className="border p-2 text-center">Keine Mannschaften gefunden</td>
                         </tr>
                       ) : (
-                        teams.map((team) => {
+                        teams
+                          .sort((a, b) => {
+                            const aIsEinzel = a.name.toLowerCase().includes('einzel');
+                            const bIsEinzel = b.name.toLowerCase().includes('einzel');
+                            if (aIsEinzel && !bIsEinzel) return 1;
+                            if (!aIsEinzel && bIsEinzel) return -1;
+                            return a.name.localeCompare(b.name);
+                          })
+                          .map((team) => {
                           const isEinzelTeam = team.name.toLowerCase().includes('einzel');
                           const shooterCount = isEinzelTeam ? (team.shooters?.length || 1) : 3;
                           const rowSpan = shooterCount + 2;

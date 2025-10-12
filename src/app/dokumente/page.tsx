@@ -184,7 +184,7 @@ export default function DokumentePage() {
                     : 'hover:bg-muted'
                 }`}
               >
-                📋 Ausschreibungen ({ausschreibungen.length})
+                📋 Ausschreibungen
               </button>
               <button
                 onClick={() => setActiveTab('formulare')}
@@ -194,7 +194,7 @@ export default function DokumentePage() {
                     : 'hover:bg-muted'
                 }`}
               >
-                📝 Formulare ({formulare.length})
+                📝 Formulare
               </button>
               <button
                 onClick={() => setActiveTab('ligalisten')}
@@ -204,7 +204,7 @@ export default function DokumentePage() {
                     : 'hover:bg-muted'
                 }`}
               >
-                📊 Ligalisten ({ligalisten.length})
+                📊 Ligalisten
               </button>
               <button
                 onClick={() => setActiveTab('ordnungen')}
@@ -214,7 +214,7 @@ export default function DokumentePage() {
                     : 'hover:bg-muted'
                 }`}
               >
-                📖 Regelwerke ({ordnungen.length})
+                📖 Regelwerke
               </button>
             </CardContent>
           </Card>
