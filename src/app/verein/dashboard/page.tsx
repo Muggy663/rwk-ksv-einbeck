@@ -69,7 +69,7 @@ export default function VereinDashboardPage() {
     },
     {
       id: 'handtabellen',
-      title: 'Handtabellen - Wettkampf-Dokumente 📄',
+      title: 'Meldebögen - Wettkampf-Dokumente 📄',
       description: 'Erstellen Sie professionelle Durchgangs-Meldebögen und Ergebnislisten. Diese Funktion wird von vielen Vereinen für offizielle Wettkämpfe genutzt.',
       icon: <FileText className="h-6 w-6 text-indigo-600" />,
       example: 'Generieren Sie einen Meldebogen für den 3. Durchgang mit allen Mannschaften Ihrer Liga.',
@@ -124,7 +124,7 @@ export default function VereinDashboardPage() {
             Willkommen, {user?.displayName || user?.email}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            Verwalten Sie hier Ihre Mannschaften, Schützen und Ergebnisse
+            Verwalte hier deine Mannschaften, Schützen und Ergebnisse
           </p>
           
           {/* Stammdaten-Hinweis */}
@@ -136,7 +136,7 @@ export default function VereinDashboardPage() {
               <div>
                 <p className="text-sm font-medium text-blue-900">Wichtiger Hinweis zu Schützen-Stammdaten</p>
                 <p className="text-xs text-blue-800 mt-1">
-                  Die Stammdaten der Schützen stammen vom <strong>01.08.2025</strong>. Ab diesem Zeitpunkt sind die Vereine für die Pflege und Aktualisierung der Daten selbst verantwortlich.
+                  Die Stammdaten der Schützen stammen vom <strong>01.08.2025</strong>. Ab diesem Zeitpunkt bist du für die Pflege und Aktualisierung der Daten selbst verantwortlich.
                 </p>
               </div>
             </div>
@@ -177,7 +177,7 @@ export default function VereinDashboardPage() {
               </div>
               <CardTitle className="text-xl">Mannschaften</CardTitle>
               <CardDescription className="text-base">
-                Erstellen und verwalten Sie Ihre Mannschaften für die verschiedenen Ligen
+                Erstelle und verwalte deine Mannschaften für die verschiedenen Ligen
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -202,7 +202,7 @@ export default function VereinDashboardPage() {
               </div>
               <CardTitle className="text-xl">Schützen</CardTitle>
               <CardDescription className="text-base">
-                Fügen Sie neue Schützen hinzu und bearbeiten Sie deren Stammdaten
+                Füge neue Schützen hinzu und bearbeite deren Stammdaten
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -225,7 +225,7 @@ export default function VereinDashboardPage() {
             </div>
             <CardTitle className="text-xl">Ergebnisse</CardTitle>
             <CardDescription className="text-base">
-              Tragen Sie die Wettkampfergebnisse für Ihre Mannschaften ein
+              Trage die Wettkampfergebnisse für deine Mannschaften ein
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -245,15 +245,15 @@ export default function VereinDashboardPage() {
               </div>
               <Badge variant="secondary">Neu</Badge>
             </div>
-            <CardTitle className="text-xl">Handtabellen</CardTitle>
+            <CardTitle className="text-xl">Meldebögen</CardTitle>
             <CardDescription className="text-base">
-              Erstellen Sie Durchgangs-Meldebögen und Gesamtergebnislisten für Wettkämpfe
+              Erstelle Durchgangs-Meldebögen und Gesamtergebnislisten für Wettkämpfe
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full h-12 text-sm font-semibold">
               <Link href="/verein/handtabellen">
-                <span className="truncate">Handtabellen erstellen</span>
+                <span className="truncate">Meldebögen erstellen</span>
               </Link>
             </Button>
           </CardContent>
@@ -269,7 +269,7 @@ export default function VereinDashboardPage() {
             </div>
             <CardTitle className="text-xl">Termine</CardTitle>
             <CardDescription className="text-base">
-              Sehen Sie alle aktuellen Wettkampftermine ein
+              Sieh dir alle aktuellen Wettkampftermine an
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -291,7 +291,7 @@ export default function VereinDashboardPage() {
             </div>
             <CardTitle className="text-xl">Termin hinzufügen</CardTitle>
             <CardDescription className="text-base">
-              Fügen Sie neue Wettkampftermine hinzu
+              Füge neue Wettkampftermine hinzu
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -314,7 +314,7 @@ export default function VereinDashboardPage() {
             </div>
             <CardTitle className="text-xl">Mannschaftsführer</CardTitle>
             <CardDescription className="text-base">
-              Kontaktdaten aller Mannschaftsführer in Ihren Ligen
+              Kontaktdaten aller Mannschaftsführer in deinen Ligen
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -336,7 +336,7 @@ export default function VereinDashboardPage() {
             </div>
             <CardTitle className="text-xl">Passwort ändern</CardTitle>
             <CardDescription className="text-base">
-              Ändern Sie Ihr Passwort für mehr Sicherheit
+              Ändere dein Passwort für mehr Sicherheit
             </CardDescription>
           </CardHeader>
           <CardContent>

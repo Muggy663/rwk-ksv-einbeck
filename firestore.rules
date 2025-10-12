@@ -268,11 +268,13 @@ service cloud.firestore {
       allow create: if isSuperAdmin() || 
                     hasLegacyClubAccess(request.resource.data.clubId) || // Legacy
                     isSportleiter(request.resource.data.clubId) ||
-                    isVorstand(request.resource.data.clubId);
+                    isVorstand(request.resource.data.clubId) ||
+                    isMannschaftsfuehrer(request.resource.data.clubId);
       allow update, delete: if isSuperAdmin() || 
                             hasLegacyClubAccess(resource.data.clubId) || // Legacy
                             isSportleiter(resource.data.clubId) ||
-                            isVorstand(resource.data.clubId);
+                            isVorstand(resource.data.clubId) ||
+                            isMannschaftsfuehrer(resource.data.clubId);
     }
 
     match /rwk_scores/{score} {
