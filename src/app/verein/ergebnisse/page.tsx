@@ -1062,7 +1062,7 @@ Die Handzettel sind als Anhang beigefügt.`);
                   
                   <Input 
                     type="file" 
-                    accept="image/*,.pdf" 
+                    accept="image/*" 
                     capture="environment"
                     onChange={async (e) => {
                       if (e.target.files && e.target.files.length > 0) {
@@ -1077,7 +1077,7 @@ Die Handzettel sind als Anhang beigefügt.`);
                   <div className="mt-2 text-xs text-blue-700 space-y-1">
                     <p>📱 <strong>Handy:</strong> Foto → OCR automatisch</p>
                     <p>💻 <strong>PC:</strong> Datei wählen</p>
-                    <p>✅ <strong>Formate:</strong> JPG, PNG, PDF</p>
+                    <p>✅ <strong>Formate:</strong> JPG, PNG (PDF folgt)</p>
                   </div>
                   
                   {handzettelFiles.length > 0 && (
