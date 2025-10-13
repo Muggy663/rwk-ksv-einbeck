@@ -193,63 +193,53 @@ export function HandzettelGenerator({
     if (!printContent) return;
 
     if (isMobile()) {
-      // Mobile: Try Web Share API first, fallback to print
-      if (navigator.share) {
-        try {
-          // Create a blob with the HTML content
-          const htmlContent = `
-            <html>
-              <head>
-                <title>Meldebogen</title>
-                <style>${printStyles}</style>
-              </head>
-              <body>
-                <div class="print-area">${printContent.innerHTML}</div>
-              </body>
-            </html>
-          `;
-          
-          const blob = new Blob([htmlContent], { type: 'text/html' });
-          const file = new File([blob], 'Meldebogen.html', { type: 'text/html' });
-          
-          await navigator.share({
-            title: 'Meldebogen',
-            text: 'RWK Meldebogen zum Drucken',
-            files: [file]
-          });
-          return;
-        } catch (error) {
-          console.log('Web Share API failed, falling back to print');
+      // Mobile: Direct print with better styles
+      const allElements = document.querySelectorAll('*');
+      const printArea = document.querySelector('.print-area');
+      
+      // Hide all elements except print area
+      allElements.forEach(el => {
+        if (!printArea?.contains(el) && el !== printArea) {
+          el.style.display = 'none';
         }
+      });
+      
+      // Show and style print area
+      if (printArea) {
+        printArea.style.display = 'block';
+        printArea.style.position = 'fixed';
+        printArea.style.top = '0';
+        printArea.style.left = '0';
+        printArea.style.width = '100vw';
+        printArea.style.height = '100vh';
+        printArea.style.backgroundColor = 'white';
+        printArea.style.zIndex = '9999';
+        printArea.style.transform = 'none';
+        printArea.style.fontSize = '12px';
       }
       
-      // Fallback: Direct print
-      const styleElement = document.createElement('style');
-      styleElement.id = 'mobile-print-styles';
-      styleElement.innerHTML = `
-        @media print {
-          body * { visibility: hidden; }
-          .print-area, .print-area * { visibility: visible; }
-          .print-area { 
-            position: absolute; 
-            left: 0; 
-            top: 0; 
-            width: 100% !important;
-            height: 100% !important;
-            transform: none !important;
-            font-size: 12px !important;
-          }
-          ${printStyles}
-        }
-      `;
-      document.head.appendChild(styleElement);
-      
-      window.print();
-      
+      // Trigger print
       setTimeout(() => {
-        const element = document.getElementById('mobile-print-styles');
-        if (element) element.remove();
-      }, 1000);
+        window.print();
+        
+        // Restore original styles after print
+        setTimeout(() => {
+          allElements.forEach(el => {
+            el.style.display = '';
+          });
+          if (printArea) {
+            printArea.style.position = '';
+            printArea.style.top = '';
+            printArea.style.left = '';
+            printArea.style.width = '';
+            printArea.style.height = '';
+            printArea.style.backgroundColor = '';
+            printArea.style.zIndex = '';
+            printArea.style.transform = '';
+            printArea.style.fontSize = '';
+          }
+        }, 1000);
+      }, 100);
     } else {
       // Desktop: Use iframe method
       const iframe = document.createElement('iframe');
@@ -545,7 +535,7 @@ export function HandzettelGenerator({
               <div className="flex flex-wrap gap-3">
                 <Button variant="outline" onClick={printDurchgang} disabled={!selectedSeasonId || !selectedLeagueId}>
                   <Printer className="mr-2 h-4 w-4" />
-                  {typeof window !== 'undefined' && isMobile() ? 'Teilen/Drucken' : 'Drucken'}
+                  Drucken
                 </Button>
               </div>
             </CardContent>
@@ -633,62 +623,53 @@ export function HandzettelGenerator({
                   `;
 
                   if (isMobile()) {
-                    // Mobile: Try Web Share API first
-                    if (navigator.share) {
-                      try {
-                        const htmlContent = `
-                          <html>
-                            <head>
-                              <title>Gesamtergebnisliste</title>
-                              <style>${gesamtPrintStyles}</style>
-                            </head>
-                            <body>
-                              <div class="gesamt-print-area">${printContent.innerHTML}</div>
-                            </body>
-                          </html>
-                        `;
-                        
-                        const blob = new Blob([htmlContent], { type: 'text/html' });
-                        const file = new File([blob], 'Gesamtergebnisliste.html', { type: 'text/html' });
-                        
-                        await navigator.share({
-                          title: 'Gesamtergebnisliste',
-                          text: 'RWK Gesamtergebnisliste zum Drucken',
-                          files: [file]
-                        });
-                        return;
-                      } catch (error) {
-                        console.log('Web Share API failed, falling back to print');
+                    // Mobile: Direct print with better element handling
+                    const allElements = document.querySelectorAll('*');
+                    const gesamtPrintArea = document.querySelector('.gesamt-print-area');
+                    
+                    // Hide all elements except print area
+                    allElements.forEach(el => {
+                      if (!gesamtPrintArea?.contains(el) && el !== gesamtPrintArea) {
+                        el.style.display = 'none';
                       }
+                    });
+                    
+                    // Show and style print area
+                    if (gesamtPrintArea) {
+                      gesamtPrintArea.style.display = 'block';
+                      gesamtPrintArea.style.position = 'fixed';
+                      gesamtPrintArea.style.top = '0';
+                      gesamtPrintArea.style.left = '0';
+                      gesamtPrintArea.style.width = '100vw';
+                      gesamtPrintArea.style.height = '100vh';
+                      gesamtPrintArea.style.backgroundColor = 'white';
+                      gesamtPrintArea.style.zIndex = '9999';
+                      gesamtPrintArea.style.transform = 'none';
+                      gesamtPrintArea.style.fontSize = '10px';
                     }
                     
-                    // Fallback: Direct print
-                    const styleElement = document.createElement('style');
-                    styleElement.id = 'mobile-gesamt-print-styles';
-                    styleElement.innerHTML = `
-                      @media print {
-                        body * { visibility: hidden; }
-                        .gesamt-print-area, .gesamt-print-area * { visibility: visible; }
-                        .gesamt-print-area { 
-                          position: absolute; 
-                          left: 0; 
-                          top: 0; 
-                          width: 100% !important;
-                          height: 100% !important;
-                          transform: none !important;
-                          font-size: 10px !important;
-                        }
-                        ${gesamtPrintStyles}
-                      }
-                    `;
-                    document.head.appendChild(styleElement);
-                    
-                    window.print();
-                    
+                    // Trigger print
                     setTimeout(() => {
-                      const element = document.getElementById('mobile-gesamt-print-styles');
-                      if (element) element.remove();
-                    }, 1000);
+                      window.print();
+                      
+                      // Restore original styles after print
+                      setTimeout(() => {
+                        allElements.forEach(el => {
+                          el.style.display = '';
+                        });
+                        if (gesamtPrintArea) {
+                          gesamtPrintArea.style.position = '';
+                          gesamtPrintArea.style.top = '';
+                          gesamtPrintArea.style.left = '';
+                          gesamtPrintArea.style.width = '';
+                          gesamtPrintArea.style.height = '';
+                          gesamtPrintArea.style.backgroundColor = '';
+                          gesamtPrintArea.style.zIndex = '';
+                          gesamtPrintArea.style.transform = '';
+                          gesamtPrintArea.style.fontSize = '';
+                        }
+                      }, 1000);
+                    }, 100);
                   } else {
                     // Desktop: Use iframe method
                     const iframe = document.createElement('iframe');
@@ -719,7 +700,7 @@ export function HandzettelGenerator({
                   }
                 }} disabled={!selectedSeasonId || !selectedLeagueId} size="sm">
                   <Printer className="mr-2 h-4 w-4" />
-                  {typeof window !== 'undefined' && isMobile() ? 'Teilen/Drucken' : 'Drucken'}
+                  Drucken
                 </Button>
               </div>
             </CardHeader>
