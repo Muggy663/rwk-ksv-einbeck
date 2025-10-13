@@ -183,6 +183,7 @@ export function HandzettelGenerator({
   `;
 
   const isMobile = () => {
+    if (typeof window === 'undefined') return false;
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
            window.innerWidth <= 768;
   };
@@ -544,7 +545,7 @@ export function HandzettelGenerator({
               <div className="flex flex-wrap gap-3">
                 <Button variant="outline" onClick={printDurchgang} disabled={!selectedSeasonId || !selectedLeagueId}>
                   <Printer className="mr-2 h-4 w-4" />
-                  {isMobile() ? 'Teilen/Drucken' : 'Drucken'}
+                  {typeof window !== 'undefined' && isMobile() ? 'Teilen/Drucken' : 'Drucken'}
                 </Button>
               </div>
             </CardContent>
@@ -718,7 +719,7 @@ export function HandzettelGenerator({
                   }
                 }} disabled={!selectedSeasonId || !selectedLeagueId} size="sm">
                   <Printer className="mr-2 h-4 w-4" />
-                  {isMobile() ? 'Teilen/Drucken' : 'Drucken'}
+                  {typeof window !== 'undefined' && isMobile() ? 'Teilen/Drucken' : 'Drucken'}
                 </Button>
               </div>
             </CardHeader>
