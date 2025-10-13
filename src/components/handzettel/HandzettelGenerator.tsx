@@ -187,33 +187,68 @@ export function HandzettelGenerator({
            window.innerWidth <= 768;
   };
 
-  const printDurchgang = () => {
+  const printDurchgang = async () => {
     const printContent = document.querySelector('.print-area');
     if (!printContent) return;
 
     if (isMobile()) {
-      // Mobile: Create temporary print window
-      const printWindow = window.open('', '_blank', 'width=800,height=600');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Meldebogen</title>
-              <style>${printStyles}</style>
-            </head>
-            <body>
-              <div class="print-area">${printContent.innerHTML}</div>
-              <script>
-                window.onload = function() {
-                  window.print();
-                  setTimeout(() => window.close(), 1000);
-                };
-              </script>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
+      // Mobile: Try Web Share API first, fallback to print
+      if (navigator.share) {
+        try {
+          // Create a blob with the HTML content
+          const htmlContent = `
+            <html>
+              <head>
+                <title>Meldebogen</title>
+                <style>${printStyles}</style>
+              </head>
+              <body>
+                <div class="print-area">${printContent.innerHTML}</div>
+              </body>
+            </html>
+          `;
+          
+          const blob = new Blob([htmlContent], { type: 'text/html' });
+          const file = new File([blob], 'Meldebogen.html', { type: 'text/html' });
+          
+          await navigator.share({
+            title: 'Meldebogen',
+            text: 'RWK Meldebogen zum Drucken',
+            files: [file]
+          });
+          return;
+        } catch (error) {
+          console.log('Web Share API failed, falling back to print');
+        }
       }
+      
+      // Fallback: Direct print
+      const styleElement = document.createElement('style');
+      styleElement.id = 'mobile-print-styles';
+      styleElement.innerHTML = `
+        @media print {
+          body * { visibility: hidden; }
+          .print-area, .print-area * { visibility: visible; }
+          .print-area { 
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            width: 100% !important;
+            height: 100% !important;
+            transform: none !important;
+            font-size: 12px !important;
+          }
+          ${printStyles}
+        }
+      `;
+      document.head.appendChild(styleElement);
+      
+      window.print();
+      
+      setTimeout(() => {
+        const element = document.getElementById('mobile-print-styles');
+        if (element) element.remove();
+      }, 1000);
     } else {
       // Desktop: Use iframe method
       const iframe = document.createElement('iframe');
@@ -509,7 +544,7 @@ export function HandzettelGenerator({
               <div className="flex flex-wrap gap-3">
                 <Button variant="outline" onClick={printDurchgang} disabled={!selectedSeasonId || !selectedLeagueId}>
                   <Printer className="mr-2 h-4 w-4" />
-                  Drucken
+                  {isMobile() ? 'Teilen/Drucken' : 'Drucken'}
                 </Button>
               </div>
             </CardContent>
@@ -563,7 +598,7 @@ export function HandzettelGenerator({
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>Gesamtergebnisliste (5 Durchgänge)</CardTitle>
-                <Button variant="outline" onClick={() => {
+                <Button variant="outline" onClick={async () => {
                   const printContent = document.querySelector('.gesamt-print-area');
                   if (!printContent) return;
 
@@ -597,28 +632,62 @@ export function HandzettelGenerator({
                   `;
 
                   if (isMobile()) {
-                    // Mobile: Create temporary print window
-                    const printWindow = window.open('', '_blank', 'width=800,height=600');
-                    if (printWindow) {
-                      printWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>Gesamtergebnisliste</title>
-                            <style>${gesamtPrintStyles}</style>
-                          </head>
-                          <body>
-                            <div class="gesamt-print-area">${printContent.innerHTML}</div>
-                            <script>
-                              window.onload = function() {
-                                window.print();
-                                setTimeout(() => window.close(), 1000);
-                              };
-                            </script>
-                          </body>
-                        </html>
-                      `);
-                      printWindow.document.close();
+                    // Mobile: Try Web Share API first
+                    if (navigator.share) {
+                      try {
+                        const htmlContent = `
+                          <html>
+                            <head>
+                              <title>Gesamtergebnisliste</title>
+                              <style>${gesamtPrintStyles}</style>
+                            </head>
+                            <body>
+                              <div class="gesamt-print-area">${printContent.innerHTML}</div>
+                            </body>
+                          </html>
+                        `;
+                        
+                        const blob = new Blob([htmlContent], { type: 'text/html' });
+                        const file = new File([blob], 'Gesamtergebnisliste.html', { type: 'text/html' });
+                        
+                        await navigator.share({
+                          title: 'Gesamtergebnisliste',
+                          text: 'RWK Gesamtergebnisliste zum Drucken',
+                          files: [file]
+                        });
+                        return;
+                      } catch (error) {
+                        console.log('Web Share API failed, falling back to print');
+                      }
                     }
+                    
+                    // Fallback: Direct print
+                    const styleElement = document.createElement('style');
+                    styleElement.id = 'mobile-gesamt-print-styles';
+                    styleElement.innerHTML = `
+                      @media print {
+                        body * { visibility: hidden; }
+                        .gesamt-print-area, .gesamt-print-area * { visibility: visible; }
+                        .gesamt-print-area { 
+                          position: absolute; 
+                          left: 0; 
+                          top: 0; 
+                          width: 100% !important;
+                          height: 100% !important;
+                          transform: none !important;
+                          font-size: 10px !important;
+                        }
+                        ${gesamtPrintStyles}
+                      }
+                    `;
+                    document.head.appendChild(styleElement);
+                    
+                    window.print();
+                    
+                    setTimeout(() => {
+                      const element = document.getElementById('mobile-gesamt-print-styles');
+                      if (element) element.remove();
+                    }, 1000);
                   } else {
                     // Desktop: Use iframe method
                     const iframe = document.createElement('iframe');
@@ -649,7 +718,7 @@ export function HandzettelGenerator({
                   }
                 }} disabled={!selectedSeasonId || !selectedLeagueId} size="sm">
                   <Printer className="mr-2 h-4 w-4" />
-                  Drucken
+                  {isMobile() ? 'Teilen/Drucken' : 'Drucken'}
                 </Button>
               </div>
             </CardHeader>
