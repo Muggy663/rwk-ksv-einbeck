@@ -192,24 +192,28 @@ export function HandzettelGenerator({
     if (!printContent) return;
 
     if (isMobile()) {
-      // Mobile: Use window.print() with temporary styles
-      const originalContent = document.body.innerHTML;
-      const printableContent = `
-        <html>
-          <head>
-            <title>Meldebogen</title>
-            <style>${printStyles}</style>
-          </head>
-          <body>
-            <div class="print-area">${printContent.innerHTML}</div>
-          </body>
-        </html>
-      `;
-      
-      document.body.innerHTML = printableContent;
-      window.print();
-      document.body.innerHTML = originalContent;
-      window.location.reload(); // Reload to restore React state
+      // Mobile: Create temporary print window
+      const printWindow = window.open('', '_blank', 'width=800,height=600');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Meldebogen</title>
+              <style>${printStyles}</style>
+            </head>
+            <body>
+              <div class="print-area">${printContent.innerHTML}</div>
+              <script>
+                window.onload = function() {
+                  window.print();
+                  setTimeout(() => window.close(), 1000);
+                };
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
     } else {
       // Desktop: Use iframe method
       const iframe = document.createElement('iframe');
@@ -593,24 +597,28 @@ export function HandzettelGenerator({
                   `;
 
                   if (isMobile()) {
-                    // Mobile: Use window.print() with temporary styles
-                    const originalContent = document.body.innerHTML;
-                    const printableContent = `
-                      <html>
-                        <head>
-                          <title>Gesamtergebnisliste</title>
-                          <style>${gesamtPrintStyles}</style>
-                        </head>
-                        <body>
-                          <div class="gesamt-print-area">${printContent.innerHTML}</div>
-                        </body>
-                      </html>
-                    `;
-                    
-                    document.body.innerHTML = printableContent;
-                    window.print();
-                    document.body.innerHTML = originalContent;
-                    window.location.reload(); // Reload to restore React state
+                    // Mobile: Create temporary print window
+                    const printWindow = window.open('', '_blank', 'width=800,height=600');
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Gesamtergebnisliste</title>
+                            <style>${gesamtPrintStyles}</style>
+                          </head>
+                          <body>
+                            <div class="gesamt-print-area">${printContent.innerHTML}</div>
+                            <script>
+                              window.onload = function() {
+                                window.print();
+                                setTimeout(() => window.close(), 1000);
+                              };
+                            </script>
+                          </body>
+                        </html>
+                      `);
+                      printWindow.document.close();
+                    }
                   } else {
                     // Desktop: Use iframe method
                     const iframe = document.createElement('iframe');
