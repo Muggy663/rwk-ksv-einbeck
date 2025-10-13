@@ -182,9 +182,36 @@ export function HandzettelGenerator({
     .flex-col { flex-direction: column; }
   `;
 
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+           window.innerWidth <= 768;
+  };
+
   const printDurchgang = () => {
     const printContent = document.querySelector('.print-area');
-    if (printContent) {
+    if (!printContent) return;
+
+    if (isMobile()) {
+      // Mobile: Use window.print() with temporary styles
+      const originalContent = document.body.innerHTML;
+      const printableContent = `
+        <html>
+          <head>
+            <title>Meldebogen</title>
+            <style>${printStyles}</style>
+          </head>
+          <body>
+            <div class="print-area">${printContent.innerHTML}</div>
+          </body>
+        </html>
+      `;
+      
+      document.body.innerHTML = printableContent;
+      window.print();
+      document.body.innerHTML = originalContent;
+      window.location.reload(); // Reload to restore React state
+    } else {
+      // Desktop: Use iframe method
       const iframe = document.createElement('iframe');
       iframe.style.position = 'absolute';
       iframe.style.left = '-9999px';
@@ -534,7 +561,58 @@ export function HandzettelGenerator({
                 <CardTitle>Gesamtergebnisliste (5 Durchgänge)</CardTitle>
                 <Button variant="outline" onClick={() => {
                   const printContent = document.querySelector('.gesamt-print-area');
-                  if (printContent) {
+                  if (!printContent) return;
+
+                  const gesamtPrintStyles = `
+                    @page { size: A4 landscape; margin: 8mm; }
+                    @media print { 
+                      * { color: black !important; background: white !important; }
+                      body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10px; }
+                      .gesamt-print-area { width: 100% !important; height: 100% !important; transform: none !important; }
+                      table { width: 100% !important; font-size: 8px !important; }
+                      th, td { font-size: 8px !important; padding: 2px !important; }
+                      .bg-yellow-100 { background-color: #fef3c7 !important; }
+                      .bg-gray-100 { background-color: #f3f4f6 !important; }
+                    }
+                    body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10px; }
+                    table { border-collapse: collapse; width: 100%; }
+                    th, td { border: 1px solid black; padding: 2px; text-align: left; }
+                    .bg-yellow-100 { background-color: #fef3c7; }
+                    .bg-gray-100 { background-color: #f3f4f6; }
+                    .border { border: 1px solid black; }
+                    .font-bold { font-weight: bold; }
+                    .text-center { text-align: center; }
+                    .text-xs { font-size: 8px; }
+                    .italic { font-style: italic; }
+                    .flex { display: flex; }
+                    .justify-between { justify-content: space-between; }
+                    .items-center { align-items: center; }
+                    .flex-1 { flex: 1; }
+                    .mb-4 { margin-bottom: 16px; }
+                    img { width: 60px !important; height: 60px !important; object-fit: contain !important; }
+                  `;
+
+                  if (isMobile()) {
+                    // Mobile: Use window.print() with temporary styles
+                    const originalContent = document.body.innerHTML;
+                    const printableContent = `
+                      <html>
+                        <head>
+                          <title>Gesamtergebnisliste</title>
+                          <style>${gesamtPrintStyles}</style>
+                        </head>
+                        <body>
+                          <div class="gesamt-print-area">${printContent.innerHTML}</div>
+                        </body>
+                      </html>
+                    `;
+                    
+                    document.body.innerHTML = printableContent;
+                    window.print();
+                    document.body.innerHTML = originalContent;
+                    window.location.reload(); // Reload to restore React state
+                  } else {
+                    // Desktop: Use iframe method
                     const iframe = document.createElement('iframe');
                     iframe.style.position = 'absolute';
                     iframe.style.left = '-9999px';
@@ -547,34 +625,7 @@ export function HandzettelGenerator({
                       <html>
                         <head>
                           <title>Gesamtergebnisliste</title>
-                          <style>
-                            @page { size: A4 landscape; margin: 8mm; }
-                            @media print { 
-                              * { color: black !important; background: white !important; }
-                              body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10px; }
-                              .gesamt-print-area { width: 100% !important; height: 100% !important; transform: none !important; }
-                              table { width: 100% !important; font-size: 8px !important; }
-                              th, td { font-size: 8px !important; padding: 2px !important; }
-                              .bg-yellow-100 { background-color: #fef3c7 !important; }
-                              .bg-gray-100 { background-color: #f3f4f6 !important; }
-                            }
-                            body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 10px; }
-                            table { border-collapse: collapse; width: 100%; }
-                            th, td { border: 1px solid black; padding: 2px; text-align: left; }
-                            .bg-yellow-100 { background-color: #fef3c7; }
-                            .bg-gray-100 { background-color: #f3f4f6; }
-                            .border { border: 1px solid black; }
-                            .font-bold { font-weight: bold; }
-                            .text-center { text-align: center; }
-                            .text-xs { font-size: 8px; }
-                            .italic { font-style: italic; }
-                            .flex { display: flex; }
-                            .justify-between { justify-content: space-between; }
-                            .items-center { align-items: center; }
-                            .flex-1 { flex: 1; }
-                            .mb-4 { margin-bottom: 16px; }
-                            img { width: 60px !important; height: 60px !important; object-fit: contain !important; }
-                          </style>
+                          <style>${gesamtPrintStyles}</style>
                         </head>
                         <body>${printContent.innerHTML}</body>
                       </html>
