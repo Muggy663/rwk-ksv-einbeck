@@ -45,7 +45,13 @@ export default function HomePage() {
   const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(true);
   const [latestNews, setLatestNews] = useState<any[]>([]);
   const [isLoadingNews, setIsLoadingNews] = useState<boolean>(true);
-  const { isNativeApp } = useNativeApp();
+  const [isNativeApp, setIsNativeApp] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsNativeApp(window.Capacitor && window.Capacitor.isNativePlatform());
+    }
+  }, []);
 
   // Lade Updates und Termine parallel
   useEffect(() => {
