@@ -1892,7 +1892,7 @@ function RwkTabellenPageComponent() {
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
-                      <div className="overflow-x-auto" style={{touchAction: isNativeApp ? 'auto' : 'pan-y'}}>
+                      <div className={isNativeApp ? "overflow-auto max-h-[70vh]" : "overflow-x-auto"} style={{touchAction: isNativeApp ? 'pan-y' : 'pan-y'}}>
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-muted/50">
