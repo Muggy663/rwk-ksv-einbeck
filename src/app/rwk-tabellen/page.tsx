@@ -158,7 +158,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                     <div className="flex items-center gap-1">
                       <Button
                         variant="link"
-                        className="p-0 h-auto text-sm text-left hover:text-primary whitespace-normal text-wrap justify-start"
+                        className="p-0 h-auto text-xs text-left hover:text-primary whitespace-normal text-wrap justify-start font-normal"
                         onClick={() => onShooterClick(shooterDataForModal)}
                       >
                         {shooterRes.shooterName}
@@ -2117,9 +2117,9 @@ function RwkTabellenPageComponent() {
                                 shooter.rank
                               }
                             </TableCell>
-                            <TableCell className="font-medium text-foreground">
+                            <TableCell className="text-foreground">
                               <div className="flex items-center gap-2">
-                                <Button variant="link" className="p-0 h-auto text-base text-left hover:text-primary whitespace-normal text-wrap" onClick={() => handleShooterNameClick(shooter)}>
+                                <Button variant="link" className="p-0 h-auto text-sm text-left hover:text-primary whitespace-normal text-wrap font-normal" onClick={() => handleShooterNameClick(shooter)}>
                                   {shooter.shooterName}
                                 </Button>
                                 <LineChartIcon className="h-3 w-3 text-muted-foreground" title="Klicken Sie auf den Namen für Statistik-Diagramm" />
