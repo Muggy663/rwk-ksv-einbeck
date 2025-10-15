@@ -1893,7 +1893,7 @@ function RwkTabellenPageComponent() {
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
-                      <div className="overflow-x-auto" style={isNativeApp ? { touchAction: 'pan-x pan-y pinch-zoom' } : {}}>
+                      <div className={isNativeApp ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={isNativeApp ? { touchAction: 'pan-x pan-y pinch-zoom', maxHeight: '70vh' } : {}}>
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-muted/50">
@@ -1996,7 +1996,7 @@ function RwkTabellenPageComponent() {
                       <SelectTrigger id="individualLeagueFilter" className="w-full sm:w-[350px] mt-1 shadow-sm border-blue-300">
                         <SelectValue placeholder="-- Bitte Liga auswählen --" />
                       </SelectTrigger>
-                      <SelectContent side="bottom" align="start">
+                      <SelectContent side="bottom" align="start" sideOffset={4} avoidCollisions={false}>
                         {/* Spezielle Optionen für Gesamtlisten */}
                         {selectedCompetition?.discipline === 'KK' && (
                           <SelectItem value="KK_GEWEHR_EHRUNGEN" className="bg-amber-50 text-amber-800 font-medium">
