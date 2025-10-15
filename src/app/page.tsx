@@ -45,6 +45,7 @@ export default function HomePage() {
   const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(true);
   const [latestNews, setLatestNews] = useState<any[]>([]);
   const [isLoadingNews, setIsLoadingNews] = useState<boolean>(true);
+  const { isNativeApp } = useNativeApp();
 
   // Lade Updates und Termine parallel
   useEffect(() => {
@@ -387,6 +388,50 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Desktop-Hinweis für Native App */}
+      {isNativeApp && (
+        <Card className="mb-6 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center text-blue-800 dark:text-blue-200">
+              <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-blue-300">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                  <path d="m7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              💻 Desktop-Version verfügbar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <p className="text-blue-700 dark:text-blue-300">
+                Wussten Sie, dass es auch eine <strong>Desktop-Website</strong> gibt? 
+                Dort stehen Ihnen zusätzliche Funktionen zur Verfügung:
+              </p>
+              <ul className="space-y-2 text-sm text-blue-600 dark:text-blue-400">
+                <li className="flex items-center space-x-2">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span>📄 PDF-Export von Tabellen und Ergebnissen</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span>🖨️ Druckfunktionen für Handzettel und Urkunden</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span>⚙️ Erweiterte Verwaltungsfunktionen</span>
+                </li>
+              </ul>
+              <div className="bg-blue-100 dark:bg-blue-800/30 p-3 rounded-lg mt-4">
+                <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                  🌐 Besuchen Sie: <strong>rwk-einbeck.de</strong> am Computer
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Was ist neu? - Version 1.8.0 */}
       <Card className="mb-6 shadow-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">

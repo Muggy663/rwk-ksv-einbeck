@@ -1832,8 +1832,8 @@ function RwkTabellenPageComponent() {
                         </Label>
                         <PDFHelpDialog />
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        {/* Web PDF Buttons */}
+                      {/* PDF Buttons nur auf Desktop */}
+                      <div className="hidden lg:flex flex-col sm:flex-row gap-2">
                         <PDFButton 
                           league={league} 
                           numRounds={currentNumRoundsState} 
@@ -1844,24 +1844,20 @@ function RwkTabellenPageComponent() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className={`text-xs px-2 py-1 whitespace-nowrap ${isNativeApp ? 'hidden' : ''}`}
+                          className="text-xs px-2 py-1 whitespace-nowrap"
                           onClick={async () => {
-                            // Import der benötigten Funktionen
                             const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
-                            // Lade Einzelschützen für diese Liga
                             const shooterData = await fetchIndividualShooterData(
                               selectedCompetition, 
                               currentNumRoundsState, 
                               league.id
                             );
                             
-                            // Erstelle temporäres League-Objekt mit den geladenen Schützen
                             const tempLeague = {
                               ...league,
                               individualLeagueShooters: shooterData
                             };
                             
-                            // Generiere PDF mit den geladenen Daten und Logo
                             try {
                               await generateShootersPDFFixed(
                                 tempLeague, 
@@ -1885,29 +1881,17 @@ function RwkTabellenPageComponent() {
                         >
                           Einzelschützen als PDF
                         </Button>
-                        
-                        {/* Native App Buttons */}
-                        <NativePDFButton 
-                          league={league} 
-                          numRounds={currentNumRoundsState} 
-                          competitionYear={selectedCompetition.year} 
-                          type="teams"
-                          className="text-xs px-2 py-1 whitespace-nowrap"
-                        />
-                        <NativePDFButton 
-                          league={{
-                            ...league,
-                            individualLeagueShooters: [] // Wird dynamisch geladen
-                          }} 
-                          numRounds={currentNumRoundsState} 
-                          competitionYear={selectedCompetition.year} 
-                          type="shooters"
-                          className="text-xs px-2 py-1 whitespace-nowrap"
-                        />
+                      </div>
+                      
+                      {/* Mobile Hinweis */}
+                      <div className="lg:hidden">
+                        <p className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950 p-2 rounded">
+                          💡 PDF-Export nur am Desktop verfügbar
+                        </p>
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
-                      <div className="overflow-x-auto">
+                      <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-muted/50">

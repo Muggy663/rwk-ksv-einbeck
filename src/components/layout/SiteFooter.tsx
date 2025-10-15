@@ -40,12 +40,14 @@ export function SiteFooter() {
           </p>
         </div>
         <div className="text-center text-sm text-muted-foreground md:text-right min-w-0 flex-shrink-0">
-          <div className="flex flex-col items-center md:items-end gap-2">
+          <div className="flex flex-col items-center md:items-end gap-3 py-2">
             <div>
               <p className="whitespace-nowrap">Web-Version {version} <span className="text-xs text-red-600 dark:text-red-400 font-semibold">Beta</span></p>
               <p className="text-xs mt-1 whitespace-nowrap">App-Version 0.9.4.1</p>
             </div>
-            <ClearCacheButton />
+            <div className="mb-2">
+              <ClearCacheButton />
+            </div>
           </div>
         </div>
       </div>
