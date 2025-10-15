@@ -1902,8 +1902,8 @@ function RwkTabellenPageComponent() {
                                 <TableHead key={`dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>
                               ))}
                               <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap">Gesamt</TableHead>
-                              <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap">Schnitt</TableHead>
-                              <TableHead className="w-[60px] text-right pr-4 px-2 py-2"></TableHead>
+                              {!isNativeApp && <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap">Schnitt</TableHead>}
+                              {!isNativeApp && <TableHead className="w-[60px] text-right pr-4 px-2 py-2"></TableHead>}
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -1911,7 +1911,7 @@ function RwkTabellenPageComponent() {
                               .filter(team => showOutOfCompetitionTeams || !team.outOfCompetition)
                               .map(team => (
                               <React.Fragment key={team.id}>
-                                <TableRow className="hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => toggleTeamExpansion(team.id)}>
+                                <TableRow className="hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => isNativeApp ? toggleTeamExpansion(team.id) : toggleTeamExpansion(team.id)}>
                                   <TableCell className="text-center font-medium px-2 py-2">
                                     {team.outOfCompetition ? 
                                       <span className="text-amber-500" title="Außer Konkurrenz">AK</span> : 
@@ -1941,16 +1941,16 @@ function RwkTabellenPageComponent() {
                                       team.totalScore ?? '-'
                                     )}
                                   </TableCell>
-                                  <TableCell className="text-center font-medium text-muted-foreground px-2 py-2">{team.averageScore != null ? team.averageScore.toFixed(2) : '-'}</TableCell>
-                                  <TableCell className="text-right pr-4 px-2 py-2">
+                                  {!isNativeApp && <TableCell className="text-center font-medium text-muted-foreground px-2 py-2">{team.averageScore != null ? team.averageScore.toFixed(2) : '-'}</TableCell>}
+                                  {!isNativeApp && <TableCell className="text-right pr-4 px-2 py-2">
                                     <Button variant="ghost" size="icon" onClick={(e) => {e.stopPropagation(); toggleTeamExpansion(team.id);}} aria-label={`Details für ${team.name} ${expandedTeamIds.includes(team.id) ? 'ausblenden' : 'anzeigen'}`} className="hover:bg-accent/20 rounded-md">
                                       {expandedTeamIds.includes(team.id) ? <ChevronDown className="h-5 w-5 transition-transform duration-200 rotate-180" /> : <ChevronRight className="h-5 w-5 transition-transform duration-200" />}
                                     </Button>
-                                  </TableCell>
+                                  </TableCell>}
                                 </TableRow>
                                 {expandedTeamIds.includes(team.id) && (
                                   <TableRow className="bg-transparent hover:bg-transparent">
-                                    <TableCell colSpan={5 + currentNumRoundsState + 1} className="p-0 border-t-0">
+                                    <TableCell colSpan={isNativeApp ? 3 + currentNumRoundsState : 5 + currentNumRoundsState + 1} className="p-0 border-t-0">
                                       {loadingTeamShooters.has(team.id) ? (
                                         <div className="p-4 text-center">
                                           <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
