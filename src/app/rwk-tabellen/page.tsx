@@ -1891,7 +1891,7 @@ function RwkTabellenPageComponent() {
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
-                      <div className="overflow-x-auto">
+                      <div className="overflow-x-auto" style={{touchAction: 'pan-y'}}>
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-muted/50">
@@ -1910,7 +1910,7 @@ function RwkTabellenPageComponent() {
                               .filter(team => showOutOfCompetitionTeams || !team.outOfCompetition)
                               .map(team => (
                               <React.Fragment key={team.id}>
-                                <TableRow className="hover:bg-secondary/20 transition-colors cursor-pointer touch-pan-y" onClick={() => toggleTeamExpansion(team.id)}>
+                                <TableRow className="hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => toggleTeamExpansion(team.id)}>
                                   <TableCell className="text-center font-medium px-2 py-2">
                                     {team.outOfCompetition ? 
                                       <span className="text-amber-500" title="Außer Konkurrenz">AK</span> : 
