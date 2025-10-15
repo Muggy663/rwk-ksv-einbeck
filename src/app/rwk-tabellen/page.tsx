@@ -122,7 +122,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
   }
   return (
     <div className="p-2 bg-muted/20 rounded-b-md shadow-inner overflow-x-auto">
-      <Table className="min-w-full" style={{touchAction: 'auto'}}>
+      <Table className="min-w-full">
         <TableHeader>
           <TableRow className="text-xs border-b-0">
             <TableHead className="pl-3 pr-1 py-1.5 text-muted-foreground font-normal whitespace-nowrap">Schütze</TableHead>
@@ -159,8 +159,9 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                     <div className="flex items-center gap-1">
                       <Button
                         variant="link"
-                        className={`p-0 h-auto text-left hover:text-primary whitespace-normal text-wrap justify-start font-normal ${isNativeApp ? 'text-[10px]' : 'text-xs'}`}
+                        className={`p-0 h-auto text-left hover:text-primary whitespace-normal text-wrap justify-start font-normal ${isNativeApp ? 'text-[10px] !important' : 'text-xs'}`}
                         onClick={() => onShooterClick(shooterDataForModal)}
+                        style={isNativeApp ? {fontSize: '10px !important'} : {}}
                       >
                         {shooterRes.shooterName}
                       </Button>
@@ -1892,7 +1893,7 @@ function RwkTabellenPageComponent() {
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
-                      <div className={isNativeApp ? "overflow-auto max-h-[70vh]" : "overflow-x-auto"} style={{touchAction: isNativeApp ? 'pan-y' : 'pan-y'}}>
+                      <div className={isNativeApp ? "overflow-auto max-h-[70vh]" : "overflow-x-auto"} style={{touchAction: 'auto'}}>
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-muted/50">
