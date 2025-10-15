@@ -22,8 +22,8 @@ export function PDFHelpDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-muted-foreground">
-          <HelpCircle className="h-4 w-4 mr-1" />
+        <Button variant="ghost" size="sm" className="text-muted-foreground text-xs px-2 py-1">
+          <HelpCircle className="h-3 w-3 mr-1" />
           PDF-Hilfe
         </Button>
       </DialogTrigger>
