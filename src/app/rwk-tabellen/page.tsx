@@ -1996,7 +1996,7 @@ function RwkTabellenPageComponent() {
                       <SelectTrigger id="individualLeagueFilter" className="w-full sm:w-[350px] mt-1 shadow-sm border-blue-300">
                         <SelectValue placeholder="-- Bitte Liga auswählen --" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent side="bottom" align="start">
                         {/* Spezielle Optionen für Gesamtlisten */}
                         {selectedCompetition?.discipline === 'KK' && (
                           <SelectItem value="KK_GEWEHR_EHRUNGEN" className="bg-amber-50 text-amber-800 font-medium">
