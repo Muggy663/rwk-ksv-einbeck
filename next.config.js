@@ -7,6 +7,20 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   swcMinify: true,
+  // Cache-Busting für PWA
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
   webpack: (config, { dev, isServer }) => {
     // Komplett undici ignorieren
     config.externals = config.externals || [];
@@ -32,6 +46,10 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['undici'],
     esmExternals: false,
+  },
+  // PWA Cache-Busting
+  generateBuildId: async () => {
+    return `build-${Date.now()}`;
   },
 }
 

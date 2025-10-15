@@ -19,6 +19,7 @@ import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { AppUpdateChecker } from '@/components/app-update-checker';
 import { NativeAppProvider } from '@/components/ui/native-app-detector';
 import { AppVersionChecker } from '@/components/AppVersionChecker';
+import { ForceRefresh } from '@/components/ui/force-refresh';
 
 
 // import { SentryClientInit } from '@/components/sentry-client-init';
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta name="robots" content="noarchive" />
       </head>
       <body className="font-sans app-container safe-area-inset" suppressHydrationWarning>
+        <ForceRefresh />
         <AppVersionChecker />
         {/* Mobile Status Bar Overlay */}
         <div className="mobile-header-overlay"></div>

@@ -4,6 +4,7 @@ import { LeagueDisplay, TeamDisplay } from '@/types/rwk';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { isMobileDevice } from './is-mobile';
+import { isSafari, isIOS, downloadPDFSafari } from './safari-pdf-fix';
 
 // Erweitere die jsPDF-Typen für autotable
 declare module 'jspdf' {
@@ -15,56 +16,70 @@ declare module 'jspdf' {
 import { openWithAppChooser } from './open-external';
 
 /**
- * Verbesserte PDF-Generator-Funktion für mobile Geräte
- * Verwendet einen anderen Ansatz für mobile Geräte, um Kompatibilitätsprobleme zu vermeiden
+ * Verbesserte PDF-Generator-Funktion für mobile Geräte und Safari
+ * Verwendet einen anderen Ansatz für mobile Geräte und Safari, um Kompatibilitätsprobleme zu vermeiden
  */
 export async function generatePDFWithMobileSupport(
   generateFunction: () => Promise<Blob>,
   fileName: string
 ): Promise<void> {
   try {
-
+    // Safari-Erkennung über Hilfsfunktion
+    const safariDetected = isSafari();
     
     // PDF generieren
     const pdfBlob = await generateFunction();
-
     
     // Prüfen, ob wir in einer nativen App sind
     const isNativeApp = window.Capacitor && window.Capacitor.isNativePlatform();
     
     // Prüfen, ob es sich um ein mobiles Gerät handelt
-    if (isMobileDevice() || isNativeApp) {
-
-      
-      // Blob-URL erstellen
-      const url = URL.createObjectURL(pdfBlob);
-
-      
+    const isMobile = isMobileDevice();
+    
+    // Blob-URL erstellen
+    const url = URL.createObjectURL(pdfBlob);
+    
+    if (isNativeApp) {
       // In nativer App: Mit Capacitor öffnen
-      if (isNativeApp) {
-
-        try {
-          // Speichere die Datei temporär und öffne sie mit der nativen App
-          await openWithAppChooser(url);
-        } catch (nativeError) {
-          console.error('Fehler beim Öffnen mit nativer App:', nativeError);
-          // Fallback: Im Browser öffnen
-          window.open(url, '_blank');
-        }
-      } else {
-        // Auf mobilen Geräten: PDF im Browser öffnen
-
+      try {
+        await openWithAppChooser(url);
+      } catch (nativeError) {
+        console.error('Fehler beim Öffnen mit nativer App:', nativeError);
+        // Fallback: Im Browser öffnen
         window.open(url, '_blank');
       }
+    } else if (isSafari()) {
+      // Safari-spezifische Behandlung mit optimierter Funktion
+      console.log('Safari erkannt - verwende Safari-optimierte PDF-Behandlung');
       
-      // Nach einer Verzögerung die URL freigeben
+      try {
+        await downloadPDFSafari(pdfBlob, fileName);
+      } catch (safariError) {
+        console.error('Safari PDF-Behandlung fehlgeschlagen:', safariError);
+        
+        // Letzter Fallback: Einfacher Blob-URL
+        const url = URL.createObjectURL(pdfBlob);
+        window.open(url, '_blank');
+        
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+        }, 10000);
+      }
+    } else if (isMobile) {
+      // Auf anderen mobilen Geräten: PDF im Browser öffnen
+      console.log('Mobile Gerät erkannt - öffne PDF in neuem Tab');
+      const newWindow = window.open(url, '_blank');
+      if (!newWindow) {
+        // Fallback für blockierte Popups
+        window.location.href = url;
+      }
+      
       setTimeout(() => {
         URL.revokeObjectURL(url);
       }, 5000);
     } else {
       // Auf Desktop-Geräten: PDF herunterladen
-
-      const url = URL.createObjectURL(pdfBlob);
+      console.log('Desktop erkannt - lade PDF herunter');
       const link = document.createElement('a');
       link.href = url;
       link.download = fileName;
