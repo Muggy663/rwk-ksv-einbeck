@@ -1896,7 +1896,7 @@ function RwkTabellenPageComponent() {
                           <TableHeader>
                             <TableRow className="bg-muted/50">
                               <TableHead className="w-[50px] text-center px-2 py-2 text-xs font-medium text-muted-foreground">#</TableHead>
-                              <TableHead className="min-w-[150px] px-2 py-2 text-xs font-medium text-muted-foreground">Mannschaft</TableHead>
+                              <TableHead className="min-w-[150px] px-2 py-2 text-sm font-medium text-muted-foreground">Mannschaft</TableHead>
                               {[...Array(currentNumRoundsState)].map((_, i) => (
                                 <TableHead key={`dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>
                               ))}
@@ -1910,14 +1910,14 @@ function RwkTabellenPageComponent() {
                               .filter(team => showOutOfCompetitionTeams || !team.outOfCompetition)
                               .map(team => (
                               <React.Fragment key={team.id}>
-                                <TableRow className="hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => toggleTeamExpansion(team.id)}>
+                                <TableRow className="hover:bg-secondary/20 transition-colors cursor-pointer touch-pan-y" onClick={() => toggleTeamExpansion(team.id)}>
                                   <TableCell className="text-center font-medium px-2 py-2">
                                     {team.outOfCompetition ? 
                                       <span className="text-amber-500" title="Außer Konkurrenz">AK</span> : 
                                       team.rank
                                     }
                                   </TableCell>
-                                  <TableCell className="font-medium text-foreground px-2 py-2">
+                                  <TableCell className="font-medium text-foreground px-2 py-2 text-sm">
                                     {team.name}
                                     <TeamStatusBadge 
                                       outOfCompetition={team.outOfCompetition} 
