@@ -112,6 +112,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
   onShooterClick,
   teamSubstitutions,
 }) => {
+  const { isNativeApp } = useNativeApp();
   if (!shootersResults || shootersResults.length === 0) {
     return (
       <div className="p-3 text-sm text-center text-muted-foreground bg-muted/30 rounded-b-md">
