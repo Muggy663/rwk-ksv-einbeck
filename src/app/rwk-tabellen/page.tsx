@@ -121,7 +121,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
   }
   return (
     <div className="p-2 bg-muted/20 rounded-b-md shadow-inner overflow-x-auto">
-      <Table className="min-w-full">
+      <Table className="min-w-full" style={{touchAction: 'auto'}}>
         <TableHeader>
           <TableRow className="text-xs border-b-0">
             <TableHead className="pl-3 pr-1 py-1.5 text-muted-foreground font-normal whitespace-nowrap">Schütze</TableHead>
@@ -158,7 +158,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                     <div className="flex items-center gap-1">
                       <Button
                         variant="link"
-                        className="p-0 h-auto text-xs text-left hover:text-primary whitespace-normal text-wrap justify-start font-normal"
+                        className="p-0 h-auto text-xs text-left hover:text-primary whitespace-normal text-wrap justify-start font-normal text-[11px]"
                         onClick={() => onShooterClick(shooterDataForModal)}
                       >
                         {shooterRes.shooterName}
@@ -1830,7 +1830,7 @@ function RwkTabellenPageComponent() {
                         >
                           Teams "Außer Konkurrenz" anzeigen
                         </Label>
-                        <PDFHelpDialog />
+
                       </div>
                       {/* PDF Buttons nur auf Desktop */}
                       <div className="hidden lg:flex flex-col sm:flex-row gap-2">
