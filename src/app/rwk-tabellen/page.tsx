@@ -130,7 +130,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
               <TableHead key={`shooter-dg${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>
             ))}
             <TableHead className="px-1 py-1.5 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">Gesamt</TableHead>
-            <TableHead className="pl-1 pr-3 py-1.5 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">Schnitt</TableHead>
+            {!isNativeApp && <TableHead className="pl-1 pr-3 py-1.5 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">Schnitt</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -197,7 +197,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                   </TableCell>
                 ))}
                 <TableCell className="px-1 py-1.5 text-center font-medium">{shooterRes.total ?? '-'}</TableCell>
-                <TableCell className="pl-1 pr-3 py-1.5 text-center font-medium">{shooterRes.average != null ? shooterRes.average.toFixed(2) : '-'}</TableCell>
+                {!isNativeApp && <TableCell className="pl-1 pr-3 py-1.5 text-center font-medium">{shooterRes.average != null ? shooterRes.average.toFixed(2) : '-'}</TableCell>}
               </TableRow>
             );
           })}
