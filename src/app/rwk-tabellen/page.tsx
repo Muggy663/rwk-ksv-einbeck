@@ -159,9 +159,8 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                     <div className="flex items-center gap-1">
                       <Button
                         variant="link"
-                        className={`p-0 h-auto text-left hover:text-primary whitespace-normal text-wrap justify-start font-normal ${isNativeApp ? 'text-[10px] !important' : 'text-xs'}`}
+                                                     className={`p-0 h-auto text-left hover:text-primary whitespace-normal text-wrap justify-start font-normal ${isNativeApp ? 'text-[10px]' : 'text-xs'}`}
                         onClick={() => onShooterClick(shooterDataForModal)}
-                        style={isNativeApp ? {fontSize: '10px !important'} : {}}
                       >
                         {shooterRes.shooterName}
                       </Button>
@@ -1893,7 +1892,7 @@ function RwkTabellenPageComponent() {
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
-                      <div className={isNativeApp ? "overflow-auto max-h-[70vh]" : "overflow-x-auto"} style={{touchAction: 'auto'}}>
+                      <div className={isNativeApp ? "overflow-y-scroll max-h-[70vh] -webkit-overflow-scrolling-touch" : "overflow-x-auto"} style={{touchAction: isNativeApp ? 'pan-x pan-y' : 'auto'}}>
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-muted/50">
