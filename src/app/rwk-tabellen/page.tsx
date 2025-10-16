@@ -134,12 +134,12 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
       }}>
         <TableHeader>
           <TableRow className="text-xs border-b-0">
-            <TableHead className="pl-3 pr-1 py-1.5 text-muted-foreground font-normal whitespace-nowrap">Schütze</TableHead>
+            <TableHead className="pl-3 pr-1 py-1.5 text-muted-foreground font-normal whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Schütze</TableHead>
             {[...Array(numRounds)].map((_, i) => (
-              <TableHead key={`shooter-dg${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>
+              <TableHead key={`shooter-dg${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>DG {i + 1}</TableHead>
             ))}
-            <TableHead className="px-1 py-1.5 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">Gesamt</TableHead>
-            {!isNativeApp && <TableHead className="pl-1 pr-3 py-1.5 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">Schnitt</TableHead>}
+            <TableHead className="px-1 py-1.5 text-center text-xs font-medium text-muted-foreground whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Gesamt</TableHead>
+            {!isNativeApp && <TableHead className="pl-1 pr-3 py-1.5 text-center text-xs font-medium text-muted-foreground whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Schnitt</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -285,10 +285,10 @@ const ShooterDetailModalContent: React.FC<ShooterDetailModalContentProps> = ({ s
             <TableHeader>
               <TableRow>
                 {[...Array(numRounds)].map((_, i) => (
-                  <TableHead key={`detail-dg${i + 1}`} className="text-center text-xs px-1 py-1.5 font-normal text-muted-foreground">DG {i + 1}</TableHead>
+                  <TableHead key={`detail-dg${i + 1}`} className="text-center text-xs px-1 py-1.5 font-normal text-muted-foreground" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>DG {i + 1}</TableHead>
                 ))}
-                <TableHead className="text-center text-xs px-1 py-1.5 font-medium text-muted-foreground">Gesamt</TableHead>
-                <TableHead className="text-center text-xs px-1 py-1.5 font-medium text-muted-foreground">Schnitt</TableHead>
+                <TableHead className="text-center text-xs px-1 py-1.5 font-medium text-muted-foreground" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Gesamt</TableHead>
+                <TableHead className="text-center text-xs px-1 py-1.5 font-medium text-muted-foreground" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Schnitt</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1917,14 +1917,14 @@ function RwkTabellenPageComponent() {
                         }}>
                           <TableHeader>
                             <TableRow className="bg-muted/50">
-                              <TableHead className="w-[50px] text-center px-2 py-2 text-xs font-medium text-muted-foreground">#</TableHead>
-                              <TableHead className="min-w-[150px] px-2 py-2 text-sm font-medium text-muted-foreground">Mannschaft</TableHead>
+                              <TableHead className="w-[50px] text-center px-2 py-2 text-xs font-medium text-muted-foreground" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>#</TableHead>
+                              <TableHead className="min-w-[150px] px-2 py-2 text-sm font-medium text-muted-foreground" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Mannschaft</TableHead>
                               {[...Array(currentNumRoundsState)].map((_, i) => (
-                                <TableHead key={`dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>
+                                <TableHead key={`dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>DG {i + 1}</TableHead>
                               ))}
-                              <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap">Gesamt</TableHead>
-                              {!isNativeApp && <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap">Schnitt</TableHead>}
-                              {!isNativeApp && <TableHead className="w-[60px] text-right pr-4 px-2 py-2"></TableHead>}
+                              <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Gesamt</TableHead>
+                              {!isNativeApp && <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Schnitt</TableHead>}
+                              {!isNativeApp && <TableHead className="w-[60px] text-right pr-4 px-2 py-2" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}></TableHead>}
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -2126,10 +2126,10 @@ function RwkTabellenPageComponent() {
                       touchAction: needsSpecialTouch ? "pan-x pan-y" : "auto",
                       transform: "translateZ(0)"
                     }}>
-                      <TableHeader><TableRow className="bg-muted/50">
-                          <TableHead className="w-[40px] text-center">#</TableHead><TableHead>Name</TableHead><TableHead>Mannschaft</TableHead>
-                          {[...Array(currentNumRoundsState)].map((_, i) => (<TableHead key={`ind-dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>))}
-                          <TableHead className="text-center font-semibold px-1 py-1.5 text-xs text-muted-foreground whitespace-nowrap">Gesamt</TableHead><TableHead className="text-center font-semibold px-1 py-1.5 text-xs text-muted-foreground whitespace-nowrap">Schnitt</TableHead>
+                      <TableHeader className="pwa-table-header"><TableRow className="bg-muted/50">
+                          <TableHead className="w-[40px] text-center" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>#</TableHead><TableHead style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Name</TableHead><TableHead style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Mannschaft</TableHead>
+                          {[...Array(currentNumRoundsState)].map((_, i) => (<TableHead key={`ind-dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>DG {i + 1}</TableHead>))}
+                          <TableHead className="text-center font-semibold px-1 py-1.5 text-xs text-muted-foreground whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Gesamt</TableHead><TableHead className="text-center font-semibold px-1 py-1.5 text-xs text-muted-foreground whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Schnitt</TableHead>
                       </TableRow></TableHeader>
                       <TableBody>
                         {filteredIndividualData

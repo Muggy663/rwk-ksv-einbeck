@@ -4,17 +4,33 @@
   "description": "Die digitale Plattform für die Rundenwettkämpfe des Kreisschützenverbandes Einbeck",
   "start_url": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
-  "background_color": "#ffffff",
-  "theme_color": "#1f2937",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#f0fdf4",
+  "theme_color": "#16a34a",
   "edge_side_panel": {
     "preferred_width": 400
   },
-  "orientation": "portrait",
+  "orientation": "any",
   "scope": "/",
   "lang": "de",
   "categories": ["sports", "utilities"],
   "permissions": ["notifications"],
+  "shortcuts": [
+    {
+      "name": "RWK Tabellen",
+      "short_name": "Tabellen",
+      "description": "Aktuelle Rundenwettkampf Tabellen",
+      "url": "/rwk-tabellen",
+      "icons": [{ "src": "/images/logo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Vereinsbereich",
+      "short_name": "Verein",
+      "description": "Vereinsverwaltung und Dashboard",
+      "url": "/verein",
+      "icons": [{ "src": "/images/logo.png", "sizes": "96x96" }]
+    }
+  ],
   "gcm_sender_id": "103953800507",
   "prefer_related_applications": false,
   "related_applications": [],

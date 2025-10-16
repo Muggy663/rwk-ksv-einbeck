@@ -161,7 +161,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="container py-8 max-w-7xl mx-auto">
+    <div className="container py-8 max-w-7xl mx-auto pwa-optimized">
       {/* Wartungshinweis entfernt - System ist live */}
       
 
@@ -202,9 +202,9 @@ export default function HomePage() {
       <Separator className="my-6" />
 
       {/* Feature-Cards mit modernem Design */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 pwa-cards">
         {/* Letzte Ergebnis-Updates */}
-        <Card className="md:col-span-2 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-background via-background to-primary/5 border-primary/20 hover:border-primary/40">
+        <Card className="md:col-span-2 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-background via-background to-primary/5 border-primary/20 hover:border-primary/40 pwa-card-updates">
           <CardHeader>
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
