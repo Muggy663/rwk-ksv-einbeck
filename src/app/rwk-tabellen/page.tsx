@@ -97,6 +97,7 @@ import { SubstitutionBadge } from '@/components/ui/substitution-badge';
 import { BackButton } from '@/components/ui/back-button';
 import { RWKLegend } from '@/components/ui/rwk-legend';
 import { SmartTable } from '@/components/ui/smart-table';
+import { MobileTeamCards } from '@/components/ui/mobile-team-cards';
 
 const EXCLUDED_TEAM_NAME_PART = 'einzel'; // Case-insensitive check later
 
@@ -458,6 +459,23 @@ function RwkTabellenPageComponent() {
   const [isShooterDetailModalOpen, setIsShooterDetailModalOpen] = useState(false);
   const [selectedShooterForDetail, setSelectedShooterForDetail] = useState<IndividualShooterDisplayData | null>(null);
   const [teamSubstitutions, setTeamSubstitutions] = useState<Map<string, any>>(new Map());
+  const [isPortrait, setIsPortrait] = useState(false);
+  
+  // Detect orientation changes
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsPortrait(window.innerHeight > window.innerWidth && window.innerWidth < 768);
+    };
+    
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
 
   // Extrahiere URL-Parameter auf Client-Seite
   useEffect(() => {
@@ -1872,19 +1890,39 @@ function RwkTabellenPageComponent() {
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
-                      <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto md:overflow-x-visible"} style={needsSpecialTouch ? { 
-                        touchAction: 'manipulation', 
-                        maxHeight: '70vh',
-                        WebkitOverflowScrolling: 'touch',
-                        transform: 'translateZ(0)',
-                        overflow: 'auto',
-                        WebkitTransform: 'translateZ(0)',
-                        willChange: 'scroll-position'
-                      } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
-                        <SmartTable style={{ 
-                          touchAction: 'auto',
-                          transform: 'translateZ(0)'
-                        }}>
+                      isPortrait ? (
+                        <div>
+                          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <div className="flex items-center gap-2 text-blue-900 dark:text-blue-100 text-sm">
+                              <span>🔄</span>
+                              <span><strong>Bessere Ansicht:</strong> Drehen Sie Ihr Gerät ins Querformat für die vollständige Tabellen-Ansicht!</span>
+                            </div>
+                          </div>
+                          <MobileTeamCards
+                          teams={league.teams.filter(team => showOutOfCompetitionTeams || !team.outOfCompetition)}
+                          numRounds={currentNumRoundsState}
+                          onShooterClick={handleShooterNameClick}
+                          teamSubstitutions={teamSubstitutions}
+                          expandedTeams={expandedTeamIds}
+                          onToggleTeam={toggleTeamExpansion}
+                          loadingTeams={loadingTeamShooters}
+                          onLoadTeamShooters={loadTeamShooters}
+                        />
+                        </div>
+                      ) : (
+                        <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={needsSpecialTouch ? { 
+                          touchAction: 'manipulation', 
+                          maxHeight: '70vh',
+                          WebkitOverflowScrolling: 'touch',
+                          transform: 'translateZ(0)',
+                          overflow: 'auto',
+                          WebkitTransform: 'translateZ(0)',
+                          willChange: 'scroll-position'
+                        } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
+                          <SmartTable style={{ 
+                            touchAction: 'auto',
+                            transform: 'translateZ(0)'
+                          }}>
                           <TableHeader>
                             <TableRow className="bg-muted/50">
                               <TableHead className="w-[50px] text-center px-2 py-2 text-xs font-medium text-muted-foreground">#</TableHead>
@@ -1956,8 +1994,9 @@ function RwkTabellenPageComponent() {
                               </React.Fragment>
                             ))}
                           </TableBody>
-                        </SmartTable>
-                      </div>
+                          </SmartTable>
+                        </div>
+                      )
                     ) : (<p className="p-4 text-center text-muted-foreground">Keine Mannschaften in dieser Liga für {pageTitle} vorhanden.</p>)}
                   </div>
                 )
@@ -2091,7 +2130,7 @@ function RwkTabellenPageComponent() {
               <Card className="shadow-lg">
                 <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage)' : selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? '(🏆 Alle Luftdruck Auflage)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
                 <CardContent>
-                  <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto md:overflow-x-visible"} style={needsSpecialTouch ? { 
+                  <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={needsSpecialTouch ? { 
                     touchAction: 'manipulation', 
                     maxHeight: '70vh',
                     WebkitOverflowScrolling: 'touch',

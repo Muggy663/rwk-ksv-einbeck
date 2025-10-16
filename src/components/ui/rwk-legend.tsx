@@ -83,9 +83,15 @@ export const RWKLegend: React.FC = () => {
                 <span>📱</span>
                 <span>Mobile Ansicht</span>
               </div>
-              <p className="text-sm text-purple-800 dark:text-purple-200">
-                Tabellen werden als übersichtliche Karten dargestellt. Tippen Sie auf Team-Namen für Details.
-              </p>
+              <div className="space-y-2 text-sm text-purple-800 dark:text-purple-200">
+                <p><strong>Hochkant:</strong> Teams als Karten, aufklappbar für Schützen-Details</p>
+                <p><strong>Querformat:</strong> Normale Tabelle mit horizontalem Scrollen</p>
+                <div className="mt-3 p-2 bg-blue-100 dark:bg-blue-900/30 rounded border border-blue-300 dark:border-blue-700">
+                  <p className="text-blue-800 dark:text-blue-200 font-medium">
+                    💻 <strong>Tipp:</strong> Für die beste Übersicht nutzen Sie die Desktop-Version oder drehen Sie Ihr Gerät ins Querformat!
+                  </p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </CollapsibleContent>

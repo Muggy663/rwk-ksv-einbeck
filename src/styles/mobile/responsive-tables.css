@@ -1,5 +1,5 @@
-/* Responsive Card-Lösung für RWK Tabellen */
-@media (max-width: 768px) {
+/* Responsive Card-Lösung für RWK Tabellen - nur im Hochkant-Modus */
+@media (max-width: 768px) and (orientation: portrait) {
   .responsive-card-table {
     border: none;
     width: 100%;
