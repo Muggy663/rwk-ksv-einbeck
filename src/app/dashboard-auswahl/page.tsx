@@ -132,7 +132,7 @@ export default function DashboardAuswahl() {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-primary mb-2">Arbeitsbereich auswählen</h1>
         <p className="text-muted-foreground">
-          Willkommen {user.displayName || user.email}! Wählen Sie Ihren Arbeitsbereich:
+          Willkommen {userAppPermissions?.displayName || user.displayName || user.email}! Wähle deinen Arbeitsbereich:
         </p>
       </div>
 

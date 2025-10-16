@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   MobileTable as Table,
   MobileTableBody as TableBody,
@@ -87,6 +88,7 @@ export default function VereinErgebnissePage() {
   const [isSubmittingScores, setIsSubmittingScores] = useState(false);
   const [handzettelFiles, setHandzettelFiles] = useState<File[]>([]);
   const [showOCR, setShowOCR] = useState(false);
+  const [attachOnly, setAttachOnly] = useState(false);
 
  useEffect(() => {
 
@@ -884,7 +886,10 @@ Die Handzettel sind als Anhang beigefügt.`);
             body: uploadFormData
           });
           
-          if (uploadResponse.ok) {
+          const responseData = await uploadResponse.json();
+          console.log('E-Mail API Response:', responseData);
+          
+          if (uploadResponse.ok && responseData.success) {
             progressToast.updateProgress(100, "Upload erfolgreich abgeschlossen!");
             toast({ 
               title: "✅ Ergebnisse und Handzettel gesendet!", 
@@ -892,15 +897,16 @@ Die Handzettel sind als Anhang beigefügt.`);
               className: "border-green-500 bg-green-50"
             });
           } else {
-            throw new Error('Upload fehlgeschlagen');
+            throw new Error(responseData.message || 'Upload fehlgeschlagen');
           }
         } catch (error) {
           console.error('Handzettel-Upload Fehler:', error);
-          progressToast.error('E-Mail-Versand fehlgeschlagen');
+          progressToast.error(`E-Mail-Versand fehlgeschlagen: ${error.message || error}`);
           toast({ 
             title: "✅ Ergebnisse gespeichert", 
-            description: "Handzettel-E-Mail fehlgeschlagen, aber Ergebnisse sind gesichert.",
-            className: "border-green-500 bg-green-50"
+            description: `Handzettel-E-Mail fehlgeschlagen: ${error.message || error}. Ergebnisse sind aber gesichert.`,
+            className: "border-green-500 bg-green-50",
+            duration: 8000
           });
         }
       } else {
@@ -1060,38 +1066,128 @@ Die Handzettel sind als Anhang beigefügt.`);
                     DG: <strong>{selectedRound}</strong> | OCR auto
                   </p>
                   
-                  <Input 
-                    type="file" 
-                    accept="image/*" 
-                    capture="environment"
-                    onChange={async (e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        const files = Array.from(e.target.files);
-                        setHandzettelFiles(files);
-                        setShowOCR(true);
-                      }
-                    }}
-                    className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
-                  />
-                  
-                  <div className="mt-2 text-xs text-blue-700 space-y-1">
-                    <p>📱 <strong>Handy:</strong> Foto → OCR automatisch</p>
-                    <p>💻 <strong>PC:</strong> Datei wählen</p>
-                    <p>✅ <strong>Formate:</strong> JPG, PNG (PDF folgt)</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="attach-only" 
+                        checked={attachOnly} 
+                        onCheckedChange={setAttachOnly}
+                      />
+                      <Label htmlFor="attach-only" className="text-sm">
+                        📎 Nur anhängen (ohne OCR-Verarbeitung)
+                      </Label>
+                    </div>
+                    
+                    <Input 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment"
+                      multiple
+                      onChange={async (e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          const files = Array.from(e.target.files);
+                          setHandzettelFiles(files);
+                          
+                          // OCR nur starten wenn nicht "nur anhängen" gewählt ist
+                          if (!attachOnly && files.length === 1) {
+                            setShowOCR(true);
+                          } else if (attachOnly) {
+                            toast({
+                              title: "📎 Handzettel vorgemerkt",
+                              description: `${files.length} Datei(en) werden beim Speichern mitgesendet (ohne OCR).`,
+                              className: "border-blue-500 bg-blue-50"
+                            });
+                          }
+                        }
+                      }}
+                      className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
+                    />
+                    
+                    {handzettelFiles.length > 0 && !attachOnly && (
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (handzettelFiles.length > 0) {
+                              setShowOCR(true);
+                            }
+                          }}
+                          className="text-xs"
+                        >
+                          🤖 OCR starten
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setHandzettelFiles([]);
+                            setShowOCR(false);
+                          }}
+                          className="text-xs text-red-600"
+                        >
+                          ❌ Entfernen
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {handzettelFiles.length > 0 && attachOnly && (
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setHandzettelFiles([]);
+                            setAttachOnly(false);
+                          }}
+                          className="text-xs text-red-600"
+                        >
+                          ❌ Entfernen
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   
-                  {handzettelFiles.length > 0 && (
+                  <div className="mt-2 text-xs text-blue-700 space-y-1">
+                    <p>📱 <strong>Handy:</strong> Checkbox → Foto → OCR oder nur anhängen</p>
+                    <p>💻 <strong>PC:</strong> Mehrere Dateien möglich</p>
+                    <p>✅ <strong>Formate:</strong> JPG, PNG (PDF folgt)</p>
+                    <p>📎 <strong>Nur anhängen:</strong> Checkbox aktivieren für Upload ohne OCR</p>
+                  </div>
+                  
+                  {handzettelFiles.length > 0 && !showOCR && !attachOnly && (
                     <div className="mt-3 p-2 bg-blue-100 rounded border border-blue-200 w-full max-w-full overflow-hidden">
                       <div className="flex items-center gap-2 text-sm text-blue-800 min-w-0">
+                        <Camera className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">📎 {handzettelFiles.length} Datei(en) ausgewählt - OCR starten?</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {handzettelFiles.length > 0 && attachOnly && (
+                    <div className="mt-3 p-2 bg-green-100 rounded border border-green-200 w-full max-w-full overflow-hidden">
+                      <div className="flex items-center gap-2 text-sm text-green-800 min-w-0">
+                        <Camera className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">📎 {handzettelFiles.length} Datei(en) nur zum Anhängen vorgemerkt</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {handzettelFiles.length > 0 && showOCR && (
+                    <div className="mt-3 p-2 bg-green-100 rounded border border-green-200 w-full max-w-full overflow-hidden">
+                      <div className="flex items-center gap-2 text-sm text-green-800 min-w-0">
                         <Zap className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">📸 Foto aufgenommen - OCR startet...</span>
+                        <span className="truncate">🤖 OCR läuft...</span>
                       </div>
                     </div>
                   )}
                 </div>
                 
                 {/* OCR-Komponente */}
-                {showOCR && handzettelFiles.length > 0 && (
+                {showOCR && handzettelFiles.length > 0 && !attachOnly && (
                   <div data-ocr-component className="w-full max-w-full overflow-hidden">
                     <HandzettelOCR
                       imageFile={handzettelFiles[0]}
@@ -1392,8 +1488,7 @@ Die Handzettel sind als Anhang beigefügt.`);
                       .map(sh => (
                         <SelectItem 
                           key={sh.id} 
-                          value={sh.id} 
-                          className="font-bold text-primary"
+                          value={sh.id}
                         >
                           {sh.name} ⚠️
                         </SelectItem>

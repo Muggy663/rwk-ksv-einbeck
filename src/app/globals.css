@@ -78,6 +78,20 @@
 
 /* Mobile App Fixes - Enhanced with Safe Area System */
 @media (max-width: 768px) {
+  /* Chrome Mobile Touch Fix */
+  .overflow-x-auto, .overflow-auto {
+    -webkit-overflow-scrolling: touch !important;
+    overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+    transform: translateZ(0) !important;
+  }
+  
+  /* Force scroll für Chrome Mobile */
+  table {
+    touch-action: auto !important;
+    -webkit-transform: translate3d(0,0,0) !important;
+    transform: translate3d(0,0,0) !important;
+  }
   /* Prevent horizontal overflow only on mobile */
   html, body {
     overflow-x: hidden !important;
@@ -588,6 +602,14 @@
   padding-bottom: env(safe-area-inset-bottom, 0px) !important;
   /* PWA Splash Screen Farbe */
   background-color: #f0fdf4 !important;
+}
+
+/* PWA Dropdown Fix */
+@media (display-mode: standalone) {
+  [data-radix-select-content] {
+    transform-origin: top !important;
+    animation-direction: normal !important;
+  }
 }
 
 .pwa-app .pwa-safe-footer {

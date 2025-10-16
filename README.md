@@ -4,7 +4,7 @@
 
 Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
-[![Version](https://img.shields.io/badge/Version-1.8.1-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-1.8.2-blue?style=for-the-badge)](#)
 [![Android App](https://img.shields.io/badge/Android_App-0.9.4.1-success?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -145,7 +145,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 | Platform | Version | Status | Download |
 |----------|---------|--------|---------|
-| **Web App** | 1.8.1 | ✅ Produktiv | Vercel Deployment |
+| **Web App** | 1.8.2 | ✅ Produktiv | Vercel Deployment |
 | **Android App** | 0.9.4.1 | ✅ Produktiv | Google Play Store |
 | **iOS App** | - | ❌ Nicht geplant | Unrentabel |
 
@@ -228,7 +228,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 12. Oktober 2025*
+*Letzte Aktualisierung: 16. Oktober 2025*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 
@@ -255,6 +255,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
+- **Web-Version 1.8.2** - Handzettel-Upload Verbesserungen & Dashboard-Fixes: Checkbox "Nur anhängen (ohne OCR)" für optionale OCR-Verarbeitung, Vereinsname-Anzeige im Dashboard korrigiert, Meldezettel-Karten-Titel optimiert, Schützen-Dropdown Sichtbarkeit in Light Mode behoben
 - **Web-Version 1.8.1** - Mobile OCR-Optimierungen & UI-Fixes: Automatische OCR-Starts nach Foto-Aufnahme, Tabellen-Overflow-Fixes für Portrait-Modus, Safe Area Support für mobile Header, Dark Mode Print-Fixes, Team-Sortierung mit Einzel-Teams am Ende, PDF-Hilfe Button kompakter für App-Ansicht
 - **Web-Version 1.7.5.4** - Google Analytics Integration (wieder entfernt in v1.7.5.5): Besucherzähler im Footer mit Google Analytics 4, DSGVO-konformes Tracking mit anonymisierten IPs, automatisches Page-Tracking, dezente Anzeige der Besucherzahlen
 - **Web-Version 1.7.5.3** - Sportleiter Schützen-Vollzugriff: SPORTLEITER können jetzt Schützen anlegen/bearbeiten/löschen, Geburtsjahr-Input korrigiert, Teams nur aus laufenden Saisons, Stammdaten-Hinweis 01.08.2025 im RWK Dashboard

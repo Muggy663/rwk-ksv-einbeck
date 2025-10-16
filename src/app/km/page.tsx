@@ -12,7 +12,7 @@ import { BackButton } from '@/components/ui/back-button';
 
 export default function KMDashboard() {
   const { hasKMAccess, userRole, loading } = useKMAuth();
-  const { user } = useAuthContext();
+  const { user, userAppPermissions } = useAuthContext();
   const [isInstructionOpen, setIsInstructionOpen] = useState(false);
   const [aktivesJahr, setAktivesJahr] = useState({ jahr: 2026, meldeschluss: '15.12.2025' });
   const [isLoadingJahr, setIsLoadingJahr] = useState(true);
@@ -65,10 +65,10 @@ export default function KMDashboard() {
       <div className="mb-6">
         <div className="flex items-center mb-2">
           <BackButton className="mr-2" fallbackHref="/dashboard-auswahl" />
-          <h1 className="text-3xl font-bold text-primary">🏆 KM-Dashboard</h1>
+          <h1 className="text-3xl font-bold text-primary">🏆 Kreismeisterschaften</h1>
         </div>
         <p className="text-muted-foreground">
-          Hallo {user?.displayName || user?.email}! Kreismeisterschafts-Meldungen für Ihren Verein
+          Hallo {userAppPermissions?.displayName || user?.displayName || user?.email}! Kreismeisterschafts-Meldungen für deinen Verein
           {userRole && <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{userRole === 'admin' ? 'Admin' : userRole === 'km_organisator' ? 'KM-Organisator' : userRole === 'verein' ? 'Sportleiter' : 'Vereinsvertreter'}</span>}
         </p>
       </div>

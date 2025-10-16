@@ -1,22 +1,27 @@
 // src/app/verein/dashboard/page.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Users, FileText, BarChart3, Calendar, Key, Play, Sparkles, Target, Trophy, Shield, HelpCircle } from 'lucide-react';
+import { db } from '@/lib/firebase/config';
+import { collection, getDocs } from 'firebase/firestore';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useVereinAuth } from '@/app/verein/layout';
+import { useAuthContext } from '@/components/auth/AuthContext';
 import { ClubSwitcher } from '@/components/ui/club-switcher';
 import { InteractiveGuide } from '@/components/onboarding/InteractiveGuide';
 import { BackButton } from '@/components/ui/back-button';
 
 export default function VereinDashboardPage() {
   const { user } = useAuth();
-  const { userPermission } = useVereinAuth();
+  const { userPermission, currentClubId, assignedClubId } = useVereinAuth();
+  const { userAppPermissions } = useAuthContext();
   const [showGuide, setShowGuide] = useState(false);
+  const [allClubsGlobal, setAllClubsGlobal] = useState([]);
 
   const onboardingSteps = [
     {
@@ -97,6 +102,20 @@ export default function VereinDashboardPage() {
   const completeGuide = () => setShowGuide(false);
   const skipGuide = () => setShowGuide(false);
 
+  // Lade Clubs für Vereinsanzeige
+  useEffect(() => {
+    const fetchClubs = async () => {
+      try {
+        const clubsSnapshot = await getDocs(collection(db, 'clubs'));
+        const clubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setAllClubsGlobal(clubs);
+      } catch (error) {
+        console.error('Fehler beim Laden der Clubs:', error);
+      }
+    };
+    fetchClubs();
+  }, []);
+
   return (
     <div className="container py-8 max-w-7xl mx-auto">
       {/* Onboarding-Tour */}
@@ -112,8 +131,15 @@ export default function VereinDashboardPage() {
         <div>
           <div className="flex items-center mb-4">
             <BackButton className="mr-2" fallbackHref="/dashboard-auswahl" />
-            <h1 className="text-4xl font-bold text-primary">RWK-Dashboard</h1>
+            <h1 className="text-4xl font-bold text-primary">Rundenwettkampf</h1>
           </div>
+          {(currentClubId || assignedClubId) && (
+            <p className="text-muted-foreground text-lg mb-2">
+              Verein: <span className="font-semibold text-primary">
+                {allClubsGlobal.find(c => c.id === (currentClubId || assignedClubId))?.name || 'Verein wird geladen...'}
+              </span>
+            </p>
+          )}
           <div className="mb-4">
             <ClubSwitcher />
             <p className="text-xs text-muted-foreground mt-1 sm:hidden">
@@ -121,7 +147,7 @@ export default function VereinDashboardPage() {
             </p>
           </div>
           <p className="text-lg text-muted-foreground">
-            Willkommen, {user?.displayName || user?.email}
+            Willkommen, {userAppPermissions?.displayName || user?.displayName || user?.email}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
             Verwalte hier deine Mannschaften, Schützen und Ergebnisse
@@ -245,15 +271,15 @@ export default function VereinDashboardPage() {
               </div>
               <Badge variant="secondary">Neu</Badge>
             </div>
-            <CardTitle className="text-xl">Meldebögen</CardTitle>
+            <CardTitle className="text-xl">Meldezettel</CardTitle>
             <CardDescription className="text-base">
-              Erstelle Durchgangs-Meldebögen und Gesamtergebnislisten für Wettkämpfe
+              Erstelle Durchgangs-Handzettel und Gesamtergebnislisten für Wettkämpfe
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full h-12 text-sm font-semibold">
               <Link href="/verein/handtabellen">
-                <span className="truncate">Meldebögen erstellen</span>
+                <span className="truncate">Meldezettel erstellen</span>
               </Link>
             </Button>
           </CardContent>
@@ -267,37 +293,15 @@ export default function VereinDashboardPage() {
               </div>
               <Badge variant="outline">Info</Badge>
             </div>
-            <CardTitle className="text-xl">Termine</CardTitle>
+            <CardTitle className="text-xl">Wettkampftermine</CardTitle>
             <CardDescription className="text-base">
-              Sieh dir alle aktuellen Wettkampftermine an
+              Sieh dir alle aktuellen Wettkampftermine an und füge neue hinzu
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="w-full h-12 text-sm">
               <Link href="/termine">
-                <span className="truncate">Termine anzeigen</span>
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-teal-500">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="p-2 bg-teal-100 rounded-lg">
-                <Calendar className="h-6 w-6 text-teal-600" />
-              </div>
-              <Badge variant="outline">Neu</Badge>
-            </div>
-            <CardTitle className="text-xl">Termin hinzufügen</CardTitle>
-            <CardDescription className="text-base">
-              Füge neue Wettkampftermine hinzu
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="w-full h-12 text-sm">
-              <Link href="/termine/add">
-                <span className="truncate">Termin erstellen</span>
+                <span className="truncate">Termine verwalten</span>
               </Link>
             </Button>
           </CardContent>

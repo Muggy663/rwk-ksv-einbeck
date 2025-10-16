@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.8.1"; // Mobile OCR-Optimierungen, automatische OCR-Starts, Tabellen-Overflow-Fixes
+  const version = "1.8.2"; // Handzettel-Upload Verbesserungen, Dashboard-Fixes, OCR optional
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t pb-safe-area-bottom pwa-safe-footer">
@@ -35,7 +35,7 @@ export function SiteFooter() {
           <p className="text-xs text-muted-foreground mt-3">
             Für beste Kompatibilität empfehlen wir Chrome, Firefox oder Edge
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-1 mb-6">
             Entwickelt mit ❤️ für den deutschen Schießsport
           </p>
         </div>
