@@ -98,6 +98,7 @@ import { BackButton } from '@/components/ui/back-button';
 import { RWKLegend } from '@/components/ui/rwk-legend';
 import { SmartTable } from '@/components/ui/smart-table';
 import { MobileTeamCards } from '@/components/ui/mobile-team-cards';
+import { MobileShooterCards } from '@/components/ui/mobile-shooter-cards';
 
 const EXCLUDED_TEAM_NAME_PART = 'einzel'; // Case-insensitive check later
 
@@ -1781,6 +1782,16 @@ function RwkTabellenPageComponent() {
             </div>
           )}
           
+          {/* Orientierungs-Hinweis für Portrait-Modus */}
+          {isPortrait && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2 text-blue-900 dark:text-blue-100 text-sm">
+                <span>🔄</span>
+                <span><strong>Bessere Ansicht:</strong> Drehen Sie Ihr Gerät ins Querformat für die vollständige Tabellen-Ansicht!</span>
+              </div>
+            </div>
+          )}
+          
           {!loadingData && !error && (!teamData || teamData.leagues.length === 0) && (
             <Card className="shadow-lg">
                 <CardHeader><CardTitle className="text-accent">Keine Ligen für {selectedCompetition.displayName}</CardTitle></CardHeader>
@@ -2030,7 +2041,7 @@ function RwkTabellenPageComponent() {
                       <SelectTrigger id="individualLeagueFilter" className="w-full sm:w-[350px] mt-1 shadow-sm border-blue-300">
                         <SelectValue placeholder="-- Bitte Liga auswählen --" />
                       </SelectTrigger>
-                      <SelectContent side="bottom" align="start" sideOffset={4} avoidCollisions={true}>
+                      <SelectContent side="bottom" align="start" sideOffset={4} avoidCollisions={true} position="popper">
                         {/* Spezielle Optionen für Gesamtlisten */}
                         {selectedCompetition?.discipline === 'KK' && (
                           <SelectItem value="KK_GEWEHR_EHRUNGEN" className="bg-amber-50 text-amber-800 font-medium">
@@ -2130,19 +2141,32 @@ function RwkTabellenPageComponent() {
               <Card className="shadow-lg">
                 <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage)' : selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? '(🏆 Alle Luftdruck Auflage)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
                 <CardContent>
-                  <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={needsSpecialTouch ? { 
-                    touchAction: 'manipulation', 
-                    maxHeight: '70vh',
-                    WebkitOverflowScrolling: 'touch',
-                    transform: 'translateZ(0)',
-                    overflow: 'auto',
-                    WebkitTransform: 'translateZ(0)',
-                    willChange: 'scroll-position'
-                  } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
-                    <Table className="responsive-card-table" style={{ 
-                      touchAction: 'auto',
-                      transform: 'translateZ(0)'
-                    }}>
+                  {isPortrait ? (
+                    <MobileShooterCards
+                      shooters={filteredIndividualData
+                        .filter(shooter => showOutOfCompetitionShooters || !shooter.teamOutOfCompetition)
+                        .filter(shooter => 
+                          !shooterSearchTerm || 
+                          shooter.shooterName.toLowerCase().includes(shooterSearchTerm.toLowerCase()) ||
+                          shooter.teamName.toLowerCase().includes(shooterSearchTerm.toLowerCase())
+                        )}
+                      numRounds={currentNumRoundsState}
+                      onShooterClick={handleShooterNameClick}
+                    />
+                  ) : (
+                    <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={needsSpecialTouch ? { 
+                      touchAction: 'manipulation', 
+                      maxHeight: '70vh',
+                      WebkitOverflowScrolling: 'touch',
+                      transform: 'translateZ(0)',
+                      overflow: 'auto',
+                      WebkitTransform: 'translateZ(0)',
+                      willChange: 'scroll-position'
+                    } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
+                      <Table className="responsive-card-table" style={{ 
+                        touchAction: 'auto',
+                        transform: 'translateZ(0)'
+                      }}>
                       <TableHeader className="pwa-table-header"><TableRow className="bg-muted/50">
                           <TableHead className="w-[40px] text-center">#</TableHead><TableHead>Name</TableHead><TableHead>Mannschaft</TableHead>
                           {[...Array(currentNumRoundsState)].map((_, i) => (<TableHead key={`ind-dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>))}
@@ -2190,8 +2214,9 @@ function RwkTabellenPageComponent() {
                           </TableRow>
                         ))}
                       </TableBody>
-                    </Table>
-                  </div>
+                      </Table>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
