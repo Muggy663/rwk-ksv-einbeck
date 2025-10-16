@@ -124,11 +124,13 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
   }
   return (
     <div className="p-2 bg-muted/20 rounded-b-md shadow-inner overflow-x-auto" style={{ 
-      touchAction: "pan-x pan-y",
+      touchAction: "manipulation",
       WebkitOverflowScrolling: "touch",
       transform: "translateZ(0)",
+      WebkitTransform: "translateZ(0)",
       overflowX: "scroll",
-      overflowY: "hidden"
+      overflowY: "hidden",
+      willChange: "scroll-position"
     }}>
       <Table className="min-w-full" style={{ 
         touchAction: "auto",
@@ -1908,11 +1910,13 @@ function RwkTabellenPageComponent() {
                     </div>
                     {league.teams.length > 0 ? (
                       <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={needsSpecialTouch ? { 
-                        touchAction: 'pan-x pan-y', 
+                        touchAction: 'manipulation', 
                         maxHeight: '70vh',
                         WebkitOverflowScrolling: 'touch',
                         transform: 'translateZ(0)',
-                        overflow: 'auto'
+                        overflow: 'auto',
+                        WebkitTransform: 'translateZ(0)',
+                        willChange: 'scroll-position'
                       } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
                         <Table style={{ 
                           touchAction: 'auto',
@@ -2120,11 +2124,13 @@ function RwkTabellenPageComponent() {
                 <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage)' : selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? '(🏆 Alle Luftdruck Auflage)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
                 <CardContent>
                   <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={needsSpecialTouch ? { 
-                    touchAction: 'pan-x pan-y', 
+                    touchAction: 'manipulation', 
                     maxHeight: '70vh',
                     WebkitOverflowScrolling: 'touch',
                     transform: 'translateZ(0)',
-                    overflow: 'auto'
+                    overflow: 'auto',
+                    WebkitTransform: 'translateZ(0)',
+                    willChange: 'scroll-position'
                   } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
                     <Table style={{ 
                       touchAction: 'auto',
