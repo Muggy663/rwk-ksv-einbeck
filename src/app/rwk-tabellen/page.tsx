@@ -1678,7 +1678,12 @@ function RwkTabellenPageComponent() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" style={{
+      touchAction: 'manipulation',
+      WebkitOverflowScrolling: 'touch',
+      WebkitTransform: 'translateZ(0)',
+      willChange: 'scroll-position'
+    }}>
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="flex items-center space-x-3">
           <BackButton className="mr-2" fallbackHref="/" />
