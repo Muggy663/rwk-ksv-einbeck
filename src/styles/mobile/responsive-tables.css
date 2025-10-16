@@ -1,81 +1,73 @@
-/* Mobile-optimierte Tabellendarstellung */
+/* Responsive Card-Lösung für RWK Tabellen */
 @media (max-width: 768px) {
-  /* Allgemeine Tabellen-Anpassungen */
-  .responsive-table {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  /* Aktiviere Card-Modus für spezielle Tabellen */
+  .responsive-card-table {
+    border: none;
   }
 
-  /* Spezifische Anpassungen für RWK-Tabellen */
-  .rwk-table-container {
-    margin: 0 -1rem;
-    padding: 0 1rem;
-    width: calc(100% + 2rem);
-  }
-
-  .rwk-table th, 
-  .rwk-table td {
-    padding: 0.5rem;
-    font-size: 0.875rem;
-  }
-
-  /* Verstecke weniger wichtige Spalten auf kleinen Bildschirmen */
-  .rwk-table .hide-on-mobile {
+  /* 1. Tabellenkopf ausblenden */
+  .responsive-card-table thead {
     display: none;
   }
 
-  /* Statistik-Tabellen */
-  .statistics-table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  /* 2. Jede Zeile wird zu einer Karte */
+  .responsive-card-table tr {
+    display: block;
+    margin-bottom: 1rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    background: hsl(var(--card));
   }
 
-  /* Verbesserte Touch-Interaktionen */
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
+  /* 3. Jede Zelle wird zu einer eigenen Zeile */
+  .responsive-card-table td {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed hsl(var(--border) / 0.3);
+    font-size: 0.9rem;
   }
 
-  /* Verbesserte Lesbarkeit auf kleinen Bildschirmen */
-  .mobile-text-sm {
-    font-size: 0.875rem;
+  .responsive-card-table td:last-child {
+    border-bottom: none;
+    font-weight: 600;
+    color: hsl(var(--primary));
   }
 
-  .mobile-text-xs {
-    font-size: 0.75rem;
+  /* 4. Label aus data-label Attribut */
+  .responsive-card-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: hsl(var(--muted-foreground));
+    min-width: 40%;
+  }
+
+  /* Spezielle Styles für wichtige Zellen */
+  .responsive-card-table td[data-label="Name"]::before,
+  .responsive-card-table td[data-label="Schütze"]::before {
+    color: hsl(var(--primary));
+  }
+
+  .responsive-card-table td[data-label="Gesamt"]::before,
+  .responsive-card-table td[data-label="Total"]::before {
+    color: hsl(var(--primary));
+  }
+
+  /* Rang-Badge */
+  .responsive-card-table td[data-label="Rang"] {
+    font-weight: bold;
+    background: hsl(var(--primary) / 0.1);
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    margin: 0.25rem 0;
   }
 }
 
-/* Verbesserte Touch-Interaktionen für Diagramme */
-@media (max-width: 768px) {
-  .recharts-wrapper {
-    touch-action: pan-y;
-  }
-
-  .recharts-tooltip-wrapper {
-    padding: 8px;
-  }
-
-  .recharts-default-tooltip {
-    padding: 8px !important;
-    border-radius: 6px !important;
-  }
-
-  .recharts-tooltip-item {
-    margin-bottom: 4px !important;
-  }
-
-  /* Größere Klickbereiche für Diagramm-Elemente */
-  .recharts-layer {
-    cursor: pointer;
-  }
-
-  .recharts-active-dot {
-    r: 6;
-  }
+/* Dark Mode Anpassungen */
+.dark .responsive-card-table tr {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
 }

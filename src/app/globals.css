@@ -5,6 +5,7 @@
 /* Import Mobile Styles */
 @import '../styles/mobile/safe-area.css';
 @import '../styles/mobile/android-fixes.css';
+@import '../styles/mobile/responsive-tables.css';
 @import '../styles/animations/micro-animations.css';
 @import '../styles/themes/dark-mode-enhanced.css';
 

@@ -94,6 +94,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { SubstitutionBadge } from '@/components/ui/substitution-badge';
 import { BackButton } from '@/components/ui/back-button';
+import { RWKLegend } from '@/components/ui/rwk-legend';
 
 const EXCLUDED_TEAM_NAME_PART = 'einzel'; // Case-insensitive check later
 
@@ -132,7 +133,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
       overflowY: "hidden",
       willChange: "scroll-position"
     }}>
-      <Table className="min-w-full" style={{ 
+      <Table className="min-w-full responsive-card-table" style={{ 
         touchAction: "auto",
         transform: "translateZ(0)"
       }}>
@@ -167,7 +168,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
             };
             return (
               <TableRow key={`ts-${shooterRes.shooterId}`} className="text-sm border-b-0 hover:bg-background/40">
-                <TableCell className="font-medium pl-3 pr-1 py-1.5 whitespace-nowrap">
+                <TableCell className="font-medium pl-3 pr-1 py-1.5 whitespace-nowrap" data-label="Schütze">
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-1">
                       <Button
@@ -194,7 +195,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                   </div>
                 </TableCell>
                 {[...Array(numRounds)].map((_, i) => (
-                  <TableCell key={`shooter-dg${i + 1}-${shooterRes.shooterId}`} className="px-1 py-1.5 text-center">
+                  <TableCell key={`shooter-dg${i + 1}-${shooterRes.shooterId}`} className="px-1 py-1.5 text-center" data-label={`DG ${i + 1}`}>
                     {shooterRes.results?.[`dg${i + 1}`] !== null ? (
                       shooterRes.results?.[`dg${i + 1}`]
                     ) : (
@@ -211,8 +212,8 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                     )}
                   </TableCell>
                 ))}
-                <TableCell className="px-1 py-1.5 text-center font-medium">{shooterRes.total ?? '-'}</TableCell>
-                {!isNativeApp && <TableCell className="pl-1 pr-3 py-1.5 text-center font-medium">{shooterRes.average != null ? shooterRes.average.toFixed(2) : '-'}</TableCell>}
+                <TableCell className="px-1 py-1.5 text-center font-medium" data-label="Gesamt">{shooterRes.total ?? '-'}</TableCell>
+                {!isNativeApp && <TableCell className="pl-1 pr-3 py-1.5 text-center font-medium" data-label="Schnitt">{shooterRes.average != null ? shooterRes.average.toFixed(2) : '-'}</TableCell>}
               </TableRow>
             );
           })}
@@ -1737,6 +1738,20 @@ function RwkTabellenPageComponent() {
         )}
 
         <TabsContent value="mannschaften">
+          {/* Globale Team-Suche */}
+          {!loadingData && !error && teamData && teamData.leagues.length > 0 && (
+            <div className="mb-6">
+              <Input 
+                placeholder="Team oder Verein suchen..." 
+                className="max-w-md" 
+                onChange={(e) => {
+                  // TODO: Implement global team search functionality
+                  console.log('Search term:', e.target.value);
+                }}
+              />
+            </div>
+          )}
+          
           {!loadingData && !error && (!teamData || teamData.leagues.length === 0) && (
             <Card className="shadow-lg">
                 <CardHeader><CardTitle className="text-accent">Keine Ligen für {selectedCompetition.displayName}</CardTitle></CardHeader>
@@ -1758,79 +1773,11 @@ function RwkTabellenPageComponent() {
                 title: <>{league.name} {league.shortName && `(${league.shortName})`}</>,
                 content: (
                   <div className="pt-0 pb-0">
-                    {/* Erklärung der Wertungslogik */}
-                    <div className="mb-4 bg-muted/20 p-3 rounded-md text-sm">
-                      <h4 className="font-medium mb-1">Hinweise:</h4>
-                      <p className="mb-2">Die Tabelle wird nach dem letzten vollständig abgeschlossenen Durchgang sortiert. 
-                      Teams, die bereits weitere Durchgänge begonnen haben, werden erst neu eingeordnet, 
-                      wenn alle Teams diesen Durchgang abgeschlossen haben.</p>
-                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <LineChartIcon className="h-3 w-3" />
-                        <strong>Tipp:</strong> Klicken Sie auf Schützen-Namen für detaillierte Statistik-Diagramme
-                      </p>
-                      <p className="flex items-center gap-1 text-xs text-amber-600 mt-2">
-                        <AlertTriangle className="h-3 w-3" />
-                        <strong>Achtung:</strong> Fehlende Ergebnisse werden mit <span className="bg-red-100 text-red-700 px-1 rounded-sm font-bold">FEHLT</span> markiert und können die Gesamtwertung beeinflussen
-                      </p>
-                      <p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                        <span className="h-3 w-3">-</span>
-                        <strong>Hinweis:</strong> Ein Strich (-) bedeutet, dass der Durchgang noch nicht begonnen wurde
-                      </p>
-                    </div>
-                    
-                    {/* Farbkodierung für den aktuellen Durchgang */}
-                    <div className="flex items-center gap-2 text-sm mb-4">
-                      <span className="font-medium">Aktueller vollständiger Durchgang:</span>
-                      <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-md font-bold">
-                        {league.teams.length > 0 && 
-                         league.teams[0].sortingScore !== undefined && 
-                         league.teams[0].sortingAverage && 
-                         !isNaN(league.teams[0].sortingScore / league.teams[0].sortingAverage) ? 
-                          Math.floor(league.teams[0].sortingScore / league.teams[0].sortingAverage) : 0}
-                      </span>
-                    </div>
-                    
-                    {/* Fortschrittsanzeige für Durchgänge */}
-                    <div className="flex gap-1 mb-4">
-                      {[...Array(currentNumRoundsState)].map((_, i) => {
-                        const currentRound = league.teams.length > 0 && 
-                          league.teams[0].sortingScore !== undefined && 
-                          league.teams[0].sortingAverage && 
-                          !isNaN(league.teams[0].sortingScore / league.teams[0].sortingAverage) ? 
-                            Math.floor(league.teams[0].sortingScore / league.teams[0].sortingAverage) : 0;
-                        return (
-                          <div 
-                            key={i} 
-                            className={`h-2 flex-1 rounded-full ${i < currentRound ? 'bg-green-500' : 'bg-muted'}`}
-                            title={`Durchgang ${i+1}: ${i < currentRound ? 'Abgeschlossen' : 'Offen'}`}
-                          />
-                        );
-                      })}
-                    </div>
+
                     
                     {/* Verbesserte mobile Ansicht */}
                     <div className="md:hidden p-3 bg-yellow-50 text-yellow-800 rounded-md mb-4">
                       <p className="text-sm">Für die beste Ansicht der Tabelle bitte das Gerät drehen oder einen größeren Bildschirm verwenden.</p>
-                    </div>
-                    
-                    {/* Schnellfilter für Teams */}
-                    <div className="mb-4">
-                      <Input 
-                        placeholder="Team suchen..." 
-                        className="max-w-xs" 
-                        onChange={(e) => {
-                          const filterValue = e.target.value.toLowerCase();
-                          const filteredTeams = league.teams.filter(team => 
-                            team.name.toLowerCase().includes(filterValue) || 
-                            team.clubName.toLowerCase().includes(filterValue)
-                          );
-                          // Hier könnte man die gefilterten Teams anzeigen, aber das würde eine größere Änderung erfordern
-                          // Für jetzt nur die Anzahl der gefundenen Teams anzeigen
-                          if (filterValue) {
-
-                          }
-                        }}
-                      />
                     </div>
                     
                     <div className="flex justify-between items-center p-2 bg-muted/10">
@@ -1914,7 +1861,7 @@ function RwkTabellenPageComponent() {
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
-                      <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={needsSpecialTouch ? { 
+                      <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto md:overflow-x-visible"} style={needsSpecialTouch ? { 
                         touchAction: 'manipulation', 
                         maxHeight: '70vh',
                         WebkitOverflowScrolling: 'touch',
@@ -1923,7 +1870,7 @@ function RwkTabellenPageComponent() {
                         WebkitTransform: 'translateZ(0)',
                         willChange: 'scroll-position'
                       } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
-                        <Table style={{ 
+                        <Table className="responsive-card-table" style={{ 
                           touchAction: 'auto',
                           transform: 'translateZ(0)'
                         }}>
@@ -1945,13 +1892,13 @@ function RwkTabellenPageComponent() {
                               .map(team => (
                               <React.Fragment key={team.id}>
                                 <TableRow className="hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => isNativeApp ? toggleTeamExpansion(team.id) : toggleTeamExpansion(team.id)}>
-                                  <TableCell className="text-center font-medium px-2 py-2">
+                                  <TableCell className="text-center font-medium px-2 py-2" data-label="Rang">
                                     {team.outOfCompetition ? 
                                       <span className="text-amber-500" title="Außer Konkurrenz">AK</span> : 
                                       team.rank
                                     }
                                   </TableCell>
-                                  <TableCell className="font-medium text-foreground px-2 py-2 text-sm">
+                                  <TableCell className="font-medium text-foreground px-2 py-2 text-sm" data-label="Mannschaft">
                                     {team.name}
                                     <TeamStatusBadge 
                                       outOfCompetition={team.outOfCompetition} 
@@ -1960,9 +1907,9 @@ function RwkTabellenPageComponent() {
                                     />
                                   </TableCell>
                                   {[...Array(currentNumRoundsState)].map((_, i) => (
-                                    <TableCell key={`dg-val-${i + 1}-${team.id}`} className="text-center px-1 py-2">{(team.roundResults as any)?.[`dg${i + 1}`] ?? '-'}</TableCell>
+                                    <TableCell key={`dg-val-${i + 1}-${team.id}`} className="text-center px-1 py-2" data-label={`DG ${i + 1}`}>{(team.roundResults as any)?.[`dg${i + 1}`] ?? '-'}</TableCell>
                                   ))}
-                                  <TableCell className="text-center font-semibold text-primary px-2 py-2">
+                                  <TableCell className="text-center font-semibold text-primary px-2 py-2" data-label="Gesamt">
                                     {team.sortingScore !== undefined && team.sortingScore !== team.totalScore ? (
                                       <div className="flex flex-col items-center">
                                         <span>{team.totalScore ?? '-'}</span>
@@ -1974,8 +1921,8 @@ function RwkTabellenPageComponent() {
                                       team.totalScore ?? '-'
                                     )}
                                   </TableCell>
-                                  {!isNativeApp && <TableCell className="text-center font-medium text-muted-foreground px-2 py-2">{team.averageScore != null ? team.averageScore.toFixed(2) : '-'}</TableCell>}
-                                  {!isNativeApp && <TableCell className="text-right pr-4 px-2 py-2">
+                                  {!isNativeApp && <TableCell className="text-center font-medium text-muted-foreground px-2 py-2" data-label="Schnitt">{team.averageScore != null ? team.averageScore.toFixed(2) : '-'}</TableCell>}
+                                  {!isNativeApp && <TableCell className="text-right pr-4 px-2 py-2" data-label="Details">
                                     <Button variant="ghost" size="icon" onClick={(e) => {e.stopPropagation(); toggleTeamExpansion(team.id);}} aria-label={`Details für ${team.name} ${expandedTeamIds.includes(team.id) ? 'ausblenden' : 'anzeigen'}`} className="hover:bg-accent/20 rounded-md">
                                       {expandedTeamIds.includes(team.id) ? <ChevronDown className="h-5 w-5 transition-transform duration-200 rotate-180" /> : <ChevronRight className="h-5 w-5 transition-transform duration-200" />}
                                     </Button>
@@ -2006,6 +1953,11 @@ function RwkTabellenPageComponent() {
               }))}
             />
           )}
+          
+          {/* RWK Legende am Ende */}
+          <div className="mt-12 mb-8">
+            <RWKLegend />
+          </div>
         </TabsContent>
 
         <TabsContent value="einzelschützen">
@@ -2128,7 +2080,7 @@ function RwkTabellenPageComponent() {
               <Card className="shadow-lg">
                 <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage)' : selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? '(🏆 Alle Luftdruck Auflage)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
                 <CardContent>
-                  <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={needsSpecialTouch ? { 
+                  <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto md:overflow-x-visible"} style={needsSpecialTouch ? { 
                     touchAction: 'manipulation', 
                     maxHeight: '70vh',
                     WebkitOverflowScrolling: 'touch',
@@ -2137,7 +2089,7 @@ function RwkTabellenPageComponent() {
                     WebkitTransform: 'translateZ(0)',
                     willChange: 'scroll-position'
                   } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
-                    <Table style={{ 
+                    <Table className="responsive-card-table" style={{ 
                       touchAction: 'auto',
                       transform: 'translateZ(0)'
                     }}>
@@ -2156,13 +2108,13 @@ function RwkTabellenPageComponent() {
                           )
                           .map(shooter => (
                           <TableRow key={`ind-${shooter.shooterId}`} className="hover:bg-secondary/20 transition-colors">
-                            <TableCell className="text-center font-medium">
+                            <TableCell className="text-center font-medium" data-label="Rang">
                               {shooter.teamOutOfCompetition ? 
                                 <span className="text-amber-500" title="Außer Konkurrenz">AK</span> : 
                                 shooter.rank
                               }
                             </TableCell>
-                            <TableCell className="text-foreground">
+                            <TableCell className="text-foreground" data-label="Name">
                               <div className="flex items-center gap-2">
                                 <Button variant="link" className="p-0 h-auto text-sm text-left hover:text-primary whitespace-normal text-wrap font-normal" onClick={() => handleShooterNameClick(shooter)}>
                                   {shooter.shooterName}
@@ -2170,7 +2122,7 @@ function RwkTabellenPageComponent() {
                                 <LineChartIcon className="h-3 w-3 text-muted-foreground" title="Klicken Sie auf den Namen für Statistik-Diagramm" />
                               </div>
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
+                            <TableCell className="text-sm text-muted-foreground" data-label="Mannschaft">
                               {shooter.teamName}
                               {shooter.teamOutOfCompetition && (
                                 <span 
@@ -2182,9 +2134,9 @@ function RwkTabellenPageComponent() {
                                 </span>
                               )}
                             </TableCell>
-                            {[...Array(currentNumRoundsState)].map((_, i) => (<TableCell key={`ind-dg-val-${i + 1}-${shooter.shooterId}`} className="text-center px-1 py-2">{shooter.results?.[`dg${i + 1}`] ?? '-'}</TableCell>))}
-                            <TableCell className="text-center font-semibold text-primary">{shooter.totalScore}</TableCell>
-                            <TableCell className="text-center font-medium text-muted-foreground">{shooter.averageScore != null ? shooter.averageScore.toFixed(2) : '-'}</TableCell>
+                            {[...Array(currentNumRoundsState)].map((_, i) => (<TableCell key={`ind-dg-val-${i + 1}-${shooter.shooterId}`} className="text-center px-1 py-2" data-label={`DG ${i + 1}`}>{shooter.results?.[`dg${i + 1}`] ?? '-'}</TableCell>))}
+                            <TableCell className="text-center font-semibold text-primary" data-label="Gesamt">{shooter.totalScore}</TableCell>
+                            <TableCell className="text-center font-medium text-muted-foreground" data-label="Schnitt">{shooter.averageScore != null ? shooter.averageScore.toFixed(2) : '-'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
