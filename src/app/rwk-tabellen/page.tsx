@@ -90,7 +90,7 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { cn, clsx } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { SubstitutionBadge } from '@/components/ui/substitution-badge';
 import { BackButton } from '@/components/ui/back-button';
@@ -123,23 +123,25 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
     );
   }
   return (
-    <div className="p-2 bg-muted/20 rounded-b-md shadow-inner overflow-x-auto touch-pan-xy" style={{ 
-      touchAction: needsSpecialTouch ? "pan-x pan-y" : "auto",
+    <div className="p-2 bg-muted/20 rounded-b-md shadow-inner overflow-x-auto" style={{ 
+      touchAction: "pan-x pan-y",
       WebkitOverflowScrolling: "touch",
-      transform: "translateZ(0)"
+      transform: "translateZ(0)",
+      overflowX: "scroll",
+      overflowY: "hidden"
     }}>
-      <Table className="min-w-full touch-pan-xy" style={{ 
-        touchAction: needsSpecialTouch ? "pan-x pan-y" : "auto",
+      <Table className="min-w-full" style={{ 
+        touchAction: needsSpecialTouch ? "manipulation" : "auto",
         transform: "translateZ(0)"
       }}>
         <TableHeader>
           <TableRow className="text-xs border-b-0">
-            <TableHead className="pl-3 pr-1 py-1.5 text-muted-foreground font-normal whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Schütze</TableHead>
+            <TableHead className="pl-3 pr-1 py-1.5 text-muted-foreground font-normal whitespace-nowrap">Schütze</TableHead>
             {[...Array(numRounds)].map((_, i) => (
-              <TableHead key={`shooter-dg${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>DG {i + 1}</TableHead>
+              <TableHead key={`shooter-dg${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>
             ))}
-            <TableHead className="px-1 py-1.5 text-center text-xs font-medium text-muted-foreground whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Gesamt</TableHead>
-            {!isNativeApp && <TableHead className="pl-1 pr-3 py-1.5 text-center text-xs font-medium text-muted-foreground whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Schnitt</TableHead>}
+            <TableHead className="px-1 py-1.5 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">Gesamt</TableHead>
+            {!isNativeApp && <TableHead className="pl-1 pr-3 py-1.5 text-center text-xs font-medium text-muted-foreground whitespace-nowrap">Schnitt</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -168,7 +170,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                     <div className="flex items-center gap-1">
                       <Button
                         variant="link"
-                        className={clsx(
+                        className={cn(
                           "p-0 text-left hover:text-primary whitespace-normal text-wrap justify-start font-normal",
                           isNativeApp ? "text-[10px] leading-tight h-4 min-h-4" : "text-xs h-auto"
                         )}
@@ -285,10 +287,10 @@ const ShooterDetailModalContent: React.FC<ShooterDetailModalContentProps> = ({ s
             <TableHeader>
               <TableRow>
                 {[...Array(numRounds)].map((_, i) => (
-                  <TableHead key={`detail-dg${i + 1}`} className="text-center text-xs px-1 py-1.5 font-normal text-muted-foreground" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>DG {i + 1}</TableHead>
+                  <TableHead key={`detail-dg${i + 1}`} className="text-center text-xs px-1 py-1.5 font-normal text-muted-foreground">DG {i + 1}</TableHead>
                 ))}
-                <TableHead className="text-center text-xs px-1 py-1.5 font-medium text-muted-foreground" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Gesamt</TableHead>
-                <TableHead className="text-center text-xs px-1 py-1.5 font-medium text-muted-foreground" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Schnitt</TableHead>
+                <TableHead className="text-center text-xs px-1 py-1.5 font-medium text-muted-foreground">Gesamt</TableHead>
+                <TableHead className="text-center text-xs px-1 py-1.5 font-medium text-muted-foreground">Schnitt</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1905,26 +1907,27 @@ function RwkTabellenPageComponent() {
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
-                      <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 touch-pan-xy" : "overflow-x-auto"} style={needsSpecialTouch ? { 
+                      <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={needsSpecialTouch ? { 
                         touchAction: 'pan-x pan-y', 
                         maxHeight: '70vh',
                         WebkitOverflowScrolling: 'touch',
-                        transform: 'translateZ(0)'
-                      } : {}}>
-                        <Table className="touch-pan-xy" style={{ 
-                          touchAction: needsSpecialTouch ? "pan-x pan-y" : "auto",
-                          transform: "translateZ(0)"
+                        transform: 'translateZ(0)',
+                        overflow: 'auto'
+                      } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
+                        <Table style={{ 
+                          touchAction: 'manipulation',
+                          transform: 'translateZ(0)'
                         }}>
                           <TableHeader>
                             <TableRow className="bg-muted/50">
-                              <TableHead className="w-[50px] text-center px-2 py-2 text-xs font-medium text-muted-foreground" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>#</TableHead>
-                              <TableHead className="min-w-[150px] px-2 py-2 text-sm font-medium text-muted-foreground" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Mannschaft</TableHead>
+                              <TableHead className="w-[50px] text-center px-2 py-2 text-xs font-medium text-muted-foreground">#</TableHead>
+                              <TableHead className="min-w-[150px] px-2 py-2 text-sm font-medium text-muted-foreground">Mannschaft</TableHead>
                               {[...Array(currentNumRoundsState)].map((_, i) => (
-                                <TableHead key={`dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>DG {i + 1}</TableHead>
+                                <TableHead key={`dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>
                               ))}
-                              <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Gesamt</TableHead>
-                              {!isNativeApp && <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Schnitt</TableHead>}
-                              {!isNativeApp && <TableHead className="w-[60px] text-right pr-4 px-2 py-2" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}></TableHead>}
+                              <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap">Gesamt</TableHead>
+                              {!isNativeApp && <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap">Schnitt</TableHead>}
+                              {!isNativeApp && <TableHead className="w-[60px] text-right pr-4 px-2 py-2"></TableHead>}
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -2116,20 +2119,21 @@ function RwkTabellenPageComponent() {
               <Card className="shadow-lg">
                 <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage)' : selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? '(🏆 Alle Luftdruck Auflage)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
                 <CardContent>
-                  <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 touch-pan-xy" : "overflow-x-auto"} style={needsSpecialTouch ? { 
+                  <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={needsSpecialTouch ? { 
                     touchAction: 'pan-x pan-y', 
                     maxHeight: '70vh',
                     WebkitOverflowScrolling: 'touch',
-                    transform: 'translateZ(0)'
-                  } : {}}>
-                    <Table className="touch-pan-xy" style={{ 
-                      touchAction: needsSpecialTouch ? "pan-x pan-y" : "auto",
-                      transform: "translateZ(0)"
+                    transform: 'translateZ(0)',
+                    overflow: 'auto'
+                  } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
+                    <Table style={{ 
+                      touchAction: 'manipulation',
+                      transform: 'translateZ(0)'
                     }}>
                       <TableHeader className="pwa-table-header"><TableRow className="bg-muted/50">
-                          <TableHead className="w-[40px] text-center" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>#</TableHead><TableHead style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Name</TableHead><TableHead style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Mannschaft</TableHead>
-                          {[...Array(currentNumRoundsState)].map((_, i) => (<TableHead key={`ind-dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>DG {i + 1}</TableHead>))}
-                          <TableHead className="text-center font-semibold px-1 py-1.5 text-xs text-muted-foreground whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Gesamt</TableHead><TableHead className="text-center font-semibold px-1 py-1.5 text-xs text-muted-foreground whitespace-nowrap" style={{ pointerEvents: 'none', touchAction: 'pan-x pan-y' }}>Schnitt</TableHead>
+                          <TableHead className="w-[40px] text-center">#</TableHead><TableHead>Name</TableHead><TableHead>Mannschaft</TableHead>
+                          {[...Array(currentNumRoundsState)].map((_, i) => (<TableHead key={`ind-dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>))}
+                          <TableHead className="text-center font-semibold px-1 py-1.5 text-xs text-muted-foreground whitespace-nowrap">Gesamt</TableHead><TableHead className="text-center font-semibold px-1 py-1.5 text-xs text-muted-foreground whitespace-nowrap">Schnitt</TableHead>
                       </TableRow></TableHeader>
                       <TableBody>
                         {filteredIndividualData

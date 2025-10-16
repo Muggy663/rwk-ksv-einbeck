@@ -639,7 +639,8 @@
 @media (display-mode: standalone) {
   .pwa-optimized {
     padding-top: calc(env(safe-area-inset-top, 0px) + 20px) !important;
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px) !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px) !important;
+    min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
   }
   
   .pwa-cards {
@@ -701,44 +702,62 @@
 
 /* PWA Footer Fix für Android Navigation */
 @media (display-mode: standalone) {
-  body {
-    padding-bottom: env(safe-area-inset-bottom, 80px) !important;
+  /* Globale Safe Area für alle Seiten */
+  html, body {
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px) !important;
+    min-height: 100vh !important;
   }
   
+  .app-container {
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px) !important;
+    min-height: 100vh !important;
+  }
+  
+  /* Header immer mit Safe Area */
+  header, .site-header {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+  }
+  
+  /* Main Content mit Safe Area */
+  main {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 20px) !important;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px) !important;
+    min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+  }
+  
+  /* Footer immer mit Safe Area */
   footer, .site-footer {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px) !important;
-    margin-bottom: env(safe-area-inset-bottom, 20px) !important;
+    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px) !important;
   }
   
   .cache-button {
     margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 60px) !important;
   }
-  
-  /* PWA Safe Area für alle Seiten */
-  .app-container {
-    padding-top: env(safe-area-inset-top, 0px) !important;
-    padding-bottom: env(safe-area-inset-bottom, 80px) !important;
-  }
-  
-  header, .site-header {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
-  }
-  
-  main {
-    padding-top: env(safe-area-inset-top, 0px) !important;
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px) !important;
-  }
 }
 
 /* PWA Touch-Optimierungen */
 .pwa-app table, .mobile-device table {
-  touch-action: pan-x pan-y !important;
+  touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
 
 .pwa-app .overflow-x-auto, .mobile-device .overflow-x-auto {
   touch-action: pan-x pan-y !important;
   -webkit-overflow-scrolling: touch !important;
+  overflow-x: scroll !important;
+  overflow-y: hidden !important;
+}
+
+.pwa-app .overflow-auto, .mobile-device .overflow-auto {
+  touch-action: pan-x pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
+  overflow: auto !important;
 }
 
 /* PWA Navigation Fixes */
