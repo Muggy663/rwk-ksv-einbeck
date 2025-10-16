@@ -90,7 +90,7 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { cn, clsx } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { SubstitutionBadge } from '@/components/ui/substitution-badge';
 import { BackButton } from '@/components/ui/back-button';
@@ -122,7 +122,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
   }
   return (
     <div className="p-2 bg-muted/20 rounded-b-md shadow-inner overflow-x-auto">
-      <Table className="min-w-full">
+      <Table className="min-w-full" style={{ touchAction: "pan-y" }}>
         <TableHeader>
           <TableRow className="text-xs border-b-0">
             <TableHead className="pl-3 pr-1 py-1.5 text-muted-foreground font-normal whitespace-nowrap">Schütze</TableHead>
@@ -159,8 +159,10 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                     <div className="flex items-center gap-1">
                       <Button
                         variant="link"
-                        className={`p-0 text-left hover:text-primary whitespace-normal text-wrap justify-start font-normal text-xs ${isNativeApp ? '!text-[10px] !leading-tight !h-4 !min-h-4' : 'h-auto'}`}
-                        style={isNativeApp ? { fontSize: '10px !important', lineHeight: '1.2 !important', height: '16px !important', minHeight: '16px !important' } : {}}
+                        className={clsx(
+                          "p-0 text-left hover:text-primary whitespace-normal text-wrap justify-start font-normal",
+                          isNativeApp ? "text-[10px] leading-tight h-4 min-h-4" : "text-xs h-auto"
+                        )}
                         onClick={() => onShooterClick(shooterDataForModal)}
                       >
                         {shooterRes.shooterName}
@@ -1893,8 +1895,8 @@ function RwkTabellenPageComponent() {
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
-                      <div className={isNativeApp ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={isNativeApp ? { touchAction: 'pan-x pan-y pinch-zoom', maxHeight: '70vh' } : {}}>
-                        <Table>
+                      <div className={isNativeApp ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={isNativeApp ? { touchAction: 'pan-y', maxHeight: '70vh' } : {}}>
+                        <Table style={{ touchAction: "pan-y" }}>
                           <TableHeader>
                             <TableRow className="bg-muted/50">
                               <TableHead className="w-[50px] text-center px-2 py-2 text-xs font-medium text-muted-foreground">#</TableHead>
@@ -2096,8 +2098,8 @@ function RwkTabellenPageComponent() {
               <Card className="shadow-lg">
                 <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage)' : selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? '(🏆 Alle Luftdruck Auflage)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
                 <CardContent>
-                  <div className={isNativeApp ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={isNativeApp ? { touchAction: 'pan-x pan-y pinch-zoom', maxHeight: '70vh' } : {}}>
-                    <Table>
+                  <div className={isNativeApp ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={isNativeApp ? { touchAction: 'pan-y', maxHeight: '70vh' } : {}}>
+                    <Table style={{ touchAction: "pan-y" }}>
                       <TableHeader><TableRow className="bg-muted/50">
                           <TableHead className="w-[40px] text-center">#</TableHead><TableHead>Name</TableHead><TableHead>Mannschaft</TableHead>
                           {[...Array(currentNumRoundsState)].map((_, i) => (<TableHead key={`ind-dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>))}
