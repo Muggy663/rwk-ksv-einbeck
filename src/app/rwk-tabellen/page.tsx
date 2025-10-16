@@ -50,6 +50,7 @@ import {
   Medal,
   LineChart as LineChartIcon,
   FileDown,
+  Info,
 } from 'lucide-react';
 import { PDFButton } from '@/components/ui/pdf-button';
 import { NativePDFButton } from '@/components/ui/native-pdf-button';
@@ -95,6 +96,7 @@ import { useToast } from '@/hooks/use-toast';
 import { SubstitutionBadge } from '@/components/ui/substitution-badge';
 import { BackButton } from '@/components/ui/back-button';
 import { RWKLegend } from '@/components/ui/rwk-legend';
+import { SmartTable } from '@/components/ui/smart-table';
 
 const EXCLUDED_TEAM_NAME_PART = 'einzel'; // Case-insensitive check later
 
@@ -1690,6 +1692,15 @@ function RwkTabellenPageComponent() {
           <BackButton className="mr-2" fallbackHref="/" />
           <TableIconLucide className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold text-primary">{pageTitle}</h1>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="ml-4 text-muted-foreground hover:text-primary"
+            onClick={() => document.getElementById('rwk-legend')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            <Info className="h-4 w-4 mr-1" />
+            Erklärung
+          </Button>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <Select 
@@ -1870,7 +1881,7 @@ function RwkTabellenPageComponent() {
                         WebkitTransform: 'translateZ(0)',
                         willChange: 'scroll-position'
                       } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
-                        <Table className="responsive-card-table" style={{ 
+                        <SmartTable style={{ 
                           touchAction: 'auto',
                           transform: 'translateZ(0)'
                         }}>
@@ -1892,13 +1903,13 @@ function RwkTabellenPageComponent() {
                               .map(team => (
                               <React.Fragment key={team.id}>
                                 <TableRow className="hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => isNativeApp ? toggleTeamExpansion(team.id) : toggleTeamExpansion(team.id)}>
-                                  <TableCell className="text-center font-medium px-2 py-2" data-label="Rang">
+                                  <TableCell className="text-center font-medium px-2 py-2">
                                     {team.outOfCompetition ? 
                                       <span className="text-amber-500" title="Außer Konkurrenz">AK</span> : 
                                       team.rank
                                     }
                                   </TableCell>
-                                  <TableCell className="font-medium text-foreground px-2 py-2 text-sm" data-label="Mannschaft">
+                                  <TableCell className="font-medium text-foreground px-2 py-2 text-sm">
                                     {team.name}
                                     <TeamStatusBadge 
                                       outOfCompetition={team.outOfCompetition} 
@@ -1907,9 +1918,9 @@ function RwkTabellenPageComponent() {
                                     />
                                   </TableCell>
                                   {[...Array(currentNumRoundsState)].map((_, i) => (
-                                    <TableCell key={`dg-val-${i + 1}-${team.id}`} className="text-center px-1 py-2" data-label={`DG ${i + 1}`}>{(team.roundResults as any)?.[`dg${i + 1}`] ?? '-'}</TableCell>
+                                    <TableCell key={`dg-val-${i + 1}-${team.id}`} className="text-center px-1 py-2">{(team.roundResults as any)?.[`dg${i + 1}`] ?? '-'}</TableCell>
                                   ))}
-                                  <TableCell className="text-center font-semibold text-primary px-2 py-2" data-label="Gesamt">
+                                  <TableCell className="text-center font-semibold text-primary px-2 py-2">
                                     {team.sortingScore !== undefined && team.sortingScore !== team.totalScore ? (
                                       <div className="flex flex-col items-center">
                                         <span>{team.totalScore ?? '-'}</span>
@@ -1921,8 +1932,8 @@ function RwkTabellenPageComponent() {
                                       team.totalScore ?? '-'
                                     )}
                                   </TableCell>
-                                  {!isNativeApp && <TableCell className="text-center font-medium text-muted-foreground px-2 py-2" data-label="Schnitt">{team.averageScore != null ? team.averageScore.toFixed(2) : '-'}</TableCell>}
-                                  {!isNativeApp && <TableCell className="text-right pr-4 px-2 py-2" data-label="Details">
+                                  {!isNativeApp && <TableCell className="text-center font-medium text-muted-foreground px-2 py-2">{team.averageScore != null ? team.averageScore.toFixed(2) : '-'}</TableCell>}
+                                  {!isNativeApp && <TableCell className="text-right pr-4 px-2 py-2">
                                     <Button variant="ghost" size="icon" onClick={(e) => {e.stopPropagation(); toggleTeamExpansion(team.id);}} aria-label={`Details für ${team.name} ${expandedTeamIds.includes(team.id) ? 'ausblenden' : 'anzeigen'}`} className="hover:bg-accent/20 rounded-md">
                                       {expandedTeamIds.includes(team.id) ? <ChevronDown className="h-5 w-5 transition-transform duration-200 rotate-180" /> : <ChevronRight className="h-5 w-5 transition-transform duration-200" />}
                                     </Button>
@@ -1945,7 +1956,7 @@ function RwkTabellenPageComponent() {
                               </React.Fragment>
                             ))}
                           </TableBody>
-                        </Table>
+                        </SmartTable>
                       </div>
                     ) : (<p className="p-4 text-center text-muted-foreground">Keine Mannschaften in dieser Liga für {pageTitle} vorhanden.</p>)}
                   </div>
@@ -1955,7 +1966,7 @@ function RwkTabellenPageComponent() {
           )}
           
           {/* RWK Legende am Ende */}
-          <div className="mt-12 mb-8">
+          <div id="rwk-legend" className="mt-12 mb-8">
             <RWKLegend />
           </div>
         </TabsContent>
