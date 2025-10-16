@@ -745,6 +745,7 @@
 .pwa-app table, .mobile-device table {
   touch-action: auto !important;
   -webkit-overflow-scrolling: touch !important;
+  pointer-events: auto !important;
 }
 
 .pwa-app .overflow-x-auto, .mobile-device .overflow-x-auto {
@@ -752,12 +753,26 @@
   -webkit-overflow-scrolling: touch !important;
   overflow-x: scroll !important;
   overflow-y: hidden !important;
+  position: relative !important;
+  z-index: 1 !important;
 }
 
 .pwa-app .overflow-auto, .mobile-device .overflow-auto {
   touch-action: pan-x pan-y !important;
   -webkit-overflow-scrolling: touch !important;
   overflow: auto !important;
+  position: relative !important;
+}
+
+/* Verhindere Event-Capturing bei verschachtelten Scrollbereichen */
+.pwa-app .overflow-auto .overflow-x-auto,
+.mobile-device .overflow-auto .overflow-x-auto {
+  pointer-events: none !important;
+}
+
+.pwa-app .overflow-auto .overflow-x-auto *,
+.mobile-device .overflow-auto .overflow-x-auto * {
+  pointer-events: auto !important;
 }
 
 /* PWA Navigation Fixes */
