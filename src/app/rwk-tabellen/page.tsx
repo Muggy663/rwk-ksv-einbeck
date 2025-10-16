@@ -112,7 +112,9 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
   onShooterClick,
   teamSubstitutions,
 }) => {
-  const { isNativeApp } = useNativeApp();
+  const { isNativeApp, isPWA, isMobile } = useNativeApp();
+  const needsSpecialTouch = isNativeApp || isPWA || isMobile;
+  
   if (!shootersResults || shootersResults.length === 0) {
     return (
       <div className="p-3 text-sm text-center text-muted-foreground bg-muted/30 rounded-b-md">
@@ -121,8 +123,15 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
     );
   }
   return (
-    <div className="p-2 bg-muted/20 rounded-b-md shadow-inner overflow-x-auto">
-      <Table className="min-w-full" style={{ touchAction: "pan-y" }}>
+    <div className="p-2 bg-muted/20 rounded-b-md shadow-inner overflow-x-auto touch-pan-xy" style={{ 
+      touchAction: needsSpecialTouch ? "pan-x pan-y" : "auto",
+      WebkitOverflowScrolling: "touch",
+      transform: "translateZ(0)"
+    }}>
+      <Table className="min-w-full touch-pan-xy" style={{ 
+        touchAction: needsSpecialTouch ? "pan-x pan-y" : "auto",
+        transform: "translateZ(0)"
+      }}>
         <TableHeader>
           <TableRow className="text-xs border-b-0">
             <TableHead className="pl-3 pr-1 py-1.5 text-muted-foreground font-normal whitespace-nowrap">Schütze</TableHead>
@@ -394,7 +403,8 @@ const RwkTabellenPageLoadingSkeleton: React.FC<{ title?: string }> = ({ title })
 function RwkTabellenPageComponent() {
   const router = useRouter();
   const { toast } = useToast();
-  const { isNativeApp } = useNativeApp();
+  const { isNativeApp, isPWA, isMobile } = useNativeApp();
+  const needsSpecialTouch = isNativeApp || isPWA || isMobile;
   
   const [urlParams, setUrlParams] = useState<{
     year: string | null,
@@ -1895,8 +1905,16 @@ function RwkTabellenPageComponent() {
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
-                      <div className={isNativeApp ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={isNativeApp ? { touchAction: 'pan-y', maxHeight: '70vh' } : {}}>
-                        <Table style={{ touchAction: "pan-y" }}>
+                      <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 touch-pan-xy" : "overflow-x-auto"} style={needsSpecialTouch ? { 
+                        touchAction: 'pan-x pan-y', 
+                        maxHeight: '70vh',
+                        WebkitOverflowScrolling: 'touch',
+                        transform: 'translateZ(0)'
+                      } : {}}>
+                        <Table className="touch-pan-xy" style={{ 
+                          touchAction: needsSpecialTouch ? "pan-x pan-y" : "auto",
+                          transform: "translateZ(0)"
+                        }}>
                           <TableHeader>
                             <TableRow className="bg-muted/50">
                               <TableHead className="w-[50px] text-center px-2 py-2 text-xs font-medium text-muted-foreground">#</TableHead>
@@ -2098,8 +2116,16 @@ function RwkTabellenPageComponent() {
               <Card className="shadow-lg">
                 <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage)' : selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? '(🏆 Alle Luftdruck Auflage)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
                 <CardContent>
-                  <div className={isNativeApp ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={isNativeApp ? { touchAction: 'pan-y', maxHeight: '70vh' } : {}}>
-                    <Table style={{ touchAction: "pan-y" }}>
+                  <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 touch-pan-xy" : "overflow-x-auto"} style={needsSpecialTouch ? { 
+                    touchAction: 'pan-x pan-y', 
+                    maxHeight: '70vh',
+                    WebkitOverflowScrolling: 'touch',
+                    transform: 'translateZ(0)'
+                  } : {}}>
+                    <Table className="touch-pan-xy" style={{ 
+                      touchAction: needsSpecialTouch ? "pan-x pan-y" : "auto",
+                      transform: "translateZ(0)"
+                    }}>
                       <TableHeader><TableRow className="bg-muted/50">
                           <TableHead className="w-[40px] text-center">#</TableHead><TableHead>Name</TableHead><TableHead>Mannschaft</TableHead>
                           {[...Array(currentNumRoundsState)].map((_, i) => (<TableHead key={`ind-dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>))}

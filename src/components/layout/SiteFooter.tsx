@@ -7,7 +7,7 @@ export function SiteFooter() {
   const version = "1.8.1"; // Mobile OCR-Optimierungen, automatische OCR-Starts, Tabellen-Overflow-Fixes
 
   return (
-    <footer className="py-6 md:px-8 md:py-0 border-t">
+    <footer className="py-6 md:px-8 md:py-0 border-t pb-safe-area-bottom pwa-safe-footer">
       <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
         <div className="text-center md:text-left mt-2">
           <p className="text-sm leading-loose text-muted-foreground mt-2">

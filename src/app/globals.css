@@ -582,6 +582,179 @@
   padding-bottom: env(safe-area-inset-bottom, 20px) !important;
 }
 
+/* PWA-spezifische Styles */
+.pwa-app {
+  padding-top: env(safe-area-inset-top, 0px) !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+
+.pwa-app .pwa-safe-footer {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px) !important;
+}
+
+/* PWA Touch-Optimierungen */
+.pwa-app table, .mobile-device table {
+  touch-action: pan-x pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.pwa-app .overflow-x-auto, .mobile-device .overflow-x-auto {
+  touch-action: pan-x pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* PWA Navigation Fixes */
+.pwa-app .cache-button {
+  margin-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+
+/* Safari-spezifische Fixes */
+.safari-browser {
+  /* Safari Scroll-Verhalten */
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.safari-browser table {
+  /* Safari Table Scroll Fix */
+  -webkit-overflow-scrolling: touch !important;
+  transform: translateZ(0) !important; /* Hardware-Beschleunigung */
+}
+
+.safari-browser .overflow-x-auto {
+  -webkit-overflow-scrolling: touch !important;
+  transform: translateZ(0) !important;
+}
+
+/* Safari iOS spezifische Fixes */
+.safari-browser input, .safari-browser textarea {
+  /* Verhindert Zoom beim Fokus */
+  font-size: 16px !important;
+  transform: translateZ(0) !important;
+}
+
+.safari-browser button {
+  /* Safari Button Rendering Fix */
+  -webkit-appearance: none !important;
+  transform: translateZ(0) !important;
+}
+
+/* Safari Sticky Position Fix */
+.safari-browser .sticky {
+  position: -webkit-sticky !important;
+  position: sticky !important;
+}
+
+/* Safari Safe Area für iOS */
+@supports (padding: max(0px)) {
+  .safari-browser {
+    padding-top: max(env(safe-area-inset-top), 0px) !important;
+    padding-bottom: max(env(safe-area-inset-bottom), 0px) !important;
+  }
+  
+  .safari-browser .pwa-safe-footer {
+    padding-bottom: max(calc(env(safe-area-inset-bottom) + 20px), 20px) !important;
+  }
+}
+
+/* Safari Flexbox Fixes */
+.safari-browser .flex {
+  display: -webkit-flex !important;
+  display: flex !important;
+}
+
+.safari-browser .flex-col {
+  -webkit-flex-direction: column !important;
+  flex-direction: column !important;
+}
+
+/* Safari Grid Fixes */
+.safari-browser .grid {
+  display: -webkit-grid !important;
+  display: grid !important;
+}
+
+/* Safari Transform Fixes für Animationen */
+.safari-browser .transform {
+  -webkit-transform: translateZ(0) !important;
+  transform: translateZ(0) !important;
+}
+
+/* Safari Backdrop Filter Support */
+.safari-browser .backdrop-blur {
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Safari Touch Action Fix */
+.safari-browser .touch-pan-x {
+  -webkit-touch-action: pan-x !important;
+  touch-action: pan-x !important;
+}
+
+.safari-browser .touch-pan-y {
+  -webkit-touch-action: pan-y !important;
+  touch-action: pan-y !important;
+}
+
+.safari-browser .touch-pan-xy {
+  -webkit-touch-action: pan-x pan-y !important;
+  touch-action: pan-x pan-y !important;
+}
+
+/* Safari iOS spezifische Mobile Fixes */
+@media (max-width: 768px) {
+  .safari-browser {
+    /* Verhindert Bounce-Scrolling */
+    overscroll-behavior: none !important;
+    -webkit-overscroll-behavior: none !important;
+  }
+  
+  .safari-browser table {
+    /* Bessere Table Performance auf Safari iOS */
+    will-change: transform !important;
+    -webkit-transform: translate3d(0,0,0) !important;
+    transform: translate3d(0,0,0) !important;
+  }
+  
+  .safari-browser .overflow-x-auto {
+    /* Safari Momentum Scrolling */
+    -webkit-overflow-scrolling: touch !important;
+    overflow-scrolling: touch !important;
+    will-change: scroll-position !important;
+  }
+  
+  /* Safari Input Zoom Prevention */
+  .safari-browser input[type="text"],
+  .safari-browser input[type="email"],
+  .safari-browser input[type="number"],
+  .safari-browser input[type="search"],
+  .safari-browser textarea,
+  .safari-browser select {
+    font-size: 16px !important;
+    -webkit-appearance: none !important;
+    border-radius: 0 !important;
+  }
+  
+  /* Safari Button Active State Fix */
+  .safari-browser button:active {
+    -webkit-transform: scale(0.98) !important;
+    transform: scale(0.98) !important;
+    transition: transform 0.1s ease !important;
+  }
+  
+  /* Safari Scroll Indicator */
+  .safari-browser .table-container::-webkit-scrollbar {
+    -webkit-appearance: none !important;
+    height: 7px !important;
+  }
+  
+  .safari-browser .table-container::-webkit-scrollbar-thumb {
+    border-radius: 4px !important;
+    background-color: rgba(0,0,0,.5) !important;
+    -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5) !important;
+  }
+}
+
 .capacitor-app .mobile-header-overlay {
   display: block !important;
   height: env(safe-area-inset-top, 44px) !important;
@@ -672,6 +845,32 @@
     min-width: 44px !important;
     padding: 12px 16px !important;
     font-size: 16px !important; /* Verhindert Zoom auf iOS */
+  }
+  
+  /* Tabellen-Scroll-Verbesserungen */
+  .table-container, .overflow-x-auto {
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+  }
+  
+  /* Bessere Scroll-Indikatoren */
+  .table-container::-webkit-scrollbar {
+    height: 8px !important;
+  }
+  
+  .table-container::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1) !important;
+    border-radius: 4px !important;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.3) !important;
+    border-radius: 4px !important;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.5) !important;
   }
   
   /* Größere Checkboxes und Radio Buttons */

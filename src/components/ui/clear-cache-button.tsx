@@ -54,7 +54,7 @@ export function ClearCacheButton() {
       variant="outline" 
       size="sm" 
       onClick={clearCache}
-      className="text-xs"
+      className="text-xs cache-button"
     >
       <RefreshCw className="h-3 w-3 mr-1" />
       Cache leeren
