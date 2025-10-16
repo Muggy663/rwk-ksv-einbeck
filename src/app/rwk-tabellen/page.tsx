@@ -131,7 +131,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
       overflowY: "hidden"
     }}>
       <Table className="min-w-full" style={{ 
-        touchAction: needsSpecialTouch ? "manipulation" : "auto",
+        touchAction: "auto",
         transform: "translateZ(0)"
       }}>
         <TableHeader>
@@ -1915,7 +1915,7 @@ function RwkTabellenPageComponent() {
                         overflow: 'auto'
                       } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
                         <Table style={{ 
-                          touchAction: 'manipulation',
+                          touchAction: 'auto',
                           transform: 'translateZ(0)'
                         }}>
                           <TableHeader>
@@ -2127,7 +2127,7 @@ function RwkTabellenPageComponent() {
                     overflow: 'auto'
                   } : { touchAction: 'pan-x pan-y', overflowX: 'scroll' }}>
                     <Table style={{ 
-                      touchAction: 'manipulation',
+                      touchAction: 'auto',
                       transform: 'translateZ(0)'
                     }}>
                       <TableHeader className="pwa-table-header"><TableRow className="bg-muted/50">

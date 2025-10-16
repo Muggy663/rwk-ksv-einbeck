@@ -1,6 +1,6 @@
 // src/components/layout/SiteFooter.tsx
 import Link from 'next/link';
-import { ClearCacheButton } from '@/components/ui/clear-cache-button';
+
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
@@ -45,9 +45,7 @@ export function SiteFooter() {
               <p className="whitespace-nowrap">Web-Version {version} <span className="text-xs text-red-600 dark:text-red-400 font-semibold">Beta</span></p>
               <p className="text-xs mt-1 whitespace-nowrap">App-Version 0.9.4.1</p>
             </div>
-            <div className="mb-2">
-              <ClearCacheButton />
-            </div>
+
           </div>
         </div>
       </div>
