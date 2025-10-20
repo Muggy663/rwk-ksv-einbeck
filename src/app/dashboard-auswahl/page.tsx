@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { VereinsAppBanner } from '@/components/ui/vereins-app-banner';
 import Link from 'next/link';
 
 export default function DashboardAuswahl() {
@@ -135,6 +136,9 @@ export default function DashboardAuswahl() {
           Willkommen {userAppPermissions?.displayName || user.displayName || user.email}! Wähle deinen Arbeitsbereich:
         </p>
       </div>
+
+      {/* Vereins-Manager Banner */}
+      <VereinsAppBanner />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 

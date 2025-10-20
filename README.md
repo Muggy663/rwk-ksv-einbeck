@@ -4,7 +4,7 @@
 
 Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
-[![Version](https://img.shields.io/badge/Version-1.8.2-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-1.8.3-blue?style=for-the-badge)](#)
 [![Android App](https://img.shields.io/badge/Android_App-0.9.4.1-success?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -254,7 +254,10 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 
 ---
 
+### Versionshistorie
+
 **Aktuelle Versionen:**
+- **Web-Version 1.8.3** - Vorbereitung für Vereins-App-Erweiterungen
 - **Web-Version 1.8.2** - Handzettel-Upload Verbesserungen & Dashboard-Fixes: Checkbox "Nur anhängen (ohne OCR)" für optionale OCR-Verarbeitung, Vereinsname-Anzeige im Dashboard korrigiert, Meldezettel-Karten-Titel optimiert, Schützen-Dropdown Sichtbarkeit in Light Mode behoben
 - **Web-Version 1.8.1** - Mobile OCR-Optimierungen & UI-Fixes: Automatische OCR-Starts nach Foto-Aufnahme, Tabellen-Overflow-Fixes für Portrait-Modus, Safe Area Support für mobile Header, Dark Mode Print-Fixes, Team-Sortierung mit Einzel-Teams am Ende, PDF-Hilfe Button kompakter für App-Ansicht
 - **Web-Version 1.7.5.4** - Google Analytics Integration (wieder entfernt in v1.7.5.5): Besucherzähler im Footer mit Google Analytics 4, DSGVO-konformes Tracking mit anonymisierten IPs, automatisches Page-Tracking, dezente Anzeige der Besucherzahlen
