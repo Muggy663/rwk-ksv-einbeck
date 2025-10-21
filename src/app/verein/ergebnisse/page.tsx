@@ -881,8 +881,26 @@ Die Handzettel sind als Anhang beigefügt.`);
           
           progressToast.updateProgress(60, "E-Mail wird versendet...");
           
+          // Firebase-Token für Authentifizierung holen
+          let authHeaders = {};
+          let hasAuthToken = false;
+          try {
+            const { getAuth } = await import('firebase/auth');
+            const auth = getAuth();
+            if (auth.currentUser) {
+              const token = await auth.currentUser.getIdToken();
+              authHeaders = {
+                'Authorization': `Bearer ${token}`
+              };
+              hasAuthToken = true;
+            }
+          } catch (authError) {
+            console.warn('Konnte Firebase-Token nicht laden:', authError);
+          }
+          
           const uploadResponse = await fetch('/api/send-email', {
             method: 'POST',
+            headers: authHeaders,
             body: uploadFormData
           });
           
@@ -902,11 +920,21 @@ Die Handzettel sind als Anhang beigefügt.`);
         } catch (error) {
           console.error('Handzettel-Upload Fehler:', error);
           progressToast.error(`E-Mail-Versand fehlgeschlagen: ${error.message || error}`);
+          
+          // Detaillierte Fehlermeldung für Debugging
+          const errorDetails = error instanceof Error ? error.message : String(error);
+          console.log('Detaillierte E-Mail-Fehlerinfo:', {
+            error: errorDetails,
+            userRole: userPermission?.role,
+            clubRoles: userPermission?.clubRoles,
+            hasToken: hasAuthToken
+          });
+          
           toast({ 
             title: "✅ Ergebnisse gespeichert", 
-            description: `Handzettel-E-Mail fehlgeschlagen: ${error.message || error}. Ergebnisse sind aber gesichert.`,
+            description: `Handzettel-E-Mail fehlgeschlagen: ${errorDetails}. Ergebnisse sind aber gesichert. Bitte kontaktieren Sie den Administrator falls das Problem weiterhin besteht.`,
             className: "border-green-500 bg-green-50",
-            duration: 8000
+            duration: 10000
           });
         }
       } else {
@@ -1067,15 +1095,21 @@ Die Handzettel sind als Anhang beigefügt.`);
                   </p>
                   
                   <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="attach-only" 
-                        checked={attachOnly} 
-                        onCheckedChange={setAttachOnly}
-                      />
-                      <Label htmlFor="attach-only" className="text-sm">
-                        📎 Nur anhängen (ohne OCR-Verarbeitung)
-                      </Label>
+                    <div className="p-4 border-2 border-green-400 rounded-lg bg-green-50">
+                      <div className="flex items-center space-x-3">
+                        <Checkbox 
+                          id="use-ocr" 
+                          checked={!attachOnly} 
+                          onCheckedChange={(checked) => setAttachOnly(!checked)}
+                          className="h-5 w-5 border-2 border-green-600"
+                        />
+                        <Label htmlFor="use-ocr" className="text-sm font-medium text-green-900 cursor-pointer">
+                          🤖 OCR-Erkennung verwenden (automatisches Auslesen)
+                        </Label>
+                      </div>
+                      <p className="text-xs text-green-800 mt-2 ml-8">
+                        ⚠️ WICHTIG: OCR-Ergebnisse müssen immer kontrolliert werden! Prüfen Sie alle Werte vor dem Speichern.
+                      </p>
                     </div>
                     
                     <Input 
@@ -1088,13 +1122,13 @@ Die Handzettel sind als Anhang beigefügt.`);
                           const files = Array.from(e.target.files);
                           setHandzettelFiles(files);
                           
-                          // OCR nur starten wenn nicht "nur anhängen" gewählt ist
+                          // OCR nur starten wenn explizit gewünscht
                           if (!attachOnly && files.length === 1) {
                             setShowOCR(true);
-                          } else if (attachOnly) {
+                          } else {
                             toast({
                               title: "📎 Handzettel vorgemerkt",
-                              description: `${files.length} Datei(en) werden beim Speichern mitgesendet (ohne OCR).`,
+                              description: `${files.length} Datei(en) werden beim Speichern mitgesendet${!attachOnly ? ' (OCR aktiviert - Ergebnisse prüfen!)' : ' (ohne OCR)'}.`,
                               className: "border-blue-500 bg-blue-50"
                             });
                           }

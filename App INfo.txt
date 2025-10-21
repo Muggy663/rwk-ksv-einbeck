@@ -1,5 +1,0 @@
-Zusammenfassend
-Web-App: Die Version, die man im Browser aufruft.
-Progressive Web App (PWA): Die verbesserte Web-App, die man "installieren" kann.
-Hybrid-App: Die Android-Version aus dem Play Store, die deine Web-App in einem nativen Rahmen ausführt.
-Du hast also eine Codebasis, die du sowohl als moderne Web-Anwendung als auch als native App für den Store bereitstellen kannst. Das ist ein sehr effizienter und moderner Entwicklungsansatz

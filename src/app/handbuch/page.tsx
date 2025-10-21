@@ -24,7 +24,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM und Vereinssoftware.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: 12.10.2025, Web-Version 1.8.1, App-Version 0.9.4.1
+            Stand: 21.10.2025
           </p>
         </div>
       </div>

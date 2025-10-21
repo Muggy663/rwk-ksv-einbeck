@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.8.2"; // Handzettel-Upload Verbesserungen, Dashboard-Fixes, OCR optional
+  const version = "1.8.3";
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t pb-safe-area-bottom pwa-safe-footer">

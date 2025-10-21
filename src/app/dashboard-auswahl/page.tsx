@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { useKMAuth } from '@/hooks/useKMAuth';
-import { VereinsAppBanner } from '@/components/ui/vereins-app-banner';
 import Link from 'next/link';
 
 export default function DashboardAuswahl() {
@@ -136,9 +135,6 @@ export default function DashboardAuswahl() {
           Willkommen {userAppPermissions?.displayName || user.displayName || user.email}! Wähle deinen Arbeitsbereich:
         </p>
       </div>
-
-      {/* Vereins-Manager Banner */}
-      <VereinsAppBanner />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
@@ -281,125 +277,42 @@ export default function DashboardAuswahl() {
           </CardContent>
         </Card>
 
-        {/* Vereinssoftware - Mit Lizenz-Check */}
-        {(userAppPermissions?.vereinssoftwareLicense === true || userAppPermissions?.vereinssoftwareLicense === 'true' || isRWKAdmin || user?.email === 'admin@rwk-einbeck.de') ? (
-          <Card className="shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="pb-4">
-              <div>
-                <CardTitle className="text-xl mb-2">
-                  👥 Vereinssoftware
-                  <Badge className="ml-2 bg-orange-500 text-white text-xs">BETA</Badge>
-                </CardTitle>
-                <div className="flex flex-wrap gap-1">
-                  {isRWKAdmin && <Badge variant="default">Superadmin</Badge>}
-                  {(userAppPermissions?.vereinssoftwareLicense === true || userAppPermissions?.vereinssoftwareLicense === 'true') && !isRWKAdmin && <Badge variant="secondary">Lizenziert</Badge>}
-                  {!isRWKAdmin && (
-                    <>
-                      {isVorstand && <Badge variant="outline">Vorstand</Badge>}
-                      {isKassenwart && <Badge variant="outline">Kassenwart</Badge>}
-                      {isSchriftfuehrer && <Badge variant="outline">Schriftführer</Badge>}
-                      {isSportleiter && <Badge variant="outline">Sportleiter</Badge>}
-                      {isJugendwart && <Badge variant="outline">Jugendwart</Badge>}
-                      {isDamenwart && <Badge variant="outline">Damenwart</Badge>}
-                      {isZeugwart && <Badge variant="outline">Zeugwart</Badge>}
-                      {isPressewart && <Badge variant="outline">Pressewart</Badge>}
-                      {isTrainer && <Badge variant="outline">Trainer</Badge>}
-                      {isAusbilder && <Badge variant="outline">Ausbilder</Badge>}
-                      {isVereinsschuetze && <Badge variant="outline">Vereinsschütze</Badge>}
-                      {isEhrenmitglied && <Badge variant="outline">Ehrenmitglied</Badge>}
-                    </>
-                  )}
-                </div>
+
+      </div>
+
+      {/* Werbebanner für neue Vereinssoftware */}
+      <div className="mt-8 mb-6">
+        <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 shadow-lg">
+          <CardContent className="p-6">
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-2xl">🚀</span>
+                <h3 className="text-xl font-bold text-purple-800">Neue Vereinssoftware in Entwicklung!</h3>
+                <span className="text-2xl">🚀</span>
               </div>
-              <CardDescription>
-                Vollständige Vereinsverwaltung für moderne Schützenvereine
-                <br />
-                <span className="text-orange-600 text-sm font-medium">
-                  ⚠️ In aktiver Entwicklung - Neue Features werden laufend hinzugefügt
-                </span>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                  <h4 className="font-semibold text-green-900 dark:text-green-100 mb-2">
-                    Ihre Bereiche ({isVorstand ? 'Vorstand' : isKassenwart ? 'Kassenwart' : isSchriftfuehrer ? 'Schriftführer' : isSportleiter ? 'Sportleiter' : isJugendwart ? 'Jugendwart' : isDamenwart ? 'Damenwart' : isZeugwart ? 'Zeugwart' : isPressewart ? 'Pressewart' : isTrainer ? 'Trainer' : isAusbilder ? 'Ausbilder' : isVereinsschuetze ? 'Vereinsschütze' : isEhrenmitglied ? 'Ehrenmitglied' : 'Benutzer'})
-                  </h4>
-                  <div className="text-sm text-green-700 dark:text-green-200 space-y-1">
-                    {getVereinssoftwareBereiche().map((bereich, index) => (
-                      <div key={index}>• {bereich}</div>
-                    ))}
-                  </div>
-                  <div className="mt-2 pt-2 border-t border-green-200 dark:border-green-700">
-                    <p className="text-xs text-green-600 dark:text-green-300 italic">
-                      {getRollenBeschreibung()}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <a href="/vereinssoftware">
-                    <Button className="w-full">
-                      Vereinssoftware öffnen
-                    </Button>
-                  </a>
-                  <a href="/demo/vereinssoftware">
-                    <Button className="w-full" variant="outline">
-                      Demo ansehen
-                    </Button>
-                  </a>
-                </div>
+              <p className="text-purple-700 max-w-2xl mx-auto">
+                Wir entwickeln eine brandneue, moderne Vereinssoftware speziell für Schützenvereine. 
+                <strong>"Verein-im-Visier"</strong> wird alle Bereiche der Vereinsverwaltung abdecken.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2 text-sm">
+                <Badge className="bg-purple-100 text-purple-800 border-purple-300">👥 Mitgliederverwaltung</Badge>
+                <Badge className="bg-purple-100 text-purple-800 border-purple-300">💰 SEPA & Finanzen</Badge>
+                <Badge className="bg-purple-100 text-purple-800 border-purple-300">🏆 Lizenzen</Badge>
+                <Badge className="bg-purple-100 text-purple-800 border-purple-300">⚖️ Vereinsrecht</Badge>
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="shadow-lg border-2 border-dashed border-gray-300 bg-gray-50 dark:bg-gray-900/20">
-            <CardHeader className="pb-4">
-              <div>
-                <CardTitle className="text-xl mb-2 text-gray-500">
-                  👥 Vereinssoftware
-                  <Badge className="ml-2 bg-orange-500 text-white text-xs">BETA</Badge>
-                </CardTitle>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="outline" className="text-orange-600 border-orange-300">
-                    🔒 Lizenz erforderlich
-                  </Badge>
-                </div>
-              </div>
-              <CardDescription className="text-gray-400">
-                Vollständige Vereinsverwaltung für moderne Schützenvereine
-                <br />
-                <span className="text-orange-500 text-sm font-medium">
-                  💰 Kostenpflichtiges Zusatzmodul
-                </span>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Funktionen</h4>
-                  <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
-                    <div>• 👥 Vollständige Mitgliederverwaltung</div>
-                    <div>• 💳 SEPA-Lastschrift & Multi-Bank-Export</div>
-                    <div>• 🎂 Geburtstage & Jubiläen-System</div>
-                    <div>• 🏆 Lizenzen & Ausbildungen-Management</div>
-                    <div>• ⚖️ Vereinsrecht-Modul (Protokolle, Wahlen)</div>
-                    <div>• 📋 Aufgaben-Management für Vorstand</div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Button disabled className="w-full bg-gray-300 text-gray-500 cursor-not-allowed">
-                    Lizenz erforderlich
+              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                <a href="https://vereins-manager-app.vercel.app/" target="_blank" rel="noopener noreferrer">
+                  <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+                    🔗 Vorschau ansehen
                   </Button>
-                  <p className="text-xs text-gray-500 mt-2 text-center">
-                    Kontakt: <strong>rwk-leiter-ksve@gmx.de</strong>
-                  </p>
-                </div>
+                </a>
+                <p className="text-xs text-purple-600">
+                  ⚠️ Noch in früher Entwicklungsphase
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Support-Bereich */}

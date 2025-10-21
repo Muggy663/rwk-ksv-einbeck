@@ -16,7 +16,6 @@ import { fetchEvents } from '@/lib/services/calendar-service';
 import { cleanupExpiredEvents } from '@/lib/services/event-cleanup';
 import { newsService } from '@/lib/services/news-service';
 import { MaintenanceBanner } from '@/components/MaintenanceBanner';
-import { VereinsAppBanner } from '@/components/ui/vereins-app-banner';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
@@ -201,9 +200,6 @@ export default function HomePage() {
       </section>
 
       <Separator className="my-6" />
-
-      {/* Vereins-Manager Banner */}
-      <VereinsAppBanner />
 
       {/* Feature-Cards mit modernem Design */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 pwa-cards">

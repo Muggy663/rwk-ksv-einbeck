@@ -38,88 +38,19 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - **Qualifikations-Management** für Landesmeisterschaften
 - **Urkunden-Druck** automatisiert
 
-### 🏠 Vereinssoftware - Komplette Digitalisierung (NEU v1.5.7)
+### 🚀 **Neue Vereinssoftware "Verein-im-Visier"**
 
-**Die RWK App bietet eine vollständige Vereinssoftware für moderne Schützenvereine:**
+**Wir entwickeln eine brandneue, moderne Vereinssoftware speziell für Schützenvereine:**
 
-#### 👥 **Mitgliederverwaltung**
-- **Vollständige Mitgliederdatenbank** mit allen wichtigen Daten (Name, Adresse, Geburtstag, Kontakt)
-- **Automatische Altersberechnung** und Vereinsjahre-Ermittlung
-- **Import-Funktionen** für bestehende Mitgliederlisten (CSV/Excel)
-- **Suchfunktionen** - finden Sie jeden Schützen in Sekunden
-- **Sortierbare Listen** - alle Spalten per Klick sortierbar
-- **Mitgliederstatus** - Aktiv/Inaktiv Verwaltung mit Austrittsdaten
+- 👥 **Vollständige Mitgliederverwaltung** mit SEPA-Integration
+- 💰 **Moderne Finanzverwaltung** mit Multi-Bank-Export
+- 🏆 **Lizenzen & Ausbildungen** Management
+- ⚖️ **Vereinsrecht-Modul** für Protokolle und Wahlen
+- 📊 **Umfangreiche Statistiken** und Auswertungen
 
-#### 💰 **Beitragsverwaltung & SEPA**
-- **Flexible Beitragssätze** - individuell konfigurierbar (Erwachsene, Jugend, Senioren, Familie)
-- **SEPA-Lastschrift Integration** - vollständige Mandate-Verwaltung mit automatischer BIC-Berechnung
-- **Multi-Bank-Export** - Sparkasse, Volksbank, Commerzbank, Deutsche Bank Formate
-- **Automatische Beitragsberechnung** nach Alter und Vereinsregeln
-- **Professionelle Mahnbriefe** - PDF-Generator mit Schützenbruder-Anrede und Bankdaten
-- **Erweiterte Beitragsliste** - Zahlungsart-Dropdown, SEPA-Mandate, Banknamen
-- **Export-Funktionen** - SEPA-XML, CSV, Excel für Ihre Bank
-- **Zahlungsübersicht** - wer hat bezahlt, wer nicht?
+**🔗 Vorschau:** [vereins-manager-app.vercel.app](https://vereins-manager-app.vercel.app/)
 
-#### 🎂 **Geburtstage & Jubiläen**
-- **Individuell konfigurierbar** - bestimmen Sie selbst, wer wann geehrt wird
-- **5-Jahres-Vorausplanung** (2025-2030) - nie wieder Jubiläum vergessen
-- **Automatische Jubiläums-Listen** - Bronze (10 Jahre), Silber (25 Jahre), Gold (40+ Jahre)
-- **Urkunden-Generator** - professionelle Ehrungsurkunden mit Vereinslogo
-- **Geburtstags-Aktionen** - Karten, Gutscheine nach Ihren Regeln
-- **Gender-spezifische Anreden** - SCHÜTZENBRUDER/SCHÜTZENSCHWESTER
-
-#### 🏆 **Lizenzen & Ausbildungen** ✅ **FERTIG v1.5.8**
-- **8 echte Schießsport-Ausbildungen** (Waffensachkunde, Schieß- und Standaufsicht, JugendBasisLizenz, Schießsportleiter, Fachschießsportleiter, Trainer C Basis, Kampfrichter B, Trainer C Leistung)
-- **12 Vorstandspositionen** (1./2. Vorsitzender, Kassenwart, Schriftführer, Schießwart, Jugendwart, Damenwart, Zeugwart, Pressewart, Beisitzer, Ehrenvorsitzender, Kassenprüfer)
-- **Automatische Ablauf-Überwachung** - 90-Tage-Warnung vor Ablauf mit Status-Ampel
-- **DSB-Lizenznummern-Verwaltung** - vollständige Integration
-- **Live-Statistiken** - Mitglieder, Lizenzen, Ausbildungen, Warnungen
-- **Multi-Tenant Firestore** - club-spezifische Datentrennung
-- **PDF-Export** - professionelle Listen zum Drucken
-- **Echtzeit-Synchronisation** - sofortige Updates für alle Nutzer
-
-#### 📋 **Aufgaben-Management für den Vorstand**
-- **To-Do-Listen** für Vereinsführung - nie wieder wichtige Termine vergessen
-- **Prioritäten-System** - Hoch/Mittel/Niedrig mit Fälligkeitsdaten
-- **Zuständigkeiten** - wer macht was bis wann?
-- **Fortschritts-Tracking** - 0-100% Bearbeitung sichtbar
-- **Dashboard-Übersicht** - alle offenen Aufgaben auf einen Blick
-
-#### ⚖️ **Vereinsrecht & Protokolle**
-- **Digitale Protokolle** - Sitzungsprotokolle professionell erstellen
-- **Wahlen-System** - Vereinswahlen digital durchführen und dokumentieren
-- **Satzungsverwaltung** - alle Vereinsdokumente zentral verwaltet
-- **Gemeinnützigkeits-Compliance** - rechtssichere Vereinsführung
-- **Status-Workflows** - Entwurf → Fertig → Versendet
-
-#### 🔧 **Technische Highlights**
-- **Multi-Tenant Architektur** - jeder Verein hat seine eigenen, getrennten Daten
-- **Sortierbare Tabellen** - alle Listen per Klick nach jeder Spalte sortierbar
-- **Responsive Design** - funktioniert auf PC, Tablet und Smartphone
-- **Automatische Backups** - Ihre Daten sind sicher in der Cloud
-- **Echtzeit-Synchronisation** - Änderungen sind sofort für alle sichtbar
-- **Offline-Funktionen** - wichtige Daten auch ohne Internet verfügbar
-
-#### 📊 **Statistiken & Auswertungen**
-- **Mitglieder-Dashboard** - Gesamtzahl, Altersverteilung, Geschlecht
-- **Beitrags-Übersicht** - Einnahmen, offene Posten, SEPA-Status
-- **Jubiläums-Planung** - wer wird wann geehrt?
-- **Vorstand-Übersicht** - alle Ämter und Zuständigkeiten
-- **Export-Funktionen** - alle Daten als PDF oder Excel
-
-**💡 Warum Vereinssoftware nutzen?**
-- ✅ **Zeitersparnis** - keine Excel-Listen mehr pflegen
-- ✅ **Fehlerreduzierung** - automatische Berechnungen
-- ✅ **Professioneller Auftritt** - saubere Dokumente und Urkunden
-- ✅ **Rechtssicherheit** - korrekte Protokolle und Compliance
-- ✅ **Zukunftssicher** - digitale Vereinsführung für moderne Vereine
-
-**🎯 Perfekt für:**
-- Schützenvereine aller Größen (10-500 Mitglieder)
-- Vorstände, die Zeit sparen wollen
-- Vereine, die professioneller werden möchten
-- Kassenwarte mit SEPA-Lastschrift
-- Schriftführer für digitale Protokolle
+*⚠️ Noch in früher Entwicklungsphase - Release geplant für 2025*
 
 ### 📊 Verwaltung & Organisation
 - **Globale Suche** über alle Bereiche (NEU v1.5.4)
@@ -228,7 +159,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 16. Oktober 2025*
+*Letzte Aktualisierung: 21. Oktober 2025*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 
@@ -254,11 +185,8 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 
 ---
 
-### Versionshistorie
-
 **Aktuelle Versionen:**
-- **Web-Version 1.8.3** - Vorbereitung für Vereins-App-Erweiterungen
-- **Web-Version 1.8.2** - Handzettel-Upload Verbesserungen & Dashboard-Fixes: Checkbox "Nur anhängen (ohne OCR)" für optionale OCR-Verarbeitung, Vereinsname-Anzeige im Dashboard korrigiert, Meldezettel-Karten-Titel optimiert, Schützen-Dropdown Sichtbarkeit in Light Mode behoben
+- **Web-Version 1.8.3** - OCR-Optimierung & E-Mail-Fixes: OCR nur noch auf Wunsch mit Kontrollhinweis, E-Mail-Versand für Sportleiter behoben, Vereinssoftware-Verweis auf neue "Verein-im-Visier" App
 - **Web-Version 1.8.1** - Mobile OCR-Optimierungen & UI-Fixes: Automatische OCR-Starts nach Foto-Aufnahme, Tabellen-Overflow-Fixes für Portrait-Modus, Safe Area Support für mobile Header, Dark Mode Print-Fixes, Team-Sortierung mit Einzel-Teams am Ende, PDF-Hilfe Button kompakter für App-Ansicht
 - **Web-Version 1.7.5.4** - Google Analytics Integration (wieder entfernt in v1.7.5.5): Besucherzähler im Footer mit Google Analytics 4, DSGVO-konformes Tracking mit anonymisierten IPs, automatisches Page-Tracking, dezente Anzeige der Besucherzahlen
 - **Web-Version 1.7.5.3** - Sportleiter Schützen-Vollzugriff: SPORTLEITER können jetzt Schützen anlegen/bearbeiten/löschen, Geburtsjahr-Input korrigiert, Teams nur aus laufenden Saisons, Stammdaten-Hinweis 01.08.2025 im RWK Dashboard
