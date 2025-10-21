@@ -48,9 +48,9 @@ export default function FuerVereinePage() {
       <div className="flex items-center space-x-3 mb-8">
         <BackButton className="mr-2" fallbackHref="/" />
         <div>
-          <h1 className="text-4xl font-bold text-primary">Für Vereine</h1>
+          <h1 className="text-4xl font-bold text-primary">Für Kreisverbände</h1>
           <p className="text-lg text-muted-foreground">
-            Digitalisieren Sie Ihren Schützenverein - Einfach, Modern und Effizient
+            Kreisverband für Rundenwettkämpfe und Kreismeisterschaften - Einfach, Modern und Effizient
           </p>
         </div>
       </div>
@@ -69,7 +69,7 @@ export default function FuerVereinePage() {
         </div>
         
         <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent mb-6">
-          Digitalisieren Sie Ihren Schützenverein
+          Kreisverband für Rundenwettkämpfe und Kreismeisterschaften
         </h1>
         
         <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-4xl mx-auto">

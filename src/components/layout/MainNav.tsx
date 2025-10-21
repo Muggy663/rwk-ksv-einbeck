@@ -117,7 +117,7 @@ export function MainNav() {
     },
     {
       href: '/fuer-vereine',
-      label: 'Vereine',
+      label: 'Kreisverbände',
       icon: <MessageSquare className="h-4 w-4 mr-2" />,
       active: pathname === '/fuer-vereine',
     },

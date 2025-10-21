@@ -38,20 +38,6 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - **Qualifikations-Management** für Landesmeisterschaften
 - **Urkunden-Druck** automatisiert
 
-### 🚀 **Neue Vereinssoftware "Verein-im-Visier"**
-
-**Wir entwickeln eine brandneue, moderne Vereinssoftware speziell für Schützenvereine:**
-
-- 👥 **Vollständige Mitgliederverwaltung** mit SEPA-Integration
-- 💰 **Moderne Finanzverwaltung** mit Multi-Bank-Export
-- 🏆 **Lizenzen & Ausbildungen** Management
-- ⚖️ **Vereinsrecht-Modul** für Protokolle und Wahlen
-- 📊 **Umfangreiche Statistiken** und Auswertungen
-
-**🔗 Vorschau:** [vereins-manager-app.vercel.app](https://vereins-manager-app.vercel.app/)
-
-*⚠️ Noch in früher Entwicklungsphase - Release geplant für 2025*
-
 ### 📊 Verwaltung & Organisation
 - **Globale Suche** über alle Bereiche (NEU v1.5.4)
 - **Aufgaben-Management** für Vorstand (NEU v1.5.4)

@@ -53,17 +53,7 @@ export default function HandbuchPage() {
           <Trophy className="h-4 w-4" />
           <span>Kreismeisterschaften (KM)</span>
         </button>
-        <button
-          onClick={() => setActiveTab('vereinssoftware')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors w-full md:w-auto ${
-            activeTab === 'vereinssoftware' 
-              ? 'bg-background text-primary shadow-sm' 
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <BookOpenCheck className="h-4 w-4" />
-          <span>Vereinssoftware</span>
-        </button>
+
       </div>
 
       {activeTab === 'rwk' && (

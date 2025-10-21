@@ -381,20 +381,20 @@ export default function SupportPage() {
         <CardHeader>
           <CardTitle className="text-2xl text-primary flex items-center gap-2">
             <HelpCircle className="h-6 w-6" />
-            Für neue Vereine
+            Für Kreisverbände
           </CardTitle>
           <CardDescription>
-            Entdecken Sie, wie die RWK KSV Einbeck App Ihren Verein digitalisieren kann
+            Entdecken Sie, wie die RWK KSV Einbeck App Ihren Kreisverband unterstützt
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            Sind Sie Vereinsvorstand oder Schießsportleiter und möchten Ihren Verein modernisieren? 
-            Erfahren Sie mehr über unsere umfassende Lösung für Wettkampf-Management und Vereinssoftware.
+            Sind Sie Kreisverbandsleiter oder RWK-Organisator und möchten Ihre Rundenwettkämpfe und Kreismeisterschaften modernisieren? 
+            Erfahren Sie mehr über unsere spezialisierte Lösung für Wettkampf-Management.
           </p>
           <Button asChild className="w-full">
             <Link href="/fuer-vereine">
-              Mehr erfahren - Für Vereine
+              Mehr erfahren - Für Kreisverbände
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
