@@ -38,7 +38,7 @@ export function Sidebar() {
 
   const helpRoutes = [
     { href: '/handbuch', label: 'Handbuch', icon: BookOpen },
-    { href: '/fuer-vereine', label: 'Für Kreisverbände', icon: MessageSquare },
+    { href: '/kreisverband', label: 'Für Kreisverbände', icon: MessageSquare },
     { href: '/support', label: 'Support', icon: MessageSquare },
   ];
 

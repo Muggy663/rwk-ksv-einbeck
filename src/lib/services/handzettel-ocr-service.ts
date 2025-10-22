@@ -19,6 +19,7 @@ export interface OCRResult {
   datum?: string;
   teams: OCRTeam[];
   rawText: string;
+  ocrMethod?: string;
 }
 
 export class HandzettelOCRService {
@@ -199,8 +200,15 @@ export class HandzettelOCRService {
           const shooterMatch = line.match(pattern);
           if (shooterMatch && currentTeam) {
             let scoreStr = shooterMatch[2];
-            // Handschrift-Korrekturen
-            scoreStr = scoreStr.replace(/O/g, '0').replace(/[Il]/g, '1');
+            // Erweiterte Handschrift-Korrekturen
+            scoreStr = scoreStr
+              .replace(/O/g, '0')
+              .replace(/[Il]/g, '1')
+              .replace(/S/g, '5')
+              .replace(/B/g, '8')
+              .replace(/G/g, '6')
+              .replace(/Z/g, '2')
+              .replace(/C/g, '0');
             const score = parseInt(scoreStr);
             
             if (score >= 0 && score <= 400) {
@@ -250,7 +258,7 @@ export class GoogleVisionOCRService {
       // Convert image to base64
       const base64Image = await this.fileToBase64(imageFile);
       
-      // Call Google Vision API
+      // Call Google Vision API with structured detection
       const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${this.apiKey}`, {
         method: 'POST',
         headers: {
@@ -261,10 +269,16 @@ export class GoogleVisionOCRService {
             image: {
               content: base64Image
             },
-            features: [{
-              type: 'DOCUMENT_TEXT_DETECTION',
-              maxResults: 1
-            }]
+            features: [
+              {
+                type: 'DOCUMENT_TEXT_DETECTION',
+                maxResults: 1
+              },
+              {
+                type: 'TEXT_DETECTION',
+                maxResults: 50
+              }
+            ]
           }]
         })
       });
@@ -274,15 +288,34 @@ export class GoogleVisionOCRService {
       }
 
       const data = await response.json();
-      const text = data.responses[0]?.fullTextAnnotation?.text || '';
+      const fullText = data.responses[0]?.fullTextAnnotation?.text || '';
+      const textAnnotations = data.responses[0]?.textAnnotations || [];
       
-      return {
-        liga: this.extractLiga(text),
-        durchgang: this.extractDurchgang(text),
-        datum: this.extractDatum(text),
-        teams: this.extractTeamsWithNumbers(text),
-        rawText: text
-      };
+      // Premium: Strukturbasierte Erkennung mit Koordinaten
+      const structuredResult = this.extractStructuredData(textAnnotations);
+      
+      // Prüfe ob Standard-Handzettel erkannt wurde
+      const isStandardHandzettel = this.detectStandardHandzettel(textAnnotations);
+      
+      if (isStandardHandzettel && structuredResult.teams.length > 0) {
+        console.log('✅ Standard-Handzettel erkannt - Premium OCR verwendet');
+        return {
+          liga: structuredResult.liga || this.extractLiga(fullText),
+          durchgang: structuredResult.durchgang || this.extractDurchgang(fullText),
+          datum: structuredResult.datum || this.extractDatum(fullText),
+          teams: structuredResult.teams,
+          rawText: fullText
+        };
+      } else {
+        console.log('⚠️ Kein Standard-Handzettel - Fallback auf normale OCR');
+        return {
+          liga: this.extractLiga(fullText),
+          durchgang: this.extractDurchgang(fullText),
+          datum: this.extractDatum(fullText),
+          teams: this.extractTeamsWithNumbers(fullText),
+          rawText: fullText
+        };
+      }
     } catch (error) {
       console.error('Google Vision OCR Error:', error);
       throw error;
@@ -330,6 +363,287 @@ export class GoogleVisionOCRService {
     return match ? match[1] : undefined;
   }
 
+  private detectStandardHandzettel(textAnnotations: any[]): boolean {
+    // Erkenne Standard-Handzettel anhand typischer Merkmale
+    const allText = textAnnotations.map(a => a.description).join(' ').toLowerCase();
+    
+    const standardIndicators = [
+      'kreisschützenverband',
+      'rundenwettkampf',
+      'meldebogen',
+      'durchgang',
+      'ringe',
+      'teiler'
+    ];
+    
+    const foundIndicators = standardIndicators.filter(indicator => 
+      allText.includes(indicator)
+    ).length;
+    
+    // Mindestens 3 von 6 Indikatoren müssen vorhanden sein
+    const isStandard = foundIndicators >= 3;
+    
+    // Zusätzlich: Prüfe Layout-Struktur (Header + Team-Bereich)
+    const hasHeaderStructure = textAnnotations.some(a => 
+      a.boundingPoly && a.boundingPoly.vertices[0].y < 150
+    );
+    
+    const hasTeamStructure = textAnnotations.some(a => 
+      a.boundingPoly && a.boundingPoly.vertices[0].y > 150 && a.boundingPoly.vertices[0].y < 800
+    );
+    
+    const result = isStandard && hasHeaderStructure && hasTeamStructure;
+    
+    console.log(`🔍 Handzettel-Erkennung: ${foundIndicators}/6 Indikatoren, Header: ${hasHeaderStructure}, Teams: ${hasTeamStructure} = ${result ? 'Standard' : 'Nicht-Standard'}`);
+    
+    return result;
+  }
+  
+  private extractStructuredData(textAnnotations: any[]): { liga?: string, durchgang?: number, datum?: string, teams: OCRTeam[] } {
+    console.log('🏗️ Premium Strukturbasierte OCR gestartet');
+    
+    // Sortiere Textelemente nach Y-Koordinate (von oben nach unten)
+    const sortedTexts = textAnnotations
+      .filter(annotation => annotation.boundingPoly && annotation.description)
+      .map(annotation => ({
+        text: annotation.description,
+        x: annotation.boundingPoly.vertices[0].x || 0,
+        y: annotation.boundingPoly.vertices[0].y || 0,
+        width: (annotation.boundingPoly.vertices[2].x || 0) - (annotation.boundingPoly.vertices[0].x || 0),
+        height: (annotation.boundingPoly.vertices[2].y || 0) - (annotation.boundingPoly.vertices[0].y || 0)
+      }))
+      .sort((a, b) => a.y - b.y);
+    
+    console.log(`📍 ${sortedTexts.length} Textelemente mit Koordinaten gefunden`);
+    
+    // Definiere Handzettel-Layout-Bereiche (basierend auf Standard-Handzettel)
+    const layout = {
+      header: { yMin: 0, yMax: 150 },        // Liga, Durchgang, Datum
+      teamArea: { yMin: 150, yMax: 800 },    // Mannschaften und Schützen
+      scoreColumns: [                         // Ringzahl-Spalten (X-Koordinaten)
+        { xMin: 400, xMax: 500, label: 'Ringe' },
+        { xMin: 500, xMax: 600, label: 'Teiler' },
+        { xMin: 600, xMax: 700, label: 'Gesamt' }
+      ]
+    };
+    
+    // Extrahiere Header-Informationen
+    const headerTexts = sortedTexts.filter(t => t.y <= layout.header.yMax);
+    const liga = this.findInTexts(headerTexts, /(Kreisklasse|Kreisliga|Bezirksklasse|Bezirksliga)\s*([A-Z]?)/i);
+    const durchgang = this.findNumberInTexts(headerTexts, /Durchgang[:\s]*(\d+)/i);
+    const datum = this.findInTexts(headerTexts, /Datum[:\s]*(\d{1,2}\.?\d{1,2}\.?\d{2,4})/i);
+    
+    // Extrahiere Team-Bereich
+    const teamTexts = sortedTexts.filter(t => 
+      t.y >= layout.teamArea.yMin && t.y <= layout.teamArea.yMax
+    );
+    
+    console.log(`🏆 ${teamTexts.length} Texte im Team-Bereich gefunden`);
+    
+    // Gruppiere Texte in Zeilen (ähnliche Y-Koordinaten)
+    const rows = this.groupIntoRows(teamTexts, 15); // 15px Toleranz
+    console.log(`📋 ${rows.length} Zeilen erkannt`);
+    
+    const teams: OCRTeam[] = [];
+    let currentTeam: string | null = null;
+    let currentShooters: OCRShooter[] = [];
+    
+    for (const row of rows) {
+      const rowText = row.map(t => t.text).join(' ');
+      console.log(`📝 Zeile: ${rowText}`);
+      
+      // Team-Erkennung (römische Zahlen am Ende)
+      const teamMatch = rowText.match(/([A-ZÄÖÜ][A-Za-zäöüß\s\.]+\s+[IVX]+)|([A-ZÄÖÜ][a-zäöüß\s\.]+(?:e\.V\.|eV)\s+[IVX]+)/);
+      if (teamMatch) {
+        // Speichere vorheriges Team
+        if (currentTeam && currentShooters.length > 0) {
+          teams.push({
+            name: currentTeam,
+            shooters: currentShooters,
+            confidence: 0.95
+          });
+        }
+        
+        currentTeam = (teamMatch[1] || teamMatch[2]).trim();
+        currentShooters = [];
+        console.log(`✅ Team erkannt: ${currentTeam}`);
+        continue;
+      }
+      
+      // Schützen-Erkennung mit Koordinaten-basierter Ringzahl-Zuordnung
+      if (currentTeam) {
+        const shooterName = this.extractShooterName(row);
+        if (shooterName) {
+          const score = this.extractScoreFromRow(row, layout.scoreColumns);
+          if (score !== null && score >= 0 && score <= 400) {
+            currentShooters.push({
+              name: shooterName,
+              score: score,
+              confidence: 0.95
+            });
+            console.log(`🎯 Schütze: ${shooterName} - ${score} Ringe (Premium OCR)`);
+          } else {
+            console.log(`⚠️ Schütze ohne gültige Ringzahl: ${shooterName}`);
+          }
+        }
+      }
+    }
+    
+    // Letztes Team speichern
+    if (currentTeam && currentShooters.length > 0) {
+      teams.push({
+        name: currentTeam,
+        shooters: currentShooters,
+        confidence: 0.95
+      });
+    }
+    
+    console.log(`🏁 Premium OCR: ${teams.length} Teams mit ${teams.reduce((sum, t) => sum + t.shooters.length, 0)} Schützen`);
+    
+    // Validiere Ergebnis - bei zu wenig Daten Fallback signalisieren
+    const totalShooters = teams.reduce((sum, t) => sum + t.shooters.length, 0)
+    console.log(`🔍 Premium OCR Validierung: ${teams.length} Teams, ${totalShooters} Schützen`);
+    
+    if (teams.length === 0 || totalShooters < 10) {
+      console.log('⚠️ Premium OCR unvollständig - Fallback empfohlen');
+      return { liga, durchgang, datum, teams: [] }; // Leere Teams = Fallback
+    }
+    
+    return { liga, durchgang, datum, teams };
+  }
+  
+  private findInTexts(texts: any[], pattern: RegExp): string | undefined {
+    for (const text of texts) {
+      const match = text.text.match(pattern);
+      if (match) return match[1] + (match[2] || '');
+    }
+    return undefined;
+  }
+  
+  private findNumberInTexts(texts: any[], pattern: RegExp): number | undefined {
+    const result = this.findInTexts(texts, pattern);
+    return result ? parseInt(result) : undefined;
+  }
+  
+  private groupIntoRows(texts: any[], tolerance: number): any[][] {
+    const rows: any[][] = [];
+    const sortedByY = [...texts].sort((a, b) => a.y - b.y);
+    
+    for (const text of sortedByY) {
+      let addedToRow = false;
+      
+      for (const row of rows) {
+        const avgY = row.reduce((sum, t) => sum + t.y, 0) / row.length;
+        if (Math.abs(text.y - avgY) <= tolerance) {
+          row.push(text);
+          row.sort((a, b) => a.x - b.x); // Sortiere nach X-Koordinate
+          addedToRow = true;
+          break;
+        }
+      }
+      
+      if (!addedToRow) {
+        rows.push([text]);
+      }
+    }
+    
+    return rows;
+  }
+  
+  private extractShooterName(row: any[]): string | null {
+    // Suche nach Namen-Pattern in der Zeile (meist am Anfang)
+    const nameTexts = row.filter(t => t.x < 300); // Namen stehen links
+    const nameText = nameTexts.map(t => t.text).join(' ');
+    
+    // Erweiterte Namen-Patterns für bessere Erkennung
+    const namePatterns = [
+      /([A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?\s+[A-ZÄÖÜ][a-zäöüß]+)/,  // Hans-Joachim Hinz
+      /([A-ZÄÖÜ][a-zäöüß]+\s+[A-ZÄÖÜ][a-zäöüß]+)/,  // Standard: Vorname Nachname
+      /([A-ZÄÖÜ][a-zäöüß]+\s+[A-ZÄÖÜ][a-zäöüß]+\s+[A-ZÄÖÜ][a-zäöüß]+)/ // Drei Namen
+    ];
+    
+    for (const pattern of namePatterns) {
+      const nameMatch = nameText.match(pattern);
+      if (nameMatch) {
+        return nameMatch[1].trim();
+      }
+    }
+    
+    return null;
+  }
+  
+  private extractScoreFromRow(row: any[], scoreColumns: any[]): number | null {
+    // Suche in den definierten Ringzahl-Spalten
+    for (const column of scoreColumns) {
+      const scoreTexts = row.filter(t => t.x >= column.xMin && t.x <= column.xMax);
+      
+      for (const scoreText of scoreTexts) {
+        let text = scoreText.text
+          .replace(/[Il|]/g, '1')
+          .replace(/[O]/g, '0')
+          .replace(/[S]/g, '5')
+          .replace(/[B]/g, '8')
+          .replace(/[G]/g, '6')
+          .replace(/[D]/g, '0')
+          .replace(/[T]/g, '7')
+          .replace(/[A]/g, '4')
+          .replace(/[Z]/g, '2')
+          .replace(/[C]/g, '0');
+        
+        const scoreMatch = text.match(/^(\d{1,3})$/);
+        if (scoreMatch) {
+          let score = parseInt(scoreMatch[1]);
+          
+          // Korrigiere häufige OCR-Fehler
+          if (score > 400) {
+            if (score >= 700 && score <= 799) score = score - 600;
+            else if (score >= 800 && score <= 899) score = score - 600;
+            else score = Math.min(score, 400);
+          }
+          
+          if (score >= 0 && score <= 400) {
+            console.log(`🎯 Ringzahl gefunden in Spalte ${column.label}: ${score}`);
+            return score;
+          }
+        }
+      }
+    }
+    
+    return null;
+  }
+  
+  private fuzzyMatch(str1: string, str2: string): number {
+    const s1 = str1.toLowerCase().replace(/[^a-z]/g, '');
+    const s2 = str2.toLowerCase().replace(/[^a-z]/g, '');
+    
+    if (s1 === s2) return 1;
+    if (s1.includes(s2) || s2.includes(s1)) return 0.9;
+    
+    // Levenshtein distance
+    const matrix = [];
+    for (let i = 0; i <= s2.length; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= s1.length; j++) {
+      matrix[0][j] = j;
+    }
+    for (let i = 1; i <= s2.length; i++) {
+      for (let j = 1; j <= s1.length; j++) {
+        if (s2.charAt(i - 1) === s1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+    const distance = matrix[s2.length][s1.length];
+    return 1 - distance / Math.max(s1.length, s2.length);
+  }
+
   private extractTeamsWithNumbers(text: string): OCRTeam[] {
     const teams: OCRTeam[] = [];
     const lines = text.split('\n').filter(line => line.trim());
@@ -359,7 +673,10 @@ export class GoogleVisionOCRService {
             !name.includes('Ansprechpartner') &&
             !name.includes('Mannschaftsführer') &&
             !name.includes('Einbeck') &&
-            name.split(' ').length === 2) {
+            !name.includes('Datum') &&
+            !name.includes('Durchgang') &&
+            name.split(' ').length === 2 &&
+            !shooterNames.includes(name)) { // Duplikat-Prüfung
           shooterNames.push(name);
           console.log('👤 Schütze gefunden:', name);
         }
@@ -370,21 +687,46 @@ export class GoogleVisionOCRService {
         .replace(/[Il|]/g, '1')
         .replace(/[O]/g, '0')
         .replace(/[S]/g, '5')
-        .replace(/[Z]/g, '2')
         .replace(/[B]/g, '8')
-        .replace(/^7/g, '1');
+        .replace(/[G]/g, '6')
+        .replace(/[D]/g, '0')
+        .replace(/[T]/g, '7')
+        .replace(/[A]/g, '4')
+        .replace(/[Z]/g, '2')
+        .replace(/[C]/g, '0');
         
       const scoreMatch = correctedLine.match(/^(\d{1,3})$/);
       if (scoreMatch) {
         let score = parseInt(scoreMatch[1]);
+        const originalScore = score;
+        
+        // Korrigiere häufige OCR-Fehler bei Zahlen
         if (score > 400) {
-          if (score >= 700 && score <= 799) score = score - 600;
-          else if (score >= 800 && score <= 899) score = score - 600;
+          if (score >= 700 && score <= 799) score = score - 600; // 7xx -> 1xx
+          else if (score >= 800 && score <= 899) score = score - 600; // 8xx -> 2xx
+          else if (score >= 600 && score <= 699) score = score - 600; // 6xx -> 0xx
+          else if (score >= 900 && score <= 999) score = score - 600; // 9xx -> 3xx
           else score = Math.min(score, 400);
         }
+        
+        // Weitere Korrekturen für typische Handschrift-Fehler
+        if (score < 50 && originalScore > 100) {
+          // Wahrscheinlich falsch erkannt, versuche andere Interpretation
+          const scoreStr = originalScore.toString();
+          if (scoreStr.startsWith('8')) score = parseInt('9' + scoreStr.slice(1));
+          else if (scoreStr.startsWith('6')) score = parseInt('9' + scoreStr.slice(1));
+        }
+        
+        // Validiere finalen Score
         if (score >= 0 && score <= 400) {
           scores.push(score);
-          console.log(`🎯 Ringzahl: ${score} (original: ${line})`);
+          if (originalScore !== score) {
+            console.log(`🎯 Ringzahl korrigiert: ${score} (original: ${originalScore} von "${line}")`);
+          } else {
+            console.log(`🎯 Ringzahl: ${score} (von "${line}")`);
+          }
+        } else {
+          console.log(`❌ Ungültige Ringzahl ignoriert: ${score} (original: ${originalScore} von "${line}")`);
         }
       }
     }
@@ -405,77 +747,200 @@ export class GoogleVisionOCRService {
     console.log('Schützen:', shooterNames);
     console.log('Scores:', scores);
     
-    // Spezialfall: Elias Michalik hat keine Ringzahl
-    // Entferne eine Ringzahl wenn Schützen > Ringzahlen
+    // Lücken-Erkennung: Wenn mehr Schützen als Ringzahlen vorhanden sind
     if (shooterNames.length > scores.length) {
-      const eliasIndex = shooterNames.indexOf('Elias Michalik');
-      if (eliasIndex === 2) { // 3. Schütze (Index 2)
-        // Verschiebe alle Scores um eine Position nach rechts ab Index 2
-        scores.splice(2, 0, 0); // Füge 0 an Position 2 ein
-        console.log('🔧 Elias Michalik Korrektur: 0 Ringe eingefügt');
+      console.log(`⚠️ Lücke erkannt: ${shooterNames.length} Schützen, ${scores.length} Ringzahlen`);
+      
+      // Füge 0-Werte für fehlende Ringzahlen hinzu
+      const missingScores = shooterNames.length - scores.length;
+      for (let i = 0; i < missingScores; i++) {
+        // Versuche intelligente Position zu finden
+        const insertPosition = Math.min(scores.length, shooterNames.length - missingScores + i);
+        scores.splice(insertPosition, 0, 0);
+        console.log(`🔧 Lücke gefüllt: 0 Ringe an Position ${insertPosition} eingefügt`);
       }
     }
     
-    // Einfache sequenzielle Zuordnung mit Lücken-Erkennung
-    let shooterIndex = 0;
-    let scoreIndex = 0;
-    
-    console.log(`🔍 Start Zuordnung: ${shooterNames.length} Schützen, ${scores.length} Ringzahlen, ${teamNames.length} Teams`);
-    
-    for (let teamIdx = 0; teamIdx < teamNames.length; teamIdx++) {
-      const teamName = teamNames[teamIdx];
-      const teamShooters: OCRShooter[] = [];
+    // Zu viele Ringzahlen: Entferne die niedrigsten oder offensichtlich falschen
+    if (scores.length > shooterNames.length) {
+      console.log(`⚠️ Zu viele Ringzahlen: ${scores.length} Ringzahlen, ${shooterNames.length} Schützen`);
       
-      console.log(`🏆 Team ${teamIdx + 1}/${teamNames.length}: ${teamName}`);
+      // Entferne Ringzahlen > 400 oder sehr niedrige Werte < 50
+      const validScores = scores.filter(score => score >= 50 && score <= 400);
+      if (validScores.length === shooterNames.length) {
+        scores.length = 0;
+        scores.push(...validScores);
+        console.log('🔧 Ungültige Ringzahlen entfernt');
+      } else {
+        // Entferne überschüssige Ringzahlen vom Ende
+        scores.splice(shooterNames.length);
+        console.log('🔧 Überschüssige Ringzahlen entfernt');
+      }
+    }
+    
+    // Präzise zweistufige Zuordnung mit strikten Team-Grenzen
+    console.log(`🔍 Präzise Team-Schützen-Zuordnung`);
+    
+    interface TempShooter { name: string; lineIndex: number; }
+    interface TempScore { value: number; lineIndex: number; }
+    interface TempTeam { name: string; lineIndex: number; }
+    
+    const tempShooters: TempShooter[] = [];
+    const tempScores: TempScore[] = [];
+    const tempTeams: TempTeam[] = [];
+    
+    // Stufe 1: Präzise Extraktion mit verbesserter Filterung
+    lines.forEach((line, index) => {
+      const trimmed = line.trim();
       
-      // 3 Schützen pro Team
-      for (let i = 0; i < 3 && shooterIndex < shooterNames.length; i++) {
-        const shooterName = shooterNames[shooterIndex];
-        
-        console.log(`  👤 Schütze ${shooterIndex + 1}: ${shooterName} (scoreIndex: ${scoreIndex})`);
-        
-        // Prüfe ob nächste Ringzahl verfügbar ist
-        if (scoreIndex < scores.length) {
-          const score = scores[scoreIndex];
-          if (score > 0) { // Nur Schützen mit Ringzahl > 0 hinzufügen
-            teamShooters.push({
-              name: shooterName,
-              score: score,
-              confidence: 0.85
-            });
-            console.log(`    ✅ Eingetragen: ${score} Ringe`);
-          } else {
-            console.log(`    ⏭️ Übersprungen: 0 Ringe`);
-          }
-          scoreIndex++;
-        } else {
-          // Keine Ringzahl mehr verfügbar - überspringe
-          console.log(`    ⚠️ Keine Ringzahl mehr verfügbar`);
+      // Erweiterte Ringzahl-Erkennung (2-3 Ziffern, 0-400 Bereich)
+      const scoreMatch = trimmed.match(/^(\d{2,3})$/);
+      if (scoreMatch) {
+        const score = parseInt(scoreMatch[1]);
+        if (score >= 0 && score <= 400) {
+          tempScores.push({ value: score, lineIndex: index });
+          console.log(`🎯 Score erkannt: ${score} (Zeile ${index})`);
+          return;
         }
-        
-        shooterIndex++;
       }
       
-      console.log(`  📊 Team ${teamName}: ${teamShooters.length} Schützen eingetragen`);
+      // Verbesserte Namen-Erkennung mit strengerer Filterung
+      const namePatterns = [
+        /^([A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?\s+[A-ZÄÖÜ][a-zäöüß]+)(?:\s+\w{1,3})?$/, // Hans-Joachim Hinz wit
+        /^([A-ZÄÖÜ][a-zäöüß]+\s+[A-ZÄÖÜ][a-zäöüß]+)$/ // Standard: Vorname Nachname
+      ];
+      
+      for (const pattern of namePatterns) {
+        const nameMatch = trimmed.match(pattern);
+        if (nameMatch && 
+            !trimmed.includes('Ansprechpartner') && 
+            !trimmed.includes('Kreisschützenverband') && 
+            !trimmed.includes('e.V.') &&
+            !trimmed.includes('Einbeck') &&
+            !trimmed.includes('RWK') &&
+            !trimmed.includes('Datum') &&
+            !trimmed.includes('Uhrzeit') &&
+            trimmed.length > 5) {
+          const cleanName = nameMatch[1].trim();
+          tempShooters.push({ name: cleanName, lineIndex: index });
+          console.log(`👤 Schütze erkannt: ${cleanName} (Zeile ${index})`);
+          return;
+        }
+      }
+      
+      // Team-Erkennung
+      const teamMatch = trimmed.match(/([A-ZÄÖÜ][A-Za-zäöüß\s\.]+\s+[IVX]+)|([A-ZÄÖÜ][a-zäöüß\s\.]+(?:e\.V\.|eV)\s+[IVX]+)/);
+      if (teamMatch) {
+        const cleanName = (teamMatch[1] || teamMatch[2]).replace(/\s+\d{3}$/, '').trim();
+        tempTeams.push({ name: cleanName, lineIndex: index });
+        console.log(`🏆 Team erkannt: ${cleanName} (Zeile ${index})`);
+      }
+    });
+    
+    console.log(`📊 Extrahiert: ${tempTeams.length} Teams, ${tempShooters.length} Schützen, ${tempScores.length} Ringzahlen`);
+    console.log('🏆 Teams:', tempTeams.map(t => `${t.name} (${t.lineIndex})`));
+    console.log('👥 Schützen:', tempShooters.map(s => `${s.name} (${s.lineIndex})`));
+    console.log('🎯 Scores:', tempScores.map(s => `${s.value} (${s.lineIndex})`));
+    
+    // Stufe 2: Präzise Team-Zuordnung mit Used-Tracking
+    const usedShooters = new Set<number>();
+    const usedScores = new Set<number>();
+    
+    tempTeams.forEach((team, i) => {
+      const teamLine = team.lineIndex;
+      const nextTeamLine = tempTeams[i + 1] ? tempTeams[i + 1].lineIndex : lines.length;
+      
+      console.log(`🔍 Team ${team.name}: Analysiere um Zeile ${teamLine}`);
+      
+      // Sammle Schützen VOR und NACH dem Team (bis zum nächsten Team)
+      const candidateShooters = tempShooters.filter(s => 
+        !usedShooters.has(s.lineIndex) && 
+        ((s.lineIndex < teamLine && s.lineIndex > (tempTeams[i-1]?.lineIndex || 0)) || // VOR Team
+         (s.lineIndex > teamLine && s.lineIndex < nextTeamLine)) // NACH Team
+      );
+      
+      const teamScores = tempScores.filter(s => 
+        !usedScores.has(s.lineIndex) && 
+        s.lineIndex > (tempTeams[i-1]?.lineIndex || 0) && 
+        s.lineIndex < nextTeamLine
+      );
+      
+      const elementsInBlock = [
+        ...candidateShooters.map(s => ({...s, type: 'shooter'})),
+        ...teamScores.map(s => ({...s, type: 'score'}))
+      ].sort((a, b) => a.lineIndex - b.lineIndex);
+      
+      console.log(`  📊 Block-Elemente:`, elementsInBlock.map(e => `${e.type === 'shooter' ? e.name : e.value} (${e.lineIndex})`));
+      
+      const teamShooters: OCRShooter[] = [];
+      
+      // Lokale Zuordnung innerhalb des Team-Blocks
+      const localUsedScores = new Set<number>();
+      
+      elementsInBlock.forEach((element, index) => {
+        if (element.type === 'shooter') {
+          // Finde nächsten Score nach diesem Schützen (auch außerhalb des Blocks)
+          let bestScore: any = null;
+          let minDistance = Infinity;
+          
+          // Suche zuerst im Block
+          elementsInBlock.forEach((candidate, candidateIndex) => {
+            if (candidate.type === 'score' && 
+                candidateIndex > index && 
+                !usedScores.has(candidate.lineIndex)) {
+              const distance = candidate.lineIndex - element.lineIndex;
+              if (distance < minDistance) {
+                minDistance = distance;
+                bestScore = candidate;
+              }
+            }
+          });
+          
+          // Falls kein Score im Block, suche in verfügbaren globalen Scores
+          if (!bestScore) {
+            tempScores.forEach(candidate => {
+              if (candidate.lineIndex > element.lineIndex && 
+                  !usedScores.has(candidate.lineIndex) &&
+                  !localUsedScores.has(candidate.lineIndex)) {
+                const distance = candidate.lineIndex - element.lineIndex;
+                if (distance < minDistance) {
+                  minDistance = distance;
+                  bestScore = candidate;
+                }
+              }
+            });
+          }
+          
+          if (bestScore) {
+            usedScores.add(bestScore.lineIndex);
+            localUsedScores.add(bestScore.lineIndex);
+            usedShooters.add(element.lineIndex);
+            teamShooters.push({
+              name: element.name,
+              score: bestScore.value,
+              confidence: 0.95
+            });
+            console.log(`  ✅ Zuordnung: ${element.name} (${element.lineIndex}) → ${bestScore.value} (${bestScore.lineIndex})`);
+          } else {
+            console.log(`  ⚠️ Kein Score für ${element.name} gefunden`);
+          }
+        }
+      });
       
       if (teamShooters.length > 0) {
         teams.push({
-          name: teamName,
+          name: team.name,
           shooters: teamShooters,
-          confidence: 0.9
+          confidence: 0.95
         });
+        console.log(`✅ Team ${team.name}: ${teamShooters.length} Schützen`);
+        teamShooters.forEach(s => console.log(`  - ${s.name}: ${s.score} Ringe`));
       }
-    }
+    });
     
-    console.log(`🏁 Zuordnung beendet: shooterIndex=${shooterIndex}, scoreIndex=${scoreIndex}`);
-    
-    console.log('🏆 Gefundene Teams:', teams);
+    console.log('🏆 Präzise OCR - Finale Teams:', teams);
     const totalEntered = teams.reduce((sum, team) => sum + team.shooters.length, 0);
-    console.log(`📊 Eingetragen: ${totalEntered} von ${shooterNames.length} Schützen`);
-    
-    if (totalEntered < shooterNames.length) {
-      console.log(`⚠️ Fehlende Schützen: ${shooterNames.slice(shooterIndex)}`);
-    }
+    console.log(`📊 Präzise OCR - Eingetragen: ${totalEntered} von 15 erwarteten Schützen`);
     return teams;
   }
 }

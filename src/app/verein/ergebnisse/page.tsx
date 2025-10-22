@@ -28,7 +28,7 @@ import { VoiceInputButton } from '@/components/ui/voice-input-button';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { BackButton } from '@/components/ui/back-button';
 import { createProgressToast } from '@/components/ui/progress-toast';
-import { HandzettelOCR, type OCRMatchResult } from '@/components/ui/handzettel-ocr';
+import { HandzettelOCR, type OCRMatchResult } from '@/components/ui/handzettel-ocr-simple';
 import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, FirestoreLeagueSpecificDiscipline, Club, LeagueUpdateEntry, UserPermission } from '@/types/rwk';
 import { leagueDisciplineOptions } from '@/types/rwk';
 import { useVereinAuth } from '@/app/verein/layout'; 
@@ -701,9 +701,9 @@ export default function VereinErgebnissePage() {
       shooterId: result.shooterId,
       shooterName: result.shooterName,
       shooterGender: 'unknown',
-      durchgang: parsedRound,
+      durchgang: parseInt(selectedRound),
       totalRinge: result.score,
-      scoreInputType: (existingScoresForTeamAndRound.length > 0 ? 'post' : 'regular') as const, // Automatisch Nachschießen wenn bereits Ergebnisse vorhanden
+      scoreInputType: (existingScoresForTeamAndRound.length > 0 ? 'post' : 'regular') as const,
       competitionYear: currentSeason.competitionYear,
       isOCRGenerated: true,
       ocrConfidence: result.confidence,
@@ -1122,49 +1122,30 @@ Die Handzettel sind als Anhang beigefügt.`);
                           const files = Array.from(e.target.files);
                           setHandzettelFiles(files);
                           
-                          // OCR nur starten wenn explizit gewünscht
-                          if (!attachOnly && files.length === 1) {
-                            setShowOCR(true);
-                          } else {
-                            toast({
-                              title: "📎 Handzettel vorgemerkt",
-                              description: `${files.length} Datei(en) werden beim Speichern mitgesendet${!attachOnly ? ' (OCR aktiviert - Ergebnisse prüfen!)' : ' (ohne OCR)'}.`,
-                              className: "border-blue-500 bg-blue-50"
-                            });
-                          }
+                          // Datei nur vormerken, OCR muss manuell gestartet werden
+                          toast({
+                            title: "📎 Handzettel vorgemerkt",
+                            description: `${files.length} Datei(en) ausgewählt. ${!attachOnly ? 'Klicke "🤖 OCR starten" um automatisch auszulesen.' : 'Wird ohne OCR versendet.'}`,
+                            className: "border-blue-500 bg-blue-50"
+                          });
                         }
                       }}
                       className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
                     />
                     
                     {handzettelFiles.length > 0 && !attachOnly && (
-                      <div className="flex gap-2 flex-wrap">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            if (handzettelFiles.length > 0) {
-                              setShowOCR(true);
-                            }
-                          }}
-                          className="text-xs"
-                        >
-                          🤖 OCR starten
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setHandzettelFiles([]);
-                            setShowOCR(false);
-                          }}
-                          className="text-xs text-red-600"
-                        >
-                          ❌ Entfernen
-                        </Button>
-                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setHandzettelFiles([]);
+                          setShowOCR(false);
+                        }}
+                        className="text-xs text-red-600 w-full"
+                      >
+                        ❌ Datei entfernen
+                      </Button>
                     )}
                     
                     {handzettelFiles.length > 0 && attachOnly && (
@@ -1193,12 +1174,14 @@ Die Handzettel sind als Anhang beigefügt.`);
                   </div>
                   
                   {handzettelFiles.length > 0 && !showOCR && !attachOnly && (
-                    <div className="mt-3 p-2 bg-blue-100 rounded border border-blue-200 w-full max-w-full overflow-hidden">
-                      <div className="flex items-center gap-2 text-sm text-blue-800 min-w-0">
-                        <Camera className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">📎 {handzettelFiles.length} Datei(en) ausgewählt - OCR starten?</span>
-                      </div>
-                    </div>
+                    <Button
+                      onClick={() => setShowOCR(true)}
+                      className="w-full mt-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      size="lg"
+                    >
+                      <Zap className="mr-2 h-5 w-5" />
+                      🤖 OCR jetzt starten
+                    </Button>
                   )}
                   
                   {handzettelFiles.length > 0 && attachOnly && (
@@ -1210,20 +1193,14 @@ Die Handzettel sind als Anhang beigefügt.`);
                     </div>
                   )}
                   
-                  {handzettelFiles.length > 0 && showOCR && (
-                    <div className="mt-3 p-2 bg-green-100 rounded border border-green-200 w-full max-w-full overflow-hidden">
-                      <div className="flex items-center gap-2 text-sm text-green-800 min-w-0">
-                        <Zap className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">🤖 OCR läuft...</span>
-                      </div>
-                    </div>
-                  )}
+
                 </div>
                 
-                {/* OCR-Komponente */}
+                {/* OCR-Komponente - nur einmal rendern */}
                 {showOCR && handzettelFiles.length > 0 && !attachOnly && (
                   <div data-ocr-component className="w-full max-w-full overflow-hidden">
                     <HandzettelOCR
+                      key={`ocr-${handzettelFiles[0]?.name}-${Date.now()}`}
                       imageFile={handzettelFiles[0]}
                       availableTeams={allTeamsInSelectedLeague}
                       selectedLeagueId={selectedLeagueId}
@@ -1231,7 +1208,7 @@ Die Handzettel sind als Anhang beigefügt.`);
                       availableLeagues={allLeagues.map(l => ({ id: l.id, name: l.name, type: l.type }))}
                       onOCRComplete={handleOCRComplete}
                       onError={handleOCRError}
-                      autoStart={true}
+                      autoStart={false}
                     />
                   </div>
                 )}
@@ -1296,9 +1273,9 @@ Die Handzettel sind als Anhang beigefügt.`);
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <Input 
                             type="number" 
-                            value={entry.totalRinge} 
+                            value={entry.totalRinge ?? ''}
                             onChange={(e) => {
-                              const newScore = parseInt(e.target.value) || 0;
+                              const newScore = e.target.value === '' ? 0 : parseInt(e.target.value);
                               setPendingScores(prev => 
                                 prev.map(p => 
                                   p.tempId === entry.tempId 
@@ -1358,9 +1335,9 @@ Die Handzettel sind als Anhang beigefügt.`);
                     <TableCell className="text-center" label="Ringe">
                       <Input 
                         type="number" 
-                        value={entry.totalRinge} 
+                        value={entry.totalRinge ?? ''}
                         onChange={(e) => {
-                          const newScore = parseInt(e.target.value) || 0;
+                          const newScore = e.target.value === '' ? 0 : parseInt(e.target.value);
                           setPendingScores(prev => 
                             prev.map(p => 
                               p.tempId === entry.tempId 
@@ -1695,9 +1672,9 @@ Die Handzettel sind als Anhang beigefügt.`);
                     <TableCell className="text-center" label="Ringe">
                       <Input 
                         type="number" 
-                        value={entry.totalRinge} 
+                        value={entry.totalRinge ?? ''}
                         onChange={(e) => {
-                          const newScore = parseInt(e.target.value) || 0;
+                          const newScore = e.target.value === '' ? 0 : parseInt(e.target.value);
                           setPendingScores(prev => 
                             prev.map(p => 
                               p.tempId === entry.tempId 

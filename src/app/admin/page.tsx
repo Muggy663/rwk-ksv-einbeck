@@ -560,6 +560,9 @@ export default function AdminDashboardPage() {
               <Link href="/admin/audit" passHref>
                 <Button className="w-full" variant="outline">Änderungsprotokoll</Button>
               </Link>
+              <Link href="/admin/cleanup-updates" passHref>
+                <Button className="w-full" variant="outline">🗑️ Alte Updates löschen</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

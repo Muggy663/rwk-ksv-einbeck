@@ -393,7 +393,7 @@ export default function SupportPage() {
             Erfahren Sie mehr über unsere spezialisierte Lösung für Wettkampf-Management.
           </p>
           <Button asChild className="w-full">
-            <Link href="/fuer-vereine">
+            <Link href="/kreisverband">
               Mehr erfahren - Für Kreisverbände
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

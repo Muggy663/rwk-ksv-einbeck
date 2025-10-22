@@ -116,10 +116,10 @@ export function MainNav() {
       active: pathname === '/handbuch',
     },
     {
-      href: '/fuer-vereine',
+      href: '/kreisverband',
       label: 'Kreisverbände',
       icon: <MessageSquare className="h-4 w-4 mr-2" />,
-      active: pathname === '/fuer-vereine',
+      active: pathname === '/kreisverband',
     },
     {
       href: '/support',

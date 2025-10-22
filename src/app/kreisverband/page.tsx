@@ -17,7 +17,19 @@ import {
   Award,
   Zap
 } from 'lucide-react';
-import { features } from './_data';
+
+const features = {
+  'Wettkampf-Management': [
+    'Live-Tabellen mit automatischer Auf-/Abstiegsberechnung.',
+    'Digitale Meldungen für RWK und Kreismeisterschaften.',
+    'Automatische Generatoren für Startlisten, Handzettel und Zeitungsberichte.',
+  ],
+  'Moderne Technologie': [
+    'Verfügbar als Web-App und native Android-App.',
+    'Schnelle Ergebniserfassung per Spracheingabe.',
+    'Echtzeit-Synchronisation für alle Mitglieder.',
+  ],
+};
 
 interface FeatureCardProps {
   title: string;
@@ -42,7 +54,7 @@ const FeatureCard = ({ title, items }: FeatureCardProps) => (
   </Card>
 );
 
-export default function FuerVereinePage() {
+export default function KreisverbandPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl min-h-screen overflow-x-hidden">
       <div className="flex items-center space-x-3 mb-8">
@@ -50,7 +62,7 @@ export default function FuerVereinePage() {
         <div>
           <h1 className="text-4xl font-bold text-primary">Für Kreisverbände</h1>
           <p className="text-lg text-muted-foreground">
-            Kreisverband für Rundenwettkämpfe und Kreismeisterschaften - Einfach, Modern und Effizient
+            Professionelle Wettkampforganisation für den modernen Schießsport
           </p>
         </div>
       </div>
@@ -69,18 +81,19 @@ export default function FuerVereinePage() {
         </div>
         
         <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent mb-6">
-          Kreisverband für Rundenwettkämpfe und Kreismeisterschaften
+          Digitale Wettkampforganisation für Kreisschützenverbände
         </h1>
         
         <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-4xl mx-auto">
-          <strong>Einfach, Modern und Effizient.</strong><br />
-          Haben Sie es satt, Rundenwettkämpfe (RWK) und Kreismeisterschaften (KM) mit unzähligen Excel-Listen und Papierkram zu verwalten?
+          <strong>Bewährt im Einsatz.</strong><br />
+          Verwalten Sie Rundenwettkämpfe und Kreismeisterschaften vollständig digital - von der Meldung bis zur Siegerehrung.
         </p>
         
         <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-6 rounded-lg mb-8">
           <p className="text-lg font-medium">
-            Die <strong>RWK KSV Einbeck - Live Tabellen & Wettkampf-Management</strong> ist Ihre All-in-One-Lösung, entwickelt von Schützen für Schützen, 
-            um Ihren Vereinsalltag radikal zu vereinfachen.
+            Entwickelt für <strong>Kreisschützenverbände</strong> zur professionellen Organisation von 
+            <strong> Rundenwettkämpfen</strong> und <strong>Kreismeisterschaften</strong>. 
+            Bereits erfolgreich im Einsatz beim KSV Einbeck.
           </p>
         </div>
         
@@ -102,7 +115,7 @@ export default function FuerVereinePage() {
       <Separator className="my-12" />
 
       {/* Main Features */}
-      <section aria-labelledby="features-heading" className="grid md:grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+      <section aria-labelledby="features-heading" className="grid md:grid-cols-1 lg:grid-cols-2 gap-8 mb-16 justify-center">
         <h2 id="features-heading" className="sr-only">Hauptfunktionen</h2>
         {Object.entries(features).map(([title, items]) => (
           <FeatureCard key={title} title={title} items={items} />
@@ -160,7 +173,7 @@ export default function FuerVereinePage() {
           <div>
             <Award className="h-12 w-12 text-secondary mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">Professionell auftreten</h3>
-            <p>Präsentieren Sie Ihren Verein professionell und zukunftssicher</p>
+            <p>Präsentieren Sie Ihren Kreisverband professionell und zukunftssicher</p>
           </div>
         </div>
       </div>
@@ -168,10 +181,10 @@ export default function FuerVereinePage() {
       {/* Call to Action */}
       <footer className="text-center bg-gradient-to-r from-primary to-secondary p-8 rounded-lg">
         <h2 className="text-3xl font-bold mb-4 text-black !text-black">
-          Steigen Sie jetzt um und bringen Sie Ihren Verein ins digitale Zeitalter!
+          Modernisieren Sie Ihren Kreisverband noch heute!
         </h2>
         <p className="text-xl mb-6 text-black">
-          Diese App ist weit mehr als nur ein Tool für Tabellen – sie macht Ihren Verein für neue Mitglieder besonders attraktiv.
+          Professionelle Wettkampforganisation, die Ihren Kreisverband für Vereine und Schützen attraktiver macht.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button asChild size="lg" variant="secondary" className="text-lg px-8">

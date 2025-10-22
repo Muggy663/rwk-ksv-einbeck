@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckSquare, Save, PlusCircle, Trash2, Loader, AlertCircle, Edit, ToggleLeft, ToggleRight, CheckCircle, Camera } from 'lucide-react';
+import { CheckSquare, Save, PlusCircle, Trash2, Loader, AlertCircle, Edit, ToggleLeft, ToggleRight, CheckCircle, Camera, Upload } from 'lucide-react';
+import { HandzettelOCR, type OCRMatchResult } from '@/components/ui/handzettel-ocr-simple';
 import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, FirestoreLeagueSpecificDiscipline, Club, LeagueUpdateEntry } from '@/types/rwk';
 import { leagueDisciplineOptions } from '@/types/rwk';
 import { useAuth } from '@/hooks/use-auth';
@@ -60,6 +61,8 @@ export default function AdminResultsPage() {
   const [isLoadingExistingScores, setIsLoadingExistingScores] = useState(false);
   const [isSubmittingScores, setIsSubmittingScores] = useState(false);
   const [editMode, setEditMode] = useState(true);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [showOCR, setShowOCR] = useState(false);
 
   const fetchMasterData = useCallback(async () => {
 
@@ -424,11 +427,7 @@ export default function AdminResultsPage() {
   };
 
   const selectedLeagueObject = availableLeaguesForSeason.find(l => l.id === selectedLeagueId); 
-  let numRoundsForSelect = 5;
-  if (selectedLeagueObject) {
-    const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
-    if (fourHundredPointDisciplines.includes(selectedLeagueObject.type)) numRoundsForSelect = 4;
-  }
+  let numRoundsForSelect = 5; // Alle Disziplinen haben 5 Durchgänge
   
   if (isLoadingMasterData) {
     return <div className="flex justify-center items-center py-12"><Loader className="h-12 w-12 animate-spin text-primary mr-3" /><p>Lade Grunddaten...</p></div>;
@@ -566,11 +565,93 @@ export default function AdminResultsPage() {
               <div className="flex items-center space-x-2"><RadioGroupItem value="post" id="r-post" /><Label htmlFor="r-post">Nachschießen</Label></div>
             </RadioGroup>
           </div>
-          <div className="flex justify-end pt-4">
+          <div className="flex flex-col md:flex-row gap-4 justify-end pt-4">
+            <div className="flex flex-col md:flex-row gap-2">
+              <input
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setUploadedFile(file);
+                    setShowOCR(true);
+                  }
+                }}
+                className="hidden"
+                id="handzettel-upload"
+              />
+              <Button
+                variant="outline"
+                onClick={() => document.getElementById('handzettel-upload')?.click()}
+                disabled={!selectedLeagueId || !selectedRound}
+                className="w-full md:w-auto"
+              >
+                <Camera className="mr-2 h-4 w-4" />
+                🤖 OCR Handzettel
+              </Button>
+            </div>
             <Button onClick={handleAddToList} disabled={!selectedShooterId || !selectedRound || !score || isSubmittingScores || isLoadingExistingScores} className="w-full md:w-auto"><PlusCircle className="mr-2 h-5 w-5" /> Zur Liste hinzufügen</Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* OCR Component */}
+      {showOCR && uploadedFile && selectedLeagueId && selectedRound && (
+        <div className="mt-6">
+          <HandzettelOCR
+            imageFile={uploadedFile}
+            availableTeams={allTeamsInSelectedLeague}
+            selectedLeagueId={selectedLeagueId}
+            selectedRound={selectedRound}
+            onOCRComplete={(results: OCRMatchResult[]) => {
+              // Konvertiere OCR-Ergebnisse zu PendingScoreEntry
+              const season = allSeasons.find(s => s.id === selectedSeasonId);
+              const league = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
+              
+              if (season && league) {
+                const newEntries: PendingScoreEntry[] = results.map(result => ({
+                  tempId: new Date().toISOString() + Math.random().toString(36).substring(2, 15),
+                  seasonId: selectedSeasonId,
+                  seasonName: season.name,
+                  leagueId: selectedLeagueId,
+                  leagueName: league.name,
+                  leagueType: league.type,
+                  teamId: result.teamId,
+                  teamName: result.teamName,
+                  clubId: allTeamsInSelectedLeague.find(t => t.id === result.teamId)?.clubId || '',
+                  shooterId: result.shooterId,
+                  shooterName: result.shooterName,
+                  shooterGender: allShootersFromDB.find(s => s.id === result.shooterId)?.gender || 'M',
+                  durchgang: parseInt(selectedRound),
+                  totalRinge: result.score, // null-Scores bleiben null
+                  scoreInputType: 'regular',
+                  competitionYear: season.competitionYear
+                }));
+                
+                setPendingScores(prev => [...prev, ...newEntries]);
+                toast({
+                  title: "✅ OCR erfolgreich!",
+                  description: `${newEntries.length} Ergebnisse aus Handzettel übernommen.`,
+                  className: "border-green-500 bg-green-50"
+                });
+              }
+              
+              setShowOCR(false);
+              setUploadedFile(null);
+            }}
+            onError={(error: string) => {
+              toast({
+                title: "OCR Fehler",
+                description: error,
+                variant: "destructive"
+              });
+              setShowOCR(false);
+              setUploadedFile(null);
+            }}
+            autoStart={true}
+          />
+        </div>
+      )}
 
       {pendingScores.length > 0 && (
         <Card className="shadow-md mt-6">
@@ -591,7 +672,21 @@ export default function AdminResultsPage() {
                       <div><span className="font-medium">Mannschaft:</span> {entry.teamName}</div>
                       <div className="flex gap-4">
                         <div><span className="font-medium">DG:</span> {entry.durchgang}</div>
-                        <div><span className="font-medium">Ringe:</span> {entry.totalRinge}</div>
+                        <div><span className="font-medium">Ringe:</span> 
+                          <Input 
+                            type="number" 
+                            placeholder="Ringe" 
+                            value={entry.totalRinge === null ? '' : entry.totalRinge.toString()}
+                            className="w-20 h-6 text-center inline-block ml-2" 
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const newScore = value === '' ? null : parseInt(value);
+                              setPendingScores(prev => prev.map(p => 
+                                p.tempId === entry.tempId ? {...p, totalRinge: newScore} : p
+                              ));
+                            }}
+                          />
+                        </div>
                         <div><span className="font-medium">Typ:</span> {entry.scoreInputType === 'pre' ? 'Vorschuss' : entry.scoreInputType === 'post' ? 'Nachschuss' : 'Regulär'}</div>
                       </div>
                     </div>
@@ -603,7 +698,26 @@ export default function AdminResultsPage() {
             {/* Desktop Table Layout */}
             <div className="hidden md:block">
               <Table><TableHeader><TableRow><TableHead>Schütze</TableHead><TableHead>Mannschaft</TableHead><TableHead className="text-center">DG</TableHead><TableHead className="text-center">Ringe</TableHead><TableHead>Typ</TableHead><TableHead className="text-right">Aktion</TableHead></TableRow></TableHeader>
-                <TableBody>{pendingScores.map((entry) => (<TableRow key={entry.tempId}><TableCell>{entry.shooterName}</TableCell><TableCell>{entry.teamName}</TableCell><TableCell className="text-center">{entry.durchgang}</TableCell><TableCell className="text-center">{entry.totalRinge}</TableCell><TableCell>{entry.scoreInputType === 'pre' ? 'Vorschuss' : entry.scoreInputType === 'post' ? 'Nachschuss' : 'Regulär'}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleRemoveFromList(entry.tempId)} className="text-destructive hover:text-destructive/80" disabled={isSubmittingScores}><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody>
+                <TableBody>{pendingScores.map((entry) => (
+                  <TableRow key={entry.tempId}>
+                    <TableCell>{entry.shooterName}</TableCell>
+                    <TableCell>{entry.teamName}</TableCell>
+                    <TableCell className="text-center">{entry.durchgang}</TableCell>
+                    <TableCell className="text-center">
+                      <Input 
+                        type="number" 
+                        placeholder="Ringe" 
+                        value={entry.totalRinge === null ? '' : entry.totalRinge.toString()}
+                        className="w-20 h-8 text-center" 
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const newScore = value === '' ? null : parseInt(value);
+                          setPendingScores(prev => prev.map(p => 
+                            p.tempId === entry.tempId ? {...p, totalRinge: newScore} : p
+                          ));
+                        }}
+                      />
+                    </TableCell><TableCell>{entry.scoreInputType === 'pre' ? 'Vorschuss' : entry.scoreInputType === 'post' ? 'Nachschuss' : 'Regulär'}</TableCell><TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleRemoveFromList(entry.tempId)} className="text-destructive hover:text-destructive/80" disabled={isSubmittingScores}><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody>
               </Table>
             </div>
             <div className="flex justify-end pt-6"><Button onClick={handleFinalSave} size="lg" disabled={isSubmittingScores || pendingScores.length === 0} className="w-full md:w-auto">{isSubmittingScores && <Loader className="mr-2 h-4 w-4 animate-spin" />} Alle {pendingScores.length} Ergebnisse speichern</Button></div>

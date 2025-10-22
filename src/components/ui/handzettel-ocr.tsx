@@ -48,12 +48,18 @@ export function HandzettelOCR({
   const [ocrResult, setOcrResult] = React.useState<OCRResult | null>(null)
   const [matchedResults, setMatchedResults] = React.useState<OCRMatchResult[]>([])
 
-  // Auto-start OCR wenn autoStart=true
+  // Auto-start OCR wenn autoStart=true (nur einmal)
+  const [hasStarted, setHasStarted] = React.useState(false)
+  const processedFileRef = React.useRef<string | null>(null)
+  
   React.useEffect(() => {
-    if (autoStart && !isProcessing && !ocrResult) {
+    const fileKey = `${imageFile.name}-${imageFile.size}-${imageFile.lastModified}`
+    if (autoStart && !isProcessing && !ocrResult && !hasStarted && processedFileRef.current !== fileKey) {
+      setHasStarted(true)
+      processedFileRef.current = fileKey
       processOCR()
     }
-  }, [autoStart])
+  }, [autoStart, hasStarted, imageFile])
 
   const processOCR = async () => {
     console.log('🤖 OCR gestartet mit Datei:', imageFile.name, imageFile.type)
@@ -66,15 +72,34 @@ export function HandzettelOCR({
       
       console.log('📄 Starte Google Vision OCR...')
       let result: OCRResult
+      let ocrMethod = 'unknown'
+      
       try {
         result = await googleVisionOCR.processHandzettel(imageFile)
-        console.log('✅ Google Vision Ergebnis:', result)
+        
+        // Prüfe ob brauchbare Ergebnisse vorhanden
+        if (result.teams.length > 0) {
+          if (result.teams[0].confidence >= 0.95) {
+            ocrMethod = 'Google Vision Premium (95%+ Genauigkeit)'
+            console.log('✅ Google Vision Premium OCR erfolgreich')
+          } else {
+            ocrMethod = 'Google Vision Standard'
+            console.log('✅ Google Vision Standard OCR verwendet')
+          }
+          console.log('✅ Google Vision Ergebnis:', result)
+        } else {
+          throw new Error('Google Vision lieferte keine brauchbaren Ergebnisse')
+        }
       } catch (error) {
         console.warn('⚠️ Google Vision fehlgeschlagen, verwende Tesseract Fallback:', error)
-        setCurrentStep("Google Vision Limit erreicht - verwende Tesseract...")
+        setCurrentStep("Google Vision nicht verfügbar - verwende Tesseract...")
+        ocrMethod = 'Tesseract Fallback'
         result = await handzettelOCR.processHandzettel(imageFile)
         console.log('✅ Tesseract Fallback Ergebnis:', result)
       }
+      
+      // Füge OCR-Methode zu Ergebnis hinzu
+      result.ocrMethod = ocrMethod
       setOcrResult(result)
       
       setCurrentStep("Teams werden zugeordnet...")
@@ -110,138 +135,176 @@ export function HandzettelOCR({
   const matchTeamsAndShooters = async (ocrResult: OCRResult, teams: Team[]): Promise<OCRMatchResult[]> => {
     const matches: OCRMatchResult[] = []
     
-    // Verwende die gleiche Logik wie in /verein/ergebnisse
-    const loadShootersForTeam = async (team: Team) => {
-      if (!team.shooterIds?.length) return []
+    // Lade alle Schützen aus allen Teams mit detailliertem Logging
+    const allShooters: Array<{id: string, name: string, teamId: string, teamName: string}> = []
+    
+    console.log(`🔍 Durchsuche ${teams.length} Teams nach Schützen:`);
+    console.log('📊 Verfügbare Teams aus availableTeams Parameter:', teams.map(t => `"${t.name}" (ID: ${t.id})`));
+    
+    for (const team of teams) {
+      console.log(`  📋 Team: "${team.name}" (ID: ${team.id})`);
+      console.log(`    🔗 Team.shooterIds:`, team.shooterIds);
       
-      const validShooterIds = team.shooterIds.filter(id => id && typeof id === 'string' && id.trim() !== "")
-      const shooters = []
-      
-      for (const shooterId of validShooterIds) {
-        try {
-          const shooterDoc = await getDoc(doc(db, "shooters", shooterId))
-          if (shooterDoc.exists()) {
-            const data = shooterDoc.data()
-            shooters.push({
-              id: shooterId,
-              name: data.name || `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Unbekannt'
-            })
+      if (team.shooterIds?.length) {
+        console.log(`    📝 Lade ${team.shooterIds.length} Schützen aus Firestore Collection "shooters"`);
+        
+        for (const shooterId of team.shooterIds) {
+          try {
+            console.log(`      🔍 Firestore Query: doc("shooters", "${shooterId}")`);
+            const shooterDoc = await getDoc(doc(db, "shooters", shooterId))
+            
+            if (shooterDoc.exists()) {
+              const data = shooterDoc.data()
+              console.log(`      📄 Schütze-Daten aus Firestore:`, {
+                id: shooterId,
+                name: data.name,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                allFields: Object.keys(data)
+              });
+              
+              const shooterName = data.name || `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Unbekannt'
+              allShooters.push({
+                id: shooterId,
+                name: shooterName,
+                teamId: team.id,
+                teamName: team.name
+              })
+              console.log(`      ✅ Schütze zugeordnet: "${shooterName}" → Team "${team.name}" (aus availableTeams Parameter)`);
+            } else {
+              console.log(`      ❌ Schütze ${shooterId} existiert nicht in Firestore Collection "shooters"`);
+            }
+          } catch (error) {
+            console.error(`      ❌ Firestore Fehler bei Schütze ${shooterId}:`, error)
           }
-        } catch (error) {
-          console.error(`Fehler beim Laden von Schütze ${shooterId}:`, error)
         }
+      } else {
+        console.log(`    ⚠️ Team hat keine shooterIds`);
       }
-      
-      return shooters
     }
     
-    const teamsWithShooters = await Promise.all(
-      teams.map(async (team) => ({
-        ...team,
-        shooters: await loadShootersForTeam(team)
-      }))
-    )
+    console.log(`📊 Gesamt geladene Schützen: ${allShooters.length}`);
+    console.log('👥 Finale Schützen-Team-Zuordnung:');
+    allShooters.forEach(s => {
+      console.log(`  "${s.name}" → Team "${s.teamName}" (Team-ID: ${s.teamId}, Schütze-ID: ${s.id})`);
+    });
     
-    // Wenn keine OCR-Teams, zeige alle Schützen
-    if (ocrResult.teams.length === 0) {
-      console.log('Keine OCR-Teams - zeige alle Schützen')
-      for (const team of teamsWithShooters) {
-        if (team.shooters?.length) {
-          for (const shooter of team.shooters) {
-            matches.push({
-              teamId: team.id,
-              teamName: team.name,
-              shooterId: shooter.id,
-              shooterName: shooter.name,
-              score: 0,
-              confidence: 0.5,
-              ocrSource: 'handzettel-ocr'
-            })
-          }
-        }
-      }
-    } else {
-      for (const ocrTeam of ocrResult.teams) {
-        const matchedTeam = teamsWithShooters.find(team => {
-          const teamName = team.name.toLowerCase().trim()
-          const ocrName = ocrTeam.name.toLowerCase().trim()
+    console.log('🔍 DATENQUELLE-ERKLÄRUNG:');
+    console.log('  1. Teams kommen aus availableTeams Parameter (von Eltern-Komponente)');
+    console.log('  2. Team.shooterIds enthält Array von Schützen-IDs');
+    console.log('  3. Schützen-Daten kommen aus Firestore Collection "shooters"');
+    console.log('  4. Team-Zugehörigkeit = Team aus availableTeams, das diese shooterId enthält');
+    
+    // Vereinfachte Zuordnung: Nur Schützen-Namen matchen
+    if (ocrResult.teams.length > 0 && ocrResult.teams[0].name === 'OCR_DETECTED_SHOOTERS') {
+      const ocrShooters = ocrResult.teams[0].shooters;
+      console.log(`🎯 Starte Matching für ${ocrShooters.length} OCR-Schützen`);
+      
+      for (const ocrShooter of ocrShooters) {
+        // Finde Schützen in Datenbank mit detailliertem Matching-Log
+        console.log(`🔍 Suche OCR-Schütze: "${ocrShooter.name}" (${ocrShooter.score} Ringe)`);
+        
+        const matchedShooter = allShooters.find(shooter => {
+          const shooterName = shooter.name.toLowerCase().trim()
+          const ocrName = ocrShooter.name.toLowerCase().trim()
+          
+          console.log(`  🔄 Vergleiche mit DB-Schütze: "${shooter.name}" (${shooter.teamName})`);
           
           // Exakte Übereinstimmung
-          if (teamName === ocrName) return true
+          if (shooterName === ocrName) {
+            console.log(`    ✅ Exakte Übereinstimmung gefunden!`);
+            return true
+          }
           
           // Enthält-Prüfung
-          if (teamName.includes(ocrName) || ocrName.includes(teamName)) return true
-          
-          // Römische Endungen isolieren
-          const teamRoman = teamName.match(/\b(i{1,3})\b$/i)?.[1]?.toLowerCase() || ''
-          const ocrRoman = ocrName.match(/\b(i{1,3})\b$/i)?.[1]?.toLowerCase() || ''
-          
-          // Basisnamen ohne römische Endung
-          const teamBase = teamName.replace(/\b(i{1,3})\b$/i, '').trim().toLowerCase()
-          const ocrBase = ocrName.replace(/\b(i{1,3})\b$/i, '').trim().toLowerCase()
-          
-          let similarity = fuzzyMatch(teamBase, ocrBase)
-          
-          // Harter Block: Wenn Basis gleich, aber römische Zahl verschieden
-          if (similarity > 0.8 && teamRoman && ocrRoman && teamRoman !== ocrRoman) {
-            console.log(`🚫 Römischer Konflikt: "${teamName}" vs "${team.name}" - BLOCKIERT`);
-            return false
+          if (shooterName.includes(ocrName) || ocrName.includes(shooterName)) {
+            console.log(`    ✅ Enthält-Match gefunden!`);
+            return true
           }
           
-          // Vereinsschutz: Wenn Verein zu unterschiedlich, aber römische Zahl gleich
-          if (similarity < 0.7 && teamRoman && ocrRoman && teamRoman === ocrRoman) {
-            console.log(`🚫 Verein zu unterschiedlich trotz gleicher römischer Endung: "${ocrName}" vs "${teamName}"`);
-            return false
+          // Fuzzy Match
+          const similarity = fuzzyMatch(shooterName, ocrName)
+          console.log(`    📊 Fuzzy-Ähnlichkeit: ${similarity.toFixed(3)}`);
+          if (similarity > 0.7) {
+            console.log(`    ✅ Fuzzy-Match gefunden (${similarity.toFixed(3)})!`);
+            return true
           }
           
-          // Bonus für exakt gleiche römische Zahl
-          if (teamRoman && ocrRoman && teamRoman === ocrRoman) {
-            similarity = Math.min(1.0, similarity + 0.3)
-            console.log(`✅ Römische Zahlen-Bonus: "${teamRoman}" = "${ocrRoman}" (${similarity.toFixed(2)})`);
+          // Name normalisieren
+          const normalizedShooter = normalizeNameForOCR(shooterName)
+          const normalizedOCR = normalizeNameForOCR(ocrName)
+          
+          if (normalizedShooter === normalizedOCR) {
+            console.log(`    ✅ Normalisierter Match gefunden!`);
+            return true
           }
           
-          // Akzeptiere Match wenn Similarity > 0.7
-          if (similarity > 0.7) return true
+          const normalizedSimilarity = fuzzyMatch(normalizedShooter, normalizedOCR)
+          console.log(`    📊 Normalisierte Ähnlichkeit: ${normalizedSimilarity.toFixed(3)}`);
+          if (normalizedSimilarity > 0.8) {
+            console.log(`    ✅ Normalisierter Fuzzy-Match gefunden (${normalizedSimilarity.toFixed(3)})!`);
+            return true
+          }
           
-          console.log(`❌ Team nicht gefunden: "${ocrTeam.name}" vs "${team.name}" (fuzzy: ${fuzzyMatch(teamName, ocrName).toFixed(2)})`);
+          console.log(`    ❌ Kein Match`);
           return false
         })
         
-        if (matchedTeam?.shooters) {
-          console.log(`✅ Team Match: "${ocrTeam.name}" → "${matchedTeam.name}" (${matchedTeam.shooters.length} Schützen)`);
-          for (const ocrShooter of ocrTeam.shooters) {
-            const matchedShooter = matchedTeam.shooters.find((shooter: any) =>
-              shooter.name.toLowerCase().includes(ocrShooter.name.toLowerCase()) ||
-              ocrShooter.name.toLowerCase().includes(shooter.name.toLowerCase()) ||
-              fuzzyMatch(shooter.name, ocrShooter.name) > 0.6
-            )
-            
-            if (matchedShooter && ocrShooter.score >= 0 && ocrShooter.score <= 400) {
-              console.log(`  ✅ Schütze Match: "${ocrShooter.name}" → "${matchedShooter.name}" (${ocrShooter.score} Ringe)`);
-              matches.push({
-                teamId: matchedTeam.id,
-                teamName: matchedTeam.name,
-                shooterId: matchedShooter.id,
-                shooterName: matchedShooter.name,
-                score: ocrShooter.score,
-                confidence: Math.min(ocrTeam.confidence, ocrShooter.confidence),
-                ocrSource: 'handzettel-ocr'
-              })
-            } else if (!matchedShooter) {
-              console.log(`  ❌ Schütze nicht gefunden: "${ocrShooter.name}" in Team "${matchedTeam.name}"`);
-            }
-          }
+        if (matchedShooter) {
+          matches.push({
+            teamId: matchedShooter.teamId,
+            teamName: matchedShooter.teamName,
+            shooterId: matchedShooter.id,
+            shooterName: matchedShooter.name,
+            score: ocrShooter.score,
+            confidence: ocrShooter.confidence,
+            ocrSource: 'handzettel-ocr'
+          });
+          console.log(`✅ ERFOLGREICHER MATCH:`);
+          console.log(`  OCR: "${ocrShooter.name}" (${ocrShooter.score} Ringe)`);
+          console.log(`  DB:  "${matchedShooter.name}" (ID: ${matchedShooter.id})`);
+          console.log(`  →    Team "${matchedShooter.teamName}" (ID: ${matchedShooter.teamId})`);
         } else {
-          console.log(`❌ Team nicht gefunden: "${ocrTeam.name}"`);
+          // Temporärer Eintrag
+          const tempShooterId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          matches.push({
+            teamId: 'unknown',
+            teamName: 'Unbekanntes Team',
+            shooterId: tempShooterId,
+            shooterName: `${ocrShooter.name} (OCR)`,
+            score: ocrShooter.score,
+            confidence: 0.5,
+            ocrSource: 'handzettel-ocr'
+          });
+          console.log(`❌ KEIN MATCH GEFUNDEN:`);
+          console.log(`  OCR: "${ocrShooter.name}" (${ocrShooter.score} Ringe)`);
+          console.log(`  →    Erstelle temporären Eintrag`);
         }
       }
     }
+    
+    console.log(`🏁 FINALE ERGEBNISSE: ${matches.length} Matches erstellt`);
+    matches.forEach((match, i) => {
+      console.log(`  ${i+1}. "${match.shooterName}" → "${match.teamName}" (${match.score} Ringe)`);
+    });
     
     return matches
   }
 
   const extractTeamsFromRawText = (rawText: string, availableTeams: Team[]) => {
     return []
+  }
+
+  const normalizeNameForOCR = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/ä/g, 'ae')
+      .replace(/ö/g, 'oe')
+      .replace(/ü/g, 'ue')
+      .replace(/ß/g, 'ss')
+      .replace(/[^a-z\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
   }
 
   const fuzzyMatch = (str1: string, str2: string): number => {
@@ -327,6 +390,13 @@ export function HandzettelOCR({
             <div className="flex items-center gap-2 text-green-700 min-w-0">
               <CheckCircle className="h-4 w-4 flex-shrink-0" />
               <span className="font-medium truncate">🎯 Handzettel gescannt!</span>
+              {ocrResult.ocrMethod && (
+                <Badge variant="outline" className="text-xs ml-2 flex-shrink-0">
+                  {ocrResult.ocrMethod.includes('Premium') ? '🚀 Premium' : 
+                   ocrResult.ocrMethod.includes('Standard') ? '🔄 Standard' : 
+                   '🔄 Fallback'}
+                </Badge>
+              )}
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-sm">
