@@ -1234,9 +1234,20 @@ function RwkTabellenPageComponent() {
         // Zeige alle Schützen, auch ohne Ergebnisse
         // .filter(s => s.roundsShot > 0) // Entfernt, um alle Schützen zu zeigen 
         .sort((a, b) => {
-          // Erst nach Gesamtpunkten
-          const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
-          if (totalDiff !== 0) return totalDiff;
+          // Spezielle Sortierung für "Alle Luftdruck Auflage (Gesamtliste)" nach Durchschnitt
+          if (filterByLeagueId === "LGA_GESAMTLISTE") {
+            // Erst nach Durchschnitt
+            const avgDiff = (b.averageScore ?? 0) - (a.averageScore ?? 0);
+            if (avgDiff !== 0) return avgDiff;
+            
+            // Bei Gleichstand: Nach Gesamtpunkten
+            const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
+            if (totalDiff !== 0) return totalDiff;
+          } else {
+            // Normale Sortierung nach Gesamtpunkten für alle anderen Ligen
+            const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
+            if (totalDiff !== 0) return totalDiff;
+          }
           
           // Bei Gleichstand: Stichentscheid vom letzten zum ersten Durchgang
           for (let round = numRoundsForCompetition; round >= 1; round--) {
