@@ -1,4 +1,6 @@
 // Vereinfachte OCR-Service ohne Team-Erkennung
+import { secureLogger } from '@/lib/utils/secure-logger';
+
 export interface SimpleOCRResult {
   shooters: Array<{
     name: string;
@@ -11,7 +13,10 @@ export interface SimpleOCRResult {
 export class SimpleOCRService {
   async processHandzettel(imageFile: File): Promise<SimpleOCRResult> {
     // Google Vision API Call
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_VISION_API_KEY || 'AIzaSyBlcJpndITalBIoqtXSOvefgfRQoBl6_0c';
+    const apiKey = process.env.GOOGLE_VISION_API_KEY;
+    if (!apiKey) {
+      throw new Error('GOOGLE_VISION_API_KEY environment variable is required');
+    }
     
     const base64Image = await this.fileToBase64(imageFile);
     
@@ -39,12 +44,10 @@ export class SimpleOCRService {
       fullText = data.responses[0].textAnnotations[0].description || '';
     }
     
-    console.log('📝 DOCUMENT_TEXT_DETECTION verwendet für bessere Handschrift-Erkennung');
+    secureLogger.debug('Using DOCUMENT_TEXT_DETECTION for handwriting', 'simple-ocr');
     const lines = fullText.split('\n').filter(line => line.trim());
     
-    console.log('🔍 OCR Zeilen:', lines);
-    console.log('🔍 OCR Zeilen mit Index:');
-    lines.forEach((line, i) => console.log(`  ${i}: "${line}"`));
+    secureLogger.debug('OCR lines processed', 'simple-ocr');
     
     // Sammle Namen und Scores mit Lücken-Erkennung
     const shooterNames: string[] = [];
@@ -67,11 +70,11 @@ export class SimpleOCRService {
           // Nur Lücke prüfen wenn schon Scores gesehen wurden
           if (lastWasName && hasSeenScore) {
             scores.push(0);
-            console.log('🔄 Lücke erkannt: 0 eingefügt');
+            secureLogger.debug('Gap detected, inserting zero', 'simple-ocr');
           }
           
           shooterNames.push(name);
-          console.log('👤 Schütze:', name);
+          secureLogger.debug('Shooter recognized', 'simple-ocr');
           lastWasName = true;
         }
         continue;
@@ -83,13 +86,13 @@ export class SimpleOCRService {
         let score = parseInt(scoreMatch[1]);
         
         if (score > 400) {
-          console.log(`⚠️ Unrealistisch: ${score} → 0`);
+          secureLogger.debug('Unrealistic score corrected to zero', 'simple-ocr');
           score = 0;
         }
         
         if (score >= 0 && score <= 400) {
           scores.push(score);
-          console.log('🎯 Score:', score);
+          secureLogger.debug('Score recognized', 'simple-ocr');
           lastWasName = false;
           hasSeenScore = true;
         }
@@ -99,11 +102,10 @@ export class SimpleOCRService {
     // Rest mit 0 auffüllen falls nötig
     while (scores.length < shooterNames.length) {
       scores.push(0);
-      console.log('🔄 Fehlender Score am Ende: 0 hinzugefügt');
+      secureLogger.debug('Missing score filled with zero', 'simple-ocr');
     }
     
-    console.log(`📊 Final: ${shooterNames.length} Schützen, ${scores.length} Scores`);
-    console.log(`📝 Alle Schützen werden zurückgegeben (auch mit null-Scores)`);
+    secureLogger.debug('Final OCR processing completed', 'simple-ocr');
     
     // 1:1 Zuordnung - ALLE Schützen zurückgeben
     const shooters = [];
@@ -114,7 +116,7 @@ export class SimpleOCRService {
         score: score === 0 ? null : score,
         confidence: score === 0 ? 0.5 : 0.9
       });
-      console.log(`📝 ${shooterNames[i]}: ${score === 0 ? 'Nicht angetreten' : score + ' Ringe'}`);
+      secureLogger.debug('Shooter processed', 'simple-ocr');
     }
     
 

@@ -12,15 +12,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase/config';
 import { doc, getDoc, updateDoc, Timestamp, collection, query, getDocs } from 'firebase/firestore';
 
 export default function EditEventPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const id = searchParams.get('id') || '';
+  const [id, setId] = useState<string>('');
+  
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    setId(urlParams.get('id') || '');
+  }, []);
   
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');

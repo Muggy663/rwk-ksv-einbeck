@@ -38,7 +38,7 @@ async function checkStorageUsage(mongoUri: string) {
       stats
     };
   } catch (error) {
-    console.error('Fehler beim Abrufen der Datenbankstatistiken:', error);
+    // Stille Behandlung - MongoDB ist optional für File Server
     return {
       totalSizeInMB: 0,
       rwkEinbeckSizeInMB: 0,
@@ -46,7 +46,7 @@ async function checkStorageUsage(mongoUri: string) {
       limit: 512,
       threshold: STORAGE_THRESHOLD_MB,
       percentUsed: 0,
-      error: 'Fehler beim Abrufen der Datenbankstatistiken'
+      error: null // Keine Fehleranzeige
     };
   } finally {
     if (client) {
@@ -64,21 +64,30 @@ export async function GET() {
     const mongoUri = process.env.MONGODB_URI;
     
     if (!mongoUri) {
-      console.error('MongoDB URI nicht konfiguriert');
-      return NextResponse.json(
-        { error: 'MongoDB URI nicht konfiguriert' },
-        { status: 500 }
-      );
+      return NextResponse.json({
+        totalSizeInMB: 0,
+        rwkEinbeckSizeInMB: 0,
+        isNearLimit: false,
+        limit: 512,
+        threshold: STORAGE_THRESHOLD_MB,
+        percentUsed: 0,
+        message: 'MongoDB nicht konfiguriert - File Server deaktiviert'
+      });
     }
     
     const storageInfo = await checkStorageUsage(mongoUri);
     
     return NextResponse.json(storageInfo);
   } catch (error) {
-    console.error('Fehler beim Prüfen des Speicherplatzes:', error);
-    return NextResponse.json(
-      { error: 'Fehler beim Prüfen des Speicherplatzes' },
-      { status: 500 }
-    );
+    // Stille Behandlung - MongoDB ist optional
+    return NextResponse.json({
+      totalSizeInMB: 0,
+      rwkEinbeckSizeInMB: 0,
+      isNearLimit: false,
+      limit: 512,
+      threshold: STORAGE_THRESHOLD_MB,
+      percentUsed: 0,
+      message: 'File Server nicht aktiv'
+    });
   }
 }

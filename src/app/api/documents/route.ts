@@ -11,7 +11,8 @@ export async function GET() {
     const documents = await getAllDocumentsFromMongo();
     return NextResponse.json({ documents });
   } catch (error) {
-    console.error('Fehler beim Lesen der Dokumente:', error);
+    // Sichere Logging ohne sensitive Daten
+    console.error('Fehler beim Lesen der Dokumente');
     return NextResponse.json(
       { error: 'Fehler beim Lesen der Dokumente' },
       { status: 500 }
@@ -35,7 +36,8 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(newDocument);
   } catch (error) {
-    console.error('Fehler beim Hinzufügen des Dokuments:', error);
+    // Sichere Logging ohne sensitive Daten  
+    console.error('Fehler beim Hinzufügen des Dokuments');
     return NextResponse.json(
       { error: 'Fehler beim Hinzufügen des Dokuments' },
       { status: 500 }

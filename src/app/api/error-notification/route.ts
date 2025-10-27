@@ -1,5 +1,6 @@
 // src/app/api/error-notification/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { secureLogger } from '@/lib/utils/secure-logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,19 +8,14 @@ export async function POST(request: NextRequest) {
     
     // Hier würde normalerweise eine E-Mail gesendet werden
     // Für jetzt loggen wir nur den kritischen Fehler
-    console.error('CRITICAL ERROR NOTIFICATION:', {
-      message: errorReport.message,
-      page: errorReport.page,
-      timestamp: new Date(errorReport.timestamp).toISOString(),
-      userAgent: errorReport.userAgent?.substring(0, 100)
-    });
+    secureLogger.error('Critical error notification received', 'error-notification-api');
 
     // TODO: E-Mail-Service integrieren (z.B. Nodemailer, SendGrid, etc.)
     // await sendErrorEmail(errorReport);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error in error notification:', error);
+    secureLogger.error('Error in error notification processing', 'error-notification-api');
     return NextResponse.json(
       { error: 'Failed to process error notification' },
       { status: 500 }

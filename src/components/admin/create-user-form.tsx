@@ -10,6 +10,7 @@ import { Loader2, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithRole } from '@/lib/firebase/functions';
 import type { Club } from '@/types/rwk';
+import { sanitizeInput } from '@/lib/utils/sanitize';
 
 interface CreateUserFormProps {
   clubs: Club[];
@@ -29,7 +30,7 @@ export function CreateUserForm({ clubs, onUserCreated }: CreateUserFormProps) {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: sanitizeInput(value) }));
   };
 
   const handleSelectChange = (name: string, value: string) => {

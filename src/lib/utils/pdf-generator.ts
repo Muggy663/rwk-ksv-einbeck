@@ -81,8 +81,9 @@ export class PdfGenerator {
     // Logo rechts oben
     try {
       // Kreisverbandslogo aus dem public-Ordner laden
+      const logoPath = process.env.NEXT_PUBLIC_LOGO_PATH || '/images/logo2.png';
       this.doc.addImage(
-        '/images/logo2.png',
+        logoPath,
         'PNG',
         this.pageWidth - this.margin - 35,
         this.margin,
@@ -513,7 +514,10 @@ export class PdfGenerator {
     try {
       const pdfBlob = this.doc.output('blob');
       const pdfUrl = URL.createObjectURL(pdfBlob);
-      window.open(pdfUrl, '_blank');
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.location.href = pdfUrl;
+      }
     } catch (error) {
       console.error('Fehler beim Öffnen des PDFs:', error);
       alert('Fehler beim Öffnen des PDFs. Bitte versuchen Sie es erneut.');

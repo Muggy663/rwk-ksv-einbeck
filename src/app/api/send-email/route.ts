@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { secureLogger } from '@/lib/utils/secure-logger';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -19,10 +20,10 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Email API called on Vercel');
+    secureLogger.info('Email API called', 'send-email-api');
     
     if (!resend) {
-      console.error('RESEND_API_KEY missing');
+      secureLogger.error('RESEND_API_KEY missing', 'send-email-api');
       return NextResponse.json({ 
         success: false, 
         message: 'E-Mail-Service nicht konfiguriert. RESEND_API_KEY fehlt.' 
@@ -102,15 +103,11 @@ ${signature}`.trim();
           attachments: attachments.length > 0 ? attachments : undefined
         };
         
-        console.log('Sending email batch:', { 
-          recipients: batch.length, 
-          hasAttachments: attachments.length > 0,
-          from: emailData.from
-        });
+        secureLogger.info('Sending email batch', 'send-email-api');
         
         const result = await resend.emails.send(emailData);
         
-        console.log('Email sent successfully:', result.data?.id);
+        secureLogger.info('Email sent successfully', 'send-email-api');
         
         results.push({
           batchNumber: Math.floor(i/batchSize) + 1,

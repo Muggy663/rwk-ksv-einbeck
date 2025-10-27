@@ -11,7 +11,7 @@ import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 
 import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 
 // Konstante für den localStorage-Schlüssel
-const PASSWORD_CHANGED_KEY_PREFIX = 'rwk-password-changed-';
+const PASSWORD_CHANGED_KEY_PREFIX = process.env.NEXT_PUBLIC_APP_NAME ? `${process.env.NEXT_PUBLIC_APP_NAME}-password-changed-` : 'app-password-changed-';
 
 export function PasswordChangePrompt() {
   const { user } = useAuth();

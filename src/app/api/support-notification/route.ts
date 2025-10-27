@@ -19,8 +19,8 @@ export async function POST(request: Request) {
       port: 587,
       secure: false, // true für 465, false für andere Ports
       auth: {
-        user: process.env.EMAIL_USER || 'rwk-leiter-ksve@gmx.de',
-        pass: process.env.EMAIL_PASSWORD || '', // Passwort sollte in Umgebungsvariablen gespeichert werden
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
       },
     });
 

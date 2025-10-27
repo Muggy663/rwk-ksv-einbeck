@@ -1,5 +1,7 @@
 // src/utils/appVersion.ts
-export const APP_VERSION = '0.11.9';
+import packageJson from '../../package.json';
+
+export const APP_VERSION = packageJson.version;
 
 export function checkAndClearOnUpdate() {
   if (typeof window === 'undefined') return;
@@ -10,8 +12,6 @@ export function checkAndClearOnUpdate() {
   
   // Bei erstem Start oder Version-Wechsel
   if (!storedVersion || storedVersion !== currentVersion) {
-    console.log(`App Update erkannt: ${storedVersion} → ${currentVersion}`);
-    
     // Alle Daten löschen
     localStorage.clear();
     sessionStorage.clear();
@@ -34,7 +34,5 @@ export function checkAndClearOnUpdate() {
     
     // Neue Version speichern
     localStorage.setItem(STORAGE_KEY, currentVersion);
-    
-    console.log('App-Daten nach Update gelöscht');
   }
 }

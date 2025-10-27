@@ -1,5 +1,6 @@
 // src/lib/services/handzettel-ocr-service.ts
 import { createWorker, type Worker } from 'tesseract.js';
+import { secureLogger } from '@/lib/utils/secure-logger';
 
 export interface OCRShooter {
   name: string;
@@ -143,13 +144,13 @@ export class HandzettelOCRService {
     const teams: OCRTeam[] = [];
     const lines = text.split('\n').filter(line => line.trim());
     
-    console.log('🔍 OCR-Zeilen:', lines);
+    secureLogger.debug('OCR lines processed', 'handzettel-ocr');
     
     let currentTeam: string | null = null;
     let currentShooters: OCRShooter[] = [];
     
     for (const line of lines) {
-      console.log('📝 Verarbeite Zeile:', line);
+      secureLogger.debug('Processing OCR line', 'handzettel-ocr');
       // Skip header lines
       if (line.includes('Verein') || line.includes('Name') || line.includes('Ringe')) continue;
       if (line.includes('Kreisschützenverband') || line.includes('Rundenwettkampf')) continue;
@@ -158,7 +159,7 @@ export class HandzettelOCRService {
       const teamMatch = line.match(/([A-ZÄÖÜ][A-Za-zäöüß\s\.]+\s+[IVX]+)/) ||
                        line.match(/([A-ZÄÖÜ][a-zäöüß\s\.]+(?:e\.V\.|eV)\s+[IVX]+)/);
       if (teamMatch) {
-        console.log('✅ Team gefunden:', teamMatch[1]);
+        secureLogger.debug('Team found in OCR', 'handzettel-ocr');
         // Vorheriges Team speichern
         if (currentTeam && currentShooters.length > 0) {
           teams.push({
@@ -169,7 +170,7 @@ export class HandzettelOCRService {
         }
         
         currentTeam = teamMatch[1].trim();
-        console.log('🏆 Aktuelles Team:', currentTeam);
+        secureLogger.debug('Current team set', 'handzettel-ocr');
         currentShooters = [];
         
         // Schütze in derselben Zeile nach Mannschaft suchen
@@ -212,7 +213,7 @@ export class HandzettelOCRService {
             const score = parseInt(scoreStr);
             
             if (score >= 0 && score <= 400) {
-              console.log(`🎯 Tesseract Schütze: ${shooterMatch[1]} - ${score} Ringe`);
+              secureLogger.debug('Shooter recognized by Tesseract', 'handzettel-ocr');
               currentShooters.push({
                 name: shooterMatch[1].trim(),
                 score: score,
@@ -250,7 +251,10 @@ export class GoogleVisionOCRService {
   private apiKey: string;
 
   constructor() {
-    this.apiKey = process.env.NEXT_PUBLIC_GOOGLE_VISION_API_KEY || 'AIzaSyBlcJpndITalBIoqtXSOvefgfRQoBl6_0c';
+    this.apiKey = process.env.GOOGLE_VISION_API_KEY || '';
+    if (!this.apiKey) {
+      throw new Error('GOOGLE_VISION_API_KEY environment variable is required');
+    }
   }
 
   async processHandzettel(imageFile: File): Promise<OCRResult> {
@@ -298,7 +302,7 @@ export class GoogleVisionOCRService {
       const isStandardHandzettel = this.detectStandardHandzettel(textAnnotations);
       
       if (isStandardHandzettel && structuredResult.teams.length > 0) {
-        console.log('✅ Standard-Handzettel erkannt - Premium OCR verwendet');
+        secureLogger.info('Standard handzettel detected - using premium OCR', 'google-vision');
         return {
           liga: structuredResult.liga || this.extractLiga(fullText),
           durchgang: structuredResult.durchgang || this.extractDurchgang(fullText),
@@ -307,7 +311,7 @@ export class GoogleVisionOCRService {
           rawText: fullText
         };
       } else {
-        console.log('⚠️ Kein Standard-Handzettel - Fallback auf normale OCR');
+        secureLogger.info('Non-standard handzettel - using fallback OCR', 'google-vision');
         return {
           liga: this.extractLiga(fullText),
           durchgang: this.extractDurchgang(fullText),
@@ -317,7 +321,7 @@ export class GoogleVisionOCRService {
         };
       }
     } catch (error) {
-      console.error('Google Vision OCR Error:', error);
+      secureLogger.error('Google Vision OCR failed', 'google-vision');
       throw error;
     }
   }
@@ -394,13 +398,13 @@ export class GoogleVisionOCRService {
     
     const result = isStandard && hasHeaderStructure && hasTeamStructure;
     
-    console.log(`🔍 Handzettel-Erkennung: ${foundIndicators}/6 Indikatoren, Header: ${hasHeaderStructure}, Teams: ${hasTeamStructure} = ${result ? 'Standard' : 'Nicht-Standard'}`);
+    secureLogger.debug('Handzettel detection completed', 'google-vision');
     
     return result;
   }
   
   private extractStructuredData(textAnnotations: any[]): { liga?: string, durchgang?: number, datum?: string, teams: OCRTeam[] } {
-    console.log('🏗️ Premium Strukturbasierte OCR gestartet');
+    secureLogger.debug('Premium structured OCR started', 'google-vision');
     
     // Sortiere Textelemente nach Y-Koordinate (von oben nach unten)
     const sortedTexts = textAnnotations
@@ -414,7 +418,7 @@ export class GoogleVisionOCRService {
       }))
       .sort((a, b) => a.y - b.y);
     
-    console.log(`📍 ${sortedTexts.length} Textelemente mit Koordinaten gefunden`);
+    secureLogger.debug('Text elements with coordinates found', 'google-vision');
     
     // Definiere Handzettel-Layout-Bereiche (basierend auf Standard-Handzettel)
     const layout = {
@@ -438,11 +442,11 @@ export class GoogleVisionOCRService {
       t.y >= layout.teamArea.yMin && t.y <= layout.teamArea.yMax
     );
     
-    console.log(`🏆 ${teamTexts.length} Texte im Team-Bereich gefunden`);
+    secureLogger.debug('Texts found in team area', 'google-vision');
     
     // Gruppiere Texte in Zeilen (ähnliche Y-Koordinaten)
     const rows = this.groupIntoRows(teamTexts, 15); // 15px Toleranz
-    console.log(`📋 ${rows.length} Zeilen erkannt`);
+    secureLogger.debug('Rows recognized in OCR', 'google-vision');
     
     const teams: OCRTeam[] = [];
     let currentTeam: string | null = null;
@@ -450,7 +454,7 @@ export class GoogleVisionOCRService {
     
     for (const row of rows) {
       const rowText = row.map(t => t.text).join(' ');
-      console.log(`📝 Zeile: ${rowText}`);
+      secureLogger.debug('Processing row text', 'google-vision');
       
       // Team-Erkennung (römische Zahlen am Ende)
       const teamMatch = rowText.match(/([A-ZÄÖÜ][A-Za-zäöüß\s\.]+\s+[IVX]+)|([A-ZÄÖÜ][a-zäöüß\s\.]+(?:e\.V\.|eV)\s+[IVX]+)/);
@@ -466,7 +470,7 @@ export class GoogleVisionOCRService {
         
         currentTeam = (teamMatch[1] || teamMatch[2]).trim();
         currentShooters = [];
-        console.log(`✅ Team erkannt: ${currentTeam}`);
+        secureLogger.debug('Team recognized', 'google-vision');
         continue;
       }
       
@@ -481,9 +485,9 @@ export class GoogleVisionOCRService {
               score: score,
               confidence: 0.95
             });
-            console.log(`🎯 Schütze: ${shooterName} - ${score} Ringe (Premium OCR)`);
+            secureLogger.debug('Shooter recognized with premium OCR', 'google-vision');
           } else {
-            console.log(`⚠️ Schütze ohne gültige Ringzahl: ${shooterName}`);
+            secureLogger.debug('Shooter without valid score', 'google-vision');
           }
         }
       }
@@ -498,14 +502,14 @@ export class GoogleVisionOCRService {
       });
     }
     
-    console.log(`🏁 Premium OCR: ${teams.length} Teams mit ${teams.reduce((sum, t) => sum + t.shooters.length, 0)} Schützen`);
+    secureLogger.debug('Premium OCR completed', 'google-vision');
     
     // Validiere Ergebnis - bei zu wenig Daten Fallback signalisieren
     const totalShooters = teams.reduce((sum, t) => sum + t.shooters.length, 0)
-    console.log(`🔍 Premium OCR Validierung: ${teams.length} Teams, ${totalShooters} Schützen`);
+    secureLogger.debug('Premium OCR validation', 'google-vision');
     
     if (teams.length === 0 || totalShooters < 10) {
-      console.log('⚠️ Premium OCR unvollständig - Fallback empfohlen');
+      secureLogger.warn('Premium OCR incomplete - fallback recommended', 'google-vision');
       return { liga, durchgang, datum, teams: [] }; // Leere Teams = Fallback
     }
     
@@ -602,7 +606,7 @@ export class GoogleVisionOCRService {
           }
           
           if (score >= 0 && score <= 400) {
-            console.log(`🎯 Ringzahl gefunden in Spalte ${column.label}: ${score}`);
+            secureLogger.debug('Score found in column', 'google-vision');
             return score;
           }
         }
@@ -648,7 +652,7 @@ export class GoogleVisionOCRService {
     const teams: OCRTeam[] = [];
     const lines = text.split('\n').filter(line => line.trim());
     
-    console.log('🔍 Google Vision Zeilen:', lines);
+    secureLogger.debug('Google Vision lines processed', 'google-vision');
     
     // Erste Durchgang: Sammle alle Namen, Teams und Scores
     const shooterNames: string[] = [];
@@ -661,7 +665,7 @@ export class GoogleVisionOCRService {
       if (teamMatch) {
         const teamName = (teamMatch[1] || teamMatch[2]).trim();
         teamNames.push(teamName);
-        console.log('✅ Team gefunden:', teamName);
+        secureLogger.debug('Team found', 'google-vision');
         continue;
       }
       
@@ -678,7 +682,7 @@ export class GoogleVisionOCRService {
             name.split(' ').length === 2 &&
             !shooterNames.includes(name)) { // Duplikat-Prüfung
           shooterNames.push(name);
-          console.log('👤 Schütze gefunden:', name);
+          secureLogger.debug('Shooter found', 'google-vision');
         }
         continue;
       }
@@ -721,35 +725,28 @@ export class GoogleVisionOCRService {
         if (score >= 0 && score <= 400) {
           scores.push(score);
           if (originalScore !== score) {
-            console.log(`🎯 Ringzahl korrigiert: ${score} (original: ${originalScore} von "${line}")`);
+            secureLogger.debug('Score corrected', 'google-vision');
           } else {
-            console.log(`🎯 Ringzahl: ${score} (von "${line}")`);
+            secureLogger.debug('Score recognized', 'google-vision');
           }
         } else {
-          console.log(`❌ Ungültige Ringzahl ignoriert: ${score} (original: ${originalScore} von "${line}")`);
+          secureLogger.debug('Invalid score ignored', 'google-vision');
         }
       }
     }
     
-    console.log(`📊 Gefunden: ${teamNames.length} Teams, ${shooterNames.length} Schützen, ${scores.length} Ringzahlen`);
-    console.log('👥 Schützen-Namen:', shooterNames);
-    console.log('🎯 Ringzahlen:', scores);
-    console.log('🏆 Team-Namen:', teamNames);
+    secureLogger.debug('OCR extraction summary', 'google-vision');
     
     if (teamNames.length === 0 || shooterNames.length === 0) {
-      console.log('⚠️ Unvollständige OCR-Daten');
+      secureLogger.warn('Incomplete OCR data', 'google-vision');
       return teams;
     }
     
-    // Debug: Zeige erkannte Daten
-    console.log('🔍 Erkannte Daten:');
-    console.log('Teams:', teamNames);
-    console.log('Schützen:', shooterNames);
-    console.log('Scores:', scores);
+    secureLogger.debug('Recognized data summary', 'google-vision');
     
     // Lücken-Erkennung: Wenn mehr Schützen als Ringzahlen vorhanden sind
     if (shooterNames.length > scores.length) {
-      console.log(`⚠️ Lücke erkannt: ${shooterNames.length} Schützen, ${scores.length} Ringzahlen`);
+      secureLogger.debug('Gap detected in OCR data', 'google-vision');
       
       // Füge 0-Werte für fehlende Ringzahlen hinzu
       const missingScores = shooterNames.length - scores.length;
@@ -757,29 +754,29 @@ export class GoogleVisionOCRService {
         // Versuche intelligente Position zu finden
         const insertPosition = Math.min(scores.length, shooterNames.length - missingScores + i);
         scores.splice(insertPosition, 0, 0);
-        console.log(`🔧 Lücke gefüllt: 0 Ringe an Position ${insertPosition} eingefügt`);
+        secureLogger.debug('Gap filled with zero score', 'google-vision');
       }
     }
     
     // Zu viele Ringzahlen: Entferne die niedrigsten oder offensichtlich falschen
     if (scores.length > shooterNames.length) {
-      console.log(`⚠️ Zu viele Ringzahlen: ${scores.length} Ringzahlen, ${shooterNames.length} Schützen`);
+      secureLogger.debug('Too many scores detected', 'google-vision');
       
       // Entferne Ringzahlen > 400 oder sehr niedrige Werte < 50
       const validScores = scores.filter(score => score >= 50 && score <= 400);
       if (validScores.length === shooterNames.length) {
         scores.length = 0;
         scores.push(...validScores);
-        console.log('🔧 Ungültige Ringzahlen entfernt');
+        secureLogger.debug('Invalid scores removed', 'google-vision');
       } else {
         // Entferne überschüssige Ringzahlen vom Ende
         scores.splice(shooterNames.length);
-        console.log('🔧 Überschüssige Ringzahlen entfernt');
+        secureLogger.debug('Excess scores removed', 'google-vision');
       }
     }
     
     // Präzise zweistufige Zuordnung mit strikten Team-Grenzen
-    console.log(`🔍 Präzise Team-Schützen-Zuordnung`);
+    secureLogger.debug('Precise team-shooter assignment started', 'google-vision');
     
     interface TempShooter { name: string; lineIndex: number; }
     interface TempScore { value: number; lineIndex: number; }
@@ -799,7 +796,7 @@ export class GoogleVisionOCRService {
         const score = parseInt(scoreMatch[1]);
         if (score >= 0 && score <= 400) {
           tempScores.push({ value: score, lineIndex: index });
-          console.log(`🎯 Score erkannt: ${score} (Zeile ${index})`);
+          secureLogger.debug('Score recognized in line', 'google-vision');
           return;
         }
       }
@@ -823,7 +820,7 @@ export class GoogleVisionOCRService {
             trimmed.length > 5) {
           const cleanName = nameMatch[1].trim();
           tempShooters.push({ name: cleanName, lineIndex: index });
-          console.log(`👤 Schütze erkannt: ${cleanName} (Zeile ${index})`);
+          secureLogger.debug('Shooter recognized in line', 'google-vision');
           return;
         }
       }
@@ -833,14 +830,11 @@ export class GoogleVisionOCRService {
       if (teamMatch) {
         const cleanName = (teamMatch[1] || teamMatch[2]).replace(/\s+\d{3}$/, '').trim();
         tempTeams.push({ name: cleanName, lineIndex: index });
-        console.log(`🏆 Team erkannt: ${cleanName} (Zeile ${index})`);
+        secureLogger.debug('Team recognized in line', 'google-vision');
       }
     });
     
-    console.log(`📊 Extrahiert: ${tempTeams.length} Teams, ${tempShooters.length} Schützen, ${tempScores.length} Ringzahlen`);
-    console.log('🏆 Teams:', tempTeams.map(t => `${t.name} (${t.lineIndex})`));
-    console.log('👥 Schützen:', tempShooters.map(s => `${s.name} (${s.lineIndex})`));
-    console.log('🎯 Scores:', tempScores.map(s => `${s.value} (${s.lineIndex})`));
+    secureLogger.debug('Extraction completed with line indices', 'google-vision');
     
     // Stufe 2: Präzise Team-Zuordnung mit Used-Tracking
     const usedShooters = new Set<number>();
@@ -850,7 +844,7 @@ export class GoogleVisionOCRService {
       const teamLine = team.lineIndex;
       const nextTeamLine = tempTeams[i + 1] ? tempTeams[i + 1].lineIndex : lines.length;
       
-      console.log(`🔍 Team ${team.name}: Analysiere um Zeile ${teamLine}`);
+      secureLogger.debug('Analyzing team block', 'google-vision');
       
       // Sammle Schützen VOR und NACH dem Team (bis zum nächsten Team)
       const candidateShooters = tempShooters.filter(s => 
@@ -870,7 +864,7 @@ export class GoogleVisionOCRService {
         ...teamScores.map(s => ({...s, type: 'score'}))
       ].sort((a, b) => a.lineIndex - b.lineIndex);
       
-      console.log(`  📊 Block-Elemente:`, elementsInBlock.map(e => `${e.type === 'shooter' ? e.name : e.value} (${e.lineIndex})`));
+      secureLogger.debug('Block elements identified', 'google-vision');
       
       const teamShooters: OCRShooter[] = [];
       
@@ -920,9 +914,9 @@ export class GoogleVisionOCRService {
               score: bestScore.value,
               confidence: 0.95
             });
-            console.log(`  ✅ Zuordnung: ${element.name} (${element.lineIndex}) → ${bestScore.value} (${bestScore.lineIndex})`);
+            secureLogger.debug('Shooter-score assignment completed', 'google-vision');
           } else {
-            console.log(`  ⚠️ Kein Score für ${element.name} gefunden`);
+            secureLogger.debug('No score found for shooter', 'google-vision');
           }
         }
       });
@@ -933,14 +927,11 @@ export class GoogleVisionOCRService {
           shooters: teamShooters,
           confidence: 0.95
         });
-        console.log(`✅ Team ${team.name}: ${teamShooters.length} Schützen`);
-        teamShooters.forEach(s => console.log(`  - ${s.name}: ${s.score} Ringe`));
+        secureLogger.debug('Team processing completed', 'google-vision');
       }
     });
     
-    console.log('🏆 Präzise OCR - Finale Teams:', teams);
-    const totalEntered = teams.reduce((sum, team) => sum + team.shooters.length, 0);
-    console.log(`📊 Präzise OCR - Eingetragen: ${totalEntered} von 15 erwarteten Schützen`);
+    secureLogger.debug('Precise OCR final results', 'google-vision');
     return teams;
   }
 }

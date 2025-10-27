@@ -1,63 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GridFSBucket, ObjectId } from 'mongodb';
 import { getMongoDb } from '@/lib/db/mongodb';
-import { Readable } from 'stream';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params;
+
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: 'Ungültige Datei-ID' },
+        { status: 400 }
+      );
+    }
+
     const db = await getMongoDb();
-    const bucket = new GridFSBucket(db);
+    if (!db) {
+      return NextResponse.json(
+        { error: 'MongoDB nicht verfügbar' },
+        { status: 500 }
+      );
+    }
+
+    const bucket = new GridFSBucket(db, { bucketName: 'fs' });
     
-    // Suche die Datei in GridFS
-    const files = await db.collection('fs.files').find({ _id: new ObjectId(params.id) }).toArray();
-    
+    // Prüfe ob Datei existiert
+    const files = await bucket.find({ _id: new ObjectId(id) }).toArray();
     if (files.length === 0) {
       return NextResponse.json(
         { error: 'Datei nicht gefunden' },
         { status: 404 }
       );
     }
-    
+
     const file = files[0];
     
-    // Erstelle einen Download-Stream
-    const downloadStream = bucket.openDownloadStream(new ObjectId(params.id));
+    // Stream die Datei direkt ohne Buffer-Sammlung für bessere Performance
+    const downloadStream = bucket.openDownloadStream(new ObjectId(id));
     
-    // Sammle die Daten aus dem Stream
+    // Sichere Header-Werte
+    const safeFilename = file.filename?.replace(/[^\w.-]/g, '_') || 'document.pdf';
+    const contentType = file.metadata?.contentType === 'application/pdf' ? 'application/pdf' : 'application/pdf';
+    
     const chunks: Buffer[] = [];
-    for await (const chunk of downloadStream) {
-      chunks.push(Buffer.from(chunk));
-    }
     
-    // Kombiniere die Chunks zu einem Buffer
-    const buffer = Buffer.concat(chunks);
-    
-    // Bestimme den Content-Type
-    let contentType = 'application/octet-stream';
-    if (file.metadata && file.metadata.contentType) {
-      contentType = file.metadata.contentType;
-    } else if (file.filename.endsWith('.pdf')) {
-      contentType = 'application/pdf';
-    }
-    
-    // Erstelle die Response mit dem richtigen Content-Type
-    const response = new NextResponse(buffer, {
-      status: 200,
-      headers: {
-        'Content-Type': contentType,
-        'Content-Disposition': `inline; filename="${file.filename.split('/').pop()}"`,
-        'Content-Length': buffer.length.toString()
-      }
+    return new Promise((resolve) => {
+      downloadStream.on('data', (chunk) => {
+        chunks.push(chunk);
+      });
+      
+      downloadStream.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        
+        const response = new NextResponse(buffer, {
+          status: 200,
+          headers: {
+            'Content-Type': contentType,
+            'Content-Disposition': `inline; filename="${safeFilename}"`,
+            'Content-Length': buffer.length.toString(),
+          },
+        });
+        
+        resolve(response);
+      });
+      
+      downloadStream.on('error', () => {
+        // Sichere Logging ohne sensitive Daten
+        console.error('Download Fehler');
+        resolve(NextResponse.json(
+          { error: 'Fehler beim Herunterladen der Datei' },
+          { status: 500 }
+        ));
+      });
     });
-    
-    return response;
+
   } catch (error) {
-    console.error('Fehler beim Abrufen der Datei:', error);
+    // Sichere Logging ohne sensitive Daten
+    console.error('Download Fehler');
     return NextResponse.json(
-      { error: 'Fehler beim Abrufen der Datei' },
+      { error: 'Fehler beim Herunterladen der Datei' },
       { status: 500 }
     );
   }

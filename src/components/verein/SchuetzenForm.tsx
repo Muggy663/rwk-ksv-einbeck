@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { sanitizeInput } from '@/lib/utils/sanitize';
 
 interface SchuetzenFormProps {
   clubId: string;
@@ -73,7 +74,7 @@ export default function SchuetzenForm({ clubId, onSuccess, onCancel }: Schuetzen
                 type="text"
                 required
                 value={formData.firstName}
-                onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                onChange={(e) => setFormData({...formData, firstName: sanitizeInput(e.target.value)})}
                 className="w-full p-2 border border-gray-300 rounded"
               />
             </div>
@@ -83,7 +84,7 @@ export default function SchuetzenForm({ clubId, onSuccess, onCancel }: Schuetzen
                 type="text"
                 required
                 value={formData.lastName}
-                onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                onChange={(e) => setFormData({...formData, lastName: sanitizeInput(e.target.value)})}
                 className="w-full p-2 border border-gray-300 rounded"
               />
             </div>
@@ -122,7 +123,7 @@ export default function SchuetzenForm({ clubId, onSuccess, onCancel }: Schuetzen
             <input
               type="text"
               value={formData.mitgliedsnummer}
-              onChange={(e) => setFormData({...formData, mitgliedsnummer: e.target.value})}
+              onChange={(e) => setFormData({...formData, mitgliedsnummer: sanitizeInput(e.target.value)})}
               className="w-full p-2 border border-gray-300 rounded"
               placeholder="Optional"
             />

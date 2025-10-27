@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Download, Users, Clock, Target, Save, FileText, Plus, Brain, Upload } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { doc, getDoc, collection, getDocs, addDoc, updateDoc } from 'firebase/firestore';
@@ -31,8 +31,12 @@ interface Starter {
 
 export default function StartlistenToolPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const configId = searchParams.get('id');
+  const [configId, setConfigId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    setConfigId(urlParams.get('id'));
+  }, []);
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState(null);

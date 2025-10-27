@@ -1,5 +1,6 @@
 import { httpsCallable } from 'firebase/functions';
 import { functions } from './config';
+import { secureLogger } from '@/lib/utils/secure-logger';
 
 /**
  * Erstellt einen neuen Benutzer mit Rolle und Vereinszuweisung
@@ -31,7 +32,7 @@ export const createUserWithRole = async (
     
     return result.data as { success: boolean; message: string; uid?: string };
   } catch (error: any) {
-    console.error('Fehler beim Erstellen des Benutzers:', error);
+    secureLogger.error('Error creating user', 'firebase-functions');
     throw new Error(error.message || 'Beim Erstellen des Benutzers ist ein Fehler aufgetreten.');
   }
 };

@@ -22,5 +22,12 @@ if (!getApps().length) {
   });
 }
 
-// Admin Firestore exportieren
+// Admin Services exportieren
 export const adminDb = getFirestore();
+
+// Admin Auth für API-Auth Helper
+import { getAuth } from 'firebase-admin/auth';
+export const admin = {
+  auth: () => getAuth(),
+  firestore: () => getFirestore()
+};

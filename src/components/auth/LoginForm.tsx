@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,6 +11,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LogIn, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { PasswordResetForm } from './PasswordResetForm';
+import { checkRateLimit, recordFailedAttempt, clearFailedAttempts } from '@/lib/auth/rate-limiter';
+import { authLogger } from '@/lib/utils/safe-logger';
+import { SECURITY_FEATURES } from '@/lib/config/security-features';
+import { BotProtection } from '@/lib/auth/bot-protection';
+import { ReCaptcha } from './ReCaptcha';
 
 const loginSchema = z.object({
   email: z.string({
@@ -28,6 +33,9 @@ export function LoginForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [showPasswordReset, setShowPasswordReset] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [sessionId] = useState(() => Math.random().toString(36));
+  const [honeypot, setHoneypot] = useState('');
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   const {
     register,
@@ -40,13 +48,57 @@ export function LoginForm() {
       password: ''
     }
   });
+  
+  // Login-Timer starten beim ersten Render
+  useEffect(() => {
+    BotProtection.startLoginTimer(sessionId);
+  }, [sessionId]);
 
   const onSubmit = async (data: LoginFormData) => {
     setFormError(null);
+    
+    // reCAPTCHA prüfen
+    if (!recaptchaToken) {
+      setFormError("Bitte bestätigen Sie, dass Sie kein Roboter sind.");
+      return;
+    }
+    
+    // Bot-Protection prüfen (nur wenn aktiviert)
+    if (SECURITY_FEATURES.BOT_PROTECTION) {
+      if (!BotProtection.validateHoneypot(honeypot)) {
+        setFormError("Verdächtige Aktivität erkannt.");
+        return;
+      }
+      
+      if (!BotProtection.validateLoginTiming(sessionId)) {
+        setFormError("Bitte versuchen Sie es in einem Moment erneut.");
+        return;
+      }
+    }
+    
+    // Rate Limiting prüfen (nur wenn aktiviert)
+    if (SECURITY_FEATURES.RATE_LIMITING && !checkRateLimit(data.email)) {
+      setFormError("Zu viele Fehlversuche. Bitte warten Sie 15 Minuten.");
+      return;
+    }
+    
     try {
       await signIn(data.email, data.password);
-      // Redirect or further actions will be handled by AuthProvider or page logic if needed
+      // Bei erfolgreichem Login: Rate Limit zurücksetzen
+      if (SECURITY_FEATURES.RATE_LIMITING) {
+        clearFailedAttempts(data.email);
+      }
+      if (SECURITY_FEATURES.SAFE_LOGGING) {
+        authLogger.loginAttempt(true);
+      }
     } catch (e) {
+      // Bei Fehler: Fehlversuch registrieren
+      if (SECURITY_FEATURES.RATE_LIMITING) {
+        recordFailedAttempt(data.email);
+      }
+      if (SECURITY_FEATURES.SAFE_LOGGING) {
+        authLogger.loginAttempt(false);
+      }
       // error is handled by AuthProvider's toast, but can set local form error if needed
       // setFormError(e.message || "Anmeldung fehlgeschlagen.");
     }
@@ -119,9 +171,21 @@ export function LoginForm() {
               </div>
             </div>
             
-            <div className="pt-2 text-sm text-muted-foreground">
-              (Captcha-Platzhalter - Funktion folgt)
+            {/* reCAPTCHA */}
+            <div className="flex justify-center">
+              <ReCaptcha onVerify={setRecaptchaToken} />
             </div>
+            
+            {/* Honeypot - verstecktes Feld für Bot-Detection */}
+            <input
+              type="text"
+              name="website"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              style={{ display: 'none' }}
+              tabIndex={-1}
+              autoComplete="off"
+            />
 
             {authError && !formError && (
               <Alert variant="destructive">

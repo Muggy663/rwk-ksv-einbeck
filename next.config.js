@@ -7,7 +7,7 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   swcMinify: true,
-  // Cache-Busting für PWA
+  // Security Headers & Cache-Busting
   async headers() {
     return [
       {
@@ -17,10 +17,37 @@ const nextConfig = {
             key: 'Cache-Control',
             value: 'no-cache, no-store, must-revalidate',
           },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          }
         ],
       },
+      {
+        source: '/api/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate'
+          }
+        ]
+      }
     ];
   },
+  // Source Maps in Produktion deaktivieren
+  productionBrowserSourceMaps: false,
   webpack: (config, { dev, isServer }) => {
     // Komplett undici ignorieren
     config.externals = config.externals || [];

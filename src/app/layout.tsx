@@ -21,6 +21,7 @@ import { NativeAppProvider } from '@/components/ui/native-app-detector';
 import { AppVersionChecker } from '@/components/AppVersionChecker';
 import { ForceRefresh } from '@/components/ui/force-refresh';
 import { PWAInstallPrompt } from '@/components/ui/pwa-install-prompt';
+import { SessionTimeoutProvider } from '@/components/auth/SessionTimeoutProvider';
 
 
 // import { SentryClientInit } from '@/components/sentry-client-init';
@@ -73,6 +74,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <ThemeProvider>
         <NativeAppProvider>
         <AuthProvider>
+          <SessionTimeoutProvider>
           <ClubProvider>
             <div className="flex h-screen">
               <SkipLink targetId="main-content" />
@@ -105,6 +107,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
             </div>
           </ClubProvider>
+          </SessionTimeoutProvider>
         </AuthProvider>
         </NativeAppProvider>
         </ThemeProvider>

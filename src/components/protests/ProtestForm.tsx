@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { protestService, Protest } from '@/lib/services/protest-service';
 import { fetchLeagues, fetchSeasons } from '@/lib/services/statistics-service';
+import { sanitizeInput } from '@/lib/utils/sanitize';
 
 interface ProtestFormProps {
   onSuccess?: () => void;
@@ -190,7 +191,7 @@ export function ProtestForm({ onSuccess, onCancel }: ProtestFormProps) {
               <Input
                 id="title"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => setTitle(sanitizeInput(e.target.value))}
                 placeholder="Kurze Beschreibung des Problems"
                 required
               />
@@ -289,7 +290,7 @@ export function ProtestForm({ onSuccess, onCancel }: ProtestFormProps) {
               <Input
                 id="team"
                 value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
+                onChange={(e) => setTeamName(sanitizeInput(e.target.value))}
                 placeholder="Name der betroffenen Mannschaft"
               />
             </div>
@@ -299,7 +300,7 @@ export function ProtestForm({ onSuccess, onCancel }: ProtestFormProps) {
               <Input
                 id="shooter"
                 value={shooterName}
-                onChange={(e) => setShooterName(e.target.value)}
+                onChange={(e) => setShooterName(sanitizeInput(e.target.value))}
                 placeholder="Name des betroffenen Schützen"
               />
             </div>
@@ -310,7 +311,7 @@ export function ProtestForm({ onSuccess, onCancel }: ProtestFormProps) {
             <Textarea
               id="description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => setDescription(sanitizeInput(e.target.value))}
               placeholder="Detaillierte Beschreibung des Problems und der gewünschten Lösung..."
               rows={6}
               required

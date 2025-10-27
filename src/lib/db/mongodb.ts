@@ -3,7 +3,7 @@ import { MongoClient } from 'mongodb';
 // Prüfe, ob die MONGODB_URI-Umgebungsvariable definiert ist
 const uri = process.env.MONGODB_URI;
 if (!uri) {
-  console.error('MONGODB_URI ist nicht definiert. Bitte überprüfen Sie Ihre .env.local-Datei.');
+  console.warn('MONGODB_URI ist nicht definiert. MongoDB-Features sind deaktiviert.');
 }
 
 const options = {};
@@ -37,21 +37,26 @@ if (process.env.NODE_ENV === 'development') {
 // Exportieren Sie eine Funktion, um die Verbindung zu erhalten
 export async function getMongoClient() {
   if (!uri) {
-    throw new Error('MongoDB URI nicht definiert');
+    return null;
   }
-  return clientPromise;
+  try {
+    return await clientPromise;
+  } catch (error) {
+    // Stille Behandlung - MongoDB ist optional für File Server
+    return null;
+  }
 }
 
 // Exportieren Sie eine Funktion, um die Datenbank zu erhalten
 export async function getMongoDb(dbName = 'rwk_einbeck') {
   if (!uri) {
-    throw new Error('MongoDB URI nicht definiert');
+    return null;
   }
   try {
     const client = await clientPromise;
     return client.db(dbName);
   } catch (error) {
-    console.error('Fehler beim Verbinden mit MongoDB:', error);
-    throw error;
+    // Stille Behandlung - MongoDB ist optional für File Server
+    return null;
   }
 }

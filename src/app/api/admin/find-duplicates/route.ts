@@ -10,9 +10,7 @@ export async function GET() {
       ...doc.data()
     }));
 
-    // Debug: Zeige alle Schützen
-    console.log('Gefundene Schützen:', shooters.length);
-    console.log('Erste 5 Schützen:', shooters.slice(0, 5));
+
 
     const duplicateMap = new Map();
     
@@ -46,8 +44,7 @@ export async function GET() {
       }
     });
 
-    // Debug: Zeige Duplikate
-    console.log('Gefundene Duplikate:', duplicates.length);
+
 
     return NextResponse.json({ 
       duplicates, 

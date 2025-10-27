@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { newsService, NewsArticle } from '@/lib/services/news-service';
 import { containsProfanity, findProfanity } from '@/lib/utils/profanity-filter';
+import { sanitizeInput } from '@/lib/utils/sanitize';
 
 interface NewsFormProps {
   article?: NewsArticle;
@@ -212,7 +213,7 @@ export function NewsForm({ article, onSuccess, onCancel }: NewsFormProps) {
             <Input
               id="title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => setTitle(sanitizeInput(e.target.value))}
               placeholder="Aussagekräftiger Titel für den News-Artikel"
               required
             />
@@ -223,7 +224,7 @@ export function NewsForm({ article, onSuccess, onCancel }: NewsFormProps) {
             <Textarea
               id="excerpt"
               value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
+              onChange={(e) => setExcerpt(sanitizeInput(e.target.value))}
               placeholder="Kurze Zusammenfassung (wird automatisch generiert wenn leer)"
               rows={2}
             />
@@ -234,7 +235,7 @@ export function NewsForm({ article, onSuccess, onCancel }: NewsFormProps) {
             <Textarea
               id="content"
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => setContent(sanitizeInput(e.target.value))}
               placeholder="Vollständiger Inhalt des News-Artikels..."
               rows={10}
               required
@@ -332,7 +333,7 @@ export function NewsForm({ article, onSuccess, onCancel }: NewsFormProps) {
             <div className="flex gap-2">
               <Input
                 value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
+                onChange={(e) => setNewTag(sanitizeInput(e.target.value))}
                 placeholder="Neuen Tag hinzufügen"
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
               />

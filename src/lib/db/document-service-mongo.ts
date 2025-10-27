@@ -26,12 +26,15 @@ function mapDocumentFromMongo(doc: any): Document {
 export async function getAllDocumentsFromMongo(): Promise<Document[]> {
   try {
     const db = await getMongoDb();
-    const collection = db.collection(COLLECTION_NAME);
+    if (!db) {
+      return []; // MongoDB nicht verfügbar - stille Rückgabe
+    }
     
+    const collection = db.collection(COLLECTION_NAME);
     const documents = await collection.find({}).toArray();
     return documents.map(mapDocumentFromMongo);
   } catch (error) {
-    console.error('Fehler beim Laden der Dokumente aus MongoDB:', error);
+    // Stille Behandlung - MongoDB ist optional
     return [];
   }
 }
