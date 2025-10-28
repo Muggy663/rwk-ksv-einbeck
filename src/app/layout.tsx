@@ -32,7 +32,6 @@ import { SessionTimeoutProvider } from '@/components/auth/SessionTimeoutProvider
 export const metadata: Metadata = {
   title: 'RWK KSV Einbeck - Live Tabellen & Wettkampf-Management',
   description: 'Die digitale Plattform für die Rundenwettkämpfe des Kreisschützenverbandes Einbeck',
-  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
