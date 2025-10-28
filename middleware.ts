@@ -29,6 +29,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Nur API-Routen überwachen, nicht statische Assets
+  // Nur API-Routen überwachen, nicht statische Assets wie manifest.json
   matcher: '/api/:path*'
 };
