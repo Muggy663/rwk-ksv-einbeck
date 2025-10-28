@@ -1,10 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  // Statische Assets explizit ausschließen
+  const staticAssets = [
+    '/manifest.json',
+    '/favicon.ico',
+    '/robots.txt',
+    '/sitemap.xml',
+    '/_next/',
+    '/images/',
+    '/icons/'
+  ];
+  
+  const isStaticAsset = staticAssets.some(asset => pathname.startsWith(asset));
+  if (isStaticAsset) {
+    return NextResponse.next();
+  }
+  
   // Upload Size Limits für bestimmte Pfade
   const uploadPaths = ['/api/upload', '/api/upload-handzettel'];
   const isUploadPath = uploadPaths.some(path => 
-    request.nextUrl.pathname.startsWith(path)
+    pathname.startsWith(path)
   );
   
   if (isUploadPath) {
