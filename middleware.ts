@@ -29,5 +29,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Nur API-Routen überwachen, nicht statische Assets
   matcher: '/api/:path*'
 };
