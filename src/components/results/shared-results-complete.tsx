@@ -17,7 +17,7 @@ import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, Fire
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { PlausibilityService } from '@/lib/services/plausibility-service';
+import { plausibilityService } from '@/lib/services/plausibility-service';
 import Link from 'next/link';
 import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, Timestamp } from 'firebase/firestore';
 
@@ -797,7 +797,14 @@ export default function SharedResultsPage({
                     const scoreVal = parseInt(value);
                     const league = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
                     if (league && !isNaN(scoreVal)) {
-                      const check = PlausibilityService.validateScore(scoreVal, league.type);
+                      // Einfache lokale Validierung
+                      const maxScore = ['LG', 'LGA', 'LP', 'LPA'].includes(league.type) ? 400 : 300;
+                      const check = {
+                        isValid: scoreVal >= 0 && scoreVal <= maxScore,
+                        warning: scoreVal < 0 ? 'Negative Werte nicht möglich' : 
+                                scoreVal > maxScore ? `Maximum für ${league.type}: ${maxScore} Ringe` : 
+                                scoreVal < maxScore * 0.5 ? `${scoreVal} Ringe sehr niedrig für ${league.type}` : null
+                      };
                       if (!check.isValid || check.warning) {
                         toast({
                           title: check.isValid ? "⚠️ Warnung" : "❌ Ungültiger Wert",
