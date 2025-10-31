@@ -21,7 +21,7 @@ export function TeamStatusBadge({
   const badge = (
     <span 
       className={cn(
-        "text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium",
+        "text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100 px-1.5 py-0.5 rounded font-medium",
         className
       )}
     >

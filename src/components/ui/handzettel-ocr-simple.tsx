@@ -28,7 +28,7 @@ export interface OCRMatchResult {
   shooterName: string
   score: number | null
   confidence: number
-  ocrSource: 'handzettel-ocr'
+  ocrSource: 'gemini' | 'fallback-ocr'
 }
 
 export function HandzettelOCR({ 
@@ -45,91 +45,203 @@ export function HandzettelOCR({
   const [currentStep, setCurrentStep] = React.useState("")
   const [ocrResult, setOcrResult] = React.useState<SimpleOCRResult | null>(null)
   const [matchedResults, setMatchedResults] = React.useState<OCRMatchResult[]>([])
-  const hasRunRef = React.useRef(false)
+  const [hasProcessed, setHasProcessed] = React.useState(false)
+  const shooterCacheRef = React.useRef<Map<string, {name: string, teamId: string, teamName: string}> | null>(null)
 
-  React.useEffect(() => {
-    if (!hasRunRef.current) {
-      hasRunRef.current = true
-      processOCR()
-    }
-  }, [])
-
-  const processOCR = async () => {
-    console.log('🤖 Vereinfachte OCR gestartet:', imageFile.name)
+  const processOCR = React.useCallback(async () => {
+    if (hasProcessed) return
+    
+    console.log('🤖 Gemini Erkennung gestartet:', imageFile.name)
     setIsProcessing(true)
     setProgress(0)
     
     try {
-      setCurrentStep("Handzettel wird gescannt...")
+      setCurrentStep("🤖 Gemini AI analysiert Handzettel...")
       setProgress(20)
       
-      const result = await simpleOCR.processHandzettel(imageFile)
-      console.log('✅ OCR Ergebnis:', result)
-      setOcrResult(result)
+      // Versuche zuerst Gemini OCR
+      let matches: OCRMatchResult[] = []
+      let geminiSuccess = false
       
-      setCurrentStep("Schützen werden zugeordnet...")
-      setProgress(50)
+      try {
+        const formData = new FormData()
+        formData.append('image', imageFile)
+        formData.append('availableTeams', JSON.stringify(availableTeams))
+        
+        const geminiResponse = await fetch('/api/gemini-ocr', {
+          method: 'POST',
+          body: formData
+        })
+        
+        if (geminiResponse.ok) {
+          const geminiData = await geminiResponse.json()
+          if (geminiData.success && geminiData.results && geminiData.results.length > 0) {
+            setCurrentStep("✨ Gemini AI hat Ergebnisse gefunden!")
+            setProgress(70)
+            
+            matches = await processGeminiResults(geminiData.results)
+            console.log('✅ Gemini Erkennung erfolgreich:', matches.length, 'Matches')
+            geminiSuccess = true
+          } else {
+            console.warn('⚠️ Gemini lieferte keine Ergebnisse, verwende Fallback')
+          }
+        } else {
+          console.warn('⚠️ Gemini API Fehler:', geminiResponse.status, 'verwende Fallback')
+        }
+      } catch (geminiError) {
+        console.warn('⚠️ Gemini Erkennung fehlgeschlagen, verwende Alternative:', geminiError)
+      }
       
-      const matches = await matchShooters(result, availableTeams)
+      // Fallback auf Simple OCR wenn Gemini fehlschlägt oder keine Ergebnisse liefert
+      if (!geminiSuccess || matches.length === 0) {
+        setCurrentStep("📋 Alternative Erkennung wird verwendet...")
+        setProgress(40)
+        
+        try {
+          const result = await simpleOCR.processHandzettel(imageFile)
+          console.log('✅ Alternative Erkennung Ergebnis:', result)
+          setOcrResult(result)
+          
+          setCurrentStep("Schützen werden zugeordnet...")
+          setProgress(70)
+          
+          matches = await matchShooters(result, availableTeams)
+        } catch (fallbackError) {
+          console.error('❌ Auch alternative Erkennung fehlgeschlagen:', fallbackError)
+          throw new Error('Beide Erkennungs-Methoden fehlgeschlagen. Bitte versuchen Sie es erneut.')
+        }
+      }
+      
       setMatchedResults(matches)
-      
       setProgress(100)
-      setCurrentStep("OCR abgeschlossen!")
+      setCurrentStep("🎯 Auslesen abgeschlossen!")
       onOCRComplete(matches)
       
     } catch (error) {
-      console.error('❌ OCR Error:', error)
-      onError(error instanceof Error ? error.message : 'OCR-Verarbeitung fehlgeschlagen')
+      console.error('❌ Erkennungs-Fehler:', error)
+      onError(error instanceof Error ? error.message : 'Automatisches Auslesen fehlgeschlagen')
     } finally {
       setIsProcessing(false)
     }
+  }, [hasProcessed, imageFile.name, availableTeams, onOCRComplete, onError])
+
+  // Lade Schützen-Cache einmalig
+  React.useEffect(() => {
+    const loadShooterCache = async () => {
+      if (shooterCacheRef.current) return
+      
+      const cache = new Map<string, {name: string, teamId: string, teamName: string}>()
+      const allShooterIds = new Set<string>()
+      availableTeams.forEach(team => {
+        team.shooterIds?.forEach(id => allShooterIds.add(id))
+      })
+      
+      const loadPromises = Array.from(allShooterIds).map(async (shooterId) => {
+        try {
+          const shooterDoc = await getDoc(doc(db, "shooters", shooterId))
+          if (shooterDoc.exists()) {
+            const data = shooterDoc.data()
+            const shooterName = data.name || `${data.firstName || ''} ${data.lastName || ''}`.trim()
+            const team = availableTeams.find(t => t.shooterIds?.includes(shooterId))
+            if (team) {
+              cache.set(shooterId, { name: shooterName, teamId: team.id, teamName: team.name })
+            }
+          }
+        } catch (error) {
+          console.error(`Fehler bei Schütze ${shooterId}:`, error)
+        }
+      })
+      
+      await Promise.all(loadPromises)
+      shooterCacheRef.current = cache
+    }
+    
+    loadShooterCache()
+  }, [availableTeams])
+
+  // Autostart nur einmal - verhindere Fast Refresh Loops
+  React.useEffect(() => {
+    if (autoStart && !hasProcessed && imageFile) {
+      const timeoutId = setTimeout(() => {
+        if (!hasProcessed) {
+          setHasProcessed(true)
+          processOCR()
+        }
+      }, 100)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [autoStart, imageFile.name, hasProcessed, processOCR])
+
+  const processGeminiResults = async (geminiResults: any[]): Promise<OCRMatchResult[]> => {
+    const matches: OCRMatchResult[] = []
+    
+    // Verwende den bereits geladenen Cache
+    if (!shooterCacheRef.current) {
+      console.error('Schützen-Cache nicht geladen')
+      return matches
+    }
+    
+    const shooterCache = shooterCacheRef.current
+    
+    // Begrenze Gemini-Ergebnisse auf maximal 25 pro Durchgang
+    const limitedResults = geminiResults.slice(0, 25)
+    console.log(`🔄 Gemini lieferte ${geminiResults.length} Ergebnisse, verwende ${limitedResults.length}`)
+    
+    // Matche Gemini-Ergebnisse mit Datenbank-Schützen
+    for (const geminiResult of limitedResults) {
+      let bestMatch: {shooterId: string, shooter: any, similarity: number} | null = null
+      
+      // Suche besten Match
+      for (const [shooterId, shooter] of shooterCache.entries()) {
+        const dbName = shooter.name.toLowerCase().trim()
+        const geminiName = geminiResult.shooterName?.toLowerCase().trim() || ''
+        
+        let similarity = 0
+        if (dbName === geminiName) similarity = 1.0
+        else if (dbName.includes(geminiName) || geminiName.includes(dbName)) similarity = 0.8
+        else similarity = fuzzyMatch(dbName, geminiName)
+        
+        if (similarity > 0.6 && (!bestMatch || similarity > bestMatch.similarity)) {
+          bestMatch = { shooterId, shooter, similarity }
+        }
+      }
+      
+      if (bestMatch) {
+        matches.push({
+          teamId: bestMatch.shooter.teamId,
+          teamName: bestMatch.shooter.teamName,
+          shooterId: bestMatch.shooterId,
+          shooterName: bestMatch.shooter.name,
+          score: geminiResult.score || null,
+          confidence: (geminiResult.confidence || 0.8) * bestMatch.similarity,
+          ocrSource: 'gemini'
+        })
+      }
+    }
+    
+    return matches
   }
 
   const matchShooters = async (ocrResult: SimpleOCRResult, teams: Team[]): Promise<OCRMatchResult[]> => {
     const matches: OCRMatchResult[] = []
     
-    // Sammle alle Schützen-IDs
-    const allShooterIds = new Set<string>()
-    teams.forEach(team => {
-      team.shooterIds?.forEach(id => allShooterIds.add(id))
-    })
+    // Verwende den bereits geladenen Cache
+    if (!shooterCacheRef.current) {
+      console.error('Schützen-Cache nicht geladen')
+      return matches
+    }
     
-    console.log(`🔍 Lade ${allShooterIds.size} Schützen aus Datenbank...`)
-    
-    // Lade alle Schützen in einem Batch
-    const shooterCache = new Map<string, {name: string}>()
-    const loadPromises = Array.from(allShooterIds).map(async (shooterId) => {
-      try {
-        const shooterDoc = await getDoc(doc(db, "shooters", shooterId))
-        if (shooterDoc.exists()) {
-          const data = shooterDoc.data()
-          const shooterName = data.name || `${data.firstName || ''} ${data.lastName || ''}`.trim()
-          shooterCache.set(shooterId, { name: shooterName })
-        }
-      } catch (error) {
-        console.error(`Fehler bei Schütze ${shooterId}:`, error)
-      }
-    })
-    
-    await Promise.all(loadPromises)
-    console.log(`📊 ${shooterCache.size} Schützen geladen`)
-    
-    // Erstelle Schützen-Liste mit Team-Zuordnung
+    // Erstelle Schützen-Liste aus Cache
     const allShooters: Array<{id: string, name: string, teamId: string, teamName: string}> = []
     
-    teams.forEach(team => {
-      team.shooterIds?.forEach(shooterId => {
-        const shooter = shooterCache.get(shooterId)
-        if (shooter) {
-          allShooters.push({
-            id: shooterId,
-            name: shooter.name,
-            teamId: team.id,
-            teamName: team.name
-          })
-        }
+    for (const [shooterId, shooter] of shooterCacheRef.current.entries()) {
+      allShooters.push({
+        id: shooterId,
+        name: shooter.name,
+        teamId: shooter.teamId,
+        teamName: shooter.teamName
       })
-    })
+    }
     
     // Matche OCR-Schützen mit Datenbank
     for (const ocrShooter of ocrResult.shooters) {
@@ -155,7 +267,7 @@ export function HandzettelOCR({
           shooterName: matchedShooter.name,
           score: ocrShooter.score,
           confidence: ocrShooter.confidence,
-          ocrSource: 'handzettel-ocr'
+          ocrSource: 'fallback-ocr'
         })
         const scoreText = ocrShooter.score !== null ? `${ocrShooter.score} Ringe` : 'Nicht angetreten'
         console.log(`✅ "${ocrShooter.name}" → "${matchedShooter.name}" (${matchedShooter.teamName}) - ${scoreText}`)
@@ -207,21 +319,35 @@ export function HandzettelOCR({
   }
 
   return (
-    <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
+    <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 dark:border-blue-700">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-blue-800">
+        <CardTitle className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
           <Zap className="h-5 w-5" />
-          🎯 Vereinfachte OCR
+          🎯 Automatisches Auslesen
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-
+        {!isProcessing && !ocrResult && (
+          <Button 
+            onClick={() => {
+              if (!hasProcessed) {
+                setHasProcessed(true)
+                processOCR()
+              }
+            }}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            size="lg"
+          >
+            <Zap className="mr-2 h-5 w-5" />
+            🤖 Automatisch auslesen
+          </Button>
+        )}
 
         {isProcessing && (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Loader className="h-4 w-4 animate-spin" />
-              <span>{currentStep}</span>
+              <span className="text-foreground">{currentStep}</span>
             </div>
             <Progress value={progress} />
           </div>
@@ -229,9 +355,9 @@ export function HandzettelOCR({
 
         {ocrResult && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-green-700">
+            <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
               <CheckCircle className="h-4 w-4" />
-              <span>🎯 {matchedResults.length} Schützen erkannt!</span>
+              <span>🎯 {matchedResults.length}/25 Schützen erkannt! {matchedResults[0]?.ocrSource === 'gemini' ? '(Gemini AI)' : '(Alternative Erkennung)'}</span>
             </div>
             
             <div className="space-y-1">

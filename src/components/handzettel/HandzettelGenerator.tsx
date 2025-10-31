@@ -42,6 +42,8 @@ export function HandzettelGenerator({
   
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
+  const [loadResults, setLoadResults] = useState(false);
+  const [results, setResults] = useState<any>({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -144,6 +146,37 @@ export function HandzettelGenerator({
     
     loadTeams();
   }, [selectedSeasonId, selectedLeagueId, showContactData, toast]);
+
+  const loadExistingResults = async () => {
+    if (!selectedSeasonId || !selectedLeagueId) return;
+    
+    try {
+      const resultsQuery = query(
+        collection(db, 'rwk_scores'),
+        where('seasonId', '==', selectedSeasonId),
+        where('leagueId', '==', selectedLeagueId)
+      );
+      
+      const resultsSnapshot = await getDocs(resultsQuery);
+      const resultsData = {};
+      
+      resultsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const key = `${data.teamId}-${data.shooterId}-${data.durchgang}`;
+        resultsData[key] = data.totalRinge || '';
+      });
+      
+      setResults(resultsData);
+    } catch (error) {
+      console.error('Fehler beim Laden der Ergebnisse:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (loadResults && selectedSeasonId && selectedLeagueId) {
+      loadExistingResults();
+    }
+  }, [selectedSeasonId, selectedLeagueId, loadResults]);
 
   const availableLeagues = leagues.filter(league => 
     !selectedSeasonId || league.seasonId === selectedSeasonId
@@ -581,6 +614,27 @@ export function HandzettelGenerator({
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={loadResults}
+                      onChange={async (e) => {
+                        setLoadResults(e.target.checked);
+                        if (e.target.checked && selectedSeasonId && selectedLeagueId) {
+                          await loadExistingResults();
+                        } else {
+                          setResults({});
+                        }
+                      }}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm font-medium">Vorhandene Ergebnisse aus Datenbank laden</span>
+                  </label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Lädt bereits erfasste Durchgangs-Ergebnisse in die Tabelle
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -788,31 +842,70 @@ export function HandzettelGenerator({
                                   <td className="border p-1 text-xs">
                                     {team.shooters?.[shooterIndex]?.name || `Schütze ${shooterIndex + 1}`}
                                   </td>
-                                  <td className="border p-1"></td>
-                                  <td className="border p-1"></td>
-                                  <td className="border p-1"></td>
-                                  <td className="border p-1"></td>
-                                  <td className="border p-1"></td>
-                                  <td className="border p-1"></td>
-                                  <td className="border p-1"></td>
-                                  <td className="border p-1"></td>
-                                  <td className="border p-1"></td>
+                                  {[1, 2, 3, 4, 5].map(round => {
+                                    const shooterId = team.shooters?.[shooterIndex]?.id;
+                                    const resultKey = `${team.id}-${shooterId}-${round}`;
+                                    const rings = results[resultKey] || '';
+                                    
+                                    // Berechne Gesamt nur wenn Ringe vorhanden
+                                    let gesamt = '';
+                                    if (rings) {
+                                      let sum = 0;
+                                      for (let r = 1; r <= round; r++) {
+                                        const key = `${team.id}-${shooterId}-${r}`;
+                                        const value = parseInt(results[key]) || 0;
+                                        if (value > 0) sum += value;
+                                      }
+                                      gesamt = sum > 0 ? sum : '';
+                                    }
+                                    
+                                    return (
+                                      <React.Fragment key={round}>
+                                        <td className="border p-1 text-xs text-center">{rings}</td>
+                                        <td className="border p-1 text-xs text-center">{gesamt}</td>
+                                      </React.Fragment>
+                                    );
+                                  })}
+                                  {/* Platz Spalten */}
                                   <td className="border p-1"></td>
                                   <td className="border p-1"></td>
                                 </tr>
                               ))}
                               <tr>
                                 <td className="border p-1 font-bold text-xs bg-yellow-100">Total</td>
-                                <td className="border p-1 font-bold text-xs bg-yellow-100"></td>
-                                <td className="border p-1 font-bold text-xs bg-yellow-100"></td>
-                                <td className="border p-1 font-bold text-xs bg-yellow-100"></td>
-                                <td className="border p-1 font-bold text-xs bg-yellow-100"></td>
-                                <td className="border p-1 font-bold text-xs bg-yellow-100"></td>
-                                <td className="border p-1 font-bold text-xs bg-yellow-100"></td>
-                                <td className="border p-1 font-bold text-xs bg-yellow-100"></td>
-                                <td className="border p-1 font-bold text-xs bg-yellow-100"></td>
-                                <td className="border p-1 font-bold text-xs bg-yellow-100"></td>
-                                <td className="border p-1 font-bold text-xs bg-yellow-100"></td>
+                                {[1, 2, 3, 4, 5].map(round => {
+                                  const teamRoundTotal = team.shooters?.reduce((sum, shooter, idx) => {
+                                    const resultKey = `${team.id}-${shooter.id}-${round}`;
+                                    const rings = parseInt(results[resultKey]) || 0;
+                                    return sum + rings;
+                                  }, 0) || 0;
+                                  
+                                  // Berechne Team-Gesamt nur wenn Team-Ringe vorhanden
+                                  let teamGesamt = '';
+                                  if (teamRoundTotal > 0) {
+                                    let sum = 0;
+                                    for (let r = 1; r <= round; r++) {
+                                      const roundSum = team.shooters?.reduce((teamSum, shooter) => {
+                                        const key = `${team.id}-${shooter.id}-${r}`;
+                                        const value = parseInt(results[key]) || 0;
+                                        return teamSum + value;
+                                      }, 0) || 0;
+                                      sum += roundSum;
+                                    }
+                                    teamGesamt = sum > 0 ? sum : '';
+                                  }
+                                  
+                                  return (
+                                    <React.Fragment key={round}>
+                                      <td className="border p-1 font-bold text-xs bg-yellow-100 text-center">
+                                        {teamRoundTotal > 0 ? teamRoundTotal : ''}
+                                      </td>
+                                      <td className="border p-1 font-bold text-xs bg-yellow-100 text-center">
+                                        {teamGesamt}
+                                      </td>
+                                    </React.Fragment>
+                                  );
+                                })}
                                 <td className="border p-1 font-bold text-xs bg-yellow-100"></td>
                                 <td className="border p-1 font-bold text-xs bg-yellow-100"></td>
                               </tr>

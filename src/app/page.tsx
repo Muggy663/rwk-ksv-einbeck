@@ -448,38 +448,47 @@ export default function HomePage() {
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
               </svg>
             </div>
-            Was ist neu? Version 1.8
+            Was ist neu? Version 1.9
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
+
             <div className="flex items-start space-x-3">
               <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
               <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">📸 Handzettel-Upload bei Ergebniserfassung</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">Handzettel-Fotos können jetzt direkt hochgeladen werden - kein manuelles Versenden mehr nötig</p>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">🎯 Live-Plausibilitätsprüfung</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">Automatische Warnung bei unmöglichen Ringzahlen während der Eingabe</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">🤖 Regelwerk-Assistent</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">KI beantwortet Fragen zu RWK-Regeln und Schießsport-Ordnungen (5 Fragen/Tag)</p>
               </div>
             </div>
             <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 rounded-lg border-2 border-amber-300 dark:border-amber-600 shadow-lg animate-pulse">
               <div className="w-3 h-3 bg-amber-500 dark:bg-amber-400 rounded-full mt-2 flex-shrink-0 animate-bounce"></div>
               <div>
-                <h4 className="font-bold text-amber-800 dark:text-amber-200 text-lg">🧪 EXPERIMENTAL: Automatische Handzettel-Erkennung</h4>
-                <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">OCR-System erkennt Mannschaften, Schützen und Ergebnisse automatisch aus Handzettel-Fotos - spart 95% der Eingabezeit!</p>
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">✨ Jetzt in der Ergebniserfassung verfügbar!</p>
+                <h4 className="font-bold text-amber-800 dark:text-amber-200 text-lg">🤖 Google Gemini AI Integration</h4>
+                <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">Hochmoderne KI erkennt Handzettel mit deutlich verbesserter Genauigkeit - inklusive intelligenter Liga-Analysen</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">✨ Plausibilitätsprüfung & Regelwerk-Assistent integriert!</p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">📊 Intelligente Liga-Analysen</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">KI analysiert Tabellensituation und erstellt spannende Wettkampf-Prognosen</p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
               <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
               <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">📝 PDF-Generierung & Handzettel verbessert</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">Korrekte Schützennamen in PDFs, Handzettel-Generator Fehler behoben</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">✨ Kamera-Integration & Fortschrittsbalken</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">Mobile Kamera öffnet automatisch, Upload-Fortschritt mit visuellen Indikatoren</p>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">🔒 Rate Limiting & Sicherheit</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">Schutz vor Missbrauch mit Tageslimits für KI-Funktionen</p>
               </div>
             </div>
           </div>

@@ -1,15 +1,16 @@
 // Firebase Messaging Service Worker
+importScripts('/sw-config.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-// Firebase config
+// Firebase config - loaded from environment
 const firebaseConfig = {
-  apiKey: "AIzaSyBqoWGcp-4t2WQEOvjUyHkBft_8TJQOYaI",
-  authDomain: "rwk-einbeck.firebaseapp.com",
-  projectId: "rwk-einbeck",
-  storageBucket: "rwk-einbeck.appspot.com",
-  messagingSenderId: "1092527848623",
-  appId: "1:1092527848623:web:a5b2c3d4e5f6g7h8i9j0k1"
+  apiKey: self.FIREBASE_API_KEY || "AIzaSyBlcJpndITalBIoqtXSOvefgfRQoBl6_0c",
+  authDomain: self.FIREBASE_AUTH_DOMAIN || "ksv-einbeck-app.firebaseapp.com",
+  projectId: self.FIREBASE_PROJECT_ID || "ksv-einbeck-app",
+  storageBucket: self.FIREBASE_STORAGE_BUCKET || "ksv-einbeck-app.appspot.com",
+  messagingSenderId: self.FIREBASE_MESSAGING_SENDER_ID || "110556513204",
+  appId: self.FIREBASE_APP_ID || "1:110556513204:web:a78cd3a6c92d27e825a8e1"
 };
 
 firebase.initializeApp(firebaseConfig);

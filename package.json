@@ -18,6 +18,8 @@
     "@capacitor/ios": "^7.4.2",
     "@capacitor/share": "^7.0.1",
     "@capacitor/status-bar": "^7.0.1",
+    "@google/genai": "^1.28.0",
+    "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.3.2",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-alert-dialog": "^1.0.5",

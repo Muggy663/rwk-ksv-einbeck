@@ -24,7 +24,7 @@ import {
   MobileTableRow as TableRow,
 } from "@/components/ui/mobile-table";
 import { CheckSquare, Save, Plus, Trash2, Loader, AlertCircle, Building, CheckCircle, Camera, Zap, AlertTriangle } from 'lucide-react';
-import { VoiceInputButton } from '@/components/ui/voice-input-button';
+
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { BackButton } from '@/components/ui/back-button';
 import { createProgressToast } from '@/components/ui/progress-toast';
@@ -36,6 +36,8 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, documentId, getDoc as getFirestoreDoc, Timestamp, setDoc, updateDoc, addDoc, limit } from 'firebase/firestore';
 import { auditLogService } from '@/lib/services/audit-service';
+import { plausibilityService, type PlausibilityWarning } from '@/lib/services/plausibility-service';
+import { PlausibilityAlert } from '@/components/ui/plausibility-alert';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -46,7 +48,36 @@ const CLUBS_COLLECTION = "clubs";
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
 
+import SharedResultsPage from '@/components/results/shared-results-complete';
+
 export default function VereinErgebnissePage() {
+  const { userPermission, loadingPermissions, permissionError, assignedClubId, currentClubId } = useVereinAuth();
+  
+  if (loadingPermissions) {
+    return <div className="flex justify-center items-center py-12"><Loader className="h-12 w-12 animate-spin text-primary mr-3" /><p>Lade Berechtigungen...</p></div>;
+  }
+  
+  if (permissionError) {
+    return <div className="p-6"><Card className="border-destructive bg-destructive/5"><CardHeader><CardTitle className="text-destructive flex items-center"><AlertCircle className="mr-2 h-5 w-5" /> {permissionError}</CardTitle></CardHeader></Card></div>;
+  }
+  
+  const effectiveClubId = currentClubId || assignedClubId;
+  const userRole = userPermission?.role === 'superadmin' ? 'admin' : 
+                  userPermission?.clubRoles && Object.values(userPermission.clubRoles).includes('SPORTLEITER') ? 'sportleiter' : 
+                  'mannschaftsfuehrer';
+  
+  return (
+    <SharedResultsPage 
+      userRole={userRole}
+      backHref="/verein/dashboard"
+      dashboardHref="/verein/dashboard"
+      clubId={effectiveClubId}
+    />
+  );
+}
+
+// Legacy code - wird durch SharedResultsPage ersetzt
+function LegacyVereinErgebnissePage() {
   const { userPermission, loadingPermissions, permissionError, assignedClubId, currentClubId } = useVereinAuth();
   const { toast } = useToast();
   
@@ -89,6 +120,8 @@ export default function VereinErgebnissePage() {
   const [handzettelFiles, setHandzettelFiles] = useState<File[]>([]);
   const [showOCR, setShowOCR] = useState(false);
   const [attachOnly, setAttachOnly] = useState(false);
+  const [plausibilityWarnings, setPlausibilityWarnings] = useState<PlausibilityWarning[]>([]);
+  const [isCheckingPlausibility, setIsCheckingPlausibility] = useState(false);
 
  useEffect(() => {
 
@@ -546,7 +579,8 @@ export default function VereinErgebnissePage() {
   useEffect(() => { setSelectedLeagueId(''); setSelectedTeamId(''); setSelectedShooterId(''); setSelectedRound(''); setPendingScores([]); setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]);}, [selectedSeasonId, activeClubIdForEntry]);
   useEffect(() => { setSelectedTeamId(''); setSelectedShooterId(''); setSelectedRound(''); setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]);}, [selectedLeagueId]);
   useEffect(() => { setSelectedShooterId(''); setJustSavedScoreIdentifiers([]); setExistingScoresForTeamAndRound([]);}, [selectedTeamId]);
-  useEffect(() => { setSelectedShooterId(''); setScore(''); setExistingScoresForTeamAndRound([]);}, [selectedRound]);
+  useEffect(() => { setSelectedShooterId(''); setScore(''); setExistingScoresForTeamAndRound([]); setPlausibilityWarnings([]);}, [selectedRound]);
+  useEffect(() => { setPlausibilityWarnings([]);}, [selectedShooterId]);
 
   const handleAddToList = async () => {
 
@@ -742,6 +776,114 @@ export default function VereinErgebnissePage() {
       description: error,
       variant: "destructive"
     });
+  };
+
+  const handleSendHandzettelOnly = async () => {
+    if (!userPermission?.uid) { 
+      toast({ title: "Fehler", description: "Benutzer nicht identifiziert.", variant: "destructive" }); 
+      return; 
+    }
+    
+    if (handzettelFiles.length === 0) { 
+      toast({ title: "Keine Handzettel", description: "Bitte wählen Sie mindestens eine Datei aus.", variant: "destructive" }); 
+      return; 
+    }
+    
+    setIsSubmittingScores(true);
+    
+    try {
+      const progressToast = createProgressToast({
+        title: "📤 Handzettel werden versendet...",
+        description: `${handzettelFiles.length} Datei(en) ohne Ergebnisse`,
+      });
+      
+      progressToast.start();
+      progressToast.updateProgress(10, "Dateien werden vorbereitet...");
+      
+      const uploadFormData = new FormData();
+      
+      const teamName = selectedTeamId ? 
+        (allTeamsInSelectedLeague.find(t => t.id === selectedTeamId)?.name || 'Unbekannt') : 
+        'Nicht ausgewählt';
+      const leagueName = selectedLeagueId ? 
+        (allLeagues.find(l => l.id === selectedLeagueId)?.name || 'Unbekannt') : 
+        'Nicht ausgewählt';
+      
+      uploadFormData.append('subject', `📋 Handzettel ohne Ergebnisse: ${teamName} - DG ${selectedRound || 'unbekannt'}`);
+      uploadFormData.append('message', `Handzettel ohne Ergebnisse eingegangen:
+
+Mannschaft: ${teamName}
+Liga: ${leagueName}
+Durchgang: ${selectedRound || 'nicht ausgewählt'}
+Anzahl Seiten: ${handzettelFiles.length}
+Zeitpunkt: ${new Date().toLocaleString('de-DE')}
+
+Hinweis: Diese Handzettel wurden ohne digitale Ergebniserfassung versendet.
+Die Handzettel sind als Anhang beigefügt.`);
+      uploadFormData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
+      
+      progressToast.updateProgress(30, "Dateien werden angehängt...");
+      
+      // Alle Handzettel-Dateien als Attachments hinzufügen
+      handzettelFiles.forEach((file, index) => {
+        uploadFormData.append(`attachment-${index}`, file);
+      });
+      
+      progressToast.updateProgress(60, "E-Mail wird versendet...");
+      
+      // Firebase-Token für Authentifizierung holen
+      let authHeaders = {};
+      let hasAuthToken = false;
+      try {
+        const { getAuth } = await import('firebase/auth');
+        const auth = getAuth();
+        if (auth.currentUser) {
+          const token = await auth.currentUser.getIdToken();
+          authHeaders = {
+            'Authorization': `Bearer ${token}`
+          };
+          hasAuthToken = true;
+        }
+      } catch (authError) {
+        console.warn('Konnte Firebase-Token nicht laden:', authError);
+      }
+      
+      const uploadResponse = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: authHeaders,
+        body: uploadFormData
+      });
+      
+      const responseData = await uploadResponse.json();
+      console.log('E-Mail API Response:', responseData);
+      
+      if (uploadResponse.ok && responseData.success) {
+        progressToast.updateProgress(100, "Handzettel erfolgreich versendet!");
+        toast({ 
+          title: "✅ Handzettel versendet!", 
+          description: `${handzettelFiles.length} Handzettel-Seite(n) per E-Mail an RWK-Leiter gesendet.`,
+          className: "border-green-500 bg-green-50"
+        });
+        
+        // Reset nach erfolgreichem Versand
+        setHandzettelFiles([]);
+        setAttachOnly(false);
+      } else {
+        throw new Error(responseData.message || 'Versand fehlgeschlagen');
+      }
+    } catch (error) {
+      console.error('Handzettel-Versand Fehler:', error);
+      const errorDetails = error instanceof Error ? error.message : String(error);
+      
+      toast({ 
+        title: "❌ Versand fehlgeschlagen", 
+        description: `Handzettel-E-Mail konnte nicht versendet werden: ${errorDetails}`,
+        variant: "destructive",
+        duration: 10000
+      });
+    } finally {
+      setIsSubmittingScores(false);
+    }
   };
 
   const handleFinalSave = async () => {
@@ -1062,24 +1204,24 @@ Die Handzettel sind als Anhang beigefügt.`);
       </div>
       
       {/* OCR-Bereich GANZ OBEN - sofort sichtbar */}
-      <Card className="shadow-md border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 w-full max-w-full overflow-hidden">
+      <Card className="shadow-md border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 dark:border-blue-700 w-full max-w-full overflow-hidden">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-800">
+          <CardTitle className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
             <Camera className="h-5 w-5" />
 📸 Handzettel fotografieren
           </CardTitle>
-          <CardDescription className="text-blue-700">
+          <CardDescription className="text-blue-700 dark:text-blue-300">
             🤖 Foto → OCR automatisch - spart 90% Zeit!
           </CardDescription>
         </CardHeader>
         <CardContent className="min-w-0">
           <div className="space-y-4 w-full max-w-full">
             {!selectedLeagueId || !selectedRound ? (
-              <div className="p-4 border-2 border-dashed border-amber-300 rounded-lg bg-amber-50">
+              <div className="p-4 border-2 border-dashed border-amber-300 rounded-lg bg-amber-50 dark:bg-amber-900/20 dark:border-amber-600">
                 <div className="text-center space-y-2">
-                  <Camera className="h-8 w-8 text-amber-600 mx-auto" />
-                  <p className="text-sm font-medium text-amber-800">📋 Zuerst Liga und Durchgang auswählen!</p>
-                  <p className="text-xs text-amber-700">Dann erscheint hier die Kamera-Funktion für automatische Ergebniserfassung.</p>
+                  <Camera className="h-8 w-8 text-amber-600 dark:text-amber-400 mx-auto" />
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-100">📋 Zuerst Liga und Durchgang auswählen!</p>
+                  <p className="text-xs text-amber-700 dark:text-amber-200">Dann erscheint hier die Kamera-Funktion für automatische Ergebniserfassung.</p>
                 </div>
               </div>
             ) : (
@@ -1087,9 +1229,9 @@ Die Handzettel sind als Anhang beigefügt.`);
                 <div className="p-3 border rounded-lg bg-green-50 border-green-200">
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-800">📸 Handzettel fotografieren!</span>
+                    <span className="text-sm font-medium text-green-800 dark:text-green-200">📸 Handzettel fotografieren!</span>
                   </div>
-                  <p className="text-xs text-green-700 mb-3 truncate">
+                  <p className="text-xs text-green-700 dark:text-green-300 mb-3 truncate">
                     Liga: <strong>{allLeagues.find(l => l.id === selectedLeagueId)?.name}</strong> | 
                     DG: <strong>{selectedRound}</strong> | OCR auto
                   </p>
@@ -1103,11 +1245,11 @@ Die Handzettel sind als Anhang beigefügt.`);
                           onCheckedChange={(checked) => setAttachOnly(!checked)}
                           className="h-5 w-5 border-2 border-green-600"
                         />
-                        <Label htmlFor="use-ocr" className="text-sm font-medium text-green-900 cursor-pointer">
+                        <Label htmlFor="use-ocr" className="text-sm font-medium text-green-900 dark:text-green-100 cursor-pointer">
                           🤖 OCR-Erkennung verwenden (automatisches Auslesen)
                         </Label>
                       </div>
-                      <p className="text-xs text-green-800 mt-2 ml-8">
+                      <p className="text-xs text-green-800 dark:text-green-200 mt-2 ml-8">
                         ⚠️ WICHTIG: OCR-Ergebnisse müssen immer kontrolliert werden! Prüfen Sie alle Werte vor dem Speichern.
                       </p>
                     </div>
@@ -1152,6 +1294,20 @@ Die Handzettel sind als Anhang beigefügt.`);
                       <div className="flex gap-2 flex-wrap">
                         <Button
                           type="button"
+                          variant="default"
+                          size="sm"
+                          onClick={handleSendHandzettelOnly}
+                          disabled={isSubmittingScores}
+                          className="text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          {isSubmittingScores ? (
+                            <><Loader className="mr-1 h-3 w-3 animate-spin" />Sende...</>
+                          ) : (
+                            <>📤 Handzettel abschicken</>
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
                           variant="ghost"
                           size="sm"
                           onClick={() => {
@@ -1159,6 +1315,7 @@ Die Handzettel sind als Anhang beigefügt.`);
                             setAttachOnly(false);
                           }}
                           className="text-xs text-red-600"
+                          disabled={isSubmittingScores}
                         >
                           ❌ Entfernen
                         </Button>
@@ -1166,30 +1323,51 @@ Die Handzettel sind als Anhang beigefügt.`);
                     )}
                   </div>
                   
-                  <div className="mt-2 text-xs text-blue-700 space-y-1">
+                  <div className="mt-2 text-xs text-blue-700 dark:text-blue-300 space-y-1">
                     <p>📱 <strong>Handy:</strong> Checkbox → Foto → OCR oder nur anhängen</p>
                     <p>💻 <strong>PC:</strong> Mehrere Dateien möglich</p>
                     <p>✅ <strong>Formate:</strong> JPG, PNG (PDF folgt)</p>
                     <p>📎 <strong>Nur anhängen:</strong> Checkbox aktivieren für Upload ohne OCR</p>
                   </div>
                   
-                  {handzettelFiles.length > 0 && !showOCR && !attachOnly && (
-                    <Button
-                      onClick={() => setShowOCR(true)}
-                      className="w-full mt-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                      size="lg"
-                    >
-                      <Zap className="mr-2 h-5 w-5" />
-                      🤖 OCR jetzt starten
-                    </Button>
+                  {handzettelFiles.length > 0 && !attachOnly && (
+                    <div className="mt-3">
+                      {!showOCR && (
+                        <Button
+                          onClick={() => setShowOCR(true)}
+                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                          size="lg"
+                        >
+                          <Zap className="mr-2 h-5 w-5" />
+                          🤖 OCR jetzt starten
+                        </Button>
+                      )}
+                    </div>
                   )}
                   
                   {handzettelFiles.length > 0 && attachOnly && (
-                    <div className="mt-3 p-2 bg-green-100 rounded border border-green-200 w-full max-w-full overflow-hidden">
-                      <div className="flex items-center gap-2 text-sm text-green-800 min-w-0">
-                        <Camera className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">📎 {handzettelFiles.length} Datei(en) nur zum Anhängen vorgemerkt</span>
+                    <div className="mt-3 p-3 bg-green-100 rounded border border-green-200 w-full max-w-full overflow-hidden">
+                      <div className="flex items-center justify-between gap-2 text-sm text-green-800 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Camera className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate text-green-800 dark:text-green-200">📎 {handzettelFiles.length} Datei(en) bereit zum Versand</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={handleSendHandzettelOnly}
+                          disabled={isSubmittingScores}
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 h-auto flex-shrink-0"
+                        >
+                          {isSubmittingScores ? (
+                            <><Loader className="mr-1 h-3 w-3 animate-spin" />Sende...</>
+                          ) : (
+                            <>📤 Abschicken</>
+                          )}
+                        </Button>
                       </div>
+                      <p className="text-xs text-green-700 dark:text-green-300 mt-2">
+                        💡 Handzettel werden ohne Ergebnisse per E-Mail an RWK-Leiter gesendet
+                      </p>
                     </div>
                   )}
                   
@@ -1208,7 +1386,7 @@ Die Handzettel sind als Anhang beigefügt.`);
                       availableLeagues={allLeagues.map(l => ({ id: l.id, name: l.name, type: l.type }))}
                       onOCRComplete={handleOCRComplete}
                       onError={handleOCRError}
-                      autoStart={false}
+                      autoStart={true}
                     />
                   </div>
                 )}
@@ -1516,68 +1694,88 @@ Die Handzettel sind als Anhang beigefügt.`);
                   className="ml-2"
                 />
               </div>
-              <div className="flex gap-2">
-                <Input 
-                  id="vver-score" 
-                  type="number" 
-                  value={score} 
-                  style={{ MozAppearance: 'textfield' }}
-                  className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setScore(value);
+              <Input 
+                id="vver-score" 
+                type="number" 
+                value={score} 
+                style={{ MozAppearance: 'textfield' }}
+                className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                onChange={async (e) => {
+                  const value = e.target.value;
+                  setScore(value);
+                  
+                  // Live-Validierung der Ringzahlen
+                  if (value && selectedLeagueId) {
+                    const scoreVal = parseInt(value);
+                    let maxPossibleScore = 300;
+                    const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
+                    const selectedLeagueObject = allLeagues.find(l => l.id === selectedLeagueId);
                     
-                    // Live-Validierung der Ringzahlen
-                    if (value && selectedLeagueId) {
-                      const scoreVal = parseInt(value);
-                      let maxPossibleScore = 300;
-                      const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
-                      const selectedLeagueObject = allLeagues.find(l => l.id === selectedLeagueId);
-                      
-                      if (selectedLeagueObject && fourHundredPointDisciplines.includes(selectedLeagueObject.type)) {
-                        maxPossibleScore = 400;
-                      }
-                      
-                      if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) {
-                        e.target.setCustomValidity(`Bitte geben Sie eine gültige Ringzahl zwischen 0 und ${maxPossibleScore} ein.`);
-                      } else {
-                        e.target.setCustomValidity('');
-                      }
+                    if (selectedLeagueObject && fourHundredPointDisciplines.includes(selectedLeagueObject.type)) {
+                      maxPossibleScore = 400;
                     }
-                  }}
-                  placeholder="z.B. 285" 
-                  disabled={!selectedShooterId}
-                  className={score && selectedLeagueId ? (
-                    (() => {
-                      const scoreVal = parseInt(score);
-                      let maxPossibleScore = 300;
-                      const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
-                      const selectedLeagueObject = allLeagues.find(l => l.id === selectedLeagueId);
-                      
-                      if (selectedLeagueObject && fourHundredPointDisciplines.includes(selectedLeagueObject.type)) {
-                        maxPossibleScore = 400;
-                      }
-                      
-                      return (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) 
-                        ? "border-red-500 focus:ring-red-500" 
-                        : "border-green-500 focus:ring-green-500";
-                    })()
-                  ) : ""}
-                />
-                <VoiceInputButton
-                  onResult={(text) => {
-                    // Extrahiere Zahlen aus der Spracheingabe
-                    const numbers = text.match(/\d+/g);
-                    if (numbers && numbers.length > 0) {
-                      const extractedScore = numbers[0];
-                      setScore(extractedScore);
+                    
+                    if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) {
+                      e.target.setCustomValidity(`Bitte geben Sie eine gültige Ringzahl zwischen 0 und ${maxPossibleScore} ein.`);
+                    } else {
+                      e.target.setCustomValidity('');
                     }
-                  }}
-                  disabled={!selectedShooterId}
-                  size="default"
-                  className="shrink-0"
-                />
-              </div>
+                    
+                    // Live-Plausibilitätsprüfung
+                    if (!isNaN(scoreVal) && scoreVal >= 0 && scoreVal <= maxPossibleScore && 
+                        selectedShooterId && selectedTeamId && selectedLeagueObject) {
+                      setIsCheckingPlausibility(true);
+                      try {
+                        const shooter = availableShootersForDropdown.find(s => s.id === selectedShooterId) ||
+                                       shootersOfSelectedTeam.find(s => s.id === selectedShooterId) ||
+                                       allShootersFromDB.find(s => s.id === selectedShooterId);
+                        const team = allTeamsInSelectedLeague.find(t => t.id === selectedTeamId);
+                        const season = allSeasons.find(s => s.id === selectedSeasonId);
+                        
+                        if (shooter && team && season) {
+                          const warnings = await plausibilityService.checkScorePlausibility(
+                            selectedShooterId,
+                            shooter.name,
+                            selectedTeamId,
+                            team.name,
+                            scoreVal,
+                            selectedLeagueObject.type,
+                            season.competitionYear
+                          );
+                          setPlausibilityWarnings(warnings);
+                        }
+                      } catch (error) {
+                        console.error('Fehler bei Plausibilitätsprüfung:', error);
+                        setPlausibilityWarnings([]);
+                      } finally {
+                        setIsCheckingPlausibility(false);
+                      }
+                    } else {
+                      setPlausibilityWarnings([]);
+                    }
+                  } else {
+                    setPlausibilityWarnings([]);
+                  }
+                }}
+                placeholder="z.B. 285" 
+                disabled={!selectedShooterId}
+                className={score && selectedLeagueId ? (
+                  (() => {
+                    const scoreVal = parseInt(score);
+                    let maxPossibleScore = 300;
+                    const fourHundredPointDisciplines: FirestoreLeagueSpecificDiscipline[] = ['LG', 'LGA', 'LP', 'LPA'];
+                    const selectedLeagueObject = allLeagues.find(l => l.id === selectedLeagueId);
+                    
+                    if (selectedLeagueObject && fourHundredPointDisciplines.includes(selectedLeagueObject.type)) {
+                      maxPossibleScore = 400;
+                    }
+                    
+                    return (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxPossibleScore) 
+                      ? "border-red-500 focus:ring-red-500" 
+                      : "border-green-500 focus:ring-green-500";
+                  })()
+                ) : ""}
+              />
               {score && selectedLeagueId && (() => {
                 const scoreVal = parseInt(score);
                 let maxPossibleScore = 300;
@@ -1593,6 +1791,20 @@ Die Handzettel sind als Anhang beigefügt.`);
                 }
                 return null;
               })()}
+              
+              {/* Live-Plausibilitätsprüfung */}
+              {isCheckingPlausibility && (
+                <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                  <Loader className="h-3 w-3 animate-spin" />
+                  <span>Prüfe Plausibilität...</span>
+                </div>
+              )}
+              
+              {plausibilityWarnings.length > 0 && (
+                <div className="mt-2">
+                  <PlausibilityAlert warnings={plausibilityWarnings} />
+                </div>
+              )}
             </div>
           </div>
           <div className="space-y-3 pt-2">

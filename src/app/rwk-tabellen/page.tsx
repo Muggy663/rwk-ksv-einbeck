@@ -100,6 +100,7 @@ import { SmartTable } from '@/components/ui/smart-table';
 import { MobileTeamCards } from '@/components/ui/mobile-team-cards';
 import { MobileShooterCards } from '@/components/ui/mobile-shooter-cards';
 
+
 const EXCLUDED_TEAM_NAME_PART = 'einzel'; // Case-insensitive check later
 
 interface TeamShootersTableProps {
@@ -1965,8 +1966,8 @@ function RwkTabellenPageComponent() {
                                 <TableRow className="hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => isNativeApp ? toggleTeamExpansion(team.id) : toggleTeamExpansion(team.id)}>
                                   <TableCell className="text-center font-medium px-2 py-2">
                                     {team.outOfCompetition ? 
-                                      <span className="text-amber-500" title="Außer Konkurrenz">AK</span> : 
-                                      team.rank
+                                      <span className="text-amber-500 dark:text-amber-400" title="Außer Konkurrenz">AK</span> : 
+                                      <span className="text-foreground dark:text-foreground">{team.rank}</span>
                                     }
                                   </TableCell>
                                   <TableCell className="font-medium text-foreground px-2 py-2 text-sm">
@@ -2020,6 +2021,8 @@ function RwkTabellenPageComponent() {
                         </div>
                       )
                     ) : (<p className="p-4 text-center text-muted-foreground">Keine Mannschaften in dieser Liga für {pageTitle} vorhanden.</p>)}
+                    
+
                   </div>
                 )
               }))}
@@ -2195,8 +2198,8 @@ function RwkTabellenPageComponent() {
                           <TableRow key={`ind-${shooter.shooterId}`} className="hover:bg-secondary/20 transition-colors">
                             <TableCell className="text-center font-medium" data-label="Rang">
                               {shooter.teamOutOfCompetition ? 
-                                <span className="text-amber-500" title="Außer Konkurrenz">AK</span> : 
-                                shooter.rank
+                                <span className="text-amber-500 dark:text-amber-400" title="Außer Konkurrenz">AK</span> : 
+                                <span className="text-foreground dark:text-foreground">{shooter.rank}</span>
                               }
                             </TableCell>
                             <TableCell className="text-foreground" data-label="Name">

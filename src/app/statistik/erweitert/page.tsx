@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2, Search, TrendingUp, Medal, LineChart as LineChartIcon, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { IntelligentInsights } from '@/components/ui/intelligent-insights';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import Link from 'next/link';
@@ -510,7 +511,7 @@ export default function ExtendedStatisticsPage() {
                               <td className="py-2 px-4 text-center font-medium">{currentAvg.toFixed(2)}</td>
                               <td className="py-2 px-4 text-center">
                                 {diff !== null ? (
-                                  <span className={diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}>
+                                  <span className={diff > 0 ? 'text-emerald-600 dark:text-emerald-400' : diff < 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}>
                                       {diff > 0 ? '+' : ''}{diff.toFixed(2)}
                                   </span>
                                 ) : '-'}
@@ -527,10 +528,17 @@ export default function ExtendedStatisticsPage() {
           )}
           
           {!isLoading && !shooterStats && !searchResults.length && (
-            <div className="text-center py-12">
-              <p className="text-lg text-muted-foreground">
-                Bitte suchen Sie nach einem Schützen, um dessen Leistungsentwicklung über mehrere Saisons zu analysieren.
-              </p>
+            <div className="space-y-6">
+              <IntelligentInsights 
+                seasonId={new Date().getFullYear().toString()} 
+                leagueId="all" 
+                clubId="all" 
+              />
+              <div className="text-center py-12">
+                <p className="text-lg text-muted-foreground">
+                  Bitte suchen Sie nach einem Schützen, um dessen Leistungsentwicklung über mehrere Saisons zu analysieren.
+                </p>
+              </div>
             </div>
           )}
         </CardContent>

@@ -25,7 +25,7 @@ export default function StatistikPage() {
           </CardHeader>
           <CardContent>
             <p className="mb-4">
-              Sehen Sie sich die Standard-Statistiken an, einschließlich Leistungsentwicklung, 
+              Betrachten Sie die Standard-Statistiken einschließlich Leistungsentwicklung, 
               Mannschaftsvergleich und Geschlechterverteilung.
             </p>
             <Button asChild>
@@ -58,10 +58,10 @@ export default function StatistikPage() {
           </CardContent>
         </Card>
         
-        <Card className="border-primary/20 shadow-lg">
-          <CardHeader className="bg-primary/5">
+        <Card>
+          <CardHeader>
             <CardTitle className="flex items-center">
-              <TrendingUp className="mr-2 h-5 w-5 text-primary" />
+              <TrendingUp className="mr-2 h-5 w-5" />
               Saisonübergreifende Statistiken
             </CardTitle>
           </CardHeader>
@@ -69,11 +69,10 @@ export default function StatistikPage() {
             <p className="mb-4">
               Analysieren Sie Leistungstrends über mehrere Saisons hinweg für Schützen und Mannschaften.
             </p>
-            <Button asChild className="w-full text-center">
-              <Link href="/statistik/erweitert" className="flex items-center justify-center">
-                <span className="sm:hidden">Saisonübergreifend</span>
-                <span className="hidden sm:inline">Zu den saisonübergreifenden Statistiken</span>
-                <ArrowRight className="ml-2 h-4 w-4 flex-shrink-0" />
+            <Button asChild>
+              <Link href="/statistik/erweitert">
+                Zu den saisonübergreifenden Statistiken
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </CardContent>

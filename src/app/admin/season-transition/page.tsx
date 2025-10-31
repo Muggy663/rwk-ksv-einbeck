@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, AlertCircle, ArrowUp, ArrowDown, Download } from 'lucide-react';
 import Link from 'next/link';
+import { IntelligentAdminRecommendations } from '@/components/ui/intelligent-admin-recommendations';
 import { calculateLeagueStandings, generatePromotionRelegationSuggestions, createNewSeason, applyPromotionRelegation } from '@/lib/services/season-transition-service';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -647,6 +648,15 @@ export default function SeasonTransitionPage() {
         </TabsContent>
         
         <TabsContent value="promotion">
+          {/* Intelligente Empfehlungen */}
+          {selectedSourceSeason && (
+            <IntelligentAdminRecommendations 
+              currentSeasonId={selectedSourceSeason}
+              targetYear={(seasons.find(s => s.id === selectedSourceSeason)?.competitionYear || new Date().getFullYear()) + 1}
+              className="mb-6"
+            />
+          )}
+          
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-xl text-primary">Auf-/Abstieg</CardTitle>

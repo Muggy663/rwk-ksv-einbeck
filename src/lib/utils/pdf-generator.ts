@@ -81,9 +81,9 @@ export class PdfGenerator {
     // Logo rechts oben
     try {
       // Kreisverbandslogo aus dem public-Ordner laden
-      const logoPath = process.env.NEXT_PUBLIC_LOGO_PATH || '/images/logo2.png';
+      const logoPath = process.env.NEXT_PUBLIC_LOGO_PATH || '<LOGO_PATH>';
       this.doc.addImage(
-        logoPath,
+        logoPath !== '<LOGO_PATH>' ? logoPath : '/images/logo2.png',
         'PNG',
         this.pageWidth - this.margin - 35,
         this.margin,

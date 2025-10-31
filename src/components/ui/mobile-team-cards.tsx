@@ -32,7 +32,7 @@ export const MobileTeamCards: React.FC<MobileTeamCardsProps> = ({
   return (
     <div className="space-y-4">
       {teams.map((team) => (
-        <Card key={team.id} className="overflow-hidden">
+        <Card key={team.id} className="">
           <CardHeader 
             className="cursor-pointer hover:bg-muted/50 transition-colors pb-3"
             onClick={() => {
@@ -44,7 +44,7 @@ export const MobileTeamCards: React.FC<MobileTeamCardsProps> = ({
           >
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
                   {team.outOfCompetition ? 'AK' : team.rank}
                 </div>
                 <div>

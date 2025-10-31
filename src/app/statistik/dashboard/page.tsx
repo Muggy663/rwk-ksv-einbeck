@@ -21,6 +21,7 @@ import {
 {/* CrossSeasonStats-Import entfernt */}
 import { LeagueTrendAnalysis } from '@/components/statistics/LeagueTrendAnalysis';
 import { TrendAnalysis } from '@/components/statistics/TrendAnalysis';
+import { IntelligentInsights } from '@/components/ui/intelligent-insights';
 import { useSwipe } from '@/hooks/use-swipe';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
@@ -503,11 +504,18 @@ export default function StatistikDashboardPage() {
         {/* Saisons-Tab entfernt - Funktionalität ist auf der Seite /statistik/erweitert verfügbar */}
         
         <TabsContent value="trend-analysis">
-          <TrendAnalysis 
-            seasonId={selectedSeason} 
-            leagueId={selectedLeague} 
-            clubId={selectedClub} 
-          />
+          <div className="space-y-6">
+            <IntelligentInsights 
+              seasonId={selectedSeason} 
+              leagueId={selectedLeague} 
+              clubId={selectedClub} 
+            />
+            <TrendAnalysis 
+              seasonId={selectedSeason} 
+              leagueId={selectedLeague} 
+              clubId={selectedClub} 
+            />
+          </div>
         </TabsContent>
         </div>
       </Tabs>

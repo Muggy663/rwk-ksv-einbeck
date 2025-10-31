@@ -19,6 +19,7 @@ import { DocumentCard } from './DocumentCard';
 import { Document } from '@/lib/services/document-service';
 import { useAuth } from '@/hooks/use-auth';
 import { BackButton } from '@/components/ui/back-button';
+import { RegelwerkChat } from '@/components/ui/regelwerk-chat';
 
 export default function DokumentePage() {
   const [activeTab, setActiveTab] = useState<string>('ausschreibungen');
@@ -412,6 +413,10 @@ export default function DokumentePage() {
               <h2 className="text-lg md:text-xl font-semibold mb-2">Regelwerke & Hilfen</h2>
               <div className="h-px bg-border mb-4"></div>
             </div>
+            
+            {/* Regelwerk-Chat */}
+            <RegelwerkChat />
+            
             {ordnungen.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-muted-foreground">

@@ -289,6 +289,29 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    match /team_substitutions/{substitution} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    match /rwk_results/{result} {
+      allow read: if true;
+      allow create: if isAuthenticated() && 
+                    isValidRingCount(request.resource.data.rings) &&
+                    (isSuperAdmin() ||
+                     hasLegacyClubAccess(request.resource.data.clubId) ||
+                     isSportleiter(request.resource.data.clubId) ||
+                     isVorstand(request.resource.data.clubId) ||
+                     isMannschaftsfuehrer(request.resource.data.clubId));
+      allow update: if isAuthenticated() && 
+                    isValidRingCount(request.resource.data.rings) &&
+                    (isSuperAdmin() ||
+                     hasLegacyClubAccess(resource.data.clubId) ||
+                     isSportleiter(resource.data.clubId) ||
+                     isVorstand(resource.data.clubId) ||
+                     isMannschaftsfuehrer(resource.data.clubId));
+      allow delete: if isSuperAdmin();
+    }
+
     // === KM-SYSTEM ===
     
     match /km_meldungen/{meldung} {
