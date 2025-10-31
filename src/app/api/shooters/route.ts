@@ -2,28 +2,54 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { secureLogger } from '@/lib/utils/secure-logger';
+import { sanitizeInput, InputValidator } from '@/lib/utils/input-validator';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { firstName, lastName, birthYear, gender, mitgliedsnummer, clubId } = body;
+    const firstName = sanitizeInput(body.firstName);
+    const lastName = sanitizeInput(body.lastName);
+    const birthYear = parseInt(sanitizeInput(body.birthYear));
+    const gender = sanitizeInput(body.gender);
+    const mitgliedsnummer = sanitizeInput(body.mitgliedsnummer);
+    const clubId = sanitizeInput(body.clubId);
 
-    // Validierung
+    // Sichere Validierung
     if (!firstName || !lastName || !birthYear || !gender || !clubId) {
+      secureLogger.warn('Missing required fields in shooter creation', 'shooters-api');
       return NextResponse.json({
         success: false,
         error: 'Alle Pflichtfelder müssen ausgefüllt werden'
       }, { status: 400 });
     }
 
+    // Validiere Geburtsjahr
+    if (!InputValidator.isValidNumber(birthYear, 1900, new Date().getFullYear())) {
+      secureLogger.warn('Invalid birth year in shooter creation', 'shooters-api');
+      return NextResponse.json({
+        success: false,
+        error: 'Ungültiges Geburtsjahr'
+      }, { status: 400 });
+    }
+
+    // Validiere Geschlecht
+    if (!['M', 'W', 'männlich', 'weiblich'].includes(gender)) {
+      secureLogger.warn('Invalid gender in shooter creation', 'shooters-api');
+      return NextResponse.json({
+        success: false,
+        error: 'Ungültiges Geschlecht'
+      }, { status: 400 });
+    }
+
     const shooterData = {
-      firstName,
-      lastName,
-      name: lastName, // Für Kompatibilität
-      birthYear: parseInt(birthYear),
-      gender,
-      mitgliedsnummer: mitgliedsnummer || null,
-      kmClubId: clubId,
+      firstName: firstName.substring(0, 50),
+      lastName: lastName.substring(0, 50),
+      name: lastName.substring(0, 50), // Für Kompatibilität
+      birthYear: birthYear,
+      gender: gender,
+      mitgliedsnummer: mitgliedsnummer ? mitgliedsnummer.substring(0, 20) : null,
+      kmClubId: clubId.substring(0, 50),
       rwkClubId: null,
       isActive: true,
       genderGuessed: false,
@@ -40,7 +66,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Fehler beim Anlegen des Schützen:', error);
+    secureLogger.error('Shooter creation failed', 'shooters-api');
     return NextResponse.json({
       success: false,
       error: 'Fehler beim Anlegen des Schützen'
@@ -52,7 +78,7 @@ export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const includeMembers = url.searchParams.get('includeMembers') === 'true';
-    const clubId = url.searchParams.get('clubId'); // Vereins-Filter
+    const clubId = sanitizeInput(url.searchParams.get('clubId') || ''); // Vereins-Filter
     
     let allShooters = [];
     
@@ -66,7 +92,7 @@ export async function GET(request: NextRequest) {
           source: 'km_shooter'
         }));
       } catch (kmError) {
-        console.warn('km_shooters Collection nicht gefunden');
+        secureLogger.warn('km_shooters collection not found', 'shooters-api');
       }
     } else {
       // Für RWK: Lade zentrale Schützen
@@ -94,7 +120,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Fehler beim Laden der Schützen:', error);
+    secureLogger.error('Shooters loading failed', 'shooters-api');
     return NextResponse.json({
       success: false,
       error: 'Fehler beim Laden der Schützen'
@@ -173,15 +199,10 @@ export async function DELETE(request: NextRequest) {
     }, { status: 400 });
     
   } catch (error) {
-    console.error('Cleanup Fehler Details:', {
-      message: error.message,
-      code: error.code,
-      stack: error.stack
-    });
+    secureLogger.error('Shooters cleanup failed', 'shooters-api');
     return NextResponse.json({
       success: false,
-      error: `Cleanup fehlgeschlagen: ${error.message}`,
-      code: error.code
+      error: 'Cleanup fehlgeschlagen'
     }, { status: 500 });
   }
 }

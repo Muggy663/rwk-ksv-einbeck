@@ -3,6 +3,7 @@ import { Resend } from 'resend';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { secureLogger } from '@/lib/utils/secure-logger';
+import { sanitizeInput, validateEmail } from '@/lib/utils/input-validator';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -32,23 +33,52 @@ export async function POST(request: NextRequest) {
     
     const formData = await request.formData();
     
-    const subject = formData.get('subject') as string;
-    const message = formData.get('message') as string;
+    const subject = sanitizeInput(formData.get('subject') as string);
+    const message = sanitizeInput(formData.get('message') as string);
     const recipientsJson = formData.get('recipients') as string;
     
     if (!subject || !message || !recipientsJson) {
+      secureLogger.warn('Missing required email fields', 'send-email-api');
       return NextResponse.json({ 
         success: false, 
         message: 'Betreff, Nachricht und Empfänger sind erforderlich.' 
       }, { status: 400 });
     }
     
-    const recipients = JSON.parse(recipientsJson);
+    // Sichere JSON-Parsing
+    let recipients;
+    try {
+      recipients = JSON.parse(sanitizeInput(recipientsJson));
+    } catch (error) {
+      secureLogger.warn('Invalid recipients JSON', 'send-email-api');
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Ungültige Empfänger-Daten.' 
+      }, { status: 400 });
+    }
     
     if (!Array.isArray(recipients) || recipients.length === 0) {
+      secureLogger.warn('No valid recipients found', 'send-email-api');
       return NextResponse.json({ 
         success: false, 
         message: 'Keine gültigen Empfänger gefunden.' 
+      }, { status: 400 });
+    }
+
+    // Validiere alle E-Mail-Adressen
+    const validRecipients = recipients.filter(r => {
+      if (!r.email || !validateEmail(r.email)) {
+        secureLogger.warn('Invalid email address found', 'send-email-api');
+        return false;
+      }
+      return true;
+    });
+
+    if (validRecipients.length === 0) {
+      secureLogger.warn('No valid email addresses', 'send-email-api');
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Keine gültigen E-Mail-Adressen gefunden.' 
       }, { status: 400 });
     }
     
@@ -95,10 +125,10 @@ ${signature}`.trim();
       try {
         const emailData = {
           from: 'RWK Einbeck <noreply@rwk-einbeck.de>',
-          to: batch.map((r: any) => r.email),
-          subject: subject,
-          text: emailContent,
-          html: emailContent.replace(/\n/g, '<br>'),
+          to: batch.map((r: any) => sanitizeInput(r.email)),
+          subject: sanitizeInput(subject),
+          text: sanitizeInput(emailContent),
+          html: sanitizeInput(emailContent).replace(/\n/g, '<br>'),
           replyTo: 'rwk-leiter-ksve@gmx.de',
           attachments: attachments.length > 0 ? attachments : undefined
         };
@@ -117,10 +147,11 @@ ${signature}`.trim();
         });
         
       } catch (error) {
+        secureLogger.error('Email batch failed', 'send-email-api');
         errors.push({
           batchNumber: Math.floor(i/batchSize) + 1,
-          recipients: batch.map(r => r.email),
-          error: error instanceof Error ? error.message : 'Unbekannter Fehler'
+          recipients: batch.length,
+          error: 'E-Mail-Versand fehlgeschlagen'
         });
       }
     }
@@ -143,6 +174,7 @@ ${signature}`.trim();
     });
     
   } catch (error) {
+    secureLogger.error('Email API error', 'send-email-api');
     return NextResponse.json({
       success: false,
       message: 'E-Mail konnte nicht versendet werden. Bitte versuchen Sie es später erneut.'

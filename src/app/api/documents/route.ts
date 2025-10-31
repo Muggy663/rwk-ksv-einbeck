@@ -4,6 +4,8 @@ import {
   getAllDocumentsFromMongo, 
   addDocumentToMongo 
 } from '@/lib/db/document-service-mongo';
+import { secureLogger } from '@/lib/utils/secure-logger';
+import { sanitizeInput } from '@/lib/utils/input-validator';
 
 // GET /api/documents
 export async function GET() {
@@ -11,8 +13,7 @@ export async function GET() {
     const documents = await getAllDocumentsFromMongo();
     return NextResponse.json({ documents });
   } catch (error) {
-    // Sichere Logging ohne sensitive Daten
-    console.error('Fehler beim Lesen der Dokumente');
+    secureLogger.error('Documents GET failed', 'documents-api');
     return NextResponse.json(
       { error: 'Fehler beim Lesen der Dokumente' },
       { status: 500 }
@@ -23,7 +24,27 @@ export async function GET() {
 // POST /api/documents
 export async function POST(request: NextRequest) {
   try {
-    const document = await request.json();
+    const body = await request.json();
+    
+    // Sichere Input-Validierung
+    const document = {
+      title: sanitizeInput(body.title),
+      description: sanitizeInput(body.description),
+      category: sanitizeInput(body.category),
+      fileId: sanitizeInput(body.fileId),
+      fileName: sanitizeInput(body.fileName),
+      fileSize: sanitizeInput(body.fileSize),
+      fileType: sanitizeInput(body.fileType)
+    };
+    
+    // Validiere erforderliche Felder
+    if (!document.title || !document.fileId) {
+      secureLogger.warn('Missing required fields in document creation', 'documents-api');
+      return NextResponse.json(
+        { error: 'Titel und Datei-ID sind erforderlich' },
+        { status: 400 }
+      );
+    }
     
     const newDocument = await addDocumentToMongo(document);
     
@@ -36,8 +57,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(newDocument);
   } catch (error) {
-    // Sichere Logging ohne sensitive Daten  
-    console.error('Fehler beim Hinzufügen des Dokuments');
+    secureLogger.error('Document creation failed', 'documents-api');
     return NextResponse.json(
       { error: 'Fehler beim Hinzufügen des Dokuments' },
       { status: 500 }

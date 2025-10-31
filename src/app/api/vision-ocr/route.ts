@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { HtmlSanitizer } from '@/lib/utils/html-sanitizer';
+import { secureLogger } from '@/lib/utils/secure-logger';
+import { sanitizeInput, validateImageUpload } from '@/lib/utils/input-validator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,13 +14,33 @@ export async function POST(request: NextRequest) {
     const imageFile = formData.get('image') as File;
     
     if (!imageFile) {
+      secureLogger.warn('No image provided to Vision OCR', 'vision-ocr');
       return NextResponse.json({ success: false, error: 'No image provided' }, { status: 400 });
+    }
+
+    // Sichere Bild-Validierung
+    const imageValidation = validateImageUpload(imageFile, {
+      maxSize: 5 * 1024 * 1024, // 5MB
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp']
+    });
+
+    if (!imageValidation.isValid) {
+      secureLogger.warn(`Vision OCR image validation failed: ${imageValidation.error}`, 'vision-ocr');
+      return NextResponse.json({ success: false, error: imageValidation.error }, { status: 400 });
     }
 
     const bytes = await imageFile.arrayBuffer();
     const base64Image = Buffer.from(bytes).toString('base64');
     
-    const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
+    // Sichere URL-Validierung
+    const apiUrl = 'https://vision.googleapis.com/v1/images:annotate';
+    const sanitizedApiKey = HtmlSanitizer.sanitizeText(apiKey);
+    
+    if (!apiUrl.startsWith('https://vision.googleapis.com/')) {
+      throw new Error('Invalid API endpoint');
+    }
+    
+    const response = await fetch(`${apiUrl}?key=${sanitizedApiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -103,10 +126,10 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Vision OCR error:', error);
+    secureLogger.error('Vision OCR processing failed', 'vision-ocr');
     return NextResponse.json({ 
       success: false, 
-      error: error instanceof Error ? error.message : 'OCR processing failed' 
+      error: 'OCR processing failed' 
     }, { status: 500 });
   }
 }

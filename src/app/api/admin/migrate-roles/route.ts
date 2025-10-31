@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { secureLogger } from '@/lib/utils/secure-logger';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔄 Starte Rollen-Migration...');
+    secureLogger.info('Starte Rollen-Migration');
     
     const snapshot = await adminDb.collection('user_permissions').get();
-    console.log(`📊 Gefunden: ${snapshot.docs.length} Benutzer`);
+    secureLogger.info('Benutzer gefunden', `Count: ${snapshot.docs.length}`);
     
     const batch = adminDb.batch();
     let count = 0;
@@ -15,11 +16,11 @@ export async function POST(request: NextRequest) {
     for (const doc of snapshot.docs) {
       try {
         const data = doc.data();
-        console.log(`🔍 Prüfe Benutzer: ${data.email} (${data.role})`);
+        secureLogger.debug('Prüfe Benutzer', `Role: ${data.role}`);
         
         // Skip nur Super-Admin (bereits korrekt migriert)
         if (data.platformRole === 'SUPER_ADMIN') {
-          console.log(`⏭️ Skip Super-Admin: ${data.email}`);
+          secureLogger.debug('Skip Super-Admin');
           continue;
         }
         
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
         // Super-Admin
         if (data.email === 'admin@rwk-einbeck.de') {
           updates.platformRole = 'SUPER_ADMIN';
-          console.log(`👑 Super-Admin: ${data.email}`);
+          secureLogger.info('Super-Admin migration');
         }
         // Vereinsvertreter -> SPORTLEITER (Legacy-Rolle behalten)
         else if (data.role === 'vereinsvertreter' && (data.clubId || data.assignedClubId)) {
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
           if (data.clubId) updates.clubId = data.clubId;
           if (data.assignedClubId) updates.assignedClubId = data.assignedClubId;
           updates.role = 'vereinsvertreter';
-          console.log(`🎯 Sportleiter: ${data.email} (${clubId})`);
+          secureLogger.info('Sportleiter migration', `ClubId: ${clubId}`);
         }
         // Vereinsvorstand -> VORSTAND (Legacy-Rolle behalten)
         else if (data.role === 'vereinsvorstand' && (data.clubId || data.assignedClubId)) {
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
           if (data.clubId) updates.clubId = data.clubId;
           if (data.assignedClubId) updates.assignedClubId = data.assignedClubId;
           updates.role = 'vereinsvorstand';
-          console.log(`🏢 Vorstand: ${data.email} (${clubId})`);
+          secureLogger.info('Vorstand migration', `ClubId: ${clubId}`);
         }
         // Mannschaftsführer -> SPORTLEITER (falls noch nicht migriert)
         else if (data.role === 'mannschaftsfuehrer' && (data.clubId || data.assignedClubId)) {
@@ -57,38 +58,38 @@ export async function POST(request: NextRequest) {
           if (data.clubId) updates.clubId = data.clubId;
           if (data.assignedClubId) updates.assignedClubId = data.assignedClubId;
           updates.role = 'mannschaftsfuehrer';
-          console.log(`🎯 Mannschaftsführer->Sportleiter: ${data.email} (${clubId})`);
+          secureLogger.info('Mannschaftsführer migration', `ClubId: ${clubId}`);
         }
         // KM-Organisator -> KV-Rolle
         else if (data.role === 'km_organisator') {
           updates.kvRole = 'KV_WETTKAMPFLEITER';
           updates.role = 'km_organisator'; // Legacy behalten
-          console.log(`🏆 KM-Organisator: ${data.email}`);
+          secureLogger.info('KM-Organisator migration');
         }
         
         if (Object.keys(updates).length > 0) {
           updates.updatedAt = FieldValue.serverTimestamp();
           batch.update(doc.ref, updates);
           count++;
-          console.log(`✅ Update vorbereitet für: ${data.email}`);
+          secureLogger.info('Update vorbereitet');
         } else {
-          console.log(`⏭️ Keine Updates für: ${data.email}`);
+          secureLogger.debug('Keine Updates erforderlich');
         }
       } catch (docError: any) {
-        console.error(`❌ Fehler bei Benutzer ${doc.id}:`, docError);
+        secureLogger.logError(docError, `User migration error for doc: ${doc.id}`);
       }
     }
     
     if (count > 0) {
-      console.log(`💾 Committe ${count} Updates...`);
+      secureLogger.info('Committe Updates', `Count: ${count}`);
       await batch.commit();
-      console.log(`✅ ${count} Benutzer erfolgreich migriert`);
+      secureLogger.info('Migration erfolgreich', `Count: ${count}`);
       return NextResponse.json({
         success: true,
         message: `${count} Benutzer erfolgreich migriert`
       });
     } else {
-      console.log(`ℹ️ Keine Migration erforderlich`);
+      secureLogger.info('Keine Migration erforderlich');
       return NextResponse.json({
         success: true,
         message: 'Keine Migration erforderlich'
@@ -96,8 +97,7 @@ export async function POST(request: NextRequest) {
     }
     
   } catch (error: any) {
-    console.error('❌ Migration-Fehler:', error);
-    console.error('❌ Stack:', error.stack);
+    secureLogger.logError(error, 'Migration failed');
     return NextResponse.json({
       success: false,
       error: error.message || 'Migration fehlgeschlagen'

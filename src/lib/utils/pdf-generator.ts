@@ -2,6 +2,8 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { HtmlSanitizer } from './html-sanitizer';
+import { secureLogger } from './secure-logger';
 
 // Erweitere den jsPDF-Typ um die autotable-Funktion
 declare module 'jspdf' {
@@ -42,13 +44,16 @@ export class PdfGenerator {
   private margin = 15;
 
   constructor(options: PdfGeneratorOptions) {
+    // Sanitize alle Input-Optionen
+    const sanitizedOptions = HtmlSanitizer.sanitizeObject(options);
+    
     this.options = {
       orientation: 'portrait',
       pageSize: 'a4',
       author: 'RWK Einbeck App',
       subject: 'Rundenwettkampf Einbeck',
       keywords: 'rwk,einbeck,schützen',
-      ...options
+      ...sanitizedOptions
     };
 
     this.doc = new jsPDF({
@@ -226,9 +231,10 @@ export class PdfGenerator {
     this.doc.setFont('helvetica', fontStyle as any);
     
     try {
-      this.doc.text(text || '', x, y, { align: align as any });
+      const safeText = HtmlSanitizer.sanitizeText(text || '');
+      this.doc.text(safeText, x, y, { align: align as any });
     } catch (error) {
-      console.error('Fehler beim Hinzufügen von Text:', error);
+      secureLogger.logError(error, 'PDF text addition failed');
       // Fallback: Text ohne spezielle Formatierung
       this.doc.text('Fehler beim Hinzufügen von Text', x, y);
     }

@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GridFSBucket, ObjectId } from 'mongodb';
 import { getMongoDb } from '@/lib/db/mongodb';
+import { secureLogger } from '@/lib/utils/secure-logger';
+import { sanitizeInput } from '@/lib/utils/input-validator';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
+    const id = sanitizeInput(params.id);
+
+    // Sichere ID-Validierung
+    if (!id || id.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(id)) {
+      secureLogger.warn('Invalid file ID format', 'files-api');
+      return NextResponse.json(
+        { error: 'Ungültige Datei-ID' },
+        { status: 400 }
+      );
+    }
 
     if (!ObjectId.isValid(id)) {
+      secureLogger.warn('Invalid ObjectId', 'files-api');
       return NextResponse.json(
         { error: 'Ungültige Datei-ID' },
         { status: 400 }
@@ -40,9 +52,17 @@ export async function GET(
     // Stream die Datei direkt ohne Buffer-Sammlung für bessere Performance
     const downloadStream = bucket.openDownloadStream(new ObjectId(id));
     
-    // Sichere Header-Werte
-    const safeFilename = file.filename?.replace(/[^\w.-]/g, '_') || 'document.pdf';
-    const contentType = file.metadata?.contentType === 'application/pdf' ? 'application/pdf' : 'application/pdf';
+    // Sichere Header-Werte - Path Traversal Prevention
+    const safeFilename = sanitizeInput(file.filename || 'document.pdf')
+      .replace(/[^\w.-]/g, '_')
+      .replace(/\.\.+/g, '.')
+      .substring(0, 100);
+    
+    // Nur erlaubte Content-Types
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    const contentType = allowedTypes.includes(file.metadata?.contentType) 
+      ? file.metadata.contentType 
+      : 'application/pdf';
     
     const chunks: Buffer[] = [];
     
@@ -67,8 +87,7 @@ export async function GET(
       });
       
       downloadStream.on('error', () => {
-        // Sichere Logging ohne sensitive Daten
-        console.error('Download Fehler');
+        secureLogger.error('File download stream error', 'files-api');
         resolve(NextResponse.json(
           { error: 'Fehler beim Herunterladen der Datei' },
           { status: 500 }
@@ -77,8 +96,7 @@ export async function GET(
     });
 
   } catch (error) {
-    // Sichere Logging ohne sensitive Daten
-    console.error('Download Fehler');
+    secureLogger.error('File download failed', 'files-api');
     return NextResponse.json(
       { error: 'Fehler beim Herunterladen der Datei' },
       { status: 500 }

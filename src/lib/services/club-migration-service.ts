@@ -2,6 +2,7 @@
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
 import { getClubCollection, CLUB_COLLECTIONS } from '@/lib/utils/club-utils';
+import { secureLogger } from '@/lib/utils/secure-logger';
 
 /**
  * Service für Migration von globalen zu club-spezifischen Collections
@@ -13,11 +14,11 @@ export class ClubMigrationService {
    */
   static async migrateAllClubs(): Promise<{ totalMigrated: number; clubsProcessed: string[] }> {
     try {
-      console.log('Starte Migration für alle Vereine...');
+      secureLogger.info('Starte Migration für alle Vereine');
       
       // Lade alle Clubs
       const clubsSnapshot = await getDocs(collection(db, 'clubs'));
-      console.log(`Gefunden: ${clubsSnapshot.docs.length} Vereine`);
+      secureLogger.info('Vereine gefunden', `Count: ${clubsSnapshot.docs.length}`);
       
       let totalMigrated = 0;
       const clubsProcessed = [];
@@ -25,23 +26,23 @@ export class ClubMigrationService {
       for (const clubDoc of clubsSnapshot.docs) {
         const clubId = clubDoc.id;
         const clubData = clubDoc.data();
-        console.log(`Migriere Verein: ${clubData.name} (${clubId})`);
+        secureLogger.info('Migriere Verein', `ClubId: ${clubId}`);
         
         try {
           const migrated = await this.migrateShootersToMembers(clubId);
           totalMigrated += migrated;
-          clubsProcessed.push(`${clubData.name}: ${migrated} Mitglieder`);
+          clubsProcessed.push(`Club: ${migrated} Mitglieder`);
         } catch (error) {
-          console.error(`Fehler bei ${clubData.name}:`, error);
-          clubsProcessed.push(`${clubData.name}: FEHLER - ${error.message}`);
+          secureLogger.logError(error, `Migration error for club: ${clubId}`);
+          clubsProcessed.push(`Club: FEHLER`);
         }
       }
       
-      console.log(`Migration abgeschlossen: ${totalMigrated} Mitglieder aus ${clubsProcessed.length} Vereinen`);
+      secureLogger.info('Migration abgeschlossen', `Total: ${totalMigrated}, Clubs: ${clubsProcessed.length}`);
       return { totalMigrated, clubsProcessed };
       
     } catch (error) {
-      console.error('Fehler bei Gesamt-Migration:', error);
+      secureLogger.logError(error, 'Gesamt-Migration failed');
       throw error;
     }
   }
@@ -51,17 +52,17 @@ export class ClubMigrationService {
    */
   static async migrateShootersToMembers(clubId: string): Promise<number> {
     try {
-      console.log(`Starte Migration für Verein: ${clubId}`);
+      secureLogger.info('Starte Migration für Verein', `ClubId: ${clubId}`);
       
       // Lade alle Shooter des Vereins aus globaler Collection
       const shootersQuery = query(
         collection(db, 'shooters'),
         where('clubId', '==', clubId)
       );
-      console.log('Searching for shooters with clubId:', clubId);
+      secureLogger.debug('Searching for shooters', `ClubId: ${clubId}`);
       const shootersSnapshot = await getDocs(shootersQuery);
       
-      console.log(`Gefunden: ${shootersSnapshot.docs.length} Schützen für ${clubId}`);
+      secureLogger.info('Schützen gefunden', `Count: ${shootersSnapshot.docs.length}, ClubId: ${clubId}`);
       
       // Migriere jeden Shooter zu Mitglied
       const mitgliederCollection = getClubCollection(clubId, CLUB_COLLECTIONS.MITGLIEDER);
@@ -132,11 +133,11 @@ export class ClubMigrationService {
       }
       
       const migratedCount = shootersSnapshot.docs.length;
-      console.log(`Migration abgeschlossen für ${clubId}: ${migratedCount} Mitglieder`);
+      secureLogger.info('Migration abgeschlossen', `ClubId: ${clubId}, Count: ${migratedCount}`);
       return migratedCount;
       
     } catch (error) {
-      console.error(`Fehler bei Migration für ${clubId}:`, error);
+      secureLogger.logError(error, `Migration failed for club: ${clubId}`);
       throw error;
     }
   }
@@ -146,7 +147,7 @@ export class ClubMigrationService {
    */
   static async migrateVereinsrechtData(clubId: string): Promise<void> {
     try {
-      console.log(`Migriere Vereinsrecht-Daten für: ${clubId}`);
+      secureLogger.info('Migriere Vereinsrecht-Daten', `ClubId: ${clubId}`);
       
       // Migriere Protokolle
       await this.migrateCollection(
@@ -165,7 +166,7 @@ export class ClubMigrationService {
       // Weitere Collections...
       
     } catch (error) {
-      console.error(`Fehler bei Vereinsrecht-Migration für ${clubId}:`, error);
+      secureLogger.logError(error, `Vereinsrecht-Migration failed for club: ${clubId}`);
       throw error;
     }
   }
@@ -196,7 +197,7 @@ export class ClubMigrationService {
       await addDoc(collection(db, targetCollection), data);
     }
     
-    console.log(`${snapshot.docs.length} Dokumente von ${sourceCollection} zu ${targetCollection} migriert`);
+    secureLogger.info('Collection migration completed', `Count: ${snapshot.docs.length}, Source: ${sourceCollection}`);
   }
   
   /**
@@ -208,6 +209,7 @@ export class ClubMigrationService {
       const snapshot = await getDocs(collection(db, mitgliederCollection));
       return snapshot.docs.length > 0;
     } catch (error) {
+      secureLogger.logError(error, 'Migration check failed');
       return false;
     }
   }

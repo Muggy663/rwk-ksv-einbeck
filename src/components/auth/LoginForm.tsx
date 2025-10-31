@@ -16,14 +16,20 @@ import { authLogger } from '@/lib/utils/safe-logger';
 import { SECURITY_FEATURES } from '@/lib/config/security-features';
 import { BotProtection } from '@/lib/auth/bot-protection';
 import { ReCaptcha } from './ReCaptcha';
+import { sanitizeInput, validateEmail } from '@/lib/utils/input-validator';
 
 const loginSchema = z.object({
   email: z.string({
     required_error: "E-Mail ist erforderlich"
-  }).email({ message: "Ungültige E-Mail-Adresse." }),
+  })
+  .email({ message: "Ungültige E-Mail-Adresse." })
+  .max(254, { message: "E-Mail zu lang" })
+  .refine((email) => validateEmail(email), { message: "Ungültige E-Mail-Adresse" }),
   password: z.string({
     required_error: "Passwort ist erforderlich"
-  }).min(6, { message: "Passwort muss mindestens 6 Zeichen lang sein." })
+  })
+  .min(6, { message: "Passwort muss mindestens 6 Zeichen lang sein." })
+  .max(128, { message: "Passwort zu lang" })
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -56,6 +62,16 @@ export function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     setFormError(null);
+    
+    // Sichere Input-Sanitization
+    const sanitizedEmail = sanitizeInput(data.email);
+    const sanitizedPassword = sanitizeInput(data.password);
+    
+    // Zusätzliche Validierung
+    if (!validateEmail(sanitizedEmail)) {
+      setFormError("Ungültige E-Mail-Adresse.");
+      return;
+    }
     
     // reCAPTCHA prüfen (nur auf Production)
     const isPreview = window.location.hostname.includes('vercel.app');
@@ -98,16 +114,16 @@ export function LoginForm() {
     }
     
     // Rate Limiting prüfen (nur wenn aktiviert)
-    if (SECURITY_FEATURES.RATE_LIMITING && !checkRateLimit(data.email)) {
+    if (SECURITY_FEATURES.RATE_LIMITING && !checkRateLimit(sanitizedEmail)) {
       setFormError("Zu viele Fehlversuche. Bitte warten Sie 15 Minuten.");
       return;
     }
     
     try {
-      await signIn(data.email, data.password);
+      await signIn(sanitizedEmail, sanitizedPassword);
       // Bei erfolgreichem Login: Rate Limit zurücksetzen
       if (SECURITY_FEATURES.RATE_LIMITING) {
-        clearFailedAttempts(data.email);
+        clearFailedAttempts(sanitizedEmail);
       }
       if (SECURITY_FEATURES.SAFE_LOGGING) {
         authLogger.loginAttempt(true);
@@ -115,7 +131,7 @@ export function LoginForm() {
     } catch (e) {
       // Bei Fehler: Fehlversuch registrieren
       if (SECURITY_FEATURES.RATE_LIMITING) {
-        recordFailedAttempt(data.email);
+        recordFailedAttempt(sanitizedEmail);
       }
       if (SECURITY_FEATURES.SAFE_LOGGING) {
         authLogger.loginAttempt(false);

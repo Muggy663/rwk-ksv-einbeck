@@ -1,28 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { secureLogger } from '@/lib/utils/secure-logger';
+import { sanitizeInput, validateImageUpload } from '@/lib/utils/input-validator';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
+// Sichere Konfiguration
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
 export async function POST(request: NextRequest) {
-  console.log('🔍 Gemini API Route aufgerufen');
-  console.log('🔑 GEMINI_API_KEY vorhanden:', !!process.env.GEMINI_API_KEY);
-  console.log('🔑 GEMINI_API_KEY Wert:', process.env.GEMINI_API_KEY?.substring(0, 20) + '...');
+  secureLogger.info('Gemini OCR API called', 'gemini-ocr');
   
   try {
     if (!process.env.GEMINI_API_KEY) {
-      console.error('❌ GEMINI_API_KEY fehlt');
+      secureLogger.error('GEMINI_API_KEY missing', 'gemini-ocr');
       return NextResponse.json({ 
-        error: 'Gemini API key not configured',
-        debug: 'GEMINI_API_KEY environment variable is missing'
+        error: 'OCR service not configured'
       }, { status: 500 });
     }
 
     const formData = await request.formData();
     const image = formData.get('image') as File;
-    const availableTeams = JSON.parse(formData.get('availableTeams') as string || '[]');
+    const availableTeamsRaw = formData.get('availableTeams') as string;
     
     if (!image) {
+      secureLogger.warn('No image provided', 'gemini-ocr');
       return NextResponse.json({ error: 'No image provided' }, { status: 400 });
+    }
+
+    // Sichere Bild-Validierung
+    const imageValidation = validateImageUpload(image, {
+      maxSize: MAX_IMAGE_SIZE,
+      allowedMimeTypes: ALLOWED_IMAGE_TYPES
+    });
+
+    if (!imageValidation.isValid) {
+      secureLogger.warn(`Image validation failed: ${imageValidation.error}`, 'gemini-ocr');
+      return NextResponse.json({ error: imageValidation.error }, { status: 400 });
+    }
+
+    // Sichere JSON-Parsing
+    let availableTeams = [];
+    try {
+      availableTeams = availableTeamsRaw ? JSON.parse(sanitizeInput(availableTeamsRaw)) : [];
+    } catch (error) {
+      secureLogger.warn('Invalid availableTeams JSON', 'gemini-ocr');
+      availableTeams = [];
     }
 
     // Convert image to base64
@@ -81,20 +105,16 @@ Gib die Daten als JSON-Array zurück mit shooterName, teamName, score und confid
         ocrSource: 'gemini'
       });
     } catch (parseError) {
-      console.error('Failed to parse Gemini response:', text);
+      secureLogger.error('Failed to parse Gemini response', 'gemini-ocr');
       return NextResponse.json({ 
-        error: 'Invalid response format from Gemini',
-        rawResponse: text 
+        error: 'Invalid response format from OCR service'
       }, { status: 500 });
     }
 
   } catch (error) {
-    console.error('❌ Gemini OCR error:', error);
-    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack');
+    secureLogger.error('Gemini OCR processing failed', 'gemini-ocr');
     return NextResponse.json({ 
-      error: 'OCR processing failed',
-      details: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack'
+      error: 'OCR processing failed'
     }, { status: 500 });
   }
 }

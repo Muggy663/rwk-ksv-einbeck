@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
-import { rateLimiter } from '@/lib/services/rate-limiter';
+import { secureLogger } from '@/lib/utils/secure-logger';
+import { sanitizeInput } from '@/lib/utils/input-validator';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
@@ -10,23 +11,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Gemini API key not configured' }, { status: 500 });
     }
 
-    // Rate Limiting prüfen
-    const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
-    const maxDaily = 5;
+    const body = await request.json();
+    const question = sanitizeInput(body.question);
     
-    if (!rateLimiter.canMakeRequest(ip, maxDaily)) {
-      const remaining = rateLimiter.getRemainingRequests(ip, maxDaily);
+    if (!question || question.length < 3) {
+      secureLogger.warn('Invalid question in regelwerk chat', 'regelwerk-chat');
       return NextResponse.json({ 
-        error: 'Tageslimit erreicht',
-        message: `Sie haben heute bereits ${maxDaily} Fragen gestellt. Versuchen Sie es morgen erneut.`,
-        remaining: 0
-      }, { status: 429 });
+        error: 'Ungültige Frage',
+        message: 'Bitte stellen Sie eine gültige Frage.'
+      }, { status: 400 });
     }
-
-    const { question } = await request.json();
-    
-    // Request zählen
-    rateLimiter.recordRequest(ip);
     
     const prompt = `Du bist ein Experte für deutsche Schießsport-Regelwerke, speziell RWK (Rundenwettkampf) und KM (Kreismeisterschaft).
 
@@ -49,16 +43,13 @@ Gib eine präzise, hilfreiche Antwort (max 150 Wörter). Falls unsicher, sage es
 
     const answer = response.text.trim();
     
-    const remaining = rateLimiter.getRemainingRequests(ip, maxDaily);
-    
     return NextResponse.json({ 
       success: true, 
-      answer,
-      remaining
+      answer
     });
 
   } catch (error) {
-    console.error('Regelwerk chat error:', error);
+    secureLogger.error('Regelwerk chat failed', 'regelwerk-chat');
     return NextResponse.json({ 
       error: 'Chat failed',
       answer: 'Entschuldigung, ich kann diese Frage gerade nicht beantworten. Bitte versuchen Sie es später erneut.'

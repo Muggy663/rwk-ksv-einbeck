@@ -280,45 +280,10 @@ export default function DashboardAuswahl() {
 
       </div>
 
-      {/* Werbebanner für neue Vereinssoftware */}
-      <div className="mt-8 mb-6">
-        <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 shadow-lg">
-          <CardContent className="p-6">
-            <div className="text-center space-y-4">
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-2xl">🚀</span>
-                <h3 className="text-xl font-bold text-purple-800">Neue Vereinssoftware in Entwicklung!</h3>
-                <span className="text-2xl">🚀</span>
-              </div>
-              <p className="text-purple-700 max-w-2xl mx-auto">
-                Wir entwickeln eine brandneue, moderne Vereinssoftware speziell für Schützenvereine. 
-                <strong>"Verein-im-Visier"</strong> wird alle Bereiche der Vereinsverwaltung abdecken.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2 text-sm">
-                <Badge className="bg-purple-100 text-purple-800 border-purple-300">👥 Mitgliederverwaltung</Badge>
-                <Badge className="bg-purple-100 text-purple-800 border-purple-300">💰 SEPA & Finanzen</Badge>
-                <Badge className="bg-purple-100 text-purple-800 border-purple-300">🏆 Lizenzen</Badge>
-                <Badge className="bg-purple-100 text-purple-800 border-purple-300">⚖️ Vereinsrecht</Badge>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                <a href="https://vereins-manager-app.vercel.app/" target="_blank" rel="noopener noreferrer">
-                  <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-                    🔗 Vorschau ansehen
-                  </Button>
-                </a>
-                <p className="text-xs text-purple-600">
-                  ⚠️ Noch in früher Entwicklungsphase
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Support-Bereich */}
       <div className="mt-8 pt-6 border-t">
         <h2 className="text-xl font-semibold text-center mb-4 text-muted-foreground">🛠️ Support & Hilfe</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
           {/* Support anfordern - Für Vereine */}
           {!isRWKAdmin && (
             <Card className="border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800">
@@ -356,6 +321,23 @@ export default function DashboardAuswahl() {
               </CardContent>
             </Card>
           )}
+
+          {/* Neue Vereinssoftware - Kompakt */}
+          <Card className="border-purple-200 bg-purple-50 dark:bg-purple-950/30 dark:border-purple-800">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg text-purple-800 dark:text-purple-200">🚀 Neue Software</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-purple-700 dark:text-purple-300 mb-3">
+                "Verein-im-Visier" - Moderne Vereinssoftware in Entwicklung
+              </p>
+              <a href="https://vereins-manager-app.vercel.app/" target="_blank" rel="noopener noreferrer">
+                <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                  Vorschau ansehen
+                </Button>
+              </a>
+            </CardContent>
+          </Card>
         </div>
       </div>
 

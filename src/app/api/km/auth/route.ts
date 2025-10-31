@@ -1,13 +1,16 @@
 // src/app/api/km/auth/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getKMUserPermission } from '@/lib/services/km-auth-service';
+import { secureLogger } from '@/lib/utils/secure-logger';
+import { sanitizeInput } from '@/lib/utils/input-validator';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const uid = searchParams.get('uid');
+    const uid = sanitizeInput(searchParams.get('uid') || '');
 
-    if (!uid) {
+    if (!uid || uid.length < 10) {
+      secureLogger.warn('Invalid or missing UID', 'km-auth-api');
       return NextResponse.json({
         success: false,
         error: 'User ID ist erforderlich'
@@ -22,7 +25,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Fehler beim Laden der KM-Berechtigung:', error);
+    secureLogger.error('KM permission loading failed', 'km-auth-api');
     return NextResponse.json({
       success: false,
       error: 'Fehler beim Laden der Berechtigung'
@@ -33,16 +36,23 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { uid, email, role, clubId, displayName } = body;
+    const uid = sanitizeInput(body.uid);
+    const email = sanitizeInput(body.email);
+    const role = sanitizeInput(body.role);
+    const clubId = sanitizeInput(body.clubId);
+    const displayName = sanitizeInput(body.displayName);
 
     if (!uid || !email || !role) {
+      secureLogger.warn('Missing required fields in KM auth creation', 'km-auth-api');
       return NextResponse.json({
         success: false,
         error: 'UID, E-Mail und Rolle sind erforderlich'
       }, { status: 400 });
     }
 
-    if (!['km_admin', 'km_organizer', 'verein_vertreter'].includes(role)) {
+    const allowedRoles = ['km_admin', 'km_organizer', 'verein_vertreter'];
+    if (!allowedRoles.includes(role)) {
+      secureLogger.warn('Invalid role in KM auth creation', 'km-auth-api');
       return NextResponse.json({
         success: false,
         error: 'Ungültige Rolle'
@@ -56,7 +66,7 @@ export async function POST(request: NextRequest) {
     }, { status: 501 });
 
   } catch (error) {
-    console.error('Fehler beim Erstellen der KM-Berechtigung:', error);
+    secureLogger.error('KM permission creation failed', 'km-auth-api');
     return NextResponse.json({
       success: false,
       error: 'Fehler beim Erstellen der Berechtigung'

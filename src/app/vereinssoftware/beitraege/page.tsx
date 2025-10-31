@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import { HtmlSanitizer } from '@/lib/utils/html-sanitizer';
+import { secureLogger } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -494,11 +496,15 @@ export default function BeitraegeVerwaltungPage() {
   };
 
   const downloadFile = (content, filename, type) => {
-    const blob = new Blob([content], { type });
+    // Sichere Dateinamen-Bereinigung
+    const safeFilename = HtmlSanitizer.sanitizeFilename(filename);
+    const safeContent = typeof content === 'string' ? HtmlSanitizer.sanitizeText(content) : content;
+    
+    const blob = new Blob([safeContent], { type });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = filename;
+    a.download = safeFilename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
