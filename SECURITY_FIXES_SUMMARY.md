@@ -120,7 +120,7 @@
 ### Erforderliche Environment Variables:
 ```bash
 # Bereits konfiguriert
-GEMINI_API_KEY=AIzaSyBwZtrrmPD23Wj3X2zC0tjIEyaI46WLScw
+GEMINI_API_KEY=your_gemini_api_key_here
 
 # Neue Sicherheitsfeatures
 SECURITY_RATE_LIMIT_ENABLED=true
