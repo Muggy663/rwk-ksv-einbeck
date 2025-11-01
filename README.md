@@ -19,6 +19,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - 📄 **PDF Export** - Professionelle Dokumente
 - ⚡ **Real-time Updates** - Sofortige Synchronisation
 - 🤖 **OCR Handzettel-Erkennung** - Automatische Ergebniserfassung per Foto (NEU v1.8.1)
+- 🛡️ **Enterprise-Level Sicherheit** - 70+ Sicherheitslücken behoben (NEU v1.9.0)
 
 ## 🚀 Hauptfunktionen
 
@@ -46,6 +47,16 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - **Disziplinen-Verwaltung** flexibel konfigurierbar
 - **Statistik-Dashboard** mit Auswertungen
 - **Backup & Restore** für Datensicherheit
+
+### 🛡️ Sicherheitsfeatures (NEU v1.9.0)
+- **Input-Validierung** auf allen Ebenen
+- **XSS/CSRF-Schutz** für sichere Formulare
+- **Rate Limiting** gegen Brute-Force-Angriffe
+- **Bot Protection** mit Honeypot-Technologie
+- **Sichere File-Uploads** mit Validierung
+- **API-Sicherheit** gegen Injection-Angriffe
+- **Secure Logging** ohne sensitive Daten
+- **Path Traversal Prevention** für Dateizugriffe
 
 ## 🛠️ Technologie-Stack
 
@@ -172,7 +183,7 @@ Jede Vervielfältigung, Verbreitung, öffentliche Wiedergabe oder sonstige Nutzu
 ---
 
 **Aktuelle Versionen:**
-- **Web-Version 1.9.0** - MongoDB File Server & reCAPTCHA Integration: Vollständige MongoDB Atlas Integration als File Server für Dokumente-Upload mit GridFS, Google reCAPTCHA v2 Checkbox-Integration für Login-Sicherheit, Upload-API für PDF-Dateien, Download-API für gespeicherte Dokumente, Admin-Upload-Interface für Dokumente-Verwaltung
+- **Web-Version 1.9.0** - Enterprise Security & MongoDB Integration: 70+ kritische Sicherheitslücken behoben (XSS, CSRF, SQL/NoSQL Injection, Path Traversal, Rate Limiting, Bot Protection), vollständige MongoDB Atlas Integration als File Server mit GridFS, Google reCAPTCHA v2 Integration, sichere Upload/Download-APIs, Input-Validierung auf allen Ebenen, Enterprise-Level Sicherheitsarchitektur
 - **Web-Version 1.8.3.1** - OCR-Optimierung & E-Mail-Fixes: OCR nur noch auf Wunsch mit Kontrollhinweis, E-Mail-Versand für Sportleiter behoben, Vereinssoftware-Verweis auf neue "Verein-im-Visier" App
 - **Web-Version 1.8.1** - Mobile OCR-Optimierungen & UI-Fixes: Automatische OCR-Starts nach Foto-Aufnahme, Tabellen-Overflow-Fixes für Portrait-Modus, Safe Area Support für mobile Header, Dark Mode Print-Fixes, Team-Sortierung mit Einzel-Teams am Ende, PDF-Hilfe Button kompakter für App-Ansicht
 - **Web-Version 1.7.5.4** - Google Analytics Integration (wieder entfernt in v1.7.5.5): Besucherzähler im Footer mit Google Analytics 4, DSGVO-konformes Tracking mit anonymisierten IPs, automatisches Page-Tracking, dezente Anzeige der Besucherzahlen
