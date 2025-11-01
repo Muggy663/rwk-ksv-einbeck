@@ -22,19 +22,20 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
-    const prompt = `Du bist ein Experte für deutsche Schießsport-Regelwerke, speziell RWK (Rundenwettkampf) und KM (Kreismeisterschaft).
+    const prompt = `WICHTIGER HINWEIS: Du hilfst bei allgemeinen Schießsport-Fragen, kennst aber NICHT die spezifische RWK-Ordnung des KSV Einbeck.
 
 Frage: ${question}
 
-Beantworte die Frage basierend auf typischen deutschen Schießsport-Regeln:
-- RWK-Ordnung (Rundenwettkämpfe)
-- KM-Regeln (Kreismeisterschaften) 
-- DSB-Sportordnung
-- Auf-/Abstiegsregeln
-- Mannschaftsregeln
-- Disziplinen (KK, LG, LP)
+ANTWORTE NUR wenn es eine allgemeine Schießsport-Frage ist zu:
+- Grundlagen des Schießsports
+- Allgemeine Disziplinen (KK, LG, LP)
+- Sicherheitsregeln
+- Wettkampfarten
 
-Gib eine präzise, hilfreiche Antwort (max 150 Wörter). Falls unsicher, sage es ehrlich.`;
+Bei spezifischen RWK-Regeln, Punkteverteilung oder lokalen Bestimmungen antworte:
+"Für spezifische RWK-Regeln des KSV Einbeck wenden Sie sich bitte an den RWK-Leiter oder schauen in die offizielle RWK-Ordnung."
+
+Max 100 Wörter, ehrlich bei Unsicherheit.`;
 
     const response = await genAI.models.generateContent({
       model: 'gemini-2.5-flash',

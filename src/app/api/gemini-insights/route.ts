@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
-import { rateLimiter } from '@/lib/services/rate-limiter';
+import { secureLogger } from '@/lib/utils/secure-logger';
+import { sanitizeInput } from '@/lib/utils/input-validator';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
@@ -10,25 +11,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Gemini API key not configured' }, { status: 500 });
     }
 
-    // Rate Limiting (weniger streng für Statistiken)
-    const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
-    const maxDaily = 3; // Nur 3 Liga-Analysen pro Tag
+    const body = await request.json();
+    const leagueId = sanitizeInput(body.leagueId);
+    const leagueName = sanitizeInput(body.leagueName);
+    const seasonYear = sanitizeInput(body.seasonYear);
+    const teamData = Array.isArray(body.teamData) ? body.teamData : [];
     
-    if (!rateLimiter.canMakeRequest(ip + '_insights', maxDaily)) {
+    if (!leagueName || !teamData.length) {
+      secureLogger.warn('Invalid data for league insights', 'gemini-insights');
       return NextResponse.json({ 
-        error: 'Tageslimit erreicht',
-        message: `Sie haben heute bereits ${maxDaily} Liga-Analysen erstellt. Versuchen Sie es morgen erneut.`
-      }, { status: 429 });
+        error: 'Ungültige Liga-Daten'
+      }, { status: 400 });
     }
-
-    const { leagueId, leagueName, seasonYear, teamData } = await request.json();
     
     // Vereinfachte Team-Daten für Prompt
     const teamSummary = teamData.slice(0, 8).map((team: any, index: number) => 
       `${index + 1}. ${team.name}: ${team.totalRings || 0} Ringe, ${team.matchesPlayed || 0} Spiele`
     ).join('\n');
     
-    const prompt = `Analysiere diese deutsche Schießsport-Liga:
+    const prompt = `Analysiere diese RWK-Liga des KSV Einbeck:
 
 Liga: ${leagueName}
 Saison: ${seasonYear}
@@ -36,16 +37,22 @@ Saison: ${seasonYear}
 Aktuelle Tabelle (Top 8):
 ${teamSummary}
 
-Erstelle eine kurze, interessante Analyse (max 200 Wörter):
-- Wer führt und warum?
-- Spannende Kämpfe um Plätze?
-- Auf-/Abstiegskampf?
-- Besondere Leistungen?
-- Prognose für Saisonende?
+KONTEXT: Dies ist ein Rundenwettkampf (RWK) im deutschen Schießsport mit:
+- Mannschaften aus verschiedenen Vereinen
+- Regelmäßige Wettkampftage
+- Auf-/Abstiegsregelung zwischen Ligen
+- Disziplinen: Kleinkaliber (KK), Luftgewehr (LG), Luftpistole (LP)
 
-Schreibe wie ein Sportjournalist - interessant und verständlich.`;
+Erstelle eine fundierte Analyse (max 180 Wörter):
+- Tabellenführung und Gründe
+- Spannende Positionskämpfe
+- Auf-/Abstiegssituation
+- Auffallige Leistungen
+- Realistische Saisonprognose
 
-    rateLimiter.recordRequest(ip + '_insights');
+Schreibe sachlich und kompetent für Schießsport-Kenner.`;
+
+
 
     const response = await genAI.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -60,7 +67,7 @@ Schreibe wie ein Sportjournalist - interessant und verständlich.`;
     });
 
   } catch (error) {
-    console.error('Gemini insights error:', error);
+    secureLogger.error('League insights generation failed', 'gemini-insights');
     return NextResponse.json({ 
       error: 'Analysis failed',
       message: 'Liga-Analyse konnte nicht erstellt werden.'
