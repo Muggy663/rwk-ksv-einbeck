@@ -99,7 +99,6 @@ import { RWKLegend } from '@/components/ui/rwk-legend';
 import { SmartTable } from '@/components/ui/smart-table';
 import { MobileTeamCards } from '@/components/ui/mobile-team-cards';
 import { MobileShooterCards } from '@/components/ui/mobile-shooter-cards';
-import { SmartSearch } from '@/components/ui/smart-search';
 
 
 const EXCLUDED_TEAM_NAME_PART = 'einzel'; // Case-insensitive check later
@@ -1781,27 +1780,7 @@ function RwkTabellenPageComponent() {
         )}
 
         <TabsContent value="mannschaften">
-          {/* KI-gestützte intelligente Suche */}
-          {!loadingData && !error && teamData && teamData.leagues.length > 0 && (
-            <div className="mb-6">
-              <SmartSearch
-                teamData={teamData}
-                onResult={(result) => {
-                  console.log('Suchergebnis:', result);
-                }}
-                onOpenAccordion={(leagueId) => {
-                  setOpenAccordionItems(prev => 
-                    prev.includes(leagueId) ? prev : [...prev, leagueId]
-                  );
-                }}
-                onExpandTeam={(teamId) => {
-                  setExpandedTeamIds(prev => 
-                    prev.includes(teamId) ? prev : [...prev, teamId]
-                  );
-                }}
-              />
-            </div>
-          )}
+
           
           {/* Orientierungs-Hinweis für Portrait-Modus */}
           {isPortrait && (
