@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -386,24 +386,21 @@ export default function ExtendedStatisticsPage() {
               
               <div className="w-full md:w-1/3 space-y-2">
                 <Label htmlFor="disciplineSelect">Disziplin</Label>
-                <Select
+                <NativeSelect
                   value={selectedDiscipline}
                   onValueChange={handleDisciplineChange}
                   disabled={!selectedShooter}
-                >
-                  <SelectTrigger id="disciplineSelect">
-                    <SelectValue placeholder="Disziplin auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle Disziplinen</SelectItem>
-                    <SelectItem value="KK">Kleinkaliber</SelectItem>
-                    <SelectItem value="KKG">Kleinkaliber Gewehr</SelectItem>
-                    <SelectItem value="LG">Luftgewehr</SelectItem>
-                    <SelectItem value="LGA">Luftgewehr Auflage</SelectItem>
-                    <SelectItem value="LP">Luftpistole</SelectItem>
-                    <SelectItem value="LPA">Luftpistole Auflage</SelectItem>
-                  </SelectContent>
-                </Select>
+                  placeholder="Disziplin auswählen"
+                  options={[
+                    { value: 'all', label: 'Alle Disziplinen' },
+                    { value: 'KK', label: 'Kleinkaliber' },
+                    { value: 'KKG', label: 'Kleinkaliber Gewehr' },
+                    { value: 'LG', label: 'Luftgewehr' },
+                    { value: 'LGA', label: 'Luftgewehr Auflage' },
+                    { value: 'LP', label: 'Luftpistole' },
+                    { value: 'LPA', label: 'Luftpistole Auflage' }
+                  ]}
+                />
               </div>
             </div>
             

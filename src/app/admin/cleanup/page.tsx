@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
 import { Loader2, Trash2, RefreshCw, Search, AlertTriangle, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -185,22 +185,13 @@ ${result.warnings.length > 0 ? 'Warnungen:\n' + result.warnings.join('\n') : ''}
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="clubSelect">Verein auswählen</Label>
-              <Select
+              <NativeSelect
                 value={selectedClubId}
                 onValueChange={setSelectedClubId}
                 disabled={isLoading || isDiagnosing || isCleaningUp}
-              >
-                <SelectTrigger id="clubSelect">
-                  <SelectValue placeholder="Verein auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clubs.map(club => (
-                    <SelectItem key={club.id} value={club.id}>
-                      {club.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Verein auswählen"
+                options={clubs.map(club => ({ value: club.id, label: club.name }))}
+              />
             </div>
 
             <Button

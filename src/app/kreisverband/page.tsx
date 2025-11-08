@@ -39,7 +39,7 @@ interface FeatureCardProps {
 const FeatureCard = ({ title, items }: FeatureCardProps) => (
   <Card className="flex flex-col shadow-lg hover:shadow-xl transition-all">
     <CardHeader>
-      <CardTitle className="text-2xl text-accent">{title}</CardTitle>
+      <CardTitle className="text-xl text-accent">{title}</CardTitle>
     </CardHeader>
     <CardContent className="flex-grow">
       <ul className="space-y-4">
@@ -80,7 +80,7 @@ export default function KreisverbandPage() {
           />
         </div>
         
-        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent mb-6">
           Digitale Wettkampforganisation für Kreisschützenverbände
         </h1>
         
@@ -97,13 +97,7 @@ export default function KreisverbandPage() {
           </p>
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild size="lg" className="text-lg px-8">
-            <Link href="/login">
-              Jetzt anmelden
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
+        <div className="flex justify-center">
           <Button asChild variant="outline" size="lg" className="text-lg px-8">
             <Link href="/support">
               Support kontaktieren
@@ -129,7 +123,7 @@ export default function KreisverbandPage() {
             <div className="p-2 bg-accent/10 rounded-lg">
               <Zap className="h-8 w-8 text-accent" />
             </div>
-            <CardTitle className="text-2xl">Moderne Technologie, die begeistert</CardTitle>
+            <CardTitle className="text-xl">Moderne Technologie, die begeistert</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -158,7 +152,7 @@ export default function KreisverbandPage() {
 
       {/* Benefits Section */}
       <div className="bg-gradient-to-r from-primary/5 to-secondary/5 p-8 rounded-lg mb-16">
-        <h2 className="text-3xl font-bold text-center mb-8">Ihr Vorteil</h2>
+        <h2 className="text-2xl font-bold text-center mb-8">Ihr Vorteil</h2>
         <div className="grid md:grid-cols-3 gap-6 text-center">
           <div>
             <Clock className="h-12 w-12 text-primary mx-auto mb-4" />
@@ -180,19 +174,13 @@ export default function KreisverbandPage() {
 
       {/* Call to Action */}
       <footer className="text-center bg-gradient-to-r from-primary to-secondary p-8 rounded-lg">
-        <h2 className="text-3xl font-bold mb-4 text-black !text-black">
+        <h2 className="text-2xl font-bold mb-4 text-black !text-black">
           Modernisieren Sie Ihren Kreisverband noch heute!
         </h2>
         <p className="text-xl mb-6 text-black">
           Professionelle Wettkampforganisation, die Ihren Kreisverband für Vereine und Schützen attraktiver macht.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild size="lg" variant="secondary" className="text-lg px-8">
-            <Link href="/login">
-              Jetzt starten
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
+        <div className="flex justify-center">
           <Button asChild size="lg" variant="outline" className="text-lg px-8 border-black/20 text-black hover:bg-black/10">
             <Link href="/support">
               Beratung anfordern

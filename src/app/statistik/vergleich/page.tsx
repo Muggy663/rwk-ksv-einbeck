@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShooterComparisonSelector, Shooter } from '@/components/statistics/ShooterComparisonSelector';
 import { ShooterComparisonChart } from '@/components/statistics/ShooterComparisonChart';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
@@ -168,46 +168,32 @@ export default function ShooterComparisonPage() {
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="space-y-4 mb-6">
         <div>
-          <Label htmlFor="season-select">Saison</Label>
-          <Select
+          <Label htmlFor="season-select" className="text-base font-medium">Saison</Label>
+          <NativeSelect
             value={selectedSeason}
             onValueChange={setSelectedSeason}
             disabled={seasons.length === 0}
-          >
-            <SelectTrigger id="season-select">
-              <SelectValue placeholder="Saison auswählen" />
-            </SelectTrigger>
-            <SelectContent>
-              {seasons.map(season => (
-                <SelectItem key={season.id} value={season.id}>
-                  {season.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Saison auswählen"
+            options={seasons.map(season => ({ value: season.id, label: season.name }))}
+            className="h-12 text-base mt-1"
+          />
         </div>
         
         <div>
-          <Label htmlFor="league-select">Liga</Label>
-          <Select
+          <Label htmlFor="league-select" className="text-base font-medium">Liga</Label>
+          <NativeSelect
             value={selectedLeague}
             onValueChange={setSelectedLeague}
             disabled={leagues.length === 0}
-          >
-            <SelectTrigger id="league-select">
-              <SelectValue placeholder="Alle Ligen" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Ligen</SelectItem>
-              {leagues.map(league => (
-                <SelectItem key={league.id} value={league.id}>
-                  {league.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Alle Ligen"
+            options={[
+              { value: 'all', label: 'Alle Ligen' },
+              ...leagues.map(league => ({ value: league.id, label: league.name }))
+            ]}
+            className="h-12 text-base mt-1"
+          />
         </div>
       </div>
       

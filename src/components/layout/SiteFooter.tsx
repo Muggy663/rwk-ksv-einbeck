@@ -13,25 +13,6 @@ export function SiteFooter() {
           <p className="text-sm leading-loose text-muted-foreground mt-2">
             © 2025{currentYear > 2025 ? `-${currentYear}` : ''} Marcel Bünger für den KSV Einbeck. Alle Rechte vorbehalten.
           </p>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs mt-2">
-            <Link href="/impressum" className="text-muted-foreground hover:text-primary underline">
-              Impressum
-            </Link>
-            <Link href="/nutzungsbedingungen" className="text-muted-foreground hover:text-primary underline">
-              Nutzungsbedingungen
-            </Link>
-            <Link href="/copyright" className="text-muted-foreground hover:text-primary underline">
-              Copyright
-            </Link>
-            <Link 
-              href="http://www.ksv-einbeck.de/index.htm" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-muted-foreground hover:text-primary underline"
-            >
-              KSV Einbeck
-            </Link>
-          </div>
           <p className="text-xs text-muted-foreground mt-3">
             Für beste Kompatibilität empfehlen wir Chrome, Firefox oder Edge
           </p>
@@ -44,6 +25,28 @@ export function SiteFooter() {
             <div>
               <p className="whitespace-nowrap">Web-Version {version} <span className="text-xs text-red-600 dark:text-red-400 font-semibold">Beta</span></p>
               <p className="text-xs mt-1 whitespace-nowrap">App-Version 0.9.4.1</p>
+              <p className="text-xs mt-2 text-center md:text-right">
+                <Link href="/impressum" className="text-muted-foreground hover:text-primary underline">
+                  Impressum
+                </Link>
+                <span className="text-muted-foreground"> | </span>
+                <Link href="/nutzungsbedingungen" className="text-muted-foreground hover:text-primary underline">
+                  Nutzungsbedingungen
+                </Link>
+                <span className="text-muted-foreground"> | </span>
+                <Link href="/copyright" className="text-muted-foreground hover:text-primary underline">
+                  Copyright
+                </Link>
+                <span className="text-muted-foreground"> | </span>
+                <Link 
+                  href="http://www.ksv-einbeck.de/index.htm" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-muted-foreground hover:text-primary underline"
+                >
+                  KSV Einbeck
+                </Link>
+              </p>
             </div>
 
           </div>

@@ -15,13 +15,7 @@ import {
   MobileTableHeader as TableHeader,
   MobileTableRow as TableRow,
 } from "@/components/ui/mobile-table";
-import {
-  MobileSelect as Select,
-  MobileSelectContent as SelectContent,
-  MobileSelectItem as SelectItem,
-  MobileSelectTrigger as SelectTrigger,
-  MobileSelectValue as SelectValue,
-} from "@/components/ui/mobile-select";
+import { NativeSelect } from '@/components/ui/native-select';
 import { GlobalResponsiveDialog } from '@/components/ui/global-responsive-dialog-wrapper';
 import { MobilePageWrapper } from '@/components/ui/mobile-page-wrapper';
 import { MobileFormWrapper } from '@/components/ui/mobile-form-wrapper';
@@ -1035,11 +1029,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
   const currentSelectedSeasonName = allSeasons.find(s => s.id === selectedSeasonId)?.name;
 
   return (
-    <MobilePageWrapper 
-      title="Meine Mannschaften"
-      description={isVereinsvertreter ? "Verwalten Sie hier die Mannschaften Ihres Vereins." : "Übersicht der Mannschaften Ihres Vereins."}
-    >
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 py-4 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div className="flex items-center">
           <BackButton className="mr-2" fallbackHref="/verein/dashboard" />
@@ -1053,7 +1043,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
         {activeClubName && <p className="text-muted-foreground text-lg md:text-right">Verein: <span className="font-semibold text-primary">{activeClubName}</span></p>}
       </div>
 
-      <div className="flex flex-col sm:flex-row items-end gap-3 mb-4 p-4 border rounded-md shadow-sm bg-card">
+      <div className="flex flex-col sm:flex-row items-end gap-3 mb-4 p-4 border rounded-md shadow-sm bg-card overflow-visible">
         <div className="flex-grow space-y-1.5 w-full sm:w-auto">
           <div className="flex items-center">
             <Label htmlFor="vvm-saison-select">Saison auswählen</Label>
@@ -1062,22 +1052,18 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
               className="ml-2"
             />
           </div>
-          <Select
+          <select
+            id="vvm-saison-select"
             value={selectedSeasonId}
-            onValueChange={(value) => { setSelectedSeasonId(value); setSelectedLeagueIdFilter(""); }}
+            onChange={(e) => { setSelectedSeasonId(e.target.value); setSelectedLeagueIdFilter(""); }}
             disabled={allSeasons.length === 0}
+            className="w-full h-10 px-3 py-2 text-sm border border-input bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <SelectTrigger id="vvm-saison-select" className="w-full">
-                <SelectValue placeholder={allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"} />
-            </SelectTrigger>
-            <SelectContent>
-                {allSeasons
-                    .filter(s => s && typeof s.id === 'string' && s.id.trim() !== "")
-                    .map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                {allSeasons.filter(s => s && typeof s.id === 'string' && s.id.trim() !== "").length === 0 &&
-                    <SelectItem value="NO_SEASONS_VMP_PLACEHOLDER" disabled>Keine Saisons verfügbar</SelectItem>}
-            </SelectContent>
-          </Select>
+            <option value="" disabled>{allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"}</option>
+            {allSeasons
+                .filter(s => s && typeof s.id === 'string' && s.id.trim() !== "")
+                .map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
         </div>
         <div className="flex-grow space-y-1.5 w-full sm:w-auto">
           <div className="flex items-center">
@@ -1087,29 +1073,23 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
               className="ml-2"
             />
           </div>
-           <Select
+          <select
+            id="vvm-liga-filter"
             value={selectedLeagueIdFilter}
-            onValueChange={(value) => {
+            onChange={(e) => {
               // Wenn "Alle Ligen anzeigen" ausgewählt wurde, setze den Filter zurück
-              setSelectedLeagueIdFilter(value === "ALL_LEAGUES" ? "" : value);
+              setSelectedLeagueIdFilter(e.target.value === "ALL_LEAGUES" ? "" : e.target.value);
             }}
             disabled={!selectedSeasonId || isLoadingTeams || availableLeaguesForFilter.length === 0}
-           >
-            <SelectTrigger id="vvm-liga-filter" className="w-full">
-                <SelectValue placeholder={!selectedSeasonId ? "Saison wählen" : (isLoadingTeams ? "Lade Ligen..." : (availableLeaguesForFilter.length === 0 ? "Keine Ligen für Verein/Saison" : "Alle Ligen des Vereins"))} />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="ALL_LEAGUES">Alle Ligen anzeigen</SelectItem>
-
-                {availableLeaguesForFilter
-                    .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "") // Strict filter
-                    .map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)
-                }
-                {availableLeaguesForFilter.filter(l => l && typeof l.id === 'string' && l.id.trim() !== "").length === 0 && selectedSeasonId &&
-                    <SelectItem value="NO_LEAGUES_FILTER_VMP" disabled>Keine Ligen für diese Auswahl</SelectItem>
-                }
-            </SelectContent>
-          </Select>
+            className="w-full h-10 px-3 py-2 text-sm border border-input bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="" disabled>{!selectedSeasonId ? "Saison wählen" : (isLoadingTeams ? "Lade Ligen..." : (availableLeaguesForFilter.length === 0 ? "Keine Ligen für Verein/Saison" : "Liga wählen"))}</option>
+            <option value="ALL_LEAGUES">Alle Ligen anzeigen</option>
+            {availableLeaguesForFilter
+                .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "")
+                .map(l => <option key={l.id} value={l.id}>{l.name}</option>)
+            }
+          </select>
         </div>
          {isVereinsvertreter && (
             <div className="flex flex-col gap-2">
@@ -1409,21 +1389,18 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                             className="ml-2"
                           />
                         </div>
-                        <Select
+                        <NativeSelect
                           value={teamStrength}
                           onValueChange={handleTeamStrengthChange}
-                        >
-                          <SelectTrigger id="vvm-teamStrengthDialog" className="w-full">
-                            <SelectValue placeholder="Mannschaftsstärke wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="I">I (Erste Mannschaft)</SelectItem>
-                            <SelectItem value="II">II (Zweite Mannschaft)</SelectItem>
-                            <SelectItem value="III">III (Dritte Mannschaft)</SelectItem>
-                            <SelectItem value="IV">IV (Vierte Mannschaft)</SelectItem>
-                            <SelectItem value="V">V (Fünfte Mannschaft)</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          placeholder="Mannschaftsstärke wählen"
+                          options={[
+                            { value: "I", label: "I (Erste Mannschaft)" },
+                            { value: "II", label: "II (Zweite Mannschaft)" },
+                            { value: "III", label: "III (Dritte Mannschaft)" },
+                            { value: "IV", label: "IV (Vierte Mannschaft)" },
+                            { value: "V", label: "V (Fünfte Mannschaft)" }
+                          ]}
+                        />
                     </div>
                     <div className="space-y-1.5">
                         <div className="flex items-center">
@@ -1433,22 +1410,19 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                             className="ml-2"
                           />
                         </div>
-                        <Select
+                        <NativeSelect
                           value={currentTeam?.leagueType || ""}
                           onValueChange={(value) => setCurrentTeam(prev => prev ? {...prev, leagueType: value as FirestoreLeagueSpecificDiscipline} : null)}
                           required
-                        >
-                          <SelectTrigger id="vvm-teamDisciplineDialog" className="w-full">
-                            <SelectValue placeholder="Disziplin wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="KKG">Kleinkaliber Gewehr</SelectItem>
-                            <SelectItem value="KKP">Kleinkaliber Pistole</SelectItem>
-                            <SelectItem value="LGA">Luftgewehr Auflage</SelectItem>
-                            <SelectItem value="LGS">Luftgewehr Stehend (Freihand)</SelectItem>
-                            <SelectItem value="LP">Luftpistole</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          placeholder="Disziplin wählen"
+                          options={[
+                            { value: "KKG", label: "Kleinkaliber Gewehr" },
+                            { value: "KKP", label: "Kleinkaliber Pistole" },
+                            { value: "LGA", label: "Luftgewehr Auflage" },
+                            { value: "LGS", label: "Luftgewehr Stehend (Freihand)" },
+                            { value: "LP", label: "Luftpistole" }
+                          ]}
+                        />
                     </div>
                     <div className="space-y-1.5">
                         <div className="flex items-center">
@@ -1678,7 +1652,6 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
         </GlobalResponsiveDialog>
       )}
     </div>
-    </MobilePageWrapper>
   );
 }
 

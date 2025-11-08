@@ -14,13 +14,7 @@ import {
   MobileTableHeader as TableHeader,
   MobileTableRow as TableRow,
 } from "@/components/ui/mobile-table";
-import {
-  MobileSelect as Select,
-  MobileSelectContent as SelectContent,
-  MobileSelectItem as SelectItem,
-  MobileSelectTrigger as SelectTrigger,
-  MobileSelectValue as SelectValue,
-} from "@/components/ui/mobile-select";
+import { NativeSelect } from '@/components/ui/native-select';
 import { GlobalResponsiveDialog } from '@/components/ui/global-responsive-dialog-wrapper';
 import {
   AlertDialog,
@@ -481,22 +475,15 @@ export default function AdminTeamsPage() {
               className="ml-2"
             />
           </div>
-          <Select
+          <NativeSelect
             value={selectedSeasonId}
             onValueChange={(value) => { setSelectedSeasonId(value); setSelectedLeagueIdFilter(""); }}
             disabled={allSeasons.length === 0}
-          >
-            <SelectTrigger id="admin-saison-select" className="w-full">
-                <SelectValue placeholder={allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"} />
-            </SelectTrigger>
-            <SelectContent>
-                {allSeasons
-                    .filter(s => s && typeof s.id === 'string' && s.id.trim() !== "")
-                    .map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                {allSeasons.filter(s => s && typeof s.id === 'string' && s.id.trim() !== "").length === 0 &&
-                    <SelectItem value="NO_SEASONS_ADMIN_PLACEHOLDER" disabled>Keine Saisons verfügbar</SelectItem>}
-            </SelectContent>
-          </Select>
+            placeholder={allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"}
+            options={allSeasons
+              .filter(s => s && typeof s.id === 'string' && s.id.trim() !== "")
+              .map(s => ({ value: s.id, label: s.name }))}
+          />
         </div>
         <div className="flex-grow space-y-1.5 w-full sm:w-auto">
           <div className="flex items-center">
@@ -506,25 +493,21 @@ export default function AdminTeamsPage() {
               className="ml-2"
             />
           </div>
-           <Select
+           <NativeSelect
             value={selectedLeagueIdFilter}
             onValueChange={(value) => {
               setSelectedLeagueIdFilter(value === "ALL_LEAGUES" ? "" : value);
             }}
             disabled={!selectedSeasonId || isLoadingTeams}
-           >
-            <SelectTrigger id="admin-liga-filter" className="w-full">
-                <SelectValue placeholder={!selectedSeasonId ? "Saison wählen" : "Alle Ligen"} />
-            </SelectTrigger>
-            <SelectContent>
-                <SelectItem value="ALL_LEAGUES">Alle Ligen anzeigen</SelectItem>
-                <SelectItem value="NOT_ASSIGNED">Nicht zugewiesen</SelectItem>
-                {allLeagues
-                    .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "" && l.seasonId === selectedSeasonId)
-                    .map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)
-                }
-            </SelectContent>
-          </Select>
+            placeholder={!selectedSeasonId ? "Saison wählen" : "Alle Ligen"}
+            options={[
+              { value: "ALL_LEAGUES", label: "Alle Ligen anzeigen" },
+              { value: "NOT_ASSIGNED", label: "Nicht zugewiesen" },
+              ...allLeagues
+                .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "" && l.seasonId === selectedSeasonId)
+                .map(l => ({ value: l.id, label: l.name }))
+            ]}
+          />
         </div>
         <Button
             onClick={handleSearchTeams}
@@ -876,21 +859,18 @@ export default function AdminTeamsPage() {
                             className="ml-2"
                           />
                         </div>
-                        <Select
+                        <NativeSelect
                           value={teamStrength}
                           onValueChange={setTeamStrength}
-                        >
-                          <SelectTrigger id="admin-teamStrengthDialog" className="w-full">
-                            <SelectValue placeholder="Mannschaftsstärke wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="I">I (Erste Mannschaft)</SelectItem>
-                            <SelectItem value="II">II (Zweite Mannschaft)</SelectItem>
-                            <SelectItem value="III">III (Dritte Mannschaft)</SelectItem>
-                            <SelectItem value="IV">IV (Vierte Mannschaft)</SelectItem>
-                            <SelectItem value="V">V (Fünfte Mannschaft)</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          placeholder="Mannschaftsstärke wählen"
+                          options={[
+                            { value: "I", label: "I (Erste Mannschaft)" },
+                            { value: "II", label: "II (Zweite Mannschaft)" },
+                            { value: "III", label: "III (Dritte Mannschaft)" },
+                            { value: "IV", label: "IV (Vierte Mannschaft)" },
+                            { value: "V", label: "V (Fünfte Mannschaft)" }
+                          ]}
+                        />
                     </div>
                     <div className="space-y-1.5">
                         <div className="flex items-center">
@@ -900,22 +880,19 @@ export default function AdminTeamsPage() {
                             className="ml-2"
                           />
                         </div>
-                        <Select
+                        <NativeSelect
                           value={currentTeam?.leagueType || ""}
                           onValueChange={(value) => setCurrentTeam(prev => prev ? {...prev, leagueType: value as FirestoreLeagueSpecificDiscipline} : null)}
                           required
-                        >
-                          <SelectTrigger id="admin-teamDisciplineDialog" className="w-full">
-                            <SelectValue placeholder="Disziplin wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="KKG">Kleinkaliber Gewehr</SelectItem>
-                            <SelectItem value="KKP">Kleinkaliber Pistole</SelectItem>
-                            <SelectItem value="LGA">Luftgewehr Auflage</SelectItem>
-                            <SelectItem value="LGS">Luftgewehr Freihand</SelectItem>
-                            <SelectItem value="LP">Luftpistole</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          placeholder="Disziplin wählen"
+                          options={[
+                            { value: "KKG", label: "Kleinkaliber Gewehr" },
+                            { value: "KKP", label: "Kleinkaliber Pistole" },
+                            { value: "LGA", label: "Luftgewehr Auflage" },
+                            { value: "LGS", label: "Luftgewehr Freihand" },
+                            { value: "LP", label: "Luftpistole" }
+                          ]}
+                        />
                     </div>
                     <div className="space-y-1.5">
                         <div className="flex items-center">
@@ -950,19 +927,12 @@ export default function AdminTeamsPage() {
                     </div>
                     <div className="space-y-1.5">
                         <Label htmlFor="admin-teamClubDialog">Verein</Label>
-                        <Select
+                        <NativeSelect
                           value={currentTeam.clubId || ''}
                           onValueChange={(value) => setCurrentTeam(prev => prev ? {...prev, clubId: value} : null)}
-                        >
-                          <SelectTrigger id="admin-teamClubDialog">
-                            <SelectValue placeholder="Verein wählen" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {allClubsGlobal.map(club => (
-                              <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          placeholder="Verein wählen"
+                          options={allClubsGlobal.map(club => ({ value: club.id, label: club.name }))}
+                        />
                     </div>
                 </div>
                 
@@ -985,23 +955,17 @@ export default function AdminTeamsPage() {
                 
                 <div className="space-y-1.5 mt-3">
                     <Label htmlFor="admin-teamLeagueDialogDisplay">Zugewiesene Liga</Label>
-                    <Select
+                    <NativeSelect
                       value={currentTeam.leagueId || 'NO_LEAGUE'}
                       onValueChange={(value) => setCurrentTeam(prev => prev ? {...prev, leagueId: value === 'NO_LEAGUE' ? null : value} : null)}
-                    >
-                      <SelectTrigger id="admin-teamLeagueDialogDisplay">
-                        <SelectValue placeholder="Liga wählen (optional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="NO_LEAGUE">Nicht zugewiesen</SelectItem>
-                        {allLeagues
+                      placeholder="Liga wählen (optional)"
+                      options={[
+                        { value: "NO_LEAGUE", label: "Nicht zugewiesen" },
+                        ...allLeagues
                           .filter(l => l.seasonId === selectedSeasonId)
-                          .map(league => (
-                            <SelectItem key={league.id} value={league.id}>{league.name}</SelectItem>
-                          ))
-                        }
-                      </SelectContent>
-                    </Select>
+                          .map(league => ({ value: league.id, label: league.name }))
+                      ]}
+                    />
                 </div>
 
                 <div className="pt-4 border-t mt-4">

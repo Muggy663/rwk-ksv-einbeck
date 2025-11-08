@@ -13,13 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { NativeSelect } from '@/components/ui/native-select';
 import {
   Dialog,
   DialogContent,
@@ -634,7 +628,7 @@ export default function AdminShootersPage() {
             </Button>
           </Link>
           <div className="flex flex-col md:flex-row gap-2">
-             <Select
+             <NativeSelect
               value={selectedClubIdFilter}
               onValueChange={(value) => {
                 setSelectedClubIdFilter(value);
@@ -642,18 +636,13 @@ export default function AdminShootersPage() {
                 router.push(newPath, {scroll: false});
               }}
               disabled={allClubsGlobal.length === 0}
-             >
-              <SelectTrigger className="w-full md:w-[220px]" aria-label="Verein filtern">
-                <SelectValue placeholder={allClubsGlobal.length > 0 ? "Verein filtern" : "Keine Vereine"}/>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_CLUBS_FILTER_VALUE}>Alle Vereine</SelectItem>
-                {allClubsGlobal.filter(c => c && typeof c.id === 'string' && c.id.trim() !== "").map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                {allClubsGlobal.filter(c => c && typeof c.id === 'string' && c.id.trim() !== "").length === 0 &&
-                  <SelectItem value="NO_CLUBS_PLACEHOLDER_ADMIN_SHOOTERS" disabled>Keine Vereine verfügbar</SelectItem>
-                }
-              </SelectContent>
-            </Select>
+              placeholder={allClubsGlobal.length > 0 ? "Verein filtern" : "Keine Vereine"}
+              options={[
+                { value: ALL_CLUBS_FILTER_VALUE, label: 'Alle Vereine' },
+                ...allClubsGlobal.filter(c => c && typeof c.id === 'string' && c.id.trim() !== "").map(c => ({ value: c.id, label: c.name }))
+              ]}
+              className="w-full md:w-[220px]"
+             />
             <Button onClick={handleAddNewShooter} disabled={allClubsGlobal.length === 0} className="w-full md:w-auto">
               <PlusCircle className="mr-2 h-5 w-5" /> Neuen Schützen anlegen
             </Button>
@@ -872,30 +861,25 @@ export default function AdminShootersPage() {
                 
                 <div className="space-y-1.5">
                   <Label htmlFor="clubIdFormShooterAdmin">Verein</Label>
-                  <Select 
+                  <NativeSelect
                     value={currentShooter.clubId || ''} 
                     onValueChange={(value) => handleFormInputChange('clubId', value)} 
-                    required 
                     disabled={allClubsGlobal.length === 0 || formMode === 'edit'}
-                  >
-                    <SelectTrigger id="clubIdFormShooterAdmin" aria-label="Verein auswählen">
-                        <SelectValue placeholder={allClubsGlobal.length === 0 ? "Keine Vereine" : "Verein wählen"}/>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allClubsGlobal.filter(c => c && typeof c.id === 'string' && c.id.trim() !== "").map(club => <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>)}
-                       {allClubsGlobal.filter(c => c && typeof c.id === 'string' && c.id.trim() !== "").length === 0 &&
-                         <SelectItem value="NO_CLUBS_DIALOG_ADMIN_SHOOTERS" disabled>Keine Vereine verfügbar</SelectItem>
-                       }
-                    </SelectContent>
-                  </Select>
+                    placeholder={allClubsGlobal.length === 0 ? "Keine Vereine" : "Verein wählen"}
+                    options={allClubsGlobal.filter(c => c && typeof c.id === 'string' && c.id.trim() !== "").map(club => ({ value: club.id, label: club.name }))}
+                  />
                    {formMode === 'edit' && currentShooter.clubId && <p className="text-xs text-muted-foreground pt-1">Der Verein eines bestehenden Schützen kann hier nicht geändert werden.</p>}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="genderFormDialogShooterAdmin">Geschlecht</Label>
-                  <Select value={currentShooter.gender || 'male'} onValueChange={(value) => handleFormInputChange('gender', value as 'male' | 'female')}>
-                    <SelectTrigger id="genderFormDialogShooterAdmin" aria-label="Geschlecht auswählen"><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="male">Männlich</SelectItem><SelectItem value="female">Weiblich</SelectItem></SelectContent>
-                  </Select>
+                  <NativeSelect
+                    value={currentShooter.gender || 'male'}
+                    onValueChange={(value) => handleFormInputChange('gender', value as 'male' | 'female')}
+                    options={[
+                      { value: 'male', label: 'Männlich' },
+                      { value: 'female', label: 'Weiblich' }
+                    ]}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="birthYearFormDialogShooterAdmin">Geburtsjahr (für Altersklassen)</Label>

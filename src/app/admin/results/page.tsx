@@ -4,13 +4,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckSquare, Save, PlusCircle, Trash2, Loader, AlertCircle, Edit, ToggleLeft, ToggleRight, CheckCircle, Camera, Upload, Zap, AlertTriangle } from 'lucide-react';
 import { HandzettelOCR, type OCRMatchResult } from '@/components/ui/handzettel-ocr-simple';
+import { NativeCamera } from '@/components/ui/native-camera';
 
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { BackButton } from '@/components/ui/back-button';
@@ -83,6 +84,7 @@ function LegacyAdminResultsPage() {
   const [showOCR, setShowOCR] = useState(false);
   const [handzettelFiles, setHandzettelFiles] = useState<File[]>([]);
   const [attachOnly, setAttachOnly] = useState(false);
+  const [showNativeCamera, setShowNativeCamera] = useState(false);
 
   const fetchMasterData = useCallback(async () => {
 
@@ -821,26 +823,50 @@ Die Handzettel sind als Anhang beigefügt.`);
                       </p>
                     </div>
                     
-                    <Input 
-                      type="file" 
-                      accept="image/*" 
-                      capture="environment"
-                      multiple
-                      onChange={async (e) => {
-                        if (e.target.files && e.target.files.length > 0) {
-                          const files = Array.from(e.target.files);
-                          setHandzettelFiles(files);
-                          
-                          // Datei nur vormerken, OCR muss manuell gestartet werden
-                          toast({
-                            title: "📎 Handzettel vorgemerkt",
-                            description: `${files.length} Datei(en) ausgewählt. ${!attachOnly ? 'Klicke "🤖 Automatisch auslesen" um Computer die Zahlen erkennen zu lassen.' : 'Wird ohne automatisches Auslesen versendet.'}`,
-                            className: "border-blue-500 bg-blue-50"
-                          });
-                        }
-                      }}
-                      className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
-                    />
+                    <div className="space-y-3">
+                      {/* Native Camera Button */}
+                      <Button
+                        onClick={() => setShowNativeCamera(true)}
+                        className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white p-4 h-auto"
+                        size="lg"
+                      >
+                        <Camera className="mr-3 h-6 w-6" />
+                        <div className="text-left">
+                          <div className="font-semibold">📸 Kamera öffnen</div>
+                          <div className="text-xs opacity-90">Live-Vorschau mit Handzettel-Rahmen</div>
+                        </div>
+                      </Button>
+                      
+                      {/* File Input Fallback */}
+                      <div className="relative">
+                        <Input 
+                          type="file" 
+                          accept="image/*" 
+                          capture="environment"
+                          multiple
+                          onChange={async (e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              const files = Array.from(e.target.files);
+                              setHandzettelFiles(files);
+                              
+                              // Datei nur vormerken, OCR muss manuell gestartet werden
+                              toast({
+                                title: "📎 Handzettel vorgemerkt",
+                                description: `${files.length} Datei(en) ausgewählt. ${!attachOnly ? 'Klicke "🤖 Automatisch auslesen" um Computer die Zahlen erkennen zu lassen.' : 'Wird ohne automatisches Auslesen versendet.'}`,
+                                className: "border-blue-500 bg-blue-50"
+                              });
+                            }
+                          }}
+                          className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="text-center">
+                            <Upload className="h-8 w-8 mx-auto mb-2 text-blue-500" />
+                            <p className="text-sm text-blue-600">oder Datei auswählen</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     
                     {handzettelFiles.length > 0 && !attachOnly && (
                       <Button
@@ -891,9 +917,10 @@ Die Handzettel sind als Anhang beigefügt.`);
                   </div>
                   
                   <div className="mt-2 text-xs text-blue-700 dark:text-blue-300 space-y-1">
-                    <p>📱 <strong>Handy:</strong> Checkbox → Foto → Computer liest aus oder nur anhängen</p>
-                    <p>💻 <strong>PC:</strong> Mehrere Dateien möglich</p>
-                    <p>✅ <strong>Formate:</strong> JPG, PNG (PDF folgt)</p>
+                    <p>📸 <strong>Kamera:</strong> Live-Vorschau mit Handzettel-Rahmen + Auto-Focus</p>
+                    <p>📱 <strong>Handy:</strong> Native Kamera-App mit optimierter Bildqualität</p>
+                    <p>💻 <strong>PC:</strong> Webcam oder Datei-Upload möglich</p>
+                    <p>✅ <strong>Formate:</strong> JPG, PNG (automatisch optimiert für OCR)</p>
                     <p>📎 <strong>Nur anhängen:</strong> Checkbox aktivieren für Upload ohne automatisches Auslesen</p>
                   </div>
                   
@@ -982,51 +1009,66 @@ Die Handzettel sind als Anhang beigefügt.`);
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <div className="space-y-2">
               <Label htmlFor="season">Saison (nur laufende)</Label>
-              <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={availableRunningSeasons.length === 0}>
-                <SelectTrigger id="season"><SelectValue placeholder={availableRunningSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"} /></SelectTrigger>
-                <SelectContent>{availableRunningSeasons.filter(s => s.id).map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedSeasonId}
+                onValueChange={setSelectedSeasonId}
+                disabled={availableRunningSeasons.length === 0}
+                placeholder={availableRunningSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"}
+                options={availableRunningSeasons.filter(s => s.id).map(s => ({ value: s.id, label: s.name }))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="league">Liga</Label>
-              <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={!selectedSeasonId || isLoadingLeagues || availableLeaguesForSeason.length === 0}>
-                <SelectTrigger id="league"><SelectValue placeholder={isLoadingLeagues ? "Lade Ligen..." : (availableLeaguesForSeason.length === 0 && selectedSeasonId ? "Keine Ligen für Saison" : "Liga wählen")} /></SelectTrigger>
-                <SelectContent>{availableLeaguesForSeason.filter(l => l.id).map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedLeagueId}
+                onValueChange={setSelectedLeagueId}
+                disabled={!selectedSeasonId || isLoadingLeagues || availableLeaguesForSeason.length === 0}
+                placeholder={isLoadingLeagues ? "Lade Ligen..." : (availableLeaguesForSeason.length === 0 && selectedSeasonId ? "Keine Ligen für Saison" : "Liga wählen")}
+                options={availableLeaguesForSeason.filter(l => l.id).map(l => ({ value: l.id, label: l.name }))}
+              />
             </div>
             <div className="space-y-2"> {/* Durchgang vor Mannschaft */}
               <Label htmlFor="round">Durchgang</Label>
-              <Select value={selectedRound} onValueChange={(value) => { setSelectedRound(value);}} disabled={!selectedLeagueId}>
-                <SelectTrigger id="round"><SelectValue placeholder="Durchgang wählen" /></SelectTrigger>
-                <SelectContent>{[...Array(numRoundsForSelect)].map((_, i) => (<SelectItem key={i + 1} value={(i + 1).toString()}>Durchgang {i + 1}</SelectItem>))}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedRound}
+                onValueChange={setSelectedRound}
+                disabled={!selectedLeagueId}
+                placeholder="Durchgang wählen"
+                options={[...Array(numRoundsForSelect)].map((_, i) => ({ value: (i + 1).toString(), label: `Durchgang ${i + 1}` }))}
+              />
             </div>
              <div className="space-y-2"> {/* Mannschaft nach Durchgang */}
               <Label htmlFor="team">Mannschaft</Label>
-              <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={!selectedLeagueId || isLoadingTeams || (!editMode && !selectedRound) || allTeamsInSelectedLeague.length === 0}>
-                <SelectTrigger id="team"><SelectValue placeholder={isLoadingTeams ? "Lade Teams..." : (!selectedRound && !editMode ? "Durchgang wählen" : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId ? (editMode ? "Keine Teams" : "Alle Teams vollständig erfasst") : "Mannschaft wählen"))} /></SelectTrigger>
-                <SelectContent>{allTeamsInSelectedLeague.filter(t => t.id).map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedTeamId}
+                onValueChange={setSelectedTeamId}
+                disabled={!selectedLeagueId || isLoadingTeams || (!editMode && !selectedRound) || allTeamsInSelectedLeague.length === 0}
+                placeholder={isLoadingTeams ? "Lade Teams..." : (!selectedRound && !editMode ? "Durchgang wählen" : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId ? (editMode ? "Keine Teams" : "Alle Teams vollständig erfasst") : "Mannschaft wählen"))}
+                options={allTeamsInSelectedLeague.filter(t => t.id).map(t => ({ value: t.id, label: t.name }))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="shooter">Schütze {editMode && selectedShooterId && existingScoresForTeamAndRound.find(es => es.shooterId === selectedShooterId && es.durchgang === parseInt(selectedRound, 10)) && <span className="text-sm text-amber-600">(wird überschrieben)</span>}</Label>
-              <Select value={selectedShooterId} onValueChange={(value) => {
-                setSelectedShooterId(value);
-                // Im Bearbeitungsmodus das existierende Ergebnis vorausfüllen
-                if (editMode && selectedRound) {
-                  const existingScore = existingScoresForTeamAndRound.find(es => es.shooterId === value && es.durchgang === parseInt(selectedRound, 10));
-                  if (existingScore) {
-                    setScore(existingScore.totalRinge.toString());
-                    setResultType(existingScore.scoreInputType || 'regular');
-                  } else {
-                    setScore('');
-                    setResultType('regular');
+              <NativeSelect
+                value={selectedShooterId}
+                onValueChange={(value) => {
+                  setSelectedShooterId(value);
+                  // Im Bearbeitungsmodus das existierende Ergebnis vorausfüllen
+                  if (editMode && selectedRound) {
+                    const existingScore = existingScoresForTeamAndRound.find(es => es.shooterId === value && es.durchgang === parseInt(selectedRound, 10));
+                    if (existingScore) {
+                      setScore(existingScore.totalRinge.toString());
+                      setResultType(existingScore.scoreInputType || 'regular');
+                    } else {
+                      setScore('');
+                      setResultType('regular');
+                    }
                   }
-                }
-              }} disabled={!selectedTeamId || isLoadingShooters || isLoadingExistingScores || (availableShootersForDropdown.length === 0 && !!selectedTeamId && (!!selectedRound || editMode))}>
-                <SelectTrigger id="shooter"><SelectValue placeholder={isLoadingShooters || isLoadingExistingScores ? "Lade Schützen..." : (availableShootersForDropdown.length === 0 && !!selectedTeamId && (!!selectedRound || editMode) ? (editMode ? "Keine Schützen" : "Alle erfasst/keine") : "Schütze wählen")} /></SelectTrigger>
-                <SelectContent>{availableShootersForDropdown.filter(sh => sh.id).map(sh => <SelectItem key={sh.id} value={sh.id}>{sh.name}</SelectItem>)}</SelectContent>
-              </Select>
+                }}
+                disabled={!selectedTeamId || isLoadingShooters || isLoadingExistingScores || (availableShootersForDropdown.length === 0 && !!selectedTeamId && (!!selectedRound || editMode))}
+                placeholder={isLoadingShooters || isLoadingExistingScores ? "Lade Schützen..." : (availableShootersForDropdown.length === 0 && !!selectedTeamId && (!!selectedRound || editMode) ? (editMode ? "Keine Schützen" : "Alle erfasst/keine") : "Schütze wählen")}
+                options={availableShootersForDropdown.filter(sh => sh.id).map(sh => ({ value: sh.id, label: sh.name }))}
+              />
             </div>
             <div className="space-y-2">
               <div className="flex items-center">
@@ -1298,6 +1340,25 @@ Die Handzettel sind als Anhang beigefügt.`);
        {pendingScores.length === 0 && !isLoadingMasterData && (
          <div className="mt-8 p-6 text-center text-muted-foreground bg-secondary/30 rounded-md"><CheckSquare className="mx-auto h-10 w-10 mb-3 text-primary/70" /><p className="text-base">Noch keine Ergebnisse zur Speicherung vorgemerkt.</p></div>
        )}
+      
+      {/* Native Camera Modal */}
+      <NativeCamera
+        isOpen={showNativeCamera}
+        onCapture={(file) => {
+          setHandzettelFiles([file]);
+          toast({
+            title: "📸 Foto aufgenommen!",
+            description: `Handzettel erfasst. ${!attachOnly ? 'OCR wird automatisch gestartet.' : 'Wird ohne automatisches Auslesen versendet.'}`,
+            className: "border-green-500 bg-green-50"
+          });
+          
+          // Auto-start OCR if not in attach-only mode
+          if (!attachOnly) {
+            setTimeout(() => setShowOCR(true), 500);
+          }
+        }}
+        onClose={() => setShowNativeCamera(false)}
+      />
     </div>
   );
 }

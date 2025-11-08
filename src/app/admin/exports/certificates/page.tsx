@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Award, Loader2, ArrowLeft } from 'lucide-react';
@@ -582,42 +582,29 @@ export default function CertificatesPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="season-select">Saison</Label>
-              <Select
+              <NativeSelect
                 value={selectedSeason}
                 onValueChange={setSelectedSeason}
                 disabled={seasons.length === 0 || loading}
-              >
-                <SelectTrigger id="season-select" className="w-full">
-                  <SelectValue placeholder="Saison auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {seasons.map(season => (
-                    <SelectItem key={season.id} value={season.id}>
-                      {season.name.replace('RWK ', '').replace('Kleinkaliber ', '').replace('Luftdruck ', '')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Saison auswählen"
+                className="w-full"
+                options={seasons.map(season => ({
+                  value: season.id,
+                  label: season.name.replace('RWK ', '').replace('Kleinkaliber ', '').replace('Luftdruck ', '')
+                }))}
+              />
             </div>
             
             <div>
               <Label htmlFor="league-select">Liga</Label>
-              <Select
+              <NativeSelect
                 value={selectedLeague}
                 onValueChange={setSelectedLeague}
                 disabled={leagues.length === 0 || loading}
-              >
-                <SelectTrigger id="league-select" className="w-full">
-                  <SelectValue placeholder="Liga auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {leagues.map(league => (
-                    <SelectItem key={league.id} value={league.id}>
-                      {league.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Liga auswählen"
+                className="w-full"
+                options={leagues.map(league => ({ value: league.id, label: league.name }))}
+              />
             </div>
           </div>
 
@@ -639,42 +626,30 @@ export default function CertificatesPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="num-shooters">Anzahl Top-Schützen (0 = keine)</Label>
-                <Select
+                <NativeSelect
                   value={numTopShooters.toString()}
                   onValueChange={(value) => setNumTopShooters(parseInt(value))}
                   disabled={loading}
-                >
-                  <SelectTrigger id="num-shooters" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                      <SelectItem key={num} value={num.toString()}>
-                        {num === 0 ? 'Keine Schützen' : `${num} Schütze${num > 1 ? 'n' : ''}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  className="w-full"
+                  options={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => ({
+                    value: num.toString(),
+                    label: num === 0 ? 'Keine Schützen' : `${num} Schütze${num > 1 ? 'n' : ''}`
+                  }))}
+                />
               </div>
               
               <div>
                 <Label htmlFor="num-teams">Anzahl Top-Teams (0 = keine)</Label>
-                <Select
+                <NativeSelect
                   value={numTopTeams.toString()}
                   onValueChange={(value) => setNumTopTeams(parseInt(value))}
                   disabled={loading}
-                >
-                  <SelectTrigger id="num-teams" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[0, 1, 2, 3, 4, 5].map(num => (
-                      <SelectItem key={num} value={num.toString()}>
-                        {num === 0 ? 'Keine Teams' : `${num} Team${num > 1 ? 's' : ''}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  className="w-full"
+                  options={[0, 1, 2, 3, 4, 5].map(num => ({
+                    value: num.toString(),
+                    label: num === 0 ? 'Keine Teams' : `${num} Team${num > 1 ? 's' : ''}`
+                  }))}
+                />
               </div>
             </div>
             
@@ -735,22 +710,17 @@ export default function CertificatesPage() {
           </div>
           <div>
             <Label htmlFor="season-select-overall">Saison</Label>
-            <Select
+            <NativeSelect
               value={selectedSeason}
               onValueChange={setSelectedSeason}
               disabled={seasons.length === 0 || loading}
-            >
-              <SelectTrigger id="season-select-overall" className="w-full">
-                <SelectValue placeholder="Saison auswählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {seasons.map(season => (
-                  <SelectItem key={season.id} value={season.id}>
-                    {season.name.replace('RWK ', '').replace('Kleinkaliber ', '').replace('Luftdruck ', '')}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder="Saison auswählen"
+              className="w-full"
+              options={seasons.map(season => ({
+                value: season.id,
+                label: season.name.replace('RWK ', '').replace('Kleinkaliber ', '').replace('Luftdruck ', '')
+              }))}
+            />
           </div>
 
           <div className="flex items-center space-x-2">

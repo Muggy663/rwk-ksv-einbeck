@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -379,58 +379,53 @@ export default function AdminEditResultsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="filterSeason">Saison (Laufend/Abgeschlossen)</Label>
-              <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={isLoadingFilters || allSeasons.length === 0}>
-                <SelectTrigger id="filterSeason">
-                    <SelectValue placeholder={isLoadingFilters ? "Lade Saisons..." : (allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {allSeasons.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedSeasonId}
+                onValueChange={setSelectedSeasonId}
+                disabled={isLoadingFilters || allSeasons.length === 0}
+                placeholder={isLoadingFilters ? "Lade Saisons..." : (allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen")}
+                options={allSeasons.map(s => ({ value: s.id, label: s.name }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="filterLeague">Liga</Label>
-              <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={!selectedSeasonId || isLoading || availableLeagues.length === 0}>
-                <SelectTrigger id="filterLeague">
-                    <SelectValue placeholder={!selectedSeasonId ? "Saison wählen" : (isLoading ? "Lade Ligen..." : (availableLeagues.length === 0 ? "Keine Ligen" : "Liga wählen"))} />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableLeagues.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedLeagueId}
+                onValueChange={setSelectedLeagueId}
+                disabled={!selectedSeasonId || isLoading || availableLeagues.length === 0}
+                placeholder={!selectedSeasonId ? "Saison wählen" : (isLoading ? "Lade Ligen..." : (availableLeagues.length === 0 ? "Keine Ligen" : "Liga wählen"))}
+                options={availableLeagues.map(l => ({ value: l.id, label: l.name }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="filterTeam">Mannschaft</Label>
-              <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={!selectedLeagueId || isLoading || availableTeams.length === 0}>
-                <SelectTrigger id="filterTeam">
-                    <SelectValue placeholder={!selectedLeagueId ? "Liga wählen" : (isLoading ? "Lade Teams..." : (availableTeams.length === 0 ? "Keine Teams" : "Mannschaft wählen"))} />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableTeams.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedTeamId}
+                onValueChange={setSelectedTeamId}
+                disabled={!selectedLeagueId || isLoading || availableTeams.length === 0}
+                placeholder={!selectedLeagueId ? "Liga wählen" : (isLoading ? "Lade Teams..." : (availableTeams.length === 0 ? "Keine Teams" : "Mannschaft wählen"))}
+                options={availableTeams.map(t => ({ value: t.id, label: t.name }))}
+              />
             </div>
              <div className="space-y-1.5">
               <Label htmlFor="filterShooter">Schütze</Label>
-              <Select value={selectedShooterId} onValueChange={setSelectedShooterId} disabled={!selectedTeamId || isLoading || availableShooters.length === 0}>
-                <SelectTrigger id="filterShooter">
-                    <SelectValue placeholder={!selectedTeamId ? "Team wählen" : (isLoading ? "Lade Schützen..." : (availableShooters.length === 0 ? "Keine Schützen" : "Schütze wählen"))} />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableShooters.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedShooterId}
+                onValueChange={setSelectedShooterId}
+                disabled={!selectedTeamId || isLoading || availableShooters.length === 0}
+                placeholder={!selectedTeamId ? "Team wählen" : (isLoading ? "Lade Schützen..." : (availableShooters.length === 0 ? "Keine Schützen" : "Schütze wählen"))}
+                options={availableShooters.map(s => ({ value: s.id, label: s.name }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="filterRound">Durchgang</Label>
-              <Select value={selectedRound} onValueChange={setSelectedRound} disabled={!selectedSeasonId}>
-                <SelectTrigger id="filterRound"><SelectValue placeholder="Durchgang wählen" /></SelectTrigger>
-                <SelectContent>
-                  {[...Array(numRoundsForSelect)].map((_, i) => (
-                    <SelectItem key={i + 1} value={(i + 1).toString()}>Durchgang {i + 1}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedRound}
+                onValueChange={setSelectedRound}
+                disabled={!selectedSeasonId}
+                placeholder="Durchgang wählen"
+                options={[...Array(numRoundsForSelect)].map((_, i) => ({ value: (i + 1).toString(), label: `Durchgang ${i + 1}` }))}
+              />
             </div>
           </div>
           <div className="flex justify-end">
@@ -540,19 +535,12 @@ export default function AdminEditResultsPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="editRoundValue">Durchgang</Label>
-                  <Select 
-                    value={editFormRound} 
+                  <NativeSelect
+                    value={editFormRound}
                     onValueChange={setEditFormRound}
-                  >
-                    <SelectTrigger id="editRoundValue">
-                      <SelectValue placeholder="Durchgang wählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[...Array(numRoundsForSelect)].map((_, i) => (
-                        <SelectItem key={i + 1} value={(i + 1).toString()}>Durchgang {i + 1}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Durchgang wählen"
+                    options={[...Array(numRoundsForSelect)].map((_, i) => ({ value: (i + 1).toString(), label: `Durchgang ${i + 1}` }))}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Ergebnistyp</Label>

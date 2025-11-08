@@ -4,13 +4,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  MobileSelect as Select,
-  MobileSelectContent as SelectContent,
-  MobileSelectItem as SelectItem,
-  MobileSelectTrigger as SelectTrigger,
-  MobileSelectValue as SelectValue,
-} from "@/components/ui/mobile-select";
+import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -1421,52 +1415,57 @@ Die Handzettel sind als Anhang beigefügt.`);
                   return (
                     <div 
                       key={entry.tempId} 
-                      className={`p-2 rounded border ${rowColor} mobile-cache-card`}
+                      className={`p-3 rounded border ${rowColor} mobile-cache-card`}
                     >
-                      <div className="flex items-center justify-between mb-2 min-w-0">
-                        <div className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden pr-2">
-                          {entry.isOCRGenerated && (
-                            <Zap className={`h-3 w-3 flex-shrink-0 ${
-                              confidence >= 0.8 ? 'text-green-500' : 
-                              confidence >= 0.6 ? 'text-yellow-500' : 
-                              'text-red-500'
-                            }`} />
-                          )}
-                          <span className={`${textColor} text-xs font-medium mobile-cache-name`}>
-                            {displayName}
-                          </span>
+                      <div className="space-y-2">
+                        {/* Schützenname und Löschen-Button */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {entry.isOCRGenerated && (
+                              <Zap className={`h-3 w-3 flex-shrink-0 ${
+                                confidence >= 0.8 ? 'text-green-500' : 
+                                confidence >= 0.6 ? 'text-yellow-500' : 
+                                'text-red-500'
+                              }`} />
+                            )}
+                            <span className={`${textColor} text-sm font-medium truncate`}>
+                              {displayName}
+                            </span>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => handleRemoveFromList(entry.tempId)} 
+                            className="text-destructive hover:text-destructive/80 h-6 w-6 p-0 flex-shrink-0" 
+                            disabled={isSubmittingScores}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleRemoveFromList(entry.tempId)} 
-                          className="text-destructive hover:text-destructive/80 h-6 w-6 p-0 flex-shrink-0" 
-                          disabled={isSubmittingScores}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between min-w-0">
-                        <span className="text-xs text-muted-foreground flex-shrink-0">DG {entry.durchgang}</span>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <Input 
-                            type="number" 
-                            value={entry.totalRinge ?? ''}
-                            onChange={(e) => {
-                              const newScore = e.target.value === '' ? 0 : parseInt(e.target.value);
-                              setPendingScores(prev => 
-                                prev.map(p => 
-                                  p.tempId === entry.tempId 
-                                    ? { ...p, totalRinge: newScore }
-                                    : p
-                                )
-                              );
-                            }}
-                            className="mobile-cache-input text-center text-xs h-7"
-                            min="0"
-                            max="400"
-                          />
-                          <span className="text-xs text-muted-foreground flex-shrink-0">R</span>
+                        
+                        {/* Durchgang und Ringe in separater Zeile */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Durchgang {entry.durchgang}</span>
+                          <div className="flex items-center gap-2">
+                            <Input 
+                              type="number" 
+                              value={entry.totalRinge ?? ''}
+                              onChange={(e) => {
+                                const newScore = e.target.value === '' ? 0 : parseInt(e.target.value);
+                                setPendingScores(prev => 
+                                  prev.map(p => 
+                                    p.tempId === entry.tempId 
+                                      ? { ...p, totalRinge: newScore }
+                                      : p
+                                  )
+                                );
+                              }}
+                              className="w-16 text-center text-sm h-8"
+                              min="0"
+                              max="400"
+                            />
+                            <span className="text-sm text-muted-foreground">Ringe</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1583,10 +1582,13 @@ Die Handzettel sind als Anhang beigefügt.`);
                   className="ml-2"
                 />
               </div>
-              <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={availableRunningSeasons.length === 0}>
-                <SelectTrigger id="vver-season"><SelectValue placeholder={availableRunningSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"} /></SelectTrigger>
-                <SelectContent>{availableRunningSeasons.filter(s => s.id).map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedSeasonId}
+                onValueChange={setSelectedSeasonId}
+                disabled={availableRunningSeasons.length === 0}
+                placeholder={availableRunningSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"}
+                options={availableRunningSeasons.filter(s => s.id).map(s => ({ value: s.id, label: s.name }))}
+              />
             </div>
             <div className="space-y-2">
               <div className="flex items-center">
@@ -1596,10 +1598,13 @@ Die Handzettel sind als Anhang beigefügt.`);
                   className="ml-2"
                 />
               </div>
-              <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={!selectedSeasonId || isLoadingLeagues || leaguesForActiveClubAndSeason.length === 0}>
-                <SelectTrigger id="vver-league"><SelectValue placeholder={isLoadingLeagues ? "Lade Ligen..." : (leaguesForActiveClubAndSeason.length === 0 && selectedSeasonId ? "Keine Ligen für Verein/Saison" : "Liga wählen")} /></SelectTrigger>
-                <SelectContent>{leaguesForActiveClubAndSeason.filter(l=>l.id).map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedLeagueId}
+                onValueChange={setSelectedLeagueId}
+                disabled={!selectedSeasonId || isLoadingLeagues || leaguesForActiveClubAndSeason.length === 0}
+                placeholder={isLoadingLeagues ? "Lade Ligen..." : (leaguesForActiveClubAndSeason.length === 0 && selectedSeasonId ? "Keine Ligen für Verein/Saison" : "Liga wählen")}
+                options={leaguesForActiveClubAndSeason.filter(l=>l.id).map(l => ({ value: l.id, label: l.name }))}
+              />
             </div>
             <div className="space-y-2"> {/* Durchgang vor Mannschaft */}
               <div className="flex items-center">
@@ -1609,10 +1614,13 @@ Die Handzettel sind als Anhang beigefügt.`);
                   className="ml-2"
                 />
               </div>
-              <Select value={selectedRound} onValueChange={(value) => { setSelectedRound(value);}} disabled={!selectedLeagueId}>
-                <SelectTrigger id="vver-round"><SelectValue placeholder="Durchgang wählen" /></SelectTrigger>
-                <SelectContent>{[...Array(numRoundsForSelect)].map((_, i) => (<SelectItem key={i + 1} value={(i + 1).toString()}>Durchgang {i + 1}</SelectItem>))}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedRound}
+                onValueChange={setSelectedRound}
+                disabled={!selectedLeagueId}
+                placeholder="Durchgang wählen"
+                options={[...Array(numRoundsForSelect)].map((_, i) => ({ value: (i + 1).toString(), label: `Durchgang ${i + 1}` }))}
+              />
             </div>
              <div className="space-y-2"> {/* Mannschaft nach Durchgang */}
               <div className="flex items-center">
@@ -1622,30 +1630,27 @@ Die Handzettel sind als Anhang beigefügt.`);
                   className="ml-2"
                 />
               </div>
-              <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={!selectedLeagueId || isLoadingTeams || !selectedRound || allTeamsInSelectedLeague.length === 0}>
-                <SelectTrigger id="vver-team">
-                  <SelectValue placeholder={
-                    isLoadingTeams 
-                      ? "Lade Teams..." 
-                      : (!selectedRound 
-                          ? "Durchgang wählen" 
-                          : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId && selectedRound 
-                              ? "✓ Alle Teams vollständig erfasst" 
-                              : "Mannschaft wählen"))
-                  } />
-                </SelectTrigger>
-                <SelectContent>
-                  {allTeamsInSelectedLeague.length === 0 && selectedLeagueId && selectedRound ? (
-                    <SelectItem value="no-teams-available" disabled>
-                      Alle Ergebnisse für diesen Durchgang erfasst
-                    </SelectItem>
-                  ) : (
-                    allTeamsInSelectedLeague.filter(t=>t.id).map(t => 
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    )
-                  )}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedTeamId}
+                onValueChange={setSelectedTeamId}
+                disabled={!selectedLeagueId || isLoadingTeams || !selectedRound || allTeamsInSelectedLeague.length === 0}
+                placeholder={
+                  isLoadingTeams 
+                    ? "Lade Teams..." 
+                    : (!selectedRound 
+                        ? "Durchgang wählen" 
+                        : (allTeamsInSelectedLeague.length === 0 && selectedLeagueId && selectedRound 
+                            ? "✓ Alle Teams vollständig erfasst" 
+                            : "Mannschaft wählen"))
+                }
+                options={
+                  allTeamsInSelectedLeague.length === 0 && selectedLeagueId && selectedRound ? [
+                    { value: "no-teams-available", label: "Alle Ergebnisse für diesen Durchgang erfasst", disabled: true }
+                  ] : (
+                    allTeamsInSelectedLeague.filter(t=>t.id).map(t => ({ value: t.id, label: t.name }))
+                  )
+                }
+              />
             </div>
             <div className="space-y-2">
               <div className="flex items-center">
@@ -1655,36 +1660,28 @@ Die Handzettel sind als Anhang beigefügt.`);
                   className="ml-2"
                 />
               </div>
-              <Select value={selectedShooterId} onValueChange={setSelectedShooterId} disabled={!selectedTeamId || isLoadingShooters || isLoadingExistingScores}>
-                <SelectTrigger id="vver-shooter">
-                  <SelectValue placeholder={
-                    isLoadingShooters || isLoadingExistingScores 
-                      ? "Lade Schützen..." 
-                      : (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound 
-                          ? "Alle Ergebnisse erfasst" 
-                          : "Schütze wählen")
-                  } />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound ? (
-                    <SelectItem value="no-shooters-available" disabled>
-                      Alle Ergebnisse für diesen Durchgang erfasst
-                    </SelectItem>
-                  ) : (
+              <NativeSelect
+                value={selectedShooterId}
+                onValueChange={setSelectedShooterId}
+                disabled={!selectedTeamId || isLoadingShooters || isLoadingExistingScores}
+                placeholder={
+                  isLoadingShooters || isLoadingExistingScores 
+                    ? "Lade Schützen..." 
+                    : (availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound 
+                        ? "Alle Ergebnisse erfasst" 
+                        : "Schütze wählen")
+                }
+                options={
+                  availableShootersForDropdown.length === 0 && !!selectedTeamId && !!selectedRound ? [
+                    { value: "no-shooters-available", label: "Alle Ergebnisse für diesen Durchgang erfasst", disabled: true }
+                  ] : (
                     availableShootersForDropdown
                       .filter(sh => sh.id)
                       .sort((a, b) => a.name.localeCompare(b.name))
-                      .map(sh => (
-                        <SelectItem 
-                          key={sh.id} 
-                          value={sh.id}
-                        >
-                          {sh.name} ⚠️
-                        </SelectItem>
-                      ))
-                  )}
-                </SelectContent>
-              </Select>
+                      .map(sh => ({ value: sh.id, label: `${sh.name} ⚠️` }))
+                  )
+                }
+              />
             </div>
             <div className="space-y-2">
               <div className="flex items-center">
@@ -1699,7 +1696,7 @@ Die Handzettel sind als Anhang beigefügt.`);
                 type="number" 
                 value={score} 
                 style={{ MozAppearance: 'textfield' }}
-                className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full text-lg h-12 text-center font-medium [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 onChange={async (e) => {
                   const value = e.target.value;
                   setScore(value);

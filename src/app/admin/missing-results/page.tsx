@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -244,37 +244,28 @@ export default function MissingResultsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-1 block">Saison</label>
-              <Select value={selectedSeason} onValueChange={setSelectedSeason}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Saison auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {seasons.map(season => (
-                    <SelectItem key={season.id} value={season.id}>
-                      {season.competitionYear} - {season.name} ({season.type})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedSeason}
+                onValueChange={setSelectedSeason}
+                placeholder="Saison auswählen"
+                options={seasons.map(season => ({
+                  value: season.id,
+                  label: `${season.competitionYear} - ${season.name} (${season.type})`
+                }))}
+              />
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Liga</label>
-              <Select 
-                value={selectedLeague} 
+              <NativeSelect
+                value={selectedLeague}
                 onValueChange={setSelectedLeague}
                 disabled={!selectedSeason || leagues.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={!selectedSeason ? "Erst Saison auswählen" : "Liga auswählen"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {leagues.map(league => (
-                    <SelectItem key={league.id} value={league.id}>
-                      {league.name} ({league.type})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder={!selectedSeason ? "Erst Saison auswählen" : "Liga auswählen"}
+                options={leagues.map(league => ({
+                  value: league.id,
+                  label: `${league.name} (${league.type})`
+                }))}
+              />
             </div>
           </div>
           

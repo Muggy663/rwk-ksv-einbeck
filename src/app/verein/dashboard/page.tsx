@@ -129,12 +129,10 @@ export default function VereinDashboardPage() {
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
-          <div className="flex items-center mb-4">
-            <BackButton className="mr-2" fallbackHref="/dashboard-auswahl" />
-            <h1 className="text-4xl font-bold text-primary">Rundenwettkampf</h1>
-          </div>
+          <BackButton className="mb-4" fallbackHref="/dashboard-auswahl" />
+          <h1 className="text-2xl md:text-3xl font-bold text-primary mb-4">RWK Dashboard</h1>
           {(currentClubId || assignedClubId) && (
-            <p className="text-muted-foreground text-lg mb-2">
+            <p className="text-muted-foreground text-base md:text-lg mb-2">
               Verein: <span className="font-semibold text-primary">
                 {allClubsGlobal.find(c => c.id === (currentClubId || assignedClubId))?.name || 'Verein wird geladen...'}
               </span>
@@ -146,7 +144,7 @@ export default function VereinDashboardPage() {
               ℹ️ Tippen Sie hier, um zwischen Ihren Vereinen zu wechseln
             </p>
           </div>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-base md:text-lg text-muted-foreground">
             Willkommen, {userAppPermissions?.displayName || user?.displayName || user?.email}
           </p>
           <p className="text-sm text-muted-foreground mt-1">

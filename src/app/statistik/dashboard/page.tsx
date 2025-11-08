@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { Download, ChevronLeft, TrendingUp } from 'lucide-react';
@@ -255,64 +255,44 @@ export default function StatistikDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div>
           <Label htmlFor="season-select" className="text-base font-medium">Saison</Label>
-          <Select
+          <NativeSelect
             value={selectedSeason}
             onValueChange={setSelectedSeason}
             disabled={seasons.length === 0}
-          >
-            <SelectTrigger id="season-select" className="h-12 text-base">
-              <SelectValue placeholder="Saison auswählen" />
-            </SelectTrigger>
-            <SelectContent>
-              {seasons.map(season => (
-                <SelectItem key={season.id} value={season.id} className="h-12 text-base">
-                  {season.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Saison auswählen"
+            options={seasons.map(season => ({ value: season.id, label: season.name }))}
+            className="h-12 text-base"
+          />
         </div>
         
         <div>
           <Label htmlFor="league-select" className="text-base font-medium">Liga</Label>
-          <Select
+          <NativeSelect
             value={selectedLeague}
             onValueChange={setSelectedLeague}
             disabled={leagues.length === 0}
-          >
-            <SelectTrigger id="league-select" className="h-12 text-base">
-              <SelectValue placeholder="Alle Ligen" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="h-12 text-base">Alle Ligen</SelectItem>
-              {leagues.map(league => (
-                <SelectItem key={league.id} value={league.id} className="h-12 text-base">
-                  {league.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Alle Ligen"
+            options={[
+              { value: 'all', label: 'Alle Ligen' },
+              ...leagues.map(league => ({ value: league.id, label: league.name }))
+            ]}
+            className="h-12 text-base"
+          />
         </div>
         
         <div>
           <Label htmlFor="club-select" className="text-base font-medium">Verein</Label>
-          <Select
+          <NativeSelect
             value={selectedClub}
             onValueChange={setSelectedClub}
             disabled={clubs.length === 0}
-          >
-            <SelectTrigger id="club-select" className="h-12 text-base">
-              <SelectValue placeholder="Alle Vereine" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="h-12 text-base">Alle Vereine</SelectItem>
-              {clubs.map(club => (
-                <SelectItem key={club.id} value={club.id} className="h-12 text-base">
-                  {club.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Alle Vereine"
+            options={[
+              { value: 'all', label: 'Alle Vereine' },
+              ...clubs.map(club => ({ value: club.id, label: club.name }))
+            ]}
+            className="h-12 text-base"
+          />
         </div>
       </div>
       

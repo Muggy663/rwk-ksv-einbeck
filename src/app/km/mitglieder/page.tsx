@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -544,29 +544,24 @@ export default function KMMitglieder() {
             </div>
             <div>
               <Label htmlFor="clubId">Verein</Label>
-              <Select value={currentShooter?.clubId || ''} onValueChange={(value) => setCurrentShooter(prev => ({ ...prev, clubId: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Verein auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clubs.map(club => (
-                    <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={currentShooter?.clubId || ''}
+                onValueChange={(value) => setCurrentShooter(prev => ({ ...prev, clubId: value }))}
+                placeholder="Verein auswählen"
+                options={clubs.map(club => ({ value: club.id, label: club.name }))}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="gender">Geschlecht</Label>
-                <Select value={currentShooter?.gender || 'male'} onValueChange={(value) => setCurrentShooter(prev => ({ ...prev, gender: value }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Männlich</SelectItem>
-                    <SelectItem value="female">Weiblich</SelectItem>
-                  </SelectContent>
-                </Select>
+                <NativeSelect
+                  value={currentShooter?.gender || 'male'}
+                  onValueChange={(value) => setCurrentShooter(prev => ({ ...prev, gender: value }))}
+                  options={[
+                    { value: "male", label: "Männlich" },
+                    { value: "female", label: "Weiblich" }
+                  ]}
+                />
               </div>
               <div>
                 <Label htmlFor="birthYear">Geburtsjahr</Label>

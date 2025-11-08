@@ -10,8 +10,7 @@ import { BackButton } from '@/components/ui/back-button';
 export default function StatistikPage() {
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      <div className="flex items-center mb-6">
-        <BackButton className="mr-2" fallbackHref="/" />
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-primary">Statistik-Dashboard</h1>
       </div>
       
@@ -71,7 +70,7 @@ export default function StatistikPage() {
             </p>
             <Button asChild>
               <Link href="/statistik/erweitert">
-                Zu den saisonübergreifenden Statistiken
+                Erweiterte Statistiken
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

@@ -7,19 +7,12 @@ import { Info, Lock, Calendar, Filter, LogIn, FileText, BarChart3 } from 'lucide
 import { LigaGrouping } from './LigaGrouping';
 import { SearchBar } from './SearchBar';
 
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import Link from 'next/link';
 import { DocumentCard } from './DocumentCard';
 import { Document } from '@/lib/services/document-service';
 import { useAuth } from '@/hooks/use-auth';
 import { BackButton } from '@/components/ui/back-button';
-import { RegelwerkChat } from '@/components/ui/regelwerk-chat';
 
 export default function DokumentePage() {
   const [activeTab, setActiveTab] = useState<string>('ausschreibungen');
@@ -366,16 +359,13 @@ export default function DokumentePage() {
                   <div className="flex flex-col md:flex-row items-start md:items-center gap-2 bg-muted/30 p-3 rounded-md">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <Select value={selectedYear} onValueChange={setSelectedYear}>
-                        <SelectTrigger className="w-[120px] h-8 text-sm">
-                          <SelectValue placeholder="Jahr wählen" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {years.map(year => (
-                            <SelectItem key={year} value={year}>{year}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <NativeSelect
+                        value={selectedYear}
+                        onValueChange={setSelectedYear}
+                        placeholder="Jahr wählen"
+                        options={years.map(year => ({ value: year, label: year }))}
+                        className="w-[120px] h-8 text-sm"
+                      />
                     </div>
                     <span className="text-xs text-muted-foreground">Jahr für hochgeladene Dokumente filtern</span>
                   </div>
@@ -409,14 +399,7 @@ export default function DokumentePage() {
           </TabsContent>
 
           <TabsContent value="ordnungen" className="space-y-4">
-            <div className="mb-4">
-              <h2 className="text-lg md:text-xl font-semibold mb-2">Regelwerke & Hilfen</h2>
-              <div className="h-px bg-border mb-4"></div>
-            </div>
-            
-            {/* Regelwerk-Chat */}
-            <RegelwerkChat />
-            
+            <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Regelwerke</h2>
             {ordnungen.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-muted-foreground">

@@ -14,13 +14,7 @@ import {
   MobileTableHeader as TableHeader,
   MobileTableRow as TableRow,
 } from "@/components/ui/mobile-table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { NativeSelect } from '@/components/ui/native-select';
 import {
   Dialog,
   DialogClose,
@@ -864,10 +858,15 @@ export default function VereinSchuetzenPage() {
                       className="ml-2"
                     />
                   </div>
-                  <Select value={currentShooter.gender || 'male'} onValueChange={(v) => handleFormInputChange('gender', v as 'male' | 'female')} disabled={!(isVereinsvertreter || isSportleiter || isVorstand) && formMode ==='edit'}>
-                    <SelectTrigger id="vsp-gender-dialog"><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="male">Männlich</SelectItem><SelectItem value="female">Weiblich</SelectItem></SelectContent>
-                  </Select>
+                  <NativeSelect
+                    value={currentShooter.gender || 'male'}
+                    onValueChange={(v) => handleFormInputChange('gender', v as 'male' | 'female')}
+                    disabled={!(isVereinsvertreter || isSportleiter || isVorstand) && formMode ==='edit'}
+                    options={[
+                      { value: "male", label: "Männlich" },
+                      { value: "female", label: "Weiblich" }
+                    ]}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="vsp-birthYear-dialog">Geburtsjahr (für Altersklassen)</Label>

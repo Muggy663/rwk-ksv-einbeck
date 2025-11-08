@@ -97,18 +97,18 @@ export function ShooterComparisonSelector({
                 key={shooter.id}
                 variant={selectedShooters.some(s => s.id === shooter.id) ? "default" : "outline"}
                 size="sm"
-                className="w-full justify-start mb-1"
+                className="w-full justify-start mb-1 h-auto py-2"
                 onClick={() => toggleShooterSelection(shooter)}
                 disabled={!selectedShooters.some(s => s.id === shooter.id) && selectedShooters.length >= maxSelections}
               >
-                <div className="flex justify-between w-full">
-                  <span>{shooter.name}</span>
-                  <div className="flex items-center">
+                <div className="flex flex-col items-start w-full text-left">
+                  <span className="font-medium">{shooter.name}</span>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                     {shooter.teamName && (
-                      <span className="text-xs text-muted-foreground mr-2">{shooter.teamName}</span>
+                      <span>{shooter.teamName}</span>
                     )}
                     {shooter.averageScore && (
-                      <span className="text-xs font-medium">Ø {shooter.averageScore.toFixed(1)}</span>
+                      <span className="font-medium">Ø {shooter.averageScore.toFixed(1)}</span>
                     )}
                   </div>
                 </div>

@@ -2,7 +2,7 @@
 "use client";
 import React from 'react';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Info } from 'lucide-react';
 
@@ -47,29 +47,17 @@ export function TeamStrengthSelector({
         </HelpTooltip>
       </div>
       
-      <Select
+      <NativeSelect
         value={value}
         onValueChange={onChange}
         disabled={disabled}
-      >
-        <SelectTrigger id="team-strength" className="w-full">
-          <SelectValue placeholder="Stärke auswählen" />
-        </SelectTrigger>
-        <SelectContent>
-          {strengths.map((strength) => (
-            <SelectItem key={strength} value={strength}>
-              <div>
-                <span>{strength}</span>
-                {clubName && (
-                  <span className="text-xs text-muted-foreground ml-2">
-                    ({getExampleName(strength)})
-                  </span>
-                )}
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        placeholder="Stärke auswählen"
+        options={strengths.map((strength) => ({
+          value: strength,
+          label: clubName ? `${strength} (${getExampleName(strength)})` : strength
+        }))}
+        className="w-full"
+      />
       
       {value && clubName && (
         <p className="text-sm text-muted-foreground mt-1">

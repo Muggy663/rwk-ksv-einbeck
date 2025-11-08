@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -587,11 +587,6 @@ export default function SharedResultsPage({
               </span>
             )}
           </h1>
-          <HelpTooltip 
-            text="Hier können Sie Ergebnisse für Mannschaften erfassen und speichern." 
-            side="right" 
-            className="ml-2"
-          />
         </div>
         <Link href={dashboardHref}>
           <Button variant="outline" size="sm">Zurück zum Dashboard</Button>
@@ -749,38 +744,53 @@ export default function SharedResultsPage({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <div className="space-y-2">
               <Label htmlFor="season">Saison (nur laufende)</Label>
-              <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} disabled={availableRunningSeasons.length === 0}>
-                <SelectTrigger id="season"><SelectValue placeholder={availableRunningSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"} /></SelectTrigger>
-                <SelectContent>{availableRunningSeasons.filter(s => s.id).map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedSeasonId}
+                onValueChange={setSelectedSeasonId}
+                disabled={availableRunningSeasons.length === 0}
+                placeholder={availableRunningSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"}
+                options={availableRunningSeasons.filter(s => s.id).map(s => ({ value: s.id, label: s.name }))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="league">Liga</Label>
-              <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId} disabled={!selectedSeasonId || isLoadingLeagues || availableLeaguesForSeason.length === 0}>
-                <SelectTrigger id="league"><SelectValue placeholder={isLoadingLeagues ? "Lade Ligen..." : (availableLeaguesForSeason.length === 0 && selectedSeasonId ? "Keine Ligen für Saison" : "Liga wählen")} /></SelectTrigger>
-                <SelectContent>{availableLeaguesForSeason.filter(l => l.id).map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedLeagueId}
+                onValueChange={setSelectedLeagueId}
+                disabled={!selectedSeasonId || isLoadingLeagues || availableLeaguesForSeason.length === 0}
+                placeholder={isLoadingLeagues ? "Lade Ligen..." : (availableLeaguesForSeason.length === 0 && selectedSeasonId ? "Keine Ligen für Saison" : "Liga wählen")}
+                options={availableLeaguesForSeason.filter(l => l.id).map(l => ({ value: l.id, label: l.name }))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="round">Durchgang</Label>
-              <Select value={selectedRound} onValueChange={setSelectedRound} disabled={!selectedLeagueId}>
-                <SelectTrigger id="round"><SelectValue placeholder="Durchgang wählen" /></SelectTrigger>
-                <SelectContent>{[...Array(5)].map((_, i) => (<SelectItem key={i + 1} value={(i + 1).toString()}>Durchgang {i + 1}</SelectItem>))}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedRound}
+                onValueChange={setSelectedRound}
+                disabled={!selectedLeagueId}
+                placeholder="Durchgang wählen"
+                options={[...Array(5)].map((_, i) => ({ value: (i + 1).toString(), label: `Durchgang ${i + 1}` }))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="team">Mannschaft</Label>
-              <Select value={selectedTeamId} onValueChange={setSelectedTeamId} disabled={!selectedLeagueId || isLoadingTeams || allTeamsInSelectedLeague.length === 0}>
-                <SelectTrigger id="team"><SelectValue placeholder={isLoadingTeams ? "Lade Teams..." : (allTeamsInSelectedLeague.length === 0 ? "Keine Teams" : "Mannschaft wählen")} /></SelectTrigger>
-                <SelectContent>{allTeamsInSelectedLeague.filter(t => t.id).map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedTeamId}
+                onValueChange={setSelectedTeamId}
+                disabled={!selectedLeagueId || isLoadingTeams || allTeamsInSelectedLeague.length === 0}
+                placeholder={isLoadingTeams ? "Lade Teams..." : (allTeamsInSelectedLeague.length === 0 ? "Keine Teams" : "Mannschaft wählen")}
+                options={allTeamsInSelectedLeague.filter(t => t.id).map(t => ({ value: t.id, label: t.name }))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="shooter">Schütze</Label>
-              <Select value={selectedShooterId} onValueChange={setSelectedShooterId} disabled={!selectedTeamId || isLoadingShooters || availableShootersForDropdown.length === 0}>
-                <SelectTrigger id="shooter"><SelectValue placeholder={isLoadingShooters ? "Lade Schützen..." : (availableShootersForDropdown.length === 0 ? "Keine Schützen" : "Schütze wählen")} /></SelectTrigger>
-                <SelectContent>{availableShootersForDropdown.filter(sh => sh.id).map(sh => <SelectItem key={sh.id} value={sh.id}>{sh.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedShooterId}
+                onValueChange={setSelectedShooterId}
+                disabled={!selectedTeamId || isLoadingShooters || availableShootersForDropdown.length === 0}
+                placeholder={isLoadingShooters ? "Lade Schützen..." : (availableShootersForDropdown.length === 0 ? "Keine Schützen" : "Schütze wählen")}
+                options={availableShootersForDropdown.filter(sh => sh.id).map(sh => ({ value: sh.id, label: sh.name }))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="score">Ergebnis (Ringe)</Label>
@@ -788,16 +798,15 @@ export default function SharedResultsPage({
                 id="score" 
                 type="number" 
                 value={score} 
+                className="w-40 text-center text-lg h-10"
                 onChange={(e) => {
                   const value = e.target.value;
                   setScore(value);
                   
-                  // Lokale Plausibilitätsprüfung
                   if (value && selectedLeagueId) {
                     const scoreVal = parseInt(value);
                     const league = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
                     if (league && !isNaN(scoreVal)) {
-                      // Einfache lokale Validierung
                       const maxScore = ['LG', 'LGA', 'LP', 'LPA'].includes(league.type) ? 400 : 300;
                       const check = {
                         isValid: scoreVal >= 0 && scoreVal <= maxScore,
@@ -816,11 +825,15 @@ export default function SharedResultsPage({
                     }
                   }
                 }}
-                placeholder="z.B. 285" 
                 disabled={!selectedShooterId}
               />
             </div>
+
           </div>
+          
+
+          
+
           
           <div className="space-y-3 pt-2">
             <Label>Ergebnistyp</Label>
@@ -838,6 +851,8 @@ export default function SharedResultsPage({
           </div>
         </CardContent>
       </Card>
+
+
 
       {pendingScores.length > 0 && (
         <Card className="shadow-md mt-6">
@@ -866,55 +881,65 @@ export default function SharedResultsPage({
                    'bg-red-50 border-red-200') : 'bg-white border-gray-200';
                 
                 return (
-                  <div key={entry.tempId} className={`flex items-center justify-between p-3 border rounded ${bgColor}`}>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        {entry.isOCRGenerated && (
-                          <Zap className={`h-3 w-3 ${
-                            confidence >= 0.8 ? 'text-green-500' : 
-                            confidence >= 0.6 ? 'text-yellow-500' : 
-                            'text-red-500'
-                          }`} />
-                        )}
-                        <p className="font-medium">{entry.shooterName}</p>
-                        {entry.isOCRGenerated && (
-                          <div className="flex gap-1">
-                            <span className="text-xs font-mono px-1 py-0.5 rounded bg-green-100 text-green-700">
-                              Name: 95%
-                            </span>
-                            <span className={`text-xs font-mono px-1 py-0.5 rounded ${
-                              confidence >= 0.8 ? 'bg-green-100 text-green-700' : 
-                              confidence >= 0.6 ? 'bg-yellow-100 text-yellow-700' : 
-                              'bg-red-100 text-red-700'
-                            }`}>
-                              Ringe: {Math.round((entry.ocrConfidence || 0.7) * 100)}%
-                            </span>
-                          </div>
-                        )}
+                  <div key={entry.tempId} className={`p-3 border rounded ${bgColor}`}>
+                    <div className="space-y-3">
+                      {/* Schützenname und Löschen-Button */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {entry.isOCRGenerated && (
+                            <Zap className={`h-3 w-3 ${
+                              confidence >= 0.8 ? 'text-green-500' : 
+                              confidence >= 0.6 ? 'text-yellow-500' : 
+                              'text-red-500'
+                            }`} />
+                          )}
+                          <p className="font-medium">{entry.shooterName}</p>
+                          {entry.isOCRGenerated && (
+                            <div className="flex gap-1">
+                              <span className="text-xs font-mono px-1 py-0.5 rounded bg-green-100 text-green-700">
+                                Name: 95%
+                              </span>
+                              <span className={`text-xs font-mono px-1 py-0.5 rounded ${
+                                confidence >= 0.8 ? 'bg-green-100 text-green-700' : 
+                                confidence >= 0.6 ? 'bg-yellow-100 text-yellow-700' : 
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                Ringe: {Math.round((entry.ocrConfidence || 0.7) * 100)}%
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => handleRemoveFromList(entry.tempId)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
+                      
+                      {/* Vereinsname */}
                       <p className="text-sm text-muted-foreground">{entry.teamName} - DG {entry.durchgang}</p>
+                      
+                      {/* Ringe-Eingabe */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Ringe:</span>
+                        <div className="flex items-center gap-2">
+                          <Input 
+                            type="number" 
+                            value={entry.totalRinge} 
+                            onChange={(e) => {
+                              const newScore = parseInt(e.target.value) || 0;
+                              setPendingScores(prev => prev.map(p => 
+                                p.tempId === entry.tempId ? {...p, totalRinge: newScore} : p
+                              ));
+                            }}
+                            className="w-24 text-center text-lg h-10"
+                          />
+                        </div>
+                      </div>
+                      
                       {entry.isOCRGenerated && (
-                        <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
                           📝 Namen sind zuverlässig erkannt - ⚠️ Ringzahlen bitte prüfen!
                         </p>
                       )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input 
-                        type="number" 
-                        value={entry.totalRinge} 
-                        onChange={(e) => {
-                          const newScore = parseInt(e.target.value) || 0;
-                          setPendingScores(prev => prev.map(p => 
-                            p.tempId === entry.tempId ? {...p, totalRinge: newScore} : p
-                          ));
-                        }}
-                        className="w-20 text-center"
-                      />
-                      <span className="text-sm">Ringe</span>
-                      <Button variant="ghost" size="sm" onClick={() => handleRemoveFromList(entry.tempId)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
                 )

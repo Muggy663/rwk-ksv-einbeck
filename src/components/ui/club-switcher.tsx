@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useVereinAuth } from '@/app/verein/layout';
 import { db } from '@/lib/firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useClubContext } from '@/contexts/ClubContext';
 import { Building2 } from 'lucide-react';
 
@@ -31,23 +31,15 @@ export function ClubSwitcher() {
   return (
     <div className="flex items-center gap-2 w-full sm:w-auto">
       <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-      <Select value={currentClubId || ''} onValueChange={(value) => {
-
-        switchClub(value);
-      }}>
-        <SelectTrigger className="w-full sm:w-[250px] min-w-0">
-          <SelectValue placeholder="Verein wählen" />
-        </SelectTrigger>
-        <SelectContent className="max-w-[300px]">
-          {clubs.map(club => (
-            <SelectItem key={club.id} value={club.id} className="whitespace-normal">
-              <span className="block truncate" title={club.name}>
-                {club.name}
-              </span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <NativeSelect
+        value={currentClubId || ''}
+        onValueChange={(value) => {
+          switchClub(value);
+        }}
+        placeholder="Verein wählen"
+        className="w-full sm:w-[250px] min-w-0"
+        options={clubs.map(club => ({ value: club.id, label: club.name }))}
+      />
     </div>
   );
 }

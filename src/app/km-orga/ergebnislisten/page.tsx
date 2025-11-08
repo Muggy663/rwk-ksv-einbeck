@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Badge } from '@/components/ui/badge';
 import { Download, Trophy, Medal, FileText, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -356,30 +356,26 @@ export default function ErgebnislistenPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Select value={selectedDisziplin} onValueChange={setSelectedDisziplin}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Alle Disziplinen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL_DISCIPLINES">Alle Disziplinen</SelectItem>
-                  {disziplinen.map(d => (
-                    <SelectItem key={d} value={d}>{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedDisziplin}
+                onValueChange={setSelectedDisziplin}
+                placeholder="Alle Disziplinen"
+                options={[
+                  { value: 'ALL_DISCIPLINES', label: 'Alle Disziplinen' },
+                  ...disziplinen.map(d => ({ value: d, label: d }))
+                ]}
+              />
             </div>
             <div>
-              <Select value={selectedAltersklasse} onValueChange={setSelectedAltersklasse}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Alle Altersklassen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL_ALTERSKLASSEN">Alle Altersklassen</SelectItem>
-                  {altersklassen.map(a => (
-                    <SelectItem key={a} value={a}>{a}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedAltersklasse}
+                onValueChange={setSelectedAltersklasse}
+                placeholder="Alle Altersklassen"
+                options={[
+                  { value: 'ALL_ALTERSKLASSEN', label: 'Alle Altersklassen' },
+                  ...altersklassen.map(a => ({ value: a, label: a }))
+                ]}
+              />
             </div>
           </div>
         </CardContent>

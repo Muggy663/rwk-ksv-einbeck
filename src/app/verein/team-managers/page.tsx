@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Users, Mail, Phone, Search } from 'lucide-react';
@@ -237,46 +237,30 @@ export default function TeamManagersPage() {
         {/* Saison-Filter */}
         <div>
           <Label htmlFor="season-select">Saison</Label>
-          <Select
+          <NativeSelect
             value={selectedSeason}
             onValueChange={setSelectedSeason}
             disabled={seasons.length === 0}
-          >
-            <SelectTrigger id="season-select" className="w-full">
-              <SelectValue placeholder="Saison auswählen" />
-            </SelectTrigger>
-            <SelectContent>
-              {seasons.map(season => (
-                <SelectItem key={season.id} value={season.id}>
-                  {season.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Saison auswählen"
+            options={seasons.map(season => ({ value: season.id, label: season.name }))}
+            className="w-full"
+          />
         </div>
 
         {/* Liga-Filter */}
         <div>
           <Label htmlFor="league-select">Liga</Label>
-          <Select
+          <NativeSelect
             value={selectedLeague}
-            // Beim Ändern: Wenn 'all' vom SelectItem kommt, setze selectedLeague auf leeren String
             onValueChange={(value) => setSelectedLeague(value === 'all' ? '' : value)}
             disabled={leagues.length === 0}
-          >
-            <SelectTrigger id="league-select" className="w-full">
-              <SelectValue placeholder="Alle Ligen" />
-            </SelectTrigger>
-            <SelectContent>
-              {/* 'value="all"' ist der spezielle Wert für "Alle Ligen", um den Radix-Fehler zu umgehen */}
-              <SelectItem value="all">Alle Ligen</SelectItem>
-              {leagues.map(league => (
-                <SelectItem key={league.id} value={league.id}>
-                  {league.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder="Alle Ligen"
+            options={[
+              { value: "all", label: "Alle Ligen" },
+              ...leagues.map(league => ({ value: league.id, label: league.name }))
+            ]}
+            className="w-full"
+          />
         </div>
         
         {/* Suchfeld */}

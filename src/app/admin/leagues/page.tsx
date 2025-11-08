@@ -12,13 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { NativeSelect } from '@/components/ui/native-select';
 import {
   Dialog,
   DialogContent,
@@ -326,24 +320,20 @@ export default function AdminLeaguesPage() {
               Zurück zum Dashboard
             </Button>
           </Link>
-          <Select 
-            value={selectedSeasonId} 
+          <NativeSelect
+            value={selectedSeasonId}
             onValueChange={(value) => {
               setSelectedSeasonId(value);
               router.push(`/admin/leagues?seasonId=${value}`, { scroll: false });
-            }} 
+            }}
             disabled={isLoadingData || allSeasons.length === 0}
-          >
-            <SelectTrigger className="w-full sm:w-[250px]" aria-label="Saison auswählen">
-              <SelectValue placeholder={isLoadingData ? "Lade Saisons..." : (allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen")} />
-            </SelectTrigger>
-            <SelectContent>
-              {allSeasons.length > 0 ? 
-                allSeasons.map(season => <SelectItem key={season.id} value={season.id}>{season.name}</SelectItem>) :
-                <SelectItem value="no-season" disabled>Keine Saisons verfügbar</SelectItem>
-              }
-            </SelectContent>
-          </Select>
+            placeholder={isLoadingData ? "Lade Saisons..." : (allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen")}
+            options={allSeasons.length > 0 ? 
+              allSeasons.map(season => ({ value: season.id, label: season.name })) :
+              [{ value: "no-season", label: "Keine Saisons verfügbar", disabled: true }]
+            }
+            className="w-full sm:w-[250px]"
+          />
           <Button onClick={handleAddNew} disabled={isLoadingData || !selectedSeasonId} className="whitespace-nowrap w-full sm:w-auto">
             <PlusCircle className="mr-2 h-5 w-5" /> Neue Liga anlegen
           </Button>
@@ -427,20 +417,13 @@ export default function AdminLeaguesPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="leagueType">Typ der Liga</Label>
-                   <Select
+                   <NativeSelect
                     value={currentLeague.type || ''}
                     onValueChange={(value) => handleFormInputChange('type', value as FirestoreLeagueSpecificDiscipline)}
                     required
-                  >
-                    <SelectTrigger id="leagueType">
-                      <SelectValue placeholder="Spezifischen Ligatyp wählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {leagueDisciplineOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="Spezifischen Ligatyp wählen"
+                    options={leagueDisciplineOptions.map(option => ({ value: option.value, label: option.label }))}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="name">Name</Label>

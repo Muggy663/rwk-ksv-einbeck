@@ -8,7 +8,7 @@ import { BackButton } from '@/components/ui/back-button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
@@ -329,23 +329,10 @@ export default function TerminePage() {
 
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
+        <div className="hidden md:block md:col-span-2">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Kalender</CardTitle>
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => changeMonth('prev')}>
-                    &lt;
-                  </Button>
-                  <span className="text-sm font-medium">
-                    {format(currentMonth, 'MMMM yyyy', { locale: de })}
-                  </span>
-                  <Button variant="outline" size="sm" onClick={() => changeMonth('next')}>
-                    &gt;
-                  </Button>
-                </div>
-              </div>
+              <CardTitle>Kalender</CardTitle>
               <CardDescription>Übersicht aller anstehenden Wettkämpfe und Veranstaltungen</CardDescription>
             </CardHeader>
             <CardContent>
@@ -358,12 +345,12 @@ export default function TerminePage() {
                   onSelect={setSelectedDate}
                   month={currentMonth}
                   onMonthChange={setCurrentMonth}
-                  className="rounded-md border"
+                  className="rounded-md border-0 [&_button]:border-0 [&_button]:shadow-none"
                   modifiers={{
                     hasEvent: (date) => hasEvents(date),
                   }}
                   modifiersClassNames={{
-                    hasEvent: "bg-primary/20 font-bold text-primary dark:bg-primary/30 dark:text-primary-foreground",
+                    hasEvent: "bg-primary text-primary-foreground font-bold",
                   }}
                   locale={de}
                 />
@@ -372,7 +359,7 @@ export default function TerminePage() {
           </Card>
         </div>
         
-        <div>
+        <div className="md:col-span-1">
           <Card>
             <CardHeader>
               <CardTitle>Termine am {selectedDate?.toLocaleDateString('de-DE')}</CardTitle>

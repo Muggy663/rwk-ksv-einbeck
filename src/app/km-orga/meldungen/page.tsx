@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -678,23 +678,16 @@ export default function KMAdminMeldungen() {
           <div className="space-y-4">
             <div>
               <Label>Verein auswählen *</Label>
-              <Select 
+              <NativeSelect
                 value={meldungsForm.vereinId} 
                 onValueChange={(value) => {
                   setMeldungsForm(prev => ({ ...prev, vereinId: value, schuetzeIds: [] }));
                   loadVereinSchuetzen(value);
                   setSchuetzenSearch('');
                 }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Verein wählen..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {clubs.map(club => (
-                    <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Verein wählen..."
+                options={clubs.map(club => ({ value: club.id, label: club.name }))}
+              />
             </div>
 
             {meldungsForm.vereinId && (

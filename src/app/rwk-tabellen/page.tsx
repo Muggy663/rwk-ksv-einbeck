@@ -22,13 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
@@ -781,25 +775,24 @@ function RwkTabellenPageComponent() {
           teamDisplays.push(teamDisplayItem);
         }
         // Sortiere Teams und berücksichtige "Außer Konkurrenz"-Status
-        // Prüfe, ob alle Teams den aktuellen Durchgang abgeschlossen haben
+        // Prüfe, ob alle Teams IN WERTUNG den aktuellen Durchgang abgeschlossen haben
         const determineCurrentRound = () => {
-          // Prüfe, ob ein Durchgang vollständig ist (alle Teams und alle Schützen haben Ergebnisse)
+          // Nur Teams in Wertung berücksichtigen (AK-Teams ignorieren)
+          const teamsInCompetition = teamDisplays.filter(team => !team.outOfCompetition);
+          
+          if (teamsInCompetition.length === 0) {
+            return 0; // Keine Teams in Wertung
+          }
+          
+          // Prüfe, ob ein Durchgang vollständig ist (nur Teams in Wertung)
           const isRoundComplete = (round) => {
             if (round === 0) return false;
             const roundKey = `dg${round}`;
             
-            // Prüfe für jedes Team
-            for (const team of teamDisplays) {
-              // Prüfe, ob das Team ein Ergebnis für diesen Durchgang hat
+            // Prüfe nur für Teams in Wertung
+            for (const team of teamsInCompetition) {
               if (!team.roundResults || team.roundResults[roundKey] === null) {
                 return false;
-              }
-              
-              // Prüfe auch, ob alle Schützen des Teams Ergebnisse haben
-              // Dies erfordert, dass wir die Schützen-Ergebnisse laden
-              if (team.shooterIds && team.shooterIds.length > 0) {
-                // Hier könnte eine tiefere Prüfung erfolgen, wenn die Schützen-Daten bereits geladen sind
-                // Für jetzt verlassen wir uns auf die Team-Ergebnisse
               }
             }
             
@@ -1726,34 +1719,24 @@ function RwkTabellenPageComponent() {
           <Button 
             variant="ghost" 
             size="sm" 
-            className="ml-4 text-muted-foreground hover:text-primary"
+            className="ml-2 text-muted-foreground hover:text-primary p-2"
             onClick={() => document.getElementById('rwk-legend')?.scrollIntoView({ behavior: 'smooth' })}
           >
-            <Info className="h-4 w-4 mr-1" />
-            Erklärung
+            <Info className="h-4 w-4" />
           </Button>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Select 
-            value={selectedCompetition ? `${selectedCompetition.year}-${selectedCompetition.discipline}` : ""} 
-            onValueChange={handleCompetitionChange} 
+          <NativeSelect
+            value={selectedCompetition ? `${selectedCompetition.year}-${selectedCompetition.discipline}` : ""}
+            onChange={(e) => handleCompetitionChange(e.target.value)}
             disabled={availableCompetitions.length === 0 || loadingData}
-          >
-            <SelectTrigger className="w-full sm:w-[300px] shadow-md" aria-label="Wettkampf auswählen">
-              <SelectValue placeholder={availableCompetitions.length === 0 ? "Keine Wettkämpfe" : "Wettkampf wählen"} />
-            </SelectTrigger>
-            <SelectContent>
-              {availableCompetitions.length > 0 ? (
-                availableCompetitions.map(comp => (
-                  <SelectItem key={`${comp.year}-${comp.discipline}`} value={`${comp.year}-${comp.discipline}`}>
-                    {comp.displayName}
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="NO_COMPETITIONS_PLACEHOLDER_RWK" disabled>Keine Wettkämpfe verfügbar</SelectItem>
-              )}
-            </SelectContent>
-          </Select>
+            className="w-full sm:w-[300px] shadow-md"
+            placeholder={availableCompetitions.length === 0 ? "Keine Wettkämpfe" : "Wettkampf wählen"}
+            options={availableCompetitions.map(comp => ({
+              value: `${comp.year}-${comp.discipline}`,
+              label: comp.displayName
+            }))}
+          />
         </div>
       </div>
 
@@ -1815,46 +1798,43 @@ function RwkTabellenPageComponent() {
                   <div className="pt-0 pb-0">
 
                     
-                    {/* Verbesserte mobile Ansicht */}
-                    <div className="md:hidden p-3 bg-yellow-50 text-yellow-800 rounded-md mb-4">
-                      <p className="text-sm">Für die beste Ansicht der Tabelle bitte das Gerät drehen oder einen größeren Bildschirm verwenden.</p>
-                    </div>
+
                     
-                    <div className="flex justify-between items-center p-2 bg-muted/10">
+                    <div className="flex justify-between items-center px-2 py-1">
                       <div className="flex items-center space-x-2">
                         <Checkbox 
                           id={`showOutOfCompetitionTeams-${league.id}`}
                           checked={showOutOfCompetitionTeams}
                           onCheckedChange={(checked) => {
                             setShowOutOfCompetitionTeams(!!checked);
-                            // URL aktualisieren
                             const currentParams = new URLSearchParams(window.location.search);
                             currentParams.set('showAK', (!!checked).toString());
                             router.replace(`/rwk-tabellen?${currentParams.toString()}`, { scroll: false });
                           }}
-                          className="mr-1"
+                          className="h-5 w-5"
                         />
                         <Label 
                           htmlFor={`showOutOfCompetitionTeams-${league.id}`}
-                          className="text-sm font-medium cursor-pointer"
+                          className="text-xs cursor-pointer"
                         >
-                          Teams "Außer Konkurrenz" anzeigen
+                          AK-Teams anzeigen
                         </Label>
-                        {!isNativeApp && <PDFHelpDialog />}
+                        {!isNativeApp && !isMobile && <PDFHelpDialog />}
                       </div>
+                      
                       {/* PDF Buttons nur auf Desktop */}
-                      <div className="hidden lg:flex flex-col sm:flex-row gap-2">
+                      <div className="hidden lg:flex gap-1">
                         <PDFButton 
                           league={league} 
                           numRounds={currentNumRoundsState} 
                           competitionYear={selectedCompetition.year} 
                           type="teams"
-                          className="text-xs px-2 py-1 whitespace-nowrap"
+                          className="text-xs px-2 py-1"
                         />
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-xs px-2 py-1 whitespace-nowrap"
+                          className="text-xs px-2 py-1"
                           onClick={async () => {
                             const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
                             const shooterData = await fetchIndividualShooterData(
@@ -1889,26 +1869,18 @@ function RwkTabellenPageComponent() {
                             }
                           }}
                         >
-                          Einzelschützen als PDF
+                          Einzelschützen PDF
                         </Button>
                       </div>
                       
                       {/* Mobile Hinweis */}
-                      <div className="lg:hidden">
-                        <p className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950 p-2 rounded">
-                          💡 PDF-Export nur am Desktop verfügbar
-                        </p>
+                      <div className="lg:hidden text-xs text-muted-foreground">
+                        💡 PDF am Desktop
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
                       isPortrait ? (
                         <div>
-                          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                            <div className="flex items-center gap-2 text-blue-900 dark:text-blue-100 text-sm">
-                              <span>🔄</span>
-                              <span><strong>Bessere Ansicht:</strong> Drehen Sie Ihr Gerät ins Querformat für die vollständige Tabellen-Ansicht!</span>
-                            </div>
-                          </div>
                           <MobileTeamCards
                           teams={league.teams.filter(team => showOutOfCompetitionTeams || !team.outOfCompetition)}
                           numRounds={currentNumRoundsState}
@@ -2035,46 +2007,36 @@ function RwkTabellenPageComponent() {
                   </p>
                   <div>
                     <Label htmlFor="individualLeagueFilter" className="text-sm font-medium text-blue-900">Liga auswählen:</Label>
-                    <Select 
-                        value={selectedIndividualLeagueFilter || ""} 
-                        onValueChange={(value) => setSelectedIndividualLeagueFilter(value)}
-                        disabled={loadingData || !teamData || availableLeaguesForIndividualFilter.length === 0}
-                    >
-                      <SelectTrigger id="individualLeagueFilter" className="w-full sm:w-[350px] mt-1 shadow-sm border-blue-300">
-                        <SelectValue placeholder="-- Bitte Liga auswählen --" />
-                      </SelectTrigger>
-                      <SelectContent side="bottom" align="start" sideOffset={4} avoidCollisions={true} position="popper">
-                        {/* Spezielle Optionen für Gesamtlisten */}
-                        {selectedCompetition?.discipline === 'KK' && (
-                          <SelectItem value="KK_GEWEHR_EHRUNGEN" className="bg-amber-50 text-amber-800 font-medium">
-                            🏆 Alle KK Gewehr Auflage
-                          </SelectItem>
-                        )}
-                        {(selectedCompetition?.discipline === 'LG' || selectedCompetition?.discipline === 'LP') && (
-                          <SelectItem value="LGA_GESAMTLISTE" className="bg-amber-50 text-amber-800 font-medium">
-                            🏆 Alle Luftdruck Auflage (Gesamtliste)
-                          </SelectItem>
-                        )}
-                        {availableLeaguesForIndividualFilter
-                          .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "") 
+                    <NativeSelect
+                      id="individualLeagueFilter"
+                      value={selectedIndividualLeagueFilter || ""}
+                      onChange={(e) => setSelectedIndividualLeagueFilter(e.target.value)}
+                      disabled={loadingData || !teamData || availableLeaguesForIndividualFilter.length === 0}
+                      className="w-full sm:w-[350px] mt-1 shadow-sm border-blue-300"
+                      placeholder="-- Bitte Liga auswählen --"
+                      options={[
+                        ...(selectedCompetition?.discipline === 'KK' ? [{
+                          value: "KK_GEWEHR_EHRUNGEN",
+                          label: "🏆 Alle KK Gewehr Auflage"
+                        }] : []),
+                        ...((selectedCompetition?.discipline === 'LG' || selectedCompetition?.discipline === 'LP') ? [{
+                          value: "LGA_GESAMTLISTE",
+                          label: "🏆 Alle Luftdruck Auflage (Gesamtliste)"
+                        }] : []),
+                        ...availableLeaguesForIndividualFilter
+                          .filter(l => l && typeof l.id === 'string' && l.id.trim() !== "")
                           .map(league => {
-                            // Entferne "Gruppe" und "(Gruppe)" aus dem Namen
                             const cleanName = league.name
                               .replace(/\s*\(Gruppe\)\s*/g, '')
                               .replace(/\s+Gruppe\s*$/g, '')
                               .trim();
-                            return (
-                              <SelectItem key={league.id} value={league.id}>
-                                {cleanName} ({league.type})
-                              </SelectItem>
-                            );
+                            return {
+                              value: league.id,
+                              label: `${cleanName} (${league.type})`
+                            };
                           })
-                        }
-                        {availableLeaguesForIndividualFilter.filter(l => l && typeof l.id === 'string' && l.id.trim() !== "").length === 0 && selectedCompetition && (
-                          <SelectItem value="NO_LEAGUES_FOR_IND_FILTER_RWK" disabled>Keine Ligen verfügbar</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+                      ]}
+                    />
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -2084,17 +2046,17 @@ function RwkTabellenPageComponent() {
                       checked={showOutOfCompetitionShooters}
                       onCheckedChange={(checked) => {
                         setShowOutOfCompetitionShooters(!!checked);
-                        // URL aktualisieren
                         const currentParams = new URLSearchParams(window.location.search);
                         currentParams.set('showAKShooters', (!!checked).toString());
                         router.replace(`/rwk-tabellen?${currentParams.toString()}`, { scroll: false });
                       }}
+                      className="h-5 w-5"
                     />
                     <Label 
                       htmlFor="showOutOfCompetitionShootersIndividual"
-                      className="text-sm font-medium cursor-pointer"
+                      className="text-xs cursor-pointer"
                     >
-                      Schützen "Außer Konkurrenz" anzeigen
+                      AK-Schützen anzeigen
                     </Label>
                   </div>
                   {selectedIndividualLeagueFilter && (

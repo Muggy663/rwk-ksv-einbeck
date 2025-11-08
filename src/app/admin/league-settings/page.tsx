@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Settings, Save, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
@@ -225,18 +225,12 @@ export default function LeagueSettingsPage() {
         <CardContent>
           <div className="w-64">
             <Label>Saison</Label>
-            <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Saison wählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {seasons.map(season => (
-                  <SelectItem key={season.id} value={season.id}>
-                    {season.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <NativeSelect
+              value={selectedSeasonId}
+              onValueChange={setSelectedSeasonId}
+              placeholder="Saison wählen"
+              options={seasons.map(season => ({ value: season.id, label: season.name }))}
+            />
           </div>
         </CardContent>
       </Card>
@@ -251,21 +245,11 @@ export default function LeagueSettingsPage() {
               <CardContent className="space-y-4">
                 <div>
                   <Label>Disziplin</Label>
-                  <Select 
-                    value={league.shotSettings?.discipline || 'Kleinkaliber Gewehr'} 
+                  <NativeSelect
+                    value={league.shotSettings?.discipline || 'Kleinkaliber Gewehr'}
                     onValueChange={(value) => updateLeagueSetting(league.id, 'discipline', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DISCIPLINES.map(discipline => (
-                        <SelectItem key={discipline} value={discipline}>
-                          {discipline}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={DISCIPLINES.map(discipline => ({ value: discipline, label: discipline }))}
+                  />
                 </div>
 
                 {league.shotSettings?.discipline === 'Benutzerdefiniert' && (

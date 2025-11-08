@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Loader2, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithRole } from '@/lib/firebase/functions';
@@ -160,39 +160,27 @@ export function CreateUserForm({ clubs, onUserCreated }: CreateUserFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="role">Rolle *</Label>
-              <Select
+              <NativeSelect
                 value={formData.role}
                 onValueChange={(value) => handleSelectChange('role', value)}
+                placeholder="Rolle auswählen"
                 required
-              >
-                <SelectTrigger id="role">
-                  <SelectValue placeholder="Rolle auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vereinsvertreter">Vereinsvertreter</SelectItem>
-                  <SelectItem value="mannschaftsfuehrer">Mannschaftsführer</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: 'vereinsvertreter', label: 'Vereinsvertreter' },
+                  { value: 'mannschaftsfuehrer', label: 'Mannschaftsführer' }
+                ]}
+              />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="clubId">Verein</Label>
-              <Select
+              <NativeSelect
                 value={formData.clubId}
                 onValueChange={(value) => handleSelectChange('clubId', value)}
                 disabled={!formData.role || clubs.length === 0}
-              >
-                <SelectTrigger id="clubId">
-                  <SelectValue placeholder="Verein auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clubs.map(club => (
-                    <SelectItem key={club.id} value={club.id}>
-                      {club.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Verein auswählen"
+                options={clubs.map(club => ({ value: club.id, label: club.name }))}
+              />
             </div>
           </div>
           

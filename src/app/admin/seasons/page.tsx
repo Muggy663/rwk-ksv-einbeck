@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Season, UIDisciplineSelection } from '@/types/rwk';
@@ -354,36 +354,30 @@ export default function AdminSeasonsPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="type" className="text-right">Disziplin</Label>
-                  <Select 
+                  <NativeSelect
                       value={currentSeason.type || 'KK'} 
                       onValueChange={(value: UIDisciplineSelection) => handleFormInputChange('type', value)}
-                      required
-                  >
-                    <SelectTrigger id="type" className="col-span-3">
-                      <SelectValue placeholder="Disziplin wählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="KK">Kleinkaliber (KK)</SelectItem>
-                      <SelectItem value="LD">Luftdruck (LG/LP)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                      placeholder="Disziplin wählen"
+                      options={[
+                        { value: 'KK', label: 'Kleinkaliber (KK)' },
+                        { value: 'LD', label: 'Luftdruck (LG/LP)' }
+                      ]}
+                      className="col-span-3"
+                  />
                 </div>
                  <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">Status</Label>
-                  <Select 
+                  <NativeSelect
                       value={currentSeason.status || 'Geplant'} 
                       onValueChange={(value: Season['status']) => handleFormInputChange('status', value)}
-                      required
-                  >
-                    <SelectTrigger id="status" className="col-span-3">
-                      <SelectValue placeholder="Status wählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Geplant">Geplant</SelectItem>
-                      <SelectItem value="Laufend">Laufend</SelectItem>
-                      <SelectItem value="Abgeschlossen">Abgeschlossen</SelectItem>
-                    </SelectContent>
-                  </Select>
+                      placeholder="Status wählen"
+                      options={[
+                        { value: 'Geplant', label: 'Geplant' },
+                        { value: 'Laufend', label: 'Laufend' },
+                        { value: 'Abgeschlossen', label: 'Abgeschlossen' }
+                      ]}
+                      className="col-span-3"
+                  />
                 </div>
               </div>
             )}

@@ -189,7 +189,7 @@ export default function HomePage() {
           
           {/* Kraftvolle Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent mb-4 animate-fade-in">
-            <span className="block sm:hidden">RWK KSV Einbeck</span>
+            <span className="block sm:hidden">RWK<br />KSV Einbeck</span>
             <span className="hidden sm:block">Willkommen beim<br />Rundenwettkampf KSV Einbeck</span>
           </h1>
           
@@ -395,9 +395,88 @@ export default function HomePage() {
         </Card>
       </div>
 
-      {/* Desktop-Hinweis für Native App */}
-      {isNativeApp && (
-        <Card className="mb-6 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+
+
+      {/* Was ist neu? - Version 1.8.0 */}
+      <Card className="mb-6 shadow-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center text-green-800 dark:text-green-200">
+            <div className="p-2 bg-green-100 dark:bg-green-800 rounded-lg mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600 dark:text-green-300">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            </div>
+            Was ist neu? Version 1.9 - Mobile Update
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+
+            <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 rounded-lg border-2 border-amber-300 dark:border-amber-600 shadow-lg animate-pulse">
+              <div className="w-3 h-3 bg-amber-500 dark:bg-amber-400 rounded-full mt-2 flex-shrink-0 animate-bounce"></div>
+              <div>
+                <h4 className="font-bold text-amber-800 dark:text-amber-200 text-lg">🤖 Google Gemini AI</h4>
+                <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">Handzettel werden jetzt noch genauer erkannt - einfach fotografieren und fertig!</p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">✨ Spart noch mehr Zeit beim Ergebnisse eingeben</p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">📱 Bessere Handy-Bedienung</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">Alle Auswahlfelder funktionieren jetzt perfekt auf dem Smartphone</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">📸 Neue Kamera-Funktion</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">Live-Vorschau beim Fotografieren mit Hilfsrahmen für perfekte Handzettel-Fotos</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">⚡ Schnellere App</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">Alles lädt schneller und reagiert flüssiger - besonders auf älteren Handys</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Play Store Beta-Test */}
+      <div className="mb-6">
+        <Link href="/app" className="block">
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
+            <div className="flex items-center">
+              <div className="bg-white p-3 rounded-full mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10,9 9,9 8,9"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">🎆 Play Store Beta-Test</h2>
+                <p style={{color: 'white'}}>Werde Beta-Tester für den offiziellen Play Store Launch!</p>
+              </div>
+              <div className="text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      {/* Desktop-Hinweis für Mobile - am Ende der Seite */}
+      {!isNativeApp && typeof window !== 'undefined' && window.innerWidth <= 768 && (
+        <Card className="mt-8 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
           <CardHeader>
             <CardTitle className="text-xl flex items-center text-blue-800 dark:text-blue-200">
               <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg mr-3">
@@ -438,90 +517,6 @@ export default function HomePage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Was ist neu? - Version 1.8.0 */}
-      <Card className="mb-6 shadow-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
-        <CardHeader>
-          <CardTitle className="text-xl flex items-center text-green-800 dark:text-green-200">
-            <div className="p-2 bg-green-100 dark:bg-green-800 rounded-lg mr-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600 dark:text-green-300">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-              </svg>
-            </div>
-            Was ist neu? Version 1.9
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">🎯 Live-Plausibilitätsprüfung</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">Automatische Warnung bei unmöglichen Ringzahlen während der Eingabe</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">🤖 Regelwerk-Assistent</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">KI beantwortet Fragen zu RWK-Regeln und Schießsport-Ordnungen (5 Fragen/Tag)</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 rounded-lg border-2 border-amber-300 dark:border-amber-600 shadow-lg animate-pulse">
-              <div className="w-3 h-3 bg-amber-500 dark:bg-amber-400 rounded-full mt-2 flex-shrink-0 animate-bounce"></div>
-              <div>
-                <h4 className="font-bold text-amber-800 dark:text-amber-200 text-lg">🤖 Google Gemini AI Integration</h4>
-                <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">Hochmoderne KI erkennt Handzettel mit deutlich verbesserter Genauigkeit - inklusive intelligenter Liga-Analysen</p>
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">✨ Plausibilitätsprüfung & Regelwerk-Assistent integriert!</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">📊 Intelligente Liga-Analysen</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">KI analysiert Tabellensituation und erstellt spannende Wettkampf-Prognosen</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">🔒 Rate Limiting & Sicherheit</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">Schutz vor Missbrauch mit Tageslimits für KI-Funktionen</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Play Store Beta-Test */}
-      <div className="mb-6">
-        <Link href="/app" className="block">
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
-            <div className="flex items-center">
-              <div className="bg-white p-3 rounded-full mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
-                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                  <polyline points="14,2 14,8 20,8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                  <polyline points="10,9 9,9 8,9"/>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">🎆 Play Store Beta-Test</h2>
-                <p style={{color: 'white'}}>Werde Beta-Tester für den offiziellen Play Store Launch!</p>
-              </div>
-              <div className="text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m9 18 6-6-6-6"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </Link>
-      </div>
     </div>
   );
 }

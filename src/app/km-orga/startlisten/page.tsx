@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Save, Calendar, Clock, MapPin, Target, Users } from 'lucide-react';
@@ -225,18 +225,12 @@ export default function StartlistenPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="austragungsort">Austragungsort *</Label>
-                <Select value={config.austragungsort} onValueChange={(value) => setConfig(prev => ({...prev, austragungsort: value}))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Verein auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vereine.map(verein => (
-                      <SelectItem key={verein.id} value={verein.id}>
-                        {verein.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <NativeSelect
+                  value={config.austragungsort}
+                  onValueChange={(value) => setConfig(prev => ({...prev, austragungsort: value}))}
+                  placeholder="Verein auswählen"
+                  options={vereine.map(verein => ({ value: verein.id, label: verein.name }))}
+                />
               </div>
 
               <div className="space-y-2 md:col-span-2">
@@ -489,15 +483,14 @@ export default function StartlistenPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="anlagensystem">Anlagensystem</Label>
-                <Select value={config.anlagensystem} onValueChange={(value: 'zuganlagen' | 'andere') => setConfig(prev => ({...prev, anlagensystem: value}))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="zuganlagen">Zuganlagen (längere Schießzeiten)</SelectItem>
-                    <SelectItem value="andere">Elektronische Anlagen (Disag, Meyton)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <NativeSelect
+                  value={config.anlagensystem}
+                  onValueChange={(value: 'zuganlagen' | 'andere') => setConfig(prev => ({...prev, anlagensystem: value}))}
+                  options={[
+                    { value: "zuganlagen", label: "Zuganlagen (längere Schießzeiten)" },
+                    { value: "andere", label: "Elektronische Anlagen (Disag, Meyton)" }
+                  ]}
+                />
                 <div className="text-xs text-gray-600">
                   {config.anlagensystem === 'zuganlagen' 
                     ? '🎯 Zuganlagen benötigen mehr Zeit für das Nachladen'

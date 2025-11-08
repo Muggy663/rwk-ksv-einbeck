@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Download, Users, Clock, Target, Save, FileText, Plus, Brain, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -1234,17 +1234,15 @@ export default function StartlistenToolPage() {
             </CardHeader>
             <CardContent>
               <div className="mb-4">
-                <Select value={selectedDisziplin} onValueChange={setSelectedDisziplin}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Alle Disziplinen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="alle">Alle Disziplinen</SelectItem>
-                    {config.disziplinen.map(d => (
-                      <SelectItem key={d} value={d}>{d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <NativeSelect
+                  value={selectedDisziplin}
+                  onValueChange={setSelectedDisziplin}
+                  placeholder="Alle Disziplinen"
+                  options={[
+                    { value: 'alle', label: 'Alle Disziplinen' },
+                    ...config.disziplinen.map(d => ({ value: d, label: d }))
+                  ]}
+                />
               </div>
               {meldungen.length === 0 ? (
                 <p className="text-muted-foreground text-center py-4">
@@ -1294,28 +1292,29 @@ export default function StartlistenToolPage() {
               </CardHeader>
               <CardContent>
                 <div className="mb-4">
-                  <Select value={sortierung} onValueChange={setSortierung}>
-                    <SelectTrigger className="w-64">
-                      <SelectValue placeholder="Sortierung wählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="durchgang-stand">Durchgang → Stand → Zeit</SelectItem>
-                      <SelectItem value="startzeit-stand">Startzeit → Stand → Name</SelectItem>
-                      <SelectItem value="name-alphabetisch">Name (A-Z)</SelectItem>
-                      <SelectItem value="verein-name">Verein → Name</SelectItem>
-                      <SelectItem value="disziplin-name">Disziplin → Name</SelectItem>
-                      <SelectItem value="altersklasse-name">Altersklasse → Name</SelectItem>
-                      <SelectItem value="stand-zeit">Stand → Startzeit</SelectItem>
-                      <SelectItem value="mannschaft-einzeln">Mannschaften → Einzelschützen</SelectItem>
-                      <SelectItem value="hinweise-name">Hinweise → Name</SelectItem>
-                      <SelectItem value="geburtsjahr-name">Geburtsjahr → Name</SelectItem>
-                      <SelectItem value="geschlecht-name">Geschlecht → Name</SelectItem>
-                      <SelectItem value="lm-teilnahme">LM-Teilnahme → Name</SelectItem>
-                      <SelectItem value="mitgliedsnummer">Mitgliedsnummer</SelectItem>
-                      <SelectItem value="verein-durchgang">Verein → Durchgang → Stand</SelectItem>
-                      <SelectItem value="zufaellig">Zufällig</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <NativeSelect
+                    value={sortierung}
+                    onValueChange={setSortierung}
+                    placeholder="Sortierung wählen"
+                    className="w-64"
+                    options={[
+                      { value: 'durchgang-stand', label: 'Durchgang → Stand → Zeit' },
+                      { value: 'startzeit-stand', label: 'Startzeit → Stand → Name' },
+                      { value: 'name-alphabetisch', label: 'Name (A-Z)' },
+                      { value: 'verein-name', label: 'Verein → Name' },
+                      { value: 'disziplin-name', label: 'Disziplin → Name' },
+                      { value: 'altersklasse-name', label: 'Altersklasse → Name' },
+                      { value: 'stand-zeit', label: 'Stand → Startzeit' },
+                      { value: 'mannschaft-einzeln', label: 'Mannschaften → Einzelschützen' },
+                      { value: 'hinweise-name', label: 'Hinweise → Name' },
+                      { value: 'geburtsjahr-name', label: 'Geburtsjahr → Name' },
+                      { value: 'geschlecht-name', label: 'Geschlecht → Name' },
+                      { value: 'lm-teilnahme', label: 'LM-Teilnahme → Name' },
+                      { value: 'mitgliedsnummer', label: 'Mitgliedsnummer' },
+                      { value: 'verein-durchgang', label: 'Verein → Durchgang → Stand' },
+                      { value: 'zufaellig', label: 'Zufällig' }
+                    ]}
+                  />
                 </div>
                 <div className="overflow-x-auto">
                   <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -1435,19 +1434,12 @@ export default function StartlistenToolPage() {
                               <Badge variant="outline" className="text-xs">{starter.disziplin}</Badge>
                             </div>
                             <div className="col-span-2">
-                              <Select 
-                                value={starter.stand} 
+                              <NativeSelect
+                                value={starter.stand}
                                 onValueChange={(value) => handleStarterChange(starter.id, 'stand', value)}
-                              >
-                                <SelectTrigger className="h-8">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {config.verfuegbareStaende.map(stand => (
-                                    <SelectItem key={stand} value={stand}>Stand {stand}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                                className="h-8"
+                                options={config.verfuegbareStaende.map(stand => ({ value: stand, label: `Stand ${stand}` }))}
+                              />
                             </div>
                             <div className="col-span-2">
                               <Input

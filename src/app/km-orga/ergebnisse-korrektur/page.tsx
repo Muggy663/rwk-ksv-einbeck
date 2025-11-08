@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { ArrowLeft, Save, Search, Edit3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -161,17 +161,14 @@ export default function ErgebnisseKorrekturPage() {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Disziplin</label>
-              <Select value={selectedDisziplin} onValueChange={setSelectedDisziplin}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="alle">Alle Disziplinen</SelectItem>
-                  {disziplinen.map(d => (
-                    <SelectItem key={d} value={d}>{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedDisziplin}
+                onValueChange={setSelectedDisziplin}
+                options={[
+                  { value: 'alle', label: 'Alle Disziplinen' },
+                  ...disziplinen.map(d => ({ value: d, label: d }))
+                ]}
+              />
             </div>
           </div>
         </CardContent>

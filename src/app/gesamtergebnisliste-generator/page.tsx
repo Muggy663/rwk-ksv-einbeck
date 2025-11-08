@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
 import { BarChart3, Printer, ArrowLeft, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -164,33 +164,21 @@ export default function GesamtergebnislisteGeneratorPage() {
           <CardContent className="space-y-4">
             <div>
               <Label>Saison</Label>
-              <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Saison wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {seasons.map(season => (
-                    <SelectItem key={season.id} value={season.id}>
-                      {season.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedSeasonId}
+                onValueChange={setSelectedSeasonId}
+                placeholder="Saison wählen"
+                options={seasons.map(season => ({ value: season.id, label: season.name }))}
+              />
             </div>
             <div>
               <Label>Liga *</Label>
-              <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Liga wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableLeagues.map(league => (
-                    <SelectItem key={league.id} value={league.id}>
-                      {league.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={selectedLeagueId}
+                onValueChange={setSelectedLeagueId}
+                placeholder="Liga wählen"
+                options={availableLeagues.map(league => ({ value: league.id, label: league.name }))}
+              />
             </div>
           </CardContent>
         </Card>

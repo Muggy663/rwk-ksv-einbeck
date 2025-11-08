@@ -553,7 +553,7 @@ service cloud.firestore {
     match /events/{event} {
       allow read: if true;
       allow create, update: if isAuthenticated();
-      allow delete: if isSuperAdmin();
+      allow delete: if isSuperAdmin() || isAuthenticated();
     }
 
     match /support_tickets/{ticket} {

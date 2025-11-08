@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Plus, Save, Users, Trophy, Target } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -266,21 +266,12 @@ export default function EmergencyDataEntryPage() {
                   </div>
                   <div>
                     <Label>Verein</Label>
-                    <Select
+                    <NativeSelect
                       value={shooter.clubId}
                       onValueChange={(value) => updateQuickShooter(index, 'clubId', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Verein wählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clubs.map(club => (
-                          <SelectItem key={club.id} value={club.id}>
-                            {club.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      placeholder="Verein wählen"
+                      options={clubs.map(club => ({ value: club.id, label: club.name }))}
+                    />
                   </div>
                 </div>
               ))}
@@ -319,57 +310,36 @@ export default function EmergencyDataEntryPage() {
                     </div>
                     <div>
                       <Label>Verein</Label>
-                      <Select
+                      <NativeSelect
                         value={team.clubId}
                         onValueChange={(value) => updateQuickTeam(teamIndex, 'clubId', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Verein" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {clubs.map(club => (
-                            <SelectItem key={club.id} value={club.id}>
-                              {club.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder="Verein"
+                        options={clubs.map(club => ({ value: club.id, label: club.name }))}
+                      />
                     </div>
                     <div>
                       <Label>Saison</Label>
-                      <Select
+                      <NativeSelect
                         value={team.seasonId}
                         onValueChange={(value) => updateQuickTeam(teamIndex, 'seasonId', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Saison" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {seasons.map(season => (
-                            <SelectItem key={season.id} value={season.id}>
-                              {season.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder="Saison"
+                        options={seasons.map(season => ({ value: season.id, label: season.name }))}
+                      />
                     </div>
                     <div>
                       <Label>Disziplin</Label>
-                      <Select
+                      <NativeSelect
                         value={team.leagueType}
                         onValueChange={(value) => updateQuickTeam(teamIndex, 'leagueType', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Disziplin" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="KKG">KK Gewehr</SelectItem>
-                          <SelectItem value="KKP">KK Pistole</SelectItem>
-                          <SelectItem value="LGA">LG Auflage</SelectItem>
-                          <SelectItem value="LGS">LG Freihand</SelectItem>
-                          <SelectItem value="LP">Luftpistole</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        placeholder="Disziplin"
+                        options={[
+                          { value: 'KKG', label: 'KK Gewehr' },
+                          { value: 'KKP', label: 'KK Pistole' },
+                          { value: 'LGA', label: 'LG Auflage' },
+                          { value: 'LGS', label: 'LG Freihand' },
+                          { value: 'LP', label: 'Luftpistole' }
+                        ]}
+                      />
                     </div>
                   </div>
                   

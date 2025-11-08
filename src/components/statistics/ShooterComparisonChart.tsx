@@ -38,7 +38,7 @@ export function ShooterComparisonChart({
             variant="outline" 
             size="sm" 
             onClick={onExport}
-            className="w-full sm:w-auto"
+            className="hidden sm:flex sm:w-auto"
           >
             <Download className="h-4 w-4 mr-2" />
             Exportieren

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FileText, Printer, BarChart3, ArrowLeft } from 'lucide-react';
@@ -373,51 +373,33 @@ export function HandzettelGenerator({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="season-select">Saison</Label>
-                    <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Saison wählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {seasons.map(season => (
-                          <SelectItem key={season.id} value={season.id}>
-                            {season.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <NativeSelect
+                      value={selectedSeasonId}
+                      onValueChange={setSelectedSeasonId}
+                      placeholder="Saison wählen"
+                      options={seasons.map(season => ({ value: season.id, label: season.name }))}
+                    />
                   </div>
 
                   <div>
                     <Label htmlFor="league-select">Liga *</Label>
-                    <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Liga wählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableLeagues.map(league => (
-                          <SelectItem key={league.id} value={league.id}>
-                            {league.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <NativeSelect
+                      value={selectedLeagueId}
+                      onValueChange={setSelectedLeagueId}
+                      placeholder="Liga wählen"
+                      options={availableLeagues.map(league => ({ value: league.id, label: league.name }))}
+                    />
                   </div>
                 </div>
 
                 <div>
                   <Label htmlFor="durchgang-select">Durchgang</Label>
-                  <Select value={selectedDurchgang.toString()} onValueChange={(value) => setSelectedDurchgang(parseInt(value))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Durchgang wählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[1,2,3,4,5].map(dg => (
-                        <SelectItem key={dg} value={dg.toString()}>
-                          {dg}. Durchgang
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <NativeSelect
+                    value={selectedDurchgang.toString()}
+                    onValueChange={(value) => setSelectedDurchgang(parseInt(value))}
+                    placeholder="Durchgang wählen"
+                    options={[1,2,3,4,5].map(dg => ({ value: dg.toString(), label: `${dg}. Durchgang` }))}
+                  />
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
@@ -586,33 +568,21 @@ export function HandzettelGenerator({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Saison</Label>
-                  <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Saison wählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {seasons.map(season => (
-                        <SelectItem key={season.id} value={season.id}>
-                          {season.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <NativeSelect
+                    value={selectedSeasonId}
+                    onValueChange={setSelectedSeasonId}
+                    placeholder="Saison wählen"
+                    options={seasons.map(season => ({ value: season.id, label: season.name }))}
+                  />
                 </div>
                 <div>
                   <Label>Liga *</Label>
-                  <Select value={selectedLeagueId} onValueChange={setSelectedLeagueId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Liga wählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableLeagues.map(league => (
-                        <SelectItem key={league.id} value={league.id}>
-                          {league.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <NativeSelect
+                    value={selectedLeagueId}
+                    onValueChange={setSelectedLeagueId}
+                    placeholder="Liga wählen"
+                    options={availableLeagues.map(league => ({ value: league.id, label: league.name }))}
+                  />
                 </div>
                 <div>
                   <label className="flex items-center space-x-2 cursor-pointer">

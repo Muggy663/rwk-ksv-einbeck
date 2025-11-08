@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Download, Upload, FileText, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -149,20 +149,17 @@ export default function David21Page() {
                 </div>
                 <div>
                   <Label htmlFor="disziplin">Disziplin</Label>
-                  <Select 
-                    value={exportData.disziplinId} 
+                  <NativeSelect
+                    value={exportData.disziplinId}
                     onValueChange={(value) => setExportData({...exportData, disziplinId: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Disziplin wählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lg">Luftgewehr</SelectItem>
-                      <SelectItem value="lp">Luftpistole</SelectItem>
-                      <SelectItem value="kkg">KK Gewehr</SelectItem>
-                      <SelectItem value="kkp">KK Pistole</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    placeholder="Disziplin wählen"
+                    options={[
+                      { value: 'lg', label: 'Luftgewehr' },
+                      { value: 'lp', label: 'Luftpistole' },
+                      { value: 'kkg', label: 'KK Gewehr' },
+                      { value: 'kkp', label: 'KK Pistole' }
+                    ]}
+                  />
                 </div>
               </div>
               

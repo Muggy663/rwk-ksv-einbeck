@@ -2,46 +2,11 @@ import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, deleteDoc, doc, Timestamp, writeBatch } from 'firebase/firestore';
 
 /**
- * Löscht Termine, die älter als 24 Stunden sind
- * @returns Anzahl der gelöschten Termine
+ * Deaktiviert - Automatisches Löschen sollte über Firebase Functions erfolgen
+ * @returns 0 (keine Löschung)
  */
 export async function cleanupExpiredEvents(): Promise<number> {
-  try {
-    // Berechne das Datum von vor 24 Stunden
-    const yesterday = new Date();
-    yesterday.setHours(yesterday.getHours() - 24);
-    
-    // Konvertiere zu Firestore Timestamp
-    const cutoffTimestamp = Timestamp.fromDate(yesterday);
-    
-    // Finde alle Termine, die älter als 24 Stunden sind
-    const expiredEventsQuery = query(
-      collection(db, 'events'),
-      where('date', '<', cutoffTimestamp)
-    );
-    
-    const expiredEvents = await getDocs(expiredEventsQuery);
-    
-    if (expiredEvents.empty) {
-
-      return 0;
-    }
-    
-    // Lösche die abgelaufenen Termine in Batches
-    const batch = writeBatch(db);
-    let count = 0;
-    
-    expiredEvents.forEach(eventDoc => {
-      batch.delete(doc(db, 'events', eventDoc.id));
-      count++;
-    });
-    
-    await batch.commit();
-
-    
-    return count;
-  } catch (error) {
-    console.error('Fehler beim Löschen abgelaufener Termine:', error);
-    return 0;
-  }
+  // Client-side Cleanup deaktiviert - sollte über Firebase Functions erfolgen
+  // Grund: Sicherheit und Zuverlässigkeit
+  return 0;
 }
