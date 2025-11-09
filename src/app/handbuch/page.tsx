@@ -53,6 +53,17 @@ export default function HandbuchPage() {
           <Trophy className="h-4 w-4" />
           <span>Kreismeisterschaften (KM)</span>
         </button>
+        <button
+          onClick={() => setActiveTab('schiessnachweis')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors w-full md:w-auto ${
+            activeTab === 'schiessnachweis' 
+              ? 'bg-background text-primary shadow-sm' 
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Target className="h-4 w-4" />
+          <span>Schießnachweis</span>
+        </button>
 
       </div>
 
@@ -691,6 +702,124 @@ export default function HandbuchPage() {
           
           <Separator className="my-6" />
           <p className="text-center text-sm text-muted-foreground"><em>KM-Handbuch wird parallel zur Entwicklung aktualisiert.</em></p>
+        </>
+      )}
+      
+      {activeTab === 'schiessnachweis' && (
+        <>
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl text-accent">Schießnachweis - Benutzerhandbuch</CardTitle>
+              <CardDescription>Das digitale Schießtagebuch für Sportschützen - Version 1.0</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <ul className="list-disc list-inside pl-4 space-y-1">
+                <li><a href="#sn-einleitung" className="text-primary hover:underline">1. Was ist der Schießnachweis?</a></li>
+                <li><a href="#sn-eintrag-erstellen" className="text-primary hover:underline">2. Neuen Eintrag erstellen</a></li>
+                <li><a href="#sn-eintraege-verwalten" className="text-primary hover:underline">3. Einträge verwalten</a></li>
+                <li><a href="#sn-statistiken" className="text-primary hover:underline">4. Statistiken & Auswertungen</a></li>
+                <li><a href="#sn-export" className="text-primary hover:underline">5. Export & Backup</a></li>
+                <li><a href="#sn-digital-import" className="text-primary hover:underline">6. Import von digitalen Anlagen</a></li>
+              </ul>
+            </CardContent>
+          </Card>
+          
+          <Separator className="my-6" />
+          
+          <section id="sn-einleitung" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">1. Was ist der Schießnachweis?</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Digitales Schießtagebuch für Sportschützen</CardTitle></CardHeader>
+              <CardContent>
+                <p>Der Schießnachweis ist ein kostenloses digitales Schießtagebuch, mit dem Sie Ihre Trainings und Wettkämpfe professionell dokumentieren können.</p>
+                
+                <div className="mt-4 bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800">
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">🎯 Hauptfunktionen:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-green-700 dark:text-green-300">
+                    <li><strong>Trainings & Wettkämpfe erfassen:</strong> Alle DSB-Disziplinen unterstützt</li>
+                    <li><strong>Detaillierte Serienerfassung:</strong> Einzelschuss-Dokumentation möglich</li>
+                    <li><strong>Import von digitalen Anlagen:</strong> Meyton, Sius, Disag, Sport Quantum</li>
+                    <li><strong>Statistiken & Auswertungen:</strong> Leistungsentwicklung verfolgen</li>
+                    <li><strong>PDF-Export für Behörden:</strong> Offizieller Nachweis für Waffenbehörde</li>
+                    <li><strong>Offline-Speicherung:</strong> Alle Daten bleiben auf Ihrem Gerät</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="sn-eintrag-erstellen" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">2. Neuen Eintrag erstellen</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Schritt-für-Schritt Anleitung</CardTitle></CardHeader>
+              <CardContent>
+                <h4 className="font-semibold mt-4 mb-2">Grunddaten erfassen:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Datum wählen:</strong> Wann haben Sie geschossen?</li>
+                  <li><strong>Aktivität auswählen:</strong> Training oder Wettkampf</li>
+                  <li><strong>Kategorie wählen:</strong> Kleinkaliber, Luftdruck, Großkaliber, etc.</li>
+                  <li><strong>Disziplin auswählen:</strong> Automatische Filterung nach Kategorie</li>
+                  <li><strong>Schussanzahl & Ergebnis:</strong> Wird teilweise automatisch vorgeschlagen</li>
+                  <li><strong>Ort eingeben:</strong> Wo haben Sie geschossen?</li>
+                </ol>
+                
+                <h4 className="font-semibold mt-4 mb-2">Zusätzliche Details (optional):</h4>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>Wetter:</strong> Sonnig, bewölkt, windig, Halle</li>
+                  <li><strong>Munition:</strong> z.B. RWS R50, Lapua Center-X</li>
+                  <li><strong>Waffe:</strong> z.B. Anschütz 1827, Walther LG400</li>
+                  <li><strong>Notizen:</strong> Besondere Beobachtungen</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="sn-digital-import" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">6. Import von digitalen Anlagen</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Automatischer Import von elektronischen Schießanlagen</CardTitle></CardHeader>
+              <CardContent>
+                <p>Sie können Ergebnisse von elektronischen Schießanlagen direkt importieren - das spart Zeit und verhindert Tippfehler.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">Unterstützte Anlagen:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Elektronische Anlagen:</h5>
+                    <ul className="list-disc pl-5 text-sm text-blue-700 dark:text-blue-300">
+                      <li>Meyton OpticScore/MytargetSoft</li>
+                      <li>Sius Ascor/Suis Target</li>
+                      <li>Disag Shooting Systems</li>
+                      <li>Sport Quantum</li>
+                    </ul>
+                  </div>
+                  <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-green-800 dark:text-green-200 mb-2">Import-Methoden:</h5>
+                    <ul className="list-disc pl-5 text-sm text-green-700 dark:text-green-300">
+                      <li>Text kopieren & einfügen</li>
+                      <li>Datei hochladen (.txt, .csv)</li>
+                      <li>🤖 KI-Erkennung (Gemini AI)</li>
+                      <li>Automatische Format-Erkennung</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <h4 className="font-semibold mt-4 mb-2">So funktioniert der Import:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Ergebnisse kopieren:</strong> Markieren Sie die Ergebnisse auf dem Bildschirm der Anlage</li>
+                  <li><strong>In Schießnachweis einfügen:</strong> Gehen Sie zu "Neuer Eintrag" und fügen Sie die Daten ein</li>
+                  <li><strong>Automatische Erkennung:</strong> Die KI erkennt das Format und extrahiert die Serien</li>
+                  <li><strong>Prüfen & Speichern:</strong> Kontrollieren Sie die importierten Daten und speichern Sie ab</li>
+                </ol>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          <p className="text-center text-sm text-muted-foreground"><em>Schießnachweis-Handbuch wird parallel zur Entwicklung aktualisiert.</em></p>
         </>
       )}
       

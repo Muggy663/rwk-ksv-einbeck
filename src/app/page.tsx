@@ -397,7 +397,7 @@ export default function HomePage() {
 
 
 
-      {/* Was ist neu? - Version 1.8.0 */}
+      {/* Was ist neu? - Version 1.9.0 */}
       <Card className="mb-6 shadow-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
         <CardHeader>
           <CardTitle className="text-xl flex items-center text-green-800 dark:text-green-200">
@@ -406,11 +406,20 @@ export default function HomePage() {
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
               </svg>
             </div>
-            Was ist neu? Version 1.9 - Mobile Update
+            Was ist neu? Version 1.9 - Schießnachweis & KI-Features
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
+
+            <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-lg border-2 border-purple-300 dark:border-purple-600 shadow-lg">
+              <div className="w-3 h-3 bg-purple-500 dark:bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <h4 className="font-bold text-purple-800 dark:text-purple-200 text-lg">🎯 Schießnachweis jetzt verfügbar!</h4>
+                <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Digitales Schießtagebuch mit allen DSB-Disziplinen und KI-Import</p>
+                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-semibold">✨ Kostenlos nutzbar - Premium-Features in v2.0</p>
+              </div>
+            </div>
 
             <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 rounded-lg border-2 border-amber-300 dark:border-amber-600 shadow-lg animate-pulse">
               <div className="w-3 h-3 bg-amber-500 dark:bg-amber-400 rounded-full mt-2 flex-shrink-0 animate-bounce"></div>
@@ -424,22 +433,22 @@ export default function HomePage() {
             <div className="flex items-start space-x-3">
               <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
               <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">📱 Bessere Handy-Bedienung</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">Alle Auswahlfelder funktionieren jetzt perfekt auf dem Smartphone</p>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">🎯 Vollständige DSB-Disziplinen</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">Alle deutschen Schießdisziplinen: KK, LG, LP, Bogen, Armbrust, Vorderlader</p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
               <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
               <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">📸 Neue Kamera-Funktion</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">Live-Vorschau beim Fotografieren mit Hilfsrahmen für perfekte Handzettel-Fotos</p>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">🤖 KI-Import von Schießanlagen</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">Meyton, Sius, Disag, Sport Quantum - Ergebnisse automatisch importieren</p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
               <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
               <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">⚡ Schnellere App</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">Alles lädt schneller und reagiert flüssiger - besonders auf älteren Handys</p>
+                <h4 className="font-semibold text-green-800 dark:text-green-200">📊 Professionelle Statistiken</h4>
+                <p className="text-sm text-green-700 dark:text-green-300">Leistungskurven, Serien-Tracking und PDF-Export für Behörden</p>
               </div>
             </div>
           </div>

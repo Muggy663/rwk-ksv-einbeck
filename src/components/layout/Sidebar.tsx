@@ -19,7 +19,8 @@ import {
   Trophy,
   Users,
   AlertTriangle,
-  Newspaper
+  Newspaper,
+  Target
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -32,6 +33,7 @@ export function Sidebar() {
     { href: '/', label: 'Startseite', icon: Home },
     { href: '/rwk-tabellen', label: 'RWK Tabellen', icon: FileBarChart },
     { href: '/statistiken', label: 'Statistiken', icon: TrendingUp },
+    { href: '/schiessnachweis', label: 'Schießnachweis', icon: Target },
     { href: '/termine', label: 'Termine', icon: CalendarDays },
     { href: '/dokumente', label: 'Dokumente', icon: FileText },
   ];

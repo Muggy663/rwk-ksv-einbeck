@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Home, Users, Trophy, FileText, User, BarChart3, Calendar, BookOpen, MessageSquare, LogOut } from 'lucide-react'
+import { Menu, X, Home, Users, Trophy, FileText, User, BarChart3, Calendar, BookOpen, MessageSquare, LogOut, Target } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,7 @@ const allNavItems: NavItem[] = [
   { href: '/', icon: Home, label: 'Start' },
   { href: '/rwk-tabellen', icon: Trophy, label: 'Tabellen' },
   { href: '/statistiken', icon: BarChart3, label: 'Statistiken' },
+  { href: '/schiessnachweis', icon: Target, label: 'Schießnachweis' },
   { href: '/termine', icon: Calendar, label: 'Termine' },
   { href: '/dokumente', icon: FileText, label: 'Dateien' },
   { href: '/handbuch', icon: BookOpen, label: 'Handbuch' },

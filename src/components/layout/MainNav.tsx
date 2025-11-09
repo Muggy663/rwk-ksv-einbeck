@@ -24,7 +24,8 @@ import {
   Settings,
   TrendingUp,
   AlertTriangle,
-  Newspaper
+  Newspaper,
+  Target
 } from 'lucide-react';
 
 interface RouteItem {
@@ -96,6 +97,12 @@ export function MainNav() {
       label: 'Statistiken',
       icon: <TrendingUp className="h-4 w-4 mr-2" />,
       active: pathname === '/statistiken',
+    },
+    {
+      href: '/schiessnachweis',
+      label: 'Schießnachweis',
+      icon: <Target className="h-4 w-4 mr-2" />,
+      active: pathname === '/schiessnachweis',
     },
     {
       href: '/termine',

@@ -3,13 +3,13 @@ import { cn } from '@/lib/utils';
 
 interface NativeSelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
   placeholder?: string;
-  options: Array<{ value: string; label: string; disabled?: boolean }>;
+  options?: Array<{ value: string; label: string; disabled?: boolean }>;
   onValueChange?: (value: string) => void;
 }
 
 export function NativeSelect({ 
   placeholder = "Auswählen...", 
-  options, 
+  options = [], 
   className,
   onValueChange,
   ...props 
@@ -24,7 +24,7 @@ export function NativeSelect({
       {...props}
     >
       <option value="" disabled>{placeholder}</option>
-      {options.map((option) => (
+      {options && Array.isArray(options) ? options.map((option) => (
         <option 
           key={option.value} 
           value={option.value} 
@@ -32,7 +32,7 @@ export function NativeSelect({
         >
           {option.label}
         </option>
-      ))}
+      )) : null}
     </select>
   );
 }
