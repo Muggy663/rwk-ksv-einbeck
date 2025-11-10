@@ -56,36 +56,29 @@ export default function SchiessnachweisLoginPage() {
         
         // Professionelle E-Mail-Bestätigung mit Resend senden
         try {
-          const verificationLink = `${window.location.origin}/verify-email?token=${await user.getIdToken()}`;
+          // Firebase E-Mail-Verifizierung für den Link
+          await sendEmailVerification(user);
           
+          // Zusätzlich Resend E-Mail senden
           await fetch('/api/send-verification-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               email: user.email,
-              verificationLink,
+              verificationLink: `${window.location.origin}/verify-email`,
               displayName: user.displayName
             })
-          });
+          }).catch(() => {}); // Fehler ignorieren, Firebase E-Mail reicht
           
           toast({
             title: "🎉 Konto erstellt",
             description: "Bitte prüfen Sie Ihre E-Mails zur Bestätigung!",
           });
         } catch (emailError) {
-          // Fallback zu Firebase E-Mail
-          try {
-            await sendEmailVerification(user);
-            toast({
-              title: "✅ Konto erstellt",
-              description: "Bestätigungs-E-Mail gesendet!",
-            });
-          } catch (fallbackError) {
-            toast({
-              title: "✅ Konto erstellt",
-              description: "E-Mail-Bestätigung konnte nicht gesendet werden.",
-            });
-          }
+          toast({
+            title: "✅ Konto erstellt",
+            description: "E-Mail-Bestätigung konnte nicht gesendet werden.",
+          });
         }
       }
       router.push('/schiessnachweis');
