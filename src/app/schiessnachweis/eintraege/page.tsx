@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
-import { ArrowLeft, Plus, Search, Trash2, Calendar, Target as TargetIcon, Trophy, BarChart3, Eye } from "lucide-react";
+import { ArrowLeft, Plus, Search, Trash2, Calendar, Target as TargetIcon, Trophy, BarChart3, Eye, Crown, Smartphone } from "lucide-react";
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
 import { SchießEintrag, DISZIPLINEN } from "@/types/schiessnachweis";
@@ -281,6 +281,29 @@ export default function EinträgePage() {
           ))}
         </div>
       )}
+
+      {/* Premium Teaser */}
+      <Card className="mb-6 border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <Smartphone className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-purple-900 dark:text-purple-100">Multi-Gerät-Synchronisation</h3>
+                <p className="text-sm text-purple-700 dark:text-purple-300">Greifen Sie von überall auf Ihre Daten zu</p>
+              </div>
+            </div>
+            <Link href="/schiessnachweis/premium">
+              <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                <Crown className="h-4 w-4 mr-2" />
+                Premium
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Detail Modal */}
       {selectedEintrag && (

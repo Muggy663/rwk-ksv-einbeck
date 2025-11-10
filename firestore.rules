@@ -293,25 +293,6 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin();
     }
 
-    match /rwk_results/{result} {
-      allow read: if true;
-      allow create: if isAuthenticated() && 
-                    isValidRingCount(request.resource.data.rings) &&
-                    (isSuperAdmin() ||
-                     hasLegacyClubAccess(request.resource.data.clubId) ||
-                     isSportleiter(request.resource.data.clubId) ||
-                     isVorstand(request.resource.data.clubId) ||
-                     isMannschaftsfuehrer(request.resource.data.clubId));
-      allow update: if isAuthenticated() && 
-                    isValidRingCount(request.resource.data.rings) &&
-                    (isSuperAdmin() ||
-                     hasLegacyClubAccess(resource.data.clubId) ||
-                     isSportleiter(resource.data.clubId) ||
-                     isVorstand(resource.data.clubId) ||
-                     isMannschaftsfuehrer(resource.data.clubId));
-      allow delete: if isSuperAdmin();
-    }
-
     // === KM-SYSTEM ===
     
     match /km_meldungen/{meldung} {
@@ -327,140 +308,7 @@ service cloud.firestore {
       allow write: if isSuperAdmin() && collection.matches('km_meldungen_.*');
     }
 
-    // === VEREINSSOFTWARE (Multi-Tenant + Granular) ===
-    
-    // 👥 Mitgliederverwaltung - Erweiterte Lesezugriffe
-    match /clubs/{clubId}/mitglieder/{member} {
-      allow read: if canReadMembers(clubId);
-      allow write: if canWriteMembers(clubId);
-    }
-
-    // 💰 Finanzen & Beiträge - Nur Kassenwart + Vorstand
-    match /clubs/{clubId}/finanzen/{finance} {
-      allow read: if canReadFinances(clubId);
-      allow write: if canWriteFinances(clubId);
-    }
-
-    match /clubs/{clubId}/beitraege/{beitrag} {
-      allow read: if canReadFinances(clubId);
-      allow write: if canWriteFinances(clubId);
-    }
-
-    match /clubs/{clubId}/sepa/{sepa} {
-      allow read: if canReadFinances(clubId);
-      allow write: if canWriteFinances(clubId);
-    }
-
-    // ⚖️ Protokolle & Vereinsrecht - Schriftführer + Vorstand
-    match /clubs/{clubId}/protokolle/{protokoll} {
-      allow read: if canReadProtocols(clubId);
-      allow write: if canWriteProtocols(clubId);
-    }
-
-    match /clubs/{clubId}/vereinsrecht_protokolle/{protokoll} {
-      allow read: if canReadProtocols(clubId);
-      allow write: if canWriteProtocols(clubId);
-    }
-
-    match /clubs/{clubId}/wahlen/{wahl} {
-      allow read: if canReadProtocols(clubId);
-      allow write: if canWriteProtocols(clubId);
-    }
-
-    match /clubs/{clubId}/satzung/{satzung} {
-      allow read: if canReadProtocols(clubId);
-      allow write: if canWriteProtocols(clubId);
-    }
-
-    // 📋 Aufgaben-Management - Nur Vorstand
-    match /clubs/{clubId}/aufgaben/{task} {
-      allow read, write: if isSuperAdmin() || 
-                         isVorstand(clubId) ||
-                         hasLegacyClubAccess(clubId);
-    }
-
-    // 🏆 Lizenzen & Ausbildungen - Sportleiter + Vorstand + Trainer
-    match /clubs/{clubId}/lizenzen/{lizenz} {
-      allow read, write: if isSuperAdmin() || 
-                         isVorstand(clubId) ||
-                         isSportleiter(clubId) ||
-                         isTrainer(clubId) ||
-                         isAusbilder(clubId) ||
-                         hasLegacyClubAccess(clubId);
-    }
-
-    match /clubs/{clubId}/ausbildungen/{ausbildung} {
-      allow read, write: if isSuperAdmin() || 
-                         isVorstand(clubId) ||
-                         isSportleiter(clubId) ||
-                         isTrainer(clubId) ||
-                         isAusbilder(clubId) ||
-                         hasLegacyClubAccess(clubId);
-    }
-
-    // 🎂 Geburtstage & Jubiläen - Vorstand, Kassenwart, Schriftführer, Sportleiter
-    match /clubs/{clubId}/jubilaeen/{jubilaeum} {
-      allow read, write: if isSuperAdmin() || 
-                         isVorstand(clubId) ||
-                         isKassenwart(clubId) ||
-                         isSchriftfuehrer(clubId) ||
-                         isSportleiter(clubId) ||
-                         hasLegacyClubAccess(clubId);
-    }
-
-    match /clubs/{clubId}/geburtstage/{geburtstag} {
-      allow read, write: if isSuperAdmin() || 
-                         isVorstand(clubId) ||
-                         isKassenwart(clubId) ||
-                         isSchriftfuehrer(clubId) ||
-                         isSportleiter(clubId) ||
-                         hasLegacyClubAccess(clubId);
-    }
-
-    // 🎓 Erweiterte Rollen (Phase 2)
-    match /clubs/{clubId}/jugend/{jugend} {
-      allow read, write: if isSuperAdmin() || 
-                         isVorstand(clubId) ||
-                         isJugendwart(clubId) ||
-                         hasLegacyClubAccess(clubId);
-    }
-
-    match /clubs/{clubId}/damen/{damen} {
-      allow read, write: if isSuperAdmin() || 
-                         isVorstand(clubId) ||
-                         isDamenwart(clubId) ||
-                         hasLegacyClubAccess(clubId);
-    }
-
-    match /clubs/{clubId}/inventar/{inventar} {
-      allow read, write: if isSuperAdmin() || 
-                         isVorstand(clubId) ||
-                         isZeugwart(clubId) ||
-                         hasLegacyClubAccess(clubId);
-    }
-
-    match /clubs/{clubId}/waffen/{waffe} {
-      allow read, write: if isSuperAdmin() || 
-                         isVorstand(clubId) ||
-                         isZeugwart(clubId) ||
-                         hasLegacyClubAccess(clubId);
-    }
-
-    match /clubs/{clubId}/news/{news} {
-      allow read: if hasClubAccess(clubId);
-      allow write: if isSuperAdmin() || 
-                   isVorstand(clubId) ||
-                   isPressewart(clubId) ||
-                   hasLegacyClubAccess(clubId);
-    }
-
-    match /clubs/{clubId}/berichte/{bericht} {
-      allow read: if hasClubAccess(clubId);
-      allow write: if isSuperAdmin() || 
-                   isVorstand(clubId) ||
-                   isPressewart(clubId) ||
-                   hasLegacyClubAccess(clubId);
-    }
+   
 
     // 🔒 Fallback für alle anderen Club-Dokumente
     match /clubs/{clubId}/{document=**} {
@@ -528,12 +376,47 @@ service cloud.firestore {
 
 
 
+    // === PREMIUM & SCHIESSNACHWEISE ===
+    
+    function isPremiumUser() {
+      return isAuthenticated() && 
+             getUserPermissions() != null && 
+             getUserPermissions().isPremium == true &&
+             (getUserPermissions().premiumUntil == null || 
+              getUserPermissions().premiumUntil > request.time);
+    }
+    
+    // Schießnachweis-Daten (Premium-Feature)
+    match /schiessnachweis_data/{userId} {
+      allow read, write: if isAuthenticated() && 
+                         request.auth.uid == userId &&
+                         isPremiumUser();
+    }
+    
+    match /schiessnachweis_data/{userId}/{document=**} {
+      allow read, write: if isAuthenticated() && 
+                         request.auth.uid == userId &&
+                         isPremiumUser();
+    }
+    
+    // Premium-Subscriptions
+    match /premium_subscriptions/{userId} {
+      allow read, write: if isSuperAdmin() || 
+                         (isAuthenticated() && request.auth.uid == userId);
+    }
+
     // === SYSTEM & ADMIN ===
     
     match /user_permissions/{userId} {
       allow read: if isSuperAdmin() || 
                   (isAuthenticated() && request.auth.uid == userId);
       allow write: if isSuperAdmin();
+      allow create: if isAuthenticated() && 
+                    request.auth.uid == userId &&
+                    // Nur INDIVIDUAL userType und keine Rollen erlaubt
+                    request.resource.data.userType == 'INDIVIDUAL' &&
+                    !request.resource.data.keys().hasAny(['platformRole', 'kvRoles', 'clubRoles', 'kvRole', 'role']) &&
+                    request.resource.data.isPremium != true;
     }
 
     match /users/{userId} {
@@ -553,7 +436,7 @@ service cloud.firestore {
     match /events/{event} {
       allow read: if true;
       allow create, update: if isAuthenticated();
-      allow delete: if isSuperAdmin() || isAuthenticated();
+      allow delete: if isSuperAdmin();
     }
 
     match /support_tickets/{ticket} {

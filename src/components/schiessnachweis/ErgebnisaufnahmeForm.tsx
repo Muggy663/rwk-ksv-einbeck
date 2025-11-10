@@ -13,9 +13,10 @@ interface ErgebnisaufnahmeFormProps {
   disziplin: DisziplinName;
   onSerienChange: (serien: ZehnerSerie[]) => void;
   initialSerien?: ZehnerSerie[];
+  schussAnzahl?: number;
 }
 
-export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien = [] }: ErgebnisaufnahmeFormProps) {
+export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien = [], schussAnzahl }: ErgebnisaufnahmeFormProps) {
   const [serien, setSerien] = useState<ZehnerSerie[]>(initialSerien);
   const [activeSerieIndex, setActiveSerieIndex] = useState<number>(0);
   const [eingabeModus, setEingabeModus] = useState<'einzelschuss' | 'seriensumme'>('einzelschuss');
@@ -24,10 +25,33 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
   const disziplinConfig = getDisziplinConfig(disziplin);
   
   useEffect(() => {
-    if (serien.length === 0 && disziplinConfig) {
+    if (serien.length === 0 && disziplinConfig && schussAnzahl) {
+      // Berechne Anzahl benötigter Serien basierend auf Schussanzahl
+      const benötigteSerien = Math.ceil(schussAnzahl / disziplinConfig.serienGroesse);
+      
+      // Erstelle die benötigten Serien
+      const neueSerien: ZehnerSerie[] = [];
+      for (let i = 0; i < benötigteSerien; i++) {
+        const neueSerie: ZehnerSerie = {
+          id: `${Date.now()}-${i}`,
+          serienNummer: i + 1,
+          schuesse: Array.from({ length: disziplinConfig.serienGroesse }, (_, j) => ({
+            nummer: j + 1,
+            wert: 0,
+            ring: 0
+          })),
+          summe: 0
+        };
+        neueSerien.push(neueSerie);
+      }
+      
+      setSerien(neueSerien);
+      setActiveSerieIndex(0);
+    } else if (serien.length === 0 && disziplinConfig) {
+      // Fallback: Eine Serie erstellen
       addSerie();
     }
-  }, [disziplin]);
+  }, [disziplin, schussAnzahl]);
 
   useEffect(() => {
     onSerienChange(serien);
@@ -75,7 +99,8 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
     return serien.reduce((sum, serie) => sum + serie.summe, 0);
   };
 
-  const applySeriensumme = () => {
+  const applySeriensumme = (e?: React.FormEvent) => {
+    if (e) e.preventDefault(); // Verhindere Form-Submit
     if (!disziplinConfig || !seriensummeInput) return;
     
     const summe = parseFloat(seriensummeInput);
@@ -132,9 +157,14 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
         {serien.map((serie, index) => (
           <Button
             key={serie.id}
+            type="button"
             variant={activeSerieIndex === index ? "default" : "outline"}
             size="sm"
-            onClick={() => setActiveSerieIndex(index)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setActiveSerieIndex(index);
+            }}
           >
             Serie {serie.serienNummer}
             <Badge variant="secondary" className="ml-2">
@@ -142,7 +172,16 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
             </Badge>
           </Button>
         ))}
-        <Button variant="outline" size="sm" onClick={addSerie}>
+        <Button 
+          type="button" 
+          variant="outline" 
+          size="sm" 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            addSerie();
+          }}
+        >
           <Plus className="h-4 w-4 mr-1" />
           Serie
         </Button>
@@ -203,7 +242,7 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
             ) : (
               <div className="mb-6">
                 <Label className="text-sm font-medium mb-2 block">
-                  Seriensumme eingeben (wird gleichmäßig auf {disziplinConfig.serienGroesse} Schüsse verteilt)
+                  Seriensumme eingeben
                 </Label>
                 <div className="flex gap-4 items-end">
                   <div className="flex-1 max-w-xs">
@@ -213,14 +252,37 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
                       max={disziplinConfig.maxRinge * disziplinConfig.serienGroesse}
                       step={disziplinConfig.kommastellen ? "0.1" : "1"}
                       value={seriensummeInput}
-                      onChange={(e) => setSeriensummeInput(e.target.value)}
+                      onChange={(e) => {
+                        const summe = parseFloat(e.target.value) || 0;
+                        setSeriensummeInput(e.target.value);
+                        
+                        // Automatisch anwenden wenn Wert eingegeben wird
+                        if (summe > 0) {
+                          const neueSerien = [...serien];
+                          const serie = neueSerien[activeSerieIndex];
+                          serie.summe = summe;
+                          serie.schuesse = []; // Keine Einzelschüsse bei Seriensumme
+                          setSerien(neueSerien);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
+                      onBlur={() => setSeriensummeInput('')} // Input leeren nach Verlassen
                       placeholder={`Max. ${disziplinConfig.maxRinge * disziplinConfig.serienGroesse} Ringe`}
                       className="text-center font-mono text-lg"
                     />
                   </div>
                   <Button
                     type="button"
-                    onClick={applySeriensumme}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      applySeriensumme();
+                    }}
                     disabled={!seriensummeInput}
                   >
                     Verteilen

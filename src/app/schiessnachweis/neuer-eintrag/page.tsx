@@ -62,24 +62,34 @@ export default function NeuerEintragPage() {
   }, [formData.disziplin]);
   
   useEffect(() => {
-    if (serien.length > 0) {
+    if (serien.length > 0 && showDetailedEntry) {
       const gesamtErgebnis = serien.reduce((sum, serie) => sum + serie.summe, 0);
-      const gesamtSchussAnzahl = serien.reduce((sum, serie) => sum + serie.schuesse.length, 0);
-      setFormData(prev => ({ 
-        ...prev, 
-        ergebnis: gesamtErgebnis.toString(),
-        schussAnzahl: gesamtSchussAnzahl.toString()
-      }));
+      // Nur Ergebnis aktualisieren, nicht Schussanzahl (die ist bereits gesetzt)
+      if (gesamtErgebnis > 0) {
+        setFormData(prev => ({ 
+          ...prev, 
+          ergebnis: gesamtErgebnis.toString()
+        }));
+      }
     }
-  }, [serien]);
+  }, [serien, showDetailedEntry]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     
     if (!formData.disziplin || !formData.schussAnzahl || !formData.ergebnis || !formData.standort) {
       toast({
         title: "Fehler",
         description: "Bitte füllen Sie alle Pflichtfelder aus.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Prüfe ob Ergebnis > 0 ist
+    if (parseFloat(formData.ergebnis) <= 0) {
+      toast({
+        title: "Fehler",
+        description: "Bitte geben Sie ein gültiges Ergebnis ein.",
         variant: "destructive"
       });
       return;
@@ -147,7 +157,7 @@ export default function NeuerEintragPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="datum">Datum *</Label>
@@ -368,6 +378,7 @@ export default function NeuerEintragPage() {
                       disziplin={formData.disziplin}
                       onSerienChange={setSerien}
                       initialSerien={serien}
+                      schussAnzahl={parseInt(formData.schussAnzahl) || undefined}
                     />
                   )}
                 </div>
@@ -386,7 +397,12 @@ export default function NeuerEintragPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
+              <Button 
+                type="button" 
+                onClick={handleSubmit} 
+                disabled={isSubmitting} 
+                className="flex items-center gap-2"
+              >
                 <Save className="h-4 w-4" />
                 {isSubmitting ? 'Speichere...' : 'Eintrag speichern'}
               </Button>
@@ -396,7 +412,7 @@ export default function NeuerEintragPage() {
                 </Link>
               </Button>
             </div>
-          </form>
+          </div>
         </CardContent>
       </Card>
     </div>

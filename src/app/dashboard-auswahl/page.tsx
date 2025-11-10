@@ -210,6 +210,57 @@ export default function DashboardAuswahl() {
         </Card>
         )}
 
+        {/* Schießnachweis Dashboard */}
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+          <CardHeader className="pb-4">
+            <div>
+              <CardTitle className="text-xl mb-2">
+                🎯 Schießnachweis
+                <Badge variant="secondary" className="ml-2 text-xs">Kostenlos</Badge>
+              </CardTitle>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant="outline">Offline-Speicherung</Badge>
+                <Badge variant="outline">PDF-Export</Badge>
+              </div>
+            </div>
+            <CardDescription>
+              Digitales Schießtagebuch für Sportschützen - Kostenlos verfügbar
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🆓 Kostenlose Features</h4>
+                <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
+                  <div>• Training & Wettkampf erfassen</div>
+                  <div>• Import von digitalen Anlagen</div>
+                  <div>• PDF-Export für Behörden</div>
+                  <div>• Basis-Statistiken</div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">💎 Premium (~2€/Monat)</h4>
+                <div className="text-sm text-purple-700 dark:text-purple-300 space-y-1">
+                  <div>• 🔄 Cloud-Synchronisation</div>
+                  <div>• 📱 Multi-Gerät-Zugang</div>
+                  <div>• 📊 Erweiterte Statistiken</div>
+                  <div>• 📈 Leistungsanalyse</div>
+                </div>
+                <Badge variant="secondary" className="mt-2 text-xs">Coming Soon</Badge>
+              </div>
+              
+              <div className="flex gap-2">
+                <Link href="/schiessnachweis" className="flex-1">
+                  <Button className="w-full">
+                    Schießnachweis öffnen
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* KM Dashboard */}
         <Card className={`shadow-lg hover:shadow-xl transition-shadow ${!hasKMAccess ? 'opacity-60' : ''}`}>
           <CardHeader className="pb-4">

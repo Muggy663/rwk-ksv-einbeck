@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Target, Plus, Calendar, TrendingUp, FileText, Download, Upload } from "lucide-react";
+import { Target, Plus, Calendar, TrendingUp, FileText, Download, Upload, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
 import { SchießStatistik } from "@/types/schiessnachweis";
+import { CloudSyncStatus } from "@/components/schiessnachweis/CloudSyncStatus";
+import { PremiumProvider } from "@/components/schiessnachweis/PremiumProvider";
 import Link from "next/link";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -31,25 +33,163 @@ export default function SchießnachweisPage() {
     }
   };
 
-  const handleExport = () => {
+  const handleExportExcel = () => {
     try {
-      const data = SchießnachweisService.exportData();
-      const blob = new Blob([data], { type: 'application/json' });
+      const einträge = SchießnachweisService.getEinträge();
+      const csvData = convertToCSV(einträge);
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `schiessnachweis_backup_${format(new Date(), 'yyyy-MM-dd')}.json`;
+      a.download = `schiessnachweis_${format(new Date(), 'yyyy-MM-dd')}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Export fehlgeschlagen:', error);
+      console.error('Excel-Export fehlgeschlagen:', error);
     }
   };
 
+  const handleExportODS = () => {
+    try {
+      const einträge = SchießnachweisService.getEinträge();
+      const odsData = convertToODS(einträge);
+      const blob = new Blob([odsData], { type: 'application/vnd.oasis.opendocument.spreadsheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `schiessnachweis_${format(new Date(), 'yyyy-MM-dd')}.ods`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('ODS-Export fehlgeschlagen:', error);
+    }
+  };
+
+  const convertToCSV = (einträge: any[]) => {
+    const headers = ['Datum', 'Typ', 'Disziplin', 'Schussanzahl', 'Ergebnis', 'Bemerkung'];
+    const csvRows = [headers.join(';')];
+    
+    einträge.forEach(eintrag => {
+      const row = [
+        format(eintrag.datum, 'dd.MM.yyyy'),
+        eintrag.typ === 'training' ? 'Training' : 'Wettkampf',
+        eintrag.disziplin,
+        eintrag.schussAnzahl,
+        eintrag.ergebnis,
+        eintrag.bemerkung || ''
+      ];
+      csvRows.push(row.join(';'));
+    });
+    
+    return '\uFEFF' + csvRows.join('\n'); // BOM für UTF-8
+  };
+
+  const convertToODS = (einträge: any[]) => {
+    // Vereinfachte ODS-Struktur (CSV mit .ods Extension)
+    const csvData = convertToCSV(einträge);
+    return csvData;
+  };
+
+  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const importedCount = await importFromCSV(text);
+      
+      toast({
+        title: "✅ Import erfolgreich",
+        description: `${importedCount} neue Einträge importiert.`,
+      });
+      
+      // Statistik neu laden
+      loadStatistik();
+      
+      // Input zurücksetzen
+      event.target.value = '';
+    } catch (error) {
+      toast({
+        title: "Import fehlgeschlagen",
+        description: error instanceof Error ? error.message : "Unbekannter Fehler",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const importFromCSV = async (csvText: string): Promise<number> => {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length < 2) throw new Error('CSV-Datei ist leer oder ungültig');
+    
+    // Header prüfen
+    const header = lines[0].split(';');
+    const expectedHeaders = ['Datum', 'Typ', 'Disziplin', 'Schussanzahl', 'Ergebnis', 'Bemerkung'];
+    
+    if (!expectedHeaders.every(h => header.includes(h))) {
+      throw new Error('CSV-Format ungültig. Erwartet: Datum;Typ;Disziplin;Schussanzahl;Ergebnis;Bemerkung');
+    }
+    
+    const existingEinträge = SchießnachweisService.getEinträge();
+    let importCount = 0;
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(';');
+      if (values.length < 5) continue;
+      
+      try {
+        const [datumStr, typStr, disziplin, schussAnzahlStr, ergebnisStr, bemerkung = ''] = values;
+        
+        // Datum parsen (DD.MM.YYYY)
+        const [day, month, year] = datumStr.split('.');
+        const datum = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        
+        if (isNaN(datum.getTime())) {
+          console.warn(`Ungültiges Datum in Zeile ${i + 1}: ${datumStr}`);
+          continue;
+        }
+        
+        const typ = typStr.toLowerCase().includes('training') ? 'training' : 'wettkampf';
+        const schussAnzahl = parseInt(schussAnzahlStr);
+        const ergebnis = parseFloat(ergebnisStr.replace(',', '.'));
+        
+        if (isNaN(schussAnzahl) || isNaN(ergebnis)) {
+          console.warn(`Ungültige Zahlen in Zeile ${i + 1}`);
+          continue;
+        }
+        
+        // Duplikat-Check
+        const exists = existingEinträge.some(existing => 
+          Math.abs(existing.datum.getTime() - datum.getTime()) < 24 * 60 * 60 * 1000 && // Gleicher Tag
+          existing.disziplin === disziplin &&
+          existing.ergebnis === ergebnis
+        );
+        
+        if (!exists) {
+          SchießnachweisService.saveEintrag({
+            datum,
+            typ: typ as 'training' | 'wettkampf',
+            disziplin,
+            schussAnzahl,
+            ergebnis,
+            bemerkung: bemerkung.trim()
+          });
+          importCount++;
+        }
+      } catch (error) {
+        console.warn(`Fehler in Zeile ${i + 1}:`, error);
+      }
+    }
+    
+    return importCount;
+  };
+
   return (
-    <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
+    <PremiumProvider>
+      <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
       <div className="text-center mb-6 sm:mb-8">
         <div className="flex justify-center items-center gap-2 sm:gap-3 mb-4">
           <Target className="h-8 w-8 sm:h-12 sm:w-12 text-blue-600" />
@@ -82,6 +222,12 @@ export default function SchießnachweisPage() {
           <Link href="/schiessnachweis/statistiken">
             <TrendingUp className="h-5 w-5" />
             Statistiken
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-2 h-12 sm:h-auto border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 dark:from-yellow-950/20 dark:to-orange-950/20">
+          <Link href="/schiessnachweis/premium">
+            <Crown className="h-5 w-5 text-yellow-600" />
+            Premium
           </Link>
         </Button>
       </div>
@@ -155,6 +301,9 @@ export default function SchießnachweisPage() {
         </Card>
       )}
 
+      {/* Cloud-Sync Status */}
+      <CloudSyncStatus className="mb-6 sm:mb-8" />
+      
       {/* Backup & Export */}
       <Card className="mb-6 sm:mb-8">
         <CardHeader className="pb-3 sm:pb-6">
@@ -167,12 +316,39 @@ export default function SchießnachweisPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:flex sm:flex-row gap-3">
-            <Button onClick={handleExport} variant="outline" className="flex items-center justify-center gap-2 h-12 sm:h-auto">
-              <Download className="h-4 w-4" />
-              Daten exportieren
-            </Button>
-            <Button asChild variant="outline" className="flex items-center justify-center gap-2 h-12 sm:h-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">📤 Export</h4>
+              <div className="grid grid-cols-1 gap-2">
+                <Button onClick={handleExportExcel} variant="outline" size="sm" className="flex items-center justify-center gap-2">
+                  <Download className="h-4 w-4" />
+                  Excel (.csv)
+                </Button>
+                <Button onClick={handleExportODS} variant="outline" size="sm" className="flex items-center justify-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  LibreOffice (.ods)
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">📥 Import</h4>
+              <div className="grid grid-cols-1 gap-2">
+                <Button onClick={() => document.getElementById('csv-import')?.click()} variant="outline" size="sm" className="flex items-center justify-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  CSV/Excel importieren
+                </Button>
+                <input
+                  id="csv-import"
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={handleImportCSV}
+                  className="hidden"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            <Button asChild variant="outline" className="flex items-center justify-center gap-2 h-10">
               <Link href="/schiessnachweis/pdf-export">
                 <FileText className="h-4 w-4" />
                 PDF für Behörden
@@ -180,47 +356,16 @@ export default function SchießnachweisPage() {
             </Button>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-3">
-            Tipp: Speichern Sie Backups in Google Drive oder iCloud für zusätzliche Sicherheit
+            📊 <strong>CSV/Excel:</strong> Zum Bearbeiten, Sichern und Wiederherstellen<br/>
+            📄 <strong>LibreOffice:</strong> Schöne Übersicht und Auswertungen<br/>
+            📝 <strong>PDF:</strong> Offizieller Nachweis für Behörden<br/>
+            💡 <strong>Import:</strong> Unterstützt das gleiche Format wie der Export
           </p>
         </CardContent>
       </Card>
 
-      {/* Premium-Teaser für v2.0 */}
-      <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border-purple-200 dark:border-purple-800">
-        <CardHeader className="pb-3 sm:pb-6">
-          <CardTitle className="text-purple-800 dark:text-purple-200 flex items-center gap-2 text-base sm:text-lg">
-            💎 Premium-Features (Coming in v2.0)
-          </CardTitle>
-          <CardDescription className="text-purple-700 dark:text-purple-300 text-sm sm:text-base">
-            Erweiterte Funktionen für noch mehr Komfort
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-2 text-sm sm:text-base">🆓 Aktuell kostenlos:</h4>
-              <ul className="text-xs sm:text-sm text-purple-700 dark:text-purple-300 space-y-1">
-                <li>✅ Offline-Speicherung</li>
-                <li>✅ Backup-Export</li>
-                <li>✅ PDF für Behörden</li>
-                <li>✅ Basis-Statistiken</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2 text-sm sm:text-base">💎 Premium (~2€/Monat):</h4>
-              <ul className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                <li>🔄 Cloud-Synchronisation</li>
-                <li>📱 Multi-Gerät-Zugang</li>
-                <li>📊 Erweiterte Statistiken</li>
-                <li>🎯 RWK-Integration</li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-4 text-center">
-            <Badge variant="secondary" className="text-xs sm:text-sm">Coming in Version 2.0</Badge>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+
+      </div>
+    </PremiumProvider>
   );
 }

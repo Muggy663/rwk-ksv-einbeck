@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Home, Users, Trophy, BarChart3, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
+import { useAccess } from '@/components/schiessnachweis/PremiumProvider';
 import { MobileBurgerMenu } from './MobileBurgerMenu';
 
 interface NavItem {
@@ -14,6 +15,9 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   requiresAuth?: boolean;
+  requiresRWK?: boolean;
+  requiresKM?: boolean;
+  requiresSchiessnachweis?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -26,6 +30,7 @@ const navItems: NavItem[] = [
     href: '/rwk-tabellen',
     icon: Trophy,
     label: 'Tabellen',
+    requiresRWK: true,
   },
   {
     href: '/statistiken',
@@ -37,21 +42,27 @@ const navItems: NavItem[] = [
     icon: Users,
     label: 'Verein',
     requiresAuth: true,
+    requiresRWK: true,
   },
   {
     href: '/km',
     icon: FileText,
     label: 'KM',
     requiresAuth: true,
+    requiresKM: true,
   },
 ];
 
 export function MobileNavigation() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { canAccessRWK, canAccessKM, canAccessSchiessnachweis, userType } = useAccess();
 
   const filteredItems = navItems.filter(item => {
     if (item.requiresAuth && !user) return false;
+    if (item.requiresRWK && !canAccessRWK) return false;
+    if (item.requiresKM && !canAccessKM) return false;
+    if (item.requiresSchiessnachweis && !canAccessSchiessnachweis) return false;
     if (item.href === '/login' && user) return false;
     return true;
   });

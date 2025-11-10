@@ -4,10 +4,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NativeSelect } from "@/components/ui/native-select";
-import { ArrowLeft, TrendingUp, Calendar, Target, Trophy, Download } from "lucide-react";
+import { ArrowLeft, TrendingUp, Calendar, Target, Trophy, Download, Crown, Lock } from "lucide-react";
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
 import { SchießEintrag, DISZIPLIN_NAMES } from "@/types/schiessnachweis";
+import { PremiumService } from "@/lib/services/premium-service";
+import { PremiumStatisticsService } from "@/lib/services/premium-statistics-service";
+import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
 import { de } from "date-fns/locale";
@@ -19,6 +22,11 @@ export default function StatistikenPage() {
   const [filterDisziplin, setFilterDisziplin] = useState<string>("alle");
   const [filterZeitraum, setFilterZeitraum] = useState<string>("12monate");
   const [isLoading, setIsLoading] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
+  
+  useEffect(() => {
+    setIsPremium(PremiumService.isPremium());
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -288,57 +296,223 @@ export default function StatistikenPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Aktivitäts-Verteilung */}
-            <Card>
+            <Card className={!isPremium ? "relative" : ""}>
               <CardHeader>
-                <CardTitle>Training vs Wettkampf</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  Training vs Wettkampf
+                  {!isPremium && <Badge variant="outline" className="ml-2"><Crown className="h-3 w-3 mr-1" />Premium</Badge>}
+                </CardTitle>
                 <CardDescription>Verteilung und Durchschnittsergebnisse</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[250px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={aktivitätsdaten}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="anzahl" fill="#0088FE" name="Anzahl" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                {isPremium ? (
+                  <div className="space-y-4">
+                    <div className="h-[200px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={aktivitätsdaten}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="anzahl" fill="#0088FE" name="Anzahl" />
+                          <Bar dataKey="durchschnitt" fill="#00C49F" name="Ø Ergebnis" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    {(() => {
+                      const trendAnalysis = PremiumStatisticsService.getTrendAnalysis(getFilteredData());
+                      const metrics = PremiumStatisticsService.getPerformanceMetrics(getFilteredData());
+                      return (
+                        <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                          <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🎯 Premium-Analyse</h4>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <span className="text-blue-700 dark:text-blue-300">Trend:</span>
+                              <span className={`ml-2 font-medium ${
+                                trendAnalysis.trend === 'steigend' ? 'text-green-600' :
+                                trendAnalysis.trend === 'fallend' ? 'text-red-600' : 'text-blue-600'
+                              }`}>
+                                {trendAnalysis.trend === 'steigend' ? '📈' : 
+                                 trendAnalysis.trend === 'fallend' ? '📉' : '➡️'} 
+                                {trendAnalysis.description}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-blue-700 dark:text-blue-300">Konsistenz:</span>
+                              <span className="ml-2 font-medium text-blue-900 dark:text-blue-100">
+                                {metrics.consistency}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()
+                    }
+                  </div>
+                ) : (
+                  <div className="h-[250px] w-full bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex flex-col items-center justify-center">
+                    <Lock className="h-12 w-12 text-yellow-600 mb-3" />
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3 text-center">Erweiterte Statistiken<br />nur mit Premium</p>
+                    <Link href="/schiessnachweis/premium">
+                      <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700">
+                        <Crown className="h-4 w-4 mr-2" />
+                        Upgraden
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Disziplinen-Verteilung */}
-            <Card>
+            <Card className={!isPremium ? "relative" : ""}>
               <CardHeader>
-                <CardTitle>Disziplinen-Verteilung</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  Disziplinen-Verteilung
+                  {!isPremium && <Badge variant="outline" className="ml-2"><Crown className="h-3 w-3 mr-1" />Premium</Badge>}
+                </CardTitle>
                 <CardDescription>Häufigkeit der verschiedenen Disziplinen</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[250px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={disziplinendaten}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percentage }) => `${name}: ${percentage}%`}
-                      >
-                        {disziplinendaten.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                {isPremium ? (
+                  <div className="h-[250px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={disziplinendaten}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percentage }) => `${name}: ${percentage}%`}
+                        >
+                          {disziplinendaten.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[250px] w-full bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex flex-col items-center justify-center">
+                    <Lock className="h-12 w-12 text-yellow-600 mb-3" />
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3 text-center">Erweiterte Statistiken<br />nur mit Premium</p>
+                    <Link href="/schiessnachweis/premium">
+                      <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700">
+                        <Crown className="h-4 w-4 mr-2" />
+                        Upgraden
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
 
+          {/* Premium Analytics Section */}
+          {isPremium && (() => {
+            const comparison = PremiumStatisticsService.getDisziplinComparison(getFilteredData());
+            const weeklyPattern = PremiumStatisticsService.getWeeklyPattern(getFilteredData());
+            const monthlyProgress = PremiumStatisticsService.getMonthlyProgress(getFilteredData(), 6);
+            
+            return (
+              <div className="space-y-6">
+                {/* Disziplin-Vergleich */}
+                <Card className="border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Crown className="h-5 w-5 text-yellow-600" />
+                      Disziplin-Leistungsvergleich
+                      <Badge variant="default" className="ml-2">Premium</Badge>
+                    </CardTitle>
+                    <CardDescription>Detaillierte Analyse Ihrer Stärken und Schwächen</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {comparison.slice(0, 5).map((comp, index) => (
+                        <div key={comp.disziplin} className="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center w-6 h-6 bg-yellow-600 text-white rounded-full text-xs font-bold">
+                              {index + 1}
+                            </div>
+                            <div>
+                              <div className="font-medium">{comp.disziplin}</div>
+                              <div className="text-sm text-muted-foreground">{comp.anzahl} Einträge</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-lg">{comp.durchschnitt}</div>
+                            <div className={`text-sm ${
+                              comp.verbesserung > 0 ? 'text-green-600' : 
+                              comp.verbesserung < 0 ? 'text-red-600' : 'text-gray-500'
+                            }`}>
+                              {comp.verbesserung > 0 ? '+' : ''}{comp.verbesserung}%
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Wochenmuster */}
+                <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-purple-600" />
+                      Wochenmuster-Analyse
+                      <Badge variant="default" className="ml-2">Premium</Badge>
+                    </CardTitle>
+                    <CardDescription>An welchen Wochentagen schießen Sie am besten?</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[200px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={weeklyPattern}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="day" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#8B5CF6" name="Anzahl" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Monatlicher Fortschritt */}
+                <Card className="border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-green-600" />
+                      6-Monats-Fortschritt
+                      <Badge variant="default" className="ml-2">Premium</Badge>
+                    </CardTitle>
+                    <CardDescription>Detaillierte Entwicklung der letzten 6 Monate</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[250px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={monthlyProgress}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="monat" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Line type="monotone" dataKey="avgTraining" stroke="#10B981" name="Ø Training" strokeWidth={2} />
+                          <Line type="monotone" dataKey="avgWettkampf" stroke="#F59E0B" name="Ø Wettkampf" strokeWidth={2} />
+                          <Line type="monotone" dataKey="gesamtDurchschnitt" stroke="#3B82F6" name="Ø Gesamt" strokeWidth={3} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
+          
           {/* Beste Ergebnisse */}
           <Card>
             <CardHeader>

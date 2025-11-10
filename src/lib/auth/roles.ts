@@ -1,5 +1,5 @@
 // src/lib/auth/roles.ts
-// Neue 3-Ebenen-Rollen-Architektur für Wartungsarbeiten 15.09.2025
+// Vollständiges Rollen-System für alle Nutzertypen
 
 export type PlatformRole = 
   | 'SUPER_ADMIN'      // Entwickler/Betreiber - Vollzugriff
@@ -13,31 +13,55 @@ export type KvRole =
   | 'KV_KAMPFRICHTER';    // KM-Ergebnisse
 
 export type ClubRole = 
-  | 'VORSTAND'         // Vollzugriff alle Module
-  | 'SPORTLEITER'      // RWK/KM-Meldungen
-  | 'KASSENWART'       // Finanzen & Mitglieder
-  | 'SCHRIFTFUEHRER'   // Protokolle & Mitglieder-Lesezugriff
-  | 'JUGENDWART'       // Jugend-Mitglieder
-  | 'DAMENWART'        // Damen-Events
-  | 'ZEUGWART'         // Waffen & Inventar
-  | 'PRESSEWART'       // Vereins-News
-  | 'TRAINER'          // Ausbildungen
-  | 'AUSBILDER'        // Fortgeschrittene Schulungen
-  | 'VEREINSSCHUETZE'  // Basis-Mitglied
-  | 'EHRENMITGLIED';   // Lesezugriff Geschichte
+  | 'SPORTLEITER'      // RWK/KM Vollzugriff
+  | 'MANNSCHAFTSFUEHRER'; // Ergebnisse eingeben
+
+// Nutzertypen für Schießnachweis
+export type UserType = 
+  | 'CLUB_MEMBER'      // Vereinsmitglied (hat Club-Rolle)
+  | 'INDIVIDUAL'       // Einzelschütze (nur Schießnachweis)
+  | 'GUEST';           // Gast (nur öffentliche Bereiche)
 
 // Legacy-Rollen (für Übergangszeit)
 export type LegacyRole = 
   | 'vereinsvertreter'
   | 'vereinsvorstand'
   | 'mannschaftsfuehrer'
-  | 'km_orga';
+  | 'km_orga';  // Wird zu KV_KM_ORGA migriert
+
+// Zugriffslevel für verschiedene Bereiche
+export interface AccessLevels {
+  rwk: boolean;           // RWK-Tabellen ansehen
+  km: boolean;            // KM-Bereiche ansehen
+  schiessnachweis: boolean; // Schießnachweis nutzen
+  premiumFeatures: boolean; // Premium-Features
+  vereinssoftware: boolean; // Vereinssoftware
+  admin: boolean;         // Admin-Bereiche
+}
+
+export const getAccessLevels = (permissions: UserPermissions, clubId?: string): AccessLevels => {
+  return {
+    rwk: canAccessRWK(permissions),
+    km: canAccessKM(permissions),
+    schiessnachweis: canAccessSchiessnachweis(permissions),
+    premiumFeatures: canAccessPremiumFeatures(permissions),
+    vereinssoftware: clubId ? canAccessVereinssoftware(permissions, clubId) : false,
+    admin: permissions.platformRole === 'SUPER_ADMIN'
+  };
+};
 
 export interface UserPermissions {
   // Neue Struktur
   platformRole?: PlatformRole;
   kvRoles?: Record<string, KvRole>;     // { 'kvId': 'KV_WETTKAMPFLEITER' }
   clubRoles?: Record<string, ClubRole>; // { 'clubId': 'SPORTLEITER' }
+  
+  // Nutzertyp
+  userType: UserType;
+  
+  // Premium-Status (für Schießnachweis)
+  isPremium?: boolean;
+  premiumUntil?: Date;
   
   // Legacy (für Migration)
   role?: LegacyRole;
@@ -99,4 +123,48 @@ export const canAccessVereinssoftware = (permissions: UserPermissions, clubId: s
   }
   
   return false;
+};
+
+// RWK/KM Zugriffskontrolle
+export const canAccessRWK = (permissions: UserPermissions): boolean => {
+  if (permissions.platformRole === 'SUPER_ADMIN') return true;
+  if (permissions.kvRoles && Object.keys(permissions.kvRoles).length > 0) return true;
+  if (permissions.clubRoles && Object.keys(permissions.clubRoles).length > 0) return true;
+  if (permissions.role === 'vereinsvertreter') return true;
+  return false;
+};
+
+export const canAccessKM = (permissions: UserPermissions): boolean => {
+  if (permissions.platformRole === 'SUPER_ADMIN') return true;
+  if (permissions.kvRoles && Object.keys(permissions.kvRoles).length > 0) return true;
+  if (permissions.clubRoles && Object.keys(permissions.clubRoles).length > 0) return true;
+  if (permissions.role === 'vereinsvertreter') return true;
+  return false;
+};
+
+// Schießnachweis Zugriffskontrolle
+export const canAccessSchiessnachweis = (permissions: UserPermissions): boolean => {
+  // Alle registrierten Nutzer können Schießnachweis nutzen
+  return permissions.userType !== 'GUEST';
+};
+
+export const canAccessPremiumFeatures = (permissions: UserPermissions): boolean => {
+  if (permissions.platformRole === 'SUPER_ADMIN') return true;
+  if (!permissions.isPremium) return false;
+  if (permissions.premiumUntil && permissions.premiumUntil < new Date()) return false;
+  return true;
+};
+
+// Nutzertyp bestimmen
+export const determineUserType = (permissions: UserPermissions): UserType => {
+  if (permissions.clubRoles && Object.keys(permissions.clubRoles).length > 0) {
+    return 'CLUB_MEMBER';
+  }
+  if (permissions.kvRoles && Object.keys(permissions.kvRoles).length > 0) {
+    return 'CLUB_MEMBER'; // KV-Rollen sind auch Vereinsmitglieder
+  }
+  if (permissions.role === 'vereinsvertreter') {
+    return 'CLUB_MEMBER'; // Legacy
+  }
+  return 'INDIVIDUAL';
 };

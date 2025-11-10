@@ -28,24 +28,14 @@ const PLATFORM_ROLES = [
 ];
 
 const KV_ROLES = [
-  { value: 'KV_WETTKAMPFLEITER', label: '🏆 KV-Wettkampfleiter (KM-System)' },
+  { value: 'KV_WETTKAMPFLEITER', label: '🏆 KV-Wettkampfleiter (RWK + KM Vollzugriff)' },
+  { value: 'KV_KM_ORGA', label: '📋 KV-KM-Orga (nur KM-System)' },
   { value: 'NO_KV_ROLE', label: 'Keine KV-Rolle' },
 ];
 
 const CLUB_ROLES = [
-  { value: 'SPORTLEITER', label: '🎯 Sportleiter (RWK + KM)' },
-  { value: 'VORSTAND', label: '👔 Vorstand (Alle Bereiche)' },
-  { value: 'KASSENWART', label: '💰 Kassenwart (Finanzen)' },
-  { value: 'SCHRIFTFUEHRER', label: '📝 Schriftführer (Protokolle)' },
-  { value: 'MANNSCHAFTSFUEHRER', label: '🏹 Mannschaftsführer (Ergebnisse)' },
-  { value: 'JUGENDWART', label: '🧒 Jugendwart' },
-  { value: 'DAMENWART', label: '👩 Damenwart' },
-  { value: 'ZEUGWART', label: '🔧 Zeugwart' },
-  { value: 'PRESSEWART', label: '📰 Pressewart' },
-  { value: 'TRAINER', label: '🏃 Trainer' },
-  { value: 'AUSBILDER', label: '🎓 Ausbilder' },
-  { value: 'VEREINSSCHUETZE', label: '🎯 Vereinsschütze' },
-  { value: 'EHRENMITGLIED', label: '🏅 Ehrenmitglied' },
+  { value: 'SPORTLEITER', label: '🎯 Sportleiter (RWK + KM Vollzugriff)' },
+  { value: 'MANNSCHAFTSFUEHRER', label: '🏹 Mannschaftsführer (Ergebnisse eingeben)' },
   { value: 'NO_CLUB_ROLE', label: 'Keine Club-Rolle' },
 ];
 
@@ -59,6 +49,7 @@ interface UserPermissionFormData {
   clubRole: string;
   selectedClubIds: string[];
   vereinssoftwareLicense: boolean;
+  isPremium: boolean;
 }
 
 export default function AdminUserManagementPage() {
@@ -75,6 +66,7 @@ export default function AdminUserManagementPage() {
     clubRole: 'NO_CLUB_ROLE',
     selectedClubIds: [],
     vereinssoftwareLicense: false,
+    isPremium: false,
   });
   
   const [allClubs, setAllClubs] = useState<Club[]>([]);
@@ -124,11 +116,12 @@ export default function AdminUserManagementPage() {
           selectedClubId: data.clubId || Object.keys((data as any).clubRoles || {})[0] || '',
           selectedClubIds: data.representedClubs || (data.clubId ? [data.clubId] : []),
           vereinssoftwareLicense: (data as any).vereinssoftwareLicense || false,
+          isPremium: (data as any).isPremium || false,
         });
         toast({title: "Benutzerdaten geladen", description: `Berechtigungen für UID ${uidToFetch.trim()} geladen.`});
       } else {
         setFormData(prev => ({
-          ...prev, uid: uidToFetch.trim(), email: '', displayName: '', platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE', selectedClubId: '',
+          ...prev, uid: uidToFetch.trim(), email: '', displayName: '', platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE', selectedClubId: '', isPremium: false,
         }));
         toast({title: "Neuer Benutzer?", description: `Keine Berechtigungen für UID ${uidToFetch.trim()} gefunden. Bitte E-Mail und Anzeigenamen eintragen.`, variant: "default"});
       }
@@ -145,7 +138,7 @@ export default function AdminUserManagementPage() {
       fetchAndSetExistingPermissions(formData.uid);
     } else if (formData.uid.trim().length === 0) {
         setFormData(prev => ({
-        ...prev, email: '', displayName: '', platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE', selectedClubId: '',
+        ...prev, email: '', displayName: '', platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE', selectedClubId: '', isPremium: false,
       }));
     }
   }, [formData.uid, fetchAndSetExistingPermissions]);
@@ -224,7 +217,7 @@ export default function AdminUserManagementPage() {
       setFormData({
         uid: '', email: '', displayName: '', 
         platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE',
-        selectedClubId: '', selectedClubIds: [], vereinssoftwareLicense: false,
+        selectedClubId: '', selectedClubIds: [], vereinssoftwareLicense: false, isPremium: false,
       });
       
       setRefreshTrigger(prev => prev + 1);
@@ -248,6 +241,7 @@ export default function AdminUserManagementPage() {
       selectedClubId: user.clubId || Object.keys((user as any).clubRoles || {})[0] || '',
       selectedClubIds: user.representedClubs || (user.clubId ? [user.clubId] : []),
       vereinssoftwareLicense: (user as any).vereinssoftwareLicense || false,
+      isPremium: (user as any).isPremium || false,
     });
     setActiveTab("edit");
   };
@@ -369,6 +363,22 @@ export default function AdminUserManagementPage() {
                       />
                       <Label htmlFor="vereinssoftwareLicense" className="text-sm">
                         Vereinssoftware-Lizenz aktivieren
+                      </Label>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <Label>💎 Premium-Status (Schießnachweis)</Label>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="isPremium"
+                        checked={formData.isPremium || false}
+                        onChange={(e) => setFormData(prev => ({ ...prev, isPremium: e.target.checked }))}
+                        className="rounded"
+                      />
+                      <Label htmlFor="isPremium" className="text-sm">
+                        Premium-Features aktivieren (Cloud-Sync, erweiterte Stats)
                       </Label>
                     </div>
                   </div>

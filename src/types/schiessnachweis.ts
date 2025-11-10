@@ -49,6 +49,7 @@ export const DISZIPLINEN = [
   
   // Pistole
   { name: 'Luftpistole 10m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Pistole', schussAnzahl: [40, 60] },
+  { name: 'Luftpistole Auflage 10m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Pistole', schussAnzahl: [40, 60] },
   { name: 'Sportpistole 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [60] },
   { name: 'Freie Pistole 50m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Pistole', schussAnzahl: [60] },
   { name: 'Schnellfeuerpistole 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [60] },
