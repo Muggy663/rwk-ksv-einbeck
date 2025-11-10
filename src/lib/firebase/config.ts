@@ -31,15 +31,8 @@ if (!getApps().length) {
 }
 
 const auth: Auth = getAuth(app);
-// Initialisiere Firestore ohne Offline-Funktionen
+// Initialisiere Firestore normal
 const db: Firestore = getFirestore(app);
-
-// Firestore Offline-Cache deaktivieren für Vercel
-if (typeof window !== 'undefined') {
-  import('firebase/firestore').then(({ disableNetwork }) => {
-    disableNetwork(db).catch(() => {});
-  });
-}
 const functions: Functions = getFunctions(app, 'europe-west1');
 const storage: FirebaseStorage = getStorage(app); // Firebase Storage initialisieren
 
