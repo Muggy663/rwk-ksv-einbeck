@@ -9,8 +9,6 @@ import { ArrowLeft, Lock, Mail, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { auth } from '@/lib/firebase/config';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
@@ -38,21 +36,16 @@ export default function SchiessnachweisLoginPage() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        // user_permissions für INDIVIDUAL erstellen
-        await setDoc(doc(db, 'user_permissions', user.uid), {
-          userType: 'INDIVIDUAL',
-          email: user.email,
-          displayName: user.displayName || null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          isActive: true,
-          permissions: {
-            schiessnachweis: true,
-            rwk: false,
-            km: false,
-            admin: false
-          }
-        });
+        // user_permissions über API erstellen (vermeidet IDB-Probleme)
+        await fetch('/api/create-individual-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName
+          })
+        }).catch(() => {}); // Fehler ignorieren
         
         // Professionelle E-Mail-Bestätigung mit Resend senden
         try {
