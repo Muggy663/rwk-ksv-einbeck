@@ -251,7 +251,7 @@ export default function NeuerEintragPage() {
                       max="1000"
                       value={formData.ergebnis}
                       onChange={(e) => setFormData(prev => ({ ...prev, ergebnis: e.target.value }))}
-                      placeholder={config?.kommastellen ? "z.B. 385.2" : "z.B. 385"}
+                      placeholder={config?.kommastellen ? "385.2" : "385"}
                       required
                       disabled={showDetailedEntry && serien.length > 0}
                     />
@@ -360,13 +360,16 @@ export default function NeuerEintragPage() {
                 {/* Manuelle Erfassung */}
                 <div>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4">
-                    <Label className="text-base font-semibold">Manuelle Ergebniserfassung</Label>
+                    <div>
+                      <Label className="text-base font-semibold">Detaillierte Serien-Erfassung (optional)</Label>
+                      <p className="text-sm text-muted-foreground mt-1">Das Gesamtergebnis oben reicht zum Speichern - Serien sind nur für detaillierte Analyse</p>
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => setShowDetailedEntry(!showDetailedEntry)}
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto flex-shrink-0"
                     >
                       <ChevronDown className={`h-4 w-4 mr-2 transition-transform ${showDetailedEntry ? 'rotate-180' : ''}`} />
                       {showDetailedEntry ? 'Einfache Eingabe' : 'Serien erfassen'}

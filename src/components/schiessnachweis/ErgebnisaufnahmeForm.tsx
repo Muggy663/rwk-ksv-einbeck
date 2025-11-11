@@ -140,9 +140,12 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Ergebnisaufnahme - {disziplin}</span>
-            <Badge variant="default" className="text-lg px-3">
+          <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <span className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-primary rounded-full flex-shrink-0"></div>
+              Ergebnisaufnahme - {disziplin}
+            </span>
+            <Badge variant="default" className="text-lg px-3 w-fit">
               {getGesamtErgebnis().toFixed(disziplinConfig.kommastellen ? 1 : 0)} Ringe
             </Badge>
           </CardTitle>
@@ -194,14 +197,15 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
           </CardHeader>
           <CardContent>
             {/* Eingabe-Modus Umschalter */}
-            <div className="flex items-center gap-4 mb-4">
+            <div className="space-y-3 mb-4">
               <Label className="text-sm font-medium">Eingabe-Modus:</Label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   type="button"
                   variant={eingabeModus === 'einzelschuss' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setEingabeModus('einzelschuss')}
+                  className="w-full sm:w-auto"
                 >
                   Einzelschuss
                 </Button>
@@ -210,6 +214,7 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
                   variant={eingabeModus === 'seriensumme' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setEingabeModus('seriensumme')}
+                  className="w-full sm:w-auto"
                 >
                   Seriensumme
                 </Button>

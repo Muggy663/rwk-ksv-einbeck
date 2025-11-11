@@ -416,7 +416,7 @@ export default function HomePage() {
               <div className="w-3 h-3 bg-purple-500 dark:bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
               <div>
                 <h4 className="font-bold text-purple-800 dark:text-purple-200 text-lg">🎯 Schießnachweis jetzt verfügbar!</h4>
-                <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Digitales Schießtagebuch mit allen DSB-Disziplinen und KI-Import</p>
+                <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Digitales Schießtagebuch für Sportschützen</p>
                 <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-semibold">✨ Kostenlos nutzbar - Premium-Features in Testphase</p>
               </div>
             </div>
@@ -431,13 +431,7 @@ export default function HomePage() {
             </div>
 
 
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">📊 Professionelle Statistiken</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">Leistungskurven, Serien-Tracking und PDF-Export für Behörden (Schießnachweis)</p>
-              </div>
-            </div>
+
           </div>
         </CardContent>
       </Card>
