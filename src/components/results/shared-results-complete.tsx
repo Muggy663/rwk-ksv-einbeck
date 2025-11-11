@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { plausibilityService } from '@/lib/services/plausibility-service';
 import Link from 'next/link';
-import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, Timestamp, updateDoc, addDoc } from 'firebase/firestore';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -68,7 +68,7 @@ export default function SharedResultsPage({
   const [isLoadingShooters, setIsLoadingShooters] = useState(false);
   const [isLoadingExistingScores, setIsLoadingExistingScores] = useState(false);
   const [isSubmittingScores, setIsSubmittingScores] = useState(false);
-  const [editMode, setEditMode] = useState(true);
+  const [editMode, setEditMode] = useState(userRole === 'admin');
   const [showOCR, setShowOCR] = useState(false);
   const [handzettelFiles, setHandzettelFiles] = useState<File[]>([]);
   const [attachOnly, setAttachOnly] = useState(false);
@@ -194,15 +194,76 @@ export default function SharedResultsPage({
       setAvailableShootersForDropdown([]);
     }
   }, [selectedTeamId, allShootersFromDB, allTeamsInSelectedLeague, isLoadingTeams]);
+  
+  // Verfügbare Schützen für Dropdown filtern (ohne bereits erfasste Ergebnisse)
+  useEffect(() => {
+    if (selectedTeamId && selectedRound && shootersOfSelectedTeam.length > 0) {
+      // Im Bearbeitungsmodus alle Schützen anzeigen
+      if (editMode) {
+        setAvailableShootersForDropdown(shootersOfSelectedTeam);
+        return;
+      }
+      
+      const parsedRound = parseInt(selectedRound, 10);
+      
+      // Lade existierende Ergebnisse für dieses Team und diesen Durchgang
+      const loadExistingScores = async () => {
+        try {
+          const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
+          if (!currentSeason) return;
+          
+          const scoresQuery = query(
+            collection(db, SCORES_COLLECTION),
+            where("teamId", "==", selectedTeamId),
+            where("durchgang", "==", parsedRound),
+            where("competitionYear", "==", currentSeason.competitionYear)
+          );
+          const scoresSnapshot = await getDocs(scoresQuery);
+          const existingScores = scoresSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
+          setExistingScoresForTeamAndRound(existingScores);
+          
+          // Schützen-IDs mit bereits vorhandenen Ergebnissen
+          const shooterIdsWithResults = new Set(existingScores.map(score => score.shooterId));
+          
+          // Schützen aus Zwischenliste hinzufügen
+          pendingScores.forEach(ps => {
+            if (ps.teamId === selectedTeamId && ps.durchgang === parsedRound) {
+              shooterIdsWithResults.add(ps.shooterId);
+            }
+          });
+          
+          // Schützen mit gerade gespeicherten Ergebnissen hinzufügen
+          justSavedScoreIdentifiers.forEach(js => {
+            if (js.durchgang === parsedRound) {
+              shooterIdsWithResults.add(js.shooterId);
+            }
+          });
+          
+          // Nur Schützen ohne Ergebnisse für Dropdown verfügbar machen
+          const availableShooters = shootersOfSelectedTeam.filter(shooter => 
+            !shooterIdsWithResults.has(shooter.id)
+          );
+          
+          setAvailableShootersForDropdown(availableShooters);
+        } catch (error) {
+          console.error('Error loading existing scores:', error);
+          setAvailableShootersForDropdown(shootersOfSelectedTeam);
+        }
+      };
+      
+      loadExistingScores();
+    } else {
+      setAvailableShootersForDropdown(shootersOfSelectedTeam);
+    }
+  }, [selectedTeamId, selectedRound, shootersOfSelectedTeam, pendingScores, justSavedScoreIdentifiers, selectedSeasonId, allSeasons, editMode]);
 
-  // Teams laden - Sportleiter sehen alle Teams der Liga
+  // Teams laden mit Filterung für vollständige Ergebnisse
   useEffect(() => {
     const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId);
     if (selectedLeagueId && selectedSeason && !isLoadingLeagues) {
       setIsLoadingTeams(true);
       const fetchTeams = async () => {
         try {
-          // Alle Teams der Liga laden (Sportleiter können alle Teams der Liga erfassen)
           const teamsQuery = query(
             collection(db, TEAMS_COLLECTION),
             where("leagueId", "==", selectedLeagueId),
@@ -211,9 +272,71 @@ export default function SharedResultsPage({
           );
           
           const teamsSnapshot = await getDocs(teamsQuery);
-          const fetchedTeams = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team)).filter(t => t.id);
+          let fetchedTeams = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team)).filter(t => t.id);
           
-          setAllTeamsInSelectedLeague(fetchedTeams);
+          // Im Bearbeitungsmodus (Admin) alle Teams anzeigen
+          if (editMode) {
+            setAllTeamsInSelectedLeague(fetchedTeams);
+            setIsLoadingTeams(false);
+            return;
+          }
+          
+          // Wenn kein Durchgang ausgewählt, alle Teams anzeigen
+          if (!selectedRound) {
+            setAllTeamsInSelectedLeague(fetchedTeams);
+            setIsLoadingTeams(false);
+            return;
+          }
+          
+          const parsedRound = parseInt(selectedRound, 10);
+          
+          // Für jedes Team prüfen, ob alle Schützen bereits Ergebnisse haben
+          const teamsWithFilterInfo = await Promise.all(fetchedTeams.map(async team => {
+            const teamShooterIds = team.shooterIds || [];
+            if (teamShooterIds.length === 0) return { team, allShootersHaveResults: false };
+            
+            const validShooterIds = teamShooterIds.filter(id => id && typeof id === 'string' && id.trim() !== "");
+            if (validShooterIds.length === 0) return { team, allShootersHaveResults: false };
+            
+            // Ergebnisse für dieses Team und diesen Durchgang laden
+            const scoresQuery = query(
+              collection(db, SCORES_COLLECTION),
+              where("teamId", "==", team.id),
+              where("durchgang", "==", parsedRound),
+              where("competitionYear", "==", selectedSeason.competitionYear)
+            );
+            const scoresSnapshot = await getDocs(scoresQuery);
+            const existingScores = scoresSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
+            
+            // Schützen-IDs mit existierenden Ergebnissen sammeln
+            const shooterIdsWithResults = new Set(existingScores.map(score => score.shooterId));
+            
+            // Schützen mit Ergebnissen in der Zwischenliste hinzufügen
+            pendingScores.forEach(ps => {
+              if (ps.teamId === team.id && ps.durchgang === parsedRound) {
+                shooterIdsWithResults.add(ps.shooterId);
+              }
+            });
+            
+            // Schützen mit gerade gespeicherten Ergebnissen hinzufügen
+            justSavedScoreIdentifiers.forEach(js => {
+              if (js.durchgang === parsedRound && validShooterIds.includes(js.shooterId)) {
+                shooterIdsWithResults.add(js.shooterId);
+              }
+            });
+            
+            // Prüfen ob mindestens ein Schütze noch kein Ergebnis hat
+            const hasAtLeastOneShooterWithoutResult = validShooterIds.some(id => !shooterIdsWithResults.has(id));
+            
+            return { team, allShootersHaveResults: !hasAtLeastOneShooterWithoutResult };
+          }));
+          
+          // Teams anzeigen, bei denen mindestens ein Schütze noch kein Ergebnis hat
+          const filteredTeams = teamsWithFilterInfo
+            .filter(({ allShootersHaveResults }) => !allShootersHaveResults)
+            .map(({ team }) => team);
+          
+          setAllTeamsInSelectedLeague(filteredTeams);
         } catch (error) {
           console.error("Error fetching teams:", error);
           toast({ title: "Fehler Teams laden", description: (error as Error).message, variant: "destructive" });
@@ -226,7 +349,7 @@ export default function SharedResultsPage({
     } else {
       setAllTeamsInSelectedLeague([]);
     }
-  }, [selectedLeagueId, selectedSeasonId, allSeasons, isLoadingLeagues, toast]);
+  }, [selectedLeagueId, selectedSeasonId, selectedRound, allSeasons, isLoadingLeagues, pendingScores, justSavedScoreIdentifiers, editMode, toast]);
 
   const handleOCRComplete = (ocrResults: OCRMatchResult[]) => {
     const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
@@ -395,8 +518,11 @@ export default function SharedResultsPage({
         'Nicht ausgewählt';
       
       uploadFormData.append('subject', `📋 Handzettel ohne Ergebnisse: ${teamName} - DG ${selectedRound || 'unbekannt'}`);
-      uploadFormData.append('message', `Handzettel ohne Ergebnisse eingegangen:\n\nMannschaft: ${teamName}\nLiga: ${leagueName}\nDurchgang: ${selectedRound || 'nicht ausgewählt'}\nAnzahl Seiten: ${handzettelFiles.length}\nZeitpunkt: ${new Date().toLocaleString('de-DE')}\n\nHinweis: Diese Handzettel wurden ohne digitale Ergebniserfassung versendet.\nDie Handzettel sind als Anhang beigefügt.`);
-      uploadFormData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
+      uploadFormData.append('message', `Handzettel ohne Ergebnisse eingegangen:\r\n\r\nMannschaft: ${teamName}\r\nLiga: ${leagueName}\r\nDurchgang: ${selectedRound || 'nicht ausgewählt'}\r\nAnzahl Seiten: ${handzettelFiles.length}\r\nZeitpunkt: ${new Date().toLocaleString('de-DE')}\r\n\r\nHinweis: Diese Handzettel wurden ohne digitale Ergebniserfassung versendet.\r\nDie Handzettel sind als Anhang beigefügt.`);
+      
+      const recipients = [{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}];
+      console.log('Recipients:', recipients);
+      uploadFormData.append('recipients', JSON.stringify(recipients));
       
       progressToast.updateProgress(30, "Dateien werden angehängt...");
       
@@ -421,6 +547,8 @@ export default function SharedResultsPage({
       });
       
       const responseData = await uploadResponse.json();
+      console.log('Email API Response:', responseData);
+      console.log('Email Status:', uploadResponse.status);
       
       if (uploadResponse.ok && responseData.success) {
         progressToast.updateProgress(100, "Handzettel erfolgreich versendet!");
@@ -468,9 +596,89 @@ export default function SharedResultsPage({
           enteredByUserName: user.displayName || user.email || "Unbekannt",
           entryTimestamp: serverTimestamp()
         });
+        
+        // Schützen-Eintrag erstellen falls nicht vorhanden
+        const shooterDocRef = doc(db, SHOOTERS_COLLECTION, entry.shooterId);
+        const shooterData = {
+          name: entry.shooterName,
+          gender: entry.shooterGender || 'unknown',
+          createdAt: serverTimestamp(),
+          createdBy: 'auto-from-scores'
+        };
+        
+        const nameParts = entry.shooterName.split(' ');
+        if (nameParts.length >= 2) {
+          shooterData.firstName = nameParts[0];
+          shooterData.lastName = nameParts.slice(1).join(' ');
+        }
+        
+        // Nur erstellen wenn nicht existiert (merge: true)
+        batch.set(shooterDocRef, shooterData, { merge: true });
       });
       
       await batch.commit();
+      
+      // League Updates für "Letzte Ergebnis-Updates" auf der Startseite
+      for (const entry of pendingScores) {
+        if (entry.leagueId && entry.leagueName && entry.leagueType && entry.competitionYear !== undefined) {
+          try {
+            const today = new Date();
+            const startOfDay = Timestamp.fromDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
+            const endOfDay = Timestamp.fromDate(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
+            
+            const q = query(collection(db, LEAGUE_UPDATES_COLLECTION),
+              where("leagueId", "==", entry.leagueId),
+              where("competitionYear", "==", entry.competitionYear),
+              where("timestamp", ">=", startOfDay),
+              where("timestamp", "<=", endOfDay)
+            );
+            
+            const existingUpdatesSnapshot = await getDocs(q);
+            if (!existingUpdatesSnapshot.empty) {
+              const { updateDoc } = await import('firebase/firestore');
+              await updateDoc(existingUpdatesSnapshot.docs[0].ref, { timestamp: serverTimestamp() });
+            } else {
+              const { addDoc } = await import('firebase/firestore');
+              const leagueUpdateData = {
+                leagueId: entry.leagueId,
+                leagueName: entry.leagueName,
+                leagueType: entry.leagueType,
+                competitionYear: entry.competitionYear,
+                timestamp: serverTimestamp(),
+                action: 'results_added'
+              };
+              await addDoc(collection(db, LEAGUE_UPDATES_COLLECTION), leagueUpdateData);
+            }
+            
+            // E-Mail-Benachrichtigung für neue Ergebnisse
+            try {
+              const notificationFormData = new FormData();
+              notificationFormData.append('subject', `🎯 Neue Ergebnisse: ${entry.leagueName} - DG ${entry.durchgang}`);
+              notificationFormData.append('message', `Neue Ergebnisse eingegangen:\r\n\r\nLiga: ${entry.leagueName}\r\nDurchgang: ${entry.durchgang}\r\nMannschaft: ${entry.teamName}\r\nSchütze: ${entry.shooterName}\r\nRinge: ${entry.totalRinge}\r\nZeitpunkt: ${new Date().toLocaleString('de-DE')}\r\n\r\nDie Tabellen wurden automatisch aktualisiert.`);
+              notificationFormData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
+              
+              const { getAuth } = await import('firebase/auth');
+              const auth = getAuth();
+              let authHeaders = {};
+              if (auth.currentUser) {
+                const token = await auth.currentUser.getIdToken();
+                authHeaders = { 'Authorization': `Bearer ${token}` };
+              }
+              
+              await fetch('/api/send-email', {
+                method: 'POST',
+                headers: authHeaders,
+                body: notificationFormData
+              });
+            } catch (emailError) {
+              console.warn('League update email failed:', emailError);
+            }
+          } catch (updateError) {
+            console.warn('League update failed:', updateError);
+            // Fehler ignorieren - Hauptfunktion funktioniert trotzdem
+          }
+        }
+      }
       
       // Handzettel-Upload wenn vorhanden
       if (handzettelFiles.length > 0) {
@@ -489,7 +697,7 @@ export default function SharedResultsPage({
           const leagueName = availableLeaguesForSeason.find(l => l.id === selectedLeagueId)?.name || 'Unbekannt';
           
           uploadFormData.append('subject', `📋 Handzettel-Beleg: ${teamName} - Durchgang ${selectedRound}`);
-          uploadFormData.append('message', `Handzettel-Beleg eingegangen:\n\nMannschaft: ${teamName}\nLiga: ${leagueName}\nDurchgang: ${selectedRound}\nAnzahl Seiten: ${handzettelFiles.length}\nZeitpunkt: ${new Date().toLocaleString('de-DE')}\n\nDie Handzettel sind als Anhang beigefügt.`);
+          uploadFormData.append('message', `Handzettel-Beleg eingegangen:\r\n\r\nMannschaft: ${teamName}\r\nLiga: ${leagueName}\r\nDurchgang: ${selectedRound}\r\nAnzahl Seiten: ${handzettelFiles.length}\r\nZeitpunkt: ${new Date().toLocaleString('de-DE')}\r\n\r\nDie Handzettel sind als Anhang beigefügt.`);
           uploadFormData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
           
           progressToast.updateProgress(30, "Dateien werden angehängt...");
@@ -515,6 +723,11 @@ export default function SharedResultsPage({
           });
           
           const responseData = await uploadResponse.json();
+          console.log('Handzettel E-Mail Response:', responseData);
+          console.log('Handzettel Status:', uploadResponse.status);
+          console.log('E-Mail API Response:', responseData);
+          console.log('E-Mail Status:', uploadResponse.status);
+          console.log('Auth Headers:', Object.keys(authHeaders));
           
           if (uploadResponse.ok && responseData.success) {
             progressToast.updateProgress(100, "Upload erfolgreich abgeschlossen!");
@@ -543,8 +756,65 @@ export default function SharedResultsPage({
         });
       }
       
+      // Audit-Logs für alle gespeicherten Ergebnisse erstellen
+      for (const entry of pendingScores) {
+        try {
+          const { auditLogService } = await import('@/lib/services/audit-service');
+          await auditLogService.logAction(
+            'create',
+            'score',
+            `${entry.shooterId}-${entry.durchgang}`,
+            {
+              description: `Ergebnis erfasst: ${entry.shooterName} - ${entry.totalRinge} Ringe (DG ${entry.durchgang})`,
+              after: {
+                shooterName: entry.shooterName,
+                teamName: entry.teamName,
+                durchgang: entry.durchgang,
+                totalRinge: entry.totalRinge,
+                scoreInputType: entry.scoreInputType
+              }
+            },
+            {
+              leagueId: entry.leagueId,
+              leagueName: entry.leagueName,
+              teamId: entry.teamId,
+              teamName: entry.teamName,
+              shooterId: entry.shooterId,
+              shooterName: entry.shooterName
+            },
+            {
+              userId: user.uid,
+              userName: user.displayName || user.email || "Unbekannt"
+            }
+          );
+        } catch (auditError) {
+          console.warn('Audit log failed:', auditError);
+          // Audit-Fehler nicht an Benutzer weiterleiten
+        }
+      }
+      
       setPendingScores([]);
       setHandzettelFiles([]);
+      
+      // Teams neu laden um vollständig erfasste Teams zu entfernen
+      if (selectedLeagueId && selectedSeasonId) {
+        const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId);
+        if (selectedSeason) {
+          try {
+            const teamsQuery = query(
+              collection(db, TEAMS_COLLECTION),
+              where("leagueId", "==", selectedLeagueId),
+              where("competitionYear", "==", selectedSeason.competitionYear),
+              orderBy("name", "asc")
+            );
+            const teamsSnapshot = await getDocs(teamsQuery);
+            const refreshedTeams = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team)).filter(t => t.id);
+            setAllTeamsInSelectedLeague(refreshedTeams);
+          } catch (error) {
+            console.warn('Team refresh failed:', error);
+          }
+        }
+      }
     } catch (error) {
       console.error("Error saving scores:", error);
       toast({ title: "Fehler beim Speichern", description: (error as Error).message, variant: "destructive" });
@@ -735,9 +1005,20 @@ export default function SharedResultsPage({
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>📝 Einzelergebnis manuell hinzufügen</CardTitle>
-              <CardDescription>Für zweite Handzettel oder falls OCR nicht funktioniert - klassische Eingabe</CardDescription>
+              <CardTitle>📝 {editMode ? 'Ergebnis bearbeiten/hinzufügen' : 'Einzelergebnis manuell hinzufügen'}</CardTitle>
+              <CardDescription>{editMode ? 'Bearbeitungsmodus: Alle Teams und Schützen werden angezeigt' : 'Für zweite Handzettel oder falls OCR nicht funktioniert - klassische Eingabe'}</CardDescription>
             </div>
+            {userRole === 'admin' && (
+              <Button
+                variant={editMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setEditMode(!editMode)}
+                className="flex items-center gap-2"
+              >
+                {editMode ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                {editMode ? 'Bearbeiten AN' : 'Bearbeiten AUS'}
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -803,7 +1084,7 @@ export default function SharedResultsPage({
                   const value = e.target.value;
                   setScore(value);
                   
-                  if (value && selectedLeagueId) {
+                  if (value && selectedLeagueId && selectedShooterId && selectedTeamId) {
                     const scoreVal = parseInt(value);
                     const league = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
                     if (league && !isNaN(scoreVal)) {
@@ -821,6 +1102,36 @@ export default function SharedResultsPage({
                           variant: check.isValid ? "default" : "destructive",
                           duration: 3000
                         });
+                      }
+                      
+                      // Erweiterte Plausibilitätsprüfung
+                      if (check.isValid) {
+                        const shooter = allShootersFromDB.find(s => s.id === selectedShooterId);
+                        const team = allTeamsInSelectedLeague.find(t => t.id === selectedTeamId);
+                        const season = allSeasons.find(s => s.id === selectedSeasonId);
+                        
+                        if (shooter && team && season) {
+                          plausibilityService.checkScorePlausibility(
+                            selectedShooterId,
+                            shooter.name,
+                            selectedTeamId,
+                            team.name,
+                            scoreVal,
+                            league.type,
+                            season.competitionYear
+                          ).then(warnings => {
+                            if (warnings.length > 0) {
+                              toast({
+                                title: "⚠️ Plausibilitätswarnung",
+                                description: warnings[0].message,
+                                variant: "default",
+                                duration: 5000
+                              });
+                            }
+                          }).catch(error => {
+                            console.warn('Plausibility check failed:', error);
+                          });
+                        }
                       }
                     }
                   }

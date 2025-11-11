@@ -11,8 +11,18 @@ export async function POST(request: NextRequest) {
     // Simulate payment processing
     const subscriptionId = `sub_${Date.now()}`;
     const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + 1);
     
+    // Korrekte Laufzeit je nach Plan
+    if (plan === 'monthly') {
+      expiresAt.setMonth(expiresAt.getMonth() + 1);
+    } else if (plan === 'yearly') {
+      expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    } else {
+      // Trial: 30 Tage
+      expiresAt.setDate(expiresAt.getDate() + 30);
+    }
+    
+    // Premium-Subscription erstellen
     await adminDb.collection('premium_subscriptions').doc(userId).set({
       userId,
       subscriptionId,
@@ -26,6 +36,14 @@ export async function POST(request: NextRequest) {
         advancedStats: true,
         performanceAnalysis: true
       }
+    });
+    
+    // Premium-Status in user_permissions setzen
+    await adminDb.collection('user_permissions').doc(userId).update({
+      isPremium: true,
+      premiumUntil: expiresAt,
+      premiumPlan: plan,
+      updatedAt: new Date()
     });
     
     return NextResponse.json({

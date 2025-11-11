@@ -59,12 +59,28 @@ export class SchießnachweisService {
     this.saveToStorage(einträge);
     
     // Cloud-Sync für Premium-Nutzer
-    if (PremiumService.isPremium()) {
+    if (PremiumService.isPremiumSync()) {
       CloudSyncService.markPendingChanges();
-      CloudSyncService.autoSync(einträge).catch(console.warn);
     }
     
     return neuerEintrag;
+  }
+
+  static updateEintrag(id: string, updates: Partial<Omit<SchießEintrag, 'id' | 'createdAt'>>): SchießEintrag | null {
+    const einträge = this.getEinträge();
+    const index = einträge.findIndex(e => e.id === id);
+    
+    if (index === -1) return null;
+    
+    einträge[index] = { ...einträge[index], ...updates };
+    this.saveToStorage(einträge);
+    
+    // Cloud-Sync für Premium-Nutzer
+    if (PremiumService.isPremiumSync()) {
+      CloudSyncService.markPendingChanges();
+    }
+    
+    return einträge[index];
   }
 
   static deleteEintrag(id: string): void {
@@ -72,9 +88,8 @@ export class SchießnachweisService {
     this.saveToStorage(einträge);
     
     // Cloud-Sync für Premium-Nutzer
-    if (PremiumService.isPremium()) {
+    if (PremiumService.isPremiumSync()) {
       CloudSyncService.markPendingChanges();
-      CloudSyncService.autoSync(einträge).catch(console.warn);
     }
   }
   
@@ -119,6 +134,12 @@ export class SchießnachweisService {
       
       request.onsuccess = () => {
         const db = request.result;
+        
+        // Prüfe ob Object Store existiert
+        if (!db.objectStoreNames.contains('eintraege')) {
+          return;
+        }
+        
         const transaction = db.transaction(['eintraege'], 'readwrite');
         const store = transaction.objectStore('eintraege');
         store.put({ key: 'schiessnachweis', data: einträge, timestamp: Date.now() });
@@ -135,6 +156,13 @@ export class SchießnachweisService {
         
         request.onsuccess = () => {
           const db = request.result;
+          
+          // Prüfe ob Object Store existiert
+          if (!db.objectStoreNames.contains('eintraege')) {
+            resolve([]);
+            return;
+          }
+          
           const transaction = db.transaction(['eintraege'], 'readonly');
           const store = transaction.objectStore('eintraege');
           const getRequest = store.get('schiessnachweis');

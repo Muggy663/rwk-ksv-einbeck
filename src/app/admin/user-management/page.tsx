@@ -50,6 +50,8 @@ interface UserPermissionFormData {
   selectedClubIds: string[];
   vereinssoftwareLicense: boolean;
   isPremium: boolean;
+  premiumMonths?: number;
+  autoRenew?: boolean;
 }
 
 export default function AdminUserManagementPage() {
@@ -67,6 +69,8 @@ export default function AdminUserManagementPage() {
     selectedClubIds: [],
     vereinssoftwareLicense: false,
     isPremium: false,
+    premiumMonths: 1,
+    autoRenew: false,
   });
   
   const [allClubs, setAllClubs] = useState<Club[]>([]);
@@ -209,6 +213,22 @@ export default function AdminUserManagementPage() {
         permissionData.vereinssoftwareLicense = true;
         permissionData.vereinssoftwareLicenseActivatedAt = Timestamp.now();
       }
+      
+      // Premium-Status
+      if (formData.isPremium) {
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + (formData.premiumMonths || 1));
+        
+        permissionData.isPremium = true;
+        permissionData.premiumUntil = Timestamp.fromDate(expiresAt);
+        permissionData.premiumActivatedAt = Timestamp.now();
+        permissionData.autoRenew = formData.autoRenew || false;
+        permissionData.paymentMethod = 'admin_activated';
+      } else {
+        permissionData.isPremium = false;
+        permissionData.premiumUntil = null;
+        permissionData.autoRenew = false;
+      }
 
       await setDoc(userPermissionRef, permissionData, { merge: true });
       toast({ title: "✅ Berechtigungen gespeichert", description: `3-Tier-Rollen für ${formData.email} erfolgreich gespeichert.` });
@@ -218,6 +238,7 @@ export default function AdminUserManagementPage() {
         uid: '', email: '', displayName: '', 
         platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE',
         selectedClubId: '', selectedClubIds: [], vereinssoftwareLicense: false, isPremium: false,
+        premiumMonths: 1, autoRenew: false,
       });
       
       setRefreshTrigger(prev => prev + 1);
@@ -367,7 +388,7 @@ export default function AdminUserManagementPage() {
                     </div>
                   </div>
                   
-                  <div className="space-y-1.5">
+                  <div className="space-y-3">
                     <Label>💎 Premium-Status (Schießnachweis)</Label>
                     <div className="flex items-center space-x-2">
                       <input 
@@ -381,6 +402,39 @@ export default function AdminUserManagementPage() {
                         Premium-Features aktivieren (Cloud-Sync, erweiterte Stats)
                       </Label>
                     </div>
+                    {formData.isPremium && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="premiumMonths" className="text-sm font-medium">Laufzeit (Monate)</Label>
+                          <Input 
+                            id="premiumMonths"
+                            name="premiumMonths"
+                            type="number"
+                            min="1"
+                            max="12"
+                            placeholder="1"
+                            value={formData.premiumMonths || 1}
+                            onChange={(e) => setFormData(prev => ({ ...prev, premiumMonths: parseInt(e.target.value) || 1 }))}
+                            className="w-full"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-sm font-medium">Auto-Renewal</Label>
+                          <div className="flex items-center space-x-2">
+                            <input 
+                              type="checkbox" 
+                              id="autoRenew"
+                              checked={formData.autoRenew || false}
+                              onChange={(e) => setFormData(prev => ({ ...prev, autoRenew: e.target.checked }))}
+                              className="rounded"
+                            />
+                            <Label htmlFor="autoRenew" className="text-sm">
+                              Automatische Verlängerung
+                            </Label>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 
                   <div className="space-y-1.5">

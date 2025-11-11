@@ -20,10 +20,33 @@ export default function SchiessnachweisLoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setLoginError(""); // Reset error
+
+    // Validierung
+    if (!email || !password) {
+      toast({
+        title: "Fehler",
+        description: "Bitte füllen Sie alle Felder aus.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Fehler",
+        description: "Passwort muss mindestens 6 Zeichen lang sein.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       if (isLogin) {
@@ -36,38 +59,42 @@ export default function SchiessnachweisLoginPage() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
-        // user_permissions über API erstellen (vermeidet IDB-Probleme)
-        await fetch('/api/create-individual-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName
-          })
-        }).catch(() => {}); // Fehler ignorieren
-        
-        // Professionelle E-Mail-Bestätigung mit Resend senden
+        // user_permissions über API erstellen
         try {
-          // Firebase E-Mail-Verifizierung für den Link
-          await sendEmailVerification(user);
-          
-          // Zusätzlich Resend E-Mail senden
-          await fetch('/api/send-verification-email', {
+          const response = await fetch('/api/create-individual-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              uid: user.uid,
               email: user.email,
-              verificationLink: `${window.location.origin}/verify-email`,
               displayName: user.displayName
             })
-          }).catch(() => {}); // Fehler ignorieren, Firebase E-Mail reicht
+          });
+          
+          if (!response.ok) {
+            console.error('API-Fehler:', await response.text());
+          } else {
+            console.log('user_permissions erfolgreich erstellt');
+            // Kurz warten damit AuthProvider die Permissions findet
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (apiError) {
+          console.error('API-Aufruf fehlgeschlagen:', apiError);
+        }
+        
+        // E-Mail-Bestätigung senden
+        try {
+          // Firebase Standard-E-Mail (funktioniert zuverlässig)
+          await sendEmailVerification(user);
+          console.log('Firebase E-Mail-Verifizierung gesendet an:', user.email);
           
           toast({
-            title: "🎉 Konto erstellt",
-            description: "Bitte prüfen Sie Ihre E-Mails zur Bestätigung!",
+            title: "🎉 Konto erfolgreich erstellt!",
+            description: "📧 Bestätigungs-E-Mail gesendet. Bitte auch im Spam-Ordner nachschauen!",
+            duration: 8000, // Länger anzeigen
           });
         } catch (emailError) {
+          console.error('E-Mail-Fehler:', emailError);
           toast({
             title: "✅ Konto erstellt",
             description: "E-Mail-Bestätigung konnte nicht gesendet werden.",
@@ -76,9 +103,43 @@ export default function SchiessnachweisLoginPage() {
       }
       router.push('/schiessnachweis');
     } catch (error: any) {
+      console.error('Auth-Fehler:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      let errorMessage = "Anmeldung fehlgeschlagen";
+      
+      // Spezifische Firebase Auth Fehlercodes
+      switch (error.code) {
+        case 'auth/invalid-credential':
+        case 'auth/wrong-password':
+        case 'auth/invalid-login-credentials':
+          errorMessage = "❌ Falsches Passwort oder E-Mail";
+          break;
+        case 'auth/user-not-found':
+          errorMessage = "❌ Benutzer nicht gefunden";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "❌ Ungültige E-Mail-Adresse";
+          break;
+        case 'auth/user-disabled':
+          errorMessage = "❌ Benutzerkonto wurde deaktiviert";
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = "⏰ Zu viele Fehlversuche. Bitte später erneut versuchen";
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = "🌐 Netzwerkfehler. Bitte Internetverbindung prüfen";
+          break;
+        default:
+          errorMessage = `❌ Anmeldung fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`;
+      }
+      
+      setLoginError(errorMessage);
+      
+      // Auch Toast anzeigen
       toast({
-        title: "Fehler",
-        description: error.message || "Anmeldung fehlgeschlagen",
+        title: "Anmeldung fehlgeschlagen",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -164,6 +225,14 @@ export default function SchiessnachweisLoginPage() {
               }
             </Button>
           </form>
+          
+          {loginError && (
+            <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">
+                {loginError}
+              </p>
+            </div>
+          )}
 
           <div className="mt-4 text-center">
             <button
@@ -183,7 +252,12 @@ export default function SchiessnachweisLoginPage() {
               {isLogin ? 'Nach der Anmeldung:' : 'Nach der Registrierung:'}
             </h4>
             <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-              {!isLogin && <li>📧 E-Mail-Bestätigung erhalten</li>}
+              {!isLogin && (
+                <>
+                  <li>📧 E-Mail-Bestätigung erhalten (auch Spam prüfen!)</li>
+                  <li>⚠️ Ohne Bestätigung: Nur Offline-Nutzung möglich</li>
+                </>
+              )}
               <li>✅ Ihre Offline-Daten bleiben erhalten</li>
               <li>🎆 30 Tage Premium kostenlos testen</li>
               <li>☁️ Cloud-Synchronisation verfügbar</li>

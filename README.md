@@ -6,6 +6,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 [![Version](https://img.shields.io/badge/Version-1.9.1-blue?style=for-the-badge)](#)
 [![Android App](https://img.shields.io/badge/Android_App-0.9.4.1-success?style=for-the-badge)](#)
+[![Premium](https://img.shields.io/badge/Premium-Testphase-orange?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
 ## ✨ Highlights
@@ -21,6 +22,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - 🤖 **OCR Handzettel-Erkennung** - Automatische Ergebniserfassung per Foto
 - 🛡️ **Enterprise-Level Sicherheit** - 70+ Sicherheitslücken behoben
 - 🎯 **Schießnachweis** - Digitales Schießtagebuch für Sportschützen
+- 🚧 **Premium Testphase** - Erweiterte Features kostenlos verfügbar
 
 ## 🚀 Hauptfunktionen
 
@@ -40,14 +42,15 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - **Qualifikations-Management** für Landesmeisterschaften
 - **Urkunden-Druck** automatisiert
 
-### 🎯 Schießnachweis (NEU)
+### 🎯 Schießnachweis (Premium Testphase)
 - **Digitales Schießtagebuch** für Sportschützen
 - **Training & Wettkampf** Dokumentation
-- **Import von digitalen Anlagen** (Meyton, Sius, Disag, Sport Quantum)
+- **Cloud-Synchronisation** - Multi-Device-Zugriff (Premium)
+- **Erweiterte Statistiken** - Detaillierte Leistungsanalysen (Premium)
 - **Detaillierte Serienerfassung** mit Einzelschuss-Dokumentation
-- **Statistiken & Auswertungen** zur Leistungsentwicklung
 - **PDF-Export für Behörden** - Offizieller Nachweis für Waffenbehörde
-- **Offline-Speicherung** - Alle Daten bleiben auf Ihrem Gerät
+- **Offline-First** - Funktioniert auch ohne Internet
+- **Kostenlos in Testphase** - Premium-Features auf Anfrage
 
 ### 📊 Verwaltung & Organisation
 - **Globale Suche** über alle Bereiche
@@ -162,7 +165,19 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 21. Januar 2025*
+## 🚧 Premium Testphase
+
+**Aktuell verfügbar:** Premium-Features kostenlos während der Testphase
+- **Anfrage per E-Mail:** marcel.buenger@gmx.de
+- **Trinkgeld willkommen:** https://paypal.me/marcel.buenger@gmx.de/2EUR
+- **Feedback erwünscht:** Helfen Sie uns bei der Entwicklung
+
+**Geplante Preise (nach Testphase):**
+- 1 Monat: 2,00€
+- 3 Monate: 6,00€  
+- 12 Monate: 20,00€
+
+*Letzte Aktualisierung: 11. November 2025*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

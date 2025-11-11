@@ -24,7 +24,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM und Vereinssoftware.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: 21.10.2025
+            Stand: 11.11.2025
           </p>
         </div>
       </div>

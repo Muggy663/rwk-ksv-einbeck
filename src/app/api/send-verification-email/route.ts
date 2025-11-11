@@ -23,12 +23,12 @@ export async function POST(request: NextRequest) {
         </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #1f2937; margin-bottom: 10px;">🎯 RWK Einbeck</h1>
+            <h1 style="color: #1f2937; margin-bottom: 10px;">RWK Einbeck</h1>
             <p style="color: #6b7280; font-size: 16px;">Schießnachweis - E-Mail bestätigen</p>
           </div>
           
           <div style="background: #f9fafb; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
-            <h2 style="color: #1f2937; margin-top: 0;">Willkommen ${displayName ? displayName : 'beim Schießnachweis'}!</h2>
+            <h2 style="color: #1f2937; margin-top: 0;">Willkommen ${displayName ? displayName : 'beim Schießnachweis'}</h2>
             <p>Vielen Dank für Ihre Registrierung beim digitalen Schießnachweis der RWK Einbeck App.</p>
             <p>Um Ihr Konto zu aktivieren, bestätigen Sie bitte Ihre E-Mail-Adresse:</p>
             
@@ -46,11 +46,11 @@ export async function POST(request: NextRequest) {
           </div>
           
           <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 20px; margin-bottom: 30px;">
-            <h3 style="color: #065f46; margin-top: 0;">✨ Was Sie erwartet:</h3>
+            <h3 style="color: #065f46; margin-top: 0;">Was Sie erwartet:</h3>
             <ul style="color: #047857; margin: 0; padding-left: 20px;">
-              <li>Digitales Schießtagebuch für Training & Wettkampf</li>
+              <li>Digitales Schießtagebuch für Training und Wettkampf</li>
               <li>Import von elektronischen Anlagen (Meyton, Sius, etc.)</li>
-              <li>Detaillierte Statistiken & Auswertungen</li>
+              <li>Detaillierte Statistiken und Auswertungen</li>
               <li>PDF-Export für Behörden</li>
               <li>30 Tage Premium kostenlos testen</li>
             </ul>
@@ -61,8 +61,9 @@ export async function POST(request: NextRequest) {
             <p>Bei Fragen wenden Sie sich an: <a href="mailto:rwk-leiter-ksve@gmx.de" style="color: #3b82f6;">rwk-leiter-ksve@gmx.de</a></p>
             <p style="text-align: center; margin-top: 30px;">
               <strong>RWK Einbeck</strong><br>
+              Kreisschützenverband Einbeck e.V.<br>
               Digitale Schießsport-Verwaltung<br>
-              © 2025 KSV Einbeck
+              2025 KSV Einbeck
             </p>
           </div>
         </body>
@@ -72,8 +73,20 @@ export async function POST(request: NextRequest) {
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'admin@rwk-einbeck.de',
       to: email,
-      subject: '🎯 E-Mail bestätigen - RWK Einbeck Schießnachweis',
+      subject: 'E-Mail Bestätigung - RWK Einbeck Schießnachweis',
       html: emailHtml,
+      // Spam-Score verbessern
+      headers: {
+        'X-Priority': '3',
+        'X-MSMail-Priority': 'Normal',
+        'Importance': 'Normal'
+      },
+      tags: [
+        {
+          name: 'category',
+          value: 'email-verification'
+        }
+      ]
     });
 
     return NextResponse.json({ success: true });

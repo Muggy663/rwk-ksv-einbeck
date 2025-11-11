@@ -9,6 +9,7 @@ import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
 import { SchießStatistik } from "@/types/schiessnachweis";
 import { CloudSyncStatus } from "@/components/schiessnachweis/CloudSyncStatus";
 import { PremiumProvider } from "@/components/schiessnachweis/PremiumProvider";
+import { PremiumStatus } from "@/components/schiessnachweis/PremiumStatus";
 import Link from "next/link";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -205,29 +206,29 @@ export default function SchießnachweisPage() {
       </div>
 
       {/* Schnellaktionen */}
-      <div className="grid grid-cols-1 sm:flex sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8 sm:justify-center">
-        <Button asChild size="lg" className="flex items-center justify-center gap-2 h-12 sm:h-auto">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8 sm:justify-center">
+        <Button asChild size="lg" className="flex items-center justify-center gap-2 h-12">
           <Link href="/schiessnachweis/neuer-eintrag">
             <Plus className="h-5 w-5" />
             Neuer Eintrag
           </Link>
         </Button>
-        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-2 h-12 sm:h-auto">
+        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-2 h-12">
           <Link href="/schiessnachweis/eintraege">
             <Calendar className="h-5 w-5" />
             Alle Einträge
           </Link>
         </Button>
-        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-2 h-12 sm:h-auto">
+        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-2 h-12">
           <Link href="/schiessnachweis/statistiken">
             <TrendingUp className="h-5 w-5" />
             Statistiken
           </Link>
         </Button>
-        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-2 h-12 sm:h-auto border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 dark:from-yellow-950/20 dark:to-orange-950/20">
+        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-2 h-12 border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 dark:from-yellow-950/20 dark:to-orange-950/20">
           <Link href="/schiessnachweis/premium">
             <Crown className="h-5 w-5 text-yellow-600" />
-            Premium
+            Premium (Testphase)
           </Link>
         </Button>
       </div>
@@ -301,7 +302,20 @@ export default function SchießnachweisPage() {
         </Card>
       )}
 
-      {/* Cloud-Sync Status */}
+      {/* Testphase Banner */}
+      <Card className="mb-4 sm:mb-6 border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20">
+        <CardContent className="p-4">
+          <div className="text-center">
+            <div className="text-lg font-bold text-orange-800 dark:text-orange-200 mb-1">🚧 Testphase</div>
+            <p className="text-sm text-orange-700 dark:text-orange-300">
+              Premium-Features sind aktuell kostenlos verfügbar. Feedback willkommen!
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Premium & Cloud-Sync Status */}
+      <PremiumStatus className="mb-4 sm:mb-6" />
       <CloudSyncStatus className="mb-6 sm:mb-8" />
       
       {/* Backup & Export */}

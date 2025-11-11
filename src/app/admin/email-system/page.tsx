@@ -301,7 +301,8 @@ export default function EmailSystemPage() {
       const formData = new FormData();
       formData.append('subject', emailData.subject);
       formData.append('message', emailData.message);
-      formData.append('recipients', JSON.stringify(recipients.map(r => ({ name: r.name, email: r.email }))));
+      const recipientData = recipients.map(r => ({ name: r.name, email: r.email }));
+      formData.append('recipients', JSON.stringify(recipientData));
       
       // Anhänge hinzufügen
       emailData.attachments.forEach((file, index) => {

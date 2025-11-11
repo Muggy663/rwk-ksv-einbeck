@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
-import { ArrowLeft, Plus, Search, Trash2, Calendar, Target as TargetIcon, Trophy, BarChart3, Eye, Crown, Smartphone } from "lucide-react";
+import { ArrowLeft, Plus, Search, Trash2, Calendar, Target as TargetIcon, Trophy, BarChart3, Eye, Crown, Smartphone, Edit } from "lucide-react";
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
 import { SchießEintrag, DISZIPLINEN } from "@/types/schiessnachweis";
@@ -268,6 +268,17 @@ export default function EinträgePage() {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
+                        window.location.href = `/schiessnachweis/eintraege/${eintrag.id}`;
+                      }}
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         handleDelete(eintrag.id);
                       }}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -362,7 +373,7 @@ export default function EinträgePage() {
                 </div>
               )}
               
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-between pt-4">
                 <Button 
                   variant="destructive" 
                   onClick={() => {
@@ -373,7 +384,18 @@ export default function EinträgePage() {
                   <Trash2 className="h-4 w-4 mr-2" />
                   Löschen
                 </Button>
-                <Button onClick={() => setSelectedEintrag(null)}>Schließen</Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      window.location.href = `/schiessnachweis/eintraege/${selectedEintrag.id}`;
+                    }}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Bearbeiten
+                  </Button>
+                  <Button onClick={() => setSelectedEintrag(null)}>Schließen</Button>
+                </div>
               </div>
             </CardContent>
           </Card>

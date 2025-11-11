@@ -78,10 +78,15 @@ export class CloudSyncService {
     const updated = { ...current, ...updates };
     
     localStorage.setItem(this.SYNC_STATUS_KEY, JSON.stringify(updated));
+    
+    // Event für UI-Updates
+    window.dispatchEvent(new CustomEvent('syncStatusChanged', { 
+      detail: updated 
+    }));
   }
 
   static async syncToCloud(einträge: SchießEintrag[]): Promise<boolean> {
-    if (!PremiumService.isPremium()) {
+    if (!(await PremiumService.isPremium())) {
       throw new Error('Cloud-Sync ist nur für Premium-Nutzer verfügbar');
     }
 
@@ -92,18 +97,29 @@ export class CloudSyncService {
     this.updateSyncStatus({ syncInProgress: true });
 
     try {
-      // Simuliere Cloud-Upload (später durch echte API ersetzen)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
+      console.log('Speichere in Firebase:', einträge.length, 'Einträge');
+      
+      // Firebase-Imports
+      const { doc, setDoc } = await import('firebase/firestore');
+      const { auth, db } = await import('@/lib/firebase/config');
+      
+      if (!auth.currentUser) {
+        throw new Error('Benutzer nicht angemeldet');
+      }
+      
       const cloudData: CloudData = {
         einträge,
         lastModified: new Date(),
         deviceId: this.getDeviceId()
       };
+      
+      // In Firebase speichern
+      await setDoc(doc(db, 'schiessnachweis_data', auth.currentUser.uid), cloudData);
+      console.log('✅ Firebase gespeichert:', auth.currentUser.uid, '- Einträge:', einträge.length);
 
-      // Simuliere Cloud-Speicherung
+      // Auch lokal als Backup speichern
       localStorage.setItem(this.CLOUD_STORAGE_KEY, JSON.stringify(cloudData));
-
+      
       this.updateSyncStatus({
         lastSync: new Date(),
         pendingChanges: 0,
@@ -119,7 +135,7 @@ export class CloudSyncService {
   }
 
   static async syncFromCloud(): Promise<SchießEintrag[]> {
-    if (!PremiumService.isPremium()) {
+    if (!(await PremiumService.isPremium())) {
       throw new Error('Cloud-Sync ist nur für Premium-Nutzer verfügbar');
     }
 
@@ -130,21 +146,33 @@ export class CloudSyncService {
     this.updateSyncStatus({ syncInProgress: true });
 
     try {
-      // Simuliere Cloud-Download (später durch echte API ersetzen)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      const stored = localStorage.getItem(this.CLOUD_STORAGE_KEY);
-      if (!stored) {
+      console.log('Lade Daten aus Firebase...');
+      
+      // Firebase-Imports
+      const { doc, getDoc } = await import('firebase/firestore');
+      const { auth, db } = await import('@/lib/firebase/config');
+      
+      if (!auth.currentUser) {
+        throw new Error('Benutzer nicht angemeldet');
+      }
+      
+      const docRef = doc(db, 'schiessnachweis_data', auth.currentUser.uid);
+      const docSnap = await getDoc(docRef);
+      
+      if (!docSnap.exists()) {
+        console.log('Keine Cloud-Daten für User:', auth.currentUser.uid);
         this.updateSyncStatus({ syncInProgress: false });
         return [];
       }
-
-      const cloudData: CloudData = JSON.parse(stored);
+      
+      const cloudData = docSnap.data() as CloudData;
+      console.log('✅ Firebase geladen:', auth.currentUser.uid, '- Einträge:', cloudData.einträge.length);
       
       // Konvertiere Datum-Strings zurück zu Date-Objekten
       const einträge = cloudData.einträge.map(eintrag => ({
         ...eintrag,
-        datum: new Date(eintrag.datum)
+        datum: new Date(eintrag.datum),
+        createdAt: new Date(eintrag.createdAt)
       }));
 
       this.updateSyncStatus({
@@ -161,19 +189,20 @@ export class CloudSyncService {
   }
 
   static async autoSync(einträge: SchießEintrag[]): Promise<void> {
-    if (!PremiumService.isPremium() || !navigator.onLine) {
+    if (!(await PremiumService.isPremium()) || !navigator.onLine) {
       return;
     }
 
     const status = this.getSyncStatus();
     
-    // Auto-Sync nur wenn letzte Sync älter als 5 Minuten
-    if (status.lastSync && (Date.now() - status.lastSync.getTime()) < 5 * 60 * 1000) {
+    // Auto-Sync nur wenn letzte Sync älter als 30 Sekunden (für bessere UX)
+    if (status.lastSync && (Date.now() - status.lastSync.getTime()) < 30 * 1000) {
       return;
     }
 
     try {
       await this.syncToCloud(einträge);
+      console.log('✅ Auto-Sync erfolgreich');
     } catch (error) {
       console.warn('Auto-Sync fehlgeschlagen:', error);
     }
@@ -184,6 +213,13 @@ export class CloudSyncService {
     this.updateSyncStatus({
       pendingChanges: status.pendingChanges + count
     });
+    
+    // Event für UI-Updates
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('syncStatusChanged', { 
+        detail: this.getSyncStatus() 
+      }));
+    }
   }
 
   static getCloudInfo(): { hasCloudData: boolean; lastModified: Date | null; deviceId: string | null } {

@@ -28,7 +28,17 @@ export function CloudSyncStatus({ className }: CloudSyncStatusProps) {
     // Auth-Status überwachen
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setIsLoggedIn(!!user);
-      setIsPremium(user ? PremiumService.isPremium() : false);
+      // Nur verifizierte User können Premium nutzen
+      const isPremiumActive = user && user.emailVerified ? PremiumService.isPremium() : false;
+      
+      // Auto-aktiviere Premium für 1 Monat wenn noch nicht aktiv (Testzweck)
+      if (user && user.emailVerified && !isPremiumActive) {
+        console.log('🎆 Aktiviere 1 Monat Premium für verifizierten User');
+        PremiumService.activatePremium('monthly', 1);
+        setIsPremium(true);
+      } else {
+        setIsPremium(isPremiumActive);
+      }
     });
     
     // Sync-Status laden
@@ -46,28 +56,53 @@ export function CloudSyncStatus({ className }: CloudSyncStatusProps) {
     
     setIsOnline(navigator.onLine);
     
-    // Periodisches Update des Sync-Status
-    const interval = setInterval(() => {
-      const status = SchießnachweisService.getSyncStatus();
+    // Event-basierte Updates statt Polling
+    const handleSyncStatusChange = (event: CustomEvent) => {
+      const status = event.detail;
       setLastSync(status.lastSync);
       setPendingChanges(status.pendingChanges);
       setIsSyncing(status.syncInProgress);
-    }, 5000);
+    };
+    
+    window.addEventListener('syncStatusChanged', handleSyncStatusChange as EventListener);
+    
+    // Auto-Sync nur bei Änderungen
+    const handleAutoSync = async (event: CustomEvent) => {
+      const status = event.detail;
+      if (isPremium && isOnline && status.pendingChanges > 0 && !status.syncInProgress) {
+        console.log('🔄 Auto-Sync gestartet - Ausstehende Änderungen:', status.pendingChanges);
+        try {
+          await SchießnachweisService.syncToCloud();
+          console.log('✅ Auto-Sync erfolgreich');
+        } catch (error) {
+          console.log('❌ Auto-Sync fehlgeschlagen:', error);
+        }
+      }
+    };
+    
+    window.addEventListener('syncStatusChanged', handleAutoSync as EventListener);
     
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      clearInterval(interval);
+      window.removeEventListener('syncStatusChanged', handleSyncStatusChange as EventListener);
+      window.removeEventListener('syncStatusChanged', handleAutoSync as EventListener);
       unsubscribe();
     };
   }, []);
 
   const handleSync = async () => {
-    if (!isPremium || !isOnline) return;
+    console.log('Sync-Versuch:', { isPremium, isOnline, emailVerified: auth.currentUser?.emailVerified });
+    
+    if (!isPremium || !isOnline) {
+      console.log('Sync blockiert: Premium oder Offline');
+      return;
+    }
     
     setIsSyncing(true);
     
     try {
+      console.log('Starte Cloud-Sync...');
       await SchießnachweisService.syncToCloud();
       const status = SchießnachweisService.getSyncStatus();
       setLastSync(status.lastSync);
@@ -113,6 +148,48 @@ export function CloudSyncStatus({ className }: CloudSyncStatusProps) {
                 Anmelden
               </Button>
             </Link>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // E-Mail nicht verifiziert
+  if (isLoggedIn && auth.currentUser && !auth.currentUser.emailVerified) {
+    console.log('E-Mail nicht verifiziert:', auth.currentUser.emailVerified);
+    return (
+      <Card className={`border-orange-200 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/50 dark:to-red-950/50 dark:border-orange-800 ${className}`}>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <CloudOff className="h-4 w-4 text-orange-600" />
+            Cloud-Synchronisation
+            <Badge variant="outline" className="ml-auto text-orange-700 dark:text-orange-300 dark:border-orange-600">
+              E-Mail bestätigen
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-orange-600" />
+              <span className="text-sm text-orange-700 dark:text-orange-200">
+                Nur Offline-Nutzung
+              </span>
+            </div>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="border-orange-300 text-orange-700 hover:bg-orange-100 dark:border-orange-600 dark:text-orange-200 dark:hover:bg-orange-900/30"
+              onClick={() => {
+                toast({
+                  title: "📧 E-Mail-Bestätigung erforderlich",
+                  description: "Bitte bestätigen Sie Ihre E-Mail für Premium & Cloud-Sync. Auch im Spam-Ordner nachschauen!",
+                  duration: 8000
+                });
+              }}
+            >
+              Hinweis
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -203,9 +280,9 @@ export function CloudSyncStatus({ className }: CloudSyncStatusProps) {
             className="border-blue-300 text-blue-700 hover:bg-blue-100"
           >
             {isSyncing ? (
-              <Sync className="h-4 w-4 animate-spin" />
+              <RefreshCw className="h-4 w-4 animate-spin" />
             ) : (
-              <Sync className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4" />
             )}
           </Button>
         </div>

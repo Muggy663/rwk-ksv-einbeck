@@ -390,13 +390,13 @@ service cloud.firestore {
     match /schiessnachweis_data/{userId} {
       allow read, write: if isAuthenticated() && 
                          request.auth.uid == userId &&
-                         isPremiumUser();
+                         request.auth.token.email_verified == true;
     }
     
     match /schiessnachweis_data/{userId}/{document=**} {
       allow read, write: if isAuthenticated() && 
                          request.auth.uid == userId &&
-                         isPremiumUser();
+                         request.auth.token.email_verified == true;
     }
     
     // Premium-Subscriptions
@@ -411,6 +411,11 @@ service cloud.firestore {
       allow read: if isSuperAdmin() || 
                   (isAuthenticated() && request.auth.uid == userId);
       allow write: if isSuperAdmin();
+      allow update: if isSuperAdmin() || 
+                    (isAuthenticated() && 
+                     request.auth.uid == userId &&
+                     // Erlaube Premium-Updates durch API
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isPremium', 'premiumUntil', 'premiumPlan', 'updatedAt']));
       allow create: if isAuthenticated() && 
                     request.auth.uid == userId &&
                     // Nur INDIVIDUAL userType und keine Rollen erlaubt

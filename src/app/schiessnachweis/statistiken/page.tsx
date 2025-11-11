@@ -218,28 +218,29 @@ export default function StatistikenPage() {
               <label className="text-sm font-medium mb-2 block">Disziplin</label>
               <NativeSelect
                 value={filterDisziplin}
-                onChange={setFilterDisziplin}
-              >
-                <option value="alle">Alle Disziplinen</option>
-                {DISZIPLIN_NAMES.map(disziplin => (
-                  <option key={disziplin} value={disziplin}>
-                    {disziplin}
-                  </option>
-                ))}
-              </NativeSelect>
+                onValueChange={setFilterDisziplin}
+                options={[
+                  { value: "alle", label: "Alle Disziplinen" },
+                  ...[...new Set(einträge.map(e => e.disziplin))].sort().map(disziplin => ({
+                    value: disziplin,
+                    label: disziplin
+                  }))
+                ]}
+              />
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Zeitraum</label>
               <NativeSelect
                 value={filterZeitraum}
-                onChange={setFilterZeitraum}
-              >
-                <option value="1monat">Letzter Monat</option>
-                <option value="3monate">Letzte 3 Monate</option>
-                <option value="6monate">Letzte 6 Monate</option>
-                <option value="12monate">Letztes Jahr</option>
-                <option value="alle">Alle Zeit</option>
-              </NativeSelect>
+                onValueChange={setFilterZeitraum}
+                options={[
+                  { value: "1monat", label: "Letzter Monat" },
+                  { value: "3monate", label: "Letzte 3 Monate" },
+                  { value: "6monate", label: "Letzte 6 Monate" },
+                  { value: "12monate", label: "Letztes Jahr" },
+                  { value: "alle", label: "Alle Zeit" }
+                ]}
+              />
             </div>
           </div>
         </CardContent>
@@ -487,10 +488,10 @@ export default function StatistikenPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <TrendingUp className="h-5 w-5 text-green-600" />
-                      6-Monats-Fortschritt
+                      Fortschritt seit Anmeldung
                       <Badge variant="default" className="ml-2">Premium</Badge>
                     </CardTitle>
-                    <CardDescription>Detaillierte Entwicklung der letzten 6 Monate</CardDescription>
+                    <CardDescription>Detaillierte Entwicklung seit Ihrem ersten Eintrag</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="h-[250px] w-full">

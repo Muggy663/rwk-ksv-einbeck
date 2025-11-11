@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     // Sichere JSON-Parsing
     let recipients;
     try {
-      recipients = JSON.parse(sanitizeInput(recipientsJson));
+      recipients = JSON.parse(recipientsJson);
     } catch (error) {
       secureLogger.warn('Invalid recipients JSON', 'send-email-api');
       return NextResponse.json({ 
