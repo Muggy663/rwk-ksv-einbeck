@@ -417,7 +417,7 @@ export default function HomePage() {
               <div>
                 <h4 className="font-bold text-purple-800 dark:text-purple-200 text-lg">🎯 Schießnachweis jetzt verfügbar!</h4>
                 <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Digitales Schießtagebuch mit allen DSB-Disziplinen und KI-Import</p>
-                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-semibold">✨ Kostenlos nutzbar - Premium-Features in v2.0</p>
+                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-semibold">✨ Kostenlos nutzbar - Premium-Features in Testphase</p>
               </div>
             </div>
 
@@ -425,30 +425,17 @@ export default function HomePage() {
               <div className="w-3 h-3 bg-amber-500 dark:bg-amber-400 rounded-full mt-2 flex-shrink-0 animate-bounce"></div>
               <div>
                 <h4 className="font-bold text-amber-800 dark:text-amber-200 text-lg">🤖 Google Gemini AI</h4>
-                <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">Handzettel werden jetzt noch genauer erkannt - einfach fotografieren und fertig!</p>
+                <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">Handzettel werden jetzt noch genauer erkannt - einfach fotografieren, abschicken und fertig!</p>
                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">✨ Spart noch mehr Zeit beim Ergebnisse eingeben</p>
               </div>
             </div>
 
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">🎯 Vollständige DSB-Disziplinen</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">Alle deutschen Schießdisziplinen: KK, LG, LP, Bogen, Armbrust, Vorderlader</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <h4 className="font-semibold text-green-800 dark:text-green-200">🤖 KI-Import von Schießanlagen</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">Meyton, Sius, Disag, Sport Quantum - Ergebnisse automatisch importieren</p>
-              </div>
-            </div>
+
             <div className="flex items-start space-x-3">
               <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
               <div>
                 <h4 className="font-semibold text-green-800 dark:text-green-200">📊 Professionelle Statistiken</h4>
-                <p className="text-sm text-green-700 dark:text-green-300">Leistungskurven, Serien-Tracking und PDF-Export für Behörden</p>
+                <p className="text-sm text-green-700 dark:text-green-300">Leistungskurven, Serien-Tracking und PDF-Export für Behörden (Schießnachweis)</p>
               </div>
             </div>
           </div>

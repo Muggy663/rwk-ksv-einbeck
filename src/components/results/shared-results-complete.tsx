@@ -870,7 +870,7 @@ export default function SharedResultsPage({
             📸 Handzettel fotografieren
           </CardTitle>
           <CardDescription className="text-blue-700 dark:text-blue-300">
-            🤖 Foto machen → Computer liest automatisch alle Ergebnisse aus - spart 90% Zeit!
+            🤖 Google Gemini AI - Handzettel werden jetzt noch genauer erkannt - einfach fotografieren, abschicken und fertig!
           </CardDescription>
         </CardHeader>
         <CardContent className="min-w-0">
@@ -880,7 +880,7 @@ export default function SharedResultsPage({
                 <div className="text-center space-y-2">
                   <Camera className="h-8 w-8 text-amber-600 dark:text-amber-400 mx-auto" />
                   <p className="text-sm font-medium text-amber-800 dark:text-amber-100">📋 Zuerst Liga und Durchgang auswählen!</p>
-                  <p className="text-xs text-amber-700 dark:text-amber-200">Dann erscheint hier die Kamera-Funktion - Computer liest Handzettel automatisch aus.</p>
+                  <p className="text-xs text-amber-700 dark:text-amber-200">Dann erscheint hier die Kamera-Funktion - einfach fotografieren, abschicken und fertig!</p>
                 </div>
               </div>
             ) : (

@@ -196,7 +196,7 @@ export default function SchießnachweisPage() {
           <Target className="h-8 w-8 sm:h-12 sm:w-12 text-blue-600" />
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">Schießnachweis</h1>
-            <Badge variant="secondary" className="mt-1 text-xs sm:text-sm">Kostenlos verfügbar</Badge>
+            <Badge variant="secondary" className="mt-1 text-xs sm:text-sm">Kostenlos nutzbar - Premium-Features in Testphase</Badge>
           </div>
         </div>
         
