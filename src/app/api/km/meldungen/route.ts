@@ -107,9 +107,42 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const jahr = parseInt(searchParams.get('jahr') || '2026');
+    const saisonId = searchParams.get('saison');
     const clubId = searchParams.get('clubId');
     
-    // Alle Disziplinen für ein Jahr laden
+    // Wenn saisonId angegeben, filtere nach Saison
+    if (saisonId) {
+      const saisonDoc = await adminDb.collection('km_saisons').doc(saisonId).get();
+      if (!saisonDoc.exists) {
+        return NextResponse.json({ success: true, data: [] });
+      }
+      
+      const saisonData = saisonDoc.data();
+      const disziplinTyp = saisonData.disziplinTyp; // 'KK' oder 'LD'
+      const saisonJahr = saisonData.jahr;
+      
+      const collectionName = getKMMeldungenCollection(saisonJahr, disziplinTyp.toLowerCase());
+      const snapshot = await adminDb.collection(collectionName).get();
+      
+      let meldungen = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        _collection: disziplinTyp.toLowerCase()
+      }));
+      
+      if (clubId) {
+        const shootersSnapshot = await adminDb.collection('shooters').where('clubId', '==', clubId).get();
+        const clubShooterIds = shootersSnapshot.docs.map(doc => doc.id);
+        meldungen = meldungen.filter(meldung => clubShooterIds.includes(meldung.schuetzeId));
+      }
+      
+      return NextResponse.json({
+        success: true,
+        data: meldungen
+      });
+    }
+    
+    // Fallback: Alle Disziplinen für ein Jahr laden
     const collections = ['kk', 'ld'];
     let alleMeldungen = [];
     

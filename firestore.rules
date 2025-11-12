@@ -50,7 +50,7 @@ service cloud.firestore {
     }
     
     function isKvKmOrga(kvId) {
-      return getUserKvRole(kvId) == 'KV_KM_ORGA';
+      return getUserKvRole(kvId) == 'KV_KM_ORGA' || getUserKvRole(kvId) == 'KM_ORGANISATOR';
     }
     
     function isKvPressewart(kvId) {
@@ -306,6 +306,46 @@ service cloud.firestore {
     match /{collection}/{document=**} {
       allow read: if true && collection.matches('km_meldungen_.*');
       allow write: if isSuperAdmin() && collection.matches('km_meldungen_.*');
+    }
+
+    match /km_ergebnisse/{ergebnis} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_startlisten/{startliste} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_disziplinen/{disziplin} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_jahre/{jahr} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_saisons/{saison} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_shooters/{shooter} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_startlisten_configs/{config} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    match /km_startlisten/{startliste} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
     }
 
    

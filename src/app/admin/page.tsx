@@ -545,23 +545,14 @@ export default function AdminDashboardPage() {
                   </Button>
                 </div>
               </div>
-              <Link href="/admin/migration" passHref>
-                <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">🔄 Schützen-Migration</Button>
-              </Link>
-              <Link href="/admin/cleanup" passHref>
-                <Button className="w-full" variant="outline">Datenbereinigung</Button>
-              </Link>
               <Link href="/admin/team-cleanup" passHref>
                 <Button className="w-full" variant="outline">Team-Bereinigung</Button>
               </Link>
-              <Link href="/admin/shooter-normalization" passHref>
-                <Button className="w-full" variant="outline">Excel-Schützen Normalisierung</Button>
+              <Link href="/admin/recovery" passHref>
+                <Button className="w-full" variant="outline">🔄 Datenwiederherstellung</Button>
               </Link>
               <Link href="/admin/audit" passHref>
                 <Button className="w-full" variant="outline">Änderungsprotokoll</Button>
-              </Link>
-              <Link href="/admin/cleanup-updates" passHref>
-                <Button className="w-full" variant="outline">🗑️ Alte Updates löschen</Button>
               </Link>
             </div>
           </CardContent>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/config';
 import { doc, updateDoc } from 'firebase/firestore';
 
-const KM_JAHRE_COLLECTION = 'km_jahre';
+const KM_SAISONS_COLLECTION = 'km_saisons';
 
 export async function PATCH(
   request: NextRequest,
@@ -20,11 +20,11 @@ export async function PATCH(
     if (meldeschluss !== undefined) updateData.meldeschluss = meldeschluss;
     if (beschreibung !== undefined) updateData.beschreibung = beschreibung;
 
-    await updateDoc(doc(db, KM_JAHRE_COLLECTION, params.id), updateData);
+    await updateDoc(doc(db, KM_SAISONS_COLLECTION, params.id), updateData);
 
     return NextResponse.json({
       success: true,
-      message: 'KM-Jahr aktualisiert'
+      message: 'KM-Saison aktualisiert'
     });
 
   } catch (error) {

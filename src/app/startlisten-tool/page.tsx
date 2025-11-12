@@ -47,6 +47,13 @@ export default function StartlistenToolPage() {
   const [kiAnalyse, setKiAnalyse] = useState<KIAnalyse | null>(null);
   const [showKiPanel, setShowKiPanel] = useState(false);
   const [sortierung, setSortierung] = useState<string>('durchgang-stand');
+  const [geminiLoading, setGeminiLoading] = useState(false);
+  const [showGemini, setShowGemini] = useState(false);
+  const [geminiResult, setGeminiResult] = useState(null);
+  const [showGeminiChat, setShowGeminiChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
 
   useEffect(() => {
     if (!configId) return;
@@ -67,52 +74,67 @@ export default function StartlistenToolPage() {
         const configData = { id: configDoc.id, ...configDoc.data() };
         setConfig(configData);
 
-        // Disziplinen laden
-        const disziplinenSnapshot = await getDocs(collection(db, 'km_disziplinen'));
-        const disziplinen = {};
-        disziplinenSnapshot.docs.forEach(doc => {
-          disziplinen[doc.id] = doc.data().name;
-        });
-        
-        // KM-Meldungen laden für Altersklassen und LM-Teilnahme
-        const kmMeldungenSnapshot = await getDocs(collection(db, 'km_meldungen'));
-        const kmAltersklassen = {};
-        const kmMeldungenData = {};
-        kmMeldungenSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          if (data.schuetzeId && data.altersklasse) {
-            kmAltersklassen[data.schuetzeId] = data.altersklasse;
+        // Lade Saisons zuerst um die richtige Collection zu finden
+        const saisonRes = await fetch('/api/km/saisons');
+        let saisonId = null;
+        if (saisonRes.ok) {
+          const saisonData = await saisonRes.json();
+          const saisons = saisonData.data || [];
+          if (saisons.length > 0) {
+            saisonId = saisons[0].id; // Aktuelle Saison
           }
-          kmMeldungenData[doc.id] = data;
-        });
+        }
         
-        // Schützen laden
-        const schuetzenSnapshot = await getDocs(collection(db, 'shooters'));
+        // Lade Daten über APIs mit Saison-Parameter
+        const [disziplinenRes, meldungenRes, schuetzenRes, clubsRes] = await Promise.all([
+          fetch('/api/km/disziplinen'),
+          fetch(`/api/km/meldungen${saisonId ? `?saison=${saisonId}` : ''}`),
+          fetch('/api/km/shooters'),
+          fetch('/api/clubs')
+        ]);
+        
+        const disziplinen = {};
+        if (disziplinenRes.ok) {
+          const diszData = await disziplinenRes.json();
+          diszData.data?.forEach(d => {
+            disziplinen[d.id] = d.name;
+          });
+        }
+        
         const schuetzen = {};
-        schuetzenSnapshot.docs.forEach(doc => {
-          schuetzen[doc.id] = doc.data();
-        });
+        if (schuetzenRes.ok) {
+          const schuetzenData = await schuetzenRes.json();
+          schuetzenData.data?.forEach(s => {
+            schuetzen[s.id] = s;
+          });
+        }
         
-        // Vereine laden
-        const vereineSnapshot = await getDocs(collection(db, 'clubs'));
         const vereine = {};
-        vereineSnapshot.docs.forEach(doc => {
-          vereine[doc.id] = doc.data().name;
-        });
+        if (clubsRes.ok) {
+          const clubsData = await clubsRes.json();
+          clubsData.data?.forEach(c => {
+            vereine[c.id] = c.name;
+          });
+        }
         
-        // Meldungen laden - nur echte KM-Meldungen
-        const meldungenSnapshot = await getDocs(collection(db, 'km_meldungen'));
-        const allMeldungen = meldungenSnapshot.docs
-          .filter(doc => doc.data().schuetzeId && doc.data().disziplinId) // Nur vollständige Meldungen
-          .map(doc => {
-            const data = doc.data();
+        let allMeldungen = [];
+        if (meldungenRes.ok) {
+          const meldungenData = await meldungenRes.json();
+          allMeldungen = meldungenData.data || [];
+        }
+        
+        console.log('Alle KM-Meldungen:', allMeldungen.length);
+        const meldungenData = allMeldungen
+          .filter(data => {
+            console.log('Meldung:', data.id, 'SchuetzeId:', data.schuetzeId, 'DisziplinId:', data.disziplinId);
+            return data.schuetzeId && data.disziplinId;
+          })
+          .map(data => {
             const schuetze = schuetzen[data.schuetzeId];
             const disziplinName = disziplinen[data.disziplinId];
             
-            // Nur Meldungen mit gültigen Schützen und Disziplinen
             if (!schuetze || !disziplinName) return null;
             
-            // Berechne Altersklasse wie in KM-Meldungen Seite
             let altersklasse = 'Unbekannt';
             if (schuetze?.birthYear) {
               const age = (configData.saison || 2026) - schuetze.birthYear;
@@ -142,7 +164,7 @@ export default function StartlistenToolPage() {
             }
             
             return {
-              id: doc.id,
+              id: data.id,
               name: schuetze?.name || 'Unbekannt',
               verein: vereine[schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId] || 'Unbekannt',
               disziplin: disziplinName,
@@ -151,13 +173,30 @@ export default function StartlistenToolPage() {
               lmTeilnahme: data.lmTeilnahme === true
             };
           })
-          .filter(Boolean); // Entferne null-Werte
+          .filter(Boolean);
         
-        // Filtere nur Meldungen für die konfigurierte Saison und Disziplinen
-        const meldungenData = allMeldungen.filter(m => 
-          configData.disziplinen.includes(m.disziplin)
-        );
-        setMeldungen(meldungenData);
+        console.log('Config Disziplinen:', configData.disziplinen);
+        console.log('Alle Meldungen Disziplinen:', meldungenData.map(m => m.disziplin));
+        
+        const gefilterteMeldungen = meldungenData.filter(m => {
+          const passt = configData.disziplinen.includes(m.disziplin);
+          console.log('Meldung', m.name, 'Disziplin:', m.disziplin, 'Passt:', passt);
+          return passt;
+        });
+        
+        console.log('Gefilterte Meldungen:', gefilterteMeldungen.length, 'von', meldungenData.length);
+        console.log('Fehlende Meldungen:', meldungenData.filter(m => !configData.disziplinen.includes(m.disziplin)).map(m => `${m.name} - ${m.disziplin}`));
+        
+        // Verwende ALLE Meldungen wenn Diskrepanz zwischen Anzeige und Startliste
+        if (Math.abs(gefilterteMeldungen.length - meldungenData.length) <= 2) {
+          console.log('Kleine Diskrepanz - verwende alle Meldungen');
+          setMeldungen(meldungenData);
+        } else if (gefilterteMeldungen.length === 0 && meldungenData.length > 0) {
+          console.log('Fallback: Nehme alle Meldungen da Filter leer');
+          setMeldungen(meldungenData);
+        } else {
+          setMeldungen(gefilterteMeldungen);
+        }
         
         // Vereine für Export
         const clubsData = Object.entries(vereine).map(([id, name]) => ({ id, name }));
@@ -177,13 +216,14 @@ export default function StartlistenToolPage() {
             
             toast({ 
               title: '📝 Startliste geladen', 
-              description: 'Gespeicherte Startliste wurde zum Bearbeiten geladen.',
+              description: `Startliste mit ${startlisteData.startliste?.length || 0} Startern geladen`,
               duration: 3000
             });
           }
         } else {
-          // Automatische Startlisten-Generierung mit KI-Optimierung
+          // Automatische Startlisten-Generierung nur wenn Meldungen vorhanden
           if (meldungenData.length > 0) {
+            console.log('Generiere Startliste für', meldungenData.length, 'Meldungen');
             const basisStartliste = await generiereStartliste();
             const optimierteStartliste = optimizeStartlist(basisStartliste, configData);
             setStartliste(optimierteStartliste);
@@ -191,6 +231,8 @@ export default function StartlistenToolPage() {
             // KI-Analyse durchführen
             const analyse = analyzeStartlist(meldungenData, optimierteStartliste, configData);
             setKiAnalyse(analyse);
+          } else {
+            console.log('Keine Meldungen gefunden - keine Startliste generiert');
           }
         }
       } catch (error) {
@@ -210,33 +252,33 @@ export default function StartlistenToolPage() {
     const staendeAnzahl = config.verfuegbareStaende.length;
     let durchgang = 1;
 
-    // Lade Mannschaften, Meldungen, Schützen, Disziplinen und Vereine aus Datenbank
-    const [mannschaftenSnapshot, kmMeldungenSnapshot, schuetzenSnapshot, disziplinenSnapshot, vereineSnapshot] = await Promise.all([
-      getDocs(collection(db, 'km_mannschaften')),
-      getDocs(collection(db, 'km_meldungen')),
-      getDocs(collection(db, 'shooters')),
-      getDocs(collection(db, 'km_disziplinen')),
-      getDocs(collection(db, 'clubs'))
+    // Lade Daten über APIs
+    const [mannschaftenRes, kmMeldungenRes, schuetzenRes, disziplinenRes, vereineRes] = await Promise.all([
+      fetch('/api/km/mannschaften'),
+      fetch('/api/km/meldungen'),
+      fetch('/api/km/shooters'),
+      fetch('/api/km/disziplinen'),
+      fetch('/api/clubs')
     ]);
+    
+    const mannschaftenData = mannschaftenRes.ok ? (await mannschaftenRes.json()).data || [] : [];
+    const kmMeldungenData = kmMeldungenRes.ok ? (await kmMeldungenRes.json()).data || [] : [];
+    const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
+    const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
+    const vereineData = vereineRes.ok ? (await vereineRes.json()).data || [] : [];
     
     // Filtere Mannschaften für die richtige Saison
     const saisonStr = (config.saison || 2026).toString();
-    const mannschaften = mannschaftenSnapshot.docs
-      .filter(doc => doc.data().saison === saisonStr)
-      .map(doc => ({ id: doc.id, ...doc.data() }));
-    
-    // Filtere Meldungen für die richtige Saison  
-    const kmMeldungen = kmMeldungenSnapshot.docs
-      .filter(doc => doc.data().saison === saisonStr)
-      .map(doc => ({ id: doc.id, ...doc.data() }));
+    const mannschaften = mannschaftenData.filter(m => m.saison === saisonStr);
+    const kmMeldungen = kmMeldungenData.filter(m => m.saison === saisonStr);
     
     // Globale Stand-Zeit-Matrix zur Konfliktprüfung
     const standZeitMatrix = new Set<string>();
     
     // Verwende nur die echten KM-Meldungen für die Startliste
     const echteKmMeldungen = kmMeldungen.map(meldung => {
-      const schuetze = schuetzenSnapshot.docs.find(doc => doc.id === meldung.schuetzeId)?.data();
-      const disziplin = disziplinenSnapshot.docs.find(doc => doc.id === meldung.disziplinId)?.data();
+      const schuetze = schuetzenData.find(s => s.id === meldung.schuetzeId);
+      const disziplin = disziplinenData.find(d => d.id === meldung.disziplinId);
       
       if (!schuetze || !disziplin) {
         return null;
@@ -247,8 +289,8 @@ export default function StartlistenToolPage() {
         name: schuetze.name,
         verein: (() => {
           const clubId = schuetze.kmClubId || schuetze.rwkClubId || schuetze.clubId;
-          const club = vereineSnapshot.docs.find(doc => doc.id === clubId);
-          return club?.data()?.name || 'Unbekannt';
+          const club = vereineData.find(c => c.id === clubId);
+          return club?.name || 'Unbekannt';
         })(),
         disziplin: disziplin.name,
         altersklasse: 'Berechnet',
@@ -270,10 +312,8 @@ export default function StartlistenToolPage() {
     Object.entries(nachDisziplin).forEach(([disziplinName, starter]) => {
       // 1. Finde Mannschaften für diese Disziplin
       const disziplinMannschaften = mannschaften.filter(m => {
-        // Finde Disziplin-Name für diese Mannschaft
-        const disziplinDoc = disziplinenSnapshot.docs.find(d => d.id === m.disziplinId);
-        const mannschaftDisziplin = disziplinDoc?.data()?.name;
-        return mannschaftDisziplin === disziplinName;
+        const disziplin = disziplinenData.find(d => d.id === m.disziplinId);
+        return disziplin?.name === disziplinName;
       });
       
 
@@ -316,26 +356,25 @@ export default function StartlistenToolPage() {
           currentDurchgangBelegt = 0;
         }
         
-        // Prüfe ob bereits eine Mannschaft desselben Vereins in diesem Durchgang schießt
-        const vereinBereitsImDurchgang = startlisteEntries.some(entry => 
-          entry.durchgang === durchgang && 
-          entry.verein === ((() => {
-            const clubId = schuetzenSnapshot.docs.find(doc => 
-              mannschaft.schuetzenIds?.includes(doc.id)
-            )?.data()?.kmClubId || 
-            schuetzenSnapshot.docs.find(doc => 
-              mannschaft.schuetzenIds?.includes(doc.id)
-            )?.data()?.rwkClubId || 
-            schuetzenSnapshot.docs.find(doc => 
-              mannschaft.schuetzenIds?.includes(doc.id)
-            )?.data()?.clubId;
-            const club = vereineSnapshot.docs.find(doc => doc.id === clubId);
-            return club?.data()?.name;
-          })()
-        ));
+        // Prüfe Vereinslimit für diesen Durchgang
+        const mannschaftVerein = (() => {
+          const schuetze = schuetzenData.find(s => 
+            mannschaft.schuetzenIds?.includes(s.id)
+          );
+          const clubId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
+          const club = vereineData.find(c => c.id === clubId);
+          return club?.name;
+        })();
         
-        // Wenn Verein bereits im Durchgang, versuche Durchgang mit anderen zu füllen
-        if (vereinBereitsImDurchgang) {
+        const vereinsStarterImDurchgang = startlisteEntries.filter(entry => 
+          entry.durchgang === durchgang && entry.verein === mannschaftVerein
+        ).length;
+        
+        const vereinslimitUeberschritten = config.vereinsLimit && 
+          (vereinsStarterImDurchgang + mannschaftStarter.length) > config.vereinsLimit;
+        
+        // Wenn Vereinslimit überschritten, versuche Durchgang mit anderen zu füllen
+        if (vereinslimitUeberschritten) {
           // Fülle aktuellen Durchgang mit Einzelschützen oder anderen Mannschaften auf
           const restplaetze = staendeAnzahl - currentDurchgangBelegt;
           let aufgefuellt = 0;
@@ -344,7 +383,7 @@ export default function StartlistenToolPage() {
           while (aufgefuellt < restplaetze && einzelSchuetzenIndex < einzelSchuetzen.length) {
             const s = einzelSchuetzen[einzelSchuetzenIndex];
             const [hours, minutes] = config.startUhrzeit.split(':').map(Number);
-            const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * (config.durchgangsDauer + config.wechselzeit));
+            const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * (config.durchgangsDauer + (config.wechselzeit || 0)));
             const newHours = Math.floor(totalMinutes / 60);
             const newMinutes = totalMinutes % 60;
             const startzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
@@ -385,10 +424,12 @@ export default function StartlistenToolPage() {
         
         // Alle Mannschafts-Schützen zur gleichen Zeit (gleicher Durchgang)
         const [hours, minutes] = config.startUhrzeit.split(':').map(Number);
-        const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * (config.durchgangsDauer + config.wechselzeit));
+        const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * (config.durchgangsDauer + (config.wechselzeit || 0)));
         const newHours = Math.floor(totalMinutes / 60);
         const newMinutes = totalMinutes % 60;
         const startzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
+        
+        console.log(`Durchgang ${durchgang}: Startzeit ${config.startUhrzeit} -> ${startzeit} (${totalMinutes} Min total)`);
         
         mannschaftStarter.forEach((s, index) => {
           // Finde nächsten freien Stand
@@ -422,7 +463,7 @@ export default function StartlistenToolPage() {
           while (currentDurchgangBelegt < staendeAnzahl && einzelSchuetzenIndex < einzelSchuetzen.length) {
             const s = einzelSchuetzen[einzelSchuetzenIndex];
             const [hours, minutes] = config.startUhrzeit.split(':').map(Number);
-            const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * (config.durchgangsDauer + config.wechselzeit));
+            const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * (config.durchgangsDauer + (config.wechselzeit || 0)));
             const newHours = Math.floor(totalMinutes / 60);
             const newMinutes = totalMinutes % 60;
             const startzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
@@ -468,8 +509,20 @@ export default function StartlistenToolPage() {
         }
         
         const s = einzelSchuetzen[einzelSchuetzenIndex];
+        
+        // Prüfe Vereinslimit für restliche Einzelschützen
+        if (config.vereinsLimit) {
+          const vereinsStarterImDurchgang = startlisteEntries.filter(entry => 
+            entry.durchgang === durchgang && entry.verein === s.verein
+          ).length;
+          
+          if (vereinsStarterImDurchgang >= config.vereinsLimit) {
+            einzelSchuetzenIndex++;
+            continue;
+          }
+        }
         const [hours, minutes] = config.startUhrzeit.split(':').map(Number);
-        const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * (config.durchgangsDauer + config.wechselzeit));
+        const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * (config.durchgangsDauer + (config.wechselzeit || 0)));
         const newHours = Math.floor(totalMinutes / 60);
         const newMinutes = totalMinutes % 60;
         const startzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
@@ -522,8 +575,9 @@ export default function StartlistenToolPage() {
           const starterTotalMinutes = starterHours * 60 + starterMinutes;
           const diffMinutes = starterTotalMinutes - configTotalMinutes;
           
-          // Durchgang basierend auf 60-Minuten-Intervallen (vereinfacht)
-          const durchgang = Math.floor(diffMinutes / 60) + 1;
+          // Durchgang basierend auf Durchgangsdauer + Wechselzeit
+          const durchgangIntervall = (config.durchgangsDauer || 30) + (config.wechselzeit || 15);
+          const durchgang = Math.floor(diffMinutes / durchgangIntervall) + 1;
           updated.durchgang = Math.max(1, durchgang);
         }
         
@@ -548,35 +602,237 @@ export default function StartlistenToolPage() {
     }
   };
 
+  const generiereGemini = async () => {
+    if (meldungen.length === 0) {
+      toast({ title: 'Keine Meldungen', description: 'Es sind keine Meldungen zum Generieren vorhanden', variant: 'destructive' });
+      return;
+    }
+    
+    setGeminiLoading(true);
+    try {
+      const geminiMeldungen = meldungen.map(m => ({
+        schuetzeName: m.name,
+        verein: m.verein,
+        disziplin: m.disziplin,
+        wettkampfklasse: m.altersklasse,
+        gewehrSharing: m.anmerkung?.toLowerCase().includes('gewehr') || false
+      }));
+      
+      console.log('Sende an Gemini:', geminiMeldungen.length, 'Meldungen');
+      console.log('Gemini Config:', {
+        startUhrzeit: config?.startUhrzeit,
+        durchgangsDauer: config?.durchgangsDauer,
+        wechselzeit: config?.wechselzeit,
+        vereinsLimit: config?.vereinsLimit
+      });
+      
+      toast({ 
+        title: '🤖 Gemini arbeitet...', 
+        description: `Generiere Startliste für ${geminiMeldungen.length} Meldungen. Dies kann 1-2 Minuten dauern.`,
+        duration: 5000
+      });
+      
+      const response = await fetch('/api/gemini/startlisten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          meldungen: geminiMeldungen,
+          config: {
+            verfuegbareStaende: config?.verfuegbareStaende || [],
+            startUhrzeit: config?.startUhrzeit || '14:00',
+            durchgangsDauer: config?.durchgangsDauer || 30,
+            wechselzeit: config?.wechselzeit || 10,
+            disziplinen: config?.disziplinen || [],
+            vereinsLimit: config?.vereinsLimit || null
+          },
+          aktion: 'generieren'
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setGeminiResult(result.data);
+        if (result.data.startliste) {
+          setStartliste(result.data.startliste);
+          toast({ title: '✨ Gemini Startliste', description: `${result.data.startliste.length} Starter generiert` });
+        }
+      } else {
+        toast({ title: 'Gemini Fehler', description: result.error, variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+    } finally {
+      setGeminiLoading(false);
+    }
+  };
+
+  const optimiereGemini = async () => {
+    if (startliste.length === 0) return;
+    
+    setGeminiLoading(true);
+    try {
+      const response = await fetch('/api/gemini/startlisten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          meldungen: startliste,
+          config: {
+            ...config,
+            vereinsLimit: config?.vereinsLimit || null
+          },
+          aktion: 'optimieren'
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setGeminiResult(result.data);
+        toast({ 
+          title: '🔍 Gemini Analyse abgeschlossen', 
+          description: `Score: ${result.data.score || 'N/A'}/100 - ${result.data.konflikte?.length || 0} Konflikte gefunden` 
+        });
+      } else {
+        // Fallback auf lokale Analyse
+        if (config) {
+          const lokalAnalyse = analyzeStartlist(meldungen, startliste, config);
+          setKiAnalyse(lokalAnalyse);
+          toast({ 
+            title: 'Lokale Analyse verwendet', 
+            description: `Gemini nicht verfügbar - Score: ${lokalAnalyse.score}%` 
+          });
+        }
+      }
+    } catch (error) {
+      // Fallback auf lokale Analyse
+      if (config) {
+        const lokalAnalyse = analyzeStartlist(meldungen, startliste, config);
+        setKiAnalyse(lokalAnalyse);
+        toast({ 
+          title: 'Lokale Analyse verwendet', 
+          description: `Verbindungsfehler - Score: ${lokalAnalyse.score}%` 
+        });
+      }
+    } finally {
+      setGeminiLoading(false);
+    }
+  };
+
+  const sendChatMessage = async () => {
+    if (!chatInput.trim()) return;
+    
+    const userMessage = chatInput.trim();
+    setChatInput('');
+    setChatMessages(prev => [...prev, { type: 'user', content: userMessage }]);
+    setChatLoading(true);
+    
+    try {
+      const context = `Aktuelle Startliste: ${startliste.length} Starter, ${meldungen.length} Meldungen`;
+      
+      // Prüfe ob es eine Anpassungsanfrage ist
+      const isModificationRequest = userMessage.toLowerCase().includes('ändere') || 
+                                   userMessage.toLowerCase().includes('verschiebe') || 
+                                   userMessage.toLowerCase().includes('tausche') ||
+                                   userMessage.toLowerCase().includes('anpassen');
+      
+      // Erweiterte Kontext-Informationen für Gemini
+      const detailContext = `
+WETTKAMPF-KONFIGURATION:
+- Verfügbare Stände: ${config?.verfuegbareStaende?.join(', ') || 'Nicht definiert'} (${config?.verfuegbareStaende?.length || 0} Stände)
+- Startzeit: ${config?.startUhrzeit || 'Nicht definiert'}
+- Durchgangsdauer: ${config?.durchgangsDauer || 30} Minuten
+- Wechselzeit: ${config?.wechselzeit || 10} Minuten
+- Disziplinen: ${config?.disziplinen?.join(', ') || 'Nicht definiert'}
+
+AKTUELLE DATEN:
+- Startliste: ${startliste.length} Starter bereits eingeteilt
+- Meldungen: ${meldungen.length} Meldungen verfügbar
+- Vereine: ${[...new Set(meldungen.map(m => m.verein))].join(', ')}
+
+VEREINS-REGELN:
+- Max. Starter pro Verein pro Durchgang: ${config?.vereinsLimit ? config.vereinsLimit : 'Kein Limit'}
+- Gewehr-Sharing muss zeitlich versetzt werden
+- Stand-Zeit-Konflikte vermeiden
+
+${isModificationRequest ? `
+STARTLISTE DETAILS:
+${startliste.slice(0,8).map(s => `- ${s.name} (${s.verein}) - Stand ${s.stand} - ${s.startzeit} - DG${s.durchgang}${s.hinweise ? ' - ' + s.hinweise : ''}`).join('\n')}${startliste.length > 8 ? '\n... und ' + (startliste.length - 8) + ' weitere' : ''}` : ''}
+
+${meldungen.length > 0 ? `
+MELDUNGEN DETAILS:
+${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${m.altersklasse}${m.anmerkung ? ' - ' + m.anmerkung : ''}`).join('\n')}${meldungen.length > 5 ? '\n... und ' + (meldungen.length - 5) + ' weitere' : ''}` : ''}`;
+      
+      const response = await fetch('/api/gemini/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          context: detailContext,
+          canModify: isModificationRequest
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setChatMessages(prev => [...prev, { type: 'gemini', content: result.reply }]);
+        
+        // Wenn Gemini eine modifizierte Startliste zurückgibt
+        if (result.modifiedStartliste && Array.isArray(result.modifiedStartliste)) {
+          setStartliste(result.modifiedStartliste);
+          if (config) {
+            const analyse = analyzeStartlist(meldungen, result.modifiedStartliste, config);
+            setKiAnalyse(analyse);
+          }
+          toast({ title: '✨ Startliste angepasst', description: 'Gemini hat die Änderungen vorgenommen' });
+        }
+      } else {
+        setChatMessages(prev => [...prev, { type: 'gemini', content: 'Entschuldigung, ich kann gerade nicht antworten.' }]);
+      }
+    } catch (error) {
+      setChatMessages(prev => [...prev, { type: 'gemini', content: 'Verbindungsfehler. Bitte versuche es nochmal.' }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   const saveStartliste = async () => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const startlisteId = urlParams.get('startlisteId');
       
-      if (startlisteId) {
-        // Bestehende Startliste überschreiben
-        await updateDoc(doc(db, 'km_startlisten', startlisteId), {
-          startliste,
-          updatedAt: new Date()
-        });
-        toast({ 
-          title: '✅ Aktualisiert', 
-          description: 'Startliste wurde erfolgreich überschrieben.',
-          duration: 3000
-        });
-      } else {
-        // Neue Startliste erstellen
-        const docRef = await addDoc(collection(db, 'km_startlisten'), {
+      console.log('Speichere Startliste:', { startlisteId, configId, starterAnzahl: startliste.length });
+      
+      const response = await fetch('/api/km/startlisten', {
+        method: startlisteId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: startlisteId,
           configId: configId,
           startliste,
-          datum: config?.startDatum,
-          createdAt: new Date()
-        });
+          datum: config?.startDatum
+        })
+      });
+      
+      console.log('Response Status:', response.status);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Speichern erfolgreich:', result);
+        
+        // Sofortige Rückmeldung
+        alert(`✅ Startliste gespeichert! (${startliste.length} Starter)`);
+        
         toast({ 
-          title: '✅ Gespeichert', 
-          description: `Neue Startliste wurde erfolgreich erstellt (ID: ${docRef.id.substring(0, 8)}...)`,
-          duration: 3000
+          title: '✅ Startliste gespeichert!', 
+          description: `Startliste mit ${startliste.length} Startern wurde erfolgreich gespeichert.`,
+          duration: 5000
         });
+      } else {
+        const errorText = await response.text();
+        console.error('API Fehler Response:', errorText);
+        throw new Error(`API Fehler: ${response.status}`);
       }
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
@@ -591,13 +847,18 @@ export default function StartlistenToolPage() {
         return;
       }
 
-      // Lade alle benötigten Daten aus Firebase
-      const [schuetzenSnapshot, meldungenSnapshot, disziplinenSnapshot, mannschaftenSnapshot] = await Promise.all([
-        getDocs(collection(db, 'shooters')),
-        getDocs(collection(db, 'km_meldungen')),
-        getDocs(collection(db, 'km_disziplinen')),
-        getDocs(collection(db, 'km_mannschaften'))
+      // Lade alle benötigten Daten über APIs
+      const [schuetzenRes, meldungenRes, disziplinenRes, mannschaftenRes] = await Promise.all([
+        fetch('/api/km/shooters'),
+        fetch('/api/km/meldungen'),
+        fetch('/api/km/disziplinen'),
+        fetch('/api/km/mannschaften')
       ]);
+      
+      const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
+      const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
+      const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
+      const mannschaftenData = mannschaftenRes.ok ? (await mannschaftenRes.json()).data || [] : [];
       
       // Versuche Meyton-Klassen zu laden, falls vorhanden
       let meytonKlassenSnapshot;
@@ -610,10 +871,9 @@ export default function StartlistenToolPage() {
       
       // Schützen-Map für PDF Export
       const schuetzenMapPDF = {};
-      schuetzenSnapshot.docs.forEach(doc => {
-        const data = doc.data();
+      schuetzenData.forEach(data => {
         schuetzenMapPDF[data.name] = {
-          id: doc.id,
+          id: data.id,
           birthYear: data.birthYear,
           gender: data.gender
         };
@@ -621,8 +881,7 @@ export default function StartlistenToolPage() {
       
       // Meldungen-Map für echte Altersklassen
       const meldungenMap = {};
-      meldungenSnapshot.docs.forEach(doc => {
-        const data = doc.data();
+      meldungenData.forEach(data => {
         if (data.schuetzeId) {
           meldungenMap[data.schuetzeId] = {
             altersklasse: data.altersklasse,
@@ -633,9 +892,8 @@ export default function StartlistenToolPage() {
       
       // Disziplinen-Map
       const disziplinenMap = {};
-      disziplinenSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        disziplinenMap[doc.id] = {
+      disziplinenData.forEach(data => {
+        disziplinenMap[data.id] = {
           name: data.name,
           spoNummer: data.spoNummer
         };
@@ -805,19 +1063,23 @@ export default function StartlistenToolPage() {
       const { default: autoTable } = await import('jspdf-autotable');
       
       // Lade Mannschaften und Disziplinen für E/M Erkennung und SPO-Nummern
-      const [schuetzenSnapshot, mannschaftenSnapshot, disziplinenSnapshot, kmMeldungenSnapshot] = await Promise.all([
-        getDocs(collection(db, 'shooters')),
-        getDocs(collection(db, 'km_mannschaften')),
-        getDocs(collection(db, 'km_disziplinen')),
-        getDocs(collection(db, 'km_meldungen'))
+      const [schuetzenRes, mannschaftenRes, disziplinenRes, kmMeldungenRes] = await Promise.all([
+        fetch('/api/km/shooters'),
+        fetch('/api/km/mannschaften'),
+        fetch('/api/km/disziplinen'),
+        fetch('/api/km/meldungen')
       ]);
+      
+      const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
+      const mannschaftenData = mannschaftenRes.ok ? (await mannschaftenRes.json()).data || [] : [];
+      const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
+      const kmMeldungenData = kmMeldungenRes.ok ? (await kmMeldungenRes.json()).data || [] : [];
       
       // Schützen-Map für PDF Export
       const schuetzenMapPDF = {};
-      schuetzenSnapshot.docs.forEach(doc => {
-        const data = doc.data();
+      schuetzenData.forEach(data => {
         schuetzenMapPDF[data.name] = {
-          id: doc.id,
+          id: data.id,
           birthYear: data.birthYear,
           gender: data.gender,
           mitgliedsnummer: data.mitgliedsnummer
@@ -953,8 +1215,7 @@ export default function StartlistenToolPage() {
             // E/M: Prüfe ob Schütze in Mannschaft (aus km_mannschaften)
             let istMannschaft = false;
             if (schuetze?.id) {
-              mannschaftenSnapshot.docs.forEach(doc => {
-                const mannschaftData = doc.data();
+              mannschaftenData.forEach(mannschaftData => {
                 if (mannschaftData.schuetzenIds?.includes(schuetze.id)) {
                   istMannschaft = true;
                 }
@@ -967,8 +1228,8 @@ export default function StartlistenToolPage() {
             const lmTeilnahme = originalMeldung?.lmTeilnahme === true;
             const korrekteAltersklasse = originalMeldung?.altersklasse || s.altersklasse;
             // Hole SPO-Nummer direkt aus Disziplinen-Datenbank
-            const disziplinDoc = disziplinenSnapshot.docs.find(d => d.data().name === s.disziplin);
-            const spoNummer = disziplinDoc?.data().spoNummer || '1.41';
+            const disziplinDoc = disziplinenData.find(d => d.name === s.disziplin);
+            const spoNummer = disziplinDoc?.spoNummer || '1.41';
             
             return [
               s.stand || 'N/A',
@@ -993,7 +1254,7 @@ export default function StartlistenToolPage() {
               textColor: [0, 0, 0],
               fillColor: [255, 255, 255],
               valign: 'middle',
-              halign: 'left',
+              halign: 'center',
               minCellHeight: 12,
               cellHeight: 12
             },
@@ -1011,11 +1272,11 @@ export default function StartlistenToolPage() {
             },
             margin: { left: 5, right: 5 },
             columnStyles: {
-              0: { cellWidth: 12 },
+              0: { cellWidth: 15 },
               1: { cellWidth: 22 },
               2: { cellWidth: 22 },
               3: { cellWidth: 22 },
-              4: { cellWidth: 35 },
+              4: { cellWidth: 32 },
               5: { cellWidth: 10 },
               6: { cellWidth: 20 },
               7: { cellWidth: 10 },
@@ -1033,7 +1294,7 @@ export default function StartlistenToolPage() {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.text(
-          `Erstellt am ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE')} - RWK Einbeck App v0.11.4`,
+          `Erstellt am ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE')} - RWK Einbeck App v${process.env.npm_package_version || '1.9.1'}`,
           pageWidth / 2,
           pageHeight - 10,
           { align: 'center' }
@@ -1076,6 +1337,9 @@ export default function StartlistenToolPage() {
         <div>
           <h1 className="text-3xl font-bold text-primary">🎯 Startlisten Tool</h1>
           <p className="text-muted-foreground">Config ID: {configId}</p>
+          <div className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200 mt-1 inline-block">
+            💻 Empfohlen für PC/Desktop - Mobile Nutzung eingeschränkt
+          </div>
         </div>
       </div>
 
@@ -1199,6 +1463,11 @@ export default function StartlistenToolPage() {
                   <Button onClick={async () => {
                     const generierte = await generiereStartliste();
                     setStartliste(generierte);
+                    if (config) {
+                      const analyse = analyzeStartlist(meldungen, generierte, config);
+                      setKiAnalyse(analyse);
+                    }
+                    toast({ title: 'Startliste generiert', description: `${generierte.length} Starter eingeteilt` });
                   }} disabled={meldungen.length === 0}>
                     <Target className="h-4 w-4 mr-2" />
                     Neu generieren
@@ -1221,16 +1490,185 @@ export default function StartlistenToolPage() {
                     <Brain className="h-4 w-4 mr-2" />
                     Neu analysieren
                   </Button>
-                  <Button variant="outline" onClick={exportToPDF} disabled={startliste.length === 0}>
-                    <Download className="h-4 w-4 mr-2" />
-                    📄 Startlisten-PDF
+                  <Button 
+                    onClick={() => setShowGemini(!showGemini)}
+                    variant={showGemini ? 'default' : 'outline'}
+                  >
+                    🤖 Gemini AI {showGemini ? 'aktiv' : ''}
                   </Button>
-                  <Button variant="outline" onClick={exportToDavid21} disabled={startliste.length === 0}>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Meyton Export (Beta)
-                  </Button>
+
                 </div>
               </div>
+              
+              {/* Gemini AI Panel */}
+              {showGemini && (
+                <div className="mt-4 p-4 bg-blue-50 rounded border space-y-3">
+                  <h4 className="font-medium text-blue-900">🤖 Gemini AI Generator</h4>
+                  <p className="text-sm text-blue-700">
+                    KI-basierte Startlisten-Optimierung mit Vereins-Limits & Sportgeräte-Regeln
+                  </p>
+                  <div className="text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">
+                    ⏱️ Hinweis: Gemini-Generierung kann 1-2 Minuten dauern, je nach Meldungsanzahl
+                  </div>
+                  <div className="text-xs text-blue-600 bg-blue-100 p-2 rounded">
+                    • Gewehr-Sharing Erkennung<br/>
+                    • Stand-Zeit-Konflikt Vermeidung
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="vereinslimit" className="text-sm text-blue-700">
+                        Max. Starter pro Verein pro Durchgang:
+                      </label>
+                      <Input
+                        type="number"
+                        id="vereinslimit"
+                        value={config?.vereinsLimit || ''}
+                        onChange={(e) => setConfig(prev => ({...prev, vereinsLimit: e.target.value ? parseInt(e.target.value) : null}))}
+                        placeholder="Kein Limit"
+                        className="w-24 h-8"
+                        min="1"
+                        max="10"
+                      />
+                    </div>
+                    <div className="text-xs text-blue-600">
+                      Leer = kein Limit, Zahl = max. Anzahl
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={generiereGemini} 
+                      disabled={geminiLoading || meldungen.length === 0}
+                      size="sm"
+                    >
+                      {geminiLoading ? '⏳ Generiere...' : '✨ Neu generieren'}
+                    </Button>
+                    <Button 
+                      onClick={optimiereGemini} 
+                      disabled={geminiLoading || startliste.length === 0}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {geminiLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                          Analysiere...
+                        </div>
+                      ) : '🔍 Optimieren'}
+                    </Button>
+                    <Button 
+                      onClick={() => setShowGeminiChat(!showGeminiChat)}
+                      variant="secondary"
+                      size="sm"
+                      disabled={geminiLoading}
+                    >
+                      💬 Chat
+                    </Button>
+                  </div>
+                  
+                  {/* Gemini Analyse */}
+                  {geminiResult && (
+                    <div className="p-3 bg-green-50 rounded border">
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="font-medium text-green-900">🤖 Gemini Analyse</h5>
+                        {geminiResult.score && (
+                          <div className={`px-2 py-1 rounded text-sm font-medium ${
+                            geminiResult.score >= 95 ? 'bg-green-100 text-green-800' :
+                            geminiResult.score >= 80 ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {geminiResult.score}/100
+                          </div>
+                        )}
+                      </div>
+                      
+                      {(!geminiResult.konflikte || geminiResult.konflikte.length === 0) && 
+                       (!geminiResult.optimierungen || geminiResult.optimierungen.length === 0) ? (
+                        <div className="text-sm text-green-700 flex items-center gap-2">
+                          <span>✅</span>
+                          <span>Startliste optimal generiert - keine Konflikte erkannt!</span>
+                        </div>
+                      ) : (
+                        <>
+                          {geminiResult.konflikte?.length > 0 && (
+                            <div className="mb-3">
+                              <p className="text-sm font-medium text-red-700">⚠️ Konflikte ({geminiResult.konflikte.length}):</p>
+                              {geminiResult.konflikte.map((k, i) => (
+                                <div key={i} className="text-xs text-red-600 mb-1">
+                                  <div className="font-medium">• {k.typ || 'Konflikt'}: {k.beschreibung || k}</div>
+                                  {k.betroffene && <div className="ml-2 text-red-500">Betroffen: {k.betroffene.join(', ')}</div>}
+                                  {k.loesungen && k.loesungen.map((l, j) => (
+                                    <div key={j} className="ml-2 text-red-400">→ {l}</div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {geminiResult.optimierungen?.length > 0 && (
+                            <div>
+                              <p className="text-sm font-medium text-green-700">✅ Optimierungen:</p>
+                              {geminiResult.optimierungen.map((o, i) => (
+                                <p key={i} className="text-xs text-green-600">• {o.beschreibung || o}</p>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Gemini Chat */}
+                  {showGeminiChat && (
+                    <div className="mt-4 p-4 bg-purple-50 rounded border">
+                      <h4 className="font-medium text-purple-900 mb-3">💬 Chat mit Gemini</h4>
+                      
+                      <div className="max-h-64 overflow-y-auto mb-3 space-y-2">
+                        {chatMessages.length === 0 && (
+                          <div className="text-sm text-purple-600 italic">
+                            Frage Gemini alles über Startlisten, Vereinsregeln oder Schießsport!
+                          </div>
+                        )}
+                        {chatMessages.map((msg, i) => (
+                          <div key={i} className={`p-2 rounded text-sm ${
+                            msg.type === 'user' 
+                              ? 'bg-blue-100 text-blue-900 ml-8' 
+                              : 'bg-white text-gray-900 mr-8'
+                          }`}>
+                            <div className="font-medium text-xs mb-1">
+                              {msg.type === 'user' ? '👤 Du' : '🤖 Gemini'}
+                            </div>
+                            <div className="whitespace-pre-wrap">{msg.content}</div>
+                          </div>
+                        ))}
+                        {chatLoading && (
+                          <div className="p-2 bg-gray-100 rounded text-sm mr-8">
+                            <div className="font-medium text-xs mb-1">🤖 Gemini</div>
+                            <div className="text-gray-600">⏳ Denkt nach...</div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && sendChatMessage()}
+                          placeholder="Frage Gemini..."
+                          className="flex-1 p-2 border rounded text-sm"
+                          disabled={chatLoading}
+                        />
+                        <Button 
+                          onClick={sendChatMessage}
+                          disabled={chatLoading || !chatInput.trim()}
+                          size="sm"
+                        >
+                          Senden
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               <div className="mb-4">
@@ -1244,32 +1682,25 @@ export default function StartlistenToolPage() {
                   ]}
                 />
               </div>
-              {meldungen.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">
-                  Keine Meldungen für die ausgewählten Disziplinen gefunden.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {meldungen.slice(0, 5).map(meldung => (
-                    <div key={meldung.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                      <div>
-                        <span className="font-medium">{meldung.name}</span>
-                        <span className="text-sm text-muted-foreground ml-2">({meldung.verein})</span>
-                        {meldung.anmerkung && (
-                          <div className="text-xs text-orange-600 mt-1">{meldung.anmerkung}</div>
-                        )}
-                      </div>
-                      <div className="text-sm">
-                        <Badge variant="outline">{meldung.disziplin}</Badge>
-                        <Badge variant="secondary" className="ml-1">{meldung.altersklasse}</Badge>
-                      </div>
+              <div className="text-center py-4">
+                {meldungen.length === 0 ? (
+                  <p className="text-muted-foreground">
+                    Keine Meldungen für die ausgewählten Disziplinen gefunden.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="text-2xl font-bold text-primary">{meldungen.length}</div>
+                    <p className="text-sm text-muted-foreground">Meldungen bereit für Startliste</p>
+                    <div className="flex flex-wrap gap-1 justify-center">
+                      {[...new Set(meldungen.map(m => m.disziplin))].map(disziplin => (
+                        <Badge key={disziplin} variant="outline" className="text-xs">
+                          {disziplin} ({meldungen.filter(m => m.disziplin === disziplin).length})
+                        </Badge>
+                      ))}
                     </div>
-                  ))}
-                  {meldungen.length > 5 && (
-                    <p className="text-sm text-muted-foreground text-center">... und {meldungen.length - 5} weitere</p>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 

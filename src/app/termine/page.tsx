@@ -328,6 +328,37 @@ export default function TerminePage() {
       
 
       
+      {/* Mobile Kalender */}
+      <div className="md:hidden mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Kalender</CardTitle>
+            <CardDescription>Übersicht aller anstehenden Wettkämpfe und Veranstaltungen</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-[350px] w-full" />
+            ) : (
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                month={currentMonth}
+                onMonthChange={setCurrentMonth}
+                className="rounded-md border-0 [&_button]:border-0 [&_button]:shadow-none [&_th]:text-center [&_th]:text-xs [&_td]:text-center [&_.rdp-cell]:p-1 [&_.rdp-button]:h-8 [&_.rdp-button]:w-8 [&_.rdp-button]:text-xs"
+                modifiers={{
+                  hasEvent: (date) => hasEvents(date),
+                }}
+                modifiersClassNames={{
+                  hasEvent: "bg-primary text-primary-foreground font-bold",
+                }}
+                locale={de}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="hidden md:block md:col-span-2">
           <Card>

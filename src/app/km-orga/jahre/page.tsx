@@ -6,13 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { NativeSelect } from '@/components/ui/native-select';
 import { BackButton } from '@/components/ui/back-button';
 import { useKMAuth } from '@/hooks/useKMAuth';
-import { CalendarDays, Plus, Settings } from 'lucide-react';
+import { CalendarDays, Plus, Settings, Edit } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-interface KMJahr {
+type DisziplinTyp = 'KK' | 'LP';
+
+interface KMSaison {
   id: string;
   jahr: number;
+  disziplinTyp: DisziplinTyp;
+  name: string;
   meldeschluss: string;
   status: 'aktiv' | 'archiviert' | 'vorbereitung';
   beschreibung?: string;
@@ -20,57 +26,81 @@ interface KMJahr {
 
 export default function KMJahreVerwaltung() {
   const { hasKMAccess, userRole, loading } = useKMAuth();
-  const [jahre, setJahre] = useState<KMJahr[]>([]);
+  const { toast } = useToast();
+  const [saisons, setSaisons] = useState<KMSaison[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingSaison, setEditingSaison] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     jahr: new Date().getFullYear() + 1,
+    disziplinTyp: 'KK' as DisziplinTyp,
     meldeschluss: '15.12.',
     beschreibung: ''
   });
+  const [editData, setEditData] = useState({
+    meldeschluss: '',
+    beschreibung: ''
+  });
+
 
   useEffect(() => {
-    loadJahre();
+    loadSaisons();
   }, []);
 
-  const loadJahre = async () => {
+  const loadSaisons = async () => {
     try {
       const response = await fetch('/api/km/jahre');
+      console.log('API Response Status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
-        setJahre(data.data || []);
+        console.log('API Response Data:', data);
+        setSaisons(data.data || []);
+      } else {
+        console.error('API Error:', response.status, response.statusText);
+        const errorData = await response.text();
+        console.error('Error Details:', errorData);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Jahre:', error);
+      console.error('Fehler beim Laden der Saisons:', error);
+      toast({ title: 'Fehler', description: 'Saisons konnten nicht geladen werden', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const createJahr = async () => {
+  const createSaison = async () => {
     try {
       const response = await fetch('/api/km/jahre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           jahr: formData.jahr,
-          meldeschluss: `${formData.meldeschluss}${formData.jahr - 1}`,
+          disziplinTyp: formData.disziplinTyp,
+          meldeschluss: formData.meldeschluss.includes('.') && formData.meldeschluss.length > 6 ? formData.meldeschluss : `${formData.meldeschluss}${formData.jahr - 1}`,
           status: 'vorbereitung',
           beschreibung: formData.beschreibung
         })
       });
 
+      const result = await response.json();
+      
       if (response.ok) {
-        await loadJahre();
+        toast({ title: 'Erfolg', description: result.message });
+        await loadSaisons();
         setShowForm(false);
         setFormData({
-          jahr: formData.jahr + 1,
+          jahr: formData.jahr,
+          disziplinTyp: 'KK',
           meldeschluss: '15.12.',
           beschreibung: ''
         });
+      } else {
+        toast({ title: 'Fehler', description: result.error, variant: 'destructive' });
       }
     } catch (error) {
       console.error('Fehler beim Erstellen:', error);
+      toast({ title: 'Fehler', description: 'Saison konnte nicht erstellt werden', variant: 'destructive' });
     }
   };
 
@@ -83,13 +113,39 @@ export default function KMJahreVerwaltung() {
       });
 
       if (response.ok) {
-        console.log('Status updated successfully');
-        await loadJahre();
+        toast({ title: 'Erfolg', description: 'Status aktualisiert' });
+        await loadSaisons();
       } else {
-        console.error('Update failed:', response.status);
+        toast({ title: 'Fehler', description: 'Status-Update fehlgeschlagen', variant: 'destructive' });
       }
     } catch (error) {
       console.error('Fehler beim Update:', error);
+      toast({ title: 'Fehler', description: 'Update fehlgeschlagen', variant: 'destructive' });
+    }
+  };
+
+  const updateSaison = async (id: string) => {
+    try {
+      const response = await fetch(`/api/km/jahre/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          meldeschluss: editData.meldeschluss,
+          beschreibung: editData.beschreibung
+        })
+      });
+
+      if (response.ok) {
+        toast({ title: 'Erfolg', description: 'Saison aktualisiert' });
+        setEditingSaison(null);
+        setEditData({ meldeschluss: '', beschreibung: '' });
+        await loadSaisons();
+      } else {
+        toast({ title: 'Fehler', description: 'Update fehlgeschlagen', variant: 'destructive' });
+      }
+    } catch (error) {
+      console.error('Fehler beim Update:', error);
+      toast({ title: 'Fehler', description: 'Update fehlgeschlagen', variant: 'destructive' });
     }
   };
 
@@ -131,11 +187,11 @@ export default function KMJahreVerwaltung() {
           <BackButton className="mr-2" fallbackHref="/km-orga" />
           <h1 className="text-xl md:text-3xl font-bold text-primary flex items-center gap-2">
             <CalendarDays className="h-6 md:h-8 w-6 md:w-8" />
-            KM-Jahresverwaltung
+            KM-Saisonverwaltung
           </h1>
         </div>
         <p className="text-sm md:text-base text-muted-foreground">
-          Kreismeisterschafts-Jahre anlegen und verwalten
+          Kreismeisterschafts-Saisons anlegen und verwalten (KK & LP getrennt)
         </p>
       </div>
 
@@ -144,18 +200,21 @@ export default function KMJahreVerwaltung() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
-            Neues KM-Jahr anlegen
+            Neue KM-Saison anlegen
           </CardTitle>
+          <CardDescription>
+            Pro Jahr gibt es zwei separate Kreismeisterschaften: Kleinkaliber (KK) und Luftdruck (LP)
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {!showForm ? (
             <Button onClick={() => setShowForm(true)} className="w-full md:w-auto">
               <Plus className="h-4 w-4 mr-2" />
-              Jahr hinzufügen
+              Saison hinzufügen
             </Button>
           ) : (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="jahr">Jahr</Label>
                   <Input
@@ -163,6 +222,17 @@ export default function KMJahreVerwaltung() {
                     type="number"
                     value={formData.jahr}
                     onChange={(e) => setFormData({...formData, jahr: parseInt(e.target.value)})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="disziplinTyp">Disziplin-Typ</Label>
+                  <NativeSelect
+                    value={formData.disziplinTyp}
+                    onValueChange={(value) => setFormData({...formData, disziplinTyp: value as DisziplinTyp})}
+                    options={[
+                      { value: 'KK', label: '🎯 Kleinkaliber (KK)' },
+                      { value: 'LP', label: '💨 Luftdruck (LP)' }
+                    ]}
                   />
                 </div>
                 <div>
@@ -180,12 +250,12 @@ export default function KMJahreVerwaltung() {
                     id="beschreibung"
                     value={formData.beschreibung}
                     onChange={(e) => setFormData({...formData, beschreibung: e.target.value})}
-                    placeholder="z.B. Luftdruck-KM"
+                    placeholder="Zusätzliche Informationen"
                   />
                 </div>
               </div>
               <div className="flex flex-col md:flex-row gap-2">
-                <Button onClick={createJahr} className="w-full md:w-auto">Erstellen</Button>
+                <Button onClick={createSaison} className="w-full md:w-auto">Saison erstellen</Button>
                 <Button variant="outline" onClick={() => setShowForm(false)} className="w-full md:w-auto">Abbrechen</Button>
               </div>
             </div>
@@ -193,56 +263,109 @@ export default function KMJahreVerwaltung() {
         </CardContent>
       </Card>
 
-      {/* Bestehende Jahre */}
+      {/* Bestehende Saisons */}
       <div className="grid gap-4">
-        {jahre.map((jahr) => (
-          <Card key={jahr.id}>
+        {saisons.map((saison) => (
+          <Card key={saison.id}>
             <CardHeader>
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div>
+                <div className="flex-1">
                   <CardTitle className="flex items-center gap-2">
-                    🏆 KM {jahr.jahr}
-                    <Badge className={getStatusColor(jahr.status)}>
-                      {jahr.status}
+                    {saison.disziplinTyp === 'KK' ? '🎯' : '💨'} {saison.name}
+                    <Badge className={getStatusColor(saison.status)}>
+                      {saison.status}
                     </Badge>
                   </CardTitle>
                   <CardDescription>
-                    Meldeschluss: {jahr.meldeschluss}
-                    {jahr.beschreibung && ` • ${jahr.beschreibung}`}
+                    {editingSaison === saison.id ? (
+                      <div className="space-y-2 mt-2">
+                        <div>
+                          <Label className="text-xs">Meldeschluss:</Label>
+                          <Input
+                            value={editData.meldeschluss}
+                            onChange={(e) => setEditData({...editData, meldeschluss: e.target.value})}
+                            className="h-8 text-sm"
+                            placeholder="15.12.2025"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Beschreibung:</Label>
+                          <Input
+                            value={editData.beschreibung}
+                            onChange={(e) => setEditData({...editData, beschreibung: e.target.value})}
+                            className="h-8 text-sm"
+                            placeholder="Zusätzliche Informationen"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        Meldeschluss: {saison.meldeschluss}
+                        {saison.beschreibung && ` • ${saison.beschreibung}`}
+                      </>
+                    )}
                   </CardDescription>
                 </div>
                 <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-                  {jahr.status === 'vorbereitung' && (
-                    <Button 
-                      size="sm" 
-                      onClick={() => updateStatus(jahr.id, 'aktiv')}
-                      className="w-full md:w-auto"
-                    >
-                      Aktivieren
-                    </Button>
+                  {editingSaison === saison.id ? (
+                    <>
+                      <Button 
+                        size="sm" 
+                        onClick={() => updateSaison(saison.id)}
+                        className="w-full md:w-auto"
+                      >
+                        Speichern
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          setEditingSaison(null);
+                          setEditData({ meldeschluss: '', beschreibung: '' });
+                        }}
+                        className="w-full md:w-auto"
+                      >
+                        Abbrechen
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      {saison.status === 'vorbereitung' && (
+                        <Button 
+                          size="sm" 
+                          onClick={() => updateStatus(saison.id, 'aktiv')}
+                          className="w-full md:w-auto"
+                        >
+                          Aktivieren
+                        </Button>
+                      )}
+                      {saison.status === 'aktiv' && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => updateStatus(saison.id, 'archiviert')}
+                          className="w-full md:w-auto"
+                        >
+                          Archivieren
+                        </Button>
+                      )}
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          setEditingSaison(saison.id);
+                          setEditData({
+                            meldeschluss: saison.meldeschluss,
+                            beschreibung: saison.beschreibung || ''
+                          });
+                        }}
+                        className="w-full md:w-auto"
+                      >
+                        <Edit className="h-4 w-4 mr-2 md:mr-0" />
+                        <span className="md:hidden">Bearbeiten</span>
+                      </Button>
+                    </>
                   )}
-                  {jahr.status === 'aktiv' && (
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => updateStatus(jahr.id, 'archiviert')}
-                      className="w-full md:w-auto"
-                    >
-                      Archivieren
-                    </Button>
-                  )}
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => {
-                      // TODO: Jahr bearbeiten (Meldeschluss, Beschreibung ändern)
-                      console.log('Jahr bearbeiten:', jahr.id);
-                    }}
-                    className="w-full md:w-auto"
-                  >
-                    <Settings className="h-4 w-4 mr-2 md:mr-0" />
-                    <span className="md:hidden">Bearbeiten</span>
-                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -250,11 +373,12 @@ export default function KMJahreVerwaltung() {
         ))}
       </div>
 
-      {jahre.length === 0 && (
+      {saisons.length === 0 && (
         <Card>
           <CardContent className="text-center py-8">
             <CalendarDays className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Noch keine KM-Jahre angelegt.</p>
+            <p className="text-muted-foreground">Noch keine KM-Saisons angelegt.</p>
+            <p className="text-xs text-muted-foreground mt-2">Erstellen Sie separate Saisons für Kleinkaliber und Luftdruck.</p>
           </CardContent>
         </Card>
       )}

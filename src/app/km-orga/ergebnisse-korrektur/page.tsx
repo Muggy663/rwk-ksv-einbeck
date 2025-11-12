@@ -9,8 +9,7 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { ArrowLeft, Save, Search, Edit3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+
 
 interface KMErgebnis {
   id: string;
@@ -44,13 +43,12 @@ export default function ErgebnisseKorrekturPage() {
 
   const loadErgebnisse = async () => {
     try {
-      const snapshot = await getDocs(collection(db, 'km_ergebnisse'));
-      const ergebnisseData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as KMErgebnis[];
-      
-      setErgebnisse(ergebnisseData.sort((a, b) => a.schuetzeName.localeCompare(b.schuetzeName)));
+      const response = await fetch('/api/km/ergebnisse');
+      if (response.ok) {
+        const data = await response.json();
+        const ergebnisseData = (data.data || []) as KMErgebnis[];
+        setErgebnisse(ergebnisseData.sort((a, b) => a.schuetzeName.localeCompare(b.schuetzeName)));
+      }
     } catch (error) {
       console.error('Fehler beim Laden der Ergebnisse:', error);
       toast({ title: 'Fehler', description: 'Ergebnisse konnten nicht geladen werden.', variant: 'destructive' });
@@ -87,7 +85,13 @@ export default function ErgebnisseKorrekturPage() {
 
   const saveEdit = async (id: string) => {
     try {
-      await updateDoc(doc(db, 'km_ergebnisse', id), editValues);
+      const response = await fetch(`/api/km/ergebnisse/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editValues)
+      });
+      
+      if (!response.ok) throw new Error('API-Fehler');
       
       setErgebnisse(prev => prev.map(e => 
         e.id === id ? { ...e, ...editValues } : e
@@ -107,7 +111,11 @@ export default function ErgebnisseKorrekturPage() {
     if (!confirm(`Ergebnis von ${schuetzeName} wirklich löschen?`)) return;
     
     try {
-      await deleteDoc(doc(db, 'km_ergebnisse', id));
+      const response = await fetch(`/api/km/ergebnisse/${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) throw new Error('API-Fehler');
       setErgebnisse(prev => prev.filter(e => e.id !== id));
       toast({ title: 'Gelöscht', description: 'Ergebnis wurde erfolgreich gelöscht.' });
     } catch (error) {

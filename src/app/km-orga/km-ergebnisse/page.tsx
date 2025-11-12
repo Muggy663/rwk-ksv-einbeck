@@ -11,8 +11,7 @@ import { Save, Trophy, Medal, Upload, FileText, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import Link from 'next/link';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
+
 
 interface Meldung {
   id: string;
@@ -51,8 +50,9 @@ export default function KMErgebnissePage() {
           fetch('/api/clubs')
         ]);
         
-        // Lade VM-Ergebnisse direkt aus Firebase da kein API-Endpunkt existiert
-        const kmErgebnisseSnapshot = await getDocs(collection(db, 'km_vm_ergebnisse'));
+        // Lade KM-Ergebnisse über API
+        const kmErgebnisseRes = await fetch('/api/km/ergebnisse');
+        const kmErgebnisseData = kmErgebnisseRes.ok ? (await kmErgebnisseRes.json()).data || [] : [];
         
         const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
         const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
@@ -64,8 +64,7 @@ export default function KMErgebnissePage() {
 
         // KM-Ergebnisse Map erstellen
         const kmErgebnisseMap = new Map();
-        kmErgebnisseSnapshot.docs.forEach(doc => {
-          const data = doc.data();
+        kmErgebnisseData.forEach(data => {
           kmErgebnisseMap.set(data.meldung_id, {
             ringe: data.ergebnis_ringe,
             teiler: data.ergebnis_teiler,
@@ -155,13 +154,6 @@ export default function KMErgebnissePage() {
 
     setSaving(true);
     try {
-      // Prüfe ob bereits ein Ergebnis existiert
-      const existingQuery = query(
-        collection(db, 'km_vm_ergebnisse'),
-        where('meldung_id', '==', meldungId)
-      );
-      const existingSnapshot = await getDocs(existingQuery);
-      
       const ergebnisData = {
         meldung_id: meldungId,
         ergebnis_ringe: meldung.kmErgebnis.ringe,
@@ -172,15 +164,20 @@ export default function KMErgebnissePage() {
         eingegeben_von: 'km-admin'
       };
 
-      if (existingSnapshot.empty) {
-        // Neuen Eintrag erstellen
-        await addDoc(collection(db, 'km_vm_ergebnisse'), ergebnisData);
-        toast({ title: 'Neu erstellt', description: `KM-Ergebnis für ${meldung.schuetzenName} erstellt.` });
+      const response = await fetch('/api/km/ergebnisse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ergebnisData)
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        toast({ 
+          title: result.created ? 'Neu erstellt' : 'Aktualisiert', 
+          description: `KM-Ergebnis für ${meldung.schuetzenName} ${result.created ? 'erstellt' : 'aktualisiert'}.` 
+        });
       } else {
-        // Bestehenden Eintrag aktualisieren
-        const docId = existingSnapshot.docs[0].id;
-        await updateDoc(doc(db, 'km_vm_ergebnisse', docId), ergebnisData);
-        toast({ title: 'Aktualisiert', description: `KM-Ergebnis für ${meldung.schuetzenName} aktualisiert.` });
+        throw new Error('API-Fehler');
       }
     } catch (error) {
       console.error('Fehler beim Speichern:', error);

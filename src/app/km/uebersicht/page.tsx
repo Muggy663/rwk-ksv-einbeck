@@ -14,8 +14,10 @@ export default function KMUebersicht() {
   const { hasKMAccess, loading: authLoading, userPermission, userClubIds } = useKMAuth();
   const { activeClubId } = useClubContext();
   const [selectedClubId, setSelectedClubId] = useState('');
+  const [selectedSaison, setSelectedSaison] = useState('');
   const [editingMeldung, setEditingMeldung] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>({});
+  const [saisons, setSaisons] = useState([]);
   const [data, setData] = useState({
     meldungen: [],
     schuetzen: [],
@@ -32,9 +34,27 @@ export default function KMUebersicht() {
 
   useEffect(() => {
     if (hasKMAccess && !authLoading) {
+      loadSaisons();
       loadData();
     }
-  }, [hasKMAccess, authLoading, selectedClubId]);
+  }, [hasKMAccess, authLoading, selectedClubId, selectedSaison]);
+
+  const loadSaisons = async () => {
+    try {
+      const response = await fetch('/api/km/saisons');
+      if (response.ok) {
+        const data = await response.json();
+        setSaisons(data.data || []);
+        // Setze erste aktive Saison als Standard
+        const aktiveSaison = data.data.find(s => s.status === 'aktiv');
+        if (aktiveSaison && !selectedSaison) {
+          setSelectedSaison(aktiveSaison.id);
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Saisons:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -60,8 +80,13 @@ export default function KMUebersicht() {
       }
       
       // Lade alle Daten parallel
+      let meldungenUrl = `/api/km/meldungen?jahr=${aktivesJahr}`;
+      if (selectedSaison) {
+        meldungenUrl += `&saison=${selectedSaison}`;
+      }
+      
       const [meldungenRes, schuetzenRes] = await Promise.all([
-        fetch(`/api/km/meldungen?jahr=${aktivesJahr}`),
+        fetch(meldungenUrl),
         fetch('/api/km/shooters')
       ]);
       
@@ -190,30 +215,52 @@ export default function KMUebersicht() {
             <h1 className="text-3xl font-bold text-primary">📊 KM-Übersicht</h1>
             <p className="text-muted-foreground">
               {userPermission?.role === 'admin' 
-                ? 'Statistiken und Übersicht der Kreismeisterschaft 2026'
-                : `Ihre Meldungen für die Kreismeisterschaft 2026`
+                ? 'Statistiken und Übersicht der Kreismeisterschaften 2026'
+                : `Ihre Meldungen für die Kreismeisterschaften 2026`
               }
             </p>
           </div>
           
-          {userClubIds.length > 1 && (
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Verein:</label>
-              <select 
-                value={selectedClubId} 
-                onChange={(e) => setSelectedClubId(e.target.value)}
-                className="border rounded px-3 py-1"
-              >
-                <option value="">Alle Vereine</option>
-                {userClubIds.map(clubId => {
-                  const club = data.clubs.find(c => c.id === clubId);
-                  return club ? (
-                    <option key={club.id} value={club.id}>{club.name}</option>
-                  ) : null;
-                })}
-              </select>
-            </div>
-          )}
+          <div className="flex items-center gap-4">
+            {/* Saison Filter */}
+            {saisons.length > 0 && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Saison:</label>
+                <select 
+                  value={selectedSaison} 
+                  onChange={(e) => setSelectedSaison(e.target.value)}
+                  className="border rounded px-3 py-1"
+                >
+                  <option value="">Alle Saisons</option>
+                  {saisons.map(saison => (
+                    <option key={saison.id} value={saison.id}>
+                      {saison.name} ({saison.status})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
+            {/* Verein Filter */}
+            {userClubIds.length > 1 && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Verein:</label>
+                <select 
+                  value={selectedClubId} 
+                  onChange={(e) => setSelectedClubId(e.target.value)}
+                  className="border rounded px-3 py-1"
+                >
+                  <option value="">Alle Vereine</option>
+                  {userClubIds.map(clubId => {
+                    const club = data.clubs.find(c => c.id === clubId);
+                    return club ? (
+                      <option key={club.id} value={club.id}>{club.name}</option>
+                    ) : null;
+                  })}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

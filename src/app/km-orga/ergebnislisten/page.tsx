@@ -8,8 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Download, Trophy, Medal, FileText, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+
 
 interface ErgebnisEintrag {
   id: string;
@@ -35,8 +34,9 @@ export default function ErgebnislistenPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // KM-Ergebnisse laden (aus km_vm_ergebnisse)
-        const kmErgebnisseSnapshot = await getDocs(collection(db, 'km_vm_ergebnisse'));
+        // KM-Ergebnisse laden über API
+        const kmErgebnisseRes = await fetch('/api/km/ergebnisse');
+        const kmErgebnisseData = kmErgebnisseRes.ok ? (await kmErgebnisseRes.json()).data || [] : [];
         const meldungenRes = await fetch('/api/km/meldungen?jahr=2026');
         const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
         
@@ -125,8 +125,7 @@ export default function ErgebnislistenPage() {
         const disziplinenSet = new Set<string>();
         const altersklassenSet = new Set<string>();
 
-        kmErgebnisseSnapshot.docs.forEach(doc => {
-          const data = doc.data();
+        kmErgebnisseData.forEach(data => {
           const meldungInfo = meldungenMap.get(data.meldung_id);
           
           if (meldungInfo) {
@@ -135,7 +134,7 @@ export default function ErgebnislistenPage() {
               data.ergebnis_ringe;
 
             ergebnisseData.push({
-              id: doc.id,
+              id: data.id,
               schuetzenName: meldungInfo.schuetzenName,
               vereinsname: meldungInfo.vereinsname,
               disziplin: meldungInfo.disziplin,

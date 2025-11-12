@@ -301,25 +301,25 @@ export default function KMAdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* KM-Jahresverwaltung */}
+        {/* KM-Saisonverwaltung */}
         <Card className="hover:shadow-md transition-shadow border-purple-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-purple-800">
-              📅 KM-Jahresverwaltung
+              📅 KM-Saisonverwaltung
             </CardTitle>
             <CardDescription>
-              Jahre anlegen, Meldeschlüsse verwalten und Status ändern
+              Saisons anlegen (KK & LP getrennt), Meldeschlüsse verwalten und Status ändern
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-2">
               <Link href="/km-orga/jahre">
                 <Button className="w-full h-12 text-left justify-start bg-purple-600 hover:bg-purple-700">
-                  📅 Jahre verwalten
+                  📅 Saisons verwalten
                 </Button>
               </Link>
               <div className="text-xs text-purple-700 dark:text-purple-200 bg-purple-100 dark:bg-purple-900/30 p-2 rounded">
-                💡 Hier können Sie neue KM-Jahre anlegen und Meldeschlüsse festlegen
+                💡 Hier können Sie neue KM-Saisons anlegen (KK & LP getrennt)
               </div>
             </div>
           </CardContent>

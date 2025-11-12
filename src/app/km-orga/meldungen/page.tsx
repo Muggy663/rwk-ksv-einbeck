@@ -21,7 +21,8 @@ export default function KMAdminMeldungen() {
   const [disziplinen, setDisziplinen] = useState<any[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState(2026);
+  const [selectedSaison, setSelectedSaison] = useState('');
+  const [saisons, setSaisons] = useState<any[]>([]);
   const [filter, setFilter] = useState({ verein: '', disziplin: '', search: '' });
   const [showMeldungsDialog, setShowMeldungsDialog] = useState(false);
   const [meldungsForm, setMeldungsForm] = useState({
@@ -39,14 +40,36 @@ export default function KMAdminMeldungen() {
 
   useEffect(() => {
     if (hasFullAccess && !authLoading) {
+      loadSaisons();
+    }
+  }, [hasFullAccess, authLoading]);
+
+  useEffect(() => {
+    if (selectedSaison && saisons.length > 0) {
       loadData();
     }
-  }, [hasFullAccess, authLoading, selectedYear]);
+  }, [selectedSaison, saisons]);
+
+  const loadSaisons = async () => {
+    try {
+      const response = await fetch('/api/km/saisons');
+      if (response.ok) {
+        const data = await response.json();
+        const saisonsList = data.data || [];
+        setSaisons(saisonsList);
+        if (saisonsList.length > 0) {
+          setSelectedSaison(saisonsList[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Saisons:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
       const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
-        fetch(`/api/km/meldungen?jahr=${selectedYear}`),
+        fetch(`/api/km/meldungen?saison=${selectedSaison}`),
         fetch('/api/km/shooters'),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs')
@@ -108,8 +131,7 @@ export default function KMAdminMeldungen() {
           const meldungData = {
             schuetzeId,
             disziplinId,
-            saison: selectedYear.toString(),
-            jahr: selectedYear,
+            saisonId: selectedSaison,
             lmTeilnahme: meldungsForm.lmTeilnahme,
             anmerkung: meldungsForm.anmerkung,
             vmErgebnis: meldungsForm.vmErgebnis ? { ringe: parseInt(meldungsForm.vmErgebnis) } : null,
@@ -247,18 +269,21 @@ export default function KMAdminMeldungen() {
               <Button variant="outline">← Zurück</Button>
             </Link>
             <div>
-              <h1 className="text-xl md:text-3xl font-bold text-primary">📋 KM-Meldungen {selectedYear}</h1>
-              <p className="text-sm md:text-base text-muted-foreground">Verwaltung aller Meldungen zur Kreismeisterschaft {selectedYear}</p>
+              <h1 className="text-xl md:text-3xl font-bold text-primary">📋 KM-Meldungen</h1>
+              <p className="text-sm md:text-base text-muted-foreground">Verwaltung aller Meldungen zur Kreismeisterschaft</p>
             </div>
           </div>
           <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            value={selectedSaison}
+            onChange={(e) => setSelectedSaison(e.target.value)}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm font-medium"
           >
-            <option value={2026}>KM 2026</option>
-            <option value={2027}>KM 2027</option>
-            <option value={2028}>KM 2028</option>
+            <option value="">Saison wählen...</option>
+            {saisons.map(saison => (
+              <option key={saison.id} value={saison.id}>
+                {saison.name}
+              </option>
+            ))}
           </select>
         </div>
         <Button onClick={() => {
@@ -356,7 +381,8 @@ export default function KMAdminMeldungen() {
                         {(() => {
                           if (!schuetze?.birthYear) return 'Unbekannt';
                           
-                          const age = selectedYear - schuetze.birthYear;
+                          const currentSaison = saisons.find(s => s.id === selectedSaison);
+                          const age = (currentSaison?.jahr || 2026) - schuetze.birthYear;
                           const isAuflage = disziplin?.name?.toLowerCase().includes('auflage');
                           const isMale = schuetze.gender === 'male';
                           
@@ -533,7 +559,8 @@ export default function KMAdminMeldungen() {
                           {(() => {
                             if (!schuetze?.birthYear) return 'Unbekannt';
                             
-                            const age = selectedYear - schuetze.birthYear;
+                            const currentSaison = saisons.find(s => s.id === selectedSaison);
+                            const age = (currentSaison?.jahr || 2026) - schuetze.birthYear;
                             const isAuflage = disziplin?.name?.toLowerCase().includes('auflage');
                             const isMale = schuetze.gender === 'male';
                             

@@ -14,24 +14,25 @@ export default function KMDashboard() {
   const { hasKMAccess, userRole, loading } = useKMAuth();
   const { user, userAppPermissions } = useAuthContext();
   const [isInstructionOpen, setIsInstructionOpen] = useState(false);
-  const [aktivesJahr, setAktivesJahr] = useState({ jahr: 2026, meldeschluss: '15.12.2025' });
-  const [isLoadingJahr, setIsLoadingJahr] = useState(true);
+  const [aktiveSaisons, setAktiveSaisons] = useState([]);
+  const [isLoadingSaisons, setIsLoadingSaisons] = useState(true);
   
   React.useEffect(() => {
-    loadAktivesJahr();
+    loadAktiveSaisons();
   }, []);
   
-  const loadAktivesJahr = async () => {
+  const loadAktiveSaisons = async () => {
     try {
-      const response = await fetch('/api/km/aktuelles-jahr');
+      const response = await fetch('/api/km/saisons');
       if (response.ok) {
         const data = await response.json();
-        setAktivesJahr(data.data);
+        const aktiveSaisons = data.data.filter(s => s.status === 'aktiv');
+        setAktiveSaisons(aktiveSaisons);
       }
     } catch (error) {
-      console.error('Fehler beim Laden des aktuellen Jahres:', error);
+      console.error('Fehler beim Laden der Saisons:', error);
     } finally {
-      setIsLoadingJahr(false);
+      setIsLoadingSaisons(false);
     }
   };
 
@@ -148,7 +149,7 @@ export default function KMDashboard() {
           <div className="mt-6 p-4 bg-green-100 border border-green-300 rounded-lg">
             <h4 className="font-semibold text-green-800 mb-2">✅ Wichtige Hinweise</h4>
             <ul className="text-sm text-green-700 space-y-1">
-              <li>• Meldeschluss: 15. Dezember 2025</li>
+              <li>• Meldeschluss: 15.12.2025</li>
               <li>• VM-Ergebnisse (Vereinsmeisterschaft) können nachgetragen werden</li>
               <li>• Altersklassen werden automatisch nach Geburtsjahr berechnet</li>
               <li>• Bei Fragen wenden Sie sich an die KM-Organisatoren</li>
@@ -223,23 +224,45 @@ export default function KMDashboard() {
         <Card className="hover:shadow-md transition-shadow border-orange-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-orange-800">
-              📊 Aktuelle Kreismeisterschaft
+              📊 Aktuelle Kreismeisterschaften
             </CardTitle>
             <CardDescription>
-              KM {aktivesJahr.jahr} - Wichtige Informationen
+              KM 2026 - Wichtige Informationen
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="bg-orange-50 p-3 rounded border border-orange-100">
-                <div className="text-orange-700 space-y-2">
-
-                  <div className="flex items-center gap-2 font-medium text-orange-700">
-                    <span>⏰</span>
-                    <span>Meldeschluss: {aktivesJahr.meldeschluss}</span>
+              {aktiveSaisons.length > 0 ? (
+                aktiveSaisons.map((saison) => (
+                  <div key={saison.id} className="bg-orange-50 p-3 rounded border border-orange-100">
+                    <div className="text-orange-700 space-y-2">
+                      <div className="flex items-center gap-2 font-medium text-orange-800">
+                        <span>🎯</span>
+                        <span>KM 2026 - {saison.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 font-medium text-orange-700">
+                        <span>⏰</span>
+                        <span>Meldeschluss: {saison.meldeschluss}</span>
+                      </div>
+                      {saison.status === 'vorbereitung' && saison.aktivAb && (
+                        <div className="flex items-center gap-2 text-sm text-orange-600">
+                          <span>📅</span>
+                          <span>Meldungen ab: {saison.aktivAb}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="bg-orange-50 p-3 rounded border border-orange-100">
+                  <div className="text-orange-700">
+                    <div className="flex items-center gap-2 font-medium">
+                      <span>⏰</span>
+                      <span>Meldeschluss: 15.12.2025</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>

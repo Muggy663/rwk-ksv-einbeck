@@ -21,6 +21,22 @@ export default function David21Page() {
   });
   const [importFile, setImportFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [disziplinen, setDisziplinen] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    const loadDisziplinen = async () => {
+      try {
+        const response = await fetch('/api/km/disziplinen');
+        if (response.ok) {
+          const data = await response.json();
+          setDisziplinen(data.data || []);
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der Disziplinen:', error);
+      }
+    };
+    loadDisziplinen();
+  }, []);
 
   const handleExport = async () => {
     setLoading(true);
@@ -153,12 +169,10 @@ export default function David21Page() {
                     value={exportData.disziplinId}
                     onValueChange={(value) => setExportData({...exportData, disziplinId: value})}
                     placeholder="Disziplin wählen"
-                    options={[
-                      { value: 'lg', label: 'Luftgewehr' },
-                      { value: 'lp', label: 'Luftpistole' },
-                      { value: 'kkg', label: 'KK Gewehr' },
-                      { value: 'kkp', label: 'KK Pistole' }
-                    ]}
+                    options={disziplinen.map(d => ({
+                      value: d.id,
+                      label: `${d.spoNummer} - ${d.name}`
+                    }))}
                   />
                 </div>
               </div>

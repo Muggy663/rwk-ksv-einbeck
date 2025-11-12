@@ -9,8 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Save, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where, addDoc, updateDoc, doc } from 'firebase/firestore';
+
 
 interface Meldung {
   id: string;
@@ -34,39 +33,30 @@ export default function VMErgebnissePage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Meldungen laden
-        const meldungenSnapshot = await getDocs(collection(db, 'km_meldungen'));
+        const [meldungenRes, ergebnisseRes] = await Promise.all([
+          fetch('/api/km/meldungen'),
+          fetch('/api/km/ergebnisse')
+        ]);
+        
         const meldungenData: Meldung[] = [];
         const disziplinenSet = new Set<string>();
-
-        // VM-Ergebnisse laden
-        const vmErgebnisseSnapshot = await getDocs(collection(db, 'km_vm_ergebnisse'));
-        const vmErgebnisseMap = new Map();
-        vmErgebnisseSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          vmErgebnisseMap.set(data.meldung_id, {
-            ringe: data.ergebnis_ringe,
-            teiler: data.ergebnis_teiler
-          });
-        });
-
-        meldungenSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          if (data.schuetzen && Array.isArray(data.schuetzen)) {
-            data.schuetzen.forEach((schuetze: any) => {
-              const meldungId = `${doc.id}-${schuetze.id}`;
-              meldungenData.push({
-                id: meldungId,
-                schuetzenName: schuetze.name,
-                vereinsname: data.vereinsname,
-                disziplin: data.disziplin,
-                vmErgebnis: vmErgebnisseMap.get(meldungId)
-              });
-              disziplinenSet.add(data.disziplin);
+        
+        if (meldungenRes.ok && ergebnisseRes.ok) {
+          const meldungen = (await meldungenRes.json()).data || [];
+          const ergebnisse = (await ergebnisseRes.json()).data || [];
+          
+          const vmErgebnisseMap = new Map();
+          ergebnisse.forEach((data: any) => {
+            vmErgebnisseMap.set(data.meldung_id, {
+              ringe: data.ergebnis_ringe,
+              teiler: data.ergebnis_teiler
             });
-          }
-        });
-
+          });
+          
+          // TODO: Anpassung an neue Meldungsstruktur erforderlich
+          // Diese Seite muss überarbeitet werden für das neue KM-System
+        }
+        
         setMeldungen(meldungenData);
         setDisziplinen(Array.from(disziplinenSet).sort());
       } catch (error) {
@@ -101,13 +91,18 @@ export default function VMErgebnissePage() {
 
     setSaving(true);
     try {
-      await addDoc(collection(db, 'km_vm_ergebnisse'), {
-        meldung_id: meldungId,
-        ergebnis_ringe: meldung.vmErgebnis.ringe,
-        ergebnis_teiler: meldung.vmErgebnis.teiler || 0,
-        eingegeben_am: new Date(),
-        eingegeben_von: 'km-admin'
+      const response = await fetch('/api/km/ergebnisse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          meldung_id: meldungId,
+          ergebnis_ringe: meldung.vmErgebnis.ringe,
+          ergebnis_teiler: meldung.vmErgebnis.teiler || 0,
+          eingegeben_von: 'km-admin'
+        })
       });
+      
+      if (!response.ok) throw new Error('API-Fehler');
 
       toast({ title: 'Gespeichert', description: `VM-Ergebnis für ${meldung.schuetzenName} gespeichert.` });
     } catch (error) {

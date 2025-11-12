@@ -51,11 +51,35 @@ export default function StartlistenPage() {
     anlagensystem: 'andere',
     altersklassen: ['Erwachsene']
   });
+  
+  const [selectedSaison, setSelectedSaison] = useState('');
+  const [saisons, setSaisons] = useState<any[]>([]);
+  const [meldungen, setMeldungen] = useState<any[]>([]);
 
   const ALLE_STAENDE = [
     ...Array.from({length: 15}, (_, i) => (i + 1).toString()),
     '101', '102'
   ];
+
+  // Saisons laden
+  useEffect(() => {
+    const loadSaisons = async () => {
+      try {
+        const response = await fetch('/api/km/saisons');
+        if (response.ok) {
+          const data = await response.json();
+          const saisonsList = data.data || [];
+          setSaisons(saisonsList);
+          if (saisonsList.length > 0) {
+            setSelectedSaison(saisonsList[0].id);
+          }
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der Saisons:', error);
+      }
+    };
+    loadSaisons();
+  }, []);
 
   // Vereine und Disziplinen aus Firestore laden
   useEffect(() => {
@@ -103,6 +127,50 @@ export default function StartlistenPage() {
     };
     loadData();
   }, [toast]);
+
+  // Meldungen laden wenn Saison gewählt
+  useEffect(() => {
+    const loadMeldungen = async () => {
+      if (!selectedSaison) return;
+      
+      try {
+        console.log('Loading KM-Meldungen für Saison:', selectedSaison);
+        const response = await fetch(`/api/km/meldungen?saison=${selectedSaison}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          const allMeldungen = data.data || [];
+          console.log('Alle KM-Meldungen:', allMeldungen.length);
+          console.log('Config Disziplinen:', config.disziplinen);
+          
+          // Lade auch Disziplinen-Details für Matching
+          const disziplinenRes = await fetch('/api/km/disziplinen');
+          let disziplinenData: any[] = [];
+          if (disziplinenRes.ok) {
+            const diszData = await disziplinenRes.json();
+            disziplinenData = diszData.data || [];
+          }
+          
+          // Filter nach Disziplinen (match by name)
+          const gefiltert = allMeldungen.filter(meldung => {
+            const disziplin = disziplinenData.find(d => d.id === meldung.disziplinId);
+            const disziplinName = disziplin?.name;
+            console.log('Checking meldung disziplin:', disziplinName, 'against config:', config.disziplinen);
+            return disziplinName && config.disziplinen.includes(disziplinName);
+          });
+          
+          console.log('Gefilterte Meldungen:', gefiltert.length, 'von', allMeldungen.length);
+          setMeldungen(gefiltert);
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der Meldungen:', error);
+      }
+    };
+    
+    if (selectedSaison && config.disziplinen.length > 0) {
+      loadMeldungen();
+    }
+  }, [selectedSaison, config.disziplinen]);
 
   const handleDisziplinChange = (disziplinName: string, checked: boolean) => {
     setConfig(prev => ({
@@ -201,11 +269,30 @@ export default function StartlistenPage() {
         <Link href="/km-orga">
           <Button variant="outline">← Zurück</Button>
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold text-primary">📄 Startlisten generieren</h1>
           <p className="text-muted-foreground">
             Konfigurieren Sie die Wettkampf-Parameter für die automatische Startlisten-Generierung
           </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <select
+            value={selectedSaison}
+            onChange={(e) => setSelectedSaison(e.target.value)}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm font-medium"
+          >
+            <option value="">Saison wählen...</option>
+            {saisons.map(saison => (
+              <option key={saison.id} value={saison.id}>
+                {saison.name}
+              </option>
+            ))}
+          </select>
+          {meldungen.length > 0 && (
+            <div className="text-sm text-green-600 font-medium">
+              {meldungen.length} Meldungen
+            </div>
+          )}
         </div>
       </div>
 

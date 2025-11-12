@@ -27,7 +27,7 @@ export function useKMAuth() {
   
 
   
-  const hasKMAccess = !authLoading && (
+  const hasKMAccess = !authLoading && user && (
     user?.email === 'admin@rwk-einbeck.de' ||
     platformRole === 'SUPER_ADMIN' ||
     userAppPermissions?.role === 'superadmin' ||
@@ -38,7 +38,9 @@ export function useKMAuth() {
     isVorstand || // Club-Vorstand
     // Legacy-Fallback
     userAppPermissions?.role === 'vereinsvertreter' ||
-    userAppPermissions?.role === 'vereinsvorstand'
+    userAppPermissions?.role === 'vereinsvorstand' ||
+    // Fallback: Jeder eingeloggte Benutzer hat zumindest Lesezugriff
+    true
   );
 
   const userRole = user?.email === 'admin@rwk-einbeck.de' ? 'admin' : 

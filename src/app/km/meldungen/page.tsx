@@ -274,6 +274,7 @@ export default function KMMeldungen() {
             body: JSON.stringify({
               schuetzeId: selectedSchuetze,
               disziplinId,
+              saison: selectedSaison,
               lmTeilnahme: lmTeilnahme[disziplinId] || false,
               anmerkung,
               vmErgebnis: vmData?.ringe ? {
@@ -393,6 +394,22 @@ export default function KMMeldungen() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Saison Status Warning */}
+              {selectedSaison && saisons.find(s => s.id === selectedSaison)?.status === 'vorbereitung' && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                  <div className="flex items-center gap-2 text-yellow-800">
+                    <span>⚠️</span>
+                    <span className="font-medium">Saison in Vorbereitung</span>
+                  </div>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    Diese Saison ist noch nicht aktiv. Meldungen sind möglich, aber die Saison muss noch aktiviert werden.
+                    {saisons.find(s => s.id === selectedSaison)?.aktivAb && (
+                      <> Aktivierung geplant ab: {saisons.find(s => s.id === selectedSaison)?.aktivAb}</>  
+                    )}
+                  </p>
+                </div>
+              )}
+              
               {/* Melde-Modus Tabs */}
               <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
                 <button

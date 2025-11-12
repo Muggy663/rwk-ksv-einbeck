@@ -8,8 +8,7 @@ import Link from 'next/link';
 import { Edit, Play, Trash2, Plus, Calendar, MapPin, Target, Eye, ArrowLeft, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { David21ImportDialog } from '@/components/David21ImportDialog';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, deleteDoc, doc, orderBy, query } from 'firebase/firestore';
+
 import { useKMAuth } from '@/hooks/useKMAuth';
 
 interface StartlistConfig {
@@ -47,36 +46,30 @@ export default function StartlistenUebersichtPage() {
     
     const loadData = async () => {
       try {
-        // Konfigurationen laden
-        const configsSnapshot = await getDocs(
-          query(collection(db, 'km_startlisten_configs'), orderBy('createdAt', 'desc'))
-        );
-        const configsData = configsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate() || new Date(),
-          updatedAt: doc.data().updatedAt?.toDate() || new Date()
-        })) as StartlistConfig[];
-        setConfigs(configsData);
-
-        // Gespeicherte Startlisten laden
-        const startlistenSnapshot = await getDocs(
-          query(collection(db, 'km_startlisten'), orderBy('createdAt', 'desc'))
-        );
-        const startlistenData = startlistenSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate() || new Date()
-        })) as GespeicherteStartliste[];
-        setStartlisten(startlistenData);
-
-        // Vereine für Namen laden
-        const clubsSnapshot = await getDocs(collection(db, 'clubs'));
-        const clubsMap: {[key: string]: string} = {};
-        clubsSnapshot.docs.forEach(doc => {
-          clubsMap[doc.id] = doc.data().name;
-        });
-        setVereine(clubsMap);
+        const [configsRes, startlistenRes, clubsRes] = await Promise.all([
+          fetch('/api/km/startlisten'),
+          fetch('/api/km/startlisten/gespeichert'),
+          fetch('/api/clubs')
+        ]);
+        
+        if (configsRes.ok) {
+          const data = await configsRes.json();
+          setConfigs(data.data || []);
+        }
+        
+        if (startlistenRes.ok) {
+          const data = await startlistenRes.json();
+          setStartlisten(data.data || []);
+        }
+        
+        if (clubsRes.ok) {
+          const data = await clubsRes.json();
+          const clubsMap: {[key: string]: string} = {};
+          (data.data || []).forEach((club: any) => {
+            clubsMap[club.id] = club.name;
+          });
+          setVereine(clubsMap);
+        }
       } catch (error) {
         console.error('Fehler beim Laden:', error);
         toast({ title: 'Fehler', description: 'Konfigurationen konnten nicht geladen werden.', variant: 'destructive' });
@@ -91,13 +84,18 @@ export default function StartlistenUebersichtPage() {
     if (!confirm('Konfiguration wirklich löschen?')) return;
     
     try {
-      await deleteDoc(doc(db, 'km_startlisten_configs', configId));
-      setConfigs(prev => prev.filter(c => c.id !== configId));
-      toast({ 
-        title: '✅ Gelöscht', 
-        description: 'Konfiguration wurde erfolgreich entfernt.',
-        duration: 3000
+      const response = await fetch(`/api/km/startlisten/${configId}`, {
+        method: 'DELETE'
       });
+      
+      if (response.ok) {
+        setConfigs(prev => prev.filter(c => c.id !== configId));
+        toast({ 
+          title: '✅ Gelöscht', 
+          description: 'Konfiguration wurde erfolgreich entfernt.',
+          duration: 3000
+        });
+      }
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
       toast({ title: 'Fehler', description: 'Konfiguration konnte nicht gelöscht werden.', variant: 'destructive' });
@@ -108,13 +106,18 @@ export default function StartlistenUebersichtPage() {
     if (!confirm('Startliste wirklich löschen?')) return;
     
     try {
-      await deleteDoc(doc(db, 'km_startlisten', startlisteId));
-      setStartlisten(prev => prev.filter(s => s.id !== startlisteId));
-      toast({ 
-        title: '✅ Gelöscht', 
-        description: 'Startliste wurde erfolgreich entfernt.',
-        duration: 3000
+      const response = await fetch(`/api/km/startlisten/gespeichert/${startlisteId}`, {
+        method: 'DELETE'
       });
+      
+      if (response.ok) {
+        setStartlisten(prev => prev.filter(s => s.id !== startlisteId));
+        toast({ 
+          title: '✅ Gelöscht', 
+          description: 'Startliste wurde erfolgreich entfernt.',
+          duration: 3000
+        });
+      }
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
       toast({ title: 'Fehler', description: 'Startliste konnte nicht gelöscht werden.', variant: 'destructive' });
@@ -258,7 +261,10 @@ export default function StartlistenUebersichtPage() {
 
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 pt-2">
                     <span className="text-xs text-muted-foreground">
-                      Erstellt: {config.createdAt.toLocaleDateString('de-DE')}
+                      Erstellt: {(() => {
+                        const date = config.createdAt?.toDate ? config.createdAt.toDate() : new Date(config.createdAt);
+                        return date.toLocaleDateString('de-DE');
+                      })()}
                     </span>
                     <div className="flex flex-col gap-2 w-full md:flex-row md:w-auto">
                       <Link href={`/startlisten-tool?id=${config.id}`} className="w-full md:w-auto">
@@ -307,7 +313,10 @@ export default function StartlistenUebersichtPage() {
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <Link href={`/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`} className="hidden md:block">
+                      <button 
+                        onClick={() => window.location.href = `/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`}
+                        className="hidden md:block"
+                      >
                         <Button 
                           variant="outline" 
                           size="sm"
@@ -315,7 +324,7 @@ export default function StartlistenUebersichtPage() {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                      </Link>
+                      </button>
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -348,12 +357,15 @@ export default function StartlistenUebersichtPage() {
                         })()} Uhr
                       </span>
                       <div className="flex flex-col gap-2 w-full md:flex-row md:w-auto">
-                        <Link href={`/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`} className="w-full md:hidden">
+                        <button 
+                          onClick={() => window.location.href = `/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`}
+                          className="w-full md:hidden"
+                        >
                           <Button variant="outline" className="w-full h-12 text-left justify-start">
                             <Edit className="h-4 w-4 mr-2" />
                             Bearbeiten
                           </Button>
-                        </Link>
+                        </button>
                         <Button 
                           variant="outline" 
                           onClick={() => {
