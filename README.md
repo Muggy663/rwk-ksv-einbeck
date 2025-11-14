@@ -69,6 +69,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 |----------|--------|---------|
 | **Web App** | ✅ Produktiv | Vercel Deployment |
 | **Android App** | ✅ Produktiv | Google Play Store |
+| **Safari (iPhone)** | ✅ Mobile | Vollständig mobil nutzbar |
 | **iOS App** | ❌ Nicht geplant | Unrentabel |
 
 ## 🎯 Zielgruppe
