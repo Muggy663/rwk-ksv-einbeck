@@ -938,8 +938,26 @@ Die Handzettel sind als Anhang beigefügt.`);
           
           newlySavedIdentifiers.push({ shooterId: entry.shooterId, durchgang: entry.durchgang });
           
-          // Liga-Update für jedes Ergebnis einzeln verarbeiten (für "Letzte Ergebnis-Updates" auf der Startseite)
+          // Sammle Liga-Updates (nur einmal pro Liga pro Tag)
           if (entry.leagueId && entry.leagueName && entry.leagueType && entry.competitionYear !== undefined) {
+            newlySavedIdentifiers.push({ shooterId: entry.shooterId, durchgang: entry.durchgang });
+          }
+        } catch (scoreError) {
+          console.error("VER_ERGEBNISSE DEBUG: Error saving individual score:", scoreError);
+          // Fehler für einzelnes Ergebnis protokollieren und mit dem nächsten fortfahren
+        }
+      }
+      
+      // Alle Scores in einem Batch speichern
+      await batch.commit();
+      
+      // Liga-Update EINMAL pro Liga erstellen (für "Letzte Ergebnis-Updates" auf der Startseite)
+      const processedLeagues = new Set<string>();
+      for (const entry of pendingScores) {
+        if (entry.leagueId && entry.leagueName && entry.leagueType && entry.competitionYear !== undefined) {
+          const leagueKey = `${entry.leagueId}-${entry.competitionYear}`;
+          if (!processedLeagues.has(leagueKey)) {
+            processedLeagues.add(leagueKey);
             try {
               const today = new Date();
               const startOfDay = Timestamp.fromDate(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
@@ -968,17 +986,10 @@ Die Handzettel sind als Anhang beigefügt.`);
               }
             } catch (updateError) {
               // Berechtigungsfehler ignorieren - die Hauptfunktion (Ergebnisse speichern) funktioniert trotzdem
-
             }
           }
-        } catch (scoreError) {
-          console.error("VER_ERGEBNISSE DEBUG: Error saving individual score:", scoreError);
-          // Fehler für einzelnes Ergebnis protokollieren und mit dem nächsten fortfahren
         }
       }
-      
-      // Alle Scores in einem Batch speichern
-      await batch.commit();
       
       // Handzettel-Upload verarbeiten (mehrere Dateien) mit Fortschrittsbalken
       if (handzettelFiles.length > 0) {

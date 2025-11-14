@@ -101,6 +101,7 @@ export function MobileBurgerMenu() {
                       isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground"
                     )} />
                     <span className="truncate">{item.label}</span>
+                    {item.href === '/schiessnachweis' && <span className="text-xs text-red-600 dark:text-red-400 font-semibold ml-1">Beta</span>}
                   </Link>
                 )
               })}
@@ -128,7 +129,7 @@ export function MobileBurgerMenu() {
           {/* Footer with safe area */}
           <div className="p-3 border-t pb-safe-area-bottom">
             <p className="text-xs text-muted-foreground text-center truncate">
-              RWK KSV Einbeck v1.9.2 Beta
+              RWK KSV Einbeck v1.9.2.1
             </p>
           </div>
         </div>

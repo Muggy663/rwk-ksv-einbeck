@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import Link from 'next/link';
 
-
 interface Meldung {
   id: string;
   schuetzenName: string;
@@ -23,6 +22,7 @@ interface Meldung {
     teiler?: number;
     platz_disziplin?: number;
     platz_altersklasse?: number;
+    serien?: number[][];
   };
 }
 
@@ -32,25 +32,49 @@ export default function KMErgebnissePage() {
   const [meldungen, setMeldungen] = useState<Meldung[]>([]);
   const [selectedDisziplin, setSelectedDisziplin] = useState<string>('');
   const [disziplinen, setDisziplinen] = useState<string[]>([]);
+  const [selectedJahr, setSelectedJahr] = useState<string>('');
+  const [jahre, setJahre] = useState<{id: string, name: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [inputValues, setInputValues] = useState<{[key: string]: string}>({});
+  const [seriesInputs, setSeriesInputs] = useState<{[key: string]: string}>({});
+
+  // Lade Jahre/Saisons
+  useEffect(() => {
+    const loadJahre = async () => {
+      try {
+        const response = await fetch('/api/km/jahre');
+        if (response.ok) {
+          const data = await response.json();
+          const jahreData = (data.data || []).map(saison => ({
+            id: saison.id,
+            name: saison.name
+          }));
+          setJahre(jahreData);
+          if (jahreData.length > 0 && !selectedJahr) {
+            setSelectedJahr(jahreData[0].id);
+          }
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der Jahre:', error);
+      }
+    };
+    loadJahre();
+  }, []);
 
   useEffect(() => {
-    if (!hasKMAccess || authLoading) return;
+    if (!hasKMAccess || authLoading || !selectedJahr) return;
     
     const loadData = async () => {
       try {
-        // Lade Daten über API
         const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
-          fetch('/api/km/meldungen?jahr=2026'),
+          fetch(`/api/km/meldungen?saisonId=${selectedJahr}`),
           fetch('/api/km/shooters'),
           fetch('/api/km/disziplinen'),
           fetch('/api/clubs')
         ]);
         
-        // Lade KM-Ergebnisse über API
         const kmErgebnisseRes = await fetch('/api/km/ergebnisse');
         const kmErgebnisseData = kmErgebnisseRes.ok ? (await kmErgebnisseRes.json()).data || [] : [];
         
@@ -62,18 +86,17 @@ export default function KMErgebnissePage() {
         const meldungenDataProcessed: Meldung[] = [];
         const disziplinenSet = new Set<string>();
 
-        // KM-Ergebnisse Map erstellen
         const kmErgebnisseMap = new Map();
         kmErgebnisseData.forEach(data => {
           kmErgebnisseMap.set(data.meldung_id, {
             ringe: data.ergebnis_ringe,
             teiler: data.ergebnis_teiler,
             platz_disziplin: data.platz_disziplin,
-            platz_altersklasse: data.platz_altersklasse
+            platz_altersklasse: data.platz_altersklasse,
+            serien: data.serien || []
           });
         });
 
-        // Maps für Namen-Auflösung
         const schuetzenMap = new Map();
         const disziplinenMap = new Map();
         const clubsMap = new Map();
@@ -97,17 +120,13 @@ export default function KMErgebnissePage() {
         });
 
         meldungenData.forEach(meldung => {
-
           const schuetze = schuetzenMap.get(meldung.schuetzeId);
-
           const disziplinName = disziplinenMap.get(meldung.disziplinId) || 'Unbekannte Disziplin';
           
-          // Verwende vereinsname aus Meldung oder lade über clubId
           let vereinsname = meldung.vereinsname || 'Unbekannter Verein';
           if (!meldung.vereinsname && schuetze && schuetze.clubId) {
             vereinsname = clubsMap.get(schuetze.clubId) || 'Unbekannter Verein';
           }
-
           
           meldungenDataProcessed.push({
             id: meldung.id,
@@ -130,7 +149,53 @@ export default function KMErgebnissePage() {
       }
     };
     loadData();
-  }, [hasKMAccess, authLoading, toast]);
+  }, [hasKMAccess, authLoading, selectedJahr, toast]);
+
+  // Disziplin-spezifische Schusszahlen
+  const getDisciplineShots = (disziplinName: string) => {
+    const disciplineMap = {
+      'Luftgewehr': 40,
+      'Luftgewehr Auflage': 30,
+      'KK-Gewehr Auflage 50m': 30,
+      'KK Gewehr Auflage 100m': 30,
+      'KK - Gewehr 30 Schuss': 30,
+      'KK - Liegendkampf': 60,
+      '10m Luftpistole': 40,
+      '10 m Luftpistole Auflage': 40,
+      'Zimmerstutzen': 30,
+      'Zimmerstutzen Auflage': 30
+    };
+    return disciplineMap[disziplinName] || 30;
+  };
+
+  // Serien-Definition für Meisterschaften (immer 10 Schuss pro Serie)
+  const getSeriesInfo = (disziplinName: string) => {
+    const seriesMap = {
+      'Luftgewehr': { count: 4, shotsPerSeries: 10 }, // 4 Serien à 10 Schuss
+      'Luftgewehr Auflage': { count: 3, shotsPerSeries: 10 }, // 3 Serien à 10 Schuss
+      'KK-Gewehr Auflage 50m': { count: 3, shotsPerSeries: 10 }, // 3 Serien à 10 Schuss
+      'KK Gewehr Auflage 100m': { count: 3, shotsPerSeries: 10 }, // 3 Serien à 10 Schuss
+      'KK - Gewehr 30 Schuss': { count: 3, shotsPerSeries: 10 }, // 3 Serien à 10 Schuss
+      'KK - Liegendkampf': { count: 6, shotsPerSeries: 10 }, // 6 Serien à 10 Schuss
+      '10m Luftpistole': { count: 4, shotsPerSeries: 10 }, // 4 Serien à 10 Schuss
+      '10 m Luftpistole Auflage': { count: 4, shotsPerSeries: 10 }, // 4 Serien à 10 Schuss
+      'Zimmerstutzen': { count: 3, shotsPerSeries: 10 }, // 3 Serien à 10 Schuss
+      'Zimmerstutzen Auflage': { count: 3, shotsPerSeries: 10 } // 3 Serien à 10 Schuss
+    };
+    return seriesMap[disziplinName] || { count: 3, shotsPerSeries: 10 };
+  };
+
+  const calculateTotalFromSeries = (series: number[][]) => {
+    return series.flat().reduce((sum, shot) => sum + shot, 0);
+  };
+
+  const parseInput = (value: string) => {
+    if (!value) return { ringe: 0, teiler: 0 };
+    const parts = value.replace(',', '.').split('.');
+    const ringe = parseInt(parts[0]) || 0;
+    const teiler = parts[1] ? parseInt(parts[1]) || 0 : 0;
+    return { ringe, teiler };
+  };
 
   const handleErgebnisChange = (meldungId: string, field: 'ringe' | 'teiler', value: string) => {
     setMeldungen(prev => prev.map(m => {
@@ -150,7 +215,10 @@ export default function KMErgebnissePage() {
 
   const handleSave = async (meldungId: string) => {
     const meldung = meldungen.find(m => m.id === meldungId);
-    if (!meldung?.kmErgebnis) return;
+    if (!meldung?.kmErgebnis?.ringe) {
+      toast({ title: 'Fehler', description: 'Kein Ergebnis zum Speichern vorhanden.', variant: 'destructive' });
+      return;
+    }
 
     setSaving(true);
     try {
@@ -158,11 +226,14 @@ export default function KMErgebnissePage() {
         meldung_id: meldungId,
         ergebnis_ringe: meldung.kmErgebnis.ringe,
         ergebnis_teiler: meldung.kmErgebnis.teiler || 0,
-        platz_disziplin: 0,
-        platz_altersklasse: 0,
-        eingegeben_am: new Date(),
+        serien: meldung.kmErgebnis.serien || [],
+        platz_disziplin: meldung.kmErgebnis.platz_disziplin || 0,
+        platz_altersklasse: meldung.kmErgebnis.platz_altersklasse || 0,
+        eingegeben_am: new Date().toISOString(),
         eingegeben_von: 'km-admin'
       };
+
+      console.log('💾 Speichere KM-Ergebnis:', ergebnisData);
 
       const response = await fetch('/api/km/ergebnisse', {
         method: 'POST',
@@ -172,80 +243,27 @@ export default function KMErgebnissePage() {
       
       if (response.ok) {
         const result = await response.json();
+        console.log('✅ Erfolgreich gespeichert:', result);
         toast({ 
-          title: result.created ? 'Neu erstellt' : 'Aktualisiert', 
-          description: `KM-Ergebnis für ${meldung.schuetzenName} ${result.created ? 'erstellt' : 'aktualisiert'}.` 
+          title: '✅ Gespeichert!', 
+          description: `${meldung.schuetzenName}: ${meldung.kmErgebnis.ringe} Ringe ${result.created ? 'neu erstellt' : 'aktualisiert'}`,
+          className: 'border-green-500 bg-green-50'
         });
       } else {
-        throw new Error('API-Fehler');
+        const errorText = await response.text();
+        console.error('❌ API Fehler:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
-      toast({ title: 'Fehler', description: 'Ergebnis konnte nicht gespeichert werden.', variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const berechneAutomatischePlaetze = async () => {
-    if (!selectedDisziplin || selectedDisziplin === 'ALL_DISCIPLINES') {
-      toast({ title: 'Hinweis', description: 'Bitte wählen Sie eine spezifische Disziplin aus.', variant: 'destructive' });
-      return;
-    }
-
-    // TODO: Automatische Platzberechnung implementieren
-    toast({ title: 'Info', description: 'Automatische Platzberechnung wird implementiert...', variant: 'default' });
-  };
-
-  const handlePDFImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || file.type !== 'application/pdf') {
-      toast({ title: 'Fehler', description: 'Bitte wählen Sie eine PDF-Datei aus.', variant: 'destructive' });
-      return;
-    }
-
-    setImporting(true);
-    try {
-      // TODO: PDF-Parser implementieren
-      // Beispiel-Ergebnisse für Demo
-      const demoErgebnisse = [
-        { name: 'Karl-Arthur Aurin', ringe: 285, teiler: 7 },
-        { name: 'Kloss', ringe: 278, teiler: 3 },
-        { name: 'Langnickel', ringe: 292, teiler: 9 },
-        { name: 'Leiding', ringe: 281, teiler: 5 }
-      ];
-
-      // Automatisch Ergebnisse zuordnen
-      setMeldungen(prev => prev.map(m => {
-        const ergebnis = demoErgebnisse.find(e => 
-          m.schuetzenName.toLowerCase().includes(e.name.toLowerCase()) ||
-          e.name.toLowerCase().includes(m.schuetzenName.toLowerCase())
-        );
-        
-        if (ergebnis) {
-          return {
-            ...m,
-            kmErgebnis: {
-              ringe: ergebnis.ringe,
-              teiler: ergebnis.teiler
-            }
-          };
-        }
-        return m;
-      }));
-
+      console.error('❌ Speichern fehlgeschlagen:', error);
       toast({ 
-        title: 'PDF importiert', 
-        description: `${demoErgebnisse.length} Ergebnisse automatisch zugeordnet.`,
+        title: '❌ Speichern fehlgeschlagen', 
+        description: `${meldung.schuetzenName}: ${error.message || 'Unbekannter Fehler'}`,
+        variant: 'destructive',
         duration: 5000
       });
-    } catch (error) {
-      console.error('PDF-Import Fehler:', error);
-      toast({ title: 'Fehler', description: 'PDF konnte nicht verarbeitet werden.', variant: 'destructive' });
     } finally {
-      setImporting(false);
-      // Reset file input
-      event.target.value = '';
+      setSaving(false);
     }
   };
 
@@ -293,49 +311,26 @@ export default function KMErgebnissePage() {
         </div>
       </div>
 
-      <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
-        <h3 className="font-semibold text-blue-900 mb-2">ℹ️ Hinweis zur Ergebniserfassung:</h3>
-        <p className="text-sm text-blue-700">
-          <strong>KM-Ergebnisse</strong> sind die tatsächlichen Wettkampfergebnisse der Kreismeisterschaft. 
-          Diese werden NACH dem Wettkampf erfasst und dienen zur Erstellung der offiziellen Ergebnislisten 
-          und später für die Weiterleitung qualifizierter Schützen zur Landesmeisterschaft.
-        </p>
-      </div>
-
       <Card className="mb-6">
         <CardHeader>
-          <div className="flex flex-col gap-4">
-            <CardTitle>Filter & Aktionen</CardTitle>
-            <div className="flex flex-col md:flex-row gap-2">
-              <label className="cursor-pointer w-full md:w-auto">
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={handlePDFImport}
-                  className="hidden"
-                  disabled={importing}
-                />
-                <Button variant="outline" disabled={importing} asChild className="w-full md:w-auto">
-                  <span>
-                    {importing ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                    ) : (
-                      <Upload className="h-4 w-4 mr-2" />
-                    )}
-                    {importing ? 'Importiere...' : 'PDF importieren'}
-                  </span>
-                </Button>
-              </label>
-              <Button onClick={berechneAutomatischePlaetze} disabled={!selectedDisziplin || selectedDisziplin === 'ALL_DISCIPLINES'} className="w-full md:w-auto">
-                <Medal className="h-4 w-4 mr-2" />
-                Plätze berechnen
-              </Button>
-            </div>
-          </div>
+          <CardTitle>Filter & Aktionen</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Jahr/Saison</Label>
+              <Select value={selectedJahr} onValueChange={setSelectedJahr}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {jahre.map(jahr => (
+                    <SelectItem key={jahr.id} value={jahr.id}>{jahr.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label>Disziplin</Label>
               <Select value={selectedDisziplin} onValueChange={setSelectedDisziplin}>
                 <SelectTrigger>
@@ -358,8 +353,7 @@ export default function KMErgebnissePage() {
           <CardTitle>KM-Ergebnisse ({filteredMeldungen.length} Meldungen)</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Mobile Card Layout */}
-          <div className="block md:hidden space-y-4">
+          <div className="space-y-4">
             {filteredMeldungen.map(meldung => (
               <Card key={meldung.id} className="p-4">
                 <div className="space-y-3">
@@ -370,161 +364,129 @@ export default function KMErgebnissePage() {
                     </div>
                     <Badge variant="outline">{meldung.disziplin}</Badge>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Ergebnis (Ringe.Zehntel)</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="text"
-                        value={inputValues[meldung.id] ?? (meldung.kmErgebnis ? `${meldung.kmErgebnis.ringe}${meldung.kmErgebnis.teiler ? ',' + meldung.kmErgebnis.teiler : ''}` : '')}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setInputValues(prev => ({ ...prev, [meldung.id]: value }));
-                          
-                          if (value && !value.endsWith(',') && !value.endsWith('.')) {
-                            const parts = value.split(/[.,]/);
-                            const ringe = parseInt(parts[0]) || 0;
-                            const teiler = parts[1] ? parseInt(parts[1]) || 0 : 0;
+                  
+                  <div className="space-y-3">
+                    {(() => {
+                      const shots = getDisciplineShots(meldung.disziplin);
+                      const seriesInfo = getSeriesInfo(meldung.disziplin);
+                      const currentSeries = meldung.kmErgebnis?.serien || Array(seriesInfo.count).fill(null).map(() => []);
+                      
+                      return (
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold">
+                            {meldung.disziplin}: {shots} Schuss in {seriesInfo.count} Serien à {seriesInfo.shotsPerSeries}
+                          </Label>
+                          {Array.from({ length: seriesInfo.count }, (_, serieIndex) => (
+                            <div key={serieIndex}>
+                              <Label className="text-xs">Serie {serieIndex + 1} ({seriesInfo.shotsPerSeries} Schuss)</Label>
+                              <Input
+                                type="text"
+                                value={seriesInputs[`${meldung.id}-${serieIndex}`] || ''}
+                                onChange={(e) => {
+                                  const inputKey = `${meldung.id}-${serieIndex}`;
+                                  setSeriesInputs(prev => ({ ...prev, [inputKey]: e.target.value }));
+                                }}
+                                onBlur={(e) => {
+                                  const values = e.target.value.split(/[\s]+/).map(v => {
+                                    const num = parseFloat(v.trim().replace(',', '.'));
+                                    return (!isNaN(num) && num >= 0 && num <= 109) ? num : null;
+                                  }).filter(v => v !== null).slice(0, seriesInfo.shotsPerSeries);
+                                  
+                                  const newSeries = [...currentSeries];
+                                  newSeries[serieIndex] = values;
+                                  const total = calculateTotalFromSeries(newSeries);
+                                  
+                                  setMeldungen(prev => prev.map(m => {
+                                    if (m.id === meldung.id) {
+                                      return {
+                                        ...m,
+                                        kmErgebnis: {
+                                          ...m.kmErgebnis,
+                                          serien: newSeries,
+                                          ringe: total
+                                        }
+                                      };
+                                    }
+                                    return m;
+                                  }));
+                                }}
+                                placeholder=""
+                                className="text-xs h-8"
+                              />
+                              {currentSeries[serieIndex] && currentSeries[serieIndex].length > 0 && (
+                                <div className="text-xs text-blue-600">
+                                  {currentSeries[serieIndex].length}/{seriesInfo.shotsPerSeries} Schuss = {currentSeries[serieIndex].reduce((sum, val) => sum + val, 0)} Ringe
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          {meldung.kmErgebnis?.serien && (
+                            <div className="text-sm font-semibold text-green-600 p-2 bg-green-50 rounded">
+                              Gesamtergebnis: {calculateTotalFromSeries(meldung.kmErgebnis.serien)} Ringe
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                    
+                    <div>
+                      <Label className="text-xs">Ergebnis (Ringe.Zehntel)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="text"
+                          value={inputValues[meldung.id] ?? (meldung.kmErgebnis ? `${meldung.kmErgebnis.ringe}${meldung.kmErgebnis.teiler ? ',' + meldung.kmErgebnis.teiler : ''}` : '')}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setInputValues(prev => ({ ...prev, [meldung.id]: value }));
                             
-                            setMeldungen(prev => prev.map(m => {
-                              if (m.id === meldung.id) {
-                                return {
-                                  ...m,
-                                  kmErgebnis: { ringe, teiler }
-                                };
-                              }
-                              return m;
-                            }));
-                          }
-                        }}
-                        onBlur={() => {
-                          const value = inputValues[meldung.id] || '';
-                          if (value) {
-                            const parts = value.split(/[.,]/);
-                            const ringe = parseInt(parts[0]) || 0;
-                            const teiler = parts[1] ? parseInt(parts[1]) || 0 : 0;
-                            
-                            setMeldungen(prev => prev.map(m => {
-                              if (m.id === meldung.id) {
-                                return {
-                                  ...m,
-                                  kmErgebnis: { ringe, teiler }
-                                };
-                              }
-                              return m;
-                            }));
-                          }
-                        }}
-                        className="flex-1"
-                        placeholder="z.B. 285,7"
-                      />
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleSave(meldung.id)}
-                        disabled={saving || !meldung.kmErgebnis?.ringe}
-                      >
-                        <Save className="h-4 w-4" />
-                      </Button>
+                            if (value && !value.endsWith(',') && !value.endsWith('.')) {
+                              const { ringe, teiler } = parseInput(value);
+                              handleErgebnisChange(meldung.id, 'ringe', ringe.toString());
+                              handleErgebnisChange(meldung.id, 'teiler', teiler.toString());
+                            }
+                          }}
+                          className="flex-1"
+                          placeholder=""
+                        />
+                        <div className="flex gap-1">
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleSave(meldung.id)}
+                            disabled={saving || !meldung.kmErgebnis?.ringe}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            {saving ? '💾' : '✅'}
+                          </Button>
+                          {meldung.kmErgebnis?.ringe && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setMeldungen(prev => prev.map(m => {
+                                  if (m.id === meldung.id) {
+                                    return {
+                                      ...m,
+                                      kmErgebnis: {
+                                        ringe: 0,
+                                        teiler: 0,
+                                        serien: []
+                                      }
+                                    };
+                                  }
+                                  return m;
+                                }));
+                              }}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              🗑️
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  {meldung.kmErgebnis && meldung.kmErgebnis.ringe > 0 && (
-                    <div className="text-sm p-2 bg-green-50 dark:bg-green-900/30 rounded">
-                      <div className="font-medium text-green-600">
-                        Ergebnis: {meldung.kmErgebnis.ringe}{meldung.kmErgebnis.teiler > 0 ? `,${meldung.kmErgebnis.teiler}` : ''}
-                      </div>
-                      {meldung.kmErgebnis.platz_disziplin && (
-                        <div className="text-xs text-blue-600">
-                          Platz: {meldung.kmErgebnis.platz_disziplin}
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               </Card>
-            ))}
-          </div>
-          
-          {/* Desktop Grid Layout */}
-          <div className="hidden md:block space-y-3">
-            {filteredMeldungen.map(meldung => (
-              <div key={meldung.id} className="grid grid-cols-12 gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg items-center">
-                <div className="col-span-3">
-                  <div className="font-medium">{meldung.schuetzenName}</div>
-                  <div className="text-sm text-muted-foreground">{meldung.vereinsname}</div>
-                </div>
-                <div className="col-span-2">
-                  <Badge variant="outline">{meldung.disziplin}</Badge>
-                </div>
-                <div className="col-span-4">
-                  <Label className="text-xs">Ergebnis (Ringe.Zehntel)</Label>
-                  <Input
-                    type="text"
-                    value={inputValues[meldung.id] ?? (meldung.kmErgebnis ? `${meldung.kmErgebnis.ringe}${meldung.kmErgebnis.teiler ? ',' + meldung.kmErgebnis.teiler : ''}` : '')}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setInputValues(prev => ({ ...prev, [meldung.id]: value }));
-                      
-                      if (value && !value.endsWith(',') && !value.endsWith('.')) {
-                        const parts = value.split(/[.,]/);
-                        const ringe = parseInt(parts[0]) || 0;
-                        const teiler = parts[1] ? parseInt(parts[1]) || 0 : 0;
-                        
-                        setMeldungen(prev => prev.map(m => {
-                          if (m.id === meldung.id) {
-                            return {
-                              ...m,
-                              kmErgebnis: { ringe, teiler }
-                            };
-                          }
-                          return m;
-                        }));
-                      }
-                    }}
-                    onBlur={() => {
-                      const value = inputValues[meldung.id] || '';
-                      if (value) {
-                        const parts = value.split(/[.,]/);
-                        const ringe = parseInt(parts[0]) || 0;
-                        const teiler = parts[1] ? parseInt(parts[1]) || 0 : 0;
-                        
-                        setMeldungen(prev => prev.map(m => {
-                          if (m.id === meldung.id) {
-                            return {
-                              ...m,
-                              kmErgebnis: { ringe, teiler }
-                            };
-                          }
-                          return m;
-                        }));
-                      }
-                    }}
-                    className="h-8"
-                    placeholder="z.B. 285,7 oder 285.7 oder 285"
-                  />
-                </div>
-                <div className="col-span-2">
-                  {meldung.kmErgebnis && meldung.kmErgebnis.ringe > 0 && (
-                    <div className="text-sm">
-                      <div className="font-medium text-green-600">
-                        {meldung.kmErgebnis.ringe}{meldung.kmErgebnis.teiler > 0 ? `,${meldung.kmErgebnis.teiler}` : ''}
-                      </div>
-                      {meldung.kmErgebnis.platz_disziplin && (
-                        <div className="text-xs text-blue-600">
-                          Platz: {meldung.kmErgebnis.platz_disziplin}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="col-span-1">
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleSave(meldung.id)}
-                    disabled={saving || !meldung.kmErgebnis?.ringe}
-                  >
-                    <Save className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
             ))}
           </div>
         </CardContent>

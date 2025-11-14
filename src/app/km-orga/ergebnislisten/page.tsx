@@ -20,6 +20,7 @@ interface ErgebnisEintrag {
   sortierWert: number;
   platz: number;
   altersklasse?: string;
+  serien?: number[][];
 }
 
 export default function ErgebnislistenPage() {
@@ -27,17 +28,40 @@ export default function ErgebnislistenPage() {
   const [ergebnisse, setErgebnisse] = useState<ErgebnisEintrag[]>([]);
   const [selectedDisziplin, setSelectedDisziplin] = useState<string>('');
   const [selectedAltersklasse, setSelectedAltersklasse] = useState<string>('');
+  const [selectedSaison, setSelectedSaison] = useState<string>('');
   const [disziplinen, setDisziplinen] = useState<string[]>([]);
   const [altersklassen, setAltersklassen] = useState<string[]>([]);
+  const [saisons, setSaisons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const loadSaisons = async () => {
+      try {
+        const response = await fetch('/api/km/jahre');
+        if (response.ok) {
+          const data = await response.json();
+          const saisonsList = data.data || [];
+          setSaisons(saisonsList);
+          if (saisonsList.length > 0 && !selectedSaison) {
+            setSelectedSaison(saisonsList[0].id);
+          }
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der Saisons:', error);
+      }
+    };
+    loadSaisons();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedSaison) return;
+    
     const loadData = async () => {
       try {
         // KM-Ergebnisse laden über API
         const kmErgebnisseRes = await fetch('/api/km/ergebnisse');
         const kmErgebnisseData = kmErgebnisseRes.ok ? (await kmErgebnisseRes.json()).data || [] : [];
-        const meldungenRes = await fetch('/api/km/meldungen?jahr=2026');
+        const meldungenRes = await fetch(`/api/km/meldungen?saisonId=${selectedSaison}`);
         const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
         
         // Lade zusätzliche Daten über API
@@ -86,7 +110,8 @@ export default function ErgebnislistenPage() {
           if (schuetze) {
             const schuetzeDetail = schuetzenData.find(s => s.id === meldung.schuetzeId);
             if (schuetzeDetail?.birthYear) {
-              const age = 2026 - schuetzeDetail.birthYear;
+              const currentSaison = saisons.find(s => s.id === selectedSaison);
+              const age = (currentSaison?.jahr || 2026) - schuetzeDetail.birthYear;
               const isAuflage = disziplinName?.toLowerCase().includes('auflage');
               const isMale = schuetzeDetail.gender === 'male';
               
@@ -142,7 +167,8 @@ export default function ErgebnislistenPage() {
               teiler: data.ergebnis_teiler,
               sortierWert,
               platz: 0, // Wird berechnet
-              altersklasse: meldungInfo.altersklasse
+              altersklasse: meldungInfo.altersklasse,
+              serien: data.serien || []
             });
 
             disziplinenSet.add(meldungInfo.disziplin);
@@ -164,7 +190,7 @@ export default function ErgebnislistenPage() {
       }
     };
     loadData();
-  }, [toast]);
+  }, [selectedSaison, toast]);
 
   const berechnePlayetze = (ergebnisse: ErgebnisEintrag[]): ErgebnisEintrag[] => {
     // Gruppiere nach Disziplin und Altersklasse
@@ -193,9 +219,10 @@ export default function ErgebnislistenPage() {
       
       const doc = new jsPDF();
       
-      // Header
+      // Header mit Saison
+      const currentSaison = saisons.find(s => s.id === selectedSaison);
       doc.setFontSize(16);
-      doc.text('Ergebnisliste Kreismeisterschaft', 20, 20);
+      doc.text(`Ergebnisliste ${currentSaison?.name || 'Kreismeisterschaft'}`, 20, 20);
       doc.setFontSize(12);
       doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-DE')}`, 20, 30);
       
@@ -231,26 +258,39 @@ export default function ErgebnislistenPage() {
         
         const tableData = ergebnisse
           .sort((a, b) => a.platz - b.platz)
-          .map(e => [
-            e.platz.toString(),
-            e.schuetzenName,
-            e.vereinsname,
-            `${e.ringe}${e.teiler ? '.' + e.teiler : ''}`,
-          ]);
+          .map(e => {
+            const serienText = e.serien && e.serien.length > 0 
+              ? e.serien.map(serie => serie.join(' ')).join(' | ')
+              : '-';
+            return [
+              e.platz.toString(),
+              e.schuetzenName,
+              e.vereinsname,
+              serienText,
+              `${e.ringe}${e.teiler ? '.' + e.teiler : ''}`,
+            ];
+          });
         
         autoTable(doc, {
           startY: yPosition,
-          head: [['Platz', 'Name', 'Verein', 'Ergebnis']],
+          head: [['Platz', 'Name', 'Verein', 'Serien', 'Ergebnis']],
           body: tableData,
-          styles: { fontSize: 10 },
+          styles: { fontSize: 8 },
           headStyles: { fillColor: [66, 139, 202] },
-          margin: { left: 20, right: 20 }
+          columnStyles: {
+            0: { cellWidth: 15 },
+            1: { cellWidth: 40 },
+            2: { cellWidth: 40 },
+            3: { cellWidth: 60 },
+            4: { cellWidth: 25 }
+          },
+          margin: { left: 10, right: 10 }
         });
         
         yPosition = (doc as any).lastAutoTable.finalY + 15;
       });
       
-      const fileName = `Ergebnisliste_KM_${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `Ergebnisliste_${currentSaison?.name?.replace(/\s+/g, '_') || 'KM'}_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
       
       toast({ title: 'PDF erstellt', description: `${fileName} wurde heruntergeladen.` });
@@ -292,7 +332,8 @@ export default function ErgebnislistenPage() {
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Ergebnisliste');
       
-      const fileName = `Ergebnisliste_KM_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const currentSaison = saisons.find(s => s.id === selectedSaison);
+      const fileName = `Ergebnisliste_${currentSaison?.name?.replace(/\s+/g, '_') || 'KM'}_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(workbook, fileName);
       
       toast({ title: 'Excel erstellt', description: `${fileName} wurde heruntergeladen.` });
@@ -353,7 +394,19 @@ export default function ErgebnislistenPage() {
           <CardTitle>Filter</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Saison</label>
+              <select
+                value={selectedSaison}
+                onChange={(e) => setSelectedSaison(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded text-sm"
+              >
+                {saisons.map(saison => (
+                  <option key={saison.id} value={saison.id}>{saison.name}</option>
+                ))}
+              </select>
+            </div>
             <div>
               <NativeSelect
                 value={selectedDisziplin}
