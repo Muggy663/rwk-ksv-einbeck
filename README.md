@@ -1,6 +1,6 @@
 # 🎯 RWK Einbeck App
 
-**Version: 1.9.2.2** | **Android: 0.9.4.1**
+**Version: 1.9.2.3** | **Android: 0.9.4.1**
 
 > **Moderne Digitalisierung für Schießsport-Rundenwettkämpfe**
 
@@ -52,37 +52,16 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - **Erweiterte Statistiken** - Detaillierte Leistungsanalysen (Premium)
 - **Detaillierte Serienerfassung** mit Einzelschuss-Dokumentation
 - **PDF-Export für Behörden** - Offizieller Nachweis für Waffenbehörde
-- **Offline-First** - Funktioniert auch ohne Internet
+
 - **Kostenlos in Testphase** - Premium-Features auf Anfrage
 
 ### 📊 Verwaltung & Organisation
 - **Globale Suche** über alle Bereiche
 - **Schützen-Datenbank** mit Import/Export
-- **Vereins-Management** mit Kontakten
 - **Disziplinen-Verwaltung** flexibel konfigurierbar
 - **Statistik-Dashboard** mit Auswertungen
-- **Backup & Restore** für Datensicherheit
 
-### 🛡️ Sicherheitsfeatures
-- **Input-Validierung** auf allen Ebenen
-- **XSS/CSRF-Schutz** für sichere Formulare
-- **Rate Limiting** gegen Brute-Force-Angriffe
-- **Bot Protection** mit Honeypot-Technologie
-- **Sichere File-Uploads** mit Validierung
-- **API-Sicherheit** gegen Injection-Angriffe
-- **Secure Logging** ohne sensitive Daten
-- **Path Traversal Prevention** für Dateizugriffe
 
-## 🛠️ Technologie-Stack
-
-- **Frontend**: Next.js 14, React 18, TypeScript
-- **UI/UX**: Tailwind CSS, Radix UI, Lucide Icons
-- **Backend**: Firebase (Firestore, Auth, Functions)
-- **OCR**: Google Vision API, Tesseract.js (Fallback)
-- **Mobile**: Capacitor (Native Android App)
-- **PDF**: jsPDF, html2canvas
-- **E-Mail**: Resend API
-- **Deployment**: Vercel (Web), Google Play Store (Android)
 
 ## 📱 Verfügbare Versionen
 
@@ -169,18 +148,6 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 ## 📄 Lizenz & Copyright
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
-
-## 🚧 Premium Testphase
-
-**Aktuell verfügbar:** Premium-Features kostenlos während der Testphase
-- **Anfrage per E-Mail:** marcel.buenger@gmx.de
-- **Trinkgeld willkommen:** https://paypal.me/marcel.buenger@gmx.de/2EUR
-- **Feedback erwünscht:** Helfen Sie uns bei der Entwicklung
-
-**Geplante Preise (nach Testphase):**
-- 1 Monat: 2,00€
-- 3 Monate: 6,00€  
-- 12 Monate: 20,00€
 
 *Letzte Aktualisierung: 14. November 2025*
 

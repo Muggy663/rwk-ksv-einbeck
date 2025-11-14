@@ -39,22 +39,28 @@ export interface SchießStatistik {
 
 export const DISZIPLINEN = [
   // Gewehr
-  { name: 'KK liegend 50m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [40, 60] },
+  { name: 'KK liegend 50m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [20, 30, 40, 60] },
+  { name: 'KK Auflage 50m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [20, 30, 40, 60] },
+  { name: 'KK Freihand 50m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [20, 30, 40, 60] },
   { name: 'KK 3-Stellung 50m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [120] },
-  { name: 'KK liegend 100m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [40, 60] },
-  { name: 'Luftgewehr 10m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [40, 60] },
-  { name: 'Luftgewehr 10m Auflage', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [40, 60] },
+  { name: 'KK liegend 100m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [20, 30, 40, 60] },
+  { name: 'KK Gewehr 100m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [20, 30, 40, 60] },
+  { name: 'Luftgewehr 10m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [20, 30, 40, 60] },
+  { name: 'Luftgewehr 10m Auflage', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [20, 30, 40, 60] },
   { name: 'Luftgewehr 3-Stellung 10m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [30, 60] },
-  { name: 'Großkaliber 300m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Gewehr', schussAnzahl: [40, 60] },
   
   // Pistole
-  { name: 'Luftpistole 10m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Pistole', schussAnzahl: [40, 60] },
-  { name: 'Luftpistole Auflage 10m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Pistole', schussAnzahl: [40, 60] },
+  { name: 'Luftpistole 10m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Pistole', schussAnzahl: [20, 30, 40, 60] },
+  { name: 'Luftpistole Auflage 10m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Pistole', schussAnzahl: [20, 30, 40, 60] },
+  { name: 'Luftpistole Freihand 10m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Pistole', schussAnzahl: [20, 30, 40, 60] },
   { name: 'Sportpistole 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [60] },
+  { name: 'Sportpistole Präzision 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [30, 60] },
+  { name: 'Sportpistole Duell 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [30, 60] },
+  { name: 'Sportpistole Schnellfeuer 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [30, 60] },
   { name: 'Freie Pistole 50m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Pistole', schussAnzahl: [60] },
   { name: 'Schnellfeuerpistole 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [60] },
-  { name: 'Zentralfeuerpistole 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [30, 60] },
-  { name: 'Großkaliber Pistole 50m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Pistole', schussAnzahl: [30, 60] },
+  { name: 'Zentralfeuerpistole 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [20, 30, 60] },
+  { name: 'Großkaliber Pistole 50m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Pistole', schussAnzahl: [20, 30, 60] },
   
   // Laufende Scheibe
   { name: 'Laufende Scheibe 50m', maxRinge: 10, serienGroesse: 10, kommastellen: false, kategorie: 'Laufende Scheibe', schussAnzahl: [30, 60] },
