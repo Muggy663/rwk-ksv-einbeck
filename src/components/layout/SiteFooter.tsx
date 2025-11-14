@@ -14,7 +14,7 @@ export function SiteFooter() {
             © 2025{currentYear > 2025 ? `-${currentYear}` : ''} Marcel Bünger für den KSV Einbeck. Alle Rechte vorbehalten.
           </p>
           <p className="text-xs text-muted-foreground mt-3">
-            Für beste Kompatibilität empfehlen wir Chrome, Firefox oder Edge
+            Für beste Kompatibilität empfehlen wir Chrome, Firefox, Edge oder Safari (iOS)
           </p>
           <p className="text-xs text-muted-foreground mt-1 mb-6">
             Entwickelt mit ❤️ für den deutschen Schießsport

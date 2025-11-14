@@ -905,32 +905,66 @@ export default function SharedResultsPage({
                           className="h-5 w-5 border-2 border-green-600"
                         />
                         <Label htmlFor="use-ocr" className="text-sm font-medium text-green-900 dark:text-green-100 cursor-pointer">
-                          🤖 Automatisches Auslesen verwenden (Computer erkennt Zahlen)
+                          🤖 Google Gemini AI Erkennung
                         </Label>
                       </div>
                       <p className="text-xs text-green-800 dark:text-green-200 mt-2 ml-8">
-                        ⚠️ WICHTIG: Automatisch erkannte Ergebnisse müssen immer kontrolliert werden! Prüfen Sie alle Werte vor dem Speichern.
+                        ✨ Gemini erkennt Handzettel sehr zuverlässig! Trotzdem kurz kontrollieren. Deaktivieren = nur Handzettel versenden.
                       </p>
                     </div>
                     
-                    <Input 
-                      type="file" 
-                      accept="image/*" 
-                      capture="environment"
-                      multiple
-                      onChange={async (e) => {
-                        if (e.target.files && e.target.files.length > 0) {
-                          const files = Array.from(e.target.files);
-                          setHandzettelFiles(files);
-                          toast({
-                            title: "📎 Handzettel vorgemerkt",
-                            description: `${files.length} Datei(en) ausgewählt.`,
-                            className: "border-blue-500 bg-blue-50"
-                          });
-                        }
-                      }}
-                      className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
-                    />
+                    <div className="space-y-4">
+                      {/* Kamera-Button für Mobile */}
+                      <div className="block md:hidden">
+                        <div className="p-4 border-2 border-green-300 rounded-lg bg-green-50">
+                          <h4 className="text-sm font-medium text-green-800 mb-2 text-center">📸 Kamera verwenden</h4>
+                          <Input 
+                            type="file" 
+                            accept="image/*" 
+                            capture="environment"
+                            multiple
+                            onChange={async (e) => {
+                              if (e.target.files && e.target.files.length > 0) {
+                                const files = Array.from(e.target.files);
+                                setHandzettelFiles(files);
+                                toast({
+                                  title: "📸 Foto aufgenommen",
+                                  description: `${files.length} Foto(s) bereit. ${!attachOnly ? 'Klicke "🤖 Erkennung starten" um automatisch auszulesen.' : 'Wird ohne OCR versendet.'}`,
+                                  className: "border-blue-500 bg-blue-50"
+                                });
+                              }
+                            }}
+                            className="bg-white border-2 border-dashed border-green-400 p-4 text-center cursor-pointer hover:border-green-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                          />
+                          <p className="text-xs text-center text-green-700 mt-2">Direkt fotografieren</p>
+                        </div>
+                      </div>
+                      
+                      {/* Galerie/Datei-Auswahl für Mobile und Desktop */}
+                      <div>
+                        <div className="p-4 border-2 border-blue-300 rounded-lg bg-blue-50">
+                          <h4 className="text-sm font-medium text-blue-800 mb-2 text-center">📁 Galerie/Dateien verwenden</h4>
+                          <Input 
+                            type="file" 
+                            accept="image/*" 
+                            multiple
+                            onChange={async (e) => {
+                              if (e.target.files && e.target.files.length > 0) {
+                                const files = Array.from(e.target.files);
+                                setHandzettelFiles(files);
+                                toast({
+                                  title: "📎 Handzettel ausgewählt",
+                                  description: `${files.length} Datei(en) aus Galerie/Dateien. ${!attachOnly ? 'Klicke "🤖 Erkennung starten" um automatisch auszulesen.' : 'Wird ohne OCR versendet.'}`,
+                                  className: "border-blue-500 bg-blue-50"
+                                });
+                              }
+                            }}
+                            className="bg-white border-2 border-dashed border-blue-400 p-4 text-center cursor-pointer hover:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          />
+                          <p className="text-xs text-center text-blue-700 mt-2">Aus Galerie oder WhatsApp wählen</p>
+                        </div>
+                      </div>
+                    </div>
                     
                     {handzettelFiles.length > 0 && !attachOnly && (
                       <div className="mt-3">
