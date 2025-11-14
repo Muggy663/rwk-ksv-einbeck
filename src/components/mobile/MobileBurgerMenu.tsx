@@ -20,6 +20,7 @@ const allNavItems: NavItem[] = [
   { href: '/rwk-tabellen', icon: Trophy, label: 'Tabellen' },
   { href: '/statistiken', icon: BarChart3, label: 'Statistiken' },
   { href: '/schiessnachweis', icon: Target, label: 'Schießnachweis' },
+  { href: '/schiesssport-erklaerung', icon: BookOpen, label: 'Schießsport erklärt' },
   { href: '/termine', icon: Calendar, label: 'Termine' },
   { href: '/dokumente', icon: FileText, label: 'Dateien' },
   { href: '/handbuch', icon: BookOpen, label: 'Handbuch' },
@@ -129,7 +130,7 @@ export function MobileBurgerMenu() {
           {/* Footer with safe area */}
           <div className="p-3 border-t pb-safe-area-bottom">
             <p className="text-xs text-muted-foreground text-center truncate">
-              RWK KSV Einbeck v1.9.2.1
+              RWK KSV Einbeck v1.9.2.2
             </p>
           </div>
         </div>

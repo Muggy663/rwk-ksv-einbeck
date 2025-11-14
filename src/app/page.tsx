@@ -436,8 +436,33 @@ export default function HomePage() {
         </CardContent>
       </Card>
 
-      {/* Play Store Beta-Test */}
-      <div className="mb-6">
+      {/* Quick Links */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Schießsport erklärt */}
+        <Link href="/schiesssport-erklaerung" className="block">
+          <div className="bg-gradient-to-r from-green-500 to-teal-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
+            <div className="flex items-center">
+              <div className="bg-white p-3 rounded-full mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+                  <circle cx="12" cy="12" r="10"/>
+                  <circle cx="12" cy="12" r="6"/>
+                  <circle cx="12" cy="12" r="2"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">🎯 Schießsport erklärt</h2>
+                <p style={{color: 'white'}}>Grundlagen, Disziplinen und Wettkampf-System</p>
+              </div>
+              <div className="text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        {/* Play Store Beta-Test */}
         <Link href="/app" className="block">
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
             <div className="flex items-center">

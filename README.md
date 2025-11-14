@@ -1,11 +1,11 @@
 # 🎯 RWK Einbeck App
 
+**Version: 1.9.2.2** | **Android: 0.9.4.1**
+
 > **Moderne Digitalisierung für Schießsport-Rundenwettkämpfe**
 
 Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
 
-[![Version](https://img.shields.io/badge/Version-1.9.2.1-blue?style=for-the-badge)](#)
-[![Android App](https://img.shields.io/badge/Android_App-0.9.4.1-success?style=for-the-badge)](#)
 [![Premium](https://img.shields.io/badge/Premium-Testphase-orange?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -19,9 +19,10 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - 🔐 **Rollen-System** - Admin, Verein, Schütze
 - 📄 **PDF Export** - Professionelle Dokumente
 - ⚡ **Real-time Updates** - Sofortige Synchronisation
-- 🤖 **OCR Handzettel-Erkennung** - Automatische Ergebniserfassung per Foto
+- 🤖 **Google Gemini AI OCR** - Intelligente Handzettel-Erkennung per Foto oder Galerie
+- 📱 **Galerie-Support** - Handzettel aus WhatsApp/Galerie importieren (PWA)
 - 🛡️ **Enterprise-Level Sicherheit** - 70+ Sicherheitslücken behoben
-- 🎯 **Schießnachweis** - Digitales Schießtagebuch für Sportschützen
+- 🎯 **Schießnachweis Premium** - Digitales Schießtagebuch mit Import-Funktionen
 - 🚧 **Premium Testphase** - Erweiterte Features kostenlos verfügbar
 
 ## 🚀 Hauptfunktionen
@@ -45,6 +46,8 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 ### 🎯 Schießnachweis (Premium Testphase)
 - **Digitales Schießtagebuch** für Sportschützen
 - **Training & Wettkampf** Dokumentation
+- **Import von digitalen Anlagen** - Meyton, Sius, Disag, Sport Quantum
+- **KI-gestützte Erkennung** - Google Gemini AI für automatischen Import
 - **Cloud-Synchronisation** - Multi-Device-Zugriff (Premium)
 - **Erweiterte Statistiken** - Detaillierte Leistungsanalysen (Premium)
 - **Detaillierte Serienerfassung** mit Einzelschuss-Dokumentation
@@ -83,11 +86,11 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 ## 📱 Verfügbare Versionen
 
-| Platform | Version | Status | Download |
-|----------|---------|--------|---------|
-| **Web App** | 1.9.2.1 | ✅ Produktiv | Vercel Deployment |
-| **Android App** | 0.9.4.1 | ✅ Produktiv | Google Play Store |
-| **iOS App** | - | ❌ Nicht geplant | Unrentabel |
+| Platform | Status | Download |
+|----------|--------|---------|
+| **Web App** | ✅ Produktiv | Vercel Deployment |
+| **Android App** | ✅ Produktiv | Google Play Store |
+| **iOS App** | ❌ Nicht geplant | Unrentabel |
 
 ## 🎯 Zielgruppe
 
@@ -109,6 +112,8 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - **🔙 BackButton Navigation**: Einheitliche Zurück-Navigation auf allen Seiten
 - **📅 KM-Jahresverwaltung**: Automatische Collections für jedes Jahr
 - **✏️ Inline-Bearbeitung**: Direkte Bearbeitung in KM-Tabellen
+- **📸 Dual-Input-System**: Kamera + Galerie für maximale Flexibilität (PWA)
+- **🤖 Google Gemini AI**: Intelligenteste OCR-Erkennung für Handzettel
 
 ## 🌟 Warum RWK Einbeck App?
 
@@ -177,7 +182,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - 3 Monate: 6,00€  
 - 12 Monate: 20,00€
 
-*Letzte Aktualisierung: 11. November 2025*
+*Letzte Aktualisierung: 14. November 2025*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

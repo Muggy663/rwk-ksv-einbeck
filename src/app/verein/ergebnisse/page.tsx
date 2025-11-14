@@ -1259,26 +1259,54 @@ Die Handzettel sind als Anhang beigefügt.`);
                       </p>
                     </div>
                     
-                    <Input 
-                      type="file" 
-                      accept="image/*" 
-                      capture="environment"
-                      multiple
-                      onChange={async (e) => {
-                        if (e.target.files && e.target.files.length > 0) {
-                          const files = Array.from(e.target.files);
-                          setHandzettelFiles(files);
-                          
-                          // Datei nur vormerken, OCR muss manuell gestartet werden
-                          toast({
-                            title: "📎 Handzettel vorgemerkt",
-                            description: `${files.length} Datei(en) ausgewählt. ${!attachOnly ? 'Klicke "🤖 OCR starten" um automatisch auszulesen.' : 'Wird ohne OCR versendet.'}`,
-                            className: "border-blue-500 bg-blue-50"
-                          });
-                        }
-                      }}
-                      className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
-                    />
+                    <div className="space-y-3">
+                      {/* Kamera-Button für Mobile */}
+                      <div className="block md:hidden">
+                        <Input 
+                          type="file" 
+                          accept="image/*" 
+                          capture="environment"
+                          multiple
+                          onChange={async (e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              const files = Array.from(e.target.files);
+                              setHandzettelFiles(files);
+                              
+                              toast({
+                                title: "📸 Foto aufgenommen",
+                                description: `${files.length} Foto(s) bereit. ${!attachOnly ? 'Klicke "🤖 OCR starten" um automatisch auszulesen.' : 'Wird ohne OCR versendet.'}`,
+                                className: "border-blue-500 bg-blue-50"
+                              });
+                            }
+                          }}
+                          className="bg-white border-2 border-dashed border-green-300 p-4 text-center cursor-pointer hover:border-green-400"
+                        />
+                        <p className="text-xs text-center text-green-700 mt-1">📸 Kamera öffnen</p>
+                      </div>
+                      
+                      {/* Galerie/Datei-Auswahl für Mobile und Desktop */}
+                      <div>
+                        <Input 
+                          type="file" 
+                          accept="image/*" 
+                          multiple
+                          onChange={async (e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              const files = Array.from(e.target.files);
+                              setHandzettelFiles(files);
+                              
+                              toast({
+                                title: "📎 Handzettel ausgewählt",
+                                description: `${files.length} Datei(en) aus Galerie/Dateien. ${!attachOnly ? 'Klicke "🤖 OCR starten" um automatisch auszulesen.' : 'Wird ohne OCR versendet.'}`,
+                                className: "border-blue-500 bg-blue-50"
+                              });
+                            }
+                          }}
+                          className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
+                        />
+                        <p className="text-xs text-center text-blue-700 mt-1">📁 Aus Galerie/Dateien wählen</p>
+                      </div>
+                    </div>
                     
                     {handzettelFiles.length > 0 && !attachOnly && (
                       <Button
@@ -1329,10 +1357,11 @@ Die Handzettel sind als Anhang beigefügt.`);
                   </div>
                   
                   <div className="mt-2 text-xs text-blue-700 dark:text-blue-300 space-y-1">
-                    <p>📱 <strong>Handy:</strong> Checkbox → Foto → OCR oder nur anhängen</p>
-                    <p>💻 <strong>PC:</strong> Mehrere Dateien möglich</p>
+                    <p>📸 <strong>Kamera:</strong> Direktes Fotografieren (nur Mobile)</p>
+                    <p>📁 <strong>Galerie:</strong> Vorhandene Bilder aus WhatsApp, Galerie etc.</p>
+                    <p>💻 <strong>PC:</strong> Mehrere Dateien gleichzeitig möglich</p>
                     <p>✅ <strong>Formate:</strong> JPG, PNG (PDF folgt)</p>
-                    <p>📎 <strong>Nur anhängen:</strong> Checkbox aktivieren für Upload ohne OCR</p>
+                    <p>📎 <strong>Nur anhängen:</strong> Checkbox deaktivieren für Upload ohne OCR</p>
                   </div>
                   
                   {handzettelFiles.length > 0 && !attachOnly && (

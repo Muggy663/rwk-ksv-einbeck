@@ -1,6 +1,6 @@
 {
   "name": "rwk-ksv-einbeck-live-tabellen-wettkampf-management",
-  "version": "1.9.2.1",
+  "version": "1.9.2.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -51,6 +51,7 @@
     "@sentry/nextjs": "^9.34.0",
     "@tanstack/react-table": "^8.10.7",
     "@types/nodemailer": "^6.4.15",
+    "@types/three": "^0.181.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "cmdk": "^0.2.0",
@@ -82,6 +83,7 @@
     "tailwind-merge": "^2.0.0",
     "tailwindcss-animate": "^1.0.7",
     "tesseract.js": "^6.0.1",
+    "three": "^0.181.1",
     "vaul": "^0.7.9",
     "xlsx": "^0.18.5",
     "zod": "^3.22.4"
