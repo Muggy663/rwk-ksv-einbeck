@@ -20,8 +20,18 @@ export default function SchießnachweisPage() {
   const { toast } = useToast();
   const [statistik, setStatistik] = useState<SchießStatistik | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Mobile Detection
+    const checkMobile = () => {
+      const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
     // Lösche localStorage und lade nur aus Firebase
     localStorage.removeItem('rwk_schiessnachweis');
     localStorage.removeItem('rwk_schiessnachweis_backup');
@@ -29,6 +39,8 @@ export default function SchießnachweisPage() {
     loadStatistik();
     // Automatisches Cloud-Sync beim ersten Laden
     checkAndSyncFromCloud();
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
   
   const checkAndSyncFromCloud = async () => {
@@ -477,22 +489,40 @@ export default function SchießnachweisPage() {
             <div className="space-y-2">
               <h4 className="text-sm font-medium">📤 Export</h4>
               <div className="grid grid-cols-1 gap-2">
-                <Button onClick={handleExportExcel} variant="outline" size="sm" className="flex items-center justify-center gap-2">
+                <Button 
+                  onClick={handleExportExcel} 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center justify-center gap-2"
+                  disabled={isMobile}
+                >
                   <Download className="h-4 w-4" />
-                  Excel (.csv)
+                  Excel (.csv) {isMobile && '(Desktop)'}
                 </Button>
-                <Button onClick={handleExportODS} variant="outline" size="sm" className="flex items-center justify-center gap-2">
+                <Button 
+                  onClick={handleExportODS} 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center justify-center gap-2"
+                  disabled={isMobile}
+                >
                   <FileText className="h-4 w-4" />
-                  LibreOffice (.ods)
+                  LibreOffice (.ods) {isMobile && '(Desktop)'}
                 </Button>
               </div>
             </div>
             <div className="space-y-2">
               <h4 className="text-sm font-medium">📥 Import</h4>
               <div className="grid grid-cols-1 gap-2">
-                <Button onClick={() => document.getElementById('csv-import')?.click()} variant="outline" size="sm" className="flex items-center justify-center gap-2">
+                <Button 
+                  onClick={() => document.getElementById('csv-import')?.click()} 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center justify-center gap-2"
+                  disabled={isMobile}
+                >
                   <Upload className="h-4 w-4" />
-                  CSV/Excel importieren
+                  CSV/Excel importieren {isMobile && '(Desktop)'}
                 </Button>
                 <Button onClick={handleCloudSync} variant="outline" size="sm" className="flex items-center justify-center gap-2">
                   <Download className="h-4 w-4" />
@@ -509,11 +539,24 @@ export default function SchießnachweisPage() {
             </div>
           </div>
           <div className="grid grid-cols-1 gap-2">
-            <Button asChild variant="outline" className="flex items-center justify-center gap-2 h-10">
-              <Link href="/schiessnachweis/pdf-export">
-                <FileText className="h-4 w-4" />
-                PDF für Behörden
-              </Link>
+            <Button 
+              asChild={!isMobile} 
+              variant="outline" 
+              className="flex items-center justify-center gap-2 h-10"
+              disabled={isMobile}
+              onClick={isMobile ? undefined : undefined}
+            >
+              {isMobile ? (
+                <span>
+                  <FileText className="h-4 w-4" />
+                  PDF für Behörden (Desktop)
+                </span>
+              ) : (
+                <Link href="/schiessnachweis/pdf-export">
+                  <FileText className="h-4 w-4" />
+                  PDF für Behörden
+                </Link>
+              )}
             </Button>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-3">

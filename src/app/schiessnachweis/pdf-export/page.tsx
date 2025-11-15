@@ -26,6 +26,7 @@ export default function PDFExportPage() {
   const [filterDisziplin, setFilterDisziplin] = useState<string>("alle");
   const [filterTyp, setFilterTyp] = useState<string>("alle");
   const [includeAIText, setIncludeAIText] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   // Persönliche Daten für Behörden-Nachweis
   const [personalData, setPersonalData] = useState({
@@ -40,8 +41,19 @@ export default function PDFExportPage() {
   });
 
   useEffect(() => {
+    // Mobile Detection
+    const checkMobile = () => {
+      const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
     loadData();
     loadPersonalData();
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const loadData = () => {
@@ -379,6 +391,59 @@ export default function PDFExportPage() {
   };
 
   const filteredData = getFilteredData();
+
+  // Mobile Warnung anzeigen
+  if (isMobile) {
+    return (
+      <div className="container mx-auto p-6 max-w-2xl">
+        <div className="mb-6">
+          <Button asChild variant="ghost" className="mb-4">
+            <Link href="/schiessnachweis">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Zurück zum Schießnachweis
+            </Link>
+          </Button>
+          
+          <div className="flex items-center gap-3 mb-2">
+            <FileText className="h-8 w-8 text-blue-600" />
+            <h1 className="text-2xl font-bold">PDF-Export für Behörden</h1>
+          </div>
+        </div>
+
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader>
+            <CardTitle className="text-amber-800 flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Nur am Desktop verfügbar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4 text-amber-700">
+              <p>
+                💻 <strong>PDF-Export ist nur am Desktop-PC verfügbar.</strong>
+              </p>
+              <p>
+                Die PDF-Erstellung benötigt erweiterte Browser-Funktionen, die auf mobilen Geräten nicht zuverlässig funktionieren.
+              </p>
+              <div className="bg-white p-4 rounded border border-amber-200">
+                <h4 className="font-semibold mb-2">So erstellen Sie Ihren Behörden-Nachweis:</h4>
+                <ol className="list-decimal list-inside space-y-1 text-sm">
+                  <li>Öffnen Sie die App am Desktop-PC oder Laptop</li>
+                  <li>Gehen Sie zu Schießnachweis → PDF für Behörden</li>
+                  <li>Füllen Sie Ihre persönlichen Daten aus</li>
+                  <li>Wählen Sie den gewünschten Zeitraum</li>
+                  <li>Erstellen Sie das PDF mit einem Klick</li>
+                </ol>
+              </div>
+              <p className="text-sm">
+                📱 <strong>Alternative:</strong> Nutzen Sie den CSV-Export in den Einstellungen - dieser funktioniert auch mobil und kann am PC geöffnet werden.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
