@@ -43,9 +43,10 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
         },
         body: JSON.stringify({
           text: text,
-          context: `Erkenne Schießergebnisse aus digitaler Schießanlage für Disziplin: ${disziplin}. 
-          Format kann sein: Meyton, Sius, Disag, Sport Quantum.
-          Extrahiere Serien und Einzelschüsse mit Kommastellen.`
+          context: `Erkenne Schießergebnisse für Schießnachweis aus digitaler Schießanlage für Disziplin: ${disziplin}. 
+          Format kann sein: Meyton, Sius, Disag, Sport Quantum oder manuell eingegebene Daten.
+          Extrahiere Serien und Einzelschüsse mit Kommastellen (z.B. 10.5, 9.8, 10.1).
+          Wichtig: Erkenne auch Serien-Strukturen und Gesamtergebnisse für persönliches Schießtagebuch.`
         })
       });
       
@@ -174,7 +175,10 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
     try {
       const formData = new FormData();
       formData.append('image', file);
-      formData.append('context', `Erkenne Schießergebnisse aus digitaler Schießanlage für Disziplin: ${disziplin}. Extrahiere Serien und Einzelschüsse mit Kommastellen.`);
+      formData.append('context', `Erkenne Schießergebnisse für Schießnachweis aus digitaler Schießanlage oder Bildschirm-Foto für Disziplin: ${disziplin}. 
+      Extrahiere alle Einzelschüsse mit Kommastellen (z.B. 10.5, 9.8, 10.1). 
+      Format kann sein: Meyton, Sius, Disag, Sport Quantum oder handschriftliche Notizen.
+      Wichtig: Erkenne auch Serien-Strukturen und Gesamtergebnisse.`);
       
       const response = await fetch('/api/gemini-ocr', {
         method: 'POST',
@@ -286,92 +290,53 @@ Total: 50.3`}
           />
         </div>
         
-        {/* Mobile: Alle Buttons untereinander */}
-        {isMobile ? (
-          <div className="space-y-3">
-            <Button 
-              onClick={() => processDigitalResults(textInput)}
-              disabled={!textInput.trim() || isProcessing}
-              className="flex items-center justify-center gap-2 w-full"
-            >
-              <FileText className="h-4 w-4" />
-              {isProcessing ? 'Verarbeite...' : 'Text importieren'}
-            </Button>
-            
-            {/* Foto-Upload (Mobile) */}
-            <div className="relative">
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handlePhotoUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                disabled={isProcessing || isPhotoProcessing}
-              />
-              <Button variant="outline" disabled={isProcessing || isPhotoProcessing} className="flex items-center justify-center gap-2 w-full">
-                <Camera className="h-4 w-4" />
-                {isPhotoProcessing ? 'Analysiere...' : 'Foto aufnehmen'}
-              </Button>
-            </div>
-            
-            {/* Galerie-Upload (Mobile) */}
-            <div className="relative">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                disabled={isProcessing || isPhotoProcessing}
-              />
-              <Button variant="outline" disabled={isProcessing || isPhotoProcessing} className="flex items-center justify-center gap-2 w-full">
-                <Image className="h-4 w-4" />
-                Aus Galerie wählen
-              </Button>
-            </div>
-            
-            {/* Datei-Upload (Mobile) */}
-            <div className="relative">
-              <input
-                type="file"
-                accept=".txt,.csv"
-                onChange={handleFileUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                disabled={isProcessing || isPhotoProcessing}
-              />
-              <Button variant="outline" disabled={isProcessing || isPhotoProcessing} className="flex items-center justify-center gap-2 w-full">
-                <Upload className="h-4 w-4" />
-                Datei hochladen
-              </Button>
-            </div>
+        {/* Buttons für alle Geräte */}
+        <div className="space-y-3">
+          <Button 
+            onClick={() => processDigitalResults(textInput)}
+            disabled={!textInput.trim() || isProcessing}
+            className="flex items-center justify-center gap-2 w-full"
+          >
+            <FileText className="h-4 w-4" />
+            {isProcessing ? 'Verarbeite...' : 'Text importieren'}
+          </Button>
+          
+          {/* Kamera-Button für Mobile */}
+          <div className="block md:hidden">
+            <Input 
+              type="file" 
+              accept="image/*" 
+              capture="environment"
+              onChange={handlePhotoUpload}
+              className="bg-white border-2 border-dashed border-green-300 p-4 text-center cursor-pointer hover:border-green-400"
+              disabled={isProcessing || isPhotoProcessing}
+            />
+            <p className="text-xs text-center text-green-700 mt-1">📸 Kamera öffnen</p>
           </div>
-        ) : (
-          /* Desktop: Buttons nebeneinander */
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button 
-              onClick={() => processDigitalResults(textInput)}
-              disabled={!textInput.trim() || isProcessing}
-              className="flex items-center justify-center gap-2"
-            >
-              <FileText className="h-4 w-4" />
-              {isProcessing ? 'Verarbeite...' : 'Text importieren'}
-            </Button>
-            
-            {/* Datei-Upload (Desktop) */}
-            <div className="relative">
-              <input
-                type="file"
-                accept=".txt,.csv"
-                onChange={handleFileUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                disabled={isProcessing || isPhotoProcessing}
-              />
-              <Button variant="outline" disabled={isProcessing || isPhotoProcessing} className="flex items-center justify-center gap-2 w-full">
-                <Upload className="h-4 w-4" />
-                Datei hochladen
-              </Button>
-            </div>
+          
+          {/* Galerie/Datei-Auswahl für alle Geräte */}
+          <div>
+            <Input 
+              type="file" 
+              accept="image/*,.txt,.csv" 
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  if (file.type.startsWith('image/')) {
+                    handlePhotoUpload(e);
+                  } else {
+                    handleFileUpload(e);
+                  }
+                }
+              }}
+              className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
+              disabled={isProcessing || isPhotoProcessing}
+            />
+            <p className="text-xs text-center text-blue-700 mt-1">
+              📁 Aus Galerie/Dateien wählen (Bilder, .txt, .csv)
+            </p>
           </div>
-        )}
+        </div>
         
         {/* Hinweise */}
         <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">

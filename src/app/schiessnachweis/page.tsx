@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
+import { PremiumService } from "@/lib/services/premium-service";
 import { SchießStatistik } from "@/types/schiessnachweis";
 import { CloudSyncStatus } from "@/components/schiessnachweis/CloudSyncStatus";
 import { PremiumProvider } from "@/components/schiessnachweis/PremiumProvider";
@@ -22,7 +23,24 @@ export default function SchießnachweisPage() {
 
   useEffect(() => {
     loadStatistik();
+    // Automatisches Cloud-Sync beim ersten Laden
+    checkAndSyncFromCloud();
   }, []);
+  
+  const checkAndSyncFromCloud = async () => {
+    try {
+      // Prüfe ob Premium und eingeloggt
+      if (await PremiumService.isPremium()) {
+        const cloudEinträge = await SchießnachweisService.loadFromCloudNow();
+        if (cloudEinträge.length > 0) {
+          console.log('🔄 Automatisches Cloud-Sync:', cloudEinträge.length, 'Einträge');
+          loadStatistik(); // Statistik neu laden
+        }
+      }
+    } catch (error) {
+      console.log('Cloud-Sync übersprungen:', error.message);
+    }
+  };
 
   const loadStatistik = () => {
     setIsLoading(true);
@@ -185,13 +203,41 @@ export default function SchießnachweisPage() {
 
   const handleCloudSync = async () => {
     try {
+      const lokaleEinträge = SchießnachweisService.getEinträge();
       const cloudEinträge = await SchießnachweisService.loadFromCloudNow();
+      
       if (cloudEinträge.length > 0) {
-        toast({
-          title: "✅ Cloud-Sync erfolgreich",
-          description: `${cloudEinträge.length} Einträge aus der Cloud geladen.`,
+        // Merge: Kombiniere lokale und Cloud-Daten
+        const alleEinträge = [...lokaleEinträge];
+        let neueEinträge = 0;
+        
+        cloudEinträge.forEach(cloudEintrag => {
+          const existiert = alleEinträge.some(lokal => 
+            Math.abs(lokal.datum.getTime() - cloudEintrag.datum.getTime()) < 24 * 60 * 60 * 1000 &&
+            lokal.disziplin === cloudEintrag.disziplin &&
+            lokal.ergebnis === cloudEintrag.ergebnis
+          );
+          
+          if (!existiert) {
+            alleEinträge.push(cloudEintrag);
+            neueEinträge++;
+          }
         });
-        loadStatistik();
+        
+        // Speichere kombinierte Daten
+        if (neueEinträge > 0) {
+          localStorage.setItem('rwk_schiessnachweis', JSON.stringify(alleEinträge));
+          toast({
+            title: "✅ Cloud-Sync erfolgreich",
+            description: `${neueEinträge} neue Einträge aus der Cloud hinzugefügt.`,
+          });
+          loadStatistik();
+        } else {
+          toast({
+            title: "ℹ️ Bereits aktuell",
+            description: "Alle Cloud-Daten sind bereits vorhanden.",
+          });
+        }
       } else {
         toast({
           title: "Keine Cloud-Daten",
@@ -466,7 +512,7 @@ export default function SchießnachweisPage() {
                 </Button>
                 <Button onClick={handleCloudSync} variant="outline" size="sm" className="flex items-center justify-center gap-2">
                   <Download className="h-4 w-4" />
-                  Aus Cloud laden
+                  Cloud-Daten hinzufügen
                 </Button>
                 <input
                   id="csv-import"
