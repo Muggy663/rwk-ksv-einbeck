@@ -228,7 +228,17 @@ export default function EinträgePage() {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">
-                          {format(eintrag.datum, 'dd.MM.yyyy', { locale: de })}
+                          {(() => {
+                            try {
+                              const datum = eintrag.datum instanceof Date ? eintrag.datum : new Date(eintrag.datum);
+                              if (isNaN(datum.getTime()) || datum.getFullYear() < 2020) {
+                                return 'Ungültiges Datum';
+                              }
+                              return format(datum, 'dd.MM.yyyy', { locale: de });
+                            } catch (e) {
+                              return 'Datum-Fehler';
+                            }
+                          })()} 
                         </span>
                       </div>
                       {getTypBadge(eintrag.typ)}
@@ -338,7 +348,17 @@ export default function EinträgePage() {
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Datum</label>
                   <div className="text-lg font-semibold">
-                    {format(selectedEintrag.datum, 'EEEE, dd. MMMM yyyy', { locale: de })}
+                    {(() => {
+                      try {
+                        const datum = selectedEintrag.datum instanceof Date ? selectedEintrag.datum : new Date(selectedEintrag.datum);
+                        if (isNaN(datum.getTime()) || datum.getFullYear() < 2020) {
+                          return 'Ungültiges Datum';
+                        }
+                        return format(datum, 'EEEE, dd. MMMM yyyy', { locale: de });
+                      } catch (e) {
+                        return 'Datum-Fehler';
+                      }
+                    })()} 
                   </div>
                 </div>
                 <div>

@@ -107,6 +107,37 @@ export default function DebugPage() {
               <Database className="h-4 w-4 mr-2" />
               Test-Eintrag erstellen
             </Button>
+            <Button 
+              onClick={() => {
+                try {
+                  const data = localStorage.getItem('rwk_schiessnachweis');
+                  if (data) {
+                    const parsed = JSON.parse(data);
+                    const fixed = parsed.map((eintrag: any) => {
+                      let datum = new Date(eintrag.datum);
+                      if (isNaN(datum.getTime()) || datum.getFullYear() < 2020) {
+                        datum = new Date();
+                        addLog(`🔧 Repariere Datum für Eintrag: ${eintrag.id}`);
+                      }
+                      return {
+                        ...eintrag,
+                        datum: datum.toISOString()
+                      };
+                    });
+                    localStorage.setItem('rwk_schiessnachweis', JSON.stringify(fixed));
+                    localStorage.setItem('rwk_schiessnachweis_backup', JSON.stringify(fixed));
+                    addLog(`✅ ${fixed.length} Einträge repariert`);
+                    toast({ title: "Daten repariert", description: `${fixed.length} Einträge mit korrigierten Daten.` });
+                  }
+                } catch (error) {
+                  addLog(`❌ Reparatur fehlgeschlagen: ${error}`);
+                }
+              }}
+              variant="outline" 
+              className="w-full bg-green-50 border-green-200 text-green-800 hover:bg-green-100"
+            >
+              📅 Daten reparieren (01.01.1970 Fix)
+            </Button>
             <Button onClick={activatePremium} variant="outline" className="w-full">
               <User className="h-4 w-4 mr-2" />
               Premium aktivieren

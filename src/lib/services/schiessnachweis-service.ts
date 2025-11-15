@@ -79,11 +79,27 @@ export class SchießnachweisService {
         return [];
       }
       
-      const einträge = JSON.parse(data).map((eintrag: any) => ({
-        ...eintrag,
-        datum: new Date(eintrag.datum),
-        createdAt: new Date(eintrag.createdAt)
-      }));
+      const einträge = JSON.parse(data).map((eintrag: any) => {
+        // Robuste Datum-Konvertierung
+        let datum = new Date(eintrag.datum);
+        let createdAt = new Date(eintrag.createdAt || eintrag.datum);
+        
+        // Fallback für ungültige Daten
+        if (isNaN(datum.getTime())) {
+          console.warn('Ungültiges Datum gefunden:', eintrag.datum, 'verwende heutiges Datum');
+          datum = new Date();
+        }
+        
+        if (isNaN(createdAt.getTime())) {
+          createdAt = datum;
+        }
+        
+        return {
+          ...eintrag,
+          datum,
+          createdAt
+        };
+      });
       
       // Cache aktualisieren
       cachedEinträge = einträge;
@@ -234,11 +250,24 @@ export class SchießnachweisService {
           
           getRequest.onsuccess = () => {
             if (getRequest.result && getRequest.result.data) {
-              resolve(getRequest.result.data.map((eintrag: any) => ({
-                ...eintrag,
-                datum: new Date(eintrag.datum),
-                createdAt: new Date(eintrag.createdAt)
-              })));
+              resolve(getRequest.result.data.map((eintrag: any) => {
+                let datum = new Date(eintrag.datum);
+                let createdAt = new Date(eintrag.createdAt || eintrag.datum);
+                
+                if (isNaN(datum.getTime())) {
+                  datum = new Date();
+                }
+                
+                if (isNaN(createdAt.getTime())) {
+                  createdAt = datum;
+                }
+                
+                return {
+                  ...eintrag,
+                  datum,
+                  createdAt
+                };
+              }));
             } else {
               resolve([]);
             }
@@ -372,6 +401,32 @@ export class SchießnachweisService {
   }
   
   // Notfall-Wiederherstellung
+  // Debug-Funktion für Datum-Probleme
+  static debugDates(): void {
+    if (typeof window === 'undefined') return;
+    
+    console.log('🔍 Debug: Überprüfe Datum-Formate in localStorage...');
+    
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+      try {
+        const parsed = JSON.parse(data);
+        console.log('Raw data:', parsed);
+        
+        parsed.forEach((eintrag: any, index: number) => {
+          console.log(`Eintrag ${index}:`, {
+            originalDatum: eintrag.datum,
+            datumType: typeof eintrag.datum,
+            parsedDatum: new Date(eintrag.datum),
+            isValidDate: !isNaN(new Date(eintrag.datum).getTime())
+          });
+        });
+      } catch (e) {
+        console.error('Parse error:', e);
+      }
+    }
+  }
+  
   static recoverData(): { found: boolean; source: string; count: number } {
     if (typeof window === 'undefined') return { found: false, source: '', count: 0 };
     
