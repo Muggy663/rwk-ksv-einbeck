@@ -220,7 +220,7 @@ export default function EinträgePage() {
       ) : (
         <div className="space-y-4">
           {filteredEinträge.map((eintrag) => (
-            <Card key={eintrag.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedEintrag(eintrag)}>
+            <Card key={eintrag.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex-1">
@@ -228,17 +228,7 @@ export default function EinträgePage() {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">
-                          {(() => {
-                            try {
-                              const datum = eintrag.datum instanceof Date ? eintrag.datum : new Date(eintrag.datum);
-                              if (isNaN(datum.getTime()) || datum.getFullYear() < 2020) {
-                                return 'Ungültiges Datum';
-                              }
-                              return format(datum, 'dd.MM.yyyy', { locale: de });
-                            } catch (e) {
-                              return 'Datum-Fehler';
-                            }
-                          })()} 
+                          {format(eintrag.datum, 'dd.MM.yyyy', { locale: de })}
                         </span>
                       </div>
                       {getTypBadge(eintrag.typ)}
@@ -247,7 +237,14 @@ export default function EinträgePage() {
                           📊 {eintrag.serien.length} Serien
                         </Badge>
                       )}
-                      <Eye className="h-4 w-4 text-muted-foreground ml-auto" />
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setSelectedEintrag(eintrag)}
+                        className="ml-auto p-1 h-auto"
+                      >
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      </Button>
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
@@ -331,10 +328,10 @@ export default function EinträgePage() {
         </CardContent>
       </Card>
 
-      {/* Detail Modal */}
+      {/* Detail Modal - Mobile optimiert */}
       {selectedEintrag && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedEintrag(null)}>
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center p-0 md:p-4 z-50" onClick={() => setSelectedEintrag(null)}>
+          <Card className="w-full max-w-2xl max-h-[85vh] md:max-h-[90vh] overflow-y-auto rounded-t-lg md:rounded-lg" onClick={(e) => e.stopPropagation()}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Eintrag Details</span>
@@ -348,17 +345,7 @@ export default function EinträgePage() {
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Datum</label>
                   <div className="text-lg font-semibold">
-                    {(() => {
-                      try {
-                        const datum = selectedEintrag.datum instanceof Date ? selectedEintrag.datum : new Date(selectedEintrag.datum);
-                        if (isNaN(datum.getTime()) || datum.getFullYear() < 2020) {
-                          return 'Ungültiges Datum';
-                        }
-                        return format(datum, 'EEEE, dd. MMMM yyyy', { locale: de });
-                      } catch (e) {
-                        return 'Datum-Fehler';
-                      }
-                    })()} 
+                    {format(selectedEintrag.datum, 'EEEE, dd. MMMM yyyy', { locale: de })}
                   </div>
                 </div>
                 <div>

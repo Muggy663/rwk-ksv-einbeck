@@ -20,6 +20,9 @@ export class SchießnachweisService {
       return cachedEinträge;
     }
     
+    // Versuche zuerst Cloud-Daten zu laden
+    this.loadFromCloudSync();
+    
     try {
       // 1. Versuche localStorage
       let data = localStorage.getItem(STORAGE_KEY);
@@ -81,12 +84,26 @@ export class SchießnachweisService {
       
       const einträge = JSON.parse(data).map((eintrag: any) => {
         // Robuste Datum-Konvertierung
-        let datum = new Date(eintrag.datum);
-        let createdAt = new Date(eintrag.createdAt || eintrag.datum);
+        let datum;
+        let createdAt;
+        
+        // Firebase Timestamp oder ISO String
+        if (eintrag.datum && typeof eintrag.datum === 'object' && eintrag.datum.seconds) {
+          // Firebase Timestamp
+          datum = new Date(eintrag.datum.seconds * 1000);
+        } else {
+          // ISO String oder Date
+          datum = new Date(eintrag.datum);
+        }
+        
+        if (eintrag.createdAt && typeof eintrag.createdAt === 'object' && eintrag.createdAt.seconds) {
+          createdAt = new Date(eintrag.createdAt.seconds * 1000);
+        } else {
+          createdAt = new Date(eintrag.createdAt || eintrag.datum);
+        }
         
         // Fallback für ungültige Daten
         if (isNaN(datum.getTime())) {
-          console.warn('Ungültiges Datum gefunden:', eintrag.datum, 'verwende heutiges Datum');
           datum = new Date();
         }
         
@@ -251,8 +268,21 @@ export class SchießnachweisService {
           getRequest.onsuccess = () => {
             if (getRequest.result && getRequest.result.data) {
               resolve(getRequest.result.data.map((eintrag: any) => {
-                let datum = new Date(eintrag.datum);
-                let createdAt = new Date(eintrag.createdAt || eintrag.datum);
+                let datum;
+                let createdAt;
+                
+                // Firebase Timestamp oder ISO String
+                if (eintrag.datum && typeof eintrag.datum === 'object' && eintrag.datum.seconds) {
+                  datum = new Date(eintrag.datum.seconds * 1000);
+                } else {
+                  datum = new Date(eintrag.datum);
+                }
+                
+                if (eintrag.createdAt && typeof eintrag.createdAt === 'object' && eintrag.createdAt.seconds) {
+                  createdAt = new Date(eintrag.createdAt.seconds * 1000);
+                } else {
+                  createdAt = new Date(eintrag.createdAt || eintrag.datum);
+                }
                 
                 if (isNaN(datum.getTime())) {
                   datum = new Date();
@@ -401,6 +431,52 @@ export class SchießnachweisService {
   }
   
   // Notfall-Wiederherstellung
+  // Einmalige Reparatur für 01.01.1970 Problem
+  static repairDates(): void {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const data = localStorage.getItem(STORAGE_KEY);
+      if (data) {
+        const parsed = JSON.parse(data);
+        let repaired = false;
+        
+        const fixed = parsed.map((eintrag: any) => {
+          let datum = new Date(eintrag.datum);
+          
+          // Repariere 01.01.1970 Daten
+          if (datum.getFullYear() === 1970) {
+            // Verwende createdAt als Fallback oder heutiges Datum
+            const createdAt = new Date(eintrag.createdAt);
+            if (createdAt.getFullYear() > 2020) {
+              datum = createdAt;
+            } else {
+              datum = new Date(); // Heutiges Datum
+            }
+            repaired = true;
+          }
+          
+          return {
+            ...eintrag,
+            datum: datum.toISOString()
+          };
+        });
+        
+        if (repaired) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(fixed));
+          localStorage.setItem(BACKUP_KEY, JSON.stringify(fixed));
+          console.log('🔧 01.01.1970 Daten repariert');
+          
+          // Cache invalidieren
+          cachedEinträge = null;
+          lastCacheTime = 0;
+        }
+      }
+    } catch (error) {
+      console.error('Datum-Reparatur fehlgeschlagen:', error);
+    }
+  }
+  
   // Debug-Funktion für Datum-Probleme
   static debugDates(): void {
     if (typeof window === 'undefined') return;
@@ -463,5 +539,38 @@ export class SchießnachweisService {
     }
     
     return { found: false, source: '', count: 0 };
+  }
+  
+  // Synchrones Cloud-Laden
+  private static loadFromCloudSync(): void {
+    // Nur wenn Premium und angemeldet
+    import('@/lib/services/premium-service').then(({ PremiumService }) => {
+      import('@/lib/firebase/config').then(({ auth, db }) => {
+        if (auth.currentUser && PremiumService.isPremium()) {
+          import('firebase/firestore').then(({ doc, getDoc }) => {
+            const docRef = doc(db, 'schiessnachweis_data', auth.currentUser!.uid);
+            getDoc(docRef).then(docSnap => {
+              if (docSnap.exists()) {
+                const cloudData = docSnap.data();
+                if (cloudData.einträge) {
+                  const einträge = cloudData.einträge.map((eintrag: any) => ({
+                    ...eintrag,
+                    datum: eintrag.datum.toDate ? eintrag.datum.toDate() : new Date(eintrag.datum),
+                    createdAt: eintrag.createdAt.toDate ? eintrag.createdAt.toDate() : new Date(eintrag.createdAt)
+                  }));
+                  
+                  // Cache und localStorage aktualisieren
+                  cachedEinträge = einträge;
+                  lastCacheTime = Date.now();
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(einträge));
+                  
+                  console.log('☁️ Cloud-Daten geladen:', einträge.length);
+                }
+              }
+            }).catch(console.error);
+          });
+        }
+      });
+    });
   }
 }

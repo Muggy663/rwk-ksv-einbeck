@@ -107,8 +107,20 @@ export class CloudSyncService {
         throw new Error('Benutzer nicht angemeldet');
       }
       
+      // Entferne undefined Werte für Firebase
+      const cleanedEinträge = einträge.map(eintrag => {
+        const cleaned: any = {};
+        Object.keys(eintrag).forEach(key => {
+          const value = (eintrag as any)[key];
+          if (value !== undefined) {
+            cleaned[key] = value;
+          }
+        });
+        return cleaned;
+      });
+      
       const cloudData: CloudData = {
-        einträge,
+        einträge: cleanedEinträge,
         lastModified: new Date(),
         deviceId: this.getDeviceId()
       };
@@ -168,11 +180,11 @@ export class CloudSyncService {
       const cloudData = docSnap.data() as CloudData;
       console.log('✅ Firebase geladen:', auth.currentUser.uid, '- Einträge:', cloudData.einträge.length);
       
-      // Konvertiere Datum-Strings zurück zu Date-Objekten
+      // Konvertiere Firebase Timestamps zu Date-Objekten
       const einträge = cloudData.einträge.map(eintrag => ({
         ...eintrag,
-        datum: new Date(eintrag.datum),
-        createdAt: new Date(eintrag.createdAt)
+        datum: eintrag.datum.toDate ? eintrag.datum.toDate() : new Date(eintrag.datum),
+        createdAt: eintrag.createdAt.toDate ? eintrag.createdAt.toDate() : new Date(eintrag.createdAt)
       }));
 
       this.updateSyncStatus({

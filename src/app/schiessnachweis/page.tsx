@@ -22,6 +22,10 @@ export default function SchießnachweisPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Lösche localStorage und lade nur aus Firebase
+    localStorage.removeItem('rwk_schiessnachweis');
+    localStorage.removeItem('rwk_schiessnachweis_backup');
+    
     loadStatistik();
     // Automatisches Cloud-Sync beim ersten Laden
     checkAndSyncFromCloud();
@@ -34,7 +38,8 @@ export default function SchießnachweisPage() {
         const cloudEinträge = await SchießnachweisService.loadFromCloudNow();
         if (cloudEinträge.length > 0) {
           console.log('🔄 Automatisches Cloud-Sync:', cloudEinträge.length, 'Einträge');
-          loadStatistik(); // Statistik neu laden
+          // Erzwinge Reload der Seite um neue Daten anzuzeigen
+          window.location.reload();
         }
       }
     } catch (error) {
@@ -203,41 +208,20 @@ export default function SchießnachweisPage() {
 
   const handleCloudSync = async () => {
     try {
-      const lokaleEinträge = SchießnachweisService.getEinträge();
       const cloudEinträge = await SchießnachweisService.loadFromCloudNow();
       
       if (cloudEinträge.length > 0) {
-        // Merge: Kombiniere lokale und Cloud-Daten
-        const alleEinträge = [...lokaleEinträge];
-        let neueEinträge = 0;
+        // Überschreibe localStorage komplett mit Cloud-Daten
+        localStorage.setItem('rwk_schiessnachweis', JSON.stringify(cloudEinträge));
+        localStorage.setItem('rwk_schiessnachweis_backup', JSON.stringify(cloudEinträge));
         
-        cloudEinträge.forEach(cloudEintrag => {
-          const existiert = alleEinträge.some(lokal => 
-            Math.abs(lokal.datum.getTime() - cloudEintrag.datum.getTime()) < 24 * 60 * 60 * 1000 &&
-            lokal.disziplin === cloudEintrag.disziplin &&
-            lokal.ergebnis === cloudEintrag.ergebnis
-          );
-          
-          if (!existiert) {
-            alleEinträge.push(cloudEintrag);
-            neueEinträge++;
-          }
+        toast({
+          title: "✅ Cloud-Daten geladen",
+          description: `${cloudEinträge.length} Einträge aus der Cloud übernommen.`,
         });
         
-        // Speichere kombinierte Daten
-        if (neueEinträge > 0) {
-          localStorage.setItem('rwk_schiessnachweis', JSON.stringify(alleEinträge));
-          toast({
-            title: "✅ Cloud-Sync erfolgreich",
-            description: `${neueEinträge} neue Einträge aus der Cloud hinzugefügt.`,
-          });
-          loadStatistik();
-        } else {
-          toast({
-            title: "ℹ️ Bereits aktuell",
-            description: "Alle Cloud-Daten sind bereits vorhanden.",
-          });
-        }
+        // Seite neu laden um korrekte Daten anzuzeigen
+        window.location.reload();
       } else {
         toast({
           title: "Keine Cloud-Daten",

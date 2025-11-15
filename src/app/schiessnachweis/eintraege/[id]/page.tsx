@@ -90,6 +90,7 @@ export default function EintragBearbeitenPage() {
 
     setIsSaving(true);
     try {
+      console.log('Speichere Eintrag mit Standort:', eintrag.standort);
       const updated = SchießnachweisService.updateEintrag(eintrag.id, {
         datum: eintrag.datum,
         typ: eintrag.typ,
@@ -97,15 +98,22 @@ export default function EintragBearbeitenPage() {
         schussAnzahl: eintrag.schussAnzahl,
         ergebnis: eintrag.ergebnis,
         serien: serien.length > 0 ? serien : undefined,
-        standort: eintrag.standort,
-        schiessstand: eintrag.schiessstand,
-        wetter: eintrag.wetter,
-        munition: eintrag.munition,
-        waffe: eintrag.waffe,
-        notizen: eintrag.notizen
+        standort: eintrag.standort || 'Unbekannt',
+        schiessstand: eintrag.schiessstand || '',
+        wetter: eintrag.wetter || '',
+        munition: eintrag.munition || '',
+        waffe: eintrag.waffe || '',
+        notizen: eintrag.notizen || ''
       });
 
       if (updated) {
+        // Automatisch in Cloud synchronisieren
+        try {
+          await SchießnachweisService.syncToCloud();
+        } catch (syncError) {
+          console.log('Cloud-Sync nach Update fehlgeschlagen:', syncError);
+        }
+        
         toast({
           title: "✅ Gespeichert",
           description: "Eintrag wurde erfolgreich aktualisiert.",
