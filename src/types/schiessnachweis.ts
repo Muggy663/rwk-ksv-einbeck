@@ -80,6 +80,10 @@ export const DISZIPLINEN = [
   { name: 'Vorderlader 50m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Vorderlader', schussAnzahl: [40] },
   { name: 'Perkussionspistole 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Vorderlader', schussAnzahl: [40] },
   
+  // Blasrohr
+  { name: 'Blasrohr 10m', maxRinge: 10, serienGroesse: 6, kommastellen: false, kategorie: 'Blasrohr', schussAnzahl: [60] },
+  { name: 'Blasrohr 7m', maxRinge: 10, serienGroesse: 6, kommastellen: false, kategorie: 'Blasrohr', schussAnzahl: [60] },
+  
   // Sonstige
   { name: 'Sonstige Disziplin', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Sonstige', schussAnzahl: [10, 20, 30, 40, 60] }
 ] as const;
