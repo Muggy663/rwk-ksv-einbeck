@@ -1315,10 +1315,13 @@ function RwkTabellenPageComponent() {
         setAllIndividualDataForDiscipline(individualsInLeague); // Setze auch allIndividualData
 
         if (individualsInLeague.length > 0) {
-          const males = individualsInLeague.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'male' || s.shooterGender.toLowerCase() === 'm'));
+          // Filtere AK-Schützen (Außer Konkurrenz) aus der Bestenliste heraus
+          const shootersInCompetition = individualsInLeague.filter(s => !s.teamOutOfCompetition);
+          
+          const males = shootersInCompetition.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'male' || s.shooterGender.toLowerCase() === 'm'));
           setTopMaleShooter(males.length > 0 ? males[0] : null);
           
-          const females = individualsInLeague.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'female' || s.shooterGender.toLowerCase() === 'w'));
+          const females = shootersInCompetition.filter(s => s.shooterGender && (s.shooterGender.toLowerCase() === 'female' || s.shooterGender.toLowerCase() === 'w'));
           setTopFemaleShooter(females.length > 0 ? females[0] : null);
         }
       } else if (activeTab === 'einzelschützen' && !selectedIndividualLeagueFilter) {
