@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Search, Loader2, UserCog, Clock } from 'lucide-react';
+import { Edit, Trash2, Search, Loader2, UserCog } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy, doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 interface UserListProps {
   clubs: Club[];
@@ -59,35 +59,8 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
         };
       }) as UserPermission[];
       
-      // Letzte Login-Daten laden (nur für SuperAdmins)
-      const usersWithLoginData = await Promise.all(
-        fetchedUsers.map(async (user) => {
-          try {
-            const userDocRef = doc(db, 'users', user.uid);
-            const userDoc = await getDoc(userDocRef);
-            
-            if (userDoc.exists()) {
-              const userData = userDoc.data();
-              return {
-                ...user,
-                lastLogin: userData.lastLogin || null
-              };
-            }
-          } catch (error) {
-            // Berechtigungsfehler ignorieren - Login-Daten sind optional
-            if (error.code !== 'permission-denied') {
-              console.error(`Error fetching login data for user ${user.uid}:`, error);
-            }
-          }
-          return {
-            ...user,
-            lastLogin: null
-          };
-        })
-      );
-      
-      setUsers(usersWithLoginData);
-      setFilteredUsers(usersWithLoginData);
+      setUsers(fetchedUsers);
+      setFilteredUsers(fetchedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -153,10 +126,27 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
   };
 
   const getClubNames = (user: UserPermission) => {
-    const clubIds = user.representedClubs || (user.clubId ? [user.clubId] : []);
-    if (clubIds.length === 0) return '-';
+    // Sammle alle Club-IDs aus verschiedenen Quellen
+    const clubIds = new Set<string>();
     
-    const clubNames = clubIds.map(clubId => {
+    // Aus representedClubs
+    if (user.representedClubs) {
+      user.representedClubs.forEach(id => clubIds.add(id));
+    }
+    
+    // Aus clubId (Legacy)
+    if (user.clubId) {
+      clubIds.add(user.clubId);
+    }
+    
+    // Aus clubRoles (neue Struktur)
+    if (user.clubRoles) {
+      Object.keys(user.clubRoles).forEach(id => clubIds.add(id));
+    }
+    
+    if (clubIds.size === 0) return '-';
+    
+    const clubNames = Array.from(clubIds).map(clubId => {
       const club = clubs.find(c => c.id === clubId);
       return club ? club.name : 'Unbekannt';
     });
@@ -165,8 +155,21 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
   };
 
   const getClubCount = (user: UserPermission) => {
-    const clubIds = user.representedClubs || (user.clubId ? [user.clubId] : []);
-    return clubIds.length;
+    const clubIds = new Set<string>();
+    
+    if (user.representedClubs) {
+      user.representedClubs.forEach(id => clubIds.add(id));
+    }
+    
+    if (user.clubId) {
+      clubIds.add(user.clubId);
+    }
+    
+    if (user.clubRoles) {
+      Object.keys(user.clubRoles).forEach(id => clubIds.add(id));
+    }
+    
+    return clubIds.size;
   };
 
   const getRoleBadge = (user: UserPermission) => {
@@ -224,17 +227,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
     return roles.length > 0 ? <div className="flex flex-wrap gap-1">{roles}</div> : <Badge variant="outline">Keine Rolle</Badge>;
   };
 
-  const formatLastLogin = (lastLogin: any) => {
-    if (!lastLogin) return 'Nie';
-    
-    try {
-      const date = lastLogin.toDate ? lastLogin.toDate() : new Date(lastLogin);
-      return format(date, 'dd.MM.yyyy HH:mm', { locale: de });
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Unbekannt';
-    }
-  };
+
 
   return (
     <Card className="shadow-lg">
@@ -279,7 +272,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
                     <TableHead>Name</TableHead>
                     <TableHead>Rolle</TableHead>
                     <TableHead>Vereine</TableHead>
-                    <TableHead>Letzter Login</TableHead>
+                    <TableHead>Premium</TableHead>
                     <TableHead className="text-right">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -300,19 +293,22 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center">
-                                <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-                                <span>{formatLastLogin(user.lastLogin)}</span>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Letzter Login des Benutzers</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        {(user as any).isPremium ? (
+                          <div className="flex flex-col gap-1">
+                            <Badge variant="default" className="bg-yellow-500 text-white text-xs">
+                              📎 Premium
+                            </Badge>
+                            {(user as any).autoRenew && (
+                              <Badge variant="outline" className="text-xs">
+                                Auto-Renewal
+                              </Badge>
+                            )}
+                          </div>
+                        ) : (
+                          <Badge variant="outline" className="text-xs text-muted-foreground">
+                            Standard
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">

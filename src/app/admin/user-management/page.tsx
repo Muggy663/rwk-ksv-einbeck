@@ -48,7 +48,7 @@ interface UserPermissionFormData {
   selectedClubId: string;
   clubRole: string;
   selectedClubIds: string[];
-  vereinssoftwareLicense: boolean;
+
   isPremium: boolean;
   premiumMonths?: number;
   autoRenew?: boolean;
@@ -67,7 +67,7 @@ export default function AdminUserManagementPage() {
     selectedClubId: '',
     clubRole: 'NO_CLUB_ROLE',
     selectedClubIds: [],
-    vereinssoftwareLicense: false,
+
     isPremium: false,
     premiumMonths: 1,
     autoRenew: false,
@@ -78,7 +78,7 @@ export default function AdminUserManagementPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetchingDetails, setIsFetchingDetails] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [activeTab, setActiveTab] = useState("edit");
+  const [activeTab, setActiveTab] = useState("list");
 
   useEffect(() => {
     const fetchClubs = async () => {
@@ -110,6 +110,21 @@ export default function AdminUserManagementPage() {
       const docSnap = await getDoc(userPermDocRef);
       if (docSnap.exists()) {
         const data = docSnap.data() as UserPermission;
+        
+        const selectedClubIds = (() => {
+          const clubIds = new Set<string>();
+          if (data.representedClubs) {
+            data.representedClubs.forEach(id => clubIds.add(id));
+          }
+          if (data.clubId) {
+            clubIds.add(data.clubId);
+          }
+          if ((data as any).clubRoles) {
+            Object.keys((data as any).clubRoles).forEach(id => clubIds.add(id));
+          }
+          return Array.from(clubIds);
+        })();
+        
         setFormData({
           uid: uidToFetch.trim(),
           email: data.email || '',
@@ -118,9 +133,10 @@ export default function AdminUserManagementPage() {
           kvRole: (data as any).kvRole || 'NO_KV_ROLE',
           clubRole: Object.values((data as any).clubRoles || {})[0] || 'NO_CLUB_ROLE',
           selectedClubId: data.clubId || Object.keys((data as any).clubRoles || {})[0] || '',
-          selectedClubIds: data.representedClubs || (data.clubId ? [data.clubId] : []),
-          vereinssoftwareLicense: (data as any).vereinssoftwareLicense || false,
+          selectedClubIds,
           isPremium: (data as any).isPremium || false,
+          premiumMonths: 1,
+          autoRenew: (data as any).autoRenew || false,
         });
         toast({title: "Benutzerdaten geladen", description: `Berechtigungen für UID ${uidToFetch.trim()} geladen.`});
       } else {
@@ -168,9 +184,14 @@ export default function AdminUserManagementPage() {
       toast({ title: "E-Mail fehlt", description: "Bitte E-Mail des Benutzers eingeben.", variant: "warning" }); return;
     }
 
-    // Validierung: Club-Rollen benötigen Vereinszuweisung
-    if (formData.clubRole !== 'NO_CLUB_ROLE' && formData.selectedClubIds.length === 0) {
-      toast({ title: "Fehlende Vereinszuweisung", description: `Club-Rolle '${formData.clubRole}' benötigt mindestens einen Verein.`, variant: "destructive" }); return;
+    // Validierung: Club-Rollen oder KV-Rollen mit Vereinen benötigen Vereinszuweisung
+    const hasClubRole = formData.clubRole !== 'NO_CLUB_ROLE';
+    const hasKvRole = formData.kvRole !== 'NO_KV_ROLE';
+    const hasSelectedClubs = formData.selectedClubIds.length > 0;
+    
+    if ((hasClubRole || hasKvRole) && !hasSelectedClubs) {
+      const roleType = hasClubRole ? `Club-Rolle '${formData.clubRole}'` : `KV-Rolle '${formData.kvRole}'`;
+      toast({ title: "Fehlende Vereinszuweisung", description: `${roleType} benötigt mindestens einen Verein.`, variant: "destructive" }); return;
     }
 
     setIsSubmitting(true);
@@ -197,22 +218,31 @@ export default function AdminUserManagementPage() {
         permissionData.kvRole = formData.kvRole;
       }
       
-      // Club-Rolle (Multi-Verein)
-      if (formData.clubRole !== 'NO_CLUB_ROLE' && formData.selectedClubIds.length > 0) {
-        const clubRoles: Record<string, string> = {};
-        formData.selectedClubIds.forEach(clubId => {
-          clubRoles[clubId] = formData.clubRole;
-        });
-        permissionData.clubRoles = clubRoles;
+      // Vereine und Club-Rollen verwalten
+      if (formData.selectedClubIds.length > 0) {
+        // Immer representedClubs setzen, auch ohne Club-Rolle (für KV-Rollen)
         permissionData.representedClubs = formData.selectedClubIds;
         permissionData.clubId = formData.selectedClubIds[0]; // Hauptverein
+        
+        // Club-Rollen nur setzen wenn eine Club-Rolle ausgewählt ist
+        if (formData.clubRole !== 'NO_CLUB_ROLE') {
+          const clubRoles: Record<string, string> = {};
+          formData.selectedClubIds.forEach(clubId => {
+            clubRoles[clubId] = formData.clubRole;
+          });
+          permissionData.clubRoles = clubRoles;
+        } else {
+          // Keine Club-Rolle, aber Vereine für KV-Zugang behalten
+          permissionData.clubRoles = {};
+        }
+      } else {
+        // Keine Vereine ausgewählt
+        permissionData.clubRoles = {};
+        permissionData.representedClubs = [];
+        permissionData.clubId = null;
       }
       
-      // Vereinssoftware-Lizenz
-      if (formData.vereinssoftwareLicense) {
-        permissionData.vereinssoftwareLicense = true;
-        permissionData.vereinssoftwareLicenseActivatedAt = Timestamp.now();
-      }
+
       
       // Premium-Status
       if (formData.isPremium) {
@@ -230,14 +260,30 @@ export default function AdminUserManagementPage() {
         permissionData.autoRenew = false;
       }
 
-      await setDoc(userPermissionRef, permissionData, { merge: true });
+      // Erst bestehende Daten laden, dann gezielt überschreiben
+      const existingDoc = await getDoc(userPermissionRef);
+      let finalData = permissionData;
+      
+      if (existingDoc.exists()) {
+        const existingData = existingDoc.data();
+        // Behalte alle bestehenden Felder und überschreibe nur die neuen
+        finalData = {
+          ...existingData,
+          ...permissionData,
+          // Stelle sicher dass clubRoles komplett überschrieben wird
+          clubRoles: permissionData.clubRoles || {},
+          representedClubs: permissionData.representedClubs || [],
+        };
+      }
+      
+      await setDoc(userPermissionRef, finalData);
       toast({ title: "✅ Berechtigungen gespeichert", description: `3-Tier-Rollen für ${formData.email} erfolgreich gespeichert.` });
       
       // Form zurücksetzen
       setFormData({
         uid: '', email: '', displayName: '', 
         platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE',
-        selectedClubId: '', selectedClubIds: [], vereinssoftwareLicense: false, isPremium: false,
+        selectedClubId: '', selectedClubIds: [], isPremium: false,
         premiumMonths: 1, autoRenew: false,
       });
       
@@ -252,6 +298,20 @@ export default function AdminUserManagementPage() {
   };
   
   const handleEditUser = (user: UserPermission) => {
+    const selectedClubIds = (() => {
+      const clubIds = new Set<string>();
+      if (user.representedClubs) {
+        user.representedClubs.forEach(id => clubIds.add(id));
+      }
+      if (user.clubId) {
+        clubIds.add(user.clubId);
+      }
+      if ((user as any).clubRoles) {
+        Object.keys((user as any).clubRoles).forEach(id => clubIds.add(id));
+      }
+      return Array.from(clubIds);
+    })();
+    
     setFormData({
       uid: user.uid,
       email: user.email || '',
@@ -260,9 +320,10 @@ export default function AdminUserManagementPage() {
       kvRole: (user as any).kvRole || 'NO_KV_ROLE',
       clubRole: Object.values((user as any).clubRoles || {})[0] || 'NO_CLUB_ROLE',
       selectedClubId: user.clubId || Object.keys((user as any).clubRoles || {})[0] || '',
-      selectedClubIds: user.representedClubs || (user.clubId ? [user.clubId] : []),
-      vereinssoftwareLicense: (user as any).vereinssoftwareLicense || false,
+      selectedClubIds,
       isPremium: (user as any).isPremium || false,
+      premiumMonths: 1,
+      autoRenew: (user as any).autoRenew || false,
     });
     setActiveTab("edit");
   };
@@ -290,10 +351,9 @@ export default function AdminUserManagementPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 mb-6">
-          <TabsTrigger value="edit" className="text-xs md:text-sm">🎯 Benutzer verwalten</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="list" className="text-xs md:text-sm">Übersicht</TabsTrigger>
-          <TabsTrigger value="migrate" className="text-xs md:text-sm">🔄 Migration</TabsTrigger>
+          <TabsTrigger value="edit" className="text-xs md:text-sm">🎯 Benutzer verwalten</TabsTrigger>
         </TabsList>
         
 
@@ -307,7 +367,7 @@ export default function AdminUserManagementPage() {
                 <strong>Platform-Rollen:</strong> System-weite Berechtigungen (SUPER_ADMIN)<br/>
                 <strong>KV-Rollen:</strong> Kreisverband-Berechtigungen (KV_WETTKAMPFLEITER)<br/>
                 <strong>Club-Rollen:</strong> Vereins-spezifische Rollen (SPORTLEITER, VORSTAND, MANNSCHAFTSFÜHRER, etc.)<br/>
-                <strong>Lizenzen:</strong> Kostenpflichtige Module (Vereinssoftware)
+                <strong>Premium:</strong> Schießnachweis Premium-Features
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -372,21 +432,7 @@ export default function AdminUserManagementPage() {
                 </div>
                 
                 <div className="grid grid-cols-1 gap-6">
-                  <div className="space-y-1.5">
-                    <Label>💰 Vereinssoftware-Lizenz</Label>
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="vereinssoftwareLicense"
-                        checked={formData.vereinssoftwareLicense}
-                        onChange={(e) => setFormData(prev => ({ ...prev, vereinssoftwareLicense: e.target.checked }))}
-                        className="rounded"
-                      />
-                      <Label htmlFor="vereinssoftwareLicense" className="text-sm">
-                        Vereinssoftware-Lizenz aktivieren
-                      </Label>
-                    </div>
-                  </div>
+
                   
                   <div className="space-y-3">
                     <Label>💎 Premium-Status (Schießnachweis)</Label>
@@ -438,7 +484,42 @@ export default function AdminUserManagementPage() {
                   </div>
                 
                   <div className="space-y-1.5">
-                    <Label>🏠 Vereine auswählen (Multi-Verein)</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>🏠 Vereine auswählen (Multi-Verein)</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const allClubIds = allClubs.map(club => club.id);
+                            setFormData(prev => ({
+                              ...prev,
+                              selectedClubIds: allClubIds,
+                              selectedClubId: allClubIds.length > 0 ? allClubIds[0] : ''
+                            }));
+                          }}
+                          className="text-xs"
+                        >
+                          Alle auswählen
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              selectedClubIds: [],
+                              selectedClubId: ''
+                            }));
+                          }}
+                          className="text-xs"
+                        >
+                          Alle abwählen
+                        </Button>
+                      </div>
+                    </div>
                     <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
                       {allClubs.map(club => (
                         <div key={club.id} className="flex items-center space-x-2 py-1">
@@ -471,7 +552,7 @@ export default function AdminUserManagementPage() {
                       ))}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Club-Rollen benötigen mindestens einen Verein. Erster Verein = Hauptverein.
+                      Club-Rollen und KV-Rollen benötigen mindestens einen Verein. Erster Verein = Hauptverein.
                     </p>
                   </div>
                 </div>
@@ -499,160 +580,7 @@ export default function AdminUserManagementPage() {
           />
         </TabsContent>
         
-        <TabsContent value="migrate" className="space-y-4">
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-xl text-primary">🔄 Rollen-Migration</CardTitle>
-              <CardDescription>
-                <strong>Basis-Migration:</strong> Fügt neue Rollen hinzu, behält Legacy-Rollen.<br/>
-                <strong>Finale Migration:</strong> Entfernt alle Legacy-Rollen, nur noch 3-Tier-System.<br/>
-                • vereinsvertreter → SPORTLEITER<br/>
-                • vereinsvorstand → VORSTAND<br/>
-                • mannschaftsfuehrer → SPORTLEITER<br/>
-                • km_organisator → KV_WETTKAMPFLEITER
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <Button 
-                  onClick={async () => {
-                    console.log('🚀 Migration-Button geklickt');
-                    setIsSubmitting(true);
-                    try {
-                      const response = await fetch('/api/admin/migrate-roles', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' }
-                      });
-                      
-                      if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                      }
-                      
-                      const result = await response.json();
-                      
-                      if (result.success) {
-                        toast({ title: "✅ Migration erfolgreich", description: result.message });
-                        setRefreshTrigger(prev => prev + 1);
-                      } else {
-                        toast({ title: "❌ Migration fehlgeschlagen", description: result.error, variant: "destructive" });
-                      }
-                    } catch (error: any) {
-                      toast({ title: "❌ Fehler", description: error.message, variant: "destructive" });
-                    } finally {
-                      setIsSubmitting(false);
-                    }
-                  }}
-                  className="w-full"
-                  size="lg"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  🚀 Basis-Migration starten
-                </Button>
-                
-                <Button 
-                  onClick={async () => {
-                    setIsSubmitting(true);
-                    try {
-                      const response = await fetch('/api/admin/assign-roles', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'assign_sample_roles' })
-                      });
-                      
-                      const result = await response.json();
-                      
-                      if (result.success) {
-                        toast({ title: "✅ Rollen zugewiesen", description: result.message });
-                        setRefreshTrigger(prev => prev + 1);
-                      } else {
-                        toast({ title: "❌ Fehler", description: result.error, variant: "destructive" });
-                      }
-                    } catch (error: any) {
-                      toast({ title: "❌ Fehler", description: error.message, variant: "destructive" });
-                    } finally {
-                      setIsSubmitting(false);
-                    }
-                  }}
-                  className="w-full"
-                  variant="outline"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  🎯 Beispiel-Rollen zuweisen
-                </Button>
-                
-                <Button 
-                  onClick={async () => {
-                    if (!confirm('🔧 KV_KM_ORGA KORREKTUR: Nur 3 Benutzer sollen KV_KM_ORGA behalten (test-orga, stephanie.buenger, sportleitung-ksv-einbeck). Fortfahren?')) return;
-                    
-                    setIsSubmitting(true);
-                    try {
-                      const response = await fetch('/api/admin/fix-kv-roles', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' }
-                      });
-                      
-                      const result = await response.json();
-                      
-                      if (result.success) {
-                        toast({ title: "✅ KV_KM_ORGA Rollen korrigiert", description: result.message });
-                        console.log('Fix Log:', result.log);
-                        console.log('Stats:', result.stats);
-                        setRefreshTrigger(prev => prev + 1);
-                      } else {
-                        toast({ title: "❌ Korrektur fehlgeschlagen", description: result.error, variant: "destructive" });
-                      }
-                    } catch (error: any) {
-                      toast({ title: "❌ Fehler", description: error.message, variant: "destructive" });
-                    } finally {
-                      setIsSubmitting(false);
-                    }
-                  }}
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  🔧 KV_KM_ORGA Rollen korrigieren (nur 3 behalten)
-                </Button>
-                
-                <Button 
-                  onClick={async () => {
-                    if (!confirm('⚠️ FINALE MIGRATION: Alle Legacy-Rollen werden entfernt und durch neue 3-Tier-Rollen ersetzt. Fortfahren?')) return;
-                    
-                    setIsSubmitting(true);
-                    try {
-                      const response = await fetch('/api/admin/final-migration', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' }
-                      });
-                      
-                      const result = await response.json();
-                      
-                      if (result.success) {
-                        toast({ title: "✅ Finale Migration erfolgreich", description: result.message });
-                        console.log('Migration Log:', result.migrationLog);
-                        console.log('Stats:', result.stats);
-                        setRefreshTrigger(prev => prev + 1);
-                      } else {
-                        toast({ title: "❌ Migration fehlgeschlagen", description: result.error, variant: "destructive" });
-                      }
-                    } catch (error: any) {
-                      toast({ title: "❌ Fehler", description: error.message, variant: "destructive" });
-                    } finally {
-                      setIsSubmitting(false);
-                    }
-                  }}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  🔥 FINALE MIGRATION (Legacy-Rollen entfernen)
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+
       </Tabs>
 
       <Accordion type="single" collapsible className="w-full" defaultValue="anleitung-benutzeranlage">
