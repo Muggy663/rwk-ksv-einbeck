@@ -25,6 +25,7 @@ export default function PDFExportPage() {
   const [filterJahr, setFilterJahr] = useState<string>(new Date().getFullYear().toString());
   const [filterDisziplin, setFilterDisziplin] = useState<string>("alle");
   const [filterTyp, setFilterTyp] = useState<string>("alle");
+  const [includeAIText, setIncludeAIText] = useState<boolean>(false);
   
   // Persönliche Daten für Behörden-Nachweis
   const [personalData, setPersonalData] = useState({
@@ -152,6 +153,29 @@ export default function PDFExportPage() {
       pdf.text('Nachweis regelmäßiger Schießtätigkeit', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 20;
 
+      // Statistik-Daten vorbereiten
+      const stats = SchießnachweisService.getStatistik();
+      const filteredStats = {
+        totalSchüsse: filteredData.reduce((sum, e) => sum + e.schussAnzahl, 0),
+        totalTrainings: filteredData.filter(e => e.typ === 'training').length,
+        totalWettkämpfe: filteredData.filter(e => e.typ === 'wettkampf').length,
+        zeitraum: filterJahr !== "alle" ? `Jahr ${filterJahr}` : 'Gesamter Zeitraum'
+      };
+
+      // Optional: KI-generierter Begleittext
+      if (includeAIText) {
+        const aiText = await generateAIText(personalData, filteredStats);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        
+        const lines = pdf.splitTextToSize(aiText, pageWidth - 40);
+        lines.forEach((line: string) => {
+          pdf.text(line, 20, yPosition);
+          yPosition += 5;
+        });
+        yPosition += 10;
+      }
+
       // Persönliche Daten
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
@@ -186,14 +210,6 @@ export default function PDFExportPage() {
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
       
-      const stats = SchießnachweisService.getStatistik();
-      const filteredStats = {
-        totalSchüsse: filteredData.reduce((sum, e) => sum + e.schussAnzahl, 0),
-        totalTrainings: filteredData.filter(e => e.typ === 'training').length,
-        totalWettkämpfe: filteredData.filter(e => e.typ === 'wettkampf').length,
-        zeitraum: filterJahr !== "alle" ? `Jahr ${filterJahr}` : 'Gesamter Zeitraum'
-      };
-      
       const statsInfo = [
         `Zeitraum: ${filteredStats.zeitraum}`,
         `Trainingseinheiten: ${filteredStats.totalTrainings}`,
@@ -219,7 +235,7 @@ export default function PDFExportPage() {
       pdf.setFontSize(8);
       pdf.setFont('helvetica', 'bold');
       
-      const colWidths = [25, 20, 45, 25, 25, 30, 40];
+      const colWidths = [25, 30, 40, 25, 25, 30, 35];
       const headers = ['Datum', 'Typ', 'Disziplin', 'Schüsse', 'Ergebnis', 'Standort', 'Notizen'];
       let xPosition = 20;
       
@@ -245,8 +261,8 @@ export default function PDFExportPage() {
         xPosition = 20;
         const rowData = [
           format(eintrag.datum, 'dd.MM.yy', { locale: de }),
-          eintrag.typ === 'training' ? 'T' : 'W',
-          eintrag.disziplin.length > 20 ? eintrag.disziplin.substring(0, 17) + '...' : eintrag.disziplin,
+          eintrag.typ === 'training' ? 'Training' : 'Wettkampf',
+          eintrag.disziplin.length > 15 ? eintrag.disziplin.substring(0, 12) + '...' : eintrag.disziplin,
           eintrag.schussAnzahl.toString(),
           eintrag.ergebnis.toString(),
           eintrag.standort.length > 15 ? eintrag.standort.substring(0, 12) + '...' : eintrag.standort,
@@ -290,6 +306,67 @@ export default function PDFExportPage() {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const generateAIText = async (personalData: any, stats: any) => {
+    try {
+      console.log('🤖 Starte KI-Textgenerierung...');
+      console.log('Personal Data:', personalData);
+      console.log('Stats:', stats);
+      
+      const response = await fetch('/api/gemini/behoerdentext', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ personalData, stats })
+      });
+      
+      console.log('Response Status:', response.status);
+      console.log('Response OK:', response.ok);
+      
+      if (!response.ok) {
+        console.error('API Response nicht OK:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('Error Response Text:', errorText);
+        return generateFallbackText(personalData, stats);
+      }
+      
+      const data = await response.json();
+      console.log('API Response Data:', data);
+      
+      if (data.success) {
+        const finalText = `Sehr geehrte Damen und Herren,\n\n${data.text}\n\nMit freundlichen Grüßen`;
+        console.log('✅ KI-Text erfolgreich generiert');
+        return finalText;
+      } else {
+        console.warn('⚠️ API meldet Fehler:', data.error);
+        return generateFallbackText(personalData, stats);
+      }
+    } catch (error) {
+      console.error('❌ Fehler bei KI-Textgenerierung:', error);
+      return generateFallbackText(personalData, stats);
+    }
+  };
+  
+  const generateFallbackText = (personalData: any, stats: any) => {
+    const vereinsname = personalData.vereinsname || 'meinem Schützenverein';
+    let vereinText;
+    
+    if (personalData.vereinsname) {
+      if (vereinsname.includes('Schützengilde') || vereinsname.includes('Gilde')) {
+        vereinText = `in der ${vereinsname}`;
+      } else if (vereinsname.startsWith('SC ') || vereinsname.startsWith('KSV ') || vereinsname.includes('Verein')) {
+        vereinText = `im ${vereinsname}`;
+      } else {
+        vereinText = `im ${vereinsname}`; // Default für unbekannte Vereine
+      }
+    } else {
+      vereinText = 'in meinem Schützenverein';
+    }
+    
+    const trainingsText = stats.totalTrainings > 0 ? `regelmäßig trainiere (${stats.totalTrainings} Trainingseinheiten)` : 'regelmäßig trainiere';
+    const wettkampfText = stats.totalWettkämpfe > 0 ? `an ${stats.totalWettkämpfe} Wettkämpfen teilgenommen habe` : 'an Wettkämpfen teilnehme';
+    
+    return `Sehr geehrte Damen und Herren,\n\nhiermit bestätige ich, dass ich ${vereinText} aktiv bin und ${trainingsText}. Im dokumentierten Zeitraum ${stats.zeitraum} habe ich ${wettkampfText} und insgesamt ${stats.totalSchüsse} Schüsse abgegeben.\n\nDie nachfolgende Aufstellung dokumentiert meine regelmäßige Schießtätigkeit gemäß den Anforderungen des Waffengesetzes.\n\nMit freundlichen Grüßen`;
   };
 
   const availableYears = () => {
@@ -439,43 +516,62 @@ export default function PDFExportPage() {
               <Label htmlFor="jahr">Jahr</Label>
               <NativeSelect
                 value={filterJahr}
-                onChange={setFilterJahr}
-              >
-                <option value="alle">Alle Jahre</option>
-                {availableYears().map(year => (
-                  <option key={year} value={year.toString()}>
-                    {year}
-                  </option>
-                ))}
-              </NativeSelect>
+                onValueChange={setFilterJahr}
+                options={[
+                  { value: "alle", label: "Alle Jahre" },
+                  ...availableYears().map(year => ({
+                    value: year.toString(),
+                    label: year.toString()
+                  }))
+                ]}
+              />
             </div>
             
             <div>
               <Label htmlFor="disziplin">Disziplin</Label>
               <NativeSelect
                 value={filterDisziplin}
-                onChange={setFilterDisziplin}
-              >
-                <option value="alle">Alle Disziplinen</option>
-                {DISZIPLIN_NAMES.map(disziplin => (
-                  <option key={disziplin} value={disziplin}>
-                    {disziplin}
-                  </option>
-                ))}
-              </NativeSelect>
+                onValueChange={setFilterDisziplin}
+                options={[
+                  { value: "alle", label: "Alle Disziplinen" },
+                  ...[...new Set(einträge.map(e => e.disziplin))].sort().map(disziplin => ({
+                    value: disziplin,
+                    label: disziplin
+                  }))
+                ]}
+              />
             </div>
             
             <div>
               <Label htmlFor="typ">Aktivitätstyp</Label>
               <NativeSelect
                 value={filterTyp}
-                onChange={setFilterTyp}
-              >
-                <option value="alle">Training & Wettkampf</option>
-                <option value="training">Nur Training</option>
-                <option value="wettkampf">Nur Wettkämpfe</option>
-              </NativeSelect>
+                onValueChange={setFilterTyp}
+                options={[
+                  { value: "alle", label: "Training & Wettkampf" },
+                  { value: "training", label: "Nur Training" },
+                  { value: "wettkampf", label: "Nur Wettkämpfe" }
+                ]}
+              />
             </div>
+            
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="aiText"
+                checked={includeAIText}
+                onChange={(e) => setIncludeAIText(e.target.checked)}
+                className="rounded"
+              />
+              <Label htmlFor="aiText" className="text-sm">
+                KI-Begleittext hinzufügen (Ich-Form)
+              </Label>
+            </div>
+            {includeAIText && (
+              <p className="text-xs text-muted-foreground">
+                🤖 Gemini AI erstellt einen professionellen Begleittext in Ich-Form
+              </p>
+            )}
             
             {/* Vorschau-Statistik */}
             <div className="bg-muted/30 p-4 rounded-lg">

@@ -1,6 +1,6 @@
 # 🎯 RWK Einbeck App
 
-**Version: 1.9.2.3** | **Android: 0.9.4.1**
+**Version: 1.9.2.4** | **Android: 0.9.4.1**
 
 > **Moderne Digitalisierung für Schießsport-Rundenwettkämpfe**
 

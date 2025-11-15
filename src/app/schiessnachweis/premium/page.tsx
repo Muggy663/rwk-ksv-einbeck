@@ -154,12 +154,20 @@ export default function PremiumPage() {
                   {subscription.expiresAt?.toLocaleDateString('de-DE')} um 00:00
                 </div>
               </div>
-              <div>
-                <div className="text-sm text-green-700 dark:text-green-300">Verbleibende Zeit:</div>
-                <div className="font-semibold text-lg">
-                  {PremiumService.getDaysRemaining()} Tage
+              {subscription.expiresAt && (
+                <div>
+                  <div className="text-sm text-green-700 dark:text-green-300">Verbleibende Zeit:</div>
+                  <div className="font-semibold text-lg">
+                    {(() => {
+                      const now = new Date();
+                      const expires = new Date(subscription.expiresAt);
+                      const diffTime = Math.max(0, expires.getTime() - now.getTime());
+                      const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                      return `${days} Tage`;
+                    })()} 
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             {subscription.autoRenew && (
               <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
@@ -229,32 +237,6 @@ export default function PremiumPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Zukünftige Preise */}
-          <Card className="opacity-60">
-            <CardHeader>
-              <CardTitle className="text-center">Geplante Preise (nach Testphase)</CardTitle>
-              <CardDescription className="text-center">Voraussichtlich ab Sommer 2025</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-muted/30 rounded-lg">
-                  <div className="text-xl font-bold">2,00€</div>
-                  <div className="text-sm text-muted-foreground">pro Monat</div>
-                </div>
-                <div className="text-center p-4 bg-muted/30 rounded-lg">
-                  <div className="text-xl font-bold">6,00€</div>
-                  <div className="text-sm text-muted-foreground">3 Monate</div>
-                </div>
-                <div className="text-center p-4 bg-muted/30 rounded-lg">
-                  <div className="text-xl font-bold">20,00€</div>
-                  <div className="text-sm text-muted-foreground">12 Monate</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-
 
           {/* Testphase Hinweise */}
           <Card className="bg-green-50 dark:bg-green-950/20 border-green-200">

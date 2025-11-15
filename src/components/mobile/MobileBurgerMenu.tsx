@@ -7,6 +7,7 @@ import { Menu, X, Home, Users, Trophy, FileText, User, BarChart3, Calendar, Book
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
+import { APP_VERSION } from '@/lib/version'
 
 interface NavItem {
   href: string
@@ -130,7 +131,7 @@ export function MobileBurgerMenu() {
           {/* Footer with safe area */}
           <div className="p-3 border-t pb-safe-area-bottom">
             <p className="text-xs text-muted-foreground text-center truncate">
-              RWK KSV Einbeck v1.9.2.3
+              RWK KSV Einbeck v{APP_VERSION.web}
             </p>
           </div>
         </div>

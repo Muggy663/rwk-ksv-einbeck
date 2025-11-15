@@ -5,41 +5,92 @@ import { PremiumService } from './premium-service';
 const STORAGE_KEY = 'rwk_schiessnachweis';
 const BACKUP_KEY = 'rwk_schiessnachweis_backup';
 
+// Cache für bessere Performance
+let cachedEinträge: SchießEintrag[] | null = null;
+let lastCacheTime = 0;
+const CACHE_DURATION = 5000; // 5 Sekunden Cache
+
 export class SchießnachweisService {
   static getEinträge(): SchießEintrag[] {
     if (typeof window === 'undefined') return [];
     
+    // Cache prüfen
+    const now = Date.now();
+    if (cachedEinträge && (now - lastCacheTime) < CACHE_DURATION) {
+      return cachedEinträge;
+    }
+    
     try {
-      // Versuche localStorage
+      // 1. Versuche localStorage
       let data = localStorage.getItem(STORAGE_KEY);
+      if (!data) {
+        console.log('🔍 Keine Daten gefunden, lade aus Backup...');
+      }
       
-      // Fallback zu sessionStorage
+      // 2. Fallback zu sessionStorage
       if (!data) {
         data = sessionStorage.getItem(STORAGE_KEY);
+        console.log('sessionStorage:', data ? `${data.length} Zeichen` : 'leer');
       }
       
-      // Fallback zu Backup
+      // 3. Fallback zu Backup
       if (!data) {
         data = localStorage.getItem(BACKUP_KEY);
+        console.log('localStorage (backup):', data ? `${data.length} Zeichen` : 'leer');
+      }
+      
+      // 4. Suche nach anderen möglichen Keys
+      if (!data) {
+        const allKeys = Object.keys(localStorage);
+        console.log('Alle localStorage Keys:', allKeys);
+        
+        // Suche nach ähnlichen Keys
+        const possibleKeys = allKeys.filter(key => 
+          key.includes('schiess') || key.includes('nachweis') || key.includes('rwk')
+        );
+        console.log('Mögliche Schießnachweis Keys:', possibleKeys);
+        
+        for (const key of possibleKeys) {
+          const testData = localStorage.getItem(key);
+          if (testData) {
+            try {
+              const parsed = JSON.parse(testData);
+              if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].disziplin) {
+                console.log(`✅ Daten gefunden in Key: ${key}`);
+                data = testData;
+                break;
+              }
+            } catch (e) {
+              // Ignore
+            }
+          }
+        }
       }
       
       if (!data) {
+        console.log('⚠️ Keine Daten in localStorage/sessionStorage gefunden');
         // Fallback zu IndexedDB (Cache-sicher)
         this.loadFromIndexedDB().then(indexedData => {
           if (indexedData.length > 0) {
-            console.log('💾 Daten aus IndexedDB wiederhergestellt');
+            console.log('💾 Daten aus IndexedDB wiederhergestellt:', indexedData.length);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(indexedData));
           }
         });
         return [];
       }
       
-      const einträge = JSON.parse(data);
-      return einträge.map((eintrag: any) => ({
+      const einträge = JSON.parse(data).map((eintrag: any) => ({
         ...eintrag,
         datum: new Date(eintrag.datum),
         createdAt: new Date(eintrag.createdAt)
       }));
+      
+      // Cache aktualisieren
+      cachedEinträge = einträge;
+      lastCacheTime = now;
+      
+      console.log(`✅ ${einträge.length} Einträge geladen`);
+      return einträge;
     } catch (error) {
       console.error('Fehler beim Laden der Einträge:', error);
       return [];
@@ -49,18 +100,22 @@ export class SchießnachweisService {
   static saveEintrag(eintrag: Omit<SchießEintrag, 'id' | 'createdAt'>): SchießEintrag {
     const neuerEintrag: SchießEintrag = {
       ...eintrag,
-      id: Date.now().toString(),
+      id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
       createdAt: new Date()
     };
 
     const einträge = this.getEinträge();
     einträge.push(neuerEintrag);
     
+    // Cache aktualisieren
+    cachedEinträge = einträge;
+    lastCacheTime = Date.now();
+    
     this.saveToStorage(einträge);
     
-    // Cloud-Sync für Premium-Nutzer
+    // Automatische Cloud-Sync für Premium-Nutzer
     if (PremiumService.isPremiumSync()) {
-      CloudSyncService.markPendingChanges();
+      CloudSyncService.autoSync(einträge);
     }
     
     return neuerEintrag;
@@ -73,11 +128,16 @@ export class SchießnachweisService {
     if (index === -1) return null;
     
     einträge[index] = { ...einträge[index], ...updates };
+    
+    // Cache aktualisieren
+    cachedEinträge = einträge;
+    lastCacheTime = Date.now();
+    
     this.saveToStorage(einträge);
     
-    // Cloud-Sync für Premium-Nutzer
+    // Automatische Cloud-Sync für Premium-Nutzer
     if (PremiumService.isPremiumSync()) {
-      CloudSyncService.markPendingChanges();
+      CloudSyncService.autoSync(einträge);
     }
     
     return einträge[index];
@@ -85,11 +145,16 @@ export class SchießnachweisService {
 
   static deleteEintrag(id: string): void {
     const einträge = this.getEinträge().filter(e => e.id !== id);
+    
+    // Cache aktualisieren
+    cachedEinträge = einträge;
+    lastCacheTime = Date.now();
+    
     this.saveToStorage(einträge);
     
-    // Cloud-Sync für Premium-Nutzer
+    // Automatische Cloud-Sync für Premium-Nutzer
     if (PremiumService.isPremiumSync()) {
-      CloudSyncService.markPendingChanges();
+      CloudSyncService.autoSync(einträge);
     }
   }
   
@@ -109,7 +174,7 @@ export class SchießnachweisService {
       // IndexedDB für persistente Speicherung (Cache-sicher)
       this.saveToIndexedDB(einträge);
       
-      console.log(`💾 ${einträge.length} Einträge gespeichert`);
+      console.log(`💾 ${einträge.length} Einträge gespeichert (Cache aktualisiert)`);
     } catch (error) {
       console.error('Speichern fehlgeschlagen:', error);
       // Fallback zu sessionStorage
@@ -273,6 +338,9 @@ export class SchießnachweisService {
   static async syncFromCloud(): Promise<void> {
     const cloudEinträge = await CloudSyncService.syncFromCloud();
     if (cloudEinträge.length > 0) {
+      // Cache invalidieren bei Cloud-Sync
+      cachedEinträge = null;
+      lastCacheTime = 0;
       this.saveToStorage(cloudEinträge);
     }
   }
@@ -283,5 +351,62 @@ export class SchießnachweisService {
   
   static getCloudInfo() {
     return CloudSyncService.getCloudInfo();
+  }
+  
+  static async loadFromCloudNow(): Promise<SchießEintrag[]> {
+    try {
+      console.log('🔄 Lade Daten aus Cloud...');
+      const cloudEinträge = await CloudSyncService.syncFromCloud();
+      if (cloudEinträge.length > 0) {
+        console.log('☁️ Cloud-Daten geladen:', cloudEinträge.length);
+        // Cache invalidieren bei Cloud-Sync
+        cachedEinträge = null;
+        lastCacheTime = 0;
+        this.saveToStorage(cloudEinträge);
+      }
+      return cloudEinträge;
+    } catch (error) {
+      console.error('Cloud-Sync fehlgeschlagen:', error);
+      throw error;
+    }
+  }
+  
+  // Notfall-Wiederherstellung
+  static recoverData(): { found: boolean; source: string; count: number } {
+    if (typeof window === 'undefined') return { found: false, source: '', count: 0 };
+    
+    console.log('🚨 Starte Datenwiederherstellung...');
+    
+    // Durchsuche alle localStorage Keys
+    const allKeys = Object.keys(localStorage);
+    console.log('Alle verfügbaren Keys:', allKeys);
+    
+    for (const key of allKeys) {
+      try {
+        const data = localStorage.getItem(key);
+        if (data) {
+          const parsed = JSON.parse(data);
+          
+          // Prüfe ob es Schießnachweis-Daten sind
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const firstItem = parsed[0];
+            if (firstItem && (firstItem.disziplin || firstItem.ergebnis || firstItem.schussAnzahl)) {
+              console.log(`✅ Schießnachweis-Daten gefunden in Key: ${key}`);
+              console.log('Daten:', parsed);
+              
+              // Wiederherstellen
+              localStorage.setItem(STORAGE_KEY, data);
+              localStorage.setItem(BACKUP_KEY, data);
+              
+              return { found: true, source: key, count: parsed.length };
+            }
+          }
+        }
+      } catch (e) {
+        // Ignore invalid JSON
+      }
+    }
+    
+    return { found: false, source: '', count: 0 };
   }
 }

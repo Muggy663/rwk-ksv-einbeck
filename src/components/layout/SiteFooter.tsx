@@ -1,10 +1,9 @@
 // src/components/layout/SiteFooter.tsx
 import Link from 'next/link';
-
+import { APP_VERSION } from '@/lib/version';
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
-  const version = "1.9.2.3";
 
   return (
     <footer className="py-6 md:px-8 md:py-0 border-t pb-safe-area-bottom pwa-safe-footer">
@@ -23,8 +22,8 @@ export function SiteFooter() {
         <div className="text-center text-sm text-muted-foreground md:text-right min-w-0 flex-shrink-0">
           <div className="flex flex-col items-center md:items-end gap-3 py-2">
             <div>
-              <p className="whitespace-nowrap">Web-Version 1.9.2.3</p>
-              <p className="text-xs mt-1 whitespace-nowrap">App-Version 0.9.4.1</p>
+              <p className="whitespace-nowrap">Web-Version {APP_VERSION.web}</p>
+              <p className="text-xs mt-1 whitespace-nowrap">App-Version {APP_VERSION.android}</p>
               <p className="text-xs mt-2 text-center md:text-right">
                 <Link href="/impressum" className="text-muted-foreground hover:text-primary underline">
                   Impressum

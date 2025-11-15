@@ -110,6 +110,9 @@ export default function AdminShootersPage() {
   // Sortierung
   const [sortField, setSortField] = useState<'lastName' | 'firstName' | 'clubId' | 'gender' | 'birthYear' | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  
+  // Suche
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
 
   const fetchInitialData = useCallback(async () => {
@@ -544,11 +547,29 @@ export default function AdminShootersPage() {
     return allClubsGlobal.find(c => c.id === selectedClubIdFilter)?.name || 'Unbekannt';
   }, [selectedClubIdFilter, allClubsGlobal]);
 
-  // Sortierte Schützen
-  const sortedShooters = useMemo(() => {
-    if (!sortField) return shootersOfActiveClub;
+  // Gefilterte und sortierte Schützen
+  const filteredAndSortedShooters = useMemo(() => {
+    // Erst filtern nach Suchbegriff
+    let filtered = shootersOfActiveClub;
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      filtered = shootersOfActiveClub.filter(shooter => {
+        const fullName = `${shooter.firstName || ''} ${shooter.lastName || ''}`.toLowerCase();
+        const clubName = getClubName(shooter).toLowerCase();
+        const teamInfo = getTeamInfoForShooter(shooter).toLowerCase();
+        
+        return fullName.includes(term) || 
+               clubName.includes(term) || 
+               teamInfo.includes(term) ||
+               (shooter.firstName || '').toLowerCase().includes(term) ||
+               (shooter.lastName || '').toLowerCase().includes(term);
+      });
+    }
     
-    return [...shootersOfActiveClub].sort((a, b) => {
+    // Dann sortieren
+    if (!sortField) return filtered;
+    
+    return [...filtered].sort((a, b) => {
       let aValue: string | number = '';
       let bValue: string | number = '';
       
@@ -586,7 +607,7 @@ export default function AdminShootersPage() {
       
       return 0;
     });
-  }, [shootersOfActiveClub, sortField, sortDirection, getClubName]);
+  }, [shootersOfActiveClub, sortField, sortDirection, searchTerm, getClubName, getTeamInfoForShooter]);
 
   const handleSort = (field: 'lastName' | 'firstName' | 'clubId' | 'gender' | 'birthYear') => {
     if (sortField === field) {
@@ -628,6 +649,12 @@ export default function AdminShootersPage() {
             </Button>
           </Link>
           <div className="flex flex-col md:flex-row gap-2">
+            <Input
+              placeholder="Schütze suchen (Name, Verein, Mannschaft)..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full md:w-[280px]"
+            />
              <NativeSelect
               value={selectedClubIdFilter}
               onValueChange={(value) => {
@@ -663,7 +690,7 @@ export default function AdminShootersPage() {
        <Card className="shadow-md">
         <CardHeader>
           <CardTitle>
-            Schützen für {selectedClubNameForTitle} ({shootersOfActiveClub.length})
+            Schützen für {selectedClubNameForTitle} ({filteredAndSortedShooters.length}{searchTerm ? ` von ${shootersOfActiveClub.length}` : ''})
           </CardTitle>
           <CardDescription>
             Verwalten Sie hier die Schützen. Die Zuweisung zu Mannschaften kann hier beim Anlegen oder über die Mannschaftsverwaltung erfolgen.
@@ -673,11 +700,11 @@ export default function AdminShootersPage() {
         <CardContent>
            {isLoadingClubSpecificData ? (
              <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2">Lade Schützen...</p></div>
-           ) : shootersOfActiveClub.length > 0 ? (
+           ) : filteredAndSortedShooters.length > 0 ? (
              <>
                {/* Mobile Card Layout */}
                <div className="block md:hidden space-y-4">
-                 {sortedShooters.map((shooter) => (
+                 {filteredAndSortedShooters.map((shooter) => (
                    <Card key={shooter.id} className="p-4">
                      <div className="space-y-3">
                        <div className="flex items-center justify-between">
@@ -769,22 +796,22 @@ export default function AdminShootersPage() {
                   <TableHead className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Checkbox 
-                        checked={selectedShootersForDelete.length === sortedShooters.length && sortedShooters.length > 0}
+                        checked={selectedShootersForDelete.length === filteredAndSortedShooters.length && filteredAndSortedShooters.length > 0}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            setSelectedShootersForDelete(sortedShooters.map(s => s.id));
+                            setSelectedShootersForDelete(filteredAndSortedShooters.map(s => s.id));
                           } else {
                             setSelectedShootersForDelete([]);
                           }
                         }}
-                        disabled={isFormSubmitting || isDeleting || sortedShooters.length === 0}
+                        disabled={isFormSubmitting || isDeleting || filteredAndSortedShooters.length === 0}
                       />
                       Aktionen
                     </div>
                   </TableHead>
               </TableRow></TableHeader>
               <TableBody>
-                {sortedShooters.map((shooter) => (
+                {filteredAndSortedShooters.map((shooter) => (
                   <TableRow key={shooter.id}>
                     <TableCell>{shooter.lastName}</TableCell><TableCell>{shooter.firstName}</TableCell>
                     <TableCell>{getClubName(shooter)}</TableCell>
@@ -826,8 +853,21 @@ export default function AdminShootersPage() {
           ) : (
             <div className="p-6 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <UserIcon className="mx-auto h-10 w-10 text-primary/70 mb-3" />
-              <p className="text-lg">{selectedClubIdFilter !== ALL_CLUBS_FILTER_VALUE && selectedClubIdFilter !== "" ? `Keine Schützen für "${selectedClubNameForTitle}" gefunden.` : (allClubsGlobal.length === 0 ? 'Bitte zuerst Vereine anlegen.' : 'Keine Schützen angelegt oder Filter aktiv.')}</p>
-               {allClubsGlobal.length > 0 && <p className="text-sm mt-1">Klicken Sie auf "Neuen Schützen anlegen".</p>}
+              <p className="text-lg">
+                {searchTerm ? 
+                  `Keine Schützen für "${searchTerm}" gefunden.` :
+                  (selectedClubIdFilter !== ALL_CLUBS_FILTER_VALUE && selectedClubIdFilter !== "" ? 
+                    `Keine Schützen für "${selectedClubNameForTitle}" gefunden.` : 
+                    (allClubsGlobal.length === 0 ? 'Bitte zuerst Vereine anlegen.' : 'Keine Schützen angelegt oder Filter aktiv.')
+                  )
+                }
+              </p>
+              {searchTerm && (
+                <p className="text-sm mt-1">Versuchen Sie einen anderen Suchbegriff oder löschen Sie die Suche.</p>
+              )}
+              {!searchTerm && allClubsGlobal.length > 0 && (
+                <p className="text-sm mt-1">Klicken Sie auf "Neuen Schützen anlegen".</p>
+              )}
             </div>
           )}
         </CardContent>

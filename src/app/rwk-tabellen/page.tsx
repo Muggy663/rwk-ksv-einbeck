@@ -1104,7 +1104,11 @@ function RwkTabellenPageComponent() {
                 if (shooterData.title) nameParts.push(shooterData.title);
                 displayName = nameParts.join(' ');
               }
-              shooterNamesMap.set(doc.id, displayName);
+              // Speichere sowohl Namen als auch Geschlecht
+              shooterNamesMap.set(doc.id, {
+                name: displayName,
+                gender: shooterData.gender || 'unknown'
+              });
             });
           }
         } catch (error) {
@@ -1136,11 +1140,12 @@ function RwkTabellenPageComponent() {
             }
           }
           
-          const shooterName = shooterNamesMap.get(shooterId) || `Schütze ${shooterId.substring(0,8)}`;
+          const shooterInfo = shooterNamesMap.get(shooterId);
+          const shooterName = shooterInfo?.name || `Schütze ${shooterId.substring(0,8)}`;
           
           const shooterData = {
             shooterId, shooterName,
-            shooterGender: 'unknown', teamName,
+            shooterGender: shooterInfo?.gender || 'unknown', teamName,
             results: initialResults, totalScore: 0, averageScore: null, roundsShot: 0,
             competitionYear: config.year, leagueId, leagueType,
             teamOutOfCompetition, teamOutOfCompetitionReason,
@@ -1158,11 +1163,12 @@ function RwkTabellenPageComponent() {
           const initialResults: { [key: string]: number | null } = {};
           for (let r = 1; r <= numRoundsForCompetition; r++) initialResults[`dg${r}`] = null;
           
-          const shooterName = shooterNamesMap.get(score.shooterId) || score.shooterName || "Unbek. Schütze";
+          const shooterInfo = shooterNamesMap.get(score.shooterId);
+          const shooterName = shooterInfo?.name || score.shooterName || "Unbek. Schütze";
           
           currentShooterData = {
             shooterId: score.shooterId, shooterName,
-            shooterGender: score.shooterGender || 'unknown', teamName: score.teamName || "Unbek. Team", 
+            shooterGender: shooterInfo?.gender || score.shooterGender || 'unknown', teamName: score.teamName || "Unbek. Team", 
             results: initialResults, totalScore: 0, averageScore: null, roundsShot: 0,
             competitionYear: score.competitionYear, leagueId: score.leagueId, leagueType: score.leagueType,
             teamOutOfCompetition: score.teamOutOfCompetition || false,

@@ -84,34 +84,21 @@ export default function StatistikenPage() {
   // Leistungsentwicklung über Zeit
   const getLeistungsentwicklung = () => {
     const filtered = getFilteredData();
-    const months = eachMonthOfInterval({
-      start: subMonths(new Date(), 11),
-      end: new Date()
-    });
-
-    return months.map(month => {
-      const monthStart = startOfMonth(month);
-      const monthEnd = endOfMonth(month);
-      
-      const monthData = filtered.filter(e => 
-        e.datum >= monthStart && e.datum <= monthEnd
-      );
-      
-      const avgErgebnis = monthData.length > 0 
-        ? monthData.reduce((sum, e) => sum + e.ergebnis, 0) / monthData.length
-        : 0;
-      
-      const trainings = monthData.filter(e => e.typ === 'training').length;
-      const wettkämpfe = monthData.filter(e => e.typ === 'wettkampf').length;
-      
-      return {
-        monat: format(month, 'MMM yyyy', { locale: de }),
-        durchschnitt: Math.round(avgErgebnis * 10) / 10,
-        trainings,
-        wettkämpfe,
-        gesamt: monthData.length
-      };
-    });
+    
+    if (filtered.length === 0) {
+      return [];
+    }
+    
+    // Sortiere nach Datum und zeige individuelle Einträge
+    return filtered
+      .sort((a, b) => a.datum.getTime() - b.datum.getTime())
+      .map((eintrag, index) => ({
+        datum: format(eintrag.datum, 'dd.MM.yy', { locale: de }),
+        ringe: eintrag.ergebnis,
+        typ: eintrag.typ,
+        disziplin: eintrag.disziplin,
+        index: index + 1
+      }));
   };
 
   // Disziplinen-Verteilung
@@ -271,23 +258,30 @@ export default function StatistikenPage() {
           <Card>
             <CardHeader>
               <CardTitle>Leistungsentwicklung</CardTitle>
-              <CardDescription>Durchschnittliche Ergebnisse über die Zeit</CardDescription>
+              <CardDescription>Ringzahlen aller Einträge chronologisch</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={leistungsdaten}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="monat" />
+                    <XAxis dataKey="datum" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip 
+                      formatter={(value, name, props) => [
+                        `${value} Ringe`,
+                        props.payload.typ === 'training' ? '🎯 Training' : '🏆 Wettkampf'
+                      ]}
+                      labelFormatter={(label) => `Datum: ${label}`}
+                    />
                     <Legend />
                     <Line 
                       type="monotone" 
-                      dataKey="durchschnitt" 
+                      dataKey="ringe" 
                       stroke="#0088FE" 
-                      name="Ø Ergebnis"
+                      name="Ringzahl"
                       strokeWidth={2}
+                      dot={{ fill: '#0088FE', strokeWidth: 2, r: 4 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>

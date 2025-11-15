@@ -232,6 +232,11 @@ export default function EinträgePage() {
                         </span>
                       </div>
                       {getTypBadge(eintrag.typ)}
+                      {eintrag.serien && eintrag.serien.length > 0 && (
+                        <Badge variant="outline" className="text-xs">
+                          📊 {eintrag.serien.length} Serien
+                        </Badge>
+                      )}
                       <Eye className="h-4 w-4 text-muted-foreground ml-auto" />
                     </div>
                     
@@ -365,6 +370,33 @@ export default function EinträgePage() {
                   <div className="text-lg">{selectedEintrag.schussAnzahl * 10} Ringe</div>
                 </div>
               </div>
+              
+              {selectedEintrag.serien && selectedEintrag.serien.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Serien-Details</label>
+                  <div className="mt-2 space-y-3">
+                    {selectedEintrag.serien.map((serie) => (
+                      <div key={serie.id} className="p-3 bg-muted rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium">Serie {serie.serienNummer}</span>
+                          <span className="font-bold text-primary">{serie.summe} Ringe</span>
+                        </div>
+                        <div className="grid grid-cols-5 sm:grid-cols-10 gap-1 text-xs">
+                          {serie.schuesse.map((schuss) => (
+                            <div key={schuss.nummer} className="text-center p-1 bg-background rounded border">
+                              <div className="text-xs text-muted-foreground">{schuss.nummer}</div>
+                              <div className="font-medium">{schuss.wert}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="text-sm text-muted-foreground">
+                      Gesamt: {selectedEintrag.serien.reduce((sum, serie) => sum + serie.summe, 0)} Ringe
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {selectedEintrag.notizen && (
                 <div>

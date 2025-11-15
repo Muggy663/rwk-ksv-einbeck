@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, Zap, AlertCircle } from "lucide-react";
+import { Upload, FileText, Zap, AlertCircle, Camera, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ZehnerSerie } from "@/types/schiessnachweis";
 
@@ -18,6 +18,18 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [textInput, setTextInput] = useState("");
+  const [isPhotoProcessing, setIsPhotoProcessing] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const processDigitalResults = async (text: string) => {
     setIsProcessing(true);
@@ -144,6 +156,99 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
     event.target.value = '';
   };
 
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Ungültiger Dateityp",
+        description: "Bitte wählen Sie ein Bild aus.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsPhotoProcessing(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('context', `Erkenne Schießergebnisse aus digitaler Schießanlage für Disziplin: ${disziplin}. Extrahiere Serien und Einzelschüsse mit Kommastellen.`);
+      
+      const response = await fetch('/api/gemini-ocr', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success && result.results && result.results.length > 0) {
+          // Konvertiere OCR-Ergebnisse zu Serien
+          const serien: ZehnerSerie[] = [];
+          let serienNummer = 1;
+          
+          // Gruppiere Ergebnisse nach Serien (10 Schuss pro Serie)
+          const alleWerte: number[] = [];
+          
+          result.results.forEach((res: any) => {
+            if (res.score && !isNaN(parseFloat(res.score))) {
+              const wert = parseFloat(res.score);
+              if (wert >= 0 && wert <= 10.9) {
+                alleWerte.push(wert);
+              }
+            }
+          });
+          
+          // Erstelle Serien mit je 10 Schuss
+          for (let i = 0; i < alleWerte.length; i += 10) {
+            const serienWerte = alleWerte.slice(i, i + 10);
+            if (serienWerte.length > 0) {
+              const serie: ZehnerSerie = {
+                id: `photo-${Date.now()}-${serienNummer}`,
+                serienNummer,
+                schuesse: serienWerte.map((wert, index) => ({
+                  nummer: index + 1,
+                  wert,
+                  ring: Math.floor(wert)
+                })),
+                summe: serienWerte.reduce((sum, wert) => sum + wert, 0)
+              };
+              serien.push(serie);
+              serienNummer++;
+            }
+          }
+          
+          if (serien.length > 0) {
+            onImport(serien);
+            toast({
+              title: "🤖 Foto-Import erfolgreich",
+              description: `${serien.length} Serie(n) mit ${alleWerte.length} Schüssen aus Foto erkannt.`,
+            });
+          } else {
+            throw new Error("Keine gültigen Ergebnisse im Foto gefunden");
+          }
+        } else {
+          throw new Error("Keine Ergebnisse im Foto erkannt");
+        }
+      } else {
+        throw new Error("OCR-Service nicht verfügbar");
+      }
+    } catch (error) {
+      console.error('Foto-Import Fehler:', error);
+      toast({
+        title: "Foto-Import fehlgeschlagen",
+        description: "Die Ergebnisse konnten nicht aus dem Foto erkannt werden.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsPhotoProcessing(false);
+      // Input zurücksetzen
+      event.target.value = '';
+    }
+  };
+
   return (
     <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
       <CardHeader>
@@ -181,31 +286,92 @@ Total: 50.3`}
           />
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button 
-            onClick={() => processDigitalResults(textInput)}
-            disabled={!textInput.trim() || isProcessing}
-            className="flex items-center justify-center gap-2 w-full sm:w-auto"
-          >
-            <FileText className="h-4 w-4" />
-            {isProcessing ? 'Verarbeite...' : 'Text importieren'}
-          </Button>
-          
-          {/* Datei-Upload */}
-          <div className="relative w-full sm:w-auto">
-            <input
-              type="file"
-              accept=".txt,.csv"
-              onChange={handleFileUpload}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              disabled={isProcessing}
-            />
-            <Button variant="outline" disabled={isProcessing} className="flex items-center justify-center gap-2 w-full">
-              <Upload className="h-4 w-4" />
-              Datei hochladen
+        {/* Mobile: Alle Buttons untereinander */}
+        {isMobile ? (
+          <div className="space-y-3">
+            <Button 
+              onClick={() => processDigitalResults(textInput)}
+              disabled={!textInput.trim() || isProcessing}
+              className="flex items-center justify-center gap-2 w-full"
+            >
+              <FileText className="h-4 w-4" />
+              {isProcessing ? 'Verarbeite...' : 'Text importieren'}
             </Button>
+            
+            {/* Foto-Upload (Mobile) */}
+            <div className="relative">
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handlePhotoUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={isProcessing || isPhotoProcessing}
+              />
+              <Button variant="outline" disabled={isProcessing || isPhotoProcessing} className="flex items-center justify-center gap-2 w-full">
+                <Camera className="h-4 w-4" />
+                {isPhotoProcessing ? 'Analysiere...' : 'Foto aufnehmen'}
+              </Button>
+            </div>
+            
+            {/* Galerie-Upload (Mobile) */}
+            <div className="relative">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={isProcessing || isPhotoProcessing}
+              />
+              <Button variant="outline" disabled={isProcessing || isPhotoProcessing} className="flex items-center justify-center gap-2 w-full">
+                <Image className="h-4 w-4" />
+                Aus Galerie wählen
+              </Button>
+            </div>
+            
+            {/* Datei-Upload (Mobile) */}
+            <div className="relative">
+              <input
+                type="file"
+                accept=".txt,.csv"
+                onChange={handleFileUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={isProcessing || isPhotoProcessing}
+              />
+              <Button variant="outline" disabled={isProcessing || isPhotoProcessing} className="flex items-center justify-center gap-2 w-full">
+                <Upload className="h-4 w-4" />
+                Datei hochladen
+              </Button>
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Desktop: Buttons nebeneinander */
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button 
+              onClick={() => processDigitalResults(textInput)}
+              disabled={!textInput.trim() || isProcessing}
+              className="flex items-center justify-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              {isProcessing ? 'Verarbeite...' : 'Text importieren'}
+            </Button>
+            
+            {/* Datei-Upload (Desktop) */}
+            <div className="relative">
+              <input
+                type="file"
+                accept=".txt,.csv"
+                onChange={handleFileUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={isProcessing || isPhotoProcessing}
+              />
+              <Button variant="outline" disabled={isProcessing || isPhotoProcessing} className="flex items-center justify-center gap-2 w-full">
+                <Upload className="h-4 w-4" />
+                Datei hochladen
+              </Button>
+            </div>
+          </div>
+        )}
         
         {/* Hinweise */}
         <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
@@ -218,7 +384,15 @@ Total: 50.3`}
                 <li>• Sius Ascor/Suis Target (.txt, .csv)</li>
                 <li>• Disag Shooting Systems (.txt, .csv)</li>
                 <li>• Sport Quantum (.txt, .csv)</li>
-                <li>• Foto von Bildschirm/Ausdruck (🤖 Gemini KI)</li>
+                {isMobile && (
+                  <>
+                    <li>• 📸 Foto von Bildschirm/Ausdruck (🤖 Gemini KI)</li>
+                    <li>• 📱 Handy-Fotos aus WhatsApp/Galerie</li>
+                  </>
+                )}
+                {!isMobile && (
+                  <li>• 💻 Desktop: Nur Datei-Upload verfügbar</li>
+                )}
                 <li>• Automatische Format-Erkennung</li>
               </ul>
             </div>

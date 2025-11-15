@@ -10,11 +10,13 @@ import { SchießStatistik } from "@/types/schiessnachweis";
 import { CloudSyncStatus } from "@/components/schiessnachweis/CloudSyncStatus";
 import { PremiumProvider } from "@/components/schiessnachweis/PremiumProvider";
 import { PremiumStatus } from "@/components/schiessnachweis/PremiumStatus";
+import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
 export default function SchießnachweisPage() {
+  const { toast } = useToast();
   const [statistik, setStatistik] = useState<SchießStatistik | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -37,7 +39,20 @@ export default function SchießnachweisPage() {
   const handleExportExcel = () => {
     try {
       const einträge = SchießnachweisService.getEinträge();
+      console.log('Exportiere Einträge:', einträge.length, einträge);
+      
+      if (einträge.length === 0) {
+        toast({
+          title: "Keine Daten",
+          description: "Es sind keine Einträge zum Exportieren vorhanden.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const csvData = convertToCSV(einträge);
+      console.log('CSV-Daten:', csvData);
+      
       const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -47,8 +62,18 @@ export default function SchießnachweisPage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Export erfolgreich",
+        description: `${einträge.length} Einträge exportiert.`,
+      });
     } catch (error) {
       console.error('Excel-Export fehlgeschlagen:', error);
+      toast({
+        title: "Export fehlgeschlagen",
+        description: error instanceof Error ? error.message : "Unbekannter Fehler",
+        variant: "destructive"
+      });
     }
   };
 
@@ -71,17 +96,38 @@ export default function SchießnachweisPage() {
   };
 
   const convertToCSV = (einträge: any[]) => {
-    const headers = ['Datum', 'Typ', 'Disziplin', 'Schussanzahl', 'Ergebnis', 'Bemerkung'];
+    const headers = ['Datum', 'Typ', 'Disziplin', 'Schussanzahl', 'Ergebnis', 'Standort', 'Schiessstand', 'Wetter', 'Munition', 'Waffe', 'Notizen', 'Serien'];
     const csvRows = [headers.join(';')];
     
     einträge.forEach(eintrag => {
+      console.log('Verarbeite Eintrag:', eintrag);
+      
+      // Datum korrekt konvertieren
+      let datumStr = '';
+      try {
+        if (eintrag.datum) {
+          const datum = eintrag.datum instanceof Date ? eintrag.datum : new Date(eintrag.datum);
+          datumStr = format(datum, 'dd.MM.yyyy');
+        }
+      } catch (e) {
+        console.warn('Datum-Konvertierung fehlgeschlagen:', eintrag.datum);
+        datumStr = 'Ungültiges Datum';
+      }
+      
+      const serienData = eintrag.serien ? JSON.stringify(eintrag.serien) : '';
       const row = [
-        format(eintrag.datum, 'dd.MM.yyyy'),
+        datumStr,
         eintrag.typ === 'training' ? 'Training' : 'Wettkampf',
-        eintrag.disziplin,
-        eintrag.schussAnzahl,
-        eintrag.ergebnis,
-        eintrag.bemerkung || ''
+        eintrag.disziplin || '',
+        eintrag.schussAnzahl || 0,
+        eintrag.ergebnis || 0,
+        eintrag.standort || '',
+        eintrag.schiessstand || '',
+        eintrag.wetter || '',
+        eintrag.munition || '',
+        eintrag.waffe || '',
+        eintrag.notizen || '',
+        serienData
       ];
       csvRows.push(row.join(';'));
     });
@@ -111,11 +157,50 @@ export default function SchießnachweisPage() {
       // Statistik neu laden
       loadStatistik();
       
+      // Automatisch in Cloud synchronisieren
+      try {
+        const einträge = SchießnachweisService.getEinträge();
+        await SchießnachweisService.syncToCloud();
+        toast({
+          title: "☁️ Cloud-Sync erfolgreich",
+          description: "Daten wurden automatisch in die Cloud gesichert.",
+        });
+      } catch (error) {
+        toast({
+          title: "⚠️ Cloud-Sync Info",
+          description: "Import erfolgreich. Cloud-Sync später verfügbar.",
+        });
+      }
+      
       // Input zurücksetzen
       event.target.value = '';
     } catch (error) {
       toast({
         title: "Import fehlgeschlagen",
+        description: error instanceof Error ? error.message : "Unbekannter Fehler",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleCloudSync = async () => {
+    try {
+      const cloudEinträge = await SchießnachweisService.loadFromCloudNow();
+      if (cloudEinträge.length > 0) {
+        toast({
+          title: "✅ Cloud-Sync erfolgreich",
+          description: `${cloudEinträge.length} Einträge aus der Cloud geladen.`,
+        });
+        loadStatistik();
+      } else {
+        toast({
+          title: "Keine Cloud-Daten",
+          description: "Keine Daten in der Cloud gefunden.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Cloud-Sync fehlgeschlagen",
         description: error instanceof Error ? error.message : "Unbekannter Fehler",
         variant: "destructive"
       });
@@ -128,10 +213,10 @@ export default function SchießnachweisPage() {
     
     // Header prüfen
     const header = lines[0].split(';');
-    const expectedHeaders = ['Datum', 'Typ', 'Disziplin', 'Schussanzahl', 'Ergebnis', 'Bemerkung'];
+    const requiredHeaders = ['Datum', 'Typ', 'Disziplin', 'Schussanzahl', 'Ergebnis'];
     
-    if (!expectedHeaders.every(h => header.includes(h))) {
-      throw new Error('CSV-Format ungültig. Erwartet: Datum;Typ;Disziplin;Schussanzahl;Ergebnis;Bemerkung');
+    if (!requiredHeaders.every(h => header.includes(h))) {
+      throw new Error('CSV-Format ungültig. Mindestens erforderlich: Datum;Typ;Disziplin;Schussanzahl;Ergebnis');
     }
     
     const existingEinträge = SchießnachweisService.getEinträge();
@@ -142,7 +227,18 @@ export default function SchießnachweisPage() {
       if (values.length < 5) continue;
       
       try {
-        const [datumStr, typStr, disziplin, schussAnzahlStr, ergebnisStr, bemerkung = ''] = values;
+        const datumStr = values[header.indexOf('Datum')];
+        const typStr = values[header.indexOf('Typ')];
+        const disziplin = values[header.indexOf('Disziplin')];
+        const schussAnzahlStr = values[header.indexOf('Schussanzahl')];
+        const ergebnisStr = values[header.indexOf('Ergebnis')];
+        const standort = values[header.indexOf('Standort')] || 'Unbekannt';
+        const schiessstand = values[header.indexOf('Schiessstand')] || '';
+        const wetter = values[header.indexOf('Wetter')] || '';
+        const munition = values[header.indexOf('Munition')] || '';
+        const waffe = values[header.indexOf('Waffe')] || '';
+        const notizen = values[header.indexOf('Notizen')] || values[header.indexOf('Bemerkung')] || '';
+        const serienStr = values[header.indexOf('Serien')] || '';
         
         // Datum parsen (DD.MM.YYYY)
         const [day, month, year] = datumStr.split('.');
@@ -162,6 +258,16 @@ export default function SchießnachweisPage() {
           continue;
         }
         
+        // Serien parsen
+        let serien = undefined;
+        if (serienStr) {
+          try {
+            serien = JSON.parse(serienStr);
+          } catch (e) {
+            console.warn(`Ungültige Serien-Daten in Zeile ${i + 1}`);
+          }
+        }
+        
         // Duplikat-Check
         const exists = existingEinträge.some(existing => 
           Math.abs(existing.datum.getTime() - datum.getTime()) < 24 * 60 * 60 * 1000 && // Gleicher Tag
@@ -170,14 +276,21 @@ export default function SchießnachweisPage() {
         );
         
         if (!exists) {
-          SchießnachweisService.saveEintrag({
+          const neuerEintrag = {
             datum,
             typ: typ as 'training' | 'wettkampf',
             disziplin,
             schussAnzahl,
             ergebnis,
-            bemerkung: bemerkung.trim()
-          });
+            standort,
+            schiessstand,
+            wetter,
+            munition,
+            waffe,
+            notizen: notizen.trim(),
+            serien
+          };
+          SchießnachweisService.saveEintrag(neuerEintrag);
           importCount++;
         }
       } catch (error) {
@@ -351,6 +464,10 @@ export default function SchießnachweisPage() {
                   <Upload className="h-4 w-4" />
                   CSV/Excel importieren
                 </Button>
+                <Button onClick={handleCloudSync} variant="outline" size="sm" className="flex items-center justify-center gap-2">
+                  <Download className="h-4 w-4" />
+                  Aus Cloud laden
+                </Button>
                 <input
                   id="csv-import"
                   type="file"
@@ -373,7 +490,8 @@ export default function SchießnachweisPage() {
             📊 <strong>CSV/Excel:</strong> Zum Bearbeiten, Sichern und Wiederherstellen<br/>
             📄 <strong>LibreOffice:</strong> Schöne Übersicht und Auswertungen<br/>
             📝 <strong>PDF:</strong> Offizieller Nachweis für Behörden<br/>
-            💡 <strong>Import:</strong> Unterstützt das gleiche Format wie der Export
+            💡 <strong>Import:</strong> Unterstützt das gleiche Format wie der Export<br/>
+            ☁️ <strong>Cloud-Sync:</strong> Automatisch bei Premium-Nutzern
           </p>
         </CardContent>
       </Card>

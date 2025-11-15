@@ -33,7 +33,7 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
       const neueSerien: ZehnerSerie[] = [];
       for (let i = 0; i < benötigteSerien; i++) {
         const neueSerie: ZehnerSerie = {
-          id: `${Date.now()}-${i}`,
+          id: `serie-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`,
           serienNummer: i + 1,
           schuesse: Array.from({ length: disziplinConfig.serienGroesse }, (_, j) => ({
             nummer: j + 1,
@@ -49,19 +49,30 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
       setActiveSerieIndex(0);
     } else if (serien.length === 0 && disziplinConfig) {
       // Fallback: Eine Serie erstellen
-      addSerie();
+      const neueSerie: ZehnerSerie = {
+        id: `serie-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        serienNummer: 1,
+        schuesse: Array.from({ length: disziplinConfig.serienGroesse }, (_, i) => ({
+          nummer: i + 1,
+          wert: 0,
+          ring: 0
+        })),
+        summe: 0
+      };
+      setSerien([neueSerie]);
+      setActiveSerieIndex(0);
     }
-  }, [disziplin, schussAnzahl]);
+  }, [disziplin, schussAnzahl, disziplinConfig, serien.length]);
 
   useEffect(() => {
     onSerienChange(serien);
-  }, [serien, onSerienChange]);
+  }, [serien]);
 
   const addSerie = () => {
     if (!disziplinConfig) return;
     
     const neueSerie: ZehnerSerie = {
-      id: Date.now().toString(),
+      id: `serie-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${serien.length}`,
       serienNummer: serien.length + 1,
       schuesse: Array.from({ length: disziplinConfig.serienGroesse }, (_, i) => ({
         nummer: i + 1,
