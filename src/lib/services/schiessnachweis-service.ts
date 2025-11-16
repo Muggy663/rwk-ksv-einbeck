@@ -147,7 +147,10 @@ export class SchießnachweisService {
     this.saveToStorage(einträge);
     
     // Automatische Cloud-Sync für Premium-Nutzer
-    if (PremiumService.isPremiumSync()) {
+    const isPremiumSync = PremiumService.isPremiumSync();
+    console.log('🔍 Debug - Premium-Check:', isPremiumSync);
+    
+    if (isPremiumSync) {
       console.log('🔍 Debug - Auto-Sync gestartet für', einträge.length, 'Einträge');
       CloudSyncService.autoSync(einträge).then(() => {
         console.log('✅ Auto-Sync erfolgreich');
@@ -155,7 +158,11 @@ export class SchießnachweisService {
         console.error('🔴 Auto-Sync fehlgeschlagen:', error);
       });
     } else {
-      console.log('⚠️ Auto-Sync übersprungen - kein Premium oder nicht eingeloggt');
+      console.log('⚠️ Auto-Sync übersprungen - Premium-Check fehlgeschlagen');
+      // Prüfe auch async Premium
+      PremiumService.isPremium().then(isPremiumAsync => {
+        console.log('🔍 Debug - Async Premium-Check:', isPremiumAsync);
+      });
     }
     
     return neuerEintrag;
@@ -398,6 +405,8 @@ export class SchießnachweisService {
   
   static async syncToCloud(): Promise<void> {
     const einträge = this.getEinträge();
+    console.log('🔍 SchießnachweisService.syncToCloud() - Einträge:', einträge.length);
+    console.log('🔍 Einträge-Daten:', einträge);
     await CloudSyncService.syncToCloud(einträge);
   }
   

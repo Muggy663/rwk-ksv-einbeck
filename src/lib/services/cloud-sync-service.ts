@@ -86,26 +86,34 @@ export class CloudSyncService {
   }
 
   static async syncToCloud(einträge: SchießEintrag[]): Promise<boolean> {
+    console.log('🔍 Cloud-Sync gestartet mit', einträge.length, 'Einträgen');
+    
     if (!(await PremiumService.isPremium())) {
+      console.log('❌ Premium-Check fehlgeschlagen');
       throw new Error('Cloud-Sync ist nur für Premium-Nutzer verfügbar');
     }
+    console.log('✅ Premium-Check erfolgreich');
 
     if (!navigator.onLine) {
+      console.log('❌ Offline');
       throw new Error('Keine Internetverbindung');
     }
+    console.log('✅ Online');
 
     this.updateSyncStatus({ syncInProgress: true });
 
     try {
-      console.log('Speichere in Firebase:', einträge.length, 'Einträge');
+      console.log('💾 Speichere in Firebase:', einträge.length, 'Einträge');
       
       // Firebase-Imports
       const { doc, setDoc } = await import('firebase/firestore');
       const { auth, db } = await import('@/lib/firebase/config');
       
       if (!auth.currentUser) {
+        console.log('❌ Benutzer nicht angemeldet');
         throw new Error('Benutzer nicht angemeldet');
       }
+      console.log('✅ Benutzer angemeldet:', auth.currentUser.uid, auth.currentUser.email);
       
       // Entferne undefined Werte für Firebase
       const cleanedEinträge = einträge.map(eintrag => {
@@ -118,14 +126,17 @@ export class CloudSyncService {
         });
         return cleaned;
       });
+      console.log('✅ Daten bereinigt:', cleanedEinträge.length, 'Einträge');
       
       const cloudData: CloudData = {
         einträge: cleanedEinträge,
         lastModified: new Date(),
         deviceId: this.getDeviceId()
       };
+      console.log('💾 CloudData erstellt:', cloudData);
       
       // In Firebase speichern
+      console.log('🔥 Speichere in Firebase Collection: schiessnachweis_data, Doc:', auth.currentUser.uid);
       await setDoc(doc(db, 'schiessnachweis_data', auth.currentUser.uid), cloudData);
       console.log('✅ Firebase gespeichert:', auth.currentUser.uid, '- Einträge:', einträge.length);
 

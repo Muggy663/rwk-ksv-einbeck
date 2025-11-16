@@ -121,7 +121,7 @@ export class PremiumService {
         };
       }
       
-      return {
+      const premiumSubscription = {
         isActive: true,
         plan: 'premium',
         expiresAt,
@@ -129,6 +129,16 @@ export class PremiumService {
         autoRenew: userData.autoRenew || false,
         paymentMethod: userData.paymentMethod || 'unknown'
       };
+      
+      // Cache für synchrone Aufrufe
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('premium_cache', JSON.stringify({
+          isPremium: true,
+          timestamp: Date.now()
+        }));
+      }
+      
+      return premiumSubscription;
     } catch (error) {
       console.error('Firebase Premium-Check fehlgeschlagen:', error);
       return null;
@@ -178,7 +188,21 @@ export class PremiumService {
 
   // Synchrone Version für Backward-Compatibility
   static isPremiumSync(): boolean {
-    // Nur localStorage prüfen für synchrone Aufrufe
+    // Prüfe zuerst Firebase Premium (synchron über Cache)
+    if (typeof window !== 'undefined') {
+      try {
+        // Schneller Check über gespeicherte Premium-Info
+        const premiumCache = localStorage.getItem('premium_cache');
+        if (premiumCache) {
+          const cached = JSON.parse(premiumCache);
+          if (cached.timestamp && (Date.now() - cached.timestamp) < 60000) { // 1 Minute Cache
+            return cached.isPremium;
+          }
+        }
+      } catch (e) {}
+    }
+    
+    // Fallback zu localStorage Premium
     try {
       const stored = localStorage.getItem(this.STORAGE_KEY);
       if (!stored) return false;

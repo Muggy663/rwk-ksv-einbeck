@@ -430,13 +430,15 @@ service cloud.firestore {
     match /schiessnachweis_data/{userId} {
       allow read, write: if isAuthenticated() && 
                          request.auth.uid == userId &&
-                         request.auth.token.email_verified == true;
+                         (request.auth.token.email_verified == true ||
+                          (getUserPermissions() != null && getUserPermissions().emailVerifiedByAdmin == true));
     }
     
     match /schiessnachweis_data/{userId}/{document=**} {
       allow read, write: if isAuthenticated() && 
                          request.auth.uid == userId &&
-                         request.auth.token.email_verified == true;
+                         (request.auth.token.email_verified == true ||
+                          (getUserPermissions() != null && getUserPermissions().emailVerifiedByAdmin == true));
     }
     
     // Premium-Subscriptions
