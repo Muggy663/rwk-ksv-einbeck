@@ -33,6 +33,7 @@ export default function NeuerEintragPage() {
     disziplin: '',
     schussAnzahl: '',
     ergebnis: '',
+    ergebnisGanzeRinge: '',
     standort: '',
     schiessstand: '',
     wetter: '',
@@ -120,6 +121,7 @@ export default function NeuerEintragPage() {
         disziplin: formData.disziplin,
         schussAnzahl: parseInt(formData.schussAnzahl),
         ergebnis: parseFloat(formData.ergebnis),
+        ergebnisGanzeRinge: formData.ergebnisGanzeRinge ? parseFloat(formData.ergebnisGanzeRinge) : undefined,
         // Speichere beide Ergebnisse wenn aus Serien berechnet
         ergebnisDetails: berechneteErgebnisse ? {
           mitZehntel: berechneteErgebnisse.mitZehntel,
@@ -265,21 +267,30 @@ export default function NeuerEintragPage() {
                   
                   <div>
                     <Label htmlFor="ergebnis">Ergebnis (Ringe) *</Label>
-                    <Input
-                      id="ergebnis"
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="1000"
-                      value={formData.ergebnis}
-                      onChange={(e) => setFormData(prev => ({ ...prev, ergebnis: e.target.value }))}
-                      placeholder="385 oder 385.2"
-                      required
-                      disabled={showDetailedEntry && serien.length > 0}
-                    />
+                    <div className="space-y-2">
+                      <Input
+                        id="ergebnis"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="1000"
+                        value={formData.ergebnis}
+                        onChange={(e) => setFormData(prev => ({ ...prev, ergebnis: e.target.value }))}
+                        placeholder="385.2 (mit Zehntel)"
+                        required
+                        disabled={showDetailedEntry && serien.length > 0}
+                      />
+                      <Input
+                        type="number"
+                        min="0"
+                        max="1000"
+                        placeholder="385 (nur ganze Ringe) - optional"
+                        onChange={(e) => setFormData(prev => ({ ...prev, ergebnisGanzeRinge: e.target.value }))}
+                      />
+                    </div>
                     {config && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Max. {config.maxRinge} Ringe pro Schuss • Zehntel möglich (z.B. 9.8)
+                        Max. {config.maxRinge} Ringe pro Schuss • Beide Ergebnisse für Leistungsschützen
                       </p>
                     )}
                     

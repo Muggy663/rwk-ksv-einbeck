@@ -21,11 +21,6 @@ export default function SchießnachweisPage() {
   const [statistik, setStatistik] = useState<SchießStatistik | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
-  
-  const addDebugInfo = (message: string) => {
-    setDebugInfo(prev => [...prev.slice(-4), `${new Date().toLocaleTimeString()}: ${message}`]);
-  };
 
   useEffect(() => {
     // Mobile Detection
@@ -254,11 +249,9 @@ export default function SchießnachweisPage() {
       console.log('🔍 Debug - User ID:', auth.currentUser.uid);
       console.log('🔍 Debug - User Email:', auth.currentUser.email);
       
-      addDebugInfo(`Lade Cloud-Daten für ${auth.currentUser.email}`);
       const cloudEinträge = await SchießnachweisService.loadFromCloudNow();
       
       if (cloudEinträge.length > 0) {
-        addDebugInfo(`✅ ${cloudEinträge.length} Einträge aus Cloud geladen`);
         localStorage.setItem('rwk_schiessnachweis', JSON.stringify(cloudEinträge));
         localStorage.setItem('rwk_schiessnachweis_backup', JSON.stringify(cloudEinträge));
         
@@ -269,7 +262,6 @@ export default function SchießnachweisPage() {
         
         window.location.reload();
       } else {
-        addDebugInfo(`❌ Keine Cloud-Daten für ${auth.currentUser.email}`);
         toast({
           title: "💭 Keine Cloud-Daten",
           description: `Keine Daten für User ${auth.currentUser.email} gefunden. Erste Nutzung?`,
@@ -528,23 +520,6 @@ export default function SchießnachweisPage() {
         </CardContent>
       </Card>
 
-      {/* Debug Panel für App-Nutzer */}
-      {debugInfo.length > 0 && (
-        <Card className="mb-4 sm:mb-6 border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-yellow-800 dark:text-yellow-200">🔧 Debug-Info</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              {debugInfo.map((info, i) => (
-                <div key={i} className="text-xs font-mono text-yellow-700 dark:text-yellow-300">
-                  {info}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
       
       {/* Premium & Cloud-Sync Status */}
       <PremiumStatus className="mb-4 sm:mb-6" />

@@ -37,7 +37,7 @@ export function PremiumStatus({ className }: PremiumStatusProps) {
           <Crown className="h-4 w-4 text-yellow-600" />
           Premium Status
           <Badge variant="default" className="ml-auto bg-yellow-600">
-            Aktiv
+            Premium
           </Badge>
         </CardTitle>
       </CardHeader>

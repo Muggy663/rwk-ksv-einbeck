@@ -103,6 +103,13 @@ export class PremiumService {
       const userData = userDoc.data();
       if (!userData.isPremium) return null;
       
+      // Prüfe E-Mail-Verifizierung: Entweder Firebase Auth oder Admin-verifiziert
+      const isEmailVerified = auth.currentUser.emailVerified || userData.emailVerifiedByAdmin;
+      if (!isEmailVerified) {
+        console.log('⚠️ Premium blockiert: E-Mail nicht verifiziert');
+        return null;
+      }
+      
       const expiresAt = userData.premiumUntil ? userData.premiumUntil.toDate() : null;
       
       // Prüfe Ablauf

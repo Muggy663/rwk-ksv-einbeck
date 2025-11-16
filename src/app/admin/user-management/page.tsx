@@ -254,6 +254,23 @@ export default function AdminUserManagementPage() {
         permissionData.premiumActivatedAt = Timestamp.now();
         permissionData.autoRenew = formData.autoRenew || false;
         permissionData.paymentMethod = 'admin_activated';
+        
+        // Automatische E-Mail-Verifizierung für Admin-aktivierte Premium-Nutzer
+        try {
+          const { updateUser } = await import('firebase/auth');
+          const { auth } = await import('@/lib/firebase/config');
+          
+          // Setze emailVerified auf true für diesen User
+          // Hinweis: Das funktioniert nur mit Admin SDK, nicht mit Client SDK
+          console.log('📧 E-Mail-Verifizierung für Premium-User:', formData.email);
+          
+          // Speichere Flag in Firestore dass E-Mail als verifiziert gilt
+          permissionData.emailVerifiedByAdmin = true;
+          permissionData.emailVerifiedAt = Timestamp.now();
+          
+        } catch (error) {
+          console.warn('E-Mail-Verifizierung fehlgeschlagen:', error);
+        }
       } else {
         permissionData.isPremium = false;
         permissionData.premiumUntil = null;

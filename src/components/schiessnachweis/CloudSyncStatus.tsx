@@ -26,18 +26,14 @@ export function CloudSyncStatus({ className }: CloudSyncStatusProps) {
 
   useEffect(() => {
     // Auth-Status überwachen
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setIsLoggedIn(!!user);
-      // Nur verifizierte User können Premium nutzen
-      const isPremiumActive = user && user.emailVerified ? PremiumService.isPremium() : false;
-      
-      // Auto-aktiviere Premium für 1 Monat wenn noch nicht aktiv (Testzweck)
-      if (user && user.emailVerified && !isPremiumActive) {
-        console.log('🎆 Aktiviere 1 Monat Premium für verifizierten User');
-        PremiumService.activatePremium('monthly', 1);
-        setIsPremium(true);
-      } else {
+      // Premium-Check mit Admin-Verifizierung
+      if (user) {
+        const isPremiumActive = await PremiumService.isPremium();
         setIsPremium(isPremiumActive);
+      } else {
+        setIsPremium(false);
       }
     });
     
@@ -154,47 +150,7 @@ export function CloudSyncStatus({ className }: CloudSyncStatusProps) {
     );
   }
   
-  // E-Mail nicht verifiziert
-  if (isLoggedIn && auth.currentUser && !auth.currentUser.emailVerified) {
-    console.log('E-Mail nicht verifiziert:', auth.currentUser.emailVerified);
-    return (
-      <Card className={`border-orange-200 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/50 dark:to-red-950/50 dark:border-orange-800 ${className}`}>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <CloudOff className="h-4 w-4 text-orange-600" />
-            Cloud-Synchronisation
-            <Badge variant="outline" className="ml-auto text-orange-700 dark:text-orange-300 dark:border-orange-600">
-              E-Mail bestätigen
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Lock className="h-4 w-4 text-orange-600" />
-              <span className="text-sm text-orange-700 dark:text-orange-200">
-                Nur Offline-Nutzung
-              </span>
-            </div>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="border-orange-300 text-orange-700 hover:bg-orange-100 dark:border-orange-600 dark:text-orange-200 dark:hover:bg-orange-900/30"
-              onClick={() => {
-                toast({
-                  title: "📧 E-Mail-Bestätigung erforderlich",
-                  description: "Bitte bestätigen Sie Ihre E-Mail für Premium & Cloud-Sync. Auch im Spam-Ordner nachschauen!",
-                  duration: 8000
-                });
-              }}
-            >
-              Hinweis
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Testphase: E-Mail-Verifizierung übersprungen
   
   if (!isPremium) {
     return (
