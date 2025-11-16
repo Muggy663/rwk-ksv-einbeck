@@ -6,6 +6,11 @@ export interface SchießEintrag {
   schussAnzahl: number;
   ergebnis: number;
   serien?: ZehnerSerie[];
+  ergebnisDetails?: {
+    mitZehntel: number;
+    ohneZehntel: number;
+    verwendetesErgebnis: number;
+  };
   standort: string;
   schiessstand?: string;
   wetter?: string;

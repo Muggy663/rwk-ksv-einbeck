@@ -148,7 +148,14 @@ export class SchießnachweisService {
     
     // Automatische Cloud-Sync für Premium-Nutzer
     if (PremiumService.isPremiumSync()) {
-      CloudSyncService.autoSync(einträge);
+      console.log('🔍 Debug - Auto-Sync gestartet für', einträge.length, 'Einträge');
+      CloudSyncService.autoSync(einträge).then(() => {
+        console.log('✅ Auto-Sync erfolgreich');
+      }).catch(error => {
+        console.error('🔴 Auto-Sync fehlgeschlagen:', error);
+      });
+    } else {
+      console.log('⚠️ Auto-Sync übersprungen - kein Premium oder nicht eingeloggt');
     }
     
     return neuerEintrag;

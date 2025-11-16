@@ -68,7 +68,12 @@ export default function StatistikenPage() {
         startDate = subMonths(now, 6);
         break;
       case "12monate":
-        startDate = subMonths(now, 12);
+        // Für "Letztes Jahr" - zeige alle Daten der letzten 365 Tage
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      case "2024":
+        // Spezifisch für 2024
+        startDate = new Date(2024, 0, 1); // 1. Januar 2024
         break;
       default:
         startDate = new Date(0); // Alle Zeit
@@ -224,7 +229,8 @@ export default function StatistikenPage() {
                   { value: "1monat", label: "Letzter Monat" },
                   { value: "3monate", label: "Letzte 3 Monate" },
                   { value: "6monate", label: "Letzte 6 Monate" },
-                  { value: "12monate", label: "Letztes Jahr" },
+                  { value: "12monate", label: "Letzte 365 Tage" },
+                  { value: "2024", label: "Jahr 2024" },
                   { value: "alle", label: "Alle Zeit" }
                 ]}
               />

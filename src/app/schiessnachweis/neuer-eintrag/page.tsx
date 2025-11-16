@@ -43,6 +43,10 @@ export default function NeuerEintragPage() {
   
   const [serien, setSerien] = useState<ZehnerSerie[]>([]);
   const [showDetailedEntry, setShowDetailedEntry] = useState(false);
+  const [berechneteErgebnisse, setBerechneteErgebnisse] = useState<{
+    mitZehntel: number;
+    ohneZehntel: number;
+  } | null>(null);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [availableDisziplinen, setAvailableDisziplinen] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,14 +73,20 @@ export default function NeuerEintragPage() {
   
   useEffect(() => {
     if (serien.length > 0 && showDetailedEntry) {
-      const gesamtErgebnis = serien.reduce((sum, serie) => sum + serie.summe, 0);
-      // Nur Ergebnis aktualisieren, nicht Schussanzahl (die ist bereits gesetzt)
-      if (gesamtErgebnis > 0) {
+      // Berechne nur Ergebnis mit Zehntel (exakt)
+      const mitZehntel = serien.reduce((sum, serie) => sum + serie.summe, 0);
+      
+      setBerechneteErgebnisse({ mitZehntel, ohneZehntel: 0 });
+      
+      // Setze das Zehntel-Ergebnis als Standard
+      if (mitZehntel > 0) {
         setFormData(prev => ({ 
           ...prev, 
-          ergebnis: gesamtErgebnis.toString()
+          ergebnis: mitZehntel.toString()
         }));
       }
+    } else {
+      setBerechneteErgebnisse(null);
     }
   }, [serien, showDetailedEntry]);
 
@@ -110,6 +120,12 @@ export default function NeuerEintragPage() {
         disziplin: formData.disziplin,
         schussAnzahl: parseInt(formData.schussAnzahl),
         ergebnis: parseFloat(formData.ergebnis),
+        // Speichere beide Ergebnisse wenn aus Serien berechnet
+        ergebnisDetails: berechneteErgebnisse ? {
+          mitZehntel: berechneteErgebnisse.mitZehntel,
+          ohneZehntel: berechneteErgebnisse.ohneZehntel,
+          verwendetesErgebnis: parseFloat(formData.ergebnis)
+        } : undefined,
         serien: serien.length > 0 ? serien : undefined,
         standort: formData.standort,
         schiessstand: formData.schiessstand || undefined,
@@ -252,20 +268,34 @@ export default function NeuerEintragPage() {
                     <Input
                       id="ergebnis"
                       type="number"
-                      step={config?.kommastellen ? "0.1" : "1"}
+                      step="0.1"
                       min="0"
                       max="1000"
                       value={formData.ergebnis}
                       onChange={(e) => setFormData(prev => ({ ...prev, ergebnis: e.target.value }))}
-                      placeholder={config?.kommastellen ? "385.2" : "385"}
+                      placeholder="385 oder 385.2"
                       required
                       disabled={showDetailedEntry && serien.length > 0}
                     />
                     {config && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Max. {config.maxRinge} Ringe pro Schuss
-                        {config.kommastellen && " • Kommastellen möglich"}
+                        Max. {config.maxRinge} Ringe pro Schuss • Zehntel möglich (z.B. 9.8)
                       </p>
+                    )}
+                    
+                    {/* Berechnetes Ergebnis anzeigen */}
+                    {berechneteErgebnisse && (
+                      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 className="text-sm font-semibold text-blue-900 mb-2">🎯 Aus Serien berechnet:</h4>
+                        <div className="bg-white p-2 rounded border text-center">
+                          <div className="text-blue-700 font-medium">Ergebnis mit Zehntel:</div>
+                          <div className="text-xl font-bold text-blue-900">{berechneteErgebnisse.mitZehntel}</div>
+                          <div className="text-xs text-blue-600">Automatisch übernommen</div>
+                        </div>
+                        <p className="text-xs text-blue-700 mt-2">
+                          💡 Für ganze Ringe müssen Sie die Serien ohne Zehntel eingeben
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>

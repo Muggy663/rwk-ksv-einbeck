@@ -21,6 +21,11 @@ export default function SchießnachweisPage() {
   const [statistik, setStatistik] = useState<SchießStatistik | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  
+  const addDebugInfo = (message: string) => {
+    setDebugInfo(prev => [...prev.slice(-4), `${new Date().toLocaleTimeString()}: ${message}`]);
+  };
 
   useEffect(() => {
     // Mobile Detection
@@ -32,13 +37,29 @@ export default function SchießnachweisPage() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     
-    // Lösche localStorage und lade nur aus Firebase
-    localStorage.removeItem('rwk_schiessnachweis');
-    localStorage.removeItem('rwk_schiessnachweis_backup');
+    // Automatische Datenwiederherstellung für Premium-Nutzer
+    const autoRestore = async () => {
+      try {
+        const localData = SchießnachweisService.getEinträge();
+        if (localData.length === 0 && await PremiumService.isPremium()) {
+          console.log('🔄 Keine lokalen Daten - versuche Cloud-Wiederherstellung...');
+          const cloudData = await SchießnachweisService.loadFromCloudNow();
+          if (cloudData.length > 0) {
+            toast({
+              title: "☁️ Daten wiederhergestellt",
+              description: `${cloudData.length} Einträge aus der Cloud geladen.`,
+              className: "border-green-500 bg-green-50"
+            });
+            loadStatistik();
+          }
+        }
+      } catch (error) {
+        console.log('Auto-Restore fehlgeschlagen:', error);
+      }
+    };
     
     loadStatistik();
-    // Automatisches Cloud-Sync beim ersten Laden
-    checkAndSyncFromCloud();
+    autoRestore();
     
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
@@ -220,10 +241,24 @@ export default function SchießnachweisPage() {
 
   const handleCloudSync = async () => {
     try {
+      const { auth } = await import('@/lib/firebase/config');
+      if (!auth.currentUser) {
+        toast({
+          title: "❌ Nicht eingeloggt",
+          description: "Cloud-Sync funktioniert nur mit Benutzer-Account. Bitte über 'Verein' einloggen.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      console.log('🔍 Debug - User ID:', auth.currentUser.uid);
+      console.log('🔍 Debug - User Email:', auth.currentUser.email);
+      
+      addDebugInfo(`Lade Cloud-Daten für ${auth.currentUser.email}`);
       const cloudEinträge = await SchießnachweisService.loadFromCloudNow();
       
       if (cloudEinträge.length > 0) {
-        // Überschreibe localStorage komplett mit Cloud-Daten
+        addDebugInfo(`✅ ${cloudEinträge.length} Einträge aus Cloud geladen`);
         localStorage.setItem('rwk_schiessnachweis', JSON.stringify(cloudEinträge));
         localStorage.setItem('rwk_schiessnachweis_backup', JSON.stringify(cloudEinträge));
         
@@ -232,15 +267,16 @@ export default function SchießnachweisPage() {
           description: `${cloudEinträge.length} Einträge aus der Cloud übernommen.`,
         });
         
-        // Seite neu laden um korrekte Daten anzuzeigen
         window.location.reload();
       } else {
+        addDebugInfo(`❌ Keine Cloud-Daten für ${auth.currentUser.email}`);
         toast({
-          title: "Keine Cloud-Daten",
-          description: "Keine Daten in der Cloud gefunden.",
+          title: "💭 Keine Cloud-Daten",
+          description: `Keine Daten für User ${auth.currentUser.email} gefunden. Erste Nutzung?`,
         });
       }
     } catch (error) {
+      console.error('Cloud-Sync Fehler:', error);
       toast({
         title: "Cloud-Sync fehlgeschlagen",
         description: error instanceof Error ? error.message : "Unbekannter Fehler",
@@ -457,6 +493,29 @@ export default function SchießnachweisPage() {
         </Card>
       )}
 
+      {/* Safari Cloud-Sync Warnung - SEHR SICHTBAR */}
+      <Card className="mb-4 sm:mb-6 border-red-300 bg-gradient-to-r from-red-100 to-orange-100 dark:from-red-950/30 dark:to-orange-950/30 shadow-lg">
+        <CardContent className="p-4">
+          <div className="text-center">
+            <div className="text-xl font-bold text-red-800 dark:text-red-200 mb-2 flex items-center justify-center gap-2">
+              🍎 Safari Nutzer - WICHTIG!
+            </div>
+            <p className="text-sm font-semibold text-red-700 dark:text-red-300 mb-2">
+              Safari blockiert automatische Cloud-Synchronisation!
+            </p>
+            <p className="text-xs text-red-600 dark:text-red-400 mb-3">
+              <strong>1. Einloggen:</strong> Über "Verein" anmelden • <strong>2. Beim Start:</strong> "☁️ Aus Cloud laden" • <strong>3. Nach Einträgen:</strong> "☁️ In Cloud sichern"
+            </p>
+            <div className="bg-white dark:bg-gray-800 p-2 rounded border border-red-200 dark:border-red-700">
+              <p className="text-xs text-gray-700 dark:text-gray-300">
+                ❗ <strong>Wichtig:</strong> Cloud-Sync funktioniert nur mit Benutzer-Account!<br/>
+                💡 <strong>Besser:</strong> Chrome oder Firefox verwenden - dort funktioniert Auto-Sync zuverlässig
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Testphase Banner */}
       <Card className="mb-4 sm:mb-6 border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20">
         <CardContent className="p-4">
@@ -469,6 +528,24 @@ export default function SchießnachweisPage() {
         </CardContent>
       </Card>
 
+      {/* Debug Panel für App-Nutzer */}
+      {debugInfo.length > 0 && (
+        <Card className="mb-4 sm:mb-6 border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-yellow-800 dark:text-yellow-200">🔧 Debug-Info</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              {debugInfo.map((info, i) => (
+                <div key={i} className="text-xs font-mono text-yellow-700 dark:text-yellow-300">
+                  {info}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       {/* Premium & Cloud-Sync Status */}
       <PremiumStatus className="mb-4 sm:mb-6" />
       <CloudSyncStatus className="mb-6 sm:mb-8" />
@@ -524,9 +601,42 @@ export default function SchießnachweisPage() {
                   <Upload className="h-4 w-4" />
                   CSV/Excel importieren {isMobile && '(Desktop)'}
                 </Button>
-                <Button onClick={handleCloudSync} variant="outline" size="sm" className="flex items-center justify-center gap-2">
+                <Button onClick={handleCloudSync} variant="outline" size="sm" className="flex items-center justify-center gap-2 bg-green-50 border-green-300 text-green-700 hover:bg-green-100">
                   <Download className="h-4 w-4" />
-                  Cloud-Daten hinzufügen
+                  ☁️ Aus Cloud laden
+                </Button>
+                <Button onClick={async () => {
+                  try {
+                    const { auth } = await import('@/lib/firebase/config');
+                    if (!auth.currentUser) {
+                      toast({
+                        title: "❌ Nicht eingeloggt",
+                        description: "Cloud-Sync funktioniert nur mit Benutzer-Account. Bitte über 'Verein' einloggen.",
+                        variant: "destructive"
+                      });
+                      return;
+                    }
+                    
+                    const einträge = SchießnachweisService.getEinträge();
+                    console.log('🔍 Debug - Speichere Einträge:', einträge.length);
+                    console.log('🔍 Debug - User ID:', auth.currentUser.uid);
+                    
+                    await SchießnachweisService.syncToCloud();
+                    toast({ 
+                      title: "✅ Gesichert", 
+                      description: `${einträge.length} Einträge für ${auth.currentUser.email} in Cloud gespeichert` 
+                    });
+                  } catch (error) {
+                    console.error('🔴 Sync-Fehler:', error);
+                    toast({
+                      title: "Fehler",
+                      description: error instanceof Error ? error.message : "Unbekannter Fehler",
+                      variant: "destructive"
+                    });
+                  }
+                }} variant="outline" size="sm" className="flex items-center justify-center gap-2 bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100">
+                  <Upload className="h-4 w-4" />
+                  ☁️ In Cloud sichern
                 </Button>
                 <input
                   id="csv-import"
