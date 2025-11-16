@@ -157,6 +157,7 @@ export default function StatistikenPage() {
         datum: format(e.datum, 'dd.MM.yyyy', { locale: de }),
         disziplin: e.disziplin,
         ergebnis: e.ergebnis,
+        ergebnisZehntel: e.ergebnisZehntel,
         typ: e.typ,
         standort: e.standort
       }));
@@ -533,7 +534,14 @@ export default function StatistikenPage() {
                           {result.rang}
                         </div>
                         <div>
-                          <div className="font-medium">{result.ergebnis} Ringe</div>
+                          <div className="font-medium">
+                            {result.ergebnis} Ringe
+                            {result.ergebnisZehntel && (
+                              <span className="text-sm text-green-600 ml-2">
+                                ({result.ergebnisZehntel} mit Zehntel)
+                              </span>
+                            )}
+                          </div>
                           <div className="text-sm text-muted-foreground">
                             {result.disziplin} • {result.datum}
                           </div>

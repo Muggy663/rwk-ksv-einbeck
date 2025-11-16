@@ -93,17 +93,24 @@ export default function NeuerEintragPage() {
 
   const handleSubmit = async () => {
     
-    if (!formData.disziplin || !formData.schussAnzahl || !formData.ergebnis || !formData.standort) {
+    // Detaillierte Validierung mit spezifischen Fehlermeldungen
+    const missingFields = [];
+    if (!formData.disziplin) missingFields.push('Disziplin');
+    if (!formData.schussAnzahl) missingFields.push('Anzahl Schüsse');
+    if (!formData.ergebnisGanzeRinge) missingFields.push('Ergebnis (Ganze Ringe)');
+    if (!formData.standort) missingFields.push('Ort/Stadt');
+    
+    if (missingFields.length > 0) {
       toast({
-        title: "Fehler",
-        description: "Bitte füllen Sie alle Pflichtfelder aus.",
+        title: "Pflichtfelder fehlen",
+        description: `Bitte ausfüllen: ${missingFields.join(', ')}`,
         variant: "destructive"
       });
       return;
     }
     
     // Prüfe ob Ergebnis > 0 ist
-    if (parseFloat(formData.ergebnis) <= 0) {
+    if (parseFloat(formData.ergebnisGanzeRinge) <= 0) {
       toast({
         title: "Fehler",
         description: "Bitte geben Sie ein gültiges Ergebnis ein.",
@@ -120,8 +127,8 @@ export default function NeuerEintragPage() {
         typ: formData.typ,
         disziplin: formData.disziplin,
         schussAnzahl: parseInt(formData.schussAnzahl),
-        ergebnis: parseFloat(formData.ergebnis),
-        ergebnisGanzeRinge: formData.ergebnisGanzeRinge ? parseFloat(formData.ergebnisGanzeRinge) : undefined,
+        ergebnis: parseFloat(formData.ergebnisGanzeRinge), // Hauptergebnis sind jetzt ganze Ringe
+        ergebnisZehntel: formData.ergebnis ? parseFloat(formData.ergebnis) : undefined, // Zehntel optional
         // Speichere beide Ergebnisse wenn aus Serien berechnet
         ergebnisDetails: berechneteErgebnisse ? {
           mitZehntel: berechneteErgebnisse.mitZehntel,
@@ -266,31 +273,41 @@ export default function NeuerEintragPage() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="ergebnis">Ergebnis (Ringe) *</Label>
-                    <div className="space-y-2">
-                      <Input
-                        id="ergebnis"
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="1000"
-                        value={formData.ergebnis}
-                        onChange={(e) => setFormData(prev => ({ ...prev, ergebnis: e.target.value }))}
-                        placeholder="385.2 (mit Zehntel)"
-                        required
-                        disabled={showDetailedEntry && serien.length > 0}
-                      />
-                      <Input
-                        type="number"
-                        min="0"
-                        max="1000"
-                        placeholder="385 (nur ganze Ringe) - optional"
-                        onChange={(e) => setFormData(prev => ({ ...prev, ergebnisGanzeRinge: e.target.value }))}
-                      />
+                    <Label htmlFor="ergebnis">Ergebnis *</Label>
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="ergebnisGanzeRinge" className="text-sm font-medium text-blue-700">Ergebnis (Ganze Ringe) *</Label>
+                        <Input
+                          id="ergebnisGanzeRinge"
+                          type="number"
+                          min="0"
+                          max="1000"
+                          value={formData.ergebnisGanzeRinge}
+                          onChange={(e) => setFormData(prev => ({ ...prev, ergebnisGanzeRinge: e.target.value }))}
+                          required
+                          className="border-blue-200 focus:border-blue-400"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="ergebnis" className="text-sm font-medium text-green-700">Ergebnis (mit Zehntel) - Optional</Label>
+                        <Input
+                          id="ergebnis"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="1000"
+                          value={formData.ergebnis}
+                          onChange={(e) => setFormData(prev => ({ ...prev, ergebnis: e.target.value }))}
+                          disabled={showDetailedEntry && serien.length > 0}
+                          className="border-green-200 focus:border-green-400"
+                        />
+                      </div>
                     </div>
                     {config && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Max. {config.maxRinge} Ringe pro Schuss • Beide Ergebnisse für Leistungsschützen
+                      <p className="text-xs text-muted-foreground mt-2">
+                        🎯 Max. {config.maxRinge} Ringe pro Schuss<br/>
+                        📊 <strong>Ganze Ringe:</strong> Pflichtfeld für alle Einträge<br/>
+                        🎯 <strong>Zehntel-Ergebnis:</strong> Optional für Leistungsschützen (z.B. detaillierte Analyse)
                       </p>
                     )}
                     

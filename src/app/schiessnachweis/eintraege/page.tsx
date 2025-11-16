@@ -258,7 +258,14 @@ export default function EinträgePage() {
                       </div>
                       <div>
                         <span className="text-muted-foreground">Ergebnis:</span>
-                        <div className="font-medium">{eintrag.ergebnis} Ringe</div>
+                        <div className="font-medium">
+                          {eintrag.ergebnis} Ringe
+                          {eintrag.ergebnisZehntel && (
+                            <div className="text-xs text-green-600">
+                              ({eintrag.ergebnisZehntel} mit Zehntel)
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Standort:</span>
@@ -365,9 +372,15 @@ export default function EinträgePage() {
                   <div className="text-lg font-semibold">{selectedEintrag.schussAnzahl} Schuss</div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Ergebnis</label>
+                  <label className="text-sm font-medium text-muted-foreground">Ergebnis (Ganze Ringe)</label>
                   <div className="text-2xl font-bold text-primary">{selectedEintrag.ergebnis} Ringe</div>
                 </div>
+                {selectedEintrag.ergebnisZehntel && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Ergebnis (mit Zehntel)</label>
+                    <div className="text-xl font-bold text-green-600">{selectedEintrag.ergebnisZehntel} Ringe</div>
+                  </div>
+                )}
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Durchschnitt pro Schuss</label>
                   <div className="text-lg">{(selectedEintrag.ergebnis / selectedEintrag.schussAnzahl).toFixed(2)} Ringe</div>

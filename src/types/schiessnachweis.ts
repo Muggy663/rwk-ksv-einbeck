@@ -4,7 +4,8 @@ export interface SchießEintrag {
   typ: 'training' | 'wettkampf' | 'meisterschaft' | 'pokal';
   disziplin: string;
   schussAnzahl: number;
-  ergebnis: number;
+  ergebnis: number; // Hauptergebnis: Ganze Ringe (Pflicht)
+  ergebnisZehntel?: number; // Zehntel-Ergebnis (Optional für Leistungsschützen)
   serien?: ZehnerSerie[];
   ergebnisDetails?: {
     mitZehntel: number;

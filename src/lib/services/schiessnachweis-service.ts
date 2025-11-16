@@ -2,8 +2,23 @@ import { SchießEintrag, SchießStatistik } from '@/types/schiessnachweis';
 import { CloudSyncService } from './cloud-sync-service';
 import { PremiumService } from './premium-service';
 
-const STORAGE_KEY = 'rwk_schiessnachweis';
-const BACKUP_KEY = 'rwk_schiessnachweis_backup';
+// User-spezifische Keys
+const getStorageKey = () => {
+  if (typeof window === 'undefined') return 'rwk_schiessnachweis';
+  
+  // Versuche User-ID zu bekommen
+  try {
+    const auth = require('@/lib/firebase/config').auth;
+    if (auth.currentUser) {
+      return `rwk_schiessnachweis_${auth.currentUser.uid}`;
+    }
+  } catch (e) {}
+  
+  // Fallback zu globalem Key
+  return 'rwk_schiessnachweis';
+};
+
+const getBackupKey = () => getStorageKey() + '_backup';
 
 // Cache für bessere Performance
 let cachedEinträge: SchießEintrag[] | null = null;
@@ -24,21 +39,23 @@ export class SchießnachweisService {
     this.loadFromCloudSync();
     
     try {
-      // 1. Versuche localStorage
-      let data = localStorage.getItem(STORAGE_KEY);
+      // 1. Versuche localStorage (user-spezifisch)
+      const storageKey = getStorageKey();
+      let data = localStorage.getItem(storageKey);
       if (!data) {
         console.log('🔍 Keine Daten gefunden, lade aus Backup...');
       }
       
       // 2. Fallback zu sessionStorage
       if (!data) {
-        data = sessionStorage.getItem(STORAGE_KEY);
+        data = sessionStorage.getItem(storageKey);
         console.log('sessionStorage:', data ? `${data.length} Zeichen` : 'leer');
       }
       
       // 3. Fallback zu Backup
       if (!data) {
-        data = localStorage.getItem(BACKUP_KEY);
+        const backupKey = getBackupKey();
+        data = localStorage.getItem(backupKey);
         console.log('localStorage (backup):', data ? `${data.length} Zeichen` : 'leer');
       }
       
@@ -209,14 +226,18 @@ export class SchießnachweisService {
     const data = JSON.stringify(einträge);
     
     try {
+      // User-spezifische Speicherung
+      const storageKey = getStorageKey();
+      const backupKey = getBackupKey();
+      
       // Haupt-Speicherung
-      localStorage.setItem(STORAGE_KEY, data);
+      localStorage.setItem(storageKey, data);
       
       // Backup-Speicherung
-      localStorage.setItem(BACKUP_KEY, data);
+      localStorage.setItem(backupKey, data);
       
       // Session-Backup
-      sessionStorage.setItem(STORAGE_KEY, data);
+      sessionStorage.setItem(storageKey, data);
       
       // IndexedDB für persistente Speicherung (Cache-sicher)
       this.saveToIndexedDB(einträge);
