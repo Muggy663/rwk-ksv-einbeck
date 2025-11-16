@@ -180,6 +180,28 @@ export default function PremiumPage() {
                 </p>
               </div>
             )}
+            
+            {/* Wichtiger Datensicherungshinweis */}
+            <div className="mt-4 p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+              <div className="flex items-start gap-2 text-red-800 dark:text-red-200">
+                <Shield className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="font-semibold">⚠️ Wichtiger Hinweis zur Datensicherung</span>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                    <strong>Nach Ablauf von Premium verlieren Sie den Zugriff auf Ihre Cloud-Daten!</strong><br/>
+                    Sichern Sie Ihre Einträge regelmäßig über "📤 Export" → "Excel (.csv)".<br/>
+                    Bei Kündigung oder Ablauf sind nur noch lokale Daten verfügbar.
+                  </p>
+                  <div className="mt-2">
+                    <Button asChild size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-100">
+                      <Link href="/schiessnachweis">
+                        📤 Jetzt Daten sichern
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -257,6 +279,24 @@ export default function PremiumPage() {
                 <div className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-green-600" />
                   <span>Trinkgeld (2€) freiwillig - keine Steuern, kein Gewerbe</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Datensicherungshinweis für Nicht-Premium */}
+          <Card className="bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <Shield className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <div className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
+                    💾 Datensicherung empfohlen
+                  </div>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                    <strong>Wichtig:</strong> Nach Ende der Testphase oder bei Premium-Kündigung haben Sie keinen Zugriff mehr auf Cloud-Daten. 
+                    Sichern Sie Ihre Einträge regelmäßig über den CSV-Export.
+                  </p>
                 </div>
               </div>
             </CardContent>

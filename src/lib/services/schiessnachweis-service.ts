@@ -24,6 +24,7 @@ const getBackupKey = () => getStorageKey() + '_backup';
 let cachedEinträge: SchießEintrag[] | null = null;
 let lastCacheTime = 0;
 const CACHE_DURATION = 5000; // 5 Sekunden Cache
+let isLoading = false; // Verhindere mehrfache gleichzeitige Ladevorgänge
 
 export class SchießnachweisService {
   static getEinträge(): SchießEintrag[] {
@@ -35,8 +36,12 @@ export class SchießnachweisService {
       return cachedEinträge;
     }
     
-    // Versuche zuerst Cloud-Daten zu laden
-    this.loadFromCloudSync();
+    // Verhindere mehrfache gleichzeitige Ladevorgänge
+    if (isLoading) {
+      return cachedEinträge || [];
+    }
+    
+    isLoading = true;
     
     try {
       // 1. Versuche localStorage (user-spezifisch)
@@ -59,8 +64,8 @@ export class SchießnachweisService {
         console.log('localStorage (backup):', data ? `${data.length} Zeichen` : 'leer');
       }
       
-      // 4. Suche nach anderen möglichen Keys
-      if (!data) {
+      // 4. Suche nach anderen möglichen Keys (nur einmal pro Session)
+      if (!data && !sessionStorage.getItem('backup_search_done')) {
         const allKeys = Object.keys(localStorage);
         console.log('Alle localStorage Keys:', allKeys);
         
@@ -85,17 +90,14 @@ export class SchießnachweisService {
             }
           }
         }
+        
+        // Markiere Backup-Suche als erledigt
+        sessionStorage.setItem('backup_search_done', 'true');
       }
       
       if (!data) {
         console.log('⚠️ Keine Daten in localStorage/sessionStorage gefunden');
-        // Fallback zu IndexedDB (Cache-sicher)
-        this.loadFromIndexedDB().then(indexedData => {
-          if (indexedData.length > 0) {
-            console.log('💾 Daten aus IndexedDB wiederhergestellt:', indexedData.length);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(indexedData));
-          }
-        });
+        isLoading = false;
         return [];
       }
       
@@ -138,11 +140,13 @@ export class SchießnachweisService {
       // Cache aktualisieren
       cachedEinträge = einträge;
       lastCacheTime = now;
+      isLoading = false;
       
       console.log(`✅ ${einträge.length} Einträge geladen`);
       return einträge;
     } catch (error) {
       console.error('Fehler beim Laden der Einträge:', error);
+      isLoading = false;
       return [];
     }
   }
@@ -247,7 +251,8 @@ export class SchießnachweisService {
       console.error('Speichern fehlgeschlagen:', error);
       // Fallback zu sessionStorage
       try {
-        sessionStorage.setItem(STORAGE_KEY, data);
+        const storageKey = getStorageKey();
+        sessionStorage.setItem(storageKey, data);
       } catch (sessionError) {
         console.error('Auch sessionStorage fehlgeschlagen:', sessionError);
       }
@@ -473,7 +478,7 @@ export class SchießnachweisService {
     if (typeof window === 'undefined') return;
     
     try {
-      const data = localStorage.getItem(STORAGE_KEY);
+      const data = localStorage.getItem(getStorageKey());
       if (data) {
         const parsed = JSON.parse(data);
         let repaired = false;
@@ -500,8 +505,10 @@ export class SchießnachweisService {
         });
         
         if (repaired) {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(fixed));
-          localStorage.setItem(BACKUP_KEY, JSON.stringify(fixed));
+          const storageKey = getStorageKey();
+          const backupKey = getBackupKey();
+          localStorage.setItem(storageKey, JSON.stringify(fixed));
+          localStorage.setItem(backupKey, JSON.stringify(fixed));
           console.log('🔧 01.01.1970 Daten repariert');
           
           // Cache invalidieren
@@ -520,7 +527,7 @@ export class SchießnachweisService {
     
     console.log('🔍 Debug: Überprüfe Datum-Formate in localStorage...');
     
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = localStorage.getItem(getStorageKey());
     if (data) {
       try {
         const parsed = JSON.parse(data);
@@ -563,8 +570,10 @@ export class SchießnachweisService {
               console.log('Daten:', parsed);
               
               // Wiederherstellen
-              localStorage.setItem(STORAGE_KEY, data);
-              localStorage.setItem(BACKUP_KEY, data);
+              const storageKey = getStorageKey();
+              const backupKey = getBackupKey();
+              localStorage.setItem(storageKey, data);
+              localStorage.setItem(backupKey, data);
               
               return { found: true, source: key, count: parsed.length };
             }
@@ -578,36 +587,5 @@ export class SchießnachweisService {
     return { found: false, source: '', count: 0 };
   }
   
-  // Synchrones Cloud-Laden
-  private static loadFromCloudSync(): void {
-    // Nur wenn Premium und angemeldet
-    import('@/lib/services/premium-service').then(({ PremiumService }) => {
-      import('@/lib/firebase/config').then(({ auth, db }) => {
-        if (auth.currentUser && PremiumService.isPremium()) {
-          import('firebase/firestore').then(({ doc, getDoc }) => {
-            const docRef = doc(db, 'schiessnachweis_data', auth.currentUser!.uid);
-            getDoc(docRef).then(docSnap => {
-              if (docSnap.exists()) {
-                const cloudData = docSnap.data();
-                if (cloudData.einträge) {
-                  const einträge = cloudData.einträge.map((eintrag: any) => ({
-                    ...eintrag,
-                    datum: eintrag.datum.toDate ? eintrag.datum.toDate() : new Date(eintrag.datum),
-                    createdAt: eintrag.createdAt.toDate ? eintrag.createdAt.toDate() : new Date(eintrag.createdAt)
-                  }));
-                  
-                  // Cache und localStorage aktualisieren
-                  cachedEinträge = einträge;
-                  lastCacheTime = Date.now();
-                  localStorage.setItem(STORAGE_KEY, JSON.stringify(einträge));
-                  
-                  console.log('☁️ Cloud-Daten geladen:', einträge.length);
-                }
-              }
-            }).catch(console.error);
-          });
-        }
-      });
-    });
-  }
+
 }

@@ -1,8 +1,8 @@
 // Service Worker Configuration
-// Diese Datei wird zur Build-Zeit mit Environment Variables gefüllt
-self.FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-self.FIREBASE_AUTH_DOMAIN = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
-self.FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-self.FIREBASE_STORAGE_BUCKET = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
-self.FIREBASE_MESSAGING_SENDER_ID = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID;
-self.FIREBASE_APP_ID = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
+// Hardcoded values da process.env im Service Worker nicht verfügbar ist
+self.FIREBASE_API_KEY = "AIzaSyBlcJpndITalBIoqtXSOvefgfRQoBl6_0c";
+self.FIREBASE_AUTH_DOMAIN = "ksv-einbeck-app.firebaseapp.com";
+self.FIREBASE_PROJECT_ID = "ksv-einbeck-app";
+self.FIREBASE_STORAGE_BUCKET = "ksv-einbeck-app.appspot.com";
+self.FIREBASE_MESSAGING_SENDER_ID = "110556513204";
+self.FIREBASE_APP_ID = "1:110556513204:web:a78cd3a6c92d27e825a8e1";
