@@ -74,16 +74,23 @@ export default function NeuerEintragPage() {
   
   useEffect(() => {
     if (serien.length > 0 && showDetailedEntry) {
-      // Berechne nur Ergebnis mit Zehntel (exakt)
+      // Berechne Ergebnis mit Zehntel (exakt)
       const mitZehntel = serien.reduce((sum, serie) => sum + serie.summe, 0);
+      // Berechne ganze Ringe (jeder Schuss einzeln abgerundet)
+      const ohneZehntel = serien.reduce((sum, serie) => {
+        return sum + serie.schuesse.reduce((serieSum, schuss) => {
+          return serieSum + Math.floor(schuss.wert);
+        }, 0);
+      }, 0);
       
-      setBerechneteErgebnisse({ mitZehntel, ohneZehntel: 0 });
+      setBerechneteErgebnisse({ mitZehntel, ohneZehntel });
       
-      // Setze das Zehntel-Ergebnis als Standard
+      // Setze beide Ergebnisse
       if (mitZehntel > 0) {
         setFormData(prev => ({ 
           ...prev, 
-          ergebnis: mitZehntel.toString()
+          ergebnis: mitZehntel.toString(),
+          ergebnisGanzeRinge: ohneZehntel.toString()
         }));
       }
     } else {
@@ -98,7 +105,7 @@ export default function NeuerEintragPage() {
     if (!formData.disziplin) missingFields.push('Disziplin');
     if (!formData.schussAnzahl) missingFields.push('Anzahl Schüsse');
     if (!formData.ergebnisGanzeRinge) missingFields.push('Ergebnis (Ganze Ringe)');
-    if (!formData.standort) missingFields.push('Ort/Stadt');
+    if (!formData.standort || !formData.standort.trim()) missingFields.push('Ort/Stadt');
     
     if (missingFields.length > 0) {
       toast({
@@ -315,13 +322,18 @@ export default function NeuerEintragPage() {
                     {berechneteErgebnisse && (
                       <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                         <h4 className="text-sm font-semibold text-blue-900 mb-2">🎯 Aus Serien berechnet:</h4>
-                        <div className="bg-white p-2 rounded border text-center">
-                          <div className="text-blue-700 font-medium">Ergebnis mit Zehntel:</div>
-                          <div className="text-xl font-bold text-blue-900">{berechneteErgebnisse.mitZehntel}</div>
-                          <div className="text-xs text-blue-600">Automatisch übernommen</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-white p-2 rounded border text-center">
+                            <div className="text-blue-700 font-medium text-sm">Ganze Ringe:</div>
+                            <div className="text-lg font-bold text-blue-900">{berechneteErgebnisse.ohneZehntel}</div>
+                          </div>
+                          <div className="bg-white p-2 rounded border text-center">
+                            <div className="text-green-700 font-medium text-sm">Mit Zehntel:</div>
+                            <div className="text-lg font-bold text-green-900">{berechneteErgebnisse.mitZehntel}</div>
+                          </div>
                         </div>
                         <p className="text-xs text-blue-700 mt-2">
-                          💡 Für ganze Ringe müssen Sie die Serien ohne Zehntel eingeben
+                          ✅ Beide Ergebnisse automatisch übernommen
                         </p>
                       </div>
                     )}

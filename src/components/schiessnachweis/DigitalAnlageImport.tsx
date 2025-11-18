@@ -175,40 +175,100 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
     try {
       const formData = new FormData();
       formData.append('image', file);
-      formData.append('context', `Erkenne Schießergebnisse für Schießnachweis aus digitaler Schießanlage oder Bildschirm-Foto für Disziplin: ${disziplin}. 
-      Extrahiere alle Einzelschüsse mit Kommastellen (z.B. 10.5, 9.8, 10.1). 
-      Format kann sein: Meyton, Sius, Disag, Sport Quantum oder handschriftliche Notizen.
-      Wichtig: Erkenne auch Serien-Strukturen und Gesamtergebnisse.`);
+      formData.append('context', `Erkenne Schießergebnisse aus Ausdrucken digitaler Schießanlagen für Disziplin: ${disziplin}.
       
+      FORMATE:
+      • Meyton OpticScore: Tabellen mit Einzelschüssen (10.5, 9.8) und Seriensummen
+      • Sius Ascor: "Shot 1: 10.5" oder Tabellen mit Schussnummern
+      • Disag: "Ring 1: 10.5" oder "S1: 10.5" Format
+      • Sport Quantum: "Round 1" mit Schusswerten in Spalten
+      
+      Extrahiere ALLE Einzelschüsse mit Kommastellen (0.0-10.9) und erkenne Serien-Strukturen.`);
+      
+      console.log('🔍 Sende Foto an Gemini OCR...');
       const response = await fetch('/api/gemini-ocr', {
         method: 'POST',
         body: formData
       });
       
+      console.log('📡 OCR Response Status:', response.status);
+      
       if (response.ok) {
         const result = await response.json();
+        
+        console.log('📊 OCR Result:', result);
+        console.log('📊 OCR Results Array:', result.results);
         
         if (result.success && result.results && result.results.length > 0) {
           // Konvertiere OCR-Ergebnisse zu Serien
           const serien: ZehnerSerie[] = [];
           let serienNummer = 1;
           
-          // Gruppiere Ergebnisse nach Serien (10 Schuss pro Serie)
+          // Sammle alle Schießwerte und Ringzahlen aus verschiedenen Formaten
           const alleWerte: number[] = [];
+          const alleRingzahlen: number[] = [];
           
-          result.results.forEach((res: any) => {
+          result.results.forEach((res: any, index: number) => {
+            console.log(`📊 OCR Result ${index}:`, res);
+            
+            // Verschiedene Formate prüfen
+            let wert: number | null = null;
+            
+            // Format 1: res.score (Meyton/Standard)
             if (res.score && !isNaN(parseFloat(res.score))) {
-              const wert = parseFloat(res.score);
-              if (wert >= 0 && wert <= 10.9) {
-                alleWerte.push(wert);
+              wert = parseFloat(res.score);
+            }
+            // Format 2: res.shotValue (Sius/Disag)
+            else if (res.shotValue && !isNaN(parseFloat(res.shotValue))) {
+              wert = parseFloat(res.shotValue);
+            }
+            // Format 3: res.ringValue (Sport Quantum)
+            else if (res.ringValue && !isNaN(parseFloat(res.ringValue))) {
+              wert = parseFloat(res.ringValue);
+            }
+            // Format 4: res.value (Allgemein)
+            else if (res.value && !isNaN(parseFloat(res.value))) {
+              wert = parseFloat(res.value);
+            }
+            // Format 5: res.shooterName als Wert (falls Gemini verwirrt ist)
+            else if (res.shooterName && !isNaN(parseFloat(res.shooterName))) {
+              wert = parseFloat(res.shooterName);
+            }
+            // Format 6: Direkt als Zahl
+            else if (typeof res === 'number') {
+              wert = res;
+            }
+            // Format 7: String mit Zahl
+            else if (typeof res === 'string' && !isNaN(parseFloat(res))) {
+              wert = parseFloat(res);
+            }
+            
+            // Sammle sowohl Schusswerte als auch Ringzahlen
+            if (wert !== null && wert >= 0) {
+              // Große ganze Zahlen = Ringzahlen (z.B. 297, 311)
+              if (wert > 50 && wert === Math.floor(wert)) {
+                alleRingzahlen.push(wert);
+                console.log(`🎯 Ringzahl gefunden: ${wert}`);
               }
+              // Einzelschusswerte (0.0 bis 10.9)
+              else if (wert <= 10.9) {
+                alleWerte.push(wert);
+                console.log(`✅ Schusswert gefunden: ${wert}`);
+              }
+            } else {
+              console.log(`❌ Ungültiger Wert: ${wert}`);
             }
           });
           
-          // Erstelle Serien mit je 10 Schuss
-          for (let i = 0; i < alleWerte.length; i += 10) {
-            const serienWerte = alleWerte.slice(i, i + 10);
-            if (serienWerte.length > 0) {
+          console.log(`🎯 Alle Schusswerte:`, alleWerte);
+          console.log(`🎯 Alle Ringzahlen:`, alleRingzahlen);
+          
+          // Erstelle Serien mit je 10 Schuss (oder weniger)
+          if (alleWerte.length > 0) {
+            for (let i = 0; i < alleWerte.length; i += 10) {
+              const serienWerte = alleWerte.slice(i, i + 10);
+              const ringeSumme = alleRingzahlen.length > 0 ? alleRingzahlen[serienNummer - 1] || Math.floor(serienWerte.reduce((sum, wert) => sum + wert, 0)) : Math.floor(serienWerte.reduce((sum, wert) => sum + wert, 0));
+              
               const serie: ZehnerSerie = {
                 id: `photo-${Date.now()}-${serienNummer}`,
                 serienNummer,
@@ -217,33 +277,44 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
                   wert,
                   ring: Math.floor(wert)
                 })),
-                summe: serienWerte.reduce((sum, wert) => sum + wert, 0)
+                summe: serienWerte.reduce((sum, wert) => sum + wert, 0),
+                ringeSumme
               };
               serien.push(serie);
               serienNummer++;
             }
-          }
-          
-          if (serien.length > 0) {
+            
             onImport(serien);
             toast({
               title: "🤖 Foto-Import erfolgreich",
-              description: `${serien.length} Serie(n) mit ${alleWerte.length} Schüssen aus Foto erkannt.`,
+              description: `${serien.length} Serie(n) mit ${alleWerte.length} Schüssen aus Schießanlagen-Ausdruck erkannt.`,
             });
           } else {
-            throw new Error("Keine gültigen Ergebnisse im Foto gefunden");
+            throw new Error(`Keine gültigen Schießwerte gefunden. OCR erkannte: ${JSON.stringify(result.results)}`);
           }
         } else {
-          throw new Error("Keine Ergebnisse im Foto erkannt");
+          console.warn('⚠️ Keine OCR-Ergebnisse:', result);
+          throw new Error(`Keine Ergebnisse im Foto erkannt. ${result.error || 'Unbekannter Fehler'}`);
         }
       } else {
         throw new Error("OCR-Service nicht verfügbar");
       }
     } catch (error) {
       console.error('Foto-Import Fehler:', error);
+      
+      let errorMessage = "Die Ergebnisse konnten nicht aus dem Foto erkannt werden.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes("Keine gültigen Ergebnisse")) {
+          errorMessage = "Keine Schießergebnisse im Foto erkannt. Versuchen Sie:\n• Bessere Beleuchtung\n• Klareres Foto\n• Vollständige Ergebnistabelle";
+        } else if (error.message.includes("OCR-Service")) {
+          errorMessage = "KI-Service vorübergehend nicht verfügbar. Versuchen Sie Text-Import.";
+        }
+      }
+      
       toast({
-        title: "Foto-Import fehlgeschlagen",
-        description: "Die Ergebnisse konnten nicht aus dem Foto erkannt werden.",
+        title: "📸 Foto-Import fehlgeschlagen",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -265,6 +336,14 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!disziplin && (
+          <div className="bg-yellow-100 border border-yellow-300 p-3 rounded-lg">
+            <p className="text-sm text-yellow-800 font-medium">
+              ⚠️ Bitte wählen Sie zuerst eine <strong>Disziplin</strong> und <strong>Anzahl Schüsse</strong> aus, bevor Sie Ergebnisse importieren.
+            </p>
+          </div>
+        )}
+        
         {/* Text-Eingabe */}
         <div>
           <Label htmlFor="textInput">Ergebnisse einfügen</Label>
@@ -294,7 +373,7 @@ Total: 50.3`}
         <div className="space-y-3">
           <Button 
             onClick={() => processDigitalResults(textInput)}
-            disabled={!textInput.trim() || isProcessing}
+            disabled={!textInput.trim() || isProcessing || !disziplin}
             className="flex items-center justify-center gap-2 w-full"
           >
             <FileText className="h-4 w-4" />
@@ -303,20 +382,38 @@ Total: 50.3`}
           
           {/* Kamera-Button für Mobile */}
           <div className="block md:hidden">
-            <Input 
+            <Button 
+              onClick={() => document.getElementById('camera-input')?.click()}
+              disabled={isProcessing || isPhotoProcessing || !disziplin}
+              className="flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-700"
+            >
+              <Camera className="h-4 w-4" />
+              {isPhotoProcessing ? 'Analysiere Foto...' : '📸 Kamera öffnen'}
+            </Button>
+            <input 
+              id="camera-input"
               type="file" 
               accept="image/*" 
               capture="environment"
               onChange={handlePhotoUpload}
-              className="bg-white border-2 border-dashed border-green-300 p-4 text-center cursor-pointer hover:border-green-400"
-              disabled={isProcessing || isPhotoProcessing}
+              className="hidden"
+              disabled={isProcessing || isPhotoProcessing || !disziplin}
             />
-            <p className="text-xs text-center text-green-700 mt-1">📸 Kamera öffnen</p>
           </div>
           
           {/* Galerie/Datei-Auswahl für alle Geräte */}
-          <div>
-            <Input 
+          <div className="space-y-2">
+            <Button 
+              onClick={() => document.getElementById('file-input')?.click()}
+              disabled={isProcessing || isPhotoProcessing || !disziplin}
+              variant="outline"
+              className="flex items-center justify-center gap-2 w-full border-blue-300 text-blue-700 hover:bg-blue-50"
+            >
+              <Image className="h-4 w-4" />
+              {isPhotoProcessing ? 'Analysiere...' : '📁 Foto/Datei auswählen'}
+            </Button>
+            <input 
+              id="file-input"
               type="file" 
               accept="image/*,.txt,.csv" 
               onChange={(e) => {
@@ -329,11 +426,11 @@ Total: 50.3`}
                   }
                 }
               }}
-              className="bg-white border-2 border-dashed border-blue-300 p-4 text-center cursor-pointer hover:border-blue-400"
-              disabled={isProcessing || isPhotoProcessing}
+              className="hidden"
+              disabled={isProcessing || isPhotoProcessing || !disziplin}
             />
-            <p className="text-xs text-center text-blue-700 mt-1">
-              📁 Aus Galerie/Dateien wählen (Bilder, .txt, .csv)
+            <p className="text-xs text-center text-blue-700">
+              Unterstützt: JPG, PNG, .txt, .csv Dateien
             </p>
           </div>
         </div>
@@ -345,14 +442,15 @@ Total: 50.3`}
             <div className="text-xs text-blue-700 dark:text-blue-300">
               <p className="font-semibold mb-1">Unterstützte Anlagen:</p>
               <ul className="space-y-1">
-                <li>• Meyton OpticScore/MytargetSoft (.txt, .csv)</li>
-                <li>• Sius Ascor/Suis Target (.txt, .csv)</li>
-                <li>• Disag Shooting Systems (.txt, .csv)</li>
-                <li>• Sport Quantum (.txt, .csv)</li>
+                <li>• Meyton OpticScore/MytargetSoft (.txt, .csv, 📷)</li>
+                <li>• Sius Ascor/Suis Target (.txt, .csv, 📷)</li>
+                <li>• Disag Shooting Systems (.txt, .csv, 📷)</li>
+                <li>• Sport Quantum (.txt, .csv, 📷)</li>
                 {isMobile && (
                   <>
                     <li>• 📸 Foto von Bildschirm/Ausdruck (🤖 Gemini KI)</li>
                     <li>• 📱 Handy-Fotos aus WhatsApp/Galerie</li>
+                    <li>• 🎯 Meyton/Sius/Disag Ausdrucke scannen</li>
                   </>
                 )}
                 {!isMobile && (

@@ -54,19 +54,28 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     const base64Image = buffer.toString('base64');
 
-    const prompt = `Analysiere diesen handschriftlichen Schießsport-Ergebniszettel und extrahiere alle Schützenergebnisse.
+    const prompt = `Analysiere diesen MEYTON/SIUS/DISAG Schießergebnis-Ausdruck und extrahiere ALLE Einzelschuss-Werte.
 
-WICHTIGE REGELN:
-1. Erkenne ALLE Namen und Ringzahlen aus der Tabelle
-2. Erkenne auch Teamnamen wenn möglich
-3. Ringzahlen sind meist 2-3 stellige Zahlen (z.B. 285, 167, 294)
-4. IGNORIERE Nachschießen-Spalten komplett - nur reguläre Ergebnisse
-5. Wenn ein Schütze sowohl reguläres Ergebnis als auch Nachschießen hat, nimm nur das reguläre
-6. Ignoriere Unterschriften und Notizen am Ende
-7. Confidence: 0.9 für klare Handschrift, 0.7 für mittlere, 0.5 für schwer lesbare
-8. Extrahiere ALLE Schützen, nicht nur bestimmte Teams
+MEYTON ERKENNUNG:
+- Tabellen mit "Serie 1", "Serie 2" etc.
+- Spalten: Schuss 1, Schuss 2, Schuss 3...
+- Werte wie: 10.5, 9.8, 10.1, 9.9, 10.0
+- Oft 10 Schuss pro Serie
+- Manchmal Summen am Ende (IGNORIEREN!)
 
-Gib die Daten als JSON-Array zurück mit shooterName, teamName, score und confidence.`;
+SIUS/DISAG ERKENNUNG:
+- Komma-getrennte Werte: "9.1,9.3,9.7,9.8,9.2"
+- Pipe-getrennte: "9.1|9.3|9.7|9.8|9.2"
+- Spalten-Format mit Zahlen
+
+WICHTIG:
+- NUR Einzelschuss-Werte zwischen 0.0-10.9
+- KEINE Summen, Namen, Daten
+- Ganze Zahlen als .0 ("10" = "10.0")
+- Auch handschriftliche Werte
+
+Rückgabe als JSON-Array:
+[{"score": "10.5"}, {"score": "9.8"}, {"score": "10.1"}]`;
 
     const response = await genAI.models.generateContent({
       model: 'gemini-2.5-flash',

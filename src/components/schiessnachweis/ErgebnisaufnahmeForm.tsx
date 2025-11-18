@@ -102,7 +102,8 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
       ring: Math.floor(validierterWert)
     };
     
-    serie.summe = serie.schuesse.reduce((sum, schuss) => sum + schuss.wert, 0);
+    const rawSum = serie.schuesse.reduce((sum, schuss) => sum + schuss.wert, 0);
+    serie.summe = parseFloat(rawSum.toFixed(1));
     setSerien(neueSerien);
   };
 
@@ -182,7 +183,7 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
           >
             Serie {serie.serienNummer}
             <Badge variant="secondary" className="ml-2">
-              {serie.summe.toFixed(disziplinConfig.kommastellen ? 1 : 0)}
+              {parseFloat(serie.summe.toFixed(1))}
             </Badge>
           </Button>
         ))}
