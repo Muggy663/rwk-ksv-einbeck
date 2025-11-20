@@ -6,19 +6,15 @@ import { sanitizeInput, validateImageUpload } from '@/lib/utils/input-validator'
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 // Sichere Konfiguration
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB Desktop
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export async function POST(request: NextRequest) {
-  secureLogger.info('Gemini OCR API called', 'gemini-ocr');
-  
-  // TEMP: Mobile Debug - Skip auth for testing
+  const startTime = Date.now();
   const userAgent = request.headers.get('user-agent') || '';
-  const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+  const isMobileRequest = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
   
-  if (isMobile) {
-    secureLogger.info('Mobile request detected - skipping auth checks', 'gemini-ocr');
-  }
+  secureLogger.info(`Gemini OCR API called (${isMobileRequest ? 'Mobile' : 'Desktop'})`, 'gemini-ocr');
   
   try {
     if (!process.env.GEMINI_API_KEY) {
@@ -72,23 +68,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 });
     }
 
-    // Sichere Bild-Validierung
+    // Mobile-spezifische Validierung
+    const maxSize = isMobileRequest ? 3 * 1024 * 1024 : MAX_IMAGE_SIZE; // 3MB für Mobile, 5MB für Desktop
+    
     const imageValidation = validateImageUpload(image, {
-      maxSize: MAX_IMAGE_SIZE,
+      maxSize,
       allowedMimeTypes: ALLOWED_IMAGE_TYPES
     });
 
     if (!imageValidation.isValid) {
       secureLogger.warn(`Image validation failed: ${imageValidation.error}`, 'gemini-ocr');
-      return NextResponse.json({ error: imageValidation.error }, { status: 400 });
+      return NextResponse.json({ 
+        error: `${imageValidation.error}${isMobileRequest ? ' (Mobile: max 3MB)' : ''}` 
+      }, { status: 400 });
     }
 
-    // Convert image to base64
-    const bytes = await image.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64Image = buffer.toString('base64');
+    // Logging für Mobile Debug
+    if (isMobileRequest) {
+      secureLogger.info(`Mobile OCR: ${Math.round(image.size/1024)}KB ${image.type}`, 'gemini-ocr');
+    }
 
-    // Bestimme Prompt
+    // Convert image to base64 mit Fehlerbehandlung
+    let base64Image: string;
+    try {
+      const bytes = await image.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      base64Image = buffer.toString('base64');
+      
+      // Validiere Base64
+      if (!base64Image || base64Image.length < 100) {
+        throw new Error('Invalid image data');
+      }
+    } catch (conversionError) {
+      secureLogger.error('Image conversion failed', 'gemini-ocr');
+      return NextResponse.json({ 
+        error: 'Failed to process image data'
+      }, { status: 400 });
+    }
+
+    // Mobile-optimierter Prompt
     let prompt;
     if (contextRaw) {
       prompt = sanitizeInput(contextRaw);
@@ -104,27 +122,70 @@ WICHTIGE REGELN:
 6. Ignoriere Unterschriften und Notizen am Ende
 7. Confidence: 0.9 für klare Handschrift, 0.7 für mittlere, 0.5 für schwer lesbare
 8. Extrahiere ALLE Schützen, nicht nur bestimmte Teams
+9. Maximal 25 Ergebnisse pro Anfrage
 
-Gib die Daten als JSON-Array zurück mit shooterName, teamName, score und confidence.`;
+Gib die Daten als JSON-Array zurück mit shooterName, teamName, score und confidence.
+Format: [{"shooterName": "Max Mustermann", "teamName": "Team A", "score": 285, "confidence": 0.9}]`;
     }
 
-    const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [{
-        role: 'user',
-        parts: [
-          { text: prompt },
-          {
-            inlineData: {
-              data: base64Image,
-              mimeType: image.type
-            }
-          }
-        ]
-      }]
-    });
+    // Gemini API Call mit Timeout und Retry-Logic
+    let response;
+    let attempts = 0;
+    const maxAttempts = isMobileRequest ? 2 : 1; // Mobile: 2 Versuche
+    
+    while (attempts < maxAttempts) {
+      attempts++;
+      
+      try {
+        // Timeout für Mobile länger
+        const timeoutMs = isMobileRequest ? 40000 : 25000;
+        
+        const responsePromise = genAI.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [{
+            role: 'user',
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  data: base64Image,
+                  mimeType: image.type
+                }
+              }
+            ]
+          }]
+        });
+        
+        // Race zwischen Response und Timeout
+        response = await Promise.race([
+          responsePromise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Gemini API timeout')), timeoutMs)
+          )
+        ]);
+        
+        break; // Erfolgreich, verlasse Loop
+        
+      } catch (attemptError) {
+        secureLogger.warn(`Gemini attempt ${attempts} failed`, 'gemini-ocr');
+        
+        if (attempts >= maxAttempts) {
+          throw attemptError;
+        }
+        
+        // Kurze Pause vor Retry (nur bei Mobile)
+        if (isMobileRequest && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
 
     const text = response.text;
+    const processingTime = Date.now() - startTime;
+    
+    if (isMobileRequest) {
+      secureLogger.info(`Mobile OCR completed in ${processingTime}ms`, 'gemini-ocr');
+    }
     
     try {
       let jsonText = text;
@@ -136,22 +197,66 @@ Gib die Daten als JSON-Array zurück mit shooterName, teamName, score und confid
       }
       
       const parsedResults = JSON.parse(jsonText);
+      
+      // Validiere und begrenze Ergebnisse
+      const validResults = Array.isArray(parsedResults) 
+        ? parsedResults.slice(0, 25).filter(result => 
+            result && 
+            typeof result.shooterName === 'string' && 
+            result.shooterName.trim().length > 0 &&
+            typeof result.score === 'number' &&
+            result.score >= 0 && result.score <= 400
+          )
+        : [];
+      
       return NextResponse.json({ 
         success: true, 
-        results: parsedResults,
-        ocrSource: 'gemini'
+        results: validResults,
+        ocrSource: 'gemini',
+        processingTime: isMobileRequest ? processingTime : undefined,
+        attempts: isMobileRequest ? attempts : undefined
       });
+      
     } catch (parseError) {
       secureLogger.error('Failed to parse Gemini response', 'gemini-ocr');
+      
+      // Für Mobile: Detailliertere Fehlermeldung
+      const errorDetails = isMobileRequest 
+        ? `Parse error after ${processingTime}ms (attempt ${attempts})`
+        : 'Invalid response format';
+      
       return NextResponse.json({ 
-        error: 'Invalid response format from OCR service'
+        error: `Invalid response format from OCR service: ${errorDetails}`,
+        rawResponse: isMobileRequest ? text.substring(0, 200) : undefined
       }, { status: 500 });
     }
 
   } catch (error) {
-    secureLogger.error('Gemini OCR processing failed', 'gemini-ocr');
+    const processingTime = Date.now() - startTime;
+    
+    secureLogger.error(`Gemini OCR processing failed after ${processingTime}ms`, 'gemini-ocr');
+    
+    // Mobile-spezifische Fehlermeldungen
+    let errorMessage = 'OCR processing failed';
+    
+    if (error instanceof Error) {
+      if (error.message.includes('timeout')) {
+        errorMessage = isMobileRequest 
+          ? 'Timeout: Mobile Verbindung zu langsam. Versuchen Sie ein kleineres Bild oder besseres WLAN.'
+          : 'Timeout: Verarbeitung dauerte zu lange';
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorMessage = isMobileRequest
+          ? 'Netzwerkfehler: Prüfen Sie Ihre Internetverbindung'
+          : 'Network error occurred';
+      } else if (error.message.includes('quota') || error.message.includes('limit')) {
+        errorMessage = 'Service temporarily unavailable. Please try again later.';
+      }
+    }
+    
     return NextResponse.json({ 
-      error: 'OCR processing failed'
+      error: errorMessage,
+      isMobile: isMobileRequest,
+      processingTime
     }, { status: 500 });
   }
 }

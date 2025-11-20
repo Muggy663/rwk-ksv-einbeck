@@ -13,7 +13,7 @@ import { db } from "@/lib/firebase/config"
 
 interface HandzettelOCRProps {
   imageFile: File
-  availableTeams: Team[]
+  availableTeams?: Team[]
   selectedLeagueId: string
   selectedRound: string
   onOCRComplete: (results: OCRMatchResult[]) => void
@@ -33,7 +33,7 @@ export interface OCRMatchResult {
 
 export function HandzettelOCR({ 
   imageFile, 
-  availableTeams, 
+  availableTeams = [], 
   selectedLeagueId, 
   selectedRound, 
   onOCRComplete, 
@@ -48,6 +48,62 @@ export function HandzettelOCR({
   const [hasProcessed, setHasProcessed] = React.useState(false)
   const shooterCacheRef = React.useRef<Map<string, {name: string, teamId: string, teamName: string}> | null>(null)
 
+  // Bildkomprimierung für Mobile
+  const compressImageForMobile = React.useCallback(async (file: File): Promise<File> => {
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    
+    // Nur auf Mobile komprimieren und nur wenn Bild > 1MB
+    if (!isMobile || file.size <= 1024 * 1024) {
+      return file
+    }
+    
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+      
+      img.onload = () => {
+        // Maximale Auflösung für Mobile: 1920x1080
+        const maxWidth = 1920
+        const maxHeight = 1080
+        
+        let { width, height } = img
+        
+        // Skalierung berechnen
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height)
+          width *= ratio
+          height *= ratio
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // Bild zeichnen mit besserer Qualität
+        ctx!.imageSmoothingEnabled = true
+        ctx!.imageSmoothingQuality = 'high'
+        ctx!.drawImage(img, 0, 0, width, height)
+        
+        // Als JPEG mit 85% Qualität exportieren
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            })
+            console.log(`📱 Bild komprimiert: ${Math.round(file.size/1024)}KB → ${Math.round(compressedFile.size/1024)}KB`)
+            resolve(compressedFile)
+          } else {
+            resolve(file)
+          }
+        }, 'image/jpeg', 0.85)
+      }
+      
+      img.onerror = () => resolve(file)
+      img.src = URL.createObjectURL(file)
+    })
+  }, [])
+
   const processOCR = React.useCallback(async () => {
     if (hasProcessed) return
     
@@ -58,90 +114,125 @@ export function HandzettelOCR({
     setProgress(0)
     
     try {
+      setCurrentStep("📱 Bereite Bild vor...")
+      setProgress(10)
+      
+      // Bild für Mobile komprimieren
+      let processedImage = imageFile
+      if (isMobile) {
+        setCurrentStep("📱 Komprimiere Bild...")
+        processedImage = await compressImageForMobile(imageFile)
+        setProgress(20)
+      }
+      
       setCurrentStep("🤖 Gemini AI analysiert Handzettel...")
-      setProgress(20)
+      setProgress(30)
       
       // Mobile Debug Info
       if (isMobile) {
-        console.log('📱 Mobile Debug - Bildgröße:', imageFile.size, 'bytes')
-        console.log('📱 Mobile Debug - Bildtyp:', imageFile.type)
+        console.log('📱 Mobile Debug - Original:', Math.round(imageFile.size/1024), 'KB')
+        console.log('📱 Mobile Debug - Komprimiert:', Math.round(processedImage.size/1024), 'KB')
         console.log('📱 Mobile Debug - Teams:', availableTeams.length)
-        
-        // Debug Toast für Mobile
-        const debugInfo = `📱 Debug: ${Math.round(imageFile.size/1024)}KB ${imageFile.type} | ${availableTeams.length} Teams`
-        setCurrentStep(debugInfo)
       }
       
-      // Versuche zuerst Gemini OCR
+      // Versuche Gemini OCR mit Timeout
       let matches: OCRMatchResult[] = []
       let geminiSuccess = false
       
       try {
         const formData = new FormData()
-        formData.append('image', imageFile)
+        formData.append('image', processedImage)
+        const teamNames = availableTeams.map(t => t.name).join(',')
+        formData.append('teamNames', teamNames)
         
-        if (isMobile) {
-          console.log('📱 Mobile Debug - Sende Request an /api/gemini-ocr')
-          setCurrentStep('📱 Sende Request...')
-        }
+        setCurrentStep("📡 Sende an Gemini AI...")
+        setProgress(50)
+        
+        // AbortController für Timeout
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => {
+          controller.abort()
+        }, isMobile ? 45000 : 30000) // 45s für Mobile, 30s für Desktop
         
         const geminiResponse = await fetch('/api/gemini-ocr', {
           method: 'POST',
           body: formData,
           headers: {
             'Accept': 'application/json'
-          }
+          },
+          signal: controller.signal
         })
+        
+        clearTimeout(timeoutId)
         
         if (isMobile) {
           console.log('📱 Mobile Debug - Response Status:', geminiResponse.status)
           setCurrentStep(`📱 Response: ${geminiResponse.status}`)
         }
         
+        setProgress(70)
+        
         if (geminiResponse.ok) {
           const geminiData = await geminiResponse.json()
-          if (isMobile) {
-            console.log('📱 Mobile Debug - Response Data:', geminiData)
-            setCurrentStep(`📱 Data: ${geminiData.success ? 'OK' : 'FEHLER'}`)
-          }
           
           if (geminiData.success && geminiData.results && geminiData.results.length > 0) {
-            setCurrentStep("✨ Gemini AI hat Ergebnisse gefunden!")
-            setProgress(70)
+            setCurrentStep("✨ Verarbeite Ergebnisse...")
+            setProgress(80)
             
             matches = await processGeminiResults(geminiData.results)
             console.log('✅ Gemini Erkennung erfolgreich:', matches.length, 'Matches')
             geminiSuccess = true
           } else {
-            console.warn('⚠️ Gemini lieferte keine Ergebnisse, verwende Fallback')
+            console.warn('⚠️ Gemini lieferte keine Ergebnisse')
             if (isMobile) {
-              console.log('📱 Mobile Debug - Gemini Fehler:', geminiData.error || 'Keine Ergebnisse')
-              setCurrentStep(`📱 Gemini Fehler: ${geminiData.error || 'Keine Ergebnisse'}`)
+              setCurrentStep(`📱 Keine Ergebnisse: ${geminiData.error || 'Unbekannt'}`)
             }
           }
         } else {
           const errorText = await geminiResponse.text().catch(() => 'Unbekannter Fehler')
-          console.warn('⚠️ Gemini API Fehler:', geminiResponse.status, 'verwende Fallback')
+          console.warn('⚠️ Gemini API Fehler:', geminiResponse.status)
           if (isMobile) {
-            console.log('📱 Mobile Debug - API Fehler:', errorText)
             setCurrentStep(`📱 API Fehler: ${geminiResponse.status}`)
           }
         }
       } catch (geminiError) {
         console.warn('⚠️ Gemini Erkennung fehlgeschlagen:', geminiError)
+        
+        let errorMsg = 'Unbekannter Fehler'
+        if (geminiError instanceof Error) {
+          if (geminiError.name === 'AbortError') {
+            errorMsg = 'Timeout - Verbindung zu langsam'
+          } else if (geminiError.message.includes('fetch')) {
+            errorMsg = 'Netzwerkfehler'
+          } else {
+            errorMsg = geminiError.message
+          }
+        }
+        
         if (isMobile) {
-          const errorMsg = geminiError instanceof Error ? geminiError.message : String(geminiError)
-          console.log('📱 Mobile Debug - Gemini Exception:', errorMsg)
-          setCurrentStep(`📱 Fehler: ${errorMsg.includes('aborted') ? 'Timeout (30s)' : errorMsg}`)
+          setCurrentStep(`📱 Fehler: ${errorMsg}`)
         }
       }
       
-      // Wenn Gemini fehlschlägt, direkt Fehler werfen
+      // Wenn Gemini fehlschlägt, detaillierte Fehlermeldung
       if (!geminiSuccess || matches.length === 0) {
+        let errorDetails = 'Gemini OCR fehlgeschlagen.'
+        
         if (isMobile) {
-          setCurrentStep('📱 Gemini OCR fehlgeschlagen - keine Alternative')
+          errorDetails += `\n\n📱 Mobile Details:\n• Bildgröße: ${Math.round(processedImage.size/1024)}KB\n• Teams: ${availableTeams.length}\n• Typ: ${processedImage.type}`
+          
+          // Spezifische Mobile-Tipps
+          if (processedImage.size > 2 * 1024 * 1024) {
+            errorDetails += '\n\n💡 Tipp: Bild ist sehr groß. Versuchen Sie ein kleineres Foto.'
+          }
+          if (availableTeams.length === 0) {
+            errorDetails += '\n\n⚠️ Keine Teams verfügbar. Wählen Sie zuerst Liga und Durchgang.'
+          }
         }
-        throw new Error('Gemini OCR fehlgeschlagen. Bitte versuchen Sie es erneut oder verwenden Sie ein anderes Foto.')
+        
+        errorDetails += '\n\nBitte versuchen Sie:\n• Ein anderes/besseres Foto\n• Bessere Beleuchtung\n• Handzettel gerade fotografieren'
+        
+        throw new Error(errorDetails)
       }
       
       setMatchedResults(matches)
@@ -151,20 +242,19 @@ export function HandzettelOCR({
       
     } catch (error) {
       console.error('❌ Erkennungs-Fehler:', error)
-      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
       
       let errorMessage = error instanceof Error ? error.message : 'Automatisches Auslesen fehlgeschlagen'
       
-      if (isMobile) {
-        console.log('📱 Mobile Debug - Final Error:', errorMessage)
-        errorMessage = `Mobile Fehler: ${errorMessage}\n\nBild: ${imageFile.size} bytes, ${imageFile.type}\nTeams: ${availableTeams.length}`
+      // Cleanup bei Fehlern
+      if (processedImage !== imageFile) {
+        URL.revokeObjectURL(URL.createObjectURL(processedImage))
       }
       
       onError(errorMessage)
     } finally {
       setIsProcessing(false)
     }
-  }, [hasProcessed, imageFile.name, availableTeams, onOCRComplete, onError])
+  }, [hasProcessed, imageFile, availableTeams, onOCRComplete, onError, compressImageForMobile])
 
   // Lade Schützen-Cache einmalig
   React.useEffect(() => {
