@@ -650,29 +650,7 @@ export default function SharedResultsPage({
               await addDoc(collection(db, LEAGUE_UPDATES_COLLECTION), leagueUpdateData);
             }
             
-            // E-Mail-Benachrichtigung für neue Ergebnisse
-            try {
-              const notificationFormData = new FormData();
-              notificationFormData.append('subject', `🎯 Neue Ergebnisse: ${entry.leagueName} - DG ${entry.durchgang}`);
-              notificationFormData.append('message', `Neue Ergebnisse eingegangen:\r\n\r\nLiga: ${entry.leagueName}\r\nDurchgang: ${entry.durchgang}\r\nMannschaft: ${entry.teamName}\r\nSchütze: ${entry.shooterName}\r\nRinge: ${entry.totalRinge}\r\nZeitpunkt: ${new Date().toLocaleString('de-DE')}\r\n\r\nDie Tabellen wurden automatisch aktualisiert.`);
-              notificationFormData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
-              
-              const { getAuth } = await import('firebase/auth');
-              const auth = getAuth();
-              let authHeaders = {};
-              if (auth.currentUser) {
-                const token = await auth.currentUser.getIdToken();
-                authHeaders = { 'Authorization': `Bearer ${token}` };
-              }
-              
-              await fetch('/api/send-email', {
-                method: 'POST',
-                headers: authHeaders,
-                body: notificationFormData
-              });
-            } catch (emailError) {
-              console.warn('League update email failed:', emailError);
-            }
+            // E-Mail-Benachrichtigung entfernt - nur noch für Handzettel
           } catch (updateError) {
             console.warn('League update failed:', updateError);
             // Fehler ignorieren - Hauptfunktion funktioniert trotzdem
