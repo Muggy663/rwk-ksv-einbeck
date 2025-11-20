@@ -35,32 +35,74 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
     setIsProcessing(true);
     
     try {
-      // Gemini AI Integration für intelligente Erkennung
-      const response = await fetch('/api/gemini-ocr', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: text,
-          context: `Erkenne Schießergebnisse für Schießnachweis aus digitaler Schießanlage für Disziplin: ${disziplin}. 
-          Format kann sein: Meyton, Sius, Disag, Sport Quantum oder manuell eingegebene Daten.
-          Extrahiere Serien und Einzelschüsse mit Kommastellen (z.B. 10.5, 9.8, 10.1).
-          Wichtig: Erkenne auch Serien-Strukturen und Gesamtergebnisse für persönliches Schießtagebuch.`
-        })
-      });
-      
-      if (response.ok) {
-        const aiResult = await response.json();
-        if (aiResult.serien && aiResult.serien.length > 0) {
-          onImport(aiResult.serien);
-          toast({
-            title: "🤖 KI-Import erfolgreich",
-            description: `${aiResult.serien.length} Serie(n) automatisch erkannt und importiert.`,
-          });
-          setTextInput("");
-          return;
+      // Versuche zuerst Gemini AI für intelligente Erkennung
+      try {
+        const response = await fetch('/api/gemini-ocr', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: text,
+            context: `Erkenne Schießergebnisse für Schießnachweis aus digitaler Schießanlage für Disziplin: ${disziplin}. 
+            Format kann sein: Meyton, Sius, Disag, Sport Quantum oder manuell eingegebene Daten.
+            Extrahiere Serien und Einzelschüsse mit Kommastellen (z.B. 10.5, 9.8, 10.1).
+            Wichtig: Erkenne auch Serien-Strukturen und Gesamtergebnisse für persönliches Schießtagebuch.
+            
+            Gib die Daten als JSON zurück:
+            {
+              "serien": [
+                {
+                  "serienNummer": 1,
+                  "schuesse": [
+                    {
+                      "nummer": 1,
+                      "wert": 10.5,
+                      "ring": 10
+                    }
+                  ],
+                  "summe": 98.6
+                }
+              ]
+            }`
+          })
+        });
+        
+        if (response.ok) {
+          const aiResult = await response.json();
+          if (aiResult.results && Array.isArray(aiResult.results)) {
+            // Konvertiere Gemini-Ergebnisse zu Serien-Format
+            const serien: ZehnerSerie[] = [];
+            let currentSerie: ZehnerSerie | null = null;
+            let serienNummer = 1;
+            
+            for (const result of aiResult.results) {
+              if (result.serienNummer || result.serie) {
+                if (currentSerie) serien.push(currentSerie);
+                currentSerie = {
+                  id: Date.now().toString() + serienNummer,
+                  serienNummer: result.serienNummer || serienNummer,
+                  schuesse: result.schuesse || [],
+                  summe: result.summe || 0
+                };
+                serienNummer++;
+              }
+            }
+            if (currentSerie) serien.push(currentSerie);
+            
+            if (serien.length > 0) {
+              onImport(serien);
+              toast({
+                title: "🤖 KI-Import erfolgreich",
+                description: `${serien.length} Serie(n) automatisch erkannt und importiert.`,
+              });
+              setTextInput("");
+              return;
+            }
+          }
         }
+      } catch (aiError) {
+        console.warn('Gemini AI Import fehlgeschlagen, verwende Fallback:', aiError);
       }
       
       // Fallback: Manuelle Verarbeitung
@@ -176,7 +218,9 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
       console.log('📡 OCR Response Status:', response.status);
       
       if (!response.ok) {
-        throw new Error('OCR-Service nicht verfügbar');
+        const errorText = await response.text().catch(() => 'Unbekannter Fehler');
+        console.error('OCR API Fehler:', errorText);
+        throw new Error(`OCR-Service nicht verfügbar (${response.status})`);
       }
       
       const result = await response.json();

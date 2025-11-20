@@ -29,31 +29,38 @@ export async function POST(request: NextRequest) {
     
     if (contentType.includes('application/json')) {
       // JSON Text-Input (Schießnachweis)
-      const body = await request.json();
-      const textInput = body.text;
-      const contextFromBody = body.context;
-      
-      if (textInput) {
-        const prompt = contextFromBody || `Analysiere diesen Text und extrahiere Schießergebnisse:\n\n${textInput}\n\nExtrahiere alle Schützen-Namen und ihre Ergebnisse. Rückgabe als JSON-Array:\n[{"shooterName": "Name", "score": 285, "confidence": 0.9}]`;
+      try {
+        const body = await request.json();
+        const textInput = body.text;
+        const contextFromBody = body.context;
         
-        const response = await genAI.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ role: 'user', parts: [{ text: prompt }] }]
-        });
-        
-        const text = response.text;
-        let jsonText = text;
-        if (text.includes('```json')) {
-          const match = text.match(/```json\s*([\s\S]*?)\s*```/);
-          if (match) jsonText = match[1];
+        if (textInput) {
+          const prompt = contextFromBody || `Analysiere diesen Text und extrahiere Schießergebnisse:\n\n${textInput}\n\nExtrahiere alle Schützen-Namen und ihre Ergebnisse. Rückgabe als JSON-Array:\n[{"shooterName": "Name", "score": 285, "confidence": 0.9}]`;
+          
+          const response = await genAI.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }]
+          });
+          
+          const text = response.text;
+          let jsonText = text;
+          if (text.includes('```json')) {
+            const match = text.match(/```json\s*([\s\S]*?)\s*```/);
+            if (match) jsonText = match[1];
+          }
+          
+          const parsedResults = JSON.parse(jsonText);
+          return NextResponse.json({ 
+            success: true, 
+            results: parsedResults,
+            ocrSource: 'gemini'
+          });
         }
-        
-        const parsedResults = JSON.parse(jsonText);
+      } catch (jsonError) {
+        secureLogger.error('JSON processing failed', 'gemini-ocr');
         return NextResponse.json({ 
-          success: true, 
-          results: parsedResults,
-          ocrSource: 'gemini'
-        });
+          error: 'Invalid JSON request'
+        }, { status: 400 });
       }
     }
     
