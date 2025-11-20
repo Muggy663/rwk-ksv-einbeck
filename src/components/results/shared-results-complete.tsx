@@ -1032,7 +1032,6 @@ export default function SharedResultsPage({
                     <HandzettelOCR
                       key={handzettelFiles[0]?.name}
                       imageFile={handzettelFiles[0]}
-                      availableTeams={allTeamsInSelectedLeague}
                       selectedLeagueId={selectedLeagueId}
                       selectedRound={selectedRound}
                       onOCRComplete={handleOCRComplete}

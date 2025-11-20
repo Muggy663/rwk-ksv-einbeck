@@ -87,7 +87,10 @@ export function HandzettelOCR({
         
         const geminiResponse = await fetch('/api/gemini-ocr', {
           method: 'POST',
-          body: formData
+          body: formData,
+          headers: {
+            'Accept': 'application/json'
+          }
         })
         
         if (isMobile) {

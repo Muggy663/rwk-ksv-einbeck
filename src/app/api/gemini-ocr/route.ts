@@ -12,6 +12,14 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 export async function POST(request: NextRequest) {
   secureLogger.info('Gemini OCR API called', 'gemini-ocr');
   
+  // TEMP: Mobile Debug - Skip auth for testing
+  const userAgent = request.headers.get('user-agent') || '';
+  const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+  
+  if (isMobile) {
+    secureLogger.info('Mobile request detected - skipping auth checks', 'gemini-ocr');
+  }
+  
   try {
     if (!process.env.GEMINI_API_KEY) {
       secureLogger.error('GEMINI_API_KEY missing', 'gemini-ocr');
