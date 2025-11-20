@@ -79,7 +79,6 @@ export function HandzettelOCR({
       try {
         const formData = new FormData()
         formData.append('image', imageFile)
-        formData.append('availableTeams', JSON.stringify(availableTeams))
         
         if (isMobile) {
           console.log('📱 Mobile Debug - Sende Request an /api/gemini-ocr')
@@ -133,24 +132,12 @@ export function HandzettelOCR({
         }
       }
       
-      // Fallback auf Simple OCR wenn Gemini fehlschlägt oder keine Ergebnisse liefert
+      // Wenn Gemini fehlschlägt, direkt Fehler werfen
       if (!geminiSuccess || matches.length === 0) {
-        setCurrentStep("📋 Alternative Erkennung wird verwendet...")
-        setProgress(40)
-        
-        try {
-          const result = await simpleOCR.processHandzettel(imageFile)
-          console.log('✅ Alternative Erkennung Ergebnis:', result)
-          setOcrResult(result)
-          
-          setCurrentStep("Schützen werden zugeordnet...")
-          setProgress(70)
-          
-          matches = await matchShooters(result, availableTeams)
-        } catch (fallbackError) {
-          console.error('❌ Auch alternative Erkennung fehlgeschlagen:', fallbackError)
-          throw new Error('Beide Erkennungs-Methoden fehlgeschlagen. Bitte versuchen Sie es erneut.')
+        if (isMobile) {
+          setCurrentStep('📱 Gemini OCR fehlgeschlagen - keine Alternative')
         }
+        throw new Error('Gemini OCR fehlgeschlagen. Bitte versuchen Sie es erneut oder verwenden Sie ein anderes Foto.')
       }
       
       setMatchedResults(matches)
