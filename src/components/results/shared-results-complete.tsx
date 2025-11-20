@@ -917,51 +917,63 @@ export default function SharedResultsPage({
                       {/* Kamera-Button für Mobile */}
                       <div className="block md:hidden">
                         <div className="p-4 border-2 border-green-300 rounded-lg bg-green-50">
-                          <h4 className="text-sm font-medium text-green-800 mb-2 text-center">📸 Kamera verwenden</h4>
-                          <Input 
-                            type="file" 
-                            accept="image/*" 
-                            capture="environment"
-                            multiple
-                            onChange={async (e) => {
-                              if (e.target.files && e.target.files.length > 0) {
-                                const files = Array.from(e.target.files);
-                                setHandzettelFiles(files);
-                                toast({
-                                  title: "📸 Foto aufgenommen",
-                                  description: `${files.length} Foto(s) bereit. ${!attachOnly ? 'Klicke "🤖 Erkennung starten" um automatisch auszulesen.' : 'Wird ohne OCR versendet.'}`,
-                                  className: "border-blue-500 bg-blue-50"
-                                });
-                              }
-                            }}
-                            className="bg-white border-2 border-dashed border-green-400 p-4 text-center cursor-pointer hover:border-green-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                          />
-                          <p className="text-xs text-center text-green-700 mt-2">Direkt fotografieren</p>
+                          <h4 className="text-sm font-medium text-green-800 mb-3 text-center">📸 Kamera verwenden</h4>
+                          <div className="relative">
+                            <Input 
+                              type="file" 
+                              accept="image/*" 
+                              capture="environment"
+                              multiple
+                              onChange={async (e) => {
+                                if (e.target.files && e.target.files.length > 0) {
+                                  const files = Array.from(e.target.files);
+                                  setHandzettelFiles(files);
+                                  toast({
+                                    title: "📸 Foto aufgenommen",
+                                    description: `${files.length} Foto(s) bereit. ${!attachOnly ? 'Klicke "🤖 Erkennung starten" um automatisch auszulesen.' : 'Wird ohne OCR versendet.'}`,
+                                    className: "border-blue-500 bg-blue-50"
+                                  });
+                                }
+                              }}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            />
+                            <div className="min-h-[80px] flex flex-col items-center justify-center border-2 border-dashed border-green-400 rounded-lg bg-white hover:border-green-500 hover:bg-green-50 transition-all duration-200 px-4 py-6">
+                              <span className="text-green-700 font-semibold text-base mb-1">📸 Kamera öffnen</span>
+                              <span className="text-green-600 text-sm text-center">Tippen zum Fotografieren</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-center text-green-700 mt-3">Direkt fotografieren</p>
                         </div>
                       </div>
                       
                       {/* Galerie/Datei-Auswahl für Mobile und Desktop */}
                       <div>
                         <div className="p-4 border-2 border-blue-300 rounded-lg bg-blue-50">
-                          <h4 className="text-sm font-medium text-blue-800 mb-2 text-center">📁 Galerie/Dateien verwenden</h4>
-                          <Input 
-                            type="file" 
-                            accept="image/*" 
-                            multiple
-                            onChange={async (e) => {
-                              if (e.target.files && e.target.files.length > 0) {
-                                const files = Array.from(e.target.files);
-                                setHandzettelFiles(files);
-                                toast({
-                                  title: "📎 Handzettel ausgewählt",
-                                  description: `${files.length} Datei(en) aus Galerie/Dateien. ${!attachOnly ? 'Klicke "🤖 Erkennung starten" um automatisch auszulesen.' : 'Wird ohne OCR versendet.'}`,
-                                  className: "border-blue-500 bg-blue-50"
-                                });
-                              }
-                            }}
-                            className="bg-white border-2 border-dashed border-blue-400 p-4 text-center cursor-pointer hover:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                          />
-                          <p className="text-xs text-center text-blue-700 mt-2">Aus Galerie oder WhatsApp wählen</p>
+                          <h4 className="text-sm font-medium text-blue-800 mb-3 text-center">📁 Galerie/Dateien verwenden</h4>
+                          <div className="relative">
+                            <Input 
+                              type="file" 
+                              accept="image/*" 
+                              multiple
+                              onChange={async (e) => {
+                                if (e.target.files && e.target.files.length > 0) {
+                                  const files = Array.from(e.target.files);
+                                  setHandzettelFiles(files);
+                                  toast({
+                                    title: "📎 Handzettel ausgewählt",
+                                    description: `${files.length} Datei(en) aus Galerie/Dateien. ${!attachOnly ? 'Klicke "🤖 Erkennung starten" um automatisch auszulesen.' : 'Wird ohne OCR versendet.'}`,
+                                    className: "border-blue-500 bg-blue-50"
+                                  });
+                                }
+                              }}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            />
+                            <div className="min-h-[80px] flex flex-col items-center justify-center border-2 border-dashed border-blue-400 rounded-lg bg-white hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 px-4 py-6">
+                              <span className="text-blue-700 font-semibold text-base mb-1">📁 Dateien auswählen</span>
+                              <span className="text-blue-600 text-sm text-center">Tippen zum Auswählen</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-center text-blue-700 mt-3">Aus Galerie oder WhatsApp wählen</p>
                         </div>
                       </div>
                     </div>

@@ -215,15 +215,18 @@ export function HandzettelOCR({
       }
       
       if (bestMatch) {
-        matches.push({
-          teamId: bestMatch.shooter.teamId,
-          teamName: bestMatch.shooter.teamName,
-          shooterId: bestMatch.shooterId,
-          shooterName: bestMatch.shooter.name,
-          score: geminiResult.score || null,
-          confidence: (geminiResult.confidence || 0.8) * bestMatch.similarity,
-          ocrSource: 'gemini'
-        })
+        // Nur hinzufügen wenn ein gültiges Ergebnis vorhanden ist
+        if (geminiResult.score && geminiResult.score > 0) {
+          matches.push({
+            teamId: bestMatch.shooter.teamId,
+            teamName: bestMatch.shooter.teamName,
+            shooterId: bestMatch.shooterId,
+            shooterName: bestMatch.shooter.name,
+            score: geminiResult.score,
+            confidence: (geminiResult.confidence || 0.8) * bestMatch.similarity,
+            ocrSource: 'gemini'
+          })
+        }
       }
     }
     
@@ -267,7 +270,7 @@ export function HandzettelOCR({
         return similarity > 0.7
       })
       
-      if (matchedShooter) {
+      if (matchedShooter && ocrShooter.score && ocrShooter.score > 0) {
         matches.push({
           teamId: matchedShooter.teamId,
           teamName: matchedShooter.teamName,
@@ -277,8 +280,9 @@ export function HandzettelOCR({
           confidence: ocrShooter.confidence,
           ocrSource: 'fallback-ocr'
         })
-        const scoreText = ocrShooter.score !== null ? `${ocrShooter.score} Ringe` : 'Nicht angetreten'
-        console.log(`✅ "${ocrShooter.name}" → "${matchedShooter.name}" (${matchedShooter.teamName}) - ${scoreText}`)
+        console.log(`✅ "${ocrShooter.name}" → "${matchedShooter.name}" (${matchedShooter.teamName}) - ${ocrShooter.score} Ringe`)
+      } else if (matchedShooter && (!ocrShooter.score || ocrShooter.score === 0)) {
+        console.log(`⏭️ "${ocrShooter.name}" übersprungen (kein Ergebnis)`)
       } else {
         console.log(`❌ "${ocrShooter.name}" nicht gefunden`)
       }

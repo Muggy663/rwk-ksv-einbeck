@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SchießnachweisService } from '@/lib/services/schiessnachweis-service';
 import { UnifiedTrainingService } from '@/lib/services/unified-training-service';
 import { SchießEintrag } from '@/types/schiessnachweis';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, Calendar, Target, MapPin, Edit, Trash2, Eye, Users } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, Target, MapPin, Edit, Trash2, Eye, Users, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -18,6 +19,7 @@ export default function EintraegePage() {
   const [einträge, setEinträge] = useState<SchießEintrag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [needsSync, setNeedsSync] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<string>('alle');
 
   useEffect(() => {
     loadEinträge();
@@ -81,6 +83,17 @@ export default function EintraegePage() {
     }
   };
 
+  const availableYears = useMemo(() => {
+    const years = [...new Set(einträge.map(e => new Date(e.datum).getFullYear()))]
+      .sort((a, b) => b - a);
+    return years;
+  }, [einträge]);
+
+  const filteredEinträge = useMemo(() => {
+    if (selectedYear === 'alle') return einträge;
+    return einträge.filter(e => new Date(e.datum).getFullYear() === parseInt(selectedYear));
+  }, [einträge, selectedYear]);
+
   return (
     <div className="container mx-auto p-4 sm:p-6 max-w-4xl">
       <div className="mb-6">
@@ -95,7 +108,7 @@ export default function EintraegePage() {
           <div>
             <h1 className="text-3xl font-bold mb-2">Alle Einträge</h1>
             <p className="text-muted-foreground">
-              {einträge.length} Einträge insgesamt
+              {filteredEinträge.length} von {einträge.length} Einträgen
             </p>
           </div>
           <div className="flex gap-2">
@@ -115,13 +128,34 @@ export default function EintraegePage() {
         </div>
       </div>
 
+      {availableYears.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Jahr auswählen" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Alle Jahre</SelectItem>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
       {/* Sync banner removed - data is automatically stored in database */}
 
       {isLoading ? (
         <div className="text-center py-8">
           <p>Lade Einträge...</p>
         </div>
-      ) : einträge.length === 0 ? (
+      ) : filteredEinträge.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8">
             <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -139,7 +173,7 @@ export default function EintraegePage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {einträge.map((eintrag) => (
+          {filteredEinträge.map((eintrag) => (
             <Card key={eintrag.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
