@@ -54,6 +54,7 @@ export function HandzettelOCR({
     console.log('🤖 Gemini Erkennung gestartet:', imageFile.name)
     setIsProcessing(true)
     setProgress(0)
+    setHasProcessed(true) // Sofort setzen um Doppelausführung zu verhindern
     
     try {
       setCurrentStep("🤖 Gemini AI analysiert Handzettel...")
@@ -99,7 +100,14 @@ export function HandzettelOCR({
         setProgress(40)
         
         try {
-          const result = await simpleOCR.processHandzettel(imageFile)
+          // Timeout für Fallback OCR (Mobile Browser Problem)
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('OCR Timeout')), 15000)
+          )
+          
+          const ocrPromise = simpleOCR.processHandzettel(imageFile)
+          const result = await Promise.race([ocrPromise, timeoutPromise]) as SimpleOCRResult
+          
           console.log('✅ Alternative Erkennung Ergebnis:', result)
           setOcrResult(result)
           
@@ -108,14 +116,18 @@ export function HandzettelOCR({
           
           matches = await matchShooters(result, availableTeams)
         } catch (fallbackError) {
-          console.error('❌ Auch alternative Erkennung fehlgeschlagen:', fallbackError)
+          console.error('❌ Alternative Erkennung fehlgeschlagen:', fallbackError)
           // Wenn Vision API fehlschlägt, aber Gemini erfolgreich war, verwende Gemini
           if (geminiSuccess && matches.length > 0) {
             console.log('🔄 Verwende Gemini-Ergebnisse trotz Vision API Fehler')
             // Verwende die bereits vorhandenen Gemini-Matches
           } else {
-            // Wenn beide fehlschlagen, gib eine hilfreiche Fehlermeldung
-            throw new Error('Automatische Erkennung fehlgeschlagen. Mögliche Lösungen:\n• Bessere Bildqualität verwenden\n• Handzettel vollständig fotografieren\n• Manuelle Eingabe verwenden')
+            // Mobile-spezifische Fehlermeldung
+            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            const errorMsg = isMobile 
+              ? 'OCR in PWA fehlgeschlagen. Versuche:\n• Bessere Internetverbindung\n• Browser-App statt PWA\n• Manuelle Eingabe'
+              : 'Automatische Erkennung fehlgeschlagen. Mögliche Lösungen:\n• Bessere Bildqualität verwenden\n• Handzettel vollständig fotografieren\n• Manuelle Eingabe verwenden'
+            throw new Error(errorMsg)
           }
         }
       }
@@ -127,6 +139,7 @@ export function HandzettelOCR({
       
     } catch (error) {
       console.error('❌ Erkennungs-Fehler:', error)
+      setHasProcessed(false) // Reset bei Fehler für erneuten Versuch
       onError(error instanceof Error ? error.message : 'Automatisches Auslesen fehlgeschlagen')
     } finally {
       setIsProcessing(false)
@@ -172,8 +185,7 @@ export function HandzettelOCR({
     if (autoStart && !hasProcessed && imageFile) {
       const timeoutId = setTimeout(() => {
         if (!hasProcessed) {
-          setHasProcessed(true)
-          processOCR()
+          processOCR() // hasProcessed wird in processOCR gesetzt
         }
       }, 100)
       return () => clearTimeout(timeoutId)
@@ -340,19 +352,27 @@ export function HandzettelOCR({
       </CardHeader>
       <CardContent className="space-y-4">
         {!isProcessing && !ocrResult && (
-          <Button 
-            onClick={() => {
-              if (!hasProcessed) {
-                setHasProcessed(true)
-                processOCR()
-              }
-            }}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-            size="lg"
-          >
-            <Zap className="mr-2 h-5 w-5" />
-            🤖 Automatisch auslesen
-          </Button>
+          <div className="space-y-2">
+            <Button 
+              onClick={() => {
+                if (!isProcessing) {
+                  setHasProcessed(false) // Reset für manuellen Start
+                  processOCR()
+                }
+              }}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              size="lg"
+              disabled={isProcessing}
+            >
+              <Zap className="mr-2 h-5 w-5" />
+              🤖 {hasProcessed ? 'Erneut versuchen' : 'Automatisch auslesen'}
+            </Button>
+            {hasProcessed && (
+              <p className="text-xs text-center text-muted-foreground">
+                OCR abgebrochen? Klicke "Erneut versuchen" oder verwende manuelle Eingabe
+              </p>
+            )}
+          </div>
         )}
 
         {isProcessing && (
@@ -369,7 +389,7 @@ export function HandzettelOCR({
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
               <CheckCircle className="h-4 w-4" />
-              <span>🎯 {matchedResults.length}/25 Schützen erkannt! {matchedResults[0]?.ocrSource === 'gemini' ? '(Gemini AI)' : '(Alternative Erkennung)'}</span>
+              <span>🎯 {matchedResults.length} Schützen erkannt! {matchedResults[0]?.ocrSource === 'gemini' ? '(Gemini AI)' : '(Alternative Erkennung)'}</span>
             </div>
             
             <div className="space-y-1">
