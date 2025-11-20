@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     let prompt;
     if (contextRaw) {
       prompt = sanitizeInput(contextRaw);
-    } else if (availableTeamsRaw) {
+    } else {
       prompt = `Analysiere diesen handschriftlichen Schießsport-Ergebniszettel und extrahiere alle Schützenergebnisse.
 
 WICHTIGE REGELN:
@@ -98,8 +98,6 @@ WICHTIGE REGELN:
 8. Extrahiere ALLE Schützen, nicht nur bestimmte Teams
 
 Gib die Daten als JSON-Array zurück mit shooterName, teamName, score und confidence.`;
-    } else {
-      prompt = `Analysiere dieses Bild und extrahiere Schießergebnisse. Rückgabe als JSON-Array mit shooterName, score und confidence.`;
     }
 
     const response = await genAI.models.generateContent({
