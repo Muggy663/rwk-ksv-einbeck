@@ -125,10 +125,11 @@ export function HandzettelOCR({
           }
         }
       } catch (geminiError) {
-        console.warn('⚠️ Gemini Erkennung fehlgeschlagen, verwende Alternative:', geminiError)
+        console.warn('⚠️ Gemini Erkennung fehlgeschlagen:', geminiError)
         if (isMobile) {
-          console.log('📱 Mobile Debug - Gemini Exception:', geminiError instanceof Error ? geminiError.message : geminiError)
-          setCurrentStep(`📱 Exception: ${geminiError instanceof Error ? geminiError.message : geminiError}`)
+          const errorMsg = geminiError instanceof Error ? geminiError.message : String(geminiError)
+          console.log('📱 Mobile Debug - Gemini Exception:', errorMsg)
+          setCurrentStep(`📱 Fehler: ${errorMsg.includes('aborted') ? 'Timeout (30s)' : errorMsg}`)
         }
       }
       
