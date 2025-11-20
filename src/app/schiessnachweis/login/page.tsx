@@ -11,6 +11,7 @@ import { auth } from '@/lib/firebase/config';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { ReCaptcha } from '@/components/auth/ReCaptcha';
 
 export default function SchiessnachweisLoginPage() {
   const { toast } = useToast();
@@ -21,6 +22,7 @@ export default function SchiessnachweisLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +48,48 @@ export default function SchiessnachweisLoginPage() {
       });
       setIsSubmitting(false);
       return;
+    }
+
+    // reCAPTCHA prüfen (nur auf Production)
+    const isPreview = window.location.hostname.includes('vercel.app') || window.location.hostname === 'localhost';
+    if (!recaptchaToken && !isPreview) {
+      toast({
+        title: "Fehler",
+        description: "Bitte bestätigen Sie, dass Sie kein Roboter sind.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
+    
+    // reCAPTCHA serverseitig validieren (nur auf Production)
+    if (recaptchaToken && !isPreview) {
+      try {
+        const recaptchaResponse = await fetch('/api/auth/verify-recaptcha', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: recaptchaToken })
+        });
+        
+        const recaptchaResult = await recaptchaResponse.json();
+        if (!recaptchaResult.success) {
+          toast({
+            title: "Fehler",
+            description: "reCAPTCHA-Verifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+            variant: "destructive"
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (error) {
+        toast({
+          title: "Fehler",
+          description: "Fehler bei der Sicherheitsüberprüfung. Bitte versuchen Sie es erneut.",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     try {
@@ -214,6 +258,11 @@ export default function SchiessnachweisLoginPage() {
               </div>
             </div>
 
+            {/* reCAPTCHA */}
+            <div className="flex justify-center">
+              <ReCaptcha onVerify={setRecaptchaToken} />
+            </div>
+
             <Button 
               type="submit" 
               className="w-full" 
@@ -278,6 +327,12 @@ export default function SchiessnachweisLoginPage() {
             <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200">
               <p className="text-xs text-yellow-800 dark:text-yellow-200">
                 💡 <strong>Hinweis:</strong> Dies ist ein separater Login - nicht für RWK/KM-Bereiche des Kreisverbands
+              </p>
+            </div>
+            
+            <div className="p-3 bg-gray-50 dark:bg-gray-950/20 rounded-lg border border-gray-200">
+              <p className="text-xs text-gray-700 dark:text-gray-300">
+                🔒 <strong>Sicherheit:</strong> Diese Seite ist durch reCAPTCHA geschützt
               </p>
             </div>
           </div>
