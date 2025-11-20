@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { BookOpenCheck, Target, Trophy } from 'lucide-react';
+import { BookOpenCheck, Target, Trophy, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth'; 
 
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";
@@ -24,13 +24,13 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM, Schießnachweis und Vereinssoftware.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: 14.11.2025 - Version 1.9.2.2
+            Stand: 20.11.2025 - Version 2.0.0 Social Training Platform
           </p>
         </div>
       </div>
       
       {/* Tab Navigation */}
-      <div className="flex flex-col md:flex-row space-y-1 md:space-y-0 md:space-x-1 mb-4 md:mb-6 bg-muted p-2 md:p-1 rounded-lg">
+      <div className="flex flex-col space-y-1 mb-4 md:mb-6 bg-muted p-2 md:p-1 rounded-lg">
         <button
           onClick={() => setActiveTab('rwk')}
           className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors w-full md:w-auto ${
@@ -63,6 +63,19 @@ export default function HandbuchPage() {
         >
           <Target className="h-4 w-4" />
           <span>Schießnachweis</span>
+          <span className="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">Beta</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('social')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors w-full md:w-auto ${
+            activeTab === 'social' 
+              ? 'bg-background text-primary shadow-sm' 
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Users className="h-4 w-4" />
+          <span>Social Training</span>
+          <span className="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">Beta</span>
         </button>
 
       </div>
@@ -722,6 +735,7 @@ export default function HandbuchPage() {
                 <li><a href="#sn-statistiken" className="text-primary hover:underline">4. Statistiken & Auswertungen</a></li>
                 <li><a href="#sn-export" className="text-primary hover:underline">5. Export & Backup</a></li>
                 <li><a href="#sn-digital-import" className="text-primary hover:underline">6. Import von digitalen Anlagen</a></li>
+                <li><a href="#social-training" className="text-primary hover:underline">7. Social Training Platform (NEU v2.0)</a></li>
               </ul>
             </CardContent>
           </Card>
@@ -821,7 +835,368 @@ export default function HandbuchPage() {
           </section>
           
           <Separator className="my-6" />
+          
+          <section id="social-training" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">7. Social Training Platform (NEU v2.0)</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Community-Features für Sportschützen</CardTitle></CardHeader>
+              <CardContent>
+                <p>Die neue Social Training Platform verwandelt die RWK App in eine Community-Plattform für gemeinsames Training und Wettkämpfe.</p>
+                
+                <div className="mt-4 bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🚀 Neue Features in Version 2.0:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-blue-700 dark:text-blue-300">
+                    <li><strong>👥 Trainingsgruppen:</strong> Erstellen Sie Gruppen mit 6-stelligen Beitrittscodes</li>
+                    <li><strong>⚔️ Live-Wettkämpfe:</strong> Real-time Wettkämpfe mit Live-Ranglisten (Premium)</li>
+                    <li><strong>🎯 Duelle-System:</strong> 1vs1 Herausforderungen zwischen Schützen</li>
+                    <li><strong>🔔 Smart Notifications:</strong> DSGVO-konforme Push-Benachrichtigungen</li>
+                    <li><strong>📊 Community-Statistiken:</strong> Erweiterte Performance-Analysen</li>
+                    <li><strong>🏆 Ranglisten:</strong> Community-weite Leistungsvergleiche</li>
+                  </ul>
+                </div>
+                
+                <h4 className="font-semibold mt-4 mb-2">So nutzen Sie Social Training:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Profil freigeben:</strong> Aktivieren Sie die Sichtbarkeit in den Einstellungen</li>
+                  <li><strong>Trainingsgruppe erstellen:</strong> Laden Sie Freunde mit einem 6-stelligen Code ein</li>
+                  <li><strong>Live-Wettkämpfe starten:</strong> Organisieren Sie Real-time Wettkämpfe (Premium)</li>
+                  <li><strong>Duelle austragen:</strong> Fordern Sie andere Schützen zu 1vs1 Duellen heraus</li>
+                  <li><strong>Community entdecken:</strong> Finden Sie andere Schützen in Ihrer Nähe</li>
+                </ol>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-green-800 dark:text-green-200 mb-2">✅ Kostenlose Features:</h5>
+                    <ul className="list-disc pl-5 text-sm text-green-700 dark:text-green-300">
+                      <li>Profil-Freigabe</li>
+                      <li>Trainingsgruppen (bis 10 Mitglieder)</li>
+                      <li>Community entdecken</li>
+                      <li>Basis-Statistiken</li>
+                      <li>Duelle-System</li>
+                    </ul>
+                  </div>
+                  <div className="bg-yellow-50 dark:bg-yellow-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⭐ Premium Features:</h5>
+                    <ul className="list-disc pl-5 text-sm text-yellow-700 dark:text-yellow-300">
+                      <li>Live-Wettkämpfe</li>
+                      <li>Unbegrenzte Gruppengröße</li>
+                      <li>Erweiterte Statistiken</li>
+                      <li>Performance-Charts</li>
+                      <li>Export-Funktionen</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
           <p className="text-center text-sm text-muted-foreground"><em>Schießnachweis-Handbuch wird parallel zur Entwicklung aktualisiert.</em></p>
+        </>
+      )}
+      
+      {activeTab === 'social' && (
+        <>
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl text-accent">Social Training Platform - Benutzerhandbuch</CardTitle>
+              <CardDescription>Version 2.0.0 - Die erste Community-Plattform für Sportschützen</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <ul className="list-disc list-inside pl-4 space-y-1">
+                <li><a href="#st-einleitung" className="text-primary hover:underline">1. Was ist Social Training?</a></li>
+                <li><a href="#st-profil-freigabe" className="text-primary hover:underline">2. Profil freigeben</a></li>
+                <li><a href="#st-trainingsgruppen" className="text-primary hover:underline">3. Trainingsgruppen</a></li>
+                <li><a href="#st-live-wettkaempfe" className="text-primary hover:underline">4. Live-Wettkämpfe (Premium)</a></li>
+                <li><a href="#st-duelle" className="text-primary hover:underline">5. Duelle-System</a></li>
+                <li><a href="#st-notifications" className="text-primary hover:underline">6. Smart Notifications</a></li>
+                <li><a href="#st-statistiken" className="text-primary hover:underline">7. Community-Statistiken</a></li>
+              </ul>
+            </CardContent>
+          </Card>
+          
+          <Separator className="my-6" />
+          
+          <section id="st-einleitung" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">1. Was ist Social Training?</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Die erste Community-Plattform für Sportschützen</CardTitle></CardHeader>
+              <CardContent>
+                <p>Social Training verwandelt die RWK App in eine Community-Plattform, wo Schützen gemeinsam trainieren, sich messen und voneinander lernen können.</p>
+                
+                <div className="mt-4 bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🎯 Vision:</h4>
+                  <p className="text-blue-700 dark:text-blue-300">Vom isolierten Training zur lebendigen Community - Social Training bringt Schützen zusammen und macht Training spannender, motivierender und sozialer.</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-green-800 dark:text-green-200 mb-2">✅ Vorher (Einzelkämpfer):</h5>
+                    <ul className="list-disc pl-5 text-sm text-green-700 dark:text-green-300">
+                      <li>Isoliertes Training</li>
+                      <li>Keine Vergleichsmöglichkeiten</li>
+                      <li>Wenig Motivation</li>
+                      <li>Papier-basierte Wettkämpfe</li>
+                    </ul>
+                  </div>
+                  <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🚀 Nachher (Community):</h5>
+                    <ul className="list-disc pl-5 text-sm text-blue-700 dark:text-blue-300">
+                      <li>Gemeinsames Training in Gruppen</li>
+                      <li>Live-Wettkämpfe mit Real-time Ranglisten</li>
+                      <li>1vs1 Duelle für extra Motivation</li>
+                      <li>Community-weite Leistungsvergleiche</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="st-profil-freigabe" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">2. Profil freigeben</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">DSGVO-konforme Sichtbarkeit</CardTitle></CardHeader>
+              <CardContent>
+                <p>Bevor Sie Social Training nutzen können, müssen Sie Ihr Profil für andere Schützen sichtbar machen. Dies erfolgt nach dem Opt-in Prinzip.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">So geben Sie Ihr Profil frei:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Einstellungen öffnen:</strong> Gehen Sie zu Ihren Benutzereinstellungen</li>
+                  <li><strong>Social Settings:</strong> Finden Sie den Bereich "Social Training"</li>
+                  <li><strong>Sichtbarkeit aktivieren:</strong> ☑️ "Profil öffentlich sichtbar"</li>
+                  <li><strong>Weitere Optionen:</strong> Wählen Sie, was Sie teilen möchten</li>
+                </ol>
+                
+                <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800 mt-4">
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">🔒 Datenschutz-Optionen:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-green-700 dark:text-green-300">
+                    <li>☑️ <strong>Profil öffentlich sichtbar:</strong> Andere können Sie finden</li>
+                    <li>☑️ <strong>Trainingsergebnisse teilen:</strong> Leistungen in Community sichtbar</li>
+                    <li>☑️ <strong>Für Wettkämpfe verfügbar:</strong> Einladungen zu Live-Wettkämpfen</li>
+                    <li>☑️ <strong>Vereinszugehörigkeit anzeigen:</strong> Verein wird angezeigt</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="st-trainingsgruppen" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">3. Trainingsgruppen</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Gemeinsam trainieren wie WhatsApp-Gruppen</CardTitle></CardHeader>
+              <CardContent>
+                <p>Trainingsgruppen funktionieren wie WhatsApp-Gruppen: Erstellen Sie eine Gruppe, teilen Sie den 6-stelligen Code und schon können Freunde beitreten.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">Gruppe erstellen:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>"Gruppe erstellen" klicken:</strong> Auf der Trainingsgruppen-Seite</li>
+                  <li><strong>Namen eingeben:</strong> z.B. "Einbecker Luftgewehr-Cracks"</li>
+                  <li><strong>Beschreibung hinzufügen:</strong> Was ist das Ziel der Gruppe?</li>
+                  <li><strong>Einstellungen wählen:</strong> Wettkämpfe erlauben, öffentliche Ergebnisse</li>
+                  <li><strong>Code teilen:</strong> 6-stelligen Beitritts-Code an Freunde senden</li>
+                </ol>
+                
+                <h4 className="font-semibold mt-4 mb-2">Gruppe beitreten:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>"Gruppe beitreten" klicken:</strong> Code-Eingabe öffnen</li>
+                  <li><strong>6-stelligen Code eingeben:</strong> z.B. "ABC123"</li>
+                  <li><strong>Beitreten bestätigen:</strong> Sie sind sofort Mitglied</li>
+                </ol>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">👥 Kostenlose Gruppen:</h5>
+                    <ul className="list-disc pl-5 text-sm text-blue-700 dark:text-blue-300">
+                      <li>Bis zu 10 Mitglieder</li>
+                      <li>Basis-Wettkämpfe</li>
+                      <li>Gruppen-Chat (geplant)</li>
+                      <li>Einfache Statistiken</li>
+                    </ul>
+                  </div>
+                  <div className="bg-yellow-50 dark:bg-yellow-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⭐ Premium Gruppen:</h5>
+                    <ul className="list-disc pl-5 text-sm text-yellow-700 dark:text-yellow-300">
+                      <li>Unbegrenzte Mitgliederzahl</li>
+                      <li>Live-Wettkämpfe</li>
+                      <li>Erweiterte Statistiken</li>
+                      <li>Export-Funktionen</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="st-live-wettkaempfe" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">4. Live-Wettkämpfe (Premium)</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Real-time Wettkämpfe mit Live-Ranglisten</CardTitle></CardHeader>
+              <CardContent>
+                <p>Live-Wettkämpfe sind das Herzstück von Social Training: Alle Teilnehmer schießen gleichzeitig und sehen die Rangliste in Echtzeit.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">Wettkampf erstellen:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Disziplin wählen:</strong> Alle DSB-Disziplinen verfügbar</li>
+                  <li><strong>Schusszahl festlegen:</strong> 10, 20, 30, 40 oder 60 Schuss</li>
+                  <li><strong>Zeitlimit setzen:</strong> Optional für extra Spannung</li>
+                  <li><strong>Teilnehmer einladen:</strong> Aus Ihrer Trainingsgruppe</li>
+                  <li><strong>Wettkampf starten:</strong> Alle erhalten eine Benachrichtigung</li>
+                </ol>
+                
+                <h4 className="font-semibold mt-4 mb-2">Am Wettkampf teilnehmen:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Benachrichtigung erhalten:</strong> Push-Notification oder E-Mail</li>
+                  <li><strong>Wettkampf beitreten:</strong> Direkt über den Link</li>
+                  <li><strong>Ergebnis eingeben:</strong> Wie gewohnt im Schießnachweis</li>
+                  <li><strong>Live-Rangliste verfolgen:</strong> Sehen Sie Ihre Position in Echtzeit</li>
+                </ol>
+                
+                <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800 mt-4">
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">🏆 Live-Wettkampf Features:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-green-700 dark:text-green-300">
+                    <li><strong>Real-time Ranglisten:</strong> Sofortige Updates bei neuen Ergebnissen</li>
+                    <li><strong>Automatische Platzierung:</strong> Sortierung nach Ringzahl und Teiler</li>
+                    <li><strong>Spannungsaufbau:</strong> Sehen Sie, wer gerade führt</li>
+                    <li><strong>Faire Bewertung:</strong> Gleiche Regeln für alle Teilnehmer</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="st-duelle" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">5. Duelle-System</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">1vs1 Herausforderungen für extra Motivation</CardTitle></CardHeader>
+              <CardContent>
+                <p>Das Duelle-System bringt den Wettkampfgeist zurück: Fordern Sie andere Schützen zu direkten 1vs1 Duellen heraus.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">Duell starten:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Gegner auswählen:</strong> Aus der Community oder Trainingsgruppe</li>
+                  <li><strong>Disziplin wählen:</strong> LG, LP, KK oder andere</li>
+                  <li><strong>Schusszahl festlegen:</strong> 10-60 Schuss</li>
+                  <li><strong>Herausforderung senden:</strong> Gegner erhält Benachrichtigung</li>
+                </ol>
+                
+                <h4 className="font-semibold mt-4 mb-2">Duell-Ablauf:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Herausforderung annehmen:</strong> 7 Tage Zeit zum Antworten</li>
+                  <li><strong>Beide schießen:</strong> Jeder trägt sein Ergebnis ein</li>
+                  <li><strong>Automatische Auswertung:</strong> Gewinner wird ermittelt</li>
+                  <li><strong>Ergebnis-Benachrichtigung:</strong> Beide erhalten das Resultat</li>
+                </ol>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div className="bg-yellow-50 dark:bg-yellow-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⏳ Ausstehend:</h5>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">Warten auf Antwort des Gegners</p>
+                  </div>
+                  <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🎯 Aktiv:</h5>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">Beide schießen ihre Ergebnisse</p>
+                  </div>
+                  <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-green-800 dark:text-green-200 mb-2">🏆 Beendet:</h5>
+                    <p className="text-sm text-green-700 dark:text-green-300">Gewinner steht fest</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="st-notifications" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">6. Smart Notifications</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">DSGVO-konforme Push-Benachrichtigungen</CardTitle></CardHeader>
+              <CardContent>
+                <p>Das Notification-System hält Sie über alle wichtigen Events auf dem Laufenden - natürlich nur mit Ihrer Zustimmung.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">Benachrichtigungs-Arten:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">📧 E-Mail (Opt-in):</h5>
+                    <ul className="list-disc pl-5 text-sm text-blue-700 dark:text-blue-300">
+                      <li>Gruppen-Einladungen</li>
+                      <li>Wettkampf-Einladungen</li>
+                      <li>Wettkampf-Ergebnisse</li>
+                      <li>Wöchentliche Zusammenfassung</li>
+                    </ul>
+                  </div>
+                  <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-green-800 dark:text-green-200 mb-2">📱 Browser Push (Opt-in):</h5>
+                    <ul className="list-disc pl-5 text-sm text-green-700 dark:text-green-300">
+                      <li>Gruppen-Aktivitäten</li>
+                      <li>Wettkampf-Updates</li>
+                      <li>Duell-Herausforderungen</li>
+                      <li>Direkte Nachrichten</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <h4 className="font-semibold mt-4 mb-2">Einstellungen verwalten:</h4>
+                <ol className="list-decimal pl-5 space-y-2">
+                  <li><strong>Notification-Center öffnen:</strong> Über das Glocken-Symbol</li>
+                  <li><strong>Einstellungen anpassen:</strong> Jede Art einzeln ein-/ausschalten</li>
+                  <li><strong>Browser-Berechtigung:</strong> Wird beim ersten Mal abgefragt</li>
+                  <li><strong>Jederzeit änderbar:</strong> Volle Kontrolle über alle Benachrichtigungen</li>
+                </ol>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
+          <section id="st-statistiken" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">7. Community-Statistiken</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">Erweiterte Performance-Analysen</CardTitle></CardHeader>
+              <CardContent>
+                <p>Die neuen Statistiken zeigen nicht nur Ihre eigene Leistung, sondern auch Vergleiche mit der Community und detaillierte Trend-Analysen.</p>
+                
+                <h4 className="font-semibold mt-4 mb-2">Neue Statistik-Features:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">📊 Performance-Charts:</h5>
+                    <ul className="list-disc pl-5 text-sm text-blue-700 dark:text-blue-300">
+                      <li>Interaktive Leistungsdiagramme</li>
+                      <li>Trend-Indikatoren mit Prozent-Änderungen</li>
+                      <li>Line & Bar Charts</li>
+                      <li>Durchschnittswerte und Bestleistungen</li>
+                    </ul>
+                  </div>
+                  <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md">
+                    <h5 className="font-medium text-green-800 dark:text-green-200 mb-2">🏆 Community-Vergleiche:</h5>
+                    <ul className="list-disc pl-5 text-sm text-green-700 dark:text-green-300">
+                      <li>Ranking in der Community</li>
+                      <li>Duell-Bilanz (Siege/Niederlagen)</li>
+                      <li>Wettkampf-Teilnahmen</li>
+                      <li>Aktivitäts-Level</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="bg-yellow-50 dark:bg-yellow-950/50 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 mt-4">
+                  <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⭐ Premium-Statistiken:</h4>
+                  <p className="text-yellow-700 dark:text-yellow-300">Premium-Nutzer erhalten Zugang zu erweiterten Analysen, Export-Funktionen und detaillierten Leistungsvergleichen über längere Zeiträume.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          <p className="text-center text-sm text-muted-foreground"><em>Social Training Platform-Handbuch wird parallel zur Entwicklung aktualisiert.</em></p>
         </>
       )}
       

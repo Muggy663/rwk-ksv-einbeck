@@ -16,18 +16,32 @@ interface NavItem {
   requiresAuth?: boolean
 }
 
-const allNavItems: NavItem[] = [
-  { href: '/', icon: Home, label: 'Start' },
-  { href: '/rwk-tabellen', icon: Trophy, label: 'Tabellen' },
+// Hauptbereich
+const mainNavItems: NavItem[] = [
+  { href: '/', icon: Home, label: 'Startseite' },
+  { href: '/rwk-tabellen', icon: Trophy, label: 'RWK Tabellen' },
   { href: '/statistiken', icon: BarChart3, label: 'Statistiken' },
-  { href: '/schiessnachweis', icon: Target, label: 'Schießnachweis' },
   { href: '/termine', icon: Calendar, label: 'Termine' },
-  { href: '/dokumente', icon: FileText, label: 'Dateien' },
+  { href: '/dokumente', icon: FileText, label: 'Dokumente' },
+]
+
+// Beta Features
+const betaNavItems: NavItem[] = [
+  { href: '/social', icon: Users, label: 'Social Training' },
+  { href: '/schiessnachweis', icon: Target, label: 'Schießnachweis' },
+]
+
+// Hilfe & Support
+const helpNavItems: NavItem[] = [
   { href: '/handbuch', icon: BookOpen, label: 'Handbuch' },
   { href: '/schiesssport-erklaerung', icon: BookOpen, label: 'Schießsport erklärt' },
   { href: '/kreisverband', icon: MessageSquare, label: 'Für Kreisverbände' },
   { href: '/support', icon: MessageSquare, label: 'Support' },
-  { href: '/dashboard-auswahl', icon: Users, label: 'Dashboard', requiresAuth: true },
+]
+
+// Mein Bereich
+const userNavItems: NavItem[] = [
+  { href: '/dashboard-auswahl', icon: Users, label: 'Arbeitsbereich', requiresAuth: true },
   { href: '/login', icon: User, label: 'Login' },
 ]
 
@@ -36,11 +50,16 @@ export function MobileBurgerMenu() {
   const pathname = usePathname()
   const { user, signOut } = useAuth()
 
-  const filteredItems = allNavItems.filter(item => {
+  const filterItems = (items: NavItem[]) => items.filter(item => {
     if (item.requiresAuth && !user) return false
     if (item.href === '/login' && user) return false
     return true
   })
+
+  const filteredMainItems = filterItems(mainNavItems)
+  const filteredBetaItems = filterItems(betaNavItems)
+  const filteredHelpItems = filterItems(helpNavItems)
+  const filteredUserItems = filterItems(userNavItems)
 
   const toggleMenu = () => setIsOpen(!isOpen)
   const closeMenu = () => setIsOpen(false)
@@ -79,51 +98,109 @@ export function MobileBurgerMenu() {
 
           {/* Menu Items */}
           <div className="flex-1 overflow-y-auto p-3 pb-safe-area-bottom">
-            <nav className="space-y-1">
-              {filteredItems.map((item) => {
-                const Icon = item.icon
-                const isActive = pathname === item.href || 
-                  (item.href !== '/' && pathname.startsWith(item.href))
+            <nav className="space-y-4">
+              {/* Hauptbereich */}
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">Hauptbereich</h3>
+                <div className="space-y-1">
+                  {filteredMainItems.map((item) => {
+                    const Icon = item.icon
+                    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+                    return (
+                      <Link key={item.href} href={item.href} onClick={closeMenu}
+                        className={cn("flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full min-w-0 text-sm font-medium overflow-hidden",
+                          isActive ? "text-primary-foreground bg-primary dark:text-white dark:bg-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}
+                      >
+                        <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground")} />
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
 
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeMenu}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full min-w-0",
-                      "text-sm font-medium overflow-hidden",
-                      isActive 
-                        ? "text-primary-foreground bg-primary dark:text-white dark:bg-primary" 
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <Icon className={cn(
-                      "h-5 w-5 flex-shrink-0",
-                      isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground"
-                    )} />
-                    <span className="truncate">{item.label}</span>
-                    {item.href === '/schiessnachweis' && <span className="text-xs text-red-600 dark:text-red-400 font-semibold ml-1">Beta</span>}
-                  </Link>
-                )
-              })}
+              {/* Beta Features */}
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">Beta Features</h3>
+                <div className="space-y-1">
+                  {filteredBetaItems.map((item) => {
+                    const Icon = item.icon
+                    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+                    return (
+                      <Link key={item.href} href={item.href} onClick={closeMenu}
+                        className={cn("flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full min-w-0 text-sm font-medium overflow-hidden",
+                          isActive ? "text-primary-foreground bg-primary dark:text-white dark:bg-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}
+                      >
+                        <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground")} />
+                        <span className="truncate">{item.label}</span>
+                        {item.href === '/schiessnachweis' && <span className="text-xs text-red-600 dark:text-red-400 font-semibold ml-1">Beta</span>}
+                        {item.href === '/social' && <span className="text-xs text-green-600 dark:text-green-400 font-semibold ml-1">NEU</span>}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Mein Bereich */}
+              {user && (
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">Mein Bereich</h3>
+                  <div className="space-y-1">
+                    {filteredUserItems.map((item) => {
+                      const Icon = item.icon
+                      const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+                      return (
+                        <Link key={item.href} href={item.href} onClick={closeMenu}
+                          className={cn("flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full min-w-0 text-sm font-medium overflow-hidden",
+                            isActive ? "text-primary-foreground bg-primary dark:text-white dark:bg-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}
+                        >
+                          <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground")} />
+                          <span className="truncate">{item.label}</span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Hilfe & Support */}
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">Hilfe & Support</h3>
+                <div className="space-y-1">
+                  {filteredHelpItems.map((item) => {
+                    const Icon = item.icon
+                    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+                    return (
+                      <Link key={item.href} href={item.href} onClick={closeMenu}
+                        className={cn("flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full min-w-0 text-sm font-medium overflow-hidden",
+                          isActive ? "text-primary-foreground bg-primary dark:text-white dark:bg-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}
+                      >
+                        <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground")} />
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
               
               {/* Logout Button for authenticated users */}
               {user && (
-                <button
-                  onClick={() => {
-                    signOut()
-                    closeMenu()
-                  }}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full min-w-0",
-                    "text-sm font-medium overflow-hidden",
-                    "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  )}
-                >
-                  <LogOut className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
-                  <span className="truncate">Logout</span>
-                </button>
+                <div className="pt-2 border-t">
+                  <button
+                    onClick={() => {
+                      signOut()
+                      closeMenu()
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full min-w-0",
+                      "text-sm font-medium overflow-hidden",
+                      "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    <LogOut className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                    <span className="truncate">Logout</span>
+                  </button>
+                </div>
               )}
             </nav>
           </div>

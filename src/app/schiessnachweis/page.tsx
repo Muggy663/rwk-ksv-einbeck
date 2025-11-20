@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Target, Plus, Calendar, TrendingUp, FileText, Download, Upload, Crown } from "lucide-react";
+import { Target, Plus, Calendar, TrendingUp, FileText, Download, Upload, Crown, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PremiumBadge } from "@/components/ui/premium-badge";
+import { ScrollToTopButton, usePullToRefresh } from "@/components/ui/mobile-enhancements";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
 import { PremiumService } from "@/lib/services/premium-service";
 import { SchießStatistik } from "@/types/schiessnachweis";
@@ -21,6 +23,11 @@ export default function SchießnachweisPage() {
   const [statistik, setStatistik] = useState<SchießStatistik | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  
+  const { isRefreshing } = usePullToRefresh(async () => {
+    loadStatistik();
+    await checkAndSyncFromCloud();
+  });
 
   useEffect(() => {
     // Mobile Detection
@@ -396,6 +403,7 @@ export default function SchießnachweisPage() {
             Neuer Eintrag
           </Link>
         </Button>
+
         <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-2 h-12">
           <Link href="/schiessnachweis/eintraege">
             <Calendar className="h-5 w-5" />
@@ -410,8 +418,8 @@ export default function SchießnachweisPage() {
         </Button>
         <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-2 h-12 border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 dark:from-yellow-950/20 dark:to-orange-950/20">
           <Link href="/schiessnachweis/premium">
-            <Crown className="h-5 w-5 text-yellow-600" />
-            Premium (Testphase)
+            <PremiumBadge variant="inline" className="mr-1" />
+Premium (Testphase)
           </Link>
         </Button>
       </div>
@@ -655,6 +663,7 @@ export default function SchießnachweisPage() {
       </Card>
 
 
+      <ScrollToTopButton />
       </div>
     </PremiumProvider>
   );

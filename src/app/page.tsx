@@ -397,47 +397,49 @@ export default function HomePage() {
 
 
 
-      {/* Was ist neu? - Version 1.9.0 */}
-      <Card className="mb-6 shadow-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+      {/* Was ist neu? - Version 2.0.0 */}
+      <Card className="mb-6 shadow-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800">
         <CardHeader>
-          <CardTitle className="text-xl flex items-center text-green-800 dark:text-green-200">
-            <div className="p-2 bg-green-100 dark:bg-green-800 rounded-lg mr-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600 dark:text-green-300">
+          <CardTitle className="text-xl flex items-center text-blue-800 dark:text-blue-200">
+            <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-blue-300">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
               </svg>
             </div>
-            Was ist neu? Version 1.9 - Schießnachweis & KI-Features
+            Was ist neu? Version 2.0.0 - Social Training Platform
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-
-            <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 rounded-lg border-2 border-purple-300 dark:border-purple-600 shadow-lg">
+            <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-lg border-2 border-purple-300 dark:border-purple-600 shadow-lg">
               <div className="w-3 h-3 bg-purple-500 dark:bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
               <div>
-                <h4 className="font-bold text-purple-800 dark:text-purple-200 text-lg">🎯 Schießnachweis jetzt verfügbar!</h4>
-                <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Digitales Schießtagebuch für Sportschützen</p>
-                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-semibold">✨ Kostenlos nutzbar - Premium-Features in Testphase</p>
+                <h4 className="font-bold text-purple-800 dark:text-purple-200 text-lg">👥 Trainingsgruppen</h4>
+                <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Gemeinsam trainieren mit Freunden - einfach Gruppe erstellen und Code teilen</p>
               </div>
             </div>
 
-            <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 rounded-lg border-2 border-amber-300 dark:border-amber-600 shadow-lg animate-pulse">
-              <div className="w-3 h-3 bg-amber-500 dark:bg-amber-400 rounded-full mt-2 flex-shrink-0 animate-bounce"></div>
+            <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-red-100 to-orange-100 dark:from-red-900/30 dark:to-orange-900/30 rounded-lg border-2 border-red-300 dark:border-red-600 shadow-lg">
+              <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
               <div>
-                <h4 className="font-bold text-amber-800 dark:text-amber-200 text-lg">🤖 Google Gemini AI</h4>
-                <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">Handzettel werden jetzt noch genauer erkannt - einfach fotografieren, abschicken und fertig!</p>
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 font-semibold">✨ Spart noch mehr Zeit beim Ergebnisse eingeben</p>
+                <h4 className="font-bold text-red-800 dark:text-red-200 text-lg">⚔️ Live-Wettkämpfe & Duelle</h4>
+                <p className="text-sm text-red-700 dark:text-red-300 font-medium">Real-time Wettkämpfe und 1vs1 Herausforderungen zwischen Schützen</p>
               </div>
             </div>
 
-
-
+            <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-green-100 to-teal-100 dark:from-green-900/30 dark:to-teal-900/30 rounded-lg border-2 border-green-300 dark:border-green-600 shadow-lg">
+              <div className="w-3 h-3 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div>
+                <h4 className="font-bold text-green-800 dark:text-green-200 text-lg">🏅 Achievements & Community</h4>
+                <p className="text-sm text-green-700 dark:text-green-300 font-medium">Abzeichen sammeln, Statistiken vergleichen und andere Schützen entdecken</p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Schießsport erklärt */}
         <Link href="/schiesssport-erklaerung" className="block">
           <div className="bg-gradient-to-r from-green-500 to-teal-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
@@ -462,9 +464,33 @@ export default function HomePage() {
           </div>
         </Link>
 
+        {/* Social Training Platform */}
+        <Link href="/social" className="block">
+          <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
+            <div className="flex items-center">
+              <div className="bg-white p-3 rounded-full mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-600">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="m22 21-3-3m0 0a5.5 5.5 0 1 0-7.78-7.78 5.5 5.5 0 0 0 7.78 7.78Z"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">🚀 Social Training Platform</h2>
+                <p style={{color: 'white'}}>Trainingsgruppen, Live-Wettkämpfe & Community-Features</p>
+              </div>
+              <div className="text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </Link>
+
         {/* Play Store Beta-Test */}
         <Link href="/app" className="block">
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
+          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer border-2 border-yellow-300 animate-pulse">
             <div className="flex items-center">
               <div className="bg-white p-3 rounded-full mr-4">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
@@ -476,8 +502,8 @@ export default function HomePage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">🎆 Play Store Beta-Test</h2>
-                <p style={{color: 'white'}}>Werde Beta-Tester für den offiziellen Play Store Launch!</p>
+                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">🎆 Play Store Beta-Test!</h2>
+                <p style={{color: 'white'}}>Jetzt anmelden für offiziellen Launch</p>
               </div>
               <div className="text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

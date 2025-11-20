@@ -127,6 +127,7 @@ export class CloudSyncService {
         return cleaned;
       });
       console.log('✅ Daten bereinigt:', cleanedEinträge.length, 'Einträge');
+      console.log('🔍 Debug - Beispiel Eintrag:', cleanedEinträge[0]);
       
       const cloudData: CloudData = {
         einträge: cleanedEinträge,
@@ -139,6 +140,7 @@ export class CloudSyncService {
       console.log('🔥 Speichere in Firebase Collection: schiessnachweis_data, Doc:', auth.currentUser.uid);
       await setDoc(doc(db, 'schiessnachweis_data', auth.currentUser.uid), cloudData);
       console.log('✅ Firebase gespeichert:', auth.currentUser.uid, '- Einträge:', einträge.length);
+      console.log('🔍 Debug - Gespeicherte CloudData:', cloudData);
 
       // Auch lokal als Backup speichern
       localStorage.setItem(this.CLOUD_STORAGE_KEY, JSON.stringify(cloudData));

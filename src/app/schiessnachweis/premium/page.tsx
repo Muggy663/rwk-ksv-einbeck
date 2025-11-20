@@ -250,7 +250,7 @@ export default function PremiumPage() {
                     variant="outline" 
                     className="border-orange-300 text-orange-700 hover:bg-orange-100"
                     onClick={() => {
-                      window.open('https://paypal.me/marcel.buenger@gmx.de/2EUR', '_blank');
+                      window.open('https://paypal.me/marcelbuenger1989/2EUR', '_blank');
                     }}
                   >
                     ☕ Trinkgeld (2€)

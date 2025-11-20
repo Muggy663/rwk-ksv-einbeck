@@ -25,7 +25,8 @@ import {
   TrendingUp,
   AlertTriangle,
   Newspaper,
-  Target
+  Target,
+  Users
 } from 'lucide-react';
 
 interface RouteItem {
@@ -103,6 +104,12 @@ export function MainNav() {
       label: 'Schießnachweis',
       icon: <Target className="h-4 w-4 mr-2" />,
       active: pathname === '/schiessnachweis',
+    },
+    {
+      href: '/social',
+      label: 'Social Training',
+      icon: <Users className="h-4 w-4 mr-2" />,
+      active: pathname === '/social' || pathname.startsWith('/training-groups') || pathname.startsWith('/live-competition'),
     },
     {
       href: '/termine',

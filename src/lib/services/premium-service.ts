@@ -2,11 +2,17 @@
 "use client";
 
 export interface PremiumFeatures {
+  // Schießnachweis Premium
   cloudSync: boolean;
   multiDevice: boolean;
   advancedStats: boolean;
   performanceAnalysis: boolean;
   exportOptions: boolean;
+  
+  // Social Training Premium
+  createTrainingGroups: boolean;
+  liveCompetitions: boolean;
+  extendedCommunityStats: boolean;
 }
 
 export interface PremiumSubscription {
@@ -19,19 +25,31 @@ export interface PremiumSubscription {
 }
 
 const FREE_FEATURES: PremiumFeatures = {
+  // Schießnachweis - Basis kostenlos
   cloudSync: false,
   multiDevice: false,
   advancedStats: false,
   performanceAnalysis: false,
   exportOptions: true, // PDF für Behörden bleibt kostenlos
+  
+  // Social Training - Teilnahme kostenlos
+  createTrainingGroups: false,
+  liveCompetitions: false,
+  extendedCommunityStats: false,
 };
 
 const PREMIUM_FEATURES: PremiumFeatures = {
+  // Schießnachweis Premium
   cloudSync: true,
   multiDevice: true,
   advancedStats: true,
   performanceAnalysis: true,
   exportOptions: true,
+  
+  // Social Training Premium
+  createTrainingGroups: true,
+  liveCompetitions: true,
+  extendedCommunityStats: true,
 };
 
 export class PremiumService {

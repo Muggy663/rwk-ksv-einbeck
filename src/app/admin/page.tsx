@@ -522,6 +522,32 @@ export default function AdminDashboardPage() {
         
          <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Social Training</CardTitle> 
+            <Users className="h-6 w-6 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="mb-4">
+              Verwaltung der Social Training Features und Community-Funktionen.
+            </CardDescription>
+             <div className="flex flex-col gap-2">
+              <Link href="/admin/social/groups" passHref>
+                <Button className="w-full" variant="outline">👥 Trainingsgruppen</Button>
+              </Link>
+              <Link href="/admin/social/competitions" passHref>
+                <Button className="w-full" variant="outline">🏆 Live-Wettkämpfe</Button>
+              </Link>
+              <Link href="/admin/social/profiles" passHref>
+                <Button className="w-full" variant="outline">👤 Öffentliche Profile</Button>
+              </Link>
+              <Link href="/admin/social/moderation" passHref>
+                <Button className="w-full" variant="outline">🛡️ Moderation</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+        
+         <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium">System & Berichte</CardTitle> 
             <Settings className="h-6 w-6 text-muted-foreground" />
           </CardHeader>

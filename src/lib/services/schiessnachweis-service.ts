@@ -10,11 +10,16 @@ const getStorageKey = () => {
   try {
     const auth = require('@/lib/firebase/config').auth;
     if (auth.currentUser) {
-      return `rwk_schiessnachweis_${auth.currentUser.uid}`;
+      const userKey = `rwk_schiessnachweis_${auth.currentUser.uid}`;
+      console.log('🔑 User-spezifischer Key:', userKey);
+      return userKey;
     }
-  } catch (e) {}
+  } catch (e) {
+    console.log('⚠️ Auth nicht verfügbar, verwende globalen Key');
+  }
   
   // Fallback zu globalem Key
+  console.log('🔑 Globaler Key verwendet: rwk_schiessnachweis');
   return 'rwk_schiessnachweis';
 };
 
@@ -42,6 +47,9 @@ export class SchießnachweisService {
     }
     
     isLoading = true;
+    
+    // Automatischer Cloud-Sync beim ersten Laden
+    this.autoSyncOnLoad();
     
     try {
       // 1. Versuche localStorage (user-spezifisch)
@@ -556,6 +564,12 @@ export class SchießnachweisService {
     const allKeys = Object.keys(localStorage);
     console.log('Alle verfügbaren Keys:', allKeys);
     
+    // Zeige auch aktuelle Keys
+    const currentKey = getStorageKey();
+    const currentBackupKey = getBackupKey();
+    console.log('🔑 Aktueller Key:', currentKey);
+    console.log('🔑 Aktueller Backup-Key:', currentBackupKey);
+    
     for (const key of allKeys) {
       try {
         const data = localStorage.getItem(key);
@@ -566,14 +580,18 @@ export class SchießnachweisService {
           if (Array.isArray(parsed) && parsed.length > 0) {
             const firstItem = parsed[0];
             if (firstItem && (firstItem.disziplin || firstItem.ergebnis || firstItem.schussAnzahl)) {
-              console.log(`✅ Schießnachweis-Daten gefunden in Key: ${key}`);
-              console.log('Daten:', parsed);
+              console.log(`✅ Schießnachweis-Daten gefunden in Key: ${key} (${parsed.length} Einträge)`);
               
-              // Wiederherstellen
-              const storageKey = getStorageKey();
-              const backupKey = getBackupKey();
-              localStorage.setItem(storageKey, data);
-              localStorage.setItem(backupKey, data);
+              // Zeige erste paar Einträge
+              console.log('Erste 3 Einträge:', parsed.slice(0, 3));
+              
+              // Wiederherstellen zum aktuellen Key
+              localStorage.setItem(currentKey, data);
+              localStorage.setItem(currentBackupKey, data);
+              
+              // Cache invalidieren
+              cachedEinträge = null;
+              lastCacheTime = 0;
               
               return { found: true, source: key, count: parsed.length };
             }
@@ -585,6 +603,64 @@ export class SchießnachweisService {
     }
     
     return { found: false, source: '', count: 0 };
+  }
+  
+  // Automatischer Cloud-Sync beim ersten Laden
+  private static async autoSyncOnLoad(): Promise<void> {
+    try {
+      // Prüfe ob bereits heute synchronisiert wurde
+      const lastSync = localStorage.getItem('last_cloud_sync');
+      const today = new Date().toDateString();
+      
+      if (lastSync !== today) {
+        console.log('🔄 Starte automatischen Cloud-Sync...');
+        await this.syncFromCloud();
+        localStorage.setItem('last_cloud_sync', today);
+        console.log('✅ Automatischer Cloud-Sync abgeschlossen');
+      }
+    } catch (error) {
+      console.log('⚠️ Automatischer Cloud-Sync fehlgeschlagen:', error);
+    }
+  }
+  
+  // Neue Debug-Funktion
+  static debugAllData(): void {
+    if (typeof window === 'undefined') return;
+    
+    console.log('🔍 === SCHIESSNACHWEISE DEBUG ===');
+    
+    const currentKey = getStorageKey();
+    const currentBackupKey = getBackupKey();
+    
+    console.log('Aktueller Key:', currentKey);
+    console.log('Backup Key:', currentBackupKey);
+    
+    // Prüfe alle möglichen Keys
+    const allKeys = Object.keys(localStorage);
+    const schiessKeys = allKeys.filter(key => 
+      key.includes('schiess') || key.includes('nachweis') || key.includes('rwk')
+    );
+    
+    console.log('Alle Schieß-relevanten Keys:', schiessKeys);
+    
+    schiessKeys.forEach(key => {
+      try {
+        const data = localStorage.getItem(key);
+        if (data) {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed)) {
+            console.log(`Key: ${key} -> ${parsed.length} Einträge`);
+            if (parsed.length > 0) {
+              console.log('  Erster Eintrag:', parsed[0]);
+            }
+          }
+        }
+      } catch (e) {
+        console.log(`Key: ${key} -> Ungültiges JSON`);
+      }
+    });
+    
+    console.log('🔍 === ENDE DEBUG ===');
   }
   
 

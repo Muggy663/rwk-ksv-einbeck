@@ -33,9 +33,13 @@ export function Sidebar() {
     { href: '/', label: 'Startseite', icon: Home },
     { href: '/rwk-tabellen', label: 'RWK Tabellen', icon: FileBarChart },
     { href: '/statistiken', label: 'Statistiken', icon: TrendingUp },
-    { href: '/schiessnachweis', label: 'Schießnachweis', icon: Target },
     { href: '/termine', label: 'Termine', icon: CalendarDays },
     { href: '/dokumente', label: 'Dokumente', icon: FileText },
+  ];
+
+  const betaRoutes = [
+    { href: '/social', label: 'Social Training', icon: Users },
+    { href: '/schiessnachweis', label: 'Schießnachweis', icon: Target },
   ];
 
   const helpRoutes = [
@@ -88,6 +92,7 @@ export function Sidebar() {
               <Icon className="h-4 w-4 mr-3" />
               {route.label}
               {route.href === '/schiessnachweis' && <span className="text-xs text-red-600 dark:text-red-400 font-semibold ml-2">Beta</span>}
+              {route.href === '/social' && <span className="text-xs text-green-600 dark:text-green-400 font-semibold ml-2">NEU</span>}
             </Link>
           );
         })}
@@ -99,6 +104,8 @@ export function Sidebar() {
     <div className="w-64 h-full bg-background border-r flex flex-col">
       <div className="p-6 pt-8 flex-1 overflow-y-auto">
         <NavSection title="Hauptbereich" routes={publicRoutes} />
+        
+        <NavSection title="Beta Features" routes={betaRoutes} />
         
         {user && (
           <NavSection title="Mein Bereich" routes={userRoutes} />

@@ -1,29 +1,34 @@
 # 🎯 RWK Einbeck App
 
-**Version: 1.9.2.4** | **Android: 0.9.4.1**
+**Version: 2.0.0** | **Android: 0.9.4.1**
 
-> **Moderne Digitalisierung für Schießsport-Rundenwettkämpfe**
+> **Social Training Platform für den deutschen Schießsport**
 
-Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (RWK) und Kreismeisterschaften (KM) im Schießsport. Entwickelt für den KSV Einbeck und optimiert für deutsche Schützenvereine.
+Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und Social Training. Die erste Community-Plattform für Sportschützen mit Live-Wettkämpfen, Trainingsgruppen und erweiterten Statistiken.
 
-[![Premium](https://img.shields.io/badge/Premium-Testphase-orange?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.0.0-green?style=for-the-badge)](#)
+[![Social Training](https://img.shields.io/badge/Social_Training-Live-blue?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
 ## ✨ Highlights
 
-- 🏆 **Vollständige RWK & KM Verwaltung** - Von Meldungen bis Ergebnislisten
-- 📱 **Progressive Web App + Native Android** - Funktioniert überall
-- 🎯 **Alle Disziplinen** - KK, LG, LP, Benutzerdefiniert
-- 📊 **Automatische Tabellen** - Live-Berechnung mit Statistiken
-- 📧 **E-Mail Integration** - Automatische Rundschreiben
-- 🔐 **Rollen-System** - Admin, Verein, Schütze
-- 📄 **PDF Export** - Professionelle Dokumente
-- ⚡ **Real-time Updates** - Sofortige Synchronisation
-- 🤖 **Google Gemini AI OCR** - Intelligente Handzettel-Erkennung per Foto oder Galerie
-- 📱 **Galerie-Support** - Handzettel aus WhatsApp/Galerie importieren (PWA)
-- 🛡️ **Enterprise-Level Sicherheit** - 70+ Sicherheitslücken behoben
-- 🎯 **Schießnachweis Premium** - Digitales Schießtagebuch mit Import-Funktionen
-- 🚧 **Premium Testphase** - Erweiterte Features kostenlos verfügbar
+### 🏆 Klassische Features
+- **Vollständige RWK & KM Verwaltung** - Von Meldungen bis Ergebnislisten
+- **Progressive Web App + Native Android** - Funktioniert überall
+- **Alle Disziplinen** - KK, LG, LP, Benutzerdefiniert
+- **Automatische Tabellen** - Live-Berechnung mit Statistiken
+- **Google Gemini AI OCR** - Intelligente Handzettel-Erkennung
+- **Schießnachweis Premium** - Digitales Schießtagebuch
+
+### 🚀 NEU: Social Training Platform (Version 2.0.0)
+- **👥 Trainingsgruppen** - Gemeinsam trainieren mit Freunden (6-stellige Beitrittscodes)
+- **⚔️ Live-Wettkämpfe** - Real-time Wettkämpfe mit Live-Ranglisten (Premium)
+- **🎯 Duelle-System** - 1vs1 Herausforderungen mit Firebase-Integration
+- **📊 Community-Statistiken** - Erweiterte Performance-Analysen
+- **🔔 Smart Notifications** - DSGVO-konforme Push-Benachrichtigungen
+- **🏅 Ranglisten** - Community-weite Leistungsvergleiche
+- **📱 Real-time Updates** - Live-Synchronisation aller Ergebnisse
+- **🎮 Einheitliche Eingabe** - Über Schießnachweis mit Social Training Checkbox
 
 ## 🚀 Hauptfunktionen
 
@@ -43,17 +48,23 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 - **Qualifikations-Management** für Landesmeisterschaften
 - **Urkunden-Druck** automatisiert
 
-### 🎯 Schießnachweis (Premium Testphase)
+### 🎯 Schießnachweis (Premium)
 - **Digitales Schießtagebuch** für Sportschützen
 - **Training & Wettkampf** Dokumentation
 - **Import von digitalen Anlagen** - Meyton, Sius, Disag, Sport Quantum
 - **KI-gestützte Erkennung** - Google Gemini AI für automatischen Import
-- **Cloud-Synchronisation** - Multi-Device-Zugriff (Premium)
-- **Erweiterte Statistiken** - Detaillierte Leistungsanalysen (Premium)
-- **Detaillierte Serienerfassung** mit Einzelschuss-Dokumentation
+- **Cloud-Synchronisation** - Multi-Device-Zugriff
+- **Erweiterte Statistiken** - Detaillierte Leistungsanalysen
 - **PDF-Export für Behörden** - Offizieller Nachweis für Waffenbehörde
 
-- **Kostenlos in Testphase** - Premium-Features auf Anfrage
+### 👥 Social Training (Version 2.0.1)
+- **Trainingsgruppen erstellen** - Mit 6-stelligen Beitrittscodes (Premium)
+- **Live-Wettkämpfe** - Real-time Ranglisten mit Rundenbasiertem System
+- **Duelle-System** - 1vs1 Herausforderungen mit Firebase-Integration
+- **Community entdecken** - Schützen-Profile durchsuchen
+- **Einheitliche Ergebnis-Eingabe** - Über Schießnachweis mit Social Training Checkbox
+- **Admin-Kontrollen** - Wettkampf-Ersteller können Ergebnisse verwalten
+- **Automatische Ranglisten** - Live-Updates basierend auf Gruppen-Ergebnissen
 
 ### 📊 Verwaltung & Organisation
 - **Globale Suche** über alle Bereiche
@@ -82,35 +93,43 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 ## 🎯 Besondere Features
 
-- **⚡ Pull-to-Refresh**: Native Mobile-Geste zum Aktualisieren
-- **🔄 Optimistic Updates**: Sofortige UI-Reaktionen für schnelleres Gefühl
-- **🎯 Meyton Integration**: Export für elektronische Schießanlagen im David21-Format
-- **📊 Live-Tabellen**: Automatische Berechnung nach RWK-Ordnung mit Auf-/Abstieg
-- **🏆 KM-System**: Vollständige Kreismeisterschafts-Verwaltung mit Startlisten
-- **📱 Progressive Web App**: Funktioniert offline, installierbar wie native App
-- **🌙 Enhanced Dark Mode**: Professionelle Farbpalette mit System-Integration
-- **🔙 BackButton Navigation**: Einheitliche Zurück-Navigation auf allen Seiten
-- **📅 KM-Jahresverwaltung**: Automatische Collections für jedes Jahr
-- **✏️ Inline-Bearbeitung**: Direkte Bearbeitung in KM-Tabellen
-- **📸 Dual-Input-System**: Kamera + Galerie für maximale Flexibilität (PWA)
-- **🤖 Google Gemini AI**: Intelligenteste OCR-Erkennung für Handzettel
+### 🏆 Wettkampf-Management
+- **Live-Tabellen**: Automatische Berechnung nach RWK-Ordnung
+- **KM-System**: Vollständige Kreismeisterschafts-Verwaltung
+- **Meyton Integration**: Export für elektronische Schießanlagen
+- **Google Gemini AI**: Intelligenteste OCR-Erkennung für Handzettel
 
-## 🌟 Warum RWK Einbeck App?
+### 👥 Social Features (20.11.2025)
+- **Live-Wettkämpfe**: Real-time Wettkämpfe mit Live-Ranglisten (Premium)
+- **Duelle-System**: 1vs1 Herausforderungen mit Firebase-Integration
+- **Community-Ranglisten**: Automatische Sortierung und Performance-Analysen
+- **Trainingsgruppen**: 6-stellige Beitrittscodes mit Admin-Berechtigungen
+- **Einheitliche Dateneingabe**: Über Schießnachweis mit Social Training Checkbox
+- **Community entdecken**: Profile durchsuchen und zu Gruppen einladen
 
-### ❌ Vorher (Analog)
+### 📱 Technische Highlights
+- **Progressive Web App**: Offline-fähig, installierbar
+- **Pull-to-Refresh**: Native Mobile-Gesten
+- **Optimistic Updates**: Sofortige UI-Reaktionen
+- **Enhanced Dark Mode**: System-Integration
+- **Dual-Input-System**: Kamera + Galerie Support
+
+## 🌟 Warum RWK Einbeck App 2.0?
+
+### ❌ Vorher (Analog + Einzelkämpfer)
 - Excel-Tabellen manuell pflegen
 - Papier-basierte Meldungen
-- Fehleranfällige Berechnungen
+- Isoliertes Training ohne Community
+- Keine Live-Wettkämpfe möglich
 - Zeitaufwändige Kommunikation
-- Keine zentrale Datenhaltung
 
-### ✅ Nachher (Digital)
-- Automatische Berechnung aller Tabellen
-- Online-Meldungen mit Validierung
-- OCR-Erkennung für Handzettel
-- Fehlerfreie Punkteverteilung
-- Automatische E-Mail-Rundschreiben
-- Zentrale Cloud-Datenbank
+### ✅ Nachher (Digital + Community - Stand 20.11.2025)
+- **Automatische Berechnung** aller Tabellen und Ranglisten
+- **Live-Wettkämpfe** mit Real-time Ranglisten und Premium-Features
+- **Trainingsgruppen** mit 6-stelligen Beitrittscodes und Community-Features
+- **Duelle-System** mit 1vs1 Herausforderungen und Firebase-Backend
+- **Einheitliche Eingabe** über Schießnachweis mit Social Training Integration
+- **Community-Ranglisten** mit erweiterten Statistiken und Performance-Analysen
 
 ## 📸 Screenshots
 
@@ -150,7 +169,7 @@ Eine vollständig digitale Lösung für die Verwaltung von Rundenwettkämpfen (R
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 14. November 2025*
+*Letzte Aktualisierung: 20. November 2025 - Version 2.0.0 Social Training Platform*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

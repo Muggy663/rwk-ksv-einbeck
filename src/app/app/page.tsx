@@ -48,8 +48,9 @@ export default function AppPage() {
         <CardContent className="text-center">
           <div className="mb-6">
             <div className="bg-green-100 border border-green-300 rounded-lg p-4 mb-4">
-              <h3 className="font-semibold text-green-900 mb-2">🚀 Jetzt für Beta-Test anmelden!</h3>
+              <h3 className="font-semibold text-green-900 mb-2">🚀 WICHTIG: Jetzt für Beta-Test anmelden!</h3>
               <p className="text-green-800 text-sm mb-3">
+                <strong>Nur mit genügend Beta-Testern kann die App im Play Store veröffentlicht werden!</strong><br/>
                 Hilf uns dabei, die RWK App für den offiziellen Play Store zu optimieren.
                 Als Beta-Tester erhältst du frühen Zugang zu neuen Features!
               </p>
@@ -58,6 +59,7 @@ export default function AppPage() {
                 <p>1. 📧 Sende deine <strong>Google-Mail-Adresse</strong> (die mit dem Play Store verknüpft ist)</p>
                 <p>2. 📱 Erhalte den exklusiven Beta-Test-Link</p>
                 <p>3. 🎆 Teste neue Features vor allen anderen</p>
+                <p><strong>⚠️ Ohne Beta-Tester kein Play Store Launch!</strong></p>
               </div>
             </div>
             <Button 
@@ -69,9 +71,14 @@ export default function AppPage() {
                 📧 Jetzt für Beta-Test anmelden
               </a>
             </Button>
-            <p className="text-sm text-muted-foreground mt-2">
-              🔒 Deine E-Mail wird nur für den Beta-Test verwendet
-            </p>
+            <div className="bg-red-100 border border-red-300 rounded-lg p-3 mt-3">
+              <p className="text-sm text-red-800 font-semibold">
+                ⚠️ WICHTIG: Ohne genügend Beta-Tester kann die App nicht im Play Store veröffentlicht werden!
+              </p>
+              <p className="text-xs text-red-700 mt-1">
+                🔒 Deine E-Mail wird nur für den Beta-Test verwendet
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -85,10 +92,12 @@ export default function AppPage() {
           </CardTitle>
           <CardDescription className="text-blue-700">
             Kostenlose Android-App • Keine Werbung • Schnell & einfach
-            <Badge variant="outline" className="ml-2 text-xs border-orange-300 bg-orange-50 text-orange-700">
+          </CardDescription>
+          <div className="mt-2">
+            <Badge variant="outline" className="text-xs border-orange-300 bg-orange-50 text-orange-700">
               🚧 Direkt-Download (bis Play Store)
             </Badge>
-          </CardDescription>
+          </div>
         </CardHeader>
         <CardContent className="text-center">
           <div className="mb-6">

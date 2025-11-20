@@ -61,6 +61,7 @@ export const DISZIPLINEN = [
   { name: 'Sportpistole 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [60] },
   { name: 'Sportpistole Präzision 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [30, 60] },
   { name: 'Sportpistole Duell 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [30, 60] },
+  { name: 'Sportpistole 30+30 (Präzision+Duell)', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [60] },
   { name: 'Sportpistole Schnellfeuer 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [30, 60] },
   { name: 'Freie Pistole 50m', maxRinge: 10, serienGroesse: 10, kommastellen: true, kategorie: 'Pistole', schussAnzahl: [60] },
   { name: 'Schnellfeuerpistole 25m', maxRinge: 10, serienGroesse: 5, kommastellen: false, kategorie: 'Pistole', schussAnzahl: [60] },

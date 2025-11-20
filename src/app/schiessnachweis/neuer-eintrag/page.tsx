@@ -1,24 +1,36 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
-import { ArrowLeft, Save, Target, ChevronDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowLeft, Save, Target, ChevronDown, Users } from "lucide-react";
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
+import { UnifiedTrainingService } from "@/lib/services/unified-training-service";
+import { TrainingGroupsService } from "@/lib/services/training-groups-service";
 import { KATEGORIEN, getDisziplinenByKategorie, getDisziplinConfig, WETTKAMPF_TYPEN, BELIEBTE_SCHIESSSTAENDE, ZehnerSerie } from "@/types/schiessnachweis";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { ErgebnisaufnahmeForm } from "@/components/schiessnachweis/ErgebnisaufnahmeForm";
 import { DigitalAnlageImport } from "@/components/schiessnachweis/DigitalAnlageImport";
+import { TrainingGroup } from "@/types/social";
+import { CompetitionSelector } from "@/components/schiessnachweis/CompetitionSelector";
 
 export default function NeuerEintragPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [socialTraining, setSocialTraining] = useState(searchParams?.get('social') === 'true');
+  const [selectedGroupId, setSelectedGroupId] = useState(searchParams?.get('group') || '');
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState<string | null>(null);
+  const [userGroups, setUserGroups] = useState<TrainingGroup[]>([]);
   
   const [formData, setFormData] = useState({
     datum: (() => {
@@ -51,6 +63,23 @@ export default function NeuerEintragPage() {
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [availableDisziplinen, setAvailableDisziplinen] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Lade Benutzer-Gruppen wenn Social Training aktiviert ist
+  useEffect(() => {
+    if (socialTraining && user) {
+      loadUserGroups();
+    }
+  }, [socialTraining, user]);
+  
+  const loadUserGroups = async () => {
+    if (!user) return;
+    try {
+      const groups = await TrainingGroupsService.getUserGroups(user.uid);
+      setUserGroups(groups);
+    } catch (error) {
+      console.error('Error loading groups:', error);
+    }
+  };
   
   useEffect(() => {
     if (formData.kategorie) {
@@ -129,34 +158,58 @@ export default function NeuerEintragPage() {
     setIsSubmitting(true);
     
     try {
-      SchießnachweisService.saveEintrag({
+      // Debug: Prüfe groupId
+      console.log('🔍 Debug - selectedGroupId:', selectedGroupId);
+      console.log('🔍 Debug - socialTraining:', socialTraining);
+      
+      // Verwende Unified Training Service für nahtlose Integration
+      const result = await UnifiedTrainingService.saveTrainingResult({
         datum: new Date(formData.datum),
         typ: formData.typ,
         disziplin: formData.disziplin,
         schussAnzahl: parseInt(formData.schussAnzahl),
-        ergebnis: parseFloat(formData.ergebnisGanzeRinge), // Hauptergebnis sind jetzt ganze Ringe
-        ergebnisZehntel: formData.ergebnis ? parseFloat(formData.ergebnis) : undefined, // Zehntel optional
-        // Speichere beide Ergebnisse wenn aus Serien berechnet
-        ergebnisDetails: berechneteErgebnisse ? {
-          mitZehntel: berechneteErgebnisse.mitZehntel,
-          ohneZehntel: berechneteErgebnisse.ohneZehntel,
-          verwendetesErgebnis: parseFloat(formData.ergebnis)
-        } : undefined,
-        serien: serien.length > 0 ? serien : undefined,
+        ergebnis: parseFloat(formData.ergebnisGanzeRinge),
         standort: formData.standort,
         schiessstand: formData.schiessstand || undefined,
         wetter: formData.wetter || undefined,
         munition: formData.munition || undefined,
         waffe: formData.waffe || undefined,
-        notizen: formData.notizen || undefined
+        notizen: formData.notizen || undefined,
+        serien: serien || undefined,
+        socialTraining,
+        groupId: selectedGroupId || undefined,
+        competitionId: selectedCompetitionId || undefined,
+        proofType: 'verified'
       });
+      
+      console.log('✅ Ergebnis gespeichert:', result);
+      
+      // Debug: Prüfe ob Social Training Ergebnis erstellt wurde
+      if (result.socialTraining) {
+        console.log('✅ Social Training Ergebnis ID:', result.socialTraining.id);
+        console.log('✅ Social Training groupId:', result.socialTraining.groupId);
+      } else {
+        console.log('❌ Kein Social Training Ergebnis erstellt');
+      }
+      
+      // Erzwinge Cloud-Sync um alle Daten (inkl. Serien) zu speichern
+      try {
+        await SchießnachweisService.syncToCloud();
+        console.log('✅ Cloud-Sync nach Speicherung erfolgreich');
+      } catch (syncError) {
+        console.warn('⚠️ Cloud-Sync nach Speicherung fehlgeschlagen:', syncError);
+      }
+
+
 
       toast({
         title: "Erfolgreich gespeichert",
-        description: `${WETTKAMPF_TYPEN.find(t => t.value === formData.typ)?.label} wurde hinzugefügt.`,
+        description: result.socialTraining 
+          ? `${WETTKAMPF_TYPEN.find(t => t.value === formData.typ)?.label} wurde in Schießnachweis und Social Training gespeichert.`
+          : `${WETTKAMPF_TYPEN.find(t => t.value === formData.typ)?.label} wurde hinzugefügt.`,
       });
 
-      router.push('/schiessnachweis');
+      router.push(socialTraining ? '/social' : '/schiessnachweis');
     } catch (error) {
       toast({
         title: "Fehler",
@@ -196,7 +249,7 @@ export default function NeuerEintragPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="datum">Datum *</Label>
                 <Input
@@ -217,6 +270,17 @@ export default function NeuerEintragPage() {
                     value: typ.value,
                     label: `${typ.icon} ${typ.label}`
                   }))}
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="standort">Ort/Stadt *</Label>
+                <Input
+                  id="standort"
+                  value={formData.standort}
+                  onChange={(e) => setFormData(prev => ({ ...prev, standort: e.target.value }))}
+                  placeholder="z.B. Einbeck"
+                  required
                 />
               </div>
             </div>
@@ -342,27 +406,14 @@ export default function NeuerEintragPage() {
               );
             })()}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="standort">Ort/Stadt *</Label>
-                <Input
-                  id="standort"
-                  value={formData.standort}
-                  onChange={(e) => setFormData(prev => ({ ...prev, standort: e.target.value }))}
-                  placeholder="z.B. Einbeck"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="schiessstand">Schießstand</Label>
-                <Input
-                  id="schiessstand"
-                  value={formData.schiessstand}
-                  onChange={(e) => setFormData(prev => ({ ...prev, schiessstand: e.target.value }))}
-                  placeholder="z.B. Einbecker Schützengilde"
-                />
-              </div>
+            <div>
+              <Label htmlFor="schiessstand">Schießstand (optional)</Label>
+              <Input
+                id="schiessstand"
+                value={formData.schiessstand}
+                onChange={(e) => setFormData(prev => ({ ...prev, schiessstand: e.target.value }))}
+                placeholder="z.B. Einbecker Schützengilde"
+              />
             </div>
             
             {/* Optionale Details */}
@@ -473,6 +524,77 @@ export default function NeuerEintragPage() {
                 placeholder="Zusätzliche Bemerkungen..."
                 rows={3}
               />
+            </div>
+
+            {/* Social Training Checkbox */}
+            <div className="border-t pt-4">
+              <div className="space-y-4 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="socialTraining" 
+                    checked={socialTraining}
+                    onCheckedChange={(checked) => {
+                      setSocialTraining(checked);
+                      if (checked && user) {
+                        loadUserGroups();
+                      }
+                    }}
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="socialTraining" className="flex items-center gap-2 cursor-pointer">
+                      <Users className="h-4 w-4 text-purple-600" />
+                      <span className="font-medium">Auch in Social Training speichern</span>
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Ergebnis wird für Community-Features gespeichert. <strong>Ohne Premium:</strong> Nur in Trainingsgruppen sichtbar, keine Datenbank-Speicherung der Schießnachweis-Details.
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Gruppen-Auswahl */}
+                {socialTraining && (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="groupSelection">Trainingsgruppe (optional)</Label>
+                      <NativeSelect
+                        value={selectedGroupId}
+                        onValueChange={setSelectedGroupId}
+                        placeholder="Keine Gruppe auswählen..."
+                        options={[
+                          { value: '', label: 'Keine Gruppe (nur persönlich)' },
+                          ...userGroups.map(group => ({
+                            value: group.id!,
+                            label: `${group.name} (${group.members?.length || 0} Mitglieder)`
+                          }))
+                        ]}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {selectedGroupId 
+                          ? 'Ergebnis wird in der ausgewählten Gruppe geteilt und für Vergleiche verwendet.'
+                          : 'Ergebnis wird nur in Ihrem persönlichen Social Training Profil gespeichert.'}
+                      </p>
+                      {userGroups.length === 0 && (
+                        <p className="text-xs text-orange-600 mt-1">
+                          Sie sind noch keiner Trainingsgruppe beigetreten. <Link href="/training-groups" className="underline">Gruppe erstellen oder beitreten</Link>
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Wettkampf-Auswahl */}
+                    {selectedGroupId && (
+                      <CompetitionSelector 
+                        groupId={selectedGroupId}
+                        discipline={formData.disziplin}
+                        onCompetitionChange={(competitionId) => {
+                          setSelectedCompetitionId(competitionId);
+                          console.log('🏆 Selected competition ID:', competitionId);
+                          console.log('🏆 Expected competition ID: Kg8GG35V5Z8b0OAy5jtQ');
+                        }}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-4">

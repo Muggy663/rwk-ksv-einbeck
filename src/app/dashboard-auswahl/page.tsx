@@ -279,14 +279,60 @@ export default function DashboardAuswahl() {
 
       </div>
       
-      {/* Schießnachweis Dashboard - Nach unten */}
-      <div className="mt-6 max-w-2xl mx-auto">
+      {/* Beta Features - Nach unten */}
+      <div className="mt-6">
+        <h2 className="text-xl font-semibold text-center mb-4 text-muted-foreground">🚀 Beta Features</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          
+          {/* Social Training */}
+          <Card className="shadow-lg hover:shadow-xl transition-shadow border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30">
+            <CardHeader className="pb-4">
+              <div>
+                <CardTitle className="text-xl mb-2">
+                  👥 Social Training
+                  <Badge variant="default" className="ml-2 text-xs bg-green-600">NEU</Badge>
+                </CardTitle>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="outline">Trainingsgruppen</Badge>
+                  <Badge variant="outline">Live-Wettkämpfe</Badge>
+                  <Badge variant="outline">Community</Badge>
+                </div>
+              </div>
+              <CardDescription>
+                Trainieren Sie gemeinsam mit anderen Schützen und nehmen Sie an Live-Wettkämpfen teil
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                  <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">🆕 Features</h4>
+                  <div className="text-sm text-purple-700 dark:text-purple-200 space-y-1">
+                    <div>• 👥 Trainingsgruppen erstellen</div>
+                    <div>• ⚔️ Live-Wettkämpfe & Duelle</div>
+                    <div>• 🏅 Achievements sammeln</div>
+                    <div>• 📊 Community-Statistiken</div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Link href="/social" className="flex-1">
+                    <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                      Social Training öffnen
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Schießnachweis */}
+          <div className="max-w-2xl mx-auto">
         <Card className="shadow-lg hover:shadow-xl transition-shadow border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
           <CardHeader className="pb-4">
             <div>
               <CardTitle className="text-xl mb-2">
                 🎯 Schießnachweis
-                <Badge variant="secondary" className="ml-2 text-xs">Kostenlos</Badge>
+                <Badge variant="secondary" className="ml-2 text-xs">Beta</Badge>
               </CardTitle>
               <div className="flex flex-wrap gap-1">
                 <Badge variant="outline">Offline-Speicherung</Badge>
@@ -294,18 +340,17 @@ export default function DashboardAuswahl() {
               </div>
             </div>
             <CardDescription>
-              Digitales Schießtagebuch für Sportschützen - Kostenlos verfügbar
+              Digitales Schießtagebuch für Sportschützen
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🆓 Kostenlose Features</h4>
+                <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🆕 Features</h4>
                 <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
                   <div>• Training & Wettkampf erfassen</div>
-                  <div>• Import von digitalen Anlagen</div>
                   <div>• PDF-Export für Behörden</div>
-                  <div>• Basis-Statistiken</div>
+                  <div>• Premium: Cloud-Sync & Statistiken</div>
                 </div>
               </div>
               
@@ -317,7 +362,7 @@ export default function DashboardAuswahl() {
                   <div>• 📊 Erweiterte Statistiken</div>
                   <div>• 📈 Leistungsanalyse</div>
                 </div>
-                <Badge variant="secondary" className="mt-2 text-xs">Coming Soon</Badge>
+
               </div>
               
               <div className="flex gap-2">
@@ -330,6 +375,8 @@ export default function DashboardAuswahl() {
             </div>
           </CardContent>
         </Card>
+          </div>
+        </div>
       </div>
 
       {/* Support-Bereich */}
