@@ -256,38 +256,36 @@ export function HandzettelOCR({
     }
   }, [hasProcessed, imageFile, availableTeams, onOCRComplete, onError, compressImageForMobile])
 
-  // Lade Schützen-Cache einmalig
-  React.useEffect(() => {
-    const loadShooterCache = async () => {
-      if (shooterCacheRef.current) return
-      
-      const cache = new Map<string, {name: string, teamId: string, teamName: string}>()
-      const allShooterIds = new Set<string>()
-      availableTeams.forEach(team => {
-        team.shooterIds?.forEach(id => allShooterIds.add(id))
-      })
-      
-      const loadPromises = Array.from(allShooterIds).map(async (shooterId) => {
-        try {
-          const shooterDoc = await getDoc(doc(db, "shooters", shooterId))
-          if (shooterDoc.exists()) {
-            const data = shooterDoc.data()
-            const shooterName = data.name || `${data.firstName || ''} ${data.lastName || ''}`.trim()
-            const team = availableTeams.find(t => t.shooterIds?.includes(shooterId))
-            if (team) {
-              cache.set(shooterId, { name: shooterName, teamId: team.id, teamName: team.name })
-            }
-          }
-        } catch (error) {
-          console.error(`Fehler bei Schütze ${shooterId}:`, error)
-        }
-      })
-      
-      await Promise.all(loadPromises)
-      shooterCacheRef.current = cache
+  // Lazy Loading: Lade Schützen nur bei Bedarf
+  const getShooterInfo = React.useCallback(async (shooterId: string): Promise<{name: string, teamId: string, teamName: string} | null> => {
+    // Prüfe Cache zuerst
+    if (shooterCacheRef.current?.has(shooterId)) {
+      return shooterCacheRef.current.get(shooterId) || null
     }
     
-    loadShooterCache()
+    // Initialisiere Cache falls nötig
+    if (!shooterCacheRef.current) {
+      shooterCacheRef.current = new Map()
+    }
+    
+    try {
+      const shooterDoc = await getDoc(doc(db, "shooters", shooterId))
+      if (shooterDoc.exists()) {
+        const data = shooterDoc.data()
+        const shooterName = data.name || `${data.firstName || ''} ${data.lastName || ''}`.trim()
+        const team = availableTeams.find(t => t.shooterIds?.includes(shooterId))
+        
+        if (team && shooterName) {
+          const shooterInfo = { name: shooterName, teamId: team.id, teamName: team.name }
+          shooterCacheRef.current.set(shooterId, shooterInfo)
+          return shooterInfo
+        }
+      }
+    } catch (error) {
+      console.error(`Fehler bei Schütze ${shooterId}:`, error)
+    }
+    
+    return null
   }, [availableTeams])
 
   // Autostart nur einmal - verhindere Fast Refresh Loops
@@ -306,114 +304,75 @@ export function HandzettelOCR({
   const processGeminiResults = async (geminiResults: any[]): Promise<OCRMatchResult[]> => {
     const matches: OCRMatchResult[] = []
     
-    // Verwende den bereits geladenen Cache
-    if (!shooterCacheRef.current) {
-      console.error('Schützen-Cache nicht geladen')
-      return matches
-    }
-    
-    const shooterCache = shooterCacheRef.current
-    
     // Begrenze Gemini-Ergebnisse auf maximal 25 pro Durchgang
     const limitedResults = geminiResults.slice(0, 25)
     console.log(`🔄 Gemini lieferte ${geminiResults.length} Ergebnisse, verwende ${limitedResults.length}`)
     
-    // Matche Gemini-Ergebnisse mit Datenbank-Schützen
+    // Sammle alle Schützen-IDs aus Teams
+    const allShooterIds = new Set<string>()
+    availableTeams.forEach(team => {
+      team.shooterIds?.forEach(id => allShooterIds.add(id))
+    })
+    
+    // Matche Gemini-Ergebnisse mit Datenbank-Schützen (Lazy Loading)
     for (const geminiResult of limitedResults) {
-      let bestMatch: {shooterId: string, shooter: any, similarity: number} | null = null
+      if (!geminiResult.shooterName || !geminiResult.score || geminiResult.score <= 0) {
+        continue
+      }
       
-      // Suche besten Match
-      for (const [shooterId, shooter] of shooterCache.entries()) {
-        const dbName = shooter.name.toLowerCase().trim()
-        const geminiName = geminiResult.shooterName?.toLowerCase().trim() || ''
+      let bestMatch: {shooterId: string, shooterInfo: any, similarity: number} | null = null
+      const geminiName = geminiResult.shooterName.toLowerCase().trim()
+      
+      // Durchsuche nur relevante Schützen-IDs (maximal 10 parallel)
+      const shooterIdArray = Array.from(allShooterIds)
+      const batchSize = 10 // Mobile-freundlich
+      
+      for (let i = 0; i < shooterIdArray.length; i += batchSize) {
+        const batch = shooterIdArray.slice(i, i + batchSize)
         
-        let similarity = 0
-        if (dbName === geminiName) similarity = 1.0
-        else if (dbName.includes(geminiName) || geminiName.includes(dbName)) similarity = 0.8
-        else similarity = fuzzyMatch(dbName, geminiName)
+        const batchPromises = batch.map(async (shooterId) => {
+          const shooterInfo = await getShooterInfo(shooterId)
+          if (!shooterInfo) return null
+          
+          const dbName = shooterInfo.name.toLowerCase().trim()
+          
+          let similarity = 0
+          if (dbName === geminiName) similarity = 1.0
+          else if (dbName.includes(geminiName) || geminiName.includes(dbName)) similarity = 0.8
+          else similarity = fuzzyMatch(dbName, geminiName)
+          
+          return similarity > 0.6 ? { shooterId, shooterInfo, similarity } : null
+        })
         
-        if (similarity > 0.6 && (!bestMatch || similarity > bestMatch.similarity)) {
-          bestMatch = { shooterId, shooter, similarity }
+        const batchResults = await Promise.all(batchPromises)
+        
+        for (const result of batchResults) {
+          if (result && (!bestMatch || result.similarity > bestMatch.similarity)) {
+            bestMatch = result
+          }
         }
+        
+        // Wenn perfekter Match gefunden, stoppe Suche
+        if (bestMatch?.similarity === 1.0) break
       }
       
       if (bestMatch) {
-        // Nur hinzufügen wenn ein gültiges Ergebnis vorhanden ist
-        if (geminiResult.score && geminiResult.score > 0) {
-          matches.push({
-            teamId: bestMatch.shooter.teamId,
-            teamName: bestMatch.shooter.teamName,
-            shooterId: bestMatch.shooterId,
-            shooterName: bestMatch.shooter.name,
-            score: geminiResult.score,
-            confidence: (geminiResult.confidence || 0.8) * bestMatch.similarity,
-            ocrSource: 'gemini'
-          })
-        }
+        matches.push({
+          teamId: bestMatch.shooterInfo.teamId,
+          teamName: bestMatch.shooterInfo.teamName,
+          shooterId: bestMatch.shooterId,
+          shooterName: bestMatch.shooterInfo.name,
+          score: geminiResult.score,
+          confidence: (geminiResult.confidence || 0.8) * bestMatch.similarity,
+          ocrSource: 'gemini'
+        })
       }
     }
     
     return matches
   }
 
-  const matchShooters = async (ocrResult: SimpleOCRResult, teams: Team[]): Promise<OCRMatchResult[]> => {
-    const matches: OCRMatchResult[] = []
-    
-    // Verwende den bereits geladenen Cache
-    if (!shooterCacheRef.current) {
-      console.error('Schützen-Cache nicht geladen')
-      return matches
-    }
-    
-    // Erstelle Schützen-Liste aus Cache
-    const allShooters: Array<{id: string, name: string, teamId: string, teamName: string}> = []
-    
-    for (const [shooterId, shooter] of shooterCacheRef.current.entries()) {
-      allShooters.push({
-        id: shooterId,
-        name: shooter.name,
-        teamId: shooter.teamId,
-        teamName: shooter.teamName
-      })
-    }
-    
-    // Matche OCR-Schützen mit Datenbank
-    for (const ocrShooter of ocrResult.shooters) {
-      const scoreText = ocrShooter.score !== null ? `${ocrShooter.score} Ringe` : 'Nicht angetreten'
-      console.log(`🔍 Suche: "${ocrShooter.name}" (${scoreText})`)
-      
-      const matchedShooter = allShooters.find(shooter => {
-        const dbName = shooter.name.toLowerCase().trim()
-        const ocrName = ocrShooter.name.toLowerCase().trim()
-        
-        if (dbName === ocrName) return true
-        if (dbName.includes(ocrName) || ocrName.includes(dbName)) return true
-        
-        const similarity = fuzzyMatch(dbName, ocrName)
-        return similarity > 0.7
-      })
-      
-      if (matchedShooter && ocrShooter.score && ocrShooter.score > 0) {
-        matches.push({
-          teamId: matchedShooter.teamId,
-          teamName: matchedShooter.teamName,
-          shooterId: matchedShooter.id,
-          shooterName: matchedShooter.name,
-          score: ocrShooter.score,
-          confidence: ocrShooter.confidence,
-          ocrSource: 'fallback-ocr'
-        })
-        console.log(`✅ "${ocrShooter.name}" → "${matchedShooter.name}" (${matchedShooter.teamName}) - ${ocrShooter.score} Ringe`)
-      } else if (matchedShooter && (!ocrShooter.score || ocrShooter.score === 0)) {
-        console.log(`⏭️ "${ocrShooter.name}" übersprungen (kein Ergebnis)`)
-      } else {
-        console.log(`❌ "${ocrShooter.name}" nicht gefunden`)
-      }
-    }
-    
-    console.log(`🏁 ${matches.length} Matches erstellt`)
-    return matches
-  }
+  // Fallback OCR wird nicht mehr verwendet - nur Gemini
 
   const fuzzyMatch = (str1: string, str2: string): number => {
     const longer = str1.length > str2.length ? str1 : str2
