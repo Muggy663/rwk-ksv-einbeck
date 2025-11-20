@@ -66,6 +66,10 @@ export function HandzettelOCR({
         console.log('📱 Mobile Debug - Bildgröße:', imageFile.size, 'bytes')
         console.log('📱 Mobile Debug - Bildtyp:', imageFile.type)
         console.log('📱 Mobile Debug - Teams:', availableTeams.length)
+        
+        // Debug Toast für Mobile
+        const debugInfo = `📱 Debug: ${Math.round(imageFile.size/1024)}KB ${imageFile.type} | ${availableTeams.length} Teams`
+        setCurrentStep(debugInfo)
       }
       
       // Versuche zuerst Gemini OCR
@@ -79,6 +83,7 @@ export function HandzettelOCR({
         
         if (isMobile) {
           console.log('📱 Mobile Debug - Sende Request an /api/gemini-ocr')
+          setCurrentStep('📱 Sende Request...')
         }
         
         const geminiResponse = await fetch('/api/gemini-ocr', {
@@ -88,12 +93,14 @@ export function HandzettelOCR({
         
         if (isMobile) {
           console.log('📱 Mobile Debug - Response Status:', geminiResponse.status)
+          setCurrentStep(`📱 Response: ${geminiResponse.status}`)
         }
         
         if (geminiResponse.ok) {
           const geminiData = await geminiResponse.json()
           if (isMobile) {
             console.log('📱 Mobile Debug - Response Data:', geminiData)
+            setCurrentStep(`📱 Data: ${geminiData.success ? 'OK' : 'FEHLER'}`)
           }
           
           if (geminiData.success && geminiData.results && geminiData.results.length > 0) {
@@ -107,6 +114,7 @@ export function HandzettelOCR({
             console.warn('⚠️ Gemini lieferte keine Ergebnisse, verwende Fallback')
             if (isMobile) {
               console.log('📱 Mobile Debug - Gemini Fehler:', geminiData.error || 'Keine Ergebnisse')
+              setCurrentStep(`📱 Gemini Fehler: ${geminiData.error || 'Keine Ergebnisse'}`)
             }
           }
         } else {
@@ -114,12 +122,14 @@ export function HandzettelOCR({
           console.warn('⚠️ Gemini API Fehler:', geminiResponse.status, 'verwende Fallback')
           if (isMobile) {
             console.log('📱 Mobile Debug - API Fehler:', errorText)
+            setCurrentStep(`📱 API Fehler: ${geminiResponse.status}`)
           }
         }
       } catch (geminiError) {
         console.warn('⚠️ Gemini Erkennung fehlgeschlagen, verwende Alternative:', geminiError)
         if (isMobile) {
           console.log('📱 Mobile Debug - Gemini Exception:', geminiError instanceof Error ? geminiError.message : geminiError)
+          setCurrentStep(`📱 Exception: ${geminiError instanceof Error ? geminiError.message : geminiError}`)
         }
       }
       
