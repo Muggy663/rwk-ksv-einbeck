@@ -32,10 +32,10 @@ export default function StatistikenPage() {
     loadData();
   }, []);
 
-  const loadData = () => {
+  const loadData = async () => {
     setIsLoading(true);
     try {
-      const data = SchießnachweisService.getEinträge();
+      const data = await SchießnachweisService.getEinträge();
       setEinträge(data);
     } catch (error) {
       console.error('Fehler beim Laden der Daten:', error);

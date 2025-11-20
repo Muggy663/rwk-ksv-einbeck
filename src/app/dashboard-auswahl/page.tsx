@@ -335,7 +335,7 @@ export default function DashboardAuswahl() {
                 <Badge variant="secondary" className="ml-2 text-xs">Beta</Badge>
               </CardTitle>
               <div className="flex flex-wrap gap-1">
-                <Badge variant="outline">Offline-Speicherung</Badge>
+                <Badge variant="outline">Cloud-Speicherung</Badge>
                 <Badge variant="outline">PDF-Export</Badge>
               </div>
             </div>
@@ -350,19 +350,15 @@ export default function DashboardAuswahl() {
                 <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
                   <div>• Training & Wettkampf erfassen</div>
                   <div>• PDF-Export für Behörden</div>
-                  <div>• Premium: Cloud-Sync & Statistiken</div>
+                  <div>• Cloud-Sync & Statistiken</div>
                 </div>
               </div>
               
-              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
-                <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">💎 Premium (~2€/Monat)</h4>
-                <div className="text-sm text-purple-700 dark:text-purple-300 space-y-1">
-                  <div>• 🔄 Cloud-Synchronisation</div>
-                  <div>• 📱 Multi-Gerät-Zugang</div>
-                  <div>• 📊 Erweiterte Statistiken</div>
-                  <div>• 📈 Leistungsanalyse</div>
+              <div className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                <h4 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">🚧 Testphase</h4>
+                <div className="text-sm text-orange-700 dark:text-orange-300">
+                  Feedback willkommen!
                 </div>
-
               </div>
               
               <div className="flex gap-2">

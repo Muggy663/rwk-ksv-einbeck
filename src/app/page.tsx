@@ -465,7 +465,7 @@ export default function HomePage() {
         </Link>
 
         {/* Social Training Platform */}
-        <Link href="/social" className="block">
+        <Link href="/social/welcome" className="block">
           <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
             <div className="flex items-center">
               <div className="bg-white p-3 rounded-full mr-4">

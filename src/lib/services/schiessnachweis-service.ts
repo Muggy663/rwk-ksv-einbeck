@@ -1,29 +1,4 @@
 import { SchießEintrag, SchießStatistik } from '@/types/schiessnachweis';
-import { CloudSyncService } from './cloud-sync-service';
-import { PremiumService } from './premium-service';
-
-// User-spezifische Keys
-const getStorageKey = () => {
-  if (typeof window === 'undefined') return 'rwk_schiessnachweis';
-  
-  // Versuche User-ID zu bekommen
-  try {
-    const auth = require('@/lib/firebase/config').auth;
-    if (auth.currentUser) {
-      const userKey = `rwk_schiessnachweis_${auth.currentUser.uid}`;
-      console.log('🔑 User-spezifischer Key:', userKey);
-      return userKey;
-    }
-  } catch (e) {
-    console.log('⚠️ Auth nicht verfügbar, verwende globalen Key');
-  }
-  
-  // Fallback zu globalem Key
-  console.log('🔑 Globaler Key verwendet: rwk_schiessnachweis');
-  return 'rwk_schiessnachweis';
-};
-
-const getBackupKey = () => getStorageKey() + '_backup';
 
 // Cache für bessere Performance
 let cachedEinträge: SchießEintrag[] | null = null;
@@ -32,7 +7,7 @@ const CACHE_DURATION = 5000; // 5 Sekunden Cache
 let isLoading = false; // Verhindere mehrfache gleichzeitige Ladevorgänge
 
 export class SchießnachweisService {
-  static getEinträge(): SchießEintrag[] {
+  static async getEinträge(): Promise<SchießEintrag[]> {
     if (typeof window === 'undefined') return [];
     
     // Cache prüfen
@@ -48,83 +23,45 @@ export class SchießnachweisService {
     
     isLoading = true;
     
-    // Automatischer Cloud-Sync beim ersten Laden
-    this.autoSyncOnLoad();
-    
     try {
-      // 1. Versuche localStorage (user-spezifisch)
-      const storageKey = getStorageKey();
-      let data = localStorage.getItem(storageKey);
-      if (!data) {
-        console.log('🔍 Keine Daten gefunden, lade aus Backup...');
-      }
+      // Lade direkt aus Firebase - alle Daten werden in der Datenbank gespeichert
+      const { auth, db } = await import('@/lib/firebase/config');
       
-      // 2. Fallback zu sessionStorage
-      if (!data) {
-        data = sessionStorage.getItem(storageKey);
-        console.log('sessionStorage:', data ? `${data.length} Zeichen` : 'leer');
-      }
-      
-      // 3. Fallback zu Backup
-      if (!data) {
-        const backupKey = getBackupKey();
-        data = localStorage.getItem(backupKey);
-        console.log('localStorage (backup):', data ? `${data.length} Zeichen` : 'leer');
-      }
-      
-      // 4. Suche nach anderen möglichen Keys (nur einmal pro Session)
-      if (!data && !sessionStorage.getItem('backup_search_done')) {
-        const allKeys = Object.keys(localStorage);
-        console.log('Alle localStorage Keys:', allKeys);
-        
-        // Suche nach ähnlichen Keys
-        const possibleKeys = allKeys.filter(key => 
-          key.includes('schiess') || key.includes('nachweis') || key.includes('rwk')
-        );
-        console.log('Mögliche Schießnachweis Keys:', possibleKeys);
-        
-        for (const key of possibleKeys) {
-          const testData = localStorage.getItem(key);
-          if (testData) {
-            try {
-              const parsed = JSON.parse(testData);
-              if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].disziplin) {
-                console.log(`✅ Daten gefunden in Key: ${key}`);
-                data = testData;
-                break;
-              }
-            } catch (e) {
-              // Ignore
-            }
-          }
-        }
-        
-        // Markiere Backup-Suche als erledigt
-        sessionStorage.setItem('backup_search_done', 'true');
-      }
-      
-      if (!data) {
-        console.log('⚠️ Keine Daten in localStorage/sessionStorage gefunden');
+      if (!auth.currentUser) {
+        console.log('⚠️ Benutzer nicht angemeldet - keine Daten verfügbar');
         isLoading = false;
         return [];
       }
       
-      const einträge = JSON.parse(data).map((eintrag: any) => {
+      const { doc, getDoc } = await import('firebase/firestore');
+      const docRef = doc(db, 'schiessnachweis_data', auth.currentUser.uid);
+      const docSnap = await getDoc(docRef);
+      
+      if (!docSnap.exists()) {
+        console.log('📝 Keine Schießnachweis-Daten für User:', auth.currentUser.uid);
+        isLoading = false;
+        return [];
+      }
+      
+      const data = docSnap.data();
+      const einträge = (data.einträge || []).map((eintrag: any) => {
         // Robuste Datum-Konvertierung
         let datum;
         let createdAt;
         
         // Firebase Timestamp oder ISO String
         if (eintrag.datum && typeof eintrag.datum === 'object' && eintrag.datum.seconds) {
-          // Firebase Timestamp
           datum = new Date(eintrag.datum.seconds * 1000);
+        } else if (eintrag.datum && eintrag.datum.toDate) {
+          datum = eintrag.datum.toDate();
         } else {
-          // ISO String oder Date
           datum = new Date(eintrag.datum);
         }
         
         if (eintrag.createdAt && typeof eintrag.createdAt === 'object' && eintrag.createdAt.seconds) {
           createdAt = new Date(eintrag.createdAt.seconds * 1000);
+        } else if (eintrag.createdAt && eintrag.createdAt.toDate) {
+          createdAt = eintrag.createdAt.toDate();
         } else {
           createdAt = new Date(eintrag.createdAt || eintrag.datum);
         }
@@ -150,55 +87,36 @@ export class SchießnachweisService {
       lastCacheTime = now;
       isLoading = false;
       
-      console.log(`✅ ${einträge.length} Einträge geladen`);
+      console.log(`✅ ${einträge.length} Einträge aus Datenbank geladen`);
       return einträge;
     } catch (error) {
-      console.error('Fehler beim Laden der Einträge:', error);
+      console.error('Fehler beim Laden der Einträge aus Datenbank:', error);
       isLoading = false;
       return [];
     }
   }
 
-  static saveEintrag(eintrag: Omit<SchießEintrag, 'id' | 'createdAt'>): SchießEintrag {
+  static async saveEintrag(eintrag: Omit<SchießEintrag, 'id' | 'createdAt'>): Promise<SchießEintrag> {
     const neuerEintrag: SchießEintrag = {
       ...eintrag,
       id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
       createdAt: new Date()
     };
 
-    const einträge = this.getEinträge();
+    const einträge = await this.getEinträge();
     einträge.push(neuerEintrag);
     
     // Cache aktualisieren
     cachedEinträge = einträge;
     lastCacheTime = Date.now();
     
-    this.saveToStorage(einträge);
-    
-    // Automatische Cloud-Sync für Premium-Nutzer
-    const isPremiumSync = PremiumService.isPremiumSync();
-    console.log('🔍 Debug - Premium-Check:', isPremiumSync);
-    
-    if (isPremiumSync) {
-      console.log('🔍 Debug - Auto-Sync gestartet für', einträge.length, 'Einträge');
-      CloudSyncService.autoSync(einträge).then(() => {
-        console.log('✅ Auto-Sync erfolgreich');
-      }).catch(error => {
-        console.error('🔴 Auto-Sync fehlgeschlagen:', error);
-      });
-    } else {
-      console.log('⚠️ Auto-Sync übersprungen - Premium-Check fehlgeschlagen');
-      // Prüfe auch async Premium
-      PremiumService.isPremium().then(isPremiumAsync => {
-        console.log('🔍 Debug - Async Premium-Check:', isPremiumAsync);
-      });
-    }
+    await this.saveToDatabase(einträge);
     
     return neuerEintrag;
   }
 
-  static updateEintrag(id: string, updates: Partial<Omit<SchießEintrag, 'id' | 'createdAt'>>): SchießEintrag | null {
-    const einträge = this.getEinträge();
+  static async updateEintrag(id: string, updates: Partial<Omit<SchießEintrag, 'id' | 'createdAt'>>): Promise<SchießEintrag | null> {
+    const einträge = await this.getEinträge();
     const index = einträge.findIndex(e => e.id === id);
     
     if (index === -1) return null;
@@ -209,61 +127,54 @@ export class SchießnachweisService {
     cachedEinträge = einträge;
     lastCacheTime = Date.now();
     
-    this.saveToStorage(einträge);
-    
-    // Automatische Cloud-Sync für Premium-Nutzer
-    if (PremiumService.isPremiumSync()) {
-      CloudSyncService.autoSync(einträge);
-    }
+    await this.saveToDatabase(einträge);
     
     return einträge[index];
   }
 
-  static deleteEintrag(id: string): void {
-    const einträge = this.getEinträge().filter(e => e.id !== id);
+  static async deleteEintrag(id: string): Promise<void> {
+    const einträge = (await this.getEinträge()).filter(e => e.id !== id);
     
     // Cache aktualisieren
     cachedEinträge = einträge;
     lastCacheTime = Date.now();
     
-    this.saveToStorage(einträge);
-    
-    // Automatische Cloud-Sync für Premium-Nutzer
-    if (PremiumService.isPremiumSync()) {
-      CloudSyncService.autoSync(einträge);
-    }
+    await this.saveToDatabase(einträge);
   }
   
-  private static saveToStorage(einträge: SchießEintrag[]): void {
-    const data = JSON.stringify(einträge);
-    
+  private static async saveToDatabase(einträge: SchießEintrag[]): Promise<void> {
     try {
-      // User-spezifische Speicherung
-      const storageKey = getStorageKey();
-      const backupKey = getBackupKey();
+      const { auth, db } = await import('@/lib/firebase/config');
       
-      // Haupt-Speicherung
-      localStorage.setItem(storageKey, data);
-      
-      // Backup-Speicherung
-      localStorage.setItem(backupKey, data);
-      
-      // Session-Backup
-      sessionStorage.setItem(storageKey, data);
-      
-      // IndexedDB für persistente Speicherung (Cache-sicher)
-      this.saveToIndexedDB(einträge);
-      
-      console.log(`💾 ${einträge.length} Einträge gespeichert (Cache aktualisiert)`);
-    } catch (error) {
-      console.error('Speichern fehlgeschlagen:', error);
-      // Fallback zu sessionStorage
-      try {
-        const storageKey = getStorageKey();
-        sessionStorage.setItem(storageKey, data);
-      } catch (sessionError) {
-        console.error('Auch sessionStorage fehlgeschlagen:', sessionError);
+      if (!auth.currentUser) {
+        throw new Error('Benutzer nicht angemeldet');
       }
+      
+      const { doc, setDoc } = await import('firebase/firestore');
+      
+      // Entferne undefined Werte für Firebase
+      const cleanedEinträge = einträge.map(eintrag => {
+        const cleaned: any = {};
+        Object.keys(eintrag).forEach(key => {
+          const value = (eintrag as any)[key];
+          if (value !== undefined) {
+            cleaned[key] = value;
+          }
+        });
+        return cleaned;
+      });
+      
+      const cloudData = {
+        einträge: cleanedEinträge,
+        lastModified: new Date(),
+        deviceId: this.getDeviceId()
+      };
+      
+      await setDoc(doc(db, 'schiessnachweis_data', auth.currentUser.uid), cloudData);
+      console.log(`💾 ${einträge.length} Einträge in Datenbank gespeichert`);
+    } catch (error) {
+      console.error('Speichern in Datenbank fehlgeschlagen:', error);
+      throw error;
     }
   }
   
@@ -361,8 +272,8 @@ export class SchießnachweisService {
     });
   }
 
-  static getStatistik(): SchießStatistik {
-    const einträge = this.getEinträge();
+  static async getStatistik(): Promise<SchießStatistik> {
+    const einträge = await this.getEinträge();
     
     if (einträge.length === 0) {
       return {
@@ -398,15 +309,15 @@ export class SchießnachweisService {
     };
   }
 
-  static exportData(): string {
-    const einträge = this.getEinträge();
+  static async exportData(): Promise<string> {
+    const einträge = await this.getEinträge();
     return JSON.stringify(einträge, null, 2);
   }
 
-  static importData(jsonData: string): number {
+  static async importData(jsonData: string): Promise<number> {
     try {
       const importedEinträge = JSON.parse(jsonData);
-      const existingEinträge = this.getEinträge();
+      const existingEinträge = await this.getEinträge();
       
       // Merge und Duplikate vermeiden
       const allEinträge = [...existingEinträge];
@@ -430,237 +341,31 @@ export class SchießnachweisService {
         }
       });
       
-      this.saveToStorage(allEinträge);
+      await this.saveToDatabase(allEinträge);
       return importCount;
     } catch (error) {
       throw new Error('Ungültiges Datenformat');
     }
   }
   
-  static async syncToCloud(): Promise<void> {
-    const einträge = this.getEinträge();
-    console.log('🔍 SchießnachweisService.syncToCloud() - Einträge:', einträge.length);
-    console.log('🔍 Einträge-Daten:', einträge);
-    await CloudSyncService.syncToCloud(einträge);
+  // Daten sind bereits in der Datenbank - kein separater Cloud-Sync nötig
+  static async refreshData(): Promise<SchießEintrag[]> {
+    // Cache invalidieren und neu laden
+    cachedEinträge = null;
+    lastCacheTime = 0;
+    return await this.getEinträge();
   }
   
-  static async syncFromCloud(): Promise<void> {
-    const cloudEinträge = await CloudSyncService.syncFromCloud();
-    if (cloudEinträge.length > 0) {
-      // Cache invalidieren bei Cloud-Sync
-      cachedEinträge = null;
-      lastCacheTime = 0;
-      this.saveToStorage(cloudEinträge);
+  // Hilfsfunktion für Device-ID
+  private static getDeviceId(): string {
+    if (typeof window === 'undefined') return 'server';
+    
+    let deviceId = localStorage.getItem('schiessnachweis_device_id');
+    if (!deviceId) {
+      deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('schiessnachweis_device_id', deviceId);
     }
-  }
-  
-  static getSyncStatus() {
-    return CloudSyncService.getSyncStatus();
-  }
-  
-  static getCloudInfo() {
-    return CloudSyncService.getCloudInfo();
-  }
-  
-  static async loadFromCloudNow(): Promise<SchießEintrag[]> {
-    try {
-      console.log('🔄 Lade Daten aus Cloud...');
-      const cloudEinträge = await CloudSyncService.syncFromCloud();
-      if (cloudEinträge.length > 0) {
-        console.log('☁️ Cloud-Daten geladen:', cloudEinträge.length);
-        // Cache invalidieren bei Cloud-Sync
-        cachedEinträge = null;
-        lastCacheTime = 0;
-        this.saveToStorage(cloudEinträge);
-      }
-      return cloudEinträge;
-    } catch (error) {
-      console.error('Cloud-Sync fehlgeschlagen:', error);
-      throw error;
-    }
-  }
-  
-  // Notfall-Wiederherstellung
-  // Einmalige Reparatur für 01.01.1970 Problem
-  static repairDates(): void {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const data = localStorage.getItem(getStorageKey());
-      if (data) {
-        const parsed = JSON.parse(data);
-        let repaired = false;
-        
-        const fixed = parsed.map((eintrag: any) => {
-          let datum = new Date(eintrag.datum);
-          
-          // Repariere 01.01.1970 Daten
-          if (datum.getFullYear() === 1970) {
-            // Verwende createdAt als Fallback oder heutiges Datum
-            const createdAt = new Date(eintrag.createdAt);
-            if (createdAt.getFullYear() > 2020) {
-              datum = createdAt;
-            } else {
-              datum = new Date(); // Heutiges Datum
-            }
-            repaired = true;
-          }
-          
-          return {
-            ...eintrag,
-            datum: datum.toISOString()
-          };
-        });
-        
-        if (repaired) {
-          const storageKey = getStorageKey();
-          const backupKey = getBackupKey();
-          localStorage.setItem(storageKey, JSON.stringify(fixed));
-          localStorage.setItem(backupKey, JSON.stringify(fixed));
-          console.log('🔧 01.01.1970 Daten repariert');
-          
-          // Cache invalidieren
-          cachedEinträge = null;
-          lastCacheTime = 0;
-        }
-      }
-    } catch (error) {
-      console.error('Datum-Reparatur fehlgeschlagen:', error);
-    }
-  }
-  
-  // Debug-Funktion für Datum-Probleme
-  static debugDates(): void {
-    if (typeof window === 'undefined') return;
-    
-    console.log('🔍 Debug: Überprüfe Datum-Formate in localStorage...');
-    
-    const data = localStorage.getItem(getStorageKey());
-    if (data) {
-      try {
-        const parsed = JSON.parse(data);
-        console.log('Raw data:', parsed);
-        
-        parsed.forEach((eintrag: any, index: number) => {
-          console.log(`Eintrag ${index}:`, {
-            originalDatum: eintrag.datum,
-            datumType: typeof eintrag.datum,
-            parsedDatum: new Date(eintrag.datum),
-            isValidDate: !isNaN(new Date(eintrag.datum).getTime())
-          });
-        });
-      } catch (e) {
-        console.error('Parse error:', e);
-      }
-    }
-  }
-  
-  static recoverData(): { found: boolean; source: string; count: number } {
-    if (typeof window === 'undefined') return { found: false, source: '', count: 0 };
-    
-    console.log('🚨 Starte Datenwiederherstellung...');
-    
-    // Durchsuche alle localStorage Keys
-    const allKeys = Object.keys(localStorage);
-    console.log('Alle verfügbaren Keys:', allKeys);
-    
-    // Zeige auch aktuelle Keys
-    const currentKey = getStorageKey();
-    const currentBackupKey = getBackupKey();
-    console.log('🔑 Aktueller Key:', currentKey);
-    console.log('🔑 Aktueller Backup-Key:', currentBackupKey);
-    
-    for (const key of allKeys) {
-      try {
-        const data = localStorage.getItem(key);
-        if (data) {
-          const parsed = JSON.parse(data);
-          
-          // Prüfe ob es Schießnachweis-Daten sind
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const firstItem = parsed[0];
-            if (firstItem && (firstItem.disziplin || firstItem.ergebnis || firstItem.schussAnzahl)) {
-              console.log(`✅ Schießnachweis-Daten gefunden in Key: ${key} (${parsed.length} Einträge)`);
-              
-              // Zeige erste paar Einträge
-              console.log('Erste 3 Einträge:', parsed.slice(0, 3));
-              
-              // Wiederherstellen zum aktuellen Key
-              localStorage.setItem(currentKey, data);
-              localStorage.setItem(currentBackupKey, data);
-              
-              // Cache invalidieren
-              cachedEinträge = null;
-              lastCacheTime = 0;
-              
-              return { found: true, source: key, count: parsed.length };
-            }
-          }
-        }
-      } catch (e) {
-        // Ignore invalid JSON
-      }
-    }
-    
-    return { found: false, source: '', count: 0 };
-  }
-  
-  // Automatischer Cloud-Sync beim ersten Laden
-  private static async autoSyncOnLoad(): Promise<void> {
-    try {
-      // Prüfe ob bereits heute synchronisiert wurde
-      const lastSync = localStorage.getItem('last_cloud_sync');
-      const today = new Date().toDateString();
-      
-      if (lastSync !== today) {
-        console.log('🔄 Starte automatischen Cloud-Sync...');
-        await this.syncFromCloud();
-        localStorage.setItem('last_cloud_sync', today);
-        console.log('✅ Automatischer Cloud-Sync abgeschlossen');
-      }
-    } catch (error) {
-      console.log('⚠️ Automatischer Cloud-Sync fehlgeschlagen:', error);
-    }
-  }
-  
-  // Neue Debug-Funktion
-  static debugAllData(): void {
-    if (typeof window === 'undefined') return;
-    
-    console.log('🔍 === SCHIESSNACHWEISE DEBUG ===');
-    
-    const currentKey = getStorageKey();
-    const currentBackupKey = getBackupKey();
-    
-    console.log('Aktueller Key:', currentKey);
-    console.log('Backup Key:', currentBackupKey);
-    
-    // Prüfe alle möglichen Keys
-    const allKeys = Object.keys(localStorage);
-    const schiessKeys = allKeys.filter(key => 
-      key.includes('schiess') || key.includes('nachweis') || key.includes('rwk')
-    );
-    
-    console.log('Alle Schieß-relevanten Keys:', schiessKeys);
-    
-    schiessKeys.forEach(key => {
-      try {
-        const data = localStorage.getItem(key);
-        if (data) {
-          const parsed = JSON.parse(data);
-          if (Array.isArray(parsed)) {
-            console.log(`Key: ${key} -> ${parsed.length} Einträge`);
-            if (parsed.length > 0) {
-              console.log('  Erster Eintrag:', parsed[0]);
-            }
-          }
-        }
-      } catch (e) {
-        console.log(`Key: ${key} -> Ungültiges JSON`);
-      }
-    });
-    
-    console.log('🔍 === ENDE DEBUG ===');
+    return deviceId;
   }
   
 

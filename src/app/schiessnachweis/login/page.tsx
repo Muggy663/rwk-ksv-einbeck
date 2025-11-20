@@ -168,8 +168,8 @@ export default function SchiessnachweisLoginPage() {
           </CardTitle>
           <CardDescription>
             {isLogin 
-              ? 'Melden Sie sich an für Cloud-Sync und Premium-Features'
-              : 'Erstellen Sie ein Konto für Cloud-Sync und Premium-Features'
+              ? 'Melden Sie sich an für Schießnachweis und Social Training'
+              : 'Erstellen Sie ein Konto für Schießnachweis und Social Training'
             }
           </CardDescription>
         </CardHeader>
@@ -247,22 +247,39 @@ export default function SchiessnachweisLoginPage() {
             </button>
           </div>
 
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-              {isLogin ? 'Nach der Anmeldung:' : 'Nach der Registrierung:'}
-            </h4>
-            <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-              {!isLogin && (
-                <>
-                  <li>📧 E-Mail-Bestätigung erhalten (auch Spam prüfen!)</li>
-                  <li>⚠️ Ohne Bestätigung: Nur Offline-Nutzung möglich</li>
-                </>
-              )}
-              <li>✅ Ihre Offline-Daten bleiben erhalten</li>
-              <li>🎆 30 Tage Premium kostenlos testen</li>
-              <li>☁️ Cloud-Synchronisation verfügbar</li>
-              <li>📱 Multi-Gerät-Zugang</li>
-            </ul>
+          <div className="mt-6 space-y-4">
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                🎯 Was ist das hier?
+              </h4>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                Ein Account für <strong>Schießnachweis</strong> (digitales Schießtagebuch) und <strong>Social Training</strong> (Trainingsgruppen mit anderen Schützen).
+              </p>
+            </div>
+            
+            <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
+              <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">
+                {isLogin ? 'Nach der Anmeldung:' : 'Nach der Registrierung:'}
+              </h4>
+              <ul className="text-sm text-green-700 dark:text-green-300 space-y-1">
+                {!isLogin && (
+                  <>
+                    <li>📧 E-Mail-Bestätigung erhalten (auch Spam prüfen!)</li>
+                    <li>⚠️ Ohne Bestätigung: Nur Offline-Nutzung möglich</li>
+                  </>
+                )}
+                <li>✅ Alle Daten werden in der Datenbank gespeichert</li>
+                <li>🎆 Alle Features kostenlos verfügbar</li>
+                <li>☁️ Multi-Device Zugriff</li>
+                <li>👥 Social Training: Gruppen beitreten</li>
+              </ul>
+            </div>
+            
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200">
+              <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                💡 <strong>Hinweis:</strong> Dies ist ein separater Login - nicht für RWK/KM-Bereiche des Kreisverbands
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

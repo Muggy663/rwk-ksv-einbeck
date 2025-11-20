@@ -56,10 +56,10 @@ export default function PDFExportPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const loadData = () => {
+  const loadData = async () => {
     setIsLoading(true);
     try {
-      const data = SchießnachweisService.getEinträge();
+      const data = await SchießnachweisService.getEinträge();
       setEinträge(data);
     } catch (error) {
       console.error('Fehler beim Laden der Daten:', error);
@@ -166,7 +166,7 @@ export default function PDFExportPage() {
       yPosition += 20;
 
       // Statistik-Daten vorbereiten
-      const stats = SchießnachweisService.getStatistik();
+      const stats = await SchießnachweisService.getStatistik();
       const filteredStats = {
         totalSchüsse: filteredData.reduce((sum, e) => sum + e.schussAnzahl, 0),
         totalTrainings: filteredData.filter(e => e.typ === 'training').length,

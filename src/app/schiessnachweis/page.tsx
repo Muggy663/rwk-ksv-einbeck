@@ -82,10 +82,10 @@ export default function SchießnachweisPage() {
     }
   };
 
-  const loadStatistik = () => {
+  const loadStatistik = async () => {
     setIsLoading(true);
     try {
-      const stats = SchießnachweisService.getStatistik();
+      const stats = await SchießnachweisService.getStatistik();
       setStatistik(stats);
     } catch (error) {
       console.error('Fehler beim Laden der Statistik:', error);
@@ -94,9 +94,9 @@ export default function SchießnachweisPage() {
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     try {
-      const einträge = SchießnachweisService.getEinträge();
+      const einträge = await SchießnachweisService.getEinträge();
       console.log('Exportiere Einträge:', einträge.length, einträge);
       
       if (einträge.length === 0) {
@@ -135,9 +135,9 @@ export default function SchießnachweisPage() {
     }
   };
 
-  const handleExportODS = () => {
+  const handleExportODS = async () => {
     try {
-      const einträge = SchießnachweisService.getEinträge();
+      const einträge = await SchießnachweisService.getEinträge();
       const odsData = convertToODS(einträge);
       const blob = new Blob([odsData], { type: 'application/vnd.oasis.opendocument.spreadsheet' });
       const url = URL.createObjectURL(blob);
@@ -215,20 +215,11 @@ export default function SchießnachweisPage() {
       // Statistik neu laden
       loadStatistik();
       
-      // Automatisch in Cloud synchronisieren
-      try {
-        const einträge = SchießnachweisService.getEinträge();
-        await SchießnachweisService.syncToCloud();
-        toast({
-          title: "☁️ Cloud-Sync erfolgreich",
-          description: "Daten wurden automatisch in die Cloud gesichert.",
-        });
-      } catch (error) {
-        toast({
-          title: "⚠️ Cloud-Sync Info",
-          description: "Import erfolgreich. Cloud-Sync später verfügbar.",
-        });
-      }
+      // Daten sind bereits in der Datenbank gespeichert
+      toast({
+        title: "✅ Import erfolgreich",
+        description: "Daten wurden in der Datenbank gespeichert.",
+      });
       
       // Input zurücksetzen
       event.target.value = '';
@@ -241,43 +232,30 @@ export default function SchießnachweisPage() {
     }
   };
 
-  const handleCloudSync = async () => {
+  const handleRefreshData = async () => {
     try {
       const { auth } = await import('@/lib/firebase/config');
       if (!auth.currentUser) {
         toast({
           title: "❌ Nicht eingeloggt",
-          description: "Cloud-Sync funktioniert nur mit Benutzer-Account. Bitte über 'Verein' einloggen.",
+          description: "Daten-Aktualisierung funktioniert nur mit Benutzer-Account.",
           variant: "destructive"
         });
         return;
       }
       
-      console.log('🔍 Debug - User ID:', auth.currentUser.uid);
-      console.log('🔍 Debug - User Email:', auth.currentUser.email);
+      const einträge = await SchießnachweisService.refreshData();
       
-      const cloudEinträge = await SchießnachweisService.loadFromCloudNow();
-      
-      if (cloudEinträge.length > 0) {
-        localStorage.setItem('rwk_schiessnachweis', JSON.stringify(cloudEinträge));
-        localStorage.setItem('rwk_schiessnachweis_backup', JSON.stringify(cloudEinträge));
-        
-        toast({
-          title: "✅ Cloud-Daten geladen",
-          description: `${cloudEinträge.length} Einträge aus der Cloud übernommen.`,
-        });
-        
-        window.location.reload();
-      } else {
-        toast({
-          title: "💭 Keine Cloud-Daten",
-          description: `Keine Daten für User ${auth.currentUser.email} gefunden. Erste Nutzung?`,
-        });
-      }
-    } catch (error) {
-      console.error('Cloud-Sync Fehler:', error);
       toast({
-        title: "Cloud-Sync fehlgeschlagen",
+        title: "✅ Daten aktualisiert",
+        description: `${einträge.length} Einträge aus der Datenbank geladen.`,
+      });
+      
+      loadStatistik();
+    } catch (error) {
+      console.error('Daten-Aktualisierung fehlgeschlagen:', error);
+      toast({
+        title: "Aktualisierung fehlgeschlagen",
         description: error instanceof Error ? error.message : "Unbekannter Fehler",
         variant: "destructive"
       });
@@ -296,7 +274,7 @@ export default function SchießnachweisPage() {
       throw new Error('CSV-Format ungültig. Mindestens erforderlich: Datum;Typ;Disziplin;Schussanzahl;Ergebnis');
     }
     
-    const existingEinträge = SchießnachweisService.getEinträge();
+    const existingEinträge = await SchießnachweisService.getEinträge();
     let importCount = 0;
     
     for (let i = 1; i < lines.length; i++) {
@@ -367,7 +345,7 @@ export default function SchießnachweisPage() {
             notizen: notizen.trim(),
             serien
           };
-          SchießnachweisService.saveEintrag(neuerEintrag);
+          await SchießnachweisService.saveEintrag(neuerEintrag);
           importCount++;
         }
       } catch (error) {
@@ -377,6 +355,113 @@ export default function SchießnachweisPage() {
     
     return importCount;
   };
+
+  // Check if user is logged in via Schießnachweis auth
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { auth } = await import('@/lib/firebase/config');
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+          setUser(user);
+          setAuthLoading(false);
+        });
+        return unsubscribe;
+      } catch (error) {
+        setAuthLoading(false);
+      }
+    };
+    checkAuth();
+  }, []);
+  
+  // Show login prompt for non-authenticated users
+  if (authLoading) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <div className="py-12">Lade...</div>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return (
+      <div className="container mx-auto p-4 sm:p-6 max-w-5xl">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <div className="relative mb-8">
+            <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-xl animate-pulse" style={{ width: 120, height: 120, margin: 'auto' }} />
+            <Target className="relative h-16 w-16 sm:h-20 sm:w-20 text-blue-600 mx-auto mb-4" />
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            Schießnachweis
+          </h1>
+          <p className="text-xl sm:text-2xl text-muted-foreground mb-8">
+            Das digitale Schießtagebuch für Sportschützen
+          </p>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <Card className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Target className="h-6 w-6 text-blue-600" />
+            </div>
+            <h3 className="font-semibold text-blue-800 mb-2">Training dokumentieren</h3>
+            <p className="text-sm text-blue-600">Erfassen Sie alle Trainings und Wettkämpfe digital</p>
+          </Card>
+          
+          <Card className="text-center p-6 bg-gradient-to-br from-green-50 to-teal-50 border-green-200">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileText className="h-6 w-6 text-green-600" />
+            </div>
+            <h3 className="font-semibold text-green-800 mb-2">PDF für Behörden</h3>
+            <p className="text-sm text-green-600">Offizieller Nachweis für die Waffenbehörde</p>
+          </Card>
+          
+          <Card className="text-center p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
+            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users className="h-6 w-6 text-purple-600" />
+            </div>
+            <h3 className="font-semibold text-purple-800 mb-2">Social Training</h3>
+            <p className="text-sm text-purple-600">Gleicher Account für Community-Features</p>
+          </Card>
+        </div>
+
+        {/* Login Section */}
+        <Card className="max-w-2xl mx-auto bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200 shadow-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl text-blue-800 mb-2">
+              🔐 Anmeldung erforderlich
+            </CardTitle>
+            <CardDescription className="text-blue-700">
+              Für den Schießnachweis benötigen Sie einen kostenlosen Account. 
+              Dieser funktioniert auch für Social Training.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-6">
+            <Button asChild size="lg" className="w-full sm:w-auto px-8">
+              <Link href="/schiessnachweis/login">
+                Jetzt anmelden oder registrieren
+              </Link>
+            </Button>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="text-sm text-yellow-800 space-y-2">
+                <p>
+                  💡 <strong>Hinweis:</strong> Dies ist ein anderer Login als für RWK/KM-Bereiche des Kreisverbands
+                </p>
+                <p>
+                  🏆 <strong>RWK/KM-Nutzer?</strong> <Link href="/login" className="text-blue-600 hover:text-blue-800 underline font-medium">Hier zum Kreisverband-Login</Link>
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <PremiumProvider>
@@ -416,12 +501,7 @@ export default function SchießnachweisPage() {
             Statistiken
           </Link>
         </Button>
-        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-2 h-12 border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 dark:from-yellow-950/20 dark:to-orange-950/20">
-          <Link href="/schiessnachweis/premium">
-            <PremiumBadge variant="inline" className="mr-1" />
-Premium (Testphase)
-          </Link>
-        </Button>
+
       </div>
 
       {/* Statistik-Übersicht */}
@@ -493,23 +573,21 @@ Premium (Testphase)
         </Card>
       )}
 
-      {/* Safari Cloud-Sync Warnung - SEHR SICHTBAR */}
-      <Card className="mb-4 sm:mb-6 border-red-300 bg-gradient-to-r from-red-100 to-orange-100 dark:from-red-950/30 dark:to-orange-950/30 shadow-lg">
+      {/* Datenbank-Info */}
+      <Card className="mb-4 sm:mb-6 border-blue-300 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-950/30 dark:to-indigo-950/30 shadow-lg">
         <CardContent className="p-4">
           <div className="text-center">
-            <div className="text-xl font-bold text-red-800 dark:text-red-200 mb-2 flex items-center justify-center gap-2">
-              🍎 Safari Nutzer - WICHTIG!
+            <div className="text-xl font-bold text-blue-800 dark:text-blue-200 mb-2 flex items-center justify-center gap-2">
+              💾 Alle Daten in der Datenbank
             </div>
-            <p className="text-sm font-semibold text-red-700 dark:text-red-300 mb-2">
-              Safari blockiert automatische Cloud-Synchronisation!
+            <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2">
+              Ihre Schießnachweis-Daten werden sicher in der Datenbank gespeichert!
             </p>
-            <p className="text-xs text-red-600 dark:text-red-400 mb-3">
-              <strong>1. Einloggen:</strong> Über "Verein" anmelden • <strong>2. Beim Start:</strong> "☁️ Aus Cloud laden" • <strong>3. Nach Einträgen:</strong> "☁️ In Cloud sichern"
-            </p>
-            <div className="bg-white dark:bg-gray-800 p-2 rounded border border-red-200 dark:border-red-700">
+            <div className="bg-white dark:bg-gray-800 p-2 rounded border border-blue-200 dark:border-blue-700">
               <p className="text-xs text-gray-700 dark:text-gray-300">
-                ❗ <strong>Wichtig:</strong> Cloud-Sync funktioniert nur mit Benutzer-Account!<br/>
-                💡 <strong>Besser:</strong> Chrome oder Firefox verwenden - dort funktioniert Auto-Sync zuverlässig
+                ✅ <strong>Automatische Speicherung:</strong> Jeder Eintrag wird sofort in der Datenbank gesichert<br/>
+                🔄 <strong>Multi-Device:</strong> Zugriff von allen Geräten mit demselben Account<br/>
+                🛡️ <strong>Sicher:</strong> Keine lokalen Daten mehr - alles professionell gesichert
               </p>
             </div>
           </div>
@@ -521,17 +599,26 @@ Premium (Testphase)
         <CardContent className="p-4">
           <div className="text-center">
             <div className="text-lg font-bold text-orange-800 dark:text-orange-200 mb-1">🚧 Testphase</div>
-            <p className="text-sm text-orange-700 dark:text-orange-300">
-              Premium-Features sind aktuell kostenlos verfügbar. Feedback willkommen!
+            <p className="text-sm text-orange-700 dark:text-orange-300 mb-3">
+              Feedback willkommen!
             </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
+              <span className="text-xs text-orange-600 dark:text-orange-400">
+                💡 Infrastruktur erhalten:
+              </span>
+              <Button asChild variant="outline" size="sm" className="text-xs">
+                <Link href="https://paypal.me/rwkeinbeck" target="_blank">
+                  ☕ PayPal Spende
+                </Link>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       
-      {/* Premium & Cloud-Sync Status */}
-      <PremiumStatus className="mb-4 sm:mb-6" />
-      <CloudSyncStatus className="mb-6 sm:mb-8" />
+      {/* Premium Status */}
+      <PremiumStatus className="mb-6 sm:mb-8" />
       
       {/* Backup & Export */}
       <Card className="mb-6 sm:mb-8">
@@ -584,42 +671,9 @@ Premium (Testphase)
                   <Upload className="h-4 w-4" />
                   CSV/Excel importieren {isMobile && '(Desktop)'}
                 </Button>
-                <Button onClick={handleCloudSync} variant="outline" size="sm" className="flex items-center justify-center gap-2 bg-green-50 border-green-300 text-green-700 hover:bg-green-100">
+                <Button onClick={handleRefreshData} variant="outline" size="sm" className="flex items-center justify-center gap-2 bg-green-50 border-green-300 text-green-700 hover:bg-green-100">
                   <Download className="h-4 w-4" />
-                  ☁️ Aus Cloud laden
-                </Button>
-                <Button onClick={async () => {
-                  try {
-                    const { auth } = await import('@/lib/firebase/config');
-                    if (!auth.currentUser) {
-                      toast({
-                        title: "❌ Nicht eingeloggt",
-                        description: "Cloud-Sync funktioniert nur mit Benutzer-Account. Bitte über 'Verein' einloggen.",
-                        variant: "destructive"
-                      });
-                      return;
-                    }
-                    
-                    const einträge = SchießnachweisService.getEinträge();
-                    console.log('🔍 Debug - Speichere Einträge:', einträge.length);
-                    console.log('🔍 Debug - User ID:', auth.currentUser.uid);
-                    
-                    await SchießnachweisService.syncToCloud();
-                    toast({ 
-                      title: "✅ Gesichert", 
-                      description: `${einträge.length} Einträge für ${auth.currentUser.email} in Cloud gespeichert` 
-                    });
-                  } catch (error) {
-                    console.error('🔴 Sync-Fehler:', error);
-                    toast({
-                      title: "Fehler",
-                      description: error instanceof Error ? error.message : "Unbekannter Fehler",
-                      variant: "destructive"
-                    });
-                  }
-                }} variant="outline" size="sm" className="flex items-center justify-center gap-2 bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100">
-                  <Upload className="h-4 w-4" />
-                  ☁️ In Cloud sichern
+                  🔄 Daten aktualisieren
                 </Button>
                 <input
                   id="csv-import"
@@ -653,11 +707,11 @@ Premium (Testphase)
             </Button>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-3">
-            📊 <strong>CSV/Excel:</strong> Zum Bearbeiten, Sichern und Wiederherstellen<br/>
+            📊 <strong>CSV/Excel:</strong> Zum Bearbeiten und Sichern<br/>
             📄 <strong>LibreOffice:</strong> Schöne Übersicht und Auswertungen<br/>
             📝 <strong>PDF:</strong> Offizieller Nachweis für Behörden<br/>
             💡 <strong>Import:</strong> Unterstützt das gleiche Format wie der Export<br/>
-            ☁️ <strong>Cloud-Sync:</strong> Automatisch bei Premium-Nutzern
+            💾 <strong>Datenbank:</strong> Alle Daten werden automatisch sicher gespeichert
           </p>
         </CardContent>
       </Card>

@@ -192,13 +192,8 @@ export default function NeuerEintragPage() {
         console.log('❌ Kein Social Training Ergebnis erstellt');
       }
       
-      // Erzwinge Cloud-Sync um alle Daten (inkl. Serien) zu speichern
-      try {
-        await SchießnachweisService.syncToCloud();
-        console.log('✅ Cloud-Sync nach Speicherung erfolgreich');
-      } catch (syncError) {
-        console.warn('⚠️ Cloud-Sync nach Speicherung fehlgeschlagen:', syncError);
-      }
+      // Daten sind bereits in der Datenbank gespeichert
+      console.log('✅ Daten automatisch in Datenbank gespeichert');
 
 
 
@@ -546,7 +541,7 @@ export default function NeuerEintragPage() {
                       <span className="font-medium">Auch in Social Training speichern</span>
                     </Label>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Ergebnis wird für Community-Features gespeichert. <strong>Ohne Premium:</strong> Nur in Trainingsgruppen sichtbar, keine Datenbank-Speicherung der Schießnachweis-Details.
+                      Ergebnis wird für Community-Features gespeichert. Alle Daten werden in der Datenbank gesichert.
                     </p>
                   </div>
                 </div>

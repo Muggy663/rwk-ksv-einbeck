@@ -25,9 +25,9 @@ const mainNavItems: NavItem[] = [
   { href: '/dokumente', icon: FileText, label: 'Dokumente' },
 ]
 
-// Beta Features
-const betaNavItems: NavItem[] = [
-  { href: '/social', icon: Users, label: 'Social Training' },
+// Beta Features - wird dynamisch in der Komponente gesetzt
+const getBetaNavItems = (user: any): NavItem[] => [
+  { href: user ? '/social' : '/social/welcome', icon: Users, label: 'Social Training' },
   { href: '/schiessnachweis', icon: Target, label: 'Schießnachweis' },
 ]
 
@@ -57,7 +57,7 @@ export function MobileBurgerMenu() {
   })
 
   const filteredMainItems = filterItems(mainNavItems)
-  const filteredBetaItems = filterItems(betaNavItems)
+  const filteredBetaItems = filterItems(getBetaNavItems(user))
   const filteredHelpItems = filterItems(helpNavItems)
   const filteredUserItems = filterItems(userNavItems)
 
@@ -134,7 +134,7 @@ export function MobileBurgerMenu() {
                         <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground")} />
                         <span className="truncate">{item.label}</span>
                         {item.href === '/schiessnachweis' && <span className="text-xs text-red-600 dark:text-red-400 font-semibold ml-1">Beta</span>}
-                        {item.href === '/social' && <span className="text-xs text-green-600 dark:text-green-400 font-semibold ml-1">NEU</span>}
+                        {(item.href === '/social' || item.href === '/social/welcome') && <span className="text-xs text-green-600 dark:text-green-400 font-semibold ml-1">NEU</span>}
                       </Link>
                     )
                   })}

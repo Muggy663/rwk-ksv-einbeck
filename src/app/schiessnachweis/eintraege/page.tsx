@@ -24,9 +24,9 @@ export default function EintraegePage() {
     checkSyncStatus();
   }, []);
 
-  const loadEinträge = () => {
+  const loadEinträge = async () => {
     try {
-      const data = SchießnachweisService.getEinträge();
+      const data = await SchießnachweisService.getEinträge();
       setEinträge(data);
     } catch (error) {
       console.error('Fehler beim Laden der Einträge:', error);
@@ -62,14 +62,22 @@ export default function EintraegePage() {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Eintrag wirklich löschen?')) {
-      SchießnachweisService.deleteEintrag(id);
-      loadEinträge();
-      toast({
-        title: "Eintrag gelöscht",
-        description: "Der Eintrag wurde erfolgreich entfernt"
-      });
+      try {
+        await SchießnachweisService.deleteEintrag(id);
+        loadEinträge();
+        toast({
+          title: "Eintrag gelöscht",
+          description: "Der Eintrag wurde erfolgreich entfernt"
+        });
+      } catch (error) {
+        toast({
+          title: "Fehler",
+          description: "Eintrag konnte nicht gelöscht werden",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -107,17 +115,7 @@ export default function EintraegePage() {
         </div>
       </div>
 
-      {needsSync && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="font-semibold text-blue-800 mb-2">🔄 Synchronisation verfügbar</h3>
-          <p className="text-sm text-blue-700 mb-3">
-            Synchronisiere deine Trainingsdaten zwischen Schießnachweis und Social Training.
-          </p>
-          <Button onClick={handleCloudSync} disabled={isLoading} size="sm">
-            {isLoading ? 'Synchronisiere...' : '☁️ Jetzt synchronisieren'}
-          </Button>
-        </div>
-      )}
+      {/* Sync banner removed - data is automatically stored in database */}
 
       {isLoading ? (
         <div className="text-center py-8">

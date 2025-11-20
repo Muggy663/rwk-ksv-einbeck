@@ -36,7 +36,7 @@ export class UnifiedTrainingService {
   }): Promise<{ schiessnachweis: SchießEintrag; socialTraining?: TrainingResult }> {
     
     // 1. Speichere in Schießnachweis
-    const schiessEintrag = SchießnachweisService.saveEintrag({
+    const schiessEintrag = await SchießnachweisService.saveEintrag({
       datum: data.datum,
       typ: data.typ,
       disziplin: data.disziplin,
@@ -167,14 +167,14 @@ export class UnifiedTrainingService {
     }>;
   }> {
     
-    const schiessEintraege = SchießnachweisService.getEinträge();
+    const schiessEinträge = await SchießnachweisService.getEinträge();
     const socialResults = await SocialTrainingService.getUserResults(userId);
     
     // Kombiniere und verknüpfe Daten
     const combined: any[] = [];
     
     // Füge Schießnachweis-Einträge hinzu
-    schiessEintraege.forEach(eintrag => {
+    schiessEinträge.forEach(eintrag => {
       const linkedSocial = socialResults.find(s => s.schiessnachweis_id === eintrag.id);
       
       combined.push({
@@ -206,7 +206,7 @@ export class UnifiedTrainingService {
     combined.sort((a, b) => b.date.getTime() - a.date.getTime());
     
     return {
-      schiessnachweis: schiessEintraege,
+      schiessnachweis: schiessEinträge,
       socialTraining: socialResults,
       combined
     };
@@ -217,8 +217,8 @@ export class UnifiedTrainingService {
    */
   static async syncAllData(): Promise<void> {
     try {
-      // 1. Schießnachweis Cloud-Sync
-      await SchießnachweisService.syncFromCloud();
+      // 1. Schießnachweis Daten aktualisieren
+      await SchießnachweisService.refreshData();
       
       // 2. Lade aktuelle Daten
       const { auth } = await import('@/lib/firebase/config');
