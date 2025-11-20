@@ -1268,7 +1268,7 @@ export default function SharedResultsPage({
                         <div className="flex items-center gap-2">
                           <Input 
                             type="number" 
-                            value={entry.totalRinge} 
+                            value={entry.totalRinge?.toString() || ''} 
                             onChange={(e) => {
                               const newScore = parseInt(e.target.value) || 0;
                               setPendingScores(prev => prev.map(p => 

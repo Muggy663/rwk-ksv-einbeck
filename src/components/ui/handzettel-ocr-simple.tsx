@@ -83,13 +83,14 @@ export function HandzettelOCR({
             console.log('✅ Gemini Erkennung erfolgreich:', matches.length, 'Matches')
             geminiSuccess = true
           } else {
-            console.warn('⚠️ Gemini lieferte keine Ergebnisse, verwende Fallback')
+            console.warn('⚠️ Gemini lieferte keine Ergebnisse:', geminiData.error || 'Unbekannter Fehler')
           }
         } else {
-          console.warn('⚠️ Gemini API Fehler:', geminiResponse.status, 'verwende Fallback')
+          const errorData = await geminiResponse.json().catch(() => ({}))
+          console.warn('⚠️ Gemini API Fehler:', geminiResponse.status, errorData.error || 'Unbekannter Fehler')
         }
       } catch (geminiError) {
-        console.warn('⚠️ Gemini Erkennung fehlgeschlagen, verwende Alternative:', geminiError)
+        console.warn('⚠️ Gemini Erkennung fehlgeschlagen:', geminiError instanceof Error ? geminiError.message : geminiError)
       }
       
       // Fallback auf Simple OCR wenn Gemini fehlschlägt oder keine Ergebnisse liefert
@@ -108,7 +109,14 @@ export function HandzettelOCR({
           matches = await matchShooters(result, availableTeams)
         } catch (fallbackError) {
           console.error('❌ Auch alternative Erkennung fehlgeschlagen:', fallbackError)
-          throw new Error('Beide Erkennungs-Methoden fehlgeschlagen. Bitte versuchen Sie es erneut.')
+          // Wenn Vision API fehlschlägt, aber Gemini erfolgreich war, verwende Gemini
+          if (geminiSuccess && matches.length > 0) {
+            console.log('🔄 Verwende Gemini-Ergebnisse trotz Vision API Fehler')
+            // Verwende die bereits vorhandenen Gemini-Matches
+          } else {
+            // Wenn beide fehlschlagen, gib eine hilfreiche Fehlermeldung
+            throw new Error('Automatische Erkennung fehlgeschlagen. Mögliche Lösungen:\n• Bessere Bildqualität verwenden\n• Handzettel vollständig fotografieren\n• Manuelle Eingabe verwenden')
+          }
         }
       }
       

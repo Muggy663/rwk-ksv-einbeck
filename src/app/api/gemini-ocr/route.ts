@@ -22,22 +22,38 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const image = formData.get('image') as File;
+    const textInput = formData.get('text') as string;
     const availableTeamsRaw = formData.get('availableTeams') as string;
     
-    if (!image) {
-      secureLogger.warn('No image provided', 'gemini-ocr');
-      return NextResponse.json({ error: 'No image provided' }, { status: 400 });
+    // Prüfe ob Text- oder Bild-Input
+    const isTextInput = textInput !== null;
+    const isImageInput = image !== null;
+    
+    if (!isTextInput && !isImageInput) {
+      secureLogger.warn('No input provided (neither text nor image)', 'gemini-ocr');
+      return NextResponse.json({ error: 'No input provided' }, { status: 400 });
     }
 
-    // Sichere Bild-Validierung
-    const imageValidation = validateImageUpload(image, {
-      maxSize: MAX_IMAGE_SIZE,
-      allowedMimeTypes: ALLOWED_IMAGE_TYPES
-    });
+    let base64Image: string | undefined;
+    let imageType: string | undefined;
+    
+    if (isImageInput) {
+      // Sichere Bild-Validierung
+      const imageValidation = validateImageUpload(image, {
+        maxSize: MAX_IMAGE_SIZE,
+        allowedMimeTypes: ALLOWED_IMAGE_TYPES
+      });
 
-    if (!imageValidation.isValid) {
-      secureLogger.warn(`Image validation failed: ${imageValidation.error}`, 'gemini-ocr');
-      return NextResponse.json({ error: imageValidation.error }, { status: 400 });
+      if (!imageValidation.isValid) {
+        secureLogger.warn(`Image validation failed: ${imageValidation.error}`, 'gemini-ocr');
+        return NextResponse.json({ error: imageValidation.error }, { status: 400 });
+      }
+
+      // Convert image to base64
+      const bytes = await image.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      base64Image = buffer.toString('base64');
+      imageType = image.type;
     }
 
     // Sichere JSON-Parsing
@@ -49,48 +65,48 @@ export async function POST(request: NextRequest) {
       availableTeams = [];
     }
 
-    // Convert image to base64
-    const bytes = await image.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64Image = buffer.toString('base64');
+    // Erstelle Prompt basierend auf Input-Typ
+    let prompt;
+    if (isTextInput) {
+      // Text-basierte Verarbeitung
+      prompt = `Analysiere diesen Text und extrahiere Schießergebnisse:\n\n${textInput}\n\nExtrahiere alle Schützen-Namen und ihre Ergebnisse. Rückgabe als JSON-Array:\n[{"shooterName": "Name", "score": 285, "confidence": 0.9}]`;
+    } else {
+      // Bild-basierte Verarbeitung für Handzettel
+      prompt = `Analysiere diesen Schießsport-Handzettel und extrahiere ALLE Schützen mit ihren Ergebnissen.
 
-    const prompt = `Analysiere diesen MEYTON/SIUS/DISAG Schießergebnis-Ausdruck und extrahiere ALLE Einzelschuss-Werte.
-
-MEYTON ERKENNUNG:
-- Tabellen mit "Serie 1", "Serie 2" etc.
-- Spalten: Schuss 1, Schuss 2, Schuss 3...
-- Werte wie: 10.5, 9.8, 10.1, 9.9, 10.0
-- Oft 10 Schuss pro Serie
-- Manchmal Summen am Ende (IGNORIEREN!)
-
-SIUS/DISAG ERKENNUNG:
-- Komma-getrennte Werte: "9.1,9.3,9.7,9.8,9.2"
-- Pipe-getrennte: "9.1|9.3|9.7|9.8|9.2"
-- Spalten-Format mit Zahlen
+SUCHE NACH:
+- Schützen-Namen (z.B. "Müller Hans", "Schmidt Anna")
+- Ergebnisse in Ringen (z.B. 285, 297, 0 für nicht angetreten)
+- Tabellen-Format mit Namen und Ringzahlen
 
 WICHTIG:
-- NUR Einzelschuss-Werte zwischen 0.0-10.9
-- KEINE Summen, Namen, Daten
-- Ganze Zahlen als .0 ("10" = "10.0")
-- Auch handschriftliche Werte
+- Extrahiere ALLE sichtbaren Schützen
+- Auch Schützen mit 0 Ringen (nicht angetreten)
+- Namen können handschriftlich oder gedruckt sein
+- Ergebnisse sind meist 3-stellige Zahlen (200-400 Bereich)
 
 Rückgabe als JSON-Array:
-[{"score": "10.5"}, {"score": "9.8"}, {"score": "10.1"}]`;
+[{"shooterName": "Müller Hans", "score": 285, "confidence": 0.9}, {"shooterName": "Schmidt Anna", "score": 297, "confidence": 0.8}]`;
+    }
 
+    // Erstelle Content basierend auf Input-Typ
+    const contentParts: any[] = [{ text: prompt }];
+    
+    if (isImageInput && base64Image && imageType) {
+      contentParts.push({
+        inlineData: {
+          data: base64Image,
+          mimeType: imageType
+        }
+      });
+    }
+    
     const response = await genAI.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [
         {
           role: 'user',
-          parts: [
-            { text: prompt },
-            {
-              inlineData: {
-                data: base64Image,
-                mimeType: image.type
-              }
-            }
-          ]
+          parts: contentParts
         }
       ]
     });
