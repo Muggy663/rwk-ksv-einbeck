@@ -24,10 +24,13 @@ export async function POST(request: NextRequest) {
     const image = formData.get('image') as File;
     const textInput = formData.get('text') as string;
     const availableTeamsRaw = formData.get('availableTeams') as string;
+    const contextRaw = formData.get('context') as string;
     
     // Prüfe ob Text- oder Bild-Input
     const isTextInput = textInput !== null;
     const isImageInput = image !== null;
+    const isSchießnachweis = contextRaw !== null; // Schießnachweis verwendet 'context'
+    const isRundenwettkampf = availableTeamsRaw !== null; // Rundenwettkampf verwendet 'availableTeams'
     
     if (!isTextInput && !isImageInput) {
       secureLogger.warn('No input provided (neither text nor image)', 'gemini-ocr');
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
       imageType = image.type;
     }
 
-    // Sichere JSON-Parsing
+    // Sichere JSON-Parsing für availableTeams
     let availableTeams = [];
     try {
       availableTeams = availableTeamsRaw ? JSON.parse(sanitizeInput(availableTeamsRaw)) : [];
@@ -65,28 +68,29 @@ export async function POST(request: NextRequest) {
       availableTeams = [];
     }
 
-    // Erstelle Prompt basierend auf Input-Typ
+    // Erstelle Prompt basierend auf Anwendung
     let prompt;
     if (isTextInput) {
-      // Text-basierte Verarbeitung
+      // Text-basierte Verarbeitung (Schießnachweis)
       prompt = `Analysiere diesen Text und extrahiere Schießergebnisse:\n\n${textInput}\n\nExtrahiere alle Schützen-Namen und ihre Ergebnisse. Rückgabe als JSON-Array:\n[{"shooterName": "Name", "score": 285, "confidence": 0.9}]`;
+    } else if (isSchießnachweis && contextRaw) {
+      // Schießnachweis Bild-Verarbeitung
+      prompt = contextRaw;
     } else {
-      // Bild-basierte Verarbeitung für Handzettel
-      prompt = `Analysiere diesen Schießsport-Handzettel und extrahiere ALLE Schützen mit ihren Ergebnissen.
+      // Rundenwettkampf Handzettel-Verarbeitung
+      prompt = `Analysiere diesen handschriftlichen Schießsport-Ergebniszettel und extrahiere alle Schützenergebnisse.
 
-SUCHE NACH:
-- Schützen-Namen (z.B. "Müller Hans", "Schmidt Anna")
-- Ergebnisse in Ringen (z.B. 285, 297, 0 für nicht angetreten)
-- Tabellen-Format mit Namen und Ringzahlen
+WICHTIGE REGELN:
+1. Erkenne ALLE Namen und Ringzahlen aus der Tabelle
+2. Erkenne auch Teamnamen wenn möglich
+3. Ringzahlen sind meist 2-3 stellige Zahlen (z.B. 285, 167, 294)
+4. IGNORIERE Nachschießen-Spalten komplett - nur reguläre Ergebnisse
+5. Wenn ein Schütze sowohl reguläres Ergebnis als auch Nachschießen hat, nimm nur das reguläre
+6. Ignoriere Unterschriften und Notizen am Ende
+7. Confidence: 0.9 für klare Handschrift, 0.7 für mittlere, 0.5 für schwer lesbare
+8. Extrahiere ALLE Schützen, nicht nur bestimmte Teams
 
-WICHTIG:
-- Extrahiere ALLE sichtbaren Schützen
-- Auch Schützen mit 0 Ringen (nicht angetreten)
-- Namen können handschriftlich oder gedruckt sein
-- Ergebnisse sind meist 3-stellige Zahlen (200-400 Bereich)
-
-Rückgabe als JSON-Array:
-[{"shooterName": "Müller Hans", "score": 285, "confidence": 0.9}, {"shooterName": "Schmidt Anna", "score": 297, "confidence": 0.8}]`;
+Gib die Daten als JSON-Array zurück mit shooterName, teamName, score und confidence.`;
     }
 
     // Erstelle Content basierend auf Input-Typ
