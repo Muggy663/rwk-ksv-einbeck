@@ -94,41 +94,11 @@ export function HandzettelOCR({
         console.warn('⚠️ Gemini Erkennung fehlgeschlagen:', geminiError instanceof Error ? geminiError.message : geminiError)
       }
       
-      // Fallback auf Simple OCR wenn Gemini fehlschlägt oder keine Ergebnisse liefert
+      // Nur Gemini verwenden - kein Fallback mehr
       if (!geminiSuccess || matches.length === 0) {
-        setCurrentStep("📋 Alternative Erkennung wird verwendet...")
-        setProgress(40)
-        
-        try {
-          // Timeout für Fallback OCR (Mobile Browser Problem)
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('OCR Timeout')), 15000)
-          )
-          
-          const ocrPromise = simpleOCR.processHandzettel(imageFile)
-          const result = await Promise.race([ocrPromise, timeoutPromise]) as SimpleOCRResult
-          
-          console.log('✅ Alternative Erkennung Ergebnis:', result)
-          setOcrResult(result)
-          
-          setCurrentStep("Schützen werden zugeordnet...")
-          setProgress(70)
-          
-          matches = await matchShooters(result, availableTeams)
-        } catch (fallbackError) {
-          console.error('❌ Alternative Erkennung fehlgeschlagen:', fallbackError)
-          // Wenn Vision API fehlschlägt, aber Gemini erfolgreich war, verwende Gemini
-          if (geminiSuccess && matches.length > 0) {
-            console.log('🔄 Verwende Gemini-Ergebnisse trotz Vision API Fehler')
-            // Verwende die bereits vorhandenen Gemini-Matches
-          } else {
-            // Mobile-spezifische Fehlermeldung
-            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-            const errorMsg = isMobile 
-              ? 'OCR in PWA fehlgeschlagen. Versuche:\n• Bessere Internetverbindung\n• Browser-App statt PWA\n• Manuelle Eingabe'
-              : 'Automatische Erkennung fehlgeschlagen. Mögliche Lösungen:\n• Bessere Bildqualität verwenden\n• Handzettel vollständig fotografieren\n• Manuelle Eingabe verwenden'
-            throw new Error(errorMsg)
-          }
+        console.log('❌ Gemini OCR fehlgeschlagen oder keine Matches')
+        if (matches.length === 0) {
+          throw new Error('Handzettel-Erkennung fehlgeschlagen. Versuche:\n• Handzettel neu fotografieren\n• Bessere Beleuchtung\n• Vollständigen Handzettel fotografieren\n• Manuelle Eingabe verwenden')
         }
       }
       
