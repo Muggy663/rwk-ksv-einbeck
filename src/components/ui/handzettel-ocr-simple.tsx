@@ -51,6 +51,8 @@ export function HandzettelOCR({
   const processOCR = React.useCallback(async () => {
     if (hasProcessed) return
     
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    
     console.log('🤖 Gemini Erkennung gestartet:', imageFile.name)
     setIsProcessing(true)
     setProgress(0)
@@ -58,6 +60,13 @@ export function HandzettelOCR({
     try {
       setCurrentStep("🤖 Gemini AI analysiert Handzettel...")
       setProgress(20)
+      
+      // Mobile Debug Info
+      if (isMobile) {
+        console.log('📱 Mobile Debug - Bildgröße:', imageFile.size, 'bytes')
+        console.log('📱 Mobile Debug - Bildtyp:', imageFile.type)
+        console.log('📱 Mobile Debug - Teams:', availableTeams.length)
+      }
       
       // Versuche zuerst Gemini OCR
       let matches: OCRMatchResult[] = []
@@ -68,13 +77,25 @@ export function HandzettelOCR({
         formData.append('image', imageFile)
         formData.append('availableTeams', JSON.stringify(availableTeams))
         
+        if (isMobile) {
+          console.log('📱 Mobile Debug - Sende Request an /api/gemini-ocr')
+        }
+        
         const geminiResponse = await fetch('/api/gemini-ocr', {
           method: 'POST',
           body: formData
         })
         
+        if (isMobile) {
+          console.log('📱 Mobile Debug - Response Status:', geminiResponse.status)
+        }
+        
         if (geminiResponse.ok) {
           const geminiData = await geminiResponse.json()
+          if (isMobile) {
+            console.log('📱 Mobile Debug - Response Data:', geminiData)
+          }
+          
           if (geminiData.success && geminiData.results && geminiData.results.length > 0) {
             setCurrentStep("✨ Gemini AI hat Ergebnisse gefunden!")
             setProgress(70)
@@ -84,12 +105,22 @@ export function HandzettelOCR({
             geminiSuccess = true
           } else {
             console.warn('⚠️ Gemini lieferte keine Ergebnisse, verwende Fallback')
+            if (isMobile) {
+              console.log('📱 Mobile Debug - Gemini Fehler:', geminiData.error || 'Keine Ergebnisse')
+            }
           }
         } else {
+          const errorText = await geminiResponse.text().catch(() => 'Unbekannter Fehler')
           console.warn('⚠️ Gemini API Fehler:', geminiResponse.status, 'verwende Fallback')
+          if (isMobile) {
+            console.log('📱 Mobile Debug - API Fehler:', errorText)
+          }
         }
       } catch (geminiError) {
         console.warn('⚠️ Gemini Erkennung fehlgeschlagen, verwende Alternative:', geminiError)
+        if (isMobile) {
+          console.log('📱 Mobile Debug - Gemini Exception:', geminiError instanceof Error ? geminiError.message : geminiError)
+        }
       }
       
       // Fallback auf Simple OCR wenn Gemini fehlschlägt oder keine Ergebnisse liefert
@@ -119,7 +150,16 @@ export function HandzettelOCR({
       
     } catch (error) {
       console.error('❌ Erkennungs-Fehler:', error)
-      onError(error instanceof Error ? error.message : 'Automatisches Auslesen fehlgeschlagen')
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      
+      let errorMessage = error instanceof Error ? error.message : 'Automatisches Auslesen fehlgeschlagen'
+      
+      if (isMobile) {
+        console.log('📱 Mobile Debug - Final Error:', errorMessage)
+        errorMessage = `Mobile Fehler: ${errorMessage}\n\nBild: ${imageFile.size} bytes, ${imageFile.type}\nTeams: ${availableTeams.length}`
+      }
+      
+      onError(errorMessage)
     } finally {
       setIsProcessing(false)
     }
