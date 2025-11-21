@@ -884,7 +884,11 @@ function RwkTabellenPageComponent() {
               if (a.teamOutOfCompetition && !b.teamOutOfCompetition) return 1;
               if (!a.teamOutOfCompetition && b.teamOutOfCompetition) return -1;
               
-              // Sortierung nach Gesamtpunkten
+              // Sortierung nach Durchschnitt
+              const avgDiff = (b.averageScore ?? 0) - (a.averageScore ?? 0);
+              if (avgDiff !== 0) return avgDiff;
+              
+              // Bei Gleichstand: Nach Gesamtpunkten
               const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
               if (totalDiff !== 0) return totalDiff;
               
@@ -1234,20 +1238,13 @@ function RwkTabellenPageComponent() {
         // Zeige alle Schützen, auch ohne Ergebnisse
         // .filter(s => s.roundsShot > 0) // Entfernt, um alle Schützen zu zeigen 
         .sort((a, b) => {
-          // Spezielle Sortierung für "Alle Luftdruck Auflage (Gesamtliste)" nach Durchschnitt
-          if (filterByLeagueId === "LGA_GESAMTLISTE") {
-            // Erst nach Durchschnitt
-            const avgDiff = (b.averageScore ?? 0) - (a.averageScore ?? 0);
-            if (avgDiff !== 0) return avgDiff;
-            
-            // Bei Gleichstand: Nach Gesamtpunkten
-            const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
-            if (totalDiff !== 0) return totalDiff;
-          } else {
-            // Normale Sortierung nach Gesamtpunkten für alle anderen Ligen
-            const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
-            if (totalDiff !== 0) return totalDiff;
-          }
+          // Sortierung nach Durchschnitt für alle Ligen
+          const avgDiff = (b.averageScore ?? 0) - (a.averageScore ?? 0);
+          if (avgDiff !== 0) return avgDiff;
+          
+          // Bei Gleichstand: Nach Gesamtpunkten
+          const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
+          if (totalDiff !== 0) return totalDiff;
           
           // Bei Gleichstand: Stichentscheid vom letzten zum ersten Durchgang
           for (let round = numRoundsForCompetition; round >= 1; round--) {
@@ -1646,7 +1643,7 @@ function RwkTabellenPageComponent() {
         shootersResults.push(sResults);
       }
       
-      shootersResults.sort((a, b) => (b.total ?? 0) - (a.total ?? 0) || a.shooterName.localeCompare(b.shooterName));
+      shootersResults.sort((a, b) => (b.average ?? 0) - (a.average ?? 0) || (b.total ?? 0) - (a.total ?? 0) || a.shooterName.localeCompare(b.shooterName));
 
       // Update teamData
       setTeamData(prev => {

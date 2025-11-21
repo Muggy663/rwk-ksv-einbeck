@@ -23,7 +23,7 @@ export const MobileShooterCards: React.FC<MobileShooterCardsProps> = ({
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
                   {shooter.teamOutOfCompetition ? 'AK' : shooter.rank}
                 </div>
                 <div>
