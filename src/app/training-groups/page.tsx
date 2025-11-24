@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { TrainingGroupsService } from "@/lib/services/training-groups-service";
 import { TrainingGroup } from "@/types/social";
 import { usePullToRefresh, ScrollToTopButton, SwipeRow } from "@/components/ui/mobile-enhancements";
-import { PremiumBadge } from "@/components/ui/premium-badge";
+
 import { ReportButton } from "@/components/ui/report-button";
 
 export default function TrainingGroupsPage() {
@@ -100,7 +100,6 @@ export default function TrainingGroupsPage() {
             <CardTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5" />
               Neue Gruppe erstellen
-              <PremiumBadge size="sm" />
             </CardTitle>
             <CardDescription>
               Starten Sie Ihre eigene Trainingsgruppe

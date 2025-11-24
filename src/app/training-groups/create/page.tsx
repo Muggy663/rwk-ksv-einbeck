@@ -39,9 +39,7 @@ export default function CreateGroupPage() {
     setIsCreating(true);
     
     try {
-      // TODO: Premium-Check später aktivieren
-      // Aktuell für Tests deaktiviert
-      console.log('📎 Gruppen-Erstellung (Premium-Check deaktiviert für Tests)');
+      console.log('📎 Gruppen-Erstellung gestartet');
       
       const { auth } = await import('@/lib/firebase/config');
       
@@ -92,14 +90,8 @@ export default function CreateGroupPage() {
           <h1 className="text-3xl font-bold">Trainingsgruppe erstellen</h1>
         </div>
         <p className="text-muted-foreground">
-          Erstellen Sie eine neue Trainingsgruppe für gemeinsame Übungen und Wettkämpfe (Premium erforderlich)
+          Erstellen Sie eine neue Trainingsgruppe für gemeinsame Übungen und Wettkämpfe
         </p>
-        
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            📎 <strong>Premium-Feature:</strong> Das Erstellen von Trainingsgruppen erfordert Premium, da Datenbank-Speicherung und Real-time Features genutzt werden.
-          </p>
-        </div>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -148,7 +140,7 @@ export default function CreateGroupPage() {
                 onChange={(e) => setFormData(prev => ({ ...prev, maxMembers: parseInt(e.target.value) || 10 }))}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Premium: bis 50 Mitglieder • Kostenlos: nur Beitreten möglich
+                Bis zu 50 Mitglieder möglich
               </p>
             </div>
           </CardContent>
@@ -171,7 +163,7 @@ export default function CreateGroupPage() {
               <div className="space-y-1">
                 <Label htmlFor="allowCompetitions">Live-Wettkämpfe erlauben</Label>
                 <p className="text-xs text-muted-foreground">
-                  Mitglieder können Echtzeit-Wettkämpfe erstellen (Premium-Feature)
+                  Mitglieder können Echtzeit-Wettkämpfe erstellen
                 </p>
               </div>
               <Switch

@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Trophy, Search, Plus, Target } from "lucide-react";
-import { PremiumBadge, PremiumFeatureWrapper } from "@/components/ui/premium-badge";
+
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";

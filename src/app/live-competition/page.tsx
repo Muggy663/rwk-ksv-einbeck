@@ -24,7 +24,7 @@ interface Competition {
 
 export default function LiveCompetitionPage() {
   const { user } = useAuth();
-  const [isPremium, setIsPremium] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [activeCompetitions, setActiveCompetitions] = useState<Competition[]>([]);
   const [myCompetitions, setMyCompetitions] = useState<Competition[]>([]);
@@ -41,14 +41,7 @@ export default function LiveCompetitionPage() {
     setLoading(true);
     
     try {
-      // Check premium status
-      const { SocialService } = await import('@/lib/services/social-service');
-      const premium = await SocialService.checkPremiumStatus(user.uid);
-      setIsPremium(premium);
-      
-      if (premium) {
-        await loadCompetitions();
-      }
+      await loadCompetitions();
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -97,65 +90,7 @@ export default function LiveCompetitionPage() {
     );
   }
 
-  if (!isPremium) {
-    return (
-      <div className="container mx-auto p-4 sm:p-6 max-w-4xl">
-        <div className="mb-6">
-          <Button asChild variant="ghost" className="mb-4">
-            <Link href="/social">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Zurück zu Social Training
-            </Link>
-          </Button>
-          
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Live-Wettkämpfe</h1>
-          <p className="text-muted-foreground">
-            Nehmen Sie an Echtzeit-Wettkämpfen mit anderen Schützen teil
-          </p>
-        </div>
 
-        <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 dark:border-yellow-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-6 w-6 text-yellow-600" />
-              Premium-Feature
-            </CardTitle>
-            <CardDescription>
-              Live-Wettkämpfe sind ein Premium-Feature für erweiterte Community-Funktionen
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
-              <h3 className="font-semibold mb-2">🏆 Was sind Live-Wettkämpfe?</h3>
-              <ul className="text-sm space-y-1">
-                <li>• Echtzeit-Wettkämpfe mit anderen Schützen</li>
-                <li>• Live-Ranglisten während des Schießens</li>
-                <li>• Alle DSB-Disziplinen unterstützt</li>
-                <li>• Flexible Schussanzahl und Zeitlimits</li>
-                <li>• Automatische Ergebnis-Auswertung</li>
-              </ul>
-            </div>
-            
-            <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-              <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-2">💎 Premium-Vorteile</h3>
-              <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
-                <li>• Unbegrenzte Live-Wettkämpfe erstellen</li>
-                <li>• Trainingsgruppen ohne Mitglieder-Limit</li>
-                <li>• Erweiterte Statistiken und Analysen</li>
-                <li>• Priority-Support</li>
-              </ul>
-            </div>
-
-            <Button asChild className="w-full">
-              <Link href="/license-request">
-                Premium-Lizenz anfragen
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
@@ -172,7 +107,7 @@ export default function LiveCompetitionPage() {
             <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600 dark:text-yellow-400" />
             <h1 className="text-2xl sm:text-3xl font-bold">Live-Wettkämpfe</h1>
           </div>
-          <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 w-fit">Premium</Badge>
+
         </div>
         <p className="text-muted-foreground">
           Nehmen Sie an Echtzeit-Wettkämpfen teil oder erstellen Sie eigene

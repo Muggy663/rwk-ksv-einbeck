@@ -136,7 +136,7 @@ export default function SocialStatsPage() {
             <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600 dark:text-purple-400" />
             <h1 className="text-2xl sm:text-3xl font-bold">Social Training Statistiken</h1>
           </div>
-          <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 w-fit">Premium</Badge>
+
         </div>
         <p className="text-muted-foreground">
           Detaillierte Analysen Ihrer Community-Aktivitäten und Leistungen
@@ -339,20 +339,7 @@ export default function SocialStatsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Premium Hinweis */}
-      <Card className="mt-6 border-yellow-200 bg-yellow-50">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <Trophy className="h-6 w-6 text-yellow-600" />
-            <div>
-              <h3 className="font-semibold text-yellow-900">Premium-Statistiken</h3>
-              <p className="text-sm text-yellow-800">
-                Erweiterte Analysen, Vergleiche und Export-Funktionen sind in der Premium-Version verfügbar.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   );
 }
