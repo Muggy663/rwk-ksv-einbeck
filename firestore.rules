@@ -521,7 +521,14 @@ service cloud.firestore {
 
     // === SOCIAL TRAINING FEATURES ===
     
-    // Öffentliche Profile
+    // Social Training Profile (getrennt von RWK/KM)
+    match /social_profiles/{userId} {
+      allow read: if true; // Öffentlich lesbar für Community
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Öffentliche Profile (Legacy - wird durch social_profiles ersetzt)
     match /public_profiles/{userId} {
       allow read: if true; // Öffentlich lesbar
       allow write: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);

@@ -864,27 +864,18 @@ export default function HandbuchPage() {
                   <li><strong>Community entdecken:</strong> Finden Sie andere Schützen in Ihrer Nähe</li>
                 </ol>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md">
-                    <h5 className="font-medium text-green-800 dark:text-green-200 mb-2">✅ Kostenlose Features:</h5>
-                    <ul className="list-disc pl-5 text-sm text-green-700 dark:text-green-300">
-                      <li>Profil-Freigabe</li>
-                      <li>Trainingsgruppen (bis 10 Mitglieder)</li>
-                      <li>Community entdecken</li>
-                      <li>Basis-Statistiken</li>
-                      <li>Duelle-System</li>
-                    </ul>
-                  </div>
-                  <div className="bg-yellow-50 dark:bg-yellow-950/50 p-3 rounded-md">
-                    <h5 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⭐ Erweiterte Features:</h5>
-                    <ul className="list-disc pl-5 text-sm text-yellow-700 dark:text-yellow-300">
-                      <li>Live-Wettkämpfe</li>
-                      <li>Unbegrenzte Gruppengröße</li>
-                      <li>Erweiterte Statistiken</li>
-                      <li>Performance-Charts</li>
-                      <li>Export-Funktionen</li>
-                    </ul>
-                  </div>
+                <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800 mt-4">
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">✅ Verfügbare Features:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-green-700 dark:text-green-300">
+                    <li>Profil-Freigabe</li>
+                    <li>Trainingsgruppen</li>
+                    <li>Community entdecken</li>
+                    <li>Live-Wettkämpfe</li>
+                    <li>Duelle-System</li>
+                    <li>Erweiterte Statistiken</li>
+                    <li>Performance-Charts</li>
+                    <li>Export-Funktionen</li>
+                  </ul>
                 </div>
               </CardContent>
             </Card>
@@ -1008,25 +999,15 @@ export default function HandbuchPage() {
                   <li><strong>Beitreten bestätigen:</strong> Sie sind sofort Mitglied</li>
                 </ol>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md">
-                    <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">👥 Kostenlose Gruppen:</h5>
-                    <ul className="list-disc pl-5 text-sm text-blue-700 dark:text-blue-300">
-                      <li>Bis zu 10 Mitglieder</li>
-                      <li>Basis-Wettkämpfe</li>
-                      <li>Gruppen-Chat (geplant)</li>
-                      <li>Einfache Statistiken</li>
-                    </ul>
-                  </div>
-                  <div className="bg-yellow-50 dark:bg-yellow-950/50 p-3 rounded-md">
-                    <h5 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⭐ Premium Gruppen:</h5>
-                    <ul className="list-disc pl-5 text-sm text-yellow-700 dark:text-yellow-300">
-                      <li>Unbegrenzte Mitgliederzahl</li>
-                      <li>Live-Wettkämpfe</li>
-                      <li>Erweiterte Statistiken</li>
-                      <li>Export-Funktionen</li>
-                    </ul>
-                  </div>
+                <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">👥 Trainingsgruppen Features:</h4>
+                  <ul className="list-disc pl-5 space-y-1 text-blue-700 dark:text-blue-300">
+                    <li>Unbegrenzte Mitgliederzahl</li>
+                    <li>Live-Wettkämpfe</li>
+                    <li>Gruppen-Chat (geplant)</li>
+                    <li>Erweiterte Statistiken</li>
+                    <li>Export-Funktionen</li>
+                  </ul>
                 </div>
               </CardContent>
             </Card>
@@ -1187,10 +1168,7 @@ export default function HandbuchPage() {
                   </div>
                 </div>
                 
-                <div className="bg-yellow-50 dark:bg-yellow-950/50 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 mt-4">
-                  <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⭐ Erweiterte Statistiken:</h4>
-                  <p className="text-yellow-700 dark:text-yellow-300">Nutzer erhalten Zugang zu erweiterten Analysen, Export-Funktionen und detaillierten Leistungsvergleichen über längere Zeiträume.</p>
-                </div>
+
               </CardContent>
             </Card>
           </section>

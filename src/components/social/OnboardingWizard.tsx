@@ -53,9 +53,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         throw new Error('Benutzer nicht authentifiziert');
       }
       
-      // Save to user_permissions with server timestamp
-      const userPermissionsRef = doc(db, 'user_permissions', currentUser.uid);
-      await setDoc(userPermissionsRef, {
+      // Save to new social_profiles collection
+      const socialProfileRef = doc(db, 'social_profiles', currentUser.uid);
+      await setDoc(socialProfileRef, {
         displayName: data.displayName,
         clubName: data.clubName,
         disciplines: data.disciplines,
@@ -70,23 +70,14 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         onboardingCompleted: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-      }, { merge: true });
+      });
 
-      // Create public profile if public
-      if (data.isPublic) {
-        const publicProfileRef = doc(db, 'public_profiles', currentUser.uid);
-        await setDoc(publicProfileRef, {
-          displayName: data.displayName,
-          clubName: data.clubName,
-          disciplines: data.disciplines,
-          birthYear: data.birthYear,
-          isPublic: true,
-          shareResults: true,
-          availableForCompetitions: true,
-          lastActive: serverTimestamp(),
-          createdAt: serverTimestamp()
-        });
-      }
+      // Mark onboarding as completed in user_permissions (minimal update)
+      const userPermissionsRef = doc(db, 'user_permissions', currentUser.uid);
+      await setDoc(userPermissionsRef, {
+        onboardingCompleted: true,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
 
       toast({
         title: "Willkommen bei Social Training!",

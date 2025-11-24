@@ -51,11 +51,11 @@ export default function EditProfilePage() {
       const { db } = await import('@/lib/firebase/config');
       const { doc, getDoc } = await import('firebase/firestore');
       
-      const profileRef = doc(db, 'user_permissions', user.uid);
-      const profileDoc = await getDoc(profileRef);
+      const socialProfileRef = doc(db, 'social_profiles', user.uid);
+      const socialProfileDoc = await getDoc(socialProfileRef);
       
-      if (profileDoc.exists()) {
-        const data = profileDoc.data();
+      if (socialProfileDoc.exists()) {
+        const data = socialProfileDoc.data();
         setProfile({
           displayName: data.displayName || "",
           firstName: data.firstName || "",
@@ -98,11 +98,11 @@ export default function EditProfilePage() {
         throw new Error('Benutzer nicht authentifiziert');
       }
       
-      const userPermissionsRef = doc(db, 'user_permissions', currentUser.uid);
-      const existingDoc = await getDoc(userPermissionsRef);
+      const socialProfileRef = doc(db, 'social_profiles', currentUser.uid);
+      const existingDoc = await getDoc(socialProfileRef);
       const existingData = existingDoc.exists() ? existingDoc.data() : {};
       
-      await setDoc(userPermissionsRef, {
+      await setDoc(socialProfileRef, {
         ...existingData,
         displayName: profile.displayName,
         firstName: profile.firstName,
@@ -113,19 +113,6 @@ export default function EditProfilePage() {
         birthYear: profile.birthYear,
         updatedAt: serverTimestamp()
       }, { merge: true });
-
-      const publicProfileRef = doc(db, 'public_profiles', currentUser.uid);
-      const publicProfileDoc = await getDoc(publicProfileRef);
-      
-      if (publicProfileDoc.exists()) {
-        await setDoc(publicProfileRef, {
-          displayName: profile.displayName,
-          clubName: profile.clubName,
-          disciplines: profile.disciplines,
-          birthYear: profile.birthYear,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-      }
 
       toast({
         title: "Profil gespeichert",

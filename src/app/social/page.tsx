@@ -53,10 +53,19 @@ export default function SocialPage() {
       const { db } = await import('@/lib/firebase/config');
       const { doc, getDoc } = await import('firebase/firestore');
       
+      // Check both collections for onboarding status
       const userPermissionsRef = doc(db, 'user_permissions', currentUser.uid);
-      const userDoc = await getDoc(userPermissionsRef);
+      const socialProfileRef = doc(db, 'social_profiles', currentUser.uid);
       
-      if (!userDoc.exists() || !userDoc.data()?.onboardingCompleted) {
+      const [userDoc, socialDoc] = await Promise.all([
+        getDoc(userPermissionsRef),
+        getDoc(socialProfileRef)
+      ]);
+      
+      const hasOnboarding = (userDoc.exists() && userDoc.data()?.onboardingCompleted) ||
+                           (socialDoc.exists() && socialDoc.data()?.onboardingCompleted);
+      
+      if (!hasOnboarding) {
         setNeedsOnboarding(true);
       }
     } catch (error) {
