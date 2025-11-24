@@ -847,7 +847,7 @@ export default function HandbuchPage() {
                   <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🚀 Neue Features in Version 2.0:</h4>
                   <ul className="list-disc pl-5 space-y-1 text-blue-700 dark:text-blue-300">
                     <li><strong>👥 Trainingsgruppen:</strong> Erstellen Sie Gruppen mit 6-stelligen Beitrittscodes</li>
-                    <li><strong>⚔️ Live-Wettkämpfe:</strong> Real-time Wettkämpfe mit Live-Ranglisten (Premium)</li>
+                    <li><strong>⚔️ Live-Wettkämpfe:</strong> Real-time Wettkämpfe mit Live-Ranglisten</li>
                     <li><strong>🎯 Duelle-System:</strong> 1vs1 Herausforderungen zwischen Schützen</li>
                     <li><strong>🔔 Smart Notifications:</strong> DSGVO-konforme Push-Benachrichtigungen</li>
                     <li><strong>📊 Community-Statistiken:</strong> Erweiterte Performance-Analysen</li>
@@ -859,7 +859,7 @@ export default function HandbuchPage() {
                 <ol className="list-decimal pl-5 space-y-2">
                   <li><strong>Profil freigeben:</strong> Aktivieren Sie die Sichtbarkeit in den Einstellungen</li>
                   <li><strong>Trainingsgruppe erstellen:</strong> Laden Sie Freunde mit einem 6-stelligen Code ein</li>
-                  <li><strong>Live-Wettkämpfe starten:</strong> Organisieren Sie Real-time Wettkämpfe (Premium)</li>
+                  <li><strong>Live-Wettkämpfe starten:</strong> Organisieren Sie Real-time Wettkämpfe</li>
                   <li><strong>Duelle austragen:</strong> Fordern Sie andere Schützen zu 1vs1 Duellen heraus</li>
                   <li><strong>Community entdecken:</strong> Finden Sie andere Schützen in Ihrer Nähe</li>
                 </ol>
@@ -876,7 +876,7 @@ export default function HandbuchPage() {
                     </ul>
                   </div>
                   <div className="bg-yellow-50 dark:bg-yellow-950/50 p-3 rounded-md">
-                    <h5 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⭐ Premium Features:</h5>
+                    <h5 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⭐ Erweiterte Features:</h5>
                     <ul className="list-disc pl-5 text-sm text-yellow-700 dark:text-yellow-300">
                       <li>Live-Wettkämpfe</li>
                       <li>Unbegrenzte Gruppengröße</li>
@@ -1035,7 +1035,7 @@ export default function HandbuchPage() {
           <Separator className="my-6" />
           
           <section id="st-live-wettkaempfe" className="space-y-4 scroll-mt-20">
-            <h2 className="text-3xl font-semibold text-primary border-b pb-2">4. Live-Wettkämpfe (Premium)</h2>
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">4. Live-Wettkämpfe</h2>
             <Card>
               <CardHeader><CardTitle className="text-xl text-accent">Real-time Wettkämpfe mit Live-Ranglisten</CardTitle></CardHeader>
               <CardContent>
@@ -1188,8 +1188,8 @@ export default function HandbuchPage() {
                 </div>
                 
                 <div className="bg-yellow-50 dark:bg-yellow-950/50 p-3 rounded-md border border-yellow-200 dark:border-yellow-800 mt-4">
-                  <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⭐ Premium-Statistiken:</h4>
-                  <p className="text-yellow-700 dark:text-yellow-300">Premium-Nutzer erhalten Zugang zu erweiterten Analysen, Export-Funktionen und detaillierten Leistungsvergleichen über längere Zeiträume.</p>
+                  <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">⭐ Erweiterte Statistiken:</h4>
+                  <p className="text-yellow-700 dark:text-yellow-300">Nutzer erhalten Zugang zu erweiterten Analysen, Export-Funktionen und detaillierten Leistungsvergleichen über längere Zeiträume.</p>
                 </div>
               </CardContent>
             </Card>

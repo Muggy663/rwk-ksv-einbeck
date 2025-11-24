@@ -19,6 +19,7 @@ interface ProfileData {
   clubName: string;
   email: string;
   disciplines: string[];
+  birthYear?: number;
 }
 
 export default function EditProfilePage() {
@@ -33,7 +34,8 @@ export default function EditProfilePage() {
     lastName: "",
     clubName: "",
     email: "",
-    disciplines: []
+    disciplines: [],
+    birthYear: undefined
   });
 
   useEffect(() => {
@@ -60,7 +62,8 @@ export default function EditProfilePage() {
           lastName: data.lastName || "",
           clubName: data.clubName || "",
           email: data.email || user.email || "",
-          disciplines: data.disciplines || []
+          disciplines: data.disciplines || [],
+          birthYear: data.birthYear || undefined
         });
       } else {
         setProfile(prev => ({
@@ -101,6 +104,7 @@ export default function EditProfilePage() {
         clubName: profile.clubName,
         email: profile.email,
         disciplines: profile.disciplines,
+        birthYear: profile.birthYear,
         updatedAt: new Date()
       }, { merge: true });
 
@@ -203,6 +207,27 @@ export default function EditProfilePage() {
               onChange={(e) => setProfile(prev => ({ ...prev, lastName: e.target.value }))}
               placeholder="Ihr Nachname"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="birthYear">
+              Geburtsjahr (optional)
+            </Label>
+            <Input
+              id="birthYear"
+              type="number"
+              min="1920"
+              max={new Date().getFullYear()}
+              value={profile.birthYear || ""}
+              onChange={(e) => setProfile(prev => ({ 
+                ...prev, 
+                birthYear: e.target.value ? parseInt(e.target.value) : undefined 
+              }))}
+              placeholder="z.B. 1985"
+            />
+            <p className="text-xs text-muted-foreground">
+              Wichtig für Wettkampfklassen (Schüler, Jugend, Senioren, etc.)
+            </p>
           </div>
 
           <div className="space-y-2">

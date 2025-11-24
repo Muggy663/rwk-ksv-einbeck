@@ -16,6 +16,7 @@ interface OnboardingData {
   clubName: string;
   disciplines: string[];
   isPublic: boolean;
+  birthYear?: number;
 }
 
 interface OnboardingWizardProps {
@@ -31,7 +32,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     displayName: "",
     clubName: "",
     disciplines: [],
-    isPublic: false
+    isPublic: false,
+    birthYear: undefined
   });
 
   const totalSteps = 3;
@@ -51,6 +53,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         displayName: data.displayName,
         clubName: data.clubName,
         disciplines: data.disciplines,
+        birthYear: data.birthYear,
         socialSettings: {
           isPublic: data.isPublic,
           shareResults: data.isPublic,
@@ -69,6 +72,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           displayName: data.displayName,
           clubName: data.clubName,
           disciplines: data.disciplines,
+          birthYear: data.birthYear,
           isPublic: true,
           shareResults: true,
           availableForCompetitions: true,
@@ -149,6 +153,27 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   onChange={(e) => setData(prev => ({ ...prev, clubName: e.target.value }))}
                   placeholder="Name Ihres Schützenvereins"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="birthYear">
+                  Geburtsjahr (optional)
+                </Label>
+                <Input
+                  id="birthYear"
+                  type="number"
+                  min="1920"
+                  max={new Date().getFullYear()}
+                  value={data.birthYear || ""}
+                  onChange={(e) => setData(prev => ({ 
+                    ...prev, 
+                    birthYear: e.target.value ? parseInt(e.target.value) : undefined 
+                  }))}
+                  placeholder="z.B. 1985"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Wichtig für Wettkampfklassen (Schüler, Jugend, Senioren)
+                </p>
               </div>
             </div>
           )}
@@ -232,6 +257,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     <ul className="text-xs text-blue-800 space-y-1">
                       <li>• Anzeigename: {data.displayName}</li>
                       {data.clubName && <li>• Verein: {data.clubName}</li>}
+                      {data.birthYear && <li>• Geburtsjahr: {data.birthYear}</li>}
                       <li>• Disziplinen: {data.disciplines.join(', ')}</li>
                       <li>• Verfügbarkeit für Trainingsgruppen</li>
                     </ul>
