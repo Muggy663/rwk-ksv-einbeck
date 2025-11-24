@@ -124,6 +124,7 @@ export default function DiscoverPage() {
                 <option value="GK">Großkaliber</option>
                 <option value="Pistole">Pistole</option>
                 <option value="Bogen">Bogen</option>
+                <option value="Blasrohr">Blasrohr</option>
               </select>
             </div>
             <div className="text-xs text-muted-foreground">

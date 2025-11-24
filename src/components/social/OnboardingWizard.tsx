@@ -44,16 +44,23 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     
     setSaving(true);
     try {
-      const { db } = await import('@/lib/firebase/config');
-      const { doc, setDoc } = await import('firebase/firestore');
+      const { db, auth } = await import('@/lib/firebase/config');
+      const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
       
-      // Save to user_permissions
-      const userPermissionsRef = doc(db, 'user_permissions', user.uid);
+      // Ensure user is authenticated
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('Benutzer nicht authentifiziert');
+      }
+      
+      // Save to user_permissions with server timestamp
+      const userPermissionsRef = doc(db, 'user_permissions', currentUser.uid);
       await setDoc(userPermissionsRef, {
         displayName: data.displayName,
         clubName: data.clubName,
         disciplines: data.disciplines,
         birthYear: data.birthYear,
+        email: currentUser.email,
         socialSettings: {
           isPublic: data.isPublic,
           shareResults: data.isPublic,
@@ -61,13 +68,13 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           showClubAffiliation: data.isPublic
         },
         onboardingCompleted: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       }, { merge: true });
 
       // Create public profile if public
       if (data.isPublic) {
-        const publicProfileRef = doc(db, 'public_profiles', user.uid);
+        const publicProfileRef = doc(db, 'public_profiles', currentUser.uid);
         await setDoc(publicProfileRef, {
           displayName: data.displayName,
           clubName: data.clubName,
@@ -76,8 +83,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
           isPublic: true,
           shareResults: true,
           availableForCompetitions: true,
-          lastActive: new Date(),
-          createdAt: new Date()
+          lastActive: serverTimestamp(),
+          createdAt: serverTimestamp()
         });
       }
 
@@ -89,9 +96,17 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       onComplete();
     } catch (error: any) {
       console.error('Fehler beim Speichern:', error);
+      
+      let errorMessage = "Profil konnte nicht gespeichert werden.";
+      if (error.code === 'permission-denied') {
+        errorMessage = "Keine Berechtigung. Bitte melden Sie sich erneut an.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Fehler",
-        description: "Profil konnte nicht gespeichert werden.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -196,7 +211,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   { id: 'LP', label: 'Luftpistole' },
                   { id: 'GK', label: 'Großkaliber' },
                   { id: 'Pistole', label: 'Pistole' },
-                  { id: 'Bogen', label: 'Bogen' }
+                  { id: 'Bogen', label: 'Bogen' },
+                  { id: 'Blasrohr', label: 'Blasrohr' }
                 ].map((discipline) => (
                   <div key={discipline.id} className="flex items-center space-x-2">
                     <Checkbox

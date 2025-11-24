@@ -460,13 +460,19 @@ service cloud.firestore {
                       // Erlaube Social Settings Updates
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['socialSettings', 'updatedAt']) ||
                       // Erlaube Notification Settings Updates
-                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notificationSettings', 'updatedAt'])));
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notificationSettings', 'updatedAt']) ||
+                      // Erlaube Social Training Profile Updates
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'firstName', 'lastName', 'clubName', 'disciplines', 'birthYear', 'onboardingCompleted', 'updatedAt', 'createdAt'])));
       allow create: if isAuthenticated() && 
                     request.auth.uid == userId &&
-                    // Nur INDIVIDUAL userType und keine Rollen erlaubt
-                    request.resource.data.userType == 'INDIVIDUAL' &&
-                    !request.resource.data.keys().hasAny(['platformRole', 'kvRoles', 'clubRoles', 'kvRole', 'role']) &&
-                    request.resource.data.isPremium != true;
+                    // Erlaube Social Training Onboarding
+                    (// Nur INDIVIDUAL userType und keine Rollen erlaubt
+                     (request.resource.data.userType == 'INDIVIDUAL' &&
+                      !request.resource.data.keys().hasAny(['platformRole', 'kvRoles', 'clubRoles', 'kvRole', 'role']) &&
+                      request.resource.data.isPremium != true) ||
+                     // Oder Social Training Onboarding ohne userType
+                     (!request.resource.data.keys().hasAny(['platformRole', 'kvRoles', 'clubRoles', 'kvRole', 'role', 'userType']) &&
+                      request.resource.data.isPremium != true));
     }
 
     match /users/{userId} {

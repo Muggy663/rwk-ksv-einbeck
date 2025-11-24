@@ -89,10 +89,16 @@ export default function EditProfilePage() {
     
     setSaving(true);
     try {
-      const { db } = await import('@/lib/firebase/config');
-      const { doc, setDoc, getDoc } = await import('firebase/firestore');
+      const { db, auth } = await import('@/lib/firebase/config');
+      const { doc, setDoc, getDoc, serverTimestamp } = await import('firebase/firestore');
       
-      const userPermissionsRef = doc(db, 'user_permissions', user.uid);
+      // Ensure user is authenticated
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('Benutzer nicht authentifiziert');
+      }
+      
+      const userPermissionsRef = doc(db, 'user_permissions', currentUser.uid);
       const existingDoc = await getDoc(userPermissionsRef);
       const existingData = existingDoc.exists() ? existingDoc.data() : {};
       
@@ -105,17 +111,19 @@ export default function EditProfilePage() {
         email: profile.email,
         disciplines: profile.disciplines,
         birthYear: profile.birthYear,
-        updatedAt: new Date()
+        updatedAt: serverTimestamp()
       }, { merge: true });
 
-      const publicProfileRef = doc(db, 'public_profiles', user.uid);
+      const publicProfileRef = doc(db, 'public_profiles', currentUser.uid);
       const publicProfileDoc = await getDoc(publicProfileRef);
       
       if (publicProfileDoc.exists()) {
         await setDoc(publicProfileRef, {
           displayName: profile.displayName,
           clubName: profile.clubName,
-          updatedAt: new Date()
+          disciplines: profile.disciplines,
+          birthYear: profile.birthYear,
+          updatedAt: serverTimestamp()
         }, { merge: true });
       }
 
@@ -127,9 +135,17 @@ export default function EditProfilePage() {
       router.push('/social');
     } catch (error: any) {
       console.error('Fehler beim Speichern:', error);
+      
+      let errorMessage = "Profil konnte nicht gespeichert werden.";
+      if (error.code === 'permission-denied') {
+        errorMessage = "Keine Berechtigung. Bitte melden Sie sich erneut an.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Fehler",
-        description: error.message || "Profil konnte nicht gespeichert werden.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -258,7 +274,8 @@ export default function EditProfilePage() {
                 { id: 'LP', label: 'Luftpistole' },
                 { id: 'GK', label: 'Großkaliber' },
                 { id: 'Pistole', label: 'Pistole' },
-                { id: 'Bogen', label: 'Bogen' }
+                { id: 'Bogen', label: 'Bogen' },
+                { id: 'Blasrohr', label: 'Blasrohr' }
               ].map((discipline) => (
                 <div key={discipline.id} className="flex items-center space-x-2">
                   <Checkbox
