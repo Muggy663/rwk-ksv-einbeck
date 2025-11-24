@@ -18,11 +18,11 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **Alle Disziplinen** - KK, LG, LP, Benutzerdefiniert
 - **Automatische Tabellen** - Live-Berechnung mit Statistiken
 - **Google Gemini AI OCR** - Intelligente Handzettel-Erkennung
-- **Schießnachweis Premium** - Digitales Schießtagebuch
+- **Schießnachweis** - Digitales Schießtagebuch
 
 ### 🚀 NEU: Social Training Platform (Version 2.0.0)
 - **👥 Trainingsgruppen** - Gemeinsam trainieren mit Freunden (6-stellige Beitrittscodes)
-- **⚔️ Live-Wettkämpfe** - Real-time Wettkämpfe mit Live-Ranglisten (Premium)
+- **⚔️ Live-Wettkämpfe** - Real-time Wettkämpfe mit Live-Ranglisten
 - **🎯 Duelle-System** - 1vs1 Herausforderungen mit Firebase-Integration
 - **📊 Community-Statistiken** - Erweiterte Performance-Analysen
 - **🔔 Smart Notifications** - DSGVO-konforme Push-Benachrichtigungen
@@ -48,7 +48,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **Qualifikations-Management** für Landesmeisterschaften
 - **Urkunden-Druck** automatisiert
 
-### 🎯 Schießnachweis (Premium)
+### 🎯 Schießnachweis
 - **Digitales Schießtagebuch** für Sportschützen
 - **Training & Wettkampf** Dokumentation
 - **Import von digitalen Anlagen** - Meyton, Sius, Disag, Sport Quantum
@@ -58,7 +58,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **PDF-Export für Behörden** - Offizieller Nachweis für Waffenbehörde
 
 ### 👥 Social Training (Version 2.0.1)
-- **Trainingsgruppen erstellen** - Mit 6-stelligen Beitrittscodes (Premium)
+- **Trainingsgruppen erstellen** - Mit 6-stelligen Beitrittscodes
 - **Live-Wettkämpfe** - Real-time Ranglisten mit Rundenbasiertem System
 - **Duelle-System** - 1vs1 Herausforderungen mit Firebase-Integration
 - **Community entdecken** - Schützen-Profile durchsuchen
@@ -100,7 +100,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **Google Gemini AI**: Intelligenteste OCR-Erkennung für Handzettel
 
 ### 👥 Social Features (20.11.2025)
-- **Live-Wettkämpfe**: Real-time Wettkämpfe mit Live-Ranglisten (Premium)
+- **Live-Wettkämpfe**: Real-time Wettkämpfe mit Live-Ranglisten
 - **Duelle-System**: 1vs1 Herausforderungen mit Firebase-Integration
 - **Community-Ranglisten**: Automatische Sortierung und Performance-Analysen
 - **Trainingsgruppen**: 6-stellige Beitrittscodes mit Admin-Berechtigungen
@@ -125,7 +125,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 ### ✅ Nachher (Digital + Community - Stand 20.11.2025)
 - **Automatische Berechnung** aller Tabellen und Ranglisten
-- **Live-Wettkämpfe** mit Real-time Ranglisten und Premium-Features
+- **Live-Wettkämpfe** mit Real-time Ranglisten
 - **Trainingsgruppen** mit 6-stelligen Beitrittscodes und Community-Features
 - **Duelle-System** mit 1vs1 Herausforderungen und Firebase-Backend
 - **Einheitliche Eingabe** über Schießnachweis mit Social Training Integration

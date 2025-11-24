@@ -8,11 +8,14 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { OnboardingWizard } from "@/components/social/OnboardingWizard";
 
 export default function SocialPage() {
   const { user: rwkUser, loading: rwkLoading } = useAuth();
   const [firebaseUser, setFirebaseUser] = useState(null);
   const [firebaseLoading, setFirebaseLoading] = useState(true);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -37,11 +40,42 @@ export default function SocialPage() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/schiessnachweis/login?redirect=/social');
+    } else if (isAuthenticated && (rwkUser || firebaseUser)) {
+      checkOnboardingStatus();
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, rwkUser, firebaseUser]);
 
-  if (isLoading) {
+  const checkOnboardingStatus = async () => {
+    const currentUser = rwkUser || firebaseUser;
+    if (!currentUser) return;
+    
+    try {
+      const { db } = await import('@/lib/firebase/config');
+      const { doc, getDoc } = await import('firebase/firestore');
+      
+      const userPermissionsRef = doc(db, 'user_permissions', currentUser.uid);
+      const userDoc = await getDoc(userPermissionsRef);
+      
+      if (!userDoc.exists() || !userDoc.data()?.onboardingCompleted) {
+        setNeedsOnboarding(true);
+      }
+    } catch (error) {
+      console.error('Fehler beim Prüfen des Onboarding-Status:', error);
+    } finally {
+      setCheckingOnboarding(false);
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    setNeedsOnboarding(false);
+  };
+
+  if (isLoading || checkingOnboarding) {
     return <div className="container mx-auto p-4 text-center">Laden...</div>;
+  }
+
+  if (needsOnboarding) {
+    return <OnboardingWizard onComplete={handleOnboardingComplete} />;
   }
 
   if (!isAuthenticated) {
@@ -122,11 +156,18 @@ export default function SocialPage() {
                 <div>• Verfügbarkeit für Wettkämpfe festlegen</div>
                 <div>• Vereinszugehörigkeit anzeigen</div>
               </div>
-              <Button asChild className="w-full">
-                <Link href="/einstellungen">
-                  Profil-Einstellungen
-                </Link>
-              </Button>
+              <div className="space-y-2">
+                <Button asChild className="w-full">
+                  <Link href="/social/profile/edit">
+                    Profil bearbeiten
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/einstellungen">
+                    Sichtbarkeits-Einstellungen
+                  </Link>
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

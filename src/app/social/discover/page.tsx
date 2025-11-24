@@ -36,6 +36,7 @@ interface UserProfile {
 export default function DiscoverPage() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDiscipline, setSelectedDiscipline] = useState('');
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,11 +58,16 @@ export default function DiscoverPage() {
     }
   };
 
-  const filteredProfiles = profiles.filter(profile =>
-    profile.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.clubName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.statistics?.favoriteDiscipline?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProfiles = profiles.filter(profile => {
+    const matchesSearch = profile.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      profile.clubName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      profile.statistics?.favoriteDiscipline?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesDiscipline = !selectedDiscipline || 
+      profile.statistics?.favoriteDiscipline === selectedDiscipline;
+    
+    return matchesSearch && matchesDiscipline;
+  });
 
   if (loading) {
     return (
@@ -98,17 +104,31 @@ export default function DiscoverPage() {
       {/* Suchleiste */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              placeholder="Nach Namen, Verein oder Disziplin suchen..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
-            />
-            <Button variant="outline" className="w-full sm:w-auto">
-              <Search className="h-4 w-4 mr-2 sm:mr-0" />
-              <span className="sm:hidden">Suchen</span>
-            </Button>
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Input
+                placeholder="Nach Namen, Verein suchen..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1"
+              />
+              <select
+                value={selectedDiscipline}
+                onChange={(e) => setSelectedDiscipline(e.target.value)}
+                className="px-3 py-2 border rounded-md bg-background"
+              >
+                <option value="">Alle Disziplinen</option>
+                <option value="KK">Kleinkaliber</option>
+                <option value="LG">Luftgewehr</option>
+                <option value="LP">Luftpistole</option>
+                <option value="GK">Großkaliber</option>
+                <option value="Pistole">Pistole</option>
+                <option value="Bogen">Bogen</option>
+              </select>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {filteredProfiles.length} von {profiles.length} Profilen gefunden
+            </div>
           </div>
         </CardContent>
       </Card>
