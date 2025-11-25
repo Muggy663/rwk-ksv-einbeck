@@ -24,7 +24,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM, Schießnachweis und Vereinssoftware.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: 20.11.2025 - Version 2.0.0 Social Training Platform
+            Stand: 25.11.2025 - Version 2.0.0.2 - Separate Ergebnis-Felder
           </p>
         </div>
       </div>
@@ -891,7 +891,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Social Training Platform - Benutzerhandbuch</CardTitle>
-              <CardDescription>Version 2.0.0 - Die erste Community-Plattform für Sportschützen</CardDescription>
+              <CardDescription>Version 2.0.0.2 - Die erste Community-Plattform für Sportschützen</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
