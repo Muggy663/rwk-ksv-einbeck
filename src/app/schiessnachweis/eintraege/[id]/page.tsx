@@ -35,10 +35,10 @@ export default function EintragBearbeitenPage() {
     }
   }, [params.id]);
 
-  const loadEintrag = (id: string) => {
+  const loadEintrag = async (id: string) => {
     setIsLoading(true);
     try {
-      const einträge = SchießnachweisService.getEinträge();
+      const einträge = await SchießnachweisService.getEinträge();
       const gefundenerEintrag = einträge.find(e => e.id === id);
       
       if (!gefundenerEintrag) {
@@ -107,12 +107,7 @@ export default function EintragBearbeitenPage() {
       });
 
       if (updated) {
-        // Automatisch in Cloud synchronisieren
-        try {
-          await SchießnachweisService.syncToCloud();
-        } catch (syncError) {
-          console.log('Cloud-Sync nach Update fehlgeschlagen:', syncError);
-        }
+
         
         toast({
           title: "✅ Gespeichert",
@@ -133,12 +128,12 @@ export default function EintragBearbeitenPage() {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!eintrag) return;
     
     if (confirm("Möchten Sie diesen Eintrag wirklich löschen?")) {
       try {
-        SchießnachweisService.deleteEintrag(eintrag.id);
+        await SchießnachweisService.deleteEintrag(eintrag.id);
         toast({
           title: "Gelöscht",
           description: "Eintrag wurde erfolgreich gelöscht.",

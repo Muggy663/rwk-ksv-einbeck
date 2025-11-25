@@ -23,9 +23,9 @@ export default function EintragDetailsPage() {
     }
   }, [params.id]);
 
-  const loadEintrag = (id: string) => {
+  const loadEintrag = async (id: string) => {
     try {
-      const einträge = SchießnachweisService.getEinträge();
+      const einträge = await SchießnachweisService.getEinträge();
       const gefundenerEintrag = einträge.find(e => e.id === id);
       setEintrag(gefundenerEintrag || null);
     } catch (error) {
