@@ -97,6 +97,7 @@ export default function EintragBearbeitenPage() {
         disziplin: eintrag.disziplin,
         schussAnzahl: eintrag.schussAnzahl,
         ergebnis: eintrag.ergebnis,
+        ergebnisGanzeRinge: eintrag.ergebnisGanzeRinge,
         serien: serien.length > 0 ? serien : undefined,
         standort: eintrag.standort || 'Unbekannt',
         schiessstand: eintrag.schiessstand || '',
@@ -282,25 +283,47 @@ export default function EintragBearbeitenPage() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="ergebnis">Ergebnis (Ringe) *</Label>
-                    <Input
-                      id="ergebnis"
-                      type="number"
-                      step={config?.kommastellen ? "0.1" : "1"}
-                      min="0"
-                      max="1000"
-                      value={eintrag.ergebnis}
-                      onChange={(e) => setEintrag({
-                        ...eintrag,
-                        ergebnis: parseFloat(e.target.value) || 0
-                      })}
-                      required
-                      disabled={showDetailedEntry && serien.length > 0}
-                    />
+                    <Label htmlFor="ergebnis">Ergebnis *</Label>
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="ergebnisGanzeRinge" className="text-sm font-medium text-blue-700">Ergebnis (Ganze Ringe) *</Label>
+                        <Input
+                          id="ergebnisGanzeRinge"
+                          type="number"
+                          min="0"
+                          max="1000"
+                          value={eintrag.ergebnisGanzeRinge || ''}
+                          onChange={(e) => setEintrag({
+                            ...eintrag,
+                            ergebnisGanzeRinge: parseInt(e.target.value) || 0
+                          })}
+                          required
+                          className="border-blue-200 focus:border-blue-400"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="ergebnisZehntel" className="text-sm font-medium text-green-700">Ergebnis (mit Zehntel) - Optional</Label>
+                        <Input
+                          id="ergebnisZehntel"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="1000"
+                          value={eintrag.ergebnis || ''}
+                          onChange={(e) => setEintrag({
+                            ...eintrag,
+                            ergebnis: parseFloat(e.target.value) || 0
+                          })}
+                          disabled={showDetailedEntry && serien.length > 0}
+                          className="border-green-200 focus:border-green-400"
+                        />
+                      </div>
+                    </div>
                     {config && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Max. {config.maxRinge} Ringe pro Schuss
-                        {config.kommastellen && " • Kommastellen möglich"}
+                      <p className="text-xs text-muted-foreground mt-2">
+                        🎯 Max. {config.maxRinge} Ringe pro Schuss<br/>
+                        📊 <strong>Ganze Ringe:</strong> Pflichtfeld für alle Einträge<br/>
+                        🎯 <strong>Zehntel-Ergebnis:</strong> Optional für Leistungsschützen (z.B. detaillierte Analyse)
                       </p>
                     )}
                   </div>

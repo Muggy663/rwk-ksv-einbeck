@@ -190,25 +190,36 @@ export default function EintraegePage() {
                       </span>
                     </CardDescription>
                   </div>
-                  <Badge variant={eintrag.typ === 'wettkampf' ? 'default' : 'secondary'}>
-                    {eintrag.typ === 'wettkampf' ? '🏆 Wettkampf' : '🎯 Training'}
-                  </Badge>
+                  <div className="flex gap-2">
+                    <Badge variant={eintrag.typ === 'wettkampf' ? 'default' : 'secondary'}>
+                      {eintrag.typ === 'wettkampf' ? '🏆 Wettkampf' : '🎯 Training'}
+                    </Badge>
+                    {eintrag.serien && eintrag.serien.length > 0 && (
+                      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                        📊 {eintrag.serien.length} Serien
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
                   <div>
                     <div className="text-sm text-muted-foreground">Schüsse</div>
                     <div className="font-semibold">{eintrag.schussAnzahl}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-muted-foreground">Ergebnis</div>
-                    <div className="font-semibold">{eintrag.ergebnis} Ringe</div>
+                    <div className="text-sm text-muted-foreground">Ganze Ringe</div>
+                    <div className="font-semibold text-blue-600">{eintrag.ergebnisGanzeRinge || '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Mit Zehntel</div>
+                    <div className="font-semibold text-green-600">{eintrag.ergebnis || '-'}</div>
                   </div>
                   <div>
                     <div className="text-sm text-muted-foreground">Durchschnitt</div>
                     <div className="font-semibold">
-                      {(eintrag.ergebnis / eintrag.schussAnzahl).toFixed(1)}
+                      {eintrag.ergebnis ? (eintrag.ergebnis / eintrag.schussAnzahl).toFixed(1) : '-'}
                     </div>
                   </div>
                   <div>

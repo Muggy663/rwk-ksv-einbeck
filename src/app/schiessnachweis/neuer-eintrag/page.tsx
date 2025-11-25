@@ -168,7 +168,7 @@ export default function NeuerEintragPage() {
         typ: formData.typ,
         disziplin: formData.disziplin,
         schussAnzahl: parseInt(formData.schussAnzahl),
-        ergebnis: parseFloat(formData.ergebnisGanzeRinge),
+        ergebnis: formData.ergebnis ? parseFloat(formData.ergebnis) : parseFloat(formData.ergebnisGanzeRinge),
         standort: formData.standort,
         schiessstand: formData.schiessstand || undefined,
         wetter: formData.wetter || undefined,

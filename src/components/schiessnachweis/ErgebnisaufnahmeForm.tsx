@@ -103,7 +103,7 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
     };
     
     const rawSum = serie.schuesse.reduce((sum, schuss) => sum + schuss.wert, 0);
-    serie.summe = parseFloat(rawSum.toFixed(1));
+    serie.summe = Math.round(rawSum * 10) / 10; // Korrekte Rundung auf 1 Dezimalstelle
     setSerien(neueSerien);
   };
 
