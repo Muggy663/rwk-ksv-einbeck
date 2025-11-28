@@ -187,10 +187,12 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                         </span>
                       )}
                     </div>
-                    <SubstitutionBadge
-                      isSubstitute={teamSubstitutions.has(`${parentTeam.id}-${shooterRes.shooterId}`)}
-                      substitutionInfo={teamSubstitutions.get(`${parentTeam.id}-${shooterRes.shooterId}`)}
-                    />
+                    <div className="flex justify-start">
+                      <SubstitutionBadge
+                        isSubstitute={teamSubstitutions.has(`${parentTeam.id}-${shooterRes.shooterId}`)}
+                        substitutionInfo={teamSubstitutions.get(`${parentTeam.id}-${shooterRes.shooterId}`)}
+                      />
+                    </div>
                   </div>
                 </TableCell>
                 {[...Array(numRounds)].map((_, i) => (
@@ -935,6 +937,25 @@ function RwkTabellenPageComponent() {
           });
         });
         setTeamSubstitutions(substitutionsMap);
+
+        
+        // Füge Substitution-Informationen zu Team-Schützen hinzu
+        fetchedLeaguesData.forEach(league => {
+          league.teams.forEach(team => {
+            team.shootersResults.forEach(shooter => {
+              const substitution = substitutionsMap.get(`${team.id}-${shooter.shooterId}`);
+              if (substitution) {
+                shooter.isSubstitute = true;
+                shooter.substitutionInfo = {
+                  fromRound: substitution.fromRound,
+                  originalShooterName: substitution.originalShooterName,
+                  replacementShooterName: substitution.replacementShooterName || shooter.shooterName,
+                  reason: substitution.reason || ''
+                };
+              }
+            });
+          });
+        });
       } catch (error) {
         // Substitutions sind optional - bei Berechtigungsfehlern einfach ignorieren
 
@@ -1202,14 +1223,34 @@ function RwkTabellenPageComponent() {
 
 
         if (score.durchgang >= 1 && score.durchgang <= numRoundsForCompetition && typeof score.totalRinge === 'number') {
+          // Prüfe Substitution: Nur Ergebnisse ab fromRound für Einzelwertung
+          const isSubstitutionScore = score.isSubstitutionCopy === true;
+          const shouldCountForIndividual = !isSubstitutionScore; // Kopierte Ergebnisse nicht für Einzelwertung
+          
           currentShooterData.results[`dg${score.durchgang}`] = score.totalRinge;
+          
+          // Markiere welche Ergebnisse für Einzelwertung zählen
+          if (!currentShooterData.individualResults) currentShooterData.individualResults = {};
+          currentShooterData.individualResults[`dg${score.durchgang}`] = shouldCountForIndividual ? score.totalRinge : null;
         }
       }
       shootersMap.forEach(shooterData => {
         let currentTotal = 0; let roundsShotCount = 0;
-        Object.values(shooterData.results).forEach(res => { if (res !== null && typeof res === 'number') { currentTotal += res; roundsShotCount++; } });
-        shooterData.totalScore = currentTotal; shooterData.roundsShot = roundsShotCount;
-        if (shooterData.roundsShot > 0 && shooterData.totalScore !== null) shooterData.averageScore = parseFloat((shooterData.totalScore / shooterData.roundsShot).toFixed(2));
+        
+        // Verwende individualResults falls vorhanden, sonst normale results
+        const resultsToUse = shooterData.individualResults || shooterData.results;
+        Object.values(resultsToUse).forEach(res => { 
+          if (res !== null && typeof res === 'number') { 
+            currentTotal += res; 
+            roundsShotCount++; 
+          } 
+        });
+        
+        shooterData.totalScore = currentTotal; 
+        shooterData.roundsShot = roundsShotCount;
+        if (shooterData.roundsShot > 0 && shooterData.totalScore !== null) {
+          shooterData.averageScore = parseFloat((shooterData.totalScore / shooterData.roundsShot).toFixed(2));
+        }
       });
       // Entferne Duplikate basierend auf Name+Team, behalte den mit den meisten Scores
       const shootersByName = new Map();
@@ -1408,6 +1449,37 @@ function RwkTabellenPageComponent() {
       loadData();
     }
   }, [selectedCompetition, activeTab, selectedIndividualLeagueFilter, loadData, isLoadingInitialCompetitions]);
+  
+  // Load substitutions when teamData is available
+  useEffect(() => {
+    if (teamData && selectedCompetition && teamSubstitutions.size === 0) {
+      const loadSubstitutions = async () => {
+        try {
+          const substitutionsQuery = query(
+            collection(db, 'team_substitutions'),
+            where('competitionYear', '==', selectedCompetition.year)
+          );
+          const substitutionsSnapshot = await getDocs(substitutionsQuery);
+          const substitutionsMap = new Map();
+          substitutionsSnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            const key = `${data.teamId}-${data.replacementShooterId}`;
+            substitutionsMap.set(key, {
+              originalShooterName: data.originalShooterName,
+              fromRound: data.fromRound,
+              reason: data.reason,
+              type: data.type
+            });
+          });
+          setTeamSubstitutions(substitutionsMap);
+  
+        } catch (error) {
+          console.error('Error loading substitutions:', error);
+        }
+      };
+      loadSubstitutions();
+    }
+  }, [teamData, selectedCompetition, teamSubstitutions.size]);
   
   // Speichern der Filtereinstellungen im localStorage
   useEffect(() => {
@@ -1617,6 +1689,11 @@ function RwkTabellenPageComponent() {
         // Verwende den bereits zusammengesetzten Namen oder Fallback
         let shooterDisplayName = shooterInfo?.displayName || shooterInfo?.name || (scoresByShooter.get(shooterId)?.[0]?.shooterName) || `Schütze ${shooterId.substring(0,5)}`;
         
+        // Prüfe Substitution-Info
+        const substitutionKey = `${teamId}-${shooterId}`;
+        const substitutionInfo = teamSubstitutions.get(substitutionKey);
+
+        
         const sResults: ShooterDisplayResults = { 
           shooterId, 
           shooterName: shooterDisplayName, 
@@ -1626,6 +1703,14 @@ function RwkTabellenPageComponent() {
           leagueId: teamData.leagueId, 
           competitionYear: teamData.competitionYear,
           leagueType: teamData.leagueType,
+          isSubstitute: !!substitutionInfo,
+          substitutionInfo: substitutionInfo ? {
+            fromRound: substitutionInfo.fromRound,
+            originalShooterName: substitutionInfo.originalShooterName,
+            replacementShooterName: shooterDisplayName,
+            reason: substitutionInfo.reason || '',
+            type: substitutionInfo.type || 'new_shooter'
+          } : undefined,
         };
         for (let r = 1; r <= numRounds; r++) sResults.results[`dg${r}`] = null;
         
@@ -1663,7 +1748,7 @@ function RwkTabellenPageComponent() {
     } finally {
       setLoadingTeamShooters(prev => { const newSet = new Set(prev); newSet.delete(teamId); return newSet; });
     }
-  }, [loadedTeamShooters, loadingTeamShooters]);
+  }, [loadedTeamShooters, loadingTeamShooters, teamSubstitutions]);
 
   const toggleTeamExpansion = useCallback((teamId: string) => {
     const isExpanding = !expandedTeamIds.includes(teamId);

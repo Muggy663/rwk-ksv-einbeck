@@ -23,16 +23,42 @@ export async function POST(request: NextRequest) {
 
       const team = { id: teamDoc.id, ...teamDoc.data() };
 
+      // RWK-Ordnung §12: Neuer Schütze übernimmt bisherige Ergebnisse
+      const originalScoresQuery = adminDb.collection('rwk_scores')
+        .where('shooterId', '==', substitution.originalShooterId)
+        .where('teamId', '==', teamId)
+        .where('competitionYear', '==', substitution.competitionYear)
+        .where('durchgang', '<', substitution.fromRound);
+      
+      const originalScoresSnapshot = await originalScoresQuery.get();
+      const batch = adminDb.batch();
+      
+      // Kopiere Hartmuts Ergebnisse auf Martin (RWK-Regel)
+      originalScoresSnapshot.docs.forEach(scoreDoc => {
+        const scoreData = scoreDoc.data();
+        const newScoreRef = adminDb.collection('rwk_scores').doc();
+        batch.set(newScoreRef, {
+          ...scoreData,
+          shooterId: substitution.replacementShooterId,
+          shooterName: substitution.replacementShooterName,
+          isSubstitutionCopy: true,
+          originalScoreId: scoreDoc.id,
+          enteredByUserId: 'admin',
+          enteredByUserName: 'Admin (Substitution)',
+          entryTimestamp: FieldValue.serverTimestamp()
+        });
+      });
+
+      // 2. Aktualisiere Team-Schützen-IDs
       const updatedShooterIds = team.shooterIds.map((id: string) => 
         id === substitution.originalShooterId ? substitution.replacementShooterId : id
       );
 
-      await adminDb.collection('rwk_teams').doc(teamId).update({
+      batch.update(adminDb.collection('rwk_teams').doc(teamId), {
         shooterIds: updatedShooterIds
       });
-
-      const batch = adminDb.batch();
       
+      // 3. Aktualisiere Schützen teamIds
       const originalShooterRef = adminDb.collection('shooters').doc(substitution.originalShooterId);
       batch.update(originalShooterRef, {
         teamIds: FieldValue.arrayRemove(teamId)
@@ -47,7 +73,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ 
         success: true, 
-        message: 'Ersatzschütze erfolgreich angewendet' 
+        message: `Substitution erfolgreich. ${originalScoresSnapshot.size} Ergebnisse übertragen, ab DG${substitution.fromRound} eigene Ergebnisse.`
       });
     }
 

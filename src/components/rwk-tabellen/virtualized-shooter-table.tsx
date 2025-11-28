@@ -83,14 +83,21 @@ export function VirtualizedShooterTable({
                   key={`shooter-${shooter.shooterId}`} 
                   className="text-sm border-b-0 hover:bg-background/40"
                 >
-                  <TableCell className="font-medium pl-3 pr-1 py-1.5 whitespace-nowrap">
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto text-sm text-left hover:text-primary whitespace-normal text-wrap"
-                      onClick={() => onShooterClick && onShooterClick(shooter)}
-                    >
-                      {shooter.shooterName}
-                    </Button>
+                  <TableCell className="font-medium pl-3 pr-1 py-1.5">
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto text-sm text-left hover:text-primary whitespace-normal text-wrap"
+                        onClick={() => onShooterClick && onShooterClick(shooter)}
+                      >
+                        {shooter.shooterName}
+                      </Button>
+                      {shooter.isSubstitute && shooter.substitutionInfo && (
+                        <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">
+                          Ersatz ab DG{shooter.substitutionInfo.fromRound}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   
                   {Array.from({ length: numRounds }, (_, i) => (

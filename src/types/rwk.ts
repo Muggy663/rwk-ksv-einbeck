@@ -274,6 +274,13 @@ export interface ShooterDisplayResults {
   leagueId: string;
   competitionYear: number;
   leagueType: FirestoreLeagueSpecificDiscipline;
+  isSubstitute?: boolean;
+  substitutionInfo?: {
+    fromRound: number;
+    originalShooterName: string;
+    replacementShooterName: string;
+    reason: string;
+  };
 }
 
 export interface TeamDisplay {
@@ -309,6 +316,7 @@ export interface IndividualShooterDisplayData {
   shooterGender: string;
   teamName: string;
   results: { [key: string]: number | null };
+  individualResults?: { [key: string]: number | null }; // Für Substitutions-Filter
   totalScore: number;
   averageScore: number | null;
   roundsShot: number;

@@ -31,13 +31,13 @@ export function SubstitutionBadge({
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
+        <TooltipTrigger>
           <Badge 
             variant="outline" 
-            className={`text-xs bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100 cursor-help ${className}`}
+            className={`text-xs bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100 cursor-help inline-flex items-center w-fit ${className}`}
           >
             <UserPlus className="h-3 w-3 mr-1" />
-            Ersatz ab DG{substitutionInfo.fromRound}
+            Ersatz ab DG{substitutionInfo.fromRound} für {substitutionInfo.originalShooterName}
           </Badge>
         </TooltipTrigger>
         <TooltipContent>

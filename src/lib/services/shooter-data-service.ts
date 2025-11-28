@@ -37,6 +37,23 @@ export async function fetchShooterDataForCompetition(
     const shootersMap = new Map<string, IndividualShooterDisplayData>();
     const shooterDetailsCache = new Map<string, any>();
     
+    // Lade Substitution-Informationen
+    const substitutionsQuery = query(collection(db, 'team_substitutions'), 
+      where('competitionYear', '==', config.year)
+    );
+    const substitutionsSnapshot = await getDocs(substitutionsQuery);
+    const substitutionsMap = new Map();
+    substitutionsSnapshot.docs.forEach(doc => {
+      const sub = doc.data();
+      substitutionsMap.set(sub.replacementShooterId, {
+        isSubstitute: true,
+        fromRound: sub.fromRound,
+        originalShooterName: sub.originalShooterName,
+        reason: sub.reason,
+        type: sub.type
+      });
+    });
+    
     for (const score of allScores) {
       if (!score.shooterId) continue;
       
@@ -73,6 +90,9 @@ export async function fetchShooterDataForCompetition(
           displayName = shooterDetails.name;
         }
         
+        // Prüfe Substitution-Info
+        const substitutionInfo = substitutionsMap.get(score.shooterId);
+        
         currentShooterData = {
           shooterId: score.shooterId, 
           shooterName: displayName,
@@ -90,6 +110,8 @@ export async function fetchShooterDataForCompetition(
           leagueType: score.leagueType,
           teamOutOfCompetition: score.teamOutOfCompetition || false,
           teamOutOfCompetitionReason: score.teamOutOfCompetitionReason,
+          isSubstitute: substitutionInfo?.isSubstitute || false,
+          substitutionInfo: substitutionInfo || null,
         };
         shootersMap.set(score.shooterId, currentShooterData);
       }

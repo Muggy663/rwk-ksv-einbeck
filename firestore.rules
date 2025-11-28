@@ -290,7 +290,8 @@ service cloud.firestore {
     }
 
     match /team_substitutions/{substitution} {
-      allow read, write: if isSuperAdmin();
+      allow read: if true; // Öffentlich lesbar für RWK-Tabellen
+      allow write: if isSuperAdmin();
     }
 
     // === KM-SYSTEM ===
