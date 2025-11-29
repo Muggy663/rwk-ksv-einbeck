@@ -20,6 +20,7 @@ import { db } from '@/lib/firebase/config';
 import { plausibilityService } from '@/lib/services/plausibility-service';
 import Link from 'next/link';
 import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, Timestamp, updateDoc, addDoc } from 'firebase/firestore';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -212,12 +213,28 @@ export default function SharedResultsPage({
           const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
           if (!currentSeason) return;
           
-          const scoresQuery = query(
-            collection(db, SCORES_COLLECTION),
-            where("teamId", "==", selectedTeamId),
-            where("durchgang", "==", parsedRound),
-            where("competitionYear", "==", currentSeason.competitionYear)
-          );
+          // Verwende saison-spezifische Collection falls vorhanden
+          let scoresQuery;
+          try {
+            const leagueData = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
+            const seasonSpecificCollection = leagueData ? 
+              getSeasonSpecificScoresCollection(currentSeason.competitionYear, leagueData.type) :
+              SCORES_COLLECTION;
+            
+            scoresQuery = query(
+              collection(db, seasonSpecificCollection),
+              where("teamId", "==", selectedTeamId),
+              where("durchgang", "==", parsedRound),
+              where("competitionYear", "==", currentSeason.competitionYear)
+            );
+          } catch (error) {
+            scoresQuery = query(
+              collection(db, SCORES_COLLECTION),
+              where("teamId", "==", selectedTeamId),
+              where("durchgang", "==", parsedRound),
+              where("competitionYear", "==", currentSeason.competitionYear)
+            );
+          }
           const scoresSnapshot = await getDocs(scoresQuery);
           const existingScores = scoresSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
           setExistingScoresForTeamAndRound(existingScores);
@@ -299,12 +316,28 @@ export default function SharedResultsPage({
             if (validShooterIds.length === 0) return { team, allShootersHaveResults: false };
             
             // Ergebnisse für dieses Team und diesen Durchgang laden
-            const scoresQuery = query(
-              collection(db, SCORES_COLLECTION),
-              where("teamId", "==", team.id),
-              where("durchgang", "==", parsedRound),
-              where("competitionYear", "==", selectedSeason.competitionYear)
-            );
+            // Verwende saison-spezifische Collection falls vorhanden
+            let scoresQuery;
+            try {
+              const leagueData = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
+              const seasonSpecificCollection = leagueData ? 
+                getSeasonSpecificScoresCollection(selectedSeason.competitionYear, leagueData.type) :
+                SCORES_COLLECTION;
+              
+              scoresQuery = query(
+                collection(db, seasonSpecificCollection),
+                where("teamId", "==", team.id),
+                where("durchgang", "==", parsedRound),
+                where("competitionYear", "==", selectedSeason.competitionYear)
+              );
+            } catch (error) {
+              scoresQuery = query(
+                collection(db, SCORES_COLLECTION),
+                where("teamId", "==", team.id),
+                where("durchgang", "==", parsedRound),
+                where("competitionYear", "==", selectedSeason.competitionYear)
+              );
+            }
             const scoresSnapshot = await getDocs(scoresQuery);
             const existingScores = scoresSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
             
@@ -589,7 +622,18 @@ export default function SharedResultsPage({
       
       pendingScores.forEach((entry) => {
         const { tempId, ...dataToSave } = entry;
-        const scoreDocRef = doc(collection(db, SCORES_COLLECTION));
+        
+        // Bestimme die richtige Collection basierend auf Jahr und Disziplin
+        let collectionName = SCORES_COLLECTION;
+        try {
+          const seasonSpecificCollection = getSeasonSpecificScoresCollection(entry.competitionYear, entry.leagueType);
+          collectionName = seasonSpecificCollection;
+          console.log(`🔍 Shared Results: Verwende ${collectionName}`);
+        } catch (error) {
+          console.log(`⚠️ Shared Results: Verwende Standard-Collection`);
+        }
+        
+        const scoreDocRef = doc(collection(db, collectionName));
         batch.set(scoreDocRef, {
           ...dataToSave,
           enteredByUserId: user.uid,
@@ -650,11 +694,41 @@ export default function SharedResultsPage({
               await addDoc(collection(db, LEAGUE_UPDATES_COLLECTION), leagueUpdateData);
             }
             
-            // E-Mail-Benachrichtigung entfernt - nur noch für Handzettel
+            // E-Mail-Benachrichtigung für Ergebnisse
+            try {
+              const { getAuth } = await import('firebase/auth');
+              const auth = getAuth();
+              let authHeaders = {};
+              if (auth.currentUser) {
+                const token = await auth.currentUser.getIdToken();
+                authHeaders = { 'Authorization': `Bearer ${token}` };
+              }
+              
+              const emailFormData = new FormData();
+              const teamName = allTeamsInSelectedLeague.find(t => t.id === entry.teamId)?.name || 'Unbekannt';
+              const leagueName = availableLeaguesForSeason.find(l => l.id === entry.leagueId)?.name || 'Unbekannt';
+              
+              emailFormData.append('subject', `📊 Neue Ergebnisse: ${teamName} - DG ${entry.durchgang}`);
+              emailFormData.append('message', `Neue Ergebnisse eingegangen:\r\n\r\nMannschaft: ${teamName}\r\nLiga: ${leagueName}\r\nDurchgang: ${entry.durchgang}\r\nAnzahl Ergebnisse: ${pendingScores.length}\r\nZeitpunkt: ${new Date().toLocaleString('de-DE')}\r\n\r\nDie Ergebnisse wurden digital erfasst und sind sofort in den RWK-Tabellen verfügbar.`);
+              emailFormData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
+              
+              const emailResponse = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: authHeaders,
+                body: emailFormData
+              });
+              
+              if (!emailResponse.ok) {
+                console.warn('E-Mail-Benachrichtigung fehlgeschlagen:', await emailResponse.text());
+              }
+            } catch (emailError) {
+              console.warn('E-Mail-Benachrichtigung Fehler:', emailError);
+            }
           } catch (updateError) {
             console.warn('League update failed:', updateError);
             // Fehler ignorieren - Hauptfunktion funktioniert trotzdem
           }
+          break; // Nur einmal pro Liga senden
         }
       }
       

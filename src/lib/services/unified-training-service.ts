@@ -18,7 +18,8 @@ export class UnifiedTrainingService {
     typ: 'training' | 'wettkampf';
     disziplin: string;
     schussAnzahl: number;
-    ergebnis: number;
+    ergebnis: number; // Zehntel-Ergebnis (Hauptfeld)
+    ergebnisGanzeRinge?: number; // Ganze Ringe
     standort: string;
     schiessstand?: string;
     wetter?: string;
@@ -41,7 +42,8 @@ export class UnifiedTrainingService {
       typ: data.typ,
       disziplin: data.disziplin,
       schussAnzahl: data.schussAnzahl,
-      ergebnis: data.ergebnis,
+      ergebnis: data.ergebnis, // Zehntel-Ergebnis
+      ergebnisGanzeRinge: data.ergebnisGanzeRinge, // Ganze Ringe
       standort: data.standort,
       schiessstand: data.schiessstand || '',
       wetter: data.wetter || '',

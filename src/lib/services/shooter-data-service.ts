@@ -1,6 +1,7 @@
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { CompetitionDisplayConfig, IndividualShooterDisplayData, ScoreEntry } from '@/types/rwk';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 export async function fetchShooterDataForCompetition(
   config: CompetitionDisplayConfig,
@@ -10,8 +11,9 @@ export async function fetchShooterDataForCompetition(
   if (!config || !config.year || !config.discipline) return [];
   
   try {
-    // Direkte Abfrage der Scores nach Jahr
-    const scoresColRef = collection(db, "rwk_scores");
+    // Direkte Abfrage der Scores nach Jahr mit saison-spezifischer Collection
+    const collectionName = getSeasonSpecificScoresCollection(config.year, config.discipline);
+    const scoresColRef = collection(db, collectionName);
     let scoresQuery;
     
     if (filterByLeagueId && filterByLeagueId !== "ALL_LEAGUES_IND_FILTER") {

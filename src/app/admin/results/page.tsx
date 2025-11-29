@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import Link from 'next/link';
 import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, documentId, addDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -172,12 +173,28 @@ function LegacyAdminResultsPage() {
                 if (teamShooterIds.length === 0) return { team, allShootersHaveResults: false };
                 
                 // Ergebnisse für dieses Team und diesen Durchgang aus der Datenbank laden
-                const scoresQuery = query(
-                    collection(db, SCORES_COLLECTION),
-                    where("teamId", "==", team.id),
-                    where("durchgang", "==", parsedRound),
-                    where("competitionYear", "==", selectedSeason.competitionYear)
-                );
+                // Verwende saison-spezifische Collection falls vorhanden
+                let scoresQuery;
+                try {
+                  const leagueData = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
+                  const seasonSpecificCollection = leagueData ? 
+                    getSeasonSpecificScoresCollection(selectedSeason.competitionYear, leagueData.type) :
+                    SCORES_COLLECTION;
+                  
+                  scoresQuery = query(
+                      collection(db, seasonSpecificCollection),
+                      where("teamId", "==", team.id),
+                      where("durchgang", "==", parsedRound),
+                      where("competitionYear", "==", selectedSeason.competitionYear)
+                  );
+                } catch (error) {
+                  scoresQuery = query(
+                      collection(db, SCORES_COLLECTION),
+                      where("teamId", "==", team.id),
+                      where("durchgang", "==", parsedRound),
+                      where("competitionYear", "==", selectedSeason.competitionYear)
+                  );
+                }
                 const scoresSnapshot = await getDocs(scoresQuery);
                 const existingScores = scoresSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
                 
@@ -249,12 +266,31 @@ function LegacyAdminResultsPage() {
       }
       setIsLoadingExistingScores(true);
       try {
-        const scoresQuery = query(
-          collection(db, SCORES_COLLECTION),
-          where("teamId", "==", selectedTeamId),
-          where("competitionYear", "==", currentSeason.competitionYear),
-          where("durchgang", "==", parseInt(selectedRound, 10))
-        );
+        // Verwende saison-spezifische Collection falls vorhanden
+        let scoresQuery;
+        try {
+          const leagueData = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
+          const seasonSpecificCollection = leagueData ? 
+            getSeasonSpecificScoresCollection(currentSeason.competitionYear, leagueData.type) :
+            SCORES_COLLECTION;
+          
+          console.log(`🔍 Admin Existing: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
+          
+          scoresQuery = query(
+            collection(db, seasonSpecificCollection),
+            where("teamId", "==", selectedTeamId),
+            where("competitionYear", "==", currentSeason.competitionYear),
+            where("durchgang", "==", parseInt(selectedRound, 10))
+          );
+        } catch (error) {
+          console.log(`⚠️ Admin Existing: Verwende Standard-Collection`);
+          scoresQuery = query(
+            collection(db, SCORES_COLLECTION),
+            where("teamId", "==", selectedTeamId),
+            where("competitionYear", "==", currentSeason.competitionYear),
+            where("durchgang", "==", parseInt(selectedRound, 10))
+          );
+        }
         const snapshot = await getDocs(scoresQuery);
         const fetchedScores = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
         setExistingScoresForTeamAndRound(fetchedScores);
@@ -576,16 +612,26 @@ Die Handzettel sind als Anhang beigefügt.`);
         pendingScores.forEach((entry) => {
             const { tempId, existingScoreId, ...dataToSave } = entry;
             
+            // Bestimme die richtige Collection basierend auf Jahr und Disziplin
+            let collectionName = SCORES_COLLECTION;
+            try {
+                const seasonSpecificCollection = getSeasonSpecificScoresCollection(entry.competitionYear, entry.leagueType);
+                collectionName = seasonSpecificCollection;
+                console.log(`🔍 Admin Results: Verwende ${collectionName}`);
+            } catch (error) {
+                console.log(`⚠️ Admin Results: Verwende Standard-Collection`);
+            }
+            
             if (existingScoreId) {
                 // Existierendes Ergebnis aktualisieren
-                const existingScoreRef = doc(db, SCORES_COLLECTION, existingScoreId);
+                const existingScoreRef = doc(db, collectionName, existingScoreId);
                 const scoreDataForDb: Omit<ScoreEntry, 'id' | 'entryTimestamp' | 'enteredByUserId' | 'enteredByUserName'> = {...dataToSave};
                 batch.update(existingScoreRef, {
                     ...scoreDataForDb, enteredByUserId: user.uid, enteredByUserName: user.displayName || user.email || "Unbekannt", entryTimestamp: serverTimestamp()
                 });
             } else {
                 // Neues Ergebnis erstellen
-                const scoreDocRef = doc(collection(db, SCORES_COLLECTION)); 
+                const scoreDocRef = doc(collection(db, collectionName)); 
                 const scoreDataForDb: Omit<ScoreEntry, 'id' | 'entryTimestamp' | 'enteredByUserId' | 'enteredByUserName'> = {...dataToSave};
                 batch.set(scoreDocRef, {
                     ...scoreDataForDb, enteredByUserId: user.uid, enteredByUserName: user.displayName || user.email || "Unbekannt", entryTimestamp: serverTimestamp()
@@ -712,10 +758,24 @@ Die Handzettel sind als Anhang beigefügt.`);
         const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
         if (selectedTeamId && currentSeason?.competitionYear && selectedRound) {
             setIsLoadingExistingScores(true);
-            const scoresQuery = query( collection(db, SCORES_COLLECTION),
-              where("teamId", "==", selectedTeamId), where("competitionYear", "==", currentSeason.competitionYear),
-              where("durchgang", "==", parseInt(selectedRound, 10))
-            );
+            // Verwende saison-spezifische Collection für Refresh
+            let scoresQuery;
+            try {
+              const leagueData = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
+              const seasonSpecificCollection = leagueData ? 
+                getSeasonSpecificScoresCollection(currentSeason.competitionYear, leagueData.type) :
+                SCORES_COLLECTION;
+              
+              scoresQuery = query( collection(db, seasonSpecificCollection),
+                where("teamId", "==", selectedTeamId), where("competitionYear", "==", currentSeason.competitionYear),
+                where("durchgang", "==", parseInt(selectedRound, 10))
+              );
+            } catch (error) {
+              scoresQuery = query( collection(db, SCORES_COLLECTION),
+                where("teamId", "==", selectedTeamId), where("competitionYear", "==", currentSeason.competitionYear),
+                where("durchgang", "==", parseInt(selectedRound, 10))
+              );
+            }
             const snapshot = await getDocs(scoresQuery);
             setExistingScoresForTeamAndRound(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry))); 
             setIsLoadingExistingScores(false);

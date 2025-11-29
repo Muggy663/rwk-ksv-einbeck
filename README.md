@@ -1,12 +1,12 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.0.0.2** | **Android: 0.9.4.1**
+**Version: 2.0.1** | **Android: 0.9.4.1**
 
 > **Social Training Platform für den deutschen Schießsport**
 
 Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und Social Training. Die erste Community-Plattform für Sportschützen mit Live-Wettkämpfen, Trainingsgruppen und erweiterten Statistiken.
 
-[![Version](https://img.shields.io/badge/Version-2.0.0.2-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.0.1-green?style=for-the-badge)](#)
 [![Social Training](https://img.shields.io/badge/Social_Training-Live-blue?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -20,7 +20,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **Google Gemini AI OCR** - Intelligente Handzettel-Erkennung
 - **Schießnachweis** - Digitales Schießtagebuch
 
-### 🚀 NEU: Social Training Platform (Version 2.0.0.2)
+### 🚀 NEU: Social Training Platform (Version 2.0.1)
 - **👥 Trainingsgruppen** - Gemeinsam trainieren mit Freunden (6-stellige Beitrittscodes)
 - **⚔️ Live-Wettkämpfe** - Real-time Wettkämpfe mit Live-Ranglisten
 - **🎯 Duelle-System** - 1vs1 Herausforderungen mit Firebase-Integration
@@ -123,7 +123,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - Keine Live-Wettkämpfe möglich
 - Zeitaufwändige Kommunikation
 
-### ✅ Nachher (Digital + Community - Stand 25.11.2025)
+### ✅ Nachher (Digital + Community - Stand 29.11.2025)
 - **Automatische Berechnung** aller Tabellen und Ranglisten
 - **Live-Wettkämpfe** mit Real-time Ranglisten
 - **Trainingsgruppen** mit 6-stelligen Beitrittscodes und Community-Features
@@ -169,7 +169,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 25. November 2025 - Version 2.0.0.2 - Separate Ergebnis-Felder für Ganze Ringe und Zehntel*
+*Letzte Aktualisierung: 29. November 2025 - Version 2.0.1 - Optimierte Datenbankzugriffe mit saison-spezifischen Collections*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

@@ -1,5 +1,6 @@
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy, doc, getDoc, limit } from 'firebase/firestore';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 /**
  * Generiert Daten für die Top-Schützen einer Liga
@@ -27,11 +28,22 @@ export async function fetchTopShooters(leagueId: string, topCount: number = 3) {
     }
     const seasonData = seasonSnap.data();
     
-    // Ergebnisse für die Liga abrufen
-    const scoresQuery = query(
-      collection(db, 'rwk_scores'),
-      where('leagueId', '==', leagueId)
-    );
+    // Ergebnisse für die Liga abrufen - verwende saison-spezifische Collection
+    let scoresQuery;
+    try {
+      const seasonSpecificCollection = getSeasonSpecificScoresCollection(seasonData.competitionYear, leagueData.type);
+      scoresQuery = query(
+        collection(db, seasonSpecificCollection),
+        where('leagueId', '==', leagueId),
+        where('competitionYear', '==', seasonData.competitionYear)
+      );
+    } catch (error) {
+      // Fallback auf alte Collection
+      scoresQuery = query(
+        collection(db, 'rwk_scores'),
+        where('leagueId', '==', leagueId)
+      );
+    }
     
     const scoresSnapshot = await getDocs(scoresQuery);
     const shootersMap = new Map();
@@ -177,11 +189,22 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
         continue;
       }
       
-      // Ergebnisse für das Team abrufen
-      const scoresQuery = query(
-        collection(db, 'rwk_scores'),
-        where('teamId', '==', teamDoc.id)
-      );
+      // Ergebnisse für das Team abrufen - verwende saison-spezifische Collection
+      let scoresQuery;
+      try {
+        const seasonSpecificCollection = getSeasonSpecificScoresCollection(seasonData.competitionYear, leagueData.type);
+        scoresQuery = query(
+          collection(db, seasonSpecificCollection),
+          where('teamId', '==', teamDoc.id),
+          where('competitionYear', '==', seasonData.competitionYear)
+        );
+      } catch (error) {
+        // Fallback auf alte Collection
+        scoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('teamId', '==', teamDoc.id)
+        );
+      }
       
       const scoresSnapshot = await getDocs(scoresQuery);
       
@@ -403,11 +426,40 @@ async function fetchBestShooterByGender(leagueIds: string[], gender: 'male' | 'f
     for (let i = 0; i < leagueIds.length; i += maxLeaguesPerQuery) {
       const leagueIdsChunk = leagueIds.slice(i, i + maxLeaguesPerQuery);
       
-      // Ergebnisse für die Ligen abrufen
-      const scoresQuery = query(
-        collection(db, 'rwk_scores'),
-        where('leagueId', 'in', leagueIdsChunk)
-      );
+      // Ergebnisse für die Ligen abrufen - verwende saison-spezifische Collection
+      let scoresQuery;
+      try {
+        // Ermittle Liga-Typ für Collection-Name (verwende erste Liga als Referenz)
+        const firstLeagueRef = doc(db, 'rwk_leagues', leagueIdsChunk[0]);
+        const firstLeagueSnap = await getDoc(firstLeagueRef);
+        
+        if (firstLeagueSnap.exists()) {
+          const firstLeagueData = firstLeagueSnap.data();
+          const seasonRef = doc(db, 'seasons', firstLeagueData.seasonId);
+          const seasonSnap = await getDoc(seasonRef);
+          
+          if (seasonSnap.exists()) {
+            const seasonData = seasonSnap.data();
+            const seasonSpecificCollection = getSeasonSpecificScoresCollection(seasonData.competitionYear, firstLeagueData.type);
+            
+            scoresQuery = query(
+              collection(db, seasonSpecificCollection),
+              where('leagueId', 'in', leagueIdsChunk),
+              where('competitionYear', '==', seasonData.competitionYear)
+            );
+          } else {
+            throw new Error('Saison nicht gefunden');
+          }
+        } else {
+          throw new Error('Liga nicht gefunden');
+        }
+      } catch (error) {
+        // Fallback auf alte Collection
+        scoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('leagueId', 'in', leagueIdsChunk)
+        );
+      }
       
       const scoresSnapshot = await getDocs(scoresQuery);
       allScores = [...allScores, ...scoresSnapshot.docs];

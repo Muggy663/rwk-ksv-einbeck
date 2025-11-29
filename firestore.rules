@@ -289,6 +289,20 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    // RWK Scores nach Saison (rwk_scores_[seasonId])
+    match /{collection}/{score} {
+      allow read: if collection.matches('rwk_scores_.*');
+      allow create: if collection.matches('rwk_scores_.*') && 
+                    isAuthenticated() && 
+                    isValidRingCount(request.resource.data.totalRinge) &&
+                    (request.auth.token.email == 'admin@rwk-einbeck.de' ||
+                     (exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) &&
+                      (get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles != null ||
+                       get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role != null)));
+      allow update: if collection.matches('rwk_scores_.*') && isSuperAdmin();
+      allow delete: if collection.matches('rwk_scores_.*') && isSuperAdmin();
+    }
+
     match /team_substitutions/{substitution} {
       allow read: if true; // Öffentlich lesbar für RWK-Tabellen
       allow write: if isSuperAdmin();

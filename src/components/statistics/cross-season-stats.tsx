@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Search, TrendingUp, Medal, LineChart as LineChartIcon } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 import { useToast } from '@/hooks/use-toast';
 import {
   ResponsiveContainer,
@@ -106,31 +107,52 @@ export function CrossSeasonStats() {
   const fetchShooterStats = async (shooterId: string, discipline: string) => {
     setIsLoading(true);
     try {
-      const scoresRef = collection(db, 'rwk_scores');
-      let q;
+      // Da wir saisonübergreifend suchen, müssen wir alle Collections durchsuchen
+      const currentYear = new Date().getFullYear();
+      const years = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1]; // Letzte 2 Jahre + aktuell + nächstes
+      const disciplines = discipline === 'all' ? ['KKG', 'KKP', 'LGA', 'LGS', 'LP'] : [discipline];
       
-      if (discipline === 'all') {
-        q = query(
-          scoresRef,
-          where('shooterId', '==', shooterId),
-          orderBy('competitionYear'),
-          orderBy('durchgang')
-        );
-      } else {
-        q = query(
-          scoresRef,
-          where('shooterId', '==', shooterId),
-          where('leagueType', '==', discipline),
-          orderBy('competitionYear'),
-          orderBy('durchgang')
-        );
+      let allScores: ShooterScore[] = [];
+      
+      // Durchsuche alle relevanten Collections
+      for (const year of years) {
+        for (const disc of disciplines) {
+          try {
+            const collectionName = getSeasonSpecificScoresCollection(year, disc);
+            const scoresRef = collection(db, collectionName);
+            
+            const q = query(
+              scoresRef,
+              where('shooterId', '==', shooterId),
+              orderBy('competitionYear'),
+              orderBy('durchgang')
+            );
+            
+            const querySnapshot = await getDocs(q);
+            const scores: ShooterScore[] = querySnapshot.docs.map(doc => ({
+              ...doc.data(),
+              id: doc.id
+            })) as ShooterScore[];
+            
+            allScores = [...allScores, ...scores];
+          } catch (error) {
+            // Collection existiert möglicherweise nicht - das ist ok
+            console.warn(`Collection ${disc} für Jahr ${year} nicht gefunden:`, error);
+          }
+        }
       }
       
-      const querySnapshot = await getDocs(q);
-      const scores: ShooterScore[] = querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      })) as ShooterScore[];
+      // Entferne Duplikate basierend auf einer eindeutigen Kombination
+      const uniqueScores = allScores.filter((score, index, self) => 
+        index === self.findIndex(s => 
+          s.shooterId === score.shooterId && 
+          s.competitionYear === score.competitionYear && 
+          s.durchgang === score.durchgang &&
+          s.leagueType === score.leagueType
+        )
+      );
+      
+      const scores = uniqueScores;
       
       if (scores.length === 0) {
         toast({

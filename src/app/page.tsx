@@ -419,21 +419,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-red-100 to-orange-100 dark:from-red-900/30 dark:to-orange-900/30 rounded-lg border-2 border-red-300 dark:border-red-600 shadow-lg">
-              <div className="w-3 h-3 bg-red-500 dark:bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <h4 className="font-bold text-red-800 dark:text-red-200 text-lg">⚔️ Live-Wettkämpfe & Duelle</h4>
-                <p className="text-sm text-red-700 dark:text-red-300 font-medium">Real-time Wettkämpfe und 1vs1 Herausforderungen zwischen Schützen</p>
-              </div>
-            </div>
 
-            <div className="flex items-start space-x-3 p-3 bg-gradient-to-r from-green-100 to-teal-100 dark:from-green-900/30 dark:to-teal-900/30 rounded-lg border-2 border-green-300 dark:border-green-600 shadow-lg">
-              <div className="w-3 h-3 bg-green-500 dark:bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-              <div>
-                <h4 className="font-bold text-green-800 dark:text-green-200 text-lg">🏅 Achievements & Community</h4>
-                <p className="text-sm text-green-700 dark:text-green-300 font-medium">Abzeichen sammeln, Statistiken vergleichen und andere Schützen entdecken</p>
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>

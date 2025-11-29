@@ -11,6 +11,7 @@ import { Loader2, Search, Users, Medal, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 import {
   ResponsiveContainer,
   BarChart,
@@ -146,31 +147,52 @@ export function TeamSeasonStats() {
   const fetchTeamStats = async (teamId: string, leagueType: string) => {
     setIsLoading(true);
     try {
-      const scoresRef = collection(db, 'rwk_scores');
-      let q;
+      // Da wir saisonübergreifend suchen, müssen wir alle Collections durchsuchen
+      const currentYear = new Date().getFullYear();
+      const years = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1]; // Letzte 2 Jahre + aktuell + nächstes
+      const disciplines = leagueType === 'all' ? ['KKG', 'KKP', 'LGA', 'LGS', 'LP'] : [leagueType];
       
-      if (leagueType === 'all') {
-        q = query(
-          scoresRef,
-          where('teamId', '==', teamId),
-          orderBy('competitionYear'),
-          orderBy('durchgang')
-        );
-      } else {
-        q = query(
-          scoresRef,
-          where('teamId', '==', teamId),
-          where('leagueType', '==', leagueType),
-          orderBy('competitionYear'),
-          orderBy('durchgang')
-        );
+      let allScores: TeamScore[] = [];
+      
+      // Durchsuche alle relevanten Collections
+      for (const year of years) {
+        for (const disc of disciplines) {
+          try {
+            const collectionName = getSeasonSpecificScoresCollection(year, disc);
+            const scoresRef = collection(db, collectionName);
+            
+            const q = query(
+              scoresRef,
+              where('teamId', '==', teamId),
+              orderBy('competitionYear'),
+              orderBy('durchgang')
+            );
+            
+            const querySnapshot = await getDocs(q);
+            const scores: TeamScore[] = querySnapshot.docs.map(doc => ({
+              ...doc.data(),
+              id: doc.id
+            })) as TeamScore[];
+            
+            allScores = [...allScores, ...scores];
+          } catch (error) {
+            // Collection existiert möglicherweise nicht - das ist ok
+            console.warn(`Collection ${disc} für Jahr ${year} nicht gefunden:`, error);
+          }
+        }
       }
       
-      const querySnapshot = await getDocs(q);
-      const scores: TeamScore[] = querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      })) as TeamScore[];
+      // Entferne Duplikate basierend auf einer eindeutigen Kombination
+      const uniqueScores = allScores.filter((score, index, self) => 
+        index === self.findIndex(s => 
+          s.teamId === score.teamId && 
+          s.competitionYear === score.competitionYear && 
+          s.durchgang === score.durchgang &&
+          s.leagueType === score.leagueType
+        )
+      );
+      
+      const scores = uniqueScores;
       
       if (scores.length === 0) {
         toast({

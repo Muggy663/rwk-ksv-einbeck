@@ -197,13 +197,6 @@ export default function DashboardAuswahl() {
                     </Button>
                   </Link>
                 )}
-                {isRWKAdmin && (
-                  <Link href="/dashboard-auswahl">
-                    <Button variant="outline" size="sm">
-                      Auswahl
-                    </Button>
-                  </Link>
-                )}
               </div>
             </div>
           </CardContent>
@@ -417,22 +410,7 @@ export default function DashboardAuswahl() {
             </Card>
           )}
 
-          {/* Neue Vereinssoftware - Kompakt */}
-          <Card className="border-purple-200 bg-purple-50 dark:bg-purple-950/30 dark:border-purple-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg text-purple-800 dark:text-purple-200">🚀 Neue Software</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-purple-700 dark:text-purple-300 mb-3">
-                "Verein-im-Visier" - Moderne Vereinssoftware in Entwicklung
-              </p>
-              <a href="https://vereins-manager-app.vercel.app/" target="_blank" rel="noopener noreferrer">
-                <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                  Vorschau ansehen
-                </Button>
-              </a>
-            </CardContent>
-          </Card>
+
         </div>
       </div>
 

@@ -96,8 +96,8 @@ export default function EintragBearbeitenPage() {
         typ: eintrag.typ,
         disziplin: eintrag.disziplin,
         schussAnzahl: eintrag.schussAnzahl,
-        ergebnis: eintrag.ergebnis,
-        ergebnisGanzeRinge: eintrag.ergebnisGanzeRinge,
+        ergebnis: eintrag.ergebnis, // Zehntel-Ergebnis
+        ergebnisGanzeRinge: eintrag.ergebnisGanzeRinge, // Ganze Ringe
         serien: serien.length > 0 ? serien : undefined,
         standort: eintrag.standort || 'Unbekannt',
         schiessstand: eintrag.schiessstand || '',

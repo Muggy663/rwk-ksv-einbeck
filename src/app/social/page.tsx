@@ -131,6 +131,11 @@ export default function SocialPage() {
     <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Social Training</h1>
+        <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 mb-4">
+          <div className="text-sm text-orange-800 dark:text-orange-200">
+            <div className="font-medium mb-1">🚧 Testphase - Feedback willkommen!</div>
+          </div>
+        </div>
         <p className="text-muted-foreground mb-4">
           Trainieren Sie gemeinsam mit anderen Schützen und nehmen Sie an Live-Wettkämpfen teil
         </p>
@@ -193,11 +198,6 @@ export default function SocialPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 mb-3">
-              <div className="text-sm text-orange-800 dark:text-orange-200">
-                <div className="font-medium mb-1">🚧 Testphase - Feedback willkommen!</div>
-              </div>
-            </div>
             <Button asChild variant="outline" className="w-full">
               <Link href="/training-groups">
                 <Users className="h-4 w-4 mr-2" />
@@ -232,9 +232,6 @@ export default function SocialPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="text-sm text-muted-foreground p-2 bg-orange-50 rounded border border-orange-200">
-                🚧 <strong>Testphase</strong> - Feedback willkommen!
-              </div>
               <Button asChild className="w-full">
                 <Link href="/live-competition">
                   Wettkämpfe anzeigen

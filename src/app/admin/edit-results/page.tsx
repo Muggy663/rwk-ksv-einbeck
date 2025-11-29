@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy, doc, updateDoc, deleteDoc, serverTimestamp, documentId, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 import {
   Dialog,
   DialogContent,
@@ -251,7 +252,21 @@ export default function AdminEditResultsPage() {
       if (selectedShooterId) qConstraints.push(where("shooterId", "==", selectedShooterId));
       if (selectedRound) qConstraints.push(where("durchgang", "==", parseInt(selectedRound, 10)));
 
-      const scoresQuery = query(collection(db, SCORES_COLLECTION), ...qConstraints, orderBy("entryTimestamp", "desc"));
+      // Verwende saison-spezifische Collection falls vorhanden
+      let scoresQuery;
+      try {
+        const leagueData = availableLeagues.find(l => l.id === selectedLeagueId);
+        const seasonSpecificCollection = leagueData ? 
+          getSeasonSpecificScoresCollection(seasonData.competitionYear, leagueData.type) :
+          SCORES_COLLECTION;
+        
+        console.log(`🔍 Admin: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
+        
+        scoresQuery = query(collection(db, seasonSpecificCollection), ...qConstraints, orderBy("entryTimestamp", "desc"));
+      } catch (error) {
+        console.log(`⚠️ Admin: Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
+        scoresQuery = query(collection(db, SCORES_COLLECTION), ...qConstraints, orderBy("entryTimestamp", "desc"));
+      }
 
       const snapshot = await getDocs(scoresQuery);
       const fetchedScores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScoreEntry));
@@ -310,7 +325,22 @@ export default function AdminEditResultsPage() {
     }
     
     try {
-      const scoreDocRef = doc(db, SCORES_COLLECTION, currentScoreToEdit.id);
+      // Bestimme die richtige Collection für das Update
+      let collectionName = SCORES_COLLECTION;
+      try {
+        const leagueData = availableLeagues.find(l => l.id === currentScoreToEdit.leagueId);
+        const seasonData = allSeasons.find(s => s.id === selectedSeasonId);
+        
+        if (leagueData && seasonData) {
+          const seasonSpecificCollection = getSeasonSpecificScoresCollection(seasonData.competitionYear, leagueData.type);
+          collectionName = seasonSpecificCollection;
+          console.log(`🔍 Admin Update: Verwende ${collectionName}`);
+        }
+      } catch (error) {
+        console.log(`⚠️ Admin Update: Verwende Standard-Collection`);
+      }
+      
+      const scoreDocRef = doc(db, collectionName, currentScoreToEdit.id);
       await updateDoc(scoreDocRef, {
         totalRinge: newScoreValue,
         scoreInputType: editFormResultType,
@@ -345,7 +375,22 @@ export default function AdminEditResultsPage() {
     }
     setIsDeletingScore(true);
     try {
-      await deleteDoc(doc(db, SCORES_COLLECTION, scoreToDelete.id));
+      // Bestimme die richtige Collection für das Löschen
+      let collectionName = SCORES_COLLECTION;
+      try {
+        const leagueData = availableLeagues.find(l => l.id === scoreToDelete.leagueId);
+        const seasonData = allSeasons.find(s => s.id === selectedSeasonId);
+        
+        if (leagueData && seasonData) {
+          const seasonSpecificCollection = getSeasonSpecificScoresCollection(seasonData.competitionYear, leagueData.type);
+          collectionName = seasonSpecificCollection;
+          console.log(`🔍 Admin Delete: Verwende ${collectionName}`);
+        }
+      } catch (error) {
+        console.log(`⚠️ Admin Delete: Verwende Standard-Collection`);
+      }
+      
+      await deleteDoc(doc(db, collectionName, scoreToDelete.id));
       toast({ title: "Ergebnis gelöscht", description: `Das Ergebnis für ${scoreToDelete.shooterName} (DG ${scoreToDelete.durchgang}) wurde entfernt.` });
       await handleSearchScores(); // Refresh list
     } catch (error) {

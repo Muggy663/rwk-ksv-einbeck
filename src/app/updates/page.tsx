@@ -21,7 +21,7 @@ export default function UpdatesPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <VersionBadge className="border-green-300 bg-green-50 text-green-700">
-              Web-Version: 1.7.5 (20.09.2025)
+              Web-Version: 2.0.1 (29.11.2025)
             </VersionBadge>
             <VersionBadge className="border-blue-300 bg-blue-50 text-blue-700">
               App-Version: 0.9.4.1 (02.09.2025)
@@ -180,7 +180,7 @@ export default function UpdatesPage() {
               <li>🔑 <strong>Support-Code-System:</strong> Temporärer Vereinszugang für Support-Team mit zeitlich begrenzten Codes</li>
               <li>🏢 <strong>Development-Club:</strong> Separater Test-Verein mit 20 Mitgliedern für sichere Entwicklung</li>
               <li>⚠️ <strong>Benutzerfreundliche Fehlermeldungen:</strong> Klare Anweisungen bei fehlendem Zugang statt technischer Fehler</li>
-              <li>🎯 <strong>Prioritäten-System:</strong> Support-Code > Development-Club > Fehlermeldung für optimale UX</li>
+              <li>🎯 <strong>Prioritäten-System:</strong> Support-Code &gt; Development-Club &gt; Fehlermeldung für optimale UX</li>
               <li>🔧 <strong>Admin-Tools:</strong> Vereinfachte Development-Setup-Tools für schnellere Entwicklung</li>
               <li>📱 <strong>Mobile-Optimierung:</strong> Support-Dialoge funktionieren perfekt auf allen Geräten</li>
               <li>🔒 <strong>Sicherheit:</strong> Support-Codes sind zeitlich begrenzt und automatisch ablaufend</li>

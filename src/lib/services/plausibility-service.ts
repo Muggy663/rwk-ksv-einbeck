@@ -1,6 +1,7 @@
 // Live-Plausibilitätsprüfung für Ergebniserfassung
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 export interface PlausibilityWarning {
   type: 'impossible' | 'anomaly' | 'consistency' | 'info';
@@ -209,8 +210,9 @@ class PlausibilityService {
 
     try {
       // Letzte 20 Ergebnisse des Schützen in dieser Disziplin laden
+      const collectionName = getSeasonSpecificScoresCollection(competitionYear, leagueType);
       const scoresQuery = query(
-        collection(db, 'rwk_scores'),
+        collection(db, collectionName),
         where('shooterId', '==', shooterId),
         where('leagueType', '==', leagueType),
         where('competitionYear', '>=', competitionYear - 1), // Aktuelle und letzte Saison
@@ -261,8 +263,9 @@ class PlausibilityService {
 
     try {
       // Team-Ergebnisse der letzten Durchgänge laden
+      const collectionName = getSeasonSpecificScoresCollection(competitionYear, leagueType);
       const scoresQuery = query(
-        collection(db, 'rwk_scores'),
+        collection(db, collectionName),
         where('teamId', '==', teamId),
         where('leagueType', '==', leagueType),
         where('competitionYear', '>=', competitionYear - 1),

@@ -11,6 +11,7 @@ import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import Link from 'next/link';
 import { findMissingResults, isLeagueRoundComplete } from '@/lib/services/result-validation';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 export default function MissingResultsPage() {
   const { toast } = useToast();
@@ -108,11 +109,32 @@ export default function MissingResultsPage() {
       }));
       setTeams(teamsData);
 
-      // Lade Scores
-      const scoresQuery = query(
-        collection(db, 'rwk_scores'),
-        where('leagueId', '==', selectedLeague)
-      );
+      // Lade Scores - verwende saison-spezifische Collection falls vorhanden
+      let scoresQuery;
+      try {
+        const selectedLeagueData = leagues.find(league => league.id === selectedLeague);
+        if (selectedLeagueData && teamsData[0]?.competitionYear) {
+          const seasonSpecificCollection = getSeasonSpecificScoresCollection(
+            teamsData[0].competitionYear, 
+            selectedLeagueData.type
+          );
+          
+          console.log(`🔍 Missing Results: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
+          
+          scoresQuery = query(
+            collection(db, seasonSpecificCollection),
+            where('leagueId', '==', selectedLeague)
+          );
+        } else {
+          throw new Error('Liga-Daten nicht gefunden');
+        }
+      } catch (error) {
+        console.log(`⚠️ Missing Results: Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
+        scoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('leagueId', '==', selectedLeague)
+        );
+      }
       const scoresSnapshot = await getDocs(scoresQuery);
       const scoresData = scoresSnapshot.docs.map(doc => ({
         id: doc.id,

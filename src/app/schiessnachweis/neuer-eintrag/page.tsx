@@ -158,9 +158,17 @@ export default function NeuerEintragPage() {
     setIsSubmitting(true);
     
     try {
-      // Debug: Prüfe groupId
+      // Debug: Prüfe Ergebnis-Felder
+      console.log('🔍 Debug - ergebnisGanzeRinge:', formData.ergebnisGanzeRinge);
+      console.log('🔍 Debug - ergebnis (Zehntel):', formData.ergebnis);
       console.log('🔍 Debug - selectedGroupId:', selectedGroupId);
       console.log('🔍 Debug - socialTraining:', socialTraining);
+      
+      const ganzeRinge = parseFloat(formData.ergebnisGanzeRinge);
+      const zehntelErgebnis = formData.ergebnis ? parseFloat(formData.ergebnis) : undefined;
+      
+      console.log('🔍 Parsed - ganzeRinge:', ganzeRinge);
+      console.log('🔍 Parsed - zehntelErgebnis:', zehntelErgebnis);
       
       // Verwende Unified Training Service für nahtlose Integration
       const result = await UnifiedTrainingService.saveTrainingResult({
@@ -168,7 +176,8 @@ export default function NeuerEintragPage() {
         typ: formData.typ,
         disziplin: formData.disziplin,
         schussAnzahl: parseInt(formData.schussAnzahl),
-        ergebnis: formData.ergebnis ? parseFloat(formData.ergebnis) : parseFloat(formData.ergebnisGanzeRinge),
+        ergebnis: zehntelErgebnis || ganzeRinge, // Zehntel-Ergebnis oder Ganze Ringe als Fallback
+        ergebnisGanzeRinge: ganzeRinge, // Ganze Ringe
         standort: formData.standort,
         schiessstand: formData.schiessstand || undefined,
         wetter: formData.wetter || undefined,

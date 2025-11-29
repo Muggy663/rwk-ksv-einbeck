@@ -1,5 +1,6 @@
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 export interface ShooterPerformanceData {
   shooterId: string;
@@ -32,20 +33,62 @@ export async function fetchShooterPerformanceData(
   clubId?: string
 ): Promise<ShooterPerformanceData[]> {
   try {
-    // Versuche, Daten aus Firestore zu laden
-    let scoresQuery;
+    // Lade Saison-Daten für Collection-Name
+    const seasonQuery = query(
+      collection(db, 'seasons'),
+      where('__name__', '==', seasonId)
+    );
+    const seasonSnapshot = await getDocs(seasonQuery);
     
+    if (seasonSnapshot.empty) return [];
+    
+    const seasonData = seasonSnapshot.docs[0].data();
+    const competitionYear = seasonData.competitionYear;
+    
+    // Lade Liga-Daten für Disziplin
+    let leagueType = 'KK'; // Default
     if (leagueId && leagueId !== 'all') {
-      scoresQuery = query(
-        collection(db, 'rwk_scores'),
-        where('seasonId', '==', seasonId),
-        where('leagueId', '==', leagueId)
+      const leagueQuery = query(
+        collection(db, 'rwk_leagues'),
+        where('__name__', '==', leagueId)
       );
-    } else {
-      scoresQuery = query(
-        collection(db, 'rwk_scores'),
-        where('seasonId', '==', seasonId)
-      );
+      const leagueSnapshot = await getDocs(leagueQuery);
+      if (!leagueSnapshot.empty) {
+        leagueType = leagueSnapshot.docs[0].data().type;
+      }
+    }
+    
+    // Verwende saison-spezifische Collection
+    let scoresQuery;
+    try {
+      const seasonSpecificCollection = getSeasonSpecificScoresCollection(competitionYear, leagueType);
+      
+      if (leagueId && leagueId !== 'all') {
+        scoresQuery = query(
+          collection(db, seasonSpecificCollection),
+          where('competitionYear', '==', competitionYear),
+          where('leagueId', '==', leagueId)
+        );
+      } else {
+        scoresQuery = query(
+          collection(db, seasonSpecificCollection),
+          where('competitionYear', '==', competitionYear)
+        );
+      }
+    } catch (error) {
+      // Fallback auf alte Collection
+      if (leagueId && leagueId !== 'all') {
+        scoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('seasonId', '==', seasonId),
+          where('leagueId', '==', leagueId)
+        );
+      } else {
+        scoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('seasonId', '==', seasonId)
+        );
+      }
     }
     
     const scoresSnapshot = await getDocs(scoresQuery);
@@ -131,10 +174,48 @@ export async function fetchTeamComparisonData(
       for (const teamDoc of teamsSnapshot.docs) {
         const teamData = teamDoc.data();
         
-        const scoresQuery = query(
-          collection(db, 'rwk_scores'),
-          where('teamId', '==', teamDoc.id)
-        );
+        // Verwende saison-spezifische Collection falls möglich
+        let scoresQuery;
+        try {
+          const seasonQuery = query(
+            collection(db, 'seasons'),
+            where('__name__', '==', seasonId)
+          );
+          const seasonSnapshot = await getDocs(seasonQuery);
+          
+          if (!seasonSnapshot.empty) {
+            const seasonData = seasonSnapshot.docs[0].data();
+            const competitionYear = seasonData.competitionYear;
+            
+            // Ermittle Liga-Typ für Collection-Name
+            const leagueQuery = query(
+              collection(db, 'rwk_leagues'),
+              where('__name__', '==', teamData.leagueId)
+            );
+            const leagueSnapshot = await getDocs(leagueQuery);
+            
+            if (!leagueSnapshot.empty) {
+              const leagueType = leagueSnapshot.docs[0].data().type;
+              const seasonSpecificCollection = getSeasonSpecificScoresCollection(competitionYear, leagueType);
+              
+              scoresQuery = query(
+                collection(db, seasonSpecificCollection),
+                where('teamId', '==', teamDoc.id),
+                where('competitionYear', '==', competitionYear)
+              );
+            } else {
+              throw new Error('Liga nicht gefunden');
+            }
+          } else {
+            throw new Error('Saison nicht gefunden');
+          }
+        } catch (error) {
+          // Fallback auf alte Collection
+          scoresQuery = query(
+            collection(db, 'rwk_scores'),
+            where('teamId', '==', teamDoc.id)
+          );
+        }
         
         const scoresSnapshot = await getDocs(scoresQuery);
         let totalScore = 0;
@@ -176,23 +257,65 @@ export async function fetchGenderDistributionData(
   clubId?: string
 ): Promise<GenderDistributionData> {
   try {
-    // Versuche, Daten aus Firestore zu laden
-    let scoresQuery;
+    // Lade Saison-Daten für Collection-Name
+    const seasonQuery = query(
+      collection(db, 'seasons'),
+      where('__name__', '==', seasonId)
+    );
+    const seasonSnapshot = await getDocs(seasonQuery);
     
+    if (seasonSnapshot.empty) return { male: 0, female: 0 };
+    
+    const seasonData = seasonSnapshot.docs[0].data();
+    const competitionYear = seasonData.competitionYear;
+    
+    // Lade Liga-Daten für Disziplin
+    let leagueType = 'KK'; // Default
     if (leagueId && leagueId !== 'all') {
-      scoresQuery = query(
-        collection(db, 'rwk_scores'),
-        where('seasonId', '==', seasonId),
-        where('leagueId', '==', leagueId)
+      const leagueQuery = query(
+        collection(db, 'rwk_leagues'),
+        where('__name__', '==', leagueId)
       );
-    } else {
-      scoresQuery = query(
-        collection(db, 'rwk_scores'),
-        where('seasonId', '==', seasonId)
-      );
+      const leagueSnapshot = await getDocs(leagueQuery);
+      if (!leagueSnapshot.empty) {
+        leagueType = leagueSnapshot.docs[0].data().type;
+      }
     }
     
-    const scoresSnapshot = await getDocs(scoresQuery);
+    // Verwende saison-spezifische Collection
+    let genderScoresQuery;
+    try {
+      const seasonSpecificCollection = getSeasonSpecificScoresCollection(competitionYear, leagueType);
+      
+      if (leagueId && leagueId !== 'all') {
+        genderScoresQuery = query(
+          collection(db, seasonSpecificCollection),
+          where('competitionYear', '==', competitionYear),
+          where('leagueId', '==', leagueId)
+        );
+      } else {
+        genderScoresQuery = query(
+          collection(db, seasonSpecificCollection),
+          where('competitionYear', '==', competitionYear)
+        );
+      }
+    } catch (error) {
+      // Fallback auf alte Collection
+      if (leagueId && leagueId !== 'all') {
+        genderScoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('seasonId', '==', seasonId),
+          where('leagueId', '==', leagueId)
+        );
+      } else {
+        genderScoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('seasonId', '==', seasonId)
+        );
+      }
+    }
+    
+    const scoresSnapshot = await getDocs(genderScoresQuery);
     
     if (!scoresSnapshot.empty) {
       const shootersMap = new Map<string, { gender: 'male' | 'female' }>();

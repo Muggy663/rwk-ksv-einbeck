@@ -52,6 +52,7 @@ import {
   collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query,
   where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayUnion, arrayRemove, Timestamp, setDoc
 } from 'firebase/firestore';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -313,8 +314,9 @@ export default function VereinMannschaftenPage() {
       const teamIds = teamsOfActiveClub.map(team => team.id).filter(Boolean);
       if (teamIds.length === 0) return;
 
+      const collectionName = getSeasonSpecificScoresCollection(currentSeason.competitionYear, 'KKG'); // Use KKG as default for checking
       const scoresQuery = query(
-        collection(db, 'rwk_scores'),
+        collection(db, collectionName),
         where('teamId', 'in', teamIds),
         where('competitionYear', '==', currentSeason.competitionYear)
       );

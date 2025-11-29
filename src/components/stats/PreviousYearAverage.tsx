@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 import { Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -39,9 +40,10 @@ export function PreviousYearAverage({
       try {
         const previousYear = currentYear - 1;
         
-        // Abfrage für Ergebnisse des Vorjahres
+        // Abfrage für Ergebnisse des Vorjahres mit saison-spezifischer Collection
+        const collectionName = getSeasonSpecificScoresCollection(previousYear, leagueType || 'KKG');
         let scoresQuery = query(
-          collection(db, 'rwk_scores'),
+          collection(db, collectionName),
           where('shooterId', '==', shooterId),
           where('competitionYear', '==', previousYear)
         );

@@ -87,6 +87,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 import { SubstitutionBadge } from '@/components/ui/substitution-badge';
 import { BackButton } from '@/components/ui/back-button';
 import { RWKLegend } from '@/components/ui/rwk-legend';
@@ -648,13 +649,33 @@ function RwkTabellenPageComponent() {
         teamsByLeague.get(leagueId)!.push({id: teamDoc.id, ...teamData});
       });
 
-      // Batch-load ALLE Scores auf einmal
-      const allScoresQuery = query(
-        collection(db, "rwk_scores"),
-        where("competitionYear", "==", config.year),
-        where("leagueType", "in", firestoreTypesToQuery)
-      );
-      const allScoresSnapshot = await getDocs(allScoresQuery);
+      // Batch-load ALLE Scores auf einmal - verwende saison-spezifische Collection falls vorhanden
+      let allScoresSnapshot;
+      try {
+        // Verwende neue Collection-Naming-Logik
+        const seasonSpecificCollection = getSeasonSpecificScoresCollection(config.year, firestoreTypesToQuery[0]);
+        
+        console.log(`🔍 Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
+        
+        const seasonSpecificQuery = query(
+          collection(db, seasonSpecificCollection),
+          where("competitionYear", "==", config.year),
+          where("leagueType", "in", firestoreTypesToQuery)
+        );
+        allScoresSnapshot = await getDocs(seasonSpecificQuery);
+        
+        console.log(`✅ Saison-spezifische Collection gefunden: ${allScoresSnapshot.docs.length} Scores`);
+      } catch (error) {
+        console.log(`⚠️ Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
+        
+        // Fallback auf ursprüngliche Collection
+        const allScoresQuery = query(
+          collection(db, "rwk_scores"),
+          where("competitionYear", "==", config.year),
+          where("leagueType", "in", firestoreTypesToQuery)
+        );
+        allScoresSnapshot = await getDocs(allScoresQuery);
+      }
       const scoresByTeam = new Map<string, ScoreEntry[]>();
       allScoresSnapshot.docs.forEach(scoreDoc => {
         const score = scoreDoc.data() as ScoreEntry;
@@ -1044,8 +1065,7 @@ function RwkTabellenPageComponent() {
         }
       });
       
-      // Jetzt lade Scores für diese Schützen
-      const scoresColRef = collection(db, "rwk_scores");
+      // Jetzt lade Scores für diese Schützen - verwende saison-spezifische Collection falls vorhanden
       let scoresQueryConstraints: any[] = [where("competitionYear", "==", config.year)];
       
       // WICHTIG: Liga-Filter ist jetzt immer erforderlich - keine übergreifende Abfrage mehr
@@ -1075,9 +1095,19 @@ function RwkTabellenPageComponent() {
         ];
       }
       
-
-      
-      const scoresQuery = query(scoresColRef, ...scoresQueryConstraints);
+      // Versuche saison-spezifische Collection zu verwenden
+      let scoresQuery;
+      try {
+        // Verwende neue Collection-Naming-Logik
+        const seasonSpecificCollection = getSeasonSpecificScoresCollection(config.year, config.discipline as FirestoreLeagueSpecificDiscipline);
+        
+        console.log(`🔍 Individual: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
+        
+        scoresQuery = query(collection(db, seasonSpecificCollection), ...scoresQueryConstraints);
+      } catch (error) {
+        console.log(`⚠️ Individual: Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
+        scoresQuery = query(collection(db, "rwk_scores"), ...scoresQueryConstraints);
+      }
       
       const scoresSnapshot = await getDocs(scoresQuery);
       const allScores: ScoreEntry[] = [];
@@ -1093,13 +1123,26 @@ function RwkTabellenPageComponent() {
       
       // Wenn keine Scores gefunden, prüfe alle Scores für dieses Jahr
       if (allScores.length === 0) {
-        const allScoresQuery = query(
-          collection(db, "rwk_scores"),
-          where("competitionYear", "==", config.year)
-        );
-        const allScoresSnapshot = await getDocs(allScoresQuery);
-        const allYearLeagueTypes = [...new Set(allScoresSnapshot.docs.map(doc => doc.data().leagueType))];
-        console.log('🔍 Debug - Alle leagueTypes für Jahr', config.year, ':', allYearLeagueTypes);
+        try {
+          // Versuche zuerst saison-spezifische Collection
+          const seasonSpecificCollection = getSeasonSpecificScoresCollection(config.year, config.discipline as FirestoreLeagueSpecificDiscipline);
+          const seasonSpecificQuery = query(
+            collection(db, seasonSpecificCollection),
+            where("competitionYear", "==", config.year)
+          );
+          const seasonSpecificSnapshot = await getDocs(seasonSpecificQuery);
+          const seasonSpecificLeagueTypes = [...new Set(seasonSpecificSnapshot.docs.map(doc => doc.data().leagueType))];
+          console.log('🔍 Debug - Saison-spezifische leagueTypes für Jahr', config.year, ':', seasonSpecificLeagueTypes);
+        } catch (error) {
+          // Fallback auf rwk_scores
+          const allScoresQuery = query(
+            collection(db, "rwk_scores"),
+            where("competitionYear", "==", config.year)
+          );
+          const allScoresSnapshot = await getDocs(allScoresQuery);
+          const allYearLeagueTypes = [...new Set(allScoresSnapshot.docs.map(doc => doc.data().leagueType))];
+          console.log('🔍 Debug - Alle leagueTypes für Jahr', config.year, ':', allYearLeagueTypes);
+        }
       }
 
       const shootersMap = new Map<string, IndividualShooterDisplayData>();
@@ -1581,14 +1624,34 @@ function RwkTabellenPageComponent() {
     
     try {
 
-      // Lade Scores für dieses Team
-      const scoresQuery = query(
-        collection(db, "rwk_scores"), 
-        where("teamId", "==", teamId), 
-        where("competitionYear", "==", teamData.competitionYear),
-        where("shooterId", "in", validShooterIds)
-      );
-      const teamScoresSnapshot = await getDocs(scoresQuery);
+      // Lade Scores für dieses Team - verwende saison-spezifische Collection falls vorhanden
+      let teamScoresSnapshot;
+      try {
+        // Verwende neue Collection-Naming-Logik
+        const seasonSpecificCollection = getSeasonSpecificScoresCollection(teamData.competitionYear, teamData.leagueType as FirestoreLeagueSpecificDiscipline);
+        
+        console.log(`🔍 Team: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
+        
+        const seasonSpecificQuery = query(
+          collection(db, seasonSpecificCollection), 
+          where("teamId", "==", teamId), 
+          where("competitionYear", "==", teamData.competitionYear),
+          where("shooterId", "in", validShooterIds)
+        );
+        teamScoresSnapshot = await getDocs(seasonSpecificQuery);
+        
+        console.log(`✅ Team: Saison-spezifische Collection gefunden: ${teamScoresSnapshot.docs.length} Scores`);
+      } catch (error) {
+        console.log(`⚠️ Team: Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
+        
+        const scoresQuery = query(
+          collection(db, "rwk_scores"), 
+          where("teamId", "==", teamId), 
+          where("competitionYear", "==", teamData.competitionYear),
+          where("shooterId", "in", validShooterIds)
+        );
+        teamScoresSnapshot = await getDocs(scoresQuery);
+      }
       const scoresByShooter = new Map<string, ScoreEntry[]>();
       teamScoresSnapshot.forEach(scoreDoc => {
         const score = scoreDoc.data() as ScoreEntry;
@@ -1628,12 +1691,25 @@ function RwkTabellenPageComponent() {
             
             // TEST-MODUS: Suche Namen in bestehenden Scores
             try {
-              const scoresQuery = query(
-                collection(db, "rwk_scores"),
-                where("shooterId", "==", shooterId),
-                limit(1)
-              );
-              const scoresSnapshot = await getDocs(scoresQuery);
+              // Versuche zuerst saison-spezifische Collection
+              let scoresSnapshot;
+              try {
+                const seasonSpecificCollection = getSeasonSpecificScoresCollection(teamData.competitionYear, teamData.leagueType as FirestoreLeagueSpecificDiscipline);
+                const seasonSpecificQuery = query(
+                  collection(db, seasonSpecificCollection),
+                  where("shooterId", "==", shooterId),
+                  limit(1)
+                );
+                scoresSnapshot = await getDocs(seasonSpecificQuery);
+              } catch (error) {
+                // Fallback auf rwk_scores
+                const scoresQuery = query(
+                  collection(db, "rwk_scores"),
+                  where("shooterId", "==", shooterId),
+                  limit(1)
+                );
+                scoresSnapshot = await getDocs(scoresQuery);
+              }
               
               if (!scoresSnapshot.empty) {
                 const scoreData = scoresSnapshot.docs[0].data();

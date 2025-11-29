@@ -1,5 +1,6 @@
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, writeBatch, getDoc } from 'firebase/firestore';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 /**
  * Bereinigt Referenzen auf gelöschte Mannschaften in der Datenbank
@@ -7,16 +8,30 @@ import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, writeBatc
  */
 export async function cleanupDeletedTeamReferences(teamId: string) {
   try {
-    // 1. Entferne Referenzen in rwk_scores
-    const scoresRef = collection(db, 'rwk_scores');
-    const scoresQuery = query(scoresRef, where('teamId', '==', teamId));
-    const scoresSnapshot = await getDocs(scoresQuery);
+    // 1. Entferne Referenzen in rwk_scores (alle Collections durchsuchen)
+    // Da wir nicht wissen, in welcher Collection die Scores sind, müssen wir alle durchsuchen
+    const currentYear = new Date().getFullYear();
+    const disciplines = ['KKG', 'KKP', 'LGA', 'LGS', 'LP'];
     
     const batch = writeBatch(db);
     
-    scoresSnapshot.forEach((scoreDoc) => {
-      batch.delete(scoreDoc.ref);
-    });
+    // Durchsuche alle möglichen Collections
+    for (const discipline of disciplines) {
+      try {
+        const collectionName = getSeasonSpecificScoresCollection(currentYear, discipline);
+        const scoresRef = collection(db, collectionName);
+        const scoresQuery = query(scoresRef, where('teamId', '==', teamId));
+        const scoresSnapshot = await getDocs(scoresQuery);
+        
+        scoresSnapshot.forEach((scoreDoc) => {
+          batch.delete(scoreDoc.ref);
+        });
+      } catch (error) {
+        console.warn(`Fehler beim Durchsuchen von ${discipline} Collection:`, error);
+      }
+    }
+    
+
     
     // 2. Entferne Referenzen in rwk_shooter_team_assignments
     const assignmentsRef = collection(db, 'rwk_shooter_team_assignments');
@@ -69,19 +84,29 @@ export async function cleanupAllDeletedTeamReferencesForClub(clubId: string, use
       }
     });
     
-    // Hole alle Ergebnisse für den Verein
-    const scoresRef = collection(db, 'rwk_scores');
-    const scoresQuery = query(scoresRef, where('clubId', '==', clubId));
-    const scoresSnapshot = await getDocs(scoresQuery);
+    // Hole alle Ergebnisse für den Verein aus allen Collections
+    const currentYear = new Date().getFullYear();
+    const disciplines = ['KKG', 'KKP', 'LGA', 'LGS', 'LP'];
     
-    // Lösche Ergebnisse für nicht mehr existierende Mannschaften
-    scoresSnapshot.forEach((scoreDoc) => {
-      const score = scoreDoc.data();
-      if (!activeTeamIds.includes(score.teamId)) {
-        batch.delete(scoreDoc.ref);
-        deletedCount++;
+    for (const discipline of disciplines) {
+      try {
+        const collectionName = getSeasonSpecificScoresCollection(currentYear, discipline);
+        const scoresRef = collection(db, collectionName);
+        const scoresQuery = query(scoresRef, where('clubId', '==', clubId));
+        const scoresSnapshot = await getDocs(scoresQuery);
+        
+        // Lösche Ergebnisse für nicht mehr existierende Mannschaften
+        scoresSnapshot.forEach((scoreDoc) => {
+          const score = scoreDoc.data();
+          if (!activeTeamIds.includes(score.teamId)) {
+            batch.delete(scoreDoc.ref);
+            deletedCount++;
+          }
+        });
+      } catch (error) {
+        console.warn(`Fehler beim Durchsuchen von ${discipline} Collection:`, error);
       }
-    });
+    }
     
     // Batch-Operationen ausführen
     if (deletedCount > 0) {
