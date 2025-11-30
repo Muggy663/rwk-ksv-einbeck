@@ -1,6 +1,8 @@
 // Minimale Sanitization für RWK Einbeck App
 // Nur für PDF-Generierung und HTML-Output
 
+import { logDebug } from '@/lib/utils/secure-logger'
+
 /**
  * Bereinigt Text für sichere HTML/PDF-Ausgabe
  * Verhindert XSS durch Escaping von HTML-Zeichen
