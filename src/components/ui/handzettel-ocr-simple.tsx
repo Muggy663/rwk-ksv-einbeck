@@ -10,6 +10,7 @@ import { simpleOCR, type SimpleOCRResult } from "@/lib/services/simple-ocr-servi
 import type { Team, Shooter } from "@/types/rwk"
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger'
 
 interface HandzettelOCRProps {
   imageFile: File

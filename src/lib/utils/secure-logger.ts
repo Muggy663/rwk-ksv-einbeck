@@ -156,6 +156,7 @@ class SecureLogger {
       const logMessage = this.createLogMessage('debug', message, context);
       console.debug(logMessage);
     }
+    // In production: no-op (empty function to prevent errors)
   }
 
   /**
@@ -175,5 +176,14 @@ export const secureLogger = new SecureLogger();
 export const logInfo = (message: string, context?: LogContext) => secureLogger.info(message, context);
 export const logWarn = (message: string, context?: LogContext) => secureLogger.warn(message, context);
 export const logError = (message: string, error?: Error, context?: LogContext) => secureLogger.error(message, error, context);
-export const logDebug = (message: string, context?: LogContext) => secureLogger.debug(message, context);
+export const logDebug = (message: string, context?: LogContext) => {
+  try {
+    secureLogger.debug(message, context);
+  } catch (error) {
+    // Fallback: silent fail in production
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('logDebug error:', error);
+    }
+  }
+};
 export const logPerformance = (operation: string, duration: number, context?: LogContext) => secureLogger.performance(operation, duration, context);
