@@ -74,7 +74,7 @@ export default function RWKTabellenModified() {
     }));
     localStorage.setItem(cacheKey + '-time', Date.now().toString());
   } catch (err: any) {
-    console.error('RWK DEBUG: Failed to load RWK data in loadData:', err);
+    logError('RWK DEBUG: Failed to load RWK data in loadData:', err);
     toast({ title: "Fehler Datenladen", description: `Fehler beim Laden der Wettkampfdaten: ${err.message}`, variant: "destructive" });
     setError((err as Error).message || 'Unbekannter Fehler beim Laden der Daten.');
   } finally {

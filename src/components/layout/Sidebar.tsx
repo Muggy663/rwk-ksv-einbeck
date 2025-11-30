@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';

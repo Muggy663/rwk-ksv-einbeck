@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Loader2 } from 'lucide-react';
 
 export default function RwkTabellenPrintPage() {

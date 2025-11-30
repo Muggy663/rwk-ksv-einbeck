@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,7 +76,7 @@ export default function StartlistenPage() {
           }
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Saisons:', error);
+        logError('Fehler beim Laden der Saisons:', error);
       }
     };
     loadSaisons();
@@ -96,9 +97,9 @@ export default function StartlistenPage() {
         // KM-Disziplinen laden - verwende die API statt direkten Firebase-Zugriff
         const disziplinenResponse = await fetch('/api/km/disziplinen');
         const disziplinenResult = await disziplinenResponse.json();
-        console.log('Loaded disziplinen from API:', disziplinenResult.data?.length || 0);
+        logDebug('Loaded disziplinen from API:', disziplinenResult.data?.length || 0);
         const disziplin141 = disziplinenResult.data?.find(d => d.spoNummer === '1.41');
-        console.log('Found 1.41:', disziplin141);
+        logDebug('Found 1.41:', disziplin141);
         if (disziplinenResult.success && disziplinenResult.data) {
           const disziplinenData = disziplinenResult.data
             .map(d => ({
@@ -119,7 +120,7 @@ export default function StartlistenPage() {
           setDisziplinen(disziplinenData);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Daten:', error);
+        logError('Fehler beim Laden der Daten:', error);
         toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden.', variant: 'destructive' });
       } finally {
         setLoading(false);
@@ -134,14 +135,14 @@ export default function StartlistenPage() {
       if (!selectedSaison) return;
       
       try {
-        console.log('Loading KM-Meldungen für Saison:', selectedSaison);
+        logDebug('Loading KM-Meldungen für Saison:', selectedSaison);
         const response = await fetch(`/api/km/meldungen?saison=${selectedSaison}`);
         
         if (response.ok) {
           const data = await response.json();
           const allMeldungen = data.data || [];
-          console.log('Alle KM-Meldungen:', allMeldungen.length);
-          console.log('Config Disziplinen:', config.disziplinen);
+          logDebug('Alle KM-Meldungen:', allMeldungen.length);
+          logDebug('Config Disziplinen:', config.disziplinen);
           
           // Lade auch Disziplinen-Details für Matching
           const disziplinenRes = await fetch('/api/km/disziplinen');
@@ -155,15 +156,15 @@ export default function StartlistenPage() {
           const gefiltert = allMeldungen.filter(meldung => {
             const disziplin = disziplinenData.find(d => d.id === meldung.disziplinId);
             const disziplinName = disziplin?.name;
-            console.log('Checking meldung disziplin:', disziplinName, 'against config:', config.disziplinen);
+            logDebug('Checking meldung disziplin:', disziplinName, 'against config:', config.disziplinen);
             return disziplinName && config.disziplinen.includes(disziplinName);
           });
           
-          console.log('Gefilterte Meldungen:', gefiltert.length, 'von', allMeldungen.length);
+          logDebug('Gefilterte Meldungen:', gefiltert.length, 'von', allMeldungen.length);
           setMeldungen(gefiltert);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Meldungen:', error);
+        logError('Fehler beim Laden der Meldungen:', error);
       }
     };
     
@@ -214,7 +215,7 @@ export default function StartlistenPage() {
         window.location.href = '/km-orga/startlisten/uebersicht';
       }, 1500);
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
+      logError('Fehler beim Speichern:', error);
       toast({
         title: "Fehler",
         description: "Die Konfiguration konnte nicht gespeichert werden.",

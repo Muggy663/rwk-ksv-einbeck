@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, FileText } from "lucide-react";
 import Link from "next/link";

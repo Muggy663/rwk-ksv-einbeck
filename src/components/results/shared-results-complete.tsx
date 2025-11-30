@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -101,7 +102,7 @@ export default function SharedResultsPage({
       setAllShootersFromDB(shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Shooter)).filter(s => s.id));
 
     } catch (error) {
-      console.error("Error fetching master data: ", error);
+      logError("Error fetching master data: ", error);
       toast({ title: "Fehler beim Laden der Stammdaten", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingMasterData(false);
@@ -155,7 +156,7 @@ export default function SharedResultsPage({
             
             setAvailableLeaguesForSeason(filteredLeagues);
           } catch (error) {
-            console.error("Error fetching leagues for club:", error);
+            logError("Error fetching leagues for club:", error);
             setAvailableLeaguesForSeason([]);
           } finally {
             setIsLoadingLeagues(false);
@@ -263,7 +264,7 @@ export default function SharedResultsPage({
           
           setAvailableShootersForDropdown(availableShooters);
         } catch (error) {
-          console.error('Error loading existing scores:', error);
+          logError('Error loading existing scores:', error);
           setAvailableShootersForDropdown(shootersOfSelectedTeam);
         }
       };
@@ -371,7 +372,7 @@ export default function SharedResultsPage({
           
           setAllTeamsInSelectedLeague(filteredTeams);
         } catch (error) {
-          console.error("Error fetching teams:", error);
+          logError("Error fetching teams:", error);
           toast({ title: "Fehler Teams laden", description: (error as Error).message, variant: "destructive" });
           setAllTeamsInSelectedLeague([]);
         } finally {
@@ -554,7 +555,7 @@ export default function SharedResultsPage({
       uploadFormData.append('message', `Handzettel ohne Ergebnisse eingegangen:\r\n\r\nMannschaft: ${teamName}\r\nLiga: ${leagueName}\r\nDurchgang: ${selectedRound || 'nicht ausgewählt'}\r\nAnzahl Seiten: ${handzettelFiles.length}\r\nZeitpunkt: ${new Date().toLocaleString('de-DE')}\r\n\r\nHinweis: Diese Handzettel wurden ohne digitale Ergebniserfassung versendet.\r\nDie Handzettel sind als Anhang beigefügt.`);
       
       const recipients = [{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}];
-      console.log('Recipients:', recipients);
+      logDebug('Recipients:', recipients);
       uploadFormData.append('recipients', JSON.stringify(recipients));
       
       progressToast.updateProgress(30, "Dateien werden angehängt...");
@@ -580,8 +581,8 @@ export default function SharedResultsPage({
       });
       
       const responseData = await uploadResponse.json();
-      console.log('Email API Response:', responseData);
-      console.log('Email Status:', uploadResponse.status);
+      logDebug('Email API Response:', responseData);
+      logDebug('Email Status:', uploadResponse.status);
       
       if (uploadResponse.ok && responseData.success) {
         progressToast.updateProgress(100, "Handzettel erfolgreich versendet!");
@@ -597,7 +598,7 @@ export default function SharedResultsPage({
         throw new Error(responseData.message || 'Versand fehlgeschlagen');
       }
     } catch (error) {
-      console.error('Handzettel-Versand Fehler:', error);
+      logError('Handzettel-Versand Fehler:', error);
       toast({ 
         title: "❌ Versand fehlgeschlagen", 
         description: `Handzettel-E-Mail konnte nicht versendet werden: ${error instanceof Error ? error.message : String(error)}`,
@@ -628,9 +629,9 @@ export default function SharedResultsPage({
         try {
           const seasonSpecificCollection = getSeasonSpecificScoresCollection(entry.competitionYear, entry.leagueType);
           collectionName = seasonSpecificCollection;
-          console.log(`🔍 Shared Results: Verwende ${collectionName}`);
+          logDebug(`🔍 Shared Results: Verwende ${collectionName}`);
         } catch (error) {
-          console.log(`⚠️ Shared Results: Verwende Standard-Collection`);
+          logDebug(`⚠️ Shared Results: Verwende Standard-Collection`);
         }
         
         const scoreDocRef = doc(collection(db, collectionName));
@@ -694,7 +695,7 @@ export default function SharedResultsPage({
               await addDoc(collection(db, LEAGUE_UPDATES_COLLECTION), leagueUpdateData);
             }
             
-            // E-Mail-Benachrichtigung für Ergebnisse
+            // E-Mail-Benachrichtigung - FIX für korrekte Mannschaftsnamen
             try {
               const { getAuth } = await import('firebase/auth');
               const auth = getAuth();
@@ -704,12 +705,19 @@ export default function SharedResultsPage({
                 authHeaders = { 'Authorization': `Bearer ${token}` };
               }
               
-              const emailFormData = new FormData();
-              const teamName = allTeamsInSelectedLeague.find(t => t.id === entry.teamId)?.name || 'Unbekannt';
-              const leagueName = availableLeaguesForSeason.find(l => l.id === entry.leagueId)?.name || 'Unbekannt';
+              const userName = user?.displayName || user?.email || 'Unbekannter Benutzer';
+              const teamName = entry.teamName; // Verwende teamName aus entry (ist korrekt)
+              const leagueName = entry.leagueName; // Verwende leagueName aus entry (ist korrekt)
               
-              emailFormData.append('subject', `📊 Neue Ergebnisse: ${teamName} - DG ${entry.durchgang}`);
-              emailFormData.append('message', `Neue Ergebnisse eingegangen:\r\n\r\nMannschaft: ${teamName}\r\nLiga: ${leagueName}\r\nDurchgang: ${entry.durchgang}\r\nAnzahl Ergebnisse: ${pendingScores.length}\r\nZeitpunkt: ${new Date().toLocaleString('de-DE')}\r\n\r\nDie Ergebnisse wurden digital erfasst und sind sofort in den RWK-Tabellen verfügbar.`);
+              // Erstelle detaillierte Ergebnis-Liste
+              const resultDetails = pendingScores
+                .filter(p => p.durchgang === entry.durchgang)
+                .map(result => `• ${result.shooterName}: ${result.totalRinge} Ringe`)
+                .join('\r\n');
+              
+              const emailFormData = new FormData();
+              emailFormData.append('subject', 'Neue Ergebnisse eingegangen');
+              emailFormData.append('message', `Neue Ergebnisse eingegangen:\r\n\r\nMannschaft: ${teamName}\r\nLiga: ${leagueName}\r\nDurchgang: ${entry.durchgang}\r\nAnzahl Ergebnisse: ${pendingScores.filter(p => p.durchgang === entry.durchgang).length}\r\nZeitpunkt: ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}\r\n\r\n📊 Ergebnis-Details:\r\n${resultDetails}\r\n\r\nEingegeben von: ${userName}\r\n\r\nDie Ergebnisse wurden digital erfasst und sind sofort in den RWK-Tabellen verfügbar.\r\n\r\nWICHTIGER HINWEIS:\r\nBitte antworten Sie NICHT auf diese E-Mail.\r\nBei Fragen oder Rückmeldungen schreiben Sie an: rwk-leiter-ksve@gmx.de\r\n\r\nMit sportlichen Grüßen\r\nMarcel Bünger\r\nRundenwettkampfleiter KSVE Einbeck`);
               emailFormData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
               
               const emailResponse = await fetch('/api/send-email', {
@@ -719,13 +727,16 @@ export default function SharedResultsPage({
               });
               
               if (!emailResponse.ok) {
-                console.warn('E-Mail-Benachrichtigung fehlgeschlagen:', await emailResponse.text());
+                const errorText = await emailResponse.text();
+                logWarn('E-Mail-Benachrichtigung fehlgeschlagen:', errorText);
+              } else {
+                logInfo(`E-Mail-Benachrichtigung gesendet: ${teamName} - DG ${entry.durchgang}`);
               }
             } catch (emailError) {
-              console.warn('E-Mail-Benachrichtigung Fehler:', emailError);
+              logError('E-Mail-Benachrichtigung Fehler:', emailError);
             }
           } catch (updateError) {
-            console.warn('League update failed:', updateError);
+            logWarn('League update failed:', updateError);
             // Fehler ignorieren - Hauptfunktion funktioniert trotzdem
           }
           break; // Nur einmal pro Liga senden
@@ -775,11 +786,11 @@ export default function SharedResultsPage({
           });
           
           const responseData = await uploadResponse.json();
-          console.log('Handzettel E-Mail Response:', responseData);
-          console.log('Handzettel Status:', uploadResponse.status);
-          console.log('E-Mail API Response:', responseData);
-          console.log('E-Mail Status:', uploadResponse.status);
-          console.log('Auth Headers:', Object.keys(authHeaders));
+          logDebug('Handzettel E-Mail Response:', responseData);
+          logDebug('Handzettel Status:', uploadResponse.status);
+          logDebug('E-Mail API Response:', responseData);
+          logDebug('E-Mail Status:', uploadResponse.status);
+          logDebug('Auth Headers:', Object.keys(authHeaders));
           
           if (uploadResponse.ok && responseData.success) {
             progressToast.updateProgress(100, "Upload erfolgreich abgeschlossen!");
@@ -792,7 +803,7 @@ export default function SharedResultsPage({
             throw new Error(responseData.message || 'Upload fehlgeschlagen');
           }
         } catch (error) {
-          console.error('Handzettel-Upload Fehler:', error);
+          logError('Handzettel-Upload Fehler:', error);
           toast({ 
             title: "✅ Ergebnisse gespeichert", 
             description: `Handzettel-E-Mail fehlgeschlagen: ${error instanceof Error ? error.message : String(error)}. Ergebnisse sind aber gesichert.`,
@@ -840,7 +851,7 @@ export default function SharedResultsPage({
             }
           );
         } catch (auditError) {
-          console.warn('Audit log failed:', auditError);
+          logWarn('Audit log failed:', auditError);
           // Audit-Fehler nicht an Benutzer weiterleiten
         }
       }
@@ -863,12 +874,12 @@ export default function SharedResultsPage({
             const refreshedTeams = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team)).filter(t => t.id);
             setAllTeamsInSelectedLeague(refreshedTeams);
           } catch (error) {
-            console.warn('Team refresh failed:', error);
+            logWarn('Team refresh failed:', error);
           }
         }
       }
     } catch (error) {
-      console.error("Error saving scores:", error);
+      logError("Error saving scores:", error);
       toast({ title: "Fehler beim Speichern", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsSubmittingScores(false);
@@ -1227,7 +1238,7 @@ export default function SharedResultsPage({
                               });
                             }
                           }).catch(error => {
-                            console.warn('Plausibility check failed:', error);
+                            logWarn('Plausibility check failed:', error);
                           });
                         }
                       }

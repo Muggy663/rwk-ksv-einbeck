@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { doc, deleteDoc } from 'firebase/firestore';
 
@@ -15,7 +16,7 @@ export async function DELETE(request: NextRequest) {
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Delete error:', error);
+    logError('Delete error:', error);
     return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
   }
 }

@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, writeBatch, getDoc } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
@@ -27,7 +28,7 @@ export async function cleanupDeletedTeamReferences(teamId: string) {
           batch.delete(scoreDoc.ref);
         });
       } catch (error) {
-        console.warn(`Fehler beim Durchsuchen von ${discipline} Collection:`, error);
+        logWarn(`Fehler beim Durchsuchen von ${discipline} Collection:`, error);
       }
     }
     
@@ -48,7 +49,7 @@ export async function cleanupDeletedTeamReferences(teamId: string) {
 
     return true;
   } catch (error) {
-    console.error('Fehler beim Bereinigen von Mannschaftsreferenzen:', error);
+    logError('Fehler beim Bereinigen von Mannschaftsreferenzen:', error);
     throw error;
   }
 }
@@ -104,7 +105,7 @@ export async function cleanupAllDeletedTeamReferencesForClub(clubId: string, use
           }
         });
       } catch (error) {
-        console.warn(`Fehler beim Durchsuchen von ${discipline} Collection:`, error);
+        logWarn(`Fehler beim Durchsuchen von ${discipline} Collection:`, error);
       }
     }
     
@@ -118,7 +119,7 @@ export async function cleanupAllDeletedTeamReferencesForClub(clubId: string, use
     
     return deletedCount;
   } catch (error) {
-    console.error('Fehler beim Bereinigen von Vereinsreferenzen:', error);
+    logError('Fehler beim Bereinigen von Vereinsreferenzen:', error);
     throw error;
   }
 }

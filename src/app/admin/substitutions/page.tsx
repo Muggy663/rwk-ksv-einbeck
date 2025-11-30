@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,7 +68,7 @@ export default function SubstitutionsPage() {
         setSelectedSeasonId(seasonsData[0].id);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Saisons:', error);
+      logError('Fehler beim Laden der Saisons:', error);
     }
   };
 
@@ -127,7 +128,7 @@ export default function SubstitutionsPage() {
       setSubstitutions(substitutionsData);
 
     } catch (error) {
-      console.error('Fehler beim Laden der Daten:', error);
+      logError('Fehler beim Laden der Daten:', error);
       toast({
         title: 'Fehler',
         description: 'Daten konnten nicht geladen werden.',
@@ -151,7 +152,7 @@ export default function SubstitutionsPage() {
       });
       loadData();
     } catch (error) {
-      console.error('Fehler beim Löschen:', error);
+      logError('Fehler beim Löschen:', error);
       toast({
         title: 'Fehler',
         description: 'Eintrag konnte nicht gelöscht werden.',
@@ -197,7 +198,7 @@ export default function SubstitutionsPage() {
           const shooters = (await Promise.all(shooterPromises)).filter(Boolean) as Shooter[];
           setTeamShooters(prev => new Map(prev).set(teamId, shooters));
         } catch (error) {
-          console.error('Fehler beim Laden der Schützen:', error);
+          logError('Fehler beim Laden der Schützen:', error);
         }
       }
     }

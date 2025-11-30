@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -71,7 +72,7 @@ export default function StartlistenUebersichtPage() {
           setVereine(clubsMap);
         }
       } catch (error) {
-        console.error('Fehler beim Laden:', error);
+        logError('Fehler beim Laden:', error);
         toast({ title: 'Fehler', description: 'Konfigurationen konnten nicht geladen werden.', variant: 'destructive' });
       } finally {
         setLoading(false);
@@ -97,7 +98,7 @@ export default function StartlistenUebersichtPage() {
         });
       }
     } catch (error) {
-      console.error('Fehler beim Löschen:', error);
+      logError('Fehler beim Löschen:', error);
       toast({ title: 'Fehler', description: 'Konfiguration konnte nicht gelöscht werden.', variant: 'destructive' });
     }
   };
@@ -119,7 +120,7 @@ export default function StartlistenUebersichtPage() {
         });
       }
     } catch (error) {
-      console.error('Fehler beim Löschen:', error);
+      logError('Fehler beim Löschen:', error);
       toast({ title: 'Fehler', description: 'Startliste konnte nicht gelöscht werden.', variant: 'destructive' });
     }
   };
@@ -380,7 +381,7 @@ export default function StartlistenUebersichtPage() {
                           <David21ImportDialog 
                             wettkampfId={`VW111_${liste.id.substring(0, 8)}`}
                             onImport={(results) => {
-                              console.log('Importierte Ergebnisse:', results);
+                              logDebug('Importierte Ergebnisse:', results);
                               toast({ 
                                 title: '✅ Import erfolgreich', 
                                 description: `${results.length} Ergebnisse für Startliste ${liste.id.substring(0, 8)} importiert` 

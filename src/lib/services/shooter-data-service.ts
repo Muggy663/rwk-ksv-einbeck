@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { CompetitionDisplayConfig, IndividualShooterDisplayData, ScoreEntry } from '@/types/rwk';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
@@ -78,7 +79,7 @@ export async function fetchShooterDataForCompetition(
               shooterDetailsCache.set(score.shooterId, null);
             }
           } catch (error) {
-            console.error(`Fehler beim Laden von Schütze ${score.shooterId}:`, error);
+            logError(`Fehler beim Laden von Schütze ${score.shooterId}:`, error);
             shooterDetails = null;
             shooterDetailsCache.set(score.shooterId, null);
           }
@@ -183,7 +184,7 @@ export async function fetchShooterDataForCompetition(
     
     return rankedShooters;
   } catch (err: any) {
-    console.error("Fehler beim Laden der Einzelschützendaten:", err);
+    logError("Fehler beim Laden der Einzelschützendaten:", err);
     return [];
   }
 }

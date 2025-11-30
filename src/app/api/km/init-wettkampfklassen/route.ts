@@ -1,5 +1,6 @@
 // src/app/api/km/init-wettkampfklassen/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
       message: 'Wettkampfklassen für 2026 erfolgreich initialisiert'
     });
   } catch (error) {
-    console.error('Fehler beim Initialisieren der Wettkampfklassen:', error);
+    logError('Fehler beim Initialisieren der Wettkampfklassen:', error);
     
     return NextResponse.json({
       success: false,

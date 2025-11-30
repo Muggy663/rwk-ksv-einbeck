@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Loader2, Share, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -139,7 +140,7 @@ export function NativePDFButton({
             description: 'Die PDF-Datei wurde erfolgreich geteilt.',
           });
         } catch (shareError) {
-          console.error('Native Share fehlgeschlagen:', shareError);
+          logError('Native Share fehlgeschlagen:', shareError);
           
           // Fallback: Blob URL
           const url = URL.createObjectURL(pdfBlob);
@@ -173,7 +174,7 @@ export function NativePDFButton({
         });
       }
     } catch (error) {
-      console.error('Fehler beim Erstellen der PDF:', error);
+      logError('Fehler beim Erstellen der PDF:', error);
       toast({
         title: 'Fehler',
         description: 'Die PDF-Datei konnte nicht erstellt werden.',

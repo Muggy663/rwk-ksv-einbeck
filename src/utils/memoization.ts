@@ -2,6 +2,7 @@
  * Utility-Funktionen für die Memoization von Komponenten und Funktionen
  */
 import { useMemo, useCallback, DependencyList } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 /**
  * Memoize eine Funktion mit expliziten Typen

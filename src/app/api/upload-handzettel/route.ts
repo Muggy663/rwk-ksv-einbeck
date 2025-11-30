@@ -1,13 +1,14 @@
 // src/app/api/upload-handzettel/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Resend } from 'resend';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Debug - RESEND_API_KEY vorhanden:', !!process.env.RESEND_API_KEY);
-    console.log('🔍 Debug - Alle RESEND env vars:', Object.keys(process.env).filter(key => key.includes('RESEND')));
+    logDebug('🔍 Debug - RESEND_API_KEY vorhanden:', !!process.env.RESEND_API_KEY);
+    logDebug('🔍 Debug - Alle RESEND env vars:', Object.keys(process.env).filter(key => key.includes('RESEND')));
     
     if (!resend) {
       return NextResponse.json({ 
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
     
-    console.log('📧 Handzettel-Upload gestartet');
+    logDebug('📧 Handzettel-Upload gestartet');
     const formData = await request.formData();
     
     const teamId = formData.get('teamId') as string;
@@ -24,10 +25,10 @@ export async function POST(request: NextRequest) {
     const teamName = formData.get('teamName') as string;
     const fileCount = parseInt(formData.get('fileCount') as string || '0');
     
-    console.log('📧 FormData erhalten:', { teamId, round, leagueName, teamName, fileCount });
+    logDebug('📧 FormData erhalten:', { teamId, round, leagueName, teamName, fileCount });
 
     if (fileCount === 0) {
-      console.log('❌ Keine Dateien hochgeladen');
+      logDebug('❌ Keine Dateien hochgeladen');
       return NextResponse.json({ error: 'Keine Dateien hochgeladen' }, { status: 400 });
     }
 
@@ -83,11 +84,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (emailResult.error) {
-      console.error('❌ E-Mail-Fehler:', emailResult.error);
+      logError('❌ E-Mail-Fehler:', emailResult.error);
       return NextResponse.json({ error: 'E-Mail konnte nicht gesendet werden' }, { status: 500 });
     }
 
-    console.log('✅ E-Mail erfolgreich gesendet:', emailResult.data?.id);
+    logDebug('✅ E-Mail erfolgreich gesendet:', emailResult.data?.id);
     return NextResponse.json({ 
       success: true, 
       message: `Handzettel erfolgreich per E-Mail gesendet (${attachments.length} Seite(n))`,
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Handzettel-Upload Fehler:', error);
+    logError('Handzettel-Upload Fehler:', error);
     return NextResponse.json({ error: 'Server-Fehler beim Handzettel-Versand' }, { status: 500 });
   }
 }

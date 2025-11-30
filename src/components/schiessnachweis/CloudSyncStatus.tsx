@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,12 +67,12 @@ export function CloudSyncStatus({ className }: CloudSyncStatusProps) {
     const handleAutoSync = async (event: CustomEvent) => {
       const status = event.detail;
       if (isPremium && isOnline && status.pendingChanges > 0 && !status.syncInProgress) {
-        console.log('🔄 Auto-Sync gestartet - Ausstehende Änderungen:', status.pendingChanges);
+        logDebug('🔄 Auto-Sync gestartet - Ausstehende Änderungen:', status.pendingChanges);
         try {
           await SchießnachweisService.syncToCloud();
-          console.log('✅ Auto-Sync erfolgreich');
+          logDebug('✅ Auto-Sync erfolgreich');
         } catch (error) {
-          console.log('❌ Auto-Sync fehlgeschlagen:', error);
+          logDebug('❌ Auto-Sync fehlgeschlagen:', error);
         }
       }
     };
@@ -88,17 +89,17 @@ export function CloudSyncStatus({ className }: CloudSyncStatusProps) {
   }, []);
 
   const handleSync = async () => {
-    console.log('Sync-Versuch:', { isPremium, isOnline, emailVerified: auth.currentUser?.emailVerified });
+    logDebug('Sync-Versuch:', { isPremium, isOnline, emailVerified: auth.currentUser?.emailVerified });
     
     if (!isPremium || !isOnline) {
-      console.log('Sync blockiert: Premium oder Offline');
+      logDebug('Sync blockiert: Premium oder Offline');
       return;
     }
     
     setIsSyncing(true);
     
     try {
-      console.log('Starte Cloud-Sync...');
+      logDebug('Starte Cloud-Sync...');
       await SchießnachweisService.syncToCloud();
       const status = SchießnachweisService.getSyncStatus();
       setLastSync(status.lastSync);

@@ -1,5 +1,6 @@
 // src/lib/services/season-transition-service.ts
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, query, where, orderBy, doc, writeBatch, addDoc, updateDoc } from 'firebase/firestore';
 
 export interface TeamStanding {
@@ -131,7 +132,7 @@ export async function calculateLeagueStandings(leagueId: string, competitionYear
 
     return standings;
   } catch (error) {
-    console.error('Error calculating league standings:', error);
+    logError('Error calculating league standings:', error);
     throw error;
   }
 }
@@ -287,18 +288,18 @@ export async function generatePromotionRelegationSuggestions(
     
     // Zusätzliche Hinweise für Liga-Anpassungen
     if (withdrawnInThisLeague.length > 0) {
-      console.log(`Liga ${currentLeague.name}: ${withdrawnInThisLeague.length} Teams abgemeldet`);
+      logDebug(`Liga ${currentLeague.name}: ${withdrawnInThisLeague.length} Teams abgemeldet`);
     }
     if (sizeReduction > 0) {
-      console.log(`Liga ${currentLeague.name}: Verkleinerung um ${sizeReduction} Teams geplant`);
+      logDebug(`Liga ${currentLeague.name}: Verkleinerung um ${sizeReduction} Teams geplant`);
     }
     if (additionalPromotionSlots > 0) {
-      console.log(`Liga ${currentLeague.name}: ${additionalPromotionSlots} zusätzliche Aufstiegsplätze verfügbar`);
+      logDebug(`Liga ${currentLeague.name}: ${additionalPromotionSlots} zusätzliche Aufstiegsplätze verfügbar`);
     }
 
     return suggestions;
   } catch (error) {
-    console.error('Error generating promotion/relegation suggestions:', error);
+    logError('Error generating promotion/relegation suggestions:', error);
     throw error;
   }
 }
@@ -413,7 +414,7 @@ export async function createNewSeason(
     await batch.commit();
     return newSeasonRef.id;
   } catch (error) {
-    console.error('Error creating new season:', error);
+    logError('Error creating new season:', error);
     throw error;
   }
 }
@@ -436,13 +437,13 @@ export async function applyPromotionRelegation(
         // Das ist komplex, da neue Liga-IDs gefunden werden müssen
         
         // Für jetzt: Nur Logging
-        console.log(`${suggestion.action}: ${suggestion.teamName} -> ${suggestion.targetLeague}`);
+        logDebug(`${suggestion.action}: ${suggestion.teamName} -> ${suggestion.targetLeague}`);
       }
     }
     
     await batch.commit();
   } catch (error) {
-    console.error('Error applying promotion/relegation:', error);
+    logError('Error applying promotion/relegation:', error);
     throw error;
   }
 }

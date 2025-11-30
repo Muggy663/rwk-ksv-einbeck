@@ -1,5 +1,6 @@
 // src/app/api/km/meldungen/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { KMMeldung } from '@/types/km';
@@ -17,7 +18,7 @@ const getDisziplinKuerzel = async (disziplinId: string): Promise<string> => {
       if (name.includes('luftdruck') || name.includes('ld') || name.includes('luftgewehr') || name.includes('lg') || name.includes('luftpistole') || name.includes('lp')) return 'ld';
     }
   } catch (e) {
-    console.warn('Fallback Disziplin-Kürzel:', e);
+    logWarn('Fallback Disziplin-Kürzel:', e);
   }
   return 'ld'; // Fallback
 };
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
         aktivesJahr = jahreSnapshot.docs[0].data().jahr;
       }
     } catch (e) {
-      console.warn('Fallback auf Jahr 2026:', e);
+      logWarn('Fallback auf Jahr 2026:', e);
     }
 
     // Hole Disziplin-Kürzel
@@ -88,8 +89,8 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Fehler beim Erstellen der Meldung:', error);
-    console.error('Error details:', {
+    logError('Fehler beim Erstellen der Meldung:', error);
+    logError('Error details:', {
       message: error.message,
       code: error.code,
       stack: error.stack
@@ -146,16 +147,16 @@ export async function GET(request: NextRequest) {
     const collections = ['kk', 'ld'];
     let alleMeldungen = [];
     
-    console.log('DEBUG: Suche in Jahr:', jahr);
+    logDebug('DEBUG: Suche in Jahr:', jahr);
     
     for (const disziplin of collections) {
       try {
         const collectionName = getKMMeldungenCollection(jahr, disziplin);
-        console.log('DEBUG: Lade Collection:', collectionName);
+        logDebug('DEBUG: Lade Collection:', collectionName);
         
         const snapshot = await adminDb.collection(collectionName).get();
         
-        console.log(`DEBUG: Collection ${collectionName} hat ${snapshot.docs.length} Dokumente`);
+        logDebug(`DEBUG: Collection ${collectionName} hat ${snapshot.docs.length} Dokumente`);
         
         const meldungen = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -164,26 +165,26 @@ export async function GET(request: NextRequest) {
         }));
         alleMeldungen.push(...meldungen);
       } catch (e) {
-        console.error(`DEBUG: Fehler bei Collection ${disziplin}:`, e.message);
+        logError(`DEBUG: Fehler bei Collection ${disziplin}:`, e.message);
       }
     }
     
     let meldungen = alleMeldungen;
     
-    console.log('DEBUG: Alle Meldungen geladen:', meldungen.length);
+    logDebug('DEBUG: Alle Meldungen geladen:', meldungen.length);
     
     // Client-seitige Filterung nach clubId wenn angegeben
     if (clubId) {
-      console.log('DEBUG: Filtering by clubId:', clubId);
+      logDebug('DEBUG: Filtering by clubId:', clubId);
       const shootersSnapshot = await adminDb.collection('shooters').where('clubId', '==', clubId).get();
       const clubShooterIds = shootersSnapshot.docs.map(doc => doc.id);
-      console.log('DEBUG: Gefundene Schützen für Verein:', clubShooterIds);
-      console.log('DEBUG: Meldungen vor Filter:', meldungen.map(m => ({ schuetzeId: m.schuetzeId })));
+      logDebug('DEBUG: Gefundene Schützen für Verein:', clubShooterIds);
+      logDebug('DEBUG: Meldungen vor Filter:', meldungen.map(m => ({ schuetzeId: m.schuetzeId })));
       
       meldungen = meldungen.filter(meldung => clubShooterIds.includes(meldung.schuetzeId));
-      console.log('DEBUG: Meldungen nach Filter:', meldungen.length);
+      logDebug('DEBUG: Meldungen nach Filter:', meldungen.length);
     } else {
-      console.log('DEBUG: Kein clubId-Filter - zeige alle Meldungen');
+      logDebug('DEBUG: Kein clubId-Filter - zeige alle Meldungen');
     }
     
     return NextResponse.json({
@@ -192,7 +193,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Fehler beim Laden der Meldungen:', error);
+    logError('Fehler beim Laden der Meldungen:', error);
     return NextResponse.json({
       success: true,
       data: [],

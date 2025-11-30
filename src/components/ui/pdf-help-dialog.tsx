@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import {
   Dialog,
   DialogContent,

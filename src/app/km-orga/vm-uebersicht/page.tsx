@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -126,7 +127,7 @@ export default function VMUebersichtPage() {
         setDisziplinen(uniqueDisziplinen);
       }
     } catch (error) {
-      console.error('Fehler beim Laden:', error);
+      logError('Fehler beim Laden:', error);
       toast({ title: 'Fehler', description: 'VM-Meldungen konnten nicht geladen werden.', variant: 'destructive' });
     } finally {
       setLoading(false);
@@ -194,7 +195,7 @@ export default function VMUebersichtPage() {
       
       toast({ title: 'Export erstellt', description: `${fileName} wurde heruntergeladen.` });
     } catch (error) {
-      console.error('Export-Fehler:', error);
+      logError('Export-Fehler:', error);
       toast({ title: 'Fehler', description: 'Export konnte nicht erstellt werden.', variant: 'destructive' });
     }
   };

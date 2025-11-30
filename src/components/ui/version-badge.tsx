@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { cn } from '@/lib/utils';
 
 interface VersionBadgeProps {

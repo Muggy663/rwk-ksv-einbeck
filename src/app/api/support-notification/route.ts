@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import nodemailer from 'nodemailer';
 
 interface SupportTicketData {
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Fehler beim Senden der E-Mail:', error);
+    logError('Fehler beim Senden der E-Mail:', error);
     return NextResponse.json(
       { error: 'Fehler beim Senden der E-Mail' },
       { status: 500 }

@@ -1,5 +1,6 @@
 // src/app/api/km/mannschaften/generate/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, addDoc, doc, setDoc } from 'firebase/firestore';
 
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
       }
 
     } catch (error) {
-      console.warn('⚠️ Could not clear old mannschaften:', error.message);
+      logWarn('⚠️ Could not clear old mannschaften:', error.message);
     }
     
     // Schritt 2: Lade Meldungen
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
         .filter(m => m.saison === saison || !m.saison); // Include entries without saison
 
     } catch (error) {
-      console.error('❌ Error loading meldungen:', error);
+      logError('❌ Error loading meldungen:', error);
       return NextResponse.json({
         success: false,
         error: `Fehler beim Laden der Meldungen: ${error.message}`
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
       schuetzen = schuetzenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     } catch (error) {
-      console.error('❌ Error loading shooters:', error);
+      logError('❌ Error loading shooters:', error);
     }
     
     // Schritt 4: Lade Disziplinen für Auflage-Prüfung
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
       const disziplinenSnapshot = await getDocs(collection(db, 'km_disziplinen'));
       disziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
-      console.warn('Could not load disciplines:', error);
+      logWarn('Could not load disciplines:', error);
     }
 
     const groups = {};
@@ -213,7 +214,7 @@ export async function POST(request: NextRequest) {
               await setDoc(doc(db, 'km_mannschaften', docId), mannschaft);
               generated++;
             } catch (error) {
-              console.error('❌ FAILED to create mannschaft:', error);
+              logError('❌ FAILED to create mannschaft:', error);
             }
           }
         }
@@ -263,7 +264,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('💥 Fehler bei Mannschafts-Generierung:', error);
+    logError('💥 Fehler bei Mannschafts-Generierung:', error);
     return NextResponse.json({
       success: false,
       error: `Unerwarteter Fehler: ${error.message}`

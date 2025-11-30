@@ -1,5 +1,6 @@
 // src/app/api/km/meldungen/repair/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
 
           repariert++;
         } else {
-          console.error(`Keine Luftgewehr-Disziplin gefunden für Meldung ${meldungDoc.id}`);
+          logError(`Keine Luftgewehr-Disziplin gefunden für Meldung ${meldungDoc.id}`);
           fehler++;
         }
       }
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Reparatur-Fehler:', error);
+    logError('Reparatur-Fehler:', error);
     return NextResponse.json({
       success: false,
       error: error.message

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export function ForceRefresh() {
   useEffect(() => {
@@ -8,7 +9,7 @@ export function ForceRefresh() {
     const storedVersion = localStorage.getItem('app_version');
     
     if (storedVersion !== currentVersion) {
-      console.log(`Version Update: ${storedVersion} → ${currentVersion}`);
+      logDebug(`Version Update: ${storedVersion} → ${currentVersion}`);
       
       // Cache leeren
       if ('caches' in window) {

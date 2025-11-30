@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Clock, Target, Users, CheckCircle, XCircle } from "lucide-react";

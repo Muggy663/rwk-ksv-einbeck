@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,7 +67,7 @@ export default function BearbeitenPage() {
             .sort((a, b) => (a.spoNummer || 0) - (b.spoNummer || 0))
         );
       } catch (error) {
-        console.error('Fehler beim Laden:', error);
+        logError('Fehler beim Laden:', error);
         toast({ title: 'Fehler', description: 'Konfiguration konnte nicht geladen werden.', variant: 'destructive' });
       } finally {
         setLoading(false);
@@ -84,7 +85,7 @@ export default function BearbeitenPage() {
       });
       toast({ title: 'Gespeichert', description: 'Konfiguration wurde aktualisiert.' });
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
+      logError('Fehler beim Speichern:', error);
       toast({ title: 'Fehler', description: 'Konfiguration konnte nicht gespeichert werden.', variant: 'destructive' });
     } finally {
       setSaving(false);

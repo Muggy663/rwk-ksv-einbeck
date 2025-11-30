@@ -1,6 +1,7 @@
 // src/app/admin/handzettel/page.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -73,7 +74,7 @@ export default function HandzettelPage() {
           setSelectedSeasonId(validSeasons[0].id);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Daten:', error);
+        logError('Fehler beim Laden der Daten:', error);
         toast({
           title: 'Fehler',
           description: 'Daten konnten nicht geladen werden.',
@@ -141,7 +142,7 @@ export default function HandzettelPage() {
         setEinzelschuetzen([]);
         
       } catch (error) {
-        console.error('Fehler beim Laden der Teams:', error);
+        logError('Fehler beim Laden der Teams:', error);
         toast({
           title: 'Fehler',
           description: 'Teams konnten nicht geladen werden.',
@@ -171,7 +172,7 @@ export default function HandzettelPage() {
         description: 'Der Handzettel wurde erfolgreich generiert.'
       });
     } catch (error) {
-      console.error('Fehler beim Generieren:', error);
+      logError('Fehler beim Generieren:', error);
       toast({
         title: 'Fehler',
         description: 'Handzettel konnte nicht erstellt werden.',
@@ -464,7 +465,7 @@ export default function HandzettelPage() {
                         description: 'Der Meldebogen wurde als PDF heruntergeladen.'
                       });
                     } catch (error) {
-                      console.error('PDF-Fehler:', error);
+                      logError('PDF-Fehler:', error);
                       toast({
                         title: 'Fehler',
                         description: 'PDF konnte nicht erstellt werden.',

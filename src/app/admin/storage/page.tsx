@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
@@ -54,7 +55,7 @@ export default function StoragePage() {
         const data = await response.json();
         setMongoDBInfo(data);
       } catch (err: any) {
-        console.error('Fehler beim Prüfen des MongoDB-Speicherplatzes:', err);
+        logError('Fehler beim Prüfen des MongoDB-Speicherplatzes:', err);
         setMongoDBError(err.message || 'Ein unbekannter Fehler ist aufgetreten');
       } finally {
         setLoadingMongoDB(false);
@@ -75,7 +76,7 @@ export default function StoragePage() {
         const data = await response.json();
         setFirestoreInfo(data);
       } catch (err: any) {
-        console.error('Fehler beim Prüfen des Firestore-Speicherplatzes:', err);
+        logError('Fehler beim Prüfen des Firestore-Speicherplatzes:', err);
         setFirestoreError(err.message || 'Ein unbekannter Fehler ist aufgetreten');
       } finally {
         setLoadingFirestore(false);

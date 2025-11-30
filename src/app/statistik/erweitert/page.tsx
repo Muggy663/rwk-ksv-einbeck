@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -95,7 +96,7 @@ export default function ExtendedStatisticsPage() {
         });
       }
     } catch (error) {
-      console.error("Fehler bei der Schützensuche:", error);
+      logError("Fehler bei der Schützensuche:", error);
       toast({
         title: "Fehler",
         description: "Bei der Suche ist ein Fehler aufgetreten.",
@@ -139,7 +140,7 @@ export default function ExtendedStatisticsPage() {
             allScores = [...allScores, ...scores];
           } catch (error) {
             // Collection existiert möglicherweise nicht - das ist ok
-            console.warn(`Collection ${disc} für Jahr ${year} nicht gefunden:`, error);
+            logWarn(`Collection ${disc} für Jahr ${year} nicht gefunden:`, error);
           }
         }
       }
@@ -207,7 +208,7 @@ export default function ExtendedStatisticsPage() {
       });
       
     } catch (error) {
-      console.error("Fehler beim Laden der Schützenstatistik:", error);
+      logError("Fehler beim Laden der Schützenstatistik:", error);
       toast({
         title: "Fehler",
         description: "Beim Laden der Statistik ist ein Fehler aufgetreten.",

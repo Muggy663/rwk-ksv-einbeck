@@ -2,6 +2,7 @@
 "use client";
 
 import React from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { AlertTriangle, Calendar, Shield, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 

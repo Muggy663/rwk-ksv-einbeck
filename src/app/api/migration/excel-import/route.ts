@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('📊 MIGRATION: Starte Excel-Import...');
+    logDebug('📊 MIGRATION: Starte Excel-Import...');
     
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
     
-    console.log(`📋 Excel-Zeilen gefunden: ${data.length}`);
+    logDebug(`📋 Excel-Zeilen gefunden: ${data.length}`);
     
     // Lade bestehende Vereine
     const clubsSnapshot = await getDocs(collection(db, 'clubs'));
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
           clubId = clubs.get('SC Naensen e.V. ');
         }
         if (!clubId) {
-          console.log(`❌ Verein nicht gefunden: "${vereinName}" (Länge: ${vereinName.length})`);
+          logDebug(`❌ Verein nicht gefunden: "${vereinName}" (Länge: ${vereinName.length})`);
           errors.push(`Zeile ${i + 1}: Verein "${vereinName}" nicht gefunden`);
           skipped++;
           continue;
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
         imported++;
         
         if (imported % 50 === 0) {
-          console.log(`✅ Importiert: ${imported} Schützen`);
+          logDebug(`✅ Importiert: ${imported} Schützen`);
         }
         
       } catch (error) {
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    console.log(`🎯 MIGRATION ABGESCHLOSSEN: ${imported} importiert, ${skipped} übersprungen`);
+    logDebug(`🎯 MIGRATION ABGESCHLOSSEN: ${imported} importiert, ${skipped} übersprungen`);
     
     return NextResponse.json({
       success: true,
@@ -154,7 +155,7 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('❌ MIGRATION IMPORT ERROR:', error);
+    logError('❌ MIGRATION IMPORT ERROR:', error);
     return NextResponse.json({
       success: false,
       error: error.message

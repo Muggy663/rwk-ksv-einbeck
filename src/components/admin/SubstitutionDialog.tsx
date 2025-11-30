@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -84,7 +85,7 @@ export function SubstitutionDialog({
       setAvailableShooters(available);
 
     } catch (error) {
-      console.error('Fehler beim Laden der Schützen:', error);
+      logError('Fehler beim Laden der Schützen:', error);
       toast({
         title: 'Fehler',
         description: 'Schützen konnten nicht geladen werden.',
@@ -186,7 +187,7 @@ export function SubstitutionDialog({
 
           }
         } catch (transferError) {
-          console.error('Error transferring individual scores:', transferError);
+          logError('Error transferring individual scores:', transferError);
           throw new Error('Fehler beim Übertragen der Einzelschützen-Ergebnisse');
         }
       }
@@ -239,7 +240,7 @@ export function SubstitutionDialog({
       resetForm();
 
     } catch (error) {
-      console.error('Fehler beim Erstellen der Substitution:', error);
+      logError('Fehler beim Erstellen der Substitution:', error);
       toast({
         title: 'Fehler',
         description: 'Ersatzschütze konnte nicht hinzugefügt werden.',

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -88,7 +89,7 @@ export default function SeasonTransitionPage() {
         
         setSeasons(fetchedSeasons);
       } catch (error) {
-        console.error('Error fetching seasons:', error);
+        logError('Error fetching seasons:', error);
         toast({
           title: 'Fehler beim Laden der Saisons',
           description: 'Die Saisons konnten nicht geladen werden.',
@@ -125,7 +126,7 @@ export default function SeasonTransitionPage() {
         
         setLeagues(fetchedLeagues);
       } catch (error) {
-        console.error('Error fetching leagues:', error);
+        logError('Error fetching leagues:', error);
         toast({
           title: 'Fehler beim Laden der Ligen',
           description: 'Die Ligen konnten nicht geladen werden.',
@@ -181,7 +182,7 @@ export default function SeasonTransitionPage() {
       setSeasons(fetchedSeasons);
       
     } catch (error: any) {
-      console.error('Error creating new season:', error);
+      logError('Error creating new season:', error);
       toast({
         title: 'Fehler',
         description: error.message || 'Bei der Erstellung der neuen Saison ist ein Fehler aufgetreten.',
@@ -254,7 +255,7 @@ export default function SeasonTransitionPage() {
       });
       
     } catch (error: any) {
-      console.error('Error generating suggestions:', error);
+      logError('Error generating suggestions:', error);
       toast({
         title: 'Fehler',
         description: 'Vorschläge konnten nicht generiert werden.',
@@ -306,7 +307,7 @@ export default function SeasonTransitionPage() {
       setAllLeagueSuggestions(new Map());
       
     } catch (error: any) {
-      console.error('Error applying all league suggestions:', error);
+      logError('Error applying all league suggestions:', error);
       toast({
         title: 'Fehler',
         description: 'Änderungen konnten nicht angewendet werden.',
@@ -364,7 +365,7 @@ export default function SeasonTransitionPage() {
             });
           }
         } catch (error) {
-          console.error(`Error generating suggestions for league ${league.name}:`, error);
+          logError(`Error generating suggestions for league ${league.name}:`, error);
         }
       }
       
@@ -382,7 +383,7 @@ export default function SeasonTransitionPage() {
       });
       
     } catch (error: any) {
-      console.error('Error generating all league suggestions:', error);
+      logError('Error generating all league suggestions:', error);
       toast({
         title: 'Fehler',
         description: 'Vorschläge für alle Ligen konnten nicht generiert werden.',
@@ -410,7 +411,7 @@ export default function SeasonTransitionPage() {
     try {
       doc.addImage('/images/logo2.png', 'PNG', 240, 10, 30, 30);
     } catch (error) {
-      console.log('Logo konnte nicht geladen werden:', error);
+      logDebug('Logo konnte nicht geladen werden:', error);
     }
     
     // Header
@@ -538,7 +539,7 @@ export default function SeasonTransitionPage() {
       setSuggestions([]);
       
     } catch (error: any) {
-      console.error('Error applying suggestions:', error);
+      logError('Error applying suggestions:', error);
       toast({
         title: 'Fehler',
         description: 'Änderungen konnten nicht angewendet werden.',

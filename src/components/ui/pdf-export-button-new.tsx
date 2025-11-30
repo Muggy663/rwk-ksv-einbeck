@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -56,7 +57,7 @@ export function PDFButton({
         description: 'Die PDF-Datei wurde erfolgreich erstellt.',
       });
     } catch (error) {
-      console.error('Fehler beim Erstellen der PDF:', error);
+      logError('Fehler beim Erstellen der PDF:', error);
       toast({
         title: 'Fehler',
         description: 'Die PDF-Datei konnte nicht erstellt werden.',
@@ -85,7 +86,7 @@ export function PDFButton({
       });
       doc.addImage(logoBase64, 'PNG', 250, 10, 25, 25);
     } catch (e) {
-      console.warn('Logo konnte nicht geladen werden');
+      logWarn('Logo konnte nicht geladen werden');
     }
     
     doc.setFont('helvetica', 'normal');
@@ -169,7 +170,7 @@ export function PDFButton({
       });
       doc.addImage(logoBase64, 'PNG', 250, 10, 25, 25);
     } catch (e) {
-      console.warn('Logo konnte nicht geladen werden');
+      logWarn('Logo konnte nicht geladen werden');
     }
     
     doc.setFont('helvetica', 'normal');

@@ -1,6 +1,7 @@
 // src/components/handzettel/HandzettelGenerator.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -76,7 +77,7 @@ export function HandzettelGenerator({
           setSelectedSeasonId(seasonsData[0].id);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Daten:', error);
+        logError('Fehler beim Laden der Daten:', error);
         toast({
           title: 'Fehler',
           description: 'Daten konnten nicht geladen werden.',
@@ -134,7 +135,7 @@ export function HandzettelGenerator({
         setTeams(teamsWithShooters);
         
       } catch (error) {
-        console.error('Fehler beim Laden der Teams:', error);
+        logError('Fehler beim Laden der Teams:', error);
         toast({
           title: 'Fehler',
           description: 'Teams konnten nicht geladen werden.',
@@ -176,7 +177,7 @@ export function HandzettelGenerator({
       
       setResults(resultsData);
     } catch (error) {
-      console.error('Fehler beim Laden der Ergebnisse:', error);
+      logError('Fehler beim Laden der Ergebnisse:', error);
     }
   };
 

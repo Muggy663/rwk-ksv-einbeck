@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -52,7 +53,7 @@ export default function KMUebersicht() {
         }
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Saisons:', error);
+      logError('Fehler beim Laden der Saisons:', error);
     }
   };
 
@@ -140,7 +141,7 @@ export default function KMUebersicht() {
           setData(prev => ({ ...prev, disziplinen: disziplinenData.data || [] }));
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Disziplinen:', error);
+        logError('Fehler beim Laden der Disziplinen:', error);
       }
       
       // 4. Lade Vereine
@@ -151,7 +152,7 @@ export default function KMUebersicht() {
           setData(prev => ({ ...prev, clubs: clubsData.data || [] }));
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Vereine:', error);
+        logError('Fehler beim Laden der Vereine:', error);
       }
     } catch (error) {
       toast({ 

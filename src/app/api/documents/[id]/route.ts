@@ -1,5 +1,6 @@
 // src/app/api/documents/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { 
   getDocumentByIdFromMongo, 
   updateDocumentInMongo, 
@@ -23,7 +24,7 @@ export async function GET(
     
     return NextResponse.json(document);
   } catch (error) {
-    console.error('Fehler beim Lesen des Dokuments:', error);
+    logError('Fehler beim Lesen des Dokuments:', error);
     return NextResponse.json(
       { error: 'Fehler beim Lesen des Dokuments' },
       { status: 500 }
@@ -50,7 +51,7 @@ export async function PUT(
     
     return NextResponse.json(document);
   } catch (error) {
-    console.error('Fehler beim Aktualisieren des Dokuments:', error);
+    logError('Fehler beim Aktualisieren des Dokuments:', error);
     return NextResponse.json(
       { error: 'Fehler beim Aktualisieren des Dokuments' },
       { status: 500 }
@@ -75,7 +76,7 @@ export async function DELETE(
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Fehler beim Löschen des Dokuments:', error);
+    logError('Fehler beim Löschen des Dokuments:', error);
     return NextResponse.json(
       { error: 'Fehler beim Löschen des Dokuments' },
       { status: 500 }

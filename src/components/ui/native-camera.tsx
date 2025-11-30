@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Camera, Zap, ZapOff, RotateCcw, Check, X, AlertCircle } from 'lucide-react';
@@ -38,7 +39,7 @@ export function NativeCamera({ onCapture, onClose, isOpen }: NativeCameraProps) 
       const dataUrl = URL.createObjectURL(file);
       setCapturedImage(dataUrl);
     } catch (err) {
-      console.error('Capture error:', err);
+      logError('Capture error:', err);
     }
   };
 
@@ -51,7 +52,7 @@ export function NativeCamera({ onCapture, onClose, isOpen }: NativeCameraProps) 
       stopCamera();
       onClose();
     } catch (err) {
-      console.error('Confirm capture error:', err);
+      logError('Confirm capture error:', err);
     }
   };
 

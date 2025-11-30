@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
@@ -140,7 +141,7 @@ export async function fetchShooterPerformanceData(
 
     return [];
   } catch (error) {
-    console.error('Fehler beim Laden der Schützenleistungsdaten:', error);
+    logError('Fehler beim Laden der Schützenleistungsdaten:', error);
     return [];
   }
 }
@@ -246,7 +247,7 @@ export async function fetchTeamComparisonData(
 
     return [];
   } catch (error) {
-    console.error('Fehler beim Laden der Mannschaftsvergleichsdaten:', error);
+    logError('Fehler beim Laden der Mannschaftsvergleichsdaten:', error);
     return [];
   }
 }
@@ -354,7 +355,7 @@ export async function fetchGenderDistributionData(
 
     return { male: 0, female: 0 };
   } catch (error) {
-    console.error('Fehler beim Laden der Geschlechterverteilungsdaten:', error);
+    logError('Fehler beim Laden der Geschlechterverteilungsdaten:', error);
     return { male: 0, female: 0 };
   }
 }
@@ -383,7 +384,7 @@ export async function fetchSeasons() {
 
     return [];
   } catch (error) {
-    console.error('Fehler beim Laden der Saisons:', error);
+    logError('Fehler beim Laden der Saisons:', error);
     return [];
   }
 }
@@ -430,7 +431,7 @@ export async function fetchLeagues(seasonId: string) {
 
     return [];
   } catch (error) {
-    console.error('Fehler beim Laden der Ligen:', error);
+    logError('Fehler beim Laden der Ligen:', error);
     return [];
   }
 }
@@ -457,7 +458,7 @@ export async function fetchClubs() {
 
     return [];
   } catch (error) {
-    console.error('Fehler beim Laden der Vereine:', error);
+    logError('Fehler beim Laden der Vereine:', error);
     return [];
   }
 }

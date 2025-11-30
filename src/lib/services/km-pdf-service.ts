@@ -1,5 +1,6 @@
 // src/lib/services/km-pdf-service.ts
 import jsPDF from 'jspdf';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import 'jspdf-autotable';
 import type { KMMeldung, KMDisziplin, Shooter, Club, KMMannschaft } from '@/types';
 

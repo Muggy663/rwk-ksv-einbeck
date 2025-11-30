@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +31,7 @@ export default function KMDashboard() {
         setAktiveSaisons(aktiveSaisons);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Saisons:', error);
+      logError('Fehler beim Laden der Saisons:', error);
     } finally {
       setIsLoadingSaisons(false);
     }

@@ -1,6 +1,7 @@
 // src/components/auth/AuthContext.tsx
 "use client";
 import { createContext, useContext } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export interface FirebaseUser {
   uid: string;

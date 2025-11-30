@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from "@/components/ui/button";
 import { Users, Trophy, Search, Plus, Target } from "lucide-react";
 
@@ -69,7 +70,7 @@ export default function SocialPage() {
         setNeedsOnboarding(true);
       }
     } catch (error) {
-      console.error('Fehler beim Prüfen des Onboarding-Status:', error);
+      logError('Fehler beim Prüfen des Onboarding-Status:', error);
     } finally {
       setCheckingOnboarding(false);
     }

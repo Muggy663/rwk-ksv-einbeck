@@ -2,6 +2,7 @@
 // API Route für David21 Ergebnis-Import
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { David21Service } from '@/lib/services/david21-service';
 
 export async function POST(request: NextRequest) {
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('David21 Import Error:', error);
+    logError('David21 Import Error:', error);
     return NextResponse.json(
       { success: false, error: 'Import fehlgeschlagen' },
       { status: 500 }

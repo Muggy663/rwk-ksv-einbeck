@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +33,7 @@ export default function David21Page() {
           setDisziplinen(data.data || []);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Disziplinen:', error);
+        logError('Fehler beim Laden der Disziplinen:', error);
       }
     };
     loadDisziplinen();
@@ -79,7 +80,7 @@ export default function David21Page() {
         alert('Export fehlgeschlagen: ' + result.error);
       }
     } catch (error) {
-      console.error('Export Error:', error);
+      logError('Export Error:', error);
       alert('Export fehlgeschlagen');
     } finally {
       setLoading(false);
@@ -107,13 +108,13 @@ export default function David21Page() {
       
       if (result.success) {
         alert(`Import erfolgreich! ${result.message}`);
-        console.log('Importierte Ergebnisse:', result.ergebnisse);
-        console.log('Statistik:', result.statistik);
+        logDebug('Importierte Ergebnisse:', result.ergebnisse);
+        logDebug('Statistik:', result.statistik);
       } else {
         alert('Import fehlgeschlagen: ' + result.error);
       }
     } catch (error) {
-      console.error('Import Error:', error);
+      logError('Import Error:', error);
       alert('Import fehlgeschlagen');
     } finally {
       setLoading(false);

@@ -1,6 +1,7 @@
 // src/app/social/welcome/page.tsx
 "use client";
 import React from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, Trophy, Target, ArrowRight, Crown, Zap } from 'lucide-react';

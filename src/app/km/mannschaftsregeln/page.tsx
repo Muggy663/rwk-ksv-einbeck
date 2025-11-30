@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,7 +61,7 @@ export default function KMMannschaftsregelnAdmin() {
         throw new Error(`API Fehler: ${regelnRes.status}`);
       }
     } catch (error) {
-      console.error('Fehler beim Laden:', error);
+      logError('Fehler beim Laden:', error);
       setError(error.message);
     } finally {
       setLoading(false);

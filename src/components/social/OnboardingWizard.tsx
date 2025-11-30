@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,7 +87,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       
       onComplete();
     } catch (error: any) {
-      console.error('Fehler beim Speichern:', error);
+      logError('Fehler beim Speichern:', error);
       
       let errorMessage = "Profil konnte nicht gespeichert werden.";
       if (error.code === 'permission-denied') {

@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { getUserClubId, getClubCollection, CLUB_COLLECTIONS } from '@/lib/utils/club-utils';
+import { logError, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { clubId: string } }
 ) {
   try {
-    console.log('POST /api/clubs/[clubId]/vereinsrecht/protokolle called');
+    logDebug('POST protokolle API called');
     const body = await request.json();
-    console.log('Request body:', body);
     const { titel, typ, datum, ort, tagesordnung, anwesende } = body;
 
     if (!titel || !typ || !datum) {
@@ -47,10 +47,10 @@ export async function POST(
       aktualisiertAm: new Date()
     };
 
-    console.log('Attempting to save to Firestore:', protokoll);
+    logDebug('Saving protokoll to Firestore');
     const collectionPath = getClubCollection(params.clubId, CLUB_COLLECTIONS.PROTOKOLLE);
     const docRef = await addDoc(collection(db, collectionPath), protokoll);
-    console.log('Successfully saved with ID:', docRef.id);
+    logInfo('Protokoll created successfully', { id: docRef.id });
 
     return NextResponse.json({
       success: true,
@@ -59,12 +59,7 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error('Fehler beim Erstellen des Protokolls:', error);
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      stack: error.stack
-    });
+    logError('Fehler beim Erstellen des Protokolls', error);
     return NextResponse.json({
       success: false,
       error: `Fehler: ${error.message}`,
@@ -124,7 +119,7 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('Fehler beim Laden der Protokolle:', error);
+    logError('Fehler beim Laden der Protokolle', error);
     return NextResponse.json({
       success: true,
       data: [],

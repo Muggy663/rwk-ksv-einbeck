@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,7 +82,7 @@ export default function SupportPage() {
       });
 
     } catch (error) {
-      console.error('Fehler beim Senden der E-Mail-Benachrichtigung:', error);
+      logError('Fehler beim Senden der E-Mail-Benachrichtigung:', error);
     }
   };
 
@@ -173,7 +174,7 @@ export default function SupportPage() {
               }
             }
           } catch (error) {
-            console.error(`Fehler beim Verarbeiten von ${file.name}:`, error);
+            logError(`Fehler beim Verarbeiten von ${file.name}:`, error);
             toast({
               title: "Verarbeitungsfehler",
               description: `Datei ${file.name} konnte nicht verarbeitet werden.`,
@@ -221,7 +222,7 @@ export default function SupportPage() {
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      console.error("Error submitting support ticket: ", error);
+      logError("Error submitting support ticket: ", error);
       toast({
         title: "Fehler beim Senden",
         description: (error as Error).message || "Deine Anfrage konnte nicht gesendet werden. Bitte versuche es später erneut.",

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
 export const dynamic = 'force-dynamic';
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
       count: shooters.length 
     });
   } catch (error) {
-    console.error('KM Shooters API error:', error);
+    logError('KM Shooters API error:', error);
     return NextResponse.json({ 
       success: false, 
       error: 'Failed to fetch KM shooters' 
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
       message: 'Shooter created successfully' 
     });
   } catch (error) {
-    console.error('Create shooter error:', error);
+    logError('Create shooter error:', error);
     return NextResponse.json({ 
       success: false, 
       error: 'Failed to create shooter' 

@@ -2,6 +2,7 @@
 "use client";
 
 import { SchießEintrag } from "@/types/schiessnachweis";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { PremiumService } from "./premium-service";
 
 export interface SyncStatus {
@@ -61,7 +62,7 @@ export class CloudSyncService {
         lastSync: status.lastSync ? new Date(status.lastSync) : null
       };
     } catch (error) {
-      console.error('Fehler beim Laden des Sync-Status:', error);
+      logError('Fehler beim Laden des Sync-Status:', error);
       return {
         isOnline: navigator.onLine,
         lastSync: null,
@@ -86,34 +87,34 @@ export class CloudSyncService {
   }
 
   static async syncToCloud(einträge: SchießEintrag[]): Promise<boolean> {
-    console.log('🔍 Cloud-Sync gestartet mit', einträge.length, 'Einträgen');
+    logDebug('🔍 Cloud-Sync gestartet mit', einträge.length, 'Einträgen');
     
     if (!(await PremiumService.isPremium())) {
-      console.log('❌ Premium-Check fehlgeschlagen');
+      logDebug('❌ Premium-Check fehlgeschlagen');
       throw new Error('Cloud-Sync ist nur für Premium-Nutzer verfügbar');
     }
-    console.log('✅ Premium-Check erfolgreich');
+    logDebug('✅ Premium-Check erfolgreich');
 
     if (!navigator.onLine) {
-      console.log('❌ Offline');
+      logDebug('❌ Offline');
       throw new Error('Keine Internetverbindung');
     }
-    console.log('✅ Online');
+    logDebug('✅ Online');
 
     this.updateSyncStatus({ syncInProgress: true });
 
     try {
-      console.log('💾 Speichere in Firebase:', einträge.length, 'Einträge');
+      logDebug('💾 Speichere in Firebase:', einträge.length, 'Einträge');
       
       // Firebase-Imports
       const { doc, setDoc } = await import('firebase/firestore');
       const { auth, db } = await import('@/lib/firebase/config');
       
       if (!auth.currentUser) {
-        console.log('❌ Benutzer nicht angemeldet');
+        logDebug('❌ Benutzer nicht angemeldet');
         throw new Error('Benutzer nicht angemeldet');
       }
-      console.log('✅ Benutzer angemeldet:', auth.currentUser.uid, auth.currentUser.email);
+      logDebug('✅ Benutzer angemeldet:', auth.currentUser.uid, auth.currentUser.email);
       
       // Entferne undefined Werte für Firebase
       const cleanedEinträge = einträge.map(eintrag => {
@@ -126,21 +127,21 @@ export class CloudSyncService {
         });
         return cleaned;
       });
-      console.log('✅ Daten bereinigt:', cleanedEinträge.length, 'Einträge');
-      console.log('🔍 Debug - Beispiel Eintrag:', cleanedEinträge[0]);
+      logDebug('✅ Daten bereinigt:', cleanedEinträge.length, 'Einträge');
+      logDebug('🔍 Debug - Beispiel Eintrag:', cleanedEinträge[0]);
       
       const cloudData: CloudData = {
         einträge: cleanedEinträge,
         lastModified: new Date(),
         deviceId: this.getDeviceId()
       };
-      console.log('💾 CloudData erstellt:', cloudData);
+      logDebug('💾 CloudData erstellt:', cloudData);
       
       // In Firebase speichern
-      console.log('🔥 Speichere in Firebase Collection: schiessnachweis_data, Doc:', auth.currentUser.uid);
+      logDebug('🔥 Speichere in Firebase Collection: schiessnachweis_data, Doc:', auth.currentUser.uid);
       await setDoc(doc(db, 'schiessnachweis_data', auth.currentUser.uid), cloudData);
-      console.log('✅ Firebase gespeichert:', auth.currentUser.uid, '- Einträge:', einträge.length);
-      console.log('🔍 Debug - Gespeicherte CloudData:', cloudData);
+      logDebug('✅ Firebase gespeichert:', auth.currentUser.uid, '- Einträge:', einträge.length);
+      logDebug('🔍 Debug - Gespeicherte CloudData:', cloudData);
 
       // Auch lokal als Backup speichern
       localStorage.setItem(this.CLOUD_STORAGE_KEY, JSON.stringify(cloudData));
@@ -153,7 +154,7 @@ export class CloudSyncService {
 
       return true;
     } catch (error) {
-      console.error('Cloud-Sync fehlgeschlagen:', error);
+      logError('Cloud-Sync fehlgeschlagen:', error);
       this.updateSyncStatus({ syncInProgress: false });
       throw error;
     }
@@ -171,7 +172,7 @@ export class CloudSyncService {
     this.updateSyncStatus({ syncInProgress: true });
 
     try {
-      console.log('Lade Daten aus Firebase...');
+      logDebug('Lade Daten aus Firebase...');
       
       // Firebase-Imports
       const { doc, getDoc } = await import('firebase/firestore');
@@ -185,13 +186,13 @@ export class CloudSyncService {
       const docSnap = await getDoc(docRef);
       
       if (!docSnap.exists()) {
-        console.log('Keine Cloud-Daten für User:', auth.currentUser.uid);
+        logDebug('Keine Cloud-Daten für User:', auth.currentUser.uid);
         this.updateSyncStatus({ syncInProgress: false });
         return [];
       }
       
       const cloudData = docSnap.data() as CloudData;
-      console.log('✅ Firebase geladen:', auth.currentUser.uid, '- Einträge:', cloudData.einträge.length);
+      logDebug('✅ Firebase geladen:', auth.currentUser.uid, '- Einträge:', cloudData.einträge.length);
       
       // Konvertiere Firebase Timestamps zu Date-Objekten
       const einträge = cloudData.einträge.map(eintrag => ({
@@ -207,7 +208,7 @@ export class CloudSyncService {
 
       return einträge;
     } catch (error) {
-      console.error('Cloud-Download fehlgeschlagen:', error);
+      logError('Cloud-Download fehlgeschlagen:', error);
       this.updateSyncStatus({ syncInProgress: false });
       throw error;
     }
@@ -227,9 +228,9 @@ export class CloudSyncService {
 
     try {
       await this.syncToCloud(einträge);
-      console.log('✅ Auto-Sync erfolgreich');
+      logDebug('✅ Auto-Sync erfolgreich');
     } catch (error) {
-      console.warn('Auto-Sync fehlgeschlagen:', error);
+      logWarn('Auto-Sync fehlgeschlagen:', error);
     }
   }
 

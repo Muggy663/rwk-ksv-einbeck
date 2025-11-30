@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -97,7 +98,7 @@ export default function AddTerminPage() {
           ]);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Clubs:', error);
+        logError('Fehler beim Laden der Clubs:', error);
         // Fallback zu Standard-Orten
         setLocations([
           "Schützenhaus Einbeck",
@@ -193,7 +194,7 @@ export default function AddTerminPage() {
         throw new Error('Der Termin konnte nicht erstellt werden.');
       }
     } catch (error) {
-      console.error('Fehler beim Erstellen des Termins:', error);
+      logError('Fehler beim Erstellen des Termins:', error);
       toast({
         title: 'Fehler',
         description: 'Der Termin konnte nicht erstellt werden.',

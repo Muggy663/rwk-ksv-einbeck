@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, UserCog } from 'lucide-react';
@@ -22,7 +23,7 @@ export default function CreateSampleUserLoginsPage() {
         variant: 'default'
       });
     } catch (error) {
-      console.error('Fehler beim Erstellen der Login-Daten:', error);
+      logError('Fehler beim Erstellen der Login-Daten:', error);
       toast({
         title: 'Fehler',
         description: 'Die Login-Daten konnten nicht erstellt werden.',

@@ -11,7 +11,7 @@ export class MannschaftsbildungService {
         return data.regeln;
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Mannschaftsregeln:', error);
+      logError('Fehler beim Laden der Mannschaftsregeln:', error);
     }
     return null;
   }

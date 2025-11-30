@@ -2,6 +2,7 @@
 "use client"; 
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { BookOpenCheck, Target, Trophy, Users } from 'lucide-react';

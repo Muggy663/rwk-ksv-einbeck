@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { GoogleGenAI } from '@google/genai';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
@@ -132,7 +133,7 @@ Antworte mit JSON:
     }
 
   } catch (error) {
-    console.error('Gemini API Fehler:', error);
+    logError('Gemini API Fehler:', error);
     return NextResponse.json({
       success: false,
       error: `Gemini API Fehler: ${error.message}. Prüfe API Key und Internetverbindung.`

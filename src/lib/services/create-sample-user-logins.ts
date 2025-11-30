@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, doc, setDoc, Timestamp } from 'firebase/firestore';
 
 /**
@@ -32,7 +33,7 @@ export async function createSampleUserLogins() {
 
     return users.length;
   } catch (error) {
-    console.error('Fehler beim Erstellen der Login-Daten:', error);
+    logError('Fehler beim Erstellen der Login-Daten:', error);
     throw error;
   }
 }

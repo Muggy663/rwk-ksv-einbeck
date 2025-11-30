@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +31,7 @@ export function NotificationCenter() {
       setNotifications(userNotifications);
       setUnreadCount(userNotifications.filter(n => !n.read).length);
     } catch (error) {
-      console.error('Fehler beim Laden der Benachrichtigungen:', error);
+      logError('Fehler beim Laden der Benachrichtigungen:', error);
     } finally {
       setIsLoading(false);
     }
@@ -44,7 +45,7 @@ export function NotificationCenter() {
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('Fehler beim Markieren als gelesen:', error);
+      logError('Fehler beim Markieren als gelesen:', error);
     }
   };
 
@@ -56,7 +57,7 @@ export function NotificationCenter() {
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {
-      console.error('Fehler beim Markieren aller als gelesen:', error);
+      logError('Fehler beim Markieren aller als gelesen:', error);
     }
   };
 

@@ -1,6 +1,7 @@
 // src/app/admin/team-cleanup/page.tsx
 "use client";
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -76,7 +77,7 @@ export default function TeamCleanupPage() {
         description: `${analysis.length} Teams mit ungültigen Schützen-IDs gefunden.` 
       });
     } catch (error) {
-      console.error("Fehler bei Team-Analyse:", error);
+      logError("Fehler bei Team-Analyse:", error);
       toast({ title: "Fehler bei Analyse", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsAnalyzing(false);
@@ -104,7 +105,7 @@ export default function TeamCleanupPage() {
       setBackupCreated(true);
       toast({ title: "Backup erstellt", description: "Teams-Backup wurde heruntergeladen." });
     } catch (error) {
-      console.error("Fehler beim Backup:", error);
+      logError("Fehler beim Backup:", error);
       toast({ title: "Backup-Fehler", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsCreatingBackup(false);
@@ -143,7 +144,7 @@ export default function TeamCleanupPage() {
       
       await analyzeTeams();
     } catch (error) {
-      console.error("Fehler beim Bereinigen:", error);
+      logError("Fehler beim Bereinigen:", error);
       toast({ title: "Bereinigung fehlgeschlagen", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsCleaningUp(false);

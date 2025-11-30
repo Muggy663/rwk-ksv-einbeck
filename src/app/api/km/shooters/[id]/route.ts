@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
@@ -34,7 +35,7 @@ export async function PUT(
       message: 'Shooter updated successfully' 
     });
   } catch (error) {
-    console.error('Update shooter error:', error);
+    logError('Update shooter error:', error);
     return NextResponse.json({ 
       success: false, 
       error: 'Failed to update shooter' 
@@ -67,7 +68,7 @@ export async function DELETE(
       message: 'Shooter deleted successfully' 
     });
   } catch (error) {
-    console.error('Delete shooter error:', error);
+    logError('Delete shooter error:', error);
     return NextResponse.json({ 
       success: false, 
       error: 'Failed to delete shooter' 

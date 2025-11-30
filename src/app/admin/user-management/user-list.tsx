@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -52,7 +53,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
       const snapshot = await getDocs(usersQuery);
       const fetchedUsers = snapshot.docs.map(doc => {
         const data = doc.data();
-        console.log('User data for', data.email, ':', data);
+        logDebug('User data for', data.email, ':', data);
         return {
           ...data,
           uid: doc.id
@@ -62,7 +63,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
       setUsers(fetchedUsers);
       setFilteredUsers(fetchedUsers);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      logError('Error fetching users:', error);
       toast({
         title: 'Fehler beim Laden der Benutzer',
         description: 'Die Benutzerliste konnte nicht geladen werden.',
@@ -107,7 +108,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
         description: `Die Berechtigungen für ${userToDelete.email} wurden gelöscht.`,
       });
     } catch (error) {
-      console.error('Error deleting user:', error);
+      logError('Error deleting user:', error);
       toast({
         title: 'Fehler beim Löschen',
         description: 'Die Benutzerberechtigungen konnten nicht gelöscht werden.',

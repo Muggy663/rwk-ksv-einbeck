@@ -1,4 +1,5 @@
 import '../styles/globals.css';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import type { AppProps } from 'next/app';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import { Toaster } from '@/components/ui/toaster';

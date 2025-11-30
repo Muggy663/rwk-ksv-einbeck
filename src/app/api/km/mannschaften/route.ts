@@ -1,5 +1,6 @@
 // src/app/api/km/mannschaften/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Fehler beim Laden der Mannschaften:', error);
+    logError('❌ Fehler beim Laden der Mannschaften:', error);
     // Return empty array on error to prevent UI breaking
     return NextResponse.json({
       success: true,
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Fehler beim Erstellen der Mannschaft:', error);
+    logError('Fehler beim Erstellen der Mannschaft:', error);
     return NextResponse.json({
       success: false,
       error: `Fehler: ${error.message}`

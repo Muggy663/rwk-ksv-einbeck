@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,7 +74,7 @@ export default function EditProfilePage() {
         }));
       }
     } catch (error) {
-      console.error('Fehler beim Laden des Profils:', error);
+      logError('Fehler beim Laden des Profils:', error);
       toast({
         title: "Fehler",
         description: "Profil konnte nicht geladen werden.",
@@ -121,7 +122,7 @@ export default function EditProfilePage() {
       
       router.push('/social');
     } catch (error: any) {
-      console.error('Fehler beim Speichern:', error);
+      logError('Fehler beim Speichern:', error);
       
       let errorMessage = "Profil konnte nicht gespeichert werden.";
       if (error.code === 'permission-denied') {

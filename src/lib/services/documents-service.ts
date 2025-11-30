@@ -13,6 +13,7 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { DocumentMeta, DocumentFormData } from '@/types/documents';
 
 const COLLECTION_NAME = 'documents';

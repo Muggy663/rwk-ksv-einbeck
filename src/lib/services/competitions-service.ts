@@ -13,6 +13,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export interface Competition {
   id?: string;
@@ -55,29 +56,29 @@ export class CompetitionsService {
   }
 
   static async joinCompetition(competitionId: string, userId: string): Promise<void> {
-    console.log('CompetitionsService.joinCompetition called with:', { competitionId, userId });
+    logDebug('CompetitionsService.joinCompetition called with:', { competitionId, userId });
     
     const competitionRef = doc(db, 'live_competitions', competitionId);
     const competitionDoc = await getDoc(competitionRef);
     
-    console.log('Competition doc exists:', competitionDoc.exists());
+    logDebug('Competition doc exists:', competitionDoc.exists());
     
     if (!competitionDoc.exists()) {
       throw new Error('Wettkampf nicht gefunden');
     }
     
     const competition = competitionDoc.data() as Competition;
-    console.log('Current participants:', competition.participants);
-    console.log('User already participant?', competition.participants.includes(userId));
+    logDebug('Current participants:', competition.participants);
+    logDebug('User already participant?', competition.participants.includes(userId));
     
     if (!competition.participants.includes(userId)) {
-      console.log('Adding user to participants...');
+      logDebug('Adding user to participants...');
       await updateDoc(competitionRef, {
         participants: [...competition.participants, userId]
       });
-      console.log('User added successfully');
+      logDebug('User added successfully');
     } else {
-      console.log('User already a participant');
+      logDebug('User already a participant');
     }
   }
 

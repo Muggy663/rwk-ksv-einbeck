@@ -1,5 +1,6 @@
 // src/app/api/km/auth/sync-rwk.ts
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 
 export async function syncRWKUsersToKM() {
@@ -54,7 +55,7 @@ export async function syncRWKUsersToKM() {
 
     return { success: true, synced: syncedCount };
   } catch (error) {
-    console.error('RWK-Sync Fehler:', error);
+    logError('RWK-Sync Fehler:', error);
     return { success: false, error: 'Synchronisation fehlgeschlagen' };
   }
 }

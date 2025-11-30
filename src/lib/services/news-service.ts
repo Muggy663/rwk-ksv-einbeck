@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { auditLogService } from './audit-service';
 
@@ -77,7 +78,7 @@ class NewsService {
           }
         );
       } catch (auditError) {
-        console.error('Fehler beim Erstellen des Audit-Logs:', auditError);
+        logError('Fehler beim Erstellen des Audit-Logs:', auditError);
       }
       
       // TODO: Push-Notification senden wenn veröffentlicht
@@ -87,7 +88,7 @@ class NewsService {
       
       return docRef.id;
     } catch (error) {
-      console.error('Fehler beim Erstellen des News-Artikels:', error);
+      logError('Fehler beim Erstellen des News-Artikels:', error);
       throw error;
     }
   }
@@ -106,7 +107,7 @@ class NewsService {
       
       return this.mapArticles(snapshot);
     } catch (error) {
-      console.error('Fehler beim Laden aller News-Artikel:', error);
+      logError('Fehler beim Laden aller News-Artikel:', error);
       throw error;
     }
   }
@@ -127,7 +128,7 @@ class NewsService {
       
       return this.mapArticles(snapshot);
     } catch (error) {
-      console.error('Fehler beim Laden der veröffentlichten News-Artikel:', error);
+      logError('Fehler beim Laden der veröffentlichten News-Artikel:', error);
       // Leeres Array zurückgeben statt Fehler zu werfen
       return [];
     }
@@ -149,7 +150,7 @@ class NewsService {
       
       return this.mapArticles(snapshot);
     } catch (error) {
-      console.error('Fehler beim Laden der gepinnten News-Artikel:', error);
+      logError('Fehler beim Laden der gepinnten News-Artikel:', error);
       throw error;
     }
   }
@@ -171,7 +172,7 @@ class NewsService {
       
       return this.mapArticles(snapshot);
     } catch (error) {
-      console.error('Fehler beim Laden der News-Artikel nach Kategorie:', error);
+      logError('Fehler beim Laden der News-Artikel nach Kategorie:', error);
       throw error;
     }
   }
@@ -200,7 +201,7 @@ class NewsService {
       
 
     } catch (error) {
-      console.error('Fehler beim Aktualisieren des News-Artikels:', error);
+      logError('Fehler beim Aktualisieren des News-Artikels:', error);
       throw error;
     }
   }
@@ -213,7 +214,7 @@ class NewsService {
       await deleteDoc(doc(db, this.collection, id));
 
     } catch (error) {
-      console.error('Fehler beim Löschen des News-Artikels:', error);
+      logError('Fehler beim Löschen des News-Artikels:', error);
       throw error;
     }
   }
@@ -238,7 +239,7 @@ class NewsService {
         });
       }
     } catch (error) {
-      console.error('Fehler beim Erhöhen der Views:', error);
+      logError('Fehler beim Erhöhen der Views:', error);
     }
   }
 
@@ -263,7 +264,7 @@ class NewsService {
         pinned: articles.filter(a => a.pinned).length
       };
     } catch (error) {
-      console.error('Fehler beim Laden der News-Statistiken:', error);
+      logError('Fehler beim Laden der News-Statistiken:', error);
       throw error;
     }
   }

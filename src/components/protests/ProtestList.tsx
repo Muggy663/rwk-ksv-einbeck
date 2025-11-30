@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,7 +52,7 @@ export function ProtestList({ showAll = false }: ProtestListProps) {
       
       setProtests(protestsData);
     } catch (error) {
-      console.error('Fehler beim Laden der Proteste:', error);
+      logError('Fehler beim Laden der Proteste:', error);
       toast({
         title: 'Fehler',
         description: 'Die Proteste konnten nicht geladen werden.',
@@ -83,7 +84,7 @@ export function ProtestList({ showAll = false }: ProtestListProps) {
       await loadProtests();
       setSelectedProtest(null);
     } catch (error) {
-      console.error('Fehler beim Aktualisieren des Status:', error);
+      logError('Fehler beim Aktualisieren des Status:', error);
       toast({
         title: 'Fehler',
         description: 'Der Status konnte nicht aktualisiert werden.',
@@ -111,7 +112,7 @@ export function ProtestList({ showAll = false }: ProtestListProps) {
       setNewComment('');
       await loadProtests();
     } catch (error) {
-      console.error('Fehler beim Hinzufügen des Kommentars:', error);
+      logError('Fehler beim Hinzufügen des Kommentars:', error);
       toast({
         title: 'Fehler',
         description: 'Der Kommentar konnte nicht hinzugefügt werden.',

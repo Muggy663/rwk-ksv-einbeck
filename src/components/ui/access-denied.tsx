@@ -1,5 +1,6 @@
 // src/components/ui/access-denied.tsx
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Shield, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';

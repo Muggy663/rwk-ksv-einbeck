@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
 export async function POST(request: NextRequest) {
@@ -54,13 +55,13 @@ export async function POST(request: NextRequest) {
         `
       });
     } catch (emailError) {
-      console.error('E-Mail-Benachrichtigung fehlgeschlagen:', emailError);
+      logError('E-Mail-Benachrichtigung fehlgeschlagen:', emailError);
       // Fehler nicht weiterwerfen - Registrierung soll trotzdem funktionieren
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Fehler beim Erstellen der user_permissions:', error);
+    logError('Fehler beim Erstellen der user_permissions:', error);
     return NextResponse.json(
       { error: 'Fehler beim Erstellen der Benutzerberechtigungen' },
       { status: 500 }

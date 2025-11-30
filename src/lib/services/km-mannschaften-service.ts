@@ -1,5 +1,6 @@
 // src/lib/services/km-mannschaften-service.ts
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import { kannMannschaftBilden } from '@/types/mannschaftsregeln';
 import { calculateKMWettkampfklasse } from '@/types/km';

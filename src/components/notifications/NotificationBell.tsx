@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +29,7 @@ export function NotificationBell() {
       const notifications = await NotificationService.getUserNotifications(user.uid);
       setUnreadCount(notifications.filter(n => !n.read).length);
     } catch (error) {
-      console.error('Fehler beim Laden der Benachrichtigungen:', error);
+      logError('Fehler beim Laden der Benachrichtigungen:', error);
     }
   };
 

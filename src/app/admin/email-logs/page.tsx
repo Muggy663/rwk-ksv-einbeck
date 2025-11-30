@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +33,7 @@ export default function EmailLogsPage() {
         description: 'Siehe Browser-Konsole für Details',
       });
     } catch (error) {
-      console.error('API-Test Fehler:', error);
+      logError('API-Test Fehler:', error);
       toast({
         title: 'API-Test Fehler',
         description: 'Siehe Browser-Konsole für Details',

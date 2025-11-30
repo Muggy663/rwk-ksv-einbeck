@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -52,7 +53,7 @@ export default function CertificatesPage() {
           setSelectedSeason(seasonsData[0].id);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Saisons:', error);
+        logError('Fehler beim Laden der Saisons:', error);
         toast({
           title: 'Fehler',
           description: 'Die Saisons konnten nicht geladen werden.',
@@ -92,7 +93,7 @@ export default function CertificatesPage() {
           setSelectedLeague('');
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Ligen:', error);
+        logError('Fehler beim Laden der Ligen:', error);
         toast({
           title: 'Fehler',
           description: 'Die Ligen konnten nicht geladen werden.',
@@ -149,7 +150,7 @@ export default function CertificatesPage() {
         setLoading(false);
       }, 1000);
     } catch (error) {
-      console.error('Fehler beim Generieren der Test-Urkunden:', error);
+      logError('Fehler beim Generieren der Test-Urkunden:', error);
       setLoading(false);
       toast({
         title: 'Fehler',
@@ -350,7 +351,7 @@ export default function CertificatesPage() {
         description: `${certificates.length} Urkunden wurden erfolgreich generiert.`,
       });
     } catch (error) {
-      console.error('Fehler beim Generieren der Urkunden:', error);
+      logError('Fehler beim Generieren der Urkunden:', error);
       toast({
         title: 'Fehler',
         description: 'Die Urkunden konnten nicht generiert werden.',
@@ -515,7 +516,7 @@ export default function CertificatesPage() {
         description: `${certificates.length} Urkunden wurden erfolgreich generiert.`,
       });
     } catch (error) {
-      console.error('Fehler beim Generieren der Urkunden für Gesamtsieger:', error);
+      logError('Fehler beim Generieren der Urkunden für Gesamtsieger:', error);
       toast({
         title: 'Fehler',
         description: 'Die Urkunden für Gesamtsieger konnten nicht generiert werden.',

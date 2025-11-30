@@ -1,5 +1,6 @@
 // src/app/api/clubs/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Fehler beim Laden der Vereine:', error);
+    logError('Fehler beim Laden der Vereine:', error);
     return NextResponse.json({
       success: false,
       error: 'Fehler beim Laden der Vereine'

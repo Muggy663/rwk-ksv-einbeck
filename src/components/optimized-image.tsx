@@ -1,6 +1,7 @@
 "use client";
 
 import React, { memo } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import Image, { ImageProps } from 'next/image';
 
 interface OptimizedImageProps extends Omit<ImageProps, 'loading'> {

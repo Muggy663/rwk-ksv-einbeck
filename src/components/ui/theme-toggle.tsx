@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -35,7 +36,7 @@ export function ThemeToggle() {
       variant="outline"
       size="icon"
       onClick={() => {
-        console.log('Theme toggle clicked, current theme:', theme);
+        logDebug('Theme toggle clicked, current theme:', theme);
         setTheme(theme === "light" ? "dark" : "light");
       }}
       className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"

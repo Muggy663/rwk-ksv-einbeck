@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -79,7 +80,7 @@ export function AuditTrail({
           });
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Audit-Einträge:', error);
+        logError('Fehler beim Laden der Audit-Einträge:', error);
         toast({
           title: 'Fehler',
           description: 'Die Audit-Einträge konnten nicht geladen werden.',
@@ -158,7 +159,7 @@ export function AuditTrail({
       const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
       return format(date, 'dd.MM.yyyy HH:mm:ss', { locale: de });
     } catch (error) {
-      console.error('Fehler beim Formatieren des Zeitstempels:', error);
+      logError('Fehler beim Formatieren des Zeitstempels:', error);
       return '-';
     }
   };

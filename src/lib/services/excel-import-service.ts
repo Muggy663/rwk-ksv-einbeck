@@ -1,5 +1,6 @@
 // src/lib/services/excel-import-service.ts
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 
 // Erweiterte Geschlechts-Erkennung basierend auf Vornamen
@@ -56,7 +57,7 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
 
   // Filtere nur SV Salzderhelden
   const filteredMembers = members.filter(m => m.verein === TARGET_CLUB);
-  console.log(`Gefiltert: ${filteredMembers.length} von ${members.length} für ${TARGET_CLUB}`);
+  logDebug(`Gefiltert: ${filteredMembers.length} von ${members.length} für ${TARGET_CLUB}`);
 
   // Lade bestehende Vereine und Schützen
   const clubsSnapshot = await getDocs(collection(db, 'clubs'));
@@ -116,7 +117,7 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
       
       // Prüfe auf Duplikat
       if (existingShooters.has(duplicateKey)) {
-        console.log(`Überspringe Duplikat: ${shooterName}`);
+        logDebug(`Überspringe Duplikat: ${shooterName}`);
         results.skipped++;
         continue;
       }
@@ -147,6 +148,6 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
     }
   }
 
-  console.log(`Import abgeschlossen: ${results.imported} importiert, ${results.skipped} übersprungen`);
+  logDebug(`Import abgeschlossen: ${results.imported} importiert, ${results.skipped} übersprungen`);
   return results;
 }

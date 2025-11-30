@@ -1,6 +1,7 @@
 // src/app/login/page.tsx
 "use client"; // Required for redirect and useAuth hook
 import { useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useRouter } from 'next/navigation';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { useAuth } from '@/hooks/use-auth';

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { MongoClient } from 'mongodb';
 
 const STORAGE_THRESHOLD_MB = 450;
@@ -53,7 +54,7 @@ async function checkStorageUsage(mongoUri: string) {
       try {
         await client.close();
       } catch (error) {
-        console.error('Fehler beim Schließen der MongoDB-Verbindung:', error);
+        logError('Fehler beim Schließen der MongoDB-Verbindung:', error);
       }
     }
   }

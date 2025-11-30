@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -90,7 +91,7 @@ export function CreateUserForm({ clubs, onUserCreated }: CreateUserFormProps) {
         throw new Error(data.message || "Unbekannter Fehler beim Erstellen des Benutzers");
       }
     } catch (error: any) {
-      console.error("Fehler beim Erstellen des Benutzers:", error);
+      logError("Fehler beim Erstellen des Benutzers:", error);
       toast({
         title: "Fehler",
         description: error.message || "Beim Erstellen des Benutzers ist ein Fehler aufgetreten.",

@@ -1,94 +1,179 @@
 /**
- * Sicheres Logging-System für RWK Einbeck App
- * Verhindert Log Injection und Data Exposure
+ * Secure Logger - Verhindert Log Injection (CWE-117)
+ * Sanitisiert alle Log-Ausgaben und verhindert XSS in Logs
  */
 
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
-interface LogEntry {
-  level: LogLevel;
-  message: string;
-  timestamp: string;
-  context?: string;
+interface LogContext {
+  component?: string;
+  userId?: string;
+  action?: string;
+  [key: string]: any;
 }
 
 class SecureLogger {
   private isDevelopment = process.env.NODE_ENV === 'development';
 
   /**
-   * Sanitisiert Log-Nachrichten um Injection zu verhindern
+   * Sanitisiert Strings für sichere Log-Ausgabe
    */
-  private sanitize(input: any): string {
-    if (typeof input === 'string') {
-      return input
-        .replace(/[\r\n\t]/g, ' ') // Entferne Zeilenumbrüche
-        .replace(/[<>]/g, '') // Entferne HTML-Tags
-        .substring(0, 500); // Begrenze Länge
+  private sanitizeString(value: any): string {
+    if (typeof value !== 'string') {
+      return String(value);
     }
     
-    if (typeof input === 'object') {
-      return '[Object]'; // Keine sensitive Objekt-Details
-    }
-    
-    return String(input).substring(0, 100);
+    // Entferne potentiell gefährliche Zeichen
+    return value
+      .replace(/[\r\n\t]/g, ' ') // Zeilenumbrüche entfernen
+      .replace(/[<>'"&]/g, '_') // HTML/Script-Zeichen ersetzen
+      .substring(0, 500); // Länge begrenzen
   }
 
   /**
-   * Erstellt sichere Log-Einträge
+   * Sanitisiert Objekte für sichere Log-Ausgabe
    */
-  private createLogEntry(level: LogLevel, message: string, context?: string): LogEntry {
-    return {
-      level,
-      message: this.sanitize(message),
-      timestamp: new Date().toISOString(),
-      context: context ? this.sanitize(context) : undefined
-    };
+  private sanitizeObject(obj: any, maxDepth = 3, currentDepth = 0): any {
+    if (currentDepth >= maxDepth) {
+      return '[Object too deep]';
+    }
+
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (typeof obj === 'string') {
+      return this.sanitizeString(obj);
+    }
+
+    if (typeof obj === 'number' || typeof obj === 'boolean') {
+      return obj;
+    }
+
+    if (obj instanceof Error) {
+      return {
+        name: this.sanitizeString(obj.name),
+        message: this.sanitizeString(obj.message),
+        code: obj.code ? this.sanitizeString(obj.code) : undefined,
+        stack: obj.stack ? this.sanitizeString(obj.stack.substring(0, 200)) : undefined
+      };
+    }
+
+    if (Array.isArray(obj)) {
+      if (obj.length > 10) {
+        return `[Array with ${obj.length} items]`;
+      }
+      return obj.slice(0, 10).map(item => this.sanitizeObject(item, maxDepth, currentDepth + 1));
+    }
+
+    if (typeof obj === 'object') {
+      const sanitized: any = {};
+      const keys = Object.keys(obj).slice(0, 10); // Nur erste 10 Keys
+      
+      for (const key of keys) {
+        const sanitizedKey = this.sanitizeString(key);
+        
+        // Sensible Daten ausschließen
+        if (this.isSensitiveKey(sanitizedKey)) {
+          sanitized[sanitizedKey] = '[REDACTED]';
+        } else {
+          sanitized[sanitizedKey] = this.sanitizeObject(obj[key], maxDepth, currentDepth + 1);
+        }
+      }
+      
+      if (Object.keys(obj).length > 10) {
+        sanitized['...'] = `[${Object.keys(obj).length - 10} more keys]`;
+      }
+      
+      return sanitized;
+    }
+
+    return this.sanitizeString(obj);
+  }
+
+  /**
+   * Prüft ob ein Key sensible Daten enthält
+   */
+  private isSensitiveKey(key: string): boolean {
+    const sensitiveKeys = [
+      'password', 'token', 'secret', 'key', 'auth', 'credential',
+      'email', 'phone', 'address', 'ssn', 'credit', 'card'
+    ];
+    
+    const lowerKey = key.toLowerCase();
+    return sensitiveKeys.some(sensitive => lowerKey.includes(sensitive));
+  }
+
+  /**
+   * Erstellt sichere Log-Nachricht
+   */
+  private createLogMessage(level: LogLevel, message: string, context?: LogContext): string {
+    const timestamp = new Date().toISOString();
+    const sanitizedMessage = this.sanitizeString(message);
+    
+    let logMessage = `[${timestamp}] ${level.toUpperCase()}: ${sanitizedMessage}`;
+    
+    if (context) {
+      const sanitizedContext = this.sanitizeObject(context);
+      logMessage += ` | Context: ${JSON.stringify(sanitizedContext)}`;
+    }
+    
+    return logMessage;
   }
 
   /**
    * Info-Level Logging
    */
-  info(message: string, context?: string): void {
-    const entry = this.createLogEntry('info', message, context);
-    console.log(`[INFO] ${entry.timestamp}: ${entry.message}`);
+  info(message: string, context?: LogContext): void {
+    if (this.isDevelopment) {
+      const logMessage = this.createLogMessage('info', message, context);
+      console.info(logMessage);
+    }
   }
 
   /**
    * Warning-Level Logging
    */
-  warn(message: string, context?: string): void {
-    const entry = this.createLogEntry('warn', message, context);
-    console.warn(`[WARN] ${entry.timestamp}: ${entry.message}`);
+  warn(message: string, context?: LogContext): void {
+    const logMessage = this.createLogMessage('warn', message, context);
+    console.warn(logMessage);
   }
 
   /**
-   * Error-Level Logging (ohne sensitive Details)
+   * Error-Level Logging
    */
-  error(message: string, context?: string): void {
-    const entry = this.createLogEntry('error', message, context);
-    console.error(`[ERROR] ${entry.timestamp}: ${entry.message}`);
+  error(message: string, error?: Error, context?: LogContext): void {
+    const errorContext = error ? { error: this.sanitizeObject(error), ...context } : context;
+    const logMessage = this.createLogMessage('error', message, errorContext);
+    console.error(logMessage);
   }
 
   /**
    * Debug-Level Logging (nur in Development)
    */
-  debug(message: string, context?: string): void {
+  debug(message: string, context?: LogContext): void {
     if (this.isDevelopment) {
-      const entry = this.createLogEntry('debug', message, context);
-      console.debug(`[DEBUG] ${entry.timestamp}: ${entry.message}`);
+      const logMessage = this.createLogMessage('debug', message, context);
+      console.debug(logMessage);
     }
   }
 
   /**
-   * Sichere Fehler-Behandlung ohne sensitive Daten
+   * Performance Logging
    */
-  logError(error: Error | unknown, context?: string): void {
-    const safeMessage = error instanceof Error 
-      ? `Error occurred: ${error.name}` 
-      : 'Unknown error occurred';
-    
-    this.error(safeMessage, context);
+  performance(operation: string, duration: number, context?: LogContext): void {
+    if (this.isDevelopment) {
+      this.info(`Performance: ${operation} took ${duration}ms`, context);
+    }
   }
 }
 
+// Singleton Instance
 export const secureLogger = new SecureLogger();
+
+// Convenience exports
+export const logInfo = (message: string, context?: LogContext) => secureLogger.info(message, context);
+export const logWarn = (message: string, context?: LogContext) => secureLogger.warn(message, context);
+export const logError = (message: string, error?: Error, context?: LogContext) => secureLogger.error(message, error, context);
+export const logDebug = (message: string, context?: LogContext) => secureLogger.debug(message, context);
+export const logPerformance = (operation: string, duration: number, context?: LogContext) => secureLogger.performance(operation, duration, context);

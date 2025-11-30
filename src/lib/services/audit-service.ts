@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, where, Timestamp } from 'firebase/firestore';
 
 /**
@@ -49,12 +50,22 @@ export async function createAuditEntry(
     };
     
     // Speichere den Audit-Eintrag in der Datenbank
+    // Logge für Debugging
+    logDebug('Erstelle Audit-Eintrag:', {
+      action,
+      entityType,
+      entityId,
+      teamName: metadata?.teamName,
+      shooterName: metadata?.shooterName,
+      description: details.description
+    });
+    
     const docRef = await addDoc(collection(db, 'audit_logs'), auditEntry);
     
 
     return docRef.id;
   } catch (error) {
-    console.error('Fehler beim Erstellen des Audit-Eintrags:', error);
+    logError('Fehler beim Erstellen des Audit-Eintrags:', error);
     throw error;
   }
 }
@@ -118,7 +129,7 @@ class AuditLogService {
         userName: userInfo?.userName || 'System'
       });
     } catch (error) {
-      console.error('Fehler beim Loggen der Aktion:', error);
+      logError('Fehler beim Loggen der Aktion:', error);
       return null;
     }
   }
@@ -142,7 +153,7 @@ class AuditLogService {
         timestamp: doc.data().timestamp?.toDate() || new Date()
       })) as AuditLogEntry[];
     } catch (error) {
-      console.error('Fehler beim Laden der Audit-Logs:', error);
+      logError('Fehler beim Laden der Audit-Logs:', error);
       throw error;
     }
   }
@@ -167,7 +178,7 @@ class AuditLogService {
         timestamp: doc.data().timestamp?.toDate() || new Date()
       })) as AuditLogEntry[];
     } catch (error) {
-      console.error('Fehler beim Laden der Audit-Logs nach Typ:', error);
+      logError('Fehler beim Laden der Audit-Logs nach Typ:', error);
       throw error;
     }
   }
@@ -192,7 +203,7 @@ class AuditLogService {
         timestamp: doc.data().timestamp?.toDate() || new Date()
       })) as AuditLogEntry[];
     } catch (error) {
-      console.error('Fehler beim Laden der Audit-Logs für Entität:', error);
+      logError('Fehler beim Laden der Audit-Logs für Entität:', error);
       throw error;
     }
   }
@@ -225,7 +236,7 @@ class AuditLogService {
       
       return stats;
     } catch (error) {
-      console.error('Fehler beim Laden der Audit-Statistiken:', error);
+      logError('Fehler beim Laden der Audit-Statistiken:', error);
       throw error;
     }
   }

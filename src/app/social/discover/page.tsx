@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,7 +53,7 @@ export default function DiscoverPage() {
       const publicProfiles = await SocialService.searchPublicProfiles();
       setProfiles(publicProfiles.filter(p => p.id !== user?.uid));
     } catch (error) {
-      console.error('Fehler beim Laden der Profile:', error);
+      logError('Fehler beim Laden der Profile:', error);
     } finally {
       setLoading(false);
     }

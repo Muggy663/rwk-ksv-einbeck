@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -122,7 +123,7 @@ export function CreateUserFormLocal({ clubs, onUserCreated }: CreateUserFormLoca
       // Callback zur Aktualisierung der Benutzerliste
       onUserCreated();
     } catch (error: any) {
-      console.error("Fehler beim Speichern der Berechtigungen:", error);
+      logError("Fehler beim Speichern der Berechtigungen:", error);
       toast({
         title: "Fehler",
         description: error.message || "Beim Speichern der Berechtigungen ist ein Fehler aufgetreten.",

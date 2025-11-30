@@ -19,12 +19,12 @@ export class PushNotificationService {
     }
 
     // TODO: Implement actual subscription logic
-    console.log('Subscribed:', { email, types });
+    logDebug('Subscribed:', { email, types });
   }
 
   async unsubscribe(email?: string): Promise<void> {
     // TODO: Implement actual unsubscription logic
-    console.log('Unsubscribed:', email);
+    logDebug('Unsubscribed:', email);
   }
 }
 

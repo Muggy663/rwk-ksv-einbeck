@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -83,7 +84,7 @@ export default function SupportAccessPage() {
 
       setActiveSessions(validSessions);
     } catch (error) {
-      console.error('Fehler beim Laden der Support-Sessions:', error);
+      logError('Fehler beim Laden der Support-Sessions:', error);
     }
   };
 
@@ -100,7 +101,7 @@ export default function SupportAccessPage() {
         }
       }
     } catch (error) {
-      console.error('Fehler beim Prüfen des aktuellen Zugangs:', error);
+      logError('Fehler beim Prüfen des aktuellen Zugangs:', error);
     }
   };
 
@@ -184,7 +185,7 @@ export default function SupportAccessPage() {
 
       await loadActiveSessions();
     } catch (error) {
-      console.error('Fehler beim Aktivieren des Support-Zugangs:', error);
+      logError('Fehler beim Aktivieren des Support-Zugangs:', error);
       toast({
         title: 'Fehler',
         description: 'Support-Zugang konnte nicht aktiviert werden.',
@@ -232,7 +233,7 @@ export default function SupportAccessPage() {
 
       await loadActiveSessions();
     } catch (error) {
-      console.error('Fehler beim Beenden des Support-Zugangs:', error);
+      logError('Fehler beim Beenden des Support-Zugangs:', error);
       toast({
         title: 'Fehler',
         description: 'Support-Zugang konnte nicht beendet werden.',

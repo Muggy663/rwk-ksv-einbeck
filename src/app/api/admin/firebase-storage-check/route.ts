@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import admin from 'firebase-admin';
 
 // Korrigierte Importe
@@ -17,13 +18,13 @@ async function checkFirestoreUsage() {
       try {
         serviceAccount = JSON.parse(serviceAccountKey);
       } catch (e) {
-        console.error('Fehler beim Parsen des Service Account Keys:', e);
+        logError('Fehler beim Parsen des Service Account Keys:', e);
         throw new Error('Ungültiger Service Account Key');
       }
       
       // Überprüfe, ob project_id vorhanden ist
       if (!serviceAccount.project_id) {
-        console.error('Service Account fehlt project_id');
+        logError('Service Account fehlt project_id');
         throw new Error('Service Account muss eine project_id enthalten');
       }
       
@@ -86,7 +87,7 @@ async function checkFirestoreUsage() {
       collectionStats
     };
   } catch (error) {
-    console.error('Fehler beim Abrufen der Firestore-Statistiken:', error);
+    logError('Fehler beim Abrufen der Firestore-Statistiken:', error);
     return {
       error: 'Fehler beim Abrufen der Firestore-Statistiken',
       totalSizeInKB: 0,
@@ -105,7 +106,7 @@ export async function GET() {
     const storageInfo = await checkFirestoreUsage();
     return NextResponse.json(storageInfo);
   } catch (error) {
-    console.error('Fehler beim Prüfen des Firestore-Speicherplatzes:', error);
+    logError('Fehler beim Prüfen des Firestore-Speicherplatzes:', error);
     return NextResponse.json(
       { error: 'Fehler beim Prüfen des Firestore-Speicherplatzes' },
       { status: 500 }

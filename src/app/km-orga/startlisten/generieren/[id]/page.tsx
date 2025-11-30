@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 interface Props {
   params: { id: string };

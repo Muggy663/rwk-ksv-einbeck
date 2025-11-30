@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -116,21 +117,21 @@ export default function SchiessnachweisLoginPage() {
           });
           
           if (!response.ok) {
-            console.error('API-Fehler:', await response.text());
+            logError('API-Fehler:', await response.text());
           } else {
-            console.log('user_permissions erfolgreich erstellt');
+            logDebug('user_permissions erfolgreich erstellt');
             // Kurz warten damit AuthProvider die Permissions findet
             await new Promise(resolve => setTimeout(resolve, 1000));
           }
         } catch (apiError) {
-          console.error('API-Aufruf fehlgeschlagen:', apiError);
+          logError('API-Aufruf fehlgeschlagen:', apiError);
         }
         
         // E-Mail-Bestätigung senden
         try {
           // Firebase Standard-E-Mail (funktioniert zuverlässig)
           await sendEmailVerification(user);
-          console.log('Firebase E-Mail-Verifizierung gesendet an:', user.email);
+          logDebug('Firebase E-Mail-Verifizierung gesendet an:', user.email);
           
           toast({
             title: "🎉 Konto erfolgreich erstellt!",
@@ -138,7 +139,7 @@ export default function SchiessnachweisLoginPage() {
             duration: 8000, // Länger anzeigen
           });
         } catch (emailError) {
-          console.error('E-Mail-Fehler:', emailError);
+          logError('E-Mail-Fehler:', emailError);
           toast({
             title: "✅ Konto erstellt",
             description: "E-Mail-Bestätigung konnte nicht gesendet werden.",
@@ -147,9 +148,9 @@ export default function SchiessnachweisLoginPage() {
       }
       router.push('/schiessnachweis');
     } catch (error: any) {
-      console.error('Auth-Fehler:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
+      logError('Auth-Fehler:', error);
+      logError('Error code:', error.code);
+      logError('Error message:', error.message);
       let errorMessage = "Anmeldung fehlgeschlagen";
       
       // Spezifische Firebase Auth Fehlercodes

@@ -1,5 +1,6 @@
 // src/app/api/km/disziplinen/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { generateDisziplinen2026, getAllDisziplinen } from '@/lib/services/km-disziplinen-service';
 
 export async function POST(request: NextRequest) {
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
       message: 'Disziplinen für 2026 erfolgreich initialisiert'
     });
   } catch (error) {
-    console.error('Fehler beim Initialisieren der Disziplinen:', error);
+    logError('Fehler beim Initialisieren der Disziplinen:', error);
     
     return NextResponse.json({
       success: false,
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
       data: disziplinen
     });
   } catch (error) {
-    console.error('Fehler beim Laden der Disziplinen:', error);
+    logError('Fehler beim Laden der Disziplinen:', error);
     
     // Fallback: Leere Liste zurückgeben statt 500-Fehler
     return NextResponse.json({

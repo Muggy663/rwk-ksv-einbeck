@@ -5,6 +5,7 @@ if (typeof window !== 'undefined') {
 }
 
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Service Account aus Environment Variables

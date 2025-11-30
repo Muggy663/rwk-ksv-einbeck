@@ -1,4 +1,5 @@
 import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase';
 
 /**
@@ -38,7 +39,7 @@ export const migrateTeamsForOutOfCompetition = async () => {
       return { success: true, message: "Alle Teams haben bereits das outOfCompetition-Feld", migratedCount: 0 };
     }
   } catch (error) {
-    console.error("Fehler bei der Migration:", error);
+    logError("Fehler bei der Migration:", error);
     return { success: false, message: `Fehler bei der Migration: ${error}`, migratedCount: 0 };
   }
 };

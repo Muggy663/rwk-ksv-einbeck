@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -100,7 +101,7 @@ export default function EditEventPage() {
           router.push('/termine/verwaltung');
         }
       } catch (error) {
-        console.error('Fehler beim Laden des Termins:', error);
+        logError('Fehler beim Laden des Termins:', error);
         toast({
           title: 'Fehler',
           description: 'Der Termin konnte nicht geladen werden.',
@@ -151,7 +152,7 @@ export default function EditEventPage() {
       
       router.push('/termine/verwaltung');
     } catch (error) {
-      console.error('Fehler beim Speichern des Termins:', error);
+      logError('Fehler beim Speichern des Termins:', error);
       toast({
         title: 'Fehler',
         description: 'Der Termin konnte nicht gespeichert werden.',

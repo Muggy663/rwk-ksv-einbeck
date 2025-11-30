@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +32,7 @@ export default function EintraegePage() {
       const data = await SchießnachweisService.getEinträge();
       setEinträge(data);
     } catch (error) {
-      console.error('Fehler beim Laden der Einträge:', error);
+      logError('Fehler beim Laden der Einträge:', error);
     } finally {
       setIsLoading(false);
     }

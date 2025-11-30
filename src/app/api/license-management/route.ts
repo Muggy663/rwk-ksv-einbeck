@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('License management error:', error);
+    logError('License management error:', error);
     return NextResponse.json({ error: 'License operation failed' }, { status: 500 });
   }
 }

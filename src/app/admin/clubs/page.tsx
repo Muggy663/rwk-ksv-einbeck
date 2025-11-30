@@ -2,6 +2,7 @@
 // src/app/admin/clubs/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
@@ -65,7 +66,7 @@ export default function AdminClubsPage() {
       });
       setClubs(fetchedClubs);
     } catch (error) {
-      console.error("Error fetching clubs: ", error);
+      logError("Error fetching clubs: ", error);
       toast({
         title: "Fehler beim Laden der Vereine",
         description: (error as Error).message || "Ein unbekannter Fehler ist aufgetreten.",
@@ -94,7 +95,7 @@ export default function AdminClubsPage() {
 
   const handleDeleteConfirmation = (club: Club) => {
     if (!club || !club.id) {
-      console.error("handleDeleteConfirmation: Club oder Club-ID fehlt.", club);
+      logError("handleDeleteConfirmation: Club oder Club-ID fehlt.", club);
       toast({ title: "Fehler", description: "Vereinsdaten unvollständig, Löschdialog kann nicht geöffnet werden.", variant: "destructive"});
       return;
     }
@@ -130,7 +131,7 @@ export default function AdminClubsPage() {
       
       await fetchClubs(); 
     } catch (error) {
-      console.error("--- handleDeleteClub: Error during delete operation: ---", clubId, error);
+      logError("--- handleDeleteClub: Error during delete operation: ---", clubId, error);
       toast({
         title: "Fehler beim Löschen",
         description: (error as Error).message || `Der Verein "${clubName}" konnte nicht gelöscht werden.`,
@@ -198,7 +199,7 @@ export default function AdminClubsPage() {
       setCurrentClub(null);
       await fetchClubs();
     } catch (error) {
-      console.error("Error saving club: ", error);
+      logError("Error saving club: ", error);
       const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
       toast({
         title: `Fehler beim ${action}`,
@@ -271,7 +272,7 @@ export default function AdminClubsPage() {
                             if (club.id) {
                               handleDeleteConfirmation(club);
                             } else {
-                              console.error("FEHLER: club.id ist undefined beim Klick auf Löschen-Button für Club:", club);
+                              logError("FEHLER: club.id ist undefined beim Klick auf Löschen-Button für Club:", club);
                               toast({ title: "Fehler", description: "Vereins-ID nicht gefunden, Löschen nicht möglich.", variant: "destructive"});
                             }
                           }}
@@ -314,7 +315,7 @@ export default function AdminClubsPage() {
                                 if (club.id) {
                                   handleDeleteConfirmation(club);
                                 } else {
-                                  console.error("FEHLER: club.id ist undefined beim Klick auf Löschen-Button für Club:", club);
+                                  logError("FEHLER: club.id ist undefined beim Klick auf Löschen-Button für Club:", club);
                                   toast({ title: "Fehler", description: "Vereins-ID nicht gefunden, Löschen nicht möglich.", variant: "destructive"});
                                 }
                               }}

@@ -1,6 +1,7 @@
 "use client"; // Ganz wichtig für Next.js App Router, damit React Hooks funktionieren
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -64,7 +65,7 @@ export default function TeamManagersPage() {
           setSelectedLeague(''); // Wichtig: Liga-Auswahl zurücksetzen beim Saisonwechsel
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Saisons:', error);
+        logError('Fehler beim Laden der Saisons:', error);
         toast({
           title: 'Fehler',
           description: 'Die Saisons konnten nicht geladen werden.',
@@ -185,7 +186,7 @@ export default function TeamManagersPage() {
         setTeamManagers(managersData);
         setFilteredManagers(managersData); // Initial alle geladenen Manager anzeigen
       } catch (error) {
-        console.error('Fehler beim Laden der Mannschaftsführer:', error);
+        logError('Fehler beim Laden der Mannschaftsführer:', error);
         toast({
           title: 'Fehler',
           description: 'Die Mannschaftsführer konnten nicht geladen werden.',

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +35,7 @@ export function IntelligentAdminRecommendations({
         );
         setRecommendations(generatedRecommendations);
       } catch (error) {
-        console.error('Fehler beim Laden der Admin-Empfehlungen:', error);
+        logError('Fehler beim Laden der Admin-Empfehlungen:', error);
         setRecommendations([]);
       } finally {
         setIsLoading(false);
@@ -87,7 +88,7 @@ export function IntelligentAdminRecommendations({
     setAppliedRecommendations(prev => new Set([...prev, recommendationIndex.toString()]));
     
     // Hier würde die tatsächliche Implementierung der Empfehlung erfolgen
-    console.log('Anwenden der Empfehlung:', recommendation);
+    logDebug('Anwenden der Empfehlung:', recommendation);
   };
 
   if (isLoading) {

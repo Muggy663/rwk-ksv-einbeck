@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,7 +51,7 @@ export default function ErgebnisseKorrekturPage() {
         setErgebnisse(ergebnisseData.sort((a, b) => a.schuetzeName.localeCompare(b.schuetzeName)));
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Ergebnisse:', error);
+      logError('Fehler beim Laden der Ergebnisse:', error);
       toast({ title: 'Fehler', description: 'Ergebnisse konnten nicht geladen werden.', variant: 'destructive' });
     } finally {
       setLoading(false);
@@ -102,7 +103,7 @@ export default function ErgebnisseKorrekturPage() {
       
       toast({ title: 'Gespeichert', description: 'Ergebnis wurde erfolgreich korrigiert.' });
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
+      logError('Fehler beim Speichern:', error);
       toast({ title: 'Fehler', description: 'Ergebnis konnte nicht gespeichert werden.', variant: 'destructive' });
     }
   };
@@ -119,7 +120,7 @@ export default function ErgebnisseKorrekturPage() {
       setErgebnisse(prev => prev.filter(e => e.id !== id));
       toast({ title: 'Gelöscht', description: 'Ergebnis wurde erfolgreich gelöscht.' });
     } catch (error) {
-      console.error('Fehler beim Löschen:', error);
+      logError('Fehler beim Löschen:', error);
       toast({ title: 'Fehler', description: 'Ergebnis konnte nicht gelöscht werden.', variant: 'destructive' });
     }
   };

@@ -1,5 +1,6 @@
 // src/hooks/useClubId.ts
 import { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { auth } from '@/lib/firebase/config';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { getUserClubId } from '@/lib/utils/club-utils';
@@ -56,7 +57,7 @@ export function useClubId() {
         const userClubId = await getUserClubId(currentUser.uid);
         setClubId(userClubId);
       } catch (error) {
-        console.error('Fehler beim Laden der Club-ID:', error);
+        logError('Fehler beim Laden der Club-ID:', error);
         setClubId(null);
       } finally {
         setLoading(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -54,13 +55,13 @@ export default function KMMannschaften() {
         const mannschaftenRes = await fetch('/api/km/mannschaften');
         if (mannschaftenRes.ok) {
           const data = await mannschaftenRes.json();
-          console.log('🔍 Loaded mannschaften:', data.data?.length || 0);
-          console.log('🔍 All mannschaften:', data.data);
-          console.log('🔍 User club IDs:', userClubIds);
+          logDebug('🔍 Loaded mannschaften:', data.data?.length || 0);
+          logDebug('🔍 All mannschaften:', data.data);
+          logDebug('🔍 User club IDs:', userClubIds);
           
           // Debug jede Mannschaft einzeln
           (data.data || []).forEach((m, i) => {
-            console.log(`Mannschaft ${i+1}:`, {
+            logDebug(`Mannschaft ${i+1}:`, {
               vereinId: m.vereinId,
               clubId: m.clubId,
               matchesFilter: userClubIds.includes(m.vereinId || m.clubId)
@@ -70,15 +71,15 @@ export default function KMMannschaften() {
           const filtered = (data.data || []).filter(m => 
             userClubIds.includes(m.vereinId || m.clubId)
           );
-          console.log('🔍 Filtered mannschaften:', filtered.length, filtered);
+          logDebug('🔍 Filtered mannschaften:', filtered.length, filtered);
           
           setMannschaften(data.data || []);
         } else {
-          console.warn('⚠️ Mannschaften API returned:', mannschaftenRes.status);
+          logWarn('⚠️ Mannschaften API returned:', mannschaftenRes.status);
           setMannschaften([]);
         }
       } catch (e) {
-        console.error('❌ Mannschaften API failed:', e);
+        logError('❌ Mannschaften API failed:', e);
         setMannschaften([]);
       }
       
@@ -91,7 +92,7 @@ export default function KMMannschaften() {
           setSchuetzen(data.data || []);
         }
       } catch (e) {
-        console.error('Schuetzen API failed:', e);
+        logError('Schuetzen API failed:', e);
         setSchuetzen([]);
       }
       
@@ -103,7 +104,7 @@ export default function KMMannschaften() {
           setMeldungen(data.data || []);
         }
       } catch (e) {
-        console.error('Meldungen API failed:', e);
+        logError('Meldungen API failed:', e);
         setMeldungen([]);
       }
 
@@ -116,7 +117,7 @@ export default function KMMannschaften() {
           setDisziplinen(data.data || []);
         }
       } catch (e) {
-        console.error('Disziplinen API failed:', e);
+        logError('Disziplinen API failed:', e);
         setDisziplinen([]);
       }
       
@@ -129,11 +130,11 @@ export default function KMMannschaften() {
           setClubs(data.data || []);
         }
       } catch (e) {
-        console.error('Clubs API failed:', e);
+        logError('Clubs API failed:', e);
         setClubs([]);
       }
     } catch (error) {
-      console.error('LoadData error:', error);
+      logError('LoadData error:', error);
       toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden', variant: 'destructive' });
     } finally {
 
@@ -164,12 +165,12 @@ export default function KMMannschaften() {
         
         // Debug-Info anzeigen
         if (result.debugInfo && result.debugInfo.length > 0) {
-          console.log('🔍 Debug Info:', result.debugInfo);
+          logDebug('🔍 Debug Info:', result.debugInfo);
           result.debugInfo.forEach((info, i) => {
             if (info.type === 'grouping') {
-              console.log(`🔍 Gruppierung: ${info.name} → ${info.klasse} → ${info.gruppenKey}`);
+              logDebug(`🔍 Gruppierung: ${info.name} → ${info.klasse} → ${info.gruppenKey}`);
             } else {
-              console.log(`Team ${i+1}:`, {
+              logDebug(`Team ${i+1}:`, {
                 shooters: info.shooterNames,
                 classes: info.uniqueKlassen,
                 rejected: info.rejected,
@@ -193,7 +194,7 @@ export default function KMMannschaften() {
         });
       }
     } catch (error) {
-      console.error('❌ Generate error:', error);
+      logError('❌ Generate error:', error);
       toast({ 
         title: '❌ Fehler', 
         description: `Generierung fehlgeschlagen: ${error.message}`, 

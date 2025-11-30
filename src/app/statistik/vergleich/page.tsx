@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { ShooterComparisonSelector, Shooter } from '@/components/statistics/ShooterComparisonSelector';
 import { ShooterComparisonChart } from '@/components/statistics/ShooterComparisonChart';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -151,7 +152,7 @@ export default function ShooterComparisonPage() {
       
       img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
     } catch (error) {
-      console.error('Fehler beim Exportieren des Diagramms:', error);
+      logError('Fehler beim Exportieren des Diagramms:', error);
       alert('Das Diagramm konnte nicht exportiert werden.');
     }
   };

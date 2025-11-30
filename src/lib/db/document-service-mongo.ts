@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { getMongoDb } from './mongodb';
 import { Document, DocumentFormData } from '../services/document-service';
 
@@ -48,7 +49,7 @@ export async function getActiveDocumentsFromMongo(): Promise<Document[]> {
     const documents = await collection.find({ active: true }).toArray();
     return documents.map(mapDocumentFromMongo);
   } catch (error) {
-    console.error('Fehler beim Laden der aktiven Dokumente aus MongoDB:', error);
+    logError('Fehler beim Laden der aktiven Dokumente aus MongoDB:', error);
     return [];
   }
 }
@@ -62,7 +63,7 @@ export async function getDocumentsByCategoryFromMongo(category: string): Promise
     const documents = await collection.find({ category, active: true }).toArray();
     return documents.map(mapDocumentFromMongo);
   } catch (error) {
-    console.error(`Fehler beim Laden der Dokumente der Kategorie ${category} aus MongoDB:`, error);
+    logError(`Fehler beim Laden der Dokumente der Kategorie ${category} aus MongoDB:`, error);
     return [];
   }
 }
@@ -76,7 +77,7 @@ export async function getDocumentByIdFromMongo(id: string): Promise<Document | n
     const document = await collection.findOne({ _id: new ObjectId(id) });
     return document ? mapDocumentFromMongo(document) : null;
   } catch (error) {
-    console.error(`Fehler beim Laden des Dokuments mit ID ${id} aus MongoDB:`, error);
+    logError(`Fehler beim Laden des Dokuments mit ID ${id} aus MongoDB:`, error);
     return null;
   }
 }
@@ -102,7 +103,7 @@ export async function addDocumentToMongo(document: DocumentFormData): Promise<Do
     
     return null;
   } catch (error) {
-    console.error('Fehler beim Hinzufügen des Dokuments zu MongoDB:', error);
+    logError('Fehler beim Hinzufügen des Dokuments zu MongoDB:', error);
     return null;
   }
 }
@@ -126,7 +127,7 @@ export async function updateDocumentInMongo(id: string, document: Partial<Docume
     
     return result ? mapDocumentFromMongo(result) : null;
   } catch (error) {
-    console.error(`Fehler beim Aktualisieren des Dokuments mit ID ${id} in MongoDB:`, error);
+    logError(`Fehler beim Aktualisieren des Dokuments mit ID ${id} in MongoDB:`, error);
     return null;
   }
 }
@@ -140,7 +141,7 @@ export async function deleteDocumentFromMongo(id: string): Promise<boolean> {
     const result = await collection.deleteOne({ _id: new ObjectId(id) });
     return result.deletedCount === 1;
   } catch (error) {
-    console.error(`Fehler beim Löschen des Dokuments mit ID ${id} aus MongoDB:`, error);
+    logError(`Fehler beim Löschen des Dokuments mit ID ${id} aus MongoDB:`, error);
     return false;
   }
 }
@@ -177,7 +178,7 @@ export async function migrateDocumentsToMongo(documents: Document[]): Promise<bo
     const result = await collection.insertMany(docsToInsert);
     return result.acknowledged;
   } catch (error) {
-    console.error('Fehler bei der Migration der Dokumente zu MongoDB:', error);
+    logError('Fehler bei der Migration der Dokumente zu MongoDB:', error);
     return false;
   }
 }

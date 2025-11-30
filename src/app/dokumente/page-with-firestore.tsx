@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -27,7 +28,7 @@ export default function DokumentePage() {
       const docs = await getActiveDocuments();
       setDocuments(docs);
     } catch (err) {
-      console.error('Fehler beim Laden der Dokumente:', err);
+      logError('Fehler beim Laden der Dokumente:', err);
       setError('Die Dokumente konnten nicht geladen werden.');
     } finally {
       setLoading(false);

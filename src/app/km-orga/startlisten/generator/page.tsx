@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -46,7 +47,7 @@ export default function GeneratorPage() {
       setMeldungen(mockMeldungen);
       setConfig(mockConfig);
     } catch (error) {
-      console.error('Fehler beim Laden:', error);
+      logError('Fehler beim Laden:', error);
     } finally {
       setLoading(false);
     }

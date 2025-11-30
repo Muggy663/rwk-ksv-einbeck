@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,7 +41,7 @@ export default function PasswordReset({ onBack }: PasswordResetProps) {
         description: "Eine Anleitung zum Zurücksetzen Ihres Passworts wurde an Ihre E-Mail-Adresse gesendet.",
       });
     } catch (error: any) {
-      console.error('Password reset error:', error);
+      logError('Password reset error:', error);
       
       // Handle specific Firebase Auth errors
       if (error.code === 'auth/user-not-found') {

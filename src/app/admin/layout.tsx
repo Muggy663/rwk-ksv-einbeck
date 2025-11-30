@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { MobileAdminNav } from '@/components/admin/MobileAdminNav';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';

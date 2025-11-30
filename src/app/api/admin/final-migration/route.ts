@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🚀 Starte finale Datenbank-Migration...');
+    logDebug('🚀 Starte finale Datenbank-Migration...');
     
     const snapshot = await adminDb.collection('user_permissions').get();
-    console.log(`📊 Gefunden: ${snapshot.docs.length} Benutzer`);
+    logDebug(`📊 Gefunden: ${snapshot.docs.length} Benutzer`);
     
     const batch = adminDb.batch();
     let migratedCount = 0;
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
         
         // Skip bereits vollständig migrierte Benutzer
         if (data.migrationVersion === '1.5.9' && data.clubRoles && !data.role) {
-          console.log(`⏭️ Skip bereits migriert: ${email}`);
+          logDebug(`⏭️ Skip bereits migriert: ${email}`);
           skippedCount++;
           continue;
         }
@@ -93,21 +94,21 @@ export async function POST(request: NextRequest) {
         if (Object.keys(updates).length > 3) { // Mehr als nur Timestamps
           batch.update(doc.ref, updates);
           migratedCount++;
-          console.log(`✅ Migration vorbereitet für: ${email}`);
+          logDebug(`✅ Migration vorbereitet für: ${email}`);
         } else {
           skippedCount++;
         }
         
       } catch (docError: any) {
-        console.error(`❌ Fehler bei Benutzer ${doc.id}:`, docError);
+        logError(`❌ Fehler bei Benutzer ${doc.id}:`, docError);
         migrationLog.push(`❌ Fehler: ${doc.id} - ${docError.message}`);
       }
     }
     
     if (migratedCount > 0) {
-      console.log(`💾 Committe ${migratedCount} finale Migrationen...`);
+      logDebug(`💾 Committe ${migratedCount} finale Migrationen...`);
       await batch.commit();
-      console.log(`✅ ${migratedCount} Benutzer final migriert, ${skippedCount} übersprungen`);
+      logDebug(`✅ ${migratedCount} Benutzer final migriert, ${skippedCount} übersprungen`);
       
       return NextResponse.json({
         success: true,
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
         }
       });
     } else {
-      console.log(`ℹ️ Keine finale Migration erforderlich`);
+      logDebug(`ℹ️ Keine finale Migration erforderlich`);
       return NextResponse.json({
         success: true,
         message: 'Alle Benutzer bereits final migriert',
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest) {
     }
     
   } catch (error: any) {
-    console.error('❌ Finale Migration-Fehler:', error);
+    logError('❌ Finale Migration-Fehler:', error);
     return NextResponse.json({
       success: false,
       error: error.message || 'Finale Migration fehlgeschlagen'

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuthContext } from '@/components/auth/AuthContext';
@@ -37,7 +38,7 @@ Vielen Dank!
       
       setSubmitted(true);
     } catch (error) {
-      console.error('Error requesting license:', error);
+      logError('Error requesting license:', error);
       alert('Fehler beim Senden der Anfrage');
     } finally {
       setLoading(false);
@@ -70,7 +71,7 @@ Vielen Dank!
       
       setSubmitted(true);
     } catch (error) {
-      console.error('Error requesting license:', error);
+      logError('Error requesting license:', error);
       alert('Fehler beim Senden der Anfrage');
     } finally {
       setLoading(false);

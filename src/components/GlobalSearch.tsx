@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -188,7 +189,7 @@ export function GlobalSearch() {
       });
 
     } catch (error) {
-      console.error('Suchfehler:', error);
+      logError('Suchfehler:', error);
     }
 
     setSearchResults(results.slice(0, 10)); // Max 10 Ergebnisse

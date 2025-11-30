@@ -2,6 +2,7 @@
  * Hook für Firestore-Abfragen mit Caching
  */
 import { useState, useEffect, DependencyList } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { getCachedData, CACHE_DURATION } from './dataCache';
 
 interface UseCachedQueryOptions {
@@ -48,7 +49,7 @@ export function useCachedQuery<T>(
         }
       })
       .catch(err => {
-        console.error(`Error in useCachedQuery for ${cacheKey}:`, err);
+        logError(`Error in useCachedQuery for ${cacheKey}:`, err);
         if (isMounted) {
           setError(err instanceof Error ? err : new Error(String(err)));
           setLoading(false);

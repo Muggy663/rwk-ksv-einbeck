@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { GoogleGenAI } from '@google/genai';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🤖 Gemini Behördentext API aufgerufen');
+    logDebug('🤖 Gemini Behördentext API aufgerufen');
     
     if (!process.env.GEMINI_API_KEY) {
-      console.error('❌ Gemini API Key fehlt');
+      logError('❌ Gemini API Key fehlt');
       return NextResponse.json({
         success: false,
         error: 'Gemini API Key nicht konfiguriert'
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    console.log('📝 Request Body:', body);
+    logDebug('📝 Request Body:', body);
     const { personalData, stats } = body;
     
     const systemPrompt = `Du bist ein Experte für offizielle Behördenschreiben im Schießsport. 
@@ -51,15 +52,15 @@ Statistiken:
 
 Erstelle einen kurzen, professionellen Text in ICH-FORM für Behörden.`;
 
-    console.log('🚀 Sende Anfrage an Gemini...');
+    logDebug('🚀 Sende Anfrage an Gemini...');
     const response = await genAI.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
-    console.log('✅ Gemini Response erhalten');
+    logDebug('✅ Gemini Response erhalten');
 
     const text = response.text.trim();
-    console.log('📄 Generierter Text:', text.substring(0, 100) + '...');
+    logDebug('📄 Generierter Text:', text.substring(0, 100) + '...');
     
     return NextResponse.json({
       success: true,
@@ -67,8 +68,8 @@ Erstelle einen kurzen, professionellen Text in ICH-FORM für Behörden.`;
     });
 
   } catch (error) {
-    console.error('❌ Gemini Behördentext Fehler:', error);
-    console.error('Error Details:', {
+    logError('❌ Gemini Behördentext Fehler:', error);
+    logError('Error Details:', {
       message: error.message,
       stack: error.stack,
       name: error.name
@@ -93,14 +94,14 @@ Erstelle einen kurzen, professionellen Text in ICH-FORM für Behörden.`;
       
       const fallbackText = `hiermit bestätige ich, dass ich ${vereinText} aktiv bin und regelmäßig trainiere. Im dokumentierten Zeitraum ${stats?.zeitraum || 'des letzten Jahres'} habe ich ${stats?.totalTrainings > 0 ? `${stats.totalTrainings} Trainingseinheiten absolviert` : 'regelmäßig trainiert'} und ${stats?.totalWettkämpfe > 0 ? `an ${stats.totalWettkämpfe} Wettkämpfen teilgenommen` : 'an Wettkämpfen teilgenommen'}. Insgesamt habe ich ${stats?.totalSchüsse || 0} Schüsse abgegeben.\n\nDie nachfolgende Aufstellung dokumentiert meine regelmäßige Schießtätigkeit gemäß den Anforderungen des Waffengesetzes.`;
       
-      console.log('🔄 Verwende Fallback-Text');
+      logDebug('🔄 Verwende Fallback-Text');
       return NextResponse.json({
         success: true,
         text: fallbackText,
         fallback: true
       });
     } catch (fallbackError) {
-      console.error('❌ Auch Fallback fehlgeschlagen:', fallbackError);
+      logError('❌ Auch Fallback fehlgeschlagen:', fallbackError);
       return NextResponse.json({
         success: false,
         error: `Fehler bei Textgenerierung: ${error.message}`,

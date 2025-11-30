@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, limit, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 

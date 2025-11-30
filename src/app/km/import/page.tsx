@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -126,7 +127,7 @@ export default function ExcelImport() {
       toast({ title: 'Excel gelesen', description: `${members.length} Mitglieder gefunden` });
       
     } catch (error) {
-      console.error('Excel-Parsing Fehler:', error);
+      logError('Excel-Parsing Fehler:', error);
       toast({ title: 'Fehler', description: 'Excel-Datei konnte nicht gelesen werden', variant: 'destructive' });
     }
   };

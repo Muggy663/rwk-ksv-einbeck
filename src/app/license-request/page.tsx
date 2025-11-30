@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { LicenseRequestForm } from '@/components/license-request-form';
 
 export default function LicenseRequestPage() {

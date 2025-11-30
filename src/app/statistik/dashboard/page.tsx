@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -58,7 +59,7 @@ export default function StatistikDashboardPage() {
           setSelectedSeason(seasonsData[0].id);
         }
       } catch (error) {
-        console.error("Fehler beim Laden der Saisons:", error);
+        logError("Fehler beim Laden der Saisons:", error);
       }
     };
     
@@ -75,7 +76,7 @@ export default function StatistikDashboardPage() {
         setLeagues(leaguesData);
         setSelectedLeague('all');
       } catch (error) {
-        console.error("Fehler beim Laden der Ligen:", error);
+        logError("Fehler beim Laden der Ligen:", error);
       }
     };
     
@@ -89,7 +90,7 @@ export default function StatistikDashboardPage() {
         const clubsData = await fetchClubs();
         setClubs(clubsData);
       } catch (error) {
-        console.error("Fehler beim Laden der Vereine:", error);
+        logError("Fehler beim Laden der Vereine:", error);
       }
     };
     
@@ -134,7 +135,7 @@ export default function StatistikDashboardPage() {
         setShooterData(formattedShooterData);
         setIsLoadingShooterData(false);
       } catch (error) {
-        console.error("Fehler beim Laden der Schützenleistungsdaten:", error);
+        logError("Fehler beim Laden der Schützenleistungsdaten:", error);
         setIsLoadingShooterData(false);
       }
       
@@ -159,7 +160,7 @@ export default function StatistikDashboardPage() {
         setTeamData(formattedTeamData);
         setIsLoadingTeamData(false);
       } catch (error) {
-        console.error("Fehler beim Laden der Mannschaftsvergleichsdaten:", error);
+        logError("Fehler beim Laden der Mannschaftsvergleichsdaten:", error);
         setIsLoadingTeamData(false);
       }
       
@@ -181,7 +182,7 @@ export default function StatistikDashboardPage() {
         setGenderData(formattedGenderData);
         setIsLoadingGenderData(false);
       } catch (error) {
-        console.error("Fehler beim Laden der Geschlechterverteilungsdaten:", error);
+        logError("Fehler beim Laden der Geschlechterverteilungsdaten:", error);
         setIsLoadingGenderData(false);
       }
     };
@@ -235,7 +236,7 @@ export default function StatistikDashboardPage() {
       
       img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
     } catch (error) {
-      console.error('Fehler beim Exportieren des Diagramms:', error);
+      logError('Fehler beim Exportieren des Diagramms:', error);
       alert('Das Diagramm konnte nicht exportiert werden.');
     }
   };

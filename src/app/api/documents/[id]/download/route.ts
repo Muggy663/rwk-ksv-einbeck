@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { getMongoDb } from '@/lib/db/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -20,7 +21,7 @@ export async function POST(
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Download-Tracking Fehler:', error);
+    logError('Download-Tracking Fehler:', error);
     return NextResponse.json({ error: 'Tracking failed' }, { status: 500 });
   }
 }

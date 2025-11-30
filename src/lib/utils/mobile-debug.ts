@@ -168,22 +168,22 @@ export class MobileDebugger {
   static logDebugInfo(info: MobileDebugInfo, context?: string): void {
     if (process.env.NODE_ENV === 'development') {
       console.group(`🔍 Mobile Debug${context ? ` - ${context}` : ''}`);
-      console.log('📱 Is Mobile:', info.isMobile);
-      console.log('🖥️ Screen:', info.screenSize);
-      console.log('🌐 User Agent:', info.userAgent.substring(0, 100) + '...');
+      logDebug('📱 Is Mobile:', info.isMobile);
+      logDebug('🖥️ Screen:', info.screenSize);
+      logDebug('🌐 User Agent:', info.userAgent.substring(0, 100) + '...');
       
       if (info.connectionType) {
-        console.log('📡 Connection:', info.connectionType);
+        logDebug('📡 Connection:', info.connectionType);
       }
       
       if (info.memoryInfo) {
-        console.log('💾 Memory:', info.memoryInfo);
+        logDebug('💾 Memory:', info.memoryInfo);
       }
       
       if (info.imageInfo) {
-        console.log('🖼️ Image:', `${Math.round(info.imageInfo.size / 1024)}KB ${info.imageInfo.type}`);
+        logDebug('🖼️ Image:', `${Math.round(info.imageInfo.size / 1024)}KB ${info.imageInfo.type}`);
         if (info.imageInfo.dimensions) {
-          console.log('📏 Dimensions:', info.imageInfo.dimensions);
+          logDebug('📏 Dimensions:', info.imageInfo.dimensions);
         }
       }
       

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
@@ -31,7 +32,7 @@ async function validateUserPermissions(request: NextRequest, shooterId: string) 
   const userPermission = userPermissionDoc.data();
   
   // Debug-Logging
-  console.log('DELETE Shooter Debug:', {
+  logDebug('DELETE Shooter Debug:', {
     shooterId: params.id,
     userEmail: decodedToken.email,
     userPermission: userPermission,
@@ -44,11 +45,11 @@ async function validateUserPermissions(request: NextRequest, shooterId: string) 
     (userPermission?.clubRoles && Object.values(userPermission.clubRoles).includes('SPORTLEITER'));
 
   if (!isSuperAdmin && !hasClubAccess) {
-    console.error('Permission denied:', { isSuperAdmin, hasClubAccess, userPermission });
+    logError('Permission denied:', { isSuperAdmin, hasClubAccess, userPermission });
     throw new Error('Keine Berechtigung für diesen Schützen');
   }
   
-  console.log('Permission granted:', { isSuperAdmin, hasClubAccess });
+  logDebug('Permission granted:', { isSuperAdmin, hasClubAccess });
 
   return { shooterData, userPermission, decodedToken };
 }
@@ -87,7 +88,7 @@ export async function PATCH(
     });
 
   } catch (error: any) {
-    console.error('Fehler beim Aktualisieren:', error);
+    logError('Fehler beim Aktualisieren:', error);
     return NextResponse.json({
       success: false,
       error: error.message || 'Aktualisierung fehlgeschlagen'
@@ -119,7 +120,7 @@ export async function DELETE(
     });
 
   } catch (error: any) {
-    console.error('DELETE Error:', error);
+    logError('DELETE Error:', error);
     return NextResponse.json({
       success: false,
       error: error.message || 'Fehler'

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 interface SwipeHandlers {
   onSwipeLeft?: () => void;

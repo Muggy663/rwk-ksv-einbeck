@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,13 +38,13 @@ export default function ClubMigrationPage() {
     setMigrationStatus(prev => ({ ...prev, shooters: 'running' }));
     
     try {
-      console.log('Starting migration for all clubs...');
+      logDebug('Starting migration for all clubs...');
       const result = await ClubMigrationService.migrateAllClubs();
-      console.log('Migration result:', result);
+      logDebug('Migration result:', result);
       setMigrationStatus(prev => ({ ...prev, shooters: 'completed' }));
       setMigrationResults(prev => ({ ...prev, shootersCount: result.totalMigrated }));
     } catch (error) {
-      console.error('Shooter-Migration fehlgeschlagen:', error);
+      logError('Shooter-Migration fehlgeschlagen:', error);
       setMigrationStatus(prev => ({ ...prev, shooters: 'error' }));
       setMigrationResults(prev => ({ 
         ...prev, 
@@ -60,7 +61,7 @@ export default function ClubMigrationPage() {
       setMigrationStatus(prev => ({ ...prev, vereinsrecht: 'completed' }));
       setMigrationResults(prev => ({ ...prev, vereinsrechtCount: 0 }));
     } catch (error) {
-      console.error('Vereinsrecht-Migration fehlgeschlagen:', error);
+      logError('Vereinsrecht-Migration fehlgeschlagen:', error);
       setMigrationStatus(prev => ({ ...prev, vereinsrecht: 'error' }));
       setMigrationResults(prev => ({ 
         ...prev, 

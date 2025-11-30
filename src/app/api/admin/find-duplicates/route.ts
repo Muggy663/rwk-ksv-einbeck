@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
@@ -55,7 +56,7 @@ export async function GET() {
       }
     });
   } catch (error) {
-    console.error('Fehler:', error);
+    logError('Fehler:', error);
     return NextResponse.json({ error: 'Fehler beim Suchen der Duplikate' }, { status: 500 });
   }
 }

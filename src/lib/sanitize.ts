@@ -52,6 +52,6 @@ export const sanitizeEmail = (email: string): string => {
 
 // Entwicklungs-Hinweise
 if (process.env.NODE_ENV === 'development') {
-  console.log('🧹 Sanitization utilities loaded');
-  console.log('Use sanitizeHtml() for HTML output, sanitizeForPdf() for PDF generation');
+  logDebug('🧹 Sanitization utilities loaded');
+  logDebug('Use sanitizeHtml() for HTML output, sanitizeForPdf() for PDF generation');
 }

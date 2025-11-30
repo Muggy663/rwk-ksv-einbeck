@@ -3,6 +3,7 @@
  */
 
 import type { FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 /**
  * Generates season-specific collection name based on year and discipline

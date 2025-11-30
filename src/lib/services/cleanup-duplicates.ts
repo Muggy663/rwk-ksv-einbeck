@@ -1,14 +1,15 @@
 // Duplikat-Bereinigung für Mitglieder
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 export async function cleanupDuplicatesAllClubs() {
   try {
-    console.log('Starte Duplikat-Bereinigung für alle Vereine...');
+    logDebug('Starte Duplikat-Bereinigung für alle Vereine...');
     
     // Lade alle Clubs
     const clubsSnapshot = await getDocs(collection(db, 'clubs'));
-    console.log(`Gefunden: ${clubsSnapshot.docs.length} Vereine`);
+    logDebug(`Gefunden: ${clubsSnapshot.docs.length} Vereine`);
     
     let totalDeleted = 0;
     let totalRemaining = 0;
@@ -16,18 +17,18 @@ export async function cleanupDuplicatesAllClubs() {
     for (const clubDoc of clubsSnapshot.docs) {
       const clubId = clubDoc.id;
       const clubData = clubDoc.data();
-      console.log(`Bereinige Duplikate für: ${clubData.name} (${clubId})`);
+      logDebug(`Bereinige Duplikate für: ${clubData.name} (${clubId})`);
       
       const result = await cleanupDuplicatesForClub(clubId);
       totalDeleted += result.deleted;
       totalRemaining += result.remaining;
     }
     
-    console.log(`Duplikat-Bereinigung abgeschlossen: ${totalDeleted} Duplikate gelöscht, ${totalRemaining} Mitglieder verbleiben`);
+    logDebug(`Duplikat-Bereinigung abgeschlossen: ${totalDeleted} Duplikate gelöscht, ${totalRemaining} Mitglieder verbleiben`);
     return { deleted: totalDeleted, remaining: totalRemaining };
     
   } catch (error) {
-    console.error('Fehler bei Gesamt-Duplikat-Bereinigung:', error);
+    logError('Fehler bei Gesamt-Duplikat-Bereinigung:', error);
     throw error;
   }
 }
@@ -38,7 +39,7 @@ export async function cleanupDuplicatesForClub(clubId: string) {
     const mitgliederCollection = `clubs/${clubId}/mitglieder`;
     const snapshot = await getDocs(collection(db, mitgliederCollection));
     
-    console.log('Gefunden:', snapshot.docs.length, 'Mitglieder');
+    logDebug('Gefunden:', snapshot.docs.length, 'Mitglieder');
     
     // Gruppiere nach originalShooterId
     const membersByShooterId = new Map();
@@ -58,7 +59,7 @@ export async function cleanupDuplicatesForClub(clubId: string) {
     // Lösche Duplikate - behalte nur das erste
     for (const [shooterId, members] of membersByShooterId) {
       if (members.length > 1) {
-        console.log(`Shooter ${shooterId} hat ${members.length} Duplikate`);
+        logDebug(`Shooter ${shooterId} hat ${members.length} Duplikate`);
         
         // Lösche alle außer dem ersten
         for (let i = 1; i < members.length; i++) {
@@ -68,11 +69,11 @@ export async function cleanupDuplicatesForClub(clubId: string) {
       }
     }
     
-    console.log('Duplikat-Bereinigung abgeschlossen:', deleted, 'Duplikate gelöscht');
+    logDebug('Duplikat-Bereinigung abgeschlossen:', deleted, 'Duplikate gelöscht');
     return { deleted, remaining: snapshot.docs.length - deleted };
     
   } catch (error) {
-    console.error('Fehler bei Duplikat-Bereinigung:', error);
+    logError('Fehler bei Duplikat-Bereinigung:', error);
     throw error;
   }
 }

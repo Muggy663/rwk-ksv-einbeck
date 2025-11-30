@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 /**
@@ -84,7 +85,7 @@ export async function createSampleAuditEntries() {
 
     return true;
   } catch (error) {
-    console.error('Fehler beim Erstellen der Beispiel-Audit-Einträge:', error);
+    logError('Fehler beim Erstellen der Beispiel-Audit-Einträge:', error);
     throw error;
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { ResultEntry } from '@/components/social/ResultEntry';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -26,7 +27,7 @@ export default function ResultEntryPage() {
       };
       
       // TODO: Firebase Integration später
-      console.log('Social Training Ergebnis:', resultData);
+      logDebug('Social Training Ergebnis:', resultData);
       
       toast({
         title: "Ergebnis gespeichert!",

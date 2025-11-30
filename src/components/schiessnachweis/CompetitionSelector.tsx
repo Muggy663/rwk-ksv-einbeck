@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
 import { CompetitionsService, Competition } from '@/lib/services/competitions-service';
@@ -28,7 +29,7 @@ export function CompetitionSelector({ groupId, discipline, onCompetitionChange }
       const activeCompetitions = groupCompetitions.filter(c => c.status === 'active');
       setCompetitions(activeCompetitions);
     } catch (error) {
-      console.error('Error loading competitions:', error);
+      logError('Error loading competitions:', error);
     }
   };
 

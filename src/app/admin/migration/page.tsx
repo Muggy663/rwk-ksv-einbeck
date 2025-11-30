@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
@@ -100,7 +101,7 @@ export default function MigrationPage() {
       setMigrationStatus('Migration erfolgreich abgeschlossen!');
       
     } catch (error) {
-      console.error('Migration Fehler:', error);
+      logError('Migration Fehler:', error);
       setMigrationStatus(`Fehler: ${error.message}`);
     } finally {
       setIsRunning(false);
@@ -135,9 +136,9 @@ export default function MigrationPage() {
           
           if (shooterDoc) {
             const shooterData = shooterDoc.data();
-            console.log('Checking member:', memberData.name);
-            console.log('Shooter SEPA data:', shooterData.sepa);
-            console.log('Member SEPA data:', memberData.sepa);
+            logDebug('Checking member:', memberData.name);
+            logDebug('Shooter SEPA data:', shooterData.sepa);
+            logDebug('Member SEPA data:', memberData.sepa);
             const updates = {};
             
             // Fehlende Daten ergänzen mit tatsächlichen Shooter-Feldnamen
@@ -207,7 +208,7 @@ export default function MigrationPage() {
       setMigrationStatus(`${updated} Mitglieder aktualisiert!`);
       
     } catch (error) {
-      console.error('Update Fehler:', error);
+      logError('Update Fehler:', error);
       setMigrationStatus(`Fehler: ${error.message}`);
     } finally {
       setIsRunning(false);

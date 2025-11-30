@@ -1,6 +1,7 @@
 
 "use client";
 import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { TeamStatusBadge } from '@/components/ui/team-status-badge';
@@ -548,7 +549,7 @@ function RwkTabellenPageComponent() {
         { year: new Date().getFullYear(), discipline: 'KK', displayName: `${new Date().getFullYear()} Kleinkaliber` }
       ];
     } catch (err: any) {
-      console.error('RWK DEBUG: Error fetching available competitions:', err);
+      logError('RWK DEBUG: Error fetching available competitions:', err);
       toast({ title: "Fehler", description: `Verfügbare Wettkämpfe konnten nicht geladen werden: ${err.message}`, variant: "destructive" });
       return [{ year: new Date().getFullYear(), discipline: 'KK', displayName: `${new Date().getFullYear()} Kleinkaliber` }];
     }
@@ -588,7 +589,7 @@ function RwkTabellenPageComponent() {
           }
       }
     } catch (err: any) {
-      console.error('RWK DEBUG: Error in calculateNumRounds:', err);
+      logError('RWK DEBUG: Error in calculateNumRounds:', err);
       toast({ title: "Fehler Rundenanzahl", description: `Anzahl der Durchgänge konnte nicht ermittelt werden: ${err.message}`, variant: "destructive" });
     }
 
@@ -611,7 +612,7 @@ function RwkTabellenPageComponent() {
       const seasonsSnapshot = await getDocs(qSeasons);
 
       if (seasonsSnapshot.empty) {
-        console.warn(`RWK DEBUG: No seasons found for year ${config.year} and discipline ${config.discipline} with types ${firestoreTypesToQuery.join(', ')}.`);
+        logWarn(`RWK DEBUG: No seasons found for year ${config.year} and discipline ${config.discipline} with types ${firestoreTypesToQuery.join(', ')}.`);
         return { id: `${config.year}-${config.discipline}`, config, leagues: [] };
       }
       const seasonIds = seasonsSnapshot.docs.map(sDoc => sDoc.id).filter(id => !!id);
@@ -655,7 +656,7 @@ function RwkTabellenPageComponent() {
         // Verwende neue Collection-Naming-Logik
         const seasonSpecificCollection = getSeasonSpecificScoresCollection(config.year, firestoreTypesToQuery[0]);
         
-        console.log(`🔍 Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
+        logDebug(`🔍 Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
         
         const seasonSpecificQuery = query(
           collection(db, seasonSpecificCollection),
@@ -664,9 +665,9 @@ function RwkTabellenPageComponent() {
         );
         allScoresSnapshot = await getDocs(seasonSpecificQuery);
         
-        console.log(`✅ Saison-spezifische Collection gefunden: ${allScoresSnapshot.docs.length} Scores`);
+        logDebug(`✅ Saison-spezifische Collection gefunden: ${allScoresSnapshot.docs.length} Scores`);
       } catch (error) {
-        console.log(`⚠️ Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
+        logDebug(`⚠️ Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
         
         // Fallback auf ursprüngliche Collection
         const allScoresQuery = query(
@@ -696,7 +697,7 @@ function RwkTabellenPageComponent() {
               clubCache.set(clubDoc.id, (clubDoc.data() as Club).name || "Unbek. Verein");
             });
           }
-        } catch (e) { console.error("RWK DEBUG: Error batch-fetching clubs", e); }
+        } catch (e) { logError("RWK DEBUG: Error batch-fetching clubs", e); }
       }
 
       for (const leagueDoc of leaguesSnapshot.docs) {
@@ -986,7 +987,7 @@ function RwkTabellenPageComponent() {
 
       return { id: `${config.year}-${config.discipline}`, config, leagues: fetchedLeaguesData };
     } catch (err: any) {
-      console.error('RWK DEBUG: Error fetching team data:', err);
+      logError('RWK DEBUG: Error fetching team data:', err);
       toast({ title: "Fehler Mannschaftsdaten", description: `Fehler beim Laden der Mannschaftsdaten: ${err.message}`, variant: "destructive" });
       setError((err as Error).message || 'Unbekannter Fehler beim Laden der Mannschaftsdaten.');
       return null;
@@ -1029,7 +1030,10 @@ function RwkTabellenPageComponent() {
       } else if (filterByLeagueId === "LGA_GESAMTLISTE") {
         // Direkte Liga-IDs für Luftdruck-Ligen verwenden
         const luftdruckLeagueIds = ["vOHbDJw7mktQI53Mzs5d", "wxotHc2CVAa4kflVhaPd", "YLpb9AklRcU7mpF870vP", "sTcYhFYKOmJ6AJ5w3IyN"];
-        console.log('🔍 Debug LGA_GESAMTLISTE - Verwende Liga-IDs:', luftdruckLeagueIds);
+        // Secure logging: Liga-IDs count only
+        if (process.env.NODE_ENV === 'development') {
+          logDebug('Debug LGA_GESAMTLISTE - Liga-IDs count:', luftdruckLeagueIds?.length || 0);
+        }
         
         teamsQuery = query(
           collection(db, "rwk_teams"),
@@ -1045,7 +1049,9 @@ function RwkTabellenPageComponent() {
       }
       
       if (!teamsQuery) {
-        console.warn('RWK DEBUG: Keine Teams-Query für Liga-Filter');
+        if (process.env.NODE_ENV === 'development') {
+          logWarn('RWK DEBUG: Keine Teams-Query für Liga-Filter');
+        }
         return [];
       }
       
@@ -1070,7 +1076,9 @@ function RwkTabellenPageComponent() {
       
       // WICHTIG: Liga-Filter ist jetzt immer erforderlich - keine übergreifende Abfrage mehr
       if (!filterByLeagueId || filterByLeagueId === "ALL_LEAGUES_IND_FILTER") {
-        console.warn('RWK DEBUG: Keine Liga-ID für Einzelschützen-Filter - das sollte nicht passieren');
+        if (process.env.NODE_ENV === 'development') {
+          logWarn('RWK DEBUG: Keine Liga-ID für Einzelschützen-Filter');
+        }
         return [];
       }
       
@@ -1101,11 +1109,15 @@ function RwkTabellenPageComponent() {
         // Verwende neue Collection-Naming-Logik
         const seasonSpecificCollection = getSeasonSpecificScoresCollection(config.year, config.discipline as FirestoreLeagueSpecificDiscipline);
         
-        console.log(`🔍 Individual: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
+        if (process.env.NODE_ENV === 'development') {
+          logDebug('Individual: Versuche saison-spezifische Collection');
+        }
         
         scoresQuery = query(collection(db, seasonSpecificCollection), ...scoresQueryConstraints);
       } catch (error) {
-        console.log(`⚠️ Individual: Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
+        if (process.env.NODE_ENV === 'development') {
+          logDebug('Individual: Saison-spezifische Collection nicht gefunden, verwende rwk_scores');
+        }
         scoresQuery = query(collection(db, "rwk_scores"), ...scoresQueryConstraints);
       }
       
@@ -1115,11 +1127,13 @@ function RwkTabellenPageComponent() {
       
 
       
-      // Debug: Zeige alle leagueTypes zur Diagnose
-      const leagueTypes = [...new Set(allScores.map(s => s.leagueType))];
-      console.log('🔍 Debug - Gefundene leagueTypes:', leagueTypes);
-      console.log('🔍 Debug - Anzahl Scores:', allScores.length);
-      console.log('🔍 Debug - Filter:', filterByLeagueId);
+      // Debug: Zeige Statistiken zur Diagnose
+      if (process.env.NODE_ENV === 'development') {
+        const leagueTypes = [...new Set(allScores.map(s => s.leagueType))];
+        logDebug('Debug - LeagueTypes count:', leagueTypes?.length || 0);
+        logDebug('Debug - Scores count:', allScores?.length || 0);
+        logDebug('Debug - Filter type:', typeof filterByLeagueId);
+      }
       
       // Wenn keine Scores gefunden, prüfe alle Scores für dieses Jahr
       if (allScores.length === 0) {
@@ -1132,7 +1146,9 @@ function RwkTabellenPageComponent() {
           );
           const seasonSpecificSnapshot = await getDocs(seasonSpecificQuery);
           const seasonSpecificLeagueTypes = [...new Set(seasonSpecificSnapshot.docs.map(doc => doc.data().leagueType))];
-          console.log('🔍 Debug - Saison-spezifische leagueTypes für Jahr', config.year, ':', seasonSpecificLeagueTypes);
+          if (process.env.NODE_ENV === 'development') {
+            logDebug('Debug - Saison-spezifische leagueTypes count:', seasonSpecificLeagueTypes?.length || 0);
+          }
         } catch (error) {
           // Fallback auf rwk_scores
           const allScoresQuery = query(
@@ -1141,7 +1157,9 @@ function RwkTabellenPageComponent() {
           );
           const allScoresSnapshot = await getDocs(allScoresQuery);
           const allYearLeagueTypes = [...new Set(allScoresSnapshot.docs.map(doc => doc.data().leagueType))];
-          console.log('🔍 Debug - Alle leagueTypes für Jahr', config.year, ':', allYearLeagueTypes);
+          if (process.env.NODE_ENV === 'development') {
+            logDebug('Debug - Alle leagueTypes count:', allYearLeagueTypes?.length || 0);
+          }
         }
       }
 
@@ -1180,7 +1198,9 @@ function RwkTabellenPageComponent() {
             });
           }
         } catch (error) {
-          console.warn('RWK DEBUG: Fehler beim Laden der Schützen-Namen:', error);
+          if (process.env.NODE_ENV === 'development') {
+            logWarn('RWK DEBUG: Fehler beim Laden der Schützen-Namen:', error?.message || 'Unknown error');
+          }
         }
       }
       
@@ -1352,7 +1372,7 @@ function RwkTabellenPageComponent() {
 
       return rankedShooters;
     } catch (err: any) {
-      console.error("RWK DEBUG: Error fetching individual shooter data:", err);
+      logError("RWK DEBUG: Error fetching individual shooter data:", err);
       toast({ title: "Fehler Einzelergebnisse", description: `Fehler beim Laden der Einzelschützendaten: ${err.message}`, variant: "destructive" });
       setError((err as Error).message || "Unbekannter Fehler beim Laden der Einzelschützendaten.");
       return [];
@@ -1429,7 +1449,7 @@ function RwkTabellenPageComponent() {
       }
 
     } catch (err: any) {
-      console.error('RWK DEBUG: Failed to load RWK data in loadData:', err);
+      logError('RWK DEBUG: Failed to load RWK data in loadData:', err);
       toast({ title: "Fehler Datenladen", description: `Fehler beim Laden der Wettkampfdaten: ${err.message}`, variant: "destructive" });
       setError((err as Error).message || 'Unbekannter Fehler beim Laden der Daten.');
     } finally {
@@ -1478,7 +1498,7 @@ function RwkTabellenPageComponent() {
       }
     }).catch(err => {
         if (!isMounted) return;
-        console.error("RWK DEBUG: Error in initial useEffect (fetchAvailableCompetitions):", err);
+        logError("RWK DEBUG: Error in initial useEffect (fetchAvailableCompetitions):", err);
         setIsLoadingInitialCompetitions(false);
         setError("Fehler beim Initialisieren der Wettkampfauswahl.");
     });
@@ -1517,7 +1537,7 @@ function RwkTabellenPageComponent() {
           setTeamSubstitutions(substitutionsMap);
   
         } catch (error) {
-          console.error('Error loading substitutions:', error);
+          logError('Error loading substitutions:', error);
         }
       };
       loadSubstitutions();
@@ -1630,7 +1650,7 @@ function RwkTabellenPageComponent() {
         // Verwende neue Collection-Naming-Logik
         const seasonSpecificCollection = getSeasonSpecificScoresCollection(teamData.competitionYear, teamData.leagueType as FirestoreLeagueSpecificDiscipline);
         
-        console.log(`🔍 Team: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
+        logDebug(`🔍 Team: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
         
         const seasonSpecificQuery = query(
           collection(db, seasonSpecificCollection), 
@@ -1640,9 +1660,9 @@ function RwkTabellenPageComponent() {
         );
         teamScoresSnapshot = await getDocs(seasonSpecificQuery);
         
-        console.log(`✅ Team: Saison-spezifische Collection gefunden: ${teamScoresSnapshot.docs.length} Scores`);
+        logDebug(`✅ Team: Saison-spezifische Collection gefunden: ${teamScoresSnapshot.docs.length} Scores`);
       } catch (error) {
-        console.log(`⚠️ Team: Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
+        logDebug(`⚠️ Team: Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
         
         const scoresQuery = query(
           collection(db, "rwk_scores"), 
@@ -1687,7 +1707,7 @@ function RwkTabellenPageComponent() {
               displayName // Speichere den zusammengesetzten Namen separat
             });
           } else {
-            console.warn(`❌ Schütze ${shooterId} nicht in shooters gefunden - suche in Scores...`);
+            logWarn(`❌ Schütze ${shooterId} nicht in shooters gefunden - suche in Scores...`);
             
             // TEST-MODUS: Suche Namen in bestehenden Scores
             try {
@@ -1731,7 +1751,7 @@ function RwkTabellenPageComponent() {
                   await setDoc(shooterDocRef, shooterData);
 
                 } catch (createError) {
-                  console.error(`Fehler beim Erstellen von Schütze ${shooterId}:`, createError);
+                  logError(`Fehler beim Erstellen von Schütze ${shooterId}:`, createError);
                 }
                 
                 shooterInfos.set(shooterId, {
@@ -1750,11 +1770,11 @@ function RwkTabellenPageComponent() {
                 });
               }
             } catch (scoreError) {
-              console.error(`Fehler beim Suchen in Scores für ${shooterId}:`, scoreError);
+              logError(`Fehler beim Suchen in Scores für ${shooterId}:`, scoreError);
             }
           }
         } catch (error) {
-          console.error(`Fehler beim Laden von Schütze ${shooterId}:`, error);
+          logError(`Fehler beim Laden von Schütze ${shooterId}:`, error);
         }
       }
 
@@ -1820,7 +1840,7 @@ function RwkTabellenPageComponent() {
 
       setLoadedTeamShooters(prev => new Set([...prev, teamId]));
     } catch (error) {
-      console.error('Error loading team shooters:', error);
+      logError('Error loading team shooters:', error);
     } finally {
       setLoadingTeamShooters(prev => { const newSet = new Set(prev); newSet.delete(teamId); return newSet; });
     }
@@ -2027,7 +2047,7 @@ function RwkTabellenPageComponent() {
                                 description: 'Die PDF-Datei wurde erfolgreich erstellt.',
                               });
                             } catch (error) {
-                              console.error('Fehler beim Erstellen der PDF:', error);
+                              logError('Fehler beim Erstellen der PDF:', error);
                               toast({
                                 title: 'Fehler',
                                 description: 'Die PDF-Datei konnte nicht erstellt werden.',

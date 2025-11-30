@@ -1,6 +1,7 @@
 // src/app/admin/email-system/page.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -151,7 +152,7 @@ export default function EmailSystemPage() {
 
       setContacts(loadedContacts.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (error) {
-      console.error('Fehler beim Laden der Kontakte:', error);
+      logError('Fehler beim Laden der Kontakte:', error);
       toast({
         title: 'Fehler',
         description: 'Kontakte konnten nicht geladen werden.',
@@ -218,7 +219,7 @@ export default function EmailSystemPage() {
         setLeagues(loadedLeagues);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Ligen:', error);
+      logError('Fehler beim Laden der Ligen:', error);
     }
   };
 
@@ -377,7 +378,7 @@ export default function EmailSystemPage() {
       setNewContact({ name: '', email: '', groups: [] });
       loadContacts();
     } catch (error) {
-      console.error('Fehler beim Hinzufügen des Kontakts:', error);
+      logError('Fehler beim Hinzufügen des Kontakts:', error);
       toast({
         title: 'Fehler',
         description: 'Kontakt konnte nicht hinzugefügt werden.',

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { getUserClubId, getClubCollection, CLUB_COLLECTIONS } from '@/lib/utils/club-utils';
@@ -49,7 +50,7 @@ export async function PATCH(
     });
 
   } catch (error) {
-    console.error('Fehler beim Aktualisieren:', error);
+    logError('Fehler beim Aktualisieren:', error);
     return NextResponse.json({
       success: false,
       error: 'Update fehlgeschlagen'
@@ -87,7 +88,7 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error('Fehler beim Löschen:', error);
+    logError('Fehler beim Löschen:', error);
     return NextResponse.json({
       success: false,
       error: 'Löschen fehlgeschlagen'
@@ -123,7 +124,7 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('Fehler beim Laden:', error);
+    logError('Fehler beim Laden:', error);
     return NextResponse.json({
       success: false,
       error: 'Laden fehlgeschlagen'

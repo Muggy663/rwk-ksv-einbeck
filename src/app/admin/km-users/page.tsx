@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -95,7 +96,7 @@ export default function KMUserManagement() {
       setFormData({ uid: '', email: '', displayName: '', role: 'km_organizer', clubId: 'none' });
       loadData();
     } catch (error) {
-      console.error('Error creating KM user:', error);
+      logError('Error creating KM user:', error);
       toast({ title: 'Fehler', description: `Benutzer konnte nicht erstellt werden: ${error}`, variant: 'destructive' });
     } finally {
       setSubmitting(false);

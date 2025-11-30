@@ -1,6 +1,7 @@
 // src/components/ShooterSearch.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Search, X } from 'lucide-react';

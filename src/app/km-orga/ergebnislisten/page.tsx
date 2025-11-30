@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -47,7 +48,7 @@ export default function ErgebnislistenPage() {
           }
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Saisons:', error);
+        logError('Fehler beim Laden der Saisons:', error);
       }
     };
     loadSaisons();
@@ -183,7 +184,7 @@ export default function ErgebnislistenPage() {
         setDisziplinen(Array.from(disziplinenSet).sort());
         setAltersklassen(Array.from(altersklassenSet).sort());
       } catch (error) {
-        console.error('Fehler beim Laden:', error);
+        logError('Fehler beim Laden:', error);
         toast({ title: 'Fehler', description: 'Ergebnisse konnten nicht geladen werden.', variant: 'destructive' });
       } finally {
         setLoading(false);
@@ -295,7 +296,7 @@ export default function ErgebnislistenPage() {
       
       toast({ title: 'PDF erstellt', description: `${fileName} wurde heruntergeladen.` });
     } catch (error) {
-      console.error('PDF-Export Fehler:', error);
+      logError('PDF-Export Fehler:', error);
       toast({ title: 'Fehler', description: 'PDF konnte nicht erstellt werden.', variant: 'destructive' });
     }
   };
@@ -338,7 +339,7 @@ export default function ErgebnislistenPage() {
       
       toast({ title: 'Excel erstellt', description: `${fileName} wurde heruntergeladen.` });
     } catch (error) {
-      console.error('Excel-Export Fehler:', error);
+      logError('Excel-Export Fehler:', error);
       toast({ title: 'Fehler', description: 'Excel konnte nicht erstellt werden.', variant: 'destructive' });
     }
   };

@@ -1,5 +1,6 @@
 // src/hooks/useNativeFeatures.ts
 import { useEffect, useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Capacitor } from '@capacitor/core';
 
 export const useNativeFeatures = () => {
@@ -28,7 +29,7 @@ export const useNativeFeatures = () => {
           await StatusBar.setStyle({ style: 'DARK' });
           await StatusBar.setBackgroundColor({ color: '#ffffff' });
         } catch (error) {
-          console.warn('Native features not available:', error);
+          logWarn('Native features not available:', error);
         }
       }
     };
@@ -51,7 +52,7 @@ export const useNativeFeatures = () => {
             break;
         }
       } catch (error) {
-        console.warn('Haptic feedback failed:', error);
+        logWarn('Haptic feedback failed:', error);
       }
     }
   };
@@ -66,7 +67,7 @@ export const useNativeFeatures = () => {
           dialogTitle: 'RWK Einbeck teilen'
         });
       } catch (error) {
-        console.warn('Share failed:', error);
+        logWarn('Share failed:', error);
       }
     } else {
       // Fallback for web
@@ -74,7 +75,7 @@ export const useNativeFeatures = () => {
         try {
           await navigator.share({ title, text, url });
         } catch (error) {
-          console.warn('Web share failed:', error);
+          logWarn('Web share failed:', error);
         }
       }
     }

@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { 
   collection, 
   getDocs, 
@@ -119,7 +120,7 @@ export async function safeDiagnoseDatabaseInconsistencies(clubId: string): Promi
     }
 
   } catch (error) {
-    console.error('Error during safe diagnosis:', error);
+    logError('Error during safe diagnosis:', error);
     diagnosis.warnings.push(`Fehler bei der Diagnose: ${error}`);
     diagnosis.safeToDelete = false;
   }
@@ -171,7 +172,7 @@ export async function performSafeCleanup(clubId: string, diagnosis: SafeCleanupD
     }
 
   } catch (error) {
-    console.error('Error during safe cleanup:', error);
+    logError('Error during safe cleanup:', error);
     throw error;
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Newspaper, AlertTriangle, Activity, Users } from 'lucide-react';
 import { newsService } from '@/lib/services/news-service';
@@ -30,7 +31,7 @@ export function AdminStats() {
           audit: auditStats
         });
       } catch (error) {
-        console.error('Fehler beim Laden der Admin-Statistiken:', error);
+        logError('Fehler beim Laden der Admin-Statistiken:', error);
       } finally {
         setLoading(false);
       }

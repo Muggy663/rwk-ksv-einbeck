@@ -1,5 +1,6 @@
 // src/app/api/km/wettkampfklassen/cleanup/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Fehler beim Bereinigen der Wettkampfklassen:', error);
+    logError('Fehler beim Bereinigen der Wettkampfklassen:', error);
     return NextResponse.json({
       success: false,
       error: 'Fehler beim Bereinigen der Wettkampfklassen'

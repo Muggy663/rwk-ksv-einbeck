@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import * as XLSX from 'xlsx';
 
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
     const year = url.searchParams.get('year') || '2025';
     const discipline = url.searchParams.get('discipline') || 'KK';
     
-    console.log(`📊 BACKUP: Exportiere ${discipline} ${year}...`);
+    logDebug(`📊 BACKUP: Exportiere ${discipline} ${year}...`);
     
     // 1. Lade alle Scores für das Jahr und die Disziplin
     const scoresSnapshot = await adminDb.collection('rwk_scores')
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
       }
     });
     
-    console.log(`📊 BACKUP: ${exportData.length} Einträge gefunden`);
+    logDebug(`📊 BACKUP: ${exportData.length} Einträge gefunden`);
     
     // 5. Erstelle Excel-Datei
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('❌ BACKUP ERROR:', error);
+    logError('❌ BACKUP ERROR:', error);
     return NextResponse.json({
       success: false,
       error: error.message

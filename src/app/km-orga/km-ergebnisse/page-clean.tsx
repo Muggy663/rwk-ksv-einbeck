@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -82,7 +83,7 @@ export default function KMErgebnissePage() {
         eingegeben_von: 'km-admin'
       };
 
-      console.log('💾 Speichere KM-Ergebnis:', ergebnisData);
+      logDebug('💾 Speichere KM-Ergebnis:', ergebnisData);
 
       const response = await fetch('/api/km/ergebnisse', {
         method: 'POST',
@@ -92,7 +93,7 @@ export default function KMErgebnissePage() {
       
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ Erfolgreich gespeichert:', result);
+        logDebug('✅ Erfolgreich gespeichert:', result);
         toast({ 
           title: '✅ Gespeichert!', 
           description: `${meldung.schuetzenName}: ${meldung.kmErgebnis.ringe} Ringe ${result.created ? 'neu erstellt' : 'aktualisiert'}`,
@@ -100,11 +101,11 @@ export default function KMErgebnissePage() {
         });
       } else {
         const errorText = await response.text();
-        console.error('❌ API Fehler:', response.status, errorText);
+        logError('❌ API Fehler:', response.status, errorText);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
     } catch (error) {
-      console.error('❌ Speichern fehlgeschlagen:', error);
+      logError('❌ Speichern fehlgeschlagen:', error);
       toast({ 
         title: '❌ Speichern fehlgeschlagen', 
         description: `${meldung.schuetzenName}: ${error.message || 'Unbekannter Fehler'}`,

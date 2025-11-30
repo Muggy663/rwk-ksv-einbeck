@@ -9,16 +9,16 @@ export const authLogger = {
     const status = success ? 'SUCCESS' : 'FAILED';
     
     // Sichere Logs ohne sensitive Daten
-    console.log(`[AUTH] ${timestamp} Login attempt: ${status}`);
+    logDebug(`[AUTH] ${timestamp} Login attempt: ${status}`);
   },
   
   rateLimitHit: () => {
     const timestamp = new Date().toISOString();
-    console.log(`[AUTH] ${timestamp} Rate limit exceeded`);
+    logDebug(`[AUTH] ${timestamp} Rate limit exceeded`);
   },
   
   botDetected: () => {
     const timestamp = new Date().toISOString();
-    console.log(`[AUTH] ${timestamp} Bot activity detected`);
+    logDebug(`[AUTH] ${timestamp} Bot activity detected`);
   }
 };

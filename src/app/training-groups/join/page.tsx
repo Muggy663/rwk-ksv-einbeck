@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,9 +38,9 @@ export default function JoinGroupPage() {
         throw new Error('Nicht angemeldet');
       }
       
-      console.log('🔍 Joining group with code:', joinCode);
+      logDebug('🔍 Joining group with code:', joinCode);
       const groupId = await TrainingGroupsService.joinGroup(user.uid, joinCode);
-      console.log('✅ Joined group:', groupId);
+      logDebug('✅ Joined group:', groupId);
       
       toast({
         title: "Erfolgreich beigetreten!",
@@ -49,7 +50,7 @@ export default function JoinGroupPage() {
       // Redirect zur Gruppen-Seite
       window.location.href = `/training-groups/${groupId}`;
     } catch (error: any) {
-      console.error('❌ Join error:', error);
+      logError('❌ Join error:', error);
       toast({
         title: "Fehler",
         description: "Der Gruppen-Code ist ungültig oder die Gruppe existiert nicht.",

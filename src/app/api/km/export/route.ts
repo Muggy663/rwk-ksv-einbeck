@@ -1,5 +1,6 @@
 // src/app/api/km/export/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { generateMeldelistePDF, generateStartlistePDF, generateLMMeldungenPDF } from '@/lib/services/km-pdf-service';
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Fehler beim PDF-Export:', error);
+    logError('Fehler beim PDF-Export:', error);
     return NextResponse.json({
       success: false,
       error: 'Fehler beim PDF-Export'

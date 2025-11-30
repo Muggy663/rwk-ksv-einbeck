@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -92,7 +93,7 @@ export default function ZeitungsberichtPage() {
           setSelectedSeason(seasonsData[0].id);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Saisons:', error);
+        logError('Fehler beim Laden der Saisons:', error);
       }
     };
     
@@ -125,7 +126,7 @@ export default function ZeitungsberichtPage() {
           setSelectedLeague('ALL_LEAGUES');
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Ligen:', error);
+        logError('Fehler beim Laden der Ligen:', error);
       }
     };
     
@@ -233,7 +234,7 @@ export default function ZeitungsberichtPage() {
               };
             }));
           } catch (error) {
-            console.error(`Fehler bei Liga ${league.name}:`, error);
+            logError(`Fehler bei Liga ${league.name}:`, error);
             // Weiter mit nächster Liga
             continue;
           }
@@ -291,7 +292,7 @@ export default function ZeitungsberichtPage() {
       });
 
     } catch (error) {
-      console.error('Fehler beim Laden der Daten:', error);
+      logError('Fehler beim Laden der Daten:', error);
       toast({ title: "Fehler", description: "Daten konnten nicht geladen werden", variant: "destructive" });
     } finally {
       setIsLoading(false);

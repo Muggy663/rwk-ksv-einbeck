@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -82,7 +83,7 @@ export default function TeamManagersPage() {
           setSelectedSeason(seasonsData[0].id);
         }
       } catch (error) {
-        console.error('Error fetching seasons:', error);
+        logError('Error fetching seasons:', error);
         toast({
           title: 'Fehler beim Laden der Saisons',
           description: 'Die Saisons konnten nicht geladen werden.',
@@ -101,7 +102,7 @@ export default function TeamManagersPage() {
         
         setClubs(clubsData);
       } catch (error) {
-        console.error('Error fetching clubs:', error);
+        logError('Error fetching clubs:', error);
         toast({
           title: 'Fehler beim Laden der Vereine',
           description: 'Die Vereine konnten nicht geladen werden.',
@@ -133,7 +134,7 @@ export default function TeamManagersPage() {
         setLeagues(leaguesData);
         setSelectedLeague('all'); // Reset league selection
       } catch (error) {
-        console.error('Error fetching leagues:', error);
+        logError('Error fetching leagues:', error);
         toast({
           title: 'Fehler beim Laden der Ligen',
           description: 'Die Ligen konnten nicht geladen werden.',
@@ -211,7 +212,7 @@ export default function TeamManagersPage() {
         setTeamManagers(managersData);
         setFilteredManagers(managersData);
       } catch (error) {
-        console.error('Error fetching team managers:', error);
+        logError('Error fetching team managers:', error);
         toast({
           title: 'Fehler beim Laden der Mannschaftsführer',
           description: 'Die Mannschaftsführer konnten nicht geladen werden.',
@@ -288,7 +289,7 @@ export default function TeamManagersPage() {
         description: 'Die Mannschaftsführer wurden erfolgreich exportiert.'
       });
     } catch (error) {
-      console.error('Fehler beim Exportieren der Daten:', error);
+      logError('Fehler beim Exportieren der Daten:', error);
       toast({
         title: 'Export fehlgeschlagen',
         description: 'Beim Exportieren der Daten ist ein Fehler aufgetreten.',

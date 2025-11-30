@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -7,7 +8,7 @@ export async function POST(request: NextRequest) {
     const { action } = await request.json();
     
     if (action === 'assign_sample_roles') {
-      console.log('🎯 Weise Beispiel-Rollen zu...');
+      logDebug('🎯 Weise Beispiel-Rollen zu...');
       
       const batch = adminDb.batch();
       let count = 0;
@@ -46,11 +47,11 @@ export async function POST(request: NextRequest) {
               });
               
               count++;
-              console.log(`✅ ${assignment.email}: ${assignment.clubRole} für Club ${clubId}`);
+              logDebug(`✅ ${assignment.email}: ${assignment.clubRole} für Club ${clubId}`);
             }
           }
         } catch (error) {
-          console.error(`❌ Fehler bei ${assignment.email}:`, error);
+          logError(`❌ Fehler bei ${assignment.email}:`, error);
         }
       }
       
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
     }, { status: 400 });
     
   } catch (error: any) {
-    console.error('❌ Rollen-Zuweisung Fehler:', error);
+    logError('❌ Rollen-Zuweisung Fehler:', error);
     return NextResponse.json({
       success: false,
       error: error.message || 'Rollen-Zuweisung fehlgeschlagen'

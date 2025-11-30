@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
@@ -26,7 +27,7 @@ export async function GET() {
       return NextResponse.json({ regeln: defaultRegeln });
     }
   } catch (error) {
-    console.error('Fehler beim Laden der Mannschaftsregeln:', error);
+    logError('Fehler beim Laden der Mannschaftsregeln:', error);
     return NextResponse.json({ error: 'Fehler beim Laden' }, { status: 500 });
   }
 }
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ success: true, message: 'Mannschaftsregeln gespeichert' });
   } catch (error) {
-    console.error('Fehler beim Speichern der Mannschaftsregeln:', error);
+    logError('Fehler beim Speichern der Mannschaftsregeln:', error);
     return NextResponse.json({ error: 'Fehler beim Speichern' }, { status: 500 });
   }
 }

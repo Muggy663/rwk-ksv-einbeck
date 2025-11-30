@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +53,7 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
         setProfile({ id: profileDoc.id, ...profileDoc.data() } as UserProfile);
       }
     } catch (error) {
-      console.error('Fehler beim Laden des Profils:', error);
+      logError('Fehler beim Laden des Profils:', error);
     } finally {
       setLoading(false);
     }

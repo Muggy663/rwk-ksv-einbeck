@@ -1,6 +1,7 @@
 // src/app/admin/leagues/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent, useCallback, Suspense } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Loader2, Eye } from 'lucide-react';
@@ -104,7 +105,7 @@ export default function AdminLeaguesPage() {
         toast({ title: "Keine Saisons gefunden", description: "Bitte zuerst Saisons anlegen.", variant: "destructive" });
       }
     } catch (error) {
-      console.error(">>> leagues/fetchSeasons: Error fetching seasons: ", error);
+      logError(">>> leagues/fetchSeasons: Error fetching seasons: ", error);
       toast({ title: "Fehler beim Laden der Saisons", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingData(false);
@@ -135,7 +136,7 @@ export default function AdminLeaguesPage() {
       setLeagues(fetchedLeagues);
 
     } catch (error) {
-      console.error(`>>> leagues/fetchLeagues: Error fetching leagues for season ${seasonId}: `, error);
+      logError(`>>> leagues/fetchLeagues: Error fetching leagues for season ${seasonId}: `, error);
       toast({ title: "Fehler beim Laden der Ligen", description: (error as Error).message, variant: "destructive" });
       setLeagues([]);
     } finally {
@@ -201,7 +202,7 @@ export default function AdminLeaguesPage() {
       toast({ title: "Liga gelöscht", description: `"${leagueToDelete.name}" wurde erfolgreich entfernt.` });
       if (selectedSeasonId) fetchLeaguesForSeason(selectedSeasonId); 
     } catch (error) {
-      console.error(`>>> leagues/handleDeleteLeague: Error deleting league ${leagueToDelete.id}: `, error);
+      logError(`>>> leagues/handleDeleteLeague: Error deleting league ${leagueToDelete.id}: `, error);
       toast({ title: "Fehler beim Löschen", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingDelete(false);
@@ -217,14 +218,14 @@ export default function AdminLeaguesPage() {
 
     if (!currentLeague || !currentLeague.name?.trim() || !currentLeague.seasonId || !currentLeague.type || currentLeague.competitionYear === undefined) {
       toast({ title: "Ungültige Eingabe", description: "Bitte alle erforderlichen Felder ausfüllen.", variant: "destructive" });
-      console.warn(">>> leagues/handleSubmit: Invalid form input.", currentLeague);
+      logWarn(">>> leagues/handleSubmit: Invalid form input.", currentLeague);
       return;
     }
     
     const selectedSeasonData = allSeasons.find(s => s.id === currentLeague.seasonId);
     if (!selectedSeasonData) {
         toast({ title: "Saisonfehler", description: "Zugehörige Saisondaten nicht gefunden.", variant: "destructive" });
-        console.error(">>> leagues/handleSubmit: Selected season data not found for seasonId:", currentLeague.seasonId);
+        logError(">>> leagues/handleSubmit: Selected season data not found for seasonId:", currentLeague.seasonId);
         return;
     }
 
@@ -263,7 +264,7 @@ export default function AdminLeaguesPage() {
           description: `Eine Liga mit dem Namen "${leagueDataToSave.name}" existiert bereits in dieser Saison.`,
           variant: "destructive",
         });
-        console.warn(">>> leagues/handleSubmit: Duplicate league name found.");
+        logWarn(">>> leagues/handleSubmit: Duplicate league name found.");
         setIsLoadingForm(false);
         return; 
       }
@@ -283,7 +284,7 @@ export default function AdminLeaguesPage() {
       setCurrentLeague(null);
       if(selectedSeasonId) await fetchLeaguesForSeason(selectedSeasonId);
     } catch (error) {
-      console.error(">>> leagues/handleSubmit: Error saving league: ", error);
+      logError(">>> leagues/handleSubmit: Error saving league: ", error);
       const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
       toast({ title: `Fehler beim ${action}`, description: (error as Error).message, variant: "destructive" });
     } finally {

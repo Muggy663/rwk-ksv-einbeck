@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
@@ -90,7 +91,7 @@ export function PreviousYearAverage({
           setDifference(null);
         }
       } catch (error) {
-        console.error('Fehler beim Laden des Vorjahresdurchschnitts:', error);
+        logError('Fehler beim Laden des Vorjahresdurchschnitts:', error);
         setError("Fehler beim Laden der Daten");
         setPrevYearAverage(null);
         setDifference(null);

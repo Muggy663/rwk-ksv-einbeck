@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
 export async function GET() {
   try {
-    console.log('🔍 VALIDATION: Starte System-Validierung...');
+    logDebug('🔍 VALIDATION: Starte System-Validierung...');
     
     const results = {
       shooters: { total: 0, byClub: {} },
@@ -79,7 +80,7 @@ export async function GET() {
       }
     });
     
-    console.log('✅ VALIDATION: Abgeschlossen');
+    logDebug('✅ VALIDATION: Abgeschlossen');
     
     return NextResponse.json({
       success: true,
@@ -96,7 +97,7 @@ export async function GET() {
     });
     
   } catch (error) {
-    console.error('❌ VALIDATION ERROR:', error);
+    logError('❌ VALIDATION ERROR:', error);
     return NextResponse.json({
       success: false,
       error: error.message

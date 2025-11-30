@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { doc, updateDoc } from 'firebase/firestore';
 
@@ -28,7 +29,7 @@ export async function PATCH(
     });
 
   } catch (error) {
-    console.error('Fehler beim Aktualisieren:', error);
+    logError('Fehler beim Aktualisieren:', error);
     return NextResponse.json({
       success: false,
       error: 'Aktualisierung fehlgeschlagen'

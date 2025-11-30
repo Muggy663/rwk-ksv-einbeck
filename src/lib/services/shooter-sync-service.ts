@@ -1,5 +1,6 @@
 // Automatische Synchronisation zwischen km_shooters und shooters
 import { doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 
 export class ShooterSyncService {
@@ -28,7 +29,7 @@ export class ShooterSyncService {
 
       return shooterId;
     } catch (error) {
-      console.error('❌ Sync-Fehler beim Erstellen:', error);
+      logError('❌ Sync-Fehler beim Erstellen:', error);
       throw error;
     }
   }
@@ -54,7 +55,7 @@ export class ShooterSyncService {
       
 
     } catch (error) {
-      console.error('❌ Sync-Fehler beim Aktualisieren:', error);
+      logError('❌ Sync-Fehler beim Aktualisieren:', error);
       throw error;
     }
   }
@@ -71,7 +72,7 @@ export class ShooterSyncService {
       
 
     } catch (error) {
-      console.error('❌ Sync-Fehler beim Löschen:', error);
+      logError('❌ Sync-Fehler beim Löschen:', error);
       throw error;
     }
   }

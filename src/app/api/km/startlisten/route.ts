@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
       data: startlisten
     });
   } catch (error) {
-    console.error('Fehler beim Laden der Startlisten:', error);
+    logError('Fehler beim Laden der Startlisten:', error);
     return NextResponse.json({
       success: false,
       error: error.message
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
       id: docRef.id
     });
   } catch (error) {
-    console.error('Fehler beim Erstellen der Startliste:', error);
+    logError('Fehler beim Erstellen der Startliste:', error);
     return NextResponse.json({
       success: false,
       error: error.message
@@ -70,7 +71,7 @@ export async function PUT(request: NextRequest) {
       id
     });
   } catch (error) {
-    console.error('Fehler beim Aktualisieren der Startliste:', error);
+    logError('Fehler beim Aktualisieren der Startliste:', error);
     return NextResponse.json({
       success: false,
       error: error.message

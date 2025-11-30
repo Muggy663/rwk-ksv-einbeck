@@ -2,6 +2,7 @@
 "use client";
 
 import React, { ReactNode } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from './button';
 import { useMobileDetection } from '@/hooks/use-mobile-detection';
 import { cn } from '@/lib/utils';

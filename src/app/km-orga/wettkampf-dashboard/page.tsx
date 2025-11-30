@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -111,7 +112,7 @@ export default function WettkampfDashboardPage() {
         
         setWettkampfStatus(statusArray.sort((a, b) => a.disziplin.localeCompare(b.disziplin)));
       } catch (error) {
-        console.error('Fehler beim Laden:', error);
+        logError('Fehler beim Laden:', error);
         toast({ title: 'Fehler', description: 'Wettkampf-Status konnte nicht geladen werden.', variant: 'destructive' });
       } finally {
         setLoading(false);

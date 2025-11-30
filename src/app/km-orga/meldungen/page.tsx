@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -62,7 +63,7 @@ export default function KMAdminMeldungen() {
         }
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Saisons:', error);
+      logError('Fehler beim Laden der Saisons:', error);
     }
   };
 
@@ -114,7 +115,7 @@ export default function KMAdminMeldungen() {
         setVereinSchuetzen(data.data || []);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Vereinsschützen:', error);
+      logError('Fehler beim Laden der Vereinsschützen:', error);
     }
   };
 
@@ -287,7 +288,7 @@ export default function KMAdminMeldungen() {
           </select>
         </div>
         <Button onClick={() => {
-          console.log('Button clicked, setting dialog to true');
+          logDebug('Button clicked, setting dialog to true');
           setShowMeldungsDialog(true);
         }} className="w-full h-12 text-left justify-start md:w-auto md:h-auto md:text-center md:justify-center">
           <Plus className="h-4 w-4 mr-2" />
@@ -692,7 +693,7 @@ export default function KMAdminMeldungen() {
 
       {/* Meldungs-Dialog */}
       <Dialog open={showMeldungsDialog} onOpenChange={(open) => {
-        console.log('Dialog onOpenChange:', open);
+        logDebug('Dialog onOpenChange:', open);
         setShowMeldungsDialog(open);
       }}>
         <DialogContent className="max-w-2xl mx-auto">

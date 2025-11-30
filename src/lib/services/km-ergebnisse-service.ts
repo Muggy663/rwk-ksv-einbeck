@@ -2,6 +2,7 @@
 // Optimierter Service für KM-Ergebnisse
 
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, updateDoc, doc, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 export interface KMErgebnis {
@@ -64,11 +65,11 @@ export class KMErgebnisseService {
       const results = await Promise.all(batch);
       savedIds.push(...results);
       
-      console.log(`${savedIds.length} Ergebnisse erfolgreich gespeichert`);
+      logDebug(`${savedIds.length} Ergebnisse erfolgreich gespeichert`);
       return savedIds;
       
     } catch (error) {
-      console.error('Fehler beim Speichern der Ergebnisse:', error);
+      logError('Fehler beim Speichern der Ergebnisse:', error);
       throw error;
     }
   }
@@ -92,7 +93,7 @@ export class KMErgebnisseService {
       })) as KMErgebnis[];
       
     } catch (error) {
-      console.error('Fehler beim Laden der Ergebnisse:', error);
+      logError('Fehler beim Laden der Ergebnisse:', error);
       throw error;
     }
   }
@@ -131,7 +132,7 @@ export class KMErgebnisseService {
       }
       
     } catch (error) {
-      console.error('Fehler beim Verknüpfen:', error);
+      logError('Fehler beim Verknüpfen:', error);
       throw error;
     }
   }

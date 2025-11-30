@@ -1,9 +1,10 @@
 import { MongoClient } from 'mongodb';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 // Prüfe, ob die MONGODB_URI-Umgebungsvariable definiert ist
 const uri = process.env.MONGODB_URI;
 if (!uri) {
-  console.warn('MONGODB_URI ist nicht definiert. MongoDB-Features sind deaktiviert.');
+  logWarn('MONGODB_URI ist nicht definiert. MongoDB-Features sind deaktiviert.');
 }
 
 const options = {};

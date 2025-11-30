@@ -31,7 +31,7 @@ export async function getAllDocuments(): Promise<Document[]> {
         }
       }
     } catch (apiErr) {
-      console.warn('Fehler beim Laden der Dokumente aus MongoDB, fallback zu JSON:', apiErr);
+      logWarn('Fehler beim Laden der Dokumente aus MongoDB, fallback zu JSON:', apiErr);
     }
     
     // Fallback: Lade Dokumente aus der JSON-Datei
@@ -43,7 +43,7 @@ export async function getAllDocuments(): Promise<Document[]> {
 
     return jsonData.documents;
   } catch (error) {
-    console.error('Fehler beim Laden der Dokumente:', error);
+    logError('Fehler beim Laden der Dokumente:', error);
     return [];
   }
 }
@@ -67,7 +67,7 @@ export async function getDocumentById(id: string): Promise<Document | null> {
     const document = documents.find(doc => doc.id === id);
     return document || null;
   } catch (error) {
-    console.error(`Fehler beim Laden des Dokuments mit ID ${id}:`, error);
+    logError(`Fehler beim Laden des Dokuments mit ID ${id}:`, error);
     return null;
   }
 }
@@ -89,7 +89,7 @@ export async function addDocument(document: DocumentFormData): Promise<Document 
     
     return await response.json();
   } catch (error) {
-    console.error('Fehler beim Hinzufügen des Dokuments:', error);
+    logError('Fehler beim Hinzufügen des Dokuments:', error);
     return null;
   }
 }
@@ -111,7 +111,7 @@ export async function updateDocument(id: string, document: Partial<DocumentFormD
     
     return await response.json();
   } catch (error) {
-    console.error(`Fehler beim Aktualisieren des Dokuments mit ID ${id}:`, error);
+    logError(`Fehler beim Aktualisieren des Dokuments mit ID ${id}:`, error);
     return null;
   }
 }
@@ -129,7 +129,7 @@ export async function deleteDocument(id: string): Promise<boolean> {
     
     return true;
   } catch (error) {
-    console.error(`Fehler beim Löschen des Dokuments mit ID ${id}:`, error);
+    logError(`Fehler beim Löschen des Dokuments mit ID ${id}:`, error);
     return false;
   }
 }

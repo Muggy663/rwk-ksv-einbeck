@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Fehler beim Senden der Bestätigungs-E-Mail:', error);
+    logError('Fehler beim Senden der Bestätigungs-E-Mail:', error);
     return NextResponse.json(
       { error: 'Fehler beim Senden der E-Mail' },
       { status: 500 }

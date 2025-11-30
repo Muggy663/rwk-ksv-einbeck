@@ -1,31 +1,32 @@
 // Gender-Feld nachträglich korrigieren
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, updateDoc, doc, query, where } from 'firebase/firestore';
 
 export async function fixGenderFieldsAllClubs() {
   try {
-    console.log('Korrigiere Gender-Felder für alle Vereine...');
+    logDebug('Korrigiere Gender-Felder für alle Vereine...');
     
     // Lade alle Clubs
     const clubsSnapshot = await getDocs(collection(db, 'clubs'));
-    console.log(`Gefunden: ${clubsSnapshot.docs.length} Vereine`);
+    logDebug(`Gefunden: ${clubsSnapshot.docs.length} Vereine`);
     
     let totalUpdated = 0;
     
     for (const clubDoc of clubsSnapshot.docs) {
       const clubId = clubDoc.id;
       const clubData = clubDoc.data();
-      console.log(`Korrigiere Gender für: ${clubData.name} (${clubId})`);
+      logDebug(`Korrigiere Gender für: ${clubData.name} (${clubId})`);
       
       const updated = await fixGenderForClub(clubId);
       totalUpdated += updated;
     }
     
-    console.log(`Gender-Korrektur abgeschlossen: ${totalUpdated} Mitglieder aus allen Vereinen aktualisiert`);
+    logDebug(`Gender-Korrektur abgeschlossen: ${totalUpdated} Mitglieder aus allen Vereinen aktualisiert`);
     return totalUpdated;
     
   } catch (error) {
-    console.error('Fehler bei Gesamt-Gender-Korrektur:', error);
+    logError('Fehler bei Gesamt-Gender-Korrektur:', error);
     throw error;
   }
 }
@@ -37,7 +38,7 @@ export async function fixGenderForClub(clubId: string) {
     const mitgliederCollection = `clubs/${clubId}/mitglieder`;
     const mitgliederSnapshot = await getDocs(collection(db, mitgliederCollection));
     
-    console.log('Gefunden:', mitgliederSnapshot.docs.length, 'Mitglieder');
+    logDebug('Gefunden:', mitgliederSnapshot.docs.length, 'Mitglieder');
     
     let updated = 0;
     
@@ -68,11 +69,11 @@ export async function fixGenderForClub(clubId: string) {
       }
     }
     
-    console.log('Gender-Korrektur abgeschlossen:', updated, 'Mitglieder aktualisiert');
+    logDebug('Gender-Korrektur abgeschlossen:', updated, 'Mitglieder aktualisiert');
     return updated;
     
   } catch (error) {
-    console.error('Fehler bei Gender-Korrektur:', error);
+    logError('Fehler bei Gender-Korrektur:', error);
     throw error;
   }
 }

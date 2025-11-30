@@ -2,23 +2,23 @@
 // Test-Funktion um zu beweisen, dass OCR funktioniert
 
 export const testOCRFunctionality = () => {
-  console.log("🧪 OCR-System Test gestartet...");
+  logDebug("🧪 OCR-System Test gestartet...");
   
   // Test 1: Service Import
   try {
     const { handzettelOCR } = require('./handzettel-ocr-service');
-    console.log("✅ OCR-Service erfolgreich importiert");
+    logDebug("✅ OCR-Service erfolgreich importiert");
   } catch (error) {
-    console.error("❌ OCR-Service Import fehlgeschlagen:", error);
+    logError("❌ OCR-Service Import fehlgeschlagen:", error);
     return false;
   }
   
   // Test 2: Tesseract.js verfügbar
   try {
     const tesseract = require('tesseract.js');
-    console.log("✅ Tesseract.js erfolgreich geladen");
+    logDebug("✅ Tesseract.js erfolgreich geladen");
   } catch (error) {
-    console.error("❌ Tesseract.js nicht verfügbar:", error);
+    logError("❌ Tesseract.js nicht verfügbar:", error);
     return false;
   }
   
@@ -46,9 +46,9 @@ export const testOCRFunctionality = () => {
     const durchgangMatch = mockHandzettelText.match(/Durchgang[:\s]*(\d+)/i);
     
     if (ligaMatch && durchgangMatch) {
-      console.log("✅ Text-Extraktion funktioniert:");
-      console.log(`   Liga: ${ligaMatch[1]}`);
-      console.log(`   Durchgang: ${durchgangMatch[1]}`);
+      logDebug("✅ Text-Extraktion funktioniert:");
+      logDebug(`   Liga: ${ligaMatch[1]}`);
+      logDebug(`   Durchgang: ${durchgangMatch[1]}`);
     }
     
     // Simuliere Team-Extraktion
@@ -58,20 +58,20 @@ export const testOCRFunctionality = () => {
     
     while ((teamMatch = teamPattern.exec(mockHandzettelText)) !== null) {
       teamsFound++;
-      console.log(`✅ Team erkannt: ${teamMatch[1]} - ${teamMatch[2]}: ${teamMatch[3]} Ringe`);
+      logDebug(`✅ Team erkannt: ${teamMatch[1]} - ${teamMatch[2]}: ${teamMatch[3]} Ringe`);
     }
     
     if (teamsFound > 0) {
-      console.log(`✅ ${teamsFound} Teams erfolgreich extrahiert`);
+      logDebug(`✅ ${teamsFound} Teams erfolgreich extrahiert`);
     }
     
   } catch (error) {
-    console.error("❌ Text-Verarbeitung fehlgeschlagen:", error);
+    logError("❌ Text-Verarbeitung fehlgeschlagen:", error);
     return false;
   }
   
-  console.log("🎯 OCR-System Test erfolgreich abgeschlossen!");
-  console.log("📋 Das System ist funktionsfähig und bereit für echte Handzettel!");
+  logDebug("🎯 OCR-System Test erfolgreich abgeschlossen!");
+  logDebug("📋 Das System ist funktionsfähig und bereit für echte Handzettel!");
   
   return true;
 };

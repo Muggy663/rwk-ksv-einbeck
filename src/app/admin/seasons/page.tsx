@@ -2,6 +2,7 @@
 // src/app/admin/seasons/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Eye, Loader2 } from 'lucide-react';
@@ -73,7 +74,7 @@ export default function AdminSeasonsPage() {
       });
       setSeasons(fetchedSeasons);
     } catch (error) {
-      console.error("Error fetching seasons: ", error);
+      logError("Error fetching seasons: ", error);
       toast({
         title: "Fehler beim Laden der Saisons",
         description: (error as Error).message || "Ein unbekannter Fehler ist aufgetreten.",
@@ -118,7 +119,7 @@ export default function AdminSeasonsPage() {
       toast({ title: "Saison gelöscht", description: `"${seasonToDelete.name}" wurde erfolgreich entfernt.` });
       fetchSeasons(); 
     } catch (error) {
-      console.error("Error deleting season: ", error);
+      logError("Error deleting season: ", error);
       toast({
         title: "Fehler beim Löschen",
         description: (error as Error).message || `Die Saison "${seasonToDelete.name}" konnte nicht gelöscht werden.`,
@@ -184,7 +185,7 @@ export default function AdminSeasonsPage() {
       setCurrentSeason(null);
       await fetchSeasons();
     } catch (error) {
-      console.error("Error saving season: ", error);
+      logError("Error saving season: ", error);
       const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
       toast({
         title: `Fehler beim ${action}`,

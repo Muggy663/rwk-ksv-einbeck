@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -59,7 +60,7 @@ export function ProfileSettings() {
         });
       }
     } catch (error) {
-      console.error('Error loading settings:', error);
+      logError('Error loading settings:', error);
     } finally {
       setIsLoading(false);
     }
@@ -70,9 +71,9 @@ export function ProfileSettings() {
     
     setIsSaving(true);
     try {
-      console.log('🔍 Saving settings:', settings);
+      logDebug('🔍 Saving settings:', settings);
       await SocialService.updateProfileSettings(user.uid, settings);
-      console.log('✅ Settings saved successfully');
+      logDebug('✅ Settings saved successfully');
       
       toast({
         title: "Einstellungen gespeichert",
@@ -81,7 +82,7 @@ export function ProfileSettings() {
           : "Ihre Privatsphäre-Einstellungen wurden aktualisiert.",
       });
     } catch (error: any) {
-      console.error('❌ Save error:', error);
+      logError('❌ Save error:', error);
       toast({
         title: "Fehler",
         description: error.message || "Einstellungen konnten nicht gespeichert werden.",

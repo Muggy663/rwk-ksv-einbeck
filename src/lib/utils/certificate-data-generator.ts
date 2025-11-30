@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, query, where, getDocs, orderBy, doc, getDoc, limit } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
@@ -138,7 +139,7 @@ export async function fetchTopShooters(leagueId: string, topCount: number = 3) {
       season: seasonData.name
     }));
   } catch (error) {
-    console.error('Fehler beim Abrufen der Top-Schützen:', error);
+    logError('Fehler beim Abrufen der Top-Schützen:', error);
     throw error;
   }
 }
@@ -331,7 +332,7 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
       season: seasonData.name
     }));
   } catch (error) {
-    console.error('Fehler beim Abrufen der Top-Teams:', error);
+    logError('Fehler beim Abrufen der Top-Teams:', error);
     throw error;
   }
 }
@@ -406,7 +407,7 @@ export async function fetchBestOverallShooters(seasonId: string) {
       bestKKPistol
     };
   } catch (error) {
-    console.error('Fehler beim Abrufen der besten Schützen:', error);
+    logError('Fehler beim Abrufen der besten Schützen:', error);
     throw error;
   }
 }
@@ -563,7 +564,7 @@ async function fetchBestShooterByGender(leagueIds: string[], gender: 'male' | 'f
     
     return bestShooter;
   } catch (error) {
-    console.error('Fehler beim Abrufen des besten Schützen nach Geschlecht:', error);
+    logError('Fehler beim Abrufen des besten Schützen nach Geschlecht:', error);
     throw error;
   }
 }

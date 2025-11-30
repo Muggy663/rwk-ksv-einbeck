@@ -1,4 +1,5 @@
 import { SchießnachweisService } from './schiessnachweis-service';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { SocialTrainingService } from './social-training-service';
 import { SchießEintrag } from '@/types/schiessnachweis';
 import { TrainingResult } from '@/types/social-training';
@@ -61,8 +62,8 @@ export class UnifiedTrainingService {
         const { auth } = await import('@/lib/firebase/config');
         const userId = auth.currentUser?.uid || 'anonymous';
         
-        console.log('🔍 UnifiedTrainingService - groupId:', data.groupId);
-        console.log('🔍 UnifiedTrainingService - competitionId:', data.competitionId);
+        logDebug('🔍 UnifiedTrainingService - groupId:', data.groupId);
+        logDebug('🔍 UnifiedTrainingService - competitionId:', data.competitionId);
         
         // Konvertiere Serien-Format
         const convertedSeries = schiessEintrag.serien?.map(serie => ({
@@ -113,10 +114,10 @@ export class UnifiedTrainingService {
               const userResults = competition.results[userId] || [];
               const nextRound = userResults.length + 1;
               
-              console.log('🔍 Wettkampf gefunden:', competition.name);
-              console.log('🔍 User Results:', userResults);
-              console.log('🔍 Nächste Runde:', nextRound);
-              console.log('🔍 Max Runden:', competition.rounds);
+              logDebug('🔍 Wettkampf gefunden:', competition.name);
+              logDebug('🔍 User Results:', userResults);
+              logDebug('🔍 Nächste Runde:', nextRound);
+              logDebug('🔍 Max Runden:', competition.rounds);
               
               if (nextRound <= competition.rounds) {
                 await CompetitionsService.submitResult(
@@ -125,15 +126,15 @@ export class UnifiedTrainingService {
                   nextRound,
                   data.ergebnis
                 );
-                console.log(`✅ Ergebnis in Wettkampf eingetragen - Runde ${nextRound} mit ${data.ergebnis} Ringen`);
+                logDebug(`✅ Ergebnis in Wettkampf eingetragen - Runde ${nextRound} mit ${data.ergebnis} Ringen`);
               } else {
-                console.log('⚠️ Alle Runden bereits abgeschlossen');
+                logDebug('⚠️ Alle Runden bereits abgeschlossen');
               }
             } else {
-              console.log('❌ Wettkampf nicht gefunden:', data.competitionId);
+              logDebug('❌ Wettkampf nicht gefunden:', data.competitionId);
             }
           } catch (error) {
-            console.error('❌ Wettkampf-Eintragung fehlgeschlagen:', error);
+            logError('❌ Wettkampf-Eintragung fehlgeschlagen:', error);
           }
         }
         
@@ -142,7 +143,7 @@ export class UnifiedTrainingService {
         socialResult = results.find(r => r.id === socialResultId);
         
       } catch (error) {
-        console.error('Social Training Speicherung fehlgeschlagen:', error);
+        logError('Social Training Speicherung fehlgeschlagen:', error);
       }
     }
     
@@ -229,9 +230,9 @@ export class UnifiedTrainingService {
         await this.getAllTrainingData(userId);
       }
       
-      console.log('✅ Alle Trainingsdaten synchronisiert');
+      logDebug('✅ Alle Trainingsdaten synchronisiert');
     } catch (error) {
-      console.error('❌ Synchronisation fehlgeschlagen:', error);
+      logError('❌ Synchronisation fehlgeschlagen:', error);
       throw error;
     }
   }

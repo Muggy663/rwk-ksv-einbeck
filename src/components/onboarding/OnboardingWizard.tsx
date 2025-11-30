@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -39,7 +40,7 @@ export function OnboardingWizard() {
         setOpen(true);
       }
     } catch (error) {
-      console.error('Fehler beim Zugriff auf localStorage:', error);
+      logError('Fehler beim Zugriff auf localStorage:', error);
       setStorageError(true);
       // Fallback: Dialog nicht automatisch öffnen
     }
@@ -144,7 +145,7 @@ export function OnboardingWizard() {
         localStorage.setItem(`${ONBOARDING_COMPLETED_KEY_PREFIX}${user.uid}`, 'true');
         setHasSeenOnboarding(true);
       } catch (error) {
-        console.error('Fehler beim Speichern in localStorage:', error);
+        logError('Fehler beim Speichern in localStorage:', error);
         setStorageError(true);
         // Trotzdem fortfahren, da der Benutzer die Einführung gesehen hat
       }

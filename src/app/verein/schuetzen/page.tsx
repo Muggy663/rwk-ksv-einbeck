@@ -1,6 +1,7 @@
 // /app/verein/schuetzen/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent, useCallback, useMemo } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Loader2, AlertTriangle, UserCircle as UserIcon } from 'lucide-react';
@@ -397,7 +398,7 @@ export default function VereinSchuetzenPage() {
         throw new Error(result.error || 'Löschen fehlgeschlagen');
       }
     } catch (error: any) {
-      console.error("Error deleting shooter:", error);
+      logError("Error deleting shooter:", error);
       toast({ title: "Fehler beim Löschen", description: error.message || "Der Schütze konnte nicht gelöscht werden.", variant: "destructive" });
     } finally {
       setIsDeleting(false); setIsAlertOpen(false); setShooterToDelete(null);

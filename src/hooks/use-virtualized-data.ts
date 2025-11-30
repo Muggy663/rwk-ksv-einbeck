@@ -4,6 +4,7 @@
 "use client";
 
 import { useState, useEffect, useRef, UIEvent } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 interface VirtualizedDataOptions {
   itemHeight?: number;

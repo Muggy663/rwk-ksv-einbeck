@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,7 +61,7 @@ export default function VMErgebnissePage() {
         setMeldungen(meldungenData);
         setDisziplinen(Array.from(disziplinenSet).sort());
       } catch (error) {
-        console.error('Fehler beim Laden:', error);
+        logError('Fehler beim Laden:', error);
         toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden.', variant: 'destructive' });
       } finally {
         setLoading(false);
@@ -106,7 +107,7 @@ export default function VMErgebnissePage() {
 
       toast({ title: 'Gespeichert', description: `VM-Ergebnis für ${meldung.schuetzenName} gespeichert.` });
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
+      logError('Fehler beim Speichern:', error);
       toast({ title: 'Fehler', description: 'Ergebnis konnte nicht gespeichert werden.', variant: 'destructive' });
     } finally {
       setSaving(false);

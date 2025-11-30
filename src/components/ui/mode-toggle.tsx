@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, Monitor } from "lucide-react";

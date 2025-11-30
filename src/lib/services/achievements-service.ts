@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
 export interface Achievement {
@@ -107,7 +108,7 @@ export class AchievementsService {
       }
       return [];
     } catch (error) {
-      console.error('Fehler beim Laden der Achievements:', error);
+      logError('Fehler beim Laden der Achievements:', error);
       return [];
     }
   }
@@ -141,7 +142,7 @@ export class AchievementsService {
       
       return true;
     } catch (error) {
-      console.error('Fehler beim Freischalten des Achievements:', error);
+      logError('Fehler beim Freischalten des Achievements:', error);
       return false;
     }
   }

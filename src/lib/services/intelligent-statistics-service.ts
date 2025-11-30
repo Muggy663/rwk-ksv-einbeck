@@ -1,5 +1,6 @@
 // Intelligente Statistik-Analyse mit Gemini AI
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 
 export interface StatisticsInsight {
@@ -62,7 +63,7 @@ class IntelligentStatisticsService {
       insights.push(...roundInsights);
       
     } catch (error) {
-      console.error('Fehler bei der Insight-Generierung:', error);
+      logError('Fehler bei der Insight-Generierung:', error);
     }
     
     return insights;
@@ -149,7 +150,7 @@ class IntelligentStatisticsService {
       };
       
     } catch (error) {
-      console.error('Fehler beim Laden der Liga-Daten:', error);
+      logError('Fehler beim Laden der Liga-Daten:', error);
       return null;
     }
   }
@@ -291,7 +292,7 @@ class IntelligentStatisticsService {
       }
       
     } catch (error) {
-      console.error('Fehler bei der Durchgangs-Analyse:', error);
+      logError('Fehler bei der Durchgangs-Analyse:', error);
     }
     
     return insights;

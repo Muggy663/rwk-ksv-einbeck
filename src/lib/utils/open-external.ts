@@ -1,4 +1,5 @@
 import { isMobileDevice } from './is-mobile';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 // Erweitere Window-Interface für Capacitor
 declare global {
@@ -74,12 +75,12 @@ export async function openWithAppChooser(url: string): Promise<void> {
 
     window.open(url, '_blank');
   } catch (error) {
-    console.error('Fehler beim Öffnen der URL:', error);
+    logError('Fehler beim Öffnen der URL:', error);
     // Letzter Fallback
     try {
       window.open(url, '_blank');
     } catch (finalError) {
-      console.error('Finaler Fehler beim Öffnen der URL:', finalError);
+      logError('Finaler Fehler beim Öffnen der URL:', finalError);
     }
   }
 }

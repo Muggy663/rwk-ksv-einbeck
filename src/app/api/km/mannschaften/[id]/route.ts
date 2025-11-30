@@ -1,5 +1,6 @@
 // src/app/api/km/mannschaften/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { doc, updateDoc } from 'firebase/firestore';
 
@@ -30,7 +31,7 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error('Fehler beim Aktualisieren der Mannschaft:', error);
+    logError('Fehler beim Aktualisieren der Mannschaft:', error);
     return NextResponse.json({
       success: false,
       error: `Fehler: ${error.message}`

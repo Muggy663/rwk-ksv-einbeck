@@ -96,7 +96,7 @@ export class PdfGenerator {
         25
       );
     } catch (error) {
-      console.error('Fehler beim Hinzufügen des Logos:', error);
+      logError('Fehler beim Hinzufügen des Logos:', error);
       // Fehler beim Hinzufügen des Logos ignorieren
     }
 
@@ -211,7 +211,7 @@ export class PdfGenerator {
         }
       });
     } catch (error) {
-      console.error('Fehler beim Erstellen der Tabelle:', error);
+      logError('Fehler beim Erstellen der Tabelle:', error);
       // Fallback: Einfache Tabelle ohne Formatierung
       this.doc.setFontSize(10);
       this.doc.setFont('helvetica', 'normal');
@@ -309,7 +309,7 @@ export class PdfGenerator {
       // Fußzeile hinzufügen
       this.addFooter();
     } catch (error) {
-      console.error('Fehler beim Generieren der Ligaergebnisse:', error);
+      logError('Fehler beim Generieren der Ligaergebnisse:', error);
       // Fallback: Einfache Fehlermeldung
       this.doc.setFontSize(14);
       this.doc.setFont('helvetica', 'bold');
@@ -404,7 +404,7 @@ export class PdfGenerator {
       // Fußzeile hinzufügen
       this.addFooter();
     } catch (error) {
-      console.error('Fehler beim Generieren der Einzelschützenergebnisse:', error);
+      logError('Fehler beim Generieren der Einzelschützenergebnisse:', error);
       // Fallback: Einfache Fehlermeldung
       this.doc.setFontSize(14);
       this.doc.setFont('helvetica', 'bold');
@@ -487,7 +487,7 @@ export class PdfGenerator {
         this.doc.text(data.signature, this.pageWidth / 2, this.pageHeight - margin - 20, { align: 'center' });
       }
     } catch (error) {
-      console.error('Fehler beim Generieren der Urkunde:', error);
+      logError('Fehler beim Generieren der Urkunde:', error);
       // Fallback: Einfache Fehlermeldung
       this.doc.setFontSize(14);
       this.doc.setFont('helvetica', 'bold');
@@ -507,7 +507,7 @@ export class PdfGenerator {
         return this.doc.output('blob');
       }
     } catch (error) {
-      console.error('Fehler beim Speichern des PDFs:', error);
+      logError('Fehler beim Speichern des PDFs:', error);
       // Fallback: Leeres Blob zurückgeben
       return new Blob(['Fehler beim Generieren des PDFs'], { type: 'text/plain' });
     }
@@ -525,7 +525,7 @@ export class PdfGenerator {
         newWindow.location.href = pdfUrl;
       }
     } catch (error) {
-      console.error('Fehler beim Öffnen des PDFs:', error);
+      logError('Fehler beim Öffnen des PDFs:', error);
       alert('Fehler beim Öffnen des PDFs. Bitte versuchen Sie es erneut.');
     }
   }

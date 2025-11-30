@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
 import { SkeletonTable } from './skeleton';
 import { Button } from './button';

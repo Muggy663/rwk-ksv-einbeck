@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +38,7 @@ export function PasswordChangePrompt() {
       //   setOpen(true);
       // }
     } catch (error) {
-      console.error('Fehler beim Zugriff auf localStorage:', error);
+      logError('Fehler beim Zugriff auf localStorage:', error);
     }
   }, [user]);
 
@@ -87,7 +88,7 @@ export function PasswordChangePrompt() {
       try {
         localStorage.setItem(`${PASSWORD_CHANGED_KEY_PREFIX}${user.uid}`, 'true');
       } catch (storageError) {
-        console.error('Fehler beim Speichern in localStorage:', storageError);
+        logError('Fehler beim Speichern in localStorage:', storageError);
         // Trotzdem fortfahren, da das Passwort erfolgreich geändert wurde
       }
       
@@ -105,7 +106,7 @@ export function PasswordChangePrompt() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (error: any) {
-      console.error('Fehler beim Ändern des Passworts:', error);
+      logError('Fehler beim Ändern des Passworts:', error);
       
       if (error.code === 'auth/wrong-password') {
         setError('Das aktuelle Passwort ist nicht korrekt.');

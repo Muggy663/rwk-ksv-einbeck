@@ -1,4 +1,5 @@
 import { db, storage } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { TrainingResult } from '@/types/social-training';
@@ -24,9 +25,9 @@ export class SocialTrainingService {
       });
       
       // Falls groupId vorhanden, füge auch zu Gruppen-Ergebnissen hinzu
-      console.log('🔍 SocialTrainingService - groupId:', result.groupId);
+      logDebug('🔍 SocialTrainingService - groupId:', result.groupId);
       if (result.groupId) {
-        console.log('🔍 Speichere in Gruppe:', result.groupId);
+        logDebug('🔍 Speichere in Gruppe:', result.groupId);
         await addDoc(collection(db, 'training_groups', result.groupId, 'results'), {
           userId: result.userId,
           resultId: docRef.id,
@@ -37,15 +38,15 @@ export class SocialTrainingService {
           date: result.date,
           createdAt: new Date()
         });
-        console.log('✅ Ergebnis auch in Gruppe gespeichert:', result.groupId);
+        logDebug('✅ Ergebnis auch in Gruppe gespeichert:', result.groupId);
       } else {
-        console.log('⚠️ Keine groupId - nicht in Gruppe gespeichert');
+        logDebug('⚠️ Keine groupId - nicht in Gruppe gespeichert');
       }
 
-      console.log('✅ Social Training Ergebnis gespeichert:', docRef.id);
+      logDebug('✅ Social Training Ergebnis gespeichert:', docRef.id);
       return docRef.id;
     } catch (error) {
-      console.error('Fehler beim Speichern des Social Training Ergebnisses:', error);
+      logError('Fehler beim Speichern des Social Training Ergebnisses:', error);
       throw error;
     }
   }
@@ -64,7 +65,7 @@ export class SocialTrainingService {
         ...doc.data()
       } as TrainingResult));
     } catch (error) {
-      console.error('Fehler beim Laden der Ergebnisse:', error);
+      logError('Fehler beim Laden der Ergebnisse:', error);
       throw error;
     }
   }
@@ -82,7 +83,7 @@ export class SocialTrainingService {
         ...doc.data()
       }));
     } catch (error) {
-      console.error('Fehler beim Laden der Gruppen-Ergebnisse:', error);
+      logError('Fehler beim Laden der Gruppen-Ergebnisse:', error);
       throw error;
     }
   }
@@ -102,7 +103,7 @@ export class SocialTrainingService {
         ...docSnap.data()
       } as TrainingResult;
     } catch (error) {
-      console.error('Fehler beim Laden des Ergebnisses:', error);
+      logError('Fehler beim Laden des Ergebnisses:', error);
       return null;
     }
   }
@@ -123,7 +124,7 @@ export class SocialTrainingService {
       
       return await response.json();
     } catch (error) {
-      console.error('Fehler bei Gemini-Analyse:', error);
+      logError('Fehler bei Gemini-Analyse:', error);
       throw error;
     }
   }

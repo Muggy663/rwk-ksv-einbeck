@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -93,7 +94,7 @@ export default function HomePage() {
           });
           setUpdates(fetchedUpdates);
         } else {
-          console.error("Fehler beim Laden der Updates:", updatesResult.reason);
+          logError("Fehler beim Laden der Updates:", updatesResult.reason);
         }
         
         // Termine verarbeiten
@@ -120,18 +121,18 @@ export default function HomePage() {
           
           setUpcomingEvents(futureEvents);
         } else {
-          console.error("Fehler beim Laden der Termine:", eventsResult.reason);
+          logError("Fehler beim Laden der Termine:", eventsResult.reason);
         }
         
         // News verarbeiten
         if (newsResult.status === 'fulfilled') {
           setLatestNews(newsResult.value || []);
         } else {
-          console.error("Fehler beim Laden der News:", newsResult.reason);
+          logError("Fehler beim Laden der News:", newsResult.reason);
         }
         
       } catch (error) {
-        console.error('Fehler beim Laden der Startseiten-Daten:', error);
+        logError('Fehler beim Laden der Startseiten-Daten:', error);
       } finally {
         setLoadingUpdates(false);
         setIsLoadingEvents(false);

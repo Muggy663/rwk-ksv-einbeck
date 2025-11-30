@@ -1,5 +1,6 @@
 "use client";
 import { Button } from '@/components/ui/button';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -40,7 +41,7 @@ export function ClearCacheButton() {
       }, 1000);
 
     } catch (error) {
-      console.error('Fehler beim Cache leeren:', error);
+      logError('Fehler beim Cache leeren:', error);
       toast({
         title: 'Fehler',
         description: 'Cache konnte nicht geleert werden.',

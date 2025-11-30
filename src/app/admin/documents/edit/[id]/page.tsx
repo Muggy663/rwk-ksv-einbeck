@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DocumentForm } from '../../DocumentForm';
@@ -39,7 +40,7 @@ export default function EditDocumentPage({ params }: EditDocumentPageProps) {
           router.push('/admin/documents');
         }
       } catch (error) {
-        console.error('Fehler beim Laden des Dokuments:', error);
+        logError('Fehler beim Laden des Dokuments:', error);
         toast({
           title: 'Fehler',
           description: 'Das Dokument konnte nicht geladen werden.',
@@ -68,7 +69,7 @@ export default function EditDocumentPage({ params }: EditDocumentPageProps) {
         throw new Error('Aktualisierung fehlgeschlagen');
       }
     } catch (error) {
-      console.error('Fehler beim Aktualisieren des Dokuments:', error);
+      logError('Fehler beim Aktualisieren des Dokuments:', error);
       toast({
         title: 'Fehler',
         description: 'Das Dokument konnte nicht aktualisiert werden.',

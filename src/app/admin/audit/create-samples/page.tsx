@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, History } from 'lucide-react';
@@ -22,7 +23,7 @@ export default function CreateSampleAuditEntriesPage() {
         variant: 'default'
       });
     } catch (error) {
-      console.error('Fehler beim Erstellen der Beispiel-Audit-Einträge:', error);
+      logError('Fehler beim Erstellen der Beispiel-Audit-Einträge:', error);
       toast({
         title: 'Fehler',
         description: 'Die Beispiel-Audit-Einträge konnten nicht erstellt werden.',

@@ -1,6 +1,7 @@
 // src/components/auth/AuthProvider.tsx
 "use client";
 import { useEffect, useState, useCallback, useRef, ReactNode } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { onAuthStateChanged, signInWithEmail, signOutUser, updateUserPassword } from '@/lib/firebase/auth';
 import { AuthContext, FirebaseUser, UserPermission } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -145,11 +146,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setAppPermissionsError("Benutzer ist keinem gültigen Verein zugewiesen.");
           }
         } else {
-          console.warn("AuthProvider DEBUG: No permission document found for UID:", firebaseUser.uid);
+          logWarn("AuthProvider DEBUG: No permission document found for UID:", firebaseUser.uid);
           setAppPermissionsError("Keine Berechtigungen für diesen Benutzer in Firestore gefunden.");
         }
       } catch (err) {
-        console.error("AuthProvider DEBUG: Error fetching user permissions:", err);
+        logError("AuthProvider DEBUG: Error fetching user permissions:", err);
         setAppPermissionsError("Fehler beim Laden der Benutzerberechtigungen.");
       } finally {
         setLoadingAppPermissions(false);
@@ -230,7 +231,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       try {
         await signInWithEmail(user.email, currentPassword);
       } catch (signInErr: any) {
-        console.error("Fehler bei der Reauthentifizierung:", signInErr);
+        logError("Fehler bei der Reauthentifizierung:", signInErr);
         if (signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/wrong-password') {
           throw new Error("Das aktuelle Passwort ist nicht korrekt.");
         }

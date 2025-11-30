@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -133,7 +134,7 @@ export function TeamSeasonStats() {
         });
       }
     } catch (error) {
-      console.error("Fehler bei der Teamsuche:", error);
+      logError("Fehler bei der Teamsuche:", error);
       toast({
         title: "Fehler",
         description: "Bei der Suche ist ein Fehler aufgetreten.",
@@ -177,7 +178,7 @@ export function TeamSeasonStats() {
             allScores = [...allScores, ...scores];
           } catch (error) {
             // Collection existiert möglicherweise nicht - das ist ok
-            console.warn(`Collection ${disc} für Jahr ${year} nicht gefunden:`, error);
+            logWarn(`Collection ${disc} für Jahr ${year} nicht gefunden:`, error);
           }
         }
       }
@@ -292,7 +293,7 @@ export function TeamSeasonStats() {
       });
       
     } catch (error) {
-      console.error("Fehler beim Laden der Teamstatistik:", error);
+      logError("Fehler beim Laden der Teamstatistik:", error);
       toast({
         title: "Fehler",
         description: "Beim Laden der Statistik ist ein Fehler aufgetreten.",

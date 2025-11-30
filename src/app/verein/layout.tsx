@@ -1,6 +1,7 @@
 "use client";
 import React, { type ReactNode, createContext, useContext, useState, useEffect, useMemo } from 'react'; // Added useMemo
 import Link from 'next/link';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, AlertTriangle, ShieldAlert, UserCog, FileDown, CalendarDays, User, HelpCircle, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
@@ -73,7 +74,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
       await signOut();
       router.push('/');
     } catch (error) {
-      console.error("Logout error:", error);
+      logError("Logout error:", error);
     }
   };
 
@@ -264,7 +265,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
           localStorage.setItem('currentClubId', clubId);
         }
       } else {
-        console.warn('VereinLayout: clubId not in assignedClubIdArray:', clubId);
+        logWarn('VereinLayout: clubId not in assignedClubIdArray:', clubId);
       }
     },
     assignedClubIdArray: assignedClubIdArray,

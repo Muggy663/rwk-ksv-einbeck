@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Resend } from 'resend';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('❌ Webhook-Fehler:', error);
+    logError('❌ Webhook-Fehler:', error);
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
 }

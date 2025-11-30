@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +23,7 @@ export default function AppPage() {
         }
       })
       .catch(err => {
-        console.error('Fehler beim Laden des Download-Zählers:', err);
+        logError('Fehler beim Laden des Download-Zählers:', err);
         setDownloadCount(1);
       });
   }, []);
@@ -108,7 +109,7 @@ export default function AppPage() {
                onClick={() => {
                  // Zähler inkrementieren beim Download
                  fetch('/api/increment-download')
-                   .catch(err => console.error('Fehler beim Zählen des Downloads:', err));
+                   .catch(err => logError('Fehler beim Zählen des Downloads:', err));
                }}
              >
               <a href="https://github.com/Muggy663/rwk-einbeck/releases/download/v.0.9.4.1/RWK-Einbeck-v0.9.4.1-debug.apk" download>

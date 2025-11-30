@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -122,7 +123,7 @@ export function NewsForm({ article, onSuccess, onCancel }: NewsFormProps) {
 
       onSuccess?.();
     } catch (error) {
-      console.error('Fehler beim Speichern des News-Artikels:', error);
+      logError('Fehler beim Speichern des News-Artikels:', error);
       toast({
         title: 'Fehler',
         description: 'Der News-Artikel konnte nicht gespeichert werden.',

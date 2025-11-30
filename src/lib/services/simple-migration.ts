@@ -1,14 +1,15 @@
 // Einfache Migration ohne komplexe Logik
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, addDoc } from 'firebase/firestore';
 
 export async function simpleMigration() {
   try {
-    console.log('Starte einfache Migration...');
+    logDebug('Starte einfache Migration...');
     
     // Lade alle Shooter
     const shootersSnapshot = await getDocs(collection(db, 'shooters'));
-    console.log('Gefunden:', shootersSnapshot.docs.length, 'Shooter');
+    logDebug('Gefunden:', shootersSnapshot.docs.length, 'Shooter');
     
     let migrated = 0;
     
@@ -35,15 +36,15 @@ export async function simpleMigration() {
       migrated++;
       
       if (migrated % 10 === 0) {
-        console.log('Migriert:', migrated);
+        logDebug('Migriert:', migrated);
       }
     }
     
-    console.log('Migration abgeschlossen:', migrated, 'Mitglieder');
+    logDebug('Migration abgeschlossen:', migrated, 'Mitglieder');
     return migrated;
     
   } catch (error) {
-    console.error('Migration-Fehler:', error);
+    logError('Migration-Fehler:', error);
     throw error;
   }
 }

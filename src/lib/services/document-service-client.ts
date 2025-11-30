@@ -1,5 +1,6 @@
 // src/lib/services/document-service-client.ts
 import { Document, DocumentFormData } from './document-service';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 /**
  * Lädt alle Dokumente über die API
@@ -13,7 +14,7 @@ export async function getAllDocuments(): Promise<Document[]> {
     const data = await response.json();
     return data.documents;
   } catch (error) {
-    console.error('Fehler beim Laden der Dokumente:', error);
+    logError('Fehler beim Laden der Dokumente:', error);
     return [];
   }
 }
@@ -48,7 +49,7 @@ export async function getDocumentById(id: string): Promise<Document | null> {
     }
     return await response.json();
   } catch (error) {
-    console.error(`Fehler beim Laden des Dokuments mit ID ${id}:`, error);
+    logError(`Fehler beim Laden des Dokuments mit ID ${id}:`, error);
     return null;
   }
 }
@@ -72,7 +73,7 @@ export async function addDocument(document: DocumentFormData): Promise<Document 
     
     return await response.json();
   } catch (error) {
-    console.error('Fehler beim Hinzufügen des Dokuments:', error);
+    logError('Fehler beim Hinzufügen des Dokuments:', error);
     return null;
   }
 }
@@ -96,7 +97,7 @@ export async function updateDocument(id: string, document: Partial<DocumentFormD
     
     return await response.json();
   } catch (error) {
-    console.error(`Fehler beim Aktualisieren des Dokuments mit ID ${id}:`, error);
+    logError(`Fehler beim Aktualisieren des Dokuments mit ID ${id}:`, error);
     return null;
   }
 }
@@ -116,7 +117,7 @@ export async function deleteDocument(id: string): Promise<boolean> {
     
     return true;
   } catch (error) {
-    console.error(`Fehler beim Löschen des Dokuments mit ID ${id}:`, error);
+    logError(`Fehler beim Löschen des Dokuments mit ID ${id}:`, error);
     return false;
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
@@ -73,7 +74,7 @@ export function ClubProvider({ children }: ClubProviderProps) {
           }
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Verein-Daten:', error);
+        logError('Fehler beim Laden der Verein-Daten:', error);
       } finally {
         setIsLoading(false);
       }

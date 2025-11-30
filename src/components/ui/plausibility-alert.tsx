@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, AlertTriangle, Info, CheckCircle } from 'lucide-react';
 import type { PlausibilityWarning } from '@/lib/services/plausibility-service';

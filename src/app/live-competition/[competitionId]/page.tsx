@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ export default function CompetitionDetailPage() {
       const comp = await LiveCompetitionService.getCompetitionDetails(competitionId);
       setCompetition(comp);
     } catch (error) {
-      console.error('Error loading competition:', error);
+      logError('Error loading competition:', error);
     }
   };
 

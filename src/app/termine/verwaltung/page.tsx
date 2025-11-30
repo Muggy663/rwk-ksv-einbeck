@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2, CalendarPlus, ArrowLeft } from 'lucide-react';
@@ -41,7 +42,7 @@ export default function TermineVerwaltungPage() {
         const eventsData = await fetchEvents();
         setEvents(eventsData);
       } catch (error) {
-        console.error('Fehler beim Laden der Termine:', error);
+        logError('Fehler beim Laden der Termine:', error);
         toast({
           title: 'Fehler',
           description: 'Die Termine konnten nicht geladen werden.',
@@ -104,7 +105,7 @@ export default function TermineVerwaltungPage() {
         });
       }
     } catch (error) {
-      console.error('Fehler beim Löschen des Termins:', error);
+      logError('Fehler beim Löschen des Termins:', error);
       toast({
         title: 'Fehler',
         description: 'Der Termin konnte nicht gelöscht werden.',

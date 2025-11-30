@@ -1,4 +1,5 @@
 import packageJson from '../../package.json';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export const APP_VERSION = {
   web: packageJson.version,

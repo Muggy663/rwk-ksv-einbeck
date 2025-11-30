@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,6 +106,23 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
   const [userProfiles, setUserProfiles] = useState<{ [userId: string]: any }>({});
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [loadingCompetitions, setLoadingCompetitions] = useState(false);
+  
+  // Lade Benutzer-Profile für Mitglieder-Anzeige
+  useEffect(() => {
+    if (group?.members && group.members.length > 0) {
+      loadMemberProfiles();
+    }
+  }, [group?.members]);
+  
+  const loadMemberProfiles = async () => {
+    if (!group?.members) return;
+    try {
+      const profiles = await UserService.getUserProfiles(group.members);
+      setUserProfiles(profiles);
+    } catch (error) {
+      logError('Error loading member profiles:', error);
+    }
+  };
 
   useEffect(() => {
     loadGroup();
@@ -129,7 +147,7 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
       const groupData = await TrainingGroupsService.getGroupDetails(params.id);
       setGroup(groupData);
     } catch (error) {
-      console.error('Error loading group:', error);
+      logError('Error loading group:', error);
       toast({ 
         title: "Fehler", 
         description: "Gruppe konnte nicht geladen werden. Möglicherweise haben Sie keine Berechtigung.", 
@@ -153,7 +171,7 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
         setUserProfiles(profiles);
       }
     } catch (error) {
-      console.error('Error loading group results:', error);
+      logError('Error loading group results:', error);
     } finally {
       setLoadingResults(false);
     }
@@ -162,12 +180,12 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
   const loadCompetitions = async () => {
     setLoadingCompetitions(true);
     try {
-      console.log('Loading competitions for group:', params.id);
+      logDebug('Loading competitions for group:', params.id);
       const groupCompetitions = await CompetitionsService.getGroupCompetitions(params.id);
-      console.log('Loaded competitions:', groupCompetitions);
+      logDebug('Loaded competitions:', groupCompetitions);
       setCompetitions(groupCompetitions);
     } catch (error) {
-      console.error('Error loading competitions:', error);
+      logError('Error loading competitions:', error);
     } finally {
       setLoadingCompetitions(false);
     }
@@ -252,6 +270,65 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
                     <p className="font-medium">{group.settings?.publicResults ? 'Ja' : 'Nein'}</p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+            
+            {/* Mitglieder-Liste */}
+            <Card className="lg:col-span-3">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Mitglieder ({group.members?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {group.members && group.members.length > 0 ? (
+                  <div className="space-y-3">
+                    {group.members.map((memberId, index) => {
+                      const isCurrentUser = memberId === user?.uid;
+                      const isGroupAdmin = group.admins?.includes(memberId);
+                      const memberProfile = userProfiles[memberId];
+                      
+                      return (
+                        <div key={memberId} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-sm">
+                              {index + 1}
+                            </div>
+                            <div>
+                              <div className="font-medium flex items-center gap-2">
+                                {isCurrentUser ? (
+                                  <span>Sie ({user?.displayName || user?.email?.split('@')[0] || 'Unbekannt'})</span>
+                                ) : (
+                                  <span>
+                                    {memberProfile?.displayName || 
+                                     memberProfile?.email?.split('@')[0] || 
+                                     `Schütze ${memberId.slice(-4)}`}
+                                  </span>
+                                )}
+                                {isGroupAdmin && <Crown className="h-4 w-4 text-yellow-500" />}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {isCurrentUser ? 'Das sind Sie' : 
+                                 isGroupAdmin ? 'Administrator' : 'Mitglied'}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant={isGroupAdmin ? 'default' : 'secondary'}>
+                              {isGroupAdmin ? 'Admin' : 'Mitglied'}
+                            </Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="h-12 w-12 mx-auto mb-4" />
+                    <p>Noch keine Mitglieder in der Gruppe</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -553,12 +630,12 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
                         variant="outline"
                         onClick={async () => {
                           try {
-                            console.log('Joining competition:', competition.id, 'User:', user?.uid);
+                            logDebug('Joining competition:', competition.id, 'User:', user?.uid);
                             await CompetitionsService.joinCompetition(competition.id!, user!.uid);
                             toast({ title: "Beigetreten!", description: "Sie nehmen jetzt am Wettkampf teil." });
                             loadCompetitions();
                           } catch (error) {
-                            console.error('Join competition error:', error);
+                            logError('Join competition error:', error);
                             toast({ title: "Fehler", description: `Beitritt fehlgeschlagen: ${error.message}`, variant: "destructive" });
                           }
                         }}

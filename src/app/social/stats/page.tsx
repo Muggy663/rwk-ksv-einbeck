@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -36,7 +37,7 @@ export default function SocialStatsPage() {
       
       // Lade echte Social Training Ergebnisse
       const socialResults = await SocialTrainingService.getUserResults(user.uid);
-      console.log('📊 Loaded social results:', socialResults.length);
+      logDebug('📊 Loaded social results:', socialResults.length);
       
       // Berechne echte Statistiken
       const totalRings = socialResults.reduce((sum, r) => sum + r.rings, 0);
@@ -88,7 +89,7 @@ export default function SocialStatsPage() {
         ]
       });
     } catch (error) {
-      console.error('Fehler beim Laden der Statistiken:', error);
+      logError('Fehler beim Laden der Statistiken:', error);
       setStats({
         totalGroups: 0,
         totalMembers: 0,

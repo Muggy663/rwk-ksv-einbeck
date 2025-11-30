@@ -2,6 +2,7 @@
 // src/app/admin/shooters/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent, useCallback, useMemo } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, UserCircle as UserIcon, Loader2, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
@@ -157,7 +158,7 @@ export default function AdminShootersPage() {
       }
 
     } catch (error) {
-      console.error("ASP DEBUG: Error fetching initial page data:", error);
+      logError("ASP DEBUG: Error fetching initial page data:", error);
       toast({ title: "Fehler", description: "Basisdaten konnten nicht geladen werden.", variant: "destructive" });
     } finally {
       setIsLoading(false);
@@ -192,7 +193,7 @@ export default function AdminShootersPage() {
       setShootersOfActiveClub(fetchedShooters);
 
     } catch (error) {
-      console.error(`ASP DEBUG: Error fetching shooters for club ${selectedClubIdFilter}:`, error);
+      logError(`ASP DEBUG: Error fetching shooters for club ${selectedClubIdFilter}:`, error);
       toast({ title: "Fehler", description: "Schützendaten konnten nicht geladen werden.", variant: "destructive" });
     } finally {
       setIsLoadingClubSpecificData(false);
@@ -215,7 +216,7 @@ export default function AdminShootersPage() {
           setContextTeamName(null);
         }
       } catch (err) {
-        console.error("ASP DEBUG: Error fetching context team name:", err);
+        logError("ASP DEBUG: Error fetching context team name:", err);
         setContextTeamName(null);
       }
       setIsContextTeamNameLoading(false);
@@ -266,7 +267,7 @@ export default function AdminShootersPage() {
       }
 
     } catch (error) {
-      console.error("ASP DIALOG DEBUG: Error fetching teams for dialog:", error);
+      logError("ASP DIALOG DEBUG: Error fetching teams for dialog:", error);
       toast({ title: "Fehler", description: "Mannschaften für Dialog konnten nicht geladen werden.", variant: "destructive" });
     } finally {
       setIsLoadingTeamsForDialog(false);
@@ -340,7 +341,7 @@ export default function AdminShootersPage() {
       toast({ title: "Schütze gelöscht", description: `"${shooterToDelete.name}" wurde erfolgreich entfernt.` });
       fetchPageDataForActiveClub(); 
     } catch (error: any) {
-      console.error("ASP DELETE DEBUG: Error deleting shooter:", error);
+      logError("ASP DELETE DEBUG: Error deleting shooter:", error);
       toast({ title: "Fehler beim Löschen", description: error.message || "Der Schütze konnte nicht gelöscht werden.", variant: "destructive" });
     } finally {
       setIsDeleting(false); setIsAlertOpen(false); setShooterToDelete(null);
@@ -414,7 +415,7 @@ export default function AdminShootersPage() {
         };
         
         // Debug: Prüfe ob clubId gesetzt ist
-        console.log('DEBUG: Speichere Schütze mit clubId:', currentShooter.clubId);
+        logDebug('DEBUG: Speichere Schütze mit clubId:', currentShooter.clubId);
         
         // Nur birthYear hinzufügen wenn es einen Wert hat
         if (currentShooter.birthYear && !isNaN(parseInt(currentShooter.birthYear.toString()))) {
@@ -450,7 +451,7 @@ export default function AdminShootersPage() {
       setIsFormOpen(false); setCurrentShooter(null); setSelectedTeamIdsInForm([]);
       fetchPageDataForActiveClub();
     } catch (error: any) {
-      console.error("ASP SUBMIT DEBUG: Error saving shooter:", error);
+      logError("ASP SUBMIT DEBUG: Error saving shooter:", error);
       toast({ title: `Fehler beim Speichern`, description: error.message || "Unbekannter Fehler.", variant: "destructive" });
     } finally {
       setIsFormSubmitting(false);
@@ -1062,7 +1063,7 @@ export default function AdminShootersPage() {
                   setSelectedShootersForDelete([]);
                   fetchPageDataForActiveClub();
                 } catch (error: any) {
-                  console.error('Bulk delete error:', error);
+                  logError('Bulk delete error:', error);
                   toast({ 
                     title: "Fehler beim Löschen", 
                     description: error.message || "Die Schützen konnten nicht gelöscht werden.", 

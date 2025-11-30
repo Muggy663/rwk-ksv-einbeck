@@ -1,6 +1,7 @@
 // src/app/admin/league-settings/page.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,7 +58,7 @@ export default function LeagueSettingsPage() {
         setSelectedSeasonId(seasonsData[0].id);
       }
     } catch (error) {
-      console.error('Fehler beim Laden:', error);
+      logError('Fehler beim Laden:', error);
       toast({
         title: 'Fehler',
         description: 'Daten konnten nicht geladen werden.',
@@ -89,7 +90,7 @@ export default function LeagueSettingsPage() {
       
       setLeagues(leaguesData);
     } catch (error) {
-      console.error('Fehler beim Laden der Ligen:', error);
+      logError('Fehler beim Laden der Ligen:', error);
       toast({
         title: 'Fehler',
         description: 'Ligen konnten nicht geladen werden.',
@@ -168,7 +169,7 @@ export default function LeagueSettingsPage() {
         description: 'Alle Liga-Einstellungen wurden erfolgreich aktualisiert.'
       });
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
+      logError('Fehler beim Speichern:', error);
       toast({
         title: 'Fehler',
         description: 'Einstellungen konnten nicht gespeichert werden.',

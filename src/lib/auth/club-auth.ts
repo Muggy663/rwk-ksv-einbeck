@@ -1,5 +1,6 @@
 // src/lib/auth/club-auth.ts
 import { auth } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { getUserClubId } from '@/lib/utils/club-utils';
 
 /**
@@ -15,7 +16,7 @@ export async function validateClubAccess(clubId: string): Promise<boolean> {
     const userClubId = await getUserClubId(currentUser.uid);
     return userClubId === clubId;
   } catch (error) {
-    console.error('Fehler bei Club-Berechtigung:', error);
+    logError('Fehler bei Club-Berechtigung:', error);
     return false;
   }
 }
@@ -32,7 +33,7 @@ export async function getCurrentUserClubId(): Promise<string | null> {
 
     return await getUserClubId(currentUser.uid);
   } catch (error) {
-    console.error('Fehler beim Laden der Club-ID:', error);
+    logError('Fehler beim Laden der Club-ID:', error);
     return null;
   }
 }
@@ -54,7 +55,7 @@ export async function hasClubAdminAccess(clubId: string): Promise<boolean> {
 
     return true; // Temporär alle mit Club-Zugriff als Admin
   } catch (error) {
-    console.error('Fehler bei Admin-Berechtigung:', error);
+    logError('Fehler bei Admin-Berechtigung:', error);
     return false;
   }
 }

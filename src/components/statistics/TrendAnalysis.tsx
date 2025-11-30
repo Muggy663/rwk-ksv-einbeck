@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Loader2 } from 'lucide-react';
 import { fetchTopShootersWithTrend } from '@/lib/services/enhanced-statistics-service';
 import { TrendAnalysisCard } from '@/components/statistics/advanced/TrendAnalysisCard';
@@ -35,7 +36,7 @@ export function TrendAnalysis({ seasonId, leagueId, clubId }: TrendAnalysisProps
         
         setShooters(shootersData);
       } catch (error) {
-        console.error('Fehler beim Laden der Schützentrends:', error);
+        logError('Fehler beim Laden der Schützentrends:', error);
         setError('Fehler beim Laden der Daten');
       } finally {
         setIsLoading(false);

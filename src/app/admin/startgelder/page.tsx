@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -56,7 +57,7 @@ export default function StartgelderPage() {
           setSelectedSeasonId(currentSeason.id);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Saisons:', error);
+        logError('Fehler beim Laden der Saisons:', error);
         toast({
           title: 'Fehler',
           description: 'Saisons konnten nicht geladen werden.',
@@ -155,7 +156,7 @@ export default function StartgelderPage() {
       });
 
     } catch (error) {
-      console.error('Fehler bei der Berechnung:', error);
+      logError('Fehler bei der Berechnung:', error);
       toast({
         title: 'Fehler',
         description: 'Startgelder konnten nicht berechnet werden.',
@@ -234,7 +235,7 @@ export default function StartgelderPage() {
       });
       
     } catch (error) {
-      console.error('Fehler beim PDF-Export:', error);
+      logError('Fehler beim PDF-Export:', error);
       toast({
         title: 'Fehler',
         description: 'PDF konnte nicht erstellt werden.',

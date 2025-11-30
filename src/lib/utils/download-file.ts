@@ -1,4 +1,5 @@
 import { isMobileDevice } from './is-mobile';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 /**
  * Lädt eine Datei herunter und funktioniert auch auf mobilen Geräten
@@ -19,7 +20,7 @@ export async function downloadFile(url: string, filename: string): Promise<void>
       document.body.removeChild(link);
     }
   } catch (error) {
-    console.error('Fehler beim Herunterladen der Datei:', error);
+    logError('Fehler beim Herunterladen der Datei:', error);
     // Fallback: Im Browser öffnen
     window.open(url, '_blank');
   }

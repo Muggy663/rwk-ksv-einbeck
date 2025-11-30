@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -53,7 +54,7 @@ export function InviteToGroupDialog({ targetUserId, targetUserName, children }: 
       
       setGroups(adminGroups);
     } catch (error) {
-      console.error('Fehler beim Laden der Gruppen:', error);
+      logError('Fehler beim Laden der Gruppen:', error);
     } finally {
       setLoading(false);
     }
@@ -80,7 +81,7 @@ export function InviteToGroupDialog({ targetUserId, targetUserName, children }: 
       
       alert(`Einladung an ${targetUserName} gesendet!`);
     } catch (error) {
-      console.error('Fehler beim Senden der Einladung:', error);
+      logError('Fehler beim Senden der Einladung:', error);
       alert('Fehler beim Senden der Einladung');
     } finally {
       setInviting(null);

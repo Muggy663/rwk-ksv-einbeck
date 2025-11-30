@@ -1,5 +1,6 @@
 // src/app/api/clubs/[clubId]/mitglieder/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -18,7 +19,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: mitglieder });
   } catch (error) {
-    console.error('Fehler beim Laden der Mitglieder:', error);
+    logError('Fehler beim Laden der Mitglieder:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
@@ -40,7 +41,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, id: docRef.id });
   } catch (error) {
-    console.error('Fehler beim Erstellen des Mitglieds:', error);
+    logError('Fehler beim Erstellen des Mitglieds:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

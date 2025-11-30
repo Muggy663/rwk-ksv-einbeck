@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, RotateCcw, Settings } from 'lucide-react';

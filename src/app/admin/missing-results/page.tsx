@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -41,7 +42,7 @@ export default function MissingResultsPage() {
         }));
         setSeasons(seasonsData);
       } catch (error) {
-        console.error('Fehler beim Laden der Saisons:', error);
+        logError('Fehler beim Laden der Saisons:', error);
         toast({
           title: 'Fehler',
           description: 'Saisons konnten nicht geladen werden.',
@@ -74,7 +75,7 @@ export default function MissingResultsPage() {
         }));
         setLeagues(leaguesData);
       } catch (error) {
-        console.error('Fehler beim Laden der Ligen:', error);
+        logError('Fehler beim Laden der Ligen:', error);
         toast({
           title: 'Fehler',
           description: 'Ligen konnten nicht geladen werden.',
@@ -119,7 +120,7 @@ export default function MissingResultsPage() {
             selectedLeagueData.type
           );
           
-          console.log(`🔍 Missing Results: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
+          logDebug(`🔍 Missing Results: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
           
           scoresQuery = query(
             collection(db, seasonSpecificCollection),
@@ -129,7 +130,7 @@ export default function MissingResultsPage() {
           throw new Error('Liga-Daten nicht gefunden');
         }
       } catch (error) {
-        console.log(`⚠️ Missing Results: Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
+        logDebug(`⚠️ Missing Results: Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
         scoresQuery = query(
           collection(db, 'rwk_scores'),
           where('leagueId', '==', selectedLeague)
@@ -162,7 +163,7 @@ export default function MissingResultsPage() {
       // Analysiere fehlende Ergebnisse
       analyzeResults(teamsData, scoresData, shootersMap);
     } catch (error) {
-      console.error('Fehler beim Laden der Teams und Scores:', error);
+      logError('Fehler beim Laden der Teams und Scores:', error);
       toast({
         title: 'Fehler',
         description: 'Teams und Ergebnisse konnten nicht geladen werden.',

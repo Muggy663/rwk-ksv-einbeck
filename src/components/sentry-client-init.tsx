@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export function SentryClientInit() {
   useEffect(() => {

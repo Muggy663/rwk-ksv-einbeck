@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 
 export interface DatabaseAuditResult {
@@ -87,7 +88,7 @@ export async function auditDatabase(clubId?: string): Promise<DatabaseAuditResul
     }
     
   } catch (error) {
-    console.error('Error during database audit:', error);
+    logError('Error during database audit:', error);
     throw error;
   }
   

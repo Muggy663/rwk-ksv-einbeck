@@ -1,4 +1,5 @@
 import { doc, getDoc } from 'firebase/firestore';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase';
 
 export interface UserProfile {
@@ -21,7 +22,7 @@ export class UserService {
       }
       return null;
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      logError('Error loading user profile:', error);
       return null;
     }
   }

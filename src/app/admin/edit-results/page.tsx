@@ -1,6 +1,7 @@
 // src/app/admin/edit-results/page.tsx
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -85,7 +86,7 @@ export default function AdminEditResultsPage() {
       const seasonsSnapshot = await getDocs(seasonsQuery);
       setAllSeasons(seasonsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Season)));
     } catch (error) {
-      console.error("Error fetching seasons for edit-results page:", error); 
+      logError("Error fetching seasons for edit-results page:", error); 
       toast({
         title: "Fehler beim Laden der Saisons",
         description: (error as Error).message || "Ein unbekannter Fehler ist aufgetreten. Bitte prüfen Sie die Browser-Konsole für Details und erstellen Sie ggf. den vorgeschlagenen Firestore-Index.",
@@ -118,7 +119,7 @@ export default function AdminEditResultsPage() {
         const snapshot = await getDocs(q);
         setAvailableLeagues(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as League)));
       } catch (error) {
-        console.error("Error fetching leagues for edit-results:", error);
+        logError("Error fetching leagues for edit-results:", error);
         toast({ title: "Fehler beim Laden der Ligen", description: (error as Error).message, variant: "destructive" });
         setAvailableLeagues([]);
       } finally {
@@ -166,7 +167,7 @@ export default function AdminEditResultsPage() {
         const snapshot = await getDocs(q);
         setAvailableTeams(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team)));
       } catch (error) {
-        console.error("Error fetching teams for edit-results:", error);
+        logError("Error fetching teams for edit-results:", error);
         toast({ title: "Fehler beim Laden der Mannschaften", description: (error as Error).message, variant: "destructive" });
         setAvailableTeams([]);
       } finally {
@@ -212,7 +213,7 @@ export default function AdminEditResultsPage() {
         }
 
       } catch (error) {
-        console.error("Error fetching shooters for edit-results:", error);
+        logError("Error fetching shooters for edit-results:", error);
         toast({ title: "Fehler beim Laden der Schützen", description: (error as Error).message, variant: "destructive" });
         setAvailableShooters([]);
       } finally {
@@ -260,11 +261,11 @@ export default function AdminEditResultsPage() {
           getSeasonSpecificScoresCollection(seasonData.competitionYear, leagueData.type) :
           SCORES_COLLECTION;
         
-        console.log(`🔍 Admin: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
+        logDebug(`🔍 Admin: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
         
         scoresQuery = query(collection(db, seasonSpecificCollection), ...qConstraints, orderBy("entryTimestamp", "desc"));
       } catch (error) {
-        console.log(`⚠️ Admin: Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
+        logDebug(`⚠️ Admin: Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
         scoresQuery = query(collection(db, SCORES_COLLECTION), ...qConstraints, orderBy("entryTimestamp", "desc"));
       }
 
@@ -275,7 +276,8 @@ export default function AdminEditResultsPage() {
         toast({ title: "Keine Ergebnisse", description: "Für die gewählten Filter wurden keine Ergebnisse gefunden." });
       }
     } catch (error) {
-      console.error("Error searching scores for edit-results:", error);
+      console.error("Raw error:", error);
+      logError("Error searching scores for edit-results:", error);
       toast({ title: "Fehler bei der Ergebnissuche", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoading(false);
@@ -334,10 +336,10 @@ export default function AdminEditResultsPage() {
         if (leagueData && seasonData) {
           const seasonSpecificCollection = getSeasonSpecificScoresCollection(seasonData.competitionYear, leagueData.type);
           collectionName = seasonSpecificCollection;
-          console.log(`🔍 Admin Update: Verwende ${collectionName}`);
+          logDebug(`🔍 Admin Update: Verwende ${collectionName}`);
         }
       } catch (error) {
-        console.log(`⚠️ Admin Update: Verwende Standard-Collection`);
+        logDebug(`⚠️ Admin Update: Verwende Standard-Collection`);
       }
       
       const scoreDocRef = doc(db, collectionName, currentScoreToEdit.id);
@@ -354,7 +356,7 @@ export default function AdminEditResultsPage() {
       setCurrentScoreToEdit(null);
       await handleSearchScores(); 
     } catch (error) {
-      console.error("Error submitting score edit:", error);
+      logError("Error submitting score edit:", error);
       toast({ title: "Fehler beim Aktualisieren", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsSubmittingEdit(false);
@@ -384,17 +386,17 @@ export default function AdminEditResultsPage() {
         if (leagueData && seasonData) {
           const seasonSpecificCollection = getSeasonSpecificScoresCollection(seasonData.competitionYear, leagueData.type);
           collectionName = seasonSpecificCollection;
-          console.log(`🔍 Admin Delete: Verwende ${collectionName}`);
+          logDebug(`🔍 Admin Delete: Verwende ${collectionName}`);
         }
       } catch (error) {
-        console.log(`⚠️ Admin Delete: Verwende Standard-Collection`);
+        logDebug(`⚠️ Admin Delete: Verwende Standard-Collection`);
       }
       
       await deleteDoc(doc(db, collectionName, scoreToDelete.id));
       toast({ title: "Ergebnis gelöscht", description: `Das Ergebnis für ${scoreToDelete.shooterName} (DG ${scoreToDelete.durchgang}) wurde entfernt.` });
       await handleSearchScores(); // Refresh list
     } catch (error) {
-      console.error("Error deleting score:", error);
+      logError("Error deleting score:", error);
       toast({ title: "Fehler beim Löschen", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsDeletingScore(false);

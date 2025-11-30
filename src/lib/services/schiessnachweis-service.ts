@@ -1,4 +1,5 @@
 import { SchießEintrag, SchießStatistik } from '@/types/schiessnachweis';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 // Cache für bessere Performance
 let cachedEinträge: SchießEintrag[] | null = null;
@@ -28,7 +29,7 @@ export class SchießnachweisService {
       const { auth, db } = await import('@/lib/firebase/config');
       
       if (!auth.currentUser) {
-        console.log('⚠️ Benutzer nicht angemeldet - keine Daten verfügbar');
+        logDebug('⚠️ Benutzer nicht angemeldet - keine Daten verfügbar');
         isLoading = false;
         return [];
       }
@@ -38,7 +39,7 @@ export class SchießnachweisService {
       const docSnap = await getDoc(docRef);
       
       if (!docSnap.exists()) {
-        console.log('📝 Keine Schießnachweis-Daten für User:', auth.currentUser.uid);
+        logDebug('📝 Keine Schießnachweis-Daten für User:', auth.currentUser.uid);
         isLoading = false;
         return [];
       }
@@ -87,10 +88,10 @@ export class SchießnachweisService {
       lastCacheTime = now;
       isLoading = false;
       
-      console.log(`✅ ${einträge.length} Einträge aus Datenbank geladen`);
+      logDebug(`✅ ${einträge.length} Einträge aus Datenbank geladen`);
       return einträge;
     } catch (error) {
-      console.error('Fehler beim Laden der Einträge aus Datenbank:', error);
+      logError('Fehler beim Laden der Einträge aus Datenbank:', error);
       isLoading = false;
       return [];
     }
@@ -171,9 +172,9 @@ export class SchießnachweisService {
       };
       
       await setDoc(doc(db, 'schiessnachweis_data', auth.currentUser.uid), cloudData);
-      console.log(`💾 ${einträge.length} Einträge in Datenbank gespeichert`);
+      logDebug(`💾 ${einträge.length} Einträge in Datenbank gespeichert`);
     } catch (error) {
-      console.error('Speichern in Datenbank fehlgeschlagen:', error);
+      logError('Speichern in Datenbank fehlgeschlagen:', error);
       throw error;
     }
   }
@@ -202,7 +203,7 @@ export class SchießnachweisService {
         store.put({ key: 'schiessnachweis', data: einträge, timestamp: Date.now() });
       };
     } catch (error) {
-      console.warn('IndexedDB Speicherung fehlgeschlagen:', error);
+      logWarn('IndexedDB Speicherung fehlgeschlagen:', error);
     }
   }
   

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,7 +67,7 @@ export function ProtestForm({ onSuccess, onCancel }: ProtestFormProps) {
         setSelectedSeason(currentSeason?.id || seasonsData[0].id);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Saisons:', error);
+      logError('Fehler beim Laden der Saisons:', error);
     }
   };
 
@@ -75,7 +76,7 @@ export function ProtestForm({ onSuccess, onCancel }: ProtestFormProps) {
       const leaguesData = await fetchLeagues(selectedSeason);
       setLeagues(leaguesData || []);
     } catch (error) {
-      console.error('Fehler beim Laden der Ligen:', error);
+      logError('Fehler beim Laden der Ligen:', error);
     }
   };
 
@@ -142,7 +143,7 @@ export function ProtestForm({ onSuccess, onCancel }: ProtestFormProps) {
 
       onSuccess?.();
     } catch (error) {
-      console.error('Fehler beim Einreichen des Protests:', error);
+      logError('Fehler beim Einreichen des Protests:', error);
       toast({
         title: 'Fehler',
         description: 'Der Protest konnte nicht eingereicht werden.',

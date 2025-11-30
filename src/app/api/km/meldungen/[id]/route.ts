@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
 export async function PATCH(
@@ -17,7 +18,7 @@ export async function PATCH(
         aktivesJahr = jahreSnapshot.docs[0].data().jahr;
       }
     } catch (e) {
-      console.warn('Fallback auf Jahr 2026');
+      logWarn('Fallback auf Jahr 2026');
     }
 
     // Finde das Dokument in den Collections
@@ -59,7 +60,7 @@ export async function PATCH(
     });
 
   } catch (error) {
-    console.error('Fehler beim Aktualisieren:', error);
+    logError('Fehler beim Aktualisieren:', error);
     return NextResponse.json({
       success: false,
       error: 'Update fehlgeschlagen'
@@ -80,7 +81,7 @@ export async function DELETE(
         aktivesJahr = jahreSnapshot.docs[0].data().jahr;
       }
     } catch (e) {
-      console.warn('Fallback auf Jahr 2026');
+      logWarn('Fallback auf Jahr 2026');
     }
 
     // Finde und lösche das Dokument
@@ -115,7 +116,7 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error('Fehler beim Löschen:', error);
+    logError('Fehler beim Löschen:', error);
     return NextResponse.json({
       success: false,
       error: 'Löschen fehlgeschlagen'

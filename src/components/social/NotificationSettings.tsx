@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -66,11 +67,11 @@ export function NotificationSettings() {
         
         if (notificationSettings) {
           setPreferences(notificationSettings);
-          console.log('📥 Loaded notification settings:', notificationSettings);
+          logDebug('📥 Loaded notification settings:', notificationSettings);
         }
       }
     } catch (error) {
-      console.error('Error loading notification settings:', error);
+      logError('Error loading notification settings:', error);
     }
   };
   
@@ -79,7 +80,7 @@ export function NotificationSettings() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      console.log('🔔 Saving notification settings:', preferences);
+      logDebug('🔔 Saving notification settings:', preferences);
       
       const { useAuth } = await import('@/hooks/use-auth');
       const { SocialService } = await import('@/lib/services/social-service');
@@ -98,14 +99,14 @@ export function NotificationSettings() {
         updatedAt: new Date()
       });
       
-      console.log('✅ Notification settings saved');
+      logDebug('✅ Notification settings saved');
       
       toast({
         title: "Einstellungen gespeichert",
         description: "Ihre Benachrichtigungs-Einstellungen wurden aktualisiert.",
       });
     } catch (error: any) {
-      console.error('❌ Notification save error:', error);
+      logError('❌ Notification save error:', error);
       toast({
         title: "Fehler",
         description: error.message || "Einstellungen konnten nicht gespeichert werden.",

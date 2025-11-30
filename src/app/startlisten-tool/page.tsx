@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -123,10 +124,10 @@ export default function StartlistenToolPage() {
           allMeldungen = meldungenData.data || [];
         }
         
-        console.log('Alle KM-Meldungen:', allMeldungen.length);
+        logDebug('Alle KM-Meldungen:', allMeldungen.length);
         const meldungenData = allMeldungen
           .filter(data => {
-            console.log('Meldung:', data.id, 'SchuetzeId:', data.schuetzeId, 'DisziplinId:', data.disziplinId);
+            logDebug('Meldung:', data.id, 'SchuetzeId:', data.schuetzeId, 'DisziplinId:', data.disziplinId);
             return data.schuetzeId && data.disziplinId;
           })
           .map(data => {
@@ -175,24 +176,24 @@ export default function StartlistenToolPage() {
           })
           .filter(Boolean);
         
-        console.log('Config Disziplinen:', configData.disziplinen);
-        console.log('Alle Meldungen Disziplinen:', meldungenData.map(m => m.disziplin));
+        logDebug('Config Disziplinen:', configData.disziplinen);
+        logDebug('Alle Meldungen Disziplinen:', meldungenData.map(m => m.disziplin));
         
         const gefilterteMeldungen = meldungenData.filter(m => {
           const passt = configData.disziplinen.includes(m.disziplin);
-          console.log('Meldung', m.name, 'Disziplin:', m.disziplin, 'Passt:', passt);
+          logDebug('Meldung', m.name, 'Disziplin:', m.disziplin, 'Passt:', passt);
           return passt;
         });
         
-        console.log('Gefilterte Meldungen:', gefilterteMeldungen.length, 'von', meldungenData.length);
-        console.log('Fehlende Meldungen:', meldungenData.filter(m => !configData.disziplinen.includes(m.disziplin)).map(m => `${m.name} - ${m.disziplin}`));
+        logDebug('Gefilterte Meldungen:', gefilterteMeldungen.length, 'von', meldungenData.length);
+        logDebug('Fehlende Meldungen:', meldungenData.filter(m => !configData.disziplinen.includes(m.disziplin)).map(m => `${m.name} - ${m.disziplin}`));
         
         // Verwende ALLE Meldungen wenn Diskrepanz zwischen Anzeige und Startliste
         if (Math.abs(gefilterteMeldungen.length - meldungenData.length) <= 2) {
-          console.log('Kleine Diskrepanz - verwende alle Meldungen');
+          logDebug('Kleine Diskrepanz - verwende alle Meldungen');
           setMeldungen(meldungenData);
         } else if (gefilterteMeldungen.length === 0 && meldungenData.length > 0) {
-          console.log('Fallback: Nehme alle Meldungen da Filter leer');
+          logDebug('Fallback: Nehme alle Meldungen da Filter leer');
           setMeldungen(meldungenData);
         } else {
           setMeldungen(gefilterteMeldungen);
@@ -223,7 +224,7 @@ export default function StartlistenToolPage() {
         } else {
           // Automatische Startlisten-Generierung nur wenn Meldungen vorhanden
           if (meldungenData.length > 0) {
-            console.log('Generiere Startliste für', meldungenData.length, 'Meldungen');
+            logDebug('Generiere Startliste für', meldungenData.length, 'Meldungen');
             const basisStartliste = await generiereStartliste();
             const optimierteStartliste = optimizeStartlist(basisStartliste, configData);
             setStartliste(optimierteStartliste);
@@ -232,11 +233,11 @@ export default function StartlistenToolPage() {
             const analyse = analyzeStartlist(meldungenData, optimierteStartliste, configData);
             setKiAnalyse(analyse);
           } else {
-            console.log('Keine Meldungen gefunden - keine Startliste generiert');
+            logDebug('Keine Meldungen gefunden - keine Startliste generiert');
           }
         }
       } catch (error) {
-        console.error('Fehler:', error);
+        logError('Fehler:', error);
       } finally {
         setLoading(false);
       }
@@ -429,7 +430,7 @@ export default function StartlistenToolPage() {
         const newMinutes = totalMinutes % 60;
         const startzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
         
-        console.log(`Durchgang ${durchgang}: Startzeit ${config.startUhrzeit} -> ${startzeit} (${totalMinutes} Min total)`);
+        logDebug(`Durchgang ${durchgang}: Startzeit ${config.startUhrzeit} -> ${startzeit} (${totalMinutes} Min total)`);
         
         mannschaftStarter.forEach((s, index) => {
           // Finde nächsten freien Stand
@@ -618,8 +619,8 @@ export default function StartlistenToolPage() {
         gewehrSharing: m.anmerkung?.toLowerCase().includes('gewehr') || false
       }));
       
-      console.log('Sende an Gemini:', geminiMeldungen.length, 'Meldungen');
-      console.log('Gemini Config:', {
+      logDebug('Sende an Gemini:', geminiMeldungen.length, 'Meldungen');
+      logDebug('Gemini Config:', {
         startUhrzeit: config?.startUhrzeit,
         durchgangsDauer: config?.durchgangsDauer,
         wechselzeit: config?.wechselzeit,
@@ -802,7 +803,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
       const urlParams = new URLSearchParams(window.location.search);
       const startlisteId = urlParams.get('startlisteId');
       
-      console.log('Speichere Startliste:', { startlisteId, configId, starterAnzahl: startliste.length });
+      logDebug('Speichere Startliste:', { startlisteId, configId, starterAnzahl: startliste.length });
       
       const response = await fetch('/api/km/startlisten', {
         method: startlisteId ? 'PUT' : 'POST',
@@ -815,11 +816,11 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         })
       });
       
-      console.log('Response Status:', response.status);
+      logDebug('Response Status:', response.status);
       
       if (response.ok) {
         const result = await response.json();
-        console.log('Speichern erfolgreich:', result);
+        logDebug('Speichern erfolgreich:', result);
         
         // Sofortige Rückmeldung
         alert(`✅ Startliste gespeichert! (${startliste.length} Starter)`);
@@ -831,11 +832,11 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         });
       } else {
         const errorText = await response.text();
-        console.error('API Fehler Response:', errorText);
+        logError('API Fehler Response:', errorText);
         throw new Error(`API Fehler: ${response.status}`);
       }
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
+      logError('Fehler beim Speichern:', error);
       toast({ title: 'Fehler', description: 'Startliste konnte nicht gespeichert werden.', variant: 'destructive' });
     }
   };
@@ -865,7 +866,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
       try {
         meytonKlassenSnapshot = await getDocs(collection(db, 'meyton_klassen'));
       } catch (error) {
-        console.warn('Meyton-Klassen Collection nicht gefunden, verwende Fallback-Mapping');
+        logWarn('Meyton-Klassen Collection nicht gefunden, verwende Fallback-Mapping');
         meytonKlassenSnapshot = { docs: [] };
       }
       
@@ -973,7 +974,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         const klassenId = meytonKlasse?.id || 10; // Fallback auf Herren I
         
         // Debug-Ausgabe
-        console.log(`Starter: ${entry.nachname}, Altersklasse: ${entry.wettkampfklasse}, Klassen-ID: ${klassenId}`);
+        logDebug(`Starter: ${entry.nachname}, Altersklasse: ${entry.wettkampfklasse}, Klassen-ID: ${klassenId}`);
         
         const individualWettkampfId = `W111_K${klassenId}_${year}${month}${day}_${entry.startzeit?.replace(':', '') || config.startUhrzeit.replace(':', '')}`;
         
@@ -1052,7 +1053,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         duration: 4000
       });
     } catch (error) {
-      console.error('Meyton-Export Fehler:', error);
+      logError('Meyton-Export Fehler:', error);
       toast({ title: 'Fehler', description: 'Meyton-Export fehlgeschlagen.', variant: 'destructive' });
     }
   };
@@ -1106,7 +1107,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         });
         doc.addImage(logoImg, 'PNG', pageWidth / 2 - 25, 70, 50, 50);
       } catch (error) {
-        console.warn('Logo konnte nicht geladen werden:', error);
+        logWarn('Logo konnte nicht geladen werden:', error);
       }
       
       doc.setFontSize(20);
@@ -1161,7 +1162,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
               logoImg.src = '/images/logo2.png';
               doc.addImage(logoImg, 'PNG', 15, 10, 20, 20);
             } catch (error) {
-              console.warn('Logo konnte nicht geladen werden');
+              logWarn('Logo konnte nicht geladen werden');
             }
             
             doc.setFontSize(12);
@@ -1312,7 +1313,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         duration: 4000
       });
     } catch (error) {
-      console.error('PDF-Export Fehler:', error);
+      logError('PDF-Export Fehler:', error);
       toast({ title: 'Fehler', description: 'PDF konnte nicht erstellt werden.', variant: 'destructive' });
     }
   };

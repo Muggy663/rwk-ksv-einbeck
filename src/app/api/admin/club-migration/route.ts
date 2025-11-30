@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { ClubMigrationService } from '@/lib/services/club-migration-service';
 
 export async function POST(request: NextRequest) {
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Migration-Fehler:', error);
+    logError('Migration-Fehler:', error);
     return NextResponse.json({
       success: false,
       error: `Migration fehlgeschlagen: ${error.message}`

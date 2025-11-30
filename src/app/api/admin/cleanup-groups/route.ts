@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { TrainingGroupsService } from '@/lib/services/training-groups-service';
 
 export async function POST(request: NextRequest) {
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
       ...result
     });
   } catch (error) {
-    console.error('Cleanup error:', error);
+    logError('Cleanup error:', error);
     return NextResponse.json(
       { error: 'Cleanup fehlgeschlagen' },
       { status: 500 }

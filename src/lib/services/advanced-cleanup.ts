@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { 
   collection, 
   getDocs, 
@@ -137,7 +138,7 @@ export async function diagnoseDatabaseInconsistencies(clubId: string): Promise<C
     }
 
   } catch (error) {
-    console.error('Error during diagnosis:', error);
+    logError('Error during diagnosis:', error);
     throw error;
   }
 
@@ -242,7 +243,7 @@ export async function performAdvancedCleanup(clubId: string, diagnosis: CleanupD
       result.inconsistentArraysFixed;
 
   } catch (error) {
-    console.error('Error during cleanup:', error);
+    logError('Error during cleanup:', error);
     throw error;
   }
 

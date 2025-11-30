@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,7 +41,7 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
   };
 
   const handlePhotoUpload = async (file: File) => {
-    console.log('🔍 Sende Foto an Gemini OCR...');
+    logDebug('🔍 Sende Foto an Gemini OCR...');
     setIsPhotoProcessing(true);
     
     try {
@@ -53,11 +54,11 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
         body: formData
       });
       
-      console.log('📡 OCR Response Status:', response.status);
+      logDebug('📡 OCR Response Status:', response.status);
       
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unbekannter Fehler');
-        console.error('OCR API Fehler:', errorText);
+        logError('OCR API Fehler:', errorText);
         throw new Error(`OCR-Service nicht verfügbar (${response.status})`);
       }
       
@@ -86,7 +87,7 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
       }
       
     } catch (error) {
-      console.error('Foto-Import Fehler:', error);
+      logError('Foto-Import Fehler:', error);
       toast({
         title: "Foto-Import fehlgeschlagen",
         description: "Das Foto konnte nicht analysiert werden. Bitte versuchen Sie es erneut.",
@@ -119,16 +120,41 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
           </div>
         )}
         
-        {/* Foto-Upload */}
+        {/* Foto-Upload - Separate Buttons für PWA */}
         <div className="space-y-3">
-          <Button 
-            onClick={() => document.getElementById('file-input')?.click()}
+          <div className="grid grid-cols-1 gap-3">
+            {/* Kamera Button */}
+            <Button 
+              onClick={() => document.getElementById('camera-input')?.click()}
+              disabled={isProcessing || isPhotoProcessing || !disziplin}
+              className="flex items-center justify-center gap-2"
+            >
+              <Camera className="h-4 w-4" />
+              {isPhotoProcessing ? 'Analysiere...' : '📷 Kamera'}
+            </Button>
+            
+            {/* Datei auswählen Button */}
+            <Button 
+              onClick={() => document.getElementById('file-input')?.click()}
+              disabled={isProcessing || isPhotoProcessing || !disziplin}
+              variant="outline"
+              className="flex items-center justify-center gap-2"
+            >
+              <Zap className="h-4 w-4" />
+              📁 Datei wählen
+            </Button>
+          </div>
+          
+          {/* Separate Inputs für Kamera und Datei */}
+          <input 
+            id="camera-input"
+            type="file" 
+            accept="image/*" 
+            capture="environment"
+            onChange={handleFileUpload}
+            className="hidden"
             disabled={isProcessing || isPhotoProcessing || !disziplin}
-            className="flex items-center justify-center gap-2 w-full"
-          >
-            <Camera className="h-4 w-4" />
-            {isPhotoProcessing ? 'Analysiere Foto...' : '📷 Foto hochladen'}
-          </Button>
+          />
           <input 
             id="file-input"
             type="file" 
@@ -137,8 +163,9 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
             className="hidden"
             disabled={isProcessing || isPhotoProcessing || !disziplin}
           />
+          
           <p className="text-xs text-center text-blue-700">
-            Unterstützt: .jpg, .png, .webp Dateien
+            📷 <strong>Kamera:</strong> Direkt fotografieren | 📁 <strong>Datei:</strong> Aus Galerie wählen
           </p>
         </div>
         

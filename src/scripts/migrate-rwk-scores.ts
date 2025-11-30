@@ -6,6 +6,7 @@
  */
 
 import { getApps, getApp } from 'firebase/app';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { getFirestore, collection, getDocs, doc, setDoc, writeBatch } from 'firebase/firestore';
 
 // Verwende bestehende Firebase App
@@ -29,11 +30,11 @@ async function migrateRWKScores() {
     throw new Error('🚫 Migration nur auf localhost erlaubt!');
   }
 
-  console.log('🚀 Starte RWK Scores Migration...');
+  logDebug('🚀 Starte RWK Scores Migration...');
 
   try {
     // 1. Alle bestehenden Scores laden
-    console.log('📖 Lade bestehende rwk_scores...');
+    logDebug('📖 Lade bestehende rwk_scores...');
     const scoresRef = collection(db, 'rwk_scores');
     const snapshot = await getDocs(scoresRef);
     
@@ -42,7 +43,7 @@ async function migrateRWKScores() {
       allScores.push({ id: doc.id, ...doc.data() as RWKScore });
     });
 
-    console.log(`✅ ${allScores.length} Scores gefunden`);
+    logDebug(`✅ ${allScores.length} Scores gefunden`);
 
     // 2. Nach Jahr+Disziplin gruppieren
     const scoresByYearDiscipline = new Map<string, (RWKScore & { id: string })[]>();
@@ -67,16 +68,16 @@ async function migrateRWKScores() {
       scoresByYearDiscipline.get(key)!.push(score);
     });
 
-    console.log(`📊 ${scoresByYearDiscipline.size} verschiedene Jahr-Disziplin Kombinationen gefunden:`);
+    logDebug(`📊 ${scoresByYearDiscipline.size} verschiedene Jahr-Disziplin Kombinationen gefunden:`);
     
     // 3. Für jede Jahr-Disziplin Kombination neue Collection erstellen
     for (const [yearDiscipline, scores] of scoresByYearDiscipline) {
       const collectionName = `rwk_scores_${yearDiscipline}`;
       const sampleScore = scores[0];
       
-      console.log(`\n🏆 ${yearDiscipline}: ${sampleScore.seasonName || 'Unbekannt'}`);
-      console.log(`📁 Collection: ${collectionName}`);
-      console.log(`📈 Anzahl Scores: ${scores.length}`);
+      logDebug(`\n🏆 ${yearDiscipline}: ${sampleScore.seasonName || 'Unbekannt'}`);
+      logDebug(`📁 Collection: ${collectionName}`);
+      logDebug(`📈 Anzahl Scores: ${scores.length}`);
 
       // Batch-Write für bessere Performance
       const batches: any[] = [];
@@ -106,24 +107,24 @@ async function migrateRWKScores() {
       }
 
       // Alle Batches ausführen
-      console.log(`💾 Schreibe ${batches.length} Batch(es)...`);
+      logDebug(`💾 Schreibe ${batches.length} Batch(es)...`);
       for (let i = 0; i < batches.length; i++) {
         await batches[i].commit();
-        console.log(`✅ Batch ${i + 1}/${batches.length} geschrieben`);
+        logDebug(`✅ Batch ${i + 1}/${batches.length} geschrieben`);
       }
     }
 
-    console.log('\n🎉 Migration erfolgreich abgeschlossen!');
-    console.log('\n📋 Zusammenfassung:');
+    logDebug('\n🎉 Migration erfolgreich abgeschlossen!');
+    logDebug('\n📋 Zusammenfassung:');
     scoresByYearDiscipline.forEach((scores, yearDiscipline) => {
       const sampleScore = scores[0];
-      console.log(`  • ${sampleScore.seasonName}: ${scores.length} Scores → rwk_scores_${yearDiscipline}`);
+      logDebug(`  • ${sampleScore.seasonName}: ${scores.length} Scores → rwk_scores_${yearDiscipline}`);
     });
 
-    console.log('\n⚠️ WICHTIG: Original rwk_scores Collection bleibt unverändert als Backup!');
+    logDebug('\n⚠️ WICHTIG: Original rwk_scores Collection bleibt unverändert als Backup!');
 
   } catch (error) {
-    console.error('❌ Migration fehlgeschlagen:', error);
+    logError('❌ Migration fehlgeschlagen:', error);
     throw error;
   }
 }
@@ -135,11 +136,11 @@ export { migrateRWKScores };
 if (require.main === module) {
   migrateRWKScores()
     .then(() => {
-      console.log('✅ Script beendet');
+      logDebug('✅ Script beendet');
       process.exit(0);
     })
     .catch((error) => {
-      console.error('❌ Script fehlgeschlagen:', error);
+      logError('❌ Script fehlgeschlagen:', error);
       process.exit(1);
     });
 }

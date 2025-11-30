@@ -2,6 +2,7 @@
 "use client";
 
 import React, { ReactNode } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { ResponsiveDialog } from './responsive-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './dialog';
 import { useMobileDetection } from '@/hooks/use-mobile-detection';

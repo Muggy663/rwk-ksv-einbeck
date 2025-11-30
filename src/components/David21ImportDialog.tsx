@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,7 +64,7 @@ export function David21ImportDialog({ onImport, trigger, wettkampfId = 'VW111' }
       setOpen(false);
       setFile(null);
     } catch (error) {
-      console.error('Import Error:', error);
+      logError('Import Error:', error);
       toast({ title: 'Fehler', description: 'Import fehlgeschlagen', variant: 'destructive' });
     } finally {
       setLoading(false);

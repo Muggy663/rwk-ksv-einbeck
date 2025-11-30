@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -46,7 +47,7 @@ export default function AdminCaptainsPage() {
           setSelectedSeason(seasonsData[0].id);
         }
       } catch (error) {
-        console.error('Error fetching seasons:', error);
+        logError('Error fetching seasons:', error);
         toast({
           title: 'Fehler beim Laden der Saisons',
           description: 'Bitte versuchen Sie es später erneut.',
@@ -64,7 +65,7 @@ export default function AdminCaptainsPage() {
         })) as Club[];
         setClubs(clubsData);
       } catch (error) {
-        console.error('Error fetching clubs:', error);
+        logError('Error fetching clubs:', error);
       }
     };
 
@@ -104,7 +105,7 @@ export default function AdminCaptainsPage() {
         setCaptains(captainsData);
         setFilteredCaptains(captainsData);
       } catch (error) {
-        console.error('Error fetching captains:', error);
+        logError('Error fetching captains:', error);
         toast({
           title: 'Fehler beim Laden der Mannschaftsführer',
           description: 'Bitte versuchen Sie es später erneut.',

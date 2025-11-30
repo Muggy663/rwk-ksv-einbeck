@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -39,7 +40,7 @@ export default function AdminMigrationsPage() {
         });
       }
     } catch (error) {
-      console.error("Fehler bei der Migration:", error);
+      logError("Fehler bei der Migration:", error);
       setMigrationResult({
         success: false,
         message: `Unerwarteter Fehler: ${error instanceof Error ? error.message : String(error)}`,

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,7 +36,7 @@ Rundenwettkampfleiter KSVE Einbeck`);
         setSignature(settingsDoc.data().signature || signature);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der E-Mail-Einstellungen:', error);
+      logError('Fehler beim Laden der E-Mail-Einstellungen:', error);
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +56,7 @@ Rundenwettkampfleiter KSVE Einbeck`);
         description: 'E-Mail-Signatur wurde aktualisiert.',
       });
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
+      logError('Fehler beim Speichern:', error);
       toast({
         title: 'Fehler',
         description: 'Einstellungen konnten nicht gespeichert werden.',

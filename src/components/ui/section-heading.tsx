@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { cn } from '@/lib/utils';
 
 interface SectionHeadingProps {

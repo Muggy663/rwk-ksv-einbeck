@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useMobileDetection } from './use-mobile-detection';
 
 interface PullToRefreshOptions {

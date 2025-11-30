@@ -1,17 +1,18 @@
 import { NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
 
 export async function POST() {
   try {
-    console.log('🧹 MIGRATION: Starte Schützen-Bereinigung...');
+    logDebug('🧹 MIGRATION: Starte Schützen-Bereinigung...');
     
     const batch = writeBatch(db);
     let deletedCount = 0;
     
     // 1. Lösche alle shooters
     const shootersSnapshot = await getDocs(collection(db, 'shooters'));
-    console.log(`📊 Gefunden: ${shootersSnapshot.size} shooters`);
+    logDebug(`📊 Gefunden: ${shootersSnapshot.size} shooters`);
     
     shootersSnapshot.docs.forEach(docSnap => {
       batch.delete(doc(db, 'shooters', docSnap.id));
@@ -20,7 +21,7 @@ export async function POST() {
     
     // 2. Lösche alle km_shooters
     const kmShootersSnapshot = await getDocs(collection(db, 'km_shooters'));
-    console.log(`📊 Gefunden: ${kmShootersSnapshot.size} km_shooters`);
+    logDebug(`📊 Gefunden: ${kmShootersSnapshot.size} km_shooters`);
     
     kmShootersSnapshot.docs.forEach(docSnap => {
       batch.delete(doc(db, 'km_shooters', docSnap.id));
@@ -30,7 +31,7 @@ export async function POST() {
     // 3. Batch ausführen
     await batch.commit();
     
-    console.log(`✅ MIGRATION: ${deletedCount} Schützen gelöscht`);
+    logDebug(`✅ MIGRATION: ${deletedCount} Schützen gelöscht`);
     
     return NextResponse.json({
       success: true,
@@ -43,7 +44,7 @@ export async function POST() {
     });
     
   } catch (error) {
-    console.error('❌ MIGRATION ERROR:', error);
+    logError('❌ MIGRATION ERROR:', error);
     return NextResponse.json({
       success: false,
       error: error.message

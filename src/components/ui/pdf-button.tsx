@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown, AlertTriangle } from 'lucide-react';
 import { generateLeaguePDFFixed, generateShootersPDFFixed } from '@/lib/utils/pdf-generator.fix';
@@ -63,7 +64,7 @@ function PDFButtonComponent({
           : 'Die PDF-Datei wurde erfolgreich erstellt.',
       });
     } catch (error) {
-      console.error('Fehler beim Erstellen der PDF:', error);
+      logError('Fehler beim Erstellen der PDF:', error);
       
       let errorMessage = 'Die PDF-Datei konnte nicht erstellt werden.';
       if (isSafari()) {

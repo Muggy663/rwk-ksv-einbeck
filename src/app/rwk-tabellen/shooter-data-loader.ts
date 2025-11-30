@@ -1,4 +1,5 @@
 import { fetchShooterDataForCompetition } from '@/lib/services/shooter-data-service';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { CompetitionDisplayConfig, IndividualShooterDisplayData } from '@/types/rwk';
 
 /**
@@ -12,7 +13,7 @@ export async function loadShooterData(
   try {
     return await fetchShooterDataForCompetition(config, numRounds, leagueFilter);
   } catch (error) {
-    console.error('Fehler beim Laden der Einzelschützendaten:', error);
+    logError('Fehler beim Laden der Einzelschützendaten:', error);
     return [];
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DocumentForm } from '../DocumentForm';
@@ -29,7 +30,7 @@ export default function AddDocumentPage() {
         throw new Error('Hinzufügen fehlgeschlagen');
       }
     } catch (error) {
-      console.error('Fehler beim Hinzufügen des Dokuments:', error);
+      logError('Fehler beim Hinzufügen des Dokuments:', error);
       toast({
         title: 'Fehler',
         description: 'Das Dokument konnte nicht hinzugefügt werden.',

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, TrendingUp, Target, BarChart3, AlertTriangle, Lightbulb } from 'lucide-react';
@@ -30,7 +31,7 @@ export function IntelligentInsights({ seasonId, leagueId, clubId, className = ""
         );
         setInsights(generatedInsights);
       } catch (error) {
-        console.error('Fehler beim Laden der Insights:', error);
+        logError('Fehler beim Laden der Insights:', error);
         setInsights([]);
       } finally {
         setIsLoading(false);

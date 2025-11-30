@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,19 +51,19 @@ export default function KMJahreVerwaltung() {
   const loadSaisons = async () => {
     try {
       const response = await fetch('/api/km/jahre');
-      console.log('API Response Status:', response.status);
+      logDebug('API Response Status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('API Response Data:', data);
+        logDebug('API Response Data:', data);
         setSaisons(data.data || []);
       } else {
-        console.error('API Error:', response.status, response.statusText);
+        logError('API Error:', response.status, response.statusText);
         const errorData = await response.text();
-        console.error('Error Details:', errorData);
+        logError('Error Details:', errorData);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Saisons:', error);
+      logError('Fehler beim Laden der Saisons:', error);
       toast({ title: 'Fehler', description: 'Saisons konnten nicht geladen werden', variant: 'destructive' });
     } finally {
       setIsLoading(false);
@@ -99,7 +100,7 @@ export default function KMJahreVerwaltung() {
         toast({ title: 'Fehler', description: result.error, variant: 'destructive' });
       }
     } catch (error) {
-      console.error('Fehler beim Erstellen:', error);
+      logError('Fehler beim Erstellen:', error);
       toast({ title: 'Fehler', description: 'Saison konnte nicht erstellt werden', variant: 'destructive' });
     }
   };
@@ -119,7 +120,7 @@ export default function KMJahreVerwaltung() {
         toast({ title: 'Fehler', description: 'Status-Update fehlgeschlagen', variant: 'destructive' });
       }
     } catch (error) {
-      console.error('Fehler beim Update:', error);
+      logError('Fehler beim Update:', error);
       toast({ title: 'Fehler', description: 'Update fehlgeschlagen', variant: 'destructive' });
     }
   };
@@ -144,7 +145,7 @@ export default function KMJahreVerwaltung() {
         toast({ title: 'Fehler', description: 'Update fehlgeschlagen', variant: 'destructive' });
       }
     } catch (error) {
-      console.error('Fehler beim Update:', error);
+      logError('Fehler beim Update:', error);
       toast({ title: 'Fehler', description: 'Update fehlgeschlagen', variant: 'destructive' });
     }
   };

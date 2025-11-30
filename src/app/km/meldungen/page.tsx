@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -74,7 +75,7 @@ export default function KMMeldungen() {
         setClubs(clubsData.data || []);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Daten:', error);
+      logError('Fehler beim Laden der Daten:', error);
       toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden', variant: 'destructive' });
     } finally {
       setLoading(false);
@@ -99,7 +100,7 @@ export default function KMMeldungen() {
           }
         }
       } catch (e) {
-        console.warn('Date parsing error:', e);
+        logWarn('Date parsing error:', e);
       }
       
       setVmErgebnisse({
@@ -165,18 +166,18 @@ export default function KMMeldungen() {
   };
   
   const handleBulkSubmit = async () => {
-    console.log('handleBulkSubmit called, pending:', pendingMeldungen.length);
+    logDebug('handleBulkSubmit called, pending:', pendingMeldungen.length);
     if (pendingMeldungen.length === 0) {
-      console.log('No pending meldungen, returning');
+      logDebug('No pending meldungen, returning');
       return;
     }
     
-    console.log('Starting bulk submit...');
+    logDebug('Starting bulk submit...');
     setIsSubmitting(true);
     try {
-      console.log('Creating promises for', pendingMeldungen.length, 'meldungen');
+      logDebug('Creating promises for', pendingMeldungen.length, 'meldungen');
       const promises = pendingMeldungen.map((meldung, index) => {
-        console.log(`Creating promise ${index + 1}:`, meldung);
+        logDebug(`Creating promise ${index + 1}:`, meldung);
         return fetch('/api/km/meldungen', {
           method: 'POST',
           headers: { 
@@ -187,9 +188,9 @@ export default function KMMeldungen() {
         });
       });
       
-      console.log('Waiting for all promises...');
+      logDebug('Waiting for all promises...');
       const results = await Promise.all(promises);
-      console.log('All promises resolved:', results.length);
+      logDebug('All promises resolved:', results.length);
       const successful = results.filter(r => r.ok).length;
       
       if (successful === pendingMeldungen.length) {
@@ -203,10 +204,10 @@ export default function KMMeldungen() {
         toast({ title: 'Teilweise Fehler', description: `${successful}/${pendingMeldungen.length} Meldungen gespeichert`, variant: 'destructive' });
       }
     } catch (error) {
-      console.error('Bulk submit error:', error);
+      logError('Bulk submit error:', error);
       toast({ title: 'Fehler', description: 'Speichern fehlgeschlagen', variant: 'destructive' });
     } finally {
-      console.log('Bulk submit finished, setting isSubmitting to false');
+      logDebug('Bulk submit finished, setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
@@ -1178,7 +1179,7 @@ export default function KMMeldungen() {
                             const lmKey = `${schuetzeId}_${selectedDisziplin}`;
                             const vmKey = `${schuetzeId}_${selectedDisziplin}`;
                             const vmData = vmErgebnisse[vmKey];
-                            console.log('LM Key:', lmKey, 'Value:', lmTeilnahme[lmKey]);
+                            logDebug('LM Key:', lmKey, 'Value:', lmTeilnahme[lmKey]);
                             return {
                               schuetzeId,
                               disziplinId: selectedDisziplin,
@@ -1192,7 +1193,7 @@ export default function KMMeldungen() {
                             };
                           });
                           
-                          console.log('New pending:', newPending);
+                          logDebug('New pending:', newPending);
                           setPendingMeldungen(prev => [...prev, ...newPending]);
                           
                           // Reset

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 /**
  * Komponente zur Registrierung des Service Workers
@@ -15,7 +16,7 @@ export function ServiceWorkerRegistration() {
 
           })
           .catch(error => {
-            console.error('Service Worker Registrierungsfehler:', error);
+            logError('Service Worker Registrierungsfehler:', error);
           });
       });
     }

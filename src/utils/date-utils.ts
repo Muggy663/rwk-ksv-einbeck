@@ -2,6 +2,7 @@
  * Utility-Funktionen für die Arbeit mit Datumswerten
  */
 import { format, parseISO, isValid, differenceInDays, addDays, isBefore, isAfter } from 'date-fns';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { de } from 'date-fns/locale';
 
 /**
@@ -16,7 +17,7 @@ export function formatDate(date: Date | string | number, formatStr: string = 'dd
     if (!isValid(dateObj)) return 'Ungültiges Datum';
     return format(dateObj, formatStr, { locale: de });
   } catch (error) {
-    console.error('Fehler beim Formatieren des Datums:', error);
+    logError('Fehler beim Formatieren des Datums:', error);
     return 'Fehler';
   }
 }

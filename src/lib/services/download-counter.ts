@@ -1,4 +1,5 @@
 import { adminDb } from '@/lib/firebase/admin';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { FieldValue } from 'firebase-admin/firestore';
 
 const COUNTER_DOC_ID = 'app_downloads';
@@ -14,7 +15,7 @@ export async function setDownloadCount(count: number): Promise<void> {
     await counterRef.set({ count }, { merge: true });
 
   } catch (error) {
-    console.error('Fehler beim Setzen des Download-Zählers:', error);
+    logError('Fehler beim Setzen des Download-Zählers:', error);
     throw error;
   }
 }
@@ -33,7 +34,7 @@ export async function incrementDownloadCounter(): Promise<number> {
     const updatedDoc = await counterRef.get();
     return updatedDoc.data()?.count || 0;
   } catch (error) {
-    console.error('Fehler beim Aktualisieren des Download-Zählers:', error);
+    logError('Fehler beim Aktualisieren des Download-Zählers:', error);
     return 0;
   }
 }
@@ -54,7 +55,7 @@ export async function getDownloadCount(): Promise<number> {
       return 0;
     }
   } catch (error) {
-    console.error('Fehler beim Abrufen des Download-Zählers:', error);
+    logError('Fehler beim Abrufen des Download-Zählers:', error);
     return 0;
   }
 }

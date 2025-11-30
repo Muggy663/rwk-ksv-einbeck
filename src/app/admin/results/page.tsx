@@ -2,6 +2,7 @@
 // src/app/admin/results/page.tsx
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -109,7 +110,7 @@ function LegacyAdminResultsPage() {
       setAllShootersFromDB(shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Shooter)).filter(s => s.id));
 
     } catch (error) {
-      console.error("AdminResultsPage: Error fetching master data: ", error);
+      logError("AdminResultsPage: Error fetching master data: ", error);
       toast({ title: "Fehler beim Laden der Stammdaten", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingMasterData(false);
@@ -228,7 +229,7 @@ function LegacyAdminResultsPage() {
             
             setAllTeamsInSelectedLeague(filteredTeams);
         } catch (error) {
-            console.error("Error fetching teams for league:", error);
+            logError("Error fetching teams for league:", error);
             toast({ title: "Fehler Teams laden", description: (error as Error).message, variant: "destructive" });
             setAllTeamsInSelectedLeague([]);
         } finally {
@@ -274,7 +275,7 @@ function LegacyAdminResultsPage() {
             getSeasonSpecificScoresCollection(currentSeason.competitionYear, leagueData.type) :
             SCORES_COLLECTION;
           
-          console.log(`🔍 Admin Existing: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
+          logDebug(`🔍 Admin Existing: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
           
           scoresQuery = query(
             collection(db, seasonSpecificCollection),
@@ -283,7 +284,7 @@ function LegacyAdminResultsPage() {
             where("durchgang", "==", parseInt(selectedRound, 10))
           );
         } catch (error) {
-          console.log(`⚠️ Admin Existing: Verwende Standard-Collection`);
+          logDebug(`⚠️ Admin Existing: Verwende Standard-Collection`);
           scoresQuery = query(
             collection(db, SCORES_COLLECTION),
             where("teamId", "==", selectedTeamId),
@@ -295,7 +296,7 @@ function LegacyAdminResultsPage() {
         const fetchedScores = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
         setExistingScoresForTeamAndRound(fetchedScores);
       } catch (error) {
-        console.error("AdminResultsPage: Error fetching existing scores: ", error);
+        logError("AdminResultsPage: Error fetching existing scores: ", error);
         toast({ title: "Fehler beim Laden existierender Ergebnisse", description: (error as Error).message, variant: "destructive" });
         setExistingScoresForTeamAndRound([]);
       } finally {
@@ -552,7 +553,7 @@ Die Handzettel sind als Anhang beigefügt.`);
           hasAuthToken = true;
         }
       } catch (authError) {
-        console.warn('Konnte Firebase-Token nicht laden:', authError);
+        logWarn('Konnte Firebase-Token nicht laden:', authError);
       }
       
       const uploadResponse = await fetch('/api/send-email', {
@@ -562,7 +563,7 @@ Die Handzettel sind als Anhang beigefügt.`);
       });
       
       const responseData = await uploadResponse.json();
-      console.log('E-Mail API Response:', responseData);
+      logDebug('E-Mail API Response:', responseData);
       
       if (uploadResponse.ok && responseData.success) {
         progressToast.updateProgress(100, "Handzettel erfolgreich versendet!");
@@ -579,7 +580,7 @@ Die Handzettel sind als Anhang beigefügt.`);
         throw new Error(responseData.message || 'Versand fehlgeschlagen');
       }
     } catch (error) {
-      console.error('Handzettel-Versand Fehler:', error);
+      logError('Handzettel-Versand Fehler:', error);
       const errorDetails = error instanceof Error ? error.message : String(error);
       
       toast({ 
@@ -617,9 +618,9 @@ Die Handzettel sind als Anhang beigefügt.`);
             try {
                 const seasonSpecificCollection = getSeasonSpecificScoresCollection(entry.competitionYear, entry.leagueType);
                 collectionName = seasonSpecificCollection;
-                console.log(`🔍 Admin Results: Verwende ${collectionName}`);
+                logDebug(`🔍 Admin Results: Verwende ${collectionName}`);
             } catch (error) {
-                console.log(`⚠️ Admin Results: Verwende Standard-Collection`);
+                logDebug(`⚠️ Admin Results: Verwende Standard-Collection`);
             }
             
             if (existingScoreId) {
@@ -702,7 +703,7 @@ Die Handzettel sind als Anhang beigefügt.`);
                 hasAuthToken = true;
               }
             } catch (authError) {
-              console.warn('Konnte Firebase-Token nicht laden:', authError);
+              logWarn('Konnte Firebase-Token nicht laden:', authError);
             }
             
             const uploadResponse = await fetch('/api/send-email', {
@@ -712,7 +713,7 @@ Die Handzettel sind als Anhang beigefügt.`);
             });
             
             const responseData = await uploadResponse.json();
-            console.log('E-Mail API Response:', responseData);
+            logDebug('E-Mail API Response:', responseData);
             
             if (uploadResponse.ok && responseData.success) {
               progressToast.updateProgress(100, "Upload erfolgreich abgeschlossen!");
@@ -725,12 +726,12 @@ Die Handzettel sind als Anhang beigefügt.`);
               throw new Error(responseData.message || 'Upload fehlgeschlagen');
             }
           } catch (error) {
-            console.error('Handzettel-Upload Fehler:', error);
+            logError('Handzettel-Upload Fehler:', error);
             progressToast.error(`E-Mail-Versand fehlgeschlagen: ${error.message || error}`);
             
             // Detaillierte Fehlermeldung für Debugging
             const errorDetails = error instanceof Error ? error.message : String(error);
-            console.log('Detaillierte E-Mail-Fehlerinfo:', {
+            logDebug('Detaillierte E-Mail-Fehlerinfo:', {
               error: errorDetails,
               userRole: user?.uid,
               hasToken: hasAuthToken
@@ -781,7 +782,7 @@ Die Handzettel sind als Anhang beigefügt.`);
             setIsLoadingExistingScores(false);
         }
     } catch (error) {
-        console.error("Error saving scores to Firestore: ", error);
+        logError("Error saving scores to Firestore: ", error);
         toast({ title: "Fehler beim Speichern", description: (error as Error).message, variant: "destructive" });
     } finally {
         setIsSubmittingScores(false);

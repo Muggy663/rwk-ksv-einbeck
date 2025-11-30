@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { 
   Card, 
   CardContent, 
@@ -50,7 +51,7 @@ export default function DocumentsAdminPage() {
       const docs = await getAllDocuments();
       setDocuments(docs);
     } catch (error) {
-      console.error('Fehler beim Laden der Dokumente:', error);
+      logError('Fehler beim Laden der Dokumente:', error);
       toast({
         title: 'Fehler',
         description: 'Die Dokumente konnten nicht geladen werden.',
@@ -70,7 +71,7 @@ export default function DocumentsAdminPage() {
       });
       loadDocuments();
     } catch (error) {
-      console.error('Fehler beim Ändern des Status:', error);
+      logError('Fehler beim Ändern des Status:', error);
       toast({
         title: 'Fehler',
         description: 'Der Status konnte nicht geändert werden.',
@@ -96,7 +97,7 @@ export default function DocumentsAdminPage() {
         throw new Error('Löschen fehlgeschlagen');
       }
     } catch (error) {
-      console.error('Fehler beim Löschen des Dokuments:', error);
+      logError('Fehler beim Löschen des Dokuments:', error);
       toast({
         title: 'Fehler',
         description: 'Das Dokument konnte nicht gelöscht werden.',

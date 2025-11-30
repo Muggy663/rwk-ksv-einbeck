@@ -73,7 +73,7 @@ JSON-Format:
     return NextResponse.json(analysis);
     
   } catch (error) {
-    console.error('Gemini-Analyse Fehler:', error);
+    logError('Gemini-Analyse Fehler:', error);
     return NextResponse.json({ error: 'Fehler bei der Bildanalyse' }, { status: 500 });
   }
 }

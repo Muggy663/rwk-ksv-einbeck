@@ -2,6 +2,7 @@
 // /app/verein/ergebnisse/page.tsx
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -132,10 +133,10 @@ function LegacyVereinErgebnissePage() {
             setActiveClubNameForEntry(clubSnap.data()?.name || "Unbek. Verein");
           } else {
             setActiveClubNameForEntry("Zugew. Verein nicht gefunden");
-            console.warn("VER_ERGEBNISSE DEBUG: Club with ID", effectiveClubId, "not found.");
+            logWarn("VER_ERGEBNISSE DEBUG: Club with ID", effectiveClubId, "not found.");
           }
         } catch (e) {
-          console.error("VER_ERGEBNISSE DEBUG: Error fetching assigned club name:", e);
+          logError("VER_ERGEBNISSE DEBUG: Error fetching assigned club name:", e);
           setActiveClubNameForEntry("Fehler Vereinsname");
         } finally {
           setIsLoadingAssignedClubDetails(false);
@@ -143,7 +144,7 @@ function LegacyVereinErgebnissePage() {
       };
       fetchClubName();
     } else if (!loadingPermissions && !effectiveClubId) {
-      console.warn("VER_ERGEBNISSE DEBUG: No effectiveClubId available after loading permissions.");
+      logWarn("VER_ERGEBNISSE DEBUG: No effectiveClubId available after loading permissions.");
       setActiveClubIdForEntry(null);
       setActiveClubNameForEntry(null);
       setIsLoadingAssignedClubDetails(false);
@@ -206,7 +207,7 @@ function LegacyVereinErgebnissePage() {
       // Keine Daten werden im localStorage gespeichert, um Probleme zu vermeiden
 
     } catch (error) {
-      console.error("VER_ERGEBNISSE DEBUG: Error fetching initial page data:", error);
+      logError("VER_ERGEBNISSE DEBUG: Error fetching initial page data:", error);
       toast({ title: "Fehler Basisdaten", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingPageData(false);
@@ -243,7 +244,7 @@ function LegacyVereinErgebnissePage() {
                                         .sort((a,b) => (a.order || 0) - (b.order || 0));
         setLeaguesForActiveClubAndSeason(filteredLeagues.filter(l => l.id));
       } catch (error) {
-        console.error("VER_ERGEBNISSE DEBUG: Error fetching leagues for VV:", error);
+        logError("VER_ERGEBNISSE DEBUG: Error fetching leagues for VV:", error);
         toast({ title: "Fehler Ligenladen", description: (error as Error).message, variant: "destructive" });
         setLeaguesForActiveClubAndSeason([]);
       } finally {
@@ -330,7 +331,7 @@ function LegacyVereinErgebnissePage() {
         
         setAllTeamsInSelectedLeague(filteredTeams);
       } catch (error) {
-        console.error("VER_ERGEBNISSE DEBUG: Error fetching teams in league:", error);
+        logError("VER_ERGEBNISSE DEBUG: Error fetching teams in league:", error);
         toast({ title: "Fehler Teamladen", description: (error as Error).message, variant: "destructive" });
         setAllTeamsInSelectedLeague([]);
       } finally {
@@ -370,10 +371,10 @@ function LegacyVereinErgebnissePage() {
                                     additionalShooters.push(shooterData);
 
                                 } else {
-                                    console.warn(`VER_ERGEBNISSE DEBUG: Schütze ${shooterId} nicht in Datenbank gefunden`);
+                                    logWarn(`VER_ERGEBNISSE DEBUG: Schütze ${shooterId} nicht in Datenbank gefunden`);
                                 }
                             } catch (error) {
-                                console.error(`VER_ERGEBNISSE DEBUG: Fehler beim Laden von Schütze ${shooterId}:`, error);
+                                logError(`VER_ERGEBNISSE DEBUG: Fehler beim Laden von Schütze ${shooterId}:`, error);
                             }
                         }
                         
@@ -395,7 +396,7 @@ function LegacyVereinErgebnissePage() {
                 setShootersOfSelectedTeam([]); 
             }
         } catch (error) {
-            console.error("VER_ERGEBNISSE DEBUG: Error fetching shooters for team:", error);
+            logError("VER_ERGEBNISSE DEBUG: Error fetching shooters for team:", error);
             toast({ title: "Fehler Schützenladen", description: (error as Error).message, variant: "destructive" });
             setShootersOfSelectedTeam([]);
         } finally {
@@ -422,7 +423,7 @@ function LegacyVereinErgebnissePage() {
         
         setExistingScoresForTeamAndRound(scores);
       } catch (error) {
-        console.error("VER_ERGEBNISSE DEBUG: Error fetching existing scores: ", error);
+        logError("VER_ERGEBNISSE DEBUG: Error fetching existing scores: ", error);
         toast({ title: "Fehler Ex. Ergebnisse", description: (error as Error).message, variant: "destructive" });
         setExistingScoresForTeamAndRound([]);
       } finally {
@@ -497,7 +498,7 @@ function LegacyVereinErgebnissePage() {
                 additionalShooters.push(shooterData);
 
               } else {
-                console.warn(`❌ Dropdown: Schütze ${shooterId} nicht in shooters - suche in Scores...`);
+                logWarn(`❌ Dropdown: Schütze ${shooterId} nicht in shooters - suche in Scores...`);
                 
                 // TEST-MODUS: Suche Namen in bestehenden Scores
                 try {
@@ -528,7 +529,7 @@ function LegacyVereinErgebnissePage() {
                       await setDoc(shooterDocRef, shooterData);
 
                     } catch (createError) {
-                      console.error(`Fehler beim Erstellen von Schütze ${shooterId}:`, createError);
+                      logError(`Fehler beim Erstellen von Schütze ${shooterId}:`, createError);
                     }
                     
                     additionalShooters.push({
@@ -545,11 +546,11 @@ function LegacyVereinErgebnissePage() {
                     } as Shooter);
                   }
                 } catch (scoreError) {
-                  console.error(`Dropdown: Fehler beim Suchen in Scores für ${shooterId}:`, scoreError);
+                  logError(`Dropdown: Fehler beim Suchen in Scores für ${shooterId}:`, scoreError);
                 }
               }
             } catch (error) {
-              console.error(`Dropdown: Fehler beim Laden von Schütze ${shooterId}:`, error);
+              logError(`Dropdown: Fehler beim Laden von Schütze ${shooterId}:`, error);
             }
           }
           
@@ -623,19 +624,19 @@ function LegacyVereinErgebnissePage() {
           shooter = { id: shooterSnap.id, ...shooterSnap.data() } as Shooter;
 
         } else {
-          console.error(`Schütze mit ID ${selectedShooterId} nicht in der Datenbank gefunden`);
+          logError(`Schütze mit ID ${selectedShooterId} nicht in der Datenbank gefunden`);
           toast({ title: "Datenfehler", description: "Schütze nicht gefunden.", variant: "destructive" });
           return;
         }
       } catch (error) {
-        console.error("Fehler beim Laden des Schützen:", error);
+        logError("Fehler beim Laden des Schützen:", error);
         toast({ title: "Datenfehler", description: "Fehler beim Laden des Schützen.", variant: "destructive" });
         return;
       }
     }
 
     if (!season || !league || !team || !shooter || !team.clubId) {
-      console.error("Basisdaten unvollständig:", { season, league, team, shooter, teamClubId: team?.clubId });
+      logError("Basisdaten unvollständig:", { season, league, team, shooter, teamClubId: team?.clubId });
       toast({ title: "Datenfehler", description: "Basisdaten unvollständig (Saison, Liga, Team, Schütze, Team ClubID).", variant: "destructive" }); 
       return;
     }
@@ -839,7 +840,7 @@ Die Handzettel sind als Anhang beigefügt.`);
           hasAuthToken = true;
         }
       } catch (authError) {
-        console.warn('Konnte Firebase-Token nicht laden:', authError);
+        logWarn('Konnte Firebase-Token nicht laden:', authError);
       }
       
       const uploadResponse = await fetch('/api/send-email', {
@@ -849,7 +850,7 @@ Die Handzettel sind als Anhang beigefügt.`);
       });
       
       const responseData = await uploadResponse.json();
-      console.log('E-Mail API Response:', responseData);
+      logDebug('E-Mail API Response:', responseData);
       
       if (uploadResponse.ok && responseData.success) {
         progressToast.updateProgress(100, "Handzettel erfolgreich versendet!");
@@ -866,7 +867,7 @@ Die Handzettel sind als Anhang beigefügt.`);
         throw new Error(responseData.message || 'Versand fehlgeschlagen');
       }
     } catch (error) {
-      console.error('Handzettel-Versand Fehler:', error);
+      logError('Handzettel-Versand Fehler:', error);
       const errorDetails = error instanceof Error ? error.message : String(error);
       
       toast({ 
@@ -930,7 +931,7 @@ Die Handzettel sind als Anhang beigefügt.`);
 
             }
           } catch (shooterError) {
-            console.warn(`Could not check/create shooter ${entry.shooterId}:`, shooterError);
+            logWarn(`Could not check/create shooter ${entry.shooterId}:`, shooterError);
           }
           
           // Audit-Log für Ergebnis-Erstellung (nach dem Batch-Commit)
@@ -943,7 +944,7 @@ Die Handzettel sind als Anhang beigefügt.`);
             newlySavedIdentifiers.push({ shooterId: entry.shooterId, durchgang: entry.durchgang });
           }
         } catch (scoreError) {
-          console.error("VER_ERGEBNISSE DEBUG: Error saving individual score:", scoreError);
+          logError("VER_ERGEBNISSE DEBUG: Error saving individual score:", scoreError);
           // Fehler für einzelnes Ergebnis protokollieren und mit dem nächsten fortfahren
         }
       }
@@ -1042,7 +1043,7 @@ Die Handzettel sind als Anhang beigefügt.`);
               hasAuthToken = true;
             }
           } catch (authError) {
-            console.warn('Konnte Firebase-Token nicht laden:', authError);
+            logWarn('Konnte Firebase-Token nicht laden:', authError);
           }
           
           const uploadResponse = await fetch('/api/send-email', {
@@ -1052,7 +1053,7 @@ Die Handzettel sind als Anhang beigefügt.`);
           });
           
           const responseData = await uploadResponse.json();
-          console.log('E-Mail API Response:', responseData);
+          logDebug('E-Mail API Response:', responseData);
           
           if (uploadResponse.ok && responseData.success) {
             progressToast.updateProgress(100, "Upload erfolgreich abgeschlossen!");
@@ -1065,12 +1066,12 @@ Die Handzettel sind als Anhang beigefügt.`);
             throw new Error(responseData.message || 'Upload fehlgeschlagen');
           }
         } catch (error) {
-          console.error('Handzettel-Upload Fehler:', error);
+          logError('Handzettel-Upload Fehler:', error);
           progressToast.error(`E-Mail-Versand fehlgeschlagen: ${error.message || error}`);
           
           // Detaillierte Fehlermeldung für Debugging
           const errorDetails = error instanceof Error ? error.message : String(error);
-          console.log('Detaillierte E-Mail-Fehlerinfo:', {
+          logDebug('Detaillierte E-Mail-Fehlerinfo:', {
             error: errorDetails,
             userRole: userPermission?.role,
             clubRoles: userPermission?.clubRoles,
@@ -1123,7 +1124,7 @@ Die Handzettel sind als Anhang beigefügt.`);
             }
           );
         } catch (auditError) {
-          console.error('Fehler beim Erstellen des Audit-Logs:', auditError);
+          logError('Fehler beim Erstellen des Audit-Logs:', auditError);
           // Audit-Fehler nicht an Benutzer weiterleiten
         }
       }
@@ -1145,7 +1146,7 @@ Die Handzettel sind als Anhang beigefügt.`);
           setIsLoadingExistingScores(false);
       }
     } catch (error: any) {
-        console.error("VER_ERGEBNISSE DEBUG: Error saving scores to Firestore: ", error);
+        logError("VER_ERGEBNISSE DEBUG: Error saving scores to Firestore: ", error);
         toast({ title: "Fehler beim Speichern", description: error.message || "Unbekannter Fehler", variant: "destructive" });
     } finally {
         setIsSubmittingScores(false);
@@ -1782,7 +1783,7 @@ Die Handzettel sind als Anhang beigefügt.`);
                           setPlausibilityWarnings(warnings);
                         }
                       } catch (error) {
-                        console.error('Fehler bei Plausibilitätsprüfung:', error);
+                        logError('Fehler bei Plausibilitätsprüfung:', error);
                         setPlausibilityWarnings([]);
                       } finally {
                         setIsCheckingPlausibility(false);

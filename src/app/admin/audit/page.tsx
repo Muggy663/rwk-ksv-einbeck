@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { AuditTrail } from '@/components/audit/AuditTrail';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { History, BarChart3, Activity, Users, FileText } from 'lucide-react';
@@ -24,7 +25,7 @@ export default function AuditPage() {
         const auditStats = await auditLogService.getAuditStats();
         setStats(auditStats);
       } catch (error) {
-        console.error('Fehler beim Laden der Audit-Statistiken:', error);
+        logError('Fehler beim Laden der Audit-Statistiken:', error);
       } finally {
         setIsLoadingStats(false);
       }

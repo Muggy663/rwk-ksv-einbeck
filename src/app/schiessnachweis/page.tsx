@@ -1,18 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Target, Plus, Calendar, TrendingUp, FileText, Download, Upload, Crown, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PremiumBadge } from "@/components/ui/premium-badge";
 import { ScrollToTopButton, usePullToRefresh } from "@/components/ui/mobile-enhancements";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
-import { PremiumService } from "@/lib/services/premium-service";
 import { SchießStatistik } from "@/types/schiessnachweis";
 import { CloudSyncStatus } from "@/components/schiessnachweis/CloudSyncStatus";
-import { PremiumProvider } from "@/components/schiessnachweis/PremiumProvider";
-import { PremiumStatus } from "@/components/schiessnachweis/PremiumStatus";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -43,8 +40,8 @@ export default function SchießnachweisPage() {
     const autoRestore = async () => {
       try {
         const localData = SchießnachweisService.getEinträge();
-        if (localData.length === 0 && await PremiumService.isPremium()) {
-          console.log('🔄 Keine lokalen Daten - versuche Cloud-Wiederherstellung...');
+        if (localData.length === 0) {
+          logDebug('🔄 Keine lokalen Daten - versuche Cloud-Wiederherstellung...');
           const cloudData = await SchießnachweisService.loadFromCloudNow();
           if (cloudData.length > 0) {
             toast({
@@ -56,7 +53,7 @@ export default function SchießnachweisPage() {
           }
         }
       } catch (error) {
-        console.log('Auto-Restore fehlgeschlagen:', error);
+        logDebug('Auto-Restore fehlgeschlagen:', error);
       }
     };
     
@@ -68,17 +65,17 @@ export default function SchießnachweisPage() {
   
   const checkAndSyncFromCloud = async () => {
     try {
-      // Prüfe ob Premium und eingeloggt
-      if (await PremiumService.isPremium()) {
+      // Prüfe ob eingeloggt
+      if (true) {
         const cloudEinträge = await SchießnachweisService.loadFromCloudNow();
         if (cloudEinträge.length > 0) {
-          console.log('🔄 Automatisches Cloud-Sync:', cloudEinträge.length, 'Einträge');
+          logDebug('🔄 Automatisches Cloud-Sync:', cloudEinträge.length, 'Einträge');
           // Erzwinge Reload der Seite um neue Daten anzuzeigen
           window.location.reload();
         }
       }
     } catch (error) {
-      console.log('Cloud-Sync übersprungen:', error.message);
+      logDebug('Cloud-Sync übersprungen:', error.message);
     }
   };
 
@@ -88,7 +85,7 @@ export default function SchießnachweisPage() {
       const stats = await SchießnachweisService.getStatistik();
       setStatistik(stats);
     } catch (error) {
-      console.error('Fehler beim Laden der Statistik:', error);
+      logError('Fehler beim Laden der Statistik:', error);
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +94,7 @@ export default function SchießnachweisPage() {
   const handleExportExcel = async () => {
     try {
       const einträge = await SchießnachweisService.getEinträge();
-      console.log('Exportiere Einträge:', einträge.length, einträge);
+      logDebug('Exportiere Einträge:', einträge.length, einträge);
       
       if (einträge.length === 0) {
         toast({
@@ -109,7 +106,7 @@ export default function SchießnachweisPage() {
       }
       
       const csvData = convertToCSV(einträge);
-      console.log('CSV-Daten:', csvData);
+      logDebug('CSV-Daten:', csvData);
       
       const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -126,7 +123,7 @@ export default function SchießnachweisPage() {
         description: `${einträge.length} Einträge exportiert.`,
       });
     } catch (error) {
-      console.error('Excel-Export fehlgeschlagen:', error);
+      logError('Excel-Export fehlgeschlagen:', error);
       toast({
         title: "Export fehlgeschlagen",
         description: error instanceof Error ? error.message : "Unbekannter Fehler",
@@ -149,7 +146,7 @@ export default function SchießnachweisPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('ODS-Export fehlgeschlagen:', error);
+      logError('ODS-Export fehlgeschlagen:', error);
     }
   };
 
@@ -158,7 +155,7 @@ export default function SchießnachweisPage() {
     const csvRows = [headers.join(';')];
     
     einträge.forEach(eintrag => {
-      console.log('Verarbeite Eintrag:', eintrag);
+      logDebug('Verarbeite Eintrag:', eintrag);
       
       // Datum korrekt konvertieren
       let datumStr = '';
@@ -168,7 +165,7 @@ export default function SchießnachweisPage() {
           datumStr = format(datum, 'dd.MM.yyyy');
         }
       } catch (e) {
-        console.warn('Datum-Konvertierung fehlgeschlagen:', eintrag.datum);
+        logWarn('Datum-Konvertierung fehlgeschlagen:', eintrag.datum);
         datumStr = 'Ungültiges Datum';
       }
       
@@ -253,7 +250,7 @@ export default function SchießnachweisPage() {
       
       loadStatistik();
     } catch (error) {
-      console.error('Daten-Aktualisierung fehlgeschlagen:', error);
+      logError('Daten-Aktualisierung fehlgeschlagen:', error);
       toast({
         title: "Aktualisierung fehlgeschlagen",
         description: error instanceof Error ? error.message : "Unbekannter Fehler",
@@ -300,7 +297,7 @@ export default function SchießnachweisPage() {
         const datum = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
         
         if (isNaN(datum.getTime())) {
-          console.warn(`Ungültiges Datum in Zeile ${i + 1}: ${datumStr}`);
+          logWarn(`Ungültiges Datum in Zeile ${i + 1}: ${datumStr}`);
           continue;
         }
         
@@ -309,7 +306,7 @@ export default function SchießnachweisPage() {
         const ergebnis = parseFloat(ergebnisStr.replace(',', '.'));
         
         if (isNaN(schussAnzahl) || isNaN(ergebnis)) {
-          console.warn(`Ungültige Zahlen in Zeile ${i + 1}`);
+          logWarn(`Ungültige Zahlen in Zeile ${i + 1}`);
           continue;
         }
         
@@ -319,7 +316,7 @@ export default function SchießnachweisPage() {
           try {
             serien = JSON.parse(serienStr);
           } catch (e) {
-            console.warn(`Ungültige Serien-Daten in Zeile ${i + 1}`);
+            logWarn(`Ungültige Serien-Daten in Zeile ${i + 1}`);
           }
         }
         
@@ -349,7 +346,7 @@ export default function SchießnachweisPage() {
           importCount++;
         }
       } catch (error) {
-        console.warn(`Fehler in Zeile ${i + 1}:`, error);
+        logWarn(`Fehler in Zeile ${i + 1}:`, error);
       }
     }
     
@@ -464,7 +461,6 @@ export default function SchießnachweisPage() {
   }
 
   return (
-    <PremiumProvider>
       <div className="container mx-auto p-4 sm:p-6 max-w-6xl">
       <div className="text-center mb-6 sm:mb-8">
         <div className="flex justify-center items-center gap-2 sm:gap-3 mb-4">
@@ -617,8 +613,7 @@ export default function SchießnachweisPage() {
       </Card>
 
       
-      {/* Premium Status */}
-      <PremiumStatus className="mb-6 sm:mb-8" />
+
       
       {/* Backup & Export */}
       <Card className="mb-6 sm:mb-8">
@@ -719,6 +714,5 @@ export default function SchießnachweisPage() {
 
       <ScrollToTopButton />
       </div>
-    </PremiumProvider>
   );
 }

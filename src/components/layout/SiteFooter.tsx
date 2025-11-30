@@ -1,5 +1,6 @@
 // src/components/layout/SiteFooter.tsx
 import Link from 'next/link';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { APP_VERSION } from '@/lib/version';
 
 export function SiteFooter() {

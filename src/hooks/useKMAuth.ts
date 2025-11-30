@@ -1,5 +1,6 @@
 // src/hooks/useKMAuth.ts
 import { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useAuthContext } from '@/components/auth/AuthContext';
 
 export function useKMAuth() {

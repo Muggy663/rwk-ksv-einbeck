@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useForm } from 'react-hook-form';
 import { 
   Form, 
@@ -91,7 +92,7 @@ export function DocumentForm({ initialData, onSubmit, isSubmitting }: DocumentFo
       
       setUploadSuccess(true);
     } catch (error) {
-      console.error('Fehler beim Hochladen:', error);
+      logError('Fehler beim Hochladen:', error);
       setUploadError('Fehler beim Hochladen der Datei. Bitte versuchen Sie es erneut.');
     } finally {
       setUploading(false);

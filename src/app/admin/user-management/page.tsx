@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { UserCog, Info, Loader2, SaveIcon, Users as UsersIcon, HelpCircle, ListChecks, Search, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -88,7 +89,7 @@ export default function AdminUserManagementPage() {
         const fetchedClubs = clubsSnapshot.docs.map(docData => ({ id: docData.id, ...docData.data() } as Club));
         setAllClubs(fetchedClubs.filter(c => c.id && typeof c.id === 'string' && c.id.trim() !== ""));
       } catch (error) {
-        console.error("Error fetching clubs for user management:", error);
+        logError("Error fetching clubs for user management:", error);
         toast({ title: "Fehler beim Laden der Vereine", description: (error as Error).message, variant: "destructive" });
       } finally {
         setIsLoadingClubs(false);
@@ -146,7 +147,7 @@ export default function AdminUserManagementPage() {
         toast({title: "Neuer Benutzer?", description: `Keine Berechtigungen für UID ${uidToFetch.trim()} gefunden. Bitte E-Mail und Anzeigenamen eintragen.`, variant: "default"});
       }
     } catch (error) {
-      console.error("Error fetching existing user permissions:", error);
+      logError("Error fetching existing user permissions:", error);
       toast({ title: "Fehler", description: "Konnte bestehende Berechtigungen nicht laden.", variant: "destructive"});
     } finally {
       setIsFetchingDetails(false);
@@ -262,14 +263,14 @@ export default function AdminUserManagementPage() {
           
           // Setze emailVerified auf true für diesen User
           // Hinweis: Das funktioniert nur mit Admin SDK, nicht mit Client SDK
-          console.log('📧 E-Mail-Verifizierung für Premium-User:', formData.email);
+          logDebug('📧 E-Mail-Verifizierung für Premium-User:', formData.email);
           
           // Speichere Flag in Firestore dass E-Mail als verifiziert gilt
           permissionData.emailVerifiedByAdmin = true;
           permissionData.emailVerifiedAt = Timestamp.now();
           
         } catch (error) {
-          console.warn('E-Mail-Verifizierung fehlgeschlagen:', error);
+          logWarn('E-Mail-Verifizierung fehlgeschlagen:', error);
         }
       } else {
         permissionData.isPremium = false;
@@ -307,7 +308,7 @@ export default function AdminUserManagementPage() {
       setRefreshTrigger(prev => prev + 1);
 
     } catch (error: any) {
-      console.error("Error saving permissions:", error);
+      logError("Error saving permissions:", error);
       toast({ title: "Fehler beim Speichern", description: error.message || "Unbekannter Fehler.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
         .get();
       
       if (!existingQuery.empty) {
-        console.log(`Jahr ${jahrData.jahr} bereits als KK-Saison vorhanden, überspringe...`);
+        logDebug(`Jahr ${jahrData.jahr} bereits als KK-Saison vorhanden, überspringe...`);
         continue;
       }
 
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Fehler bei der Migration:', error);
+    logError('Fehler bei der Migration:', error);
     return NextResponse.json({
       success: false,
       error: `Migration fehlgeschlagen: ${error.message}`

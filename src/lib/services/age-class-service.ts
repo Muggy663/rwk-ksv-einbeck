@@ -1,4 +1,5 @@
 import { calculateAgeClass } from '@/types/rwk';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import type { Shooter } from '@/types/rwk';
 
 export function assignAgeClassToShooter(shooter: Shooter, competitionYear: number = 2026): string | null {

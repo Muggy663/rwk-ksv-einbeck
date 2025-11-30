@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -85,7 +86,7 @@ export default function StartgebührenPage() {
         const vereinName = vereinsMap[vereinId] || 'Unbekannt';
         
         if (!vereinId) {
-          console.log('Schütze ohne Verein:', schuetze);
+          logDebug('Schütze ohne Verein:', schuetze);
           return;
         }
         const disziplinName = disziplinenMap[meldung.disziplinId] || 'Unbekannt';
@@ -127,7 +128,7 @@ export default function StartgebührenPage() {
 
       setStartgebühren(startgebührenArray);
     } catch (error) {
-      console.error('Fehler beim Laden:', error);
+      logError('Fehler beim Laden:', error);
       toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden.', variant: 'destructive' });
     } finally {
       setLoading(false);
@@ -208,7 +209,7 @@ export default function StartgebührenPage() {
         description: `${fileName} wurde heruntergeladen. ${startgebühren.reduce((sum, sg) => sum + sg.gesamt, 0)} Starter insgesamt.` 
       });
     } catch (error) {
-      console.error('Excel-Export Fehler:', error);
+      logError('Excel-Export Fehler:', error);
       toast({ title: 'Fehler', description: 'Excel-Datei konnte nicht erstellt werden.', variant: 'destructive' });
     }
   };

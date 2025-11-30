@@ -1,6 +1,7 @@
 // src/app/admin/teams/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Users as TeamsIcon, Loader2, AlertTriangle, InfoIcon, ChevronDown, ChevronRight } from 'lucide-react';
@@ -122,7 +123,7 @@ export default function AdminTeamsPage() {
         setSelectedSeasonId(fetchedSeasons[0].id);
       }
     } catch (error) {
-      console.error("Error fetching initial data:", error);
+      logError("Error fetching initial data:", error);
       toast({ title: "Fehler beim Laden der Basisdaten", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingPageData(false);
@@ -216,7 +217,7 @@ export default function AdminTeamsPage() {
         toast({title: "Keine Mannschaften", description: "Für die gewählten Filter wurden keine Mannschaften gefunden."});
       }
     } catch (error) {
-      console.error("Error fetching teams:", error);
+      logError("Error fetching teams:", error);
       toast({ title: "Fehler beim Laden der Mannschaften", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingTeams(false);
@@ -294,7 +295,7 @@ export default function AdminTeamsPage() {
       });
       setAllTeamsForValidation(teamsForValidationData);
     } catch (error) {
-      console.error("Error fetching dialog data:", error);
+      logError("Error fetching dialog data:", error);
       toast({title: "Fehler Dialogdaten", description: (error as Error).message, variant: "destructive"});
     } finally {
       setIsLoadingDialogData(false);
@@ -369,7 +370,7 @@ export default function AdminTeamsPage() {
       toast({ title: "Mannschaft gelöscht", description: `"${teamToDelete.name}" wurde erfolgreich entfernt.` });
       handleSearchTeams(); 
     } catch (error) {
-      console.error("Error deleting team:", error);
+      logError("Error deleting team:", error);
       toast({ title: "Fehler beim Löschen", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsDeletingTeam(false);
@@ -433,7 +434,7 @@ export default function AdminTeamsPage() {
           const shooters = await Promise.all(shooterPromises);
           setTeamShooters(prev => new Map(prev).set(teamId, shooters));
         } catch (error) {
-          console.error('Fehler beim Laden der Schützen:', error);
+          logError('Fehler beim Laden der Schützen:', error);
           toast({ title: "Fehler", description: "Schützen konnten nicht geladen werden.", variant: "destructive" });
         } finally {
           setLoadingShooters(prev => {
@@ -814,7 +815,7 @@ export default function AdminTeamsPage() {
                   const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
                   await updateDoc(shooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
                 } catch (error) {
-                  console.error(`Error adding team to shooter ${shooterId}:`, error);
+                  logError(`Error adding team to shooter ${shooterId}:`, error);
                 }
               }
               
@@ -823,7 +824,7 @@ export default function AdminTeamsPage() {
                   const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
                   await updateDoc(shooterDocRef, { teamIds: arrayRemove(teamIdForShooterUpdates) });
                 } catch (error) {
-                  console.error(`Error removing team from shooter ${shooterId}:`, error);
+                  logError(`Error removing team from shooter ${shooterId}:`, error);
                 }
               }
               
@@ -836,7 +837,7 @@ export default function AdminTeamsPage() {
               setExpandedTeams(new Set());
               handleSearchTeams();
             } catch (error: any) {
-              console.error("Error saving team or updating shooters:", error);
+              logError("Error saving team or updating shooters:", error);
               toast({ title: `Fehler beim aktualisieren`, description: error.message || "Unbekannter Fehler", variant: "destructive" });
             } finally {
               setIsSubmittingForm(false);

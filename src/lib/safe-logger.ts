@@ -35,19 +35,19 @@ export const safeLog = {
   info: (message: string, data?: any) => {
     const safeMessage = sanitizeForLog(message);
     const safeData = data ? sanitizeForLog(data) : '';
-    console.log(`ℹ️ ${safeMessage}`, safeData);
+    logDebug(`ℹ️ ${safeMessage}`, safeData);
   },
   
   warn: (message: string, data?: any) => {
     const safeMessage = sanitizeForLog(message);
     const safeData = data ? sanitizeForLog(data) : '';
-    console.warn(`⚠️ ${safeMessage}`, safeData);
+    logWarn(`⚠️ ${safeMessage}`, safeData);
   },
   
   error: (message: string, data?: any) => {
     const safeMessage = sanitizeForLog(message);
     const safeData = data ? sanitizeForLog(data) : '';
-    console.error(`❌ ${safeMessage}`, safeData);
+    logError(`❌ ${safeMessage}`, safeData);
   },
   
   debug: (message: string, data?: any) => {
@@ -90,5 +90,5 @@ export const securityLog = {
 
 // Entwicklungs-Hinweis
 if (process.env.NODE_ENV === 'development') {
-  console.log('🔒 Safe Logger initialized - Use safeLog instead of console.log for user input');
+  logDebug('🔒 Safe Logger initialized - Use safeLog instead of console.log for user input');
 }

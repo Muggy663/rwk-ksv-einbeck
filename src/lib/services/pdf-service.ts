@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import 'jspdf-autotable';
 import { LeagueDisplay, TeamDisplay } from '@/types/rwk';
 import { format } from 'date-fns';

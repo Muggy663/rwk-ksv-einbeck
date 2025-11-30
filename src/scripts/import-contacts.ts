@@ -1,5 +1,6 @@
 // Import Script für E-Mail-Verteiler
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 
 const emailList = `
@@ -39,7 +40,7 @@ function parseEmailList(emailString: string): Contact[] {
       email = entry.trim();
       name = email.split('@')[0]; // Use part before @ as name
     } else {
-      console.warn('Could not parse:', entry);
+      logWarn('Could not parse:', entry);
       return;
     }
     
@@ -84,7 +85,7 @@ export async function importContacts() {
         skipped++;
       }
     } catch (error) {
-      console.error(`❌ Fehler bei ${contact.email}:`, error);
+      logError(`❌ Fehler bei ${contact.email}:`, error);
     }
   }
   

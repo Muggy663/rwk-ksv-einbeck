@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -8,8 +9,7 @@ import { ArrowLeft, TrendingUp, Calendar, Target, Trophy, Download, Crown, Lock 
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
 import { SchießEintrag, DISZIPLIN_NAMES } from "@/types/schiessnachweis";
-import { PremiumService } from "@/lib/services/premium-service";
-import { PremiumStatisticsService } from "@/lib/services/premium-statistics-service";
+
 import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
@@ -22,11 +22,7 @@ export default function StatistikenPage() {
   const [filterDisziplin, setFilterDisziplin] = useState<string>("alle");
   const [filterZeitraum, setFilterZeitraum] = useState<string>("12monate");
   const [isLoading, setIsLoading] = useState(true);
-  const [isPremium, setIsPremium] = useState(false);
-  
-  useEffect(() => {
-    setIsPremium(PremiumService.isPremium());
-  }, []);
+  const isPremium = false; // Premium entfernt
 
   useEffect(() => {
     loadData();
@@ -38,7 +34,7 @@ export default function StatistikenPage() {
       const data = await SchießnachweisService.getEinträge();
       setEinträge(data);
     } catch (error) {
-      console.error('Fehler beim Laden der Daten:', error);
+      logError('Fehler beim Laden der Daten:', error);
     } finally {
       setIsLoading(false);
     }
@@ -165,7 +161,7 @@ export default function StatistikenPage() {
 
   const handleExportStatistik = () => {
     // Hier könnte PDF-Export implementiert werden
-    console.log('Export Statistik');
+    logDebug('Export Statistik');
   };
 
   const leistungsdaten = getLeistungsentwicklung();

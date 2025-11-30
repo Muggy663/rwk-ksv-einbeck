@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Document } from '@/lib/services/document-service';
 import { Button } from '@/components/ui/button';
@@ -46,7 +47,7 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
     try {
       await fetch(`/api/documents/${document.id}/download`, { method: 'POST' });
     } catch (err) {
-      console.warn('Download-Tracking fehlgeschlagen:', err);
+      logWarn('Download-Tracking fehlgeschlagen:', err);
     }
   };
   
@@ -94,7 +95,7 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
         document.body.removeChild(link);
       }
     } catch (error) {
-      console.error('Fehler beim Herunterladen:', error);
+      logError('Fehler beim Herunterladen:', error);
       // Fallback bei Fehler
       window.open(documentPath, '_blank');
     }
@@ -127,7 +128,7 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
           const { Browser } = await import('@capacitor/browser');
           await Browser.open({ url: fullPath });
         } catch (capacitorError) {
-          console.error('Capacitor Browser Fehler:', capacitorError);
+          logError('Capacitor Browser Fehler:', capacitorError);
           // Fallback
           window.open(fullPath, '_system');
         }
@@ -136,7 +137,7 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
         window.open(fullPath, '_blank');
       }
     } catch (error) {
-      console.error('Fehler beim Öffnen im Browser:', error);
+      logError('Fehler beim Öffnen im Browser:', error);
     }
   };
   
@@ -176,7 +177,7 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
         await openWithAppChooser(fullPath);
       }
     } catch (error) {
-      console.error('Fehler beim Öffnen mit App:', error);
+      logError('Fehler beim Öffnen mit App:', error);
       // Fallback bei Fehler
       window.open(documentPath, '_blank');
     }

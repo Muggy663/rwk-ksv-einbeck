@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,7 +75,7 @@ export default function EintragBearbeitenPage() {
         setShowOptionalFields(true);
       }
     } catch (error) {
-      console.error('Fehler beim Laden des Eintrags:', error);
+      logError('Fehler beim Laden des Eintrags:', error);
       toast({
         title: "Fehler",
         description: "Eintrag konnte nicht geladen werden.",
@@ -90,7 +91,7 @@ export default function EintragBearbeitenPage() {
 
     setIsSaving(true);
     try {
-      console.log('Speichere Eintrag mit Standort:', eintrag.standort);
+      logDebug('Speichere Eintrag mit Standort:', eintrag.standort);
       const updated = SchießnachweisService.updateEintrag(eintrag.id, {
         datum: eintrag.datum,
         typ: eintrag.typ,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { GoogleGenAI } from '@google/genai';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
@@ -38,7 +39,7 @@ Gib eine kurze Einschätzung (max 50 Wörter):
     });
 
   } catch (error) {
-    console.error('Gemini plausibility error:', error);
+    logError('Gemini plausibility error:', error);
     return NextResponse.json({ 
       error: 'Analysis failed',
       fallback: 'Große Abweichung vom Durchschnitt - bitte Ergebnisse prüfen.'

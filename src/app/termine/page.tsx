@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { AlertCircle, CalendarPlus, Download, FileDown, Pencil } from 'lucide-react';
@@ -58,7 +59,7 @@ export default function TerminePage() {
           }
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Saisons:', error);
+        logError('Fehler beim Laden der Saisons:', error);
         setSeasons([]);
       }
     };
@@ -78,7 +79,7 @@ export default function TerminePage() {
         const leaguesData = await fetchLeagues(selectedSeason);
         setLeagues(leaguesData || []);
       } catch (error) {
-        console.error('Fehler beim Laden der Ligen:', error);
+        logError('Fehler beim Laden der Ligen:', error);
         setLeagues([]);
       }
     };
@@ -99,7 +100,7 @@ export default function TerminePage() {
 
         }
       } catch (error) {
-        console.error('Fehler bei der automatischen Bereinigung:', error);
+        logError('Fehler bei der automatischen Bereinigung:', error);
       }
       
       try {
@@ -127,7 +128,7 @@ export default function TerminePage() {
         }).slice(0, 3);
         
       } catch (error) {
-        console.error('Fehler beim Laden der Termine:', error);
+        logError('Fehler beim Laden der Termine:', error);
         toast({
           title: 'Fehler',
           description: 'Die Termine konnten nicht geladen werden.',
@@ -153,7 +154,7 @@ export default function TerminePage() {
         );
         setSelectedEvents(filteredEvents);
       } catch (error) {
-        console.error('Fehler beim Filtern der Termine:', error);
+        logError('Fehler beim Filtern der Termine:', error);
         setSelectedEvents([]);
       }
     } else {
@@ -168,7 +169,7 @@ export default function TerminePage() {
     try {
       return events.some(event => event.date && isSameDay(event.date, date));
     } catch (error) {
-      console.error('Fehler beim Prüfen auf Termine:', error);
+      logError('Fehler beim Prüfen auf Termine:', error);
       return false;
     }
   };
@@ -205,7 +206,7 @@ export default function TerminePage() {
         description: 'Der Termin wurde als iCal-Datei exportiert.',
       });
     } catch (error) {
-      console.error('Fehler beim Exportieren des Termins:', error);
+      logError('Fehler beim Exportieren des Termins:', error);
       toast({
         title: 'Fehler',
         description: 'Der Termin konnte nicht exportiert werden.',
@@ -257,7 +258,7 @@ export default function TerminePage() {
         description: `${validEvents.length} Termine wurden als iCal-Datei exportiert.`,
       });
     } catch (error) {
-      console.error('Fehler beim Exportieren der Termine:', error);
+      logError('Fehler beim Exportieren der Termine:', error);
       toast({
         title: 'Fehler',
         description: 'Die Termine konnten nicht exportiert werden.',

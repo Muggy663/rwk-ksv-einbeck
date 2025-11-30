@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -95,7 +96,7 @@ export default function SharedResultsPage({
       setAllShootersFromDB(shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Shooter)).filter(s => s.id));
 
     } catch (error) {
-      console.error("Error fetching master data: ", error);
+      logError("Error fetching master data: ", error);
       toast({ title: "Fehler beim Laden der Stammdaten", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingMasterData(false);
@@ -179,7 +180,7 @@ export default function SharedResultsPage({
           
           setAllTeamsInSelectedLeague(filteredTeams);
         } catch (error) {
-          console.error("Error fetching teams:", error);
+          logError("Error fetching teams:", error);
           toast({ title: "Fehler Teams laden", description: (error as Error).message, variant: "destructive" });
           setAllTeamsInSelectedLeague([]);
         } finally {

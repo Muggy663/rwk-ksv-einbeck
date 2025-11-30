@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
 
 export interface Protest {
@@ -69,7 +70,7 @@ class ProtestService {
       
       return docRef.id;
     } catch (error) {
-      console.error('Fehler beim Einreichen des Protests:', error);
+      logError('Fehler beim Einreichen des Protests:', error);
       throw error;
     }
   }
@@ -99,7 +100,7 @@ class ProtestService {
         })) || []
       })) as Protest[];
     } catch (error) {
-      console.error('Fehler beim Laden der Proteste:', error);
+      logError('Fehler beim Laden der Proteste:', error);
       throw error;
     }
   }
@@ -130,7 +131,7 @@ class ProtestService {
         })) || []
       })) as Protest[];
     } catch (error) {
-      console.error('Fehler beim Laden der Benutzer-Proteste:', error);
+      logError('Fehler beim Laden der Benutzer-Proteste:', error);
       throw error;
     }
   }
@@ -168,7 +169,7 @@ class ProtestService {
       // TODO: Push-Notification an Einreicher senden
 
     } catch (error) {
-      console.error('Fehler beim Aktualisieren des Protest-Status:', error);
+      logError('Fehler beim Aktualisieren des Protest-Status:', error);
       throw error;
     }
   }
@@ -213,7 +214,7 @@ class ProtestService {
 
 
     } catch (error) {
-      console.error('Fehler beim Hinzufügen des Kommentars:', error);
+      logError('Fehler beim Hinzufügen des Kommentars:', error);
       throw error;
     }
   }
@@ -226,7 +227,7 @@ class ProtestService {
       await deleteDoc(doc(db, this.collection, protestId));
 
     } catch (error) {
-      console.error('Fehler beim Löschen des Protests:', error);
+      logError('Fehler beim Löschen des Protests:', error);
       throw error;
     }
   }
@@ -252,7 +253,7 @@ class ProtestService {
         abgelehnt: protests.filter(p => p.status === 'abgelehnt').length
       };
     } catch (error) {
-      console.error('Fehler beim Laden der Protest-Statistiken:', error);
+      logError('Fehler beim Laden der Protest-Statistiken:', error);
       throw error;
     }
   }

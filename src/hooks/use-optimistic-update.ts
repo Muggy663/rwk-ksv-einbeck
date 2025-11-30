@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useCallback } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 interface OptimisticUpdateOptions<T> {
   onSuccess?: (data: T) => void;

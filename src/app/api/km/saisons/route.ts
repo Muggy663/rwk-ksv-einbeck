@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
       data: saisons
     });
   } catch (error) {
-    console.error('Fehler beim Laden der Saisons:', error);
+    logError('Fehler beim Laden der Saisons:', error);
     return NextResponse.json({
       success: false,
       error: error.message

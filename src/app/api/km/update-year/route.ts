@@ -1,5 +1,6 @@
 // src/app/api/km/update-year/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
 export async function POST(request: NextRequest) {
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Update error:', error);
+    logError('❌ Update error:', error);
     return NextResponse.json({
       success: false,
       error: error.message

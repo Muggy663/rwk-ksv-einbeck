@@ -1,5 +1,6 @@
 // src/app/impressum/page.tsx
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Separator } from '@/components/ui/separator';
 import { Book } from 'lucide-react';
 

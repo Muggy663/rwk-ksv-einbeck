@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -53,7 +54,7 @@ export function PasswordResetForm({ onBack }: PasswordResetFormProps) {
         description: "Eine Anleitung zum Zurücksetzen Ihres Passworts wurde an Ihre E-Mail-Adresse gesendet.",
       });
     } catch (error: any) {
-      console.error('Password reset error:', error);
+      logError('Password reset error:', error);
       
       // Handle specific Firebase Auth errors
       if (error.code === 'auth/user-not-found') {

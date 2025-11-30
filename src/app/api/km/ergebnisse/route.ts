@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
       data: ergebnisse
     });
   } catch (error) {
-    console.error('Fehler beim Laden der KM-Ergebnisse:', error);
+    logError('Fehler beim Laden der KM-Ergebnisse:', error);
     return NextResponse.json({
       success: false,
       error: error.message
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
       created
     });
   } catch (error) {
-    console.error('Fehler beim Speichern des KM-Ergebnisses:', error);
+    logError('Fehler beim Speichern des KM-Ergebnisses:', error);
     return NextResponse.json({
       success: false,
       error: error.message

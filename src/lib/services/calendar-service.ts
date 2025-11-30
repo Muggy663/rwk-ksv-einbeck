@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 
@@ -69,7 +70,7 @@ export async function fetchEvents(
       try {
         eventDate = data.date?.toDate();
       } catch (error) {
-        console.error("Fehler beim Konvertieren des Datums:", error);
+        logError("Fehler beim Konvertieren des Datums:", error);
         eventDate = new Date();
       }
       
@@ -93,7 +94,7 @@ export async function fetchEvents(
     
     return events;
   } catch (error) {
-    console.error('Fehler beim Laden der Termine:', error);
+    logError('Fehler beim Laden der Termine:', error);
     return [];
   }
 }
@@ -114,7 +115,7 @@ export async function createEvent(event: Omit<Event, 'id' | 'createdAt'>): Promi
     const docRef = await addDoc(collection(db, 'events'), eventData);
     return docRef.id;
   } catch (error) {
-    console.error('Fehler beim Erstellen des Termins:', error);
+    logError('Fehler beim Erstellen des Termins:', error);
     return null;
   }
 }
@@ -136,7 +137,7 @@ export async function updateEvent(id: string, event: Partial<Event>): Promise<bo
     await updateDoc(doc(db, 'events', id), eventData);
     return true;
   } catch (error) {
-    console.error('Fehler beim Aktualisieren des Termins:', error);
+    logError('Fehler beim Aktualisieren des Termins:', error);
     return false;
   }
 }
@@ -151,7 +152,7 @@ export async function deleteEvent(id: string): Promise<boolean> {
     await deleteDoc(doc(db, 'events', id));
     return true;
   } catch (error) {
-    console.error('Fehler beim Löschen des Termins:', error);
+    logError('Fehler beim Löschen des Termins:', error);
     return false;
   }
 }
@@ -179,7 +180,7 @@ export function generateICalEvent(event: Event): string {
       endHours = hours + 2;
       minutes = mins;
     } catch (error) {
-      console.error('Fehler beim Parsen der Zeit:', error);
+      logError('Fehler beim Parsen der Zeit:', error);
       endHours = 2;
       minutes = 0;
     }
@@ -208,7 +209,7 @@ export function generateICalEvent(event: Event): string {
     
     return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//RWK Einbeck App//DE\nCALSCALE:GREGORIAN\nBEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${dateStart}T${timeStart}\nDTEND:${dateStart}T${timeEnd}\nLOCATION:${location}\nDESCRIPTION:${description}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT\nEND:VCALENDAR`;
   } catch (error) {
-    console.error('Fehler beim Generieren des iCal-Events:', error);
+    logError('Fehler beim Generieren des iCal-Events:', error);
     throw error;
   }
 }
@@ -248,7 +249,7 @@ export function generateICalFile(events: Event[]): string {
           endHours = hours + 2;
           minutes = mins;
         } catch (error) {
-          console.error('Fehler beim Parsen der Zeit:', error);
+          logError('Fehler beim Parsen der Zeit:', error);
           endHours = 2;
           minutes = 0;
         }
@@ -268,7 +269,7 @@ export function generateICalFile(events: Event[]): string {
         
         icalContent += `BEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${dateStart}T${timeStart}\nDTEND:${dateStart}T${timeEnd}\nLOCATION:${location}\nDESCRIPTION:${description}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT\n`;
       } catch (error) {
-        console.error('Fehler beim Verarbeiten eines Events für iCal:', error);
+        logError('Fehler beim Verarbeiten eines Events für iCal:', error);
         // Einzelnes Event überspringen, aber weitermachen
         continue;
       }
@@ -278,7 +279,7 @@ export function generateICalFile(events: Event[]): string {
     
     return icalContent;
   } catch (error) {
-    console.error('Fehler beim Generieren der iCal-Datei:', error);
+    logError('Fehler beim Generieren der iCal-Datei:', error);
     throw error;
   }
 }

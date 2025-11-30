@@ -1,5 +1,6 @@
 // src/app/api/km/fix-schuetze-links/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Fix error:', error);
+    logError('❌ Fix error:', error);
     return NextResponse.json({
       success: false,
       error: error.message

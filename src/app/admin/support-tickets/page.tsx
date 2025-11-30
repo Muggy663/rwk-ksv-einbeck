@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -62,7 +63,7 @@ export default function SupportTicketsPage() {
         });
         setTickets(fetchedTickets);
       } catch (error) {
-        console.error("Error fetching support tickets:", error);
+        logError("Error fetching support tickets:", error);
       } finally {
         setLoading(false);
       }
@@ -88,7 +89,7 @@ export default function SupportTicketsPage() {
         setSelectedTicket({ ...selectedTicket, status: newStatus as SupportTicket['status'] });
       }
     } catch (error) {
-      console.error("Error updating ticket status:", error);
+      logError("Error updating ticket status:", error);
     } finally {
       setUpdatingStatus(false);
     }
@@ -112,7 +113,7 @@ export default function SupportTicketsPage() {
         setSelectedTicket(null);
       }
     } catch (error) {
-      console.error("Error deleting ticket:", error);
+      logError("Error deleting ticket:", error);
       alert('Fehler beim Löschen des Tickets.');
     } finally {
       setDeletingTicket(null);

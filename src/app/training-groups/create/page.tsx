@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +40,7 @@ export default function CreateGroupPage() {
     setIsCreating(true);
     
     try {
-      console.log('📎 Gruppen-Erstellung gestartet');
+      logDebug('📎 Gruppen-Erstellung gestartet');
       
       const { auth } = await import('@/lib/firebase/config');
       
@@ -64,7 +65,7 @@ export default function CreateGroupPage() {
       // Redirect zur Gruppen-Übersicht
       window.location.href = '/training-groups';
     } catch (error) {
-      console.error('Fehler beim Erstellen der Gruppe:', error);
+      logError('Fehler beim Erstellen der Gruppe:', error);
       toast({
         title: "Fehler",
         description: `Die Gruppe konnte nicht erstellt werden: ${error.message || error}`,

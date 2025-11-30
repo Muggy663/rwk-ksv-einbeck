@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -79,7 +80,7 @@ export function PasswordChangeForm() {
         throw new Error("Passwortänderung ist nicht verfügbar");
       }
     } catch (error: any) {
-      console.error("Fehler beim Ändern des Passworts:", error);
+      logError("Fehler beim Ändern des Passworts:", error);
       
       let errorMessage = "Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.";
       

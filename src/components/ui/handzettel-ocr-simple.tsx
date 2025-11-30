@@ -91,7 +91,7 @@ export function HandzettelOCR({
               type: 'image/jpeg',
               lastModified: Date.now()
             })
-            console.log(`📱 Bild komprimiert: ${Math.round(file.size/1024)}KB → ${Math.round(compressedFile.size/1024)}KB`)
+            logDebug(`📱 Bild komprimiert: ${Math.round(file.size/1024)}KB → ${Math.round(compressedFile.size/1024)}KB`)
             resolve(compressedFile)
           } else {
             resolve(file)
@@ -109,7 +109,7 @@ export function HandzettelOCR({
     
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     
-    console.log('🤖 Gemini Erkennung gestartet:', imageFile.name)
+    logDebug('🤖 Gemini Erkennung gestartet:', imageFile.name)
     setIsProcessing(true)
     setProgress(0)
     
@@ -130,9 +130,9 @@ export function HandzettelOCR({
       
       // Mobile Debug Info
       if (isMobile) {
-        console.log('📱 Mobile Debug - Original:', Math.round(imageFile.size/1024), 'KB')
-        console.log('📱 Mobile Debug - Komprimiert:', Math.round(processedImage.size/1024), 'KB')
-        console.log('📱 Mobile Debug - Teams:', availableTeams.length)
+        logDebug('📱 Mobile Debug - Original:', Math.round(imageFile.size/1024), 'KB')
+        logDebug('📱 Mobile Debug - Komprimiert:', Math.round(processedImage.size/1024), 'KB')
+        logDebug('📱 Mobile Debug - Teams:', availableTeams.length)
       }
       
       // Versuche Gemini OCR mit Timeout
@@ -166,7 +166,7 @@ export function HandzettelOCR({
         clearTimeout(timeoutId)
         
         if (isMobile) {
-          console.log('📱 Mobile Debug - Response Status:', geminiResponse.status)
+          logDebug('📱 Mobile Debug - Response Status:', geminiResponse.status)
           setCurrentStep(`📱 Response: ${geminiResponse.status}`)
         }
         
@@ -180,23 +180,23 @@ export function HandzettelOCR({
             setProgress(80)
             
             matches = await processGeminiResults(geminiData.results)
-            console.log('✅ Gemini Erkennung erfolgreich:', matches.length, 'Matches')
+            logDebug('✅ Gemini Erkennung erfolgreich:', matches.length, 'Matches')
             geminiSuccess = true
           } else {
-            console.warn('⚠️ Gemini lieferte keine Ergebnisse')
+            logWarn('⚠️ Gemini lieferte keine Ergebnisse')
             if (isMobile) {
               setCurrentStep(`📱 Keine Ergebnisse: ${geminiData.error || 'Unbekannt'}`)
             }
           }
         } else {
           const errorText = await geminiResponse.text().catch(() => 'Unbekannter Fehler')
-          console.warn('⚠️ Gemini API Fehler:', geminiResponse.status)
+          logWarn('⚠️ Gemini API Fehler:', geminiResponse.status)
           if (isMobile) {
             setCurrentStep(`📱 API Fehler: ${geminiResponse.status}`)
           }
         }
       } catch (geminiError) {
-        console.warn('⚠️ Gemini Erkennung fehlgeschlagen:', geminiError)
+        logWarn('⚠️ Gemini Erkennung fehlgeschlagen:', geminiError)
         
         let errorMsg = 'Unbekannter Fehler'
         if (geminiError instanceof Error) {
@@ -241,7 +241,7 @@ export function HandzettelOCR({
       onOCRComplete(matches)
       
     } catch (error) {
-      console.error('❌ Erkennungs-Fehler:', error)
+      logError('❌ Erkennungs-Fehler:', error)
       
       let errorMessage = error instanceof Error ? error.message : 'Automatisches Auslesen fehlgeschlagen'
       
@@ -282,7 +282,7 @@ export function HandzettelOCR({
         }
       }
     } catch (error) {
-      console.error(`Fehler bei Schütze ${shooterId}:`, error)
+      logError(`Fehler bei Schütze ${shooterId}:`, error)
     }
     
     return null
@@ -306,7 +306,7 @@ export function HandzettelOCR({
     
     // Begrenze Gemini-Ergebnisse auf maximal 25 pro Durchgang
     const limitedResults = geminiResults.slice(0, 25)
-    console.log(`🔄 Gemini lieferte ${geminiResults.length} Ergebnisse, verwende ${limitedResults.length}`)
+    logDebug(`🔄 Gemini lieferte ${geminiResults.length} Ergebnisse, verwende ${limitedResults.length}`)
     
     // Sammle alle Schützen-IDs aus Teams
     const allShooterIds = new Set<string>()

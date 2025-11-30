@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 interface ReCaptchaProps {
   onVerify: (token: string | null) => void;
@@ -34,7 +35,7 @@ export function ReCaptcha({ onVerify }: ReCaptchaProps) {
           });
           setIsLoaded(true);
         } catch (error) {
-          console.warn('reCAPTCHA render error:', error);
+          logWarn('reCAPTCHA render error:', error);
         }
       }
     };

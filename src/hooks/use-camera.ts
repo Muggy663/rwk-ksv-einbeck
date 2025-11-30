@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 interface CameraCapabilities {
   hasCamera: boolean;
@@ -56,7 +57,7 @@ export function useCamera(options: UseCameraOptions = {}) {
         supportedConstraints
       };
     } catch (err) {
-      console.error('Error checking camera capabilities:', err);
+      logError('Error checking camera capabilities:', err);
       return {
         hasCamera: false,
         hasTorch: false,
@@ -134,7 +135,7 @@ export function useCamera(options: UseCameraOptions = {}) {
       });
       setFlashEnabled(!flashEnabled);
     } catch (err) {
-      console.error('Error toggling flash:', err);
+      logError('Error toggling flash:', err);
       setError('Flash konnte nicht umgeschaltet werden');
     }
   }, [flashEnabled, capabilities]);

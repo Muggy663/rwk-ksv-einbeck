@@ -1,5 +1,6 @@
 // src/app/dokumente/DocumentCard.tsx
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Download, Calendar, Info, Eye, Lock, ExternalLink, Share2 } from 'lucide-react';
@@ -101,7 +102,7 @@ export function DocumentCard({ document }: { document: Document }) {
                       try {
                         // Tracking zuerst
                         await fetch(`/api/documents/${document.id}/download`, { method: 'POST' })
-                          .catch(err => console.warn('Download-Tracking fehlgeschlagen:', err));
+                          .catch(err => logWarn('Download-Tracking fehlgeschlagen:', err));
                         
                         // Stelle sicher, dass die URL absolut ist
                         let fullPath = documentPath;
@@ -127,7 +128,7 @@ export function DocumentCard({ document }: { document: Document }) {
                           downloadFile(documentPath, document.title + '.pdf');
                         }
                       } catch (error) {
-                        console.error('Fehler beim Herunterladen:', error);
+                        logError('Fehler beim Herunterladen:', error);
                         // Fallback bei Fehler
                         window.open(documentPath, '_blank');
                       }

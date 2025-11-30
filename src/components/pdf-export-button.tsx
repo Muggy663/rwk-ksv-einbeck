@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown } from 'lucide-react';
 import { generateLeaguePDF, generateShootersPDF } from '@/lib/services/pdf-service';
@@ -81,7 +82,7 @@ export function PDFExportButton({
         description: 'Die PDF-Datei wurde erfolgreich erstellt und heruntergeladen.',
       });
     } catch (error) {
-      console.error('Fehler beim Erstellen der PDF:', error);
+      logError('Fehler beim Erstellen der PDF:', error);
       toast({
         title: 'Fehler',
         description: 'Die PDF-Datei konnte nicht erstellt werden.',

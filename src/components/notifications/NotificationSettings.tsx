@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -50,7 +51,7 @@ export function NotificationSettings() {
         description: 'Sie erhalten jetzt Push-Benachrichtigungen für ausgewählte Ereignisse.',
       });
     } catch (error) {
-      console.error('Subscription error:', error);
+      logError('Subscription error:', error);
       toast({
         title: 'Fehler',
         description: 'Benachrichtigungen konnten nicht aktiviert werden.',
@@ -73,7 +74,7 @@ export function NotificationSettings() {
         description: 'Sie erhalten keine Push-Benachrichtigungen mehr.',
       });
     } catch (error) {
-      console.error('Unsubscription error:', error);
+      logError('Unsubscription error:', error);
       toast({
         title: 'Fehler',
         description: 'Benachrichtigungen konnten nicht deaktiviert werden.',

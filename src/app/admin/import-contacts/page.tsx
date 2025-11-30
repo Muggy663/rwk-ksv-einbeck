@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, Users } from 'lucide-react';
@@ -80,7 +81,7 @@ export default function ImportContactsPage() {
             skipped++;
           }
         } catch (error) {
-          console.error(`❌ Fehler bei ${contact.email}:`, error);
+          logError(`❌ Fehler bei ${contact.email}:`, error);
         }
       }
       
@@ -91,7 +92,7 @@ export default function ImportContactsPage() {
       
       setImportResult(`✅ Import abgeschlossen: ${imported} importiert, ${skipped} übersprungen`);
     } catch (error) {
-      console.error('Import-Fehler:', error);
+      logError('Import-Fehler:', error);
       toast({
         title: 'Import-Fehler',
         description: 'Fehler beim Importieren der Kontakte.',

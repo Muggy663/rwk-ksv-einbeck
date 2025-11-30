@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, query, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -37,7 +38,7 @@ export async function fetchLatestUpdates(count: number = 5): Promise<Update[]> {
       };
     });
   } catch (error) {
-    console.error('Fehler beim Laden der letzten Updates:', error);
+    logError('Fehler beim Laden der letzten Updates:', error);
     
     // Fallback zu Beispieldaten, falls ein Fehler auftritt
     return [

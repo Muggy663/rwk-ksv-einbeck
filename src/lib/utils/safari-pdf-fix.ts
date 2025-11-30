@@ -57,7 +57,7 @@ export async function downloadPDFSafari(blob: Blob, fileName: string): Promise<v
         }, 1000);
         
       } catch (downloadError) {
-        console.warn('Safari Download fehlgeschlagen:', downloadError);
+        logWarn('Safari Download fehlgeschlagen:', downloadError);
         
         // Fallback: Öffne in neuem Tab
         window.open(url, '_blank');
@@ -68,7 +68,7 @@ export async function downloadPDFSafari(blob: Blob, fileName: string): Promise<v
       }
     }
   } catch (error) {
-    console.error('Safari PDF Download Fehler:', error);
+    logError('Safari PDF Download Fehler:', error);
     throw error;
   }
 }

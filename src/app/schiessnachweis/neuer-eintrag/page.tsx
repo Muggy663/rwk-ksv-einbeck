@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,14 +78,14 @@ export default function NeuerEintragPage() {
       const groups = await TrainingGroupsService.getUserGroups(user.uid);
       setUserGroups(groups);
     } catch (error) {
-      console.error('Error loading groups:', error);
+      logError('Error loading groups:', error);
     }
   };
   
   useEffect(() => {
     if (formData.kategorie) {
       const disziplinen = getDisziplinenByKategorie(formData.kategorie);
-      console.log('Kategorie:', formData.kategorie, 'Disziplinen:', disziplinen);
+      logDebug('Kategorie:', formData.kategorie, 'Disziplinen:', disziplinen);
       setAvailableDisziplinen(disziplinen.map(d => d.name));
       setFormData(prev => ({ ...prev, disziplin: '' }));
     } else {
@@ -159,16 +160,16 @@ export default function NeuerEintragPage() {
     
     try {
       // Debug: Prüfe Ergebnis-Felder
-      console.log('🔍 Debug - ergebnisGanzeRinge:', formData.ergebnisGanzeRinge);
-      console.log('🔍 Debug - ergebnis (Zehntel):', formData.ergebnis);
-      console.log('🔍 Debug - selectedGroupId:', selectedGroupId);
-      console.log('🔍 Debug - socialTraining:', socialTraining);
+      logDebug('🔍 Debug - ergebnisGanzeRinge:', formData.ergebnisGanzeRinge);
+      logDebug('🔍 Debug - ergebnis (Zehntel):', formData.ergebnis);
+      logDebug('🔍 Debug - selectedGroupId:', selectedGroupId);
+      logDebug('🔍 Debug - socialTraining:', socialTraining);
       
       const ganzeRinge = parseFloat(formData.ergebnisGanzeRinge);
       const zehntelErgebnis = formData.ergebnis ? parseFloat(formData.ergebnis) : undefined;
       
-      console.log('🔍 Parsed - ganzeRinge:', ganzeRinge);
-      console.log('🔍 Parsed - zehntelErgebnis:', zehntelErgebnis);
+      logDebug('🔍 Parsed - ganzeRinge:', ganzeRinge);
+      logDebug('🔍 Parsed - zehntelErgebnis:', zehntelErgebnis);
       
       // Verwende Unified Training Service für nahtlose Integration
       const result = await UnifiedTrainingService.saveTrainingResult({
@@ -191,18 +192,18 @@ export default function NeuerEintragPage() {
         proofType: 'verified'
       });
       
-      console.log('✅ Ergebnis gespeichert:', result);
+      logDebug('✅ Ergebnis gespeichert:', result);
       
       // Debug: Prüfe ob Social Training Ergebnis erstellt wurde
       if (result.socialTraining) {
-        console.log('✅ Social Training Ergebnis ID:', result.socialTraining.id);
-        console.log('✅ Social Training groupId:', result.socialTraining.groupId);
+        logDebug('✅ Social Training Ergebnis ID:', result.socialTraining.id);
+        logDebug('✅ Social Training groupId:', result.socialTraining.groupId);
       } else {
-        console.log('❌ Kein Social Training Ergebnis erstellt');
+        logDebug('❌ Kein Social Training Ergebnis erstellt');
       }
       
       // Daten sind bereits in der Datenbank gespeichert
-      console.log('✅ Daten automatisch in Datenbank gespeichert');
+      logDebug('✅ Daten automatisch in Datenbank gespeichert');
 
 
 
@@ -591,8 +592,8 @@ export default function NeuerEintragPage() {
                         discipline={formData.disziplin}
                         onCompetitionChange={(competitionId) => {
                           setSelectedCompetitionId(competitionId);
-                          console.log('🏆 Selected competition ID:', competitionId);
-                          console.log('🏆 Expected competition ID: Kg8GG35V5Z8b0OAy5jtQ');
+                          logDebug('🏆 Selected competition ID:', competitionId);
+                          logDebug('🏆 Expected competition ID: Kg8GG35V5Z8b0OAy5jtQ');
                         }}
                       />
                     )}

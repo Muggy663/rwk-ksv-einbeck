@@ -1,5 +1,6 @@
 // src/lib/sentry.ts
 import * as Sentry from "@sentry/nextjs";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export function initSentry() {
   if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_SENTRY_DSN) {
@@ -29,7 +30,7 @@ export function initSentry() {
 
 // Manuell Fehler loggen
 export function logError(error: Error, context?: Record<string, any>) {
-  console.error('Error:', error);
+  logError('Error:', error);
   
   if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
     Sentry.captureException(error, {

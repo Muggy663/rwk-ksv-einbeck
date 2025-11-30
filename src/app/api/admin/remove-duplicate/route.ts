@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
 export async function POST(request: NextRequest) {
-  console.log('🔧 Remove duplicate API aufgerufen');
+  logDebug('🔧 Remove duplicate API aufgerufen');
   try {
     const { removeId } = await request.json();
     
@@ -19,12 +20,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Dokument ${removeId} nicht gefunden` }, { status: 404 });
     }
 
-    console.log(`Lösche Duplikat: ${removeId}`, docSnap.data());
+    logDebug(`Lösche Duplikat: ${removeId}`, docSnap.data());
     await deleteDoc(docRef);
     
     return NextResponse.json({ success: true, message: 'Duplikat entfernt' });
   } catch (error) {
-    console.error('Remove duplicate error:', error);
+    logError('Remove duplicate error:', error);
     return NextResponse.json({ 
       error: 'Fehler beim Entfernen des Duplikats', 
       details: error.message 

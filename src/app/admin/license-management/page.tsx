@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,7 +45,7 @@ export default function LicenseManagementPage() {
       
       setUsers(usersList.sort((a, b) => a.email.localeCompare(b.email)));
     } catch (error) {
-      console.error('Error loading users:', error);
+      logError('Error loading users:', error);
     } finally {
       setLoading(false);
     }
@@ -69,7 +70,7 @@ export default function LicenseManagementPage() {
         alert('Fehler bei Lizenz-Aktion');
       }
     } catch (error) {
-      console.error('License action error:', error);
+      logError('License action error:', error);
       alert('Fehler bei Lizenz-Aktion');
     }
   };

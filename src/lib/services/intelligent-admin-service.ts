@@ -1,5 +1,6 @@
 // Intelligente Admin-Planungstools mit Gemini AI
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 
 export interface AdminRecommendation {
@@ -63,7 +64,7 @@ class IntelligentAdminService {
       recommendations.push(...replacementSuggestions);
       
     } catch (error) {
-      console.error('Fehler bei der Admin-Empfehlungs-Generierung:', error);
+      logError('Fehler bei der Admin-Empfehlungs-Generierung:', error);
     }
     
     return recommendations.sort((a, b) => {
@@ -153,7 +154,7 @@ class IntelligentAdminService {
       }
       
     } catch (error) {
-      console.error('Fehler bei Team-Platzierungs-Empfehlungen:', error);
+      logError('Fehler bei Team-Platzierungs-Empfehlungen:', error);
     }
     
     return recommendations;
@@ -250,7 +251,7 @@ class IntelligentAdminService {
       }
       
     } catch (error) {
-      console.error('Fehler bei Liga-Optimierungen:', error);
+      logError('Fehler bei Liga-Optimierungen:', error);
     }
     
     return recommendations;
@@ -283,7 +284,7 @@ class IntelligentAdminService {
       }
       
     } catch (error) {
-      console.error('Fehler bei Ersatz-Vorschlaegen:', error);
+      logError('Fehler bei Ersatz-Vorschlaegen:', error);
     }
     
     return recommendations;
@@ -351,7 +352,7 @@ class IntelligentAdminService {
       };
       
     } catch (error) {
-      console.error('Fehler bei Ersatz-Team-Vorschlaegen:', error);
+      logError('Fehler bei Ersatz-Team-Vorschlaegen:', error);
       return null;
     }
   }

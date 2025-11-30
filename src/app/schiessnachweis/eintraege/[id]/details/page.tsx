@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,7 +30,7 @@ export default function EintragDetailsPage() {
       const gefundenerEintrag = einträge.find(e => e.id === id);
       setEintrag(gefundenerEintrag || null);
     } catch (error) {
-      console.error('Fehler beim Laden des Eintrags:', error);
+      logError('Fehler beim Laden des Eintrags:', error);
     } finally {
       setIsLoading(false);
     }

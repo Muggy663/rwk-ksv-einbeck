@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import 'jspdf-autotable';
 import { LeagueDisplay, TeamDisplay } from '@/types/rwk';
 import { format } from 'date-fns';
@@ -44,18 +45,18 @@ export async function generatePDFWithMobileSupport(
       try {
         await openWithAppChooser(url);
       } catch (nativeError) {
-        console.error('Fehler beim Öffnen mit nativer App:', nativeError);
+        logError('Fehler beim Öffnen mit nativer App:', nativeError);
         // Fallback: Im Browser öffnen
         window.open(url, '_blank');
       }
     } else if (isSafari()) {
       // Safari-spezifische Behandlung mit optimierter Funktion
-      console.log('Safari erkannt - verwende Safari-optimierte PDF-Behandlung');
+      logDebug('Safari erkannt - verwende Safari-optimierte PDF-Behandlung');
       
       try {
         await downloadPDFSafari(pdfBlob, fileName);
       } catch (safariError) {
-        console.error('Safari PDF-Behandlung fehlgeschlagen:', safariError);
+        logError('Safari PDF-Behandlung fehlgeschlagen:', safariError);
         
         // Letzter Fallback: Einfacher Blob-URL
         const url = URL.createObjectURL(pdfBlob);
@@ -67,7 +68,7 @@ export async function generatePDFWithMobileSupport(
       }
     } else if (isMobile) {
       // Auf anderen mobilen Geräten: PDF im Browser öffnen
-      console.log('Mobile Gerät erkannt - öffne PDF in neuem Tab');
+      logDebug('Mobile Gerät erkannt - öffne PDF in neuem Tab');
       const newWindow = window.open(url, '_blank');
       if (!newWindow) {
         // Fallback für blockierte Popups
@@ -79,7 +80,7 @@ export async function generatePDFWithMobileSupport(
       }, 5000);
     } else {
       // Auf Desktop-Geräten: PDF herunterladen
-      console.log('Desktop erkannt - lade PDF herunter');
+      logDebug('Desktop erkannt - lade PDF herunter');
       const link = document.createElement('a');
       link.href = url;
       link.download = fileName;
@@ -89,7 +90,7 @@ export async function generatePDFWithMobileSupport(
       URL.revokeObjectURL(url);
     }
   } catch (error) {
-    console.error('Fehler beim Generieren oder Herunterladen des PDFs:', error);
+    logError('Fehler beim Generieren oder Herunterladen des PDFs:', error);
     throw error;
   }
 }
@@ -169,7 +170,7 @@ export async function generateLeaguePDFFixed(
                   shooterName = `Schütze ${shooterId.substring(0,8)}`;
                 }
               } catch (error) {
-                console.warn(`Fehler beim Laden des Schützen ${shooterId}:`, error);
+                logWarn(`Fehler beim Laden des Schützen ${shooterId}:`, error);
                 shooterName = `Schütze ${shooterId.substring(0,8)}`;
               }
             }
@@ -205,7 +206,7 @@ export async function generateLeaguePDFFixed(
         });
         doc.addImage(logoBase64, 'PNG', 250, 10, 25, 25);
       } catch (e) {
-        console.warn('Logo konnte nicht geladen werden');
+        logWarn('Logo konnte nicht geladen werden');
       }
       
       // Schriftart setzen
@@ -358,7 +359,7 @@ export async function generateLeaguePDFFixed(
             });
             doc.addImage(logoBase64, 'PNG', 250, 10, 25, 25);
           } catch (e) {
-            console.warn('Logo konnte nicht geladen werden');
+            logWarn('Logo konnte nicht geladen werden');
           }
           currentY = 30;
         }
@@ -417,7 +418,7 @@ export async function generateShootersPDFFixed(
         });
         doc.addImage(logoBase64, 'PNG', 250, 10, 25, 25);
       } catch (e) {
-        console.warn('Logo konnte nicht geladen werden');
+        logWarn('Logo konnte nicht geladen werden');
       }
       
       // Schriftart setzen

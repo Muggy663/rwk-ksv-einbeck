@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -49,7 +50,7 @@ export function NewsList({ showAll = false, onEdit, limit = 10 }: NewsListProps)
       
       setArticles(articlesData);
     } catch (error) {
-      console.error('Fehler beim Laden der News-Artikel:', error);
+      logError('Fehler beim Laden der News-Artikel:', error);
       toast({
         title: 'Fehler',
         description: 'Die News-Artikel konnten nicht geladen werden.',
@@ -75,7 +76,7 @@ export function NewsList({ showAll = false, onEdit, limit = 10 }: NewsListProps)
       });
       await loadArticles();
     } catch (error) {
-      console.error('Fehler beim Löschen des Artikels:', error);
+      logError('Fehler beim Löschen des Artikels:', error);
       toast({
         title: 'Fehler',
         description: 'Der Artikel konnte nicht gelöscht werden.',

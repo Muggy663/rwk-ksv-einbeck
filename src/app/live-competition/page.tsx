@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +44,7 @@ export default function LiveCompetitionPage() {
     try {
       await loadCompetitions();
     } catch (error) {
-      console.error('Error loading data:', error);
+      logError('Error loading data:', error);
     } finally {
       setLoading(false);
     }
@@ -73,7 +74,7 @@ export default function LiveCompetitionPage() {
       setActiveCompetitions(active);
       setMyCompetitions(mine);
     } catch (error) {
-      console.error('Error loading competitions:', error);
+      logError('Error loading competitions:', error);
     }
   };
 

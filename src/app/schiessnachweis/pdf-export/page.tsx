@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -62,7 +63,7 @@ export default function PDFExportPage() {
       const data = await SchießnachweisService.getEinträge();
       setEinträge(data);
     } catch (error) {
-      console.error('Fehler beim Laden der Daten:', error);
+      logError('Fehler beim Laden der Daten:', error);
       toast({
         title: "Fehler",
         description: "Daten konnten nicht geladen werden.",
@@ -80,7 +81,7 @@ export default function PDFExportPage() {
         setPersonalData(JSON.parse(saved));
       }
     } catch (error) {
-      console.error('Fehler beim Laden der persönlichen Daten:', error);
+      logError('Fehler beim Laden der persönlichen Daten:', error);
     }
   };
 
@@ -309,7 +310,7 @@ export default function PDFExportPage() {
       });
       
     } catch (error) {
-      console.error('Fehler beim Erstellen des PDFs:', error);
+      logError('Fehler beim Erstellen des PDFs:', error);
       toast({
         title: "Fehler",
         description: "PDF konnte nicht erstellt werden.",
@@ -322,9 +323,9 @@ export default function PDFExportPage() {
 
   const generateAIText = async (personalData: any, stats: any) => {
     try {
-      console.log('🤖 Starte KI-Textgenerierung...');
-      console.log('Personal Data:', personalData);
-      console.log('Stats:', stats);
+      logDebug('🤖 Starte KI-Textgenerierung...');
+      logDebug('Personal Data:', personalData);
+      logDebug('Stats:', stats);
       
       const response = await fetch('/api/gemini/behoerdentext', {
         method: 'POST',
@@ -332,29 +333,29 @@ export default function PDFExportPage() {
         body: JSON.stringify({ personalData, stats })
       });
       
-      console.log('Response Status:', response.status);
-      console.log('Response OK:', response.ok);
+      logDebug('Response Status:', response.status);
+      logDebug('Response OK:', response.ok);
       
       if (!response.ok) {
-        console.error('API Response nicht OK:', response.status, response.statusText);
+        logError('API Response nicht OK:', response.status, response.statusText);
         const errorText = await response.text();
-        console.error('Error Response Text:', errorText);
+        logError('Error Response Text:', errorText);
         return generateFallbackText(personalData, stats);
       }
       
       const data = await response.json();
-      console.log('API Response Data:', data);
+      logDebug('API Response Data:', data);
       
       if (data.success) {
         const finalText = `Sehr geehrte Damen und Herren,\n\n${data.text}\n\nMit freundlichen Grüßen`;
-        console.log('✅ KI-Text erfolgreich generiert');
+        logDebug('✅ KI-Text erfolgreich generiert');
         return finalText;
       } else {
-        console.warn('⚠️ API meldet Fehler:', data.error);
+        logWarn('⚠️ API meldet Fehler:', data.error);
         return generateFallbackText(personalData, stats);
       }
     } catch (error) {
-      console.error('❌ Fehler bei KI-Textgenerierung:', error);
+      logError('❌ Fehler bei KI-Textgenerierung:', error);
       return generateFallbackText(personalData, stats);
     }
   };

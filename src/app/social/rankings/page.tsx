@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -68,7 +69,7 @@ export default function RankingsPage() {
       
       setGroupRankings(groupRankingData);
     } catch (error) {
-      console.error('Error loading rankings:', error);
+      logError('Error loading rankings:', error);
     }
     setIsLoading(false);
   };

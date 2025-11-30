@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { doc, getDoc, setDoc, addDoc, collection, query, where, getDocs, updateDoc, orderBy, limit } from 'firebase/firestore';
 
 export interface NotificationPreferences {
@@ -99,7 +100,7 @@ export class NotificationService {
     
     // Prüfe ob User diese Art von E-Mail-Benachrichtigung aktiviert hat
     if (!preferences[type]) {
-      console.log(`User ${userId} hat ${type} E-Mail-Benachrichtigungen deaktiviert`);
+      logDebug(`User ${userId} hat ${type} E-Mail-Benachrichtigungen deaktiviert`);
       return;
     }
     
@@ -141,9 +142,9 @@ export class NotificationService {
         throw new Error('E-Mail konnte nicht gesendet werden');
       }
       
-      console.log(`E-Mail-Benachrichtigung ${type} an ${userEmail} gesendet`);
+      logDebug(`E-Mail-Benachrichtigung ${type} an ${userEmail} gesendet`);
     } catch (error) {
-      console.error('Fehler beim Senden der E-Mail:', error);
+      logError('Fehler beim Senden der E-Mail:', error);
       throw error;
     }
   }
@@ -159,13 +160,13 @@ export class NotificationService {
     
     // Prüfe ob User diese Art von Push-Benachrichtigung aktiviert hat
     if (!preferences[type]) {
-      console.log(`User ${userId} hat ${type} Push-Benachrichtigungen deaktiviert`);
+      logDebug(`User ${userId} hat ${type} Push-Benachrichtigungen deaktiviert`);
       return;
     }
     
     // TODO: Implementiere Browser Push API
     // Hier würde die Service Worker Push API verwendet werden
-    console.log(`Push-Benachrichtigung ${type} für User ${userId}:`, pushData);
+    logDebug(`Push-Benachrichtigung ${type} für User ${userId}:`, pushData);
   }
   
   // Gruppen-Einladung senden (mit allen aktivierten Kanälen)
@@ -193,7 +194,7 @@ export class NotificationService {
         }
       });
     } catch (error) {
-      console.error('E-Mail-Benachrichtigung fehlgeschlagen:', error);
+      logError('E-Mail-Benachrichtigung fehlgeschlagen:', error);
     }
     
     // Push-Notification (nur wenn aktiviert)
@@ -204,7 +205,7 @@ export class NotificationService {
         data: { groupId }
       });
     } catch (error) {
-      console.error('Push-Benachrichtigung fehlgeschlagen:', error);
+      logError('Push-Benachrichtigung fehlgeschlagen:', error);
     }
   }
   
@@ -229,7 +230,7 @@ export class NotificationService {
           data: { competitionId }
         });
       } catch (error) {
-        console.error('Push-Benachrichtigung fehlgeschlagen:', error);
+        logError('Push-Benachrichtigung fehlgeschlagen:', error);
       }
     }
   }
@@ -264,7 +265,7 @@ export class NotificationService {
         }
       });
     } catch (error) {
-      console.error('E-Mail-Benachrichtigung fehlgeschlagen:', error);
+      logError('E-Mail-Benachrichtigung fehlgeschlagen:', error);
     }
   }
   

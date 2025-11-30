@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,7 +31,7 @@ export default function DuelsPage() {
       const userDuels = await DuelService.getUserDuels(user.uid);
       setDuels(userDuels);
     } catch (error) {
-      console.error('Fehler beim Laden der Duelle:', error);
+      logError('Fehler beim Laden der Duelle:', error);
       toast({
         title: "Fehler",
         description: "Duelle konnten nicht geladen werden.",

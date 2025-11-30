@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +25,7 @@ export default function DuelsPage({ params }: { params: { id: string } }) {
       const groupDuels = await DuelsService.getGroupDuels(params.id);
       setDuels(groupDuels);
     } catch (error) {
-      console.error('Error loading duels:', error);
+      logError('Error loading duels:', error);
     } finally {
       setLoading(false);
     }

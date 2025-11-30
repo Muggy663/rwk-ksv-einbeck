@@ -2,6 +2,7 @@
 // /app/verein/mannschaften/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'react';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Users as TeamsIcon, Loader2, AlertTriangle, InfoIcon, ChevronDown, ChevronRight } from 'lucide-react';
@@ -131,11 +132,11 @@ export default function VereinMannschaftenPage() {
           setActiveClubName(clubInfo.name);
 
         } else if (allClubsGlobal.length > 0) { // Attempt to find it if allClubsGlobal is already populated
-          console.warn("VMP DEBUG: Club info for assignedClubId not found in allClubsGlobal. This might be a timing issue or invalid ID.");
+          logWarn("VMP DEBUG: Club info for assignedClubId not found in allClubsGlobal. This might be a timing issue or invalid ID.");
           // Optionally, fetch if not found, but allClubsGlobal should be loaded by fetchInitialData
         }
       } else {
-        console.warn("VMP DEBUG: No valid effectiveClubId from context. Setting activeClub to null.", { currentClubId, assignedClubId });
+        logWarn("VMP DEBUG: No valid effectiveClubId from context. Setting activeClub to null.", { currentClubId, assignedClubId });
         setActiveClubId(null);
         setActiveClubName(null);
       }
@@ -173,7 +174,7 @@ export default function VereinMannschaftenPage() {
 
 
     } catch (error) {
-      console.error("VMP DEBUG: fetchInitialData - Error fetching initial page data:", error);
+      logError("VMP DEBUG: fetchInitialData - Error fetching initial page data:", error);
       toast({ title: "Fehler Basisdaten", description: (error as Error).message, variant: "destructive" });
     } finally {
       setIsLoadingPageData(false);
@@ -232,7 +233,7 @@ export default function VereinMannschaftenPage() {
       const selectedSeasonData = allSeasons.find(s => s.id === selectedSeasonId);
       if (!selectedSeasonData?.competitionYear) {
         setTeamsOfActiveClub([]);
-        console.warn("VMP DEBUG: fetchTeamsForClubAndSeason - No competitionYear for selectedSeasonId:", selectedSeasonId);
+        logWarn("VMP DEBUG: fetchTeamsForClubAndSeason - No competitionYear for selectedSeasonId:", selectedSeasonId);
         setIsLoadingTeams(false);
         return;
       }
@@ -253,7 +254,7 @@ export default function VereinMannschaftenPage() {
       setTeamsOfActiveClub(fetchedTeams);
 
     } catch (error) {
-      console.error("VMP DEBUG: fetchTeamsForClubAndSeason - Error:", error);
+      logError("VMP DEBUG: fetchTeamsForClubAndSeason - Error:", error);
       toast({ title: "Fehler Mannschaftsladung", description: (error as Error).message, variant: "destructive" });
       setTeamsOfActiveClub([]);
     } finally {
@@ -296,7 +297,7 @@ export default function VereinMannschaftenPage() {
       
       setAllClubShootersForDisplay(clubShooters);
     } catch (error) {
-      console.error('Fehler beim Laden der Schützen für Anzeige:', error);
+      logError('Fehler beim Laden der Schützen für Anzeige:', error);
     }
   };
 
@@ -333,7 +334,7 @@ export default function VereinMannschaftenPage() {
       
       setTeamsWithResults(teamsWithResultsSet);
     } catch (error) {
-      console.error('Fehler beim Prüfen der Ergebnisse:', error);
+      logError('Fehler beim Prüfen der Ergebnisse:', error);
     }
   }, [selectedSeasonId, teamsOfActiveClub, allSeasons]);
 
@@ -420,7 +421,7 @@ export default function VereinMannschaftenPage() {
 
 
     } catch (error) {
-      console.error("VMP DIALOG DEBUG: Error fetching dialog data:", error);
+      logError("VMP DIALOG DEBUG: Error fetching dialog data:", error);
       toast({title: "Fehler Dialogdaten", description: (error as Error).message, variant: "destructive"});
     } finally {
       setIsLoadingDialogData(false);
@@ -571,7 +572,7 @@ export default function VereinMannschaftenPage() {
       });
       fetchTeamsForClubAndSeason(); // Refetch teams for the current view
     } catch (error: any) {
-      console.error("VMP DEBUG: Error deleting team:", error);
+      logError("VMP DEBUG: Error deleting team:", error);
       toast({ title: "Fehler beim Löschen", description: error.message || "Unbekannter Fehler", variant: "destructive" });
     } finally {
       setIsDeletingTeam(false);
@@ -597,7 +598,7 @@ export default function VereinMannschaftenPage() {
 
     const currentSeasonForSubmit = allSeasons.find(s => s.id === selectedSeasonId);
     if (!currentSeasonForSubmit || currentSeasonForSubmit.competitionYear === undefined) {
-      console.warn("VMP SUBMIT VALIDATION FAILED: Season data not found or invalid for selectedSeasonId:", selectedSeasonId);
+      logWarn("VMP SUBMIT VALIDATION FAILED: Season data not found or invalid for selectedSeasonId:", selectedSeasonId);
       toast({ title: "Ungültige Eingabe", description: "Saisondaten nicht gefunden oder ungültig.", variant: "destructive" });
       setIsSubmittingForm(false); return;
     }
@@ -717,7 +718,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
             body: emailData
           });
         } catch (emailError) {
-          console.warn('E-Mail-Benachrichtigung fehlgeschlagen:', emailError);
+          logWarn('E-Mail-Benachrichtigung fehlgeschlagen:', emailError);
         }
         
         toast({ 
@@ -755,7 +756,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
             validShootersToAdd.push(shooterId);
           }
         } catch (error) {
-          console.warn(`Error checking shooter ${shooterId}:`, error);
+          logWarn(`Error checking shooter ${shooterId}:`, error);
         }
       }
       
@@ -768,7 +769,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
             validShootersToRemove.push(shooterId);
           }
         } catch (error) {
-          console.warn(`Error checking shooter ${shooterId}:`, error);
+          logWarn(`Error checking shooter ${shooterId}:`, error);
         }
       }
       
@@ -778,7 +779,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
           const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
           await updateDoc(shooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
         } catch (error) {
-          console.error(`Error adding team to shooter ${shooterId}:`, error);
+          logError(`Error adding team to shooter ${shooterId}:`, error);
         }
       }
       
@@ -787,7 +788,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
           const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
           await updateDoc(shooterDocRef, { teamIds: arrayRemove(teamIdForShooterUpdates) });
         } catch (error) {
-          console.error(`Error removing team from shooter ${shooterId}:`, error);
+          logError(`Error removing team from shooter ${shooterId}:`, error);
         }
       }
       setIsFormOpen(false);
@@ -799,7 +800,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
       setExpandedTeams(new Set());
       fetchTeamsForClubAndSeason(); // Refetch teams
     } catch (error: any) {
-      console.error("Error saving team or updating shooters:", error);
+      logError("Error saving team or updating shooters:", error);
       const action = formMode === 'new' ? 'erstellen' : 'aktualisieren';
       toast({ title: `Fehler beim ${action}`, description: error.message || "Unbekannter Fehler", variant: "destructive" });
     } finally {
@@ -843,7 +844,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
 
     const teamBeingEdited = currentTeam;
     if (!teamBeingEdited || teamBeingEdited.competitionYear === undefined) {
-        console.warn("VMP DIALOG ShooterSelect: currentTeam or its competitionYear is undefined for validation.");
+        logWarn("VMP DIALOG ShooterSelect: currentTeam or its competitionYear is undefined for validation.");
         return;
     }
     
@@ -870,7 +871,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                   if (assignedTeamInfo?.leagueCompetitionYear === currentTeamCompYearForValidation) { 
                       // Prüfe auf exakte Disziplin, nicht Kategorie - LGS und LGA sind verschiedene Disziplinen!
                       if (assignedTeamInfo.leagueType && assignedTeamInfo.leagueType === teamLeagueData.type) {
-                          console.warn(`VMP DIALOG ShooterSelect: Conflict for ${shooterBeingChecked.name}. Already in ${assignedTeamInfo.name} (Discipline: ${assignedTeamInfo.leagueType}, Year: ${assignedTeamInfo.leagueCompetitionYear})`);
+                          logWarn(`VMP DIALOG ShooterSelect: Conflict for ${shooterBeingChecked.name}. Already in ${assignedTeamInfo.name} (Discipline: ${assignedTeamInfo.leagueType}, Year: ${assignedTeamInfo.leagueCompetitionYear})`);
                           conflictFound = true;
                       }
                   }
@@ -881,7 +882,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
               }
           }
       } else if (teamLeagueData && !categoryOfCurrentTeam){
-          console.warn("VMP DIALOG ShooterSelect: Cannot perform discipline conflict check because category of current team's league type is unknown or team has no league.", teamLeagueData?.type);
+          logWarn("VMP DIALOG ShooterSelect: Cannot perform discipline conflict check because category of current team's league type is unknown or team has no league.", teamLeagueData?.type);
       } else if (!teamLeagueData) {
 
       }
@@ -970,7 +971,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
           const shooters = await Promise.all(shooterPromises);
           setTeamShooters(prev => new Map(prev).set(teamId, shooters));
         } catch (error) {
-          console.error('Fehler beim Laden der Schützen:', error);
+          logError('Fehler beim Laden der Schützen:', error);
           toast({ title: "Fehler", description: "Schützen konnten nicht geladen werden.", variant: "destructive" });
         } finally {
           setLoadingShooters(prev => {

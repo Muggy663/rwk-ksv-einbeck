@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Ungültige Substitution ID' }, { status: 400 });
     
   } catch (error) {
-    console.error('Repair-Fehler:', error);
+    logError('Repair-Fehler:', error);
     return NextResponse.json({ 
       error: 'Reparatur fehlgeschlagen',
       details: error instanceof Error ? error.message : 'Unbekannter Fehler'

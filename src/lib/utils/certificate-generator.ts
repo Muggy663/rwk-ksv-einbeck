@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -78,7 +79,7 @@ export class CertificateGenerator {
           25
         );
       } catch (error) {
-        console.error('Fehler beim Hinzufügen des Logos:', error);
+        logError('Fehler beim Hinzufügen des Logos:', error);
         // Fehler beim Hinzufügen des Logos ignorieren
       }
       
@@ -93,7 +94,7 @@ export class CertificateGenerator {
           25
         );
       } catch (error) {
-        console.error('Fehler beim Hinzufügen des NSSV-Logos:', error);
+        logError('Fehler beim Hinzufügen des NSSV-Logos:', error);
         // Fehler beim Hinzufügen des Logos ignorieren
       }
       
@@ -260,7 +261,7 @@ export class CertificateGenerator {
           15
         );
       } catch (error) {
-        console.error('Fehler beim Hinzufügen der Präsidenten-Unterschrift:', error);
+        logError('Fehler beim Hinzufügen der Präsidenten-Unterschrift:', error);
       }
       
       // Unterschrift rechts (Rundenwettkampfleiter)
@@ -283,7 +284,7 @@ export class CertificateGenerator {
           15
         );
       } catch (error) {
-        console.error('Fehler beim Hinzufügen der Rundenwettkampfleiter-Unterschrift:', error);
+        logError('Fehler beim Hinzufügen der Rundenwettkampfleiter-Unterschrift:', error);
       }
       
       // Datum am unteren Ende der Seite
@@ -291,7 +292,7 @@ export class CertificateGenerator {
       this.doc.setFontSize(10);
       this.doc.text(dateText, this.pageWidth / 2, this.pageHeight - this.margin - 15, { align: 'center' });
     } catch (error) {
-      console.error('Fehler beim Generieren der Urkunde:', error);
+      logError('Fehler beim Generieren der Urkunde:', error);
       // Fallback: Einfache Fehlermeldung
       this.doc.setFontSize(14);
       this.doc.setFont('helvetica', 'bold');
@@ -318,7 +319,7 @@ export class CertificateGenerator {
         return this.doc.output('blob');
       }
     } catch (error) {
-      console.error('Fehler beim Speichern des PDFs:', error);
+      logError('Fehler beim Speichern des PDFs:', error);
       // Fallback: Leeres Blob zurückgeben
       return new Blob(['Fehler beim Generieren des PDFs'], { type: 'text/plain' });
     }
@@ -333,7 +334,7 @@ export class CertificateGenerator {
       const pdfUrl = URL.createObjectURL(pdfBlob);
       window.open(pdfUrl, '_blank');
     } catch (error) {
-      console.error('Fehler beim Öffnen des PDFs:', error);
+      logError('Fehler beim Öffnen des PDFs:', error);
       alert('Fehler beim Öffnen des PDFs. Bitte versuchen Sie es erneut.');
     }
   }

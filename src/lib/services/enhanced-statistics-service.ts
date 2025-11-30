@@ -1,4 +1,5 @@
 import { db } from '@/lib/firebase/config';
+import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { fetchShooterPerformanceData } from '@/lib/services/statistics-service';
 
@@ -80,7 +81,7 @@ export async function fetchTopShootersWithTrend(
     // Begrenze die Anzahl der Schützen
     return shootersWithTrend.slice(0, limit);
   } catch (error) {
-    console.error('Fehler beim Laden der Schützen mit Trendanalyse:', error);
+    logError('Fehler beim Laden der Schützen mit Trendanalyse:', error);
     throw error;
   }
 }
