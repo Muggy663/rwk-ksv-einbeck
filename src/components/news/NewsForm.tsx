@@ -85,15 +85,15 @@ export function NewsForm({ article, onSuccess, onCancel }: NewsFormProps) {
 
     try {
       const articleData: Omit<NewsArticle, 'id' | 'createdAt' | 'views' | 'slug'> = {
-        title,
-        content,
-        excerpt: excerpt || content.substring(0, 200) + '...',
+        title: sanitizeInput(title),
+        content: sanitizeInput(content),
+        excerpt: sanitizeInput(excerpt) || sanitizeInput(content).substring(0, 200) + '...',
         category,
         priority,
         status,
         targetAudience,
         pinned,
-        tags,
+        tags: tags.map(tag => sanitizeInput(tag)),
         attachments: [],
         authorEmail: user.email || '',
         authorName: user.displayName || user.email || 'Admin'
@@ -214,7 +214,7 @@ export function NewsForm({ article, onSuccess, onCancel }: NewsFormProps) {
             <Input
               id="title"
               value={title}
-              onChange={(e) => setTitle(sanitizeInput(e.target.value))}
+              onChange={(e) => setTitle(e.target.value)}
               placeholder="Aussagekräftiger Titel für den News-Artikel"
               required
             />
@@ -225,7 +225,7 @@ export function NewsForm({ article, onSuccess, onCancel }: NewsFormProps) {
             <Textarea
               id="excerpt"
               value={excerpt}
-              onChange={(e) => setExcerpt(sanitizeInput(e.target.value))}
+              onChange={(e) => setExcerpt(e.target.value)}
               placeholder="Kurze Zusammenfassung (wird automatisch generiert wenn leer)"
               rows={2}
             />
@@ -236,7 +236,7 @@ export function NewsForm({ article, onSuccess, onCancel }: NewsFormProps) {
             <Textarea
               id="content"
               value={content}
-              onChange={(e) => setContent(sanitizeInput(e.target.value))}
+              onChange={(e) => setContent(e.target.value)}
               placeholder="Vollständiger Inhalt des News-Artikels..."
               rows={10}
               required
@@ -334,7 +334,7 @@ export function NewsForm({ article, onSuccess, onCancel }: NewsFormProps) {
             <div className="flex gap-2">
               <Input
                 value={newTag}
-                onChange={(e) => setNewTag(sanitizeInput(e.target.value))}
+                onChange={(e) => setNewTag(e.target.value)}
                 placeholder="Neuen Tag hinzufügen"
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
               />
