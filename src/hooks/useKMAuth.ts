@@ -30,6 +30,7 @@ export function useKMAuth() {
   
   const hasKMAccess = !authLoading && user && (
     user?.email === 'admin@rwk-einbeck.de' ||
+    user?.email === 'stephanie.buenger@gmx.de' || // KM-Organisator
     platformRole === 'SUPER_ADMIN' ||
     userAppPermissions?.role === 'superadmin' ||
     isKVWettkampfleiter || // KV-Wettkampfleiter
@@ -45,6 +46,7 @@ export function useKMAuth() {
   );
 
   const userRole = user?.email === 'admin@rwk-einbeck.de' ? 'admin' : 
+                   user?.email === 'stephanie.buenger@gmx.de' ? 'km_organisator' : // KM-Organisator
                    platformRole === 'SUPER_ADMIN' ? 'admin' :
                    userAppPermissions?.role === 'superadmin' ? 'admin' :
                    isKVWettkampfleiter ? 'km_organisator' :
@@ -78,7 +80,7 @@ export function useKMAuth() {
     userRole,
     // Admin-spezifische Checks
     isKMAdmin: userRole === 'admin',
-    isKMOrganisator: isKVWettkampfleiter || userRole === 'km_organisator',
+    isKMOrganisator: isKVWettkampfleiter || isKVKmOrga || userRole === 'km_organisator',
     hasFullAccess: userRole === 'admin' || isKVWettkampfleiter || userRole === 'km_organisator',
     // Für KM-Übersicht Kompatibilität
     userPermission: {

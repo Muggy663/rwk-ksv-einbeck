@@ -216,7 +216,7 @@ export function HandzettelOCR({
       }
       
       // Wenn Gemini fehlschlägt, detaillierte Fehlermeldung
-      if (!geminiSuccess || matches.length === 0) {
+      if (!geminiSuccess) {
         let errorDetails = 'Gemini OCR fehlgeschlagen.'
         
         if (isMobile) {
@@ -236,6 +236,9 @@ export function HandzettelOCR({
         throw new Error(errorDetails)
       }
       
+      // Wenn Gemini erfolgreich war aber keine Matches gefunden wurden, ist das OK
+      // Das wird in der aufrufenden Komponente behandelt
+      
       setMatchedResults(matches)
       setProgress(100)
       setCurrentStep("🎯 Auslesen abgeschlossen!")
@@ -246,10 +249,8 @@ export function HandzettelOCR({
       
       let errorMessage = error instanceof Error ? error.message : 'Automatisches Auslesen fehlgeschlagen'
       
-      // Cleanup bei Fehlern
-      if (processedImage !== imageFile) {
-        URL.revokeObjectURL(URL.createObjectURL(processedImage))
-      }
+      // Cleanup bei Fehlern - processedImage könnte undefined sein
+      // URL cleanup nicht nötig da wir createObjectURL nur zum Lesen verwenden
       
       onError(errorMessage)
     } finally {

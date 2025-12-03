@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { db } from '@/lib/firebase/config';
-import { doc, updateDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const KM_SAISONS_COLLECTION = 'km_saisons';
 
@@ -14,14 +14,14 @@ export async function PATCH(
     const { status, meldeschluss, beschreibung } = body;
 
     const updateData: any = {
-      aktualisiertAm: new Date()
+      aktualisiertAm: FieldValue.serverTimestamp()
     };
     
     if (status !== undefined) updateData.status = status;
     if (meldeschluss !== undefined) updateData.meldeschluss = meldeschluss;
     if (beschreibung !== undefined) updateData.beschreibung = beschreibung;
 
-    await updateDoc(doc(db, KM_SAISONS_COLLECTION, params.id), updateData);
+    await adminDb.collection(KM_SAISONS_COLLECTION).doc(params.id).update(updateData);
 
     return NextResponse.json({
       success: true,
@@ -29,10 +29,14 @@ export async function PATCH(
     });
 
   } catch (error) {
-    logError('Fehler beim Aktualisieren:', error);
+    logError('Fehler beim Aktualisieren der KM-Saison:', {
+      id: params.id,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return NextResponse.json({
       success: false,
-      error: 'Aktualisierung fehlgeschlagen'
+      error: `Aktualisierung fehlgeschlagen: ${error instanceof Error ? error.message : String(error)}`
     }, { status: 500 });
   }
 }

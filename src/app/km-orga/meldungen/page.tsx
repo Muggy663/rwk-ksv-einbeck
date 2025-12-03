@@ -461,7 +461,18 @@ export default function KMAdminMeldungen() {
                         </div>
                       </div>
                       <div className="text-xs text-gray-500">
-                        Datum: {new Date(meldung.meldedatum?.seconds * 1000 || meldung.meldedatum).toLocaleDateString('de-DE')}
+                        Datum: {(() => {
+                          if (meldung.meldedatum?._seconds) {
+                            return new Date(meldung.meldedatum._seconds * 1000).toLocaleDateString('de-DE');
+                          } else if (meldung.meldedatum?.seconds) {
+                            return new Date(meldung.meldedatum.seconds * 1000).toLocaleDateString('de-DE');
+                          } else if (meldung.createdAt?._seconds) {
+                            return new Date(meldung.createdAt._seconds * 1000).toLocaleDateString('de-DE');
+                          } else if (meldung.createdAt?.seconds) {
+                            return new Date(meldung.createdAt.seconds * 1000).toLocaleDateString('de-DE');
+                          }
+                          return new Date().toLocaleDateString('de-DE');
+                        })()}
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 pt-2">
@@ -629,7 +640,18 @@ export default function KMAdminMeldungen() {
                         )}
                       </td>
                       <td className="p-2 text-xs text-gray-500">
-                        {new Date(meldung.meldedatum?.seconds * 1000 || meldung.meldedatum).toLocaleDateString('de-DE')}
+                        {(() => {
+                          if (meldung.meldedatum?._seconds) {
+                            return new Date(meldung.meldedatum._seconds * 1000).toLocaleDateString('de-DE');
+                          } else if (meldung.meldedatum?.seconds) {
+                            return new Date(meldung.meldedatum.seconds * 1000).toLocaleDateString('de-DE');
+                          } else if (meldung.createdAt?._seconds) {
+                            return new Date(meldung.createdAt._seconds * 1000).toLocaleDateString('de-DE');
+                          } else if (meldung.createdAt?.seconds) {
+                            return new Date(meldung.createdAt.seconds * 1000).toLocaleDateString('de-DE');
+                          }
+                          return new Date().toLocaleDateString('de-DE');
+                        })()}
                       </td>
                       <td className="p-2">
                         <div className="flex gap-1">

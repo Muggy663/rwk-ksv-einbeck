@@ -232,7 +232,7 @@ export default function KMJahreVerwaltung() {
                     onValueChange={(value) => setFormData({...formData, disziplinTyp: value as DisziplinTyp})}
                     options={[
                       { value: 'KK', label: '🎯 Kleinkaliber (KK)' },
-                      { value: 'LP', label: '💨 Luftdruck (LP)' }
+                      { value: 'LP', label: '💨 Luftdruck (LD)' }
                     ]}
                   />
                 </div>
@@ -277,35 +277,33 @@ export default function KMJahreVerwaltung() {
                       {saison.status}
                     </Badge>
                   </CardTitle>
-                  <CardDescription>
-                    {editingSaison === saison.id ? (
-                      <div className="space-y-2 mt-2">
-                        <div>
-                          <Label className="text-xs">Meldeschluss:</Label>
-                          <Input
-                            value={editData.meldeschluss}
-                            onChange={(e) => setEditData({...editData, meldeschluss: e.target.value})}
-                            className="h-8 text-sm"
-                            placeholder="15.12.2025"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Beschreibung:</Label>
-                          <Input
-                            value={editData.beschreibung}
-                            onChange={(e) => setEditData({...editData, beschreibung: e.target.value})}
-                            className="h-8 text-sm"
-                            placeholder="Zusätzliche Informationen"
-                          />
-                        </div>
+                  {editingSaison === saison.id ? (
+                    <div className="space-y-2 mt-2">
+                      <div>
+                        <Label className="text-xs">Meldeschluss:</Label>
+                        <Input
+                          value={editData.meldeschluss}
+                          onChange={(e) => setEditData({...editData, meldeschluss: e.target.value})}
+                          className="h-8 text-sm"
+                          placeholder="15.12.2025"
+                        />
                       </div>
-                    ) : (
-                      <>
-                        Meldeschluss: {saison.meldeschluss}
-                        {saison.beschreibung && ` • ${saison.beschreibung}`}
-                      </>
-                    )}
-                  </CardDescription>
+                      <div>
+                        <Label className="text-xs">Beschreibung:</Label>
+                        <Input
+                          value={editData.beschreibung}
+                          onChange={(e) => setEditData({...editData, beschreibung: e.target.value})}
+                          className="h-8 text-sm"
+                          placeholder="Zusätzliche Informationen"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <CardDescription>
+                      Meldeschluss: {saison.meldeschluss}
+                      {saison.beschreibung && ` • ${saison.beschreibung}`}
+                    </CardDescription>
+                  )}
                 </div>
                 <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
                   {editingSaison === saison.id ? (

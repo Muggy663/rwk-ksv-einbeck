@@ -210,7 +210,22 @@ export async function POST(request: NextRequest) {
             };
             
             try {
-              const docId = `team_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+              // Lade Saison-Info für Kürzel
+              let saisonKuerzel = 'km';
+              try {
+                const saisonSnapshot = await getDocs(collection(db, 'km_saisons'));
+                const saisonDoc = saisonSnapshot.docs.find(doc => doc.id === saison);
+                if (saisonDoc?.data()?.name) {
+                  const name = saisonDoc.data().name.toLowerCase();
+                  if (name.includes('kk') || name.includes('kleinkaliber')) saisonKuerzel = 'kk';
+                  else if (name.includes('ld') || name.includes('luftdruck')) saisonKuerzel = 'ld';
+                  else if (name.includes('lg') || name.includes('luftgewehr')) saisonKuerzel = 'lg';
+                }
+              } catch (e) {
+                // Fallback zu 'km'
+              }
+              
+              const docId = `km_mannschaften_${saisonKuerzel}_team_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
               await setDoc(doc(db, 'km_mannschaften', docId), mannschaft);
               generated++;
             } catch (error) {

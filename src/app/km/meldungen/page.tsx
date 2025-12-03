@@ -41,16 +41,50 @@ export default function KMMeldungen() {
   
   // Zwischenspeicher für Meldungen
   const [pendingMeldungen, setPendingMeldungen] = useState<any[]>([]);
+  const [saisons, setSaisons] = useState<any[]>([]);
+  const [selectedSaison, setSelectedSaison] = useState<string>('');
 
   useEffect(() => {
     loadData();
   }, []);
+  
+  useEffect(() => {
+    if (selectedSaison) {
+      loadDisziplinen();
+    }
+  }, [selectedSaison]);
+
+  const loadDisziplinen = async () => {
+    if (!selectedSaison) return;
+    
+    try {
+      const saison = saisons.find(s => s.id === selectedSaison);
+      const [diszRes, meldungenRes] = await Promise.all([
+        fetch(`/api/km/disziplinen?saisonId=${selectedSaison}`),
+        fetch(`/api/km/meldungen?saison=${selectedSaison}`)
+      ]);
+      
+      if (diszRes.ok) {
+        const diszData = await diszRes.json();
+        const saisonDisziplinen = (diszData.data || []).map(d => ({...d, saison}));
+        setDisziplinen(saisonDisziplinen);
+      }
+      
+      if (meldungenRes.ok) {
+        const meldungenData = await meldungenRes.json();
+        setMeldungen(meldungenData.data || []);
+      }
+    } catch (error) {
+      logWarn('Fehler beim Laden der Disziplinen:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
-      const [shootersRes, disziplinenRes, meldungenRes, clubsRes] = await Promise.all([
-        fetch('/api/km/shooters'), // Zentrale shooters collection
-        fetch('/api/km/disziplinen'),
+      // Lade nur aktive Saisons und deren Disziplinen
+      const [shootersRes, saisonRes, meldungenRes, clubsRes] = await Promise.all([
+        fetch('/api/km/shooters'),
+        fetch('/api/km/saisons?status=aktiv'),
         fetch('/api/km/meldungen'),
         fetch('/api/clubs')
       ]);
@@ -60,9 +94,57 @@ export default function KMMeldungen() {
         setSchuetzen(shootersData.data || []);
       }
       
-      if (disziplinenRes.ok) {
-        const disziplinenData = await disziplinenRes.json();
-        setDisziplinen(disziplinenData.data || []);
+      if (saisonRes.ok) {
+        const saisonData = await saisonRes.json();
+        const aktiveSaisons = saisonData.data || [];
+        setSaisons(aktiveSaisons);
+        
+        // Sortiere Saisons: Aktive zuerst, dann nach Jahr
+        const sortedSaisons = aktiveSaisons.sort((a, b) => {
+          const today = new Date();
+          const getDeadline = (s) => {
+            if (!s.meldeschluss) return new Date(0);
+            if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
+              const [day, month, year] = s.meldeschluss.split('.');
+              return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            } else {
+              const [day, month] = s.meldeschluss.split('.');
+              return new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+            }
+          };
+          
+          const aExpired = today > getDeadline(a);
+          const bExpired = today > getDeadline(b);
+          
+          if (aExpired !== bExpired) {
+            return aExpired ? 1 : -1; // Aktive zuerst
+          }
+          return b.jahr - a.jahr; // Dann nach Jahr
+        });
+        
+        setSaisons(sortedSaisons);
+        
+        // Wähle erste (aktive) Saison automatisch aus
+        if (sortedSaisons.length > 0 && !selectedSaison) {
+          setSelectedSaison(sortedSaisons[0].id);
+        }
+        
+        // Lade Disziplinen für ausgewählte Saison
+        if (selectedSaison || aktiveSaisons.length > 0) {
+          const saisonId = selectedSaison || aktiveSaisons[0]?.id;
+          const saison = aktiveSaisons.find(s => s.id === saisonId);
+          
+          try {
+            const diszRes = await fetch(`/api/km/disziplinen?saisonId=${saisonId}`);
+            if (diszRes.ok) {
+              const diszData = await diszRes.json();
+              const saisonDisziplinen = (diszData.data || []).map(d => ({...d, saison}));
+              setDisziplinen(saisonDisziplinen);
+            }
+          } catch (error) {
+            logWarn(`Fehler beim Laden der Disziplinen:`, error);
+          }
+        }
       }
       
       if (meldungenRes.ok) {
@@ -275,7 +357,7 @@ export default function KMMeldungen() {
             body: JSON.stringify({
               schuetzeId: selectedSchuetze,
               disziplinId,
-              saison: selectedSaison,
+              saison: '2026',
               lmTeilnahme: lmTeilnahme[disziplinId] || false,
               anmerkung,
               vmErgebnis: vmData?.ringe ? {
@@ -317,44 +399,76 @@ export default function KMMeldungen() {
 
   const getWettkampfklasse = (schuetze: Shooter, auflage: boolean = false, spoNummer?: string) => {
     if (!schuetze.birthYear || !schuetze.gender) {
-      return 'Daten unvollständig - bitte nachtragen';
+      return {
+        klasse: 'Daten unvollständig - bitte nachtragen',
+        kmErlaubt: false,
+        lmErlaubt: false,
+        warnung: 'Geburtsjahr und Geschlecht erforderlich'
+      };
     }
     
-    const sportjahr = 2026; // Sportjahr KM 2026
+    const sportjahr = 2026;
     const age = sportjahr - schuetze.birthYear;
     const gender = schuetze.gender;
     
     if (auflage) {
-      // Auflage: Schüler und Senioren-Klassen
-      if (age >= 12 && age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
-      
-      // Ausnahme für Disziplin 1.41 - kreisintern dürfen alle Altersklassen teilnehmen
-      if (spoNummer === '1.41' && age >= 15 && age <= 40) {
-        if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
-        if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
-        if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
-        return gender === 'male' ? 'Herren I' : 'Damen I';
+      // Schüler (KM + LM erlaubt)
+      if (age >= 12 && age <= 14) {
+        const klasse = gender === 'male' ? 'Schüler I m' : 'Schüler I w';
+        return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
       }
       
-      if (age < 41) return 'Nicht teilnahmeberechtigt';
-      if (age <= 50) return 'Senioren 0'; // 41-50 gemischt
-      if (age <= 60) return gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
-      if (age <= 65) return gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
-      if (age <= 70) return gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
-      if (age <= 75) return gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
-      if (age <= 80) return gender === 'male' ? 'Senioren V m' : 'Seniorinnen V';
-      return gender === 'male' ? 'Senioren VI m' : 'Seniorinnen VI';
+      // KM-Sonderregelung: Jugend/Junioren bei Auflage kreisintern (1.11)
+      if (spoNummer === '1.11' && age >= 15 && age <= 40) {
+        let klasse;
+        if (age <= 16) klasse = gender === 'male' ? 'Jugend m' : 'Jugend w';
+        else if (age <= 18) klasse = gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+        else if (age <= 20) klasse = gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+        else klasse = gender === 'male' ? 'Herren I' : 'Damen I';
+        
+        return {
+          klasse,
+          kmErlaubt: true,
+          lmErlaubt: false,
+          warnung: 'KM erlaubt, aber nicht LM-berechtigt (Sonderregelung Auflage kreisintern)'
+        };
+      }
+      
+      // Nicht teilnahmeberechtigt (15-40 Jahre bei normaler Auflage)
+      if (age < 41) {
+        return {
+          klasse: 'Nicht teilnahmeberechtigt',
+          kmErlaubt: false,
+          lmErlaubt: false,
+          warnung: 'Auflage-Disziplinen nur für Schüler (12-14) und Senioren (41+)'
+        };
+      }
+      
+      // Senioren (KM + LM erlaubt)
+      let klasse;
+      if (age <= 50) klasse = 'Senioren 0';
+      else if (age <= 60) klasse = gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
+      else if (age <= 65) klasse = gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
+      else if (age <= 70) klasse = gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
+      else if (age <= 75) klasse = gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
+      else if (age <= 80) klasse = gender === 'male' ? 'Senioren V m' : 'Seniorinnen V';
+      else klasse = gender === 'male' ? 'Senioren VI m' : 'Seniorinnen VI';
+      
+      return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
     } else {
-      // Freihand
-      if (age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
-      if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
-      if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
-      if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
-      if (age <= 40) return gender === 'male' ? 'Herren I' : 'Damen I';
-      if (age <= 50) return gender === 'male' ? 'Herren II' : 'Damen II';
-      if (age <= 60) return gender === 'male' ? 'Herren III' : 'Damen III';
-      if (age <= 70) return gender === 'male' ? 'Herren IV' : 'Damen IV';
-      return gender === 'male' ? 'Herren V' : 'Damen V';
+      // Freihand (alle Altersklassen KM + LM erlaubt)
+      let klasse;
+      if (age <= 14) klasse = gender === 'male' ? 'Schüler I m' : 'Schüler I w';
+      else if (age <= 16) klasse = gender === 'male' ? 'Jugend m' : 'Jugend w';
+      else if (age <= 18) klasse = gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+      else if (age <= 20) klasse = gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+      else if (age <= 40) klasse = gender === 'male' ? 'Herren I' : 'Damen I';
+      else if (age <= 50) klasse = gender === 'male' ? 'Herren II' : 'Damen II';
+      else if (age <= 60) klasse = gender === 'male' ? 'Herren III' : 'Damen III';
+      else if (age <= 70) klasse = gender === 'male' ? 'Herren IV' : 'Damen IV';
+      else klasse = gender === 'male' ? 'Herren V' : 'Damen V';
+      
+      return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
     }
   };
 
@@ -372,14 +486,32 @@ export default function KMMeldungen() {
 
   return (
     <div className="container py-8 max-w-4xl mx-auto">
-      <div className="flex items-center gap-4 mb-6">
-        <BackButton className="mr-2" fallbackHref="/km" />
-        <div>
-          <h1 className="text-3xl font-bold text-primary">📝 Schützen zur KM 2026 melden</h1>
-          <p className="text-muted-foreground">
-            Melden Sie Ihre Schützen für die Kreismeisterschaft an
-          </p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <BackButton className="mr-2" fallbackHref="/km" />
+          <div>
+            <h1 className="text-3xl font-bold text-primary">📝 Schützen zur KM melden</h1>
+            <p className="text-muted-foreground">
+              Melden Sie Ihre Schützen für die Kreismeisterschaft an
+            </p>
+          </div>
         </div>
+        {saisons.length > 1 && (
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium">KM auswählen:</label>
+            <select
+              value={selectedSaison}
+              onChange={(e) => setSelectedSaison(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm font-medium min-w-[200px]"
+            >
+              {saisons.map(saison => (
+                <option key={saison.id} value={saison.id}>
+                  {saison.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -395,21 +527,7 @@ export default function KMMeldungen() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Saison Status Warning */}
-              {selectedSaison && saisons.find(s => s.id === selectedSaison)?.status === 'vorbereitung' && (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
-                  <div className="flex items-center gap-2 text-yellow-800">
-                    <span>⚠️</span>
-                    <span className="font-medium">Saison in Vorbereitung</span>
-                  </div>
-                  <p className="text-sm text-yellow-700 mt-1">
-                    Diese Saison ist noch nicht aktiv. Meldungen sind möglich, aber die Saison muss noch aktiviert werden.
-                    {saisons.find(s => s.id === selectedSaison)?.aktivAb && (
-                      <> Aktivierung geplant ab: {saisons.find(s => s.id === selectedSaison)?.aktivAb}</>  
-                    )}
-                  </p>
-                </div>
-              )}
+
               
               {/* Melde-Modus Tabs */}
               <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
@@ -612,30 +730,48 @@ export default function KMMeldungen() {
                       const disziplin = disziplinen.find(d => d.id === disziplinId);
                       if (!schuetze || !disziplin) return null;
                       
-                      const wettkampfklasse = getWettkampfklasse(schuetze, disziplin.auflage, disziplin.spoNummer);
+                      const wettkampfInfo = getWettkampfklasse(schuetze, disziplin.auflage, disziplin.spoNummer);
                       
                       return (
-                        <div key={disziplinId} className="p-3 bg-blue-50 border border-blue-200 rounded">
+                        <div key={disziplinId} className={`p-3 border rounded ${
+                          !wettkampfInfo.kmErlaubt ? 'bg-red-50 border-red-200' :
+                          !wettkampfInfo.lmErlaubt ? 'bg-orange-50 border-orange-200' :
+                          'bg-blue-50 border-blue-200'
+                        }`}>
                           <div className="flex justify-between items-center">
                             <div>
-                              <div className="font-medium text-blue-900">
-                                {disziplin.spoNummer}: {wettkampfklasse}
+                              <div className={`font-medium ${
+                                !wettkampfInfo.kmErlaubt ? 'text-red-900' :
+                                !wettkampfInfo.lmErlaubt ? 'text-orange-900' :
+                                'text-blue-900'
+                              }`}>
+                                {disziplin.spoNummer}: {wettkampfInfo.klasse}
                               </div>
-                              <div className="text-sm text-blue-600">
+                              <div className={`text-sm ${
+                                !wettkampfInfo.kmErlaubt ? 'text-red-600' :
+                                !wettkampfInfo.lmErlaubt ? 'text-orange-600' :
+                                'text-blue-600'
+                              }`}>
                                 {disziplin.name} {disziplin.auflage ? '(Auflage)' : '(Freihand)'}
                               </div>
-                              {disziplin.auflage && (
-                                <div className="text-xs text-blue-500 mt-1">
-                                  {disziplin.spoNummer === '1.41' 
-                                    ? 'Kreisintern: Alle Altersklassen erlaubt (Sonderregelung)'
-                                    : 'Senioren-Klassen ab 41 Jahren'
-                                  }
+                              {wettkampfInfo.warnung && (
+                                <div className={`text-xs mt-1 ${
+                                  !wettkampfInfo.kmErlaubt ? 'text-red-500' :
+                                  !wettkampfInfo.lmErlaubt ? 'text-orange-500' :
+                                  'text-blue-500'
+                                }`}>
+                                  ⚠️ {wettkampfInfo.warnung}
                                 </div>
                               )}
                             </div>
-                            <Badge variant="outline" className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600">
-                              Automatisch
-                            </Badge>
+                            <div className="flex flex-col gap-1">
+                              <Badge variant={wettkampfInfo.kmErlaubt ? "default" : "destructive"} className="text-xs">
+                                KM: {wettkampfInfo.kmErlaubt ? '✅' : '❌'}
+                              </Badge>
+                              <Badge variant={wettkampfInfo.lmErlaubt ? "default" : "secondary"} className="text-xs">
+                                LM: {wettkampfInfo.lmErlaubt ? '✅' : '❌'}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       );
@@ -653,6 +789,45 @@ export default function KMMeldungen() {
                 </div>
               )}
 
+              {/* Meldeschluss-Warnung */}
+              {(() => {
+                const today = new Date();
+                const hasExpiredSeasons = disziplinen.some(d => {
+                  if (!d.saison) return false;
+                  // Prüfe Meldeschluss (Format: "01.11.2025" oder "15.12.")
+                  const meldeschluss = d.saison.meldeschluss;
+                  if (!meldeschluss) return false;
+                  
+                  let deadline;
+                  if (meldeschluss.includes('.') && meldeschluss.length > 6) {
+                    // Vollständiges Datum: "01.11.2025"
+                    const [day, month, year] = meldeschluss.split('.');
+                    deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                  } else {
+                    // Kurzes Format: "15.12." - nehme aktuelles Jahr
+                    const [day, month] = meldeschluss.split('.');
+                    deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+                  }
+                  
+                  return today > deadline;
+                });
+                
+                if (hasExpiredSeasons) {
+                  return (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded mb-4">
+                      <div className="flex items-center gap-2 text-red-800 mb-2">
+                        <span>⚠️</span>
+                        <span className="font-medium">Meldeschluss überschritten</span>
+                      </div>
+                      <p className="text-sm text-red-700">
+                        Für einige Disziplinen ist der Meldeschluss bereits vorbei. Diese können nicht mehr ausgewählt werden.
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+              
               {/* Disziplinen - Mehrfachauswahl */}
               <div>
                 <label className="block text-sm font-medium mb-2">Disziplinen auswählen (Mehrfachauswahl möglich)</label>
@@ -664,25 +839,52 @@ export default function KMMeldungen() {
                   </div>
                 ) : (
                   <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800">
-                    {disziplinen.map(disziplin => (
-                      <label key={disziplin.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedDisziplinen.includes(disziplin.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedDisziplinen(prev => [...prev, disziplin.id]);
-                            } else {
-                              setSelectedDisziplinen(prev => prev.filter(id => id !== disziplin.id));
-                            }
-                          }}
-                        />
-                        <span className="text-sm">
-                          {disziplin.spoNummer} - {disziplin.name}
-                          {disziplin.nurVereinsmeisterschaft && <Badge variant="outline" className="ml-2 text-xs">VM</Badge>}
-                        </span>
-                      </label>
-                    ))}
+                    {disziplinen.map(disziplin => {
+                      // Prüfe Meldeschluss
+                      const today = new Date();
+                      let isExpired = false;
+                      
+                      if (disziplin.saison?.meldeschluss) {
+                        const meldeschluss = disziplin.saison.meldeschluss;
+                        let deadline;
+                        
+                        if (meldeschluss.includes('.') && meldeschluss.length > 6) {
+                          const [day, month, year] = meldeschluss.split('.');
+                          deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                        } else {
+                          const [day, month] = meldeschluss.split('.');
+                          deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+                        }
+                        
+                        isExpired = today > deadline;
+                      }
+                      
+                      return (
+                        <label key={disziplin.id} className={`flex items-center space-x-2 p-2 rounded cursor-pointer ${
+                          isExpired 
+                            ? 'bg-red-50 text-red-500 cursor-not-allowed' 
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}>
+                          <input
+                            type="checkbox"
+                            checked={selectedDisziplinen.includes(disziplin.id)}
+                            disabled={isExpired}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedDisziplinen(prev => [...prev, disziplin.id]);
+                              } else {
+                                setSelectedDisziplinen(prev => prev.filter(id => id !== disziplin.id));
+                              }
+                            }}
+                          />
+                          <span className="text-sm">
+                            {disziplin.spoNummer} - {disziplin.name}
+                            {disziplin.nurVereinsmeisterschaft && <Badge variant="outline" className="ml-2 text-xs">VM</Badge>}
+                            {isExpired && <Badge variant="destructive" className="ml-2 text-xs">Meldeschluss vorbei</Badge>}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -769,31 +971,51 @@ export default function KMMeldungen() {
                   <div className="space-y-3">
                     {selectedDisziplinen.map(disziplinId => {
                       const disziplin = disziplinen.find(d => d.id === disziplinId);
-                      if (!disziplin) return null;
+                      const schuetze = schuetzen.find(s => s.id === selectedSchuetze);
+                      if (!disziplin || !schuetze) return null;
+                      
+                      const wettkampfInfo = getWettkampfklasse(schuetze, disziplin.auflage, disziplin.spoNummer);
+                      const isLmDisabled = !wettkampfInfo.lmErlaubt;
                       
                       return (
-                        <div key={disziplinId} className="p-3 bg-purple-50 border border-purple-200 rounded">
-                          <h5 className="font-medium text-purple-900 mb-2">
+                        <div key={disziplinId} className={`p-3 border rounded ${
+                          isLmDisabled ? 'bg-gray-50 border-gray-200' : 'bg-purple-50 border-purple-200'
+                        }`}>
+                          <h5 className={`font-medium mb-2 ${
+                            isLmDisabled ? 'text-gray-600' : 'text-purple-900'
+                          }`}>
                             {disziplin.spoNummer} - {disziplin.name}
                           </h5>
+                          {isLmDisabled && (
+                            <div className="mb-3 p-2 bg-orange-100 border border-orange-300 rounded text-sm text-orange-800">
+                              ⚠️ LM-Meldung für diese Altersklasse nicht möglich: {wettkampfInfo.warnung}
+                            </div>
+                          )}
                           <div className="flex items-center space-x-4">
-                            <label className="flex items-center space-x-2">
+                            <label className={`flex items-center space-x-2 ${
+                              isLmDisabled ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}>
                               <input
                                 type="radio"
                                 name={`lm_${disziplinId}`}
                                 checked={lmTeilnahme[disziplinId] === true}
+                                disabled={isLmDisabled}
                                 onChange={() => setLmTeilnahme(prev => ({...prev, [disziplinId]: true}))}
                               />
-                              <span className="text-purple-900 dark:text-purple-100">Ja</span>
+                              <span className={isLmDisabled ? 'text-gray-500' : 'text-purple-900 dark:text-purple-100'}>
+                                Ja {isLmDisabled && '(nicht möglich)'}
+                              </span>
                             </label>
                             <label className="flex items-center space-x-2">
                               <input
                                 type="radio"
                                 name={`lm_${disziplinId}`}
-                                checked={lmTeilnahme[disziplinId] !== true}
+                                checked={lmTeilnahme[disziplinId] !== true || isLmDisabled}
                                 onChange={() => setLmTeilnahme(prev => ({...prev, [disziplinId]: false}))}
                               />
-                              <span className="text-purple-900 dark:text-purple-100">Nein</span>
+                              <span className={isLmDisabled ? 'text-gray-500' : 'text-purple-900 dark:text-purple-100'}>
+                                Nein
+                              </span>
                             </label>
                           </div>
                         </div>
@@ -955,18 +1177,50 @@ export default function KMMeldungen() {
                         const disziplin = disziplinen.find(d => d.id === selectedDisziplin);
                         if (!schuetze || !disziplin) return null;
                         
-                        const wettkampfklasse = getWettkampfklasse(schuetze, disziplin.auflage, disziplin.spoNummer);
+                        const wettkampfInfo = getWettkampfklasse(schuetze, disziplin.auflage, disziplin.spoNummer);
                         const displayName = schuetze.firstName && schuetze.lastName 
                           ? `${schuetze.firstName} ${schuetze.lastName}`
                           : schuetze.name;
                         
                         return (
-                          <div key={schuetzeId} className="p-3 bg-blue-50 border border-blue-200 rounded">
-                            <div className="font-medium text-blue-900">
-                              {displayName}: {wettkampfklasse}
-                            </div>
-                            <div className="text-sm text-blue-600">
-                              {disziplin.name} {disziplin.auflage ? '(Auflage)' : '(Freihand)'}
+                          <div key={schuetzeId} className={`p-3 border rounded ${
+                            !wettkampfInfo.kmErlaubt ? 'bg-red-50 border-red-200' :
+                            !wettkampfInfo.lmErlaubt ? 'bg-orange-50 border-orange-200' :
+                            'bg-blue-50 border-blue-200'
+                          }`}>
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className={`font-medium ${
+                                  !wettkampfInfo.kmErlaubt ? 'text-red-900' :
+                                  !wettkampfInfo.lmErlaubt ? 'text-orange-900' :
+                                  'text-blue-900'
+                                }`}>
+                                  {displayName}: {wettkampfInfo.klasse}
+                                </div>
+                                <div className={`text-sm ${
+                                  !wettkampfInfo.kmErlaubt ? 'text-red-600' :
+                                  !wettkampfInfo.lmErlaubt ? 'text-orange-600' :
+                                  'text-blue-600'
+                                }`}>
+                                  {disziplin.name} {disziplin.auflage ? '(Auflage)' : '(Freihand)'}
+                                </div>
+                                {wettkampfInfo.warnung && (
+                                  <div className={`text-xs mt-1 ${
+                                    !wettkampfInfo.kmErlaubt ? 'text-red-500' :
+                                    'text-orange-500'
+                                  }`}>
+                                    ⚠️ {wettkampfInfo.warnung}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <Badge variant={wettkampfInfo.kmErlaubt ? "default" : "destructive"} className="text-xs">
+                                  KM: {wettkampfInfo.kmErlaubt ? '✅' : '❌'}
+                                </Badge>
+                                <Badge variant={wettkampfInfo.lmErlaubt ? "default" : "secondary"} className="text-xs">
+                                  LM: {wettkampfInfo.lmErlaubt ? '✅' : '❌'}
+                                </Badge>
+                              </div>
                             </div>
                           </div>
                         );
@@ -1307,7 +1561,7 @@ export default function KMMeldungen() {
                           }
                         </div>
                         <div className="text-gray-500">
-                          {disziplin?.spoNummer} {disziplin?.name} • {schuetze ? getWettkampfklasse(schuetze, disziplin?.auflage, disziplin?.spoNummer) : 'N/A'}
+                          {disziplin?.spoNummer} {disziplin?.name} • {schuetze ? getWettkampfklasse(schuetze, disziplin?.auflage, disziplin?.spoNummer).klasse : 'N/A'}
                           {meldung.vmErgebnis?.ringe && (
                             <span className="ml-2 text-green-600 font-medium">
                               • VM: {meldung.vmErgebnis.ringe} Ringe

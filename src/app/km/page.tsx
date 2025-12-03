@@ -27,7 +27,9 @@ export default function KMDashboard() {
       const response = await fetch('/api/km/saisons');
       if (response.ok) {
         const data = await response.json();
-        const aktiveSaisons = data.data.filter(s => s.status === 'aktiv');
+        const aktiveSaisons = data.data
+          .filter(s => s.status === 'aktiv')
+          .sort((a, b) => b.jahr - a.jahr); // Neueste zuerst
         setAktiveSaisons(aktiveSaisons);
       }
     } catch (error) {
@@ -234,32 +236,105 @@ export default function KMDashboard() {
           <CardContent>
             <div className="space-y-3">
               {aktiveSaisons.length > 0 ? (
-                aktiveSaisons.map((saison) => (
-                  <div key={saison.id} className="bg-orange-50 p-3 rounded border border-orange-100">
-                    <div className="text-orange-700 space-y-2">
-                      <div className="flex items-center gap-2 font-medium text-orange-800">
-                        <span>🎯</span>
-                        <span>KM 2026 - {saison.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2 font-medium text-orange-700">
-                        <span>⏰</span>
-                        <span>Meldeschluss: {saison.meldeschluss}</span>
-                      </div>
-                      {saison.status === 'vorbereitung' && saison.aktivAb && (
-                        <div className="flex items-center gap-2 text-sm text-orange-600">
-                          <span>📅</span>
-                          <span>Meldungen ab: {saison.aktivAb}</span>
+                aktiveSaisons
+                  .sort((a, b) => {
+                    // Aktive Meldeschlüsse zuerst, dann nach Jahr sortiert
+                    const today = new Date();
+                    const getDeadline = (s) => {
+                      if (!s.meldeschluss) return new Date(0);
+                      if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
+                        const [day, month, year] = s.meldeschluss.split('.');
+                        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                      } else {
+                        const [day, month] = s.meldeschluss.split('.');
+                        return new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+                      }
+                    };
+                    
+                    const aExpired = today > getDeadline(a);
+                    const bExpired = today > getDeadline(b);
+                    
+                    if (aExpired !== bExpired) {
+                      return aExpired ? 1 : -1; // Aktive zuerst
+                    }
+                    return b.jahr - a.jahr; // Dann nach Jahr
+                  })
+                  .map((saison) => {
+                  // Prüfe ob Meldeschluss abgelaufen ist
+                  const today = new Date();
+                  let isExpired = false;
+                  
+                  if (saison.meldeschluss) {
+                    let deadline;
+                    if (saison.meldeschluss.includes('.') && saison.meldeschluss.length > 6) {
+                      // Vollständiges Datum: "01.11.2025"
+                      const [day, month, year] = saison.meldeschluss.split('.');
+                      deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                    } else {
+                      // Kurzes Format: "15.12." - nehme aktuelles Jahr
+                      const [day, month] = saison.meldeschluss.split('.');
+                      deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+                    }
+                    isExpired = today > deadline;
+                  }
+                  
+                  return (
+                    <div key={saison.id} className={`p-3 rounded border ${
+                      isExpired 
+                        ? 'bg-red-50 border-red-200' 
+                        : 'bg-green-50 border-green-200'
+                    }`}>
+                      <div className={`space-y-2 ${
+                        isExpired ? 'text-red-700' : 'text-green-700'
+                      }`}>
+                        <div className={`flex items-center gap-2 font-medium ${
+                          isExpired ? 'text-red-800' : 'text-green-800'
+                        }`}>
+                          <span>🎯</span>
+                          <span>KM 2026 - {saison.name}</span>
                         </div>
-                      )}
+                        <div className={`flex items-center gap-2 font-medium ${
+                          isExpired ? 'text-red-700' : 'text-green-700'
+                        }`}>
+                          <span>{isExpired ? '⚠️' : '✅'}</span>
+                          <span>Meldeschluss: {saison.meldeschluss}</span>
+                          {isExpired ? (
+                            <Badge variant="destructive" className="ml-2 text-xs">
+                              Abgelaufen
+                            </Badge>
+                          ) : (
+                            <Badge className="ml-2 text-xs bg-green-600">
+                              Aktiv
+                            </Badge>
+                          )}
+                        </div>
+                        {saison.status === 'vorbereitung' && saison.aktivAb && (
+                          <div className={`flex items-center gap-2 text-sm ${
+                            isExpired ? 'text-red-600' : 'text-green-600'
+                          }`}>
+                            <span>📅</span>
+                            <span>Meldungen ab: {saison.aktivAb}</span>
+                          </div>
+                        )}
+                        {isExpired && (
+                          <div className="flex items-center gap-2 text-sm text-red-600 font-medium">
+                            <span>🚫</span>
+                            <span>Neue Meldungen nicht mehr möglich</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
-                <div className="bg-orange-50 p-3 rounded border border-orange-100">
-                  <div className="text-orange-700">
+                <div className="bg-green-50 p-3 rounded border border-green-200">
+                  <div className="text-green-700">
                     <div className="flex items-center gap-2 font-medium">
-                      <span>⏰</span>
+                      <span>✅</span>
                       <span>Meldeschluss: 15.12.2025</span>
+                      <Badge className="ml-2 text-xs bg-green-600">
+                        Aktiv
+                      </Badge>
                     </div>
                   </div>
                 </div>

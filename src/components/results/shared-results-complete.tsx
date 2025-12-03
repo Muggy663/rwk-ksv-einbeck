@@ -263,6 +263,11 @@ export default function SharedResultsPage({
           );
           
           setAvailableShootersForDropdown(availableShooters);
+          
+          // Automatisch ersten verfügbaren Schützen auswählen (nur wenn keiner ausgewählt)
+          if (!selectedShooterId && availableShooters.length > 0) {
+            setSelectedShooterId(availableShooters[0].id);
+          }
         } catch (error) {
           logError('Error loading existing scores:', error);
           setAvailableShootersForDropdown(shootersOfSelectedTeam);
@@ -370,6 +375,8 @@ export default function SharedResultsPage({
             .filter(({ allShootersHaveResults }) => !allShootersHaveResults)
             .map(({ team }) => team);
           
+
+          
           setAllTeamsInSelectedLeague(filteredTeams);
         } catch (error) {
           logError("Error fetching teams:", error);
@@ -391,22 +398,25 @@ export default function SharedResultsPage({
 
     const parsedRound = parseInt(selectedRound);
     
-    // Duplikat-Erkennung: Bereits vorhandene Ergebnisse filtern
+    // Erweiterte Duplikat-Erkennung: Bereits vorhandene Ergebnisse filtern
     const filteredResults = ocrResults.filter(result => {
-      // Prüfe gegen bereits gespeicherte Ergebnisse
+      // Prüfe gegen bereits gespeicherte Ergebnisse (alle Teams)
       const existsInDB = existingScoresForTeamAndRound.some(existing => 
         existing.shooterId === result.shooterId && existing.durchgang === parsedRound
       );
       
-      // Prüfe gegen Zwischenliste
+      // Prüfe gegen Zwischenliste (alle Teams)
       const existsInPending = pendingScores.some(pending => 
         pending.shooterId === result.shooterId && pending.durchgang === parsedRound
       );
       
-      // Prüfe gegen gerade gespeicherte
+      // Prüfe gegen gerade gespeicherte (alle Teams)
       const existsInJustSaved = justSavedScoreIdentifiers.some(saved => 
         saved.shooterId === result.shooterId && saved.durchgang === parsedRound
       );
+      
+      // Zusätzlich: Prüfe gegen alle bereits erfassten Ergebnisse in der Datenbank für diesen Durchgang
+      // (nicht nur für das aktuelle Team, sondern für alle Teams)
       
       return !existsInDB && !existsInPending && !existsInJustSaved;
     });
@@ -438,24 +448,31 @@ export default function SharedResultsPage({
     setPendingScores(prev => [...prev, ...newPendingEntries]);
     setShowOCR(false);
     
-    // Intelligente Toast-Nachricht
+    // Intelligente Toast-Nachricht für bereits gescannte Handzettel
     if (newPendingEntries.length > 0 && duplicateCount > 0) {
       toast({
         title: `🎯 ${newPendingEntries.length} neue Ergebnisse erfasst!`,
-        description: `${duplicateCount} bereits vorhandene Ergebnisse übersprungen. Nachschießen-Spalten werden automatisch ignoriert.`,
+        description: `${duplicateCount} bereits erfasste Ergebnisse übersprungen. 📝 Perfekt für Nachträge auf bereits gescannten Handzetteln!`,
         className: "border-green-500 bg-green-50"
       });
     } else if (newPendingEntries.length > 0) {
       toast({
         title: `🎯 ${newPendingEntries.length} Ergebnisse automatisch erfasst!`,
-        description: "Nur reguläre Ergebnisse erfasst - Nachschießen werden ignoriert. Bitte prüfen Sie alle Werte.",
+        description: "🤖 Google Gemini AI hat alle Werte erkannt. Namen sind zuverlässig - Ringzahlen bitte kurz prüfen!",
         className: "border-green-500 bg-green-50"
       });
-    } else {
+    } else if (duplicateCount > 0) {
       toast({
-        title: "ℹ️ Keine neuen Ergebnisse",
-        description: `Alle ${duplicateCount} erkannten Ergebnisse sind bereits vorhanden.`,
+        title: "ℹ️ Handzettel bereits vollständig erfasst",
+        description: `Alle ${duplicateCount} Schützen haben bereits Ergebnisse für diesen Durchgang. 🚀 Einfach manuell fehlende Schützen nachtragen!`,
         className: "border-blue-500 bg-blue-50"
+      });
+    } else {
+      // Wenn OCR erfolgreich war aber keine Ergebnisse gefunden wurden
+      toast({
+        title: "ℹ️ Keine neuen Ergebnisse erkannt",
+        description: "OCR war erfolgreich, aber keine neuen Schützen gefunden. Eventuell bereits alle erfasst oder Handzettel nicht erkannt.",
+        className: "border-amber-500 bg-amber-50"
       });
     }
   };
@@ -511,8 +528,15 @@ export default function SharedResultsPage({
     
     setPendingScores(prev => [...prev, newEntry]);
     toast({ title: "Ergebnis hinzugefügt" });
+    
+    // UI-State komplett zurücksetzen
     setSelectedShooterId('');
     setScore('');
+    
+    // Force re-render der Schützen-Liste
+    setTimeout(() => {
+      setSelectedShooterId('');
+    }, 100);
   };
 
   const handleRemoveFromList = (tempId: string) => {
@@ -944,6 +968,14 @@ export default function SharedResultsPage({
                   <Camera className="h-8 w-8 text-amber-600 dark:text-amber-400 mx-auto" />
                   <p className="text-sm font-medium text-amber-800 dark:text-amber-100">📋 Zuerst Liga und Durchgang auswählen!</p>
                   <p className="text-xs text-amber-700 dark:text-amber-200">Dann erscheint hier die Kamera-Funktion - einfach fotografieren, abschicken und fertig!</p>
+                </div>
+              </div>
+            ) : allTeamsInSelectedLeague.length === 0 && !editMode ? (
+              <div className="p-4 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50 dark:bg-blue-900/20 dark:border-blue-600">
+                <div className="text-center space-y-2">
+                  <CheckCircle className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto" />
+                  <p className="text-sm font-medium text-blue-800 dark:text-blue-100">✅ Durchgang bereits vollständig erfasst!</p>
+                  <p className="text-xs text-blue-700 dark:text-blue-200">Alle Teams haben bereits Ergebnisse für Durchgang {selectedRound}. {userRole === 'admin' ? 'Wählen Sie einen anderen Durchgang oder aktivieren Sie den Bearbeitungsmodus.' : 'Wählen Sie einen anderen Durchgang.'}</p>
                 </div>
               </div>
             ) : (

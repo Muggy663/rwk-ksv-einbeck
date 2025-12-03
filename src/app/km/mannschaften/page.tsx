@@ -39,20 +39,63 @@ export default function KMMannschaften() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [meldungen, setMeldungen] = useState<any[]>([]);
   const [selectedClubId, setSelectedClubId] = useState('');
+  const [saisons, setSaisons] = useState<any[]>([]);
+  const [selectedSaison, setSelectedSaison] = useState<string>('');
 
   useEffect(() => {
     if (hasKMAccess && !authLoading) {
       loadData();
     }
   }, [hasKMAccess, authLoading]);
+  
+  useEffect(() => {
+    if (selectedSaison && hasKMAccess) {
+      loadData();
+    }
+  }, [selectedSaison]);
 
   const loadData = async () => {
     try {
-
+      // Lade Saisons
+      try {
+        const saisonRes = await fetch('/api/km/saisons?status=aktiv');
+        if (saisonRes.ok) {
+          const saisonData = await saisonRes.json();
+          const aktiveSaisons = (saisonData.data || []).sort((a, b) => {
+            const today = new Date();
+            const getDeadline = (s) => {
+              if (!s.meldeschluss) return new Date(0);
+              if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
+                const [day, month, year] = s.meldeschluss.split('.');
+                return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+              } else {
+                const [day, month] = s.meldeschluss.split('.');
+                return new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+              }
+            };
+            
+            const aExpired = today > getDeadline(a);
+            const bExpired = today > getDeadline(b);
+            
+            if (aExpired !== bExpired) {
+              return aExpired ? 1 : -1;
+            }
+            return b.jahr - a.jahr;
+          });
+          setSaisons(aktiveSaisons);
+          
+          if (aktiveSaisons.length > 0 && !selectedSaison) {
+            setSelectedSaison(aktiveSaisons[0].id);
+          }
+        }
+      } catch (e) {
+        logError('Saisons API failed:', e);
+        setSaisons([]);
+      }
       
       // Lade Mannschaften
       try {
-        const mannschaftenRes = await fetch('/api/km/mannschaften');
+        const mannschaftenRes = await fetch(`/api/km/mannschaften?saison=${selectedSaison || '2026'}`);
         if (mannschaftenRes.ok) {
           const data = await mannschaftenRes.json();
           logDebug('🔍 Loaded mannschaften:', data.data?.length || 0);
@@ -98,7 +141,7 @@ export default function KMMannschaften() {
       
       try {
 
-        const meldungenRes = await fetch('/api/km/meldungen?jahr=2026');
+        const meldungenRes = await fetch(`/api/km/meldungen?saison=${selectedSaison || '2026'}`);
         if (meldungenRes.ok) {
           const data = await meldungenRes.json();
           setMeldungen(data.data || []);
@@ -109,9 +152,7 @@ export default function KMMannschaften() {
       }
 
       try {
-
-        const disziplinenRes = await fetch('/api/km/disziplinen');
-
+        const disziplinenRes = await fetch(`/api/km/disziplinen?saisonId=${selectedSaison || ''}`);
         if (disziplinenRes.ok) {
           const data = await disziplinenRes.json();
           setDisziplinen(data.data || []);
@@ -151,7 +192,7 @@ export default function KMMannschaften() {
       const response = await fetch('/api/km/mannschaften/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ saison: '2026' })
+        body: JSON.stringify({ saison: selectedSaison || saisons[0]?.id || '2026' })
       });
 
       const result = await response.json();
@@ -265,11 +306,28 @@ export default function KMMannschaften() {
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-primary">👥 Mannschaften KM 2026</h1>
+            <h1 className="text-3xl font-bold text-primary">👥 Mannschaften KM</h1>
             <p className="text-muted-foreground">Automatische Generierung und manuelle Anpassung</p>
           </div>
           
-          {userClubIds.length > 1 && (
+          <div className="flex flex-col sm:flex-row gap-4">
+            {saisons.length > 1 && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">KM:</label>
+                <select 
+                  value={selectedSaison} 
+                  onChange={(e) => setSelectedSaison(e.target.value)}
+                  className="border rounded px-3 py-1 min-w-[150px]"
+                >
+                  {saisons.map(saison => (
+                    <option key={saison.id} value={saison.id}>
+                      {saison.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {userClubIds.length > 1 && (
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Verein:</label>
               <select 
@@ -286,7 +344,8 @@ export default function KMMannschaften() {
                 })}
               </select>
             </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -326,7 +385,7 @@ export default function KMMannschaften() {
                         wettkampfklassen: ['Unbekannt'],
                         schuetzenIds: [],
                         name: 'Neue Mannschaft',
-                        saison: '2026'
+                        saison: selectedSaison || saisons[0]?.id || '2026'
                       };
                       
                       fetch('/api/km/mannschaften', {
@@ -347,10 +406,11 @@ export default function KMMannschaften() {
                 </div>
                 {(() => {
                   const filteredMannschaften = mannschaften.filter(m => {
-                    if (userClubIds.length === 0) return true;
+                    const saisonMatch = !selectedSaison || m.saison === selectedSaison;
+                    if (userClubIds.length === 0) return saisonMatch;
                     const clubMatch = userClubIds.includes(m.vereinId || m.clubId);
                     const selectedClubMatch = !selectedClubId || (m.vereinId || m.clubId) === selectedClubId;
-                    return clubMatch && selectedClubMatch;
+                    return saisonMatch && clubMatch && selectedClubMatch;
                   });
                   return filteredMannschaften.length > 0 && (
                     <p className="text-sm text-gray-600 mt-2">
@@ -373,13 +433,16 @@ export default function KMMannschaften() {
                 ) : (
                   mannschaften
                     .filter(mannschaft => {
+                      // Filter nach Saison-ID
+                      const saisonMatch = !selectedSaison || mannschaft.saison === selectedSaison;
+                      
                       // Wenn userClubIds leer ist (Admin/KM-Organisator), zeige alle
-                      if (userClubIds.length === 0) return true;
+                      if (userClubIds.length === 0) return saisonMatch;
                       // Zeige nur Mannschaften der eigenen Vereine
                       const clubMatch = userClubIds.includes(mannschaft.vereinId || mannschaft.clubId);
                       // Zusätzlicher Filter nach ausgewähltem Verein
                       const selectedClubMatch = !selectedClubId || (mannschaft.vereinId || mannschaft.clubId) === selectedClubId;
-                      return clubMatch && selectedClubMatch;
+                      return saisonMatch && clubMatch && selectedClubMatch;
                     })
                     .map(mannschaft => {
                     const verein = clubs.find(c => c.id === mannschaft.vereinId || c.id === mannschaft.clubId);
