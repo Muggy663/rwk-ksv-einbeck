@@ -5,7 +5,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 
 const KM_SAISONS_COLLECTION = 'km_saisons';
 
-type DisziplinTyp = 'KK' | 'LP';
+type DisziplinTyp = 'KK' | 'LD' | 'KKP';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,10 +19,10 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    if (!['KK', 'LP'].includes(disziplinTyp)) {
+    if (!['KK', 'LD', 'KKP'].includes(disziplinTyp)) {
       return NextResponse.json({
         success: false,
-        error: 'Disziplin-Typ muss KK oder LP sein'
+        error: 'Disziplin-Typ muss KK, LD oder KKP sein'
       }, { status: 400 });
     }
 
@@ -35,11 +35,11 @@ export async function POST(request: NextRequest) {
     if (!existingQuery.empty) {
       return NextResponse.json({
         success: false,
-        error: `KM ${jahr} ${disziplinTyp === 'KK' ? 'Kleinkaliber' : 'Luftdruck'} existiert bereits`
+        error: `KM ${jahr} ${disziplinTyp === 'KK' ? 'Kleinkaliber' : disziplinTyp === 'LD' ? 'Luftdruck' : 'Kleinkaliber Pistole'} existiert bereits`
       }, { status: 400 });
     }
 
-    const disziplinName = disziplinTyp === 'KK' ? 'Kleinkaliber' : 'Luftdruck';
+    const disziplinName = disziplinTyp === 'KK' ? 'Kleinkaliber' : disziplinTyp === 'LD' ? 'Luftdruck' : 'Kleinkaliber Pistole';
     const kmSaison = {
       jahr: parseInt(jahr),
       disziplinTyp,

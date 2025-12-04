@@ -15,7 +15,7 @@ import { BackButton } from '@/components/ui/back-button';
 
 export default function KMMeldungen() {
   const { toast } = useToast();
-  const { userClubIds, isMultiClub } = useKMAuth();
+  const { userClubIds, isMultiClub, userRole } = useKMAuth();
   const { user } = useAuthContext();
   const [meldeModus, setMeldeModus] = useState<'schuetze-disziplinen' | 'disziplin-schuetzen'>('schuetze-disziplinen');
   const [selectedSchuetze, setSelectedSchuetze] = useState('');
@@ -506,7 +506,7 @@ export default function KMMeldungen() {
             >
               {saisons.map(saison => (
                 <option key={saison.id} value={saison.id}>
-                  {saison.name}
+                  {saison.name} ({saison.disziplinTyp})
                 </option>
               ))}
             </select>
@@ -792,27 +792,27 @@ export default function KMMeldungen() {
               {/* Meldeschluss-Warnung */}
               {(() => {
                 const today = new Date();
-                const hasExpiredSeasons = disziplinen.some(d => {
-                  if (!d.saison) return false;
-                  // Prüfe Meldeschluss (Format: "01.11.2025" oder "15.12.")
-                  const meldeschluss = d.saison.meldeschluss;
-                  if (!meldeschluss) return false;
-                  
+                const selectedSaisonData = saisons.find(s => s.id === selectedSaison);
+                let isExpired = false;
+                
+                if (selectedSaisonData?.meldeschluss) {
+                  const meldeschluss = selectedSaisonData.meldeschluss;
                   let deadline;
+                  
                   if (meldeschluss.includes('.') && meldeschluss.length > 6) {
-                    // Vollständiges Datum: "01.11.2025"
                     const [day, month, year] = meldeschluss.split('.');
                     deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                   } else {
-                    // Kurzes Format: "15.12." - nehme aktuelles Jahr
                     const [day, month] = meldeschluss.split('.');
                     deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
                   }
                   
-                  return today > deadline;
-                });
+                  isExpired = today > deadline;
+                }
                 
-                if (hasExpiredSeasons) {
+                const canStillEdit = !isExpired || userRole === 'admin' || userRole === 'km_organisator';
+                
+                if (isExpired && !canStillEdit) {
                   return (
                     <div className="p-3 bg-red-50 border border-red-200 rounded mb-4">
                       <div className="flex items-center gap-2 text-red-800 mb-2">
@@ -820,7 +820,19 @@ export default function KMMeldungen() {
                         <span className="font-medium">Meldeschluss überschritten</span>
                       </div>
                       <p className="text-sm text-red-700">
-                        Für einige Disziplinen ist der Meldeschluss bereits vorbei. Diese können nicht mehr ausgewählt werden.
+                        Der Meldeschluss für diese KM ist bereits vorbei ({selectedSaisonData?.meldeschluss}). Neue Meldungen sind nicht mehr möglich.
+                      </p>
+                    </div>
+                  );
+                } else if (isExpired && canStillEdit) {
+                  return (
+                    <div className="p-3 bg-orange-50 border border-orange-200 rounded mb-4">
+                      <div className="flex items-center gap-2 text-orange-800 mb-2">
+                        <span>⚠️</span>
+                        <span className="font-medium">Meldeschluss überschritten - Admin-Modus</span>
+                      </div>
+                      <p className="text-sm text-orange-700">
+                        Der Meldeschluss ist vorbei ({selectedSaisonData?.meldeschluss}), aber Sie können als {userRole === 'admin' ? 'Administrator' : 'KM-Organisator'} noch Änderungen vornehmen.
                       </p>
                     </div>
                   );
@@ -1375,13 +1387,37 @@ export default function KMMeldungen() {
 
 
               {/* Buttons */}
-              <div className="flex flex-col sm:flex-row gap-2">
-                {editingMeldung ? (
+              {(() => {
+                const today = new Date();
+                const selectedSaisonData = saisons.find(s => s.id === selectedSaison);
+                let isExpired = false;
+                
+                if (selectedSaisonData?.meldeschluss) {
+                  const meldeschluss = selectedSaisonData.meldeschluss;
+                  let deadline;
+                  
+                  if (meldeschluss.includes('.') && meldeschluss.length > 6) {
+                    const [day, month, year] = meldeschluss.split('.');
+                    deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                  } else {
+                    const [day, month] = meldeschluss.split('.');
+                    deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+                  }
+                  
+                  isExpired = today > deadline;
+                }
+                
+                const canEdit = !isExpired || userRole === 'admin' || userRole === 'km_organisator';
+                
+                return (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    {editingMeldung ? (
                   <>
                     <Button 
                       onClick={handleSubmit}
-                      disabled={!selectedSchuetze || selectedDisziplinen.length === 0 || isSubmitting}
+                      disabled={!selectedSchuetze || selectedDisziplinen.length === 0 || isSubmitting || !canEdit}
                       className="w-full sm:w-auto"
+                      title={!canEdit ? 'Meldeschluss abgelaufen' : ''}
                     >
                       {isSubmitting ? 'Speichere...' : 'Meldung aktualisieren'}
                     </Button>
@@ -1406,16 +1442,18 @@ export default function KMMeldungen() {
                       <>
                         <Button 
                           onClick={handleAddToPending}
-                          disabled={!selectedSchuetze || selectedDisziplinen.length === 0}
+                          disabled={!selectedSchuetze || selectedDisziplinen.length === 0 || !canEdit}
                           className="w-full sm:w-auto"
+                          title={!canEdit ? 'Meldeschluss abgelaufen' : ''}
                         >
                           📋 Zwischenspeichern ({selectedDisziplinen.length || 0})
                         </Button>
                         <Button 
                           onClick={handleSubmit}
-                          disabled={!selectedSchuetze || selectedDisziplinen.length === 0 || isSubmitting}
+                          disabled={!selectedSchuetze || selectedDisziplinen.length === 0 || isSubmitting || !canEdit}
                           variant="outline"
                           className="w-full sm:w-auto"
+                          title={!canEdit ? 'Meldeschluss abgelaufen' : ''}
                         >
                           {isSubmitting ? 'Speichere...' : 'Direkt speichern'}
                         </Button>
@@ -1458,8 +1496,9 @@ export default function KMMeldungen() {
                           
                           toast({ title: 'Hinzugefügt', description: `${newPending.length} Meldungen zum Zwischenspeicher hinzugefügt` });
                         }}
-                        disabled={!selectedDisziplin || selectedSchuetzen.length === 0}
+                        disabled={!selectedDisziplin || selectedSchuetzen.length === 0 || !canEdit}
                         className="w-full sm:w-auto"
+                        title={!canEdit ? 'Meldeschluss abgelaufen' : ''}
                       >
                         📋 {selectedSchuetzen.length} Schützen zu Zwischenspeicher
                       </Button>
@@ -1469,7 +1508,9 @@ export default function KMMeldungen() {
                     </Link>
                   </>
                 )}
-              </div>
+                  </div>
+                );
+              })()}
               
               {/* Zwischenspeicher - unter den Buttons */}
               {pendingMeldungen.length > 0 && (
@@ -1528,6 +1569,10 @@ export default function KMMeldungen() {
               <div className="space-y-3">
                 {meldungen
                   .filter(meldung => {
+                    // Filtere nach ausgewählter Saison
+                    const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
+                    if (!disziplin || !disziplin.saison || disziplin.saison.id !== selectedSaison) return false;
+                    
                     // Wenn userClubIds leer ist (Admin/KM-Organisator), zeige alle
                     if (userClubIds.length === 0) return true;
                     
@@ -1570,24 +1615,66 @@ export default function KMMeldungen() {
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        <button 
-                          onClick={() => handleEditMeldung(meldung)}
-                          className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-300 rounded"
-                        >
-                          ✏️
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteMeldung(meldung.id)}
-                          disabled={deletingId === meldung.id}
-                          className="text-red-600 hover:text-red-800 text-xs px-2 py-1 border border-red-300 rounded disabled:opacity-50"
-                        >
-                          {deletingId === meldung.id ? '⏳' : '🗑️'}
-                        </button>
+                        {(() => {
+                          // Prüfe Meldeschluss
+                          const today = new Date();
+                          let isExpired = false;
+                          
+                          if (disziplin?.saison?.meldeschluss) {
+                            const meldeschluss = disziplin.saison.meldeschluss;
+                            let deadline;
+                            
+                            if (meldeschluss.includes('.') && meldeschluss.length > 6) {
+                              const [day, month, year] = meldeschluss.split('.');
+                              deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                            } else {
+                              const [day, month] = meldeschluss.split('.');
+                              deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+                            }
+                            
+                            isExpired = today > deadline;
+                          }
+                          
+                          const canEdit = !isExpired || userRole === 'admin' || userRole === 'km_organisator';
+                          
+                          return (
+                            <>
+                              <button 
+                                onClick={() => handleEditMeldung(meldung)}
+                                disabled={!canEdit}
+                                className={`text-xs px-2 py-1 border rounded ${
+                                  canEdit 
+                                    ? 'text-blue-600 hover:text-blue-800 border-blue-300' 
+                                    : 'text-gray-400 border-gray-300 cursor-not-allowed'
+                                }`}
+                                title={!canEdit ? 'Meldeschluss abgelaufen - nur Admin/KM-Orga kann bearbeiten' : ''}
+                              >
+                                ✏️
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteMeldung(meldung.id)}
+                                disabled={deletingId === meldung.id || !canEdit}
+                                className={`text-xs px-2 py-1 border rounded disabled:opacity-50 ${
+                                  canEdit 
+                                    ? 'text-red-600 hover:text-red-800 border-red-300' 
+                                    : 'text-gray-400 border-gray-300 cursor-not-allowed'
+                                }`}
+                                title={!canEdit ? 'Meldeschluss abgelaufen - nur Admin/KM-Orga kann löschen' : ''}
+                              >
+                                {deletingId === meldung.id ? '⏳' : '🗑️'}
+                              </button>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   );
                 })}
                 {meldungen.filter(meldung => {
+                  // Filtere nach ausgewählter Saison
+                  const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
+                  if (!disziplin || !disziplin.saison || disziplin.saison.id !== selectedSaison) return false;
+                  
                   if (userClubIds.length === 0) return true; // Admin/KM-Organisator sieht alle
                   const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
                   if (!schuetze) return false;
@@ -1606,6 +1693,10 @@ export default function KMMeldungen() {
               <div className="mt-4 pt-4 border-t">
                 <div className="text-sm text-gray-600">
                   {meldungen.filter(meldung => {
+                    // Filtere nach ausgewählter Saison
+                    const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
+                    if (!disziplin || !disziplin.saison || disziplin.saison.id !== selectedSaison) return false;
+                    
                     const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
                     if (!schuetze) return false;
                     const schuetzeClubIds = [
@@ -1614,6 +1705,9 @@ export default function KMMeldungen() {
                     ].filter(Boolean);
                     return schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
                   }).length} eigene Meldung{meldungen.filter(meldung => {
+                    const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
+                    if (!disziplin || !disziplin.saison || disziplin.saison.id !== selectedSaison) return false;
+                    
                     const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
                     if (!schuetze) return false;
                     const schuetzeClubIds = [

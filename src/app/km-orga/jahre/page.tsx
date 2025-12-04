@@ -13,7 +13,7 @@ import { useKMAuth } from '@/hooks/useKMAuth';
 import { CalendarDays, Plus, Settings, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-type DisziplinTyp = 'KK' | 'LP';
+type DisziplinTyp = 'KK' | 'LD' | 'KKP';
 
 interface KMSaison {
   id: string;
@@ -192,7 +192,7 @@ export default function KMJahreVerwaltung() {
           </h1>
         </div>
         <p className="text-sm md:text-base text-muted-foreground">
-          Kreismeisterschafts-Saisons anlegen und verwalten (KK & LP getrennt)
+          Kreismeisterschafts-Saisons anlegen und verwalten (KK, LD & KKP getrennt)
         </p>
       </div>
 
@@ -204,7 +204,7 @@ export default function KMJahreVerwaltung() {
             Neue KM-Saison anlegen
           </CardTitle>
           <CardDescription>
-            Pro Jahr gibt es zwei separate Kreismeisterschaften: Kleinkaliber (KK) und Luftdruck (LP)
+            Pro Jahr gibt es drei separate Kreismeisterschaften: Kleinkaliber (KK), Luftdruck (LD) und Kleinkaliber Pistole (KKP)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -231,8 +231,9 @@ export default function KMJahreVerwaltung() {
                     value={formData.disziplinTyp}
                     onValueChange={(value) => setFormData({...formData, disziplinTyp: value as DisziplinTyp})}
                     options={[
-                      { value: 'KK', label: '🎯 Kleinkaliber (KK)' },
-                      { value: 'LP', label: '💨 Luftdruck (LD)' }
+                      { value: 'KK', label: 'Kleinkaliber (KK)' },
+                      { value: 'LD', label: 'Luftdruck (LD)' },
+                      { value: 'KKP', label: 'Kleinkaliber Pistole (KKP)' }
                     ]}
                   />
                 </div>
@@ -272,7 +273,7 @@ export default function KMJahreVerwaltung() {
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="flex-1">
                   <CardTitle className="flex items-center gap-2">
-                    {saison.disziplinTyp === 'KK' ? '🎯' : '💨'} {saison.name}
+                    {saison.name}
                     <Badge className={getStatusColor(saison.status)}>
                       {saison.status}
                     </Badge>
@@ -377,7 +378,7 @@ export default function KMJahreVerwaltung() {
           <CardContent className="text-center py-8">
             <CalendarDays className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">Noch keine KM-Saisons angelegt.</p>
-            <p className="text-xs text-muted-foreground mt-2">Erstellen Sie separate Saisons für Kleinkaliber und Luftdruck.</p>
+            <p className="text-xs text-muted-foreground mt-2">Erstellen Sie separate Saisons für Kleinkaliber, Luftdruck und Kleinkaliber Pistole.</p>
           </CardContent>
         </Card>
       )}
