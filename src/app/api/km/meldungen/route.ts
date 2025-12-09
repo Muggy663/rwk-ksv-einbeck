@@ -4,6 +4,7 @@ import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger'
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { KMMeldung } from '@/types/km';
+import { sendKMMeldungNotificationEmail } from '@/lib/services/email-notification-service';
 
 const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => `km_meldungen_${jahr}_${disziplinKuerzel.toLowerCase()}`;
 
@@ -81,6 +82,33 @@ export async function POST(request: NextRequest) {
       ...meldung,
       meldedatum: FieldValue.serverTimestamp()
     });
+
+    // E-Mail-Benachrichtigung senden
+    try {
+      // Hole Schützen-Daten für die E-Mail
+      const schuetzeDoc = await adminDb.collection('shooters').doc(schuetzeId).get();
+      const schuetzeName = schuetzeDoc.exists ? schuetzeDoc.data()?.name || 'Unbekannt' : 'Unbekannt';
+      
+      // Hole Disziplin-Daten
+      const disziplinDoc = await adminDb.collection('km_disziplinen').doc(disziplinId).get();
+      const disziplinName = disziplinDoc.exists ? disziplinDoc.data()?.name || 'Unbekannt' : 'Unbekannt';
+      
+      await sendKMMeldungNotificationEmail({
+        schuetzeName,
+        disziplinName,
+        lmTeilnahme: !!lmTeilnahme,
+        anmerkung: anmerkung || '',
+        vmErgebnis: vmErgebnis || null,
+        gemeldeteVon,
+        jahr: aktivesJahr,
+        timestamp: new Date()
+      });
+      
+      logInfo(`KM-Meldung E-Mail gesendet: ${schuetzeName} - ${disziplinName}`);
+    } catch (emailError) {
+      logError('Fehler beim Senden der KM-Meldung E-Mail:', emailError);
+      // E-Mail-Fehler nicht an Client weiterleiten - Meldung ist trotzdem gespeichert
+    }
 
     return NextResponse.json({
       success: true,

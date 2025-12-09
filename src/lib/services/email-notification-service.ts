@@ -14,6 +14,17 @@ export interface EmailNotificationData {
   timestamp: Date;
 }
 
+export interface KMMeldungNotificationData {
+  schuetzeName: string;
+  disziplinName: string;
+  lmTeilnahme: boolean;
+  anmerkung: string;
+  vmErgebnis: number | null;
+  gemeldeteVon: string;
+  jahr: number;
+  timestamp: Date;
+}
+
 /**
  * Sendet eine E-Mail-Benachrichtigung für neue RWK-Ergebnisse
  * Diese Funktion wird direkt beim Speichern aufgerufen für sofortige Benachrichtigungen
@@ -201,4 +212,102 @@ export async function sendAllResultNotifications(
   }
 
   return { sent, failed };
+}
+
+/**
+ * Sendet eine E-Mail-Benachrichtigung für neue KM-Meldungen
+ */
+export async function sendKMMeldungNotificationEmail(data: KMMeldungNotificationData): Promise<boolean> {
+  try {
+    logDebug('Sende E-Mail-Benachrichtigung für KM-Meldung:', {
+      schuetzeName: data.schuetzeName,
+      disziplinName: data.disziplinName,
+      jahr: data.jahr
+    });
+
+    // Firebase Auth Token holen
+    const { getAuth } = await import('firebase/auth');
+    const auth = getAuth();
+    let authHeaders = {};
+    
+    if (auth.currentUser) {
+      try {
+        const token = await auth.currentUser.getIdToken();
+        authHeaders = { 'Authorization': `Bearer ${token}` };
+      } catch (tokenError) {
+        logWarn('Konnte Firebase-Token nicht laden:', tokenError);
+      }
+    }
+
+    // Formatiere Zeitstempel
+    const formattedTimestamp = data.timestamp.toLocaleString('de-DE', {
+      timeZone: 'Europe/Berlin',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+
+    // Erstelle E-Mail-Inhalt
+    let message = `Neue KM-Meldung eingegangen:\n\n`;
+    message += `Schütze: ${data.schuetzeName}\n`;
+    message += `Disziplin: ${data.disziplinName}\n`;
+    message += `Jahr: ${data.jahr}\n`;
+    message += `LM-Teilnahme: ${data.lmTeilnahme ? 'Ja' : 'Nein'}\n`;
+    
+    if (data.vmErgebnis !== null) {
+      message += `VM-Ergebnis: ${data.vmErgebnis} Ringe\n`;
+    }
+    
+    if (data.anmerkung) {
+      message += `Anmerkung: ${data.anmerkung}\n`;
+    }
+    
+    message += `\nZeitpunkt: ${formattedTimestamp}\n`;
+    message += `Gemeldet von: ${data.gemeldeteVon}\n\n`;
+    message += `Die Meldung wurde digital erfasst und ist sofort im KM-System verfügbar.\n\n`;
+    message += `WICHTIGER HINWEIS:\n`;
+    message += `Bitte antworten Sie NICHT auf diese E-Mail.\n`;
+    message += `Bei Fragen oder Rückmeldungen schreiben Sie an: rwk-leiter-ksve@gmx.de\n\n`;
+    message += `Mit sportlichen Grüßen\n`;
+    message += `Marcel Bünger\n`;
+    message += `Rundenwettkampfleiter KSVE Einbeck`;
+
+    // E-Mail-Daten zusammenstellen
+    const emailFormData = new FormData();
+    emailFormData.append('subject', `Neue KM-Meldung: ${data.schuetzeName} - ${data.disziplinName}`);
+    emailFormData.append('message', message);
+    emailFormData.append('recipients', JSON.stringify([
+      { name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de' }
+    ]));
+
+    // E-Mail senden
+    const emailResponse = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: authHeaders,
+      body: emailFormData
+    });
+
+    if (!emailResponse.ok) {
+      const errorText = await emailResponse.text();
+      logError('KM-Meldung E-Mail-Benachrichtigung fehlgeschlagen:', errorText);
+      return false;
+    }
+
+    const responseData = await emailResponse.json();
+    
+    if (responseData.success) {
+      logInfo(`KM-Meldung E-Mail-Benachrichtigung erfolgreich gesendet: ${data.schuetzeName} - ${data.disziplinName}`);
+      return true;
+    } else {
+      logError('KM-Meldung E-Mail-Benachrichtigung fehlgeschlagen:', responseData.message);
+      return false;
+    }
+
+  } catch (error) {
+    logError('Fehler beim Senden der KM-Meldung E-Mail-Benachrichtigung:', error);
+    return false;
+  }
 }
