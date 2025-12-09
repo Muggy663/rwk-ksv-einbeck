@@ -35,7 +35,6 @@ const getBetaNavItems = (user: any): NavItem[] => [
 const helpNavItems: NavItem[] = [
   { href: '/handbuch', icon: BookOpen, label: 'Handbuch' },
   { href: '/schiesssport-erklaerung', icon: BookOpen, label: 'Schießsport erklärt' },
-  { href: '/kreisverband', icon: MessageSquare, label: 'Für Kreisverbände' },
   { href: '/support', icon: MessageSquare, label: 'Support' },
 ]
 

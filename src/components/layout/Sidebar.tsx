@@ -46,7 +46,6 @@ export function Sidebar() {
   const helpRoutes = [
     { href: '/handbuch', label: 'Handbuch', icon: BookOpen },
     { href: '/schiesssport-erklaerung', label: 'Schießsport erklärt', icon: BookOpen },
-    { href: '/kreisverband', label: 'Für Kreisverbände', icon: MessageSquare },
     { href: '/support', label: 'Support', icon: MessageSquare },
   ];
 
