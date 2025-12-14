@@ -43,7 +43,7 @@ export default function StartlistenToolPage() {
   const [config, setConfig] = useState(null);
   const [meldungen, setMeldungen] = useState<Starter[]>([]);
   const [startliste, setStartliste] = useState<Starter[]>([]);
-  const [selectedDisziplin, setSelectedDisziplin] = useState<string>('alle');
+  const [selectedDisziplinen, setSelectedDisziplinen] = useState<string[]>([]);
   const [vereine, setVereine] = useState<Array<{id: string, name: string}>>([]);
   const [kiAnalyse, setKiAnalyse] = useState<KIAnalyse | null>(null);
   const [showKiPanel, setShowKiPanel] = useState(false);
@@ -55,6 +55,8 @@ export default function StartlistenToolPage() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [saisons, setSaisons] = useState([]);
+  const [selectedSaison, setSelectedSaison] = useState<string>('');
 
   useEffect(() => {
     if (!configId) return;
@@ -63,7 +65,10 @@ export default function StartlistenToolPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const startlisteId = urlParams.get('startlisteId');
     
+    let isCancelled = false;
+    
     const loadData = async () => {
+      if (isCancelled) return;
       try {
         // Konfiguration laden
         const configDoc = await getDoc(doc(db, 'km_startlisten_configs', configId));
@@ -75,24 +80,65 @@ export default function StartlistenToolPage() {
         const configData = { id: configDoc.id, ...configDoc.data() };
         setConfig(configData);
 
-        // Lade Saisons zuerst um die richtige Collection zu finden
-        const saisonRes = await fetch('/api/km/saisons');
-        let saisonId = null;
-        if (saisonRes.ok) {
-          const saisonData = await saisonRes.json();
-          const saisons = saisonData.data || [];
-          if (saisons.length > 0) {
-            saisonId = saisons[0].id; // Aktuelle Saison
+        // Lade Saisons nur einmal
+        if (saisons.length === 0) {
+          const saisonRes = await fetch('/api/km/saisons');
+          console.log('DEBUG: Saisons API Response:', saisonRes.status);
+          if (saisonRes.ok && !isCancelled) {
+            const saisonData = await saisonRes.json();
+            const availableSaisons = saisonData.data || [];
+            console.log('DEBUG: Verfügbare Saisons:', availableSaisons);
+            
+            const sortedSaisons = availableSaisons.sort((a, b) => {
+              if (a.status === 'aktiv' && b.status !== 'aktiv') return -1;
+              if (b.status === 'aktiv' && a.status !== 'aktiv') return 1;
+              return 0;
+            });
+            
+            setSaisons(sortedSaisons);
+            
+            // Verwende direkt die geladenen Saisons
+            let saisonId = selectedSaison;
+            if (!saisonId && sortedSaisons.length > 0) {
+              saisonId = sortedSaisons[0].id;
+              setSelectedSaison(saisonId);
+            }
+            console.log('DEBUG: SaisonId aus geladenen Saisons:', {selectedSaison, saisonId, saisonsCount: sortedSaisons.length});
+            
+            
+            // Lade Daten mit der gefundenen saisonId
+            console.log('DEBUG: Lade Daten für Saison:', saisonId);
           }
         }
         
-        // Lade Daten über APIs mit Saison-Parameter
+        // Fallback wenn Saisons bereits geladen
+        let saisonId = selectedSaison;
+        if (!saisonId && saisons.length > 0) {
+          saisonId = saisons[0].id;
+          setSelectedSaison(saisonId);
+        }
+        console.log('DEBUG: SaisonId aus State:', {selectedSaison, saisonId, saisonsCount: saisons.length});
+        
+        // Verwende selectedSaison oder erste Saison als Fallback
+        const finalSaisonId = selectedSaison || (saisons.length > 0 ? saisons[0].id : '81ZTV9wmusKGuq7z1I2k');
+        logDebug('Gefundene Saison-ID:', finalSaisonId);
+        
+        if (!finalSaisonId || isCancelled) {
+          console.log('DEBUG: Keine finalSaisonId oder cancelled:', {finalSaisonId, isCancelled});
+          setLoading(false);
+          return;
+        }
+        
+        console.log('DEBUG: Lade Daten für Saison:', finalSaisonId);
+        
         const [disziplinenRes, meldungenRes, schuetzenRes, clubsRes] = await Promise.all([
           fetch('/api/km/disziplinen'),
-          fetch(`/api/km/meldungen${saisonId ? `?saison=${saisonId}` : ''}`),
+          fetch(`/api/km/meldungen?saison=${finalSaisonId}`),
           fetch('/api/km/shooters'),
           fetch('/api/clubs')
         ]);
+        
+        logDebug('API-Aufrufe mit Saison-Parameter:', finalSaisonId);
         
         const disziplinen = {};
         if (disziplinenRes.ok) {
@@ -122,6 +168,9 @@ export default function StartlistenToolPage() {
         if (meldungenRes.ok) {
           const meldungenData = await meldungenRes.json();
           allMeldungen = meldungenData.data || [];
+          console.log('DEBUG: API Response Meldungen:', allMeldungen.length);
+        } else {
+          console.log('DEBUG: Meldungen API Fehler:', meldungenRes.status);
         }
         
         logDebug('Alle KM-Meldungen:', allMeldungen.length);
@@ -179,25 +228,17 @@ export default function StartlistenToolPage() {
         logDebug('Config Disziplinen:', configData.disziplinen);
         logDebug('Alle Meldungen Disziplinen:', meldungenData.map(m => m.disziplin));
         
-        const gefilterteMeldungen = meldungenData.filter(m => {
-          const passt = configData.disziplinen.includes(m.disziplin);
-          logDebug('Meldung', m.name, 'Disziplin:', m.disziplin, 'Passt:', passt);
-          return passt;
-        });
+        // Keine Filterung - verwende alle Meldungen
+        const gefilterteMeldungen = meldungenData;
         
         logDebug('Gefilterte Meldungen:', gefilterteMeldungen.length, 'von', meldungenData.length);
         logDebug('Fehlende Meldungen:', meldungenData.filter(m => !configData.disziplinen.includes(m.disziplin)).map(m => `${m.name} - ${m.disziplin}`));
         
-        // Verwende ALLE Meldungen wenn Diskrepanz zwischen Anzeige und Startliste
-        if (Math.abs(gefilterteMeldungen.length - meldungenData.length) <= 2) {
-          logDebug('Kleine Diskrepanz - verwende alle Meldungen');
-          setMeldungen(meldungenData);
-        } else if (gefilterteMeldungen.length === 0 && meldungenData.length > 0) {
-          logDebug('Fallback: Nehme alle Meldungen da Filter leer');
-          setMeldungen(meldungenData);
-        } else {
-          setMeldungen(gefilterteMeldungen);
-        }
+        // Verwende immer alle Meldungen - Filterung erfolgt in der UI
+        logDebug('Setze alle Meldungen:', meldungenData.length);
+        logDebug('Saison:', selectedSaison);
+        logDebug('Meldungen Details:', meldungenData.map(m => ({name: m.name, disziplin: m.disziplin})));
+        setMeldungen(meldungenData);
         
         // Vereine für Export
         const clubsData = Object.entries(vereine).map(([id, name]) => ({ id, name }));
@@ -234,6 +275,7 @@ export default function StartlistenToolPage() {
             setKiAnalyse(analyse);
           } else {
             logDebug('Keine Meldungen gefunden - keine Startliste generiert');
+            setStartliste([]);
           }
         }
       } catch (error) {
@@ -243,24 +285,36 @@ export default function StartlistenToolPage() {
       }
     };
     
-    loadData();
-  }, [configId]);
+    if (configId) {
+      loadData();
+    }
+    
+    return () => {
+      isCancelled = true;
+    };
+  }, [configId, selectedSaison]);
 
   const generiereStartliste = async (): Promise<Starter[]> => {
-    if (!config || meldungen.length === 0) return [];
+    console.log('DEBUG: generiereStartliste aufgerufen', {config: !!config, meldungenCount: meldungen.length});
+    if (!config || meldungen.length === 0) {
+      console.log('DEBUG: Keine Config oder Meldungen - return []');
+      return [];
+    }
     
     const startlisteEntries: Starter[] = [];
     const staendeAnzahl = config.verfuegbareStaende.length;
     let durchgang = 1;
 
     // Lade Daten über APIs
+    console.log('DEBUG: Lade APIs für Startliste...');
     const [mannschaftenRes, kmMeldungenRes, schuetzenRes, disziplinenRes, vereineRes] = await Promise.all([
       fetch('/api/km/mannschaften'),
-      fetch('/api/km/meldungen'),
+      fetch(`/api/km/meldungen${selectedSaison ? `?saison=${selectedSaison}` : ''}`),
       fetch('/api/km/shooters'),
       fetch('/api/km/disziplinen'),
       fetch('/api/clubs')
     ]);
+    console.log('DEBUG: APIs geladen für Startliste');
     
     const mannschaftenData = mannschaftenRes.ok ? (await mannschaftenRes.json()).data || [] : [];
     const kmMeldungenData = kmMeldungenRes.ok ? (await kmMeldungenRes.json()).data || [] : [];
@@ -277,6 +331,7 @@ export default function StartlistenToolPage() {
     const standZeitMatrix = new Set<string>();
     
     // Verwende nur die echten KM-Meldungen für die Startliste
+    console.log('DEBUG: Verarbeite KM-Meldungen:', kmMeldungen.length);
     const echteKmMeldungen = kmMeldungen.map(meldung => {
       const schuetze = schuetzenData.find(s => s.id === meldung.schuetzeId);
       const disziplin = disziplinenData.find(d => d.id === meldung.disziplinId);
@@ -300,7 +355,7 @@ export default function StartlistenToolPage() {
       };
     }).filter(Boolean);
     
-
+    console.log('DEBUG: Echte KM-Meldungen verarbeitet:', echteKmMeldungen.length);
     
     // Gruppiere nach Disziplinen
     const nachDisziplin = echteKmMeldungen.reduce((acc, starter) => {
@@ -310,7 +365,9 @@ export default function StartlistenToolPage() {
       return acc;
     }, {} as {[key: string]: Starter[]});
 
+    console.log('DEBUG: Nach Disziplinen gruppiert:', Object.keys(nachDisziplin));
     Object.entries(nachDisziplin).forEach(([disziplinName, starter]) => {
+      console.log('DEBUG: Verarbeite Disziplin:', disziplinName, 'mit', starter.length, 'Startern');
       // 1. Finde Mannschaften für diese Disziplin
       const disziplinMannschaften = mannschaften.filter(m => {
         const disziplin = disziplinenData.find(d => d.id === m.disziplinId);
@@ -397,7 +454,11 @@ export default function StartlistenToolPage() {
             let testStand = config.verfuegbareStaende[standIndex % staendeAnzahl];
             let testKey = `${testStand}_${startzeit}`;
             
-            while (standZeitMatrix.has(testKey)) {
+            // Prüfe Lichtpunkt-Regel für Einbeck: Stände 101 und 102 nur für Lichtpunkt
+            const istLichtpunkt = s.disziplin?.toLowerCase().includes('lichtpunkt') || s.disziplin?.toLowerCase().includes('lp');
+            
+            while (standZeitMatrix.has(testKey) || 
+                   (!istLichtpunkt && (testStand === '101' || testStand === '102'))) {
               standIndex++;
               testStand = config.verfuegbareStaende[standIndex % staendeAnzahl];
               testKey = `${testStand}_${startzeit}`;
@@ -477,6 +538,14 @@ export default function StartlistenToolPage() {
             let standIndex = currentDurchgangBelegt;
             let testStand = config.verfuegbareStaende[standIndex % staendeAnzahl];
             let testKey = `${testStand}_${startzeit}`;
+            
+            // Prüfe Licht-Regel für Einbeck: Stände 101 und 102 nur für Licht-Disziplinen
+            const istLichtgewehr = s.disziplin?.toLowerCase().includes('lichtgewehr') || s.disziplin?.toLowerCase().includes('lg');
+            const istLichtDisziplin = s.disziplin?.toLowerCase().includes('licht') || 
+                                      s.disziplin?.includes('11.10') || s.disziplin?.includes('11.11') || 
+                                      s.disziplin?.includes('11.20') || s.disziplin?.includes('11.50') || s.disziplin?.includes('11.51') ||
+                                      istLichtgewehr;
+            const hatLichtgewehr = config.disziplinen.some(d => d.toLowerCase().includes('lichtgewehr') || d.toLowerCase().includes('lg'));
             
             while (standZeitMatrix.has(testKey)) {
               standIndex++;
@@ -851,7 +920,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
       // Lade alle benötigten Daten über APIs
       const [schuetzenRes, meldungenRes, disziplinenRes, mannschaftenRes] = await Promise.all([
         fetch('/api/km/shooters'),
-        fetch('/api/km/meldungen'),
+        fetch(`/api/km/meldungen${selectedSaison ? `?saison=${selectedSaison}` : ''}`),
         fetch('/api/km/disziplinen'),
         fetch('/api/km/mannschaften')
       ]);
@@ -1068,7 +1137,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         fetch('/api/km/shooters'),
         fetch('/api/km/mannschaften'),
         fetch('/api/km/disziplinen'),
-        fetch('/api/km/meldungen')
+        fetch(`/api/km/meldungen${selectedSaison ? `?saison=${selectedSaison}` : ''}`)
       ]);
       
       const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
@@ -1335,13 +1404,35 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         <Button variant="outline" onClick={() => router.push('/km-orga/startlisten/uebersicht')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold text-primary">🎯 Startlisten Tool</h1>
           <p className="text-muted-foreground">Config ID: {configId}</p>
           <div className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200 mt-1 inline-block">
             💻 Empfohlen für PC/Desktop - Mobile Nutzung eingeschränkt
           </div>
         </div>
+        {saisons.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+            <label className="block text-sm font-medium text-blue-900 mb-2">① Saison auswählen:</label>
+            <select 
+              value={selectedSaison} 
+              onChange={(e) => {
+                setSelectedSaison(e.target.value);
+                setMeldungen([]);
+                setStartliste([]);
+                setLoading(true);
+              }}
+              className="border border-blue-300 rounded px-3 py-2 text-sm font-medium bg-white min-w-[200px]"
+            >
+              {saisons.map(saison => (
+                <option key={saison.id} value={saison.id}>
+                  {saison.name} ({saison.disziplinTyp})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
       </div>
 
       {/* KI-Analyse Panel - Automatisch anzeigen bei Problemen */}
@@ -1421,7 +1512,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         <div className="grid gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Konfiguration</CardTitle>
+              <CardTitle>② Konfiguration</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1459,43 +1550,19 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Meldungen ({meldungen.length})</CardTitle>
+                <CardTitle>③ Meldungen ({meldungen.length})</CardTitle>
                 <div className="flex gap-2">
-                  <Button onClick={async () => {
-                    const generierte = await generiereStartliste();
-                    setStartliste(generierte);
-                    if (config) {
-                      const analyse = analyzeStartlist(meldungen, generierte, config);
-                      setKiAnalyse(analyse);
-                    }
-                    toast({ title: 'Startliste generiert', description: `${generierte.length} Starter eingeteilt` });
-                  }} disabled={meldungen.length === 0}>
-                    <Target className="h-4 w-4 mr-2" />
-                    Neu generieren
-                  </Button>
+
                   <Button variant="outline" onClick={saveStartliste} disabled={startliste.length === 0}>
                     <Save className="h-4 w-4 mr-2" />
                     Speichern
                   </Button>
-                  <Button 
-                    variant={kiAnalyse?.score && kiAnalyse.score < 80 ? "destructive" : kiAnalyse?.score && kiAnalyse.score < 95 ? "default" : "secondary"}
-                    onClick={() => setShowKiPanel(!showKiPanel)}
-                  >
-                    <Brain className="h-4 w-4 mr-2" />
-                    KI-Analyse ({kiAnalyse?.score || 0}%)
-                    {kiAnalyse && kiAnalyse.score < 100 && (
-                      <span className="ml-1 text-xs">⚠️</span>
-                    )}
-                  </Button>
-                  <Button variant="outline" onClick={handleKiReanalyse}>
-                    <Brain className="h-4 w-4 mr-2" />
-                    Neu analysieren
-                  </Button>
+
                   <Button 
                     onClick={() => setShowGemini(!showGemini)}
                     variant={showGemini ? 'default' : 'outline'}
                   >
-                    🤖 Gemini AI {showGemini ? 'aktiv' : ''}
+                    🎯 Startliste generieren {showGemini ? 'aktiv' : ''}
                   </Button>
 
                 </div>
@@ -1541,7 +1608,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                       disabled={geminiLoading || meldungen.length === 0}
                       size="sm"
                     >
-                      {geminiLoading ? '⏳ Generiere...' : '✨ Neu generieren'}
+                      {geminiLoading ? '⏳ Generiere...' : '🎯 Startliste generieren'}
                     </Button>
                     <Button 
                       onClick={optimiereGemini} 
@@ -1673,20 +1740,50 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
             </CardHeader>
             <CardContent>
               <div className="mb-4">
-                <NativeSelect
-                  value={selectedDisziplin}
-                  onValueChange={setSelectedDisziplin}
-                  placeholder="Alle Disziplinen"
-                  options={[
-                    { value: 'alle', label: 'Alle Disziplinen' },
-                    ...config.disziplinen.map(d => ({ value: d, label: d }))
-                  ]}
-                />
+                <div className="text-sm font-medium mb-2">Disziplinen Filter:</div>
+                <div className="flex flex-wrap gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer bg-gray-50 px-3 py-2 rounded border">
+                    <input
+                      type="checkbox"
+                      checked={selectedDisziplinen.includes('alle')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedDisziplinen(['alle']);
+                        } else {
+                          setSelectedDisziplinen([]);
+                        }
+                      }}
+                      className="rounded"
+                    />
+                    <span className="text-sm font-medium">Alle Disziplinen</span>
+                  </label>
+                  {config.disziplinen.map(disziplin => (
+                    <label key={disziplin} className="flex items-center gap-2 cursor-pointer bg-blue-50 px-3 py-2 rounded border border-blue-200">
+                      <input
+                        type="checkbox"
+                        checked={selectedDisziplinen.includes(disziplin) || selectedDisziplinen.includes('alle')}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            if (selectedDisziplinen.includes('alle')) {
+                              setSelectedDisziplinen([disziplin]);
+                            } else {
+                              setSelectedDisziplinen([...selectedDisziplinen, disziplin]);
+                            }
+                          } else {
+                            setSelectedDisziplinen(selectedDisziplinen.filter(d => d !== disziplin));
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <span className="text-sm">{disziplin}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
               <div className="text-center py-4">
                 {meldungen.length === 0 ? (
                   <p className="text-muted-foreground">
-                    Keine Meldungen für die ausgewählten Disziplinen gefunden.
+                    Keine Meldungen vorhanden.
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -1709,7 +1806,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle>Generierte Startliste ({startliste.length})</CardTitle>
+                  <CardTitle>④ Generierte Startliste ({startliste.length})</CardTitle>
                   <div className="flex gap-2">
                     <Button onClick={exportToPDF} variant="outline">
                       <Download className="h-4 w-4 mr-2" />
@@ -1751,7 +1848,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                 <div className="overflow-x-auto">
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {(() => {
-                      const gefiltert = selectedDisziplin === 'alle' ? startliste : startliste.filter(s => s.disziplin === selectedDisziplin);
+                      const gefiltert = selectedDisziplinen.includes('alle') ? startliste : startliste.filter(s => selectedDisziplinen.includes(s.disziplin));
                       const sortiert = gefiltert.sort((a, b) => {
                         switch (sortierung) {
                           case 'durchgang-stand':

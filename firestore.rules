@@ -330,7 +330,7 @@ service cloud.firestore {
 
     match /km_startlisten/{startliste} {
       allow read: if true;
-      allow write: if isSuperAdmin();
+      allow write, delete: if isSuperAdmin();
     }
 
     match /km_disziplinen/{disziplin} {
@@ -355,12 +355,18 @@ service cloud.firestore {
 
     match /km_startlisten_configs/{config} {
       allow read: if true;
-      allow write: if isSuperAdmin();
+      allow write, delete: if isSuperAdmin() || 
+                           (isAuthenticated() && getUserPermissions() != null && 
+                            (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
+                             getUserPermissions().role == 'km_organisator'));
     }
 
     match /km_startlisten/{startliste} {
       allow read: if true;
-      allow write: if isSuperAdmin();
+      allow write, delete: if isSuperAdmin() || 
+                           (isAuthenticated() && getUserPermissions() != null && 
+                            (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
+                             getUserPermissions().role == 'km_organisator'));
     }
 
    

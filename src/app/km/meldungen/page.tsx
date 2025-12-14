@@ -496,35 +496,40 @@ export default function KMMeldungen() {
             </p>
           </div>
         </div>
-        {saisons.length > 1 && (
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium">KM auswählen:</label>
-            <select
-              value={selectedSaison}
-              onChange={(e) => setSelectedSaison(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm font-medium min-w-[200px]"
-            >
-              {saisons.map(saison => (
-                <option key={saison.id} value={saison.id}>
-                  {saison.name} ({saison.disziplinTyp})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Meldungsformular</CardTitle>
-              <CardDescription>
-                {meldeModus === 'schuetze-disziplinen' 
-                  ? 'Wählen Sie einen Schützen und die gewünschten Disziplinen'
-                  : 'Wählen Sie eine Disziplin und die gewünschten Schützen'
-                }
-              </CardDescription>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>Meldungsformular</CardTitle>
+                  <CardDescription>
+                    {meldeModus === 'schuetze-disziplinen' 
+                      ? 'Wählen Sie einen Schützen und die gewünschten Disziplinen'
+                      : 'Wählen Sie eine Disziplin und die gewünschten Schützen'
+                    }
+                  </CardDescription>
+                </div>
+                {saisons.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                    <label className="block text-sm font-medium text-blue-900 mb-2">KM auswählen:</label>
+                    <select
+                      value={selectedSaison}
+                      onChange={(e) => setSelectedSaison(e.target.value)}
+                      className="px-3 py-2 border border-blue-300 rounded bg-white text-sm font-medium min-w-[200px]"
+                    >
+                      {saisons.map(saison => (
+                        <option key={saison.id} value={saison.id}>
+                          {saison.name} ({saison.disziplinTyp})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
 

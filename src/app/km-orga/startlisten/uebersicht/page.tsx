@@ -231,6 +231,11 @@ export default function StartlistenUebersichtPage() {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
+                    <Link href={`/km-orga/startlisten?edit=${config.id}`}>
+                      <Button variant="outline" size="sm" className="hidden md:flex">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </Link>
                     <Button variant="outline" size="sm" onClick={() => handleDelete(config.id)} className="hidden md:flex">
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -270,10 +275,12 @@ export default function StartlistenUebersichtPage() {
                     <span className="text-xs text-muted-foreground">
                       Erstellt: {(() => {
                         try {
+                          if (!config.createdAt) return 'Unbekannt';
                           const date = config.createdAt?.toDate ? config.createdAt.toDate() : 
                                       config.createdAt?.seconds ? new Date(config.createdAt.seconds * 1000) :
+                                      typeof config.createdAt === 'string' ? new Date(config.createdAt) :
                                       new Date(config.createdAt);
-                          return date.toLocaleDateString('de-DE');
+                          return isNaN(date.getTime()) ? 'Unbekannt' : date.toLocaleDateString('de-DE');
                         } catch {
                           return 'Unbekannt';
                         }
@@ -284,6 +291,12 @@ export default function StartlistenUebersichtPage() {
                         <Button className="w-full h-12 text-left justify-start md:w-auto md:h-auto md:text-center md:justify-center">
                           <Play className="h-4 w-4 mr-2" />
                           Startlisten generieren
+                        </Button>
+                      </Link>
+                      <Link href={`/km-orga/startlisten?edit=${config.id}`} className="w-full md:w-auto">
+                        <Button variant="outline" className="w-full h-12 text-left justify-start md:hidden">
+                          <Edit className="h-4 w-4 mr-2" />
+                          Bearbeiten
                         </Button>
                       </Link>
                       <Button variant="outline" onClick={() => handleDelete(config.id)} className="w-full h-12 text-left justify-start md:hidden">
