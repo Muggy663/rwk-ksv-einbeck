@@ -216,11 +216,17 @@ export default function StartlistenUebersichtPage() {
                     <CardDescription className="flex items-center gap-4 mt-2">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        {new Date(config.startDatum).toLocaleDateString('de-DE')} um {config.startUhrzeit} Uhr
+                        {(() => {
+                          try {
+                            return new Date(config.startDatum).toLocaleDateString('de-DE');
+                          } catch {
+                            return config.startDatum || 'Unbekannt';
+                          }
+                        })()} um {config.startUhrzeit || '00:00'} Uhr
                       </span>
                       <span className="flex items-center gap-1">
                         <Target className="h-4 w-4" />
-                        {config.verfuegbareStaende.length} Stände
+                        {(config.verfuegbareStaende || []).length} Stände
                       </span>
                     </CardDescription>
                   </div>
@@ -236,7 +242,7 @@ export default function StartlistenUebersichtPage() {
                   <div>
                     <p className="text-sm font-medium mb-1">Stände:</p>
                     <div className="flex flex-wrap gap-1">
-                      {config.verfuegbareStaende.map(stand => (
+                      {(config.verfuegbareStaende || []).map(stand => (
                         <Badge key={stand} variant="secondary" className="text-xs">
                           {stand}
                         </Badge>
@@ -245,16 +251,16 @@ export default function StartlistenUebersichtPage() {
                   </div>
                   
                   <div>
-                    <p className="text-sm font-medium mb-1">Disziplinen ({config.disziplinen.length}):</p>
+                    <p className="text-sm font-medium mb-1">Disziplinen ({(config.disziplinen || []).length}):</p>
                     <div className="flex flex-wrap gap-1">
-                      {config.disziplinen.slice(0, 3).map(disziplin => (
+                      {(config.disziplinen || []).slice(0, 3).map(disziplin => (
                         <Badge key={disziplin} variant="outline" className="text-xs">
                           {disziplin}
                         </Badge>
                       ))}
-                      {config.disziplinen.length > 3 && (
+                      {(config.disziplinen || []).length > 3 && (
                         <Badge variant="outline" className="text-xs">
-                          +{config.disziplinen.length - 3} weitere
+                          +{(config.disziplinen || []).length - 3} weitere
                         </Badge>
                       )}
                     </div>
@@ -263,8 +269,14 @@ export default function StartlistenUebersichtPage() {
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 pt-2">
                     <span className="text-xs text-muted-foreground">
                       Erstellt: {(() => {
-                        const date = config.createdAt?.toDate ? config.createdAt.toDate() : new Date(config.createdAt);
-                        return date.toLocaleDateString('de-DE');
+                        try {
+                          const date = config.createdAt?.toDate ? config.createdAt.toDate() : 
+                                      config.createdAt?.seconds ? new Date(config.createdAt.seconds * 1000) :
+                                      new Date(config.createdAt);
+                          return date.toLocaleDateString('de-DE');
+                        } catch {
+                          return 'Unbekannt';
+                        }
                       })()}
                     </span>
                     <div className="flex flex-col gap-2 w-full md:flex-row md:w-auto">
@@ -295,6 +307,13 @@ export default function StartlistenUebersichtPage() {
         <div className="grid gap-4">
           {startlisten.map(liste => {
             const config = configs.find(c => c.id === liste.configId);
+            
+            // Skip if config not found
+            if (!config) {
+              logWarn(`Config ${liste.configId} für Startliste ${liste.id} nicht gefunden`);
+              return null;
+            }
+            
             return (
               <Card key={liste.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
@@ -302,15 +321,15 @@ export default function StartlistenUebersichtPage() {
                     <div>
                       <CardTitle className="flex items-center gap-2">
                         <Target className="h-5 w-5" />
-                        Startliste - {config ? (vereine[config.austragungsort] || 'Einbecker Schützengilde') : 'Einbecker Schützengilde'}
+                        Startliste - {vereine[config.austragungsort] || config.austragungsort || 'Einbecker Schützengilde'}
                       </CardTitle>
                       <CardDescription className="flex items-center gap-4 mt-2">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          {new Date(liste.datum).toLocaleDateString('de-DE')} um {config?.startUhrzeit || '09:00'} Uhr
+                          {new Date(liste.datum).toLocaleDateString('de-DE')} um {config.startUhrzeit || '09:00'} Uhr
                         </span>
-                        <span>{liste.startliste.length} Starter</span>
-                        <span>{Math.max(...liste.startliste.map((s: any) => s.durchgang || 1))} Durchgänge</span>
+                        <span>{liste.startliste?.length || 0} Starter</span>
+                        <span>{(liste.startliste?.length || 0) > 0 ? Math.max(...liste.startliste.map((s: any) => s.durchgang || 1)) : 0} Durchgänge</span>
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
@@ -342,19 +361,39 @@ export default function StartlistenUebersichtPage() {
                     <div>
                       <p className="text-sm font-medium mb-1">Starter:</p>
                       <div className="text-sm text-muted-foreground">
-                        {liste.startliste.slice(0, 3).map((starter: any) => starter.name).join(', ')}
-                        {liste.startliste.length > 3 && ` und ${liste.startliste.length - 3} weitere`}
+                        {(liste.startliste || []).slice(0, 3).map((starter: any) => starter.name).join(', ')}
+                        {(liste.startliste?.length || 0) > 3 && ` und ${(liste.startliste?.length || 0) - 3} weitere`}
                       </div>
                     </div>
                     
                     <div className="flex justify-between items-center pt-2">
                       <span className="text-xs text-muted-foreground">
                         Gespeichert: {(() => {
-                          const date = liste.updatedAt ? (liste.updatedAt.toDate ? liste.updatedAt.toDate() : new Date(liste.updatedAt)) : liste.createdAt;
-                          return date.toLocaleDateString('de-DE');
+                          try {
+                            const date = liste.updatedAt ? 
+                              (liste.updatedAt.toDate ? liste.updatedAt.toDate() : 
+                               liste.updatedAt.seconds ? new Date(liste.updatedAt.seconds * 1000) :
+                               new Date(liste.updatedAt)) : 
+                              (liste.createdAt?.toDate ? liste.createdAt.toDate() :
+                               liste.createdAt?.seconds ? new Date(liste.createdAt.seconds * 1000) :
+                               new Date(liste.createdAt));
+                            return date.toLocaleDateString('de-DE');
+                          } catch {
+                            return 'Unbekannt';
+                          }
                         })()} um {(() => {
-                          const date = liste.updatedAt ? (liste.updatedAt.toDate ? liste.updatedAt.toDate() : new Date(liste.updatedAt)) : liste.createdAt;
-                          return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                          try {
+                            const date = liste.updatedAt ? 
+                              (liste.updatedAt.toDate ? liste.updatedAt.toDate() : 
+                               liste.updatedAt.seconds ? new Date(liste.updatedAt.seconds * 1000) :
+                               new Date(liste.updatedAt)) : 
+                              (liste.createdAt?.toDate ? liste.createdAt.toDate() :
+                               liste.createdAt?.seconds ? new Date(liste.createdAt.seconds * 1000) :
+                               new Date(liste.createdAt));
+                            return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                          } catch {
+                            return '00:00';
+                          }
                         })()} Uhr
                       </span>
                       <div className="flex flex-col gap-2 w-full md:flex-row md:w-auto">
@@ -403,7 +442,7 @@ export default function StartlistenUebersichtPage() {
                 </CardContent>
               </Card>
             );
-          })}
+          }).filter(Boolean)}
         </div>
       )}
     </div>
