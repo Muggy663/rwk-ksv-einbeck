@@ -74,7 +74,11 @@ export function LoginForm() {
       return;
     }
     
-    // reCAPTCHA temporär deaktiviert wegen Timeout-Problemen
+    // reCAPTCHA Validierung
+    if (!recaptchaToken) {
+      setFormError("Bitte bestätigen Sie, dass Sie kein Roboter sind.");
+      return;
+    }
     
     // Bot-Protection prüfen (nur wenn aktiviert)
     if (SECURITY_FEATURES.BOT_PROTECTION) {
@@ -184,7 +188,7 @@ export function LoginForm() {
               </div>
             </div>
             
-            {/* reCAPTCHA temporär deaktiviert */}
+            <ReCaptcha onVerify={setRecaptchaToken} />
             
             {/* Honeypot - verstecktes Feld für Bot-Detection */}
             <input

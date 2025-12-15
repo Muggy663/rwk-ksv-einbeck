@@ -124,12 +124,24 @@ const DISZIPLINEN_2026 = [
   { spoNummer: '2.42', name: '25 m Sportpistole Auflage', nurVereinsmeisterschaft: false, auflage: true, schiesszeit_zuganlagen: 50, schiesszeit_andere: 50 },
   { spoNummer: '5.11', name: 'Armbrust 10m Auflage', nurVereinsmeisterschaft: false, auflage: true, schiesszeit_zuganlagen: 50, schiesszeit_andere: 50 },
   
-  // Lichtgewehr/Lichtpistole (nur 6-11 Jahre - Vereinsmeisterschaft, kürzere Zeiten)
-  { spoNummer: '11.10', name: 'Lichtgewehr', nurVereinsmeisterschaft: true, auflage: false, schiesszeit_zuganlagen: 20, schiesszeit_andere: 20 },
-  { spoNummer: '11.11', name: 'Faszination Lichtgewehr', nurVereinsmeisterschaft: true, auflage: false, schiesszeit_zuganlagen: 15, schiesszeit_andere: 15 },
-  { spoNummer: '11.20', name: 'Lichtgewehr 3-stellung', nurVereinsmeisterschaft: true, auflage: false, schiesszeit_zuganlagen: 30, schiesszeit_andere: 30 },
-  { spoNummer: '11.50', name: 'Lichtpistole', nurVereinsmeisterschaft: true, auflage: false, schiesszeit_zuganlagen: 20, schiesszeit_andere: 20 },
-  { spoNummer: '11.51', name: 'Faszination Lichtpistole', nurVereinsmeisterschaft: true, auflage: false, schiesszeit_zuganlagen: 15, schiesszeit_andere: 15 }
+  // Lichtgewehr/Lichtpistole (nur 6-11 Jahre - kein VM-Ergebnis erforderlich)
+  { spoNummer: '11.10', name: 'Lichtgewehr', nurVereinsmeisterschaft: false, auflage: false, schiesszeit_zuganlagen: 20, schiesszeit_andere: 20 },
+  { spoNummer: '11.11', name: 'Faszination Lichtgewehr', nurVereinsmeisterschaft: false, auflage: false, schiesszeit_zuganlagen: 15, schiesszeit_andere: 15 },
+  { spoNummer: '11.20', name: 'Lichtgewehr 3-stellung', nurVereinsmeisterschaft: false, auflage: false, schiesszeit_zuganlagen: 30, schiesszeit_andere: 30 },
+  { spoNummer: '11.50', name: 'Lichtpistole', nurVereinsmeisterschaft: false, auflage: false, schiesszeit_zuganlagen: 20, schiesszeit_andere: 20 },
+  { spoNummer: '11.51', name: 'Faszination Lichtpistole', nurVereinsmeisterschaft: false, auflage: false, schiesszeit_zuganlagen: 15, schiesszeit_andere: 15 },
+  
+  // Blasrohr
+  { 
+    spoNummer: '12.10', 
+    name: 'Blasrohr', 
+    nurVereinsmeisterschaft: false, 
+    auflage: false,
+    anmerkung: 'Schüler III 5m, alle anderen 7m. 10 Passen à 6 Pfeile in je 3 Min, nach 5 Passen 10 Min Pause',
+    schusszahlen: [
+      { schusszahl: 60, altersklassen: ['Alle'], schiesszeit_zuganlagen: 30, schiesszeit_andere: 30 }
+    ]
+  }
 
 ];
 

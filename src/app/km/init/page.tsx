@@ -161,6 +161,29 @@ export default function KMInit() {
                 >
                   Doppelte löschen
                 </Button>
+                <Button 
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/km/add-blasrohr', { 
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                      });
+                      const result = await response.json();
+                      toast({ 
+                        title: result.success ? 'Erfolg' : 'Fehler', 
+                        description: result.message || result.error,
+                        variant: result.success ? 'default' : 'destructive'
+                      });
+                    } catch (error) {
+                      toast({ title: 'Fehler', description: 'Netzwerkfehler', variant: 'destructive' });
+                    }
+                  }}
+                  variant="default"
+                  size="sm"
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  🎯 Blasrohr 12.10 hinzufügen
+                </Button>
               </div>
             </div>
           </CardContent>

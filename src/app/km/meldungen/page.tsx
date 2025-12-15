@@ -12,10 +12,13 @@ import { getStartVereinForDisziplin } from '@/lib/services/km-startrechte-servic
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { BackButton } from '@/components/ui/back-button';
+import { KMProvider, useKMContext } from '@/contexts/KMContext';
+import { KMClubSwitcher } from '@/components/ui/km-club-switcher';
 
-export default function KMMeldungen() {
+function KMMeldungenContent() {
   const { toast } = useToast();
-  const { userClubIds, isMultiClub, userRole } = useKMAuth();
+  const { isMultiClub, userRole } = useKMAuth();
+  const { currentClubId, userClubIds } = useKMContext();
   const { user } = useAuthContext();
   const [meldeModus, setMeldeModus] = useState<'schuetze-disziplinen' | 'disziplin-schuetzen'>('schuetze-disziplinen');
   const [selectedSchuetze, setSelectedSchuetze] = useState('');
@@ -303,10 +306,14 @@ export default function KMMeldungen() {
       return;
     }
 
-    // Prüfe VM-Ergebnis für Durchmeldungs-Disziplinen
-    const durchmeldungsDisziplinen = selectedDisziplinen.filter(id => 
-      disziplinen.find(d => d.id === id)?.nurVereinsmeisterschaft
-    );
+    // Prüfe VM-Ergebnis für Durchmeldungs-Disziplinen (außer 11.10, 11.11, 11.20, 11.50, 11.51)
+    const durchmeldungsDisziplinen = selectedDisziplinen.filter(id => {
+      const disziplin = disziplinen.find(d => d.id === id);
+      if (!disziplin?.nurVereinsmeisterschaft) return false;
+      // Diese Disziplinen brauchen kein VM-Ergebnis
+      const noVmRequired = ['11.10', '11.11', '11.20', '11.50', '11.51'];
+      return !noVmRequired.includes(disziplin.spoNummer);
+    });
     
     for (const disziplinId of durchmeldungsDisziplinen) {
       const vmData = vmErgebnisse[disziplinId];
@@ -596,26 +603,10 @@ export default function KMMeldungen() {
                 </div>
               )}
               
-              {/* Vereinsfilter */}
+              {/* Vereinsauswahl */}
               <div>
-                <label className="block text-sm font-medium mb-2">Verein filtern (optional)</label>
-                <select 
-                  value={selectedClub} 
-                  onChange={(e) => {
-                    setSelectedClub(e.target.value);
-                    setSelectedSchuetze('');
-                    setSelectedSchuetzen([]);
-                  }}
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                >
-                  <option value="">Alle Vereine</option>
-                  {(userClubIds.length > 0 ? clubs.filter(club => userClubIds.includes(club.id)) : clubs)
-                    .map(club => (
-                      <option key={club.id} value={club.id}>
-                        {club.name}
-                      </option>
-                    ))}
-                </select>
+                <label className="block text-sm font-medium mb-2">Verein</label>
+                <KMClubSwitcher />
               </div>
 
               {meldeModus === 'schuetze-disziplinen' ? (
@@ -625,9 +616,9 @@ export default function KMMeldungen() {
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Schütze auswählen
-                  {selectedClub && (
+                  {currentClubId && (
                     <span className="text-sm text-gray-500 ml-2">
-                      (gefiltert nach {clubs.find(c => c.id === selectedClub)?.name})
+                      (gefiltert nach {clubs.find(c => c.id === currentClubId)?.name})
                     </span>
                   )}
                 </label>
@@ -660,7 +651,7 @@ export default function KMMeldungen() {
                       const hasAccess = schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
                       if (!hasAccess) return false;
                       
-                      if (selectedClub && !schuetzeClubIds.includes(selectedClub)) return false;
+                      if (currentClubId && !schuetzeClubIds.includes(currentClubId)) return false;
                       
                       // Suchfilter
                       if (schuetzenSuche) {
@@ -946,21 +937,25 @@ export default function KMMeldungen() {
                     if (!disziplin) return null;
                     
                     const vmData = vmErgebnisse[disziplinId] || { ringe: '', datum: '', bemerkung: '' };
+                    const noVmRequired = ['11.10', '11.11', '11.20', '11.50', '11.51'];
+                    const isVmRequired = disziplin.nurVereinsmeisterschaft && !noVmRequired.includes(disziplin.spoNummer);
                     
                     return (
                       <div key={disziplinId} className="p-4 bg-blue-50 border border-blue-200 rounded">
                         <h5 className="font-medium text-blue-900 mb-2">
-                          {disziplin.spoNummer} - {disziplin.name} {disziplin.nurVereinsmeisterschaft ? '(Erforderlich)' : '(Optional)'}
+                          {disziplin.spoNummer} - {disziplin.name} {isVmRequired ? '(Erforderlich)' : '(Optional)'}
                         </h5>
                         <p className="text-sm text-blue-700 mb-3">
-                          {disziplin.nurVereinsmeisterschaft 
+                          {isVmRequired 
                             ? 'Da diese Disziplin nur durchgemeldet wird, ist das VM-Ergebnis erforderlich.'
-                            : 'VM-Ergebnis als Qualifikation für die Kreismeisterschaft (empfohlen).'}
+                            : disziplin.nurVereinsmeisterschaft 
+                              ? 'Durchmeldungs-Disziplin - VM-Ergebnis optional.'
+                              : 'VM-Ergebnis als Qualifikation für die Kreismeisterschaft (empfohlen).'}
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <label className="block text-sm font-medium mb-1 text-blue-900 dark:text-blue-100">
-                              Ringe {disziplin.nurVereinsmeisterschaft && '*'}
+                              Ringe {isVmRequired && '*'}
                             </label>
                             <input
                               type="number"
@@ -974,12 +969,12 @@ export default function KMMeldungen() {
                               }))}
                               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                               placeholder="z.B. 385.7 (mit Nachkommastelle)"
-                              required={disziplin.nurVereinsmeisterschaft}
+                              required={isVmRequired}
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-medium mb-1 text-blue-900 dark:text-blue-100">
-                              Datum {disziplin.nurVereinsmeisterschaft && '*'}
+                              Datum {isVmRequired && '*'}
                             </label>
                             <input
                               type="date"
@@ -989,7 +984,7 @@ export default function KMMeldungen() {
                                 [disziplinId]: { ...vmData, datum: e.target.value }
                               }))}
                               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                              required={disziplin.nurVereinsmeisterschaft}
+                              required={isVmRequired}
                             />
                           </div>
                         </div>
@@ -1120,9 +1115,9 @@ export default function KMMeldungen() {
                   <div>
                     <label className="block text-sm font-medium mb-2">
                       Schützen auswählen (Mehrfachauswahl)
-                      {selectedClub && (
+                      {currentClubId && (
                         <span className="text-sm text-gray-500 ml-2">
-                          (gefiltert nach {clubs.find(c => c.id === selectedClub)?.name})
+                          (gefiltert nach {clubs.find(c => c.id === currentClubId)?.name})
                         </span>
                       )}
                     </label>
@@ -1145,7 +1140,7 @@ export default function KMMeldungen() {
                           ].filter(Boolean);
                           const hasAccess = schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
                           if (!hasAccess) return false;
-                          if (selectedClub && !schuetzeClubIds.includes(selectedClub)) return false;
+                          if (currentClubId && !schuetzeClubIds.includes(currentClubId)) return false;
                           if (schuetzenSuche) {
                             const searchTerm = schuetzenSuche.toLowerCase();
                             const fullName = schuetze.firstName && schuetze.lastName 
@@ -1293,21 +1288,25 @@ export default function KMMeldungen() {
                         
                         const vmKey = `${schuetzeId}_${selectedDisziplin}`;
                         const vmData = vmErgebnisse[vmKey] || { ringe: '', datum: '', bemerkung: '' };
+                        const noVmRequired = ['11.10', '11.11', '11.20', '11.50', '11.51'];
+                        const isVmRequired = disziplin.nurVereinsmeisterschaft && !noVmRequired.includes(disziplin.spoNummer);
                         
                         return (
                           <div key={schuetzeId} className="p-4 bg-blue-50 border border-blue-200 rounded">
                             <h5 className="font-medium text-blue-900 mb-2">
-                              {displayName} - {disziplin.name} {disziplin.nurVereinsmeisterschaft ? '(Erforderlich)' : '(Optional)'}
+                              {displayName} - {disziplin.name} {isVmRequired ? '(Erforderlich)' : '(Optional)'}
                             </h5>
                             <p className="text-sm text-blue-700 mb-3">
-                              {disziplin.nurVereinsmeisterschaft 
+                              {isVmRequired 
                                 ? 'Da diese Disziplin nur durchgemeldet wird, ist das VM-Ergebnis erforderlich.'
-                                : 'VM-Ergebnis als Qualifikation für die Kreismeisterschaft (empfohlen).'}
+                                : disziplin.nurVereinsmeisterschaft 
+                                  ? 'Durchmeldungs-Disziplin - VM-Ergebnis optional.'
+                                  : 'VM-Ergebnis als Qualifikation für die Kreismeisterschaft (empfohlen).'}
                             </p>
                             <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <label className="block text-sm font-medium mb-1 text-blue-900 dark:text-blue-100">
-                                  Ringe {disziplin.nurVereinsmeisterschaft && '*'}
+                                  Ringe {isVmRequired && '*'}
                                 </label>
                                 <input
                                   type="number"
@@ -1321,12 +1320,12 @@ export default function KMMeldungen() {
                                   }))}
                                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                   placeholder="z.B. 385.7 (mit Nachkommastelle)"
-                                  required={disziplin.nurVereinsmeisterschaft}
+                                  required={isVmRequired}
                                 />
                               </div>
                               <div>
                                 <label className="block text-sm font-medium mb-1 text-blue-900 dark:text-blue-100">
-                                  Datum {disziplin.nurVereinsmeisterschaft && '*'}
+                                  Datum {isVmRequired && '*'}
                                 </label>
                                 <input
                                   type="date"
@@ -1336,7 +1335,7 @@ export default function KMMeldungen() {
                                     [vmKey]: { ...vmData, datum: e.target.value }
                                   }))}
                                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                                  required={disziplin.nurVereinsmeisterschaft}
+                                  required={isVmRequired}
                                 />
                               </div>
                             </div>
@@ -1597,5 +1596,13 @@ export default function KMMeldungen() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function KMMeldungen() {
+  return (
+    <KMProvider>
+      <KMMeldungenContent />
+    </KMProvider>
   );
 }

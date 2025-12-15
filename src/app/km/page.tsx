@@ -10,8 +10,10 @@ import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { BackButton } from '@/components/ui/back-button';
+import { KMProvider } from '@/contexts/KMContext';
+import { KMClubSwitcher } from '@/components/ui/km-club-switcher';
 
-export default function KMDashboard() {
+function KMDashboardContent() {
   const { hasKMAccess, userRole, loading } = useKMAuth();
   const { user, userAppPermissions } = useAuthContext();
   const [isInstructionOpen, setIsInstructionOpen] = useState(false);
@@ -75,6 +77,9 @@ export default function KMDashboard() {
           Hallo {userAppPermissions?.displayName || user?.displayName || user?.email}! Kreismeisterschafts-Meldungen für deinen Verein
           {userRole && <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{userRole === 'admin' ? 'Admin' : userRole === 'km_organisator' ? 'KM-Organisator' : userRole === 'verein' ? 'Sportleiter' : 'Vereinsvertreter'}</span>}
         </p>
+        <div className="mt-4 max-w-md">
+          <KMClubSwitcher />
+        </div>
       </div>
 
       {/* Anleitung für Vereinsvertreter */}
@@ -371,5 +376,13 @@ export default function KMDashboard() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function KMDashboard() {
+  return (
+    <KMProvider>
+      <KMDashboardContent />
+    </KMProvider>
   );
 }

@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { MannschaftsbildungService } from '@/lib/services/mannschaftsbildung-service';
 import { BackButton } from '@/components/ui/back-button';
+import { KMProvider, useKMContext } from '@/contexts/KMContext';
+import { KMClubSwitcher } from '@/components/ui/km-club-switcher';
 
 interface Mannschaft {
   id: string;
@@ -27,9 +29,10 @@ interface Shooter {
   gender: 'male' | 'female';
 }
 
-export default function KMMannschaften() {
+function KMMannschaftenContent() {
   const { toast } = useToast();
-  const { hasKMAccess, userClubIds, userRole, loading: authLoading } = useKMAuth();
+  const { hasKMAccess, userRole, loading: authLoading } = useKMAuth();
+  const { currentClubId, userClubIds } = useKMContext();
   const [mannschaften, setMannschaften] = useState<Mannschaft[]>([]);
   const [schuetzen, setSchuetzen] = useState<Shooter[]>([]);
   const [disziplinen, setDisziplinen] = useState<any[]>([]);
@@ -38,7 +41,7 @@ export default function KMMannschaften() {
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [meldungen, setMeldungen] = useState<any[]>([]);
-  const [selectedClubId, setSelectedClubId] = useState('');
+
   const [saisons, setSaisons] = useState<any[]>([]);
   const [selectedSaison, setSelectedSaison] = useState<string>('');
 
@@ -375,24 +378,9 @@ export default function KMMannschaften() {
                 </select>
               </div>
             )}
-            {userClubIds.length > 1 && (
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Verein:</label>
-              <select 
-                value={selectedClubId} 
-                onChange={(e) => setSelectedClubId(e.target.value)}
-                className="border rounded px-3 py-1"
-              >
-                <option value="">Alle Vereine</option>
-                {userClubIds.map(clubId => {
-                  const club = clubs.find(c => c.id === clubId);
-                  return club ? (
-                    <option key={club.id} value={club.id}>{club.name}</option>
-                  ) : null;
-                })}
-              </select>
+            <div className="max-w-md">
+              <KMClubSwitcher />
             </div>
-            )}
           </div>
         </div>
       </div>
@@ -498,12 +486,12 @@ export default function KMMannschaften() {
                     const saisonMatch = !selectedSaison || m.saison === selectedSaison;
                     if (userClubIds.length === 0) return saisonMatch;
                     const clubMatch = userClubIds.includes(m.vereinId || m.clubId);
-                    const selectedClubMatch = !selectedClubId || (m.vereinId || m.clubId) === selectedClubId;
-                    return saisonMatch && clubMatch && selectedClubMatch;
+                    const currentClubMatch = !currentClubId || (m.vereinId || m.clubId) === currentClubId;
+                    return saisonMatch && clubMatch && currentClubMatch;
                   });
                   return filteredMannschaften.length > 0 && (
                     <p className="text-sm text-gray-600 mt-2">
-                      {filteredMannschaften.length} {userClubIds.length === 0 ? 'Mannschaften' : 'eigene Mannschaften'} vorhanden
+                      {filteredMannschaften.length} {userClubIds.length === 0 ? 'Mannschaften' : currentClubId ? 'Mannschaften für aktuellen Verein' : 'eigene Mannschaften'} vorhanden
                     </p>
                   );
                 })()}
@@ -522,16 +510,13 @@ export default function KMMannschaften() {
                 ) : (
                   mannschaften
                     .filter(mannschaft => {
-                      // Filter nach Saison-ID
                       const saisonMatch = !selectedSaison || mannschaft.saison === selectedSaison;
                       
-                      // Wenn userClubIds leer ist (Admin/KM-Organisator), zeige alle
                       if (userClubIds.length === 0) return saisonMatch;
-                      // Zeige nur Mannschaften der eigenen Vereine
+                      
                       const clubMatch = userClubIds.includes(mannschaft.vereinId || mannschaft.clubId);
-                      // Zusätzlicher Filter nach ausgewähltem Verein
-                      const selectedClubMatch = !selectedClubId || (mannschaft.vereinId || mannschaft.clubId) === selectedClubId;
-                      return saisonMatch && clubMatch && selectedClubMatch;
+                      const currentClubMatch = !currentClubId || (mannschaft.vereinId || mannschaft.clubId) === currentClubId;
+                      return saisonMatch && clubMatch && currentClubMatch;
                     })
                     .map(mannschaft => {
                     const verein = clubs.find(c => c.id === mannschaft.vereinId || c.id === mannschaft.clubId);
@@ -875,5 +860,13 @@ export default function KMMannschaften() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function KMMannschaften() {
+  return (
+    <KMProvider>
+      <KMMannschaftenContent />
+    </KMProvider>
   );
 }
