@@ -421,6 +421,21 @@ function KMMeldungenContent() {
     const age = sportjahr - schuetze.birthYear;
     const gender = schuetze.gender;
     
+    // Spezielle Behandlung für Lichtgewehr (11.11)
+    if (spoNummer === '11.11') {
+      if (age >= 6 && age <= 11) {
+        const klasse = gender === 'male' ? 'Lichtgewehr m' : 'Lichtgewehr w';
+        return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
+      } else {
+        return {
+          klasse: 'Nicht teilnahmeberechtigt',
+          kmErlaubt: false,
+          lmErlaubt: false,
+          warnung: 'Lichtgewehr (11.11) nur für Altersklasse 6-11 Jahre'
+        };
+      }
+    }
+    
     if (auflage) {
       // Schüler (KM + LM erlaubt)
       if (age >= 12 && age <= 14) {

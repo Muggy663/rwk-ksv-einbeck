@@ -605,6 +605,10 @@ function KMMannschaftenContent() {
                                     const istAuflage = disziplin.auflage;
                                     
                                     if (istAuflage) {
+                                      // Lichtgewehr (11.11) - spezielle Altersklasse für 6-11 Jahre
+                                      if (disziplin.spoNummer === '11.11' && age >= 6 && age <= 11) {
+                                        return gender === 'male' ? 'Lichtgewehr m' : 'Lichtgewehr w';
+                                      }
                                       if (age <= 14) return gender === 'male' ? 'Schüler m' : 'Schüler w';
                                       else if (disziplin.spoNummer === '1.41' && age >= 15 && age <= 40) {
                                         if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
@@ -739,6 +743,10 @@ function KMMannschaftenContent() {
                                           const istAuflage = disziplin.auflage;
                                           
                                           if (istAuflage) {
+                                            // Lichtgewehr (11.11) - spezielle Altersklasse für 6-11 Jahre
+                                            if (disziplin.spoNummer === '11.11' && age >= 6 && age <= 11) {
+                                              return gender === 'male' ? 'Lichtgewehr m' : 'Lichtgewehr w';
+                                            }
                                             if (age <= 14) return gender === 'male' ? 'Schüler m' : 'Schüler w';
                                             else if (disziplin.spoNummer === '1.41' && age >= 15 && age <= 40) {
                                               if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
