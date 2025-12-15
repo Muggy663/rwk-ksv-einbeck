@@ -1,69 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
-export async function PATCH(
+export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params;
     const body = await request.json();
-    const { lmTeilnahme, vmErgebnis, anmerkung } = body;
-
-    // Hole aktuelles Jahr
-    let aktivesJahr = 2026;
-    try {
-      const jahreSnapshot = await adminDb.collection('km_jahre').where('status', '==', 'aktiv').get();
-      if (!jahreSnapshot.empty) {
-        aktivesJahr = jahreSnapshot.docs[0].data().jahr;
-      }
-    } catch (e) {
-      logWarn('Fallback auf Jahr 2026');
-    }
-
-    // Finde das Dokument in den Collections
-    const collections = [`km_meldungen_${aktivesJahr}_kk`, `km_meldungen_${aktivesJahr}_ld`];
-    let docFound = false;
+    const { lmTeilnahme, anmerkung, vmErgebnis } = body;
+    
+    // Finde die Meldung in allen möglichen Collections
+    const saisons = await adminDb.collection('km_saisons').get();
+    const collections = [];
+    
+    saisons.docs.forEach(doc => {
+      const saison = doc.data();
+      collections.push(`km_meldungen_${saison.jahr}_${saison.disziplinTyp.toLowerCase()}`);
+    });
+    
+    let updated = false;
     
     for (const collectionName of collections) {
       try {
-        const docRef = adminDb.collection(collectionName).doc(params.id);
-        const docSnap = await docRef.get();
+        const docRef = adminDb.collection(collectionName).doc(id);
+        const doc = await docRef.get();
         
-        if (docSnap.exists) {
-          const updateData: any = {};
-          
-          if (lmTeilnahme !== undefined) updateData.lmTeilnahme = lmTeilnahme;
-          if (vmErgebnis !== undefined) updateData.vmErgebnis = vmErgebnis;
-          if (anmerkung !== undefined) updateData.anmerkung = anmerkung;
-          
-          await docRef.update(updateData);
-          docFound = true;
+        if (doc.exists) {
+          await docRef.update({
+            lmTeilnahme: !!lmTeilnahme,
+            anmerkung: anmerkung || '',
+            vmErgebnis: vmErgebnis || null,
+            updatedAt: new Date()
+          });
+          updated = true;
           break;
         }
-      } catch (e) {
-        // Collection existiert nicht oder anderer Fehler
+      } catch (error) {
         continue;
       }
     }
-
-    if (!docFound) {
+    
+    if (!updated) {
       return NextResponse.json({
         success: false,
         error: 'Meldung nicht gefunden'
       }, { status: 404 });
     }
-
+    
     return NextResponse.json({
       success: true,
-      message: 'Meldung aktualisiert'
+      message: 'Meldung erfolgreich aktualisiert'
     });
-
+    
   } catch (error) {
-    logError('Fehler beim Aktualisieren:', error);
+    logError('Fehler beim Aktualisieren der Meldung:', error);
     return NextResponse.json({
       success: false,
-      error: 'Update fehlgeschlagen'
+      error: error.message
     }, { status: 500 });
   }
 }
@@ -73,53 +68,51 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Hole aktuelles Jahr
-    let aktivesJahr = 2026;
-    try {
-      const jahreSnapshot = await adminDb.collection('km_jahre').where('status', '==', 'aktiv').get();
-      if (!jahreSnapshot.empty) {
-        aktivesJahr = jahreSnapshot.docs[0].data().jahr;
-      }
-    } catch (e) {
-      logWarn('Fallback auf Jahr 2026');
-    }
-
-    // Finde und lösche das Dokument
-    const collections = [`km_meldungen_${aktivesJahr}_kk`, `km_meldungen_${aktivesJahr}_ld`];
-    let docFound = false;
+    const { id } = params;
+    
+    // Finde die Meldung in allen möglichen Collections
+    const saisons = await adminDb.collection('km_saisons').get();
+    const collections = [];
+    
+    saisons.docs.forEach(doc => {
+      const saison = doc.data();
+      collections.push(`km_meldungen_${saison.jahr}_${saison.disziplinTyp.toLowerCase()}`);
+    });
+    
+    let deleted = false;
     
     for (const collectionName of collections) {
       try {
-        const docRef = adminDb.collection(collectionName).doc(params.id);
-        const docSnap = await docRef.get();
+        const docRef = adminDb.collection(collectionName).doc(id);
+        const doc = await docRef.get();
         
-        if (docSnap.exists) {
+        if (doc.exists) {
           await docRef.delete();
-          docFound = true;
+          deleted = true;
           break;
         }
-      } catch (e) {
+      } catch (error) {
         continue;
       }
     }
-
-    if (!docFound) {
+    
+    if (!deleted) {
       return NextResponse.json({
         success: false,
         error: 'Meldung nicht gefunden'
       }, { status: 404 });
     }
-
+    
     return NextResponse.json({
       success: true,
-      message: 'Meldung gelöscht'
+      message: 'Meldung erfolgreich gelöscht'
     });
-
+    
   } catch (error) {
-    logError('Fehler beim Löschen:', error);
+    logError('Fehler beim Löschen der Meldung:', error);
     return NextResponse.json({
       success: false,
-      error: 'Löschen fehlgeschlagen'
+      error: error.message
     }, { status: 500 });
   }
 }

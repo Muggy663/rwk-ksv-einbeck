@@ -266,7 +266,10 @@ export default function KMMeldungen() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${JSON.stringify({ email: user?.email, displayName: user?.displayName })}`
           },
-          body: JSON.stringify(meldung)
+          body: JSON.stringify({
+            ...meldung,
+            saisonId: selectedSaison
+          })
         });
       });
       
@@ -357,7 +360,7 @@ export default function KMMeldungen() {
             body: JSON.stringify({
               schuetzeId: selectedSchuetze,
               disziplinId,
-              saison: '2026',
+              saisonId: selectedSaison,
               lmTeilnahme: lmTeilnahme[disziplinId] || false,
               anmerkung,
               vmErgebnis: vmData?.ringe ? {
@@ -499,8 +502,8 @@ export default function KMMeldungen() {
 
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <div className="max-w-4xl mx-auto">
+        <div>
           <Card>
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -513,22 +516,6 @@ export default function KMMeldungen() {
                     }
                   </CardDescription>
                 </div>
-                {saisons.length > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-                    <label className="block text-sm font-medium text-blue-900 mb-2">KM auswählen:</label>
-                    <select
-                      value={selectedSaison}
-                      onChange={(e) => setSelectedSaison(e.target.value)}
-                      className="px-3 py-2 border border-blue-300 rounded bg-white text-sm font-medium min-w-[200px]"
-                    >
-                      {saisons.map(saison => (
-                        <option key={saison.id} value={saison.id}>
-                          {saison.name} ({saison.disziplinTyp})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -565,6 +552,50 @@ export default function KMMeldungen() {
                   🎯 Disziplin → Schützen
                 </button>
               </div>
+              
+              {/* KM-Auswahl */}
+              {saisons.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                  <label className="block text-sm font-medium text-blue-900 mb-2">KM auswählen:</label>
+                  <select
+                    value={selectedSaison}
+                    onChange={(e) => setSelectedSaison(e.target.value)}
+                    className="w-full px-3 py-2 border border-blue-300 rounded bg-white text-sm font-medium"
+                  >
+                    {saisons.map(saison => {
+                      const today = new Date();
+                      let isExpired = false;
+                      
+                      if (saison.meldeschluss) {
+                        const meldeschluss = saison.meldeschluss;
+                        let deadline;
+                        
+                        if (meldeschluss.includes('.') && meldeschluss.length > 6) {
+                          const [day, month, year] = meldeschluss.split('.');
+                          deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                        } else {
+                          const [day, month] = meldeschluss.split('.');
+                          deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+                        }
+                        
+                        isExpired = today > deadline;
+                      }
+                      
+                      return (
+                        <option 
+                          key={saison.id} 
+                          value={saison.id}
+                          disabled={isExpired}
+                          style={isExpired ? { color: '#999', backgroundColor: '#f5f5f5' } : {}}
+                        >
+                          {saison.name} ({saison.disziplinTyp}){isExpired ? ' - Meldeschluss vorbei' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
+              
               {/* Vereinsfilter */}
               <div>
                 <label className="block text-sm font-medium mb-2">Verein filtern (optional)</label>
@@ -1563,175 +1594,6 @@ export default function KMMeldungen() {
               )}
             </CardContent>
           </Card>
-        </div>
-
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Aktuelle Meldungen</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {meldungen
-                  .filter(meldung => {
-                    // Filtere nach ausgewählter Saison
-                    const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-                    if (!disziplin || !disziplin.saison || disziplin.saison.id !== selectedSaison) return false;
-                    
-                    // Wenn userClubIds leer ist (Admin/KM-Organisator), zeige alle
-                    if (userClubIds.length === 0) return true;
-                    
-                    // Zeige nur Meldungen der eigenen Vereine
-                    const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-                    if (!schuetze) return false;
-                    
-                    const schuetzeClubIds = [
-                      schuetze.rwkClubId,
-                      schuetze.clubId, 
-                      schuetze.kmClubId,
-                      ...(schuetze.kmStartrechte ? Object.values(schuetze.kmStartrechte) : [])
-                    ].filter(Boolean);
-                    
-                    return schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
-                  })
-                  .slice(0, 5)
-                  .map((meldung, index) => {
-                  const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-                  const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-                  const colors = ['blue', 'green', 'orange', 'purple', 'red'];
-                  const color = colors[index % colors.length];
-                  
-                  return (
-                    <div key={meldung.id} className={`text-sm border-l-2 border-${color}-500 pl-3 flex justify-between items-center`}>
-                      <div>
-                        <div className="font-medium">
-                          {schuetze?.firstName && schuetze?.lastName 
-                            ? `${schuetze.firstName} ${schuetze.lastName}`
-                            : schuetze?.name || 'Unbekannt'
-                          }
-                        </div>
-                        <div className="text-gray-500">
-                          {disziplin?.spoNummer} {disziplin?.name} • {schuetze ? getWettkampfklasse(schuetze, disziplin?.auflage, disziplin?.spoNummer).klasse : 'N/A'}
-                          {meldung.vmErgebnis?.ringe && (
-                            <span className="ml-2 text-green-600 font-medium">
-                              • VM: {meldung.vmErgebnis.ringe} Ringe
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        {(() => {
-                          // Prüfe Meldeschluss
-                          const today = new Date();
-                          let isExpired = false;
-                          
-                          if (disziplin?.saison?.meldeschluss) {
-                            const meldeschluss = disziplin.saison.meldeschluss;
-                            let deadline;
-                            
-                            if (meldeschluss.includes('.') && meldeschluss.length > 6) {
-                              const [day, month, year] = meldeschluss.split('.');
-                              deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                            } else {
-                              const [day, month] = meldeschluss.split('.');
-                              deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
-                            }
-                            
-                            isExpired = today > deadline;
-                          }
-                          
-                          const canEdit = !isExpired || userRole === 'admin' || userRole === 'km_organisator';
-                          
-                          return (
-                            <>
-                              <button 
-                                onClick={() => handleEditMeldung(meldung)}
-                                disabled={!canEdit}
-                                className={`text-xs px-2 py-1 border rounded ${
-                                  canEdit 
-                                    ? 'text-blue-600 hover:text-blue-800 border-blue-300' 
-                                    : 'text-gray-400 border-gray-300 cursor-not-allowed'
-                                }`}
-                                title={!canEdit ? 'Meldeschluss abgelaufen - nur Admin/KM-Orga kann bearbeiten' : ''}
-                              >
-                                ✏️
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteMeldung(meldung.id)}
-                                disabled={deletingId === meldung.id || !canEdit}
-                                className={`text-xs px-2 py-1 border rounded disabled:opacity-50 ${
-                                  canEdit 
-                                    ? 'text-red-600 hover:text-red-800 border-red-300' 
-                                    : 'text-gray-400 border-gray-300 cursor-not-allowed'
-                                }`}
-                                title={!canEdit ? 'Meldeschluss abgelaufen - nur Admin/KM-Orga kann löschen' : ''}
-                              >
-                                {deletingId === meldung.id ? '⏳' : '🗑️'}
-                              </button>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  );
-                })}
-                {meldungen.filter(meldung => {
-                  // Filtere nach ausgewählter Saison
-                  const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-                  if (!disziplin || !disziplin.saison || disziplin.saison.id !== selectedSaison) return false;
-                  
-                  if (userClubIds.length === 0) return true; // Admin/KM-Organisator sieht alle
-                  const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-                  if (!schuetze) return false;
-                  const schuetzeClubIds = [
-                    schuetze.rwkClubId, schuetze.clubId, schuetze.kmClubId,
-                    ...(schuetze.kmStartrechte ? Object.values(schuetze.kmStartrechte) : [])
-                  ].filter(Boolean);
-                  return schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
-                }).length === 0 && (
-                  <div className="text-sm text-gray-500 text-center py-4">
-                    Noch keine Meldungen vorhanden
-                  </div>
-                )}
-              </div>
-              
-              <div className="mt-4 pt-4 border-t">
-                <div className="text-sm text-gray-600">
-                  {meldungen.filter(meldung => {
-                    // Filtere nach ausgewählter Saison
-                    const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-                    if (!disziplin || !disziplin.saison || disziplin.saison.id !== selectedSaison) return false;
-                    
-                    const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-                    if (!schuetze) return false;
-                    const schuetzeClubIds = [
-                      schuetze.rwkClubId, schuetze.clubId, schuetze.kmClubId,
-                      ...(schuetze.kmStartrechte ? Object.values(schuetze.kmStartrechte) : [])
-                    ].filter(Boolean);
-                    return schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
-                  }).length} eigene Meldung{meldungen.filter(meldung => {
-                    const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-                    if (!disziplin || !disziplin.saison || disziplin.saison.id !== selectedSaison) return false;
-                    
-                    const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-                    if (!schuetze) return false;
-                    const schuetzeClubIds = [
-                      schuetze.rwkClubId, schuetze.clubId, schuetze.kmClubId,
-                      ...(schuetze.kmStartrechte ? Object.values(schuetze.kmStartrechte) : [])
-                    ].filter(Boolean);
-                    return schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
-                  }).length !== 1 ? 'en' : ''}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="mt-4 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded">
-            <h4 className="font-semibold text-green-900 dark:text-green-100 text-sm mb-1">🎯 KM-System</h4>
-            <p className="text-xs text-green-700 dark:text-green-300">
-              Vollständig funktional - Meldungen werden gespeichert und sind persistent.
-            </p>
-          </div>
         </div>
       </div>
     </div>

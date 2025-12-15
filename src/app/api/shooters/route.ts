@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validiere Geschlecht
-    if (!['M', 'W', 'männlich', 'weiblich'].includes(gender)) {
+    if (!['M', 'W', 'männlich', 'weiblich', 'male', 'female'].includes(gender)) {
       secureLogger.warn('Invalid gender in shooter creation', 'shooters-api');
       return NextResponse.json({
         success: false,
@@ -42,12 +42,16 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Normalisiere gender-Werte
+    const normalizedGender = gender === 'M' || gender === 'männlich' ? 'male' : 
+                            gender === 'W' || gender === 'weiblich' ? 'female' : gender;
+
     const shooterData = {
       firstName: firstName.substring(0, 50),
       lastName: lastName.substring(0, 50),
       name: lastName.substring(0, 50), // Für Kompatibilität
       birthYear: birthYear,
-      gender: gender,
+      gender: normalizedGender,
       mitgliedsnummer: mitgliedsnummer ? mitgliedsnummer.substring(0, 20) : null,
       kmClubId: clubId.substring(0, 50),
       rwkClubId: null,

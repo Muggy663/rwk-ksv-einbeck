@@ -10,17 +10,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const { saison = '2026' } = body;
     
-    // Schritt 1: Lösche alte Mannschaften für diese Saison
-
+    // Schritt 1: Lösche alle Mannschaften (auch ohne Saison) und erstelle neu
     try {
       const { deleteDoc } = await import('firebase/firestore');
       const oldMannschaftenSnapshot = await getDocs(collection(db, 'km_mannschaften'));
-      const oldDocs = oldMannschaftenSnapshot.docs.filter(doc => doc.data().saison === saison);
       
-      for (const docToDelete of oldDocs) {
+      for (const docToDelete of oldMannschaftenSnapshot.docs) {
         await deleteDoc(docToDelete.ref);
       }
-
+      logInfo(`🗑️ ${oldMannschaftenSnapshot.docs.length} alte Mannschaften gelöscht`);
     } catch (error) {
       logWarn('⚠️ Could not clear old mannschaften:', error.message);
     }

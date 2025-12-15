@@ -708,6 +708,7 @@ export default function VereinSchuetzenPage() {
               <TableHeader><TableRow>
                   <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('lastName')}>Nachname {sortBy === 'lastName' && (sortOrder === 'asc' ? '↑' : '↓')}</TableHead>
                   <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('firstName')}>Vorname {sortBy === 'firstName' && (sortOrder === 'asc' ? '↑' : '↓')}</TableHead>
+                  <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('birthYear')}>Geburtsjahr {sortBy === 'birthYear' && (sortOrder === 'asc' ? '↑' : '↓')}</TableHead>
                   <TableHead className="cursor-pointer hover:bg-gray-50" onClick={() => handleSort('gender')}>Geschlecht {sortBy === 'gender' && (sortOrder === 'asc' ? '↑' : '↓')}</TableHead>
                   <TableHead>
                     <button 
@@ -750,6 +751,11 @@ export default function VereinSchuetzenPage() {
                         aValue = a.lastName || (a.name ? a.name.split(' ').slice(-1)[0] : '');
                         bValue = b.lastName || (b.name ? b.name.split(' ').slice(-1)[0] : '');
                         break;
+                      case 'birthYear':
+                        aValue = a.birthYear || 0;
+                        bValue = b.birthYear || 0;
+                        const result = sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+                        return result;
                       case 'gender':
                         aValue = a.gender === 'female' ? 'Weiblich' : (a.gender === 'male' ? 'Männlich' : 'N/A');
                         bValue = b.gender === 'female' ? 'Weiblich' : (b.gender === 'male' ? 'Männlich' : 'N/A');
@@ -772,6 +778,7 @@ export default function VereinSchuetzenPage() {
                     <TableCell label="Vorname">
                       <span>{shooter.firstName || (shooter.name ? shooter.name.split(' ').slice(0, -1).join(' ') : '-')}</span>
                     </TableCell>
+                    <TableCell label="Geburtsjahr">{shooter.birthYear || '-'}</TableCell>
                     <TableCell label="Geschlecht">{shooter.gender === 'female' ? 'Weiblich' : (shooter.gender === 'male' ? 'Männlich' : 'N/A')}</TableCell>
                     <TableCell label="Mannschaften" className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
                     {(isVereinsvertreter || isSportleiter || isVorstand) && (

@@ -18,7 +18,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown, PlusCircle, Edit, Trash2, ArrowLeft } 
 
 export default function KMMitglieder() {
   const { toast } = useToast();
-  const { hasKMAccess, loading: authLoading, userClubIds } = useKMAuth();
+  const { hasKMAccess, loading: authLoading, userClubIds, userRole } = useKMAuth();
   const [schuetzen, setSchuetzen] = useState<any[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,10 +32,10 @@ export default function KMMitglieder() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    if (hasKMAccess && !authLoading) {
+    if (hasKMAccess && !authLoading && userRole) {
       loadSchuetzen();
     }
-  }, [hasKMAccess, authLoading]);
+  }, [hasKMAccess, authLoading, userRole]);
 
   const loadSchuetzen = async () => {
     try {
@@ -57,11 +57,19 @@ export default function KMMitglieder() {
 
       setClubs(allClubs);
 
-      // Client-seitige Filterung nach ALLEN berechtigten Vereinen
-      const vereinsSchuetzen = userClubIds.length === 0 
+      // Client-seitige Filterung nach berechtigten Vereinen
+      // Warte bis userRole geladen ist
+      if (!userRole) {
+        setSchuetzen([]);
+        return;
+      }
+      
+      const vereinsSchuetzen = (userRole === 'admin' || userRole === 'km_organisator') 
         ? allSchuetzen // Admin/KM-Organisator sieht alle
         : allSchuetzen.filter(s => 
-            userClubIds.includes(s.clubId) || userClubIds.includes(s.kmClubId)
+            userClubIds.includes(s.clubId) || 
+            userClubIds.includes(s.kmClubId) || 
+            userClubIds.includes(s.rwkClubId)
           );
 
       setSchuetzen(vereinsSchuetzen);
@@ -148,6 +156,7 @@ export default function KMMitglieder() {
         clubId: currentShooter.clubId,
         gender: currentShooter.gender,
         birthYear: currentShooter.birthYear ? parseInt(currentShooter.birthYear) : null,
+        mitgliedsnummer: currentShooter.mitgliedsnummer || '',
         teamIds: currentShooter.teamIds || [],
         isActive: true,
         updatedAt: new Date()
@@ -176,9 +185,18 @@ export default function KMMitglieder() {
 
   const handleDelete = async (shooter: any) => {
     try {
-      await deleteDoc(doc(db, 'shooters', shooter.id));
-      toast({ title: 'Erfolg', description: 'Schütze wurde gelöscht' });
-      loadSchuetzen();
+      const response = await fetch(`/api/km/shooters/${shooter.id}`, {
+        method: 'DELETE'
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        toast({ title: 'Erfolg', description: 'Schütze wurde gelöscht' });
+        loadSchuetzen();
+      } else {
+        toast({ title: 'Fehler', description: result.error || 'Löschen fehlgeschlagen', variant: 'destructive' });
+      }
     } catch (error) {
       toast({ title: 'Fehler', description: 'Löschen fehlgeschlagen', variant: 'destructive' });
     }
@@ -301,6 +319,11 @@ export default function KMMitglieder() {
                       Geschlecht {getSortIcon('gender')}
                     </Button>
                   </th>
+                  <th className="p-2 text-left">
+                    <Button variant="ghost" onClick={() => handleSort('mitgliedsnummer')} className="h-auto p-0 font-semibold hover:bg-transparent">
+                      Mitgliedsnr. {getSortIcon('mitgliedsnummer')}
+                    </Button>
+                  </th>
                   <th className="p-2 text-left">AK Auflage 2026</th>
                   <th className="p-2 text-left">AK Freihand 2026</th>
                   <th className="p-2 text-left">Status</th>
@@ -326,6 +349,7 @@ export default function KMMitglieder() {
                     })()}</td>
                     <td className="p-2">{schuetze.birthYear || '-'}</td>
                     <td className="p-2">{schuetze.gender === 'male' ? 'M' : schuetze.gender === 'female' ? 'W' : '-'}</td>
+                    <td className="p-2">{schuetze.mitgliedsnummer ? `08-${schuetze.mitgliedsnummer.slice(1,4)}-${schuetze.mitgliedsnummer.slice(4)}` : '-'}</td>
                     <td className="p-2 text-xs">
                       {schuetze.birthYear && schuetze.gender ? (() => {
                         const sportjahr = 2026;
@@ -456,6 +480,10 @@ export default function KMMitglieder() {
                         <span className="text-gray-500">Geschlecht:</span>
                         <span className="ml-1 font-medium">{schuetze.gender === 'male' ? 'Männlich' : schuetze.gender === 'female' ? 'Weiblich' : '-'}</span>
                       </div>
+                      <div>
+                        <span className="text-gray-500">Mitgliedsnr.:</span>
+                        <span className="ml-1 font-medium">{schuetze.mitgliedsnummer ? `08-${schuetze.mitgliedsnummer.slice(1,4)}-${schuetze.mitgliedsnummer.slice(4)}` : '-'}</span>
+                      </div>
                     </div>
                     
                     <div className="text-xs space-y-1 mb-3">
@@ -579,6 +607,21 @@ export default function KMMitglieder() {
                   value={currentShooter?.birthYear || ''}
                   onChange={(e) => setCurrentShooter(prev => ({ ...prev, birthYear: e.target.value }))}
                 />
+              </div>
+              <div>
+                <Label htmlFor="mitgliedsnummer">Mitgliedsnummer</Label>
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 text-sm text-gray-500 bg-gray-50 border border-r-0 border-gray-300 rounded-l-md">
+                    0
+                  </span>
+                  <Input
+                    id="mitgliedsnummer"
+                    className="rounded-l-none"
+                    value={currentShooter?.mitgliedsnummer || ''}
+                    onChange={(e) => setCurrentShooter(prev => ({ ...prev, mitgliedsnummer: e.target.value }))}
+                    placeholder="8018085 (ohne führende 0)"
+                  />
+                </div>
               </div>
             </div>
             <DialogFooter>

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { adminDb } from '@/lib/firebase/admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,11 +12,11 @@ export async function PUT(
     const shooterId = params.id;
     const updateData = await request.json();
 
-    const shooterRef = doc(db, 'shooters', shooterId);
+    const shooterRef = adminDb.collection('shooters').doc(shooterId);
     
     // Check if shooter exists
-    const shooterSnap = await getDoc(shooterRef);
-    if (!shooterSnap.exists()) {
+    const shooterSnap = await shooterRef.get();
+    if (!shooterSnap.exists) {
       return NextResponse.json({ 
         success: false, 
         error: 'Shooter not found' 
@@ -25,7 +24,7 @@ export async function PUT(
     }
 
     // Update shooter
-    await updateDoc(shooterRef, {
+    await shooterRef.update({
       ...updateData,
       updatedAt: new Date()
     });
@@ -49,11 +48,11 @@ export async function DELETE(
 ) {
   try {
     const shooterId = params.id;
-    const shooterRef = doc(db, 'shooters', shooterId);
+    const shooterRef = adminDb.collection('shooters').doc(shooterId);
     
     // Check if shooter exists
-    const shooterSnap = await getDoc(shooterRef);
-    if (!shooterSnap.exists()) {
+    const shooterSnap = await shooterRef.get();
+    if (!shooterSnap.exists) {
       return NextResponse.json({ 
         success: false, 
         error: 'Shooter not found' 
@@ -61,7 +60,7 @@ export async function DELETE(
     }
 
     // Delete shooter
-    await deleteDoc(shooterRef);
+    await shooterRef.delete();
 
     return NextResponse.json({ 
       success: true, 

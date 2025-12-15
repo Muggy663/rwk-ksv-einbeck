@@ -46,10 +46,32 @@ export default function KMUebersicht() {
       if (response.ok) {
         const data = await response.json();
         setSaisons(data.data || []);
-        // Setze erste aktive Saison als Standard
-        const aktiveSaison = data.data.find(s => s.status === 'aktiv');
-        if (aktiveSaison && !selectedSaison) {
-          setSelectedSaison(aktiveSaison.id);
+        // Setze erste nicht-abgelaufene Saison als Standard
+        if (!selectedSaison && data.data.length > 0) {
+          const today = new Date();
+          const nichtAbgelaufeneSaison = data.data.find(saison => {
+            if (!saison.meldeschluss) return true;
+            
+            const meldeschluss = saison.meldeschluss;
+            let deadline;
+            
+            if (meldeschluss.includes('.') && meldeschluss.length > 6) {
+              const [day, month, year] = meldeschluss.split('.');
+              deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            } else {
+              const [day, month] = meldeschluss.split('.');
+              deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+            }
+            
+            return today <= deadline;
+          });
+          
+          if (nichtAbgelaufeneSaison) {
+            setSelectedSaison(nichtAbgelaufeneSaison.id);
+          } else {
+            // Fallback: Erste Saison wenn alle abgelaufen
+            setSelectedSaison(data.data[0].id);
+          }
         }
       }
     } catch (error) {
@@ -232,12 +254,36 @@ export default function KMUebersicht() {
                   onChange={(e) => setSelectedSaison(e.target.value)}
                   className="border rounded px-3 py-1"
                 >
-                  <option value="">Alle Saisons</option>
-                  {saisons.map(saison => (
-                    <option key={saison.id} value={saison.id}>
-                      {saison.name} ({saison.status})
-                    </option>
-                  ))}
+                  {saisons.map(saison => {
+                    const today = new Date();
+                    let isExpired = false;
+                    
+                    if (saison.meldeschluss) {
+                      const meldeschluss = saison.meldeschluss;
+                      let deadline;
+                      
+                      if (meldeschluss.includes('.') && meldeschluss.length > 6) {
+                        const [day, month, year] = meldeschluss.split('.');
+                        deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                      } else {
+                        const [day, month] = meldeschluss.split('.');
+                        deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+                      }
+                      
+                      isExpired = today > deadline;
+                    }
+                    
+                    return (
+                      <option 
+                        key={saison.id} 
+                        value={saison.id}
+                        disabled={isExpired}
+                        style={isExpired ? { color: '#999', backgroundColor: '#f5f5f5' } : {}}
+                      >
+                        {saison.name} ({saison.status}){isExpired ? ' - Meldeschluss vorbei' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             )}
@@ -449,10 +495,7 @@ export default function KMUebersicht() {
                                 size="sm" 
                                 onClick={async () => {
                                   try {
-                                    await fetch(`/api/km/meldungen/${meldung.id}`, { method: 'DELETE' });
-                                    const newMeldung = {
-                                      schuetzeId: meldung.schuetzeId,
-                                      disziplinId: meldung.disziplinId,
+                                    const updateData = {
                                       lmTeilnahme: editData.lmTeilnahme,
                                       anmerkung: editData.anmerkung,
                                       vmErgebnis: editData.vmRinge ? {
@@ -461,10 +504,10 @@ export default function KMUebersicht() {
                                         bemerkung: meldung.vmErgebnis?.bemerkung || ''
                                       } : meldung.vmErgebnis
                                     };
-                                    const res = await fetch('/api/km/meldungen', {
-                                      method: 'POST',
+                                    const res = await fetch(`/api/km/meldungen/${meldung.id}`, {
+                                      method: 'PUT',
                                       headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify(newMeldung)
+                                      body: JSON.stringify(updateData)
                                     });
                                     if (res.ok) {
                                       toast({ title: 'Meldung aktualisiert' });
@@ -492,45 +535,73 @@ export default function KMUebersicht() {
                                 Abbrechen
                               </Button>
                             </>
-                          ) : (
-                            <>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => {
-                                  setEditingMeldung(meldung.id);
-                                  setEditData({
-                                    lmTeilnahme: meldung.lmTeilnahme,
-                                    vmRinge: meldung.vmErgebnis?.ringe || '',
-                                    anmerkung: meldung.anmerkung || ''
-                                  });
-                                }}
-                                className="w-full sm:w-auto"
-                              >
-                                Bearbeiten
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="destructive"
-                                onClick={async () => {
-                                  if (confirm('Meldung wirklich löschen?')) {
-                                    try {
-                                      const res = await fetch(`/api/km/meldungen/${meldung.id}`, { method: 'DELETE' });
-                                      if (res.ok) {
-                                        toast({ title: 'Meldung gelöscht' });
-                                        loadData();
+                          ) : (() => {
+                            // Prüfe Meldeschluss
+                            const today = new Date();
+                            let isExpired = false;
+                            
+                            const saison = saisons.find(s => s.id === selectedSaison);
+                            if (saison?.meldeschluss) {
+                              const meldeschluss = saison.meldeschluss;
+                              let deadline;
+                              
+                              if (meldeschluss.includes('.') && meldeschluss.length > 6) {
+                                const [day, month, year] = meldeschluss.split('.');
+                                deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                              } else {
+                                const [day, month] = meldeschluss.split('.');
+                                deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+                              }
+                              
+                              isExpired = today > deadline;
+                            }
+                            
+                            const canEdit = !isExpired || userPermission?.role === 'admin' || userPermission?.role === 'km_organisator';
+                            
+                            return (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  disabled={!canEdit}
+                                  onClick={() => {
+                                    setEditingMeldung(meldung.id);
+                                    setEditData({
+                                      lmTeilnahme: meldung.lmTeilnahme,
+                                      vmRinge: meldung.vmErgebnis?.ringe || '',
+                                      anmerkung: meldung.anmerkung || ''
+                                    });
+                                  }}
+                                  className="w-full sm:w-auto"
+                                  title={!canEdit ? 'Meldeschluss abgelaufen - nur Admin/KM-Orga kann bearbeiten' : ''}
+                                >
+                                  Bearbeiten
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive"
+                                  disabled={!canEdit}
+                                  onClick={async () => {
+                                    if (confirm('Meldung wirklich löschen?')) {
+                                      try {
+                                        const res = await fetch(`/api/km/meldungen/${meldung.id}`, { method: 'DELETE' });
+                                        if (res.ok) {
+                                          toast({ title: 'Meldung gelöscht' });
+                                          loadData();
+                                        }
+                                      } catch (error) {
+                                        toast({ title: 'Fehler beim Löschen', variant: 'destructive' });
                                       }
-                                    } catch (error) {
-                                      toast({ title: 'Fehler beim Löschen', variant: 'destructive' });
                                     }
-                                  }
-                                }}
-                                className="w-full sm:w-auto"
-                              >
-                                Löschen
-                              </Button>
-                            </>
-                          )}
+                                  }}
+                                  className="w-full sm:w-auto"
+                                  title={!canEdit ? 'Meldeschluss abgelaufen - nur Admin/KM-Orga kann löschen' : ''}
+                                >
+                                  Löschen
+                                </Button>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>

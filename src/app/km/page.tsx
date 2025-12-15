@@ -152,7 +152,6 @@ export default function KMDashboard() {
           <div className="mt-6 p-4 bg-green-100 border border-green-300 rounded-lg">
             <h4 className="font-semibold text-green-800 mb-2">✅ Wichtige Hinweise</h4>
             <ul className="text-sm text-green-700 space-y-1">
-              <li>• Meldeschluss: 15.12.2025</li>
               <li>• VM-Ergebnisse (Vereinsmeisterschaft) können nachgetragen werden</li>
               <li>• Altersklassen werden automatisch nach Geburtsjahr berechnet</li>
               <li>• Bei Fragen wenden Sie sich an die KM-Organisatoren</li>

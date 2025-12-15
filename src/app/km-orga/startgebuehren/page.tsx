@@ -27,18 +27,35 @@ interface StartgebührData {
 export default function StartgebührenPage() {
   const { toast } = useToast();
   const { hasKMAccess, loading: authLoading } = useKMAuth();
-  const [selectedYear, setSelectedYear] = useState('2026');
+  const [selectedSaison, setSelectedSaison] = useState('');
+  const [saisons, setSaisons] = useState<{id: string, name: string}[]>([]);
   const [startgebühren, setStartgebühren] = useState<StartgebührData[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAbgesagte, setShowAbgesagte] = useState(false);
 
-  const availableYears = Array.from({length: 5}, (_, i) => (2026 + i).toString());
+  useEffect(() => {
+    const loadSaisons = async () => {
+      try {
+        const response = await fetch('/api/km/saisons');
+        if (response.ok) {
+          const data = await response.json();
+          setSaisons(data.data || []);
+          if (data.data?.length > 0 && !selectedSaison) {
+            setSelectedSaison(data.data[0].id);
+          }
+        }
+      } catch (error) {
+        logError('Fehler beim Laden der Saisons:', error);
+      }
+    };
+    loadSaisons();
+  }, []);
 
   useEffect(() => {
-    if (hasKMAccess && !authLoading) {
+    if (hasKMAccess && !authLoading && selectedSaison) {
       loadData();
     }
-  }, [selectedYear, hasKMAccess, authLoading]);
+  }, [selectedSaison, hasKMAccess, authLoading]);
 
   const loadData = async () => {
     setLoading(true);
@@ -46,7 +63,7 @@ export default function StartgebührenPage() {
       const [clubsRes, disziplinenRes, meldungenRes, schuetzenRes] = await Promise.all([
         fetch('/api/clubs'),
         fetch('/api/km/disziplinen'),
-        fetch(`/api/km/meldungen?jahr=${selectedYear}`),
+        fetch(`/api/km/meldungen?saison=${selectedSaison}`),
         fetch('/api/km/shooters')
       ]);
 
@@ -142,7 +159,7 @@ export default function StartgebührenPage() {
       const workbook = XLSX.utils.book_new();
       
       const übersichtData = [
-        ['Startgebühren-Übersicht KM ' + selectedYear],
+        ['Startgebühren-Übersicht KM ' + (saisons.find(s => s.id === selectedSaison)?.name || selectedSaison)],
         [''],
         ['Verein', 'Aktive Starter', 'Abgesagte Starter', 'Startgebühr pro Starter', 'Gesamt'],
         ...startgebühren.map(sg => [
@@ -176,7 +193,7 @@ export default function StartgebührenPage() {
       )].sort();
       
       const detailData = [
-        ['Detailaufstellung nach Disziplinen - KM ' + selectedYear],
+        ['Detailaufstellung nach Disziplinen - KM ' + (saisons.find(s => s.id === selectedSaison)?.name || selectedSaison)],
         [''],
         ['Verein', ...alleDisziplinen, 'Gesamt'],
         ...startgebühren.map(sg => [
@@ -201,7 +218,7 @@ export default function StartgebührenPage() {
       ];
       XLSX.utils.book_append_sheet(workbook, detailSheet, 'Detail nach Disziplinen');
       
-      const fileName = `Startgebuehren_KM_${selectedYear}.xlsx`;
+      const fileName = `Startgebuehren_KM_${saisons.find(s => s.id === selectedSaison)?.name || selectedSaison}.xlsx`;
       XLSX.writeFile(workbook, fileName);
       
       toast({ 
@@ -275,13 +292,13 @@ export default function StartgebührenPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
+              <Select value={selectedSaison} onValueChange={setSelectedSaison}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Saison wählen..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableYears.map(year => (
-                    <SelectItem key={year} value={year}>{year}</SelectItem>
+                  {saisons.map(saison => (
+                    <SelectItem key={saison.id} value={saison.id}>{saison.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -294,7 +311,7 @@ export default function StartgebührenPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Startgebühren {selectedYear}</CardTitle>
+            <CardTitle>Startgebühren {saisons.find(s => s.id === selectedSaison)?.name || 'Saison'}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -304,7 +321,7 @@ export default function StartgebührenPage() {
               </div>
             ) : startgebühren.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                Keine KM-Meldungen für {selectedYear} gefunden.
+                Keine KM-Meldungen für {saisons.find(s => s.id === selectedSaison)?.name || 'diese Saison'} gefunden.
               </div>
             ) : (
               <div className="overflow-x-auto">

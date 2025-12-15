@@ -41,27 +41,27 @@ export default function KMErgebnissePage() {
   const [inputValues, setInputValues] = useState<{[key: string]: string}>({});
   const [seriesInputs, setSeriesInputs] = useState<{[key: string]: string}>({});
 
-  // Lade Jahre/Saisons
+  // Lade Saisons
   useEffect(() => {
-    const loadJahre = async () => {
+    const loadSaisons = async () => {
       try {
-        const response = await fetch('/api/km/jahre');
+        const response = await fetch('/api/km/saisons');
         if (response.ok) {
           const data = await response.json();
-          const jahreData = (data.data || []).map(saison => ({
+          const saisonData = (data.data || []).map(saison => ({
             id: saison.id,
             name: saison.name
           }));
-          setJahre(jahreData);
-          if (jahreData.length > 0 && !selectedJahr) {
-            setSelectedJahr(jahreData[0].id);
+          setJahre(saisonData);
+          if (saisonData.length > 0 && !selectedJahr) {
+            setSelectedJahr(saisonData[0].id);
           }
         }
       } catch (error) {
-        logError('Fehler beim Laden der Jahre:', error);
+        logError('Fehler beim Laden der Saisons:', error);
       }
     };
-    loadJahre();
+    loadSaisons();
   }, []);
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export default function KMErgebnissePage() {
     const loadData = async () => {
       try {
         const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
-          fetch(`/api/km/meldungen?saisonId=${selectedJahr}`),
+          fetch(`/api/km/meldungen?saison=${selectedJahr}`),
           fetch('/api/km/shooters'),
           fetch('/api/km/disziplinen'),
           fetch('/api/clubs')

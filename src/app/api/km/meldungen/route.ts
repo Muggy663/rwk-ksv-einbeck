@@ -27,12 +27,12 @@ const getDisziplinKuerzel = async (disziplinId: string): Promise<string> => {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { schuetzeId, disziplinId, lmTeilnahme, anmerkung, vmErgebnis } = body;
+    const { schuetzeId, disziplinId, saisonId, lmTeilnahme, anmerkung, vmErgebnis } = body;
 
-    if (!schuetzeId || !disziplinId) {
+    if (!schuetzeId || !disziplinId || !saisonId) {
       return NextResponse.json({
         success: false,
-        error: 'Schütze und Disziplin sind erforderlich'
+        error: 'Schütze, Disziplin und Saison sind erforderlich'
       }, { status: 400 });
     }
 
@@ -50,28 +50,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Hole aktuelles Jahr
-    let aktivesJahr = 2026; // Fallback
-    try {
-      const jahreSnapshot = await adminDb.collection('km_jahre').where('status', '==', 'aktiv').get();
-      if (!jahreSnapshot.empty) {
-        aktivesJahr = jahreSnapshot.docs[0].data().jahr;
-      }
-    } catch (e) {
-      logWarn('Fallback auf Jahr 2026:', e);
+    // Hole Saison-Daten
+    const saisonDoc = await adminDb.collection('km_saisons').doc(saisonId).get();
+    if (!saisonDoc.exists) {
+      return NextResponse.json({
+        success: false,
+        error: 'Saison nicht gefunden'
+      }, { status: 400 });
     }
 
-    // Hole Disziplin-Kürzel
-    const disziplinKuerzel = await getDisziplinKuerzel(disziplinId);
+    const saisonData = saisonDoc.data();
+    const aktivesJahr = saisonData.jahr;
+    const disziplinTyp = saisonData.disziplinTyp; // 'KK' oder 'LD'
+
+    // Verwende Disziplin-Typ aus Saison
+    const disziplinKuerzel = disziplinTyp.toLowerCase();
 
     // Echte Firestore-Speicherung
     const meldung = {
       schuetzeId,
       disziplinId,
+      saisonId,
       lmTeilnahme: !!lmTeilnahme,
       anmerkung: anmerkung || '',
       saison: aktivesJahr.toString(),
-      jahr: aktivesJahr, // Dynamisches Jahr
+      jahr: aktivesJahr,
       meldedatum: new Date(),
       status: 'gemeldet',
       gemeldeteVon,

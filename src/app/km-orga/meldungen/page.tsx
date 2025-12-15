@@ -38,6 +38,11 @@ export default function KMAdminMeldungen() {
   const [vereinSchuetzen, setVereinSchuetzen] = useState<any[]>([]);
   const [editingMeldung, setEditingMeldung] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>({});
+  const [selectedMeldungen, setSelectedMeldungen] = useState<string[]>([]);
+  const [showVerschiebenDialog, setShowVerschiebenDialog] = useState(false);
+  const [zielSaison, setZielSaison] = useState('');
+  const [sortBy, setSortBy] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     if (hasFullAccess && !authLoading) {
@@ -216,6 +221,74 @@ export default function KMAdminMeldungen() {
     }
   };
 
+  const verschiebenMeldungen = async () => {
+    if (selectedMeldungen.length === 0 || !zielSaison) {
+      toast({ title: 'Fehler', description: 'Bitte Meldungen und Ziel-Saison auswählen', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      // Bestimme Collection-Namen basierend auf Saison-Namen
+      const aktuelleCollection = saisons.find(s => s.id === selectedSaison);
+      const zielCollection = saisons.find(s => s.id === zielSaison);
+      
+      let vonCollectionName = selectedSaison;
+      let nachCollectionName = zielSaison;
+      
+      // Spezielle Collection-Namen für 2026
+      if (aktuelleCollection?.name?.includes('Luftdruckgewehr')) {
+        vonCollectionName = 'km_meldungen_2026_ld';
+      } else if (aktuelleCollection?.name?.includes('Kleinkaliber Pistole')) {
+        vonCollectionName = 'km_meldungen_2026_kkp';
+      } else if (aktuelleCollection?.name?.includes('Kleinkaliber')) {
+        vonCollectionName = 'km_meldungen_2026_kk';
+      }
+      
+      if (zielCollection?.name?.includes('Luftdruckgewehr')) {
+        nachCollectionName = 'km_meldungen_2026_ld';
+      } else if (zielCollection?.name?.includes('Kleinkaliber Pistole')) {
+        nachCollectionName = 'km_meldungen_2026_kkp';
+      } else if (zielCollection?.name?.includes('Kleinkaliber')) {
+        nachCollectionName = 'km_meldungen_2026_kk';
+      }
+      
+      const response = await fetch('/api/km/meldungen/verschieben', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          meldungIds: selectedMeldungen,
+          vonSaison: vonCollectionName,
+          nachSaison: nachCollectionName
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast({ 
+          title: 'Erfolg', 
+          description: `${result.verschoben} Meldungen erfolgreich verschoben` 
+        });
+        setSelectedMeldungen([]);
+        setShowVerschiebenDialog(false);
+        setZielSaison('');
+        loadData();
+      } else {
+        throw new Error('Verschieben fehlgeschlagen');
+      }
+    } catch (error) {
+      toast({ title: 'Fehler', description: 'Verschieben fehlgeschlagen', variant: 'destructive' });
+    }
+  };
+
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('asc');
+    }
+  };
+
   const filteredMeldungen = meldungen.filter(meldung => {
     const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
     const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
@@ -237,6 +310,42 @@ export default function KMAdminMeldungen() {
       }
     }
     return true;
+  }).sort((a, b) => {
+    if (!sortBy) return 0;
+    
+    const schuetzeA = schuetzen.find(s => s.id === a.schuetzeId);
+    const schuetzeB = schuetzen.find(s => s.id === b.schuetzeId);
+    const disziplinA = disziplinen.find(d => d.id === a.disziplinId);
+    const disziplinB = disziplinen.find(d => d.id === b.disziplinId);
+    const vereinIdA = schuetzeA?.kmClubId || schuetzeA?.rwkClubId || schuetzeA?.clubId;
+    const vereinIdB = schuetzeB?.kmClubId || schuetzeB?.rwkClubId || schuetzeB?.clubId;
+    const vereinA = clubs.find(c => c.id === vereinIdA);
+    const vereinB = clubs.find(c => c.id === vereinIdB);
+    
+    let valueA = '';
+    let valueB = '';
+    
+    switch (sortBy) {
+      case 'schuetze':
+        valueA = schuetzeA?.firstName && schuetzeA?.lastName ? `${schuetzeA.firstName} ${schuetzeA.lastName}` : schuetzeA?.name || '';
+        valueB = schuetzeB?.firstName && schuetzeB?.lastName ? `${schuetzeB.firstName} ${schuetzeB.lastName}` : schuetzeB?.name || '';
+        break;
+      case 'verein':
+        valueA = vereinA?.name || '';
+        valueB = vereinB?.name || '';
+        break;
+      case 'disziplin':
+        valueA = disziplinA?.name || '';
+        valueB = disziplinB?.name || '';
+        break;
+      case 'lm':
+        return sortOrder === 'asc' ? (a.lmTeilnahme ? 1 : -1) : (a.lmTeilnahme ? -1 : 1);
+      default:
+        return 0;
+    }
+    
+    const comparison = valueA.localeCompare(valueB);
+    return sortOrder === 'asc' ? comparison : -comparison;
   });
 
   if (loading) {
@@ -343,7 +452,7 @@ export default function KMAdminMeldungen() {
               </div>
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <Button 
               variant="outline" 
               onClick={() => setFilter({ verein: '', disziplin: '', search: '' })}
@@ -351,6 +460,27 @@ export default function KMAdminMeldungen() {
             >
               🔄 Filter zurücksetzen
             </Button>
+            
+            {selectedMeldungen.length > 0 && (
+              <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                <span className="text-sm font-medium">
+                  {selectedMeldungen.length} ausgewählt
+                </span>
+                <Button 
+                  onClick={() => setShowVerschiebenDialog(true)}
+                  className="w-full h-12 md:w-auto md:h-auto"
+                >
+                  🚚 Verschieben nach...
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setSelectedMeldungen([])}
+                  className="w-full h-12 md:w-auto md:h-auto"
+                >
+                  ✖️ Auswahl aufheben
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -534,11 +664,23 @@ export default function KMAdminMeldungen() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-gray-50">
-                  <th className="p-2 text-left">Schütze</th>
-                  <th className="p-2 text-left">Verein</th>
-                  <th className="p-2 text-left">Disziplin</th>
-                  <th className="p-2 text-left">Klasse</th>
-                  <th className="p-2 text-left">LM</th>
+                  <th className="p-2 text-left">
+                    <Checkbox 
+                      checked={selectedMeldungen.length === filteredMeldungen.length && filteredMeldungen.length > 0}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedMeldungen(filteredMeldungen.map(m => m.id));
+                        } else {
+                          setSelectedMeldungen([]);
+                        }
+                      }}
+                    />
+                  </th>
+                  <th className="p-2 text-left cursor-pointer hover:bg-gray-100" onClick={() => handleSort('schuetze')}>Schütze {sortBy === 'schuetze' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                  <th className="p-2 text-left cursor-pointer hover:bg-gray-100" onClick={() => handleSort('verein')}>Verein {sortBy === 'verein' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                  <th className="p-2 text-left cursor-pointer hover:bg-gray-100" onClick={() => handleSort('disziplin')}>Disziplin {sortBy === 'disziplin' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                  <th className="p-2 text-left cursor-pointer hover:bg-gray-100" onClick={() => handleSort('klasse')}>Klasse {sortBy === 'klasse' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                  <th className="p-2 text-left cursor-pointer hover:bg-gray-100" onClick={() => handleSort('lm')}>LM {sortBy === 'lm' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
                   <th className="p-2 text-left">VM</th>
                   <th className="p-2 text-left">Datum</th>
                   <th className="p-2 text-left">Aktionen</th>
@@ -553,6 +695,18 @@ export default function KMAdminMeldungen() {
 
                   return (
                     <tr key={meldung.id} className="border-b hover:bg-gray-50">
+                      <td className="p-2">
+                        <Checkbox 
+                          checked={selectedMeldungen.includes(meldung.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedMeldungen(prev => [...prev, meldung.id]);
+                            } else {
+                              setSelectedMeldungen(prev => prev.filter(id => id !== meldung.id));
+                            }
+                          }}
+                        />
+                      </td>
                       <td className="p-2 font-medium">
                         {schuetze?.firstName && schuetze?.lastName 
                           ? `${schuetze.firstName} ${schuetze.lastName}`
@@ -853,6 +1007,64 @@ export default function KMAdminMeldungen() {
               </Button>
               <Button onClick={submitMeldung} className="w-full h-12 md:w-auto md:h-auto">
                 ✓ Meldung erstellen
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Verschieben-Dialog */}
+      <Dialog open={showVerschiebenDialog} onOpenChange={setShowVerschiebenDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>🚚 Meldungen verschieben</DialogTitle>
+            <DialogDescription>
+              {selectedMeldungen.length} Meldungen in eine andere Saison verschieben.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Ziel-Saison auswählen *</Label>
+              <select
+                value={zielSaison}
+                onChange={(e) => setZielSaison(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded mt-1"
+              >
+                <option value="">Saison wählen...</option>
+                {saisons
+                  .filter(s => s.id !== selectedSaison)
+                  .map(saison => (
+                    <option key={saison.id} value={saison.id}>
+                      {saison.name} ({saison.disziplinTyp || 'Alle Disziplinen'})
+                    </option>
+                  ))
+                }
+              </select>
+            </div>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+              <p className="text-sm text-yellow-800">
+                ⚠️ <strong>Achtung:</strong> Die Meldungen werden aus der aktuellen Saison entfernt und in die Ziel-Saison kopiert. Diese Aktion kann nicht rückgängig gemacht werden.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-4 md:flex-row md:justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowVerschiebenDialog(false);
+                  setZielSaison('');
+                }}
+                className="w-full h-12 md:w-auto md:h-auto"
+              >
+                ✖️ Abbrechen
+              </Button>
+              <Button 
+                onClick={verschiebenMeldungen}
+                disabled={!zielSaison}
+                className="w-full h-12 md:w-auto md:h-auto"
+              >
+                🚚 {selectedMeldungen.length} Meldungen verschieben
               </Button>
             </div>
           </div>

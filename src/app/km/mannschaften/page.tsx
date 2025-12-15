@@ -29,7 +29,7 @@ interface Shooter {
 
 export default function KMMannschaften() {
   const { toast } = useToast();
-  const { hasKMAccess, userClubIds, loading: authLoading } = useKMAuth();
+  const { hasKMAccess, userClubIds, userRole, loading: authLoading } = useKMAuth();
   const [mannschaften, setMannschaften] = useState<Mannschaft[]>([]);
   const [schuetzen, setSchuetzen] = useState<Shooter[]>([]);
   const [disziplinen, setDisziplinen] = useState<any[]>([]);
@@ -84,8 +84,31 @@ export default function KMMannschaften() {
           });
           setSaisons(aktiveSaisons);
           
+          // Setze erste nicht-abgelaufene Saison als Standard
           if (aktiveSaisons.length > 0 && !selectedSaison) {
-            setSelectedSaison(aktiveSaisons[0].id);
+            const today = new Date();
+            const nichtAbgelaufeneSaison = aktiveSaisons.find(saison => {
+              if (!saison.meldeschluss) return true;
+              
+              const meldeschluss = saison.meldeschluss;
+              let deadline;
+              
+              if (meldeschluss.includes('.') && meldeschluss.length > 6) {
+                const [day, month, year] = meldeschluss.split('.');
+                deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+              } else {
+                const [day, month] = meldeschluss.split('.');
+                deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+              }
+              
+              return today <= deadline;
+            });
+            
+            if (nichtAbgelaufeneSaison) {
+              setSelectedSaison(nichtAbgelaufeneSaison.id);
+            } else {
+              setSelectedSaison(aktiveSaisons[0].id);
+            }
           }
         }
       } catch (e) {
@@ -319,11 +342,36 @@ export default function KMMannschaften() {
                   onChange={(e) => setSelectedSaison(e.target.value)}
                   className="border rounded px-3 py-1 min-w-[150px]"
                 >
-                  {saisons.map(saison => (
-                    <option key={saison.id} value={saison.id}>
-                      {saison.name}
-                    </option>
-                  ))}
+                  {saisons.map(saison => {
+                    const today = new Date();
+                    let isExpired = false;
+                    
+                    if (saison.meldeschluss) {
+                      const meldeschluss = saison.meldeschluss;
+                      let deadline;
+                      
+                      if (meldeschluss.includes('.') && meldeschluss.length > 6) {
+                        const [day, month, year] = meldeschluss.split('.');
+                        deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                      } else {
+                        const [day, month] = meldeschluss.split('.');
+                        deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+                      }
+                      
+                      isExpired = today > deadline;
+                    }
+                    
+                    return (
+                      <option 
+                        key={saison.id} 
+                        value={saison.id}
+                        disabled={isExpired}
+                        style={isExpired ? { color: '#999', backgroundColor: '#f5f5f5' } : {}}
+                      >
+                        {saison.name}{isExpired ? ' - Meldeschluss vorbei' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             )}
@@ -375,34 +423,75 @@ export default function KMMannschaften() {
                       '🚀 Automatisch generieren'
                     )}
                   </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      // Erstelle eine leere Mannschaft
-                      const newTeam = {
-                        vereinId: userClubIds[0] || 'unknown',
-                        disziplinId: 'zBXMDsVZkxZdELRID66m', // Standard: 1.41
-                        wettkampfklassen: ['Unbekannt'],
-                        schuetzenIds: [],
-                        name: 'Neue Mannschaft',
-                        saison: selectedSaison || saisons[0]?.id || '2026'
-                      };
-                      
-                      fetch('/api/km/mannschaften', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(newTeam)
-                      }).then(res => {
-                        if (res.ok) {
-                          toast({ title: 'Erfolg', description: 'Leere Mannschaft erstellt' });
-                          loadData();
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <select 
+                      id="disziplinSelect"
+                      className="border rounded px-3 py-2 min-w-[200px]"
+                      defaultValue=""
+                    >
+                      <option value="">Disziplin wählen...</option>
+                      {disziplinen
+                        .filter(d => {
+                          // Nur Disziplinen anzeigen, für die Meldungen vom eigenen Verein existieren
+                          return meldungen.some(m => {
+                            if (m.disziplinId !== d.id) return false;
+                            // Prüfe ob Meldung zu einem Schützen gehört, der zu unseren Vereinen gehört
+                            const schuetze = schuetzen.find(s => s.id === m.schuetzeId);
+                            if (!schuetze) return false;
+                            const schuetzeClubIds = [
+                              schuetze.clubId,
+                              schuetze.kmClubId,
+                              schuetze.rwkClubId
+                            ].filter(Boolean);
+                            return schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
+                          });
+                        })
+                        .map(d => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        const selectElement = document.getElementById('disziplinSelect') as HTMLSelectElement;
+                        const selectedDisziplinId = selectElement?.value;
+                        
+                        if (!selectedDisziplinId) {
+                          toast({ title: 'Fehler', description: 'Bitte wählen Sie eine Disziplin aus', variant: 'destructive' });
+                          return;
                         }
-                      });
-                    }}
-                    className="w-full sm:w-auto"
-                  >
-                    ➕ Manuell erstellen
-                  </Button>
+                        
+                        const selectedDisziplin = disziplinen.find(d => d.id === selectedDisziplinId);
+                        const newTeam = {
+                          vereinId: userClubIds[0] || 'unknown',
+                          disziplinId: selectedDisziplinId,
+                          wettkampfklassen: ['Unbekannt'],
+                          schuetzenIds: [],
+                          name: `Neue Mannschaft`,
+                          saison: selectedSaison || saisons[0]?.id || '2026'
+                        };
+                        
+                        fetch('/api/km/mannschaften', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(newTeam)
+                        }).then(res => {
+                          if (res.ok) {
+                            toast({ title: 'Erfolg', description: 'Leere Mannschaft erstellt' });
+                            loadData();
+                            selectElement.value = ''; // Reset selection
+                          } else {
+                            toast({ title: 'Fehler', description: 'Mannschaft konnte nicht erstellt werden', variant: 'destructive' });
+                          }
+                        }).catch(error => {
+                          toast({ title: 'Fehler', description: 'Netzwerkfehler', variant: 'destructive' });
+                        });
+                      }}
+                      className="w-full sm:w-auto"
+                    >
+                      ➕ Manuell erstellen
+                    </Button>
+                  </div>
                 </div>
                 {(() => {
                   const filteredMannschaften = mannschaften.filter(m => {
@@ -462,14 +551,40 @@ export default function KMMannschaften() {
                               {mannschaft.wettkampfklassen?.length > 0 ? mannschaft.wettkampfklassen.join(', ') : 'Herren/Damen'}
                             </p>
                           </div>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => setEditingTeam(editingTeam === mannschaft.id ? null : mannschaft.id)}
-                            className="w-full sm:w-auto"
-                          >
-                            {editingTeam === mannschaft.id ? 'Fertig' : 'Bearbeiten'}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => setEditingTeam(editingTeam === mannschaft.id ? null : mannschaft.id)}
+                              className="w-full sm:w-auto"
+                            >
+                              {editingTeam === mannschaft.id ? 'Fertig' : 'Bearbeiten'}
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={async () => {
+                                if (confirm('Mannschaft wirklich löschen?')) {
+                                  try {
+                                    const response = await fetch(`/api/km/mannschaften/${mannschaft.id}`, {
+                                      method: 'DELETE'
+                                    });
+                                    if (response.ok) {
+                                      toast({ title: 'Erfolg', description: 'Mannschaft gelöscht' });
+                                      loadData();
+                                    } else {
+                                      toast({ title: 'Fehler', description: 'Löschen fehlgeschlagen', variant: 'destructive' });
+                                    }
+                                  } catch (error) {
+                                    toast({ title: 'Fehler', description: 'Netzwerkfehler', variant: 'destructive' });
+                                  }
+                                }
+                              }}
+                              className="w-full sm:w-auto"
+                            >
+                              🗑️
+                            </Button>
+                          </div>
                         </div>
 
                         <div className="space-y-2">
@@ -707,8 +822,8 @@ export default function KMMannschaften() {
                 <ol className="list-decimal pl-5 mt-2 space-y-1">
                   <li>Klicken Sie auf "Mannschaften automatisch generieren"</li>
                   <li>Das System erstellt Teams aus Ihren Meldungen</li>
+                  <li>Oder: Disziplin wählen und "Manuell erstellen"</li>
                   <li>Die Teams werden automatisch gespeichert</li>
-                  <li>Sie sehen sofort alle erstellten Mannschaften</li>
                 </ol>
               </div>
               
@@ -732,12 +847,13 @@ export default function KMMannschaften() {
                 </ul>
               </div>
               
-              <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+              <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-200 rounded text-xs text-gray-800 dark:text-gray-900">
                 <strong>💡 Tipp:</strong> Generieren Sie zuerst automatisch, dann passen Sie einzelne Teams manuell an.
               </div>
             </CardContent>
           </Card>
           
+          {(userRole === 'admin' || userRole === 'km_organisator') && (
           <Card className="mt-4">
             <CardHeader>
               <CardTitle>Mannschaftsregeln</CardTitle>
@@ -755,6 +871,7 @@ export default function KMMannschaften() {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
       </div>
     </div>

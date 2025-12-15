@@ -68,6 +68,8 @@ export function useKMAuth() {
                   Object.keys(clubRoles) ||
                   userAppPermissions?.clubIds || 
                   (userAppPermissions?.clubId ? [userAppPermissions.clubId] : []);
+    
+
   }
   
 

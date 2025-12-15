@@ -22,21 +22,49 @@ export default function KMAdminMannschaften() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [filter, setFilter] = useState({ verein: '', disziplin: '' });
+  const [saisons, setSaisons] = useState<any[]>([]);
+  const [selectedSaison, setSelectedSaison] = useState('');
 
   useEffect(() => {
     if (hasFullAccess && !authLoading) {
-      loadData();
+      loadSaisons();
     }
   }, [hasFullAccess, authLoading]);
 
+  useEffect(() => {
+    if (selectedSaison) {
+      loadData();
+    }
+  }, [selectedSaison]);
+
+  const loadSaisons = async () => {
+    try {
+      const response = await fetch('/api/km/saisons');
+      if (response.ok) {
+        const data = await response.json();
+        const saisonsList = data.data || [];
+        setSaisons(saisonsList);
+        if (saisonsList.length > 0 && !selectedSaison) {
+          const firstSaison = saisonsList[0].id;
+          setSelectedSaison(firstSaison);
+        }
+      }
+    } catch (error) {
+      logError('Fehler beim Laden der Saisons:', error);
+    }
+  };
+
   const loadData = async () => {
+    if (!selectedSaison) return;
+    
+    setLoading(true);
     try {
       const [mannschaftenRes, schuetzenRes, disziplinenRes, clubsRes, meldungenRes] = await Promise.all([
-        fetch('/api/km/mannschaften'),
+        fetch(`/api/km/mannschaften?saison=${selectedSaison}`),
         fetch('/api/km/shooters'),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs'),
-        fetch('/api/km/meldungen?jahr=2026')
+        fetch(`/api/km/meldungen?saison=${selectedSaison}`)
       ]);
       
       if (mannschaftenRes.ok) {
@@ -78,7 +106,7 @@ export default function KMAdminMannschaften() {
       const response = await fetch('/api/km/mannschaften/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ saison: '2026' })
+        body: JSON.stringify({ saison: selectedSaison })
       });
 
       const result = await response.json();
@@ -205,8 +233,23 @@ export default function KMAdminMannschaften() {
         </Link>
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-primary">🏆 Alle KM-Mannschaften</h1>
-          <p className="text-muted-foreground">Verwaltung aller Teams für die Kreismeisterschaft 2026</p>
+          <p className="text-muted-foreground">Verwaltung aller Teams für die Kreismeisterschaft</p>
         </div>
+        <select
+          value={selectedSaison}
+          onChange={(e) => {
+            setSelectedSaison(e.target.value);
+            setLoading(true);
+          }}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm font-medium"
+        >
+          <option value="">Saison wählen...</option>
+          {saisons.map(saison => (
+            <option key={saison.id} value={saison.id}>
+              {saison.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -219,32 +262,13 @@ export default function KMAdminMannschaften() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="mb-4">
-                <Button 
-                  onClick={generateMannschaften}
-                  disabled={isGenerating || loading}
-                  className="relative"
-                >
-                  {isGenerating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Generiere Mannschaften...
-                    </>
-                  ) : (
-                    '🚀 Alle Mannschaften automatisch generieren'
-                  )}
-                </Button>
-                {mannschaften.length > 0 && (
-                  <p className="text-sm text-gray-600 mt-2">
-                    {mannschaften.length} Mannschaften vorhanden
+              {mannschaften.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600">
+                    {mannschaften.length} Mannschaften für {saisons.find(s => s.id === selectedSaison)?.name || 'diese Saison'}
                   </p>
-                )}
-                {isGenerating && (
-                  <p className="text-sm text-blue-600 mt-2 animate-pulse">
-                    🔄 Erstelle Teams aller Vereine und lade Daten neu...
-                  </p>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Filter */}
               <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -276,7 +300,7 @@ export default function KMAdminMannschaften() {
                 {filteredMannschaften.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     {mannschaften.length === 0 
-                      ? 'Noch keine Mannschaften generiert. Klicken Sie "Automatisch generieren".'
+                      ? `Keine Mannschaften für ${saisons.find(s => s.id === selectedSaison)?.name || 'diese Saison'} vorhanden.`
                       : 'Keine Mannschaften für die gewählten Filter gefunden.'
                     }
                   </div>

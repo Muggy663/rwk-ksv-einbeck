@@ -8,7 +8,14 @@ const KM_MANNSCHAFTEN_COLLECTION = 'km_mannschaften';
 
 export async function GET(request: NextRequest) {
   try {
-    const snapshot = await adminDb.collection(KM_MANNSCHAFTEN_COLLECTION).get();
+    const saison = request.nextUrl.searchParams.get('saison');
+    
+    let query = adminDb.collection(KM_MANNSCHAFTEN_COLLECTION);
+    if (saison) {
+      query = query.where('saison', '==', saison);
+    }
+    
+    const snapshot = await query.get();
     const mannschaften = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
