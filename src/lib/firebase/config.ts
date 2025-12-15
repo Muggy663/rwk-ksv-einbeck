@@ -19,6 +19,16 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
+// Debug Firebase Config auf Vercel
+if (typeof window !== 'undefined') {
+  console.log('Firebase Config Debug:', {
+    apiKey: firebaseConfig.apiKey ? 'SET' : 'MISSING',
+    authDomain: firebaseConfig.authDomain,
+    projectId: firebaseConfig.projectId,
+    hostname: window.location.hostname
+  });
+}
+
 // Validate required environment variables
 if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
   throw new Error('Missing required Firebase environment variables. Check your .env.local file.');

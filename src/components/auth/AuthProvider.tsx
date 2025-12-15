@@ -188,7 +188,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     } catch (err: any) {
       setError(err);
-      toast({ title: "Anmeldefehler", description: err.message, variant: "destructive" });
+      let errorMessage = err.message;
+      
+      // Bessere Fehlerbehandlung für häufige Firebase-Fehler
+      if (err.code === 'auth/network-request-failed') {
+        errorMessage = 'Netzwerkfehler. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.';
+      } else if (err.code === 'auth/timeout') {
+        errorMessage = 'Zeitüberschreitung. Bitte versuchen Sie es erneut.';
+      } else if (err.code === 'auth/invalid-credential') {
+        errorMessage = 'Ungültige Anmeldedaten. Bitte überprüfen Sie E-Mail und Passwort.';
+      }
+      
+      toast({ title: "Anmeldefehler", description: errorMessage, variant: "destructive" });
       setLoading(false); // Wichtig: Loading auch im Fehlerfall beenden
     }
     // setLoading(false) wird durch onAuthStateChanged's setLoading(false) gehandhabt, oder hier explizit setzen
