@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { doc, getDoc, collection, getDocs, addDoc, updateDoc } from 'firebase/firestore';
-import { analyzeStartlist, optimizeStartlist, type KIAnalyse } from '@/lib/services/startlisten-ki-service';
+
 import { David21Service } from '@/lib/services/david21-service';
 import { MeytonMappingService } from '@/lib/services/meyton-mapping-service';
 
@@ -45,8 +45,7 @@ export default function StartlistenToolPage() {
   const [startliste, setStartliste] = useState<Starter[]>([]);
   const [selectedDisziplinen, setSelectedDisziplinen] = useState<string[]>([]);
   const [vereine, setVereine] = useState<Array<{id: string, name: string}>>([]);
-  const [kiAnalyse, setKiAnalyse] = useState<KIAnalyse | null>(null);
-  const [showKiPanel, setShowKiPanel] = useState(false);
+
   const [sortierung, setSortierung] = useState<string>('durchgang-stand');
   const [geminiLoading, setGeminiLoading] = useState(false);
   const [showGemini, setShowGemini] = useState(false);
@@ -252,9 +251,7 @@ export default function StartlistenToolPage() {
             const startlisteData = startlisteDoc.data();
             setStartliste(startlisteData.startliste || []);
             
-            // KI-Analyse für geladene Startliste
-            const analyse = analyzeStartlist(meldungenData, startlisteData.startliste || [], configData);
-            setKiAnalyse(analyse);
+
             
             toast({ 
               title: '📝 Startliste geladen', 
@@ -267,12 +264,9 @@ export default function StartlistenToolPage() {
           if (meldungenData.length > 0) {
             logDebug('Generiere Startliste für', meldungenData.length, 'Meldungen');
             const basisStartliste = await generiereStartliste();
-            const optimierteStartliste = optimizeStartlist(basisStartliste, configData);
-            setStartliste(optimierteStartliste);
+            setStartliste(basisStartliste);
             
-            // KI-Analyse durchführen
-            const analyse = analyzeStartlist(meldungenData, optimierteStartliste, configData);
-            setKiAnalyse(analyse);
+
           } else {
             logDebug('Keine Meldungen gefunden - keine Startliste generiert');
             setStartliste([]);
@@ -657,20 +651,10 @@ export default function StartlistenToolPage() {
     });
     setStartliste(neueStartliste);
     
-    // KI-Analyse nach Änderung aktualisieren
-    if (config) {
-      const neueAnalyse = analyzeStartlist(meldungen, neueStartliste, config);
-      setKiAnalyse(neueAnalyse);
-    }
+
   };
 
-  const handleKiReanalyse = () => {
-    if (config) {
-      const analyse = analyzeStartlist(meldungen, startliste, config);
-      setKiAnalyse(analyse);
-      toast({ title: 'KI-Analyse', description: `Qualität: ${analyse.score}% - ${analyse.konflikte.length} Konflikte erkannt` });
-    }
-  };
+
 
   const generiereGemini = async () => {
     if (meldungen.length === 0) {
@@ -680,7 +664,10 @@ export default function StartlistenToolPage() {
     
     setGeminiLoading(true);
     try {
-      const geminiMeldungen = meldungen.map(m => ({
+      // Nur gefilterte Meldungen an Gemini senden
+      const gefilterteMeldungen = selectedDisziplinen.includes('alle') ? meldungen : meldungen.filter(m => selectedDisziplinen.includes(m.disziplin));
+      
+      const geminiMeldungen = gefilterteMeldungen.map(m => ({
         schuetzeName: m.name,
         verein: m.verein,
         disziplin: m.disziplin,
@@ -764,26 +751,16 @@ export default function StartlistenToolPage() {
           description: `Score: ${result.data.score || 'N/A'}/100 - ${result.data.konflikte?.length || 0} Konflikte gefunden` 
         });
       } else {
-        // Fallback auf lokale Analyse
-        if (config) {
-          const lokalAnalyse = analyzeStartlist(meldungen, startliste, config);
-          setKiAnalyse(lokalAnalyse);
-          toast({ 
-            title: 'Lokale Analyse verwendet', 
-            description: `Gemini nicht verfügbar - Score: ${lokalAnalyse.score}%` 
-          });
-        }
-      }
-    } catch (error) {
-      // Fallback auf lokale Analyse
-      if (config) {
-        const lokalAnalyse = analyzeStartlist(meldungen, startliste, config);
-        setKiAnalyse(lokalAnalyse);
         toast({ 
-          title: 'Lokale Analyse verwendet', 
-          description: `Verbindungsfehler - Score: ${lokalAnalyse.score}%` 
+          title: 'Gemini nicht verfügbar', 
+          description: 'Bitte später nochmal versuchen oder manuelle Anpassung nutzen' 
         });
       }
+    } catch (error) {
+      toast({ 
+        title: 'Verbindungsfehler', 
+        description: 'Gemini nicht erreichbar - bitte später nochmal versuchen' 
+      });
     } finally {
       setGeminiLoading(false);
     }
@@ -851,10 +828,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         // Wenn Gemini eine modifizierte Startliste zurückgibt
         if (result.modifiedStartliste && Array.isArray(result.modifiedStartliste)) {
           setStartliste(result.modifiedStartliste);
-          if (config) {
-            const analyse = analyzeStartlist(meldungen, result.modifiedStartliste, config);
-            setKiAnalyse(analyse);
-          }
+
           toast({ title: '✨ Startliste angepasst', description: 'Gemini hat die Änderungen vorgenommen' });
         }
       } else {
@@ -920,9 +894,9 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
       // Lade alle benötigten Daten über APIs
       const [schuetzenRes, meldungenRes, disziplinenRes, mannschaftenRes] = await Promise.all([
         fetch('/api/km/shooters'),
-        fetch(`/api/km/meldungen${selectedSaison ? `?saison=${selectedSaison}` : ''}`),
+        fetch(`/api/km/meldungen?saison=${selectedSaison}`),
         fetch('/api/km/disziplinen'),
-        fetch('/api/km/mannschaften')
+        fetch(`/api/km/mannschaften?saison=${selectedSaison}`)
       ]);
       
       const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
@@ -1135,9 +1109,9 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
       // Lade Mannschaften und Disziplinen für E/M Erkennung und SPO-Nummern
       const [schuetzenRes, mannschaftenRes, disziplinenRes, kmMeldungenRes] = await Promise.all([
         fetch('/api/km/shooters'),
-        fetch('/api/km/mannschaften'),
+        fetch(`/api/km/mannschaften?saison=${selectedSaison}`),
         fetch('/api/km/disziplinen'),
-        fetch(`/api/km/meldungen${selectedSaison ? `?saison=${selectedSaison}` : ''}`)
+        fetch(`/api/km/meldungen?saison=${selectedSaison}`)
       ]);
       
       const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
@@ -1191,8 +1165,11 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
       const disziplinText = config?.disziplinen?.join(' • ') || '';
       doc.text(disziplinText, pageWidth / 2, 190, { align: 'center' });
       
+      // Verwende gefilterte Startliste basierend auf Disziplinen-Filter
+      const gefilterteStartliste = selectedDisziplinen.includes('alle') ? startliste : startliste.filter(s => selectedDisziplinen.includes(s.disziplin));
+      
       // Gruppiere nur nach Startzeiten (keine Disziplin-Gruppierung)
-      const nachStartzeit = startliste.reduce((acc, s) => {
+      const nachStartzeit = gefilterteStartliste.reduce((acc, s) => {
         const zeit = s.startzeit || config?.startUhrzeit || '14:00';
         if (!acc[zeit]) acc[zeit] = [];
         acc[zeit].push(s);
@@ -1293,10 +1270,38 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
             }
             const einzelMannschaft = istMannschaft ? 'M' : 'E';
             
-            // LM: Suche ursprüngliche Meldung für lmTeilnahme und Altersklasse
+            // LM: Suche in ursprünglichen Meldungen
             const originalMeldung = meldungen.find(m => m.name === s.name && m.disziplin === s.disziplin);
             const lmTeilnahme = originalMeldung?.lmTeilnahme === true;
-            const korrekteAltersklasse = originalMeldung?.altersklasse || s.altersklasse;
+            
+            // Altersklasse berechnen wie in KM-Meldungen
+            let korrekteAltersklasse = 'Unbekannt';
+            if (schuetze?.birthYear) {
+              const age = (config?.saison || 2026) - schuetze.birthYear;
+              const isAuflage = s.disziplin?.toLowerCase().includes('auflage');
+              const isMale = schuetze.gender === 'male';
+              
+              if (age <= 14) korrekteAltersklasse = 'Schüler';
+              else if (age <= 16) korrekteAltersklasse = 'Jugend';
+              else if (age <= 18) korrekteAltersklasse = `Junioren II ${isMale ? 'm' : 'w'}`;
+              else if (age <= 20) korrekteAltersklasse = `Junioren I ${isMale ? 'm' : 'w'}`;
+              else if (isAuflage) {
+                if (age <= 40) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
+                else if (age <= 50) korrekteAltersklasse = 'Senioren 0';
+                else if (age <= 60) korrekteAltersklasse = 'Senioren I';
+                else if (age <= 65) korrekteAltersklasse = 'Senioren II';
+                else if (age <= 70) korrekteAltersklasse = 'Senioren III';
+                else if (age <= 75) korrekteAltersklasse = 'Senioren IV';
+                else if (age <= 80) korrekteAltersklasse = 'Senioren V';
+                else korrekteAltersklasse = 'Senioren VI';
+              } else {
+                if (age <= 40) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
+                else if (age <= 50) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} II`;
+                else if (age <= 60) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} III`;
+                else if (age <= 70) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} IV`;
+                else korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} V`;
+              }
+            }
             // Hole SPO-Nummer direkt aus Disziplinen-Datenbank
             const disziplinDoc = disziplinenData.find(d => d.name === s.disziplin);
             const spoNummer = disziplinDoc?.spoNummer || '1.41';
@@ -1320,13 +1325,13 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
             body: tableData,
             styles: { 
               fontSize: 9,
-              cellPadding: 2,
+              cellPadding: 3,
               textColor: [0, 0, 0],
               fillColor: [255, 255, 255],
               valign: 'middle',
               halign: 'center',
-              minCellHeight: 12,
-              cellHeight: 12
+              minCellHeight: 16,
+              cellHeight: 16
             },
             headStyles: { 
               fillColor: [220, 220, 220],
@@ -1340,17 +1345,17 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
               lineColor: [0, 0, 0],
               textColor: [0, 0, 0]
             },
-            margin: { left: 5, right: 5 },
+            margin: { left: 10, right: 10 },
             columnStyles: {
-              0: { cellWidth: 15 },
-              1: { cellWidth: 22 },
-              2: { cellWidth: 22 },
-              3: { cellWidth: 22 },
-              4: { cellWidth: 32 },
-              5: { cellWidth: 10 },
-              6: { cellWidth: 20 },
-              7: { cellWidth: 10 },
-              8: { cellWidth: 10 }
+              0: { cellWidth: 18 },
+              1: { cellWidth: 25 },
+              2: { cellWidth: 25 },
+              3: { cellWidth: 25 },
+              4: { cellWidth: 35 },
+              5: { cellWidth: 18 },
+              6: { cellWidth: 25 },
+              7: { cellWidth: 12 },
+              8: { cellWidth: 12 }
             }
           });
           
@@ -1364,7 +1369,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.text(
-          `Erstellt am ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE')} - RWK Einbeck App v${process.env.npm_package_version || '1.9.1'}`,
+          `Erstellt am ${new Date().toLocaleDateString('de-DE')} - RWK Einbeck`,
           pageWidth / 2,
           pageHeight - 10,
           { align: 'center' }
@@ -1411,102 +1416,11 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
             💻 Empfohlen für PC/Desktop - Mobile Nutzung eingeschränkt
           </div>
         </div>
-        {saisons.length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-            <label className="block text-sm font-medium text-blue-900 mb-2">① Saison auswählen:</label>
-            <select 
-              value={selectedSaison} 
-              onChange={(e) => {
-                setSelectedSaison(e.target.value);
-                setMeldungen([]);
-                setStartliste([]);
-                setLoading(true);
-              }}
-              className="border border-blue-300 rounded px-3 py-2 text-sm font-medium bg-white min-w-[200px]"
-            >
-              {saisons.map(saison => (
-                <option key={saison.id} value={saison.id}>
-                  {saison.name} ({saison.disziplinTyp})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+
 
       </div>
 
-      {/* KI-Analyse Panel - Automatisch anzeigen bei Problemen */}
-      {kiAnalyse && (kiAnalyse.score < 100 || showKiPanel) && (
-        <Card className={`mb-6 ${kiAnalyse.score < 80 ? 'border-red-300 bg-red-50' : kiAnalyse.score < 95 ? 'border-yellow-300 bg-yellow-50' : 'border-green-300 bg-green-50'}`}>
-          <CardHeader>
-            <CardTitle className={`flex items-center gap-2 ${kiAnalyse.score < 80 ? 'text-red-700' : kiAnalyse.score < 95 ? 'text-yellow-700' : 'text-green-700'}`}>
-              <Brain className="h-5 w-5" />
-              KI-Analyse - Qualität: {kiAnalyse.score}%
-              {kiAnalyse.score < 100 && (
-                <span className="text-sm font-normal">
-                  ({kiAnalyse.konflikte.length} Konflikte, {kiAnalyse.empfehlungen.length} Empfehlungen)
-                </span>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <h4 className="font-medium text-red-700 mb-2">Konflikte ({kiAnalyse.konflikte.length})</h4>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {kiAnalyse.konflikte.map((konflikt, index) => (
-                    <div key={index} className="text-xs p-2 bg-red-50 border border-red-200 rounded">
-                      <div className="font-medium">{konflikt.titel}</div>
-                      <div className="text-red-600 mb-2">{konflikt.beschreibung}</div>
-                      {konflikt.loesungsvorschlaege && (
-                        <div className="mt-2">
-                          <div className="font-medium text-blue-700 mb-1">💡 Lösungsvorschläge:</div>
-                          <ul className="text-blue-600 space-y-1">
-                            {konflikt.loesungsvorschlaege.map((vorschlag, i) => (
-                              <li key={i} className="text-xs">• {vorschlag}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {kiAnalyse.konflikte.length === 0 && (
-                    <div className="text-xs text-green-600">✅ Keine Konflikte erkannt</div>
-                  )}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-medium text-blue-700 mb-2">Empfehlungen ({kiAnalyse.empfehlungen.length})</h4>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {kiAnalyse.empfehlungen.map((empfehlung, index) => (
-                    <div key={index} className="text-xs p-2 bg-blue-50 border border-blue-200 rounded">
-                      <div className="font-medium">{empfehlung.titel}</div>
-                      <div className="text-blue-600">{empfehlung.beschreibung}</div>
-                    </div>
-                  ))}
-                  {kiAnalyse.empfehlungen.length === 0 && (
-                    <div className="text-xs text-gray-500">Keine Empfehlungen</div>
-                  )}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-medium text-purple-700 mb-2">Optimierungen ({kiAnalyse.optimierungen.length})</h4>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {kiAnalyse.optimierungen.map((opt, index) => (
-                    <div key={index} className="text-xs p-2 bg-purple-50 border border-purple-200 rounded">
-                      <div className="font-medium">{opt.titel}</div>
-                      <div className="text-purple-600">{opt.beschreibung}</div>
-                    </div>
-                  ))}
-                  {kiAnalyse.optimierungen.length === 0 && (
-                    <div className="text-xs text-gray-500">Alle Optimierungen OK</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
 
       {config && (
         <div className="grid gap-6">
@@ -1550,7 +1464,30 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>③ Meldungen ({meldungen.length})</CardTitle>
+                <div>
+                  <CardTitle>③ Meldungen ({meldungen.length})</CardTitle>
+                  {saisons.length > 0 && (
+                    <div className="mt-2">
+                      <label className="block text-sm font-medium text-blue-900 mb-1">Saison:</label>
+                      <select 
+                        value={selectedSaison} 
+                        onChange={(e) => {
+                          setSelectedSaison(e.target.value);
+                          setMeldungen([]);
+                          setStartliste([]);
+                          setLoading(true);
+                        }}
+                        className="border-4 border-red-600 rounded px-3 py-2 text-sm font-medium bg-white min-w-[200px]"
+                      >
+                        {saisons.map(saison => (
+                          <option key={saison.id} value={saison.id}>
+                            {saison.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-2">
 
                   <Button variant="outline" onClick={saveStartliste} disabled={startliste.length === 0}>
@@ -1563,6 +1500,31 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                     variant={showGemini ? 'default' : 'outline'}
                   >
                     🎯 Startliste generieren {showGemini ? 'aktiv' : ''}
+                  </Button>
+                  
+                  <Button 
+                    onClick={async () => {
+                      if (meldungen.length === 0) {
+                        toast({ title: 'Keine Meldungen', description: 'Es sind keine Meldungen vorhanden', variant: 'destructive' });
+                        return;
+                      }
+                      
+                      // Einfache Startliste: Alle Meldungen mit Standard-Werten
+                      const einfacheStartliste = meldungen.map((m, index) => ({
+                        ...m,
+                        id: `fallback_${m.id}_${index}`,
+                        stand: config?.verfuegbareStaende[index % config.verfuegbareStaende.length] || '1',
+                        startzeit: config?.startUhrzeit || '14:00',
+                        durchgang: Math.floor(index / config?.verfuegbareStaende.length) + 1,
+                        hinweise: 'Einfache Verteilung - Stand 1 beginnend'
+                      }));
+                      
+                      setStartliste(einfacheStartliste);
+                      toast({ title: '📋 Einfache Liste', description: `${einfacheStartliste.length} Starter - jetzt manuell anpassen` });
+                    }}
+                    variant="outline"
+                  >
+                    📋 Einfache Liste
                   </Button>
 
                 </div>
@@ -1820,31 +1782,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="mb-4">
-                  <NativeSelect
-                    value={sortierung}
-                    onValueChange={setSortierung}
-                    placeholder="Sortierung wählen"
-                    className="w-64"
-                    options={[
-                      { value: 'durchgang-stand', label: 'Durchgang → Stand → Zeit' },
-                      { value: 'startzeit-stand', label: 'Startzeit → Stand → Name' },
-                      { value: 'name-alphabetisch', label: 'Name (A-Z)' },
-                      { value: 'verein-name', label: 'Verein → Name' },
-                      { value: 'disziplin-name', label: 'Disziplin → Name' },
-                      { value: 'altersklasse-name', label: 'Altersklasse → Name' },
-                      { value: 'stand-zeit', label: 'Stand → Startzeit' },
-                      { value: 'mannschaft-einzeln', label: 'Mannschaften → Einzelschützen' },
-                      { value: 'hinweise-name', label: 'Hinweise → Name' },
-                      { value: 'geburtsjahr-name', label: 'Geburtsjahr → Name' },
-                      { value: 'geschlecht-name', label: 'Geschlecht → Name' },
-                      { value: 'lm-teilnahme', label: 'LM-Teilnahme → Name' },
-                      { value: 'mitgliedsnummer', label: 'Mitgliedsnummer' },
-                      { value: 'verein-durchgang', label: 'Verein → Durchgang → Stand' },
-                      { value: 'zufaellig', label: 'Zufällig' }
-                    ]}
-                  />
-                </div>
+
                 <div className="overflow-x-auto">
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {(() => {
@@ -1952,7 +1890,9 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                             <div className="col-span-3">
                               <div className="font-medium">{starter.name}</div>
                               <div className="text-xs text-muted-foreground">{starter.verein}</div>
-                              <Badge variant="outline" className="text-xs mt-1">{starter.altersklasse}</Badge>
+                              {starter.altersklasse && (
+                                <Badge variant="outline" className="text-xs mt-1">{starter.altersklasse}</Badge>
+                              )}
                               {starter.hinweise && (
                                 <div className="text-xs text-orange-600 font-medium mt-1">
                                   {starter.hinweise}
@@ -1966,7 +1906,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                               <NativeSelect
                                 value={starter.stand}
                                 onValueChange={(value) => handleStarterChange(starter.id, 'stand', value)}
-                                className="h-8"
+                                className="h-12 w-full min-w-[100px]"
                                 options={config.verfuegbareStaende.map(stand => ({ value: stand, label: `Stand ${stand}` }))}
                               />
                             </div>
@@ -1982,17 +1922,18 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                               <Badge variant="secondary" className="text-xs">DG {starter.durchgang}</Badge>
                             </div>
                             <div className="col-span-2 relative">
-                              {starter.anmerkung && (
-                                <div className="text-xs text-blue-600">{starter.anmerkung}</div>
-                              )}
+                              {(() => {
+                                const originalMeldung = meldungen.find(m => m.name === starter.name && m.disziplin === starter.disziplin);
+                                return (starter.anmerkung || originalMeldung?.anmerkung) && (
+                                  <div className="text-xs text-blue-600">
+                                    {starter.anmerkung || originalMeldung?.anmerkung}
+                                  </div>
+                                );
+                              })()}
                               <button 
                                 onClick={() => {
                                   const neueStartliste = startliste.filter(s => s.id !== starter.id);
                                   setStartliste(neueStartliste);
-                                  if (config) {
-                                    const neueAnalyse = analyzeStartlist(meldungen, neueStartliste, config);
-                                    setKiAnalyse(neueAnalyse);
-                                  }
                                 }}
                                 className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 text-xs w-4 h-4 flex items-center justify-center"
                                 title="Starter entfernen"

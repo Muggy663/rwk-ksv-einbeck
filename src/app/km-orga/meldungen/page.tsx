@@ -605,6 +605,11 @@ export default function KMAdminMeldungen() {
                         })()}
                       </div>
                     </div>
+                    {meldung.anmerkung && (
+                      <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded border">
+                        <strong>Anmerkung:</strong> {meldung.anmerkung}
+                      </div>
+                    )}
                     <div className="flex flex-col gap-2 pt-2">
                       {editingMeldung === meldung.id ? (
                         <>
@@ -708,10 +713,20 @@ export default function KMAdminMeldungen() {
                         />
                       </td>
                       <td className="p-2 font-medium">
-                        {schuetze?.firstName && schuetze?.lastName 
-                          ? `${schuetze.firstName} ${schuetze.lastName}`
-                          : schuetze?.name || 'Unbekannt'
-                        }
+                        <div className="flex items-center gap-2">
+                          {schuetze?.firstName && schuetze?.lastName 
+                            ? `${schuetze.firstName} ${schuetze.lastName}`
+                            : schuetze?.name || 'Unbekannt'
+                          }
+                          {meldung.anmerkung && (
+                            <div className="relative group">
+                              <span className="text-blue-500 cursor-help text-sm">ℹ️</span>
+                              <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 max-w-xs">
+                                {meldung.anmerkung}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="p-2">{verein?.name || 'Unbekannt'}</td>
                       <td className="p-2">
@@ -995,10 +1010,13 @@ export default function KMAdminMeldungen() {
             <div>
               <Label>Anmerkungen</Label>
               <Input 
-                placeholder="Besondere Wünsche oder Hinweise..."
+                placeholder="z.B. 'Max Mustermann und Peter Schmidt teilen sich ein Gewehr' oder 'Verein hat nur 2 Luftgewehre'"
                 value={meldungsForm.anmerkung}
                 onChange={(e) => setMeldungsForm(prev => ({ ...prev, anmerkung: e.target.value }))}
               />
+              <div className="text-xs text-gray-500 mt-1">
+                💡 Gewehr-Sharing: Bitte beide Namen nennen oder Vereins-Geräteanzahl angeben
+              </div>
             </div>
 
             <div className="flex flex-col gap-2 pt-4 md:flex-row md:justify-end">

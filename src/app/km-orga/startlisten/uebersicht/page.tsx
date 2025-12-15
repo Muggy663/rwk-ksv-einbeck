@@ -321,9 +321,8 @@ export default function StartlistenUebersichtPage() {
           {startlisten.map(liste => {
             const config = configs.find(c => c.id === liste.configId);
             
-            // Skip if config not found
+            // Skip if config not found - silent skip to avoid console spam
             if (!config) {
-              logWarn(`Config ${liste.configId} für Startliste ${liste.id} nicht gefunden`);
               return null;
             }
             
@@ -346,18 +345,15 @@ export default function StartlistenUebersichtPage() {
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <button 
+                      <Button 
+                        variant="outline" 
+                        size="sm"
                         onClick={() => window.location.href = `/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`}
-                        className="hidden md:block"
+                        title="Startliste bearbeiten"
+                        className="hidden md:flex"
                       >
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          title="Startliste bearbeiten"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </button>
+                        <Edit className="h-4 w-4" />
+                      </Button>
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -410,25 +406,15 @@ export default function StartlistenUebersichtPage() {
                         })()} Uhr
                       </span>
                       <div className="flex flex-col gap-2 w-full md:flex-row md:w-auto">
-                        <button 
-                          onClick={() => window.location.href = `/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`}
-                          className="w-full md:hidden"
-                        >
-                          <Button variant="outline" className="w-full h-12 text-left justify-start">
-                            <Edit className="h-4 w-4 mr-2" />
-                            Bearbeiten
-                          </Button>
-                        </button>
                         <Button 
                           variant="outline" 
-                          onClick={() => {
-                            // TODO: PDF Export der gespeicherten Startliste
-                            toast({ title: 'Info', description: 'PDF-Export wird implementiert' });
-                          }}
-                          className="w-full h-12 text-left justify-start md:w-auto md:h-auto md:text-center md:justify-center"
+                          onClick={() => window.location.href = `/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`}
+                          className="w-full h-12 text-left justify-start md:hidden"
                         >
-                          📄 PDF Export
+                          <Edit className="h-4 w-4 mr-2" />
+                          Bearbeiten
                         </Button>
+
                         <div className="w-full md:w-auto">
                           <David21ImportDialog 
                             wettkampfId={`VW111_${liste.id.substring(0, 8)}`}

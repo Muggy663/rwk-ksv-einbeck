@@ -29,33 +29,55 @@ export function analyzeStartlist(meldungen: any[], startliste: any[], config: an
   const empfehlungen: KIEmpfehlung[] = [];
   const optimierungen: KIOptimierung[] = [];
 
-  // Prüfe auf Stand-Zeit-Konflikte
-  const zeitStandMap = new Map<string, string[]>();
+  // Prüfe auf Stand-Zeit-Konflikte (nur bei gleicher Disziplin)
+  const zeitStandMap = new Map<string, any[]>();
   startliste.forEach(starter => {
     const key = `${starter.stand}-${starter.startzeit}`;
     if (!zeitStandMap.has(key)) zeitStandMap.set(key, []);
-    zeitStandMap.get(key)!.push(starter.id);
+    zeitStandMap.get(key)!.push(starter);
   });
 
-  zeitStandMap.forEach((starterIds, zeitStand) => {
-    if (starterIds.length > 1) {
-      const [stand, zeit] = zeitStand.split('-');
-      const betroffeneNamen = starterIds.map(id => {
-        const starter = startliste.find(s => s.id === id);
-        return starter?.name || 'Unbekannt';
-      });
+  zeitStandMap.forEach((starter, zeitStand) => {
+    if (starter.length > 1) {
+      // Prüfe Disziplinen-Kompatibilität
+      const disziplinen = [...new Set(starter.map(s => s.disziplin))];
+      const lichtpunktStarter = starter.filter(s => s.disziplin?.toLowerCase().includes('licht'));
       
-      konflikte.push({
-        titel: 'Stand-Zeit-Konflikt',
-        beschreibung: `${starterIds.length} Starter haben gleichen Stand zur gleichen Zeit: ${zeitStand}`,
-        betroffeneStarter: starterIds,
-        loesungsvorschlaege: [
-          `Verschieben Sie einen der Starter auf einen anderen Stand (${config.verfuegbareStaende?.filter(s => s !== stand).slice(0, 3).join(', ')})`,
-          `Ändern Sie die Startzeit für einen Starter (z.B. +${config.durchgangsDauer + config.wechselzeit} Min)`,
-          `Betroffene Starter: ${betroffeneNamen.join(', ')}`,
-          'Klicken Sie auf die Dropdown-Felder um Stand oder Zeit zu ändern'
-        ]
-      });
+      // Lichtpunkt braucht spezielle Stände (101/102)
+      if (lichtpunktStarter.length > 0) {
+        const [stand] = zeitStand.split('-');
+        if (stand !== '101' && stand !== '102') {
+          konflikte.push({
+            titel: 'Lichtpunkt-Stand-Konflikt',
+            beschreibung: `Lichtpunkt-Schützen benötigen Stand 101 oder 102, nicht Stand ${stand}`,
+            betroffeneStarter: lichtpunktStarter.map(s => s.id),
+            loesungsvorschlaege: [
+              'Lichtpunkt-Schützen auf Stand 101 oder 102 verschieben',
+              'Konfiguration um Stände 101/102 erweitern',
+              `Betroffene: ${lichtpunktStarter.map(s => s.name).join(', ')}`
+            ]
+          });
+          return;
+        }
+      }
+      
+      // Echter Konflikt: Mehrere Starter gleicher Disziplin
+      if (starter.length > 1) {
+        const [stand, zeit] = zeitStand.split('-');
+        const betroffeneNamen = starter.map(s => s.name || 'Unbekannt');
+        
+        konflikte.push({
+          titel: 'Stand-Zeit-Konflikt',
+          beschreibung: `${starter.length} Starter (${disziplinen[0]}) haben gleichen Stand zur gleichen Zeit: ${zeitStand}`,
+          betroffeneStarter: starter.map(s => s.id),
+          loesungsvorschlaege: [
+            `Verschieben Sie einen der Starter auf einen anderen Stand (${config.verfuegbareStaende?.filter(s => s !== stand).slice(0, 3).join(', ')})`,
+            `Ändern Sie die Startzeit für einen Starter (z.B. +${config.durchgangsDauer + config.wechselzeit} Min)`,
+            `Betroffene Starter: ${betroffeneNamen.join(', ')}`,
+            'Klicken Sie auf die Dropdown-Felder um Stand oder Zeit zu ändern'
+          ]
+        });
+      }
     }
   });
 
