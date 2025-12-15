@@ -2,6 +2,7 @@
  * Safe Logger für Authentication Events
  * Verhindert Log Injection und Information Disclosure
  */
+import { logDebug } from './secure-logger';
 
 export const authLogger = {
   loginAttempt: (success: boolean) => {
