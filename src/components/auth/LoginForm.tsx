@@ -74,32 +74,7 @@ export function LoginForm() {
       return;
     }
     
-    // reCAPTCHA prüfen (nur auf Production)
-    const isPreview = window.location.hostname.includes('vercel.app');
-    if (!recaptchaToken && !isPreview) {
-      setFormError("Bitte bestätigen Sie, dass Sie kein Roboter sind.");
-      return;
-    }
-    
-    // reCAPTCHA serverseitig validieren (nur auf Production)
-    if (recaptchaToken && !isPreview) {
-      try {
-        const recaptchaResponse = await fetch('/api/auth/verify-recaptcha', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: recaptchaToken })
-        });
-        
-        const recaptchaResult = await recaptchaResponse.json();
-        if (!recaptchaResult.success) {
-          setFormError('reCAPTCHA-Verifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.');
-          return;
-        }
-      } catch (error) {
-        setFormError('Fehler bei der Sicherheitsüberprüfung. Bitte versuchen Sie es erneut.');
-        return;
-      }
-    }
+    // reCAPTCHA temporär deaktiviert wegen Timeout-Problemen
     
     // Bot-Protection prüfen (nur wenn aktiviert)
     if (SECURITY_FEATURES.BOT_PROTECTION) {
@@ -209,10 +184,7 @@ export function LoginForm() {
               </div>
             </div>
             
-            {/* reCAPTCHA */}
-            <div className="flex justify-center">
-              <ReCaptcha onVerify={setRecaptchaToken} />
-            </div>
+            {/* reCAPTCHA temporär deaktiviert */}
             
             {/* Honeypot - verstecktes Feld für Bot-Detection */}
             <input
