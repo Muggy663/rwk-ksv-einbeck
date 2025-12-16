@@ -13,7 +13,7 @@ export const PREVIOUS_VERSION = '1.9.0';
 
 // What's new in 2.0.0
 export const WHATS_NEW = {
-  version: '2.0.0',
+  version: '2.0.4.5',
   title: 'Social Training Platform',
   features: [
     '👥 Trainingsgruppen - Gemeinsam trainieren mit Freunden',

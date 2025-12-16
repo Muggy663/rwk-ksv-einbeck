@@ -132,6 +132,8 @@ export default function KMAdminMeldungen() {
 
     try {
       let meldungenCount = 0;
+      let duplicateCount = 0;
+      
       for (const schuetzeId of meldungsForm.schuetzeIds) {
         for (const disziplinId of meldungsForm.disziplinIds) {
           const meldungData = {
@@ -152,30 +154,56 @@ export default function KMAdminMeldungen() {
             body: JSON.stringify(meldungData)
           });
 
-          if (!response.ok) {
-            throw new Error('Meldung fehlgeschlagen');
+          if (response.ok) {
+            meldungenCount++;
+          } else if (response.status === 409) {
+            duplicateCount++;
+            console.log('Duplikat erkannt:', response.status);
+          } else {
+            console.log('Anderer Fehler:', response.status);
           }
-          meldungenCount++;
         }
       }
 
-      toast({ 
-        title: 'Erfolg', 
-        description: `${meldungenCount} Meldung(en) für ${meldungsForm.schuetzeIds.length} Schütze(n) erfolgreich erstellt` 
-      });
-      
-      setShowMeldungsDialog(false);
-      setMeldungsForm({
-        vereinId: '',
-        schuetzeIds: [],
-        disziplinIds: [],
-        vmErgebnis: '',
-        lmTeilnahme: false,
-        anmerkung: ''
-      });
-      setVereinSchuetzen([]);
-      setSchuetzenSearch('');
-      loadData();
+      if (meldungenCount > 0 && duplicateCount === 0) {
+        toast({ 
+          title: 'Erfolg', 
+          description: `${meldungenCount} Meldung(en) erfolgreich erstellt` 
+        });
+        setShowMeldungsDialog(false);
+        setMeldungsForm({
+          vereinId: '',
+          schuetzeIds: [],
+          disziplinIds: [],
+          vmErgebnis: '',
+          lmTeilnahme: false,
+          anmerkung: ''
+        });
+        setVereinSchuetzen([]);
+        setSchuetzenSearch('');
+        loadData();
+      } else if (duplicateCount > 0) {
+        // Browser-Alert für sofortige Sichtbarkeit
+        alert(`⚠️ Duplikat erkannt!\n\n${duplicateCount} Meldung(en) bereits vorhanden${meldungenCount > 0 ? `.\n${meldungenCount} neue Meldung(en) wurden erstellt` : ''}.`);
+        
+        // Zusätzlich Toast
+        toast({ 
+          title: '⚠️ Duplikat erkannt', 
+          description: `${duplicateCount} Meldung(en) bereits vorhanden${meldungenCount > 0 ? `. ${meldungenCount} neue Meldung(en) erstellt` : ''}.`, 
+          variant: 'destructive',
+          duration: 5000
+        });
+        
+        if (meldungenCount > 0) loadData();
+        return;
+      } else {
+        toast({ 
+          title: 'Fehler', 
+          description: 'Keine Meldungen konnten erstellt werden', 
+          variant: 'destructive' 
+        });
+        return;
+      }
     } catch (error) {
       toast({ title: 'Fehler', description: 'Meldung konnte nicht erstellt werden', variant: 'destructive' });
     }

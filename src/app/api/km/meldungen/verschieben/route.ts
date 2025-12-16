@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, logInfo } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
+const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => {
+  const kuerzel = disziplinKuerzel.toLowerCase();
+  // Mapping für die drei verfügbaren Collections
+  if (kuerzel === 'kk' || kuerzel === 'kleinkaliber') return `km_meldungen_${jahr}_kk`;
+  if (kuerzel === 'kkp' || kuerzel === 'kleinkaliberpistole') return `km_meldungen_${jahr}_kkp`;
+  if (kuerzel === 'ld' || kuerzel === 'luftdruck') return `km_meldungen_${jahr}_ld`;
+  return `km_meldungen_${jahr}_${kuerzel}`;
+};
+
 export async function POST(request: NextRequest) {
   try {
     const { meldungIds, vonSaison, nachSaison } = await request.json();
@@ -13,23 +22,38 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Hole Saison-Daten für Ziel-Collection
+    const nachSaisonDoc = await adminDb.collection('km_saisons').doc(nachSaison).get();
+    if (!nachSaisonDoc.exists) {
+      return NextResponse.json({
+        success: false,
+        error: 'Ziel-Saison nicht gefunden'
+      }, { status: 400 });
+    }
+
+    const nachSaisonData = nachSaisonDoc.data();
+    const zielJahr = nachSaisonData.jahr;
+    const zielDisziplinTyp = nachSaisonData.disziplinTyp.toLowerCase();
+    const zielCollection = getKMMeldungenCollection(zielJahr, zielDisziplinTyp);
+
     let verschobenCount = 0;
-    const batch = adminDb.batch();
 
     // Lade alle zu verschiebenden Meldungen
     for (const meldungId of meldungIds) {
       try {
-        // Versuche verschiedene Collection-Namen
+        // Versuche verschiedene Collection-Namen für Quell-Meldung
         let alteMeldungRef = null;
         let alteMeldungDoc = null;
         
-        // Mögliche Collection-Namen probieren
+        // Hole Quell-Saison-Daten für dynamische Collection-Namen
+        const vonSaisonDoc = await adminDb.collection('km_saisons').doc(vonSaison).get();
+        const quellJahr = vonSaisonDoc.exists ? vonSaisonDoc.data().jahr : 2026;
+        
+        // Mögliche Collection-Namen probieren (dynamisch basierend auf Jahr)
         const possibleCollections = [
-          `km_meldungen_${vonSaison}`,
-          `km_meldungen_2026_ld`,
-          `km_meldungen_2026_kkp`, 
-          `km_meldungen_2026_kk`,
-          'km_meldungen'
+          `km_meldungen_${quellJahr}_kk`,
+          `km_meldungen_${quellJahr}_kkp`, 
+          `km_meldungen_${quellJahr}_ld`
         ];
         
         for (const collectionName of possibleCollections) {
@@ -39,6 +63,7 @@ export async function POST(request: NextRequest) {
             if (testDoc.exists) {
               alteMeldungRef = testRef;
               alteMeldungDoc = testDoc;
+              logInfo(`Meldung ${meldungId} gefunden in Collection: ${collectionName}`);
               break;
             }
           } catch (e) {
@@ -53,20 +78,6 @@ export async function POST(request: NextRequest) {
 
         const meldungData = alteMeldungDoc.data();
         
-        // Ziel-Collection bestimmen
-        const zielCollections = [
-          `km_meldungen_${nachSaison}`,
-          `km_meldungen_2026_ld`,
-          `km_meldungen_2026_kkp`,
-          `km_meldungen_2026_kk`
-        ];
-        
-        let zielCollection = `km_meldungen_${nachSaison}`;
-        // Wenn nachSaison eine spezifische Collection-ID ist, verwende sie direkt
-        if (zielCollections.includes(nachSaison)) {
-          zielCollection = nachSaison;
-        }
-        
         // SICHERHEIT: Erst erstellen, dann löschen!
         const neueMeldungRef = adminDb.collection(zielCollection).doc();
         
@@ -79,10 +90,12 @@ export async function POST(request: NextRequest) {
           urspruenglicheMeldungId: meldungId
         });
         
+        logInfo(`Neue Meldung erstellt in Collection: ${zielCollection}`);
+        
         // 2. NUR WENN ERFOLGREICH: Alte Meldung löschen
         await alteMeldungRef.delete();
         
-        logInfo(`Meldung ${meldungId} erfolgreich von ${vonSaison} nach ${zielCollection} verschoben`);
+        logInfo(`Meldung ${meldungId} erfolgreich von ${alteMeldungRef.parent.id} nach ${zielCollection} verschoben`);
         
         verschobenCount++;
         

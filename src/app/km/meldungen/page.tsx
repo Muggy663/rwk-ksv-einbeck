@@ -280,6 +280,7 @@ function KMMeldungenContent() {
       const results = await Promise.all(promises);
       logDebug('All promises resolved:', results.length);
       const successful = results.filter(r => r.ok).length;
+      const duplicates = results.filter(r => r.status === 409).length;
       
       if (successful === pendingMeldungen.length) {
         toast({ 
@@ -288,6 +289,21 @@ function KMMeldungenContent() {
         });
         setPendingMeldungen([]);
         loadData();
+      } else if (duplicates > 0) {
+        // Browser-Alert für Duplikate
+        alert(`⚠️ Duplikat erkannt!\n\n${duplicates} Meldung(en) bereits vorhanden${successful > 0 ? `.\n${successful} neue Meldung(en) wurden erstellt` : ''}.`);
+        
+        toast({ 
+          title: 'Duplikat erkannt', 
+          description: `${duplicates} Meldung(en) bereits vorhanden. ${successful} neue Meldung(en) erstellt.`, 
+          variant: 'destructive' 
+        });
+        
+        // Nur erfolgreich gespeicherte aus Zwischenspeicher entfernen
+        if (successful > 0) {
+          setPendingMeldungen(prev => prev.slice(successful));
+          loadData();
+        }
       } else {
         toast({ title: 'Teilweise Fehler', description: `${successful}/${pendingMeldungen.length} Meldungen gespeichert`, variant: 'destructive' });
       }
@@ -379,27 +395,51 @@ function KMMeldungenContent() {
           });
         });
         
-        const results = await Promise.all(meldungsPromises);
-        const allSuccessful = results.every(async (response) => {
-          const result = await response.json();
-          return result.success;
-        });
+        const results = [];
+        let successful = 0;
+        let duplicates = 0;
         
-        if (allSuccessful) {
-          toast({ title: 'Erfolg', description: `${selectedDisziplinen.length} Meldung(en) erfolgreich erstellt` });
+        for (const promise of meldungsPromises) {
+          try {
+            const response = await promise;
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+              successful++;
+            } else if (response.status === 409 && data.duplicate) {
+              duplicates++;
+            }
+          } catch (error) {
+            // Fehler ignorieren und weitermachen
+          }
+        }
+        
+        if (successful > 0 && duplicates === 0) {
+          toast({ title: 'Erfolg', description: `${successful} Meldung(en) erfolgreich erstellt` });
+          // Reset form nur bei vollem Erfolg
+          setSelectedSchuetze('');
+          setSelectedDisziplinen([]);
+          setLmTeilnahme({});
+          setAnmerkung('');
+          setVmErgebnisse({});
+          loadData();
+        } else if (duplicates > 0) {
+          // Browser-Alert für sofortige Sichtbarkeit
+          alert(`⚠️ Duplikat erkannt!\n\n${duplicates} Meldung(en) bereits vorhanden${successful > 0 ? `.\n${successful} neue Meldung(en) wurden erstellt` : ''}.`);
+          
+          toast({ 
+            title: 'Duplikat erkannt', 
+            description: `${duplicates} Meldung(en) bereits vorhanden${successful > 0 ? `. ${successful} neue Meldung(en) erstellt` : ''}.`, 
+            variant: 'destructive' 
+          });
+          // Formular NICHT zurücksetzen bei Duplikaten
+          if (successful > 0) loadData(); // Nur Daten neu laden wenn etwas erfolgreich war
+          return; // Früh beenden, kein Reset
         } else {
-          toast({ title: 'Fehler', description: 'Einige Meldungen konnten nicht erstellt werden', variant: 'destructive' });
+          toast({ title: 'Fehler', description: 'Meldungen konnten nicht erstellt werden', variant: 'destructive' });
+          return; // Früh beenden, kein Reset
         }
       }
-
-      
-      // Reset form
-      setSelectedSchuetze('');
-      setSelectedDisziplinen([]);
-      setLmTeilnahme({});
-      setAnmerkung('');
-      setVmErgebnisse({});
-      loadData();
     } catch (error) {
       toast({ title: 'Fehler', description: 'Meldungen konnten nicht erstellt werden', variant: 'destructive' });
     } finally {
@@ -644,12 +684,7 @@ function KMMeldungenContent() {
                   onChange={(e) => setSchuetzenSuche(e.target.value)}
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 mb-2"
                 />
-                <select 
-                  value={selectedSchuetze} 
-                  onChange={(e) => setSelectedSchuetze(e.target.value)}
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                >
-                  <option value="">-- Schütze wählen --</option>
+                <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800">
                   {schuetzen
                     .filter(schuetze => {
                       // Zeige nur Schützen mit Namen an
@@ -716,12 +751,20 @@ function KMMeldungenContent() {
                       }
                       
                       return (
-                        <option key={schuetze.id} value={schuetze.id}>
-                          {displayName} ({birthYearDisplay}, {genderDisplay}) - {club?.name || 'Verein unbekannt'}
-                        </option>
+                        <label key={schuetze.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded cursor-pointer">
+                          <input
+                            type="radio"
+                            name="schuetze"
+                            checked={selectedSchuetze === schuetze.id}
+                            onChange={() => setSelectedSchuetze(schuetze.id)}
+                          />
+                          <span className="text-sm">
+                            {displayName} ({birthYearDisplay}, {genderDisplay}) - {club?.name || 'Verein unbekannt'}
+                          </span>
+                        </label>
                       );
                     })}
-                </select>
+                </div>
               </div>
 
               {/* Startverein-Anzeige */}

@@ -6,7 +6,14 @@ import { FieldValue } from 'firebase-admin/firestore';
 import type { KMMeldung } from '@/types/km';
 import { sendKMMeldungNotificationEmail } from '@/lib/services/email-notification-service';
 
-const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => `km_meldungen_${jahr}_${disziplinKuerzel.toLowerCase()}`;
+const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => {
+  const kuerzel = disziplinKuerzel.toLowerCase();
+  // Mapping für die drei verfügbaren Collections
+  if (kuerzel === 'kk' || kuerzel === 'kleinkaliber') return `km_meldungen_${jahr}_kk`;
+  if (kuerzel === 'kkp' || kuerzel === 'kleinkaliberpistole') return `km_meldungen_${jahr}_kkp`;
+  if (kuerzel === 'ld' || kuerzel === 'luftdruck') return `km_meldungen_${jahr}_ld`;
+  return `km_meldungen_${jahr}_${kuerzel}`;
+};
 
 // Disziplin-ID zu Kürzel Mapping
 const getDisziplinKuerzel = async (disziplinId: string): Promise<string> => {
@@ -75,12 +82,11 @@ export async function POST(request: NextRequest) {
     
     if (!existingMeldungen.empty) {
       logWarn(`DUPLIKAT ERKANNT: Schütze ${schuetzeId} bereits für Disziplin ${disziplinId} in ${collectionName} gemeldet`);
-      // VORERST NUR WARNUNG - NICHT BLOCKIEREN für laufendes System
-      // return NextResponse.json({
-      //   success: false,
-      //   error: 'Schütze ist bereits für diese Disziplin gemeldet',
-      //   duplicate: true
-      // }, { status: 409 });
+      return NextResponse.json({
+        success: false,
+        error: 'Schütze ist bereits für diese Disziplin gemeldet',
+        duplicate: true
+      }, { status: 409 });
     }
 
     // Echte Firestore-Speicherung
@@ -192,7 +198,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Fallback: Alle Disziplinen für ein Jahr laden
-    const collections = ['kk', 'ld'];
+    const collections = ['kk', 'kkp', 'ld'];
     let alleMeldungen = [];
     
     logDebug('DEBUG: Suche in Jahr:', jahr);
