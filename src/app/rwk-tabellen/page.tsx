@@ -2127,16 +2127,18 @@ function RwkTabellenPageComponent() {
                                   {[...Array(currentNumRoundsState)].map((_, i) => (
                                     <TableCell key={`dg-val-${i + 1}-${team.id}`} className="text-center px-1 py-2">{(team.roundResults as any)?.[`dg${i + 1}`] ?? '-'}</TableCell>
                                   ))}
-                                  <TableCell className="text-center font-semibold text-primary px-2 py-2">
+                                  <TableCell className="text-center px-2 py-2">
                                     {team.sortingScore !== undefined && team.sortingScore !== team.totalScore ? (
                                       <div className="flex flex-col items-center">
-                                        <span>{team.totalScore ?? '-'}</span>
-                                        <span className="text-xs text-muted-foreground bg-muted/30 px-1.5 py-0.5 rounded-sm mt-0.5" title="Wertung basiert auf vollständig abgeschlossenen Durchgängen">
-                                          Wertung: {team.sortingScore}
-                                        </span>
+                                        <span className="font-bold text-lg text-green-600 dark:text-green-400">{team.sortingScore}</span>
+                                        <span className="text-xs text-muted-foreground">Wertung</span>
+                                        <span className="text-xs text-gray-500">Gesamt: {team.totalScore ?? '-'}</span>
                                       </div>
                                     ) : (
-                                      team.totalScore ?? '-'
+                                      <div className="flex flex-col items-center">
+                                        <span className="font-bold text-lg text-primary">{team.totalScore ?? '-'}</span>
+                                        <span className="text-xs text-muted-foreground">Ringe</span>
+                                      </div>
                                     )}
                                   </TableCell>
                                   {!isNativeApp && <TableCell className="text-center font-medium text-muted-foreground px-2 py-2">{team.averageScore != null ? team.averageScore.toFixed(2) : '-'}</TableCell>}
