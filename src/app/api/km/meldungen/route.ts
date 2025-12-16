@@ -66,6 +66,23 @@ export async function POST(request: NextRequest) {
     // Verwende Disziplin-Typ aus Saison
     const disziplinKuerzel = disziplinTyp.toLowerCase();
 
+    // DUPLIKATSPRÜFUNG: Prüfe ob Schütze bereits für diese Disziplin gemeldet ist
+    const collectionName = getKMMeldungenCollection(aktivesJahr, disziplinKuerzel);
+    const existingMeldungen = await adminDb.collection(collectionName)
+      .where('schuetzeId', '==', schuetzeId)
+      .where('disziplinId', '==', disziplinId)
+      .get();
+    
+    if (!existingMeldungen.empty) {
+      logWarn(`DUPLIKAT ERKANNT: Schütze ${schuetzeId} bereits für Disziplin ${disziplinId} in ${collectionName} gemeldet`);
+      // VORERST NUR WARNUNG - NICHT BLOCKIEREN für laufendes System
+      // return NextResponse.json({
+      //   success: false,
+      //   error: 'Schütze ist bereits für diese Disziplin gemeldet',
+      //   duplicate: true
+      // }, { status: 409 });
+    }
+
     // Echte Firestore-Speicherung
     const meldung = {
       schuetzeId,

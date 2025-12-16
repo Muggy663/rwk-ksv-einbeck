@@ -67,18 +67,22 @@ export async function POST(request: NextRequest) {
           zielCollection = nachSaison;
         }
         
-        // Neue Meldung in Ziel-Collection erstellen
+        // SICHERHEIT: Erst erstellen, dann löschen!
         const neueMeldungRef = adminDb.collection(zielCollection).doc();
-        batch.set(neueMeldungRef, {
+        
+        // 1. ERST neue Meldung erstellen
+        await neueMeldungRef.set({
           ...meldungData,
           saisonId: nachSaison,
           verschobenAm: new Date(),
           verschobenVon: vonSaison,
           urspruenglicheMeldungId: meldungId
         });
-
-        // Alte Meldung löschen
-        batch.delete(alteMeldungRef);
+        
+        // 2. NUR WENN ERFOLGREICH: Alte Meldung löschen
+        await alteMeldungRef.delete();
+        
+        logInfo(`Meldung ${meldungId} erfolgreich von ${vonSaison} nach ${zielCollection} verschoben`);
         
         verschobenCount++;
         
@@ -87,8 +91,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Batch ausführen
-    await batch.commit();
+    // Batch nicht mehr nötig - einzelne Operationen sind sicherer
     
     logInfo(`${verschobenCount} Meldungen von ${vonSaison} nach ${nachSaison} verschoben`);
 
