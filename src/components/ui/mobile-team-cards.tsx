@@ -55,10 +55,19 @@ export const MobileTeamCards: React.FC<MobileTeamCardsProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 <div className="text-right">
-                  <div className="font-bold text-primary">{team.totalScore || 0}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {team.averageScore ? team.averageScore.toFixed(1) : '-'}
-                  </div>
+                  {/* Zeige Wertungsringe groß, wenn sie sich von Gesamtringen unterscheiden */}
+                  {team.sortingScore !== undefined && team.sortingScore !== team.totalScore ? (
+                    <div>
+                      <div className="font-bold text-lg text-primary">{team.sortingScore}</div>
+                      <div className="text-xs text-muted-foreground">Wertung</div>
+                      <div className="text-xs text-gray-500">Gesamt: {team.totalScore || 0}</div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="font-bold text-lg text-primary">{team.totalScore || 0}</div>
+                      <div className="text-xs text-muted-foreground">Ringe</div>
+                    </div>
+                  )}
                 </div>
                 {expandedTeams.includes(team.id) ? 
                   <ChevronDown className="h-5 w-5 text-muted-foreground" /> : 

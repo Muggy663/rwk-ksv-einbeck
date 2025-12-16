@@ -2006,7 +2006,6 @@ function RwkTabellenPageComponent() {
                         >
                           AK-Teams anzeigen
                         </Label>
-                        {!isNativeApp && !isMobile && <PDFHelpDialog />}
                       </div>
                       
                       {/* PDF Buttons nur auf Desktop */}
