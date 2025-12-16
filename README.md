@@ -1,12 +1,12 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.0.4.3** | **Android: 0.9.4.1**
+**Version: 2.0.4.4** | **Android: 0.9.4.1**
 
 > **Social Training Platform für den deutschen Schießsport**
 
 Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und Social Training. Die erste Community-Plattform für Sportschützen mit Live-Wettkämpfen, Trainingsgruppen und erweiterten Statistiken.
 
-[![Version](https://img.shields.io/badge/Version-2.0.4.3-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.0.4.4-green?style=for-the-badge)](#)
 [![Social Training](https://img.shields.io/badge/Social_Training-Live-blue?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
 
@@ -169,7 +169,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 15. Dezember 2025 - Version 2.0.4.3 - Lichtgewehr-Altersklasse 6-11 Jahre*
+*Letzte Aktualisierung: 16. Dezember 2025 - Version 2.0.4.4 - Login Race Condition Fix*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

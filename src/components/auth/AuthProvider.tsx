@@ -177,15 +177,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setError(null);
     try {
       await signInWithEmail(email, password);
-      // fetchUserAppPermissions wird durch onAuthStateChanged getriggert
+      
+      // Warte bis Auth State und Permissions geladen sind
+      const waitForAuth = () => {
+        return new Promise<void>((resolve) => {
+          const checkAuth = () => {
+            if (!loading && !loadingAppPermissions && user) {
+              resolve();
+            } else {
+              setTimeout(checkAuth, 100);
+            }
+          };
+          checkAuth();
+        });
+      };
+      
+      await waitForAuth();
+      
       toast({ title: "Erfolgreich angemeldet", description: "Willkommen zurück!" });
       
-      // Direkte Weiterleitung basierend auf E-Mail
-      if (email === 'admin@rwk-einbeck.de') {
-        window.location.href = '/dashboard-auswahl';
-      } else {
-        window.location.href = '/dashboard-auswahl';
-      }
+      // Weiterleitung erst nach vollständigem Auth-Load
+      window.location.href = '/dashboard-auswahl';
     } catch (err: any) {
       setError(err);
       let errorMessage = err.message;
