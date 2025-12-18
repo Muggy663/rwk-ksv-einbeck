@@ -51,7 +51,8 @@ export default function KMAdminMeldungen() {
   }, [hasFullAccess, authLoading]);
 
   useEffect(() => {
-    if (selectedSaison && saisons.length > 0) {
+    // Lade Daten nur wenn eine Saison ausgewählt ist (Pflichtfeld)
+    if (selectedSaison && selectedSaison !== '' && saisons.length > 0) {
       loadData();
     }
   }, [selectedSaison, saisons]);
@@ -62,10 +63,24 @@ export default function KMAdminMeldungen() {
       if (response.ok) {
         const data = await response.json();
         const saisonsList = data.data || [];
-        setSaisons(saisonsList);
-        if (saisonsList.length > 0) {
-          setSelectedSaison(saisonsList[0].id);
-        }
+        
+        // Sortiere Saisons: Neueste zuerst (LD 2026 > KKP 2026 > KK 2026)
+        const sortedSaisons = saisonsList.sort((a, b) => {
+          // Priorisiere LD (Luftdruck) als neueste Saison
+          if (a.name?.includes('Luftdruck') && !b.name?.includes('Luftdruck')) return -1;
+          if (!a.name?.includes('Luftdruck') && b.name?.includes('Luftdruck')) return 1;
+          
+          // Dann nach Jahr sortieren (höher = neuer)
+          const yearA = a.jahr || 0;
+          const yearB = b.jahr || 0;
+          if (yearA !== yearB) return yearB - yearA;
+          
+          // Dann alphabetisch
+          return (a.name || '').localeCompare(b.name || '');
+        });
+        
+        setSaisons(sortedSaisons);
+        // Keine automatische Auswahl - Benutzer muss bewusst wählen
       }
     } catch (error) {
       logError('Fehler beim Laden der Saisons:', error);
@@ -376,7 +391,7 @@ export default function KMAdminMeldungen() {
     return sortOrder === 'asc' ? comparison : -comparison;
   });
 
-  if (loading) {
+  if (loading && selectedSaison) {
     return (
       <div className="container py-8 max-w-6xl mx-auto">
         <div className="flex flex-col items-center justify-center py-20">
@@ -400,124 +415,150 @@ export default function KMAdminMeldungen() {
 
   return (
     <div className="px-2 md:px-4 py-8 max-w-6xl mx-auto">
-      <div className="flex flex-col gap-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/km-orga">
-              <Button variant="outline">← Zurück</Button>
-            </Link>
-            <div>
-              <h1 className="text-xl md:text-3xl font-bold text-primary">📋 KM-Meldungen</h1>
-              <p className="text-sm md:text-base text-muted-foreground">Verwaltung aller Meldungen zur Kreismeisterschaft</p>
-            </div>
+      <div className="flex flex-col gap-6 mb-6">
+        <div className="flex items-center gap-4">
+          <Link href="/km-orga">
+            <Button variant="outline">← Zurück</Button>
+          </Link>
+          <div>
+            <h1 className="text-xl md:text-3xl font-bold text-primary">📋 KM-Meldungen</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Verwaltung aller Meldungen zur Kreismeisterschaft</p>
           </div>
-          <select
-            value={selectedSaison}
-            onChange={(e) => setSelectedSaison(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm font-medium"
-          >
-            <option value="">Saison wählen...</option>
-            {saisons.map(saison => (
-              <option key={saison.id} value={saison.id}>
-                {saison.name}
-              </option>
-            ))}
-          </select>
         </div>
-        <Button onClick={() => {
-          logDebug('Button clicked, setting dialog to true');
-          setShowMeldungsDialog(true);
-        }} className="w-full h-12 text-left justify-start md:w-auto md:h-auto md:text-center md:justify-center">
-          <Plus className="h-4 w-4 mr-2" />
-          Meldung für Verein erstellen
-        </Button>
-      </div>
-
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Filter</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3 md:grid md:grid-cols-3 md:gap-4">
+        
+        <Card className="border-2 border-primary bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Verein</label>
+                <Label className="text-base font-semibold text-gray-800 dark:text-gray-200">🎯 Saison auswählen (Pflichtfeld)</Label>
                 <select
-                  value={filter.verein}
-                  onChange={(e) => setFilter(prev => ({ ...prev, verein: e.target.value }))}
-                  className="w-full p-2 border border-gray-300 rounded text-sm"
+                  value={selectedSaison}
+                  onChange={(e) => setSelectedSaison(e.target.value)}
+                  className="w-full mt-2 px-4 py-3 text-lg border-2 border-primary rounded-lg bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+                  required
                 >
-                  <option value="">Alle Vereine</option>
-                  {clubs.map(club => (
-                    <option key={club.id} value={club.id}>{club.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Disziplin</label>
-                <select
-                  value={filter.disziplin}
-                  onChange={(e) => setFilter(prev => ({ ...prev, disziplin: e.target.value }))}
-                  className="w-full p-2 border border-gray-300 rounded text-sm"
-                >
-                  <option value="">Alle Disziplinen</option>
-                  {disziplinen.map(disziplin => (
-                    <option key={disziplin.id} value={disziplin.id}>
-                      {disziplin.spoNummer} - {disziplin.name}
+                  <option value="">🔽 Bitte Saison wählen...</option>
+                  {saisons.map(saison => (
+                    <option key={saison.id} value={saison.id}>
+                      {saison.name}
                     </option>
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Suche</label>
-                <input
-                  type="text"
-                  value={filter.search}
-                  onChange={(e) => setFilter(prev => ({ ...prev, search: e.target.value }))}
-                  placeholder="Name, Disziplin, Verein..."
-                  className="w-full p-2 border border-gray-300 rounded text-sm"
-                />
+              
+              {selectedSaison && (
+                <Button onClick={() => {
+                  logDebug('Button clicked, setting dialog to true');
+                  setShowMeldungsDialog(true);
+                }} className="w-full h-12">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Meldung für Verein erstellen
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {!selectedSaison && (
+        <Card className="mb-6 border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="text-center py-4">
+              <p className="text-orange-800 font-medium mb-2">⚠️ Bitte wählen Sie zuerst eine Saison aus</p>
+              <p className="text-sm text-orange-600">Die Listen werden erst nach der Saisonauswahl angezeigt, um Fehlmeldungen zu vermeiden.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {selectedSaison && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Filter</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3 md:grid md:grid-cols-3 md:gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Verein</label>
+                  <select
+                    value={filter.verein}
+                    onChange={(e) => setFilter(prev => ({ ...prev, verein: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded text-sm"
+                  >
+                    <option value="">Alle Vereine</option>
+                    {clubs.map(club => (
+                      <option key={club.id} value={club.id}>{club.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Disziplin</label>
+                  <select
+                    value={filter.disziplin}
+                    onChange={(e) => setFilter(prev => ({ ...prev, disziplin: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded text-sm"
+                  >
+                    <option value="">Alle Disziplinen</option>
+                    {disziplinen.map(disziplin => (
+                      <option key={disziplin.id} value={disziplin.id}>
+                        {disziplin.spoNummer} - {disziplin.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Suche</label>
+                  <input
+                    type="text"
+                    value={filter.search}
+                    onChange={(e) => setFilter(prev => ({ ...prev, search: e.target.value }))}
+                    placeholder="Name, Disziplin, Verein..."
+                    className="w-full p-2 border border-gray-300 rounded text-sm"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-          <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <Button 
-              variant="outline" 
-              onClick={() => setFilter({ verein: '', disziplin: '', search: '' })}
-              className="w-full h-12 md:w-auto md:h-auto"
-            >
-              🔄 Filter zurücksetzen
-            </Button>
-            
-            {selectedMeldungen.length > 0 && (
-              <div className="flex flex-col gap-2 md:flex-row md:items-center">
-                <span className="text-sm font-medium">
-                  {selectedMeldungen.length} ausgewählt
-                </span>
-                <Button 
-                  onClick={() => setShowVerschiebenDialog(true)}
-                  className="w-full h-12 md:w-auto md:h-auto"
-                >
-                  🚚 Verschieben nach...
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => setSelectedMeldungen([])}
-                  className="w-full h-12 md:w-auto md:h-auto"
-                >
-                  ✖️ Auswahl aufheben
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <Button 
+                variant="outline" 
+                onClick={() => setFilter({ verein: '', disziplin: '', search: '' })}
+                className="w-full h-12 md:w-auto md:h-auto"
+              >
+                🔄 Filter zurücksetzen
+              </Button>
+              
+              {selectedMeldungen.length > 0 && (
+                <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                  <span className="text-sm font-medium">
+                    {selectedMeldungen.length} ausgewählt
+                  </span>
+                  <Button 
+                    onClick={() => setShowVerschiebenDialog(true)}
+                    className="w-full h-12 md:w-auto md:h-auto"
+                  >
+                    🚚 Verschieben nach...
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setSelectedMeldungen([])}
+                    className="w-full h-12 md:w-auto md:h-auto"
+                  >
+                    ✖️ Auswahl aufheben
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Meldungen ({filteredMeldungen.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
+      {selectedSaison && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Meldungen ({filteredMeldungen.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
           {/* Mobile Card Layout */}
           <div className="block md:hidden space-y-4">
             {filteredMeldungen.map(meldung => {
@@ -908,7 +949,8 @@ export default function KMAdminMeldungen() {
             )}
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      )}
 
       {/* Meldungs-Dialog */}
       <Dialog open={showMeldungsDialog} onOpenChange={(open) => {

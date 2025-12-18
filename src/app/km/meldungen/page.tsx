@@ -127,10 +127,7 @@ function KMMeldungenContent() {
         
         setSaisons(sortedSaisons);
         
-        // Wähle erste (aktive) Saison automatisch aus
-        if (sortedSaisons.length > 0 && !selectedSaison) {
-          setSelectedSaison(sortedSaisons[0].id);
-        }
+        // Keine automatische Auswahl - Benutzer muss bewusst wählen
         
         // Lade Disziplinen für ausgewählte Saison
         if (selectedSaison || aktiveSaisons.length > 0) {
@@ -616,55 +613,74 @@ function KMMeldungenContent() {
               </div>
               
               {/* KM-Auswahl */}
-              {saisons.length > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-                  <label className="block text-sm font-medium text-blue-900 mb-2">KM auswählen:</label>
-                  <select
-                    value={selectedSaison}
-                    onChange={(e) => setSelectedSaison(e.target.value)}
-                    className="w-full px-3 py-2 border border-blue-300 rounded bg-white text-sm font-medium"
-                  >
-                    {saisons.map(saison => {
-                      const today = new Date();
-                      let isExpired = false;
-                      
-                      if (saison.meldeschluss) {
-                        const meldeschluss = saison.meldeschluss;
-                        let deadline;
-                        
-                        if (meldeschluss.includes('.') && meldeschluss.length > 6) {
-                          const [day, month, year] = meldeschluss.split('.');
-                          deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                        } else {
-                          const [day, month] = meldeschluss.split('.');
-                          deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
-                        }
-                        
-                        isExpired = today > deadline;
-                      }
-                      
-                      return (
-                        <option 
-                          key={saison.id} 
-                          value={saison.id}
-                          disabled={isExpired}
-                          style={isExpired ? { color: '#999', backgroundColor: '#f5f5f5' } : {}}
-                        >
-                          {saison.name} ({saison.disziplinTyp}){isExpired ? ' - Meldeschluss vorbei' : ''}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
+              <Card className="border-2 border-primary bg-primary/5">
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-base font-semibold text-gray-800 dark:text-gray-200">🎯 Saison auswählen (Pflichtfeld)</label>
+                      <select
+                        value={selectedSaison}
+                        onChange={(e) => setSelectedSaison(e.target.value)}
+                        className="w-full mt-2 px-4 py-3 text-lg border-2 border-primary rounded-lg bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+                        required
+                      >
+                        <option value="">🔽 Bitte Saison wählen...</option>
+                        {saisons.map(saison => {
+                          const today = new Date();
+                          let isExpired = false;
+                          
+                          if (saison.meldeschluss) {
+                            const meldeschluss = saison.meldeschluss;
+                            let deadline;
+                            
+                            if (meldeschluss.includes('.') && meldeschluss.length > 6) {
+                              const [day, month, year] = meldeschluss.split('.');
+                              deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                            } else {
+                              const [day, month] = meldeschluss.split('.');
+                              deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+                            }
+                            
+                            isExpired = today > deadline;
+                          }
+                          
+                          return (
+                            <option 
+                              key={saison.id} 
+                              value={saison.id}
+                              disabled={isExpired}
+                              style={isExpired ? { color: '#999', backgroundColor: '#f5f5f5' } : {}}
+                            >
+                              {saison.name} ({saison.disziplinTyp}){isExpired ? ' - Meldeschluss vorbei' : ''}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {!selectedSaison && (
+                <Card className="border-orange-200 bg-orange-50">
+                  <CardContent className="pt-6">
+                    <div className="text-center py-4">
+                      <p className="text-orange-800 font-medium mb-2">⚠️ Bitte wählen Sie zuerst eine Saison aus</p>
+                      <p className="text-sm text-orange-600">Das Meldungsformular wird erst nach der Saisonauswahl angezeigt.</p>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
               
               {/* Vereinsauswahl */}
+              {selectedSaison && (
               <div>
                 <label className="block text-sm font-medium mb-2">Verein</label>
                 <KMClubSwitcher />
               </div>
+              )}
 
-              {meldeModus === 'schuetze-disziplinen' ? (
+              {selectedSaison && meldeModus === 'schuetze-disziplinen' ? (
                 <>{/* Bestehender Schütze → Disziplinen Modus */}
 
                 {/* Schützen-Auswahl */}
@@ -1145,7 +1161,7 @@ function KMMeldungenContent() {
                   />
                 </div>
                 </>
-              ) : (
+              ) : selectedSaison ? (
                 <>{/* Neuer Disziplin → Schützen Modus */}
                 {/* Disziplinen-Auswahl */}
                 <div>
@@ -1475,12 +1491,12 @@ function KMMeldungenContent() {
                   />
                 </div>
                 </>
-              )}
+              ) : null}
 
 
 
               {/* Buttons */}
-              {(() => {
+              {selectedSaison && (() => {
                 const today = new Date();
                 const selectedSaisonData = saisons.find(s => s.id === selectedSaison);
                 let isExpired = false;
@@ -1606,7 +1622,7 @@ function KMMeldungenContent() {
               })()}
               
               {/* Zwischenspeicher - unter den Buttons */}
-              {pendingMeldungen.length > 0 && (
+              {selectedSaison && pendingMeldungen.length > 0 && (
                 <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded">
                   <h4 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-2">📋 Zwischenspeicher ({pendingMeldungen.length})</h4>
                   <div className="space-y-2 mb-3">

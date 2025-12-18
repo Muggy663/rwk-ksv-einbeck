@@ -33,6 +33,8 @@ export default function VMUebersichtPage() {
   const [meldungen, setMeldungen] = useState<VMMeldung[]>([]);
   const [filteredMeldungen, setFilteredMeldungen] = useState<VMMeldung[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedSaison, setSelectedSaison] = useState('');
+  const [saisons, setSaisons] = useState<any[]>([]);
   const [selectedDisziplin, setSelectedDisziplin] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [disziplinen, setDisziplinen] = useState<string[]>([]);
@@ -63,19 +65,49 @@ export default function VMUebersichtPage() {
 
   useEffect(() => {
     if (hasKMAccess && !authLoading) {
-      loadVMMeldungen();
+      loadSaisons();
     }
   }, [hasKMAccess, authLoading]);
+
+  useEffect(() => {
+    if (selectedSaison && selectedSaison !== '') {
+      loadVMMeldungen();
+    }
+  }, [selectedSaison]);
 
   useEffect(() => {
     filterMeldungen();
   }, [meldungen, selectedDisziplin, selectedStatus]);
 
+  const loadSaisons = async () => {
+    try {
+      const response = await fetch('/api/km/saisons');
+      if (response.ok) {
+        const data = await response.json();
+        const saisonsList = data.data || [];
+        
+        const sortedSaisons = saisonsList.sort((a, b) => {
+          if (a.name?.includes('Luftdruck') && !b.name?.includes('Luftdruck')) return -1;
+          if (!a.name?.includes('Luftdruck') && b.name?.includes('Luftdruck')) return 1;
+          const yearA = a.jahr || 0;
+          const yearB = b.jahr || 0;
+          if (yearA !== yearB) return yearB - yearA;
+          return (a.name || '').localeCompare(b.name || '');
+        });
+        
+        setSaisons(sortedSaisons);
+      }
+    } catch (error) {
+      logError('Fehler beim Laden der Saisons:', error);
+    }
+  };
+
   const loadVMMeldungen = async () => {
     try {
+      setLoading(true);
       // Lade Meldungen, Schützen und Disziplinen
       const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
-        fetch('/api/km/meldungen'),
+        fetch(`/api/km/meldungen?saison=${selectedSaison}`),
         fetch('/api/km/shooters'),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs')
@@ -200,7 +232,7 @@ export default function VMUebersichtPage() {
     }
   };
 
-  if (loading || authLoading) {
+  if ((loading && selectedSaison) || authLoading) {
     return (
       <div className="container py-8 max-w-6xl mx-auto">
         <div className="flex items-center justify-center py-10">
@@ -233,25 +265,61 @@ export default function VMUebersichtPage() {
 
   return (
     <div className="container py-8 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <Link href="/km-orga">
-            <Button variant="outline">← Zurück</Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-primary">🏆 VM-Ergebnisse Übersicht</h1>
-            <p className="text-muted-foreground">
-              Vereinsmeisterschaft-Ergebnisse und Qualifikationen für die KM 2026
-            </p>
-          </div>
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/km-orga">
+          <Button variant="outline">← Zurück</Button>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold text-primary">🏆 VM-Ergebnisse Übersicht</h1>
+          <p className="text-muted-foreground">
+            Vereinsmeisterschaft-Ergebnisse und Qualifikationen für die KM 2026
+          </p>
         </div>
-        <Button onClick={exportVMUebersicht}>
-          <Download className="h-4 w-4 mr-2" />
-          Excel Export
-        </Button>
       </div>
 
+      <Card className="border-2 border-primary bg-primary/5 mb-6">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div>
+              <label className="text-base font-semibold text-gray-800 dark:text-gray-200">🎯 Saison auswählen (Pflichtfeld)</label>
+              <select
+                value={selectedSaison}
+                onChange={(e) => setSelectedSaison(e.target.value)}
+                className="w-full mt-2 px-4 py-3 text-lg border-2 border-primary rounded-lg bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+                required
+              >
+                <option value="">🔽 Bitte Saison wählen...</option>
+                {saisons.map(saison => (
+                  <option key={saison.id} value={saison.id}>
+                    {saison.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {selectedSaison && (
+              <Button onClick={exportVMUebersicht} className="w-full">
+                <Download className="h-4 w-4 mr-2" />
+                Excel Export
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {!selectedSaison && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="text-center py-4">
+              <p className="text-orange-800 font-medium mb-2">⚠️ Bitte wählen Sie zuerst eine Saison aus</p>
+              <p className="text-sm text-orange-600">Die VM-Übersicht wird erst nach der Saisonauswahl angezeigt.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Statistiken */}
+      {selectedSaison && (
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <Card>
           <CardContent className="p-4 text-center">
@@ -284,8 +352,10 @@ export default function VMUebersichtPage() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Filter */}
+      {selectedSaison && (
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -337,8 +407,10 @@ export default function VMUebersichtPage() {
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* VM-Meldungen Liste */}
+      {selectedSaison && (
       <Card>
         <CardHeader>
           <CardTitle>VM-Meldungen ({filteredMeldungen.length})</CardTitle>
@@ -413,8 +485,10 @@ export default function VMUebersichtPage() {
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Qualifikations-Hinweise */}
+      {selectedSaison && (
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -436,6 +510,7 @@ export default function VMUebersichtPage() {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

@@ -46,33 +46,7 @@ export default function KMUebersicht() {
       if (response.ok) {
         const data = await response.json();
         setSaisons(data.data || []);
-        // Setze erste nicht-abgelaufene Saison als Standard
-        if (!selectedSaison && data.data.length > 0) {
-          const today = new Date();
-          const nichtAbgelaufeneSaison = data.data.find(saison => {
-            if (!saison.meldeschluss) return true;
-            
-            const meldeschluss = saison.meldeschluss;
-            let deadline;
-            
-            if (meldeschluss.includes('.') && meldeschluss.length > 6) {
-              const [day, month, year] = meldeschluss.split('.');
-              deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-            } else {
-              const [day, month] = meldeschluss.split('.');
-              deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
-            }
-            
-            return today <= deadline;
-          });
-          
-          if (nichtAbgelaufeneSaison) {
-            setSelectedSaison(nichtAbgelaufeneSaison.id);
-          } else {
-            // Fallback: Erste Saison wenn alle abgelaufen
-            setSelectedSaison(data.data[0].id);
-          }
-        }
+        // Keine automatische Auswahl - Benutzer muss bewusst wählen
       }
     } catch (error) {
       logError('Fehler beim Laden der Saisons:', error);
@@ -233,84 +207,71 @@ export default function KMUebersicht() {
             </Button>
           </Link>
         </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-primary">📊 KM-Übersicht</h1>
-            <p className="text-muted-foreground">
-              {userPermission?.role === 'admin' 
-                ? 'Statistiken und Übersicht der Kreismeisterschaften 2026'
-                : `Ihre Meldungen für die Kreismeisterschaften 2026`
-              }
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            {/* Saison Filter */}
-            {saisons.length > 0 && (
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">Saison:</label>
-                <select 
-                  value={selectedSaison} 
-                  onChange={(e) => setSelectedSaison(e.target.value)}
-                  className="border rounded px-3 py-1"
-                >
-                  {saisons.map(saison => {
-                    const today = new Date();
-                    let isExpired = false;
-                    
-                    if (saison.meldeschluss) {
-                      const meldeschluss = saison.meldeschluss;
-                      let deadline;
-                      
-                      if (meldeschluss.includes('.') && meldeschluss.length > 6) {
-                        const [day, month, year] = meldeschluss.split('.');
-                        deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                      } else {
-                        const [day, month] = meldeschluss.split('.');
-                        deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
-                      }
-                      
-                      isExpired = today > deadline;
-                    }
-                    
-                    return (
-                      <option 
-                        key={saison.id} 
-                        value={saison.id}
-                        disabled={isExpired}
-                        style={isExpired ? { color: '#999', backgroundColor: '#f5f5f5' } : {}}
-                      >
-                        {saison.name} ({saison.status}){isExpired ? ' - Meldeschluss vorbei' : ''}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            )}
-            
-            {/* Verein Filter */}
-            {userClubIds.length > 1 && (
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">Verein:</label>
-                <select 
-                  value={selectedClubId} 
-                  onChange={(e) => setSelectedClubId(e.target.value)}
-                  className="border rounded px-3 py-1"
-                >
-                  <option value="">Alle Vereine</option>
-                  {userClubIds.map(clubId => {
-                    const club = data.clubs.find(c => c.id === clubId);
-                    return club ? (
-                      <option key={club.id} value={club.id}>{club.name}</option>
-                    ) : null;
-                  })}
-                </select>
-              </div>
-            )}
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold text-primary">📊 KM-Übersicht</h1>
+          <p className="text-muted-foreground">
+            {userPermission?.role === 'admin' 
+              ? 'Statistiken und Übersicht der Kreismeisterschaften 2026'
+              : `Ihre Meldungen für die Kreismeisterschaften 2026`
+            }
+          </p>
         </div>
       </div>
+      
+      <Card className="border-2 border-primary bg-primary/5 mb-6">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div>
+              <label className="text-base font-semibold text-gray-800 dark:text-gray-200">🎯 Saison auswählen (Pflichtfeld)</label>
+              <select
+                value={selectedSaison}
+                onChange={(e) => setSelectedSaison(e.target.value)}
+                className="w-full mt-2 px-4 py-3 text-lg border-2 border-primary rounded-lg bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+                required
+              >
+                <option value="">🔽 Bitte Saison wählen...</option>
+                {saisons.map(saison => (
+                  <option key={saison.id} value={saison.id}>
+                    {saison.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {!selectedSaison && (
+        <Card className="border-orange-200 bg-orange-50 mb-6">
+          <CardContent className="pt-6">
+            <div className="text-center py-4">
+              <p className="text-orange-800 font-medium mb-2">⚠️ Bitte wählen Sie zuerst eine Saison aus</p>
+              <p className="text-sm text-orange-600">Die Übersicht wird erst nach der Saisonauswahl angezeigt.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {selectedSaison && userClubIds.length > 1 && (
+        <div className="flex items-center gap-2 mb-6">
+          <label className="text-sm font-medium">Verein:</label>
+          <select 
+            value={selectedClubId} 
+            onChange={(e) => setSelectedClubId(e.target.value)}
+            className="border rounded px-3 py-1"
+          >
+            <option value="">Alle Vereine</option>
+            {userClubIds.map(clubId => {
+              const club = data.clubs.find(c => c.id === clubId);
+              return club ? (
+                <option key={club.id} value={club.id}>{club.name}</option>
+              ) : null;
+            })}
+          </select>
+        </div>
+      )}
 
+      {selectedSaison && (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <Card>
           <CardContent className="p-4">
@@ -331,7 +292,9 @@ export default function KMUebersicht() {
           </CardContent>
         </Card>
       </div>
+      )}
 
+      {selectedSaison && (
       <div className={`grid grid-cols-1 ${userPermission?.role === 'admin' ? 'md:grid-cols-2' : ''} gap-6`}>
         {userPermission?.role === 'admin' && (
           <Card>
@@ -397,8 +360,10 @@ export default function KMUebersicht() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Meldungen-Tabelle */}
+      {selectedSaison && (
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>Ihre Meldungen ({data.meldungen.length})</CardTitle>
@@ -633,6 +598,10 @@ export default function KMUebersicht() {
           )}
         </CardContent>
       </Card>
+      )}
+      )}
+      )}
+      )}
     </div>
   );
 }
