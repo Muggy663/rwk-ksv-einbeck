@@ -757,8 +757,8 @@ export default function VereinSchuetzenPage() {
                         const result = sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
                         return result;
                       case 'gender':
-                        aValue = a.gender === 'female' ? 'Weiblich' : (a.gender === 'male' ? 'Männlich' : 'N/A');
-                        bValue = b.gender === 'female' ? 'Weiblich' : (b.gender === 'male' ? 'Männlich' : 'N/A');
+                        aValue = a.gender === 'male' ? 'M' : 'W';
+                        bValue = b.gender === 'male' ? 'M' : 'W';
                         break;
                       default:
                         aValue = a.lastName || (a.name ? a.name.split(' ').slice(-1)[0] : '');
@@ -779,7 +779,7 @@ export default function VereinSchuetzenPage() {
                       <span>{shooter.firstName || (shooter.name ? shooter.name.split(' ').slice(0, -1).join(' ') : '-')}</span>
                     </TableCell>
                     <TableCell label="Geburtsjahr">{shooter.birthYear || '-'}</TableCell>
-                    <TableCell label="Geschlecht">{shooter.gender === 'female' ? 'Weiblich' : (shooter.gender === 'male' ? 'Männlich' : 'N/A')}</TableCell>
+                    <TableCell label="Geschlecht">{shooter.gender === 'male' ? 'M' : 'W'}</TableCell>
                     <TableCell label="Mannschaften" className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
                     {(isVereinsvertreter || isSportleiter || isVorstand) && (
                       <TableCell className="text-right space-x-1">

@@ -478,7 +478,7 @@ export default function KMMitglieder() {
                       </div>
                       <div>
                         <span className="text-gray-500">Geschlecht:</span>
-                        <span className="ml-1 font-medium">{schuetze.gender === 'male' ? 'Männlich' : schuetze.gender === 'female' ? 'Weiblich' : '-'}</span>
+                        <span className="ml-1 font-medium">{schuetze.gender === 'male' ? 'M' : schuetze.gender === 'female' ? 'W' : '-'}</span>
                       </div>
                       <div>
                         <span className="text-gray-500">Mitgliedsnr.:</span>
