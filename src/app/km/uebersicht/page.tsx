@@ -93,7 +93,7 @@ export default function KMUebersicht() {
       if (meldungenRes.ok) {
         const meldungenData = await meldungenRes.json();
         allMeldungen = meldungenData.data || [];
-        console.log('Erste 3 Meldungen mit Details:', allMeldungen.slice(0, 3));
+        console.log('Erste 3 Meldungen:', allMeldungen.slice(0, 3).map(m => ({ id: m.id, disziplinId: m.disziplinId })));
       }
       
       if (schuetzenRes.ok) {
@@ -135,7 +135,7 @@ export default function KMUebersicht() {
         const disziplinenRes = await fetch('/api/km/disziplinen');
         if (disziplinenRes.ok) {
           const disziplinenData = await disziplinenRes.json();
-          console.log('Geladene Disziplinen:', disziplinenData.data);
+          console.log('Geladene Disziplinen:', disziplinenData.data?.length || 0);
           setData(prev => ({ ...prev, disziplinen: disziplinenData.data || [] }));
         }
       } catch (error) {

@@ -180,9 +180,6 @@ export default function DisziplinenVerwaltung() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={generateKennziffern} variant="secondary">
-            🔄 Kennziffern generieren
-          </Button>
           <Button onClick={addNewDisziplin}>
             <Plus className="h-4 w-4 mr-2" />
             Neue Disziplin
