@@ -13,8 +13,8 @@ export const PREVIOUS_VERSION = '1.9.0';
 
 // What's new in 2.0.0
 export const WHATS_NEW = {
-  version: '2.0.4.7',
-  title: 'Social Training Platform',
+  version: '2.1.0',
+  title: 'Disziplinen-System Reparatur',
   features: [
     '👥 Trainingsgruppen - Gemeinsam trainieren mit Freunden',
     '⚔️ Live-Wettkämpfe - Real-time Wettkämpfe in allen Disziplinen', 

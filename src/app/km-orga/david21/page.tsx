@@ -15,47 +15,65 @@ import { David21Service } from '@/lib/services/david21-service';
 export default function David21Page() {
   const router = useRouter();
   const [exportData, setExportData] = useState({
-    wettkampfId: 'VW111',
-    disziplinId: '',
+    startlisteId: '',
+    wettkampfId: '',
     datum: new Date().toISOString().slice(0, 10),
     startzeit: '14:00'
   });
   const [importFile, setImportFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [disziplinen, setDisziplinen] = useState<any[]>([]);
+  const [startlisten, setStartlisten] = useState<any[]>([]);
+  const [selectedStartliste, setSelectedStartliste] = useState<any>(null);
 
   React.useEffect(() => {
-    const loadDisziplinen = async () => {
+    const loadStartlisten = async () => {
       try {
-        const response = await fetch('/api/km/disziplinen');
+        const response = await fetch('/api/km/startlisten/gespeichert');
         if (response.ok) {
           const data = await response.json();
-          setDisziplinen(data.data || []);
+          setStartlisten(data.data || []);
         }
       } catch (error) {
-        logError('Fehler beim Laden der Disziplinen:', error);
+        logError('Fehler beim Laden der Startlisten:', error);
       }
     };
-    loadDisziplinen();
+    loadStartlisten();
   }, []);
+
+  React.useEffect(() => {
+    if (exportData.startlisteId) {
+      const startliste = startlisten.find(s => s.id === exportData.startlisteId);
+      if (startliste) {
+        setSelectedStartliste(startliste);
+        // Auto-generate wettkampfId from startliste
+        const datum = new Date(startliste.datum);
+        const year = datum.getFullYear();
+        const month = String(datum.getMonth() + 1).padStart(2, '0');
+        const day = String(datum.getDate()).padStart(2, '0');
+        setExportData(prev => ({
+          ...prev,
+          wettkampfId: `KM${year}${month}${day}_${startliste.id.substring(0, 6)}`,
+          datum: startliste.datum,
+          startzeit: startliste.startUhrzeit || '09:00'
+        }));
+      }
+    }
+  }, [exportData.startlisteId, startlisten]);
 
   const handleExport = async () => {
     setLoading(true);
     try {
-      // TODO: Hier würdest du die echten Daten aus Firebase laden
-      const mockData = {
-        ...exportData,
-        meldungen: [],
-        schuetzen: [],
-        vereine: [],
-        disziplinen: [{ id: '1', spoNummer: '1.10', name: 'Luftgewehr' }],
-        wettkampfklassen: []
+      const exportPayload = {
+        startlisteId: exportData.startlisteId,
+        wettkampfId: exportData.wettkampfId,
+        datum: exportData.datum,
+        startzeit: exportData.startzeit
       };
 
       const response = await fetch('/api/km/david21-export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mockData)
+        body: JSON.stringify(exportPayload)
       });
 
       const result = await response.json();
@@ -98,6 +116,7 @@ export default function David21Page() {
       const formData = new FormData();
       formData.append('file', importFile);
       formData.append('wettkampfId', exportData.wettkampfId);
+      formData.append('startlisteId', exportData.startlisteId);
 
       const response = await fetch('/api/km/david21-import', {
         method: 'POST',
@@ -154,47 +173,68 @@ export default function David21Page() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="wettkampfId">Wettkampf-ID</Label>
-                  <Input
-                    id="wettkampfId"
-                    value={exportData.wettkampfId}
-                    onChange={(e) => setExportData({...exportData, wettkampfId: e.target.value})}
-                    placeholder="z.B. VW111"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="disziplin">Disziplin</Label>
+                  <Label htmlFor="startliste">Gespeicherte Startliste auswählen *</Label>
                   <NativeSelect
-                    value={exportData.disziplinId}
-                    onValueChange={(value) => setExportData({...exportData, disziplinId: value})}
-                    placeholder="Disziplin wählen"
-                    options={disziplinen.map(d => ({
-                      value: d.id,
-                      label: `${d.spoNummer} - ${d.name}`
-                    }))}
+                    value={exportData.startlisteId}
+                    onValueChange={(value) => setExportData({...exportData, startlisteId: value})}
+                    placeholder="Startliste wählen"
+                    options={startlisten.map(s => {
+                      const datum = new Date(s.datum).toLocaleDateString('de-DE');
+                      const starterCount = s.startliste?.length || 0;
+                      const disziplinen = [...new Set(s.startliste?.map((starter: any) => starter.disziplin).filter(Boolean))] || [];
+                      const austragungsort = s.configId ? 'Einbeck' : 'Unbekannt';
+                      
+                      return {
+                        value: s.id,
+                        label: `${datum} | ${starterCount} Starter | ${disziplinen.slice(0, 2).join(', ')}${disziplinen.length > 2 ? ` +${disziplinen.length - 2}` : ''} | ${austragungsort}`
+                      };
+                    })}
                   />
                 </div>
+                {selectedStartliste && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="wettkampfId">Wettkampf-ID</Label>
+                      <Input
+                        id="wettkampfId"
+                        value={exportData.wettkampfId}
+                        onChange={(e) => setExportData({...exportData, wettkampfId: e.target.value})}
+                        placeholder="Automatisch generiert"
+                      />
+                    </div>
+                    <div>
+                      <Label>Starter gefunden</Label>
+                      <div className="p-2 bg-gray-50 rounded border">
+                        {selectedStartliste.startliste?.length || 0} Starter
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="datum">Wettkampf-Datum</Label>
+                  <Label htmlFor="datum">Wettkampf-Datum (aus Startliste)</Label>
                   <Input
                     id="datum"
                     type="date"
                     value={exportData.datum}
-                    onChange={(e) => setExportData({...exportData, datum: e.target.value})}
+                    readOnly
+                    disabled
+                    className="bg-gray-50"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="startzeit">Startzeit</Label>
+                  <Label htmlFor="startzeit">Startzeit (aus Startliste)</Label>
                   <Input
                     id="startzeit"
                     type="time"
                     value={exportData.startzeit}
-                    onChange={(e) => setExportData({...exportData, startzeit: e.target.value})}
+                    readOnly
+                    disabled
+                    className="bg-gray-50"
                   />
                 </div>
               </div>
@@ -212,7 +252,7 @@ export default function David21Page() {
 
               <Button 
                 onClick={handleExport} 
-                disabled={loading || !exportData.disziplinId}
+                disabled={loading || !exportData.startlisteId || !selectedStartliste}
                 className="w-full"
               >
                 <Download className="h-4 w-4 mr-2" />

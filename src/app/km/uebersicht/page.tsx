@@ -93,6 +93,7 @@ export default function KMUebersicht() {
       if (meldungenRes.ok) {
         const meldungenData = await meldungenRes.json();
         allMeldungen = meldungenData.data || [];
+        console.log('Erste 3 Meldungen mit Details:', allMeldungen.slice(0, 3));
       }
       
       if (schuetzenRes.ok) {
@@ -134,6 +135,7 @@ export default function KMUebersicht() {
         const disziplinenRes = await fetch('/api/km/disziplinen');
         if (disziplinenRes.ok) {
           const disziplinenData = await disziplinenRes.json();
+          console.log('Geladene Disziplinen:', disziplinenData.data);
           setData(prev => ({ ...prev, disziplinen: disziplinenData.data || [] }));
         }
       } catch (error) {
@@ -375,17 +377,22 @@ export default function KMUebersicht() {
                 const schuetze = data.schuetzen.find((s: any) => s.id === meldung.schuetzeId);
                 const disziplin = data.disziplinen.find((d: any) => d.id === meldung.disziplinId);
                 
+                // Fallback: Suche nach spoNummer wenn ID nicht gefunden
+                const disziplinFallback = !disziplin && meldung.spoNummer 
+                  ? data.disziplinen.find((d: any) => d.spoNummer === meldung.spoNummer)
+                  : null;
+                
                 // Berechne Altersklasse
                 let altersklasse = 'Unbekannt';
-                if (schuetze?.birthYear && schuetze?.gender && disziplin) {
+                if (schuetze?.birthYear && schuetze?.gender && (disziplin || disziplinFallback)) {
                   const age = 2026 - schuetze.birthYear;
                   const gender = schuetze.gender;
-                  const istAuflage = disziplin.auflage;
+                  const istAuflage = (disziplin || disziplinFallback).auflage;
                   
                   if (istAuflage) {
                     // Auflage-Wettkampfklassen
                     if (age <= 14) altersklasse = gender === 'male' ? 'Schüler m' : 'Schüler w';
-                    else if (disziplin.spoNummer === '1.41' && age >= 15 && age <= 40) {
+                    else if ((disziplin || disziplinFallback).spoNummer === '1.41' && age >= 15 && age <= 40) {
                       if (age <= 16) altersklasse = gender === 'male' ? 'Jugend m' : 'Jugend w';
                       else if (age <= 18) altersklasse = gender === 'male' ? 'Junioren II m' : 'Junioren II w';
                       else if (age <= 20) altersklasse = gender === 'male' ? 'Junioren I m' : 'Junioren I w';
@@ -418,7 +425,12 @@ export default function KMUebersicht() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="flex-1">
                         <div className="font-medium text-lg">{schuetze?.name || 'Unbekannt'}</div>
-                        <div className="text-sm text-gray-600">{disziplin?.spoNummer} - {disziplin?.name}</div>
+                        <div className="text-sm text-gray-600">
+                          {(disziplin || disziplinFallback) ? 
+                            `${(disziplin || disziplinFallback).spoNummer} - ${(disziplin || disziplinFallback).name}` : 
+                            `Disziplin-ID: ${meldung.disziplinId} (nicht gefunden)`
+                          }
+                        </div>
                         <div className="text-sm font-medium text-blue-600">{altersklasse}</div>
                       </div>
                       
@@ -598,9 +610,6 @@ export default function KMUebersicht() {
           )}
         </CardContent>
       </Card>
-      )}
-      )}
-      )}
       )}
     </div>
   );

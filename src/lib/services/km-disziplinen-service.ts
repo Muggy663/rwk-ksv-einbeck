@@ -148,21 +148,63 @@ const DISZIPLINEN_2026 = [
 export async function generateDisziplinen2026(): Promise<void> {
   const collectionRef = adminDb.collection('km_disziplinen');
   
-  // Lösche ALLE bestehenden Disziplinen für komplette Neu-Erstellung
+  // NEUE SICHERE METHODE: Aktualisiere bestehende Disziplinen statt sie zu löschen
   const existingSnapshot = await collectionRef.get();
+  const existingDisziplinen = new Map();
   
-  for (const docSnap of existingSnapshot.docs) {
-    await docSnap.ref.delete();
-  }
+  // Sammle bestehende Disziplinen nach spoNummer
+  existingSnapshot.forEach(doc => {
+    const data = doc.data();
+    if (data.spoNummer) {
+      existingDisziplinen.set(data.spoNummer, { id: doc.id, data });
+    }
+  });
   
-  // Erstelle alle Disziplinen neu mit auflage-Flag
+  // Aktualisiere oder erstelle Disziplinen
   for (const disziplin of DISZIPLINEN_2026) {
-    await collectionRef.add({
+    const existing = existingDisziplinen.get(disziplin.spoNummer);
+    
+    // Generiere Kennziffer basierend auf spoNummer und Eigenschaften
+    const kennziffer = generateKennziffer(disziplin);
+    
+    const disziplinData = {
       ...disziplin,
+      kennziffer, // Füge Kennziffer hinzu
       saison: '2026',
-      createdAt: new Date()
-    });
+      updatedAt: new Date()
+    };
+    
+    if (existing) {
+      // Aktualisiere bestehende Disziplin (behält ID)
+      await collectionRef.doc(existing.id).update({
+        ...disziplinData,
+        createdAt: existing.data.createdAt // Behalte ursprüngliches Erstellungsdatum
+      });
+      console.log(`✅ Aktualisiert: ${disziplin.spoNummer} (ID: ${existing.id})`);
+    } else {
+      // Erstelle neue Disziplin
+      await collectionRef.add({
+        ...disziplinData,
+        createdAt: new Date()
+      });
+      console.log(`🆕 Neu erstellt: ${disziplin.spoNummer}`);
+    }
   }
+}
+
+// Hilfsfunktion zur Generierung der Kennziffer
+function generateKennziffer(disziplin: any): string {
+  const spoNum = disziplin.spoNummer.replace('.', '');
+  const auflageCode = disziplin.auflage ? '1' : '0';
+  const vmCode = disziplin.nurVereinsmeisterschaft ? '1' : '0';
+  
+  // Schusszahl-Code (erste Schusszahl oder Standard)
+  let schusszahlCode = '30';
+  if (disziplin.schusszahlen && disziplin.schusszahlen.length > 0) {
+    schusszahlCode = disziplin.schusszahlen[0].schusszahl.toString().padStart(2, '0');
+  }
+  
+  return `${spoNum}${auflageCode}${vmCode}${schusszahlCode}`;
 }
 
 export async function getAllDisziplinen() {

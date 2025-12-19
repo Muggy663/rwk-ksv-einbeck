@@ -289,7 +289,7 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // RWK Scores nach Saison (rwk_scores_[seasonId])
+   // RWK Scores nach Saison (rwk_scores_[seasonId])
     match /{collection}/{score} {
       allow read: if collection.matches('rwk_scores_.*');
       allow create: if collection.matches('rwk_scores_.*') && 
@@ -355,10 +355,10 @@ service cloud.firestore {
 
     match /km_startlisten_configs/{config} {
       allow read: if true;
-      allow write, delete: if isSuperAdmin() || 
-                           (isAuthenticated() && getUserPermissions() != null && 
-                            (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
-                             getUserPermissions().role == 'km_organisator'));
+      allow write: if isSuperAdmin() || 
+                   (isAuthenticated() && getUserPermissions() != null && 
+                    (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
+                     getUserPermissions().role == 'km_organisator'));
     }
 
     match /km_startlisten/{startliste} {
@@ -366,7 +366,7 @@ service cloud.firestore {
       allow write, delete: if isSuperAdmin() || 
                            (isAuthenticated() && getUserPermissions() != null && 
                             (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
-                             getUserPermissions().role == 'km_organisator'));
+                             getUserPermissions().role == 'km_organisator'));        
     }
 
    
@@ -542,7 +542,7 @@ service cloud.firestore {
 
     // === SOCIAL TRAINING FEATURES ===
     
-    // Social Training Profile (getrennt von RWK/KM)
+       // Social Training Profile (getrennt von RWK/KM)
     match /social_profiles/{userId} {
       allow read: if true; // Öffentlich lesbar für Community
       allow write: if isAuthenticated() && request.auth.uid == userId;
@@ -559,7 +559,7 @@ service cloud.firestore {
     match /training_groups/{groupId} {
       allow read: if isSuperAdmin() || isAuthenticated();
       allow create: if isAuthenticated();
-      allow update: if isSuperAdmin() || (isAuthenticated() && 
+           allow update: if isSuperAdmin() || (isAuthenticated() && 
                     (resource.data.admins.hasAny([request.auth.uid]) ||
                      // Erlaube Join-Operation: User fügt sich zu members hinzu
                      (request.resource.data.members.hasAll(resource.data.members) &&
@@ -571,7 +571,7 @@ service cloud.firestore {
     
     // Gruppen-Mitglieder
     match /training_groups/{groupId}/members/{userId} {
-      allow read: if isSuperAdmin() || (isAuthenticated() && 
+     allow read: if isSuperAdmin() || (isAuthenticated() && 
                   (request.auth.uid == userId || 
                    get(/databases/$(database)/documents/training_groups/$(groupId)).data.members.hasAny([request.auth.uid]) ||
                    get(/databases/$(database)/documents/training_groups/$(groupId)).data.admins.hasAny([request.auth.uid])));
@@ -586,11 +586,11 @@ service cloud.firestore {
     // Live-Wettkämpfe (Premium)
     match /live_competitions/{competitionId} {
       allow read: if isAuthenticated() && 
-                  get(/databases/$(database)/documents/training_groups/$(resource.data.groupId)).data.members.hasAny([request.auth.uid]);
+                                    get(/databases/$(database)/documents/training_groups/$(resource.data.groupId)).data.members.hasAny([request.auth.uid]);
       allow create: if isAuthenticated() && 
                     get(/databases/$(database)/documents/training_groups/$(request.resource.data.groupId)).data.members.hasAny([request.auth.uid]);
       allow update: if isAuthenticated() && 
-                    get(/databases/$(database)/documents/training_groups/$(resource.data.groupId)).data.members.hasAny([request.auth.uid]);
+         get(/databases/$(database)/documents/training_groups/$(resource.data.groupId)).data.members.hasAny([request.auth.uid]);
       allow delete: if isSuperAdmin() || (isAuthenticated() && resource.data.createdBy == request.auth.uid);
     }
     
@@ -601,15 +601,15 @@ service cloud.firestore {
                    get(/databases/$(database)/documents/live_competitions/$(competitionId)).data.participants.hasAny([request.auth.uid])));
       allow write: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
     }
-    
-    // Social Training Ergebnisse
+
+   // Social Training Ergebnisse
     match /social_training_results/{resultId} {
       allow read: if true; // Öffentlich lesbar für Community-Features
       allow create: if isAuthenticated();
       allow update: if isSuperAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
       allow delete: if isSuperAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
-    
+
     // Gruppen-Ergebnisse (Subcollection)
     match /training_groups/{groupId}/results/{resultId} {
       allow read: if isAuthenticated() && 
@@ -620,7 +620,7 @@ service cloud.firestore {
                             (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
     
-    // === DUELLE SYSTEM ===
+        // === DUELLE SYSTEM ===
     
     // Duelle zwischen Gruppenmitgliedern
     match /duels/{duelId} {
@@ -636,7 +636,7 @@ service cloud.firestore {
                      resource.data.opponentId == request.auth.uid);
       allow delete: if isSuperAdmin();
     }
-
+    
     match /{document=**} {
       allow read, write: if false;
     }

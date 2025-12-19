@@ -24,7 +24,8 @@ if (!getApps().length) {
 }
 
 // Admin Services exportieren
-export const adminDb = getFirestore();
+const databaseId = process.env.FIREBASE_DATABASE_ID || 'restored-main';
+export const adminDb = getFirestore(undefined, databaseId);
 
 // Admin Auth für API-Auth Helper
 import { getAuth } from 'firebase-admin/auth';

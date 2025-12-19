@@ -172,8 +172,6 @@ export default function KMAltersklassen() {
         <h3 className="font-semibold text-blue-900 mb-2">📝 Wichtige Hinweise</h3>
         <ul className="text-sm text-blue-700 space-y-1">
           <li>• <strong>Sportjahr {sportjahr}:</strong> Entscheidend ist das Geburtsjahr, nicht das Geburtsdatum</li>
-          <li>• <strong>Auflage:</strong> Nur Schüler (12-14) und Senioren (41+) teilnahmeberechtigt</li>
-          <li>• <strong>Senioren 0:</strong> Gemischte Altersklasse (männlich und weiblich zusammen)</li>
           <li>• <strong>Automatische Berechnung:</strong> Das System ordnet Schützen automatisch der korrekten Klasse zu</li>
         </ul>
       </div>
