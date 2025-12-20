@@ -9,7 +9,7 @@ export async function PATCH(
   try {
     const { id } = params;
     const body = await request.json();
-    const { lmTeilnahme, anmerkung, vmErgebnis } = body;
+    const { lmTeilnahme, anmerkung, vmErgebnis, disziplinId } = body;
     
     // Finde die Meldung in allen möglichen Collections
     const saisons = await adminDb.collection('km_saisons').get();
@@ -32,6 +32,7 @@ export async function PATCH(
             lmTeilnahme: !!lmTeilnahme,
             anmerkung: anmerkung || '',
             vmErgebnis: vmErgebnis || null,
+            ...(disziplinId && { disziplinId }),
             updatedAt: new Date()
           });
           updated = true;

@@ -40,6 +40,7 @@ export default function StartlistenPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('luftdruck');
+  const [editId, setEditId] = useState<string | null>(null);
   
   const [config, setConfig] = useState<StartlistConfig>({
     austragungsort: '',
@@ -57,10 +58,48 @@ export default function StartlistenPage() {
   const [saisons, setSaisons] = useState<any[]>([]);
   const [meldungen, setMeldungen] = useState<any[]>([]);
 
+  // Check for edit parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editParam = urlParams.get('edit');
+    if (editParam) {
+      setEditId(editParam);
+    }
+  }, []);
+
   const ALLE_STAENDE = [
     ...Array.from({length: 15}, (_, i) => (i + 1).toString()),
     '101', '102'
   ];
+
+  // Load existing config if editing
+  useEffect(() => {
+    const loadExistingConfig = async () => {
+      if (!editId) return;
+      
+      try {
+        const response = await fetch('/api/km/startlisten');
+        if (response.ok) {
+          const data = await response.json();
+          const existingConfig = data.data?.find((c: any) => c.id === editId);
+          if (existingConfig) {
+            setConfig({
+              ...existingConfig,
+              verfuegbareStaende: existingConfig.verfuegbareStaende || [],
+              disziplinen: existingConfig.disziplinen || [],
+              altersklassen: existingConfig.altersklassen || ['Erwachsene']
+            });
+          }
+        }
+      } catch (error) {
+        logError('Fehler beim Laden der Konfiguration:', error);
+      }
+    };
+    
+    if (editId) {
+      loadExistingConfig();
+    }
+  }, [editId]);
 
   // Saisons laden
   useEffect(() => {
@@ -196,18 +235,28 @@ export default function StartlistenPage() {
     try {
       const configToSave = {
         ...config,
-        createdAt: new Date(),
+        createdAt: editId ? undefined : new Date(),
         updatedAt: new Date()
       };
       
-      // Konfiguration in Firestore speichern
-      await addDoc(collection(db, 'km_startlisten_configs'), configToSave);
+      // Konfiguration über API speichern oder aktualisieren
+      const response = await fetch(editId ? `/api/km/startlisten/configs` : '/api/km/startlisten/configs', {
+        method: editId ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editId ? { id: editId, ...configToSave } : configToSave)
+      });
+      
+      if (!response.ok) {
+        throw new Error('API-Fehler beim Speichern');
+      }
       
 
       
       toast({
-        title: "Konfiguration gespeichert",
-        description: `Einstellungen für ${config.verfuegbareStaende.length} Stände gespeichert.`
+        title: editId ? "Konfiguration aktualisiert" : "Konfiguration gespeichert",
+        description: `Einstellungen für ${config.verfuegbareStaende.length} Stände ${editId ? 'aktualisiert' : 'gespeichert'}.`
       });
       
       // Weiterleitung zur Konfigurationsübersicht
@@ -271,9 +320,9 @@ export default function StartlistenPage() {
           <Button variant="outline">← Zurück</Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-primary">📄 Startlisten generieren</h1>
+          <h1 className="text-3xl font-bold text-primary">📄 {editId ? 'Austragungsort bearbeiten' : 'Startlisten generieren'}</h1>
           <p className="text-muted-foreground">
-            Konfigurieren Sie die Wettkampf-Parameter für die automatische Startlisten-Generierung
+            {editId ? 'Bearbeiten Sie die Wettkampf-Parameter' : 'Konfigurieren Sie die Wettkampf-Parameter für die automatische Startlisten-Generierung'}
           </p>
         </div>
         <div className="flex items-center gap-4">

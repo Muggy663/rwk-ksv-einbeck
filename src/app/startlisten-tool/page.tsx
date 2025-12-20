@@ -33,6 +33,7 @@ interface Starter {
 export default function StartlistenToolPage() {
   const router = useRouter();
   const [configId, setConfigId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -70,13 +71,14 @@ export default function StartlistenToolPage() {
       if (isCancelled) return;
       try {
         // Konfiguration laden
-        const configDoc = await getDoc(doc(db, 'km_startlisten_configs', configId));
-        if (!configDoc.exists()) {
+        const configResponse = await fetch(`/api/km/startlisten/${configId}`);
+        if (!configResponse.ok) {
           setLoading(false);
           return;
         }
         
-        const configData = { id: configDoc.id, ...configDoc.data() };
+        const configResult = await configResponse.json();
+        const configData = configResult.data;
         setConfig(configData);
 
         // Lade Saisons nur einmal
@@ -98,10 +100,7 @@ export default function StartlistenToolPage() {
             
             // Verwende direkt die geladenen Saisons
             let saisonId = selectedSaison;
-            if (!saisonId && sortedSaisons.length > 0) {
-              saisonId = sortedSaisons[0].id;
-              setSelectedSaison(saisonId);
-            }
+            // KEINE automatische Auswahl - Benutzer muss bewusst wählen
             console.log('DEBUG: SaisonId aus geladenen Saisons:', {selectedSaison, saisonId, saisonsCount: sortedSaisons.length});
             
             
@@ -112,14 +111,11 @@ export default function StartlistenToolPage() {
         
         // Fallback wenn Saisons bereits geladen
         let saisonId = selectedSaison;
-        if (!saisonId && saisons.length > 0) {
-          saisonId = saisons[0].id;
-          setSelectedSaison(saisonId);
-        }
+        // KEINE automatische Auswahl - Benutzer muss bewusst wählen
         console.log('DEBUG: SaisonId aus State:', {selectedSaison, saisonId, saisonsCount: saisons.length});
         
-        // Verwende selectedSaison oder erste Saison als Fallback
-        const finalSaisonId = selectedSaison || (saisons.length > 0 ? saisons[0].id : '81ZTV9wmusKGuq7z1I2k');
+        // Verwende nur selectedSaison - KEINE Fallbacks
+        const finalSaisonId = selectedSaison;
         logDebug('Gefundene Saison-ID:', finalSaisonId);
         
         if (!finalSaisonId || isCancelled) {
@@ -649,9 +645,50 @@ export default function StartlistenToolPage() {
       }
       return s;
     });
-    setStartliste(neueStartliste);
     
-
+    // Prüfe Gewehr-Sharing Konflikte und löse sie automatisch
+    const gewehrSharingStarter = neueStartliste.filter(starter => 
+      starter.anmerkung?.toLowerCase().includes('gewehr') || 
+      starter.hinweise?.toLowerCase().includes('gewehr')
+    );
+    
+    if (gewehrSharingStarter.length > 1) {
+      // Finde Schützen die zur gleichen Zeit schießen sollen
+      const zeitGruppen = {};
+      gewehrSharingStarter.forEach(starter => {
+        const zeit = starter.startzeit || '15:00';
+        if (!zeitGruppen[zeit]) zeitGruppen[zeit] = [];
+        zeitGruppen[zeit].push(starter);
+      });
+      
+      // Löse Konflikte für jede Zeit-Gruppe
+      Object.entries(zeitGruppen).forEach(([zeit, gruppe]: [string, any[]]) => {
+        if (gruppe.length > 1) {
+          // Verschiebe jeden zweiten Schützen um Durchgangsdauer + Wechselzeit
+          gruppe.forEach((starter, index) => {
+            if (index > 0) {
+              const [hours, minutes] = zeit.split(':').map(Number);
+              const durchgangIntervall = (config?.durchgangsDauer || 30) + (config?.wechselzeit || 15);
+              const newMinutes = minutes + (index * durchgangIntervall);
+              const newHours = hours + Math.floor(newMinutes / 60);
+              const finalMinutes = newMinutes % 60;
+              
+              const neueZeit = `${newHours.toString().padStart(2, '0')}:${finalMinutes.toString().padStart(2, '0')}`;
+              
+              // Update in neueStartliste
+              const starterIndex = neueStartliste.findIndex(s => s.id === starter.id);
+              if (starterIndex !== -1) {
+                neueStartliste[starterIndex].startzeit = neueZeit;
+                neueStartliste[starterIndex].durchgang = (neueStartliste[starterIndex].durchgang || 1) + index;
+                neueStartliste[starterIndex].hinweise = `Gewehr geteilt - Zeitverschiebung`;
+              }
+            }
+          });
+        }
+      });
+    }
+    
+    setStartliste(neueStartliste);
   };
 
 
@@ -1416,13 +1453,50 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
             💻 Empfohlen für PC/Desktop - Mobile Nutzung eingeschränkt
           </div>
         </div>
-
-
       </div>
 
+      <Card className="border-2 border-primary bg-primary/5 mb-6">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div>
+              <label className="text-base font-semibold text-gray-800 dark:text-gray-200">🎯 Saison auswählen (Pflichtfeld)</label>
+              <select
+                value={selectedSaison}
+                onChange={(e) => {
+                  setSelectedSaison(e.target.value);
+                  setMeldungen([]);
+                  setStartliste([]);
+                  setLoading(true);
+                }}
+                className="w-full mt-2 px-4 py-3 text-lg border-2 border-primary rounded-lg bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+                required
+              >
+                <option value="">🔽 Bitte Saison wählen...</option>
+                {saisons.map(saison => (
+                  <option key={saison.id} value={saison.id}>
+                    {saison.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {!selectedSaison && (
+        <Card className="mb-6 border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="text-center py-4">
+              <p className="text-orange-800 font-medium mb-2">⚠️ Bitte wählen Sie zuerst eine Saison aus</p>
+              <p className="text-sm text-orange-600">Die Konfiguration und Meldungen werden erst nach der Saisonauswahl geladen.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
 
-      {config && (
+
+      {config && selectedSaison && (
         <div className="grid gap-6">
           <Card>
             <CardHeader>
@@ -1466,73 +1540,104 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
               <div className="flex justify-between items-center">
                 <div>
                   <CardTitle>③ Meldungen ({meldungen.length})</CardTitle>
-                  {saisons.length > 0 && (
+                  {saisons.length > 0 && selectedSaison && (
                     <div className="mt-2">
-                      <label className="block text-sm font-medium text-blue-900 mb-1">Saison:</label>
-                      <select 
-                        value={selectedSaison} 
-                        onChange={(e) => {
-                          setSelectedSaison(e.target.value);
-                          setMeldungen([]);
-                          setStartliste([]);
-                          setLoading(true);
-                        }}
-                        className="border-4 border-red-600 rounded px-3 py-2 text-sm font-medium bg-white min-w-[200px]"
-                      >
-                        {saisons.map(saison => (
-                          <option key={saison.id} value={saison.id}>
-                            {saison.name}
-                          </option>
-                        ))}
-                      </select>
+                      <p className="text-sm text-blue-600">Aktuelle Saison: <strong>{saisons.find(s => s.id === selectedSaison)?.name}</strong></p>
                     </div>
                   )}
                 </div>
                 <div className="flex gap-2">
-
-                  <Button variant="outline" onClick={saveStartliste} disabled={startliste.length === 0}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Speichern
-                  </Button>
-
-                  <Button 
-                    onClick={() => setShowGemini(!showGemini)}
-                    variant={showGemini ? 'default' : 'outline'}
-                  >
-                    🎯 Startliste generieren {showGemini ? 'aktiv' : ''}
-                  </Button>
-                  
-                  <Button 
-                    onClick={async () => {
-                      if (meldungen.length === 0) {
-                        toast({ title: 'Keine Meldungen', description: 'Es sind keine Meldungen vorhanden', variant: 'destructive' });
-                        return;
-                      }
-                      
-                      // Einfache Startliste: Alle Meldungen mit Standard-Werten
-                      const einfacheStartliste = meldungen.map((m, index) => ({
-                        ...m,
-                        id: `fallback_${m.id}_${index}`,
-                        stand: config?.verfuegbareStaende[index % config.verfuegbareStaende.length] || '1',
-                        startzeit: config?.startUhrzeit || '14:00',
-                        durchgang: Math.floor(index / config?.verfuegbareStaende.length) + 1,
-                        hinweise: 'Einfache Verteilung - Stand 1 beginnend'
-                      }));
-                      
-                      setStartliste(einfacheStartliste);
-                      toast({ title: '📋 Einfache Liste', description: `${einfacheStartliste.length} Starter - jetzt manuell anpassen` });
-                    }}
-                    variant="outline"
-                  >
-                    📋 Einfache Liste
-                  </Button>
-
+                  {/* Gemini Panel wurde nach unten verschoben */}
                 </div>
               </div>
               
+              {/* Gemini AI Panel wurde nach oben verschoben */}
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <div className="text-sm font-medium mb-2">Disziplinen Filter:</div>
+                <div className="flex flex-wrap gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer bg-gray-50 px-3 py-2 rounded border">
+                    <input
+                      type="checkbox"
+                      checked={selectedDisziplinen.includes('alle')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedDisziplinen(['alle']);
+                        } else {
+                          setSelectedDisziplinen([]);
+                        }
+                      }}
+                      className="rounded"
+                    />
+                    <span className="text-sm font-medium">Alle Disziplinen</span>
+                  </label>
+                  {config.disziplinen.map(disziplin => (
+                    <label key={disziplin} className="flex items-center gap-2 cursor-pointer bg-blue-50 px-3 py-2 rounded border border-blue-200">
+                      <input
+                        type="checkbox"
+                        checked={selectedDisziplinen.includes(disziplin) || selectedDisziplinen.includes('alle')}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            if (selectedDisziplinen.includes('alle')) {
+                              setSelectedDisziplinen([disziplin]);
+                            } else {
+                              setSelectedDisziplinen([...selectedDisziplinen, disziplin]);
+                            }
+                          } else {
+                            setSelectedDisziplinen(selectedDisziplinen.filter(d => d !== disziplin));
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <span className="text-sm">{disziplin}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2 mb-4">
+                <Button variant="outline" onClick={saveStartliste} disabled={startliste.length === 0}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Speichern
+                </Button>
+
+                <Button 
+                  onClick={() => setShowGemini(!showGemini)}
+                  variant={showGemini ? 'default' : 'outline'}
+                >
+                  🎯 Startliste generieren {showGemini ? 'aktiv' : ''}
+                </Button>
+                
+                <Button 
+                  onClick={async () => {
+                    if (meldungen.length === 0) {
+                      toast({ title: 'Keine Meldungen', description: 'Es sind keine Meldungen vorhanden', variant: 'destructive' });
+                      return;
+                    }
+                    
+                    // Einfache Startliste: Alle Meldungen mit Standard-Werten
+                    const einfacheStartliste = meldungen.map((m, index) => ({
+                      ...m,
+                      id: `fallback_${m.id}_${index}`,
+                      stand: config?.verfuegbareStaende[index % config.verfuegbareStaende.length] || '1',
+                      startzeit: config?.startUhrzeit || '14:00',
+                      durchgang: Math.floor(index / config?.verfuegbareStaende.length) + 1,
+                      hinweise: 'Einfache Verteilung - Stand 1 beginnend'
+                    }));
+                    
+                    setStartliste(einfacheStartliste);
+                    toast({ title: '📋 Einfache Liste', description: `${einfacheStartliste.length} Starter - jetzt manuell anpassen` });
+                  }}
+                  variant="outline"
+                >
+                  📋 Einfache Liste
+                </Button>
+              </div>
+
               {/* Gemini AI Panel */}
               {showGemini && (
-                <div className="mt-4 p-4 bg-blue-50 rounded border space-y-3">
+                <div className="mt-4 p-4 bg-blue-50 rounded border space-y-3 mb-4">
                   <h4 className="font-medium text-blue-900">🤖 Gemini AI Generator</h4>
                   <p className="text-sm text-blue-700">
                     KI-basierte Startlisten-Optimierung mit Vereins-Limits & Sportgeräte-Regeln
@@ -1699,64 +1804,30 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                   )}
                 </div>
               )}
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <div className="text-sm font-medium mb-2">Disziplinen Filter:</div>
-                <div className="flex flex-wrap gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer bg-gray-50 px-3 py-2 rounded border">
-                    <input
-                      type="checkbox"
-                      checked={selectedDisziplinen.includes('alle')}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedDisziplinen(['alle']);
-                        } else {
-                          setSelectedDisziplinen([]);
-                        }
-                      }}
-                      className="rounded"
-                    />
-                    <span className="text-sm font-medium">Alle Disziplinen</span>
-                  </label>
-                  {config.disziplinen.map(disziplin => (
-                    <label key={disziplin} className="flex items-center gap-2 cursor-pointer bg-blue-50 px-3 py-2 rounded border border-blue-200">
-                      <input
-                        type="checkbox"
-                        checked={selectedDisziplinen.includes(disziplin) || selectedDisziplinen.includes('alle')}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            if (selectedDisziplinen.includes('alle')) {
-                              setSelectedDisziplinen([disziplin]);
-                            } else {
-                              setSelectedDisziplinen([...selectedDisziplinen, disziplin]);
-                            }
-                          } else {
-                            setSelectedDisziplinen(selectedDisziplinen.filter(d => d !== disziplin));
-                          }
-                        }}
-                        className="rounded"
-                      />
-                      <span className="text-sm">{disziplin}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div className="text-center py-4">
+
+              <div className="text-center py-8">
                 {meldungen.length === 0 ? (
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-lg">
                     Keine Meldungen vorhanden.
                   </p>
                 ) : (
-                  <div className="space-y-2">
-                    <div className="text-2xl font-bold text-primary">{meldungen.length}</div>
-                    <p className="text-sm text-muted-foreground">Meldungen bereit für Startliste</p>
-                    <div className="flex flex-wrap gap-1 justify-center">
-                      {[...new Set(meldungen.map(m => m.disziplin))].map(disziplin => (
-                        <Badge key={disziplin} variant="outline" className="text-xs">
-                          {disziplin} ({meldungen.filter(m => m.disziplin === disziplin).length})
-                        </Badge>
-                      ))}
+                  <div className="space-y-4">
+                    <div className="text-6xl font-bold text-primary">
+                      {selectedDisziplinen.includes('alle') ? meldungen.length : meldungen.filter(m => selectedDisziplinen.includes(m.disziplin)).length}
+                    </div>
+                    <p className="text-lg text-muted-foreground font-medium">
+                      {selectedDisziplinen.includes('alle') ? 'Alle Meldungen' : 'Gefilterte Meldungen'} bereit für Startliste
+                    </p>
+                    <div className="flex flex-wrap gap-2 justify-center max-w-4xl mx-auto">
+                      {(() => {
+                        const gefilterteMeldungen = selectedDisziplinen.includes('alle') ? meldungen : meldungen.filter(m => selectedDisziplinen.includes(m.disziplin));
+                        return [...new Set(gefilterteMeldungen.map(m => m.disziplin))].map(disziplin => (
+                          <Badge key={disziplin} variant="outline" className="text-sm px-3 py-2">
+                            {disziplin} ({gefilterteMeldungen.filter(m => m.disziplin === disziplin).length})
+                          </Badge>
+                        ));
+                      })()
+                      }
                     </div>
                   </div>
                 )}
@@ -1782,11 +1853,68 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                 </div>
               </CardHeader>
               <CardContent>
+                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-sm font-medium text-amber-900">Schütze manuell hinzufügen</p>
+                      <p className="text-xs text-amber-700">Für Schützen die am anderen Termin schießen sollen (z.B. Freihand-Schütze am Auflage-Tag)</p>
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <input
+                      type="text"
+                      placeholder="Schützen-Name suchen..."
+                      className="w-full p-2 border rounded text-sm"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <div className="max-h-32 overflow-y-auto">
+                    <div className="grid grid-cols-2 gap-2">
+                      {meldungen
+                        .filter(m => 
+                          !startliste.some(s => s.name === m.name && s.disziplin === m.disziplin) &&
+                          (searchTerm === '' || 
+                           m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           m.verein.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           m.disziplin.toLowerCase().includes(searchTerm.toLowerCase()))
+                        )
+                        .slice(0, 20)
+                        .map(schuetze => (
+                            <button
+                              key={`${schuetze.name}_${schuetze.disziplin}`}
+                              onClick={() => {
+                                setStartliste(prev => [...prev, {
+                                  ...schuetze,
+                                  id: `manual_${Date.now()}`,
+                                  stand: config?.verfuegbareStaende[0] || '1',
+                                  startzeit: config?.startUhrzeit || '14:00',
+                                  durchgang: 1,
+                                  hinweise: 'Terminwechsel - schießt am anderen Tag'
+                                }]);
+                                toast({ title: '✅ Hinzugefügt', description: `${schuetze.name} hinzugefügt` });
+                              }}
+                              className="text-left p-2 bg-white border rounded hover:bg-blue-50 text-xs"
+                            >
+                              <div className="font-medium">{schuetze.name}</div>
+                              <div className="text-gray-600">{schuetze.disziplin}</div>
+                              <div className="text-gray-500">{schuetze.verein}</div>
+                            </button>
+                          ))}
+                    </div>
+                  </div>
+                </div>
 
                 <div className="overflow-x-auto">
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {(() => {
-                      const gefiltert = selectedDisziplinen.includes('alle') ? startliste : startliste.filter(s => selectedDisziplinen.includes(s.disziplin));
+                      const gefiltert = selectedDisziplinen.includes('alle') ? 
+                        startliste : 
+                        startliste.filter(s => 
+                          selectedDisziplinen.includes(s.disziplin) || 
+                          s.hinweise?.includes('Terminwechsel') || 
+                          s.hinweise?.includes('Manuell')
+                        );
                       const sortiert = gefiltert.sort((a, b) => {
                         switch (sortierung) {
                           case 'durchgang-stand':

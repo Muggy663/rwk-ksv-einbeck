@@ -1,0 +1,200 @@
+{
+  "handbuch": {
+    "version": "2.1.0.1",
+    "datum": "19.12.2025",
+    "titel": "RWK Einbeck App - Vollständiges Handbuch",
+    "beschreibung": "Social Training Platform für den deutschen Schießsport",
+    
+    "neuerungen_v2101": {
+      "startlisten_tool": {
+        "beschreibung": "Vollständiges Startlisten-Management-Tool",
+        "funktionen": [
+          "✅ Automatische Startlisten-Generierung aus KM-Meldungen",
+          "✅ Manuelle Schützen-Suche und -Hinzufügung",
+          "✅ Terminwechsel-Feature (Freihand-Schütze am Auflage-Tag)",
+          "✅ Live-Suche nach Name, Verein oder Disziplin",
+          "✅ Klickbare Schützen-Auswahl ohne Duplikate",
+          "✅ Stand- und Startzeit-Anpassung per Drag & Drop",
+          "✅ Durchgangs-Berechnung automatisch",
+          "✅ PDF-Export mit korrekten Altersklassen",
+          "✅ Meyton/David21-Export für elektronische Anlagen"
+        ],
+        "url": "/startlisten-tool"
+      },
+      "km_system_erweitert": {
+        "beschreibung": "Erweiterte KM-Verwaltung mit Startlisten-Integration",
+        "verbesserungen": [
+          "✅ Austragungsorte vollständig editierbar",
+          "✅ Gespeicherte Startlisten-Verwaltung",
+          "✅ Disziplinen-CRUD mit Kennziffer-Management",
+          "✅ API-basierte Datenverwaltung statt direkter Firestore-Zugriffe",
+          "✅ Terminflexibilität für Schützen",
+          "✅ Automatische Altersklassen-Berechnung",
+          "✅ Vereins-Limits und Gewehr-Sharing-Regeln"
+        ],
+        "urls": ["/km-orga/startlisten/uebersicht", "/km-orga/disziplinen"]
+      }
+    },
+
+    "hauptfunktionen": {
+      "rwk_system": {
+        "beschreibung": "Rundenwettkampf-Verwaltung",
+        "funktionen": [
+          "Liga-Management mit flexiblen Schusszahlen",
+          "Mannschafts-Generierung automatisch/manuell",
+          "Ergebnis-Eingabe mit Validierung",
+          "OCR Handzettel-Erkennung (Google Gemini AI)",
+          "Live-Tabellen mit Auf-/Abstieg",
+          "Handzettel-Generator für Wettkampftage"
+        ],
+        "urls": ["/rwk-tabellen", "/verein"]
+      },
+      
+      "km_system": {
+        "beschreibung": "Kreismeisterschafts-System",
+        "funktionen": [
+          "KM-Jahresverwaltung mit automatischen Collections",
+          "Meldungen-Verwaltung mit Inline-Bearbeitung", 
+          "Startlisten-Tool mit Terminwechsel-Feature",
+          "Austragungsorte-Verwaltung vollständig editierbar",
+          "Disziplinen-Management mit Kennziffer-System",
+          "Ergebnis-Erfassung für KM-Wettkämpfe",
+          "Qualifikations-Management für Landesmeisterschaften",
+          "Urkunden-Druck automatisiert",
+          "David21/Meyton Export & Import mit korrekten Kennziffern"
+        ],
+        "urls": ["/km", "/km-orga", "/km-orga/disziplinen", "/km-orga/david21", "/startlisten-tool"]
+      },
+
+      "social_training": {
+        "beschreibung": "Community-Platform für Sportschützen",
+        "funktionen": [
+          "Trainingsgruppen mit 6-stelligen Beitrittscodes",
+          "Live-Wettkämpfe mit Real-time Ranglisten",
+          "Duelle-System (1vs1 Herausforderungen)",
+          "Community-Statistiken und Performance-Analysen",
+          "Smart Notifications (DSGVO-konform)",
+          "Community-weite Ranglisten",
+          "Real-time Updates via Firebase",
+          "Einheitliche Eingabe über Schießnachweis"
+        ],
+        "urls": ["/social", "/training-groups", "/live-competition", "/duels"]
+      },
+
+      "schiessnachweis": {
+        "beschreibung": "Digitales Schießtagebuch",
+        "funktionen": [
+          "Training & Wettkampf Dokumentation",
+          "Import von digitalen Anlagen (Meyton, Sius, Disag)",
+          "KI-gestützte Erkennung (Google Gemini AI)",
+          "Cloud-Synchronisation Multi-Device",
+          "Erweiterte Statistiken und Leistungsanalysen",
+          "PDF-Export für Behörden",
+          "Social Training Integration"
+        ],
+        "urls": ["/schiessnachweis"]
+      }
+    },
+
+    "workflows": {
+      "startlisten_erstellen": {
+        "schritte": [
+          "1. /km-orga/startlisten - Austragungsort konfigurieren",
+          "2. /startlisten-tool?id=[CONFIG_ID] - Tool öffnen",
+          "3. Saison auswählen - Meldungen werden geladen",
+          "4. 'Startliste generieren' oder 'Einfache Liste' klicken",
+          "5. Schützen manuell hinzufügen falls nötig (Terminwechsel)",
+          "6. Stände und Startzeiten anpassen",
+          "7. 'Speichern' - Startliste wird in Firebase gespeichert",
+          "8. PDF-Export oder Meyton-Export für Wettkampf"
+        ]
+      },
+      
+      "terminwechsel_feature": {
+        "beschreibung": "Schützen zwischen verschiedenen Wettkampfterminen verschieben",
+        "schritte": [
+          "1. Startlisten-Tool öffnen für gewünschten Termin",
+          "2. 'Schütze manuell hinzufügen' - Suchfeld verwenden",
+          "3. Nach Name, Verein oder Disziplin suchen",
+          "4. Schützen anklicken - wird automatisch hinzugefügt",
+          "5. Schütze behält seine ursprüngliche Disziplin",
+          "6. Hinweis: 'Terminwechsel - schießt am anderen Tag'"
+        ],
+        "anwendungsfall": "Freihand-Schütze kann nicht am Freihand-Tag → schießt am Auflage-Tag mit"
+      },
+
+      "david21_export": {
+        "schritte": [
+          "1. /km-orga/david21 öffnen",
+          "2. Gespeicherte Startliste auswählen",
+          "3. 'Startlisten exportieren' klicken",
+          "4. .TXT und .CTL Dateien werden heruntergeladen",
+          "5. Kennziffern werden automatisch aus Disziplinen-Verwaltung geholt",
+          "6. Altersklassen-basierte Schusszahl-Auswahl",
+          "7. Dateien in Meyton Shootmaster laden"
+        ]
+      }
+    },
+
+    "technische_details": {
+      "plattformen": {
+        "web_app": "✅ Produktiv - Vercel Deployment",
+        "android_app": "✅ Produktiv - Google Play Store", 
+        "safari_iphone": "✅ Mobile - Vollständig nutzbar",
+        "ios_app": "❌ Nicht geplant - Unrentabel"
+      },
+      
+      "tech_stack": {
+        "frontend": "Next.js 14",
+        "backend": "Firebase (Firestore, Auth, Functions)",
+        "ai": "Google Gemini AI 2.5 Flash",
+        "deployment": "Vercel",
+        "mobile": "Progressive Web App + Capacitor"
+      },
+
+      "api_struktur": {
+        "km_startlisten_configs": "Austragungsorte-Konfigurationen",
+        "km_startlisten": "Gespeicherte Startlisten",
+        "km_disziplinen": "Disziplinen mit Kennziffern",
+        "km_meldungen_[saison]": "KM-Meldungen pro Saison"
+      }
+    },
+
+    "kennziffer_system": {
+      "format": "XYYYYZZZ (8 Ziffern)",
+      "aufbau": {
+        "X": "Entfernung (1=10m, 2=15m, 3=25m, 4=50m)",
+        "YYYY": "DSB-Regelnummer (0110=LG, 0210=LP, 0120=3-Stellung, 0111=LG Auflage)",
+        "ZZZ": "Schussanzahl (020=20, 040=40, 060=60)"
+      },
+      "beispiele": {
+        "10110020": "LG Schüler (20 Schuss)",
+        "10110040": "LG Erwachsene (40 Schuss)", 
+        "10111020": "LG Auflage Schüler (20 Schuss)",
+        "10111040": "LG Auflage Erwachsene (40 Schuss)",
+        "10210020": "LP Schüler (20 Schuss)",
+        "10210040": "LP Erwachsene (40 Schuss)",
+        "10120060": "3-Stellung (60 Schuss)"
+      },
+      "altersklassen_zuordnung": {
+        "schueler": "≤14 Jahre → 20 Schuss",
+        "jugend": "≤16 Jahre → 20 Schuss", 
+        "junioren": "≤18 Jahre → 40 Schuss",
+        "erwachsene": ">18 Jahre → 40 Schuss"
+      }
+    },
+
+    "support": {
+      "github": "https://github.com/Muggy663/rwk-einbeck/issues",
+      "email": "rwk-leiter-ksve@gmx.de",
+      "playstore": "Google Play Store (Beta-Test)",
+      "entwickler": "KSV Einbeck RWK-Leiter Marcel Bünger"
+    },
+
+    "lizenz": {
+      "copyright": "© 2025 KSV Einbeck. Alle Rechte vorbehalten.",
+      "nutzung": "Ausschließlich für autorisierte Schützenvereine",
+      "kontakt": "rwk-leiter-ksve@gmx.de"
+    }
+  }
+}

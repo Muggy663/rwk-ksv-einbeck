@@ -1,25 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
-export async function DELETE(
+export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const { id } = params;
+    const doc = await adminDb.collection('km_startlisten_configs').doc(id).get();
     
-    await adminDb.collection('km_startlisten_configs').doc(id).delete();
+    if (!doc.exists) {
+      return NextResponse.json(
+        { success: false, error: 'Konfiguration nicht gefunden' },
+        { status: 404 }
+      );
+    }
     
     return NextResponse.json({
       success: true,
-      message: 'Startlisten-Konfiguration erfolgreich gelöscht'
+      data: { id: doc.id, ...doc.data() }
     });
+    
   } catch (error) {
-    logError('Fehler beim Löschen der Startlisten-Konfiguration:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message
-    }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Fehler beim Laden' },
+      { status: 500 }
+    );
   }
 }

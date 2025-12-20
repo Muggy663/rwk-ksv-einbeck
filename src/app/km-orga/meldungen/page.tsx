@@ -232,7 +232,8 @@ export default function KMAdminMeldungen() {
         body: JSON.stringify({
           lmTeilnahme: editData.lmTeilnahme,
           vmErgebnis: editData.vmRinge ? { ringe: parseFloat(editData.vmRinge) } : null,
-          anmerkung: editData.anmerkung || ''
+          anmerkung: editData.anmerkung || '',
+          disziplinId: editData.disziplinId
         })
       });
       
@@ -500,11 +501,18 @@ export default function KMAdminMeldungen() {
                     className="w-full p-2 border border-gray-300 rounded text-sm"
                   >
                     <option value="">Alle Disziplinen</option>
-                    {disziplinen.map(disziplin => (
-                      <option key={disziplin.id} value={disziplin.id}>
-                        {disziplin.spoNummer} - {disziplin.name}
-                      </option>
-                    ))}
+                    {disziplinen.map(disziplin => {
+                      const hatMeldungen = meldungen.some(m => m.disziplinId === disziplin.id);
+                      return (
+                        <option 
+                          key={disziplin.id} 
+                          value={disziplin.id}
+                          className={hatMeldungen ? 'font-bold bg-green-50' : ''}
+                        >
+                          {hatMeldungen ? '✅ ' : ''}{disziplin.spoNummer} - {disziplin.name}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
                 <div>
@@ -613,10 +621,27 @@ export default function KMAdminMeldungen() {
                     </div>
                     <div className="space-y-2 text-sm">
                       <div><span className="font-medium">Verein:</span> {verein?.name || 'Unbekannt'}</div>
-                      <div>
-                        <span className="font-medium">Disziplin:</span> {disziplin?.spoNummer}
-                        <div className="text-xs text-gray-500">{disziplin?.name}</div>
-                      </div>
+                        <div>
+                          <span className="font-medium">Disziplin:</span> 
+                          {editingMeldung === meldung.id ? (
+                            <select
+                              value={editData.disziplinId || meldung.disziplinId}
+                              onChange={(e) => setEditData(prev => ({...prev, disziplinId: e.target.value}))}
+                              className="w-full p-1 border rounded text-sm mt-1"
+                            >
+                              {disziplinen.map(d => (
+                                <option key={d.id} value={d.id}>
+                                  {d.spoNummer} - {d.name}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <>
+                              {disziplin?.spoNummer}
+                              <div className="text-xs text-gray-500">{disziplin?.name}</div>
+                            </>
+                          )}
+                        </div>
                       <div className="flex items-center gap-4">
                         <div>
                           <span className="font-medium">LM:</span>
@@ -706,7 +731,8 @@ export default function KMAdminMeldungen() {
                               setEditData({
                                 lmTeilnahme: meldung.lmTeilnahme,
                                 vmRinge: meldung.vmErgebnis?.ringe || '',
-                                anmerkung: meldung.anmerkung || ''
+                                anmerkung: meldung.anmerkung || '',
+                                disziplinId: meldung.disziplinId
                               });
                             }}
                             className="w-full text-blue-600 hover:text-blue-800 text-sm px-3 py-3 border border-blue-300 rounded font-medium"
@@ -799,10 +825,24 @@ export default function KMAdminMeldungen() {
                       </td>
                       <td className="p-2">{verein?.name || 'Unbekannt'}</td>
                       <td className="p-2">
-                        <div>
-                          <span className="font-medium">{disziplin?.spoNummer}</span>
-                          <div className="text-xs text-gray-500">{disziplin?.name}</div>
-                        </div>
+                        {editingMeldung === meldung.id ? (
+                          <select
+                            value={editData.disziplinId || meldung.disziplinId}
+                            onChange={(e) => setEditData(prev => ({...prev, disziplinId: e.target.value}))}
+                            className="w-full p-1 border rounded text-sm"
+                          >
+                            {disziplinen.map(d => (
+                              <option key={d.id} value={d.id}>
+                                {d.spoNummer} - {d.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div>
+                            <span className="font-medium">{disziplin?.spoNummer}</span>
+                            <div className="text-xs text-gray-500">{disziplin?.name}</div>
+                          </div>
+                        )}
                       </td>
                       <td className="p-2">
                         <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
@@ -919,7 +959,8 @@ export default function KMAdminMeldungen() {
                                   setEditData({
                                     lmTeilnahme: meldung.lmTeilnahme,
                                     vmRinge: meldung.vmErgebnis?.ringe || '',
-                                    anmerkung: meldung.anmerkung || ''
+                                    anmerkung: meldung.anmerkung || '',
+                                    disziplinId: meldung.disziplinId
                                   });
                                 }}
                                 className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-300 rounded"

@@ -321,11 +321,6 @@ export default function StartlistenUebersichtPage() {
           {startlisten.map(liste => {
             const config = configs.find(c => c.id === liste.configId);
             
-            // Skip if config not found - silent skip to avoid console spam
-            if (!config) {
-              return null;
-            }
-            
             return (
               <Card key={liste.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
@@ -333,12 +328,12 @@ export default function StartlistenUebersichtPage() {
                     <div>
                       <CardTitle className="flex items-center gap-2">
                         <Target className="h-5 w-5" />
-                        Startliste - {vereine[config.austragungsort] || config.austragungsort || 'Einbecker Schützengilde'}
+                        Startliste - {config ? (vereine[config.austragungsort] || config.austragungsort) : 'Unbekannter Austragungsort'}
                       </CardTitle>
                       <CardDescription className="flex items-center gap-4 mt-2">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          {new Date(liste.datum).toLocaleDateString('de-DE')} um {config.startUhrzeit || '09:00'} Uhr
+                          {new Date(liste.datum).toLocaleDateString('de-DE')} um {config?.startUhrzeit || '09:00'} Uhr
                         </span>
                         <span>{liste.startliste?.length || 0} Starter</span>
                         <span>{(liste.startliste?.length || 0) > 0 ? Math.max(...liste.startliste.map((s: any) => s.durchgang || 1)) : 0} Durchgänge</span>
@@ -348,9 +343,10 @@ export default function StartlistenUebersichtPage() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => window.location.href = `/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`}
-                        title="Startliste bearbeiten"
+                        onClick={() => config ? window.location.href = `/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}` : null}
+                        title={config ? "Startliste bearbeiten" : "Config nicht gefunden"}
                         className="hidden md:flex"
+                        disabled={!config}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -408,8 +404,9 @@ export default function StartlistenUebersichtPage() {
                       <div className="flex flex-col gap-2 w-full md:flex-row md:w-auto">
                         <Button 
                           variant="outline" 
-                          onClick={() => window.location.href = `/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}`}
+                          onClick={() => config ? window.location.href = `/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}` : null}
                           className="w-full h-12 text-left justify-start md:hidden"
+                          disabled={!config}
                         >
                           <Edit className="h-4 w-4 mr-2" />
                           Bearbeiten
@@ -441,7 +438,7 @@ export default function StartlistenUebersichtPage() {
                 </CardContent>
               </Card>
             );
-          }).filter(Boolean)}
+          })}
         </div>
       )}
     </div>
