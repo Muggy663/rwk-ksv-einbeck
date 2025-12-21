@@ -53,7 +53,7 @@ export default function WettkampfDashboardPage() {
         // Lade Disziplinen und Schützen über API
         const [disziplinenRes, schuetzenRes] = await Promise.all([
           fetch('/api/km/disziplinen'),
-          fetch('/api/km/shooters')
+          fetch('/api/shooters')
         ]);
         
         const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];

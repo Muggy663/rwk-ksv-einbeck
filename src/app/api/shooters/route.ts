@@ -99,23 +99,49 @@ export async function GET(request: NextRequest) {
         secureLogger.warn('km_shooters collection not found', 'shooters-api');
       }
     } else {
-      // Für RWK: Lade zentrale Schützen
-      const shootersSnapshot = await adminDb.collection('shooters').get();
+      // Lade sowohl zentrale Schützen als auch KM-Schützen
+      const [shootersSnapshot, kmShootersSnapshot] = await Promise.all([
+        adminDb.collection('shooters').get(),
+        adminDb.collection('km_shooters').get().catch(() => ({ docs: [] }))
+      ]);
+      
       let shooters = shootersSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         source: 'central'
       }));
       
+      let kmShooters = kmShootersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        source: 'km_shooter'
+      }));
+      
+      // Kombiniere beide Listen und entferne Duplikate basierend auf Namen
+      const combinedShooters = [...shooters, ...kmShooters];
+      const uniqueShooters = [];
+      const seenNames = new Set();
+      
+      for (const shooter of combinedShooters) {
+        const name = shooter.firstName && shooter.lastName 
+          ? `${shooter.firstName} ${shooter.lastName}`.toLowerCase()
+          : (shooter.name || '').toLowerCase();
+        
+        if (!seenNames.has(name) && name) {
+          seenNames.add(name);
+          uniqueShooters.push(shooter);
+        }
+      }
+      
       // Filtere nach Verein wenn clubId angegeben
       if (clubId) {
-        shooters = shooters.filter(shooter => {
+        allShooters = uniqueShooters.filter(shooter => {
           const shooterClubId = shooter.clubId || shooter.rwkClubId || shooter.kmClubId;
           return shooterClubId === clubId;
         });
+      } else {
+        allShooters = uniqueShooters;
       }
-      
-      allShooters = shooters;
     }
 
     return NextResponse.json({

@@ -1,286 +1,274 @@
 // src/app/api/km/mannschaften/generate/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { db } from '@/lib/firebase/config';
-import { collection, getDocs, addDoc, doc, setDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
+
+const KM_MANNSCHAFTEN_COLLECTION = 'km_mannschaften';
 
 export async function POST(request: NextRequest) {
   try {
-
-    const body = await request.json().catch(() => ({}));
-    const { saison = '2026' } = body;
+    const body = await request.json();
+    const { saison } = body;
     
-    // Schritt 1: Lösche alle Mannschaften (auch ohne Saison) und erstelle neu
-    try {
-      const { deleteDoc } = await import('firebase/firestore');
-      const oldMannschaftenSnapshot = await getDocs(collection(db, 'km_mannschaften'));
-      
-      for (const docToDelete of oldMannschaftenSnapshot.docs) {
-        await deleteDoc(docToDelete.ref);
-      }
-      logInfo(`🗑️ ${oldMannschaftenSnapshot.docs.length} alte Mannschaften gelöscht`);
-    } catch (error) {
-      logWarn('⚠️ Could not clear old mannschaften:', error.message);
-    }
-    
-    // Schritt 2: Lade Meldungen
-
-    let meldungen = [];
-    try {
-      const meldungenSnapshot = await getDocs(collection(db, 'km_meldungen'));
-      meldungen = meldungenSnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(m => m.saison === saison || !m.saison); // Include entries without saison
-
-    } catch (error) {
-      logError('❌ Error loading meldungen:', error);
+    if (!saison) {
       return NextResponse.json({
         success: false,
-        error: `Fehler beim Laden der Meldungen: ${error.message}`
-      }, { status: 500 });
+        error: 'Saison ist erforderlich'
+      }, { status: 400 });
     }
+
+    const db = adminDb;
+    
+    // Lade Meldungen aus der korrekten Collection
+    const saisonSnapshot = await db.collection('km_saisons').doc(saison).get();
+    const saisonData = saisonSnapshot.data();
+    
+    // Bestimme Collection Name basierend auf Saison-Daten
+    let collectionName = 'km_meldungen';
+    if (saisonData?.collectionName) {
+      collectionName = saisonData.collectionName;
+    } else if (saisonData?.name) {
+      // Fallback: Generiere Collection Name aus Saison-Name
+      const name = saisonData.name.toLowerCase();
+      if (name.includes('2026') && name.includes('luftdruck')) {
+        collectionName = 'km_meldungen_2026_ld';
+      }
+    }
+    
+    console.log('Collection Name:', collectionName);
+    
+    const meldungenSnapshot = await db.collection(collectionName).get();
+    const alleMeldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    console.log('=== MANNSCHAFTS-DEBUG ===');
+    console.log('Gesuchte Saison:', saison);
+    console.log('Anzahl Meldungen gesamt:', alleMeldungen.length);
+    console.log('Beispiel Meldung:', alleMeldungen[0]);
+    
+    // Filtere nach saisonId UND nach Vereinszugehörigkeit
+    const meldungen = alleMeldungen.filter(m => m.saisonId === saison);
+    console.log('Meldungen nach Saison-Filter:', meldungen.length);
     
     if (meldungen.length === 0) {
       return NextResponse.json({
-        success: true,
-        generated: 0,
-        message: 'Keine Meldungen für Saison ' + saison + ' gefunden.'
-      });
+        success: false,
+        error: 'Keine Meldungen für diese Saison gefunden'
+      }, { status: 404 });
+    }
+
+    // Lade Schützen und Disziplinen
+    const [schuetzenSnapshot, clubsSnapshot] = await Promise.all([
+      db.collection('shooters').get(),
+      db.collection('clubs').get()
+    ]);
+    
+    // Lade alle Disziplinen (sie haben saison: '2026', nicht saisonId)
+    const disziplinenSnapshot = await db.collection('km_disziplinen').get();
+    
+    const schuetzen = schuetzenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const disziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const clubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Lade Mannschaftsregeln aus der Datenbank
+    const mannschaftsregelnSnapshot = await db.collection('system_config')
+      .where('type', '==', 'mannschaftsregeln')
+      .get();
+    
+    let mannschaftsregeln = {};
+    if (!mannschaftsregelnSnapshot.empty) {
+      const doc = mannschaftsregelnSnapshot.docs[0];
+      mannschaftsregeln = doc.data().regeln || {};
     }
     
-    // Schritt 3: Lade Schützen für Club-Zuordnung
-
-    let schuetzen = [];
-    try {
-      const schuetzenSnapshot = await getDocs(collection(db, 'shooters'));
-      schuetzen = schuetzenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-    } catch (error) {
-      logError('❌ Error loading shooters:', error);
-    }
+    console.log('Geladene Mannschaftsregeln:', Object.keys(mannschaftsregeln).length);
+    console.log('Beispiel-Regel:', Object.values(mannschaftsregeln)[0]);
+    console.log('Alle Regel-Keys:', Object.keys(mannschaftsregeln));
     
-    // Schritt 4: Lade Disziplinen für Auflage-Prüfung
-    let disziplinen = [];
-    try {
-      const disziplinenSnapshot = await getDocs(collection(db, 'km_disziplinen'));
-      disziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-      logWarn('Could not load disciplines:', error);
-    }
-
-    const groups = {};
+    // Mannschaftsregeln - Gruppiere nach echten Altersklassen
+    const gruppiert = {};
+    
+    console.log('Starte Gruppierung von', meldungen.length, 'Meldungen');
     
     for (const meldung of meldungen) {
       const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-      const vereinId = schuetze?.clubId || schuetze?.kmClubId || meldung.clubId || 'unknown';
-      const disziplinId = meldung.disziplinId || 'unknown';
-      const key = `${vereinId}_${disziplinId}`;
-
+      const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
       
-      if (!groups[key]) {
-        groups[key] = {
+      if (!schuetze || !disziplin) continue;
+      
+      const vereinId = schuetze.kmClubId || schuetze.rwkClubId || schuetze.clubId;
+      if (!vereinId) continue;
+      
+      // Bestimme Altersklasse nach echten KM-Regeln
+      const sportjahr = 2026;
+      const age = sportjahr - (schuetze.birthYear || 0);
+      const gender = schuetze.gender;
+      const istAuflage = disziplin.auflage;
+      
+      let altersklasse = 'AK'; // Default
+      
+      if (istAuflage) {
+        // Lichtgewehr (11.11) - spezielle Altersklasse für 6-11 Jahre
+        if (disziplin.spoNummer === '11.11' && age >= 6 && age <= 11) {
+          altersklasse = gender === 'male' ? 'Lichtgewehr m' : 'Lichtgewehr w';
+        }
+        else if (age <= 14) altersklasse = gender === 'male' ? 'Schüler m' : 'Schüler w';
+        else if (disziplin.spoNummer === '1.41' && age >= 15 && age <= 40) {
+          if (age <= 16) altersklasse = gender === 'male' ? 'Jugend m' : 'Jugend w';
+          else if (age <= 18) altersklasse = gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+          else if (age <= 20) altersklasse = gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+          else altersklasse = gender === 'male' ? 'Herren I' : 'Damen I';
+        }
+        else if (age < 41) altersklasse = 'Nicht berechtigt';
+        else if (age <= 50) altersklasse = 'Senioren 0';
+        else if (age <= 60) altersklasse = gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
+        else if (age <= 65) altersklasse = gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
+        else if (age <= 70) altersklasse = gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
+        else if (age <= 75) altersklasse = gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
+        else if (age <= 80) altersklasse = gender === 'male' ? 'Senioren V m' : 'Seniorinnen V';
+        else altersklasse = gender === 'male' ? 'Senioren VI m' : 'Seniorinnen VI';
+      } else {
+        if (age <= 14) altersklasse = gender === 'male' ? 'Schüler m' : 'Schüler w';
+        else if (age <= 16) altersklasse = gender === 'male' ? 'Jugend m' : 'Jugend w';
+        else if (age <= 18) altersklasse = gender === 'male' ? 'Junioren II m' : 'Junioren II w';
+        else if (age <= 20) altersklasse = gender === 'male' ? 'Junioren I m' : 'Junioren I w';
+        else if (age <= 40) altersklasse = gender === 'male' ? 'Herren I' : 'Damen I';
+        else if (age <= 50) altersklasse = gender === 'male' ? 'Herren II' : 'Damen II';
+        else if (age <= 60) altersklasse = gender === 'male' ? 'Herren III' : 'Damen III';
+        else if (age <= 70) altersklasse = gender === 'male' ? 'Herren IV' : 'Damen IV';
+        else altersklasse = gender === 'male' ? 'Herren V' : 'Damen V';
+      }
+      
+      // Bestimme Gruppierungs-Schlüssel basierend auf Mannschaftsregeln
+      let gruppenKey = altersklasse;
+      
+      // Senioren-Regeln für Auflage-Disziplinen
+      if (istAuflage) {
+        if (altersklasse.includes('Senioren I') || altersklasse.includes('Seniorinnen I') ||
+            altersklasse.includes('Senioren II') || altersklasse.includes('Seniorinnen II')) {
+          gruppenKey = 'Senioren I+II';
+        }
+        else if (altersklasse.includes('Senioren III') || altersklasse.includes('Seniorinnen III') ||
+                 altersklasse.includes('Senioren IV') || altersklasse.includes('Seniorinnen IV')) {
+          gruppenKey = 'Senioren III+IV';
+        }
+        else if (altersklasse.includes('Senioren V') || altersklasse.includes('Seniorinnen V') ||
+                 altersklasse.includes('Senioren VI') || altersklasse.includes('Seniorinnen VI')) {
+          gruppenKey = 'Senioren V+VI';
+        }
+        // Senioren 0 bleibt allein
+      }
+      
+      const key = `${vereinId}_${disziplin.id}_${gruppenKey}`;
+      if (!gruppiert[key]) {
+        gruppiert[key] = {
           vereinId,
-          disziplinId,
-          meldungen: []
+          disziplin,
+          gruppenKey,
+          schuetzen: [],
+          club: clubs.find(c => c.id === vereinId)
         };
       }
       
-      groups[key].meldungen.push(meldung);
+      gruppiert[key].schuetzen.push({
+        ...schuetze,
+        meldungId: meldung.id,
+        altersklasse
+      });
     }
     
-
+    // Erstelle Teams - alle Gruppen mit 3+ Schützen
+    const teams = [];
     
-    // Schritt 5: Einfache Mannschafts-Erstellung
-    let generated = 0;
-    const debugInfo = [];
+    for (const [key, gruppe] of Object.entries(gruppiert)) {
+      const { vereinId, disziplin, gruppenKey, schuetzen: verfuegbareSchuetzen, club } = gruppe;
+      
+      if (verfuegbareSchuetzen.length >= 3) {
+        let teamNummer = 1;
+        for (let i = 0; i < verfuegbareSchuetzen.length; i += 3) {
+          const teamMitglieder = verfuegbareSchuetzen.slice(i, i + 3);
+          
+          if (teamMitglieder.length === 3) {
+            const teamName = `${club?.name || 'Unbekannt'} ${disziplin.spoNummer} ${gruppenKey} ${teamNummer}`;
+            
+            teams.push({
+              name: teamName,
+              vereinId,
+              disziplinId: disziplin.id,
+              disziplinName: disziplin.name,
+              spoNummer: disziplin.spoNummer,
+              wettkampfklasse: gruppenKey,
+              mitglieder: teamMitglieder,
+              vollstaendig: true,
+              saison
+            });
+            
+            teamNummer++;
+          }
+        }
+      }
+    }
     
-    // Gehe durch jede Verein-Disziplin Kombination
-    for (const [key, group] of Object.entries(groups)) {
-      const { vereinId, disziplinId, meldungen: groupMeldungen } = group as any;
-      const disziplin = disziplinen.find(d => d.id === disziplinId);
-      const istAuflage = disziplin?.auflage || false;
+    console.log('Erstellte Teams:', teams.length);
+    console.log('Teams Details:', teams.map(t => ({ name: t.name, mitglieder: t.mitglieder?.length })));
+    
+    if (teams.length === 0) {
+      console.log('Keine Teams erstellt - Debug Info:');
+      console.log('Gruppiert Keys:', Object.keys(gruppiert));
+      for (const [key, gruppe] of Object.entries(gruppiert)) {
+        console.log(`Gruppe ${key}:`, {
+          vereinId: gruppe.vereinId,
+          disziplin: gruppe.disziplin?.name,
+          schuetzenAnzahl: Object.values(gruppe.schuetzen).flat().length
+        });
+      }
+    }
+    
+    // Lösche nur bestehende Teams für die generierten Disziplinen
+    const generatedDisziplinIds = [...new Set(teams.map(t => t.disziplinId))];
+    
+    if (generatedDisziplinIds.length > 0) {
+      const existingTeamsSnapshot = await db.collection(KM_MANNSCHAFTEN_COLLECTION)
+        .where('saison', '==', saison)
+        .get();
       
-      // Alle Schützen mit Altersklassen
-      const schuetzenMitKlassen = groupMeldungen.map(meldung => {
-        const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-        if (!schuetze?.birthYear || !schuetze?.gender) return null;
-        
-        const age = 2026 - schuetze.birthYear;
-        const gender = schuetze.gender;
-        let altersklasse = '';
-        
-        if (istAuflage) {
-          if (age <= 14) altersklasse = 'Schüler';
-          else if (disziplin?.spoNummer === '1.41' && age >= 15 && age <= 40) altersklasse = 'Jung';
-          else if (age < 41) return null; // Nicht berechtigt
-          else if (age <= 50) altersklasse = 'Senioren0';
-          else if (age <= 65) altersklasse = 'SeniorenI_II';
-          else altersklasse = 'SeniorenIII_VI';
-        } else {
-          if (age <= 20) altersklasse = 'Jung';
-          else if (age <= 40) altersklasse = 'Erwachsen';
-          else altersklasse = 'Senior';
+      const batch = db.batch();
+      existingTeamsSnapshot.docs.forEach(doc => {
+        const teamData = doc.data();
+        if (generatedDisziplinIds.includes(teamData.disziplinId)) {
+          batch.delete(doc.ref);
         }
-        
-        return {
-          meldung,
-          schuetze,
-          altersklasse,
-          vmRinge: meldung.vmErgebnis?.ringe || 0,
-          sortKey: meldung.vmErgebnis?.ringe || schuetze.name || 'ZZZ'
-        };
-      }).filter(Boolean);
-      
-      // Gruppiere nach Altersklassen
-      const altersGruppen = {};
-      schuetzenMitKlassen.forEach(item => {
-        if (!altersGruppen[item.altersklasse]) {
-          altersGruppen[item.altersklasse] = [];
-        }
-        altersGruppen[item.altersklasse].push(item);
       });
       
-      // Erstelle 3er-Teams aus jeder Altersgruppe
-      for (const [altersklasse, schuetzenListe] of Object.entries(altersGruppen)) {
-        // Sortiere: VM-Ergebnis absteigend, dann Name
-        const sortiert = schuetzenListe.sort((a, b) => {
-          if (b.vmRinge !== a.vmRinge) return b.vmRinge - a.vmRinge;
-          return (a.schuetze.name || '').localeCompare(b.schuetze.name || '');
+      // Speichere neue Teams
+      for (const team of teams) {
+        const docRef = db.collection(KM_MANNSCHAFTEN_COLLECTION).doc();
+        batch.set(docRef, {
+          name: team.name,
+          vereinId: team.vereinId,
+          clubId: team.vereinId,
+          disziplinId: team.disziplinId,
+          schuetzenIds: team.mitglieder.map(m => m.id),
+          wettkampfklassen: [team.wettkampfklasse],
+          saison,
+          createdAt: FieldValue.serverTimestamp()
         });
-        
-        // Bilde 3er-Teams
-        for (let i = 0; i < sortiert.length; i += 3) {
-          const team = sortiert.slice(i, i + 3);
-          if (team.length === 3) {
-            const teamMeldungen = team.map(t => t.meldung);
-            
-            const teamSchuetzen = team.map(t => t.schuetze);
-            const wettkampfklassen = team.map(t => {
-              const age = 2026 - t.schuetze.birthYear;
-              const gender = t.schuetze.gender;
-              
-              if (istAuflage) {
-                if (age <= 14) return gender === 'male' ? 'Schüler m' : 'Schüler w';
-                else if (disziplin?.spoNummer === '1.41' && age >= 15 && age <= 40) {
-                  if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
-                  else if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
-                  else if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
-                  else return gender === 'male' ? 'Herren I' : 'Damen I';
-                }
-                else if (age <= 50) return 'Senioren 0';
-                else if (age <= 60) return gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
-                else if (age <= 65) return gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
-                else if (age <= 70) return gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
-                else if (age <= 75) return gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
-                else if (age <= 80) return gender === 'male' ? 'Senioren V m' : 'Seniorinnen V';
-                else return gender === 'male' ? 'Senioren VI m' : 'Seniorinnen VI';
-              } else {
-                if (age <= 14) return gender === 'male' ? 'Schüler m' : 'Schüler w';
-                else if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';
-                else if (age <= 18) return gender === 'male' ? 'Junioren II m' : 'Junioren II w';
-                else if (age <= 20) return gender === 'male' ? 'Junioren I m' : 'Junioren I w';
-                else if (age <= 40) return gender === 'male' ? 'Herren I' : 'Damen I';
-                else if (age <= 50) return gender === 'male' ? 'Herren II' : 'Damen II';
-                else if (age <= 60) return gender === 'male' ? 'Herren III' : 'Damen III';
-                else if (age <= 70) return gender === 'male' ? 'Herren IV' : 'Damen IV';
-                else return gender === 'male' ? 'Herren V' : 'Damen V';
-              }
-            });
-            
-            debugInfo.push({
-              teamSize: 3,
-              shooterNames: teamSchuetzen.map(s => s.name),
-              uniqueKlassen: [...new Set(wettkampfklassen)],
-              altersklasse,
-              istAuflage,
-              spoNummer: disziplin?.spoNummer
-            });
-            
-            const mannschaft = {
-              vereinId,
-              disziplinId,
-              wettkampfklassen: [...new Set(wettkampfklassen)],
-              schuetzenIds: teamMeldungen.map(m => m.schuetzeId),
-              name: `${altersklasse} Team ${Math.floor(i/3) + 1}`,
-              saison: saison || '2026',
-              createdAt: new Date().toISOString(),
-              autoGenerated: true
-            };
-            
-            try {
-              // Lade Saison-Info für Kürzel
-              let saisonKuerzel = 'km';
-              try {
-                const saisonSnapshot = await getDocs(collection(db, 'km_saisons'));
-                const saisonDoc = saisonSnapshot.docs.find(doc => doc.id === saison);
-                if (saisonDoc?.data()?.name) {
-                  const name = saisonDoc.data().name.toLowerCase();
-                  if (name.includes('kk') || name.includes('kleinkaliber')) saisonKuerzel = 'kk';
-                  else if (name.includes('ld') || name.includes('luftdruck')) saisonKuerzel = 'ld';
-                  else if (name.includes('lg') || name.includes('luftgewehr')) saisonKuerzel = 'lg';
-                }
-              } catch (e) {
-                // Fallback zu 'km'
-              }
-              
-              const docId = `km_mannschaften_${saisonKuerzel}_team_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-              await setDoc(doc(db, 'km_mannschaften', docId), mannschaft);
-              generated++;
-            } catch (error) {
-              logError('❌ FAILED to create mannschaft:', error);
-            }
-          }
-        }
       }
+      
+      await batch.commit();
     }
-
+    
     return NextResponse.json({
       success: true,
-      generated,
-      message: `${generated} Mannschaften aus ${meldungen.length} Meldungen generiert`,
-      debugInfo,
-      debug: {
-        processedTeams: generated,
-        meldungenCount: meldungen.length,
-        schuetzenCount: schuetzen.length,
-        groupsCount: Object.keys(groups).length,
-        groups: Object.keys(groups),
-        sampleShooter: schuetzen.find(s => s.name?.includes('Aurin')),
-        teamsProcessed: Object.entries(groups).map(([key, group]) => {
-          const { vereinId, disziplinId, meldungen: groupMeldungen } = group as any;
-          const teamResults = [];
-          
-          for (let i = 0; i < groupMeldungen.length; i += 3) {
-            const teamMeldungen = groupMeldungen.slice(i, i + 3);
-            const teamSchuetzen = teamMeldungen.map(m => schuetzen.find(s => s.id === m.schuetzeId)).filter(Boolean);
-            
-            const ageGroups = teamSchuetzen.map(s => {
-              if (!s.birthYear || !s.gender) return 'Unknown';
-              const age = 2026 - s.birthYear;
-              if (age <= 40) return s.gender === 'male' ? 'Herren I' : 'Damen I';
-              if (age <= 50) return s.gender === 'male' ? 'Herren II' : 'Damen II';
-              return s.gender === 'male' ? 'Senioren I' : 'Seniorinnen I';
-            });
-            
-            teamResults.push({
-              teamSize: teamMeldungen.length,
-              shooters: teamSchuetzen.map(s => ({ name: s.name, age: 2026 - s.birthYear })),
-              ageGroups,
-              uniqueAgeGroups: [...new Set(ageGroups)],
-              wouldCreate: teamMeldungen.length === 3 && [...new Set(ageGroups)].length === 1
-            });
-          }
-          
-          return { key, shooterCount: group.meldungen.length, teamResults };
-        })
-      }
+      data: teams,
+      message: `${teams.length} Mannschaften automatisch generiert`
     });
-
+    
   } catch (error) {
-    logError('💥 Fehler bei Mannschafts-Generierung:', error);
+    logError('Fehler beim Generieren der Mannschaften:', error);
     return NextResponse.json({
       success: false,
-      error: `Unerwarteter Fehler: ${error.message}`
+      error: `Fehler: ${error.message}`
     }, { status: 500 });
   }
 }

@@ -26,22 +26,28 @@ export default function KMMeldungenStatistik() {
 
   const loadData = async () => {
     try {
-      const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
+      // Lade Schützen direkt aus Firebase
+      const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
+      
+      const [meldungenRes, shootersSnapshot, disziplinenRes, clubsRes] = await Promise.all([
         fetch(`/api/km/meldungen?jahr=${selectedYear}`),
-        fetch('/api/shooters'),
+        getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs')
       ]);
+      
+      const schuetzenData = shootersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
       
       if (meldungenRes.ok) {
         const data = await meldungenRes.json();
         setMeldungen(data.data || []);
       }
 
-      if (schuetzenRes.ok) {
-        const data = await schuetzenRes.json();
-        setSchuetzen(data.data || []);
-      }
+      setSchuetzen(schuetzenData);
 
       if (disziplinenRes.ok) {
         const data = await disziplinenRes.json();

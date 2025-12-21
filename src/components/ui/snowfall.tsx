@@ -32,8 +32,7 @@ export function Snowfall() {
             left: `${flake.left}%`,
             opacity: flake.opacity,
             fontSize: `${flake.size}px`,
-            animationDelay: `${Math.random() * 5}s`,
-            animation: `snowfall ${flake.animationDuration}s linear infinite`,
+            animation: `snowfall ${flake.animationDuration}s linear infinite ${Math.random() * 5}s`,
           }}
         >
           ❄

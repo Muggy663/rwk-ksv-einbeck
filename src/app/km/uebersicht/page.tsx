@@ -82,23 +82,26 @@ export default function KMUebersicht() {
         meldungenUrl += `&saison=${selectedSaison}`;
       }
       
-      const [meldungenRes, schuetzenRes] = await Promise.all([
-        fetch(meldungenUrl),
-        fetch('/api/km/shooters')
+      const [meldungenRes] = await Promise.all([
+        fetch(meldungenUrl)
       ]);
       
+      // Lade Schützen direkt aus Firebase
+      const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
+      
+      const shootersSnapshot = await getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc')));
+      const allSchuetzen = shootersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
       let allMeldungen = [];
-      let allSchuetzen = [];
       
       if (meldungenRes.ok) {
         const meldungenData = await meldungenRes.json();
         allMeldungen = meldungenData.data || [];
         console.log('Erste 3 Meldungen:', allMeldungen.slice(0, 3).map(m => ({ id: m.id, disziplinId: m.disziplinId })));
-      }
-      
-      if (schuetzenRes.ok) {
-        const schuetzenData = await schuetzenRes.json();
-        allSchuetzen = schuetzenData.data || [];
       }
       
       // Client-seitige Filterung

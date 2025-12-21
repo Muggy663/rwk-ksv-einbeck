@@ -89,21 +89,27 @@ export default function KMAdminMeldungen() {
 
   const loadData = async () => {
     try {
-      const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
+      const [meldungenRes, disziplinenRes, clubsRes] = await Promise.all([
         fetch(`/api/km/meldungen?saison=${selectedSaison}`),
-        fetch('/api/km/shooters'),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs')
       ]);
       
+      // Lade Schützen direkt aus Firebase
+      const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
+      
+      const shootersSnapshot = await getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc')));
+      const allSchuetzen = shootersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      setSchuetzen(allSchuetzen);
+      
       if (meldungenRes.ok) {
         const data = await meldungenRes.json();
         setMeldungen(data.data || []);
-      }
-
-      if (schuetzenRes.ok) {
-        const data = await schuetzenRes.json();
-        setSchuetzen(data.data || []);
       }
 
       if (disziplinenRes.ok) {
@@ -129,11 +135,12 @@ export default function KMAdminMeldungen() {
     }
     
     try {
-      const response = await fetch(`/api/km/shooters?clubId=${vereinId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setVereinSchuetzen(data.data || []);
-      }
+      // Filtere aus bereits geladenen Schützen
+      const vereinsSchuetzen = schuetzen.filter(shooter => {
+        const shooterClubId = shooter.clubId || shooter.rwkClubId || shooter.kmClubId;
+        return shooterClubId === vereinId;
+      });
+      setVereinSchuetzen(vereinsSchuetzen);
     } catch (error) {
       logError('Fehler beim Laden der Vereinsschützen:', error);
     }

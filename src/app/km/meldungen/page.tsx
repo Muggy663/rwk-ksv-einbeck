@@ -85,17 +85,24 @@ function KMMeldungenContent() {
   const loadData = async () => {
     try {
       // Lade nur aktive Saisons und deren Disziplinen
-      const [shootersRes, saisonRes, meldungenRes, clubsRes] = await Promise.all([
-        fetch('/api/km/shooters'),
+      // Lade Schützen direkt aus Firebase wie die anderen Seiten auch
+      const [saisonRes, meldungenRes, clubsRes] = await Promise.all([
         fetch('/api/km/saisons?status=aktiv'),
         fetch('/api/km/meldungen'),
         fetch('/api/clubs')
       ]);
       
-      if (shootersRes.ok) {
-        const shootersData = await shootersRes.json();
-        setSchuetzen(shootersData.data || []);
-      }
+      // Lade Schützen direkt aus Firebase
+      const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
+      
+      const shootersSnapshot = await getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc')));
+      const allSchuetzen = shootersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      setSchuetzen(allSchuetzen);
       
       if (saisonRes.ok) {
         const saisonData = await saisonRes.json();

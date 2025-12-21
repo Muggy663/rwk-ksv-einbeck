@@ -105,18 +105,22 @@ export default function VMUebersichtPage() {
   const loadVMMeldungen = async () => {
     try {
       setLoading(true);
-      // Lade Meldungen, Schützen und Disziplinen
-      const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
+      // Lade Meldungen, Schützen und Disziplinen direkt aus Firebase
+      const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
+      
+      const [meldungenRes, shootersSnapshot, disziplinenRes, clubsRes] = await Promise.all([
         fetch(`/api/km/meldungen?saison=${selectedSaison}`),
-        fetch('/api/km/shooters'),
+        getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs')
       ]);
       
-      if (meldungenRes.ok && schuetzenRes.ok && disziplinenRes.ok && clubsRes.ok) {
-        const [meldungenData, schuetzenData, disziplinenData, clubsData] = await Promise.all([
+      const schuetzenData = { data: shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) };
+      
+      if (meldungenRes.ok && disziplinenRes.ok && clubsRes.ok) {
+        const [meldungenData, disziplinenData, clubsData] = await Promise.all([
           meldungenRes.json(),
-          schuetzenRes.json(),
           disziplinenRes.json(),
           clubsRes.json()
         ]);

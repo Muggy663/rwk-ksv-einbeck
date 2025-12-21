@@ -60,18 +60,23 @@ export default function StartgebührenPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [clubsRes, disziplinenRes, meldungenRes, schuetzenRes] = await Promise.all([
+      // Lade Schützen direkt aus Firebase
+      const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
+      
+      const [clubsRes, disziplinenRes, meldungenRes, shootersSnapshot] = await Promise.all([
         fetch('/api/clubs'),
         fetch('/api/km/disziplinen'),
         fetch(`/api/km/meldungen?saison=${selectedSaison}`),
-        fetch('/api/km/shooters')
+        getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc')))
       ]);
 
-      const [clubsData, disziplinenData, meldungenData, schuetzenData] = await Promise.all([
+      const schuetzenData = { data: shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) };
+
+      const [clubsData, disziplinenData, meldungenData] = await Promise.all([
         clubsRes.ok ? clubsRes.json() : { data: [] },
         disziplinenRes.ok ? disziplinenRes.json() : { data: [] },
-        meldungenRes.ok ? meldungenRes.json() : { data: [] },
-        schuetzenRes.ok ? schuetzenRes.json() : { data: [] }
+        meldungenRes.ok ? meldungenRes.json() : { data: [] }
       ]);
 
       const vereinsMap: {[id: string]: string} = {};

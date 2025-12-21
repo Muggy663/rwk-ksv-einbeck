@@ -165,6 +165,8 @@ export default function KMMitglieder() {
       if (formMode === 'new') {
         await addDoc(collection(db, 'shooters'), {
           ...shooterData,
+          clubId: shooterData.clubId,
+          kmClubId: shooterData.clubId,
           createdAt: new Date()
         });
         toast({ title: 'Erfolg', description: 'Schütze wurde angelegt' });

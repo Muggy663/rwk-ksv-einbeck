@@ -136,24 +136,30 @@ export default function KMAdminMannschaften() {
     
     setLoading(true);
     try {
-      const [mannschaftenRes, schuetzenRes, disziplinenRes, clubsRes, meldungenRes, altersklassenRes] = await Promise.all([
+      // Lade Schützen direkt aus Firebase
+      const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
+      
+      const [mannschaftenRes, shootersSnapshot, disziplinenRes, clubsRes, meldungenRes, altersklassenRes] = await Promise.all([
         fetch(`/api/km/mannschaften?saison=${selectedSaison}`),
-        fetch('/api/km/shooters'),
+        getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs'),
         fetch(`/api/km/meldungen?saison=${selectedSaison}`),
         fetch('/api/km/altersklassen')
       ]);
       
+      const schuetzenData = shootersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
       if (mannschaftenRes.ok) {
         const data = await mannschaftenRes.json();
         setMannschaften(data.data || []);
       }
 
-      if (schuetzenRes.ok) {
-        const data = await schuetzenRes.json();
-        setSchuetzen(data.data || []);
-      }
+      setSchuetzen(schuetzenData);
 
       if (disziplinenRes.ok) {
         const data = await disziplinenRes.json();

@@ -38,6 +38,7 @@ function KMMannschaftenContent() {
   const [disziplinen, setDisziplinen] = useState<any[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [meldungen, setMeldungen] = useState<any[]>([]);
@@ -46,16 +47,22 @@ function KMMannschaftenContent() {
   const [selectedSaison, setSelectedSaison] = useState<string>('');
 
   useEffect(() => {
-    if (hasKMAccess && !authLoading) {
+    if (hasKMAccess && !authLoading && !dataLoaded) {
       loadSaisons();
     }
-  }, [hasKMAccess, authLoading]);
+  }, [hasKMAccess, authLoading, dataLoaded]);
   
   useEffect(() => {
-    if (selectedSaison && hasKMAccess) {
-      loadData();
+    if (selectedSaison) {
+      setDataLoaded(false);
     }
   }, [selectedSaison]);
+  
+  useEffect(() => {
+    if (selectedSaison && !dataLoaded) {
+      loadData();
+    }
+  }, [selectedSaison, dataLoaded]);
 
   const loadSaisons = async () => {
     try {
@@ -90,6 +97,7 @@ function KMMannschaftenContent() {
       setSaisons([]);
     }
     setLoading(false);
+    setDataLoaded(true);
   };
 
   const loadData = async () => {
@@ -135,7 +143,7 @@ function KMMannschaftenContent() {
       
       try {
 
-        const schuetzenRes = await fetch('/api/km/shooters');
+        const schuetzenRes = await fetch('/api/shooters');
 
         if (schuetzenRes.ok) {
           const data = await schuetzenRes.json();
@@ -183,6 +191,8 @@ function KMMannschaftenContent() {
     } catch (error) {
       logError('LoadData error:', error);
       toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden', variant: 'destructive' });
+    } finally {
+      setDataLoaded(true);
     }
   };
 
@@ -228,6 +238,7 @@ function KMMannschaftenContent() {
         
         // Warte kurz und lade dann Daten neu
         setTimeout(async () => {
+          setDataLoaded(false);
           await loadData();
         }, 1000);
       } else {
@@ -412,23 +423,7 @@ function KMMannschaftenContent() {
                       defaultValue=""
                     >
                       <option value="">Disziplin wählen...</option>
-                      {disziplinen
-                        .filter(d => {
-                          // Nur Disziplinen anzeigen, für die Meldungen vom eigenen Verein existieren
-                          return meldungen.some(m => {
-                            if (m.disziplinId !== d.id) return false;
-                            // Prüfe ob Meldung zu einem Schützen gehört, der zu unseren Vereinen gehört
-                            const schuetze = schuetzen.find(s => s.id === m.schuetzeId);
-                            if (!schuetze) return false;
-                            const schuetzeClubIds = [
-                              schuetze.clubId,
-                              schuetze.kmClubId,
-                              schuetze.rwkClubId
-                            ].filter(Boolean);
-                            return schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
-                          });
-                        })
-                        .map(d => (
+                      {disziplinen.map(d => (
                         <option key={d.id} value={d.id}>{d.name}</option>
                       ))}
                     </select>
@@ -443,7 +438,6 @@ function KMMannschaftenContent() {
                           return;
                         }
                         
-                        const selectedDisziplin = disziplinen.find(d => d.id === selectedDisziplinId);
                         const newTeam = {
                           vereinId: userClubIds[0] || 'unknown',
                           disziplinId: selectedDisziplinId,
@@ -461,7 +455,7 @@ function KMMannschaftenContent() {
                           if (res.ok) {
                             toast({ title: 'Erfolg', description: 'Leere Mannschaft erstellt' });
                             loadData();
-                            selectElement.value = ''; // Reset selection
+                            selectElement.value = '';
                           } else {
                             toast({ title: 'Fehler', description: 'Mannschaft konnte nicht erstellt werden', variant: 'destructive' });
                           }

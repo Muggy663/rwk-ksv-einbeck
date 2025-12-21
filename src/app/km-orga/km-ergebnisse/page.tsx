@@ -87,9 +87,13 @@ export default function KMErgebnissePage() {
     setLoading(true);
     const loadData = async () => {
       try {
-        const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes, altersklassenRes] = await Promise.all([
+        // Lade Schützen direkt aus Firebase
+        const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase/config');
+        
+        const [meldungenRes, shootersSnapshot, disziplinenRes, clubsRes, altersklassenRes] = await Promise.all([
           fetch(`/api/km/meldungen?saison=${selectedJahr}`),
-          fetch('/api/km/shooters'),
+          getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
           fetch('/api/km/disziplinen'),
           fetch('/api/clubs'),
           fetch('/api/km/altersklassen')
@@ -112,7 +116,10 @@ export default function KMErgebnissePage() {
           logWarn('⚠️ Keine Meldungen gefunden für Saison:', selectedJahr);
         }
 
-        const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
+        const schuetzenData = shootersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
         const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
         const clubsData = clubsRes.ok ? (await clubsRes.json()).data || [] : [];
         

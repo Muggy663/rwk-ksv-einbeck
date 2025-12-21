@@ -30,15 +30,21 @@ export default function KMAdminMitglieder() {
 
   const loadData = async () => {
     try {
-      const [shootersRes, clubsRes] = await Promise.all([
-        fetch('/api/km/shooters'),
+      // Lade Schützen direkt aus Firebase
+      const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
+      
+      const [shootersSnapshot, clubsRes] = await Promise.all([
+        getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
         fetch('/api/clubs')
       ]);
       
-      if (shootersRes.ok) {
-        const data = await shootersRes.json();
-        setShooters(data.data || []);
-      }
+      const shootersData = shootersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      setShooters(shootersData);
 
       if (clubsRes.ok) {
         const data = await clubsRes.json();
@@ -67,7 +73,7 @@ export default function KMAdminMitglieder() {
     if (!editingId) return;
 
     try {
-      const response = await fetch(`/api/km/shooters/${editingId}`, {
+      const response = await fetch(`/api/shooters/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editData)
@@ -87,7 +93,7 @@ export default function KMAdminMitglieder() {
     if (!confirm(`Schütze "${shooterName}" wirklich löschen?`)) return;
 
     try {
-      const response = await fetch(`/api/km/shooters/${shooterId}`, {
+      const response = await fetch(`/api/shooters/${shooterId}`, {
         method: 'DELETE'
       });
 
@@ -120,7 +126,7 @@ export default function KMAdminMitglieder() {
         importedAt: new Date()
       };
 
-      const response = await fetch('/api/km/shooters', {
+      const response = await fetch('/api/shooters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(shooterData)

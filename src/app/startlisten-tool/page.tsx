@@ -129,7 +129,7 @@ export default function StartlistenToolPage() {
         const [disziplinenRes, meldungenRes, schuetzenRes, clubsRes] = await Promise.all([
           fetch('/api/km/disziplinen'),
           fetch(`/api/km/meldungen?saison=${finalSaisonId}`),
-          fetch('/api/km/shooters'),
+          fetch('/api/shooters'),
           fetch('/api/clubs')
         ]);
         
@@ -300,7 +300,7 @@ export default function StartlistenToolPage() {
     const [mannschaftenRes, kmMeldungenRes, schuetzenRes, disziplinenRes, vereineRes] = await Promise.all([
       fetch('/api/km/mannschaften'),
       fetch(`/api/km/meldungen${selectedSaison ? `?saison=${selectedSaison}` : ''}`),
-      fetch('/api/km/shooters'),
+      fetch('/api/shooters'),
       fetch('/api/km/disziplinen'),
       fetch('/api/clubs')
     ]);
@@ -930,7 +930,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
 
       // Lade alle benötigten Daten über APIs
       const [schuetzenRes, meldungenRes, disziplinenRes, mannschaftenRes] = await Promise.all([
-        fetch('/api/km/shooters'),
+        fetch('/api/shooters'),
         fetch(`/api/km/meldungen?saison=${selectedSaison}`),
         fetch('/api/km/disziplinen'),
         fetch(`/api/km/mannschaften?saison=${selectedSaison}`)
@@ -1145,7 +1145,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
       
       // Lade Mannschaften und Disziplinen für E/M Erkennung und SPO-Nummern
       const [schuetzenRes, mannschaftenRes, disziplinenRes, kmMeldungenRes] = await Promise.all([
-        fetch('/api/km/shooters'),
+        fetch('/api/shooters'),
         fetch(`/api/km/mannschaften?saison=${selectedSaison}`),
         fetch('/api/km/disziplinen'),
         fetch(`/api/km/meldungen?saison=${selectedSaison}`)
