@@ -17,6 +17,7 @@ import { fetchEvents } from '@/lib/services/calendar-service';
 import { cleanupExpiredEvents } from '@/lib/services/event-cleanup';
 import { newsService } from '@/lib/services/news-service';
 import { MaintenanceBanner } from '@/components/MaintenanceBanner';
+import { Snowfall } from '@/components/ui/snowfall';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
@@ -163,6 +164,7 @@ export default function HomePage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto pwa-optimized">
+      <Snowfall />
       {/* Wartungshinweis entfernt - System ist live */}
       
 
@@ -189,13 +191,14 @@ export default function HomePage() {
           </div>
           
           {/* Kraftvolle Headline */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent mb-4 animate-fade-in">
-            <span className="block sm:hidden">RWK<br />KSV Einbeck</span>
-            <span className="hidden sm:block">Willkommen beim<br />Rundenwettkampf KSV Einbeck</span>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-red-500 via-green-600 to-red-500 bg-clip-text text-transparent mb-4 animate-fade-in">
+            <span className="block sm:hidden">🎄 RWK<br />KSV Einbeck 🎅</span>
+            <span className="hidden sm:block">🎄 Frohe Weihnachten &<br />Willkommen beim RWK KSV Einbeck 🎅</span>
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Aktuelle Ergebnisse, Tabellen und Informationen zu den Rundenwettkämpfen des Kreisschützenverbandes Einbeck e.V.
+            🎁 Aktuelle Ergebnisse, Tabellen und Informationen zu den Rundenwettkämpfen des Kreisschützenverbandes Einbeck e.V. 🎁<br/>
+            <span className="text-lg text-red-600 font-semibold">✨ Wir wünschen allen Schützen frohe Weihnachten und einen guten Rutsch ins neue Jahr! ✨</span>
           </p>
         </div>
       </section>
