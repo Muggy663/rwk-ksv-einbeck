@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Save, Trophy, Medal, Upload, FileText, ArrowLeft } from 'lucide-react';
+import { Save, Trophy, Medal, Upload, FileText, ArrowLeft, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import Link from 'next/link';
@@ -35,11 +35,14 @@ export default function KMErgebnissePage() {
   const [disziplinen, setDisziplinen] = useState<string[]>([]);
   const [selectedJahr, setSelectedJahr] = useState<string>('');
   const [jahre, setJahre] = useState<{id: string, name: string}[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [inputValues, setInputValues] = useState<{[key: string]: string}>({});
   const [seriesInputs, setSeriesInputs] = useState<{[key: string]: string}>({});
+  const [showPDFDialog, setShowPDFDialog] = useState(false);
+  const [selectedPDFDisziplinen, setSelectedPDFDisziplinen] = useState<string[]>([]);
+  const [showStarterList, setShowStarterList] = useState(false);
 
   // Lade Saisons
   useEffect(() => {
@@ -52,10 +55,23 @@ export default function KMErgebnissePage() {
             id: saison.id,
             name: saison.name
           }));
-          setJahre(saisonData);
-          if (saisonData.length > 0 && !selectedJahr) {
-            setSelectedJahr(saisonData[0].id);
-          }
+          // Sortiere Saisons: Neueste zuerst (LD 2026 > KKP 2026 > KK 2026)
+          const sortedSaisons = saisonData.sort((a, b) => {
+            // Priorisiere LD (Luftdruck) als neueste Saison
+            if (a.name?.includes('Luftdruck') && !b.name?.includes('Luftdruck')) return -1;
+            if (!a.name?.includes('Luftdruck') && b.name?.includes('Luftdruck')) return 1;
+            
+            // Dann nach Jahr sortieren (höher = neuer)
+            const yearA = a.jahr || 0;
+            const yearB = b.jahr || 0;
+            if (yearA !== yearB) return yearB - yearA;
+            
+            // Dann alphabetisch
+            return (a.name || '').localeCompare(b.name || '');
+          });
+          
+          setJahre(sortedSaisons);
+          // Keine automatische Auswahl - Benutzer muss bewusst wählen
         }
       } catch (error) {
         logError('Fehler beim Laden der Saisons:', error);
@@ -65,8 +81,9 @@ export default function KMErgebnissePage() {
   }, []);
 
   useEffect(() => {
-    if (!hasKMAccess || authLoading || !selectedJahr) return;
+    if (!hasKMAccess || authLoading || !selectedJahr || selectedJahr === '') return;
     
+    setLoading(true);
     const loadData = async () => {
       try {
         const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
@@ -76,16 +93,30 @@ export default function KMErgebnissePage() {
           fetch('/api/clubs')
         ]);
         
-        const kmErgebnisseRes = await fetch('/api/km/ergebnisse');
-        const kmErgebnisseData = kmErgebnisseRes.ok ? (await kmErgebnisseRes.json()).data || [] : [];
+        logDebug('🔍 Meldungen Response Status:', meldungenRes.status);
         
         const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
+
+        const kmErgebnisseRes = await fetch(`/api/km/ergebnisse?saison=${selectedJahr}`);
+        const kmErgebnisseData = kmErgebnisseRes.ok ? (await kmErgebnisseRes.json()).data || [] : [];
+        
+        logDebug('🔍 Geladene KM-Ergebnisse:', kmErgebnisseData.length);
+        logDebug('🔍 Geladene Meldungen:', meldungenData.length);
+        logDebug('🔍 Ausgewählte Saison:', selectedJahr);
+        logDebug('🔍 API Response Meldungen:', meldungenData);
+        
+        if (meldungenData.length === 0) {
+          logWarn('⚠️ Keine Meldungen gefunden für Saison:', selectedJahr);
+        }
+
         const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
         const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
         const clubsData = clubsRes.ok ? (await clubsRes.json()).data || [] : [];
         
         const meldungenDataProcessed: Meldung[] = [];
         const disziplinenSet = new Set<string>();
+        
+        logDebug('🔍 Verarbeite Meldungen:', meldungenData.length);
 
         const kmErgebnisseMap = new Map();
         kmErgebnisseData.forEach(data => {
@@ -134,7 +165,16 @@ export default function KMErgebnissePage() {
             schuetzenName: schuetze ? schuetze.name : 'Unbekannter Schütze',
             vereinsname: vereinsname,
             disziplin: disziplinName,
-            kmErgebnis: kmErgebnisseMap.get(meldung.id)
+            kmErgebnis: meldung.kmRinge ? {
+              ringe: meldung.kmRinge,
+              teiler: 0,
+              serien: [
+                meldung.kmSerie1 ? meldung.kmSerie1.split(',').map(Number) : [],
+                meldung.kmSerie2 ? meldung.kmSerie2.split(',').map(Number) : [],
+                meldung.kmSerie3 ? meldung.kmSerie3.split(',').map(Number) : [],
+                meldung.kmSerie4 ? meldung.kmSerie4.split(',').map(Number) : []
+              ].filter(s => s.length > 0)
+            } : null
           });
           disziplinenSet.add(disziplinName);
         });
@@ -223,10 +263,10 @@ export default function KMErgebnissePage() {
 
     setSaving(true);
     try {
-      const ergebnisData = {
-        meldung_id: meldungId,
-        ergebnis_ringe: meldung.kmErgebnis.ringe,
-        ergebnis_teiler: meldung.kmErgebnis.teiler || 0,
+      // Aktualisiere die Meldung direkt mit kmErgebnis
+      const kmErgebnisData = {
+        ringe: meldung.kmErgebnis.ringe,
+        teiler: meldung.kmErgebnis.teiler || 0,
         serien: meldung.kmErgebnis.serien || [],
         platz_disziplin: meldung.kmErgebnis.platz_disziplin || 0,
         platz_altersklasse: meldung.kmErgebnis.platz_altersklasse || 0,
@@ -234,12 +274,12 @@ export default function KMErgebnissePage() {
         eingegeben_von: 'km-admin'
       };
 
-      logDebug('💾 Speichere KM-Ergebnis:', ergebnisData);
+      logDebug('💾 Speichere KM-Ergebnis:', { meldungId, saisonId: selectedJahr, kmErgebnisData });
 
-      const response = await fetch('/api/km/ergebnisse', {
+      const response = await fetch('/api/km/ergebnisse-save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(ergebnisData)
+        body: JSON.stringify({ meldungId, kmErgebnis: kmErgebnisData })
       });
       
       if (response.ok) {
@@ -247,8 +287,22 @@ export default function KMErgebnissePage() {
         logDebug('✅ Erfolgreich gespeichert:', result);
         toast({ 
           title: '✅ Gespeichert!', 
-          description: `${meldung.schuetzenName}: ${meldung.kmErgebnis.ringe} Ringe ${result.created ? 'neu erstellt' : 'aktualisiert'}`,
+          description: `${meldung.schuetzenName}: ${meldung.kmErgebnis.ringe} Ringe`,
           className: 'border-green-500 bg-green-50'
+        });
+        // Input-Wert zurücksetzen damit gespeicherter Wert angezeigt wird
+        setInputValues(prev => {
+          const newValues = { ...prev };
+          delete newValues[meldungId];
+          return newValues;
+        });
+        // Serien-Inputs zurücksetzen damit gespeicherte Werte angezeigt werden
+        setSeriesInputs(prev => {
+          const newInputs = { ...prev };
+          for (let i = 0; i < 6; i++) {
+            delete newInputs[`${meldungId}-${i}`];
+          }
+          return newInputs;
         });
       } else {
         const errorText = await response.text();
@@ -272,7 +326,96 @@ export default function KMErgebnissePage() {
     ? meldungen.filter(m => m.disziplin === selectedDisziplin)
     : meldungen;
 
-  if (loading || authLoading) {
+  const exportToPDF = async () => {
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
+      
+      const doc = new jsPDF();
+      
+      // Header mit Saison
+      const currentSaison = jahre.find(s => s.id === selectedJahr);
+      doc.setFontSize(16);
+      doc.text(`Ergebnisliste ${currentSaison?.name || 'Kreismeisterschaft'}`, 20, 20);
+      doc.setFontSize(12);
+      doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-DE')}`, 20, 30);
+      
+      let yPosition = 50;
+      
+      // Filter nach ausgewählten Disziplinen für PDF
+      let ergebnisse = filteredMeldungen.filter(m => m.kmErgebnis?.ringe);
+      if (selectedPDFDisziplinen.length > 0) {
+        ergebnisse = ergebnisse.filter(m => selectedPDFDisziplinen.includes(m.disziplin));
+      }
+      
+      // Gruppiere nach Disziplin
+      const gruppen = ergebnisse.reduce((acc, erg) => {
+        const key = erg.disziplin;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(erg);
+        return acc;
+      }, {} as {[key: string]: any[]});
+      
+      // Für jede Disziplin eine Tabelle
+      Object.entries(gruppen).forEach(([disziplin, ergebnisse]) => {
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        doc.setFontSize(14);
+        doc.text(disziplin, 20, yPosition);
+        yPosition += 10;
+        
+        const tableData = ergebnisse
+          .sort((a, b) => (b.kmErgebnis?.ringe || 0) - (a.kmErgebnis?.ringe || 0))
+          .map((e, index) => {
+            // Serien direkt aus Meldung lesen
+            const serien = [];
+            if (e.kmSerie1) serien.push(e.kmSerie1);
+            if (e.kmSerie2) serien.push(e.kmSerie2);
+            if (e.kmSerie3) serien.push(e.kmSerie3);
+            if (e.kmSerie4) serien.push(e.kmSerie4);
+            const serienText = serien.length > 0 ? serien.join(' | ') : '-';
+            
+            return [
+              (index + 1).toString(),
+              e.schuetzenName,
+              e.vereinsname,
+              serienText,
+              `${e.kmErgebnis.ringe}${e.kmErgebnis.teiler ? '.' + e.kmErgebnis.teiler : ''}`,
+            ];
+          });
+        
+        autoTable(doc, {
+          startY: yPosition,
+          head: [['Platz', 'Name', 'Verein', 'Serien', 'Ergebnis']],
+          body: tableData,
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [66, 139, 202] },
+          columnStyles: {
+            0: { cellWidth: 15 },
+            1: { cellWidth: 35 },
+            2: { cellWidth: 35 },
+            3: { cellWidth: 80 },
+            4: { cellWidth: 25 }
+          }
+        });
+        
+        yPosition = (doc as any).lastAutoTable.finalY + 15;
+      });
+      
+      const fileName = `Ergebnisliste_${currentSaison?.name?.replace(/\s+/g, '_') || 'KM'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+      
+      toast({ title: 'PDF erstellt', description: `${fileName} wurde heruntergeladen.` });
+    } catch (error) {
+      logError('PDF-Export Fehler:', error);
+      toast({ title: 'Fehler', description: 'PDF konnte nicht erstellt werden.', variant: 'destructive' });
+    }
+  };
+
+  if ((loading && selectedJahr) || authLoading) {
     return (
       <div className="container py-8 max-w-6xl mx-auto">
         <div className="flex items-center justify-center py-10">
@@ -303,7 +446,7 @@ export default function KMErgebnissePage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div>
+          <div className="flex-1">
             <h1 className="text-xl md:text-3xl font-bold text-primary">🏆 KM-Ergebnisse erfassen</h1>
             <p className="text-sm md:text-base text-muted-foreground">
               Kreismeisterschafts-Ergebnisse nach dem Wettkampf erfassen für automatische Ergebnislisten
@@ -312,48 +455,136 @@ export default function KMErgebnissePage() {
         </div>
       </div>
 
-      <Card className="mb-6">
+      <Card className="mb-6 border-2 border-primary bg-primary/5">
         <CardHeader>
-          <CardTitle>Filter & Aktionen</CardTitle>
+          <CardTitle>🎯 Saison & Filter</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Jahr/Saison</Label>
-              <Select value={selectedJahr} onValueChange={setSelectedJahr}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {jahre.map(jahr => (
-                    <SelectItem key={jahr.id} value={jahr.id}>{jahr.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-base font-semibold text-gray-800 dark:text-gray-200">🎯 Saison auswählen (Pflichtfeld)</Label>
+              <select
+                value={selectedJahr}
+                onChange={(e) => setSelectedJahr(e.target.value)}
+                className="w-full mt-2 px-4 py-3 text-lg border-2 border-primary rounded-lg bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+                required
+              >
+                <option value="">🔽 Bitte Saison wählen...</option>
+                {jahre.map(jahr => (
+                  <option key={jahr.id} value={jahr.id}>
+                    {jahr.name}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div>
-              <Label>Disziplin</Label>
-              <Select value={selectedDisziplin} onValueChange={setSelectedDisziplin}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Alle Disziplinen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL_DISCIPLINES">Alle Disziplinen</SelectItem>
-                  {disziplinen.map(d => (
-                    <SelectItem key={d} value={d}>{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {selectedJahr && (
+              <div>
+                <Label>Disziplin</Label>
+                <Select value={selectedDisziplin} onValueChange={setSelectedDisziplin}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Alle Disziplinen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL_DISCIPLINES">Alle Disziplinen</SelectItem>
+                    {disziplinen.map(d => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>KM-Ergebnisse ({filteredMeldungen.length} Meldungen)</CardTitle>
-        </CardHeader>
-        <CardContent>
+      {selectedJahr && (
+        <Card className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-blue-800 flex items-center gap-2">
+                📋 Starterliste - Übersicht
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowPDFDialog(true)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  PDF Export
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowStarterList(!showStarterList)}
+                >
+                  {showStarterList ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-6">
+              <div className="bg-white p-3 rounded border">
+                <div className="text-2xl font-bold text-blue-600">{meldungen.length}</div>
+                <div className="text-sm text-gray-600">Gemeldete Schützen</div>
+              </div>
+              <div className="bg-white p-3 rounded border">
+                <div className="text-2xl font-bold text-green-600">{meldungen.filter(m => m.kmErgebnis?.ringe).length}</div>
+                <div className="text-sm text-gray-600">Mit Ergebnissen</div>
+              </div>
+              <div className="bg-white p-3 rounded border">
+                <div className="text-2xl font-bold text-orange-600">{disziplinen.length}</div>
+                <div className="text-sm text-gray-600">Disziplinen</div>
+              </div>
+              <div className="bg-white p-3 rounded border">
+                <div className="text-2xl font-bold text-purple-600">{new Set(meldungen.map(m => m.vereinsname)).size}</div>
+                <div className="text-sm text-gray-600">Vereine</div>
+              </div>
+            </div>
+            
+            {showStarterList && (
+              <div className="space-y-4">
+                {disziplinen.map(disziplin => {
+                  const disziplinMeldungen = meldungen.filter(m => m.disziplin === disziplin);
+                  return (
+                    <div key={disziplin} className="bg-white p-4 rounded border">
+                      <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        🎯 {disziplin} ({disziplinMeldungen.length} Starter)
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+                        {disziplinMeldungen.map(meldung => (
+                          <div key={meldung.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                            <span className="font-medium">{meldung.schuetzenName}</span>
+                            <span className="text-gray-600 text-xs">{meldung.vereinsname}</span>
+                            {meldung.kmErgebnis?.ringe && (
+                              <Badge variant="secondary" className="ml-2">✅</Badge>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {!selectedJahr && (
+        <Card className="mb-6 border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="text-center py-4">
+              <p className="text-orange-800 font-medium mb-2">⚠️ Bitte wählen Sie zuerst eine Saison aus</p>
+              <p className="text-sm text-orange-600">Die Ergebnisse werden erst nach der Saisonauswahl angezeigt, um Fehlmeldungen zu vermeiden.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {selectedJahr && (
+        <Card>
+          <CardHeader>
+            <CardTitle>KM-Ergebnisse ({filteredMeldungen.length} Meldungen)</CardTitle>
+          </CardHeader>
+          <CardContent>
           <div className="space-y-4">
             {filteredMeldungen.map(meldung => (
               <Card key={meldung.id} className="p-4">
@@ -382,7 +613,7 @@ export default function KMErgebnissePage() {
                               <Label className="text-xs">Serie {serieIndex + 1} ({seriesInfo.shotsPerSeries} Schuss)</Label>
                               <Input
                                 type="text"
-                                value={seriesInputs[`${meldung.id}-${serieIndex}`] || ''}
+                                value={seriesInputs[`${meldung.id}-${serieIndex}`] || (currentSeries[serieIndex] && currentSeries[serieIndex].length > 0 ? currentSeries[serieIndex].join(' ') : '')}
                                 onChange={(e) => {
                                   const inputKey = `${meldung.id}-${serieIndex}`;
                                   setSeriesInputs(prev => ({ ...prev, [inputKey]: e.target.value }));
@@ -447,7 +678,7 @@ export default function KMErgebnissePage() {
                             }
                           }}
                           className="flex-1"
-                          placeholder=""
+                          placeholder="z.B. 387,5"
                         />
                         <div className="flex gap-1">
                           <Button 
@@ -490,8 +721,43 @@ export default function KMErgebnissePage() {
               </Card>
             ))}
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* PDF Export Dialog */}
+      {showPDFDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold mb-4">PDF Export - Disziplinen wählen</h3>
+            <div className="space-y-2 mb-4">
+              {disziplinen.map(disziplin => (
+                <label key={disziplin} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedPDFDisziplinen.includes(disziplin)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedPDFDisziplinen(prev => [...prev, disziplin]);
+                      } else {
+                        setSelectedPDFDisziplinen(prev => prev.filter(d => d !== disziplin));
+                      }
+                    }}
+                  />
+                  <span>{disziplin}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowPDFDialog(false)}>Abbrechen</Button>
+              <Button onClick={() => {
+                exportToPDF();
+                setShowPDFDialog(false);
+              }}>PDF erstellen</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

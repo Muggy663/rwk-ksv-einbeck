@@ -243,29 +243,19 @@ export default function KMAdminDashboard() {
               🏆 Ergebnisse & Auswertung
             </CardTitle>
             <CardDescription>
-              Nach dem Wettkampf: Ergebnisse erfassen und Listen erstellen
+              Nach dem Wettkampf: Ergebnisse erfassen, Starterlisten einsehen und Listen erstellen
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-2">
               <Link href="/km-orga/km-ergebnisse">
                 <Button className="w-full h-12 text-left justify-start bg-orange-600 hover:bg-orange-700">
-                  ✏️ Ergebnisse manuell eingeben
+                  🏆 KM-Ergebnisse erfassen & Ergebnislisten erstellen
                 </Button>
               </Link>
               <Link href="/km-orga/david21">
                 <Button variant="outline" className="w-full h-12 text-left justify-start">
                   🎯 Meyton Import (Shootmaster)
-                </Button>
-              </Link>
-              <Link href="/km-orga/ergebnisse-korrektur">
-                <Button variant="outline" className="w-full h-12 text-left justify-start">
-                  🔧 Ergebnisse korrigieren
-                </Button>
-              </Link>
-              <Link href="/km-orga/ergebnislisten">
-                <Button variant="outline" className="w-full h-12 text-left justify-start">
-                  📄 Ergebnislisten erstellen
                 </Button>
               </Link>
             </div>

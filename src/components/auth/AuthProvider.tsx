@@ -42,7 +42,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     // Nur Timer setzen, wenn ein Benutzer angemeldet ist
     if (user) {
-      setTimeLeft(10 * 60); // Reset countdown
+      // Reset countdown in next tick to avoid setState during render
+      setTimeout(() => {
+        setTimeLeft(10 * 60);
+      }, 0);
       
       // Countdown Timer - zurück auf 1 Sekunde für sichtbare Änderungen
       countdownTimerRef.current = setInterval(() => {

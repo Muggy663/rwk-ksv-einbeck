@@ -173,11 +173,26 @@ export async function GET(request: NextRequest) {
       }
       
       const saisonData = saisonDoc.data();
-      const disziplinTyp = saisonData.disziplinTyp; // 'KK' oder 'LD'
-      const saisonJahr = saisonData.jahr;
+      const disziplinTyp = saisonData.disziplinTyp || 'KK';
+      const saisonJahr = saisonData.jahr || 2026;
       
-      const collectionName = getKMMeldungenCollection(saisonJahr, disziplinTyp.toLowerCase());
+      // Spezielle Collection-Namen für 2026
+      let collectionName;
+      if (saisonData.name?.includes('Luftdruckgewehr') || saisonData.name?.includes('Luftdruck')) {
+        collectionName = `km_meldungen_${saisonJahr}_ld`;
+      } else if (saisonData.name?.includes('Kleinkaliber Pistole')) {
+        collectionName = `km_meldungen_${saisonJahr}_kkp`;
+      } else if (saisonData.name?.includes('Kleinkaliber')) {
+        collectionName = `km_meldungen_${saisonJahr}_kk`;
+      } else {
+        collectionName = getKMMeldungenCollection(saisonJahr, disziplinTyp.toLowerCase());
+      }
+      
+      logDebug('🔍 Saison-Daten:', { saisonId, saisonData: saisonData.name, collectionName });
+      
       const snapshot = await adminDb.collection(collectionName).get();
+      
+      logDebug('🔍 Collection-Ergebnis:', { collectionName, anzahl: snapshot.docs.length });
       
       let meldungen = snapshot.docs.map(doc => ({
         id: doc.id,

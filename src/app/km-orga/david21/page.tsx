@@ -21,6 +21,13 @@ export default function David21Page() {
     startzeit: '14:00'
   });
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [importData, setImportData] = useState({
+    saisonId: '',
+    disziplinen: [] as string[],
+    startlisteId: ''
+  });
+  const [saisons, setSaisons] = useState<any[]>([]);
+  const [disziplinen, setDisziplinen] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [startlisten, setStartlisten] = useState<any[]>([]);
   const [selectedStartliste, setSelectedStartliste] = useState<any>(null);
@@ -37,7 +44,34 @@ export default function David21Page() {
         logError('Fehler beim Laden der Startlisten:', error);
       }
     };
+    
+    const loadSaisons = async () => {
+      try {
+        const response = await fetch('/api/km/saisons');
+        if (response.ok) {
+          const data = await response.json();
+          setSaisons(data.data || []);
+        }
+      } catch (error) {
+        logError('Fehler beim Laden der Saisons:', error);
+      }
+    };
+    
+    const loadDisziplinen = async () => {
+      try {
+        const response = await fetch('/api/km/disziplinen');
+        if (response.ok) {
+          const data = await response.json();
+          setDisziplinen(data.data?.map((d: any) => d.name) || []);
+        }
+      } catch (error) {
+        logError('Fehler beim Laden der Disziplinen:', error);
+      }
+    };
+    
     loadStartlisten();
+    loadSaisons();
+    loadDisziplinen();
   }, []);
 
   React.useEffect(() => {
@@ -115,8 +149,11 @@ export default function David21Page() {
     try {
       const formData = new FormData();
       formData.append('file', importFile);
-      formData.append('wettkampfId', exportData.wettkampfId);
-      formData.append('startlisteId', exportData.startlisteId);
+      formData.append('saisonId', importData.saisonId);
+      formData.append('disziplinen', JSON.stringify(importData.disziplinen));
+      if (importData.startlisteId) {
+        formData.append('startlisteId', importData.startlisteId);
+      }
 
       const response = await fetch('/api/km/david21-import', {
         method: 'POST',
@@ -271,8 +308,60 @@ export default function David21Page() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="saisonSelect">Saison auswählen *</Label>
+                  <NativeSelect
+                    value={importData.saisonId}
+                    onValueChange={(value) => setImportData({...importData, saisonId: value})}
+                    placeholder="Saison wählen"
+                    options={saisons.map(s => ({
+                      value: s.id,
+                      label: s.name
+                    }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="disziplinSelect">Disziplinen auswählen *</Label>
+                  <select
+                    multiple
+                    value={importData.disziplinen}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.selectedOptions, option => option.value);
+                      setImportData({...importData, disziplinen: selected});
+                    }}
+                    className="w-full p-2 border rounded-md min-h-[100px]"
+                  >
+                    {disziplinen.map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Strg/Cmd + Klick für Mehrfachauswahl</p>
+                </div>
+              </div>
+              
               <div>
-                <Label htmlFor="resultFile">Ergebnis-Datei (.TXT)</Label>
+                <Label htmlFor="startlisteSelect">Startliste (optional)</Label>
+                <NativeSelect
+                  value={importData.startlisteId}
+                  onValueChange={(value) => setImportData({...importData, startlisteId: value})}
+                  placeholder="Keine Startliste (automatische Zuordnung)"
+                  options={[
+                    { value: '', label: 'Keine Startliste (automatische Zuordnung)' },
+                    ...startlisten.map(s => {
+                      const datum = new Date(s.datum).toLocaleDateString('de-DE');
+                      const starterCount = s.startliste?.length || 0;
+                      return {
+                        value: s.id,
+                        label: `${datum} | ${starterCount} Starter`
+                      };
+                    })
+                  ]}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="resultFile">Ergebnis-Datei (.TXT) *</Label>
                 <Input
                   id="resultFile"
                   type="file"
@@ -294,7 +383,7 @@ export default function David21Page() {
 
               <Button 
                 onClick={handleImport} 
-                disabled={loading || !importFile}
+                disabled={loading || !importFile || !importData.saisonId || importData.disziplinen.length === 0}
                 className="w-full"
               >
                 <Upload className="h-4 w-4 mr-2" />

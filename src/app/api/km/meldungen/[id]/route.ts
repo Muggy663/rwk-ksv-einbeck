@@ -1,180 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError } from '@/lib/utils/secure-logger';
+import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = params;
     const body = await request.json();
-    const { lmTeilnahme, anmerkung, vmErgebnis, disziplinId } = body;
+    const { kmErgebnis, lmTeilnahme, vmErgebnis, anmerkung, disziplinId, saisonId } = body;
     
-    // Finde die Meldung in allen möglichen Collections
-    const saisons = await adminDb.collection('km_saisons').get();
-    const collections = [];
+    const updateData: any = {};
+    if (kmErgebnis !== undefined) updateData.kmErgebnis = kmErgebnis;
+    if (lmTeilnahme !== undefined) updateData.lmTeilnahme = lmTeilnahme;
+    if (vmErgebnis !== undefined) updateData.vmErgebnis = vmErgebnis;
+    if (anmerkung !== undefined) updateData.anmerkung = anmerkung;
+    if (disziplinId !== undefined) updateData.disziplinId = disziplinId;
     
-    saisons.docs.forEach(doc => {
-      const saison = doc.data();
-      collections.push(`km_meldungen_${saison.jahr}_${saison.disziplinTyp.toLowerCase()}`);
-    });
-    
-    let updated = false;
+    const collections = ['km_meldungen_2026_kk', 'km_meldungen_2026_ld', 'km_meldungen_2026_kkp'];
     
     for (const collectionName of collections) {
       try {
-        const docRef = adminDb.collection(collectionName).doc(id);
+        const docRef = adminDb.collection(collectionName).doc(params.id);
         const doc = await docRef.get();
         
         if (doc.exists) {
-          await docRef.update({
-            lmTeilnahme: !!lmTeilnahme,
-            anmerkung: anmerkung || '',
-            vmErgebnis: vmErgebnis || null,
-            ...(disziplinId && { disziplinId }),
-            updatedAt: new Date()
-          });
-          updated = true;
-          break;
+          await docRef.update(updateData);
+          return NextResponse.json({ success: true });
         }
-      } catch (error) {
+      } catch (e) {
         continue;
       }
     }
     
-    if (!updated) {
-      return NextResponse.json({
-        success: false,
-        error: 'Meldung nicht gefunden'
-      }, { status: 404 });
-    }
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Meldung erfolgreich aktualisiert'
-    });
+    return NextResponse.json({ success: false, error: 'Meldung nicht gefunden' }, { status: 404 });
     
   } catch (error) {
-    logError('Fehler beim Aktualisieren der Meldung:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message
-    }, { status: 500 });
+    logError('Fehler beim Update der Meldung:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = params;
-    const body = await request.json();
-    const { lmTeilnahme, anmerkung, vmErgebnis } = body;
-    
-    // Finde die Meldung in allen möglichen Collections
-    const saisons = await adminDb.collection('km_saisons').get();
-    const collections = [];
-    
-    saisons.docs.forEach(doc => {
-      const saison = doc.data();
-      collections.push(`km_meldungen_${saison.jahr}_${saison.disziplinTyp.toLowerCase()}`);
-    });
-    
-    let updated = false;
+    const collections = ['km_meldungen_2026_kk', 'km_meldungen_2026_ld', 'km_meldungen_2026_kkp'];
     
     for (const collectionName of collections) {
       try {
-        const docRef = adminDb.collection(collectionName).doc(id);
-        const doc = await docRef.get();
-        
-        if (doc.exists) {
-          await docRef.update({
-            lmTeilnahme: !!lmTeilnahme,
-            anmerkung: anmerkung || '',
-            vmErgebnis: vmErgebnis || null,
-            updatedAt: new Date()
-          });
-          updated = true;
-          break;
-        }
-      } catch (error) {
-        continue;
-      }
-    }
-    
-    if (!updated) {
-      return NextResponse.json({
-        success: false,
-        error: 'Meldung nicht gefunden'
-      }, { status: 404 });
-    }
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Meldung erfolgreich aktualisiert'
-    });
-    
-  } catch (error) {
-    logError('Fehler beim Aktualisieren der Meldung:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message
-    }, { status: 500 });
-  }
-}
-
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const { id } = params;
-    
-    // Finde die Meldung in allen möglichen Collections
-    const saisons = await adminDb.collection('km_saisons').get();
-    const collections = [];
-    
-    saisons.docs.forEach(doc => {
-      const saison = doc.data();
-      collections.push(`km_meldungen_${saison.jahr}_${saison.disziplinTyp.toLowerCase()}`);
-    });
-    
-    let deleted = false;
-    
-    for (const collectionName of collections) {
-      try {
-        const docRef = adminDb.collection(collectionName).doc(id);
+        const docRef = adminDb.collection(collectionName).doc(params.id);
         const doc = await docRef.get();
         
         if (doc.exists) {
           await docRef.delete();
-          deleted = true;
-          break;
+          return NextResponse.json({ success: true });
         }
-      } catch (error) {
+      } catch (e) {
         continue;
       }
     }
     
-    if (!deleted) {
-      return NextResponse.json({
-        success: false,
-        error: 'Meldung nicht gefunden'
-      }, { status: 404 });
-    }
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Meldung erfolgreich gelöscht'
-    });
+    return NextResponse.json({ success: false, error: 'Meldung nicht gefunden' }, { status: 404 });
     
   } catch (error) {
     logError('Fehler beim Löschen der Meldung:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message
-    }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
