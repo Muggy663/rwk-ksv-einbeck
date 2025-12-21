@@ -18,6 +18,7 @@ interface Meldung {
   schuetzenName: string;
   vereinsname: string;
   disziplin: string;
+  altersklasse?: string;
   kmErgebnis?: {
     ringe: number;
     teiler?: number;
@@ -86,16 +87,18 @@ export default function KMErgebnissePage() {
     setLoading(true);
     const loadData = async () => {
       try {
-        const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes] = await Promise.all([
+        const [meldungenRes, schuetzenRes, disziplinenRes, clubsRes, altersklassenRes] = await Promise.all([
           fetch(`/api/km/meldungen?saison=${selectedJahr}`),
           fetch('/api/km/shooters'),
           fetch('/api/km/disziplinen'),
-          fetch('/api/clubs')
+          fetch('/api/clubs'),
+          fetch('/api/km/altersklassen')
         ]);
         
         logDebug('🔍 Meldungen Response Status:', meldungenRes.status);
         
         const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
+        const altersklassenData = altersklassenRes.ok ? (await altersklassenRes.json()).data || [] : [];
 
         const kmErgebnisseRes = await fetch(`/api/km/ergebnisse?saison=${selectedJahr}`);
         const kmErgebnisseData = kmErgebnisseRes.ok ? (await kmErgebnisseRes.json()).data || [] : [];
@@ -132,6 +135,7 @@ export default function KMErgebnissePage() {
         const schuetzenMap = new Map();
         const disziplinenMap = new Map();
         const clubsMap = new Map();
+        const altersklassenMap = new Map();
         
         schuetzenData.forEach(schuetze => {
           const fullName = schuetze.firstName && schuetze.lastName 
@@ -139,7 +143,9 @@ export default function KMErgebnissePage() {
             : schuetze.name || 'Unbekannt';
           schuetzenMap.set(schuetze.id, {
             name: fullName,
-            clubId: schuetze.kmClubId || schuetze.rwkClubId || schuetze.clubId
+            clubId: schuetze.kmClubId || schuetze.rwkClubId || schuetze.clubId,
+            birthYear: schuetze.birthYear,
+            gender: schuetze.gender
           });
         });
         
@@ -150,10 +156,17 @@ export default function KMErgebnissePage() {
         clubsData.forEach(club => {
           clubsMap.set(club.id, club.name);
         });
+        
+        altersklassenData.forEach(ak => {
+          altersklassenMap.set(ak.id, ak.name);
+        });
 
         meldungenData.forEach(meldung => {
           const schuetze = schuetzenMap.get(meldung.schuetzeId);
           const disziplinName = disziplinenMap.get(meldung.disziplinId) || 'Unbekannte Disziplin';
+          
+          // Berechne Altersklasse basierend auf Geburtsjahr und Geschlecht
+          const altersklasseName = schuetze ? getAltersklasseForSchuetze(schuetze, disziplinName) : 'Herren I';
           
           let vereinsname = meldung.vereinsname || 'Unbekannter Verein';
           if (!meldung.vereinsname && schuetze && schuetze.clubId) {
@@ -165,6 +178,7 @@ export default function KMErgebnissePage() {
             schuetzenName: schuetze ? schuetze.name : 'Unbekannter Schütze',
             vereinsname: vereinsname,
             disziplin: disziplinName,
+            altersklasse: altersklasseName,
             kmErgebnis: meldung.kmRinge ? {
               ringe: meldung.kmRinge,
               teiler: 0,
@@ -230,12 +244,41 @@ export default function KMErgebnissePage() {
     return series.flat().reduce((sum, shot) => sum + shot, 0);
   };
 
+  // Altersklassen-Berechnung (kopiert von mannschaften/page.tsx)
+  const getAltersklasseForSchuetze = (schuetze: any, disziplin: string) => {
+    if (!schuetze?.birthYear || !schuetze?.gender) return 'Herren I';
+    
+    const age = 2026 - schuetze.birthYear;
+    const isAuflage = disziplin?.toLowerCase().includes('auflage');
+    const isMale = schuetze.gender === 'male';
+    
+    if (age <= 14) return 'Schüler';
+    if (age <= 16) return 'Jugend';
+    if (age <= 18) return `Junioren II ${isMale ? 'm' : 'w'}`;
+    if (age <= 20) return `Junioren I ${isMale ? 'm' : 'w'}`;
+    
+    if (isAuflage) {
+      if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
+      if (age <= 50) return 'Senioren 0';
+      if (age <= 60) return 'Senioren I';
+      if (age <= 65) return 'Senioren II';
+      if (age <= 70) return 'Senioren III';
+      if (age <= 75) return 'Senioren IV';
+      if (age <= 80) return 'Senioren V';
+      return 'Senioren VI';
+    } else {
+      if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
+      if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;
+      if (age <= 60) return `${isMale ? 'Herren' : 'Damen'} III`;
+      if (age <= 70) return `${isMale ? 'Herren' : 'Damen'} IV`;
+      return `${isMale ? 'Herren' : 'Damen'} V`;
+    }
+  };
+
   const parseInput = (value: string) => {
     if (!value) return { ringe: 0, teiler: 0 };
-    const parts = value.replace(',', '.').split('.');
-    const ringe = parseInt(parts[0]) || 0;
-    const teiler = parts[1] ? parseInt(parts[1]) || 0 : 0;
-    return { ringe, teiler };
+    const decimalValue = parseFloat(value.replace(',', '.')) || 0;
+    return { ringe: decimalValue, teiler: 0 };
   };
 
   const handleErgebnisChange = (meldungId: string, field: 'ringe' | 'teiler', value: string) => {
@@ -336,7 +379,7 @@ export default function KMErgebnissePage() {
       // Header mit Saison
       const currentSaison = jahre.find(s => s.id === selectedJahr);
       doc.setFontSize(16);
-      doc.text(`Ergebnisliste ${currentSaison?.name || 'Kreismeisterschaft'}`, 20, 20);
+      doc.text(`Kreismeisterschaft ${currentSaison?.name || 'KM'}`, 20, 20);
       doc.setFontSize(12);
       doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-DE')}`, 20, 30);
       
@@ -348,64 +391,228 @@ export default function KMErgebnissePage() {
         ergebnisse = ergebnisse.filter(m => selectedPDFDisziplinen.includes(m.disziplin));
       }
       
-      // Gruppiere nach Disziplin
+      // Gruppiere nach Disziplin und Altersklasse
       const gruppen = ergebnisse.reduce((acc, erg) => {
         const key = erg.disziplin;
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(erg);
+        if (!acc[key]) acc[key] = {};
+        
+        // Verwende die echte Altersklasse aus den Meldungsdaten
+        const altersklasse = erg.altersklasse || 'Herren I';
+        
+        if (!acc[key][altersklasse]) acc[key][altersklasse] = [];
+        acc[key][altersklasse].push(erg);
         return acc;
-      }, {} as {[key: string]: any[]});
+      }, {} as {[disziplin: string]: {[altersklasse: string]: any[]}});
       
-      // Für jede Disziplin eine Tabelle
-      Object.entries(gruppen).forEach(([disziplin, ergebnisse]) => {
-        if (yPosition > 250) {
-          doc.addPage();
-          yPosition = 20;
-        }
-        
-        doc.setFontSize(14);
-        doc.text(disziplin, 20, yPosition);
-        yPosition += 10;
-        
-        const tableData = ergebnisse
-          .sort((a, b) => (b.kmErgebnis?.ringe || 0) - (a.kmErgebnis?.ringe || 0))
-          .map((e, index) => {
-            // Serien direkt aus Meldung lesen
-            const serien = [];
-            if (e.kmSerie1) serien.push(e.kmSerie1);
-            if (e.kmSerie2) serien.push(e.kmSerie2);
-            if (e.kmSerie3) serien.push(e.kmSerie3);
-            if (e.kmSerie4) serien.push(e.kmSerie4);
-            const serienText = serien.length > 0 ? serien.join(' | ') : '-';
-            
-            return [
-              (index + 1).toString(),
-              e.schuetzenName,
-              e.vereinsname,
-              serienText,
-              `${e.kmErgebnis.ringe}${e.kmErgebnis.teiler ? '.' + e.kmErgebnis.teiler : ''}`,
-            ];
-          });
-        
-        autoTable(doc, {
-          startY: yPosition,
-          head: [['Platz', 'Name', 'Verein', 'Serien', 'Ergebnis']],
-          body: tableData,
-          styles: { fontSize: 8 },
-          headStyles: { fillColor: [66, 139, 202] },
-          columnStyles: {
-            0: { cellWidth: 15 },
-            1: { cellWidth: 35 },
-            2: { cellWidth: 35 },
-            3: { cellWidth: 80 },
-            4: { cellWidth: 25 }
-          }
+      // ÜBERSICHTSSEITE - Spo Nr. und Wettkampfbezeichnungen
+      doc.setFontSize(14);
+      doc.text('Wettkampfübersicht', 20, yPosition);
+      yPosition += 15;
+      
+      const uebersichtData = [];
+      let spoNr = 1;
+      
+      // Sortiere Altersklassen von jung nach alt
+      const altersklassenReihenfolge = [
+        'Schüler', 'Jugend', 'Junioren II m', 'Junioren II w', 'Junioren I m', 'Junioren I w',
+        'Herren I', 'Damen I', 'Herren II', 'Damen II', 'Herren III', 'Damen III', 'Herren IV', 'Damen IV', 'Herren V', 'Damen V',
+        'Senioren 0', 'Senioren I', 'Senioren II', 'Senioren III', 'Senioren IV', 'Senioren V', 'Senioren VI'
+      ];
+      
+      Object.entries(gruppen).forEach(([disziplin, altersklassen]) => {
+        // Sortiere Altersklassen nach Reihenfolge
+        const sortierteKlassen = Object.entries(altersklassen).sort(([a], [b]) => {
+          const indexA = altersklassenReihenfolge.indexOf(a);
+          const indexB = altersklassenReihenfolge.indexOf(b);
+          return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
         });
         
-        yPosition = (doc as any).lastAutoTable.finalY + 15;
+        sortierteKlassen.forEach(([altersklasse, teilnehmer]) => {
+          // Prüfe ob Mannschaften möglich sind (mind. 3 Schützen pro Verein)
+          const vereinsgruppen = teilnehmer.reduce((acc, t) => {
+            if (!acc[t.vereinsname]) acc[t.vereinsname] = [];
+            acc[t.vereinsname].push(t);
+            return acc;
+          }, {} as {[verein: string]: any[]});
+          
+          const hatMannschaften = Object.values(vereinsgruppen).some(schuetzen => schuetzen.length >= 3);
+          
+          if (hatMannschaften) {
+            uebersichtData.push([
+              spoNr.toString(),
+              'M',
+              'Mannschaft',
+              `${disziplin} ${altersklasse}`
+            ]);
+            spoNr++;
+          }
+          
+          uebersichtData.push([
+            spoNr.toString(),
+            'E',
+            'Einzel',
+            `${disziplin} ${altersklasse}`
+          ]);
+          spoNr++;
+        });
       });
       
-      const fileName = `Ergebnisliste_${currentSaison?.name?.replace(/\s+/g, '_') || 'KM'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      autoTable(doc, {
+        startY: yPosition,
+        head: [['Spo Nr.', 'M/E', 'Wettkampfbezeichnung', 'Klasse']],
+        body: uebersichtData,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [66, 139, 202] }
+      });
+      
+      // Neue Seite für Ergebnislisten
+      doc.addPage();
+      yPosition = 20;
+      
+      // DETAILLIERTE ERGEBNISLISTEN
+      Object.entries(gruppen).forEach(([disziplin, altersklassen]) => {
+        Object.entries(altersklassen).forEach(([altersklasse, teilnehmer]) => {
+          // Mannschaftswertung
+          const vereinsgruppen = teilnehmer.reduce((acc, t) => {
+            if (!acc[t.vereinsname]) acc[t.vereinsname] = [];
+            acc[t.vereinsname].push(t);
+            return acc;
+          }, {} as {[verein: string]: any[]});
+          
+          const mannschaftsErgebnisse = Object.entries(vereinsgruppen)
+            .filter(([verein, schuetzen]) => schuetzen.length >= 3)
+            .map(([verein, schuetzen]) => {
+              const beste3 = schuetzen
+                .sort((a, b) => (b.kmErgebnis?.ringe || 0) - (a.kmErgebnis?.ringe || 0))
+                .slice(0, 3);
+              const mannschaftsRinge = Math.round(beste3.reduce((sum, s) => sum + (s.kmErgebnis?.ringe || 0), 0) * 10) / 10;
+              return { verein, mannschaftsRinge, schuetzen: beste3 };
+            })
+            .sort((a, b) => b.mannschaftsRinge - a.mannschaftsRinge);
+          
+          if (mannschaftsErgebnisse.length > 0) {
+            if (yPosition > 200) {
+              doc.addPage();
+              yPosition = 20;
+            }
+            
+            doc.setFontSize(12);
+            doc.text(`Ergebnisliste Mannschaft`, 20, yPosition);
+            yPosition += 8;
+            doc.setFontSize(10);
+            doc.text(`${disziplin} ${altersklasse}`, 20, yPosition);
+            yPosition += 15;
+            
+            const mannschaftsTableData = mannschaftsErgebnisse.map((m, index) => [
+              (index + 1).toString(),
+              m.verein,
+              m.mannschaftsRinge.toString(),
+              'Ringe'
+            ]);
+            
+            autoTable(doc, {
+              startY: yPosition,
+              head: [['', 'Verein', 'Gesamt', '']],
+              body: mannschaftsTableData,
+              styles: { fontSize: 9 },
+              headStyles: { fillColor: [66, 139, 202] }
+            });
+            
+            yPosition = (doc as any).lastAutoTable.finalY + 20;
+          }
+          
+          // Einzelwertung
+          if (yPosition > 200) {
+            doc.addPage();
+            yPosition = 20;
+          }
+          
+          doc.setFontSize(12);
+          doc.text(`Ergebnisliste Einzel`, 20, yPosition);
+          yPosition += 8;
+          doc.setFontSize(10);
+          doc.text(`${disziplin} ${altersklasse}`, 20, yPosition);
+          yPosition += 15;
+          
+          const einzelTableData = teilnehmer
+            .sort((a, b) => (b.kmErgebnis?.ringe || 0) - (a.kmErgebnis?.ringe || 0))
+            .map((e, index) => {
+              // Serien formatieren - nur so viele wie die Disziplin hat
+              const seriesInfo = getSeriesInfo(disziplin);
+              let s1 = '', s2 = '', s3 = '', s4 = '';
+              if (e.kmErgebnis?.serien && e.kmErgebnis.serien.length > 0) {
+                if (e.kmErgebnis.serien[0]) s1 = Math.round(e.kmErgebnis.serien[0].reduce((sum, shot) => sum + shot, 0) * 10) / 10;
+                if (e.kmErgebnis.serien[1]) s2 = Math.round(e.kmErgebnis.serien[1].reduce((sum, shot) => sum + shot, 0) * 10) / 10;
+                if (e.kmErgebnis.serien[2]) s3 = Math.round(e.kmErgebnis.serien[2].reduce((sum, shot) => sum + shot, 0) * 10) / 10;
+                if (seriesInfo.count > 3 && e.kmErgebnis.serien[3]) s4 = Math.round(e.kmErgebnis.serien[3].reduce((sum, shot) => sum + shot, 0) * 10) / 10;
+              }
+              
+              // Nur die benötigten Spalten zurückgeben
+              if (seriesInfo.count === 3) {
+                return [
+                  (index + 1).toString(),
+                  e.schuetzenName,
+                  e.vereinsname,
+                  s1.toString(),
+                  s2.toString(), 
+                  s3.toString(),
+                  e.kmErgebnis.ringe.toString()
+                ];
+              } else {
+                return [
+                  (index + 1).toString(),
+                  e.schuetzenName,
+                  e.vereinsname,
+                  s1.toString(),
+                  s2.toString(), 
+                  s3.toString(),
+                  s4.toString(),
+                  e.kmErgebnis.ringe.toString()
+                ];
+              }
+            });
+          
+          // Dynamische Spalten je nach Disziplin
+          const seriesInfo = getSeriesInfo(disziplin);
+          const headers = seriesInfo.count === 3 
+            ? ['', 'Name', 'Verein', '1.S', '2.S', '3.S', 'Gesamt']
+            : ['', 'Name', 'Verein', '1.S', '2.S', '3.S', '4.S', 'Gesamt'];
+          
+          const columnStyles = seriesInfo.count === 3 
+            ? {
+                0: { cellWidth: 12 },
+                1: { cellWidth: 35 },
+                2: { cellWidth: 30 },
+                3: { cellWidth: 20 },
+                4: { cellWidth: 20 },
+                5: { cellWidth: 20 },
+                6: { cellWidth: 22 }
+              }
+            : {
+                0: { cellWidth: 12 },
+                1: { cellWidth: 30 },
+                2: { cellWidth: 25 },
+                3: { cellWidth: 18 },
+                4: { cellWidth: 18 },
+                5: { cellWidth: 18 },
+                6: { cellWidth: 18 },
+                7: { cellWidth: 20 }
+              };
+          
+          autoTable(doc, {
+            startY: yPosition,
+            head: [headers],
+            body: einzelTableData,
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [34, 139, 34] },
+            columnStyles: columnStyles
+          });
+          
+          yPosition = (doc as any).lastAutoTable.finalY + 25;
+        });
+      });
+      
+      const fileName = `Ergebnisliste_KM_${currentSaison?.name?.replace(/\s+/g, '_') || 'KM'}_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
       
       toast({ title: 'PDF erstellt', description: `${fileName} wurde heruntergeladen.` });
@@ -594,7 +801,7 @@ export default function KMErgebnissePage() {
                       <div className="font-medium">{meldung.schuetzenName}</div>
                       <div className="text-sm text-muted-foreground">{meldung.vereinsname}</div>
                     </div>
-                    <Badge variant="outline">{meldung.disziplin}</Badge>
+                    <Badge variant="outline">{meldung.disziplin} {meldung.altersklasse && `- ${meldung.altersklasse}`}</Badge>
                   </div>
                   
                   <div className="space-y-3">
@@ -613,7 +820,7 @@ export default function KMErgebnissePage() {
                               <Label className="text-xs">Serie {serieIndex + 1} ({seriesInfo.shotsPerSeries} Schuss)</Label>
                               <Input
                                 type="text"
-                                value={seriesInputs[`${meldung.id}-${serieIndex}`] || (currentSeries[serieIndex] && currentSeries[serieIndex].length > 0 ? currentSeries[serieIndex].join(' ') : '')}
+                                value={seriesInputs[`${meldung.id}-${serieIndex}`] || (currentSeries[serieIndex] && currentSeries[serieIndex].length > 0 ? currentSeries[serieIndex].map(v => v.toFixed(1).replace('.', ',')).join(' ') : '')}
                                 onChange={(e) => {
                                   const inputKey = `${meldung.id}-${serieIndex}`;
                                   setSeriesInputs(prev => ({ ...prev, [inputKey]: e.target.value }));
@@ -626,7 +833,7 @@ export default function KMErgebnissePage() {
                                   
                                   const newSeries = [...currentSeries];
                                   newSeries[serieIndex] = values;
-                                  const total = calculateTotalFromSeries(newSeries);
+                                  const total = Math.round(calculateTotalFromSeries(newSeries) * 10) / 10;
                                   
                                   setMeldungen(prev => prev.map(m => {
                                     if (m.id === meldung.id) {
@@ -647,14 +854,14 @@ export default function KMErgebnissePage() {
                               />
                               {currentSeries[serieIndex] && currentSeries[serieIndex].length > 0 && (
                                 <div className="text-xs text-blue-600">
-                                  {currentSeries[serieIndex].length}/{seriesInfo.shotsPerSeries} Schuss = {currentSeries[serieIndex].reduce((sum, val) => sum + val, 0)} Ringe
+                                  {currentSeries[serieIndex].length}/{seriesInfo.shotsPerSeries} Schuss = {Math.round(currentSeries[serieIndex].reduce((sum, val) => sum + val, 0) * 10) / 10} Ringe
                                 </div>
                               )}
                             </div>
                           ))}
                           {meldung.kmErgebnis?.serien && (
                             <div className="text-sm font-semibold text-green-600 p-2 bg-green-50 rounded">
-                              Gesamtergebnis: {calculateTotalFromSeries(meldung.kmErgebnis.serien)} Ringe
+                              Gesamtergebnis: {Math.round(calculateTotalFromSeries(meldung.kmErgebnis.serien) * 10) / 10} Ringe
                             </div>
                           )}
                         </div>
@@ -666,7 +873,7 @@ export default function KMErgebnissePage() {
                       <div className="flex gap-2">
                         <Input
                           type="text"
-                          value={inputValues[meldung.id] ?? (meldung.kmErgebnis ? `${meldung.kmErgebnis.ringe}${meldung.kmErgebnis.teiler ? ',' + meldung.kmErgebnis.teiler : ''}` : '')}
+                          value={inputValues[meldung.id] ?? (meldung.kmErgebnis ? meldung.kmErgebnis.ringe.toString().replace('.', ',') : '')}
                           onChange={(e) => {
                             const value = e.target.value;
                             setInputValues(prev => ({ ...prev, [meldung.id]: value }));
