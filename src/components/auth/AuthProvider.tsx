@@ -82,6 +82,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       window.addEventListener(event, handleUserActivity, true);
     });
     
+    // API-Calls als Aktivität überwachen
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+      if (user) {
+        resetInactivityTimer();
+      }
+      return originalFetch.apply(this, args);
+    };
+    
     // Initial Timer setzen
     resetInactivityTimer();
     
@@ -97,6 +106,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       activityEvents.forEach(event => {
         window.removeEventListener(event, handleUserActivity);
       });
+      
+      // Restore original fetch
+      window.fetch = originalFetch;
     };
   }, [user, resetInactivityTimer]);
 

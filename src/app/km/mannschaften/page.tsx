@@ -47,7 +47,7 @@ function KMMannschaftenContent() {
 
   useEffect(() => {
     if (hasKMAccess && !authLoading) {
-      loadData();
+      loadSaisons();
     }
   }, [hasKMAccess, authLoading]);
   
@@ -57,71 +57,52 @@ function KMMannschaftenContent() {
     }
   }, [selectedSaison]);
 
-  const loadData = async () => {
+  const loadSaisons = async () => {
     try {
-      // Lade Saisons
-      try {
-        const saisonRes = await fetch('/api/km/saisons?status=aktiv');
-        if (saisonRes.ok) {
-          const saisonData = await saisonRes.json();
-          const aktiveSaisons = (saisonData.data || []).sort((a, b) => {
-            const today = new Date();
-            const getDeadline = (s) => {
-              if (!s.meldeschluss) return new Date(0);
-              if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
-                const [day, month, year] = s.meldeschluss.split('.');
-                return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-              } else {
-                const [day, month] = s.meldeschluss.split('.');
-                return new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
-              }
-            };
-            
-            const aExpired = today > getDeadline(a);
-            const bExpired = today > getDeadline(b);
-            
-            if (aExpired !== bExpired) {
-              return aExpired ? 1 : -1;
-            }
-            return b.jahr - a.jahr;
-          });
-          setSaisons(aktiveSaisons);
-          
-          // Setze erste nicht-abgelaufene Saison als Standard
-          if (aktiveSaisons.length > 0 && !selectedSaison) {
-            const today = new Date();
-            const nichtAbgelaufeneSaison = aktiveSaisons.find(saison => {
-              if (!saison.meldeschluss) return true;
-              
-              const meldeschluss = saison.meldeschluss;
-              let deadline;
-              
-              if (meldeschluss.includes('.') && meldeschluss.length > 6) {
-                const [day, month, year] = meldeschluss.split('.');
-                deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-              } else {
-                const [day, month] = meldeschluss.split('.');
-                deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
-              }
-              
-              return today <= deadline;
-            });
-            
-            if (nichtAbgelaufeneSaison) {
-              setSelectedSaison(nichtAbgelaufeneSaison.id);
+      const saisonRes = await fetch('/api/km/saisons?status=aktiv');
+      if (saisonRes.ok) {
+        const saisonData = await saisonRes.json();
+        const aktiveSaisons = (saisonData.data || []).sort((a, b) => {
+          const today = new Date();
+          const getDeadline = (s) => {
+            if (!s.meldeschluss) return new Date(0);
+            if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
+              const [day, month, year] = s.meldeschluss.split('.');
+              return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
             } else {
-              setSelectedSaison(aktiveSaisons[0].id);
+              const [day, month] = s.meldeschluss.split('.');
+              return new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
             }
+          };
+          
+          const aExpired = today > getDeadline(a);
+          const bExpired = today > getDeadline(b);
+          
+          if (aExpired !== bExpired) {
+            return aExpired ? 1 : -1;
           }
-        }
-      } catch (e) {
-        logError('Saisons API failed:', e);
-        setSaisons([]);
+          return b.jahr - a.jahr;
+        });
+        setSaisons(aktiveSaisons);
       }
-      
+    } catch (e) {
+      logError('Saisons API failed:', e);
+      setSaisons([]);
+    }
+    setLoading(false);
+  };
+
+  const loadData = async () => {
+    if (!selectedSaison) {
+      setMannschaften([]);
+      setMeldungen([]);
+      return;
+    }
+    
+    try {
       // Lade Mannschaften
       try {
-        const mannschaftenRes = await fetch(`/api/km/mannschaften?saison=${selectedSaison || '2026'}`);
+        const mannschaftenRes = await fetch(`/api/km/mannschaften?saison=${selectedSaison}`);
         if (mannschaftenRes.ok) {
           const data = await mannschaftenRes.json();
           logDebug('🔍 Loaded mannschaften:', data.data?.length || 0);
@@ -167,13 +148,12 @@ function KMMannschaftenContent() {
       
       try {
 
-        const meldungenRes = await fetch(`/api/km/meldungen?saison=${selectedSaison || '2026'}`);
+        const meldungenRes = await fetch(`/api/km/meldungen?saison=${selectedSaison}`);
         if (meldungenRes.ok) {
           const data = await meldungenRes.json();
           setMeldungen(data.data || []);
         }
       } catch (e) {
-        logError('Meldungen API failed:', e);
         setMeldungen([]);
       }
 
@@ -203,9 +183,6 @@ function KMMannschaftenContent() {
     } catch (error) {
       logError('LoadData error:', error);
       toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden', variant: 'destructive' });
-    } finally {
-
-      setLoading(false);
     }
   };
 
@@ -330,21 +307,19 @@ function KMMannschaftenContent() {
         <div className="flex items-center gap-4 mb-4">
           <BackButton className="mr-2" fallbackHref="/km" />
         </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-primary">👥 Mannschaften KM</h1>
-            <p className="text-muted-foreground">Automatische Generierung und manuelle Anpassung</p>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4">
-            {saisons.length > 1 && (
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">KM:</label>
-                <select 
-                  value={selectedSaison} 
+        
+        <Card className="border-2 border-primary bg-primary/5 mb-6">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div>
+                <label className="text-base font-semibold text-gray-800 dark:text-gray-200">🎯 Saison auswählen (Pflichtfeld)</label>
+                <select
+                  value={selectedSaison}
                   onChange={(e) => setSelectedSaison(e.target.value)}
-                  className="border rounded px-3 py-1 min-w-[150px]"
+                  className="w-full mt-2 px-4 py-3 text-lg border-2 border-primary rounded-lg bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+                  required
                 >
+                  <option value="">🔽 Bitte Saison wählen...</option>
                   {saisons.map(saison => {
                     const today = new Date();
                     let isExpired = false;
@@ -368,7 +343,6 @@ function KMMannschaftenContent() {
                       <option 
                         key={saison.id} 
                         value={saison.id}
-                        disabled={isExpired}
                         style={isExpired ? { color: '#999', backgroundColor: '#f5f5f5' } : {}}
                       >
                         {saison.name}{isExpired ? ' - Meldeschluss vorbei' : ''}
@@ -377,10 +351,18 @@ function KMMannschaftenContent() {
                   })}
                 </select>
               </div>
-            )}
-            <div className="max-w-md">
-              <KMClubSwitcher />
             </div>
+          </CardContent>
+        </Card>
+        
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">👥 Mannschaften KM</h1>
+            <p className="text-muted-foreground">Automatische Generierung und manuelle Anpassung</p>
+          </div>
+          
+          <div className="max-w-md">
+            <KMClubSwitcher />
           </div>
         </div>
       </div>
@@ -395,6 +377,18 @@ function KMMannschaftenContent() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {!selectedSaison && (
+                <Card className="border-orange-200 bg-orange-50">
+                  <CardContent className="pt-6">
+                    <div className="text-center py-4">
+                      <p className="text-orange-800 font-medium mb-2">⚠️ Bitte wählen Sie zuerst eine Saison aus</p>
+                      <p className="text-sm text-orange-600">Die Mannschaftsverwaltung wird erst nach der Saisonauswahl angezeigt.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {selectedSaison && (
               <div className="mb-4 space-y-3">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button 
@@ -501,7 +495,10 @@ function KMMannschaftenContent() {
                   </p>
                 )}
               </div>
+              )
+              }
 
+              {selectedSaison && (
               <div className="space-y-4">
                 {mannschaften.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
@@ -533,7 +530,39 @@ function KMMannschaftenContent() {
                               {verein?.name || `Verein-ID: ${mannschaft.vereinId || mannschaft.clubId}`} - {disziplin?.name || 'Luftgewehr'}
                             </h3>
                             <p className="text-sm text-gray-600">
-                              {mannschaft.wettkampfklassen?.length > 0 ? mannschaft.wettkampfklassen.join(', ') : 'Herren/Damen'}
+                              {(() => {
+                                const berechnet = teamSchuetzen.map(schuetze => {
+                                  if (!schuetze?.birthYear || !schuetze?.gender) return 'Unbekannt';
+                                  
+                                  const age = 2026 - schuetze.birthYear;
+                                  const isAuflage = disziplin?.auflage;
+                                  const isMale = schuetze.gender === 'male';
+                                  
+                                  if (age <= 14) return 'Schüler';
+                                  if (age <= 16) return 'Jugend';
+                                  if (age <= 18) return `Junioren II ${isMale ? 'm' : 'w'}`;
+                                  if (age <= 20) return `Junioren I ${isMale ? 'm' : 'w'}`;
+                                  
+                                  if (isAuflage) {
+                                    if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
+                                    if (age <= 50) return 'Senioren 0';
+                                    if (age <= 60) return 'Senioren I';
+                                    if (age <= 65) return 'Senioren II';
+                                    if (age <= 70) return 'Senioren III';
+                                    if (age <= 75) return 'Senioren IV';
+                                    if (age <= 80) return 'Senioren V';
+                                    return 'Senioren VI';
+                                  } else {
+                                    if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
+                                    if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;
+                                    if (age <= 60) return `${isMale ? 'Herren' : 'Damen'} III`;
+                                    if (age <= 70) return `${isMale ? 'Herren' : 'Damen'} IV`;
+                                    return `${isMale ? 'Herren' : 'Damen'} V`;
+                                  }
+                                });
+                                const unique = [...new Set(berechnet.filter(k => k !== 'Unbekannt'))];
+                                return unique.length > 0 ? unique.join(', ') : 'Gemischte Klassen';
+                              })()}
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -800,6 +829,7 @@ function KMMannschaftenContent() {
                   })
                 )}
               </div>
+              )}
             </CardContent>
           </Card>
         </div>

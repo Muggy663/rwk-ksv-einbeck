@@ -398,6 +398,30 @@ export default function HomePage() {
 
 
 
+      {/* Weihnachtsgrüße vom KSV Einbeck Präsidenten */}
+      <div className="mb-6">
+        <a href="http://www.ksv-einbeck.de/Weihnachtsgru%DF2025.pdf" target="_blank" rel="noopener noreferrer" className="block">
+          <div className="bg-gradient-to-r from-red-500 to-green-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer border-2 border-yellow-300">
+            <div className="flex items-center">
+              <div className="bg-white p-3 rounded-full mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600">
+                  <path d="M20 6 9 17l-5-5"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">🎄 Weihnachtsgrüße 2025</h2>
+                <p style={{color: 'white'}}>Vom KSV Einbeck Präsidenten - PDF öffnen</p>
+              </div>
+              <div className="text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+
       {/* Play Store Beta-Test */}
       <div className="mb-6">
         <Link href="/app" className="block">

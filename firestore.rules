@@ -353,6 +353,16 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    match /km_altersklassen/{altersklasse} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /km_mannschaften/{mannschaft} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
     match /km_startlisten_configs/{config} {
       allow read: if true;
       allow write: if isSuperAdmin() || 

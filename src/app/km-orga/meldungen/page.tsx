@@ -488,9 +488,22 @@ export default function KMAdminMeldungen() {
                     className="w-full p-2 border border-gray-300 rounded text-sm"
                   >
                     <option value="">Alle Vereine</option>
-                    {clubs.map(club => (
-                      <option key={club.id} value={club.id}>{club.name}</option>
-                    ))}
+                    {clubs.map(club => {
+                      const hatMeldungen = meldungen.some(m => {
+                        const schuetze = schuetzen.find(s => s.id === m.schuetzeId);
+                        const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
+                        return vereinId === club.id;
+                      });
+                      return (
+                        <option 
+                          key={club.id} 
+                          value={club.id}
+                          className={hatMeldungen ? 'font-bold bg-green-50' : ''}
+                        >
+                          {hatMeldungen ? '✅ ' : ''}{club.name}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
                 <div>

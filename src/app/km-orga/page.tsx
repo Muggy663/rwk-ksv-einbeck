@@ -287,11 +287,14 @@ export default function KMAdminDashboard() {
               <Link href="/km-orga/mitglieder">
                 <Button variant="outline" className="w-full h-12 text-left justify-start">👥 Alle Mitglieder</Button>
               </Link>
+              <Link href="/km-orga/disziplinen">
+                <Button variant="outline" className="w-full h-12 text-left justify-start">🎯 Disziplinen & Kennziffern</Button>
+              </Link>
               <Link href="/km-orga/altersklassen">
                 <Button variant="outline" className="w-full h-12 text-left justify-start">🏆 Altersklassen & Klassen-IDs</Button>
               </Link>
-              <Link href="/km-orga/disziplinen">
-                <Button variant="outline" className="w-full h-12 text-left justify-start">🎯 Disziplinen & Kennziffern</Button>
+              <Link href="/km-orga/mannschaftsregeln">
+                <Button variant="outline" className="w-full h-12 text-left justify-start">⚖️ Mannschaftsregeln</Button>
               </Link>
               <Link href="/km-orga/startgebuehren">
                 <Button variant="outline" className="w-full h-12 text-left justify-start">💰 Startgebühren-Übersicht</Button>

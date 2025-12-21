@@ -26,7 +26,6 @@ export default function AltersklassenVerwaltung() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<Altersklasse>>({});
 
-  // Hardcoded Daten basierend auf der Liste
   const initialKlassen: Altersklasse[] = [
     { id: '1', klassenId: 10, name: 'Herren I', minAlter: 21, maxAlter: 40, geschlecht: 1 },
     { id: '2', klassenId: 11, name: 'Damen I', minAlter: 21, maxAlter: 40, geschlecht: 0 },
@@ -34,8 +33,8 @@ export default function AltersklassenVerwaltung() {
     { id: '4', klassenId: 13, name: 'Damen II', minAlter: 41, maxAlter: 50, geschlecht: 0 },
     { id: '5', klassenId: 14, name: 'Herren III', minAlter: 51, maxAlter: 60, geschlecht: 1 },
     { id: '6', klassenId: 15, name: 'Damen III', minAlter: 51, maxAlter: 60, geschlecht: 0 },
-    { id: '7', klassenId: 16, name: 'Herren IV', minAlter: 61, maxAlter: 255, geschlecht: 1 },
-    { id: '8', klassenId: 17, name: 'Damen IV', minAlter: 61, maxAlter: 255, geschlecht: 0 },
+    { id: '7', klassenId: 16, name: 'Herren IV', minAlter: 61, maxAlter: 70, geschlecht: 1 },
+    { id: '8', klassenId: 17, name: 'Damen IV', minAlter: 61, maxAlter: 70, geschlecht: 0 },
     { id: '9', klassenId: 20, name: 'Schüler männl.', minAlter: 0, maxAlter: 14, geschlecht: 1 },
     { id: '10', klassenId: 21, name: 'Schüler weibl.', minAlter: 0, maxAlter: 14, geschlecht: 0 },
     { id: '11', klassenId: 30, name: 'Jugend männl.', minAlter: 15, maxAlter: 16, geschlecht: 1 },
@@ -54,15 +53,43 @@ export default function AltersklassenVerwaltung() {
     { id: '24', klassenId: 77, name: 'Senioren IV weibl.', minAlter: 71, maxAlter: 75, geschlecht: 0 },
     { id: '25', klassenId: 78, name: 'Senioren V männl.', minAlter: 76, maxAlter: 255, geschlecht: 1 },
     { id: '26', klassenId: 79, name: 'Senioren V weibl.', minAlter: 76, maxAlter: 255, geschlecht: 0 },
-    { id: '27', klassenId: 80, name: 'Senioren 0', minAlter: 41, maxAlter: 50, geschlecht: 1 },
-    { id: '28', klassenId: 81, name: 'Seniorinnen 0', minAlter: 41, maxAlter: 50, geschlecht: 0 },
-    { id: '29', klassenId: 99, name: 'offene Klasse', minAlter: 0, maxAlter: 255, geschlecht: 2 }
+    { id: '27', klassenId: 50, name: 'Senioren 0', minAlter: 41, maxAlter: 50, geschlecht: 1 },
+    { id: '28', klassenId: 51, name: 'Seniorinnen 0', minAlter: 41, maxAlter: 50, geschlecht: 0 },
+    { id: '29', klassenId: 18, name: 'Herren V', minAlter: 71, maxAlter: 255, geschlecht: 1 },
+    { id: '30', klassenId: 19, name: 'Damen V', minAlter: 71, maxAlter: 255, geschlecht: 0 },
+    { id: '31', klassenId: 80, name: 'Senioren VI männl.', minAlter: 81, maxAlter: 255, geschlecht: 1 },
+    { id: '32', klassenId: 81, name: 'Seniorinnen VI', minAlter: 81, maxAlter: 255, geschlecht: 0 },
+    { id: '33', klassenId: 99, name: 'offene Klasse', minAlter: 0, maxAlter: 255, geschlecht: 2 }
   ];
 
   useEffect(() => {
-    setKlassen(initialKlassen);
-    setLoading(false);
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      const response = await fetch('/api/km/altersklassen');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.data && result.data.length > 0) {
+          setKlassen(result.data);
+        } else {
+          setKlassen(initialKlassen);
+          for (const klasse of initialKlassen) {
+            await fetch('/api/km/altersklassen', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(klasse)
+            });
+          }
+        }
+      }
+    } catch (error) {
+      setKlassen(initialKlassen);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const startEdit = (klasse: Altersklasse) => {
     setEditingId(klasse.id);
@@ -74,26 +101,58 @@ export default function AltersklassenVerwaltung() {
     setEditData({});
   };
 
-  const saveEdit = () => {
-    setKlassen(prev => prev.map(k => 
-      k.id === editingId ? { ...k, ...editData } : k
-    ));
-    toast({ title: '✅ Gespeichert', description: 'Altersklasse wurde aktualisiert' });
-    cancelEdit();
+  const saveEdit = async () => {
+    try {
+      await fetch('/api/km/altersklassen', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingId, ...editData })
+      });
+      setKlassen(prev => prev.map(k => 
+        k.id === editingId ? { ...k, ...editData } : k
+      ));
+      toast({ title: '✅ Gespeichert', description: 'Altersklasse wurde aktualisiert' });
+      cancelEdit();
+    } catch (error) {
+      toast({ title: 'Fehler', description: 'Speichern fehlgeschlagen', variant: 'destructive' });
+    }
   };
 
-  const addNew = () => {
-    const newId = (klassen.length + 1).toString();
-    const newKlasse: Altersklasse = {
-      id: newId,
-      klassenId: 90,
-      name: 'Neue Klasse',
-      minAlter: 0,
-      maxAlter: 255,
-      geschlecht: 2
-    };
-    setKlassen(prev => [...prev, newKlasse]);
-    toast({ title: '✅ Hinzugefügt', description: 'Neue Altersklasse erstellt' });
+  const addNew = async () => {
+    try {
+      const newKlasse = {
+        klassenId: 90,
+        name: 'Neue Klasse',
+        minAlter: 0,
+        maxAlter: 255,
+        geschlecht: 2
+      };
+      const response = await fetch('/api/km/altersklassen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newKlasse)
+      });
+      const result = await response.json();
+      const newKlasseWithId = { id: result.id, ...newKlasse };
+      setKlassen(prev => [...prev, newKlasseWithId]);
+      setEditingId(result.id);
+      setEditData(newKlasseWithId);
+      toast({ title: '✅ Hinzugefügt', description: 'Neue Altersklasse erstellt' });
+    } catch (error) {
+      toast({ title: 'Fehler', description: 'Erstellen fehlgeschlagen', variant: 'destructive' });
+    }
+  };
+
+  const deleteKlasse = async (id: string) => {
+    if (confirm('Altersklasse wirklich löschen?')) {
+      try {
+        await fetch(`/api/km/altersklassen?id=${id}`, { method: 'DELETE' });
+        setKlassen(prev => prev.filter(k => k.id !== id));
+        toast({ title: '✅ Gelöscht', description: 'Altersklasse wurde entfernt' });
+      } catch (error) {
+        toast({ title: 'Fehler', description: 'Löschen fehlgeschlagen', variant: 'destructive' });
+      }
+    }
   };
 
   const getGeschlechtText = (geschlecht: number) => {
@@ -231,9 +290,14 @@ export default function AltersklassenVerwaltung() {
                         <td className="p-3">{klasse.maxAlter === 255 ? '∞' : klasse.maxAlter}</td>
                         <td className="p-3">{getGeschlechtText(klasse.geschlecht)}</td>
                         <td className="p-3">
-                          <Button size="sm" variant="outline" onClick={() => startEdit(klasse)}>
-                            <Edit className="h-3 w-3" />
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => startEdit(klasse)}>
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => deleteKlasse(klasse.id)}>
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </td>
                       </>
                     )}
