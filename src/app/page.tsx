@@ -48,11 +48,20 @@ export default function HomePage() {
   const [latestNews, setLatestNews] = useState<any[]>([]);
   const [isLoadingNews, setIsLoadingNews] = useState<boolean>(true);
   const [isNativeApp, setIsNativeApp] = useState(false);
+  const [showSnowfall, setShowSnowfall] = useState(false);
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsNativeApp(window.Capacitor && window.Capacitor.isNativePlatform());
     }
+  }, []);
+
+  // Schnee erst nach 2 Sekunden anzeigen, damit wichtige Inhalte zuerst laden
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSnowfall(true);
+    }, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   // Lade Updates und Termine parallel
@@ -164,7 +173,7 @@ export default function HomePage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto pwa-optimized">
-      <Snowfall />
+      {showSnowfall && <Snowfall />}
       {/* Wartungshinweis entfernt - System ist live */}
       
 
