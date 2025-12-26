@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { Edit, Play, Trash2, Plus, Calendar, MapPin, Target, Eye, ArrowLeft, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { David21ImportDialog } from '@/components/David21ImportDialog';
+import { db } from '@/lib/firebase/config';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 import { useKMAuth } from '@/hooks/useKMAuth';
 
@@ -47,21 +49,32 @@ export default function StartlistenUebersichtPage() {
     
     const loadData = async () => {
       try {
-        const [configsRes, startlistenRes, clubsRes] = await Promise.all([
+        // Lade direkt aus Firebase mit erweiterten Logs
+        // Lade über APIs statt direktem Firebase
+        const [startlistenRes, clubsRes] = await Promise.all([
           fetch('/api/km/startlisten'),
-          fetch('/api/km/startlisten/gespeichert'),
           fetch('/api/clubs')
         ]);
         
-        if (configsRes.ok) {
-          const data = await configsRes.json();
-          setConfigs(data.data || []);
-        }
+        console.log('DEBUG: API Responses:', {
+          startlisten: startlistenRes.status,
+          clubs: clubsRes.status
+        });
         
-        if (startlistenRes.ok) {
-          const data = await startlistenRes.json();
-          setStartlisten(data.data || []);
-        }
+        // Configs - lade direkt aus Firebase (funktioniert)
+        const configsSnapshot = await getDocs(collection(db, 'km_startlisten_configs'));
+        const configsData = configsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setConfigs(configsData);
+        
+        // Startlisten über API
+        const startlistenData = startlistenRes.ok ? (await startlistenRes.json()).data || [] : [];
+        console.log('DEBUG: API Startlisten:', startlistenData.length);
+        console.log('DEBUG: Erste Startliste:', startlistenData[0]);
+        setStartlisten(startlistenData);
+        
         
         if (clubsRes.ok) {
           const data = await clubsRes.json();
@@ -85,18 +98,13 @@ export default function StartlistenUebersichtPage() {
     if (!confirm('Konfiguration wirklich löschen?')) return;
     
     try {
-      const response = await fetch(`/api/km/startlisten/${configId}`, {
-        method: 'DELETE'
+      await deleteDoc(doc(db, 'km_startlisten_configs', configId));
+      setConfigs(prev => prev.filter(c => c.id !== configId));
+      toast({ 
+        title: '✅ Gelöscht', 
+        description: 'Konfiguration wurde erfolgreich entfernt.',
+        duration: 3000
       });
-      
-      if (response.ok) {
-        setConfigs(prev => prev.filter(c => c.id !== configId));
-        toast({ 
-          title: '✅ Gelöscht', 
-          description: 'Konfiguration wurde erfolgreich entfernt.',
-          duration: 3000
-        });
-      }
     } catch (error) {
       logError('Fehler beim Löschen:', error);
       toast({ title: 'Fehler', description: 'Konfiguration konnte nicht gelöscht werden.', variant: 'destructive' });
@@ -107,8 +115,10 @@ export default function StartlistenUebersichtPage() {
     if (!confirm('Startliste wirklich löschen?')) return;
     
     try {
-      const response = await fetch(`/api/km/startlisten/gespeichert/${startlisteId}`, {
-        method: 'DELETE'
+      const response = await fetch('/api/km/startlisten', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: startlisteId })
       });
       
       if (response.ok) {
@@ -118,6 +128,8 @@ export default function StartlistenUebersichtPage() {
           description: 'Startliste wurde erfolgreich entfernt.',
           duration: 3000
         });
+      } else {
+        throw new Error(`HTTP ${response.status}`);
       }
     } catch (error) {
       logError('Fehler beim Löschen:', error);
@@ -276,11 +288,11 @@ export default function StartlistenUebersichtPage() {
                       Erstellt: {(() => {
                         try {
                           if (!config.createdAt) return 'Unbekannt';
-                          const date = config.createdAt?.toDate ? config.createdAt.toDate() : 
-                                      config.createdAt?.seconds ? new Date(config.createdAt.seconds * 1000) :
-                                      typeof config.createdAt === 'string' ? new Date(config.createdAt) :
-                                      new Date(config.createdAt);
-                          return isNaN(date.getTime()) ? 'Unbekannt' : date.toLocaleDateString('de-DE');
+                          // Firebase Timestamp mit .seconds
+                          if (config.createdAt.seconds) {
+                            return new Date(config.createdAt.seconds * 1000).toLocaleDateString('de-DE');
+                          }
+                          return 'Unbekannt';
                         } catch {
                           return 'Unbekannt';
                         }
@@ -333,7 +345,15 @@ export default function StartlistenUebersichtPage() {
                       <CardDescription className="flex items-center gap-4 mt-2">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          {new Date(liste.datum).toLocaleDateString('de-DE')} um {config?.startUhrzeit || '09:00'} Uhr
+                          {(() => {
+                            try {
+                              // datum ist bereits ein String im Format "2026-02-07"
+                              const date = new Date(liste.datum);
+                              return date.toLocaleDateString('de-DE');
+                            } catch {
+                              return liste.datum || 'Unbekanntes Datum';
+                            }
+                          })()} um {config?.startUhrzeit || '09:00'} Uhr
                         </span>
                         <span>{liste.startliste?.length || 0} Starter</span>
                         <span>{(liste.startliste?.length || 0) > 0 ? Math.max(...liste.startliste.map((s: any) => s.durchgang || 1)) : 0} Durchgänge</span>
@@ -343,7 +363,7 @@ export default function StartlistenUebersichtPage() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => config ? window.location.href = `/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}` : null}
+                        onClick={() => config ? window.location.href = `/startlisten-tool?id=${liste.configId}&startlisteId=${liste.id}` : null}
                         title={config ? "Startliste bearbeiten" : "Config nicht gefunden"}
                         className="hidden md:flex"
                         disabled={!config}
@@ -375,27 +395,28 @@ export default function StartlistenUebersichtPage() {
                       <span className="text-xs text-muted-foreground">
                         Gespeichert: {(() => {
                           try {
-                            const date = liste.updatedAt ? 
-                              (liste.updatedAt.toDate ? liste.updatedAt.toDate() : 
-                               liste.updatedAt.seconds ? new Date(liste.updatedAt.seconds * 1000) :
-                               new Date(liste.updatedAt)) : 
-                              (liste.createdAt?.toDate ? liste.createdAt.toDate() :
-                               liste.createdAt?.seconds ? new Date(liste.createdAt.seconds * 1000) :
-                               new Date(liste.createdAt));
-                            return date.toLocaleDateString('de-DE');
+                            const timestamp = liste.updatedAt || liste.createdAt;
+                            if (!timestamp) return 'Unbekannt';
+                            
+                            // Firebase Timestamp mit .seconds oder ._seconds
+                            const seconds = timestamp.seconds || timestamp._seconds;
+                            if (seconds) {
+                              return new Date(seconds * 1000).toLocaleDateString('de-DE');
+                            }
+                            return 'Unbekannt';
                           } catch {
                             return 'Unbekannt';
                           }
                         })()} um {(() => {
                           try {
-                            const date = liste.updatedAt ? 
-                              (liste.updatedAt.toDate ? liste.updatedAt.toDate() : 
-                               liste.updatedAt.seconds ? new Date(liste.updatedAt.seconds * 1000) :
-                               new Date(liste.updatedAt)) : 
-                              (liste.createdAt?.toDate ? liste.createdAt.toDate() :
-                               liste.createdAt?.seconds ? new Date(liste.createdAt.seconds * 1000) :
-                               new Date(liste.createdAt));
-                            return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                            const timestamp = liste.updatedAt || liste.createdAt;
+                            if (!timestamp) return '00:00';
+                            
+                            const seconds = timestamp.seconds || timestamp._seconds;
+                            if (seconds) {
+                              return new Date(seconds * 1000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                            }
+                            return '00:00';
                           } catch {
                             return '00:00';
                           }
@@ -404,7 +425,7 @@ export default function StartlistenUebersichtPage() {
                       <div className="flex flex-col gap-2 w-full md:flex-row md:w-auto">
                         <Button 
                           variant="outline" 
-                          onClick={() => config ? window.location.href = `/km-orga/startlisten/generieren/${liste.configId}?startlisteId=${liste.id}` : null}
+                          onClick={() => config ? window.location.href = `/startlisten-tool?id=${liste.configId}&startlisteId=${liste.id}` : null}
                           className="w-full h-12 text-left justify-start md:hidden"
                           disabled={!config}
                         >

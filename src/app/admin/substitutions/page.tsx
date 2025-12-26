@@ -358,72 +358,72 @@ export default function SubstitutionsPage() {
         <CardContent>
           <div className="space-y-4">
             {filteredTeams.map((team) => (
-              <div key={team.id} className="border rounded-lg">
-                <div className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2 flex-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleTeamExpansion(team.id, team.shooterIds || [])}
-                        className="h-6 w-6 p-0"
-                        disabled={!team.shooterIds?.length}
-                      >
-                        {expandedTeams.has(team.id) ? 
-                          <ChevronDown className="h-4 w-4" /> : 
-                          <ChevronRight className="h-4 w-4" />
-                        }
-                      </Button>
-                      <div>
-                        <h4 className="font-medium">{team.name}</h4>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>{team.shooterIds?.length || 0} Schützen</span>
-                          {team.leagueType && <Badge variant="outline">{team.leagueType}</Badge>}
-                          {team.outOfCompetition && <Badge variant="secondary">AK</Badge>}
+                  <div key={team.id} className="border rounded-lg">
+                    <div className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2 flex-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleTeamExpansion(team.id, team.shooterIds || [])}
+                            className="h-6 w-6 p-0"
+                            disabled={!team.shooterIds?.length}
+                          >
+                            {expandedTeams.has(team.id) ? 
+                              <ChevronDown className="h-4 w-4" /> : 
+                              <ChevronRight className="h-4 w-4" />
+                            }
+                          </Button>
+                          <div>
+                            <h4 className="font-medium">{team.name}</h4>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span>{team.shooterIds?.length || 0} Schützen</span>
+                              {team.leagueType && <Badge variant="outline">{team.leagueType}</Badge>}
+                              {team.outOfCompetition && <Badge variant="secondary">AK</Badge>}
+                            </div>
+                          </div>
                         </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedTeam(team);
+                            setShowDialog(true);
+                          }}
+                        >
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedTeam(team);
-                        setShowDialog(true);
-                      }}
-                    >
-                      <UserPlus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                {expandedTeams.has(team.id) && (
-                  <div className="border-t bg-muted/30 p-4">
-                    {teamShooters.has(team.id) ? (
-                      <div className="space-y-2">
-                        <h5 className="font-medium text-sm">Gemeldete Schützen ({teamShooters.get(team.id)?.length || 0}):</h5>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {teamShooters.get(team.id)?.map((shooter) => (
-                            <div key={shooter.id} className="flex items-center gap-2 p-2 rounded border bg-background">
-                              <div className="text-sm">
-                                <div className="font-medium">
-                                  {shooter.firstName && shooter.lastName ? `${shooter.firstName} ${shooter.lastName}` : shooter.name}
+                    
+                    {expandedTeams.has(team.id) && (
+                      <div className="border-t bg-muted/30 p-4">
+                        {teamShooters.has(team.id) ? (
+                          <div className="space-y-2">
+                            <h5 className="font-medium text-sm">Gemeldete Schützen ({teamShooters.get(team.id)?.length || 0}):</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                              {teamShooters.get(team.id)?.map((shooter) => (
+                                <div key={shooter.id} className="flex items-center gap-2 p-2 rounded border bg-background">
+                                  <div className="text-sm">
+                                    <div className="font-medium">
+                                      {shooter.firstName && shooter.lastName ? `${shooter.firstName} ${shooter.lastName}` : shooter.name}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {shooter.gender === 'male' ? 'M' : shooter.gender === 'female' ? 'W' : '?'} • {shooter.birthYear || 'Jg. N/A'}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {shooter.gender === 'male' ? 'M' : shooter.gender === 'female' ? 'W' : '?'} • {shooter.birthYear || 'Jg. N/A'}
-                                </div>
-                              </div>
+                              )) || []}
                             </div>
-                          )) || []}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-sm text-muted-foreground text-center py-4">
-                        Keine Schützen zugeordnet
+                          </div>
+                        ) : (
+                          <div className="text-sm text-muted-foreground text-center py-4">
+                            Keine Schützen zugeordnet
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
             ))}
           </div>
         </CardContent>

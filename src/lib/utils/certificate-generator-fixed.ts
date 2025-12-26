@@ -150,16 +150,19 @@ export class CertificateGenerator {
           // "mit" und Ergebnis in separaten Zeilen
           this.doc.setFontSize(14);
           this.doc.setFont('helvetica', 'normal');
-          this.doc.text(`in der ${options.category}`, this.pageWidth / 2, this.margin + 125, { align: 'center' });
-          this.doc.text('mit', this.pageWidth / 2, this.margin + 140, { align: 'center' });
+          this.doc.text('mit', this.pageWidth / 2, this.margin + 125, { align: 'center' });
           
           this.doc.setFontSize(16);
           this.doc.setFont('helvetica', 'bold');
-          this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 155, { align: 'center' });
+          this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 140, { align: 'center' });
           
           // Platzierung für mehrzeilige Namen
           this.doc.setFontSize(16);
-          this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, this.margin + 170, { align: 'center' });
+          this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, this.margin + 155, { align: 'center' });
+          
+          this.doc.setFontSize(16);
+          this.doc.setFont('helvetica', 'bold');
+          this.doc.text(`${options.category}`, this.pageWidth / 2, this.margin + 170, { align: 'center' });
         } else {
           // Normale Einzelschützen-Urkunde
           const match = options.recipientName.match(/^(.+?)\s*\((.+)\)$/);
@@ -174,8 +177,7 @@ export class CertificateGenerator {
             
             // "mit" hinzufügen
             this.doc.setFontSize(14);
-            this.doc.text(`in der ${options.category}`, this.pageWidth / 2, this.margin + 125, { align: 'center' });
-            this.doc.text('mit', this.pageWidth / 2, this.margin + 140, { align: 'center' });
+            this.doc.text('mit', this.pageWidth / 2, this.margin + 125, { align: 'center' });
           } else {
             this.doc.text(options.recipientName, this.pageWidth / 2, this.margin + 95, { align: 'center' });
           }
@@ -225,11 +227,11 @@ export class CertificateGenerator {
           // Ergebnis (für Einzelschützen)
           this.doc.setFontSize(16);
           this.doc.setFont('helvetica', 'bold');
-          this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 155, { align: 'center' });
+          this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 140, { align: 'center' });
           
           // Platzierung
           this.doc.setFontSize(16);
-          this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, this.margin + 170, { align: 'center' });
+          this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, this.margin + 155, { align: 'center' });
         }
       }
       

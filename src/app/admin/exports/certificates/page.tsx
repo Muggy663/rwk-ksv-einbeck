@@ -203,17 +203,40 @@ export default function CertificatesPage() {
       const leagueData = leagueSnap.data();
       const leagueName = leagueData.name;
       
+      // Saison-Informationen abrufen
+      const seasonRef = doc(db, 'seasons', selectedSeason);
+      const seasonSnap = await getDoc(seasonRef);
+      
+      if (!seasonSnap.exists()) {
+        throw new Error('Saison nicht gefunden');
+      }
+      const seasonData = seasonSnap.data();
+      
       // Top-Schützen abrufen und Urkunden generieren
       if (numTopShooters > 0) {
         const topShooters = await fetchTopShooters(selectedLeague, numTopShooters);
         
         for (const shooter of topShooters) {
+          // Lade Substitution-Informationen für diesen Schützen
+          const substitutionsQuery = query(
+            collection(db, 'team_substitutions'),
+            where('replacementShooterId', '==', shooter.shooterId),
+            where('competitionYear', '==', seasonData.competitionYear)
+          );
+          const substitutionsSnapshot = await getDocs(substitutionsQuery);
+          
+          let displayName = shooter.name;
+          if (!substitutionsSnapshot.empty) {
+            const substitution = substitutionsSnapshot.docs[0].data();
+            displayName = `${shooter.name}\nErsatz ab DG${substitution.fromRound} für ${substitution.originalShooterName}`;
+          }
+          
           certificates.push({
             type: 'shooter',
             season: shooter.season.replace('RWK ', ''), // "RWK" entfernen
             discipline: shooter.discipline,
             category: leagueName, // Verwende den tatsächlichen Liga-Namen
-            recipientName: shooter.name, // Nur Name
+            recipientName: displayName, // Verwende displayName mit Substitution-Info
             teamName: shooter.teamName, // Mannschaftsname separat
             clubName: shooter.clubName, // Verein separat speichern
             score: shooter.totalScore.toString(),
@@ -228,6 +251,53 @@ export default function CertificatesPage() {
         const topTeams = await fetchTopTeams(selectedLeague, numTopTeams);
         
         for (const team of topTeams) {
+          // Lade Substitution-Informationen für alle Teammitglieder
+          const teamMembersWithSubstitutions = [];
+          if (team.teamMembersWithScores) {
+            const replacedShooters = new Set();
+            
+            // Erst alle Ersatzschützen identifizieren und die ersetzten Schützen sammeln
+            for (const member of team.teamMembersWithScores) {
+              const substitutionsQuery = query(
+                collection(db, 'team_substitutions'),
+                where('replacementShooterName', '==', member.name),
+                where('competitionYear', '==', seasonData.competitionYear)
+              );
+              const substitutionsSnapshot = await getDocs(substitutionsQuery);
+              
+              if (!substitutionsSnapshot.empty) {
+                const substitution = substitutionsSnapshot.docs[0].data();
+                replacedShooters.add(substitution.originalShooterName);
+              }
+            }
+            
+            // Dann die Teammitglieder verarbeiten und ersetzte Schützen ausschließen
+            for (const member of team.teamMembersWithScores) {
+              // Ersetzte Schützen überspringen
+              if (replacedShooters.has(member.name)) {
+                continue;
+              }
+              
+              const substitutionsQuery = query(
+                collection(db, 'team_substitutions'),
+                where('replacementShooterName', '==', member.name),
+                where('competitionYear', '==', seasonData.competitionYear)
+              );
+              const substitutionsSnapshot = await getDocs(substitutionsQuery);
+              
+              let displayName = member.name;
+              if (!substitutionsSnapshot.empty) {
+                const substitution = substitutionsSnapshot.docs[0].data();
+                displayName = `${member.name} (Ersatz ab DG${substitution.fromRound} für ${substitution.originalShooterName})`;
+              }
+              
+              teamMembersWithSubstitutions.push({
+                ...member,
+                name: displayName
+              });
+            }
+          }
+          
           certificates.push({
             type: 'team',
             season: team.season.replace('RWK ', ''), // "RWK" entfernen
@@ -235,7 +305,7 @@ export default function CertificatesPage() {
             category: leagueName, // Verwende den tatsächlichen Liga-Namen
             recipientName: team.name,
             teamMembers: team.teamMembers,
-            teamMembersWithScores: team.teamMembersWithScores,
+            teamMembersWithScores: teamMembersWithSubstitutions,
             score: team.totalScore.toString(),
             rank: team.rank,
             date: `Einbeck, ${currentDate}`

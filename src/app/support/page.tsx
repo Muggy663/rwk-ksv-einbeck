@@ -377,30 +377,7 @@ export default function SupportPage() {
           </CardContent>
         </Card>
       )}
-      {/* Marketing Link */}
-      <Card className="shadow-lg max-w-2xl mx-auto bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
-        <CardHeader>
-          <CardTitle className="text-2xl text-primary flex items-center gap-2">
-            <HelpCircle className="h-6 w-6" />
-            Für Kreisverbände
-          </CardTitle>
-          <CardDescription>
-            Entdecken Sie, wie die RWK KSV Einbeck App Ihren Kreisverband unterstützt
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground">
-            Sind Sie Kreisverbandsleiter oder RWK-Organisator und möchten Ihre Rundenwettkämpfe und Kreismeisterschaften modernisieren? 
-            Erfahren Sie mehr über unsere spezialisierte Lösung für Wettkampf-Management.
-          </p>
-          <Button asChild className="w-full">
-            <Link href="/kreisverband">
-              Mehr erfahren - Für Kreisverbände
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+
 
       {/* Konto-Löschung Sektion */}
       <Card className="shadow-lg max-w-2xl mx-auto border-destructive/20">

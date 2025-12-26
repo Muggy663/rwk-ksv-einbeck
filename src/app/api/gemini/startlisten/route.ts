@@ -25,19 +25,21 @@ MELDUNGEN (${meldungen.length} Starter):
 ${meldungen.map((m, i) => `${i+1}. ${m.schuetzeName} (${m.verein}) - ${m.disziplin} - ${m.wettkampfklasse}${m.gewehrSharing ? ' [GEWEHR GETEILT]' : ''}`).join('\n')}
 
 KONFIGURATION:
-- Verfügbare Stände: ${config.verfuegbareStaende?.join(', ') || 'Nicht definiert'}
+- Verfügbare Stände: ${config.verfuegbareStaende?.join(', ') || 'Nicht definiert'} (${config.verfuegbareStaende?.length || 0} Stände)
 - Startzeit: ${config.startUhrzeit || 'Nicht definiert'}
 - Durchgangsdauer: ${config.durchgangsDauer || 30} Minuten
 - Wechselzeit: ${config.wechselzeit || 10} Minuten
 - Pausen: ${config.pausen?.map(p => `${p.nach} Durchgängen: ${p.dauer} Min`).join(', ') || 'Keine'}
 
 WICHTIGE REGELN:
-1. Gewehr-Sharing: Starter die sich ein Gewehr teilen müssen zeitlich versetzt werden
-2. VEREINS-LIMIT: ${config.vereinsLimit ? `Maximal ${config.vereinsLimit} Starter pro Verein pro Durchgang` : `Kein Vereinslimit`} (Sportgeräte-Knappheit)
-3. Wettkampfklassen: Gleiche Klassen möglichst gruppieren  
-4. Gleichmäßige Verteilung auf verfügbare Stände
-5. Berücksichtige Pausen zwischen Durchgängen
-6. Vereinsgruppen: Starter vom gleichen Verein zeitlich nah beieinander
+1. **ALLE VERFÜGBAREN STÄNDE NUTZEN**: Nutze ALLE ${config.verfuegbareStaende?.length || 0} verfügbaren Stände pro Durchgang für minimale Durchgangsanzahl
+2. **MINIMALE DURCHGÄNGE**: Ziel ist die geringstmögliche Anzahl von Durchgängen bei optimaler Standausnutzung
+3. **STAND-OPTIMIERUNG**: Bei ${meldungen.length} Startern und ${config.verfuegbareStaende?.length || 0} Ständen sollten es maximal ${Math.ceil(meldungen.length / (config.verfuegbareStaende?.length || 1))} Durchgänge werden
+4. Gewehr-Sharing: Starter die sich ein Gewehr teilen müssen zeitlich versetzt werden (erkennbar an gleichem Nachnamen)
+5. VEREINS-LIMIT: ${config.vereinsLimit ? `Maximal ${config.vereinsLimit} Starter pro Verein pro Durchgang` : `Kein Vereinslimit`} (Sportgeräte-Knappheit)
+6. Wettkampfklassen: Gleiche Klassen möglichst gruppieren  
+7. Berücksichtige Pausen zwischen Durchgängen
+8. Vereinsgruppen: Starter vom gleichen Verein zeitlich nah beieinander
 
 Erstelle eine JSON-Antwort mit folgendem Format:
 {

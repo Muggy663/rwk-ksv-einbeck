@@ -71,14 +71,13 @@ export default function StartlistenToolPage() {
       if (isCancelled) return;
       try {
         // Konfiguration laden
-        const configResponse = await fetch(`/api/km/startlisten/${configId}`);
-        if (!configResponse.ok) {
+        const configDoc = await getDoc(doc(db, 'km_startlisten_configs', configId));
+        if (!configDoc.exists()) {
           setLoading(false);
           return;
         }
         
-        const configResult = await configResponse.json();
-        const configData = configResult.data;
+        const configData = { id: configDoc.id, ...configDoc.data() };
         setConfig(configData);
 
         // Lade Saisons nur einmal
@@ -97,24 +96,81 @@ export default function StartlistenToolPage() {
             });
             
             setSaisons(sortedSaisons);
-            
-            // Verwende direkt die geladenen Saisons
-            let saisonId = selectedSaison;
-            // KEINE automatische Auswahl - Benutzer muss bewusst wählen
-            console.log('DEBUG: SaisonId aus geladenen Saisons:', {selectedSaison, saisonId, saisonsCount: sortedSaisons.length});
-            
-            
-            // Lade Daten mit der gefundenen saisonId
-            console.log('DEBUG: Lade Daten für Saison:', saisonId);
           }
         }
         
-        // Fallback wenn Saisons bereits geladen
-        let saisonId = selectedSaison;
-        // KEINE automatische Auswahl - Benutzer muss bewusst wählen
-        console.log('DEBUG: SaisonId aus State:', {selectedSaison, saisonId, saisonsCount: saisons.length});
+        // WICHTIG: Wenn startlisteId vorhanden, lade gespeicherte Startliste OHNE Saisonauswahl
+        if (startlisteId) {
+          console.log('DEBUG: Lade gespeicherte Startliste:', startlisteId);
+          
+          // Versuche zuerst über API zu laden
+          try {
+            const response = await fetch('/api/km/startlisten');
+            if (response.ok) {
+              const apiData = await response.json();
+              const gefundeneStartliste = apiData.data?.find(s => s.id === startlisteId);
+              
+              if (gefundeneStartliste) {
+                console.log('DEBUG: Startliste über API gefunden:', gefundeneStartliste);
+                setStartliste(gefundeneStartliste.startliste || []);
+                setSelectedDisziplinen(['alle']);
+                
+                // Lade Meldungen für manuelles Hinzufügen
+                await loadMeldungenForManualAdd();
+                
+                toast({ 
+                  title: '📝 Startliste geladen', 
+                  description: `Startliste mit ${gefundeneStartliste.startliste?.length || 0} Startern geladen`,
+                  duration: 3000
+                });
+                
+                setLoading(false);
+                return;
+              }
+            }
+          } catch (apiError) {
+            console.log('DEBUG: API-Fehler, versuche Firebase direkt:', apiError);
+          }
+          
+          // Fallback: Direkt aus Firebase
+          const startlisteDoc = await getDoc(doc(db, 'km_startlisten', startlisteId));
+          if (startlisteDoc.exists()) {
+            const startlisteData = startlisteDoc.data();
+            console.log('DEBUG: Rohe Startliste-Daten:', startlisteData);
+            console.log('DEBUG: Startliste Array:', startlisteData.startliste);
+            console.log('DEBUG: Startliste Länge:', startlisteData.startliste?.length);
+            
+            setStartliste(startlisteData.startliste || []);
+            
+            console.log('DEBUG: Gespeicherte Startliste geladen:', startlisteData.startliste?.length);
+            
+            // WICHTIG: Setze Filter auf "alle" für gespeicherte Startlisten
+            setSelectedDisziplinen(['alle']);
+            
+            // Lade auch Meldungen für das manuelle Hinzufügen
+            await loadMeldungenForManualAdd();
+            
+            toast({ 
+              title: '📝 Startliste geladen', 
+              description: `Startliste mit ${startlisteData.startliste?.length || 0} Startern geladen`,
+              duration: 3000
+            });
+            
+            // STOPPE hier - keine weitere Verarbeitung für gespeicherte Startlisten
+            setLoading(false);
+            return;
+          } else {
+            console.log('DEBUG: Startliste-Dokument existiert nicht:', startlisteId);
+            toast({ 
+              title: '⚠️ Startliste nicht gefunden', 
+              description: `Startliste mit ID ${startlisteId} wurde nicht gefunden.`,
+              variant: 'destructive',
+              duration: 5000
+            });
+          }
+        }
         
-        // Verwende nur selectedSaison - KEINE Fallbacks
+        // Nur für neue Startlisten: Prüfe Saisonauswahl
         const finalSaisonId = selectedSaison;
         logDebug('Gefundene Saison-ID:', finalSaisonId);
         
@@ -239,28 +295,14 @@ export default function StartlistenToolPage() {
         const clubsData = Object.entries(vereine).map(([id, name]) => ({ id, name }));
         setVereine(clubsData);
         
-        // Lade existierende Startliste oder generiere neue
-        if (startlisteId) {
-          // Lade gespeicherte Startliste
-          const startlisteDoc = await getDoc(doc(db, 'km_startlisten', startlisteId));
-          if (startlisteDoc.exists()) {
-            const startlisteData = startlisteDoc.data();
-            setStartliste(startlisteData.startliste || []);
-            
-
-            
-            toast({ 
-              title: '📝 Startliste geladen', 
-              description: `Startliste mit ${startlisteData.startliste?.length || 0} Startern geladen`,
-              duration: 3000
-            });
-          }
-        } else {
+        // Nur für neue Startlisten: Automatische Generierung
+        if (!startlisteId) {
           // Automatische Startlisten-Generierung nur wenn Meldungen vorhanden
           if (meldungenData.length > 0) {
             logDebug('Generiere Startliste für', meldungenData.length, 'Meldungen');
             const basisStartliste = await generiereStartliste();
             setStartliste(basisStartliste);
+            autoSave(basisStartliste);
             
 
           } else {
@@ -283,6 +325,92 @@ export default function StartlistenToolPage() {
       isCancelled = true;
     };
   }, [configId, selectedSaison]);
+
+  const loadMeldungenForManualAdd = async () => {
+    try {
+      // Verwende selectedSaison falls vorhanden, sonst aktive Saison
+      let saisonId = selectedSaison;
+      
+      if (!saisonId) {
+        const saisonRes = await fetch('/api/km/saisons');
+        if (saisonRes.ok) {
+          const saisonData = await saisonRes.json();
+          const aktiveSaison = saisonData.data?.find(s => s.status === 'aktiv');
+          saisonId = aktiveSaison?.id;
+        }
+      }
+      
+      if (!saisonId) return;
+      
+      const [disziplinenRes, meldungenRes, schuetzenRes, clubsRes] = await Promise.all([
+        fetch('/api/km/disziplinen'),
+        fetch(`/api/km/meldungen?saison=${saisonId}`),
+        fetch('/api/shooters'),
+        fetch('/api/clubs')
+      ]);
+      
+      const disziplinen = {};
+      if (disziplinenRes.ok) {
+        const diszData = await disziplinenRes.json();
+        diszData.data?.forEach(d => {
+          disziplinen[d.id] = d.name;
+        });
+      }
+      
+      const schuetzen = {};
+      if (schuetzenRes.ok) {
+        const schuetzenData = await schuetzenRes.json();
+        schuetzenData.data?.forEach(s => {
+          schuetzen[s.id] = s;
+        });
+      }
+      
+      const vereine = {};
+      if (clubsRes.ok) {
+        const clubsData = await clubsRes.json();
+        clubsData.data?.forEach(c => {
+          vereine[c.id] = c.name;
+        });
+      }
+      
+      let allMeldungen = [];
+      if (meldungenRes.ok) {
+        const meldungenData = await meldungenRes.json();
+        allMeldungen = meldungenData.data || [];
+      }
+      
+      const meldungenData = allMeldungen
+        .filter(data => {
+          if (!data.schuetzeId || !data.disziplinId) return false;
+          
+          const disziplinName = disziplinen[data.disziplinId];
+          // Filtere nur Disziplinen die in der Konfiguration sind
+          return config?.disziplinen?.includes(disziplinName);
+        })
+        .map(data => {
+          const schuetze = schuetzen[data.schuetzeId];
+          const disziplinName = disziplinen[data.disziplinId];
+          
+          if (!schuetze || !disziplinName) return null;
+          
+          return {
+            id: data.id,
+            name: schuetze?.name || 'Unbekannt',
+            verein: vereine[schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId] || 'Unbekannt',
+            disziplin: disziplinName,
+            altersklasse: 'Berechnet',
+            anmerkung: data.anmerkung || '',
+            lmTeilnahme: data.lmTeilnahme === true
+          };
+        })
+        .filter(Boolean);
+      
+      setMeldungen(meldungenData);
+      console.log('DEBUG: Gefilterte Meldungen für manuelles Hinzufügen:', meldungenData.length);
+    } catch (error) {
+      console.log('DEBUG: Fehler beim Laden der Meldungen:', error);
+    }
+  };
 
   const generiereStartliste = async (): Promise<Starter[]> => {
     console.log('DEBUG: generiereStartliste aufgerufen', {config: !!config, meldungenCount: meldungen.length});
@@ -622,6 +750,46 @@ export default function StartlistenToolPage() {
     return startlisteEntries;
   };
 
+  const autoSave = async (neueStartliste: Starter[]) => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      let startlisteId = urlParams.get('startlisteId');
+      
+      const response = await fetch('/api/km/startlisten', {
+        method: startlisteId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: startlisteId,
+          configId: configId,
+          startliste: neueStartliste,
+          datum: config?.startDatum
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      // Nach dem ersten Speichern: URL mit startlisteId aktualisieren
+      if (!startlisteId && result.id) {
+        const newUrl = `${window.location.pathname}?id=${configId}&startlisteId=${result.id}`;
+        window.history.replaceState({}, '', newUrl);
+      }
+      
+      logDebug('Auto-Speichern erfolgreich:', neueStartliste.length, 'Starter');
+    } catch (error) {
+      logError('Auto-Speichern fehlgeschlagen:', error);
+      toast({ 
+        title: 'Auto-Speichern fehlgeschlagen', 
+        description: 'Änderungen wurden nicht gespeichert. Bitte manuell speichern.',
+        variant: 'destructive',
+        duration: 5000
+      });
+    }
+  };
+
   const handleStarterChange = (starterId: string, field: 'stand' | 'startzeit', value: string) => {
     const neueStartliste = startliste.map(s => {
       if (s.id === starterId) {
@@ -646,41 +814,53 @@ export default function StartlistenToolPage() {
       return s;
     });
     
-    // Prüfe Gewehr-Sharing Konflikte und löse sie automatisch
+    // Verbesserte Gewehr-Sharing Logik
     const gewehrSharingStarter = neueStartliste.filter(starter => 
       starter.anmerkung?.toLowerCase().includes('gewehr') || 
       starter.hinweise?.toLowerCase().includes('gewehr')
     );
     
     if (gewehrSharingStarter.length > 1) {
-      // Finde Schützen die zur gleichen Zeit schießen sollen
-      const zeitGruppen = {};
+      // Gruppiere nach Nachnamen (Gewehr-Sharing meist in Familien)
+      const nachNachnamen = {};
       gewehrSharingStarter.forEach(starter => {
-        const zeit = starter.startzeit || '15:00';
-        if (!zeitGruppen[zeit]) zeitGruppen[zeit] = [];
-        zeitGruppen[zeit].push(starter);
+        const nachname = starter.name.split(' ').pop() || starter.name;
+        if (!nachNachnamen[nachname]) nachNachnamen[nachname] = [];
+        nachNachnamen[nachname].push(starter);
       });
       
-      // Löse Konflikte für jede Zeit-Gruppe
-      Object.entries(zeitGruppen).forEach(([zeit, gruppe]: [string, any[]]) => {
+      // Für jeden Nachnamen: Stelle sicher, dass sie in verschiedenen Durchgängen sind
+      Object.entries(nachNachnamen).forEach(([nachname, gruppe]: [string, any[]]) => {
         if (gruppe.length > 1) {
-          // Verschiebe jeden zweiten Schützen um Durchgangsdauer + Wechselzeit
+          // Sortiere nach aktueller Startzeit
+          gruppe.sort((a, b) => (a.startzeit || '14:00').localeCompare(b.startzeit || '14:00'));
+          
+          // Verteile auf verschiedene Durchgänge
           gruppe.forEach((starter, index) => {
             if (index > 0) {
-              const [hours, minutes] = zeit.split(':').map(Number);
-              const durchgangIntervall = (config?.durchgangsDauer || 30) + (config?.wechselzeit || 15);
-              const newMinutes = minutes + (index * durchgangIntervall);
-              const newHours = hours + Math.floor(newMinutes / 60);
-              const finalMinutes = newMinutes % 60;
+              const durchgangIntervall = (config?.durchgangsDauer || 50) + (config?.wechselzeit || 10);
+              const [baseHours, baseMinutes] = (gruppe[0].startzeit || config?.startUhrzeit || '14:00').split(':').map(Number);
+              const baseTotalMinutes = baseHours * 60 + baseMinutes;
               
-              const neueZeit = `${newHours.toString().padStart(2, '0')}:${finalMinutes.toString().padStart(2, '0')}`;
+              // Jeder weitere Schütze kommt in den nächsten Durchgang
+              const newTotalMinutes = baseTotalMinutes + (index * durchgangIntervall);
+              const newHours = Math.floor(newTotalMinutes / 60);
+              const newMinutes = newTotalMinutes % 60;
+              
+              const neueZeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
               
               // Update in neueStartliste
               const starterIndex = neueStartliste.findIndex(s => s.id === starter.id);
               if (starterIndex !== -1) {
                 neueStartliste[starterIndex].startzeit = neueZeit;
-                neueStartliste[starterIndex].durchgang = (neueStartliste[starterIndex].durchgang || 1) + index;
-                neueStartliste[starterIndex].hinweise = `Gewehr geteilt - Zeitverschiebung`;
+                neueStartliste[starterIndex].durchgang = (gruppe[0].durchgang || 1) + index;
+                neueStartliste[starterIndex].hinweise = `Gewehr geteilt mit ${gruppe[0].name} - DG ${(gruppe[0].durchgang || 1) + index}`;
+              }
+            } else {
+              // Erster Schütze behält seine Zeit, aber Update Hinweis
+              const starterIndex = neueStartliste.findIndex(s => s.id === starter.id);
+              if (starterIndex !== -1) {
+                neueStartliste[starterIndex].hinweise = `Gewehr wird geteilt mit ${gruppe.slice(1).map(s => s.name).join(', ')}`;
               }
             }
           });
@@ -689,6 +869,7 @@ export default function StartlistenToolPage() {
     }
     
     setStartliste(neueStartliste);
+    autoSave(neueStartliste);
   };
 
 
@@ -722,7 +903,7 @@ export default function StartlistenToolPage() {
       
       toast({ 
         title: '🤖 Gemini arbeitet...', 
-        description: `Generiere Startliste für ${geminiMeldungen.length} Meldungen. Dies kann 1-2 Minuten dauern.`,
+        description: `Generiere Startliste für ${geminiMeldungen.length} Meldungen. Dies kann einige Minuten dauern.`,
         duration: 5000
       });
       
@@ -749,6 +930,7 @@ export default function StartlistenToolPage() {
         setGeminiResult(result.data);
         if (result.data.startliste) {
           setStartliste(result.data.startliste);
+          autoSave(result.data.startliste);
           toast({ title: '✨ Gemini Startliste', description: `${result.data.startliste.length} Starter generiert` });
         }
       } else {
@@ -865,7 +1047,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         // Wenn Gemini eine modifizierte Startliste zurückgibt
         if (result.modifiedStartliste && Array.isArray(result.modifiedStartliste)) {
           setStartliste(result.modifiedStartliste);
-
+          autoSave(result.modifiedStartliste);
           toast({ title: '✨ Startliste angepasst', description: 'Gemini hat die Änderungen vorgenommen' });
         }
       } else {
@@ -883,7 +1065,13 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
       const urlParams = new URLSearchParams(window.location.search);
       const startlisteId = urlParams.get('startlisteId');
       
-      logDebug('Speichere Startliste:', { startlisteId, configId, starterAnzahl: startliste.length });
+      console.log('DEBUG: Speichere Startliste:', { startlisteId, configId, starterAnzahl: startliste.length });
+      console.log('DEBUG: Request Body:', {
+        id: startlisteId,
+        configId: configId,
+        startliste: startliste.slice(0, 2),
+        datum: config?.startDatum
+      });
       
       const response = await fetch('/api/km/startlisten', {
         method: startlisteId ? 'PUT' : 'POST',
@@ -896,28 +1084,41 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         })
       });
       
-      logDebug('Response Status:', response.status);
+      console.log('DEBUG: Response Status:', response.status);
+      const responseText = await response.text();
+      console.log('DEBUG: Response Text:', responseText);
       
-      if (response.ok) {
-        const result = await response.json();
-        logDebug('Speichern erfolgreich:', result);
-        
-        // Sofortige Rückmeldung
-        alert(`✅ Startliste gespeichert! (${startliste.length} Starter)`);
-        
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error(`Invalid JSON response: ${responseText}`);
+      }
+      
+      console.log('DEBUG: Parsed Result:', result);
+      
+      if (response.ok && result.success) {
         toast({ 
           title: '✅ Startliste gespeichert!', 
           description: `Startliste mit ${startliste.length} Startern wurde erfolgreich gespeichert.`,
           duration: 5000
         });
+        
+        if (!startlisteId && result.id) {
+          const newUrl = `${window.location.pathname}?id=${configId}&startlisteId=${result.id}`;
+          window.history.replaceState({}, '', newUrl);
+        }
       } else {
-        const errorText = await response.text();
-        logError('API Fehler Response:', errorText);
-        throw new Error(`API Fehler: ${response.status}`);
+        throw new Error(result.error || `HTTP ${response.status}: ${responseText}`);
       }
     } catch (error) {
-      logError('Fehler beim Speichern:', error);
-      toast({ title: 'Fehler', description: 'Startliste konnte nicht gespeichert werden.', variant: 'destructive' });
+      console.error('DEBUG: Fehler beim Speichern:', error);
+      toast({ 
+        title: 'Fehler beim Speichern', 
+        description: `${error.message}`, 
+        variant: 'destructive',
+        duration: 8000
+      });
     }
   };
 
@@ -1203,7 +1404,9 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
       doc.text(disziplinText, pageWidth / 2, 190, { align: 'center' });
       
       // Verwende gefilterte Startliste basierend auf Disziplinen-Filter
-      const gefilterteStartliste = selectedDisziplinen.includes('alle') ? startliste : startliste.filter(s => selectedDisziplinen.includes(s.disziplin));
+      const gefilterteStartliste = selectedDisziplinen.includes('alle') ? 
+        startliste : 
+        startliste.filter(s => selectedDisziplinen.includes(s.disziplin));
       
       // Gruppiere nur nach Startzeiten (keine Disziplin-Gruppierung)
       const nachStartzeit = gefilterteStartliste.reduce((acc, s) => {
@@ -1268,7 +1471,6 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
           currentY += 10;
           
           globalStartNummer++;
-          // Sortiere nach Stand und Name
           const sortierteStarter = starterGruppe.sort((a, b) => {
             const standA = parseInt(a.stand || '999');
             const standB = parseInt(b.stand || '999');
@@ -1276,9 +1478,12 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
             return a.name.localeCompare(b.name);
           });
           
-
+          // Zeige nur Starter der gefilterten Disziplinen
+          const finalStarter = selectedDisziplinen.includes('alle') ? 
+            sortierteStarter : 
+            sortierteStarter.filter(s => selectedDisziplinen.includes(s.disziplin));
           
-          const tableData = sortierteStarter.map((s) => {
+          const tableData = finalStarter.map((s) => {
             // Finde Schütze für echte Mitgliedsnummer mit korrektem 0-Präfix
             const schuetze = schuetzenMapPDF[s.name];
             let mitgliedsNr = '08-000-0000';
@@ -1420,7 +1625,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
       
       toast({ 
         title: '📄 PDF erstellt', 
-        description: `${fileName} wurde heruntergeladen (${startliste.length} Teilnehmer).`,
+        description: `${fileName} wurde heruntergeladen (${gefilterteStartliste.length} Teilnehmer${selectedDisziplinen.includes('alle') ? '' : ' - gefiltert'}).`,
         duration: 4000
       });
     } catch (error) {
@@ -1459,7 +1664,13 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         <CardContent className="pt-6">
           <div className="space-y-4">
             <div>
-              <label className="text-base font-semibold text-gray-800 dark:text-gray-200">🎯 Saison auswählen (Pflichtfeld)</label>
+              <label className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                🎯 Saison auswählen {(() => {
+                  const urlParams = new URLSearchParams(window.location.search);
+                  const startlisteId = urlParams.get('startlisteId');
+                  return startlisteId ? '(Optional - Startliste bereits geladen)' : '(Pflichtfeld)';
+                })()}
+              </label>
               <select
                 value={selectedSaison}
                 onChange={(e) => {
@@ -1469,7 +1680,11 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                   setLoading(true);
                 }}
                 className="w-full mt-2 px-4 py-3 text-lg border-2 border-primary rounded-lg bg-white focus:ring-2 focus:ring-primary focus:border-primary"
-                required
+                required={(() => {
+                  const urlParams = new URLSearchParams(window.location.search);
+                  const startlisteId = urlParams.get('startlisteId');
+                  return !startlisteId; // Nur required wenn keine startlisteId
+                })()}
               >
                 <option value="">🔽 Bitte Saison wählen...</option>
                 {saisons.map(saison => (
@@ -1483,7 +1698,13 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
         </CardContent>
       </Card>
 
-      {!selectedSaison && (
+      {(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const startlisteId = urlParams.get('startlisteId');
+        
+        // Zeige Warnung nur wenn keine startlisteId UND keine Saison gewählt
+        return !startlisteId && !selectedSaison;
+      })() && (
         <Card className="mb-6 border-orange-200 bg-orange-50">
           <CardContent className="pt-6">
             <div className="text-center py-4">
@@ -1496,7 +1717,13 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
 
 
 
-      {config && selectedSaison && (
+      {(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const startlisteId = urlParams.get('startlisteId');
+        
+        // Zeige Konfiguration wenn: startlisteId vorhanden ODER (config UND selectedSaison)
+        return (startlisteId && config) || (config && selectedSaison);
+      })() && (
         <div className="grid gap-6">
           <Card>
             <CardHeader>
@@ -1524,12 +1751,56 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium mb-1">Zeitplan</p>
-                  <p className="text-xs text-muted-foreground">
-                    Start: {config.startUhrzeit} Uhr<br/>
-                    Durchgang: {config.durchgangsDauer} Min<br/>
-                    Wechselzeit: {config.wechselzeit || 0} Min
-                  </p>
+                  <p className="text-sm font-medium mb-1">Zeitplan (bearbeitbar)</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs w-16">Start:</label>
+                      <Input
+                        type="time"
+                        value={config.startUhrzeit}
+                        onChange={(e) => {
+                          const newConfig = {...config, startUhrzeit: e.target.value};
+                          setConfig(newConfig);
+                          updateDoc(doc(db, 'km_startlisten_configs', configId), { startUhrzeit: e.target.value });
+                        }}
+                        className="w-20 h-7 text-xs"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs w-16">Durchgang:</label>
+                      <Input
+                        type="number"
+                        value={config.durchgangsDauer}
+                        onChange={(e) => {
+                          const newValue = parseInt(e.target.value) || 50;
+                          const newConfig = {...config, durchgangsDauer: newValue};
+                          setConfig(newConfig);
+                          updateDoc(doc(db, 'km_startlisten_configs', configId), { durchgangsDauer: newValue });
+                        }}
+                        className="w-16 h-7 text-xs"
+                        min="10"
+                        max="120"
+                      />
+                      <span className="text-xs">Min</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs w-16">Wechsel:</label>
+                      <Input
+                        type="number"
+                        value={config.wechselzeit || 10}
+                        onChange={(e) => {
+                          const newValue = parseInt(e.target.value) || 10;
+                          const newConfig = {...config, wechselzeit: newValue};
+                          setConfig(newConfig);
+                          updateDoc(doc(db, 'km_startlisten_configs', configId), { wechselzeit: newValue });
+                        }}
+                        className="w-16 h-7 text-xs"
+                        min="0"
+                        max="60"
+                      />
+                      <span className="text-xs">Min</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -1597,9 +1868,14 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
               </div>
 
               <div className="flex gap-2 mb-4">
-                <Button variant="outline" onClick={saveStartliste} disabled={startliste.length === 0}>
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  Automatisches Speichern aktiv
+                </div>
+                
+                <Button onClick={saveStartliste} variant="outline" size="sm">
                   <Save className="h-4 w-4 mr-2" />
-                  Speichern
+                  Manuell speichern
                 </Button>
 
                 <Button 
@@ -1617,16 +1893,27 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                     }
                     
                     // Einfache Startliste: Alle Meldungen mit Standard-Werten
-                    const einfacheStartliste = meldungen.map((m, index) => ({
-                      ...m,
-                      id: `fallback_${m.id}_${index}`,
-                      stand: config?.verfuegbareStaende[index % config.verfuegbareStaende.length] || '1',
-                      startzeit: config?.startUhrzeit || '14:00',
-                      durchgang: Math.floor(index / config?.verfuegbareStaende.length) + 1,
-                      hinweise: 'Einfache Verteilung - Stand 1 beginnend'
-                    }));
+                    const einfacheStartliste = meldungen.map((m, index) => {
+                      const durchgang = Math.floor(index / config.verfuegbareStaende.length) + 1;
+                      const standIndex = index % config.verfuegbareStaende.length;
+                      const [hours, minutes] = (config?.startUhrzeit || '14:00').split(':').map(Number);
+                      const totalMinutes = hours * 60 + minutes + ((durchgang - 1) * ((config?.durchgangsDauer || 50) + (config?.wechselzeit || 10)));
+                      const newHours = Math.floor(totalMinutes / 60);
+                      const newMinutes = totalMinutes % 60;
+                      const startzeit = `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
+                      
+                      return {
+                        ...m,
+                        id: `fallback_${m.id}_${index}`,
+                        stand: config.verfuegbareStaende[standIndex],
+                        startzeit,
+                        durchgang,
+                        hinweise: 'Einfache Verteilung - alle Stände genutzt'
+                      };
+                    });
                     
                     setStartliste(einfacheStartliste);
+                    autoSave(einfacheStartliste);
                     toast({ title: '📋 Einfache Liste', description: `${einfacheStartliste.length} Starter - jetzt manuell anpassen` });
                   }}
                   variant="outline"
@@ -1643,7 +1930,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                     KI-basierte Startlisten-Optimierung mit Vereins-Limits & Sportgeräte-Regeln
                   </p>
                   <div className="text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">
-                    ⏱️ Hinweis: Gemini-Generierung kann 1-2 Minuten dauern, je nach Meldungsanzahl
+                    ⏱️ Hinweis: Gemini-Generierung kann einige Minuten dauern, je nach Meldungsanzahl
                   </div>
                   <div className="text-xs text-blue-600 bg-blue-100 p-2 rounded">
                     • Gewehr-Sharing Erkennung<br/>
@@ -1835,12 +2122,16 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
             </CardContent>
           </Card>
 
-          {startliste.length > 0 && (
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>④ Generierte Startliste ({startliste.length})</CardTitle>
+      {startliste.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>④ Generierte Startliste ({startliste.length})</CardTitle>
                   <div className="flex gap-2">
+                    <Button onClick={saveStartliste} className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2">
+                      <Save className="h-4 w-4 mr-2" />
+                      💾 JETZT SPEICHERN
+                    </Button>
                     <Button onClick={exportToPDF} variant="outline">
                       <Download className="h-4 w-4 mr-2" />
                       PDF Export
@@ -1858,6 +2149,9 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                     <div>
                       <p className="text-sm font-medium text-amber-900">Schütze manuell hinzufügen</p>
                       <p className="text-xs text-amber-700">Für Schützen die am anderen Termin schießen sollen (z.B. Freihand-Schütze am Auflage-Tag)</p>
+                      {!selectedSaison && (
+                        <p className="text-xs text-red-600 font-medium mt-1">⚠️ Bitte wählen Sie oben eine Saison aus, um Schützen hinzuzufügen</p>
+                      )}
                     </div>
                   </div>
                   <div className="mb-3">
@@ -1867,10 +2161,20 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                       className="w-full p-2 border rounded text-sm"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                      disabled={!selectedSaison}
                     />
                   </div>
                   <div className="max-h-32 overflow-y-auto">
-                    <div className="grid grid-cols-2 gap-2">
+                    {!selectedSaison ? (
+                      <div className="text-center py-4 text-amber-700">
+                        <p className="text-sm">🔽 Bitte wählen Sie zuerst eine Saison aus</p>
+                      </div>
+                    ) : meldungen.length === 0 ? (
+                      <div className="text-center py-4 text-amber-700">
+                        <p className="text-sm">Keine passenden Meldungen gefunden</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
                       {meldungen
                         .filter(m => 
                           !startliste.some(s => s.name === m.name && s.disziplin === m.disziplin) &&
@@ -1884,14 +2188,17 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                             <button
                               key={`${schuetze.name}_${schuetze.disziplin}`}
                               onClick={() => {
-                                setStartliste(prev => [...prev, {
+                                const neuerStarter = {
                                   ...schuetze,
                                   id: `manual_${Date.now()}`,
                                   stand: config?.verfuegbareStaende[0] || '1',
                                   startzeit: config?.startUhrzeit || '14:00',
                                   durchgang: 1,
                                   hinweise: 'Terminwechsel - schießt am anderen Tag'
-                                }]);
+                                };
+                                const neueStartliste = [...startliste, neuerStarter];
+                                setStartliste(neueStartliste);
+                                autoSave(neueStartliste);
                                 toast({ title: '✅ Hinzugefügt', description: `${schuetze.name} hinzugefügt` });
                               }}
                               className="text-left p-2 bg-white border rounded hover:bg-blue-50 text-xs"
@@ -1901,12 +2208,13 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                               <div className="text-gray-500">{schuetze.verein}</div>
                             </button>
                           ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                  <div className="space-y-2 max-h-[600px] overflow-y-auto">
                     {(() => {
                       const gefiltert = selectedDisziplinen.includes('alle') ? 
                         startliste : 
@@ -2062,6 +2370,7 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                                 onClick={() => {
                                   const neueStartliste = startliste.filter(s => s.id !== starter.id);
                                   setStartliste(neueStartliste);
+                                  autoSave(neueStartliste);
                                 }}
                                 className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 text-xs w-4 h-4 flex items-center justify-center"
                                 title="Starter entfernen"

@@ -4,7 +4,7 @@ import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
   try {
-    const snapshot = await adminDb.collection('km_startlisten_configs').orderBy('createdAt', 'desc').get();
+    const snapshot = await adminDb.collection('km_startlisten').orderBy('createdAt', 'desc').get();
     const startlisten = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -72,6 +72,30 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     logError('Fehler beim Aktualisieren der Startliste:', error);
+    return NextResponse.json({
+      success: false,
+      error: error.message
+    }, { status: 500 });
+  }
+}
+export async function DELETE(request: NextRequest) {
+  try {
+    const { id } = await request.json();
+    
+    if (!id) {
+      return NextResponse.json({
+        success: false,
+        error: 'ID ist erforderlich für Löschen'
+      }, { status: 400 });
+    }
+    
+    await adminDb.collection('km_startlisten').doc(id).delete();
+    
+    return NextResponse.json({
+      success: true
+    });
+  } catch (error) {
+    logError('Fehler beim Löschen der Startliste:', error);
     return NextResponse.json({
       success: false,
       error: error.message

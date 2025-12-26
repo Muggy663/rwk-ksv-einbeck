@@ -205,7 +205,15 @@ export function SubstitutionDialog({
       );
 
       await updateDoc(doc(db, 'rwk_teams', team.id), {
-        shooterIds: updatedShooterIds
+        shooterIds: updatedShooterIds,
+        // Markiere Substitution für zukünftige Ergebnis-Eingaben
+        substitutions: arrayUnion({
+          originalShooterId: selectedOriginalShooter,
+          replacementShooterId: selectedReplacementShooter,
+          fromRound: fromRound,
+          substitutionDate: new Date(),
+          active: true
+        })
       });
       
       // Aktualisiere Schützen teamIds
