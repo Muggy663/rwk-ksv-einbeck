@@ -357,6 +357,12 @@ export default function StartlistenUebersichtPage() {
                         </span>
                         <span>{liste.startliste?.length || 0} Starter</span>
                         <span>{(liste.startliste?.length || 0) > 0 ? Math.max(...liste.startliste.map((s: any) => s.durchgang || 1)) : 0} Durchgänge</span>
+                        <span className="text-xs text-blue-600">
+                          {(() => {
+                            const disziplinen = [...new Set((liste.startliste || []).map((s: any) => s.disziplin))].filter(Boolean);
+                            return disziplinen.length > 0 ? disziplinen.join(', ') : 'Keine Disziplinen';
+                          })()} 
+                        </span>
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">

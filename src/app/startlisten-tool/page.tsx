@@ -143,6 +143,7 @@ export default function StartlistenToolPage() {
             setStartliste(startlisteData.startliste || []);
             
             console.log('DEBUG: Gespeicherte Startliste geladen:', startlisteData.startliste?.length);
+            console.log('DEBUG: Erste 3 Starter aus gespeicherter Liste:', startlisteData.startliste?.slice(0, 3).map(s => s.name));
             
             // WICHTIG: Setze Filter auf "alle" für gespeicherte Startlisten
             setSelectedDisziplinen(['alle']);
@@ -342,26 +343,33 @@ export default function StartlistenToolPage() {
       
       if (!saisonId) return;
       
-      const [disziplinenRes, meldungenRes, schuetzenRes, clubsRes] = await Promise.all([
+      // Lade direkt aus Firebase wie in KM-Meldungen
+      const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
+      
+      const [disziplinenRes, meldungenRes, clubsRes] = await Promise.all([
         fetch('/api/km/disziplinen'),
         fetch(`/api/km/meldungen?saison=${saisonId}`),
-        fetch('/api/shooters'),
         fetch('/api/clubs')
       ]);
+      
+      // Lade Schützen direkt aus Firebase
+      const shootersSnapshot = await getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc')));
+      const allSchuetzen = shootersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      const schuetzen = {};
+      allSchuetzen.forEach(s => {
+        schuetzen[s.id] = s;
+      });
       
       const disziplinen = {};
       if (disziplinenRes.ok) {
         const diszData = await disziplinenRes.json();
         diszData.data?.forEach(d => {
           disziplinen[d.id] = d.name;
-        });
-      }
-      
-      const schuetzen = {};
-      if (schuetzenRes.ok) {
-        const schuetzenData = await schuetzenRes.json();
-        schuetzenData.data?.forEach(s => {
-          schuetzen[s.id] = s;
         });
       }
       
@@ -383,9 +391,8 @@ export default function StartlistenToolPage() {
         .filter(data => {
           if (!data.schuetzeId || !data.disziplinId) return false;
           
-          const disziplinName = disziplinen[data.disziplinId];
-          // Filtere nur Disziplinen die in der Konfiguration sind
-          return config?.disziplinen?.includes(disziplinName);
+          // KEINE Disziplinen-Filterung - lade alle Meldungen der Saison
+          return true;
         })
         .map(data => {
           const schuetze = schuetzen[data.schuetzeId];
@@ -406,7 +413,10 @@ export default function StartlistenToolPage() {
         .filter(Boolean);
       
       setMeldungen(meldungenData);
-      console.log('DEBUG: Gefilterte Meldungen für manuelles Hinzufügen:', meldungenData.length);
+      console.log('DEBUG: Gefilterte Meldungen für manuelles Hinzufügen (Firebase):', meldungenData.length);
+      console.log('DEBUG: Erste 3 Meldungen:', meldungenData.slice(0, 3).map(m => m.name));
+      console.log('DEBUG: Alle Disziplinen in Meldungen:', [...new Set(meldungenData.map(m => m.disziplin))]);
+      console.log('DEBUG: Config Disziplinen:', config?.disziplinen);
     } catch (error) {
       console.log('DEBUG: Fehler beim Laden der Meldungen:', error);
     }

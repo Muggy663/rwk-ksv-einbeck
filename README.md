@@ -1,6 +1,6 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.2.0_w** | **Android: 0.9.4.1**
+**Version: 2.2.1_w** | **Android: 0.9.4.1**
 
 > **Social Training Platform für den deutschen Schießsport**
 
@@ -169,7 +169,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 26. Dezember 2025 - Version 2.2.0_w - Startlisten-Tool Verbesserungen & Automatisches Speichern*
+*Letzte Aktualisierung: 26. Dezember 2025 - Version 2.2.1_w - Startlisten-Tool Verbesserungen & Gespeicherte Startlisten ohne Saisonauswahl*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 
