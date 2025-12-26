@@ -183,15 +183,39 @@ export default function StartlistenToolPage() {
         
         console.log('DEBUG: Lade Daten für Saison:', finalSaisonId);
         
-        const [disziplinenRes, meldungenRes, schuetzenRes, clubsRes] = await Promise.all([
+        const [disziplinenRes, clubsRes] = await Promise.all([
           fetch('/api/km/disziplinen'),
-          fetch(`/api/km/meldungen?saison=${finalSaisonId}`),
-          fetch('/api/shooters'),
           fetch('/api/clubs')
         ]);
         
         logDebug('API-Aufrufe mit Saison-Parameter:', finalSaisonId);
         
+        // Lade DIREKT aus Firebase ohne API (wie KM-Meldungen Seite)
+        // Bestimme Collection basierend auf Saison
+        const saisonDoc = saisons.find(s => s.id === finalSaisonId);
+        let collectionName = 'km_meldungen_2026_ld';
+        
+        if (saisonDoc?.name?.includes('Kleinkaliber Pistole')) {
+          collectionName = 'km_meldungen_2026_kkp';
+        } else if (saisonDoc?.name?.includes('Kleinkaliber')) {
+          collectionName = 'km_meldungen_2026_kk';
+        } else if (saisonDoc?.name?.includes('Luftdruck')) {
+          collectionName = 'km_meldungen_2026_ld';
+        }
+        
+        console.log('DEBUG: Verwende Collection:', collectionName, 'für Saison:', saisonDoc?.name);
+        
+        const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
+        
+        const meldungenSnapshot = await getDocs(collection(db, collectionName));
+        const allMeldungen = meldungenSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        console.log('DEBUG: Direkt aus Firebase - Alle Meldungen:', allMeldungen.length);
+        
+        // Lade Disziplinen über API (wie KM-Meldungen Seite)
         const disziplinen = {};
         if (disziplinenRes.ok) {
           const diszData = await disziplinenRes.json();
@@ -200,13 +224,21 @@ export default function StartlistenToolPage() {
           });
         }
         
+
+        
+        // Lade Schützen direkt aus Firebase (wie in KM-Meldungen)
+        const shootersSnapshot = await getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc')));
+        const allSchuetzen = shootersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        console.log('DEBUG: Geladene Schützen (mit orderBy):', allSchuetzen.length);
+        
         const schuetzen = {};
-        if (schuetzenRes.ok) {
-          const schuetzenData = await schuetzenRes.json();
-          schuetzenData.data?.forEach(s => {
-            schuetzen[s.id] = s;
-          });
-        }
+        allSchuetzen.forEach(s => {
+          schuetzen[s.id] = s;
+        });
         
         const vereine = {};
         if (clubsRes.ok) {
@@ -215,17 +247,6 @@ export default function StartlistenToolPage() {
             vereine[c.id] = c.name;
           });
         }
-        
-        let allMeldungen = [];
-        if (meldungenRes.ok) {
-          const meldungenData = await meldungenRes.json();
-          allMeldungen = meldungenData.data || [];
-          console.log('DEBUG: API Response Meldungen:', allMeldungen.length);
-        } else {
-          console.log('DEBUG: Meldungen API Fehler:', meldungenRes.status);
-        }
-        
-        logDebug('Alle KM-Meldungen:', allMeldungen.length);
         const meldungenData = allMeldungen
           .filter(data => {
             logDebug('Meldung:', data.id, 'SchuetzeId:', data.schuetzeId, 'DisziplinId:', data.disziplinId);
@@ -290,7 +311,77 @@ export default function StartlistenToolPage() {
         logDebug('Setze alle Meldungen:', meldungenData.length);
         logDebug('Saison:', selectedSaison);
         logDebug('Meldungen Details:', meldungenData.map(m => ({name: m.name, disziplin: m.disziplin})));
-        setMeldungen(meldungenData);
+        
+        // Verwende die gleiche Verarbeitungslogik wie loadMeldungenForManualAdd
+        let filteredCount = 0;
+        let missingSchuetze = 0;
+        let missingDisziplin = 0;
+        
+        const verarbeiteteData = allMeldungen
+          .filter(data => {
+            if (!data.schuetzeId || !data.disziplinId) {
+              filteredCount++;
+              return false;
+            }
+            return true;
+          })
+          .map((data, index) => {
+            const schuetze = schuetzen[data.schuetzeId];
+            const disziplinName = disziplinen[data.disziplinId];
+            
+            if (!schuetze) missingSchuetze++;
+            if (!disziplinName) missingDisziplin++;
+            
+            if (!schuetze || !disziplinName) {
+              return null;
+            }
+            
+            let altersklasse = 'Unbekannt';
+            if (schuetze?.birthYear) {
+              const age = (configData.saison || 2026) - schuetze.birthYear;
+              const isAuflage = disziplinName?.toLowerCase().includes('auflage');
+              const isMale = schuetze.gender === 'male';
+              
+              if (age <= 14) altersklasse = 'Schüler';
+              else if (age <= 16) altersklasse = 'Jugend';
+              else if (age <= 18) altersklasse = `Junioren II ${isMale ? 'm' : 'w'}`;
+              else if (age <= 20) altersklasse = `Junioren I ${isMale ? 'm' : 'w'}`;
+              else if (isAuflage) {
+                if (age <= 40) altersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
+                else if (age <= 50) altersklasse = 'Senioren 0';
+                else if (age <= 60) altersklasse = 'Senioren I';
+                else if (age <= 65) altersklasse = 'Senioren II';
+                else if (age <= 70) altersklasse = 'Senioren III';
+                else if (age <= 75) altersklasse = 'Senioren IV';
+                else if (age <= 80) altersklasse = 'Senioren V';
+                else altersklasse = 'Senioren VI';
+              } else {
+                if (age <= 40) altersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
+                else if (age <= 50) altersklasse = `${isMale ? 'Herren' : 'Damen'} II`;
+                else if (age <= 60) altersklasse = `${isMale ? 'Herren' : 'Damen'} III`;
+                else if (age <= 70) altersklasse = `${isMale ? 'Herren' : 'Damen'} IV`;
+                else altersklasse = `${isMale ? 'Herren' : 'Damen'} V`;
+              }
+            }
+            
+            return {
+              id: data.id,
+              name: schuetze?.name || 'Unbekannt',
+              verein: vereine[schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId] || 'Unbekannt',
+              disziplin: disziplinName,
+              altersklasse: altersklasse,
+              anmerkung: data.anmerkung || '',
+              lmTeilnahme: data.lmTeilnahme === true
+            };
+          })
+          .filter(Boolean);
+        
+        setMeldungen(verarbeiteteData);
+        console.log('DEBUG: Verarbeitete Meldungen:', verarbeiteteData.length);
+        console.log('DEBUG: Gefiltert wegen fehlender IDs:', filteredCount);
+        console.log('DEBUG: Fehlende Schützen:', missingSchuetze);
+        console.log('DEBUG: Fehlende Disziplinen:', missingDisziplin);
+        console.log('DEBUG: Luftgewehr Auflage:', verarbeiteteData.filter(m => m.disziplin === 'Luftgewehr Auflage').length);
         
         // Vereine für Export
         const clubsData = Object.entries(vereine).map(([id, name]) => ({ id, name }));
@@ -298,18 +389,10 @@ export default function StartlistenToolPage() {
         
         // Nur für neue Startlisten: Automatische Generierung
         if (!startlisteId) {
-          // Automatische Startlisten-Generierung nur wenn Meldungen vorhanden
-          if (meldungenData.length > 0) {
-            logDebug('Generiere Startliste für', meldungenData.length, 'Meldungen');
-            const basisStartliste = await generiereStartliste();
-            setStartliste(basisStartliste);
-            autoSave(basisStartliste);
-            
-
-          } else {
-            logDebug('Keine Meldungen gefunden - keine Startliste generiert');
-            setStartliste([]);
-          }
+          // KEINE automatische Startlisten-Generierung
+          // Benutzer muss bewusst "📋 Einfache Liste" oder "🎯 Startliste generieren" klicken
+          console.log('DEBUG: Keine automatische Generierung - Benutzer muss manuell generieren');
+          setStartliste([]);
         }
       } catch (error) {
         logError('Fehler:', error);
@@ -343,22 +426,24 @@ export default function StartlistenToolPage() {
       
       if (!saisonId) return;
       
-      // Lade direkt aus Firebase wie in KM-Meldungen
-      const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
-      const { db } = await import('@/lib/firebase/config');
-      
+      // Verwende EXAKT die gleiche Logik wie in KM-Meldungen
       const [disziplinenRes, meldungenRes, clubsRes] = await Promise.all([
         fetch('/api/km/disziplinen'),
         fetch(`/api/km/meldungen?saison=${saisonId}`),
         fetch('/api/clubs')
       ]);
       
-      // Lade Schützen direkt aus Firebase
+      // Lade Schützen direkt aus Firebase (wie in KM-Meldungen)
+      const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
+      
       const shootersSnapshot = await getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc')));
       const allSchuetzen = shootersSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      
+      console.log('DEBUG: Geladene Schützen (mit orderBy):', allSchuetzen.length);
       
       const schuetzen = {};
       allSchuetzen.forEach(s => {
@@ -381,31 +466,87 @@ export default function StartlistenToolPage() {
         });
       }
       
-      let allMeldungen = [];
-      if (meldungenRes.ok) {
-        const meldungenData = await meldungenRes.json();
-        allMeldungen = meldungenData.data || [];
-      }
+      // Lade DIREKT aus Firebase ohne API (wie KM-Meldungen Seite)
+      // Lade Meldungen direkt aus Firebase
+      const meldungenSnapshot = await getDocs(collection(db, 'km_meldungen_2026_ld'));
+      const allMeldungen = meldungenSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
       
+      console.log('DEBUG: Direkt aus Firebase - Alle Meldungen:', allMeldungen.length);
+      
+      console.log('DEBUG: API Response - Alle Meldungen:', allMeldungen.length);
+      console.log('DEBUG: Erste rohe Meldung komplett:', allMeldungen[0]);
+      console.log('DEBUG: Struktur der ersten 3 Meldungen:', allMeldungen.slice(0, 3).map(m => ({
+        id: m.id,
+        schuetzeId: m.schuetzeId,
+        disziplinId: m.disziplinId,
+        hasSchuetzeId: !!m.schuetzeId,
+        hasDisziplinId: !!m.disziplinId
+      })));
+      
+      // Debug: Zähle Luftgewehr Auflage Meldungen in rohen Daten
+      const luftgewehrAuflageDisziplinId = Object.keys(disziplinen).find(key => disziplinen[key] === 'Luftgewehr Auflage');
+      const luftgewehrAuflageMeldungenRoh = allMeldungen.filter(m => m.disziplinId === luftgewehrAuflageDisziplinId);
+      console.log('DEBUG: Rohe Luftgewehr Auflage Meldungen:', luftgewehrAuflageMeldungenRoh.length);
+      console.log('DEBUG: Luftgewehr Auflage Disziplin-ID:', luftgewehrAuflageDisziplinId);
+      
+      // EXAKT die gleiche Verarbeitung wie in KM-Meldungen
       const meldungenData = allMeldungen
-        .filter(data => {
-          if (!data.schuetzeId || !data.disziplinId) return false;
-          
-          // KEINE Disziplinen-Filterung - lade alle Meldungen der Saison
-          return true;
-        })
-        .map(data => {
+        .map((data, index) => {
           const schuetze = schuetzen[data.schuetzeId];
           const disziplinName = disziplinen[data.disziplinId];
           
-          if (!schuetze || !disziplinName) return null;
+          if (!schuetze || !disziplinName) {
+            if (index < 5) { // Nur erste 5 für Debug
+              console.log('DEBUG: Fehlende Daten für Meldung:', { 
+                meldungId: data.id, 
+                schuetzeId: data.schuetzeId, 
+                disziplinId: data.disziplinId,
+                schuetzeVorhanden: !!schuetze,
+                disziplinVorhanden: !!disziplinName,
+                disziplinName: disziplinName
+              });
+            }
+            return null;
+          }
+          
+          // Altersklasse berechnen (wie in KM-Meldungen)
+          let altersklasse = 'Unbekannt';
+          if (schuetze?.birthYear) {
+            const age = (config?.saison || 2026) - schuetze.birthYear;
+            const isAuflage = disziplinName?.toLowerCase().includes('auflage');
+            const isMale = schuetze.gender === 'male';
+            
+            if (age <= 14) altersklasse = 'Schüler';
+            else if (age <= 16) altersklasse = 'Jugend';
+            else if (age <= 18) altersklasse = `Junioren II ${isMale ? 'm' : 'w'}`;
+            else if (age <= 20) altersklasse = `Junioren I ${isMale ? 'm' : 'w'}`;
+            else if (isAuflage) {
+              if (age <= 40) altersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
+              else if (age <= 50) altersklasse = 'Senioren 0';
+              else if (age <= 60) altersklasse = 'Senioren I';
+              else if (age <= 65) altersklasse = 'Senioren II';
+              else if (age <= 70) altersklasse = 'Senioren III';
+              else if (age <= 75) altersklasse = 'Senioren IV';
+              else if (age <= 80) altersklasse = 'Senioren V';
+              else altersklasse = 'Senioren VI';
+            } else {
+              if (age <= 40) altersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
+              else if (age <= 50) altersklasse = `${isMale ? 'Herren' : 'Damen'} II`;
+              else if (age <= 60) altersklasse = `${isMale ? 'Herren' : 'Damen'} III`;
+              else if (age <= 70) altersklasse = `${isMale ? 'Herren' : 'Damen'} IV`;
+              else altersklasse = `${isMale ? 'Herren' : 'Damen'} V`;
+            }
+          }
           
           return {
             id: data.id,
             name: schuetze?.name || 'Unbekannt',
             verein: vereine[schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId] || 'Unbekannt',
             disziplin: disziplinName,
-            altersklasse: 'Berechnet',
+            altersklasse: altersklasse,
             anmerkung: data.anmerkung || '',
             lmTeilnahme: data.lmTeilnahme === true
           };
@@ -413,10 +554,10 @@ export default function StartlistenToolPage() {
         .filter(Boolean);
       
       setMeldungen(meldungenData);
-      console.log('DEBUG: Gefilterte Meldungen für manuelles Hinzufügen (Firebase):', meldungenData.length);
-      console.log('DEBUG: Erste 3 Meldungen:', meldungenData.slice(0, 3).map(m => m.name));
-      console.log('DEBUG: Alle Disziplinen in Meldungen:', [...new Set(meldungenData.map(m => m.disziplin))]);
-      console.log('DEBUG: Config Disziplinen:', config?.disziplinen);
+      console.log('DEBUG: Verarbeitete Meldungen:', meldungenData.length);
+      console.log('DEBUG: Luftgewehr Auflage Meldungen:', meldungenData.filter(m => m.disziplin === 'Luftgewehr Auflage').length);
+      console.log('DEBUG: Alle Disziplinen:', [...new Set(meldungenData.map(m => m.disziplin))]);
+      console.log('DEBUG: Fehlende Meldungen (null):', allMeldungen.length - meldungenData.length);
     } catch (error) {
       console.log('DEBUG: Fehler beim Laden der Meldungen:', error);
     }
@@ -2179,45 +2320,45 @@ ${meldungen.slice(0,5).map(m => `- ${m.name} (${m.verein}) - ${m.disziplin} - ${
                       <div className="text-center py-4 text-amber-700">
                         <p className="text-sm">🔽 Bitte wählen Sie zuerst eine Saison aus</p>
                       </div>
-                    ) : meldungen.length === 0 ? (
-                      <div className="text-center py-4 text-amber-700">
-                        <p className="text-sm">Keine passenden Meldungen gefunden</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-2">
-                      {meldungen
-                        .filter(m => 
-                          !startliste.some(s => s.name === m.name && s.disziplin === m.disziplin) &&
-                          (searchTerm === '' || 
-                           m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           m.verein.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           m.disziplin.toLowerCase().includes(searchTerm.toLowerCase()))
-                        )
-                        .slice(0, 20)
-                        .map(schuetze => (
-                            <button
-                              key={`${schuetze.name}_${schuetze.disziplin}`}
-                              onClick={() => {
-                                const neuerStarter = {
-                                  ...schuetze,
-                                  id: `manual_${Date.now()}`,
-                                  stand: config?.verfuegbareStaende[0] || '1',
-                                  startzeit: config?.startUhrzeit || '14:00',
-                                  durchgang: 1,
-                                  hinweise: 'Terminwechsel - schießt am anderen Tag'
-                                };
-                                const neueStartliste = [...startliste, neuerStarter];
-                                setStartliste(neueStartliste);
-                                autoSave(neueStartliste);
-                                toast({ title: '✅ Hinzugefügt', description: `${schuetze.name} hinzugefügt` });
-                              }}
-                              className="text-left p-2 bg-white border rounded hover:bg-blue-50 text-xs"
-                            >
-                              <div className="font-medium">{schuetze.name}</div>
-                              <div className="text-gray-600">{schuetze.disziplin}</div>
-                              <div className="text-gray-500">{schuetze.verein}</div>
-                            </button>
-                          ))}
+                                    ) : meldungen.length === 0 ? (
+                    <div className="text-center py-4 text-gray-700">
+                      <p className="text-sm">Keine passenden Meldungen gefunden</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                    {meldungen
+                      .filter(m => 
+                        !startliste.some(s => s.name === m.name && s.disziplin === m.disziplin) &&
+                        (searchTerm === '' || 
+                         m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         m.verein.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         m.disziplin.toLowerCase().includes(searchTerm.toLowerCase()))
+                      )
+                      .slice(0, 20)
+                      .map(schuetze => (
+                          <button
+                            key={`${schuetze.name}_${schuetze.disziplin}`}
+                            onClick={() => {
+                              const neuerStarter = {
+                                ...schuetze,
+                                id: `manual_${Date.now()}`,
+                                stand: config?.verfuegbareStaende[0] || '1',
+                                startzeit: config?.startUhrzeit || '14:00',
+                                durchgang: 1,
+                                hinweise: 'Terminwechsel - schießt am anderen Tag'
+                              };
+                              const neueStartliste = [...startliste, neuerStarter];
+                              setStartliste(neueStartliste);
+                              autoSave(neueStartliste);
+                              toast({ title: '✅ Hinzugefügt', description: `${schuetze.name} hinzugefügt` });
+                            }}
+                            className="text-left p-2 bg-white border border-gray-300 rounded hover:bg-blue-50 text-xs transition-colors"
+                          >
+                            <div className="font-medium">{schuetze.name}</div>
+                            <div className="text-gray-600">{schuetze.disziplin}</div>
+                            <div className="text-gray-500">{schuetze.verein}</div>
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>

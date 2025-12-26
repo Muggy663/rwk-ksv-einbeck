@@ -374,6 +374,14 @@ service cloud.firestore {
                              getUserPermissions().role == 'km_organisator'));        
     }
 
+    match /km_startlisten_v2/{startliste} {
+      allow read: if true;
+      allow write, delete: if isSuperAdmin() || 
+                           (isAuthenticated() && getUserPermissions() != null && 
+                            (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
+                             getUserPermissions().role == 'km_organisator'));
+    }
+
    
 
     // 🔒 Fallback für alle anderen Club-Dokumente

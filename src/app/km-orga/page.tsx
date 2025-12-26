@@ -224,9 +224,14 @@ export default function KMAdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-2">
-              <Link href="/km-orga/startlisten/uebersicht">
+              <Link href="/startlisten-tool-v2">
                 <Button className="w-full h-12 text-left justify-start bg-green-600 hover:bg-green-700">
-                  🎯 Startlisten-Verwaltung
+                  🎯 Startliste generieren
+                </Button>
+              </Link>
+              <Link href="/km-orga/startlisten/v2-uebersicht">
+                <Button variant="outline" className="w-full h-12 text-left justify-start">
+                  📄 Gespeicherte Startlisten bearbeiten
                 </Button>
               </Link>
               <div className="text-xs text-green-700 dark:text-green-200 bg-green-100 dark:bg-green-900/30 p-2 rounded">

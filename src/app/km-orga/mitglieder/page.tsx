@@ -116,14 +116,10 @@ export default function KMAdminMitglieder() {
       const shooterData = {
         firstName: newShooter.firstName.trim(),
         lastName: newShooter.lastName.trim(),
-        name: `${newShooter.firstName.trim()} ${newShooter.lastName.trim()}`,
         birthYear: newShooter.birthYear ? parseInt(newShooter.birthYear) : undefined,
         gender: newShooter.gender || undefined,
         mitgliedsnummer: newShooter.mitgliedsnummer?.trim() || undefined,
-        kmClubId: newShooter.kmClubId || undefined,
-        isActive: true,
-        createdAt: new Date(),
-        importedAt: new Date()
+        clubId: newShooter.kmClubId || undefined
       };
 
       const response = await fetch('/api/shooters', {

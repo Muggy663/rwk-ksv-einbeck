@@ -61,22 +61,15 @@ function KMMeldungenContent() {
     if (!selectedSaison) return;
     
     try {
+      const { getDocs, collection } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/config');
+      
       const saison = saisons.find(s => s.id === selectedSaison);
-      const [diszRes, meldungenRes] = await Promise.all([
-        fetch(`/api/km/disziplinen?saisonId=${selectedSaison}`),
-        fetch(`/api/km/meldungen?saison=${selectedSaison}`)
-      ]);
+      const disziplinTyp = saison?.disziplinTyp?.toLowerCase() || 'kk';
       
-      if (diszRes.ok) {
-        const diszData = await diszRes.json();
-        const saisonDisziplinen = (diszData.data || []).map(d => ({...d, saison}));
-        setDisziplinen(saisonDisziplinen);
-      }
-      
-      if (meldungenRes.ok) {
-        const meldungenData = await meldungenRes.json();
-        setMeldungen(meldungenData.data || []);
-      }
+      const meldungenSnapshot = await getDocs(collection(db, `km_meldungen_2026_${disziplinTyp}`));
+      const saisonMeldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setMeldungen(saisonMeldungen);
     } catch (error) {
       logWarn('Fehler beim Laden der Disziplinen:', error);
     }
@@ -84,85 +77,97 @@ function KMMeldungenContent() {
 
   const loadData = async () => {
     try {
-      // Lade nur aktive Saisons und deren Disziplinen
-      // Lade Schützen direkt aus Firebase wie die anderen Seiten auch
-      const [saisonRes, meldungenRes, clubsRes] = await Promise.all([
-        fetch('/api/km/saisons?status=aktiv'),
-        fetch('/api/km/meldungen'),
-        fetch('/api/clubs')
-      ]);
-      
-      // Lade Schützen direkt aus Firebase
+      // Lade direkt aus Firebase
       const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
       const { db } = await import('@/lib/firebase/config');
       
-      const shootersSnapshot = await getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc')));
-      const allSchuetzen = shootersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      // Lade alle Daten parallel
+      const [shootersSnapshot, disziplinenSnapshot, saisonSnapshot, clubsSnapshot] = await Promise.all([
+        getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
+        getDocs(collection(db, 'km_disziplinen')),
+        getDocs(collection(db, 'km_saisons')),
+        getDocs(collection(db, 'clubs'))
+      ]);
+      
+      const allSchuetzen = shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const allDisziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const allSaisons = saisonSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const allClubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      logDebug('DEBUG: Disziplinen aus Firebase:', allDisziplinen.length);
+      logDebug('DEBUG: Vereine aus Firebase:', allClubs.length);
+      logDebug('DEBUG: Beispiel Disziplinen IDs:', allDisziplinen.slice(0, 5).map(d => ({ id: d.id, name: d.name })));
+      logDebug('DEBUG: Suche nach Disziplin Zlnqwo6I1KYyOzeO0CPU:', allDisziplinen.find(d => d.id === 'Zlnqwo6I1KYyOzeO0CPU'));
+      logDebug('DEBUG: Alle Disziplin IDs:', allDisziplinen.map(d => d.id));
       
       setSchuetzen(allSchuetzen);
+      setDisziplinen(allDisziplinen);
+      setClubs(allClubs);
       
-      if (saisonRes.ok) {
-        const saisonData = await saisonRes.json();
-        const aktiveSaisons = saisonData.data || [];
-        setSaisons(aktiveSaisons);
-        
-        // Sortiere Saisons: Aktive zuerst, dann nach Jahr
-        const sortedSaisons = aktiveSaisons.sort((a, b) => {
-          const today = new Date();
-          const getDeadline = (s) => {
-            if (!s.meldeschluss) return new Date(0);
-            if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
-              const [day, month, year] = s.meldeschluss.split('.');
-              return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-            } else {
-              const [day, month] = s.meldeschluss.split('.');
-              return new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
-            }
-          };
-          
-          const aExpired = today > getDeadline(a);
-          const bExpired = today > getDeadline(b);
-          
-          if (aExpired !== bExpired) {
-            return aExpired ? 1 : -1; // Aktive zuerst
-          }
-          return b.jahr - a.jahr; // Dann nach Jahr
-        });
-        
-        setSaisons(sortedSaisons);
-        
-        // Keine automatische Auswahl - Benutzer muss bewusst wählen
-        
-        // Lade Disziplinen für ausgewählte Saison
-        if (selectedSaison || aktiveSaisons.length > 0) {
-          const saisonId = selectedSaison || aktiveSaisons[0]?.id;
-          const saison = aktiveSaisons.find(s => s.id === saisonId);
-          
-          try {
-            const diszRes = await fetch(`/api/km/disziplinen?saisonId=${saisonId}`);
-            if (diszRes.ok) {
-              const diszData = await diszRes.json();
-              const saisonDisziplinen = (diszData.data || []).map(d => ({...d, saison}));
-              setDisziplinen(saisonDisziplinen);
-            }
-          } catch (error) {
-            logWarn(`Fehler beim Laden der Disziplinen:`, error);
-          }
+      // Lade Meldungen aus allen Collections
+      const jahr = 2026;
+      const collections = ['kk', 'kkp', 'ld'];
+      let alleMeldungen = [];
+      
+      for (const typ of collections) {
+        try {
+          const collectionName = `km_meldungen_${jahr}_${typ}`;
+          const meldungenSnapshot = await getDocs(collection(db, collectionName));
+          const meldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          alleMeldungen.push(...meldungen);
+        } catch (e) {
+          logWarn(`Collection km_meldungen_${jahr}_${typ} nicht gefunden`);
         }
       }
       
-      if (meldungenRes.ok) {
-        const meldungenData = await meldungenRes.json();
-        setMeldungen(meldungenData.data || []);
+      setMeldungen(alleMeldungen);
+      
+      logDebug('DEBUG: Rohe Meldungen aus Firebase:', alleMeldungen.length);
+      if (alleMeldungen.length > 0) {
+        logDebug('DEBUG: Erste Meldung:', alleMeldungen[0]);
       }
       
-      if (clubsRes.ok) {
-        const clubsData = await clubsRes.json();
-        setClubs(clubsData.data || []);
-      }
+      // Debug: Prüfe Mapping
+      alleMeldungen.forEach(meldung => {
+        const schuetze = allSchuetzen.find(s => s.id === meldung.schuetzeId);
+        const disziplin = allDisziplinen.find(d => d.id === meldung.disziplinId);
+        logDebug('DEBUG: Prüfe Meldung:', meldung.id, 'SchuetzeId:', meldung.schuetzeId, 'DisziplinId:', meldung.disziplinId);
+        logDebug('DEBUG: Mapping - Schütze:', schuetze?.name || schuetze?.firstName + ' ' + schuetze?.lastName, 'Disziplin:', disziplin?.name, 'DisziplinId:', meldung.disziplinId);
+      });
+      
+      const verarbeitete = alleMeldungen.filter(meldung => {
+        const schuetze = allSchuetzen.find(s => s.id === meldung.schuetzeId);
+        const disziplin = allDisziplinen.find(d => d.id === meldung.disziplinId);
+        return schuetze && disziplin;
+      });
+      
+      logDebug('DEBUG: Verarbeitete Meldungen:', verarbeitete.length);
+      
+      // Sortiere Saisons
+      const sortedSaisons = allSaisons.sort((a, b) => {
+        const today = new Date();
+        const getDeadline = (s) => {
+          if (!s.meldeschluss) return new Date(0);
+          if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
+            const [day, month, year] = s.meldeschluss.split('.');
+            return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          } else {
+            const [day, month] = s.meldeschluss.split('.');
+            return new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+          }
+        };
+        
+        const aExpired = today > getDeadline(a);
+        const bExpired = today > getDeadline(b);
+        
+        if (aExpired !== bExpired) {
+          return aExpired ? 1 : -1;
+        }
+        return b.jahr - a.jahr;
+      });
+      
+      setSaisons(sortedSaisons);
+      
     } catch (error) {
       logError('Fehler beim Laden der Daten:', error);
       toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden', variant: 'destructive' });
@@ -951,7 +956,7 @@ function KMMeldungenContent() {
               {/* Disziplinen - Mehrfachauswahl */}
               <div>
                 <label className="block text-sm font-medium mb-2">Disziplinen auswählen (Mehrfachauswahl möglich)</label>
-                {disziplinen.length === 0 ? (
+                {disziplinen.filter(d => d.saisonId === selectedSaison).length === 0 ? (
                   <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
                     <p className="text-sm text-yellow-700">
                       Keine Disziplinen verfügbar. Bitte gehen Sie zu <Link href="/km/init" className="underline">System initialisieren</Link>.
@@ -959,7 +964,7 @@ function KMMeldungenContent() {
                   </div>
                 ) : (
                   <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800">
-                    {disziplinen.map(disziplin => {
+                    {disziplinen.filter(d => d.saisonId === selectedSaison).map(disziplin => {
                       // Prüfe Meldeschluss
                       const today = new Date();
                       let isExpired = false;
@@ -1182,7 +1187,7 @@ function KMMeldungenContent() {
                     className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   >
                     <option value="">-- Disziplin wählen --</option>
-                    {disziplinen.map(disziplin => (
+                    {disziplinen.filter(d => d.saisonId === selectedSaison).map(disziplin => (
                       <option key={disziplin.id} value={disziplin.id}>
                         {disziplin.spoNummer} - {disziplin.name}
                         {disziplin.nurVereinsmeisterschaft ? ' (VM)' : ''}

@@ -35,11 +35,17 @@ export default function David21Page() {
   React.useEffect(() => {
     const loadStartlisten = async () => {
       try {
-        const response = await fetch('/api/km/startlisten/gespeichert');
-        if (response.ok) {
-          const data = await response.json();
-          setStartlisten(data.data || []);
-        }
+        // Lade direkt aus Firebase km_startlisten_v2
+        const { getDocs, collection } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase/config');
+        
+        const startlistenSnapshot = await getDocs(collection(db, 'km_startlisten_v2'));
+        const startlistenData = startlistenSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        setStartlisten(startlistenData.sort((a, b) => new Date(b.erstellt?.toDate?.() || b.erstellt) - new Date(a.erstellt?.toDate?.() || a.erstellt)));
       } catch (error) {
         logError('Fehler beim Laden der Startlisten:', error);
       }
@@ -80,15 +86,15 @@ export default function David21Page() {
       if (startliste) {
         setSelectedStartliste(startliste);
         // Auto-generate wettkampfId from startliste
-        const datum = new Date(startliste.datum);
+        const datum = startliste.konfiguration?.datum ? new Date(startliste.konfiguration.datum) : new Date();
         const year = datum.getFullYear();
         const month = String(datum.getMonth() + 1).padStart(2, '0');
         const day = String(datum.getDate()).padStart(2, '0');
         setExportData(prev => ({
           ...prev,
           wettkampfId: `KM${year}${month}${day}_${startliste.id.substring(0, 6)}`,
-          datum: startliste.datum,
-          startzeit: startliste.startUhrzeit || '09:00'
+          datum: startliste.konfiguration?.datum || new Date().toISOString().slice(0, 10),
+          startzeit: startliste.konfiguration?.startzeit || '09:00'
         }));
       }
     }
@@ -218,10 +224,10 @@ export default function David21Page() {
                     onValueChange={(value) => setExportData({...exportData, startlisteId: value})}
                     placeholder="Startliste wählen"
                     options={startlisten.map(s => {
-                      const datum = new Date(s.datum).toLocaleDateString('de-DE');
+                      const datum = s.konfiguration?.datum ? new Date(s.konfiguration.datum).toLocaleDateString('de-DE') : 'Kein Datum';
                       const starterCount = s.startliste?.length || 0;
                       const disziplinen = [...new Set(s.startliste?.map((starter: any) => starter.disziplin).filter(Boolean))] || [];
-                      const austragungsort = s.configId ? 'Einbeck' : 'Unbekannt';
+                      const austragungsort = s.konfiguration?.austragungsort || 'Unbekannt';
                       
                       return {
                         value: s.id,

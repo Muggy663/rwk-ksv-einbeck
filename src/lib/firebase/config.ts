@@ -32,10 +32,16 @@ if (!getApps().length) {
 }
 
 const auth: Auth = getAuth(app);
-// Initialisiere Firestore normal
-const db: Firestore = getFirestore(app);
+// Initialisiere Firestore mit spezifischer Datenbank
+const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+const db: Firestore = getFirestore(app, databaseId);
 const functions: Functions = getFunctions(app, 'europe-west1');
 const storage: FirebaseStorage = getStorage(app); // Firebase Storage initialisieren
+
+// Debug-Info für Datenbank (nur in Development)
+if (typeof window === 'undefined' && process.env.NODE_ENV === 'development') {
+  console.log('🔥 Firebase Datenbank:', databaseId);
+}
 
 // Alle Offline-Funktionen wurden deaktiviert, um Probleme zu vermeiden
 

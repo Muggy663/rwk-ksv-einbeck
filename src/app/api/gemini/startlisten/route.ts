@@ -35,7 +35,11 @@ WICHTIGE REGELN:
 1. **ALLE VERFÜGBAREN STÄNDE NUTZEN**: Nutze ALLE ${config.verfuegbareStaende?.length || 0} verfügbaren Stände pro Durchgang für minimale Durchgangsanzahl
 2. **MINIMALE DURCHGÄNGE**: Ziel ist die geringstmögliche Anzahl von Durchgängen bei optimaler Standausnutzung
 3. **STAND-OPTIMIERUNG**: Bei ${meldungen.length} Startern und ${config.verfuegbareStaende?.length || 0} Ständen sollten es maximal ${Math.ceil(meldungen.length / (config.verfuegbareStaende?.length || 1))} Durchgänge werden
-4. Gewehr-Sharing: Starter die sich ein Gewehr teilen müssen zeitlich versetzt werden (erkennbar an gleichem Nachnamen)
+4. **GEWEHR-SHARING KRITISCH**: 
+   - Starter mit gleichem Nachnamen teilen sich ein Gewehr
+   - Diese dürfen NIEMALS im gleichen Durchgang starten
+   - Gewehr-Sharing Partner müssen in aufeinanderfolgenden Durchgängen starten (z.B. DG1 und DG2)
+   - Beispiel: "Müller, Hans" in DG1, "Müller, Anna" in DG2
 5. VEREINS-LIMIT: ${config.vereinsLimit ? `Maximal ${config.vereinsLimit} Starter pro Verein pro Durchgang` : `Kein Vereinslimit`} (Sportgeräte-Knappheit)
 6. Wettkampfklassen: Gleiche Klassen möglichst gruppieren  
 7. Berücksichtige Pausen zwischen Durchgängen

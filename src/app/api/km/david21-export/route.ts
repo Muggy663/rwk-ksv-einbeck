@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     // Lade gespeicherte Startliste und Vereine direkt aus Firestore
     const [startlisteDoc, vereineSnapshot] = await Promise.all([
-      adminDb.collection('km_startlisten').doc(startlisteId).get(),
+      adminDb.collection('km_startlisten_v2').doc(startlisteId).get(),
       adminDb.collection('clubs').get()
     ]);
     
