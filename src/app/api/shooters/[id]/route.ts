@@ -54,6 +54,13 @@ async function validateUserPermissions(request: NextRequest, shooterId: string) 
   return { shooterData, userPermission, decodedToken };
 }
 
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  return PATCH(request, { params });
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }

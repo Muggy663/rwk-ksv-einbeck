@@ -73,9 +73,24 @@ export default function KMAdminMitglieder() {
     if (!editingId) return;
 
     try {
+      // Get Firebase auth token
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+      if (!user) {
+        toast({ title: 'Fehler', description: 'Nicht angemeldet', variant: 'destructive' });
+        return;
+      }
+
+      const token = await user.getIdToken();
+      
       const response = await fetch(`/api/shooters/${editingId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(editData)
       });
 
@@ -83,6 +98,9 @@ export default function KMAdminMitglieder() {
         toast({ title: 'Erfolg', description: 'Schütze aktualisiert' });
         setEditingId(null);
         loadData();
+      } else {
+        const errorData = await response.json();
+        toast({ title: 'Fehler', description: errorData.error || 'Aktualisierung fehlgeschlagen', variant: 'destructive' });
       }
     } catch (error) {
       toast({ title: 'Fehler', description: 'Aktualisierung fehlgeschlagen', variant: 'destructive' });
@@ -93,13 +111,31 @@ export default function KMAdminMitglieder() {
     if (!confirm(`Schütze "${shooterName}" wirklich löschen?`)) return;
 
     try {
+      // Get Firebase auth token
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+      if (!user) {
+        toast({ title: 'Fehler', description: 'Nicht angemeldet', variant: 'destructive' });
+        return;
+      }
+
+      const token = await user.getIdToken();
+      
       const response = await fetch(`/api/shooters/${shooterId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (response.ok) {
         toast({ title: 'Erfolg', description: 'Schütze gelöscht' });
         loadData();
+      } else {
+        const errorData = await response.json();
+        toast({ title: 'Fehler', description: errorData.error || 'Löschen fehlgeschlagen', variant: 'destructive' });
       }
     } catch (error) {
       toast({ title: 'Fehler', description: 'Löschen fehlgeschlagen', variant: 'destructive' });
