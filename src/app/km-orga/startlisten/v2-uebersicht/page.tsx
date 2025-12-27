@@ -21,8 +21,14 @@ export default function StartlistenV2Uebersicht() {
 
   const loadData = async () => {
     try {
+      // Verwende die korrekte Datenbank-Instanz
+      const { getFirestore } = await import('firebase/firestore');
+      const { app } = await import('@/lib/firebase/config');
+      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+      const correctDb = getFirestore(app, databaseId);
+      
       const [startlistenSnapshot, saisonsRes] = await Promise.all([
-        getDocs(collection(db, 'km_startlisten_v2')),
+        getDocs(collection(correctDb, 'km_startlisten_v2')),
         fetch('/api/km/saisons')
       ]);
       
@@ -138,7 +144,13 @@ export default function StartlistenV2Uebersicht() {
 
   const handleSave = async () => {
     try {
-      await updateDoc(doc(db, 'km_startlisten_v2', editingId), editData);
+      // Verwende die korrekte Datenbank-Instanz
+      const { getFirestore } = await import('firebase/firestore');
+      const { app } = await import('@/lib/firebase/config');
+      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+      const correctDb = getFirestore(app, databaseId);
+      
+      await updateDoc(doc(correctDb, 'km_startlisten_v2', editingId), editData);
       setEditingId(null);
       loadData();
     } catch (error) {
@@ -149,7 +161,13 @@ export default function StartlistenV2Uebersicht() {
   const handleDelete = async (id) => {
     if (confirm('Startliste wirklich löschen?')) {
       try {
-        await deleteDoc(doc(db, 'km_startlisten_v2', id));
+        // Verwende die korrekte Datenbank-Instanz
+        const { getFirestore } = await import('firebase/firestore');
+        const { app } = await import('@/lib/firebase/config');
+        const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+        const correctDb = getFirestore(app, databaseId);
+        
+        await deleteDoc(doc(correctDb, 'km_startlisten_v2', id));
         loadData();
       } catch (error) {
         console.error('Fehler beim Löschen:', error);
@@ -348,7 +366,9 @@ export default function StartlistenV2Uebersicht() {
                             let isFirstStart = true;
                             let currentY = 35;
                             
-                            Object.entries(nachStartzeit).forEach(([startzeit, starterGruppe], startzeitIndex) => {
+                            Object.entries(nachStartzeit)
+                              .sort(([zeitA], [zeitB]) => zeitA.localeCompare(zeitB)) // Sortiere Uhrzeiten korrekt
+                              .forEach(([startzeit, starterGruppe], startzeitIndex) => {
                               if (isFirstStart) {
                                 doc.addPage();
                                 isFirstStart = false;
@@ -744,12 +764,59 @@ export default function StartlistenV2Uebersicht() {
                         />
                         <select
                           value={starter.stand}
-                          onChange={(e) => updateStarter(index, 'stand', e.target.value)}
-                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          onChange={(e) => {
+                            const neuerStand = e.target.value;
+                            
+                            // Prüfe auf Konflikte
+                            const konflikt = editData.startliste.some(s => 
+                              s !== starter && s.startzeit === starter.startzeit && s.stand === neuerStand
+                            );
+                            
+                            if (konflikt) {
+                              const bestaetigung = confirm(
+                                `⚠️ Stand ${neuerStand} ist um ${starter.startzeit} bereits belegt!\n\n` +
+                                `✅ OK = Automatisch freien Stand finden\n` +
+                                `❌ Abbrechen = Änderung rückgängig machen`
+                              );
+                              
+                              if (bestaetigung) {
+                                // Finde freien Stand
+                                const staende = [1,2,3,4,5,6,7,8,9,101,102];
+                                let freierStand = null;
+                                for (const stand of staende) {
+                                  const istFrei = !editData.startliste.some(s => 
+                                    s !== starter && s.startzeit === starter.startzeit && s.stand === stand.toString()
+                                  );
+                                  if (istFrei) {
+                                    freierStand = stand.toString();
+                                    break;
+                                  }
+                                }
+                                updateStarter(index, 'stand', freierStand || neuerStand);
+                                if (freierStand && freierStand !== neuerStand) {
+                                  setTimeout(() => alert(`✅ Auf Stand ${freierStand} verschoben!`), 100);
+                                }
+                              }
+                            } else {
+                              updateStarter(index, 'stand', neuerStand);
+                            }
+                          }}
+                          className={`p-1 border rounded text-sm ${
+                            editData.startliste.some(s => 
+                              s !== starter && s.startzeit === starter.startzeit && s.stand === starter.stand
+                            ) ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                          }`}
                         >
-                          {[1,2,3,4,5,6,7,8,9,101,102].map(stand => (
-                            <option key={stand} value={stand}>Stand {stand}</option>
-                          ))}
+                          {[1,2,3,4,5,6,7,8,9,101,102].map(stand => {
+                            const istBelegt = editData.startliste.some(s => 
+                              s !== starter && s.startzeit === starter.startzeit && s.stand === stand.toString()
+                            );
+                            return (
+                              <option key={stand} value={stand} disabled={istBelegt}>
+                                Stand {stand} {istBelegt ? '(❌ belegt)' : '(✅ frei)'}
+                              </option>
+                            );
+                          })}
                         </select>
                         <input
                           type="time"

@@ -728,35 +728,153 @@ export default function StartlistenToolV2() {
                                 {starter.hinweise}
                               </div>
                             )}
+                            {hatKonflikt && (
+                              <div className="text-xs text-red-600 font-bold mt-1 flex items-center gap-1">
+                                ⚠️ KONFLIKT: Stand bereits belegt!
+                              </div>
+                            )}
                           </div>
                           <div className="col-span-2">
                             <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">{starter.disziplin}</span>
                           </div>
-                          <div className="col-span-2">
+                          <div className="col-span-2 relative">
                             <select
                               value={starter.stand}
                               onChange={(e) => {
+                                const neuerStand = e.target.value;
+                                const neueStartzeit = starter.startzeit;
+                                
+                                // Prüfe sofort auf Konflikte
+                                const konflikt = geminiResult.startliste.some(s => 
+                                  s !== starter && s.startzeit === neueStartzeit && s.stand === neuerStand
+                                );
+                                
+                                if (konflikt) {
+                                  // Zeige Warnung und frage nach Lösung
+                                  const bestaetigung = confirm(
+                                    `⚠️ Stand ${neuerStand} ist um ${neueStartzeit} bereits belegt!\n\n` +
+                                    `❓ Möchtest du:\n` +
+                                    `✅ OK = Automatisch freien Stand finden\n` +
+                                    `❌ Abbrechen = Änderung rückgängig machen`
+                                  );
+                                  
+                                  if (bestaetigung) {
+                                    // Finde automatisch freien Stand
+                                    let freierStand = null;
+                                    for (const stand of staende) {
+                                      const istFrei = !geminiResult.startliste.some(s => 
+                                        s !== starter && s.startzeit === neueStartzeit && s.stand === stand.toString()
+                                      );
+                                      if (istFrei) {
+                                        freierStand = stand.toString();
+                                        break;
+                                      }
+                                    }
+                                    
+                                    const finalerStand = freierStand || neuerStand;
+                                    const neuerDurchgang = Math.floor((parseInt(finalerStand) - 1) / staende.length) + 1;
+                                    
+                                    const updatedStartliste = geminiResult.startliste.map(s => 
+                                      s === starter ? {...s, stand: finalerStand, durchgang: neuerDurchgang} : s
+                                    );
+                                    setGeminiResult({...geminiResult, startliste: updatedStartliste});
+                                    
+                                    if (freierStand && freierStand !== neuerStand) {
+                                      setTimeout(() => {
+                                        alert(`✅ Automatisch auf Stand ${freierStand} verschoben!`);
+                                      }, 100);
+                                    }
+                                  }
+                                  return; // Stoppe hier bei Konflikt
+                                }
+                                
+                                // Kein Konflikt - normale Verarbeitung
+                                const neuerDurchgang = Math.floor((parseInt(neuerStand) - 1) / staende.length) + 1;
                                 const updatedStartliste = geminiResult.startliste.map(s => 
-                                  s === starter ? {...s, stand: e.target.value} : s
+                                  s === starter ? {...s, stand: neuerStand, durchgang: neuerDurchgang} : s
                                 );
                                 setGeminiResult({...geminiResult, startliste: updatedStartliste});
                               }}
-                              className="w-full p-1 border rounded text-xs"
+                              className={`w-full p-1 border rounded text-xs ${
+                                hatKonflikt ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                              }`}
                             >
-                              {staende.map(stand => (
-                                <option key={stand} value={stand}>Stand {stand}</option>
-                              ))}
+                              {staende.map(stand => {
+                                // Zeige ob Stand zur aktuellen Zeit belegt ist
+                                const istBelegt = geminiResult.startliste.some(s => 
+                                  s !== starter && s.startzeit === starter.startzeit && s.stand === stand.toString()
+                                );
+                                return (
+                                  <option key={stand} value={stand} disabled={istBelegt}>
+                                    Stand {stand} {istBelegt ? '(❌ belegt)' : '(✅ frei)'}
+                                  </option>
+                                );
+                              })}
                             </select>
+                            {hatKonflikt && (
+                              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                            )}
                           </div>
                           <div className="col-span-2">
                             <input
                               type="time"
                               value={starter.startzeit}
                               onChange={(e) => {
-                                const updatedStartliste = geminiResult.startliste.map(s => 
-                                  s === starter ? {...s, startzeit: e.target.value} : s
+                                const neueStartzeit = e.target.value;
+                                const aktuellerStand = parseInt(starter.stand);
+                                
+                                // Berechne Durchgang basierend auf Zeitdifferenz zur Startzeit
+                                const [startStunden, startMinuten] = startzeit.split(':').map(Number);
+                                const [neueStunden, neueMinuten] = neueStartzeit.split(':').map(Number);
+                                
+                                const startTotalMinuten = startStunden * 60 + startMinuten;
+                                const neueTotalMinuten = neueStunden * 60 + neueMinuten;
+                                const zeitDifferenz = neueTotalMinuten - startTotalMinuten;
+                                
+                                // Durchgang basierend auf Durchgangsdauer + Wechselzeit
+                                const durchgangIntervall = (durchgang || 50) + (wechsel || 10);
+                                let neuerDurchgang = Math.max(1, Math.floor(zeitDifferenz / durchgangIntervall) + 1);
+                                
+                                // Prüfe Konflikte: Wenn Stand bereits zur neuen Zeit belegt
+                                const konflikt = geminiResult.startliste.some(s => 
+                                  s !== starter && s.startzeit === neueStartzeit && s.stand === starter.stand
                                 );
-                                setGeminiResult({...geminiResult, startliste: updatedStartliste});
+                                
+                                if (konflikt) {
+                                  // Finde nächsten freien Stand zur gleichen Zeit
+                                  let freierStand = null;
+                                  for (const stand of staende) {
+                                    const istBelegt = geminiResult.startliste.some(s => 
+                                      s !== starter && s.startzeit === neueStartzeit && s.stand === stand.toString()
+                                    );
+                                    if (!istBelegt) {
+                                      freierStand = stand.toString();
+                                      break;
+                                    }
+                                  }
+                                  
+                                  const updatedStartliste = geminiResult.startliste.map(s => 
+                                    s === starter ? {
+                                      ...s, 
+                                      startzeit: neueStartzeit, 
+                                      durchgang: neuerDurchgang,
+                                      stand: freierStand || s.stand
+                                    } : s
+                                  );
+                                  setGeminiResult({...geminiResult, startliste: updatedStartliste});
+                                  
+                                  // Zeige Benutzer-Feedback
+                                  if (freierStand && freierStand !== starter.stand) {
+                                    setTimeout(() => {
+                                      alert(`ℹ️ Stand automatisch geändert: ${starter.stand} → ${freierStand} (Konflikt vermieden)`);
+                                    }, 100);
+                                  }
+                                } else {
+                                  const updatedStartliste = geminiResult.startliste.map(s => 
+                                    s === starter ? {...s, startzeit: neueStartzeit, durchgang: neuerDurchgang} : s
+                                  );
+                                  setGeminiResult({...geminiResult, startliste: updatedStartliste});
+                                }
                               }}
                               className="w-full p-1 border rounded text-xs"
                             />
@@ -789,13 +907,185 @@ export default function StartlistenToolV2() {
                               className="w-full p-1 border rounded text-xs"
                             />
                           </div>
+                          <div className="col-span-1 flex justify-center">
+                            <button
+                              onClick={() => {
+                                if (confirm(`${starter.name || starter.schuetzeName} aus der Startliste entfernen?`)) {
+                                  const updatedStartliste = geminiResult.startliste.filter(s => s !== starter);
+                                  setGeminiResult({...geminiResult, startliste: updatedStartliste});
+                                }
+                              }}
+                              className="w-8 h-8 bg-red-500 text-white rounded-full text-sm hover:bg-red-600 flex items-center justify-center font-bold"
+                              title="Starter entfernen"
+                            >
+                              ×
+                            </button>
+                          </div>
                         </div>
                       );
                     })}
                 </div>
               </div>
               
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex gap-2 flex-wrap">
+                <button 
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+                  onClick={() => {
+                    // Auto-Sortierung: Optimiere alle Konflikte
+                    const optimierteStartliste = [...geminiResult.startliste];
+                    const staendeProDurchgang = staende.length;
+                    
+                    // Sortiere nach Zeit, dann nach Stand
+                    optimierteStartliste.sort((a, b) => {
+                      if (a.startzeit !== b.startzeit) return a.startzeit.localeCompare(b.startzeit);
+                      return parseInt(a.stand || '0') - parseInt(b.stand || '0');
+                    });
+                    
+                    // Weise Durchgänge neu zu
+                    const zeitGruppen = {};
+                    optimierteStartliste.forEach(starter => {
+                      if (!zeitGruppen[starter.startzeit]) zeitGruppen[starter.startzeit] = [];
+                      zeitGruppen[starter.startzeit].push(starter);
+                    });
+                    
+                    Object.values(zeitGruppen).forEach((gruppe: any[]) => {
+                      gruppe.forEach((starter, index) => {
+                        starter.durchgang = Math.floor(index / staendeProDurchgang) + 1;
+                      });
+                    });
+                    
+                    setGeminiResult({...geminiResult, startliste: optimierteStartliste});
+                  }}
+                >
+                  🔧 Auto-Optimierung
+                </button>
+                
+                <button 
+                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+                  onClick={() => {
+                    // Gleichmäßige Verteilung auf alle Stände
+                    const verteilteStartliste = [...geminiResult.startliste];
+                    verteilteStartliste.forEach((starter, index) => {
+                      const standIndex = index % staende.length;
+                      starter.stand = staende[standIndex].toString();
+                      starter.durchgang = Math.floor(index / staende.length) + 1;
+                      
+                      // Berechne Startzeit basierend auf Durchgang
+                      const [startStunden, startMinuten] = startzeit.split(':').map(Number);
+                      const durchgangIntervall = (durchgang || 50) + (wechsel || 10);
+                      const totalMinuten = startStunden * 60 + startMinuten + ((starter.durchgang - 1) * durchgangIntervall);
+                      const neueStunden = Math.floor(totalMinuten / 60);
+                      const neueMinuten = totalMinuten % 60;
+                      starter.startzeit = `${neueStunden.toString().padStart(2, '0')}:${neueMinuten.toString().padStart(2, '0')}`;
+                    });
+                    
+                    setGeminiResult({...geminiResult, startliste: verteilteStartliste});
+                  }}
+                >
+                  📊 Gleichmäßig verteilen
+                </button>
+                
+                <button 
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm"
+                  onClick={() => {
+                    // Drag & Drop Simulation: Verschiebe Starter automatisch bei Konflikten
+                    const optimierteStartliste = [...geminiResult.startliste];
+                    const konflikte = [];
+                    
+                    optimierteStartliste.forEach((starter, index) => {
+                      // Finde Konflikte
+                      const konfliktStarter = optimierteStartliste.find((other, otherIndex) => 
+                        otherIndex !== index && 
+                        other.startzeit === starter.startzeit && 
+                        other.stand === starter.stand
+                      );
+                      
+                      if (konfliktStarter) {
+                        // Finde nächsten freien Slot
+                        let neueZeit = starter.startzeit;
+                        let neuerStand = starter.stand;
+                        let gefunden = false;
+                        
+                        // Probiere andere Stände zur gleichen Zeit
+                        for (const stand of staende) {
+                          const istFrei = !optimierteStartliste.some(s => 
+                            s !== starter && s.startzeit === neueZeit && s.stand === stand.toString()
+                          );
+                          if (istFrei) {
+                            neuerStand = stand.toString();
+                            gefunden = true;
+                            break;
+                          }
+                        }
+                        
+                        // Wenn kein Stand frei, probiere nächste Zeit
+                        if (!gefunden) {
+                          const [stunden, minuten] = starter.startzeit.split(':').map(Number);
+                          const durchgangIntervall = (durchgang || 50) + (wechsel || 10);
+                          const neueTotalMinuten = stunden * 60 + minuten + durchgangIntervall;
+                          const neueStunden = Math.floor(neueTotalMinuten / 60);
+                          const neueMinutenWert = neueTotalMinuten % 60;
+                          neueZeit = `${neueStunden.toString().padStart(2, '0')}:${neueMinutenWert.toString().padStart(2, '0')}`;
+                          neuerStand = staende[0].toString();
+                        }
+                        
+                        starter.startzeit = neueZeit;
+                        starter.stand = neuerStand;
+                        starter.durchgang = Math.floor((parseInt(neuerStand) - 1) / staende.length) + 1;
+                        
+                        konflikte.push(`${starter.name || starter.schuetzeName}: ${neueZeit} Stand ${neuerStand}`);
+                      }
+                    });
+                    
+                    setGeminiResult({...geminiResult, startliste: optimierteStartliste});
+                    
+                    if (konflikte.length > 0) {
+                      alert(`✅ ${konflikte.length} Starter automatisch verschoben:\n\n${konflikte.join('\n')}`);
+                    }
+                  }}
+                >
+                  🔄 Smart-Verschiebung
+                </button>
+                
+                <button 
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm"
+                  onClick={() => {
+                    // Zeige Empfehlungen für bessere Verteilung
+                    const empfehlungen = [];
+                    const zeitGruppen = {};
+                    
+                    geminiResult.startliste.forEach(starter => {
+                      if (!zeitGruppen[starter.startzeit]) zeitGruppen[starter.startzeit] = [];
+                      zeitGruppen[starter.startzeit].push(starter);
+                    });
+                    
+                    Object.entries(zeitGruppen).forEach(([zeit, gruppe]: [string, any[]]) => {
+                      if (gruppe.length > staende.length) {
+                        empfehlungen.push(`⏰ ${zeit}: ${gruppe.length} Starter, aber nur ${staende.length} Stände verfügbar`);
+                      }
+                      
+                      // Prüfe Stand-Verteilung
+                      const standVerteilung = {};
+                      gruppe.forEach(s => {
+                        standVerteilung[s.stand] = (standVerteilung[s.stand] || 0) + 1;
+                      });
+                      
+                      Object.entries(standVerteilung).forEach(([stand, anzahl]: [string, number]) => {
+                        if (anzahl > 1) {
+                          empfehlungen.push(`🎯 Stand ${stand} um ${zeit}: ${anzahl} Starter (Konflikt!)`);
+                        }
+                      });
+                    });
+                    
+                    if (empfehlungen.length > 0) {
+                      alert(`💡 Verbesserungsvorschläge:\n\n${empfehlungen.join('\n')}\n\n➡️ Nutze 'Smart-Verschiebung' für automatische Lösung!`);
+                    } else {
+                      alert('🎉 Perfekte Verteilung! Keine Verbesserungen nötig.');
+                    }
+                  }}
+                >
+                  💡 Empfehlungen
+                </button>
                 <button 
                   className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-medium"
                   onClick={async () => {
@@ -884,7 +1174,9 @@ export default function StartlistenToolV2() {
                       let isFirstStart = true;
                       let currentY = 35;
                       
-                      Object.entries(nachStartzeit).forEach(([startzeit, starterGruppe], startzeitIndex) => {
+                      Object.entries(nachStartzeit)
+                        .sort(([zeitA], [zeitB]) => zeitA.localeCompare(zeitB)) // Sortiere Uhrzeiten korrekt
+                        .forEach(([startzeit, starterGruppe], startzeitIndex) => {
                         if (isFirstStart) {
                           doc.addPage();
                           isFirstStart = false;
@@ -1083,6 +1375,38 @@ export default function StartlistenToolV2() {
                 <button 
                   className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-medium"
                   onClick={async () => {
+                    // Prüfe ob bereits eine Startliste für diese Konfiguration existiert
+                    let existierendeStartlisteId = null;
+                    
+                    try {
+                      const { getDocs, collection, query, where } = await import('firebase/firestore');
+                      const { db } = await import('@/lib/firebase/config');
+                      
+                      // Suche nach existierender Startliste mit gleicher Konfiguration
+                      const snapshot = await getDocs(
+                        query(
+                          collection(db, 'km_startlisten_v2'),
+                          where('saison', '==', selectedSaison)
+                        )
+                      );
+                      
+                      // Finde die neueste Startliste für diese Saison
+                      let neuesteStartliste = null;
+                      snapshot.docs.forEach(doc => {
+                        const data = doc.data();
+                        if (!neuesteStartliste || 
+                            (data.erstellt?.toDate?.() || data.erstellt) > (neuesteStartliste.erstellt?.toDate?.() || neuesteStartliste.erstellt)) {
+                          neuesteStartliste = { id: doc.id, ...data };
+                        }
+                      });
+                      
+                      if (neuesteStartliste) {
+                        existierendeStartlisteId = neuesteStartliste.id;
+                      }
+                    } catch (error) {
+                      console.log('Fehler beim Suchen existierender Startliste:', error);
+                    }
+                    
                     const startlisteData = {
                       configId: configId || null,
                       saison: selectedSaison || null,
@@ -1104,6 +1428,7 @@ export default function StartlistenToolV2() {
                         durchgang: durchgang || 50, 
                         wechsel: wechsel || 10, 
                         austragungsort: austragungsort || '', 
+                        datum: datum || '',
                         selectedDisziplinen: selectedDisziplinen || [] 
                       },
                       erstellt: new Date(),
@@ -1111,14 +1436,32 @@ export default function StartlistenToolV2() {
                     };
                     
                     try {
-                      await addDoc(collection(db, 'km_startlisten_v2'), startlisteData);
-                      console.log('✅ Startliste gespeichert');
+                      if (existierendeStartlisteId) {
+                        // Überschreibe existierende Startliste
+                        const { updateDoc, doc } = await import('firebase/firestore');
+                        const { db } = await import('@/lib/firebase/config');
+                        
+                        await updateDoc(doc(db, 'km_startlisten_v2', existierendeStartlisteId), {
+                          ...startlisteData,
+                          aktualisiert: new Date()
+                        });
+                        
+                        alert(`✅ Startliste aktualisiert! (${geminiResult.startliste.length} Starter)`);
+                      } else {
+                        // Erstelle neue Startliste
+                        const { addDoc, collection } = await import('firebase/firestore');
+                        const { db } = await import('@/lib/firebase/config');
+                        
+                        await addDoc(collection(db, 'km_startlisten_v2'), startlisteData);
+                        alert(`✅ Neue Startliste gespeichert! (${geminiResult.startliste.length} Starter)`);
+                      }
                     } catch (error) {
                       console.error('Fehler beim Speichern:', error);
+                      alert('❌ Fehler beim Speichern!');
                     }
                   }}
                 >
-                  💾 Speichern
+                  💾 Speichern/Aktualisieren
                 </button>
               </div>
             </div>
