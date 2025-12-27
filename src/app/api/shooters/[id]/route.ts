@@ -14,44 +14,27 @@ async function validateUserPermissions(request: NextRequest, shooterId: string) 
   const token = authHeader.split('Bearer ')[1];
   const decodedToken = await getAuth().verifyIdToken(token);
   
-  // Schütze-Daten laden für Club-Zugehörigkeit
-  const shooterDoc = await adminDb.collection('shooters').doc(shooterId).get();
-  if (!shooterDoc.exists) {
-    throw new Error('Schütze nicht gefunden');
-  }
-
-  const shooterData = shooterDoc.data();
-  const shooterClubId = shooterData?.clubId || shooterData?.rwkClubId || shooterData?.kmClubId;
-
-  // Benutzer-Berechtigung prüfen
-  const userPermissionDoc = await adminDb.collection('user_permissions').doc(decodedToken.uid).get();
-  if (!userPermissionDoc.exists) {
-    throw new Error('Keine Berechtigung gefunden');
-  }
-
-  const userPermission = userPermissionDoc.data();
-  
-  // Debug-Logging
-  logDebug('DELETE Shooter Debug:', {
-    shooterId: params.id,
-    userEmail: decodedToken.email,
-    userPermission: userPermission,
-    shooterClubId: shooterClubId
-  });
-  
-  // Vereinfachte Berechtigung - erstmal alle Vereinsvertreter und Sportleiter erlauben
+  // Vereinfachte Berechtigung - alle eingeloggten Benutzer dürfen bearbeiten
   const isSuperAdmin = decodedToken.email === 'admin@rwk-einbeck.de';
-  const hasClubAccess = userPermission?.role === 'vereinsvertreter' || 
-    (userPermission?.clubRoles && Object.values(userPermission.clubRoles).includes('SPORTLEITER'));
-
-  if (!isSuperAdmin && !hasClubAccess) {
-    logError('Permission denied:', { isSuperAdmin, hasClubAccess, userPermission });
-    throw new Error('Keine Berechtigung für diesen Schützen');
+  const isKMOrga = decodedToken.email === 'stephanie.buenger@gmx.de';
+  
+  if (!isSuperAdmin && !isKMOrga) {
+    // Prüfe ob Benutzer KM-Berechtigung hat
+    const userPermissionDoc = await adminDb.collection('user_permissions').doc(decodedToken.uid).get();
+    if (userPermissionDoc.exists) {
+      const userPermission = userPermissionDoc.data();
+      const hasKMAccess = userPermission?.role === 'vereinsvertreter' || 
+                          userPermission?.role === 'km_organisator' ||
+                          userPermission?.roles?.includes('km_access');
+      
+      if (!hasKMAccess) {
+        throw new Error('Keine Berechtigung für KM-Verwaltung');
+      }
+    }
   }
   
-  logDebug('Permission granted:', { isSuperAdmin, hasClubAccess });
-
-  return { shooterData, userPermission, decodedToken };
+  logDebug('Permission granted for:', decodedToken.email);
+  return { decodedToken };
 }
 
 export async function PUT(
@@ -77,13 +60,15 @@ export async function PATCH(
     await validateUserPermissions(request, params.id);
 
     const body = await request.json();
-    const { name, birthYear, gender, mitgliedsnummer } = body;
+    const { firstName, lastName, birthYear, gender, mitgliedsnummer, kmClubId } = body;
 
     const updateData: any = {};
-    if (name !== undefined) updateData.name = name;
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
     if (birthYear !== undefined) updateData.birthYear = birthYear;
     if (gender !== undefined) updateData.gender = gender;
     if (mitgliedsnummer !== undefined) updateData.mitgliedsnummer = mitgliedsnummer;
+    if (kmClubId !== undefined) updateData.kmClubId = kmClubId;
     
     updateData.updatedAt = FieldValue.serverTimestamp();
 

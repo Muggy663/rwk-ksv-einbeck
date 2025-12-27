@@ -245,8 +245,10 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isAuthenticated() &&
                             (request.auth.token.email == 'admin@rwk-einbeck.de' ||
+                             request.auth.token.email == 'stephanie.buenger@gmx.de' ||
                              (exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) &&
                               (get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles != null ||
+                               get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.kvRoles != null ||
                                get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role != null)));
       allow delete: if false; // NUR über AdminSDK-API
     }
