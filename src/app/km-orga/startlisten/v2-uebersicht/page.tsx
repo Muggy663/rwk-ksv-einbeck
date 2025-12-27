@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getDocs, collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import Link from 'next/link';
@@ -714,14 +714,26 @@ export default function StartlistenV2Uebersicht() {
                             )
                             .slice(0, 10)
                             .map((meldung, i) => (
-                              <button
+                              <div
                                 key={i}
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData('text/plain', JSON.stringify({
+                                    type: 'newShooter',
+                                    meldung: meldung
+                                  }));
+                                  e.currentTarget.style.opacity = '0.5';
+                                }}
+                                onDragEnd={(e) => {
+                                  e.currentTarget.style.opacity = '1';
+                                }}
                                 onClick={() => addShooterToStartliste(meldung)}
-                                className="w-full text-left p-2 bg-gray-50 hover:bg-blue-50 rounded text-xs border"
+                                className="w-full text-left p-2 bg-gray-50 hover:bg-blue-50 rounded text-xs border cursor-move transition-colors"
+                                title="🖱️ Ziehen oder klicken zum Hinzufügen"
                               >
                                 <div className="font-medium">{meldung.name}</div>
                                 <div className="text-gray-600">{meldung.spoNummer} - {meldung.disziplin} • {meldung.verein}</div>
-                              </button>
+                              </div>
                             ))
                           }
                         </div>
@@ -730,7 +742,7 @@ export default function StartlistenV2Uebersicht() {
                   </div>
                   
                   {/* Startliste bearbeiten */}
-                  <div className="space-y-2 max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-3">
+                  <div className="space-y-2 max-h-screen overflow-y-auto bg-gray-50 rounded-lg p-3">
                     <div className="grid grid-cols-9 gap-2 p-2 bg-gray-200 dark:bg-gray-700 rounded font-medium text-sm dark:text-white">
                       <div>Name</div>
                       <div>Verein</div>
@@ -742,8 +754,94 @@ export default function StartlistenV2Uebersicht() {
                       <div>Anmerkung</div>
                       <div>Aktion</div>
                     </div>
-                    {editData.startliste?.map((starter, index) => (
-                      <div key={index} className="grid grid-cols-9 gap-2 p-2 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 items-center">
+                    {editData.startliste?.map((starter, index, sortedArray) => (
+                      <React.Fragment key={index}>
+                        {/* Drop Zone vor der Card */}
+                        <div
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.style.height = '40px';
+                            e.currentTarget.style.backgroundColor = '#bbf7d0';
+                            e.currentTarget.style.border = '2px dashed #16a34a';
+                            e.currentTarget.style.borderRadius = '8px';
+                            e.currentTarget.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#16a34a;font-weight:bold;font-size:12px;pointer-events:none;">📍 Hier ablegen</div>';
+                          }}
+                          onDragLeave={(e) => {
+                            e.currentTarget.style.height = '16px';
+                            e.currentTarget.style.backgroundColor = '#e5e7eb';
+                            e.currentTarget.style.border = '1px dashed #9ca3af';
+                            e.currentTarget.innerHTML = '';
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.style.height = '16px';
+                            e.currentTarget.style.backgroundColor = '#e5e7eb';
+                            e.currentTarget.style.border = '1px dashed #9ca3af';
+                            e.currentTarget.innerHTML = '';
+                            
+                            try {
+                              const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                              
+                              if (dragData.type === 'newShooter') {
+                                // Neuen Schützen an dieser Position einfügen
+                                const newStarter = {
+                                  id: `added_${Date.now()}`,
+                                  name: dragData.meldung.name,
+                                  schuetzeName: dragData.meldung.name,
+                                  verein: dragData.meldung.verein,
+                                  disziplin: dragData.meldung.disziplin,
+                                  altersklasse: dragData.meldung.altersklasse,
+                                  anmerkung: dragData.meldung.anmerkung || '',
+                                  stand: '1',
+                                  startzeit: editData.konfiguration?.startzeit || '14:00',
+                                  durchgang: 1
+                                };
+                                
+                                const newStartliste = [...editData.startliste];
+                                newStartliste.splice(index, 0, newStarter);
+                                
+                                setEditData({
+                                  ...editData,
+                                  startliste: newStartliste
+                                });
+                              } else {
+                                // Bestehenden Starter verschieben
+                                const draggedIndex = dragData.starterIndex;
+                                
+                                if (draggedIndex === index) return;
+                                
+                                const newStartliste = [...editData.startliste];
+                                const [draggedItem] = newStartliste.splice(draggedIndex, 1);
+                                newStartliste.splice(index, 0, draggedItem);
+                                
+                                setEditData({
+                                  ...editData,
+                                  startliste: newStartliste
+                                });
+                              }
+                            } catch (error) {
+                              console.error('Drop Zone Fehler:', error);
+                            }
+                          }}
+                          className="h-4 transition-all duration-200 rounded bg-gray-200 border border-dashed border-gray-400 mb-2"
+                          style={{ backgroundColor: '#e5e7eb', border: '1px dashed #9ca3af' }}
+                        />
+                        
+                        <div 
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('text/plain', JSON.stringify({
+                              starterIndex: index,
+                              starter: starter
+                            }));
+                            e.currentTarget.style.opacity = '0.5';
+                          }}
+                          onDragEnd={(e) => {
+                            e.currentTarget.style.opacity = '1';
+                          }}
+                          className="grid grid-cols-9 gap-2 p-2 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 items-center cursor-move hover:bg-gray-100 transition-colors"
+                          title="🖱️ Ziehen & zwischen Cards ablegen"
+                        >
                         <input
                           type="text"
                           value={starter.name || starter.schuetzeName || ''}
@@ -849,7 +947,53 @@ export default function StartlistenV2Uebersicht() {
                         >
                           ×
                         </button>
-                      </div>
+                        </div>
+                        
+                        {/* Drop Zone nach der letzten Card */}
+                        {index === sortedArray.length - 1 && (
+                          <div
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.currentTarget.style.height = '40px';
+                              e.currentTarget.style.backgroundColor = '#bbf7d0';
+                              e.currentTarget.style.border = '2px dashed #16a34a';
+                              e.currentTarget.style.borderRadius = '8px';
+                              e.currentTarget.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#16a34a;font-weight:bold;font-size:12px;pointer-events:none;">📍 Hier ablegen</div>';
+                            }}
+                            onDragLeave={(e) => {
+                              e.currentTarget.style.height = '16px';
+                              e.currentTarget.style.backgroundColor = '#e5e7eb';
+                              e.currentTarget.style.border = '1px dashed #9ca3af';
+                              e.currentTarget.innerHTML = '';
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.currentTarget.style.height = '16px';
+                              e.currentTarget.style.backgroundColor = '#e5e7eb';
+                              e.currentTarget.style.border = '1px dashed #9ca3af';
+                              e.currentTarget.innerHTML = '';
+                              
+                              try {
+                                const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                                const draggedIndex = dragData.starterIndex;
+                                
+                                const newStartliste = [...editData.startliste];
+                                const [draggedItem] = newStartliste.splice(draggedIndex, 1);
+                                newStartliste.push(draggedItem);
+                                
+                                setEditData({
+                                  ...editData,
+                                  startliste: newStartliste
+                                });
+                              } catch (error) {
+                                console.error('End Drop Zone Fehler:', error);
+                              }
+                            }}
+                            className="h-4 transition-all duration-200 rounded mt-2 bg-gray-200 border border-dashed border-gray-400"
+                            style={{ backgroundColor: '#e5e7eb', border: '1px dashed #9ca3af' }}
+                          />
+                        )}
+                      </React.Fragment>
                     ))}}
                   </div>
                 </div>

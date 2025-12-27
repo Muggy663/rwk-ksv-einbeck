@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getDocs, collection, query, orderBy, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
@@ -687,8 +687,19 @@ export default function StartlistenToolV2() {
                 </div>
               </div>
 
+              {/* Drag & Drop Hinweis */}
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-800">
+                  <span className="text-lg">🖱️</span>
+                  <span className="font-medium">Drag & Drop aktiviert!</span>
+                </div>
+                <p className="text-sm text-blue-700 mt-1">
+                  Ziehe die Starter-Cards mit der Maus, um sie zu verschieben. Stand, Uhrzeit und Durchgang werden automatisch angepasst.
+                </p>
+              </div>
+              
               <div className="overflow-x-auto">
-                <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                <div className="space-y-1 max-h-[600px] overflow-y-auto">
                   {geminiResult.startliste
                     .filter(starter => starter.name && starter.name !== 'EMPTY' && starter.name !== 'Leerer Stand')
                     .sort((a, b) => {
@@ -698,13 +709,12 @@ export default function StartlistenToolV2() {
                       if (standA !== standB) return standA - standB;
                       return (a.startzeit || '').localeCompare(b.startzeit || '');
                     })
-                    .map((starter, index) => {
+                    .map((starter, index, sortedArray) => {
                       const echteMeldung = meldungen.find(m => 
                         m.name === (starter.schuetzeName || starter.name) && 
                         m.disziplin === starter.disziplin
                       );
                       
-                      // Konflikt-Prüfung
                       const hatKonflikt = geminiResult.startliste.some((other, otherIndex) => 
                         otherIndex !== index && 
                         other.startzeit === starter.startzeit && 
@@ -712,10 +722,87 @@ export default function StartlistenToolV2() {
                       );
                       
                       return (
-                        <div key={index} className={`grid grid-cols-12 gap-2 p-3 border border-gray-200 rounded-lg text-sm items-center group hover:bg-gray-100 transition-colors ${
-                          hatKonflikt ? 'bg-red-100 border-red-300' : 'bg-gray-50'
-                        }`}>
-                          <div className="col-span-3">
+                        <React.Fragment key={index}>
+                          {/* Drop Zone vor der Card */}
+                          <div
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.currentTarget.style.height = '40px';
+                              e.currentTarget.style.backgroundColor = '#bbf7d0';
+                              e.currentTarget.style.border = '2px dashed #16a34a';
+                              e.currentTarget.style.borderRadius = '8px';
+                              e.currentTarget.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#16a34a;font-weight:bold;font-size:12px;pointer-events:none;">📍 Hier ablegen</div>';
+                            }}
+                            onDragLeave={(e) => {
+                              e.currentTarget.style.height = '16px';
+                              e.currentTarget.style.backgroundColor = '#e5e7eb';
+                              e.currentTarget.style.border = '1px dashed #9ca3af';
+                              e.currentTarget.innerHTML = '';
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.currentTarget.style.height = '16px';
+                              e.currentTarget.style.backgroundColor = '#e5e7eb';
+                              e.currentTarget.style.border = '1px dashed #9ca3af';
+                              e.currentTarget.innerHTML = '';
+                              
+                              try {
+                                const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                                const draggedIndex = dragData.starterIndex;
+                                
+                                if (draggedIndex === index) return;
+                                
+                                const newStartliste = [...geminiResult.startliste];
+                                const [draggedItem] = newStartliste.splice(draggedIndex, 1);
+                                newStartliste.splice(index, 0, draggedItem);
+                                
+                                const updatedStartliste = newStartliste.map((s, newIndex) => {
+                                  const durchgangNr = Math.floor(newIndex / staende.length) + 1;
+                                  const standIndex = newIndex % staende.length;
+                                  const neuerStand = staende[standIndex]?.toString() || '1';
+                                  
+                                  const [startStunden, startMinuten] = startzeit.split(':').map(Number);
+                                  const durchgangIntervall = (durchgang || 50) + (wechsel || 10);
+                                  const totalMinuten = startStunden * 60 + startMinuten + ((durchgangNr - 1) * durchgangIntervall);
+                                  const neueStunden = Math.floor(totalMinuten / 60);
+                                  const neueMinutenWert = totalMinuten % 60;
+                                  const neueStartzeit = `${neueStunden.toString().padStart(2, '0')}:${neueMinutenWert.toString().padStart(2, '0')}`;
+                                  
+                                  return {
+                                    ...s,
+                                    stand: neuerStand,
+                                    startzeit: neueStartzeit,
+                                    durchgang: durchgangNr
+                                  };
+                                });
+                                
+                                setGeminiResult({...geminiResult, startliste: updatedStartliste});
+                              } catch (error) {
+                                console.error('Drop Zone Fehler:', error);
+                              }
+                            }}
+                            className="h-4 transition-all duration-200 rounded bg-gray-200 border border-dashed border-gray-400 mb-2"
+                            style={{ backgroundColor: '#e5e7eb', border: '1px dashed #9ca3af' }}
+                          />
+                          
+                          <div 
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('text/plain', JSON.stringify({
+                                starterIndex: index,
+                                starter: starter
+                              }));
+                              e.currentTarget.style.opacity = '0.5';
+                            }}
+                            onDragEnd={(e) => {
+                              e.currentTarget.style.opacity = '1';
+                            }}
+                            className={`grid grid-cols-12 gap-2 p-3 border border-gray-200 rounded-lg text-sm items-center group hover:bg-gray-100 transition-colors cursor-move ${
+                              hatKonflikt ? 'bg-red-100 border-red-300' : 'bg-gray-50'
+                            }`}
+                            title="🖱️ Ziehen & zwischen Cards ablegen"
+                          >
+                            <div className="col-span-3">
                             <div className="font-medium">{starter.schuetzeName || starter.name}</div>
                             <div className="text-xs text-muted-foreground">{starter.verein}</div>
                             {echteMeldung?.altersklasse && (
@@ -921,7 +1008,70 @@ export default function StartlistenToolV2() {
                               ×
                             </button>
                           </div>
-                        </div>
+                          </div>
+                          
+                          {/* Drop Zone nach der letzten Card */}
+                          {index === sortedArray.length - 1 && (
+                            <div
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.style.height = '40px';
+                                e.currentTarget.style.backgroundColor = '#bbf7d0';
+                                e.currentTarget.style.border = '2px dashed #16a34a';
+                                e.currentTarget.style.borderRadius = '8px';
+                                e.currentTarget.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#16a34a;font-weight:bold;font-size:12px;pointer-events:none;">📍 Hier ablegen</div>';
+                              }}
+                              onDragLeave={(e) => {
+                                e.currentTarget.style.height = '16px';
+                                e.currentTarget.style.backgroundColor = '#e5e7eb';
+                                e.currentTarget.style.border = '1px dashed #9ca3af';
+                                e.currentTarget.innerHTML = '';
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.style.height = '16px';
+                                e.currentTarget.style.backgroundColor = '#e5e7eb';
+                                e.currentTarget.style.border = '1px dashed #9ca3af';
+                                e.currentTarget.innerHTML = '';
+                                
+                                try {
+                                  const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
+                                  const draggedIndex = dragData.starterIndex;
+                                  
+                                  const newStartliste = [...geminiResult.startliste];
+                                  const [draggedItem] = newStartliste.splice(draggedIndex, 1);
+                                  newStartliste.push(draggedItem);
+                                  
+                                  const updatedStartliste = newStartliste.map((s, newIndex) => {
+                                    const durchgangNr = Math.floor(newIndex / staende.length) + 1;
+                                    const standIndex = newIndex % staende.length;
+                                    const neuerStand = staende[standIndex]?.toString() || '1';
+                                    
+                                    const [startStunden, startMinuten] = startzeit.split(':').map(Number);
+                                    const durchgangIntervall = (durchgang || 50) + (wechsel || 10);
+                                    const totalMinuten = startStunden * 60 + startMinuten + ((durchgangNr - 1) * durchgangIntervall);
+                                    const neueStunden = Math.floor(totalMinuten / 60);
+                                    const neueMinutenWert = totalMinuten % 60;
+                                    const neueStartzeit = `${neueStunden.toString().padStart(2, '0')}:${neueMinutenWert.toString().padStart(2, '0')}`;
+                                    
+                                    return {
+                                      ...s,
+                                      stand: neuerStand,
+                                      startzeit: neueStartzeit,
+                                      durchgang: durchgangNr
+                                    };
+                                  });
+                                  
+                                  setGeminiResult({...geminiResult, startliste: updatedStartliste});
+                                } catch (error) {
+                                  console.error('End Drop Zone Fehler:', error);
+                                }
+                              }}
+                              className="h-4 transition-all duration-200 rounded mt-2 bg-gray-200 border border-dashed border-gray-400"
+                              style={{ backgroundColor: '#e5e7eb', border: '1px dashed #9ca3af' }}
+                            />
+                          )}
+                        </React.Fragment>
                       );
                     })}
                 </div>
