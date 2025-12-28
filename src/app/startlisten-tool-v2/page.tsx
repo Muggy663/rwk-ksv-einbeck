@@ -433,24 +433,43 @@ export default function StartlistenToolV2() {
                   >
                     Alle auswählen
                   </button>
-                  {Object.entries(getAlleDisziplinen()).map(([disziplin, meldungenListe]) => (
-                    <label key={disziplin} className="flex items-center gap-2 bg-white dark:bg-gray-800 p-2 rounded border cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={selectedDisziplinen.includes(disziplin)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedDisziplinen(prev => [...prev, disziplin]);
-                          } else {
-                            setSelectedDisziplinen(prev => prev.filter(d => d !== disziplin));
-                          }
-                        }}
-                        className="rounded"
-                      />
-                      <span className="text-sm dark:text-white">{disziplin}</span>
-                      <span className="text-xs bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 px-1 rounded">{meldungenListe.length}</span>
-                    </label>
-                  ))}
+                  <button
+                    onClick={() => {
+                      const lmDisziplinen = Object.entries(getAlleDisziplinen())
+                        .filter(([disziplin, meldungenListe]) => 
+                          meldungenListe.some(m => m.lmTeilnahme === true)
+                        )
+                        .map(([disziplin]) => disziplin);
+                      setSelectedDisziplinen(lmDisziplinen);
+                    }}
+                    className="text-xs bg-green-200 hover:bg-green-300 px-2 py-1 rounded"
+                  >
+                    Nur LM-Teilnehmer
+                  </button>
+                  {Object.entries(getAlleDisziplinen()).map(([disziplin, meldungenListe]) => {
+                    const lmAnzahl = meldungenListe.filter(m => m.lmTeilnahme === true).length;
+                    return (
+                      <label key={disziplin} className="flex items-center gap-2 bg-white dark:bg-gray-800 p-2 rounded border cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={selectedDisziplinen.includes(disziplin)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedDisziplinen(prev => [...prev, disziplin]);
+                            } else {
+                              setSelectedDisziplinen(prev => prev.filter(d => d !== disziplin));
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <span className="text-sm dark:text-white">{disziplin}</span>
+                        <span className="text-xs bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 px-1 rounded">{meldungenListe.length}</span>
+                        {lmAnzahl > 0 && (
+                          <span className="text-xs bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100 px-1 rounded">LM: {lmAnzahl}</span>
+                        )}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -810,6 +829,11 @@ export default function StartlistenToolV2() {
                                 {echteMeldung.altersklasse}
                               </span>
                             )}
+                            {(starter.lmTeilnahme === true || echteMeldung?.lmTeilnahme === true) && (
+                              <span className="text-xs bg-green-100 text-green-800 px-1 rounded mt-1 inline-block ml-1">
+                                LM
+                              </span>
+                            )}
                             {starter.hinweise && (
                               <div className="text-xs text-orange-600 font-medium mt-1">
                                 {starter.hinweise}
@@ -981,18 +1005,33 @@ export default function StartlistenToolV2() {
                             />
                           </div>
                           <div className="col-span-2">
-                            <input
-                              type="text"
-                              value={echteMeldung?.anmerkung || ''}
-                              onChange={(e) => {
-                                const updatedStartliste = geminiResult.startliste.map(s => 
-                                  s === starter ? {...s, anmerkung: e.target.value} : s
-                                );
-                                setGeminiResult({...geminiResult, startliste: updatedStartliste});
-                              }}
-                              placeholder="Bemerkung..."
-                              className="w-full p-1 border rounded text-xs"
-                            />
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={echteMeldung?.anmerkung || ''}
+                                onChange={(e) => {
+                                  const updatedStartliste = geminiResult.startliste.map(s => 
+                                    s === starter ? {...s, anmerkung: e.target.value} : s
+                                  );
+                                  setGeminiResult({...geminiResult, startliste: updatedStartliste});
+                                }}
+                                placeholder="Bemerkung..."
+                                className="flex-1 p-1 border rounded text-xs"
+                              />
+                              <input
+                                type="checkbox"
+                                checked={starter.lmTeilnahme === true || echteMeldung?.lmTeilnahme === true}
+                                onChange={(e) => {
+                                  const updatedStartliste = geminiResult.startliste.map(s => 
+                                    s === starter ? {...s, lmTeilnahme: e.target.checked} : s
+                                  );
+                                  setGeminiResult({...geminiResult, startliste: updatedStartliste});
+                                }}
+                                className="w-4 h-4 rounded"
+                                title="LM-Teilnahme"
+                              />
+                              <span className="text-xs text-gray-600 ml-1">LM</span>
+                            </div>
                           </div>
                           <div className="col-span-1 flex justify-center">
                             <button
@@ -1291,7 +1330,8 @@ export default function StartlistenToolV2() {
                       }
                       
                       doc.setFontSize(20);
-                      doc.text(`Kreisverbandsmeisterschaft ${new Date().getFullYear()}`, pageWidth / 2, 140, { align: 'center' });
+                      const currentSaison = saisons.find(s => s.id === selectedSaison);
+                      doc.text(`Kreisverbandsmeisterschaft ${currentSaison?.jahr || 2026}`, pageWidth / 2, 140, { align: 'center' });
                       
                       doc.setFontSize(18);
                       doc.text('Startlisten', pageWidth / 2, 160, { align: 'center' });

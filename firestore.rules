@@ -245,10 +245,8 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isAuthenticated() &&
                             (request.auth.token.email == 'admin@rwk-einbeck.de' ||
-                             request.auth.token.email == 'stephanie.buenger@gmx.de' ||
                              (exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) &&
                               (get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles != null ||
-                               get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.kvRoles != null ||
                                get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role != null)));
       allow delete: if false; // NUR über AdminSDK-API
     }
@@ -330,6 +328,11 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    match /km_startlisten/{startliste} {
+      allow read: if true;
+      allow write, delete: if isSuperAdmin();
+    }
+
     match /km_disziplinen/{disziplin} {
       allow read: if true;
       allow write: if isSuperAdmin();
@@ -347,17 +350,10 @@ service cloud.firestore {
 
     match /km_shooters/{shooter} {
       allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-
-    match /km_altersklassen/{altersklasse} {
-      allow read: if true;
-      allow write: if true;
-    }
-
-    match /km_mannschaften/{mannschaft} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
+      allow write, update, delete: if isSuperAdmin() || 
+                           (isAuthenticated() && getUserPermissions() != null && 
+                            (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
+                             getUserPermissions().role == 'km_organisator'));
     }
 
     match /km_startlisten_configs/{config} {
@@ -376,15 +372,13 @@ service cloud.firestore {
                              getUserPermissions().role == 'km_organisator'));        
     }
 
-    match /km_startlisten_v2/{startliste} {
+       match /km_startlisten_v2/{startliste} {
       allow read: if true;
       allow write, delete: if isSuperAdmin() || 
                            (isAuthenticated() && getUserPermissions() != null && 
                             (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
                              getUserPermissions().role == 'km_organisator'));
     }
-
-   
 
     // 🔒 Fallback für alle anderen Club-Dokumente
     match /clubs/{clubId}/{document=**} {

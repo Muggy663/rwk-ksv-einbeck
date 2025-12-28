@@ -118,7 +118,8 @@ export default function StartlistenV2Uebersicht() {
             spoNummer: disziplinenMap[data.disziplinId]?.spoNummer || '1.41',
             altersklasse: data.altersklasse || 'Unbekannt',
             anmerkung: data.anmerkung || '',
-            saisonId: data.saisonId || data.saison
+            saisonId: data.saisonId || data.saison,
+            lmTeilnahme: data.lmTeilnahme || false
           };
         })
         .filter(Boolean);
@@ -333,7 +334,8 @@ export default function StartlistenV2Uebersicht() {
                             }
                             
                             doc.setFontSize(20);
-                            doc.text(`Kreisverbandsmeisterschaft ${new Date().getFullYear()}`, pageWidth / 2, 140, { align: 'center' });
+                            const currentSaison = saisons.find(s => s.id === startliste.saison);
+                            doc.text(`Kreisverbandsmeisterschaft ${currentSaison?.jahr || 2026}`, pageWidth / 2, 140, { align: 'center' });
                             
                             doc.setFontSize(18);
                             doc.text('Startlisten', pageWidth / 2, 160, { align: 'center' });
@@ -628,7 +630,7 @@ export default function StartlistenV2Uebersicht() {
                   {/* Konfiguration bearbeiten */}
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <h4 className="font-medium text-blue-900 mb-3">Konfiguration</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                       <div>
                         <label className="block text-sm font-medium mb-1">Datum</label>
                         <input
@@ -677,6 +679,18 @@ export default function StartlistenV2Uebersicht() {
                           className="w-full p-2 border rounded text-sm"
                         />
                       </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Wechsel (Min)</label>
+                        <input
+                          type="number"
+                          value={editData.konfiguration?.wechsel || ''}
+                          onChange={(e) => setEditData({
+                            ...editData,
+                            konfiguration: { ...editData.konfiguration, wechsel: parseInt(e.target.value) }
+                          })}
+                          className="w-full p-2 border rounded text-sm"
+                        />
+                      </div>
                     </div>
                   </div>
                   
@@ -684,12 +698,48 @@ export default function StartlistenV2Uebersicht() {
                   <div className="bg-green-50 p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="font-medium text-green-900">Schützen verwalten</h4>
-                      <button
-                        onClick={() => setShowAddShooter(!showAddShooter)}
-                        className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-                      >
-                        + Schütze hinzufügen
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            // Filtere nur LM-Teilnehmer aus den Meldungen
+                            const lmMeldungen = meldungen.filter(m => 
+                              m.saisonId === startliste.saison && m.lmTeilnahme === true &&
+                              !editData.startliste?.some(s => s.name === m.name && s.disziplin === m.disziplin)
+                            );
+                            
+                            // Füge alle LM-Teilnehmer zur Startliste hinzu
+                            const neueLMStarter = lmMeldungen.map(meldung => ({
+                              id: `lm_${Date.now()}_${Math.random()}`,
+                              name: meldung.name,
+                              schuetzeName: meldung.name,
+                              verein: meldung.verein,
+                              disziplin: meldung.disziplin,
+                              altersklasse: meldung.altersklasse,
+                              anmerkung: meldung.anmerkung || '',
+                              stand: '1',
+                              startzeit: editData.konfiguration?.startzeit || '14:00',
+                              durchgang: 1,
+                              lmTeilnahme: true
+                            }));
+                            
+                            setEditData({
+                              ...editData,
+                              startliste: [...(editData.startliste || []), ...neueLMStarter]
+                            });
+                            
+                            alert(`✅ ${neueLMStarter.length} LM-Teilnehmer hinzugefügt!`);
+                          }}
+                          className="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700"
+                        >
+                          + Alle LM-Teilnehmer
+                        </button>
+                        <button
+                          onClick={() => setShowAddShooter(!showAddShooter)}
+                          className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                        >
+                          + Schütze hinzufügen
+                        </button>
+                      </div>
                     </div>
                     
                     {showAddShooter && (
@@ -731,7 +781,12 @@ export default function StartlistenV2Uebersicht() {
                                 className="w-full text-left p-2 bg-gray-50 hover:bg-blue-50 rounded text-xs border cursor-move transition-colors"
                                 title="🖱️ Ziehen oder klicken zum Hinzufügen"
                               >
-                                <div className="font-medium">{meldung.name}</div>
+                                <div className="font-medium flex items-center gap-2">
+                                  {meldung.name}
+                                  {meldung.lmTeilnahme && (
+                                    <span className="text-xs bg-green-100 text-green-800 px-1 rounded">LM</span>
+                                  )}
+                                </div>
                                 <div className="text-gray-600">{meldung.spoNummer} - {meldung.disziplin} • {meldung.verein}</div>
                               </div>
                             ))
@@ -743,7 +798,7 @@ export default function StartlistenV2Uebersicht() {
                   
                   {/* Startliste bearbeiten */}
                   <div className="space-y-2 max-h-screen overflow-y-auto bg-gray-50 rounded-lg p-3">
-                    <div className="grid grid-cols-9 gap-2 p-2 bg-gray-200 dark:bg-gray-700 rounded font-medium text-sm dark:text-white">
+                    <div className="grid grid-cols-10 gap-2 p-2 bg-gray-200 dark:bg-gray-700 rounded font-medium text-sm dark:text-white">
                       <div>Name</div>
                       <div>Verein</div>
                       <div>Disziplin</div>
@@ -751,6 +806,7 @@ export default function StartlistenV2Uebersicht() {
                       <div>Startzeit</div>
                       <div>Durchgang</div>
                       <div>Altersklasse</div>
+                      <div className="text-center">LM</div>
                       <div>Anmerkung</div>
                       <div>Aktion</div>
                     </div>
@@ -814,9 +870,26 @@ export default function StartlistenV2Uebersicht() {
                                 const [draggedItem] = newStartliste.splice(draggedIndex, 1);
                                 newStartliste.splice(index, 0, draggedItem);
                                 
+                                // Recalculate positions for all starters
+                                const updatedStartliste = newStartliste.map((s, i) => {
+                                  const baseTime = new Date(`1970-01-01T${editData.konfiguration?.startzeit || '14:00'}:00`);
+                                  const durchgangMin = editData.konfiguration?.durchgang || 50;
+                                  const wechselMin = editData.konfiguration?.wechsel || 10;
+                                  const durchgangNr = Math.floor(i / 10) + 1;
+                                  const minutesOffset = (durchgangNr - 1) * (durchgangMin + wechselMin);
+                                  const newStartzeit = new Date(baseTime.getTime() + minutesOffset * 60000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                                  
+                                  return {
+                                    ...s,
+                                    stand: ((i % 10) + 1).toString(),
+                                    startzeit: newStartzeit,
+                                    durchgang: durchgangNr
+                                  };
+                                });
+                                
                                 setEditData({
                                   ...editData,
-                                  startliste: newStartliste
+                                  startliste: updatedStartliste
                                 });
                               }
                             } catch (error) {
@@ -839,7 +912,7 @@ export default function StartlistenV2Uebersicht() {
                           onDragEnd={(e) => {
                             e.currentTarget.style.opacity = '1';
                           }}
-                          className="grid grid-cols-9 gap-2 p-2 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 items-center cursor-move hover:bg-gray-100 transition-colors"
+                          className="grid grid-cols-10 gap-2 p-2 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 items-center cursor-move hover:bg-gray-100 transition-colors"
                           title="🖱️ Ziehen & zwischen Cards ablegen"
                         >
                         <input
@@ -935,6 +1008,15 @@ export default function StartlistenV2Uebersicht() {
                           onChange={(e) => updateStarter(index, 'altersklasse', e.target.value)}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         />
+                        <div className="flex items-center justify-center">
+                          <input
+                            type="checkbox"
+                            checked={starter.lmTeilnahme === true || meldungen.find(m => m.name === starter.name && m.disziplin === starter.disziplin)?.lmTeilnahme === true}
+                            onChange={(e) => updateStarter(index, 'lmTeilnahme', e.target.checked)}
+                            className="w-4 h-4 rounded"
+                            title="Landesmeisterschaft Teilnahme"
+                          />
+                        </div>
                         <input
                           type="text"
                           value={starter.anmerkung || ''}
@@ -981,9 +1063,26 @@ export default function StartlistenV2Uebersicht() {
                                 const [draggedItem] = newStartliste.splice(draggedIndex, 1);
                                 newStartliste.push(draggedItem);
                                 
+                                // Recalculate positions for all starters
+                                const updatedStartliste = newStartliste.map((s, i) => {
+                                  const baseTime = new Date(`1970-01-01T${editData.konfiguration?.startzeit || '14:00'}:00`);
+                                  const durchgangMin = editData.konfiguration?.durchgang || 50;
+                                  const wechselMin = editData.konfiguration?.wechsel || 10;
+                                  const durchgangNr = Math.floor(i / 10) + 1;
+                                  const minutesOffset = (durchgangNr - 1) * (durchgangMin + wechselMin);
+                                  const newStartzeit = new Date(baseTime.getTime() + minutesOffset * 60000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                                  
+                                  return {
+                                    ...s,
+                                    stand: ((i % 10) + 1).toString(),
+                                    startzeit: newStartzeit,
+                                    durchgang: durchgangNr
+                                  };
+                                });
+                                
                                 setEditData({
                                   ...editData,
-                                  startliste: newStartliste
+                                  startliste: updatedStartliste
                                 });
                               } catch (error) {
                                 console.error('End Drop Zone Fehler:', error);
