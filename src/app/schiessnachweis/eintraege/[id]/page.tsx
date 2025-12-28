@@ -199,7 +199,7 @@ export default function EintragBearbeitenPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <Label htmlFor="datum">Datum *</Label>
                 <Input
@@ -211,6 +211,7 @@ export default function EintragBearbeitenPage() {
                     datum: new Date(e.target.value)
                   })}
                   required
+                  className="text-lg"
                 />
               </div>
               
@@ -226,6 +227,7 @@ export default function EintragBearbeitenPage() {
                     value: typ.value,
                     label: `${typ.icon} ${typ.label}`
                   }))}
+                  className="text-lg"
                 />
               </div>
             </div>
@@ -266,7 +268,7 @@ export default function EintragBearbeitenPage() {
             {eintrag.disziplin && (() => {
               const config = getDisziplinConfig(eintrag.disziplin);
               return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <Label htmlFor="schussAnzahl">Anzahl Schüsse *</Label>
                     <Input
@@ -280,59 +282,67 @@ export default function EintragBearbeitenPage() {
                         schussAnzahl: parseInt(e.target.value) || 0
                       })}
                       required
+                      className="text-lg font-semibold"
                     />
                   </div>
                   
-                  <div>
-                    <Label htmlFor="ergebnis">Ergebnis *</Label>
-                    <div className="space-y-3">
                       <div>
-                        <Label htmlFor="ergebnisGanzeRinge" className="text-sm font-medium text-blue-700">Ergebnis (Ganze Ringe) *</Label>
-                        <Input
-                          id="ergebnisGanzeRinge"
-                          type="number"
-                          min="0"
-                          max="1000"
-                          value={eintrag.ergebnisGanzeRinge || ''}
-                          onChange={(e) => setEintrag({
-                            ...eintrag,
-                            ergebnisGanzeRinge: parseInt(e.target.value) || 0
-                          })}
-                          required
-                          className="border-blue-200 focus:border-blue-400"
-                        />
+                        <Label htmlFor="ergebnis" className="text-sm font-medium">Ergebnis *</Label>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="ergebnisGanzeRinge" className="text-sm font-medium flex items-center gap-2">
+                              <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                              Ganze Ringe *
+                            </Label>
+                            <Input
+                              id="ergebnisGanzeRinge"
+                              type="number"
+                              min="0"
+                              max="1000"
+                              value={eintrag.ergebnisGanzeRinge || ''}
+                              onChange={(e) => setEintrag({
+                                ...eintrag,
+                                ergebnisGanzeRinge: parseInt(e.target.value) || 0
+                              })}
+                              placeholder="95"
+                              required
+                              className="text-xl font-bold h-12"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">Standard-Bewertung (0-10 pro Schuss)</p>
+                          </div>
+                          <div>
+                            <Label htmlFor="ergebnisZehntel" className="text-sm font-medium flex items-center gap-2">
+                              <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                              Zehntel-Ringe (optional)
+                            </Label>
+                            <Input
+                              id="ergebnisZehntel"
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="1000"
+                              value={eintrag.ergebnis || ''}
+                              onChange={(e) => setEintrag({
+                                ...eintrag,
+                                ergebnis: parseFloat(e.target.value) || 0
+                              })}
+                              placeholder="109.0"
+                              className="text-xl font-bold h-12 border-green-200 focus:border-green-400"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">Präzisions-Bewertung (0-10.9 pro Schuss)</p>
+                          </div>
+                        </div>
+                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                          <p className="text-xs text-blue-700 dark:text-blue-300">
+                            💡 <strong>Tipp:</strong> Beide Werte sind unabhängig - ganze Ringe für Vergleiche, Zehntel für Präzision
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <Label htmlFor="ergebnisZehntel" className="text-sm font-medium text-green-700">Ergebnis (mit Zehntel) - Optional</Label>
-                        <Input
-                          id="ergebnisZehntel"
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="1000"
-                          value={eintrag.ergebnis || ''}
-                          onChange={(e) => setEintrag({
-                            ...eintrag,
-                            ergebnis: parseFloat(e.target.value) || 0
-                          })}
-                          disabled={showDetailedEntry && serien.length > 0}
-                          className="border-green-200 focus:border-green-400"
-                        />
-                      </div>
-                    </div>
-                    {config && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        🎯 Max. {config.maxRinge} Ringe pro Schuss<br/>
-                        📊 <strong>Ganze Ringe:</strong> Pflichtfeld für alle Einträge<br/>
-                        🎯 <strong>Zehntel-Ergebnis:</strong> Optional für Leistungsschützen (z.B. detaillierte Analyse)
-                      </p>
-                    )}
-                  </div>
                 </div>
               );
             })()}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <Label htmlFor="standort">Ort/Stadt *</Label>
                 <Input
@@ -344,6 +354,7 @@ export default function EintragBearbeitenPage() {
                   })}
                   placeholder="z.B. Einbeck"
                   required
+                  className="text-lg"
                 />
               </div>
               
@@ -357,6 +368,7 @@ export default function EintragBearbeitenPage() {
                     schiessstand: e.target.value
                   })}
                   placeholder="z.B. Einbecker Schützengilde"
+                  className="text-lg"
                 />
               </div>
             </div>
@@ -378,7 +390,7 @@ export default function EintragBearbeitenPage() {
               </div>
               
               {showOptionalFields && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <Label htmlFor="wetter">Wetter</Label>
                     <NativeSelect
@@ -395,6 +407,7 @@ export default function EintragBearbeitenPage() {
                         { value: "Wind", label: "💨 Windig" },
                         { value: "Halle", label: "🏢 Halle" }
                       ]}
+                      className="text-lg"
                     />
                   </div>
                   
@@ -408,6 +421,7 @@ export default function EintragBearbeitenPage() {
                         munition: e.target.value
                       })}
                       placeholder="z.B. RWS R50"
+                      className="text-lg"
                     />
                   </div>
                   
@@ -421,6 +435,7 @@ export default function EintragBearbeitenPage() {
                         waffe: e.target.value
                       })}
                       placeholder="z.B. Anschütz 1827"
+                      className="text-lg"
                     />
                   </div>
                 </div>
@@ -479,24 +494,26 @@ export default function EintragBearbeitenPage() {
               />
             </div>
 
-            <div className="flex justify-between pt-4">
+            <div className="flex flex-col gap-3 pt-4">
               <Button
                 variant="destructive"
                 onClick={handleDelete}
+                className="w-full h-12 text-lg"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="h-5 w-5 mr-2" />
                 Löschen
               </Button>
               
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
+                className="w-full h-12 text-lg font-semibold"
               >
                 {isSaving ? (
                   "Speichert..."
                 ) : (
                   <>
-                    <Save className="h-4 w-4 mr-2" />
+                    <Save className="h-5 w-5 mr-2" />
                     Speichern
                   </>
                 )}

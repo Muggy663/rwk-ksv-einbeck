@@ -21,8 +21,9 @@ export default function StatistikenPage() {
   const [einträge, setEinträge] = useState<SchießEintrag[]>([]);
   const [filterDisziplin, setFilterDisziplin] = useState<string>("alle");
   const [filterZeitraum, setFilterZeitraum] = useState<string>("12monate");
+  const [ergebnisTyp, setErgebnisTyp] = useState<string>("auto");
   const [isLoading, setIsLoading] = useState(true);
-  const isPremium = false; // Premium entfernt
+  const isPremium = true; // Premium entfernt - alle Features für alle
 
   useEffect(() => {
     loadData();
@@ -93,13 +94,26 @@ export default function StatistikenPage() {
     // Sortiere nach Datum und zeige individuelle Einträge
     return filtered
       .sort((a, b) => a.datum.getTime() - b.datum.getTime())
-      .map((eintrag, index) => ({
-        datum: format(eintrag.datum, 'dd.MM.yy', { locale: de }),
-        ringe: eintrag.ergebnis,
-        typ: eintrag.typ,
-        disziplin: eintrag.disziplin,
-        index: index + 1
-      }));
+      .map((eintrag, index) => {
+        // Wähle Ergebnis basierend auf Filter und Verfügbarkeit
+        let ergebnis = null;
+        if (ergebnisTyp === "auto") {
+          ergebnis = eintrag.ergebnis || eintrag.ergebnisGanzeRinge;
+        } else if (ergebnisTyp === "zehntel") {
+          // Nur Zehntel-Werte, null wenn nicht verfügbar (zeigt Lücken)
+          ergebnis = eintrag.ergebnis || null;
+        } else if (ergebnisTyp === "ganze") {
+          ergebnis = eintrag.ergebnisGanzeRinge;
+        }
+        
+        return {
+          datum: format(eintrag.datum, 'dd.MM.yy', { locale: de }),
+          ringe: ergebnis, // Kann null sein für Lücken
+          typ: eintrag.typ,
+          disziplin: eintrag.disziplin,
+          index: index + 1
+        };
+      });
   };
 
   // Disziplinen-Verteilung
@@ -146,17 +160,52 @@ export default function StatistikenPage() {
   const getBestResults = () => {
     const filtered = getFilteredData();
     return filtered
-      .sort((a, b) => b.ergebnis - a.ergebnis)
+      .sort((a, b) => {
+        let ergebnisA = 0;
+        let ergebnisB = 0;
+        
+        if (ergebnisTyp === "auto") {
+          ergebnisA = a.ergebnis || a.ergebnisGanzeRinge || 0;
+          ergebnisB = b.ergebnis || b.ergebnisGanzeRinge || 0;
+        } else if (ergebnisTyp === "zehntel") {
+          ergebnisA = a.ergebnis || 0;
+          ergebnisB = b.ergebnis || 0;
+        } else if (ergebnisTyp === "ganze") {
+          ergebnisA = a.ergebnisGanzeRinge || 0;
+          ergebnisB = b.ergebnisGanzeRinge || 0;
+        }
+        
+        return ergebnisB - ergebnisA;
+      })
+      .filter(e => {
+        if (ergebnisTyp === "auto") {
+          return (e.ergebnis || e.ergebnisGanzeRinge || 0) > 0;
+        } else if (ergebnisTyp === "zehntel") {
+          return (e.ergebnis || 0) > 0;
+        } else {
+          return (e.ergebnisGanzeRinge || 0) > 0;
+        }
+      })
       .slice(0, 5)
-      .map((e, index) => ({
-        rang: index + 1,
-        datum: format(e.datum, 'dd.MM.yyyy', { locale: de }),
-        disziplin: e.disziplin,
-        ergebnis: e.ergebnis,
-        ergebnisZehntel: e.ergebnisZehntel,
-        typ: e.typ,
-        standort: e.standort
-      }));
+      .map((e, index) => {
+        let displayErgebnis = 0;
+        if (ergebnisTyp === "auto") {
+          displayErgebnis = e.ergebnis || e.ergebnisGanzeRinge || 0;
+        } else if (ergebnisTyp === "zehntel") {
+          displayErgebnis = e.ergebnis || 0;
+        } else {
+          displayErgebnis = e.ergebnisGanzeRinge || 0;
+        }
+        
+        return {
+          rang: index + 1,
+          datum: format(e.datum, 'dd.MM.yyyy', { locale: de }),
+          disziplin: e.disziplin,
+          ergebnis: displayErgebnis,
+          typ: e.typ,
+          standort: e.standort
+        };
+      });
   };
 
   const handleExportStatistik = () => {
@@ -199,10 +248,10 @@ export default function StatistikenPage() {
       {/* Filter */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Filter</CardTitle>
+          <CardTitle>Statistik-Anzeige</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Disziplin</label>
               <NativeSelect
@@ -215,6 +264,7 @@ export default function StatistikenPage() {
                     label: disziplin
                   }))
                 ]}
+                className="text-lg h-12"
               />
             </div>
             <div>
@@ -230,7 +280,28 @@ export default function StatistikenPage() {
                   { value: "2024", label: "Jahr 2024" },
                   { value: "alle", label: "Alle Zeit" }
                 ]}
+                className="text-lg h-12"
               />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                Ergebnis-Anzeige
+              </label>
+              <NativeSelect
+                value={ergebnisTyp}
+                onValueChange={setErgebnisTyp}
+                options={[
+                  { value: "auto", label: "🎯 Intelligent (beste verfügbare)" },
+                  { value: "zehntel", label: "🎯 Nur Zehntel-Ringe" },
+                  { value: "ganze", label: "🎯 Nur ganze Ringe" }
+                ]}
+                className="text-lg h-12"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                {ergebnisTyp === "auto" ? "Zeigt Zehntel wenn vorhanden, sonst ganze Ringe" : 
+                 ergebnisTyp === "zehntel" ? "Lücken in Grafik bei fehlenden Zehntel-Werten" : "Konsistente Anzeige nur ganzer Ringe"}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -261,7 +332,10 @@ export default function StatistikenPage() {
           <Card>
             <CardHeader>
               <CardTitle>Leistungsentwicklung</CardTitle>
-              <CardDescription>Ringzahlen aller Einträge chronologisch</CardDescription>
+              <CardDescription>
+                {ergebnisTyp === "auto" ? "🧠 Intelligente Anzeige: Zehntel-Ringe wenn verfügbar, sonst ganze Ringe" : 
+                 ergebnisTyp === "zehntel" ? "🎯 Präzisions-Modus: Nur Zehntel-Ringe (Lücken bei fehlenden Werten)" : "🔢 Standard-Modus: Nur ganze Ringe"}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[300px] w-full">
@@ -271,11 +345,14 @@ export default function StatistikenPage() {
                     <XAxis dataKey="datum" />
                     <YAxis />
                     <Tooltip 
-                      formatter={(value, name, props) => [
-                        `${value} Ringe`,
-                        props.payload.typ === 'training' ? '🎯 Training' : '🏆 Wettkampf'
-                      ]}
-                      labelFormatter={(label) => `Datum: ${label}`}
+                      formatter={(value, name, props) => {
+                        if (value === null) return ['Kein Wert', 'Fehlend'];
+                        return [
+                          `${value} Ringe`,
+                          props.payload.typ === 'training' ? '🎯 Training' : '🏆 Wettkampf'
+                        ];
+                      }}
+                      labelFormatter={(label) => `📅 ${label}`}
                     />
                     <Legend />
                     <Line 
@@ -285,6 +362,7 @@ export default function StatistikenPage() {
                       name="Ringzahl"
                       strokeWidth={2}
                       dot={{ fill: '#0088FE', strokeWidth: 2, r: 4 }}
+                      connectNulls={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -318,27 +396,41 @@ export default function StatistikenPage() {
                       </ResponsiveContainer>
                     </div>
                     {(() => {
-                      const trendAnalysis = PremiumStatisticsService.getTrendAnalysis(getFilteredData());
-                      const metrics = PremiumStatisticsService.getPerformanceMetrics(getFilteredData());
+                      // Einfache Trend-Analyse ohne Premium-Service
+                      const filtered = getFilteredData();
+                      const trainings = filtered.filter(e => e.typ === 'training');
+                      const wettkämpfe = filtered.filter(e => e.typ === 'wettkampf');
+                      
+                      const avgTraining = trainings.length > 0 
+                        ? trainings.reduce((sum, e) => sum + (e.ergebnis || e.ergebnisGanzeRinge || 0), 0) / trainings.length
+                        : 0;
+                      const avgWettkampf = wettkämpfe.length > 0 
+                        ? wettkämpfe.reduce((sum, e) => sum + (e.ergebnis || e.ergebnisGanzeRinge || 0), 0) / wettkämpfe.length
+                        : 0;
+                      
+                      const trend = avgWettkampf > avgTraining ? 'steigend' : avgWettkampf < avgTraining ? 'fallend' : 'stabil';
+                      const trendDescription = trend === 'steigend' ? 'Wettkampf besser' : 
+                                             trend === 'fallend' ? 'Training besser' : 'Ausgeglichen';
+                      
                       return (
                         <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
-                          <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🎯 Premium-Analyse</h4>
+                          <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🎯 Analyse</h4>
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             <div>
                               <span className="text-blue-700 dark:text-blue-300">Trend:</span>
                               <span className={`ml-2 font-medium ${
-                                trendAnalysis.trend === 'steigend' ? 'text-green-600' :
-                                trendAnalysis.trend === 'fallend' ? 'text-red-600' : 'text-blue-600'
+                                trend === 'steigend' ? 'text-green-600' :
+                                trend === 'fallend' ? 'text-red-600' : 'text-blue-600'
                               }`}>
-                                {trendAnalysis.trend === 'steigend' ? '📈' : 
-                                 trendAnalysis.trend === 'fallend' ? '📉' : '➡️'} 
-                                {trendAnalysis.description}
+                                {trend === 'steigend' ? '📈' : 
+                                 trend === 'fallend' ? '📉' : '➡️'} 
+                                {trendDescription}
                               </span>
                             </div>
                             <div>
-                              <span className="text-blue-700 dark:text-blue-300">Konsistenz:</span>
+                              <span className="text-blue-700 dark:text-blue-300">Aktivität:</span>
                               <span className="ml-2 font-medium text-blue-900 dark:text-blue-100">
-                                {metrics.consistency}%
+                                {filtered.length} Einträge
                               </span>
                             </div>
                           </div>
@@ -409,45 +501,46 @@ export default function StatistikenPage() {
             </Card>
           </div>
 
-          {/* Premium Analytics Section */}
-          {isPremium && (() => {
-            const comparison = PremiumStatisticsService.getDisziplinComparison(getFilteredData());
-            const weeklyPattern = PremiumStatisticsService.getWeeklyPattern(getFilteredData());
-            const monthlyProgress = PremiumStatisticsService.getMonthlyProgress(getFilteredData(), 6);
+          {/* Erweiterte Analysen */}
+          {(() => {
+            const filtered = getFilteredData();
+            const disziplinStats = [...new Set(filtered.map(e => e.disziplin))].map(disziplin => {
+              const entries = filtered.filter(e => e.disziplin === disziplin);
+              const avg = entries.reduce((sum, e) => sum + (e.ergebnis || e.ergebnisGanzeRinge || 0), 0) / entries.length;
+              return { disziplin, durchschnitt: avg.toFixed(1), anzahl: entries.length };
+            }).sort((a, b) => parseFloat(b.durchschnitt) - parseFloat(a.durchschnitt));
+            
+            const weeklyData = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+              .map((day, index) => ({
+                day,
+                count: filtered.filter(e => new Date(e.datum).getDay() === (index + 1) % 7).length
+              }));
             
             return (
               <div className="space-y-6">
                 {/* Disziplin-Vergleich */}
-                <Card className="border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20">
+                <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Crown className="h-5 w-5 text-yellow-600" />
-                      Disziplin-Leistungsvergleich
-                      <Badge variant="default" className="ml-2">Premium</Badge>
+                      🏆 Disziplin-Leistungsvergleich
                     </CardTitle>
-                    <CardDescription>Detaillierte Analyse Ihrer Stärken und Schwächen</CardDescription>
+                    <CardDescription>Ihre Stärken und Schwächen im Überblick</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {comparison.slice(0, 5).map((comp, index) => (
-                        <div key={comp.disziplin} className="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                      {disziplinStats.slice(0, 5).map((stat, index) => (
+                        <div key={stat.disziplin} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                           <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-6 h-6 bg-yellow-600 text-white rounded-full text-xs font-bold">
+                            <div className="flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground rounded-full text-xs font-bold">
                               {index + 1}
                             </div>
                             <div>
-                              <div className="font-medium">{comp.disziplin}</div>
-                              <div className="text-sm text-muted-foreground">{comp.anzahl} Einträge</div>
+                              <div className="font-medium">{stat.disziplin}</div>
+                              <div className="text-sm text-muted-foreground">{stat.anzahl} Einträge</div>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold text-lg">{comp.durchschnitt}</div>
-                            <div className={`text-sm ${
-                              comp.verbesserung > 0 ? 'text-green-600' : 
-                              comp.verbesserung < 0 ? 'text-red-600' : 'text-gray-500'
-                            }`}>
-                              {comp.verbesserung > 0 ? '+' : ''}{comp.verbesserung}%
-                            </div>
+                            <div className="font-bold text-lg">{stat.durchschnitt}</div>
                           </div>
                         </div>
                       ))}
@@ -456,53 +549,24 @@ export default function StatistikenPage() {
                 </Card>
                 
                 {/* Wochenmuster */}
-                <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20">
+                <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5 text-purple-600" />
+                      <Calendar className="h-5 w-5" />
                       Wochenmuster-Analyse
-                      <Badge variant="default" className="ml-2">Premium</Badge>
                     </CardTitle>
-                    <CardDescription>An welchen Wochentagen schießen Sie am besten?</CardDescription>
+                    <CardDescription>An welchen Wochentagen schießen Sie am häufigsten?</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="h-[200px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={weeklyPattern}>
+                        <BarChart data={weeklyData}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="day" />
                           <YAxis />
                           <Tooltip />
                           <Bar dataKey="count" fill="#8B5CF6" name="Anzahl" />
                         </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Monatlicher Fortschritt */}
-                <Card className="border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-green-600" />
-                      Fortschritt seit Anmeldung
-                      <Badge variant="default" className="ml-2">Premium</Badge>
-                    </CardTitle>
-                    <CardDescription>Detaillierte Entwicklung seit Ihrem ersten Eintrag</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[250px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={monthlyProgress}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="monat" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Line type="monotone" dataKey="avgTraining" stroke="#10B981" name="Ø Training" strokeWidth={2} />
-                          <Line type="monotone" dataKey="avgWettkampf" stroke="#F59E0B" name="Ø Wettkampf" strokeWidth={2} />
-                          <Line type="monotone" dataKey="gesamtDurchschnitt" stroke="#3B82F6" name="Ø Gesamt" strokeWidth={3} />
-                        </LineChart>
                       </ResponsiveContainer>
                     </div>
                   </CardContent>
@@ -532,11 +596,6 @@ export default function StatistikenPage() {
                         <div>
                           <div className="font-medium">
                             {result.ergebnis} Ringe
-                            {result.ergebnisZehntel && (
-                              <span className="text-sm text-green-600 ml-2">
-                                ({result.ergebnisZehntel} mit Zehntel)
-                              </span>
-                            )}
                           </div>
                           <div className="text-sm text-muted-foreground">
                             {result.disziplin} • {result.datum}

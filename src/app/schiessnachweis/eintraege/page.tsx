@@ -210,17 +210,29 @@ export default function EintraegePage() {
                     <div className="font-semibold">{eintrag.schussAnzahl}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-muted-foreground">Ganze Ringe</div>
-                    <div className="font-semibold text-blue-600">{eintrag.ergebnisGanzeRinge || '-'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">Mit Zehntel</div>
-                    <div className="font-semibold text-green-600">{eintrag.ergebnis || '-'}</div>
+                    <div className="text-sm text-muted-foreground">Ergebnis</div>
+                    <div className="font-semibold space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                        <span className="text-blue-600">
+                          {eintrag.ergebnisGanzeRinge || <span className="text-orange-500">-</span>}
+                        </span>
+                        <span className="text-xs text-muted-foreground">ganze</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                        <span className="text-green-600">
+                          {eintrag.ergebnis || <span className="text-orange-500">-</span>}
+                        </span>
+                        <span className="text-xs text-muted-foreground">zehntel</span>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <div className="text-sm text-muted-foreground">Durchschnitt</div>
                     <div className="font-semibold">
-                      {eintrag.ergebnis ? (eintrag.ergebnis / eintrag.schussAnzahl).toFixed(1) : '-'}
+                      {eintrag.ergebnis && eintrag.schussAnzahl ? (eintrag.ergebnis / eintrag.schussAnzahl).toFixed(1) : 
+                       eintrag.ergebnisGanzeRinge && eintrag.schussAnzahl ? (eintrag.ergebnisGanzeRinge / eintrag.schussAnzahl).toFixed(1) : '-'}
                     </div>
                   </div>
                   <div>

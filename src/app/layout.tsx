@@ -1,6 +1,7 @@
 // Temporarily disabled Google Fonts due to build timeout
 // import { Inter } from 'next/font/google';
 import './globals.css';
+import '@/styles/hide-number-arrows.css';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import '@/components/ui/heading-styles.css';
 import { AuthProvider } from '@/components/auth/AuthProvider';
