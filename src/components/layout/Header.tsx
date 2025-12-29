@@ -5,7 +5,7 @@ import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger'
 import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { GlobalSearch } from '@/components/GlobalSearch';
+
 import { Button } from '@/components/ui/button';
 import { LogOut, LogIn } from 'lucide-react';
 import { MobileBurgerMenu } from '@/components/mobile/MobileBurgerMenu';
@@ -39,9 +39,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-2 sm:px-4 lg:px-6 max-w-7xl overflow-hidden">
-        <div className="flex-1 max-w-md lg:max-w-lg mx-2 min-w-0">
-          <GlobalSearch />
-        </div>
+
         
         <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
           <ThemeToggle />

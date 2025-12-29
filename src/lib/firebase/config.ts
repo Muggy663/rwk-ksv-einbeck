@@ -33,7 +33,7 @@ if (!getApps().length) {
 
 const auth: Auth = getAuth(app);
 // Initialisiere Firestore mit spezifischer Datenbank
-const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'restored-main';
 const db: Firestore = getFirestore(app, databaseId);
 const functions: Functions = getFunctions(app, 'europe-west1');
 const storage: FirebaseStorage = getStorage(app); // Firebase Storage initialisieren
