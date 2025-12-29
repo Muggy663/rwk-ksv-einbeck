@@ -4,7 +4,7 @@ import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
   try {
-    const snapshot = await adminDb.collection('km_startlisten').orderBy('createdAt', 'desc').get();
+    const snapshot = await adminDb.collection('km_startlisten_v2').orderBy('createdAt', 'desc').get();
     const startlisten = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   try {
     const { configId, startliste, datum } = await request.json();
     
-    const docRef = await adminDb.collection('km_startlisten').add({
+    const docRef = await adminDb.collection('km_startlisten_v2').add({
       configId,
       startliste,
       datum,
@@ -59,7 +59,7 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 });
     }
     
-    await adminDb.collection('km_startlisten').doc(id).update({
+    await adminDb.collection('km_startlisten_v2').doc(id).update({
       configId,
       startliste,
       datum,
@@ -89,7 +89,7 @@ export async function DELETE(request: NextRequest) {
       }, { status: 400 });
     }
     
-    await adminDb.collection('km_startlisten').doc(id).delete();
+    await adminDb.collection('km_startlisten_v2').doc(id).delete();
     
     return NextResponse.json({
       success: true

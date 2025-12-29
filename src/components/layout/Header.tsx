@@ -39,18 +39,13 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-2 sm:px-4 lg:px-6 max-w-7xl overflow-hidden">
-
+        <div className="flex-1"></div>
         
-        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0 ml-auto">
           <ThemeToggle />
           
-          {/* Mobile Burger Menu */}
-          <div className="lg:hidden">
-            <MobileBurgerMenu />
-          </div>
-          
           {user ? (
-            <div className="flex items-center space-x-1 sm:space-x-2">
+            <>
               <div className="hidden md:block">
                 <InactivityTimer />
               </div>
@@ -66,7 +61,7 @@ export function Header() {
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Logout</span>
               </Button>
-            </div>
+            </>
           ) : (
             <Link href="/login">
               <Button variant="ghost" size="sm" className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
@@ -75,6 +70,11 @@ export function Header() {
               </Button>
             </Link>
           )}
+          
+          {/* Mobile Burger Menu */}
+          <div className="lg:hidden">
+            <MobileBurgerMenu />
+          </div>
         </div>
       </div>
     </header>

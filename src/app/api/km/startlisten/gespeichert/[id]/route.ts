@@ -7,7 +7,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = params;
-    await adminDb.collection('km_startlisten').doc(id).delete();
+    await adminDb.collection('km_startlisten_v2').doc(id).delete();
     
     return NextResponse.json({
       success: true,

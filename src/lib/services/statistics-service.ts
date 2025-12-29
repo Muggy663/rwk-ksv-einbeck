@@ -142,6 +142,10 @@ export async function fetchShooterPerformanceData(
     return [];
   } catch (error) {
     logError('Fehler beim Laden der Schützenleistungsdaten:', error);
+    // Spezielle Behandlung für NOT_FOUND Fehler während Build-Zeit
+    if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
+      logWarn('Firestore-Collection nicht gefunden (Build-Zeit)');
+    }
     return [];
   }
 }
@@ -248,6 +252,10 @@ export async function fetchTeamComparisonData(
     return [];
   } catch (error) {
     logError('Fehler beim Laden der Mannschaftsvergleichsdaten:', error);
+    // Spezielle Behandlung für NOT_FOUND Fehler während Build-Zeit
+    if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
+      logWarn('Firestore-Collection nicht gefunden (Build-Zeit)');
+    }
     return [];
   }
 }
@@ -356,6 +364,10 @@ export async function fetchGenderDistributionData(
     return { male: 0, female: 0 };
   } catch (error) {
     logError('Fehler beim Laden der Geschlechterverteilungsdaten:', error);
+    // Spezielle Behandlung für NOT_FOUND Fehler während Build-Zeit
+    if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
+      logWarn('Firestore-Collection nicht gefunden (Build-Zeit)');
+    }
     return { male: 0, female: 0 };
   }
 }
@@ -385,6 +397,10 @@ export async function fetchSeasons() {
     return [];
   } catch (error) {
     logError('Fehler beim Laden der Saisons:', error);
+    // Spezielle Behandlung für NOT_FOUND Fehler während Build-Zeit
+    if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
+      logWarn('Firestore-Collection nicht gefunden (Build-Zeit)');
+    }
     return [];
   }
 }
@@ -432,6 +448,10 @@ export async function fetchLeagues(seasonId: string) {
     return [];
   } catch (error) {
     logError('Fehler beim Laden der Ligen:', error);
+    // Spezielle Behandlung für NOT_FOUND Fehler während Build-Zeit
+    if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
+      logWarn('Firestore-Collection nicht gefunden (Build-Zeit)');
+    }
     return [];
   }
 }
@@ -459,6 +479,10 @@ export async function fetchClubs() {
     return [];
   } catch (error) {
     logError('Fehler beim Laden der Vereine:', error);
+    // Spezielle Behandlung für NOT_FOUND Fehler während Build-Zeit
+    if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
+      logWarn('Firestore-Collection nicht gefunden (Build-Zeit)');
+    }
     return [];
   }
 }

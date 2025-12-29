@@ -48,47 +48,42 @@ export default function StartlistenV2Uebersicht() {
 
   const loadVerfuegbareJahre = async () => {
     try {
-      const { getFirestore, listCollections } = await import('firebase/firestore');
+      const { getFirestore } = await import('firebase/firestore');
       const { app } = await import('@/lib/firebase/config');
       const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
       const correctDb = getFirestore(app, databaseId);
       
-      // Teste verschiedene Jahre
-      const testJahre = ['2024', '2025', '2026', '2027', '2028'];
-      const gefundeneJahre: string[] = [];
+      // Dynamisch aus existierenden Collections ableiten
+      const knownCollections = [
+        'km_meldungen_2026_kk', 'km_meldungen_2026_kkp', 'km_meldungen_2026_ld'
+      ];
       
-      for (const jahr of testJahre) {
+      const gefundeneJahre = new Set();
+      
+      for (const collectionName of knownCollections) {
         try {
-          // Teste ob mindestens eine der Collections existiert
-          const testCollections = [`km_meldungen_${jahr}_kk`, `km_meldungen_${jahr}_kkp`, `km_meldungen_${jahr}_ld`];
+          const { getDocs, collection, limit, query } = await import('firebase/firestore');
+          const testQuery = query(collection(correctDb, collectionName), limit(1));
+          const snapshot = await getDocs(testQuery);
           
-          for (const collectionName of testCollections) {
-            try {
-              const { getDocs, collection, limit, query } = await import('firebase/firestore');
-              const testQuery = query(collection(correctDb, collectionName), limit(1));
-              const snapshot = await getDocs(testQuery);
-              
-              if (!snapshot.empty) {
-                if (!gefundeneJahre.includes(jahr)) {
-                  gefundeneJahre.push(jahr);
-                }
-                break; // Ein Collection gefunden reicht
-              }
-            } catch (e) {
-              // Collection existiert nicht
+          if (!snapshot.empty) {
+            // Extrahiere Jahr aus Collection-Name (z.B. "km_meldungen_2026_kk" -> "2026")
+            const jahr = collectionName.match(/_(\d{4})_/)?.[1];
+            if (jahr) {
+              gefundeneJahre.add(jahr);
             }
           }
         } catch (e) {
-          // Jahr nicht verfügbar
+          // Collection existiert nicht - ignorieren
         }
       }
       
-      gefundeneJahre.sort((a, b) => parseInt(b) - parseInt(a)); // Neueste zuerst
-      setVerfuegbareJahre(gefundeneJahre);
+      const jahreArray = Array.from(gefundeneJahre).sort((a, b) => parseInt(b) - parseInt(a));
+      setVerfuegbareJahre(jahreArray);
       
       // Setze das neueste Jahr als Standard
-      if (gefundeneJahre.length > 0 && !selectedSaison) {
-        setSelectedSaison(gefundeneJahre[0]);
+      if (jahreArray.length > 0 && !selectedSaison) {
+        setSelectedSaison(jahreArray[0]);
       }
     } catch (error) {
       console.error('Fehler beim Laden der verfügbaren Jahre:', error);
@@ -974,7 +969,7 @@ export default function StartlistenV2Uebersicht() {
                           value={editData.konfiguration?.durchgang || ''}
                           onChange={(e) => setEditData({
                             ...editData,
-                            konfiguration: { ...editData.konfiguration, durchgang: parseInt(e.target.value) }
+                            konfiguration: { ...editData.konfiguration, durchgang: e.target.value ? parseInt(e.target.value) : '' }
                           })}
                           className="w-full p-2 border rounded text-sm"
                         />
@@ -986,7 +981,7 @@ export default function StartlistenV2Uebersicht() {
                           value={editData.konfiguration?.wechsel || ''}
                           onChange={(e) => setEditData({
                             ...editData,
-                            konfiguration: { ...editData.konfiguration, wechsel: parseInt(e.target.value) }
+                            konfiguration: { ...editData.konfiguration, wechsel: e.target.value ? parseInt(e.target.value) : '' }
                           })}
                           className="w-full p-2 border rounded text-sm"
                         />
@@ -999,40 +994,6 @@ export default function StartlistenV2Uebersicht() {
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="font-medium text-green-900">Schützen verwalten</h4>
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            // Filtere nur LM-Teilnehmer aus den Meldungen
-                            const lmMeldungen = meldungen.filter(m => 
-                              m.saisonId === startliste.saison && m.lmTeilnahme === true &&
-                              !editData.startliste?.some(s => s.name === m.name && s.disziplin === m.disziplin)
-                            );
-                            
-                            // Füge alle LM-Teilnehmer zur Startliste hinzu
-                            const neueLMStarter = lmMeldungen.map(meldung => ({
-                              id: `lm_${Date.now()}_${Math.random()}`,
-                              name: meldung.name,
-                              schuetzeName: meldung.name,
-                              verein: meldung.verein,
-                              disziplin: meldung.disziplin,
-                              altersklasse: meldung.altersklasse,
-                              anmerkung: meldung.anmerkung || '',
-                              stand: '1',
-                              startzeit: editData.konfiguration?.startzeit || '14:00',
-                              durchgang: 1,
-                              lmTeilnahme: true
-                            }));
-                            
-                            setEditData({
-                              ...editData,
-                              startliste: [...(editData.startliste || []), ...neueLMStarter]
-                            });
-                            
-                            alert(`✅ ${neueLMStarter.length} LM-Teilnehmer hinzugefügt!`);
-                          }}
-                          className="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700"
-                        >
-                          + Alle LM-Teilnehmer
-                        </button>
                         <button
                           onClick={() => setShowAddShooter(!showAddShooter)}
                           className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
@@ -1097,7 +1058,7 @@ export default function StartlistenV2Uebersicht() {
                   </div>
                   
                   {/* Startliste bearbeiten */}
-                  <div className="space-y-2 max-h-screen overflow-y-auto bg-gray-50 rounded-lg p-3">
+                  <div className="space-y-2 max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-3" id="startliste-container">
                     <div className="grid grid-cols-10 gap-2 p-2 bg-gray-200 dark:bg-gray-700 rounded font-medium text-sm dark:text-white">
                       <div>Name</div>
                       <div>Verein</div>
@@ -1209,6 +1170,20 @@ export default function StartlistenV2Uebersicht() {
                             }));
                             e.currentTarget.style.opacity = '0.5';
                           }}
+                          onDrag={(e) => {
+                            // Auto-scroll während drag
+                            const container = document.getElementById('startliste-container');
+                            if (container) {
+                              const rect = container.getBoundingClientRect();
+                              const scrollZone = 50;
+                              
+                              if (e.clientY < rect.top + scrollZone) {
+                                container.scrollTop -= 10;
+                              } else if (e.clientY > rect.bottom - scrollZone) {
+                                container.scrollTop += 10;
+                              }
+                            }
+                          }}
                           onDragEnd={(e) => {
                             e.currentTarget.style.opacity = '1';
                           }}
@@ -1297,8 +1272,8 @@ export default function StartlistenV2Uebersicht() {
                         />
                         <input
                           type="number"
-                          value={starter.durchgang}
-                          onChange={(e) => updateStarter(index, 'durchgang', parseInt(e.target.value))}
+                          value={starter.durchgang || ''}
+                          onChange={(e) => updateStarter(index, 'durchgang', e.target.value ? parseInt(e.target.value) : 1)}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                           min="1"
                         />
@@ -1393,14 +1368,14 @@ export default function StartlistenV2Uebersicht() {
                           />
                         )}
                       </React.Fragment>
-                    ))}}
+                    ))}
                   </div>
                 </div>
               ) : (
                 <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
                   <p>Datum: {startliste.konfiguration?.datum || 'Nicht angegeben'}</p>
                   <p>Ort: {startliste.konfiguration?.austragungsort || 'Nicht angegeben'}</p>
-                  <p>Disziplinen: {startliste.konfiguration?.selectedDisziplinen?.join(', ') || 'Alle'}</p>
+                  <p><span className="text-red-600 font-semibold">Disziplinen:</span> {startliste.konfiguration?.selectedDisziplinen?.join(', ') || 'Alle'}</p>
                   <p>Konfiguration: {startliste.konfiguration?.staende?.length || 0} Stände, Start: {startliste.konfiguration?.startzeit}</p>
                   <p>Erstellt: {new Date(startliste.erstellt?.toDate?.() || startliste.erstellt).toLocaleString('de-DE')}</p>
                 </div>

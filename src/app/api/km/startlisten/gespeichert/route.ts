@@ -4,7 +4,7 @@ import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {
   try {
-    const snapshot = await adminDb.collection('km_startlisten').get();
+    const snapshot = await adminDb.collection('km_startlisten_v2').get();
     const startlisten = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()

@@ -25,7 +25,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **⚔️ Live-Wettkämpfe** - Real-time Wettkämpfe mit Live-Ranglisten
 - **🎯 Duelle-System** - 1vs1 Herausforderungen mit Firebase-Integration
 - **📊 Community-Statistiken** - Erweiterte Performance-Analysen
-- **🔔 Smart Notifications** - DSGVO-konforme Push-Benachrichtigungen
+- **🔔 Erweiterte Statistiken** - Detaillierte Performance-Analysen
 - **🏅 Ranglisten** - Community-weite Leistungsvergleiche
 - **📱 Real-time Updates** - Live-Synchronisation aller Ergebnisse
 - **🎮 Einheitliche Eingabe** - Über Schießnachweis mit Social Training Checkbox
@@ -57,7 +57,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **Erweiterte Statistiken** - Detaillierte Leistungsanalysen
 - **PDF-Export für Behörden** - Offizieller Nachweis für Waffenbehörde
 
-### 👥 Social Training (Version 2.0.0.1)
+### 👥 Social Training
 - **Trainingsgruppen erstellen** - Mit 6-stelligen Beitrittscodes
 - **Live-Wettkämpfe** - Real-time Ranglisten mit Rundenbasiertem System
 - **Duelle-System** - 1vs1 Herausforderungen mit Firebase-Integration
@@ -67,8 +67,6 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **Automatische Ranglisten** - Live-Updates basierend auf Gruppen-Ergebnissen
 
 ### 📊 Verwaltung & Organisation
-- **Globale Suche** über alle Bereiche
-- **Schützen-Datenbank** mit Import/Export
 - **Disziplinen-Verwaltung** flexibel konfigurierbar
 - **Statistik-Dashboard** mit Auswertungen
 
@@ -99,7 +97,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **Meyton Integration**: Export für elektronische Schießanlagen
 - **Google Gemini AI**: Intelligenteste OCR-Erkennung für Handzettel
 
-### 👥 Social Features (20.11.2025)
+### 👥 Social Features
 - **Live-Wettkämpfe**: Real-time Wettkämpfe mit Live-Ranglisten
 - **Duelle-System**: 1vs1 Herausforderungen mit Firebase-Integration
 - **Community-Ranglisten**: Automatische Sortierung und Performance-Analysen
@@ -123,7 +121,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - Keine Live-Wettkämpfe möglich
 - Zeitaufwändige Kommunikation
 
-### ✅ Nachher (Digital + Community - Stand 29.11.2025)
+### ✅ Nachher (Digital + Community)
 - **Automatische Berechnung** aller Tabellen und Ranglisten
 - **Live-Wettkämpfe** mit Real-time Ranglisten
 - **Trainingsgruppen** mit 6-stelligen Beitrittscodes und Community-Features
