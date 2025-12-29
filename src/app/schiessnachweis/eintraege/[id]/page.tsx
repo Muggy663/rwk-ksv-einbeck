@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
-import { ArrowLeft, Save, Trash2, ChevronDown } from "lucide-react";
+import { ArrowLeft, Save, Trash2, ChevronDown, Target } from "lucide-react";
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
 import { SchießEintrag, KATEGORIEN, getDisziplinenByKategorie, getDisziplinConfig, WETTKAMPF_TYPEN, ZehnerSerie } from "@/types/schiessnachweis";
@@ -115,7 +115,9 @@ export default function EintragBearbeitenPage() {
           title: "✅ Gespeichert",
           description: "Eintrag wurde erfolgreich aktualisiert.",
         });
-        router.push("/schiessnachweis/eintraege");
+        
+        // Zurück zur Liste und neu laden
+        router.push("/schiessnachweis/eintraege?refresh=" + Date.now());
       } else {
         throw new Error("Update fehlgeschlagen");
       }
@@ -175,7 +177,7 @@ export default function EintragBearbeitenPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-2xl">
+    <div className="container mx-auto p-4 sm:p-6 max-w-4xl">
       <div className="mb-6">
         <Button asChild variant="ghost" className="mb-4">
           <Link href="/schiessnachweis/eintraege">
@@ -184,7 +186,10 @@ export default function EintragBearbeitenPage() {
           </Link>
         </Button>
         
-        <h1 className="text-2xl font-bold">Eintrag bearbeiten</h1>
+        <div className="flex items-center gap-3 mb-2">
+          <Target className="h-8 w-8 text-blue-600" />
+          <h1 className="text-2xl font-bold">Eintrag bearbeiten</h1>
+        </div>
         <p className="text-muted-foreground">
           Erstellt am {format(eintrag.createdAt, 'dd.MM.yyyy HH:mm')}
         </p>
@@ -192,44 +197,57 @@ export default function EintragBearbeitenPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Eintrag-Details</CardTitle>
+          <CardTitle>Schießaktivität bearbeiten</CardTitle>
           <CardDescription>
-            Bearbeiten Sie die Details Ihres Schießeintrags
+            Alle Felder mit * sind Pflichtfelder
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <Label htmlFor="datum">Datum *</Label>
-                <Input
-                  id="datum"
-                  type="date"
-                  value={format(eintrag.datum, 'yyyy-MM-dd')}
-                  onChange={(e) => setEintrag({
-                    ...eintrag,
-                    datum: new Date(e.target.value)
-                  })}
-                  required
-                  className="text-lg"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="typ">Art der Aktivität *</Label>
-                <NativeSelect
-                  value={eintrag.typ}
-                  onValueChange={(value) => setEintrag({
-                    ...eintrag,
-                    typ: value as SchießEintrag['typ']
-                  })}
-                  options={WETTKAMPF_TYPEN.map(typ => ({
-                    value: typ.value,
-                    label: `${typ.icon} ${typ.label}`
-                  }))}
-                  className="text-lg"
-                />
-              </div>
+            <div>
+              <Label htmlFor="datum">Datum *</Label>
+              <Input
+                id="datum"
+                type="date"
+                value={format(eintrag.datum, 'yyyy-MM-dd')}
+                onChange={(e) => setEintrag({
+                  ...eintrag,
+                  datum: new Date(e.target.value)
+                })}
+                required
+                className="text-lg h-12"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="typ">Art der Aktivität *</Label>
+              <NativeSelect
+                value={eintrag.typ}
+                onValueChange={(value) => setEintrag({
+                  ...eintrag,
+                  typ: value as SchießEintrag['typ']
+                })}
+                options={WETTKAMPF_TYPEN.map(typ => ({
+                  value: typ.value,
+                  label: `${typ.icon} ${typ.label}`
+                }))}
+                className="text-lg"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="standort">Ort/Stadt *</Label>
+              <Input
+                id="standort"
+                value={eintrag.standort}
+                onChange={(e) => setEintrag({
+                  ...eintrag,
+                  standort: e.target.value
+                })}
+                placeholder="z.B. Einbeck"
+                required
+                className="text-lg h-12"
+              />
             </div>
 
             <div>
@@ -282,95 +300,25 @@ export default function EintragBearbeitenPage() {
                         schussAnzahl: parseInt(e.target.value) || 0
                       })}
                       required
-                      className="text-lg font-semibold"
+                      className="text-lg font-semibold h-12"
                     />
                   </div>
-                  
-                      <div>
-                        <Label htmlFor="ergebnis" className="text-sm font-medium">Ergebnis *</Label>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="ergebnisGanzeRinge" className="text-sm font-medium flex items-center gap-2">
-                              <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
-                              Ganze Ringe *
-                            </Label>
-                            <Input
-                              id="ergebnisGanzeRinge"
-                              type="number"
-                              min="0"
-                              max="1000"
-                              value={eintrag.ergebnisGanzeRinge || ''}
-                              onChange={(e) => setEintrag({
-                                ...eintrag,
-                                ergebnisGanzeRinge: parseInt(e.target.value) || 0
-                              })}
-                              placeholder="95"
-                              required
-                              className="text-xl font-bold h-12"
-                            />
-                            <p className="text-xs text-muted-foreground mt-1">Standard-Bewertung (0-10 pro Schuss)</p>
-                          </div>
-                          <div>
-                            <Label htmlFor="ergebnisZehntel" className="text-sm font-medium flex items-center gap-2">
-                              <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                              Zehntel-Ringe (optional)
-                            </Label>
-                            <Input
-                              id="ergebnisZehntel"
-                              type="number"
-                              step="0.1"
-                              min="0"
-                              max="1000"
-                              value={eintrag.ergebnis || ''}
-                              onChange={(e) => setEintrag({
-                                ...eintrag,
-                                ergebnis: parseFloat(e.target.value) || 0
-                              })}
-                              placeholder="109.0"
-                              className="text-xl font-bold h-12 border-green-200 focus:border-green-400"
-                            />
-                            <p className="text-xs text-muted-foreground mt-1">Präzisions-Bewertung (0-10.9 pro Schuss)</p>
-                          </div>
-                        </div>
-                        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                          <p className="text-xs text-blue-700 dark:text-blue-300">
-                            💡 <strong>Tipp:</strong> Beide Werte sind unabhängig - ganze Ringe für Vergleiche, Zehntel für Präzision
-                          </p>
-                        </div>
-                      </div>
                 </div>
               );
             })()}
 
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <Label htmlFor="standort">Ort/Stadt *</Label>
-                <Input
-                  id="standort"
-                  value={eintrag.standort}
-                  onChange={(e) => setEintrag({
-                    ...eintrag,
-                    standort: e.target.value
-                  })}
-                  placeholder="z.B. Einbeck"
-                  required
-                  className="text-lg"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="schiessstand">Schießstand</Label>
-                <Input
-                  id="schiessstand"
-                  value={eintrag.schiessstand || ''}
-                  onChange={(e) => setEintrag({
-                    ...eintrag,
-                    schiessstand: e.target.value
-                  })}
-                  placeholder="z.B. Einbecker Schützengilde"
-                  className="text-lg"
-                />
-              </div>
+            <div>
+              <Label htmlFor="schiessstand">Schießstand (optional)</Label>
+              <Input
+                id="schiessstand"
+                value={eintrag.schiessstand || ''}
+                onChange={(e) => setEintrag({
+                  ...eintrag,
+                  schiessstand: e.target.value
+                })}
+                placeholder="z.B. Einbecker Schützengilde"
+                className="text-lg h-12"
+              />
             </div>
             
             {/* Optionale Details */}
@@ -390,7 +338,7 @@ export default function EintragBearbeitenPage() {
               </div>
               
               {showOptionalFields && (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-4">
                   <div>
                     <Label htmlFor="wetter">Wetter</Label>
                     <NativeSelect
@@ -421,7 +369,7 @@ export default function EintragBearbeitenPage() {
                         munition: e.target.value
                       })}
                       placeholder="z.B. RWS R50"
-                      className="text-lg"
+                      className="text-lg h-12"
                     />
                   </div>
                   
@@ -435,7 +383,7 @@ export default function EintragBearbeitenPage() {
                         waffe: e.target.value
                       })}
                       placeholder="z.B. Anschütz 1827"
-                      className="text-lg"
+                      className="text-lg h-12"
                     />
                   </div>
                 </div>
@@ -448,7 +396,7 @@ export default function EintragBearbeitenPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4">
                     <div>
                       <Label className="text-base font-semibold">Detaillierte Serien-Erfassung (optional)</Label>
-                      <p className="text-sm text-muted-foreground mt-1">Das Gesamtergebnis oben reicht zum Speichern - Serien sind nur für detaillierte Analyse</p>
+                      <p className="text-sm text-muted-foreground mt-1">Serien sind optional - das Gesamtergebnis unten reicht zum Speichern</p>
                     </div>
                     <Button
                       type="button"
@@ -476,6 +424,55 @@ export default function EintragBearbeitenPage() {
                       schussAnzahl={eintrag.schussAnzahl}
                     />
                   )}
+                  
+                  {/* Ergebnis-Felder zwischen Serien und Notizen */}
+                  <div>
+                    <Label htmlFor="ergebnis" className="text-sm font-medium">Ergebnis *</Label>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="ergebnisGanzeRinge" className="text-sm font-medium flex items-center gap-2">
+                          <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                          Ganze Ringe *
+                        </Label>
+                        <Input
+                          id="ergebnisGanzeRinge"
+                          type="number"
+                          min="0"
+                          max="1000"
+                          value={eintrag.ergebnisGanzeRinge || ''}
+                          onChange={(e) => setEintrag({
+                            ...eintrag,
+                            ergebnisGanzeRinge: parseInt(e.target.value) || 0
+                          })}
+                          placeholder="95"
+                          required
+                          className="text-xl font-bold h-12"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Standard-Bewertung (0-10 pro Schuss)</p>
+                      </div>
+                      <div>
+                        <Label htmlFor="ergebnisZehntel" className="text-sm font-medium flex items-center gap-2">
+                          <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                          Zehntel-Ringe (optional)
+                        </Label>
+                        <Input
+                          id="ergebnisZehntel"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="1000"
+                          value={eintrag.ergebnis ? eintrag.ergebnis.toString() : ''}
+                          onChange={(e) => setEintrag({
+                            ...eintrag,
+                            ergebnis: parseFloat(e.target.value) || 0
+                          })}
+                          placeholder="109.0"
+                          className="text-xl font-bold h-12 border-green-200 focus:border-green-400"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Präzisions-Bewertung (0-10.9 pro Schuss)</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -494,29 +491,29 @@ export default function EintragBearbeitenPage() {
               />
             </div>
 
-            <div className="flex flex-col gap-3 pt-4">
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-                className="w-full h-12 text-lg"
-              >
-                <Trash2 className="h-5 w-5 mr-2" />
-                Löschen
-              </Button>
-              
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="w-full h-12 text-lg font-semibold"
+                className="flex items-center gap-2"
               >
                 {isSaving ? (
                   "Speichert..."
                 ) : (
                   <>
-                    <Save className="h-5 w-5 mr-2" />
+                    <Save className="h-4 w-4" />
                     Speichern
                   </>
                 )}
+              </Button>
+              
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Löschen
               </Button>
             </div>
           </div>

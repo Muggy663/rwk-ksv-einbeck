@@ -151,7 +151,7 @@ export default function SchießnachweisPage() {
   };
 
   const convertToCSV = (einträge: any[]) => {
-    const headers = ['Datum', 'Typ', 'Disziplin', 'Schussanzahl', 'Ergebnis', 'Standort', 'Schiessstand', 'Wetter', 'Munition', 'Waffe', 'Notizen', 'Serien'];
+    const headers = ['Datum', 'Typ', 'Disziplin', 'Schussanzahl', 'Ergebnis_Ganze_Ringe', 'Ergebnis_Zehntel_Ringe', 'Standort', 'Schiessstand', 'Wetter', 'Munition', 'Waffe', 'Notizen', 'Serien'];
     const csvRows = [headers.join(';')];
     
     einträge.forEach(eintrag => {
@@ -169,13 +169,14 @@ export default function SchießnachweisPage() {
         datumStr = 'Ungültiges Datum';
       }
       
-      const serienData = eintrag.serien ? JSON.stringify(eintrag.serien) : '';
+      const serienData = eintrag.serien && eintrag.serien.length > 0 ? JSON.stringify(eintrag.serien) : '';
       const row = [
         datumStr,
         eintrag.typ === 'training' ? 'Training' : 'Wettkampf',
         eintrag.disziplin || '',
         eintrag.schussAnzahl || 0,
-        eintrag.ergebnis || 0,
+        eintrag.ergebnisGanzeRinge || '',
+        eintrag.ergebnis || '',
         eintrag.standort || '',
         eintrag.schiessstand || '',
         eintrag.wetter || '',

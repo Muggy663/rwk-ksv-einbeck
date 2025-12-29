@@ -119,7 +119,7 @@ export default function NeuerEintragPage() {
       if (mitZehntel > 0) {
         setFormData(prev => ({ 
           ...prev, 
-          ergebnis: mitZehntel.toString(),
+          ergebnis: Math.round(mitZehntel * 10) / 10, // Auf 1 Nachkommastelle runden
           ergebnisGanzeRinge: ohneZehntel.toString()
         }));
       }
@@ -134,7 +134,7 @@ export default function NeuerEintragPage() {
     const missingFields = [];
     if (!formData.disziplin) missingFields.push('Disziplin');
     if (!formData.schussAnzahl) missingFields.push('Anzahl Schüsse');
-    if (!formData.ergebnisGanzeRinge) missingFields.push('Ergebnis (Ganze Ringe)');
+    if (!formData.ergebnisGanzeRinge && !berechneteErgebnisse?.ohneZehntel) missingFields.push('Ergebnis (Ganze Ringe)');
     if (!formData.standort || !formData.standort.trim()) missingFields.push('Ort/Stadt');
     
     if (missingFields.length > 0) {
@@ -143,16 +143,28 @@ export default function NeuerEintragPage() {
         description: `Bitte ausfüllen: ${missingFields.join(', ')}`,
         variant: "destructive"
       });
+      
+      // Browser-Alert für bessere Sichtbarkeit
+      alert(`Pflichtfelder fehlen!\n\nBitte ausfüllen: ${missingFields.join(', ')}`);
+      
       return;
     }
     
+    // Verwende berechnete Ergebnisse wenn verfügbar, sonst Eingabefelder
+    const ganzeRinge = berechneteErgebnisse?.ohneZehntel || parseFloat(formData.ergebnisGanzeRinge);
+    const zehntelErgebnis = berechneteErgebnisse?.mitZehntel || (formData.ergebnis ? parseFloat(formData.ergebnis) : undefined);
+    
     // Prüfe ob Ergebnis > 0 ist
-    if (parseFloat(formData.ergebnisGanzeRinge) <= 0) {
+    if (ganzeRinge <= 0) {
       toast({
         title: "Fehler",
         description: "Bitte geben Sie ein gültiges Ergebnis ein.",
         variant: "destructive"
       });
+      
+      // Browser-Alert
+      alert('Ungültiges Ergebnis!\n\nBitte geben Sie ein gültiges Ergebnis ein.');
+      
       return;
     }
 
@@ -160,13 +172,11 @@ export default function NeuerEintragPage() {
     
     try {
       // Debug: Prüfe Ergebnis-Felder
-      logDebug('🔍 Debug - ergebnisGanzeRinge:', formData.ergebnisGanzeRinge);
-      logDebug('🔍 Debug - ergebnis (Zehntel):', formData.ergebnis);
+      logDebug('🔍 Debug - ergebnisGanzeRinge:', ganzeRinge);
+      logDebug('🔍 Debug - ergebnis (Zehntel):', zehntelErgebnis);
+      logDebug('🔍 Debug - serien:', serien);
       logDebug('🔍 Debug - selectedGroupId:', selectedGroupId);
       logDebug('🔍 Debug - socialTraining:', socialTraining);
-      
-      const ganzeRinge = parseFloat(formData.ergebnisGanzeRinge);
-      const zehntelErgebnis = formData.ergebnis ? parseFloat(formData.ergebnis) : undefined;
       
       logDebug('🔍 Parsed - ganzeRinge:', ganzeRinge);
       logDebug('🔍 Parsed - zehntelErgebnis:', zehntelErgebnis);
@@ -254,40 +264,29 @@ export default function NeuerEintragPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="datum">Datum *</Label>
-                <Input
-                  id="datum"
-                  type="date"
-                  value={formData.datum}
-                  onChange={(e) => setFormData(prev => ({ ...prev, datum: e.target.value }))}
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="typ">Art der Aktivität *</Label>
-                <NativeSelect
-                  value={formData.typ}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, typ: value }))}
-                  options={WETTKAMPF_TYPEN.map(typ => ({
-                    value: typ.value,
-                    label: `${typ.icon} ${typ.label}`
-                  }))}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="standort">Ort/Stadt *</Label>
-                <Input
-                  id="standort"
-                  value={formData.standort}
-                  onChange={(e) => setFormData(prev => ({ ...prev, standort: e.target.value }))}
-                  placeholder="z.B. Einbeck"
-                  required
-                />
-              </div>
+            <div>
+              <Label htmlFor="datum">Datum *</Label>
+              <Input
+                id="datum"
+                type="date"
+                value={formData.datum}
+                onChange={(e) => setFormData(prev => ({ ...prev, datum: e.target.value }))}
+                required
+                className="text-lg"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="typ">Art der Aktivität *</Label>
+              <NativeSelect
+                value={formData.typ}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, typ: value }))}
+                options={WETTKAMPF_TYPEN.map(typ => ({
+                  value: typ.value,
+                  label: `${typ.icon} ${typ.label}`
+                }))}
+                className="text-lg"
+              />
             </div>
 
             <div>
@@ -321,7 +320,7 @@ export default function NeuerEintragPage() {
             {formData.disziplin && (() => {
               const config = getDisziplinConfig(formData.disziplin);
               return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <Label htmlFor="schussAnzahl">Anzahl Schüsse *</Label>
                     {config && config.schussAnzahl.length > 1 ? (
@@ -333,6 +332,7 @@ export default function NeuerEintragPage() {
                           value: anzahl.toString(),
                           label: `${anzahl} Schuss`
                         }))}
+                        className="text-lg"
                       />
                     ) : (
                       <Input
@@ -344,67 +344,8 @@ export default function NeuerEintragPage() {
                         onChange={(e) => setFormData(prev => ({ ...prev, schussAnzahl: e.target.value }))}
                         placeholder={config ? config.schussAnzahl[0].toString() : "z.B. 40"}
                         required
+                        className="text-lg font-semibold"
                       />
-                    )}
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="ergebnis">Ergebnis *</Label>
-                    <div className="space-y-3">
-                      <div>
-                        <Label htmlFor="ergebnisGanzeRinge" className="text-sm font-medium text-blue-700">Ergebnis (Ganze Ringe) *</Label>
-                        <Input
-                          id="ergebnisGanzeRinge"
-                          type="number"
-                          min="0"
-                          max="1000"
-                          value={formData.ergebnisGanzeRinge}
-                          onChange={(e) => setFormData(prev => ({ ...prev, ergebnisGanzeRinge: e.target.value }))}
-                          required
-                          className="border-blue-200 focus:border-blue-400"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="ergebnis" className="text-sm font-medium text-green-700">Ergebnis (mit Zehntel) - Optional</Label>
-                        <Input
-                          id="ergebnis"
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="1000"
-                          value={formData.ergebnis}
-                          onChange={(e) => setFormData(prev => ({ ...prev, ergebnis: e.target.value }))}
-                          disabled={showDetailedEntry && serien.length > 0}
-                          className="border-green-200 focus:border-green-400"
-                        />
-                      </div>
-                    </div>
-                    {config && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        🎯 Max. {config.maxRinge} Ringe pro Schuss<br/>
-                        📊 <strong>Ganze Ringe:</strong> Pflichtfeld für alle Einträge<br/>
-                        🎯 <strong>Zehntel-Ergebnis:</strong> Optional für Leistungsschützen (z.B. detaillierte Analyse)
-                      </p>
-                    )}
-                    
-                    {/* Berechnetes Ergebnis anzeigen */}
-                    {berechneteErgebnisse && (
-                      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h4 className="text-sm font-semibold text-blue-900 mb-2">🎯 Aus Serien berechnet:</h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="bg-white p-2 rounded border text-center">
-                            <div className="text-blue-700 font-medium text-sm">Ganze Ringe:</div>
-                            <div className="text-lg font-bold text-blue-900">{berechneteErgebnisse.ohneZehntel}</div>
-                          </div>
-                          <div className="bg-white p-2 rounded border text-center">
-                            <div className="text-green-700 font-medium text-sm">Mit Zehntel:</div>
-                            <div className="text-lg font-bold text-green-900">{berechneteErgebnisse.mitZehntel}</div>
-                          </div>
-                        </div>
-                        <p className="text-xs text-blue-700 mt-2">
-                          ✅ Beide Ergebnisse automatisch übernommen
-                        </p>
-                      </div>
                     )}
                   </div>
                 </div>
@@ -412,12 +353,25 @@ export default function NeuerEintragPage() {
             })()}
 
             <div>
-              <Label htmlFor="schiessstand">Schießstand (optional)</Label>
+              <Label htmlFor="standort">Ort/Stadt *</Label>
+              <Input
+                id="standort"
+                value={formData.standort}
+                onChange={(e) => setFormData(prev => ({ ...prev, standort: e.target.value }))}
+                placeholder="z.B. Einbeck"
+                required
+                className="text-lg"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="schiessstand">Schießstand</Label>
               <Input
                 id="schiessstand"
                 value={formData.schiessstand}
                 onChange={(e) => setFormData(prev => ({ ...prev, schiessstand: e.target.value }))}
                 placeholder="z.B. Einbecker Schützengilde"
+                className="text-lg"
               />
             </div>
             
@@ -438,7 +392,7 @@ export default function NeuerEintragPage() {
               </div>
               
               {showOptionalFields && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-4">
                   <div>
                     <Label htmlFor="wetter">Wetter</Label>
                     <NativeSelect
@@ -452,6 +406,7 @@ export default function NeuerEintragPage() {
                         { value: "Wind", label: "💨 Windig" },
                         { value: "Halle", label: "🏢 Halle" }
                       ]}
+                      className="text-lg"
                     />
                   </div>
                   
@@ -462,6 +417,7 @@ export default function NeuerEintragPage() {
                       value={formData.munition}
                       onChange={(e) => setFormData(prev => ({ ...prev, munition: e.target.value }))}
                       placeholder="z.B. RWS R50"
+                      className="text-lg"
                     />
                   </div>
                   
@@ -472,6 +428,7 @@ export default function NeuerEintragPage() {
                       value={formData.waffe}
                       onChange={(e) => setFormData(prev => ({ ...prev, waffe: e.target.value }))}
                       placeholder="z.B. Anschütz 1827"
+                      className="text-lg"
                     />
                   </div>
                 </div>
@@ -494,7 +451,7 @@ export default function NeuerEintragPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4">
                     <div>
                       <Label className="text-base font-semibold">Detaillierte Serien-Erfassung (optional)</Label>
-                      <p className="text-sm text-muted-foreground mt-1">Das Gesamtergebnis oben reicht zum Speichern - Serien sind nur für detaillierte Analyse</p>
+                      <p className="text-sm text-muted-foreground mt-1">Serien sind optional - das Gesamtergebnis unten reicht zum Speichern</p>
                     </div>
                     <Button
                       type="button"
@@ -516,6 +473,61 @@ export default function NeuerEintragPage() {
                       schussAnzahl={parseInt(formData.schussAnzahl) || undefined}
                     />
                   )}
+                  
+                  {/* Ergebnis-Felder zwischen Serien und Notizen */}
+                  <div>
+                    <Label htmlFor="ergebnis" className="text-sm font-medium">Ergebnis *</Label>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="ergebnisGanzeRinge" className="text-sm font-medium flex items-center gap-2">
+                          <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                          Ganze Ringe *
+                        </Label>
+                        <Input
+                          id="ergebnisGanzeRinge"
+                          type="number"
+                          min="0"
+                          max="1000"
+                          value={berechneteErgebnisse?.ohneZehntel || formData.ergebnisGanzeRinge}
+                          onChange={(e) => {
+                            setFormData(prev => ({ ...prev, ergebnisGanzeRinge: e.target.value }));
+                            // Reset berechnete Ergebnisse bei manueller Eingabe
+                            if (e.target.value !== (berechneteErgebnisse?.ohneZehntel?.toString() || '')) {
+                              setBerechneteErgebnisse(null);
+                            }
+                          }}
+                          placeholder="95"
+                          required
+                          className="text-xl font-bold h-12"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Standard-Bewertung (0-10 pro Schuss)</p>
+                      </div>
+                      <div>
+                        <Label htmlFor="ergebnis" className="text-sm font-medium flex items-center gap-2">
+                          <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                          Zehntel-Ringe (optional)
+                        </Label>
+                        <Input
+                          id="ergebnis"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="1000"
+                          value={berechneteErgebnisse?.mitZehntel ? (Math.round(berechneteErgebnisse.mitZehntel * 10) / 10).toString() : formData.ergebnis}
+                          onChange={(e) => {
+                            setFormData(prev => ({ ...prev, ergebnis: e.target.value }));
+                            // Reset berechnete Ergebnisse bei manueller Eingabe
+                            if (e.target.value !== (berechneteErgebnisse?.mitZehntel ? (Math.round(berechneteErgebnisse.mitZehntel * 10) / 10).toString() : '')) {
+                              setBerechneteErgebnisse(null);
+                            }
+                          }}
+                          placeholder="109.0"
+                          className="text-xl font-bold h-12 border-green-200 focus:border-green-400"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Präzisions-Bewertung (0-10.9 pro Schuss)</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

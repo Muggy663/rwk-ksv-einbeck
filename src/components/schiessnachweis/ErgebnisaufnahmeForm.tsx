@@ -23,6 +23,15 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
   const [eingabeModus, setEingabeModus] = useState<'einzelschuss' | 'seriensumme'>('einzelschuss');
   const [seriensummeInput, setSeriensummeInput] = useState<string>('');
   
+  // Lade Seriensumme in Input wenn Serie gewechselt wird
+  useEffect(() => {
+    if (serien[activeSerieIndex]?.summe > 0) {
+      setSeriensummeInput(serien[activeSerieIndex].summe.toString());
+    } else {
+      setSeriensummeInput('');
+    }
+  }, [activeSerieIndex, serien]);
+  
   const disziplinConfig = getDisziplinConfig(disziplin);
   
   useEffect(() => {
@@ -94,7 +103,7 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
     const neueSerien = [...serien];
     const serie = neueSerien[serieIndex];
     
-    const maxWert = disziplinConfig.maxRinge;
+    const maxWert = disziplinConfig.maxRinge + (disziplinConfig.kommastellen ? 0.9 : 0);
     const validierterWert = Math.max(0, Math.min(maxWert, wert));
     
     serie.schuesse[schussIndex] = {
@@ -184,7 +193,7 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
           >
             Serie {serie.serienNummer}
             <Badge variant="secondary" className="ml-2">
-              {parseFloat(serie.summe.toFixed(1))}
+              {serie.summe.toFixed(1)}
             </Badge>
           </Button>
         ))}
@@ -278,8 +287,31 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
                         if (summe > 0) {
                           const neueSerien = [...serien];
                           const serie = neueSerien[activeSerieIndex];
-                          serie.summe = summe;
-                          serie.schuesse = []; // Keine Einzelschüsse bei Seriensumme
+                          
+                          // Intelligente Erkennung: Punkt/Komma = Zehntel, sonst ganze Ringe
+                          const hatKomma = e.target.value.includes('.') || e.target.value.includes(',');
+                          
+                          if (hatKomma && disziplinConfig.kommastellen) {
+                            // Zehntel-Eingabe: Summe direkt übernehmen
+                            serie.summe = summe;
+                            serie.schuesse = []; // Keine Einzelschüsse bei Zehntel
+                          } else {
+                            // Ganze Ringe: Einzelschüsse mit ganzen Ringen erstellen
+                            const schuesseProSerie = disziplinConfig.serienGroesse;
+                            const durchschnitt = Math.floor(summe / schuesseProSerie);
+                            const rest = summe % schuesseProSerie;
+                            
+                            // Erstelle Schüsse mit ganzen Ringen
+                            const neueSchuesse = Array.from({ length: schuesseProSerie }, (_, i) => ({
+                              nummer: i + 1,
+                              wert: i < rest ? durchschnitt + 1 : durchschnitt,
+                              ring: i < rest ? durchschnitt + 1 : durchschnitt
+                            }));
+                            
+                            serie.schuesse = neueSchuesse;
+                            serie.summe = summe;
+                          }
+                          
                           setSerien(neueSerien);
                         }
                       }}
@@ -290,7 +322,7 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
                         }
                       }}
                       onBlur={() => setSeriensummeInput('')} // Input leeren nach Verlassen
-                      placeholder={`Max. ${disziplinConfig.maxRinge * disziplinConfig.serienGroesse} Ringe`}
+                      placeholder={`Max. ${((disziplinConfig.maxRinge + (disziplinConfig.kommastellen ? 0.9 : 0)) * disziplinConfig.serienGroesse).toFixed(disziplinConfig.kommastellen ? 1 : 0)} Ringe`}
                       className="text-center font-mono text-lg"
                     />
                   </div>
@@ -307,36 +339,8 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Nur die Gesamtsumme wird gespeichert. Durchschnitt: {seriensummeInput ? (parseFloat(seriensummeInput) / disziplinConfig.serienGroesse).toFixed(disziplinConfig.kommastellen ? 1 : 0) : '0'} Ringe/Schuss
+                  Nur die Gesamtsumme wird gespeichert. Durchschnitt: {seriensummeInput ? (parseFloat(seriensummeInput) / disziplinConfig.serienGroesse).toFixed(disziplinConfig.kommastellen ? 1 : 0) : (serien[activeSerieIndex]?.summe ? (serien[activeSerieIndex].summe / disziplinConfig.serienGroesse).toFixed(disziplinConfig.kommastellen ? 1 : 0) : '0')} Ringe/Schuss
                 </p>
-              </div>
-            )}
-
-            {eingabeModus === 'einzelschuss' && (
-              <div className="border-t pt-4">
-                <Label className="text-sm font-medium mb-3 block">
-                  <Calculator className="h-4 w-4 inline mr-1" />
-                  Schnelleingabe:
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {getSchnellwerte().map((wert) => (
-                    <Button
-                      key={wert}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const serie = serien[activeSerieIndex];
-                        const leerSchussIndex = serie.schuesse.findIndex(s => s.wert === 0);
-                        if (leerSchussIndex !== -1) {
-                          updateSchuss(activeSerieIndex, leerSchussIndex, wert);
-                        }
-                      }}
-                      className={`${wert === 0 ? 'text-red-600' : wert >= 10 ? 'text-green-600 font-bold' : ''}`}
-                    >
-                      {wert.toFixed(disziplinConfig.kommastellen ? 1 : 0)}
-                    </Button>
-                  ))}
-                </div>
               </div>
             )}
           </CardContent>

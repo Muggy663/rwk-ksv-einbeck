@@ -1,0 +1,21 @@
+/* Button hover fix for light mode readability */
+.light button:hover,
+.light .btn:hover,
+.light [role="button"]:hover {
+  text-decoration: underline !important;
+  color: inherit !important;
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Outline button hover fix - more specific */
+.light button[data-variant="outline"]:hover,
+.light .btn-outline:hover,
+.light button.border:hover,
+.light button[class*="outline"]:hover {
+  color: black !important;
+}
+
+/* Tailwind outline variant fix */
+.light .bg-background:hover {
+  color: black !important;
+}

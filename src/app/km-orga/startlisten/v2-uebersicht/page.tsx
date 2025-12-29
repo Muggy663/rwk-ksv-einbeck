@@ -1,11 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getDocs, collection, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { getDocs, collection, doc, updateDoc, deleteDoc, addDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import Link from 'next/link';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+
+interface Aenderungswunsch {
+  id: string;
+  text: string;
+  autor: string;
+  timestamp: Date;
+  status: 'offen' | 'bearbeitung' | 'erledigt';
+  prioritaet: 'hoch' | 'normal' | 'niedrig';
+  startlisteId?: string;
+  saison: string;
+}
 
 export default function StartlistenV2Uebersicht() {
+  const { toast } = useToast();
   const [startlisten, setStartlisten] = useState([]);
   const [saisons, setSaisons] = useState([]);
   const [meldungen, setMeldungen] = useState([]);
@@ -14,10 +29,74 @@ export default function StartlistenV2Uebersicht() {
   const [editData, setEditData] = useState({});
   const [showAddShooter, setShowAddShooter] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSaison, setSelectedSaison] = useState('');
+  const [verfuegbareJahre, setVerfuegbareJahre] = useState<string[]>([]);
+  const [aenderungswuensche, setAenderungswuensche] = useState<Aenderungswunsch[]>([]);
+  const [neuerWunsch, setNeuerWunsch] = useState('');
+  const [showAenderungen, setShowAenderungen] = useState(true);
 
   useEffect(() => {
-    loadData();
+    loadVerfuegbareJahre();
   }, []);
+
+  useEffect(() => {
+    if (selectedSaison) {
+      loadData();
+      loadAenderungswuensche();
+    }
+  }, [selectedSaison]);
+
+  const loadVerfuegbareJahre = async () => {
+    try {
+      const { getFirestore, listCollections } = await import('firebase/firestore');
+      const { app } = await import('@/lib/firebase/config');
+      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+      const correctDb = getFirestore(app, databaseId);
+      
+      // Teste verschiedene Jahre
+      const testJahre = ['2024', '2025', '2026', '2027', '2028'];
+      const gefundeneJahre: string[] = [];
+      
+      for (const jahr of testJahre) {
+        try {
+          // Teste ob mindestens eine der Collections existiert
+          const testCollections = [`km_meldungen_${jahr}_kk`, `km_meldungen_${jahr}_kkp`, `km_meldungen_${jahr}_ld`];
+          
+          for (const collectionName of testCollections) {
+            try {
+              const { getDocs, collection, limit, query } = await import('firebase/firestore');
+              const testQuery = query(collection(correctDb, collectionName), limit(1));
+              const snapshot = await getDocs(testQuery);
+              
+              if (!snapshot.empty) {
+                if (!gefundeneJahre.includes(jahr)) {
+                  gefundeneJahre.push(jahr);
+                }
+                break; // Ein Collection gefunden reicht
+              }
+            } catch (e) {
+              // Collection existiert nicht
+            }
+          }
+        } catch (e) {
+          // Jahr nicht verfügbar
+        }
+      }
+      
+      gefundeneJahre.sort((a, b) => parseInt(b) - parseInt(a)); // Neueste zuerst
+      setVerfuegbareJahre(gefundeneJahre);
+      
+      // Setze das neueste Jahr als Standard
+      if (gefundeneJahre.length > 0 && !selectedSaison) {
+        setSelectedSaison(gefundeneJahre[0]);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der verfügbaren Jahre:', error);
+      // Fallback
+      setVerfuegbareJahre(['2026']);
+      setSelectedSaison('2026');
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -54,8 +133,8 @@ export default function StartlistenV2Uebersicht() {
         schuetzenMap[doc.id] = { id: doc.id, ...doc.data() };
       });
       
-      // Lade alle Meldungen aus verschiedenen Collections
-      const jahr = 2026;
+      // Lade Meldungen für die spezifische Saison
+      const jahr = parseInt(selectedSaison);
       const collections = ['kk', 'kkp', 'ld'];
       let alleMeldungen = [];
       
@@ -130,6 +209,105 @@ export default function StartlistenV2Uebersicht() {
       console.error('Fehler beim Laden:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAenderungswuensche = async () => {
+    try {
+      const { getFirestore } = await import('firebase/firestore');
+      const { app } = await import('@/lib/firebase/config');
+      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+      const correctDb = getFirestore(app, databaseId);
+      
+      const aenderungenSnapshot = await getDocs(
+        query(
+          collection(correctDb, 'km_startlisten_aenderungen'),
+          orderBy('timestamp', 'desc')
+        )
+      );
+      
+      const aenderungenData = aenderungenSnapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().timestamp?.toDate() || new Date()
+        }))
+        .filter(a => a.saison === selectedSaison);
+      
+      setAenderungswuensche(aenderungenData);
+    } catch (error) {
+      console.error('Fehler beim Laden der Änderungswünsche:', error);
+    }
+  };
+
+  const addAenderungswunsch = async () => {
+    if (!neuerWunsch.trim()) return;
+    
+    try {
+      const { getFirestore } = await import('firebase/firestore');
+      const { app } = await import('@/lib/firebase/config');
+      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+      const correctDb = getFirestore(app, databaseId);
+      
+      await addDoc(collection(correctDb, 'km_startlisten_aenderungen'), {
+        text: neuerWunsch,
+        autor: 'KM-Orga', // TODO: Echten Benutzernamen verwenden
+        timestamp: new Date(),
+        status: 'offen',
+        prioritaet: 'normal',
+        saison: selectedSaison
+      });
+      
+      setNeuerWunsch('');
+      loadAenderungswuensche();
+      toast({
+        title: "✅ Änderungswunsch hinzugefügt",
+        description: "Der Wunsch wurde erfolgreich gespeichert."
+      });
+    } catch (error) {
+      console.error('Fehler beim Hinzufügen:', error);
+      toast({
+        title: "Fehler",
+        description: "Wunsch konnte nicht gespeichert werden.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteAenderungswunsch = async (id: string) => {
+    try {
+      const { getFirestore } = await import('firebase/firestore');
+      const { app } = await import('@/lib/firebase/config');
+      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+      const correctDb = getFirestore(app, databaseId);
+      
+      await deleteDoc(doc(correctDb, 'km_startlisten_aenderungen', id));
+      loadAenderungswuensche();
+      toast({
+        title: "🗑️ Änderungswunsch gelöscht",
+        description: "Der Wunsch wurde erfolgreich entfernt."
+      });
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+      toast({
+        title: "Fehler",
+        description: "Wunsch konnte nicht gelöscht werden.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateAenderungswunschStatus = async (id: string, status: string) => {
+    try {
+      const { getFirestore } = await import('firebase/firestore');
+      const { app } = await import('@/lib/firebase/config');
+      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
+      const correctDb = getFirestore(app, databaseId);
+      
+      await updateDoc(doc(correctDb, 'km_startlisten_aenderungen', id), { status });
+      loadAenderungswuensche();
+    } catch (error) {
+      console.error('Fehler beim Update:', error);
     }
   };
 
@@ -236,6 +414,128 @@ export default function StartlistenV2Uebersicht() {
           ← Zurück
         </Link>
         <h1 className="text-3xl font-bold text-gray-800">📄 Gespeicherte Startlisten V2</h1>
+        <div className="ml-auto flex items-center gap-4">
+          <label className="text-sm font-medium">Saison:</label>
+          <select
+            value={selectedSaison}
+            onChange={(e) => setSelectedSaison(e.target.value)}
+            className="px-3 py-2 border rounded-lg bg-white"
+            disabled={verfuegbareJahre.length === 0}
+          >
+            {verfuegbareJahre.length === 0 ? (
+              <option value="">Lade Jahre...</option>
+            ) : (
+              verfuegbareJahre.map(jahr => (
+                <option key={jahr} value={jahr}>
+                  {jahr}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+      </div>
+
+      {/* Änderungswünsche Panel */}
+      <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-blue-800 flex items-center gap-2">
+            📝 Änderungswünsche Saison {selectedSaison}
+          </h2>
+          <button
+            onClick={() => setShowAenderungen(!showAenderungen)}
+            className="text-blue-600 hover:text-blue-800 text-sm"
+          >
+            {showAenderungen ? 'Ausblenden' : 'Anzeigen'}
+          </button>
+        </div>
+        
+        {showAenderungen && (
+          <div className="space-y-4">
+            {/* Neuen Wunsch hinzufügen */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={neuerWunsch}
+                onChange={(e) => setNeuerWunsch(e.target.value)}
+                placeholder="Neuen Änderungswunsch eingeben..."
+                className="flex-1 px-3 py-2 border rounded-lg"
+                onKeyDown={(e) => e.key === 'Enter' && addAenderungswunsch()}
+              />
+              <button
+                onClick={addAenderungswunsch}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Hinzufügen
+              </button>
+            </div>
+            
+            {/* Liste der Wünsche */}
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {aenderungswuensche.map((wunsch) => (
+                <div key={wunsch.id} className={`p-3 rounded-lg border ${
+                  wunsch.status === 'erledigt' ? 'bg-green-50 border-green-200' :
+                  wunsch.status === 'bearbeitung' ? 'bg-yellow-50 border-yellow-200' :
+                  'bg-white border-gray-200'
+                }`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm">{wunsch.text}</p>
+                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                        <span title="Autor des Änderungswunsches">👤 {wunsch.autor}</span>
+                        <span title="Erstellungsdatum und -zeit">🕰️ {format(wunsch.timestamp, 'dd.MM.yyyy HH:mm', { locale: de })}</span>
+                        <span className={`px-2 py-1 rounded ${
+                          wunsch.status === 'erledigt' ? 'bg-green-100 text-green-800' :
+                          wunsch.status === 'bearbeitung' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`} title={`Status: ${wunsch.status === 'erledigt' ? 'Erledigt' : wunsch.status === 'bearbeitung' ? 'In Bearbeitung' : 'Offen'}`}>
+                          {wunsch.status === 'erledigt' ? '✅ Erledigt' :
+                           wunsch.status === 'bearbeitung' ? '🔄 In Bearbeitung' :
+                           '🔴 Offen'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 ml-4">
+                      {wunsch.status !== 'bearbeitung' && (
+                        <button
+                          onClick={() => updateAenderungswunschStatus(wunsch.id, 'bearbeitung')}
+                          className="px-2 py-1 text-xs bg-yellow-600 text-white rounded hover:bg-yellow-700"
+                          title="Als 'In Bearbeitung' markieren"
+                        >
+                          🔄
+                        </button>
+                      )}
+                      {wunsch.status !== 'erledigt' && (
+                        <button
+                          onClick={() => updateAenderungswunschStatus(wunsch.id, 'erledigt')}
+                          className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                          title="Als erledigt markieren"
+                        >
+                          ✅
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (confirm('Änderungswunsch wirklich löschen?')) {
+                            deleteAenderungswunsch(wunsch.id);
+                          }
+                        }}
+                        className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                        title="Änderungswunsch endgültig löschen"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {aenderungswuensche.length === 0 && (
+                <p className="text-gray-500 text-sm text-center py-4">
+                  Keine Änderungswünsche für Saison {selectedSaison}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {startlisten.length === 0 ? (

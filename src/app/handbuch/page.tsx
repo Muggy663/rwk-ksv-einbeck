@@ -25,7 +25,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM, Schießnachweis und Vereinssoftware.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: 27.12.2025 - Version 2.3.1_w - Drag & Drop Startlisten-Verwaltung & Erweiterte UX
+            Stand: 29.12.2025 - Version 2.3.5_w - Schießnachweis Verbesserungen & UX-Optimierungen
           </p>
         </div>
       </div>

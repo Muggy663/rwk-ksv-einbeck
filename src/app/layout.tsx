@@ -2,6 +2,7 @@
 // import { Inter } from 'next/font/google';
 import './globals.css';
 import '@/styles/hide-number-arrows.css';
+import '@/styles/button-hover-fix.css';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import '@/components/ui/heading-styles.css';
 import { AuthProvider } from '@/components/auth/AuthProvider';

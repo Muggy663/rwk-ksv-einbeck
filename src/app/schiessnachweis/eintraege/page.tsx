@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,11 +22,21 @@ export default function EintraegePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [needsSync, setNeedsSync] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>('alle');
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     loadEinträge();
     checkSyncStatus();
   }, []);
+  
+  // Reload when returning from edit with refresh parameter
+  useEffect(() => {
+    const refreshParam = searchParams?.get('refresh');
+    if (refreshParam && refreshParam !== 'true') {
+      // Use timestamp-based refresh to force reload
+      loadEinträge();
+    }
+  }, [searchParams]);
 
   const loadEinträge = async () => {
     try {

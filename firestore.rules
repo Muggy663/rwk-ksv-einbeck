@@ -380,6 +380,14 @@ service cloud.firestore {
                              getUserPermissions().role == 'km_organisator'));
     }
 
+    match /km_startlisten_aenderungen/{aenderung} {
+      allow read: if true;
+      allow write, delete: if isSuperAdmin() || 
+                           (isAuthenticated() && getUserPermissions() != null && 
+                            (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
+                             getUserPermissions().role == 'km_organisator'));
+    }
+
     // 🔒 Fallback für alle anderen Club-Dokumente
     match /clubs/{clubId}/{document=**} {
       allow read: if hasClubAccess(clubId);
