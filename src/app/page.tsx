@@ -18,6 +18,7 @@ import { cleanupExpiredEvents } from '@/lib/services/event-cleanup';
 import { newsService } from '@/lib/services/news-service';
 import { MaintenanceBanner } from '@/components/MaintenanceBanner';
 import { Snowfall } from '@/components/ui/snowfall';
+import { Fireworks } from '@/components/ui/fireworks';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
@@ -49,6 +50,7 @@ export default function HomePage() {
   const [isLoadingNews, setIsLoadingNews] = useState<boolean>(true);
   const [isNativeApp, setIsNativeApp] = useState(false);
   const [showSnowfall, setShowSnowfall] = useState(false);
+  const [showFireworks, setShowFireworks] = useState(false);
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -61,6 +63,14 @@ export default function HomePage() {
     const timer = setTimeout(() => {
       setShowSnowfall(true);
     }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Feuerwerk nach 5 Sekunden für Silvester-Stimmung
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowFireworks(true);
+    }, 5000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -174,6 +184,7 @@ export default function HomePage() {
   return (
     <div className="container py-8 max-w-7xl mx-auto pwa-optimized">
       {showSnowfall && <Snowfall />}
+      {showFireworks && <Fireworks />}
       {/* Wartungshinweis entfernt - System ist live */}
       
 

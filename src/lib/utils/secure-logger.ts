@@ -143,6 +143,13 @@ class SecureLogger {
    * Error-Level Logging
    */
   error(message: string, error?: Error, context?: LogContext): void {
+    // Globaler NOT_FOUND Abfang - stumm schalten für Build-Zeit
+    if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
+      // NOT_FOUND Fehler während Build - nur als Warning loggen
+      this.warn(`Firestore NOT_FOUND (Build-Zeit): ${message}`, context);
+      return;
+    }
+    
     const errorContext = error ? { error: this.sanitizeObject(error), ...context } : context;
     const logMessage = this.createLogMessage('error', message, errorContext);
     console.error(logMessage);

@@ -28,40 +28,13 @@ export interface GenderDistributionData {
   female: number;
 }
 
-// Verfügbare Collections basierend auf deiner Datenbank
-const AVAILABLE_COLLECTIONS = [
-  'rwk_scores_2025_KK',
-  'rwk_scores_2025_KKP',
-  'rwk_scores_2026_LD'
-];
-
-async function findWorkingCollection(competitionYear: number, leagueType: string): Promise<string | null> {
-  // Erst gewünschte Collection versuchen
-  const preferredCollection = getSeasonSpecificScoresCollection(competitionYear, leagueType);
-  
-  const collectionsToTry = [preferredCollection, ...AVAILABLE_COLLECTIONS];
-  
-  for (const collName of collectionsToTry) {
-    try {
-      const testQuery = query(collection(db, collName), where('competitionYear', '==', competitionYear));
-      const testSnapshot = await getDocs(testQuery);
-      if (!testSnapshot.empty) {
-        return collName;
-      }
-    } catch (e) {
-      // Collection existiert nicht
-    }
-  }
-  
-  return null;
-}
-
 export async function fetchShooterPerformanceData(
   seasonId: string,
   leagueId?: string,
   clubId?: string
 ): Promise<ShooterPerformanceData[]> {
   try {
+    // Lade Saison-Daten für Collection-Name
     const seasonQuery = query(
       collection(db, 'seasons'),
       where('__name__', '==', seasonId)
@@ -73,7 +46,8 @@ export async function fetchShooterPerformanceData(
     const seasonData = seasonSnapshot.docs[0].data();
     const competitionYear = seasonData.competitionYear;
     
-    let leagueType = 'KK';
+    // Lade Liga-Daten für Disziplin
+    let leagueType = 'KK'; // Default
     if (leagueId && leagueId !== 'all') {
       const leagueQuery = query(
         collection(db, 'rwk_leagues'),
@@ -85,21 +59,37 @@ export async function fetchShooterPerformanceData(
       }
     }
     
-    const workingCollection = await findWorkingCollection(competitionYear, leagueType);
-    if (!workingCollection) return [];
-    
+    // Verwende saison-spezifische Collection
     let scoresQuery;
-    if (leagueId && leagueId !== 'all') {
-      scoresQuery = query(
-        collection(db, workingCollection),
-        where('competitionYear', '==', competitionYear),
-        where('leagueId', '==', leagueId)
-      );
-    } else {
-      scoresQuery = query(
-        collection(db, workingCollection),
-        where('competitionYear', '==', competitionYear)
-      );
+    try {
+      const seasonSpecificCollection = getSeasonSpecificScoresCollection(competitionYear, leagueType);
+      
+      if (leagueId && leagueId !== 'all') {
+        scoresQuery = query(
+          collection(db, seasonSpecificCollection),
+          where('competitionYear', '==', competitionYear),
+          where('leagueId', '==', leagueId)
+        );
+      } else {
+        scoresQuery = query(
+          collection(db, seasonSpecificCollection),
+          where('competitionYear', '==', competitionYear)
+        );
+      }
+    } catch (error) {
+      // Fallback auf alte Collection
+      if (leagueId && leagueId !== 'all') {
+        scoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('seasonId', '==', seasonId),
+          where('leagueId', '==', leagueId)
+        );
+      } else {
+        scoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('seasonId', '==', seasonId)
+        );
+      }
     }
     
     const scoresSnapshot = await getDocs(scoresQuery);
@@ -147,9 +137,12 @@ export async function fetchShooterPerformanceData(
       });
     }
     
+    // Keine Daten gefunden
+
     return [];
   } catch (error) {
     logError('Fehler beim Laden der Schützenleistungsdaten:', error);
+    // Spezielle Behandlung für NOT_FOUND Fehler während Build-Zeit
     if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
       logWarn('Firestore-Collection nicht gefunden (Build-Zeit)');
     }
@@ -162,6 +155,7 @@ export async function fetchTeamComparisonData(
   leagueId?: string
 ): Promise<TeamComparisonData[]> {
   try {
+    // Versuche, Daten aus Firestore zu laden
     let teamsQuery;
     
     if (leagueId && leagueId !== 'all') {
@@ -185,6 +179,7 @@ export async function fetchTeamComparisonData(
       for (const teamDoc of teamsSnapshot.docs) {
         const teamData = teamDoc.data();
         
+        // Verwende saison-spezifische Collection falls möglich
         let scoresQuery;
         try {
           const seasonQuery = query(
@@ -197,6 +192,7 @@ export async function fetchTeamComparisonData(
             const seasonData = seasonSnapshot.docs[0].data();
             const competitionYear = seasonData.competitionYear;
             
+            // Ermittle Liga-Typ für Collection-Name
             const leagueQuery = query(
               collection(db, 'rwk_leagues'),
               where('__name__', '==', teamData.leagueId)
@@ -205,25 +201,25 @@ export async function fetchTeamComparisonData(
             
             if (!leagueSnapshot.empty) {
               const leagueType = leagueSnapshot.docs[0].data().type;
-              const workingCollection = await findWorkingCollection(competitionYear, leagueType);
+              const seasonSpecificCollection = getSeasonSpecificScoresCollection(competitionYear, leagueType);
               
-              if (workingCollection) {
-                scoresQuery = query(
-                  collection(db, workingCollection),
-                  where('teamId', '==', teamDoc.id),
-                  where('competitionYear', '==', competitionYear)
-                );
-              } else {
-                continue; // Skip this team if no working collection found
-              }
+              scoresQuery = query(
+                collection(db, seasonSpecificCollection),
+                where('teamId', '==', teamDoc.id),
+                where('competitionYear', '==', competitionYear)
+              );
             } else {
-              continue; // Skip if league not found
+              throw new Error('Liga nicht gefunden');
             }
           } else {
-            continue; // Skip if season not found
+            throw new Error('Saison nicht gefunden');
           }
         } catch (error) {
-          continue; // Skip this team on error
+          // Fallback auf alte Collection
+          scoresQuery = query(
+            collection(db, 'rwk_scores'),
+            where('teamId', '==', teamDoc.id)
+          );
         }
         
         const scoresSnapshot = await getDocs(scoresQuery);
@@ -251,9 +247,12 @@ export async function fetchTeamComparisonData(
       return teamsData;
     }
     
+    // Keine Daten gefunden
+
     return [];
   } catch (error) {
     logError('Fehler beim Laden der Mannschaftsvergleichsdaten:', error);
+    // Spezielle Behandlung für NOT_FOUND Fehler während Build-Zeit
     if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
       logWarn('Firestore-Collection nicht gefunden (Build-Zeit)');
     }
@@ -267,6 +266,7 @@ export async function fetchGenderDistributionData(
   clubId?: string
 ): Promise<GenderDistributionData> {
   try {
+    // Lade Saison-Daten für Collection-Name
     const seasonQuery = query(
       collection(db, 'seasons'),
       where('__name__', '==', seasonId)
@@ -278,7 +278,8 @@ export async function fetchGenderDistributionData(
     const seasonData = seasonSnapshot.docs[0].data();
     const competitionYear = seasonData.competitionYear;
     
-    let leagueType = 'KK';
+    // Lade Liga-Daten für Disziplin
+    let leagueType = 'KK'; // Default
     if (leagueId && leagueId !== 'all') {
       const leagueQuery = query(
         collection(db, 'rwk_leagues'),
@@ -290,21 +291,37 @@ export async function fetchGenderDistributionData(
       }
     }
     
-    const workingCollection = await findWorkingCollection(competitionYear, leagueType);
-    if (!workingCollection) return { male: 0, female: 0 };
-    
+    // Verwende saison-spezifische Collection
     let genderScoresQuery;
-    if (leagueId && leagueId !== 'all') {
-      genderScoresQuery = query(
-        collection(db, workingCollection),
-        where('competitionYear', '==', competitionYear),
-        where('leagueId', '==', leagueId)
-      );
-    } else {
-      genderScoresQuery = query(
-        collection(db, workingCollection),
-        where('competitionYear', '==', competitionYear)
-      );
+    try {
+      const seasonSpecificCollection = getSeasonSpecificScoresCollection(competitionYear, leagueType);
+      
+      if (leagueId && leagueId !== 'all') {
+        genderScoresQuery = query(
+          collection(db, seasonSpecificCollection),
+          where('competitionYear', '==', competitionYear),
+          where('leagueId', '==', leagueId)
+        );
+      } else {
+        genderScoresQuery = query(
+          collection(db, seasonSpecificCollection),
+          where('competitionYear', '==', competitionYear)
+        );
+      }
+    } catch (error) {
+      // Fallback auf alte Collection
+      if (leagueId && leagueId !== 'all') {
+        genderScoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('seasonId', '==', seasonId),
+          where('leagueId', '==', leagueId)
+        );
+      } else {
+        genderScoresQuery = query(
+          collection(db, 'rwk_scores'),
+          where('seasonId', '==', seasonId)
+        );
+      }
     }
     
     const scoresSnapshot = await getDocs(genderScoresQuery);
@@ -342,9 +359,12 @@ export async function fetchGenderDistributionData(
       return { male, female };
     }
     
+    // Keine Daten gefunden
+
     return { male: 0, female: 0 };
   } catch (error) {
     logError('Fehler beim Laden der Geschlechterverteilungsdaten:', error);
+    // Spezielle Behandlung für NOT_FOUND Fehler während Build-Zeit
     if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
       logWarn('Firestore-Collection nicht gefunden (Build-Zeit)');
     }
@@ -354,6 +374,7 @@ export async function fetchGenderDistributionData(
 
 export async function fetchSeasons() {
   try {
+    // Versuche, Saisons aus Firestore zu laden - nur laufende und abgeschlossene
     const seasonsQuery = query(
       collection(db, 'seasons'),
       where('status', 'in', ['Laufend', 'Abgeschlossen']),
@@ -371,9 +392,12 @@ export async function fetchSeasons() {
       }));
     }
     
+    // Keine Daten gefunden
+
     return [];
   } catch (error) {
     logError('Fehler beim Laden der Saisons:', error);
+    // Spezielle Behandlung für NOT_FOUND Fehler während Build-Zeit
     if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
       logWarn('Firestore-Collection nicht gefunden (Build-Zeit)');
     }
@@ -383,6 +407,7 @@ export async function fetchSeasons() {
 
 export async function fetchLeagues(seasonId: string) {
   try {
+    // Prüfe zuerst, ob die Saison laufend oder abgeschlossen ist
     const seasonDoc = await getDocs(
       query(
         collection(db, 'seasons'),
@@ -391,14 +416,17 @@ export async function fetchLeagues(seasonId: string) {
     );
     
     if (seasonDoc.empty) {
+
       return [];
     }
     
     const seasonData = seasonDoc.docs[0].data();
     if (seasonData.status !== 'Laufend' && seasonData.status !== 'Abgeschlossen') {
+
       return [];
     }
     
+    // Versuche, Ligen aus Firestore zu laden
     const leaguesQuery = query(
       collection(db, 'rwk_leagues'),
       where('seasonId', '==', seasonId),
@@ -415,9 +443,12 @@ export async function fetchLeagues(seasonId: string) {
       }));
     }
     
+    // Keine Daten gefunden
+
     return [];
   } catch (error) {
     logError('Fehler beim Laden der Ligen:', error);
+    // Spezielle Behandlung für NOT_FOUND Fehler während Build-Zeit
     if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
       logWarn('Firestore-Collection nicht gefunden (Build-Zeit)');
     }
@@ -427,6 +458,7 @@ export async function fetchLeagues(seasonId: string) {
 
 export async function fetchClubs() {
   try {
+    // Versuche, Vereine aus Firestore zu laden
     const clubsQuery = query(
       collection(db, 'clubs'),
       orderBy('name', 'asc')
@@ -442,9 +474,12 @@ export async function fetchClubs() {
       }));
     }
     
+    // Keine Daten gefunden
+
     return [];
   } catch (error) {
     logError('Fehler beim Laden der Vereine:', error);
+    // Spezielle Behandlung für NOT_FOUND Fehler während Build-Zeit
     if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
       logWarn('Firestore-Collection nicht gefunden (Build-Zeit)');
     }

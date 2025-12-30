@@ -355,9 +355,42 @@ export default function StartlistenV2Uebersicht() {
       ...updatedStartliste[starterIndex],
       [field]: value
     };
-    setEditData({
-      ...editData,
-      startliste: updatedStartliste
+    
+    // Wenn Stand geändert wird, automatisch alle Positionen neu berechnen
+    if (field === 'stand') {
+      const recalculatedStartliste = recalculateAllPositions(updatedStartliste);
+      setEditData({
+        ...editData,
+        startliste: recalculatedStartliste
+      });
+    } else {
+      setEditData({
+        ...editData,
+        startliste: updatedStartliste
+      });
+    }
+  };
+  
+  // Funktion zur Neuberechnung aller Positionen
+  const recalculateAllPositions = (startliste) => {
+    const maxStaende = editData.konfiguration?.staende?.length || 9;
+    const durchgangMin = editData.konfiguration?.durchgang || 50;
+    const wechselMin = editData.konfiguration?.wechsel || 10;
+    const baseTime = new Date(`1970-01-01T${editData.konfiguration?.startzeit || '14:00'}:00`);
+    
+    return startliste.map((starter, index) => {
+      const durchgangNr = Math.floor(index / maxStaende) + 1;
+      const standNr = (index % maxStaende) + 1;
+      const minutesOffset = (durchgangNr - 1) * (durchgangMin + wechselMin);
+      const startzeit = new Date(baseTime.getTime() + minutesOffset * 60000)
+        .toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      
+      return {
+        ...starter,
+        stand: standNr.toString(),
+        startzeit: startzeit,
+        durchgang: durchgangNr
+      };
     });
   };
 
@@ -369,23 +402,87 @@ export default function StartlistenV2Uebersicht() {
     });
   };
 
-  const addShooterToStartliste = (meldung) => {
+  const calculateAgeClass = (schuetze, disziplin, selectedSaison) => {
+    if (!schuetze?.birthYear) return 'Unbekannt';
+    
+    const currentSaison = saisons.find(s => s.id === selectedSaison);
+    const age = (currentSaison?.jahr || 2026) - schuetze.birthYear;
+    const isAuflage = disziplin?.toLowerCase().includes('auflage');
+    const isMale = schuetze.gender === 'male';
+    
+    if (age <= 14) return 'Schüler';
+    if (age <= 16) return 'Jugend';
+    if (age <= 18) return `Junioren II ${isMale ? 'm' : 'w'}`;
+    if (age <= 20) return `Junioren I ${isMale ? 'm' : 'w'}`;
+    
+    if (isAuflage) {
+      if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
+      if (age <= 50) return 'Senioren 0';
+      if (age <= 60) return 'Senioren I';
+      if (age <= 65) return 'Senioren II';
+      if (age <= 70) return 'Senioren III';
+      if (age <= 75) return 'Senioren IV';
+      if (age <= 80) return 'Senioren V';
+      return 'Senioren VI';
+    } else {
+      if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
+      if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;
+      if (age <= 60) return `${isMale ? 'Herren' : 'Damen'} III`;
+      if (age <= 70) return `${isMale ? 'Herren' : 'Damen'} IV`;
+      return `${isMale ? 'Herren' : 'Damen'} V`;
+    }
+  };
+
+  const addShooterToStartliste = async (meldung) => {
+    const currentStartliste = editData.startliste || [];
+    const nextIndex = currentStartliste.length;
+    
+    // Berechne automatisch Stand, Startzeit und Durchgang basierend auf Position
+    const maxStaende = editData.konfiguration?.staende?.length || 9;
+    const durchgangMin = editData.konfiguration?.durchgang || 50;
+    const wechselMin = editData.konfiguration?.wechsel || 10;
+    const baseTime = new Date(`1970-01-01T${editData.konfiguration?.startzeit || '14:00'}:00`);
+    
+    const durchgangNr = Math.floor(nextIndex / maxStaende) + 1;
+    const standNr = (nextIndex % maxStaende) + 1;
+    const minutesOffset = (durchgangNr - 1) * (durchgangMin + wechselMin);
+    const startzeit = new Date(baseTime.getTime() + minutesOffset * 60000)
+      .toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    
+    // Berechne korrekte Altersklasse falls nicht vorhanden
+    let altersklasse = meldung.altersklasse || meldung.ageClass || meldung.wettkampfklasse;
+    if (!altersklasse || altersklasse === 'Unbekannt') {
+      // Hole Schützen-Daten für Altersklassen-Berechnung
+      try {
+        const shootersRes = await fetch('/api/shooters');
+        if (shootersRes.ok) {
+          const shootersData = await shootersRes.json();
+          const schuetze = shootersData.data?.find(s => s.name === meldung.name);
+          if (schuetze) {
+            altersklasse = calculateAgeClass(schuetze, meldung.disziplin, selectedSaison);
+          }
+        }
+      } catch (error) {
+        console.error('Fehler bei Altersklassen-Berechnung:', error);
+      }
+    }
+    
     const newStarter = {
       id: `added_${Date.now()}`,
       name: meldung.name,
       schuetzeName: meldung.name,
       verein: meldung.verein,
       disziplin: meldung.disziplin,
-      altersklasse: meldung.altersklasse,
+      altersklasse: altersklasse,
       anmerkung: meldung.anmerkung || '',
-      stand: '1',
-      startzeit: editData.konfiguration?.startzeit || '14:00',
-      durchgang: 1
+      stand: standNr.toString(),
+      startzeit: startzeit,
+      durchgang: durchgangNr
     };
     
     setEditData({
       ...editData,
-      startliste: [...(editData.startliste || []), newStarter]
+      startliste: [...currentStartliste, newStarter]
     });
     setShowAddShooter(false);
     setSearchTerm('');
@@ -989,6 +1086,76 @@ export default function StartlistenV2Uebersicht() {
                     </div>
                   </div>
                   
+                  {/* Probleme-Anzeige */}
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <h4 className="font-medium text-yellow-900 mb-3 flex items-center">
+                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      Probleme in der Startliste
+                    </h4>
+                    {(() => {
+                      const problems = [];
+                      const startliste = editData.startliste || [];
+                      
+                      // Prüfe auf doppelte Stände zur gleichen Zeit
+                      const standKonflikte = new Map();
+                      startliste.forEach((starter, index) => {
+                        const key = `${starter.startzeit}-${starter.stand}`;
+                        if (standKonflikte.has(key)) {
+                          standKonflikte.get(key).push(index + 1);
+                        } else {
+                          standKonflikte.set(key, [index + 1]);
+                        }
+                      });
+                      
+                      standKonflikte.forEach((indices, key) => {
+                        if (indices.length > 1) {
+                          const [zeit, stand] = key.split('-');
+                          problems.push(`⚠️ Stand ${stand} um ${zeit} Uhr: Mehrfach belegt (Zeilen ${indices.join(', ')})`);
+                        }
+                      });
+                      
+                      // Prüfe auf fehlende Stände
+                      const ohneStand = startliste
+                        .map((starter, index) => ({ starter, index: index + 1 }))
+                        .filter(({ starter }) => !starter.stand || starter.stand === '')
+                        .map(({ index }) => index);
+                      
+                      if (ohneStand.length > 0) {
+                        problems.push(`🚫 Ohne Stand-Zuweisung: Zeilen ${ohneStand.join(', ')}`);
+                      }
+                      
+                      // Prüfe auf fehlende Namen
+                      const ohneName = startliste
+                        .map((starter, index) => ({ starter, index: index + 1 }))
+                        .filter(({ starter }) => !starter.name || starter.name.trim() === '')
+                        .map(({ index }) => index);
+                      
+                      if (ohneName.length > 0) {
+                        problems.push(`📝 Ohne Namen: Zeilen ${ohneName.join(', ')}`);
+                      }
+                      
+                      return problems.length > 0 ? (
+                        <ul className="space-y-1 text-sm text-yellow-800">
+                          {problems.map((problem, index) => (
+                            <li key={index} className="flex items-start">
+                              <span className="mr-2">•</span>
+                              <span>{problem}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-green-700 flex items-center">
+                          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          ✅ Keine Probleme gefunden - Startliste ist bereit!
+                        </p>
+                      );
+                    })()}
+                  </div>
+                  
                   {/* Schützen hinzufügen/entfernen */}
                   <div className="bg-green-50 p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-3">
@@ -999,6 +1166,19 @@ export default function StartlistenV2Uebersicht() {
                           className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
                         >
                           + Schütze hinzufügen
+                        </button>
+                        <button
+                          onClick={() => {
+                            const recalculatedStartliste = recalculateAllPositions(editData.startliste || []);
+                            setEditData({
+                              ...editData,
+                              startliste: recalculatedStartliste
+                            });
+                          }}
+                          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                          title="Alle Positionen automatisch neu berechnen"
+                        >
+                          🔄 Positionen neu berechnen
                         </button>
                       </div>
                     </div>
@@ -1058,18 +1238,16 @@ export default function StartlistenV2Uebersicht() {
                   </div>
                   
                   {/* Startliste bearbeiten */}
-                  <div className="space-y-2 max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-3" id="startliste-container">
-                    <div className="grid grid-cols-10 gap-2 p-2 bg-gray-200 dark:bg-gray-700 rounded font-medium text-sm dark:text-white">
-                      <div>Name</div>
+                  <div className="space-y-2 max-h-[60vh] overflow-y-auto bg-gray-50 rounded-lg p-3" id="startliste-container">
+                    <div className="grid grid-cols-9 gap-2 p-2 bg-gray-200 dark:bg-gray-700 rounded font-medium text-sm dark:text-white">
+                      <div className="col-span-2">Name</div>
                       <div>Verein</div>
                       <div>Disziplin</div>
                       <div>Stand</div>
                       <div>Startzeit</div>
                       <div>Durchgang</div>
-                      <div>Altersklasse</div>
-                      <div className="text-center">LM</div>
                       <div>Anmerkung</div>
-                      <div>Aktion</div>
+                      <div className="text-center">LM</div>
                     </div>
                     {editData.startliste?.map((starter, index, sortedArray) => (
                       <React.Fragment key={index}>
@@ -1089,7 +1267,7 @@ export default function StartlistenV2Uebersicht() {
                             e.currentTarget.style.border = '1px dashed #9ca3af';
                             e.currentTarget.innerHTML = '';
                           }}
-                          onDrop={(e) => {
+                          onDrop={async (e) => {
                             e.preventDefault();
                             e.currentTarget.style.height = '16px';
                             e.currentTarget.style.backgroundColor = '#e5e7eb';
@@ -1101,13 +1279,30 @@ export default function StartlistenV2Uebersicht() {
                               
                               if (dragData.type === 'newShooter') {
                                 // Neuen Schützen an dieser Position einfügen
+                                let altersklasse = dragData.meldung.altersklasse || dragData.meldung.ageClass || dragData.meldung.wettkampfklasse;
+                                if (!altersklasse || altersklasse === 'Unbekannt') {
+                                  // Hole Schützen-Daten für Altersklassen-Berechnung
+                                  try {
+                                    const shootersRes = await fetch('/api/shooters');
+                                    if (shootersRes.ok) {
+                                      const shootersData = await shootersRes.json();
+                                      const schuetze = shootersData.data?.find(s => s.name === dragData.meldung.name);
+                                      if (schuetze) {
+                                        altersklasse = calculateAgeClass(schuetze, dragData.meldung.disziplin, selectedSaison);
+                                      }
+                                    }
+                                  } catch (error) {
+                                    console.error('Fehler bei Altersklassen-Berechnung:', error);
+                                  }
+                                }
+                                
                                 const newStarter = {
                                   id: `added_${Date.now()}`,
                                   name: dragData.meldung.name,
                                   schuetzeName: dragData.meldung.name,
                                   verein: dragData.meldung.verein,
                                   disziplin: dragData.meldung.disziplin,
-                                  altersklasse: dragData.meldung.altersklasse,
+                                  altersklasse: altersklasse,
                                   anmerkung: dragData.meldung.anmerkung || '',
                                   stand: '1',
                                   startzeit: editData.konfiguration?.startzeit || '14:00',
@@ -1187,26 +1382,34 @@ export default function StartlistenV2Uebersicht() {
                           onDragEnd={(e) => {
                             e.currentTarget.style.opacity = '1';
                           }}
-                          className="grid grid-cols-10 gap-2 p-2 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 items-center cursor-move hover:bg-gray-100 transition-colors"
+                          className="grid grid-cols-9 gap-2 p-2 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 cursor-move hover:bg-gray-100 transition-colors"
                           title="🖱️ Ziehen & zwischen Cards ablegen"
                         >
-                        <input
-                          type="text"
-                          value={starter.name || starter.schuetzeName || ''}
-                          onChange={(e) => updateStarter(index, 'name', e.target.value)}
-                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        />
+                        <div className="col-span-2">
+                          <input
+                            type="text"
+                            value={starter.name || starter.schuetzeName || ''}
+                            onChange={(e) => updateStarter(index, 'name', e.target.value)}
+                            className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-full"
+                          />
+                          <button
+                            onClick={() => removeStarter(index)}
+                            className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 mt-1"
+                          >
+                            ×
+                          </button>
+                        </div>
                         <input
                           type="text"
                           value={starter.verein || ''}
                           onChange={(e) => updateStarter(index, 'verein', e.target.value)}
-                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-40"
                         />
                         <input
                           type="text"
                           value={starter.disziplin || ''}
                           onChange={(e) => updateStarter(index, 'disziplin', e.target.value)}
-                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-40"
                         />
                         <select
                           value={starter.stand}
@@ -1226,8 +1429,9 @@ export default function StartlistenV2Uebersicht() {
                               );
                               
                               if (bestaetigung) {
-                                // Finde freien Stand
-                                const staende = [1,2,3,4,5,6,7,8,9,101,102];
+                                // Finde freien Stand basierend auf Konfiguration
+                                const maxStaende = editData.konfiguration?.staende?.length || 9;
+                                const staende = Array.from({length: maxStaende}, (_, i) => i + 1);
                                 let freierStand = null;
                                 for (const stand of staende) {
                                   const istFrei = !editData.startliste.some(s => 
@@ -1253,35 +1457,40 @@ export default function StartlistenV2Uebersicht() {
                             ) ? 'border-red-500 bg-red-50' : 'border-gray-300'
                           }`}
                         >
-                          {[1,2,3,4,5,6,7,8,9,101,102].map(stand => {
-                            const istBelegt = editData.startliste.some(s => 
-                              s !== starter && s.startzeit === starter.startzeit && s.stand === stand.toString()
-                            );
-                            return (
-                              <option key={stand} value={stand} disabled={istBelegt}>
-                                Stand {stand} {istBelegt ? '(❌ belegt)' : '(✅ frei)'}
-                              </option>
-                            );
-                          })}
+                          {(() => {
+                            const maxStaende = editData.konfiguration?.staende?.length || 9;
+                            const staende = Array.from({length: maxStaende}, (_, i) => i + 1);
+                            return staende.map(stand => {
+                              const istBelegt = editData.startliste.some(s => 
+                                s !== starter && s.startzeit === starter.startzeit && s.stand === stand.toString()
+                              );
+                              return (
+                                <option key={stand} value={stand} disabled={istBelegt}>
+                                  Stand {stand} {istBelegt ? '❌' : '✅'}
+                                </option>
+                              );
+                            });
+                          })()}}
                         </select>
                         <input
                           type="time"
                           value={starter.startzeit}
                           onChange={(e) => updateStarter(index, 'startzeit', e.target.value)}
-                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-20"
                         />
                         <input
                           type="number"
                           value={starter.durchgang || ''}
-                          onChange={(e) => updateStarter(index, 'durchgang', e.target.value ? parseInt(e.target.value) : 1)}
-                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          onChange={(e) => updateStarter(index, 'durchgang', e.target.value ? parseInt(e.target.value) : '')}
+                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-10 text-center"
                           min="1"
+                          max="99"
                         />
                         <input
                           type="text"
-                          value={starter.altersklasse || ''}
-                          onChange={(e) => updateStarter(index, 'altersklasse', e.target.value)}
-                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          value={starter.anmerkung || ''}
+                          onChange={(e) => updateStarter(index, 'anmerkung', e.target.value)}
+                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-24"
                         />
                         <div className="flex items-center justify-center">
                           <input
@@ -1292,18 +1501,6 @@ export default function StartlistenV2Uebersicht() {
                             title="Landesmeisterschaft Teilnahme"
                           />
                         </div>
-                        <input
-                          type="text"
-                          value={starter.anmerkung || ''}
-                          onChange={(e) => updateStarter(index, 'anmerkung', e.target.value)}
-                          className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        />
-                        <button
-                          onClick={() => removeStarter(index)}
-                          className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
-                        >
-                          ×
-                        </button>
                         </div>
                         
                         {/* Drop Zone nach der letzten Card */}
@@ -1323,7 +1520,7 @@ export default function StartlistenV2Uebersicht() {
                               e.currentTarget.style.border = '1px dashed #9ca3af';
                               e.currentTarget.innerHTML = '';
                             }}
-                            onDrop={(e) => {
+                            onDrop={async (e) => {
                               e.preventDefault();
                               e.currentTarget.style.height = '16px';
                               e.currentTarget.style.backgroundColor = '#e5e7eb';
@@ -1332,33 +1529,74 @@ export default function StartlistenV2Uebersicht() {
                               
                               try {
                                 const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                                const draggedIndex = dragData.starterIndex;
                                 
-                                const newStartliste = [...editData.startliste];
-                                const [draggedItem] = newStartliste.splice(draggedIndex, 1);
-                                newStartliste.push(draggedItem);
-                                
-                                // Recalculate positions for all starters
-                                const updatedStartliste = newStartliste.map((s, i) => {
-                                  const baseTime = new Date(`1970-01-01T${editData.konfiguration?.startzeit || '14:00'}:00`);
-                                  const durchgangMin = editData.konfiguration?.durchgang || 50;
-                                  const wechselMin = editData.konfiguration?.wechsel || 10;
-                                  const durchgangNr = Math.floor(i / 10) + 1;
-                                  const minutesOffset = (durchgangNr - 1) * (durchgangMin + wechselMin);
-                                  const newStartzeit = new Date(baseTime.getTime() + minutesOffset * 60000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                                if (dragData.type === 'newShooter') {
+                                  // Neuen Schützen am Ende hinzufügen
+                                  let altersklasse = dragData.meldung.altersklasse || dragData.meldung.ageClass || dragData.meldung.wettkampfklasse;
+                                  if (!altersklasse || altersklasse === 'Unbekannt') {
+                                    // Hole Schützen-Daten für Altersklassen-Berechnung
+                                    try {
+                                      const shootersRes = await fetch('/api/shooters');
+                                      if (shootersRes.ok) {
+                                        const shootersData = await shootersRes.json();
+                                        const schuetze = shootersData.data?.find(s => s.name === dragData.meldung.name);
+                                        if (schuetze) {
+                                          altersklasse = calculateAgeClass(schuetze, dragData.meldung.disziplin, selectedSaison);
+                                        }
+                                      }
+                                    } catch (error) {
+                                      console.error('Fehler bei Altersklassen-Berechnung:', error);
+                                    }
+                                  }
                                   
-                                  return {
-                                    ...s,
-                                    stand: ((i % 10) + 1).toString(),
-                                    startzeit: newStartzeit,
-                                    durchgang: durchgangNr
+                                  const newStarter = {
+                                    id: `added_${Date.now()}`,
+                                    name: dragData.meldung.name,
+                                    schuetzeName: dragData.meldung.name,
+                                    verein: dragData.meldung.verein,
+                                    disziplin: dragData.meldung.disziplin,
+                                    altersklasse: altersklasse,
+                                    anmerkung: dragData.meldung.anmerkung || '',
+                                    stand: '1',
+                                    startzeit: editData.konfiguration?.startzeit || '14:00',
+                                    durchgang: 1
                                   };
-                                });
-                                
-                                setEditData({
-                                  ...editData,
-                                  startliste: updatedStartliste
-                                });
+                                  
+                                  const newStartliste = [...editData.startliste, newStarter];
+                                  
+                                  setEditData({
+                                    ...editData,
+                                    startliste: newStartliste
+                                  });
+                                } else {
+                                  const draggedIndex = dragData.starterIndex;
+                                  
+                                  const newStartliste = [...editData.startliste];
+                                  const [draggedItem] = newStartliste.splice(draggedIndex, 1);
+                                  newStartliste.push(draggedItem);
+                                  
+                                  // Recalculate positions for all starters
+                                  const updatedStartliste = newStartliste.map((s, i) => {
+                                    const baseTime = new Date(`1970-01-01T${editData.konfiguration?.startzeit || '14:00'}:00`);
+                                    const durchgangMin = editData.konfiguration?.durchgang || 50;
+                                    const wechselMin = editData.konfiguration?.wechsel || 10;
+                                    const durchgangNr = Math.floor(i / 10) + 1;
+                                    const minutesOffset = (durchgangNr - 1) * (durchgangMin + wechselMin);
+                                    const newStartzeit = new Date(baseTime.getTime() + minutesOffset * 60000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                                    
+                                    return {
+                                      ...s,
+                                      stand: ((i % 10) + 1).toString(),
+                                      startzeit: newStartzeit,
+                                      durchgang: durchgangNr
+                                    };
+                                  });
+                                  
+                                  setEditData({
+                                    ...editData,
+                                    startliste: updatedStartliste
+                                  });
+                                }
                               } catch (error) {
                                 console.error('End Drop Zone Fehler:', error);
                               }
