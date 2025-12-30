@@ -368,9 +368,9 @@ export class SchießnachweisService {
         eintrag.disziplin,
         eintrag.schussAnzahl.toString(),
         (eintrag.ergebnisGanzeRinge || 0).toString(),
-        zehntelRinge.toLocaleString('de-DE'), // Deutsche Formatierung mit Komma
-        (eintrag.ergebnis || 0).toLocaleString('de-DE'), // Deutsche Formatierung
-        durchschnitt.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 2 }),
+        zehntelRinge.toString().replace('.', ','), // Deutsche Formatierung mit Komma
+        (eintrag.ergebnis || 0).toString().replace('.', ','), // Deutsche Formatierung
+        durchschnitt.toString().replace('.', ','),
         eintrag.standort || '',
         eintrag.schiessstand || '',
         eintrag.wetter || '',
