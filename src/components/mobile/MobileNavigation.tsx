@@ -5,7 +5,7 @@ import React from 'react';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Trophy, BarChart3, FileText } from 'lucide-react';
+import { Home, Users, Trophy, BarChart3, FileText, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useAccess } from '@/components/schiessnachweis/PremiumProvider';
@@ -32,6 +32,13 @@ const navItems: NavItem[] = [
     icon: Trophy,
     label: 'Tabellen',
     requiresRWK: true,
+  },
+  {
+    href: '/schiessnachweis',
+    icon: Target,
+    label: 'Schießnachweis',
+    requiresAuth: true,
+    requiresSchiessnachweis: true,
   },
   {
     href: '/social',
@@ -89,18 +96,18 @@ export function MobileNavigation() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors",
-              "text-xs font-medium",
+              "flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-colors min-h-[60px]",
+              "text-xs font-medium touch-manipulation",
               isActive 
                 ? "text-primary bg-primary/10" 
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
           >
             <Icon className={cn(
-              "h-5 w-5 mb-1",
+              "h-6 w-6 mb-1",
               isActive ? "text-primary" : "text-muted-foreground"
             )} />
-            <span className="truncate w-full text-center text-xs">{item.label}</span>
+            <span className="truncate w-full text-center text-xs leading-tight">{item.label}</span>
           </Link>
         );
       })}

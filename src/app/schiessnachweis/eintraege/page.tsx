@@ -133,14 +133,14 @@ export default function EintraegePage() {
               {filteredEinträge.length} von {einträge.length} Einträgen
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button asChild>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
+            <Button asChild className="w-full sm:w-auto">
               <Link href="/schiessnachweis/neuer-eintrag">
                 <Plus className="h-4 w-4 mr-2" />
                 Neuer Eintrag
               </Link>
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link href="/social">
                 <Users className="h-4 w-4 mr-2" />
                 Social Training
@@ -198,21 +198,23 @@ export default function EintraegePage() {
           {filteredEinträge.map((eintrag) => (
             <Card key={eintrag.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{eintrag.disziplin}</CardTitle>
-                    <CardDescription className="flex items-center gap-4 mt-1">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {format(eintrag.datum, 'dd.MM.yyyy', { locale: de })}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        {eintrag.standort}
-                      </span>
-                    </CardDescription>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{eintrag.disziplin}</CardTitle>
+                      <CardDescription className="flex items-center gap-4 mt-1">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          {format(eintrag.datum, 'dd.MM.yyyy', { locale: de })}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          {eintrag.standort}
+                        </span>
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Badge variant={eintrag.typ === 'wettkampf' ? 'default' : 'secondary'}>
                       {eintrag.typ === 'wettkampf' ? '🏆 Wettkampf' : '🎯 Training'}
                     </Badge>
@@ -269,14 +271,14 @@ export default function EintraegePage() {
                   </div>
                 )}
                 
-                <div className="flex gap-2">
-                  <Button asChild variant="outline" size="sm">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                     <Link href={`/schiessnachweis/eintraege/${eintrag.id}/details`}>
                       <Eye className="h-4 w-4 mr-1" />
                       Details
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" size="sm">
+                  <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
                     <Link href={`/schiessnachweis/eintraege/${eintrag.id}`}>
                       <Edit className="h-4 w-4 mr-1" />
                       Bearbeiten
@@ -286,7 +288,7 @@ export default function EintraegePage() {
                     variant="outline" 
                     size="sm" 
                     onClick={() => handleDelete(eintrag.id)}
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700 w-full sm:w-auto"
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Löschen

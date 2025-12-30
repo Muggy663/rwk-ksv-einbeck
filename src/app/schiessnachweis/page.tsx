@@ -15,6 +15,88 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
+// Komponenten für neue Features
+function LetzteEinträgeCard() {
+  const [einträge, setEinträge] = useState([]);
+  
+  useEffect(() => {
+    const loadEinträge = async () => {
+      try {
+        const data = await SchießnachweisService.getEinträge();
+        const sortedData = data.sort((a, b) => new Date(b.createdAt || b.datum).getTime() - new Date(a.createdAt || a.datum).getTime());
+        setEinträge(sortedData.slice(0, 3).reverse());
+      } catch (error) {
+        logError('Fehler beim Laden der letzten Einträge:', error);
+      }
+    };
+    loadEinträge();
+  }, []);
+  
+  if (einträge.length === 0) return null;
+  
+  return (
+    <Card className="mb-6 sm:mb-8">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+          <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+          Letzte Aktivitäten
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {einträge.map((eintrag, index) => (
+            <div key={eintrag.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/30 to-muted/50 rounded-xl border">
+              <div className="flex-1">
+                <div className="font-semibold text-base mb-1">{eintrag.disziplin}</div>
+                <div className="text-sm text-muted-foreground">
+                  {format(eintrag.datum, 'dd.MM.yyyy', { locale: de })} • {eintrag.schussAnzahl} Schüsse
+                </div>
+              </div>
+              <Badge variant={eintrag.typ === 'wettkampf' ? 'default' : 'secondary'} className="text-sm px-3 py-1">
+                {eintrag.ergebnis || eintrag.ergebnisGanzeRinge} Ringe
+              </Badge>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TippDesTagesCard() {
+  const tipps = [
+    "🎯 Konzentrieren Sie sich auf Ihre Atmung - gleichmäßig ein- und ausatmen.",
+    "👁️ Visieren Sie immer mit dem gleichen Auge - Konsistenz ist der Schlüssel.",
+    "🧘 Entspannen Sie Ihre Schultern vor jedem Schuss - Verspannungen verschlechtern die Präzision.",
+    "⏱️ Nehmen Sie sich Zeit für jeden Schuss - Hektik führt zu Fehlern.",
+    "📝 Führen Sie ein Schießtagebuch - dokumentieren Sie Ihre Fortschritte.",
+    "🎯 Üben Sie regelmäßig Trockenübungen zu Hause - auch ohne Munition.",
+    "🔧 Prüfen Sie regelmäßig Ihre Ausrüstung - saubere Waffen schießen besser.",
+    "🏃 Bleiben Sie körperlich fit - Ausdauer verbessert die Stabilität.",
+    "🧠 Mentales Training ist genauso wichtig wie körperliches Training.",
+    "🌟 Setzen Sie sich realistische Ziele und feiern Sie kleine Erfolge."
+  ];
+  
+  const heute = new Date().getDate();
+  const tippIndex = heute % tipps.length;
+  
+  return (
+    <Card className="mb-6 sm:mb-8 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 border-green-200">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-green-800 dark:text-green-200">
+          <Target className="h-4 w-4 sm:h-5 sm:w-5" />
+          💡 Tipp des Tages
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-4 sm:p-6">
+        <p className="text-base sm:text-lg text-green-700 dark:text-green-300 leading-relaxed">
+          {tipps[tippIndex]}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SchießnachweisPage() {
   const { toast } = useToast();
   const [statistik, setStatistik] = useState<SchießStatistik | null>(null);
@@ -467,65 +549,71 @@ export default function SchießnachweisPage() {
         <div className="flex justify-center items-center gap-2 sm:gap-3 mb-4">
           <Target className="h-8 w-8 sm:h-12 sm:w-12 text-blue-600" />
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Schießnachweis <span className="text-red-600 dark:text-red-400 text-xl sm:text-2xl">Beta</span></h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Schießnachweis <span className="text-red-600 dark:text-red-400 text-xl sm:text-2xl">Preview</span></h1>
             <Badge variant="secondary" className="mt-1 text-xs sm:text-sm">Digitales Schießtagebuch</Badge>
           </div>
         </div>
         
         <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 px-2">
           Das digitale Schießtagebuch für Sportschützen
+          {!isLoading && statistik && statistik.letzteAktivität && (
+            <span className="block text-sm mt-2">
+              📅 Letzte Aktivität: {format(statistik.letzteAktivität, 'EEEE, d. MMMM yyyy', { locale: de })}
+            </span>
+          )}
         </p>
       </div>
 
       {/* Schnellaktionen */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8 sm:justify-center">
-        <Button asChild size="lg" className="flex items-center justify-center gap-2 h-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8">
+        <Button asChild size="lg" className="flex items-center justify-center gap-3 h-16 text-base font-semibold">
           <Link href="/schiessnachweis/neuer-eintrag">
-            <Plus className="h-5 w-5" />
+            <Plus className="h-6 w-6" />
             Neuer Eintrag
           </Link>
         </Button>
 
-        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-2 h-12">
+        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-3 h-16 text-base font-semibold">
           <Link href="/schiessnachweis/eintraege">
-            <Calendar className="h-5 w-5" />
+            <Calendar className="h-6 w-6" />
             Alle Einträge
           </Link>
         </Button>
-        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-2 h-12">
+        
+        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-3 h-16 text-base font-semibold">
           <Link href="/schiessnachweis/statistiken">
-            <TrendingUp className="h-5 w-5" />
+            <TrendingUp className="h-6 w-6" />
             Statistiken
           </Link>
         </Button>
-
+        
+        <Button asChild variant="outline" size="lg" className="flex items-center justify-center gap-3 h-16 text-base font-semibold">
+          <Link href="/schiessnachweis/datensicherung">
+            <FileText className="h-6 w-6" />
+            Datensicherung
+          </Link>
+        </Button>
       </div>
 
       {/* Statistik-Übersicht */}
       {!isLoading && statistik && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          <Card>
-            <CardContent className="p-3 sm:p-4 text-center">
-              <div className="text-xl sm:text-2xl font-bold text-blue-600">{statistik.totalSchüsse}</div>
-              <div className="text-xs sm:text-sm text-muted-foreground">Schüsse gesamt</div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 sm:mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 border-blue-200">
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600 mb-2">{statistik.totalSchüsse}</div>
+              <div className="text-sm sm:text-base text-blue-700 dark:text-blue-300 font-medium">Schüsse gesamt</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-3 sm:p-4 text-center">
-              <div className="text-xl sm:text-2xl font-bold text-green-600">{statistik.totalTrainings}</div>
-              <div className="text-xs sm:text-sm text-muted-foreground">Trainings</div>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/30 border-green-200">
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-green-600 mb-2">{statistik.totalTrainings}</div>
+              <div className="text-sm sm:text-base text-green-700 dark:text-green-300 font-medium">Trainings</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-3 sm:p-4 text-center">
-              <div className="text-xl sm:text-2xl font-bold text-purple-600">{statistik.totalWettkämpfe}</div>
-              <div className="text-xs sm:text-sm text-muted-foreground">Wettkämpfe</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3 sm:p-4 text-center">
-              <div className="text-xl sm:text-2xl font-bold text-orange-600">{statistik.durchschnittErgebnis}</div>
-              <div className="text-xs sm:text-sm text-muted-foreground">⌀ Ergebnis</div>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/30 border-purple-200">
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600 mb-2">{statistik.totalWettkämpfe}</div>
+              <div className="text-sm sm:text-base text-purple-700 dark:text-purple-300 font-medium">Wettkämpfe</div>
             </CardContent>
           </Card>
         </div>
@@ -556,164 +644,51 @@ export default function SchießnachweisPage() {
         </Card>
       )}
 
-      {/* Letzte Aktivität */}
-      {!isLoading && statistik && statistik.letzteAktivität && (
-        <Card className="mb-6 sm:mb-8">
-          <CardHeader className="pb-3 sm:pb-6">
-            <CardTitle className="text-base sm:text-lg">📅 Letzte Aktivität</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm sm:text-base text-muted-foreground">
-              {format(statistik.letzteAktivität, 'EEEE, d. MMMM yyyy', { locale: de })}
-            </p>
-          </CardContent>
-        </Card>
+      {/* Tipp des Tages */}
+      <TippDesTagesCard />
+
+      {/* Letzte Einträge */}
+      {!isLoading && statistik && statistik.totalSchüsse > 0 && (
+        <LetzteEinträgeCard />
       )}
 
-      {/* Datenbank-Info */}
-      <Card className="mb-4 sm:mb-6 border-blue-300 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-950/30 dark:to-indigo-950/30 shadow-lg">
-        <CardContent className="p-4">
-          <div className="text-center">
-            <div className="text-xl font-bold text-blue-800 dark:text-blue-200 mb-2 flex items-center justify-center gap-2">
-              💾 Alle Daten in der Datenbank
-            </div>
-            <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2">
-              Ihre Schießnachweis-Daten werden sicher in der Datenbank gespeichert!
-            </p>
-            <div className="bg-white dark:bg-gray-800 p-2 rounded border border-blue-200 dark:border-blue-700">
-              <p className="text-xs text-gray-700 dark:text-gray-300">
-                ✅ <strong>Automatische Speicherung:</strong> Jeder Eintrag wird sofort in der Datenbank gesichert<br/>
-                🔄 <strong>Multi-Device:</strong> Zugriff von allen Geräten mit demselben Account<br/>
-                🛡️ <strong>Sicher:</strong> Keine lokalen Daten mehr - alles professionell gesichert
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+{/* Datenbank-Info */}
 
-      {/* Testphase Banner */}
-      <Card className="mb-4 sm:mb-6 border-orange-200 bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20">
-        <CardContent className="p-4">
-          <div className="text-center">
-            <div className="text-lg font-bold text-orange-800 dark:text-orange-200 mb-1">🚧 Testphase</div>
-            <p className="text-sm text-orange-700 dark:text-orange-300 mb-3">
-              Feedback willkommen!
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center items-center">
-              <span className="text-xs text-orange-600 dark:text-orange-400">
-                💡 Infrastruktur erhalten:
-              </span>
-              <Button asChild variant="outline" size="sm" className="text-xs">
-                <Link href="https://paypal.me/rwkeinbeck" target="_blank">
-                  ☕ PayPal Spende
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
 
       
-
-      
-      {/* Backup & Export */}
+      {/* Informationen */}
       <Card className="mb-6 sm:mb-8">
-        <CardHeader className="pb-3 sm:pb-6">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
-            Datensicherung
-          </CardTitle>
-          <CardDescription className="text-sm sm:text-base">
-            Sichern Sie Ihre Daten regelmäßig
-          </CardDescription>
+        <CardHeader>
+          <CardTitle>ℹ️ Informationen</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">📤 Export</h4>
-              <div className="grid grid-cols-1 gap-2">
-                <Button 
-                  onClick={handleExportExcel} 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex items-center justify-center gap-2"
-                  disabled={isMobile}
-                >
-                  <Download className="h-4 w-4" />
-                  Excel (.csv) {isMobile && '(Desktop)'}
-                </Button>
-                <Button 
-                  onClick={handleExportODS} 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex items-center justify-center gap-2"
-                  disabled={isMobile}
-                >
-                  <FileText className="h-4 w-4" />
-                  LibreOffice (.ods) {isMobile && '(Desktop)'}
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">📥 Import</h4>
-              <div className="grid grid-cols-1 gap-2">
-                <Button 
-                  onClick={() => document.getElementById('csv-import')?.click()} 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex items-center justify-center gap-2"
-                  disabled={isMobile}
-                >
-                  <Upload className="h-4 w-4" />
-                  CSV/Excel importieren {isMobile && '(Desktop)'}
-                </Button>
-                <Button onClick={handleRefreshData} variant="outline" size="sm" className="flex items-center justify-center gap-2 bg-green-50 border-green-300 text-green-700 hover:bg-green-100">
-                  <Download className="h-4 w-4" />
-                  🔄 Daten aktualisieren
-                </Button>
-                <input
-                  id="csv-import"
-                  type="file"
-                  accept=".csv,.xlsx,.xls"
-                  onChange={handleImportCSV}
-                  className="hidden"
-                />
-              </div>
-            </div>
+        <CardContent className="p-4 sm:p-6">
+          <div className="space-y-3 text-sm sm:text-base text-muted-foreground">
+            <p className="flex items-start gap-2">
+              <span className="text-lg">📊</span>
+              <span><strong>CSV/Excel:</strong> Zum Bearbeiten und Sichern in Tabellenkalkulationen</span>
+            </p>
+            <p className="flex items-start gap-2">
+              <span className="text-lg">📝</span>
+              <span><strong>PDF:</strong> Offizieller Nachweis für Waffenbehörden</span>
+            </p>
+            <p className="flex items-start gap-2">
+              <span className="text-lg">💡</span>
+              <span><strong>Import:</strong> Unterstützt das gleiche Format wie der Export</span>
+            </p>
+            <p className="flex items-start gap-2">
+              <span className="text-lg">💾</span>
+              <span><strong>Datenbank:</strong> Alle Daten werden automatisch sicher in der Datenbank gespeichert (Multi-Device-Zugriff)</span>
+            </p>
+            <p className="flex items-start gap-2">
+              <span className="text-lg">☕</span>
+              <span><strong>Unterstützung:</strong> <Link href="https://paypal.me/marcelbuenger1989" target="_blank" className="text-blue-600 hover:text-blue-800 underline font-medium">PayPal Spende</Link> für Infrastruktur</span>
+            </p>
           </div>
-          <div className="grid grid-cols-1 gap-2">
-            <Button 
-              asChild={!isMobile} 
-              variant="outline" 
-              className="flex items-center justify-center gap-2 h-10"
-              disabled={isMobile}
-              onClick={isMobile ? undefined : undefined}
-            >
-              {isMobile ? (
-                <span>
-                  <FileText className="h-4 w-4" />
-                  PDF für Behörden (Desktop)
-                </span>
-              ) : (
-                <Link href="/schiessnachweis/pdf-export">
-                  <FileText className="h-4 w-4" />
-                  PDF für Behörden
-                </Link>
-              )}
-            </Button>
-          </div>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-3">
-            📊 <strong>CSV/Excel:</strong> Zum Bearbeiten und Sichern<br/>
-            📄 <strong>LibreOffice:</strong> Schöne Übersicht und Auswertungen<br/>
-            📝 <strong>PDF:</strong> Offizieller Nachweis für Behörden<br/>
-            💡 <strong>Import:</strong> Unterstützt das gleiche Format wie der Export<br/>
-            💾 <strong>Datenbank:</strong> Alle Daten werden automatisch sicher gespeichert
-          </p>
         </CardContent>
       </Card>
 
-
-      <ScrollToTopButton />
+<ScrollToTopButton />
       </div>
   );
 }
