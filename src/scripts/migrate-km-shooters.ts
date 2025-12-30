@@ -8,7 +8,8 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const databaseId = process.env.FIREBASE_DATABASE_ID || 'restored-main';
+const db = getFirestore(app, databaseId);
 
 export async function migrateKMShooters() {
 

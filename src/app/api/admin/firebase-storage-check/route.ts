@@ -33,7 +33,8 @@ async function checkFirestoreUsage() {
       });
     }
     
-    const db = getFirestore();
+    const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'restored-main';
+    const db = getFirestore(undefined, databaseId);
     
     // Sammle Statistiken über alle Sammlungen
     const collections = [

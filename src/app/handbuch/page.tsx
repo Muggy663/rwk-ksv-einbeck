@@ -25,7 +25,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM, Schießnachweis und Vereinssoftware.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: 29.12.2025 - Version 2.3.5_w - Schießnachweis Verbesserungen & UX-Optimierungen
+            Stand: 30.12.2025 - Version 2.3.6a_w - Altersklassen-Fix & Startlisten-Optimierungen
           </p>
         </div>
       </div>
@@ -497,16 +497,17 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Kreismeisterschaften - Benutzerhandbuch</CardTitle>
-              <CardDescription>Anleitung zur Nutzung des Kreismeisterschafts-Moduls</CardDescription>
+              <CardDescription>Anleitung zur Nutzung des Kreismeisterschafts-Moduls - Version 2.3.6a_w</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
                 <li><a href="#km-einleitung" className="text-primary hover:underline">1. Einleitung KM-System</a></li>
                 <li><a href="#km-meldungen" className="text-primary hover:underline">2. Meldungen erstellen</a></li>
-                <li><a href="#km-startlisten" className="text-primary hover:underline">3. Startlisten-System</a></li>
-                <li><a href="#km-mannschaften" className="text-primary hover:underline">4. Mannschaftsbildung</a></li>
-                <li><a href="#km-wettkampfklassen" className="text-primary hover:underline">5. Wettkampfklassen</a></li>
-                <li><a href="#km-vm-ergebnisse" className="text-primary hover:underline">6. VM-Ergebnisse</a></li>
+                <li><a href="#km-startlisten" className="text-primary hover:underline">3. Startlisten-System V2 (NEU)</a></li>
+                <li><a href="#km-altersklassen" className="text-primary hover:underline">4. Automatische Altersklassen (NEU)</a></li>
+                <li><a href="#km-mannschaften" className="text-primary hover:underline">5. Mannschaftsbildung</a></li>
+                <li><a href="#km-wettkampfklassen" className="text-primary hover:underline">6. Wettkampfklassen</a></li>
+                <li><a href="#km-vm-ergebnisse" className="text-primary hover:underline">7. VM-Ergebnisse</a></li>
               </ul>
             </CardContent>
           </Card>
@@ -567,33 +568,35 @@ export default function HandbuchPage() {
           <Separator className="my-6" />
           
           <section id="km-startlisten" className="space-y-4 scroll-mt-20">
-            <h2 className="text-3xl font-semibold text-primary border-b pb-2">3. Startlisten-System</h2>
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">3. Startlisten-System V2 (NEU)</h2>
             <Card>
-              <CardHeader><CardTitle className="text-xl text-accent">Intelligente Startlisten-Generierung</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-xl text-accent">Intelligente Startlisten-Generierung mit KI</CardTitle></CardHeader>
               <CardContent>
                 <div className="bg-green-50 dark:bg-green-950/50 p-4 rounded-md border border-green-200 dark:border-green-800 mb-4">
-                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">🎯 Startlisten-Assistent (Neu in Version 0.9.9.9)</h4>
-                  <p className="text-green-700 dark:text-green-300">Das neue Startlisten-System generiert automatisch optimierte Startlisten mit KI-Unterstützung und berücksichtigt alle Besonderheiten des Schießsports.</p>
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">🎯 Startlisten V2 (Neu in Version 2.3.6a_w)</h4>
+                  <p className="text-green-700 dark:text-green-300">Das neue Startlisten-System generiert automatisch optimierte Startlisten mit KI-Unterstützung und berücksichtigt alle Besonderheiten des Schießsports. Manuell hinzugefügte Starter bekommen jetzt automatisch die korrekte Altersklasse.</p>
                 </div>
                 
-                <h4 className="font-semibold mb-2">Funktionen:</h4>
+                <h4 className="font-semibold mb-2">Neue Funktionen V2:</h4>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>Altersklassen-System:</strong> Automatische Schießzeit-Berechnung basierend auf Alter (Schüler: 20 Schuss, andere: 40 Schuss)</li>
-                  <li><strong>Anlagensystem-Unterscheidung:</strong> Zuganlagen vs. Elektronische Anlagen (Disag, Meyton) mit angepassten Zeiten</li>
+                  <li><strong>Automatische Altersklassen:</strong> DSB-konforme Berechnung für alle Starter</li>
+                  <li><strong>Optimierte UI:</strong> Bessere Feldgrößen, X-Button unter Namen, kompakteres Layout</li>
+                  <li><strong>Drag & Drop Verbesserungen:</strong> Einfacheres Verschieben von Startern</li>
+                  <li><strong>Intelligente Validierung:</strong> Automatische Prüfung auf Konflikte</li>
+                  <li><strong>Performance-Optimierung:</strong> Schnellere Ladezeiten und flüssigere Bedienung</li>
                   <li><strong>KI-Optimierung:</strong> Intelligente Verteilung der Schützen auf Stände und Zeiten</li>
                   <li><strong>Gewehr-Sharing:</strong> Automatische Berücksichtigung von geteilten Gewehren mit Zeitpuffern</li>
                   <li><strong>Konfiguration speichern:</strong> Wiederverwendbare Einstellungen für nächste Jahre</li>
-                  <li><strong>Startlisten bearbeiten:</strong> Nachträgliche Anpassungen möglich</li>
-                  <li><strong>PDF/Excel Export:</strong> Mit RWK-Logo für professionelle Dokumente</li>
                 </ul>
                 
                 <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
                   <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">📋 Workflow für Sportleiterin:</h4>
                   <ol className="list-decimal pl-5 space-y-1 text-blue-700 dark:text-blue-300">
                     <li>Meldungen prüfen und VM-Ergebnisse kontrollieren</li>
-                    <li>Startlisten-Assistent: Wettkampf konfigurieren</li>
+                    <li>Startlisten V2: Wettkampf konfigurieren</li>
                     <li>Automatische Generierung mit KI-Optimierung</li>
-                    <li>Manuelle Anpassungen bei Bedarf</li>
+                    <li>Manuelle Anpassungen bei Bedarf (Drag & Drop)</li>
+                    <li>Automatische Altersklassen-Prüfung</li>
                     <li>PDF-Export für Aushang und Versand</li>
                   </ol>
                 </div>
@@ -603,8 +606,43 @@ export default function HandbuchPage() {
           
           <Separator className="my-6" />
           
+          <section id="km-altersklassen" className="space-y-4 scroll-mt-20">
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">4. Automatische Altersklassen (NEU)</h2>
+            <Card>
+              <CardHeader><CardTitle className="text-xl text-accent">DSB-konforme Altersklassen-Berechnung</CardTitle></CardHeader>
+              <CardContent>
+                <div className="bg-green-50 dark:bg-green-950/50 p-4 rounded-md border border-green-200 dark:border-green-800 mb-4">
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">✨ Altersklassen-Fix (Version 2.3.6a_w)</h4>
+                  <p className="text-green-700 dark:text-green-300">Manuell hinzugefügte Starter in Startlisten bekommen jetzt automatisch die korrekte Altersklasse basierend auf ihren Schützen-Daten und der DSB-Sportordnung.</p>
+                </div>
+                
+                <h4 className="font-semibold mb-2">Automatische Berechnung:</h4>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><strong>Geburtsjahr-basiert:</strong> Alter wird automatisch aus Schützen-Daten berechnet</li>
+                  <li><strong>Geschlechter-berücksichtigung:</strong> Männlich/Weiblich wird korrekt zugeordnet</li>
+                  <li><strong>Disziplin-abhängig:</strong> Auflage vs. Freihand unterschiedliche Klassen</li>
+                  <li><strong>DSB-konform:</strong> Nach aktueller Sportordnung</li>
+                  <li><strong>Saison-Jahr:</strong> Berücksichtigt das Wettkampfjahr (2026 = Alter in 2026)</li>
+                </ul>
+                
+                <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
+                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🔄 Automatischer Ablauf:</h4>
+                  <ol className="list-decimal pl-5 space-y-1 text-blue-700 dark:text-blue-300">
+                    <li>Schütze wird zu Startliste hinzugefügt</li>
+                    <li>System prüft vorhandene Altersklasse</li>
+                    <li>Falls "Unbekannt" oder leer: Automatische Berechnung</li>
+                    <li>DSB-Regeln werden angewendet</li>
+                    <li>Korrekte Altersklasse wird zugewiesen</li>
+                  </ol>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+          
+          <Separator className="my-6" />
+          
           <section id="km-mannschaften" className="space-y-4 scroll-mt-20">
-            <h2 className="text-3xl font-semibold text-primary border-b pb-2">4. Mannschaftsbildung</h2>
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">5. Mannschaftsbildung</h2>
             <Card>
               <CardHeader><CardTitle className="text-xl text-accent">Automatische Mannschaftsgenerierung</CardTitle></CardHeader>
               <CardContent>
@@ -638,7 +676,7 @@ export default function HandbuchPage() {
           <Separator className="my-6" />
           
           <section id="km-wettkampfklassen" className="space-y-4 scroll-mt-20">
-            <h2 className="text-3xl font-semibold text-primary border-b pb-2">5. Wettkampfklassen</h2>
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">6. Wettkampfklassen</h2>
             <Card>
               <CardHeader>
                 <CardTitle className="text-xl text-accent flex items-center justify-between">
@@ -690,7 +728,7 @@ export default function HandbuchPage() {
           <Separator className="my-6" />
           
           <section id="km-vm-ergebnisse" className="space-y-4 scroll-mt-20">
-            <h2 className="text-3xl font-semibold text-primary border-b pb-2">6. VM-Ergebnisse</h2>
+            <h2 className="text-3xl font-semibold text-primary border-b pb-2">7. VM-Ergebnisse</h2>
             <Card>
               <CardHeader><CardTitle className="text-xl text-accent">Vereinsmeisterschafts-Ergebnisse</CardTitle></CardHeader>
               <CardContent>

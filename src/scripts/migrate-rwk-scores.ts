@@ -14,7 +14,8 @@ const app = getApps().length > 0 ? getApp() : null;
 if (!app) {
   throw new Error('Firebase App nicht initialisiert. Bitte zuerst die Hauptanwendung laden.');
 }
-const db = getFirestore(app);
+const databaseId = process.env.FIREBASE_DATABASE_ID || 'restored-main';
+const db = getFirestore(app, databaseId);
 
 interface RWKScore {
   seasonId: string;

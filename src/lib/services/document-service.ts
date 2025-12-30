@@ -1,5 +1,7 @@
 // src/lib/services/document-service.ts
 
+import { logError, logWarn } from '@/lib/utils/secure-logger';
+
 export interface Document {
   id: string;
   title: string;

@@ -30,18 +30,20 @@ export async function POST(request: NextRequest) {
     const document = {
       title: sanitizeInput(body.title),
       description: sanitizeInput(body.description),
+      path: sanitizeInput(body.path),
       category: sanitizeInput(body.category),
-      fileId: sanitizeInput(body.fileId),
-      fileName: sanitizeInput(body.fileName),
+      date: sanitizeInput(body.date),
+      fileType: sanitizeInput(body.fileType),
       fileSize: sanitizeInput(body.fileSize),
-      fileType: sanitizeInput(body.fileType)
+      active: body.active !== undefined ? body.active : true,
+      restricted: body.restricted !== undefined ? body.restricted : false
     };
     
     // Validiere erforderliche Felder
-    if (!document.title || !document.fileId) {
+    if (!document.title || !document.path) {
       secureLogger.warn('Missing required fields in document creation', 'documents-api');
       return NextResponse.json(
-        { error: 'Titel und Datei-ID sind erforderlich' },
+        { error: 'Titel und Pfad sind erforderlich' },
         { status: 400 }
       );
     }
