@@ -452,16 +452,6 @@ export default function HandbuchPage() {
               </ul>
               
               <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
-                <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Hybride Versionierungsstrategie:</h4>
-                <p className="text-blue-700 dark:text-blue-300 mb-2">Ab Version 0.9.9.6/0.9.4.1 verwenden wir eine hybride Versionierungsstrategie:</p>
-                <ul className="list-disc pl-5 space-y-1 text-blue-700 dark:text-blue-300">
-                  <li><strong>Web-App:</strong> 1.7.0 - Aktuelle Version: 1.7.0</li>
-                  <li><strong>Native App:</strong> 0.9.x.y - Aktuelle Version: 0.9.4.1</li>
-                </ul>
-                <p className="text-blue-700 dark:text-blue-300 mt-2">Dies ermöglicht unabhängige Entwicklungszyklen für Web und App, während die Hauptversion synchron bleibt.</p>
-              </div>
-              
-              <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
                 <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Installation Schritt-für-Schritt:</h4>
                 <ol className="list-decimal pl-5 space-y-1 text-blue-700 dark:text-blue-300">
                   <li>APK-Datei mit Chrome-Browser herunterladen</li>

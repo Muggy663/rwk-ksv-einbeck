@@ -30,13 +30,6 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **📱 Real-time Updates** - Live-Synchronisation aller Ergebnisse
 - **🎮 Einheitliche Eingabe** - Über Schießnachweis mit Social Training Checkbox
 
-### 🆕 Version 2.3.6a_w Highlights
-- **🎯 Altersklassen-Fix** - Manuell hinzugefügte Starter bekommen korrekte Altersklassen
-- **🎨 Startlisten-UI Optimiert** - Bessere Feldgrößen, kompakteres Layout
-- **🔧 Database Migration** - Vollständige Migration auf restored-main Datenbank
-- **📊 Erweiterte Statistiken** - Performance-Charts mit Trend-Analysen
-- **🤖 KI-Startlisten V2** - Intelligente Optimierung mit Google Gemini AI
-
 ## 🚀 Hauptfunktionen
 
 ### 🏅 Rundenwettkampf (RWK)
@@ -78,8 +71,13 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **Statistik-Dashboard** mit Auswertungen
 - **KI-Startlisten Generator V2** - Intelligente Optimierung mit Vereins-Limits
 - **Altersklassen-Automatik** - DSB-konforme Berechnung nach Geburtsjahr
-- **Multi-Database Support** - Skalierbare Firebase-Architektur
-- **Performance-Optimierungen** - Schnellere Ladezeiten und bessere UX
+- **Live-Tabellen** - Automatische Berechnung nach RWK-Ordnung
+- **KM-System** - Vollständige Kreismeisterschafts-Verwaltung
+- **Meyton Integration** - Export für elektronische Schießanlagen
+- **Google Gemini AI** - Intelligenteste OCR-Erkennung für Handzettel
+- **Community-Ranglisten** - Automatische Sortierung und Performance-Analysen
+- **Community entdecken** - Profile durchsuchen und zu Gruppen einladen
+- **Smart Notifications** - DSGVO-konforme Push-Benachrichtigungen
 
 
 
@@ -92,43 +90,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 | **Safari (iPhone)** | ✅ Mobile | Vollständig mobil nutzbar |
 | **iOS App** | ❌ Nicht geplant | Unrentabel |
 
-## 🎯 Zielgruppe
-
-- **Schützenvereine** in Deutschland
-- **Kreisverbände** für KM-Organisation
-- **Schießsport-Organisatoren**
-- **Wettkampfleiter** und Vereinsvorstände
-- **Sportschützen** für persönliche Dokumentation
-
-## 🎯 Besondere Features
-
-### 🏆 Wettkampf-Management
-- **Live-Tabellen**: Automatische Berechnung nach RWK-Ordnung
-- **KM-System**: Vollständige Kreismeisterschafts-Verwaltung
-- **Meyton Integration**: Export für elektronische Schießanlagen
-- **Google Gemini AI**: Intelligenteste OCR-Erkennung für Handzettel
-- **KI-Startlisten V2**: Automatische Optimierung mit Vereins-Limits und Zeitpuffern
-- **Altersklassen-Automatik**: DSB-konforme Berechnung nach Sportordnung
-
-### 👥 Social Features
-- **Live-Wettkämpfe**: Real-time Wettkämpfe mit Live-Ranglisten
-- **Duelle-System**: 1vs1 Herausforderungen mit Firebase-Integration
-- **Community-Ranglisten**: Automatische Sortierung und Performance-Analysen
-- **Trainingsgruppen**: 6-stellige Beitrittscodes mit Admin-Berechtigungen
-- **Einheitliche Dateneingabe**: Über Schießnachweis mit Social Training Checkbox
-- **Community entdecken**: Profile durchsuchen und zu Gruppen einladen
-- **Smart Notifications**: DSGVO-konforme Push-Benachrichtigungen
-
-### 📱 Technische Highlights
-- **Progressive Web App**: Offline-fähig, installierbar
-- **Pull-to-Refresh**: Native Mobile-Gesten
-- **Optimistic Updates**: Sofortige UI-Reaktionen
-- **Enhanced Dark Mode**: System-Integration
-- **Dual-Input-System**: Kamera + Galerie Support
-- **Multi-Database Architecture**: Skalierbare Firebase-Lösung
-- **Performance-Optimiert**: Schnelle Ladezeiten durch intelligentes Caching
-
-## 🌟 Warum RWK Einbeck App 2.3.6a_w?
+## 🌟 Warum RWK Einbeck App?
 
 ### ❌ Vorher (Analog + Einzelkämpfer)
 - Excel-Tabellen manuell pflegen
@@ -147,8 +109,6 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **Einheitliche Eingabe** über Schießnachweis mit Social Training Integration
 - **Community-Ranglisten** mit erweiterten Statistiken und Performance-Analysen
 - **KI-Startlisten Generator** mit automatischer Optimierung und Altersklassen-Berechnung
-- **Smart Notifications** für alle wichtigen Events
-- **Multi-Database Architecture** für maximale Skalierbarkeit
 
 ## 📸 Screenshots
 
@@ -188,7 +148,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 30. Dezember 2025 - Version 2.3.6a_w - Altersklassen-Fix & Startlisten-Optimierungen*
+*Letzte Aktualisierung: 30. Dezember 2025 - Version 2.3.6a_w*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 
