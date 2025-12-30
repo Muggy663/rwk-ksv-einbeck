@@ -1,36 +1,25 @@
 import { SchießEintrag, SchießStatistik } from '@/types/schiessnachweis';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
-// Cache für bessere Performance
-let cachedEinträge: SchießEintrag[] | null = null;
-let lastCacheTime = 0;
-const CACHE_DURATION = 5000; // 5 Sekunden Cache
-let isLoading = false; // Verhindere mehrfache gleichzeitige Ladevorgänge
-
 export class SchießnachweisService {
   static async getEinträge(): Promise<SchießEintrag[]> {
     if (typeof window === 'undefined') return [];
     
-    // Cache prüfen
-    const now = Date.now();
-    if (cachedEinträge && (now - lastCacheTime) < CACHE_DURATION) {
-      return cachedEinträge;
-    }
-    
-    // Verhindere mehrfache gleichzeitige Ladevorgänge
-    if (isLoading) {
-      return cachedEinträge || [];
-    }
-    
-    isLoading = true;
-    
     try {
-      // Lade direkt aus Firebase - alle Daten werden in der Datenbank gespeichert
       const { auth, db } = await import('@/lib/firebase/config');
+      
+      // Warte auf Auth-Initialisierung
+      if (!auth.currentUser) {
+        await new Promise((resolve) => {
+          const unsubscribe = auth.onAuthStateChanged((user) => {
+            unsubscribe();
+            resolve(user);
+          });
+        });
+      }
       
       if (!auth.currentUser) {
         logDebug('⚠️ Benutzer nicht angemeldet - keine Daten verfügbar');
-        isLoading = false;
         return [];
       }
       
@@ -40,7 +29,6 @@ export class SchießnachweisService {
       
       if (!docSnap.exists()) {
         logDebug('📝 Keine Schießnachweis-Daten für User:', auth.currentUser.uid);
-        isLoading = false;
         return [];
       }
       
@@ -83,16 +71,10 @@ export class SchießnachweisService {
         };
       });
       
-      // Cache aktualisieren
-      cachedEinträge = einträge;
-      lastCacheTime = now;
-      isLoading = false;
-      
       logDebug(`✅ ${einträge.length} Einträge aus Datenbank geladen`);
       return einträge;
     } catch (error) {
       logError('Fehler beim Laden der Einträge aus Datenbank:', error);
-      isLoading = false;
       return [];
     }
   }
@@ -107,10 +89,6 @@ export class SchießnachweisService {
     const einträge = await this.getEinträge();
     einträge.push(neuerEintrag);
     
-    // Cache aktualisieren
-    cachedEinträge = einträge;
-    lastCacheTime = Date.now();
-    
     await this.saveToDatabase(einträge);
     
     return neuerEintrag;
@@ -124,10 +102,6 @@ export class SchießnachweisService {
     
     einträge[index] = { ...einträge[index], ...updates };
     
-    // Cache aktualisieren
-    cachedEinträge = einträge;
-    lastCacheTime = Date.now();
-    
     await this.saveToDatabase(einträge);
     
     return einträge[index];
@@ -135,10 +109,6 @@ export class SchießnachweisService {
 
   static async deleteEintrag(id: string): Promise<void> {
     const einträge = (await this.getEinträge()).filter(e => e.id !== id);
-    
-    // Cache aktualisieren
-    cachedEinträge = einträge;
-    lastCacheTime = Date.now();
     
     await this.saveToDatabase(einträge);
   }
@@ -349,14 +319,74 @@ export class SchießnachweisService {
     }
   }
   
-  // Daten sind bereits in der Datenbank - kein separater Cloud-Sync nötig
   static async refreshData(): Promise<SchießEintrag[]> {
-    // Cache invalidieren und neu laden
-    cachedEinträge = null;
-    lastCacheTime = 0;
     return await this.getEinträge();
   }
   
+  static async exportToCSV(): Promise<string> {
+    const einträge = await this.getEinträge();
+    
+    if (einträge.length === 0) {
+      return 'Keine Daten zum Exportieren vorhanden';
+    }
+    
+    // CSV Header mit deutscher Formatierung
+    const headers = [
+      'Datum',
+      'Typ',
+      'Disziplin',
+      'Schussanzahl',
+      'Ergebnis_Ganze_Ringe',
+      'Ergebnis_Zehntel_Ringe',
+      'Ergebnis_Gesamt',
+      'Durchschnitt_pro_Schuss',
+      'Standort',
+      'Schießstand',
+      'Wetter',
+      'Munition',
+      'Waffe',
+      'Serien',
+      'Notizen'
+    ];
+    
+    // CSV Zeilen erstellen
+    const rows = einträge.map(eintrag => {
+      const zehntelRinge = eintrag.ergebnis && eintrag.ergebnisGanzeRinge ? 
+        (eintrag.ergebnis - eintrag.ergebnisGanzeRinge) : 0;
+      
+      const durchschnitt = eintrag.ergebnis && eintrag.schussAnzahl ? 
+        (eintrag.ergebnis / eintrag.schussAnzahl) : 0;
+      
+      // Serien-Information formatieren
+      const serienInfo = eintrag.serien && eintrag.serien.length > 0 ? 
+        eintrag.serien.map(s => `Serie ${s.serienNummer}: ${s.summe.toLocaleString('de-DE')}`).join('; ') : 
+        'Keine Serien';
+      
+      return [
+        eintrag.datum.toLocaleDateString('de-DE'),
+        eintrag.typ,
+        eintrag.disziplin,
+        eintrag.schussAnzahl.toString(),
+        (eintrag.ergebnisGanzeRinge || 0).toString(),
+        zehntelRinge.toLocaleString('de-DE'), // Deutsche Formatierung mit Komma
+        (eintrag.ergebnis || 0).toLocaleString('de-DE'), // Deutsche Formatierung
+        durchschnitt.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 2 }),
+        eintrag.standort || '',
+        eintrag.schiessstand || '',
+        eintrag.wetter || '',
+        eintrag.munition || '',
+        eintrag.waffe || '',
+        serienInfo,
+        eintrag.notizen || ''
+      ].map(field => `"${field.toString().replace(/"/g, '""')}"`); // CSV-Escaping
+    });
+    
+    // CSV zusammenfügen
+    const csvContent = [headers.join(';'), ...rows.map(row => row.join(';'))].join('\n');
+    
+    return csvContent;
+  }
+
   // Hilfsfunktion für Device-ID
   private static getDeviceId(): string {
     if (typeof window === 'undefined') return 'server';
@@ -368,6 +398,4 @@ export class SchießnachweisService {
     }
     return deviceId;
   }
-  
-
 }

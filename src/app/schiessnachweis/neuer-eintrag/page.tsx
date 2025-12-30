@@ -109,7 +109,7 @@ export default function NeuerEintragPage() {
       // Berechne ganze Ringe (jeder Schuss einzeln abgerundet)
       const ohneZehntel = serien.reduce((sum, serie) => {
         return sum + serie.schuesse.reduce((serieSum, schuss) => {
-          return serieSum + Math.floor(schuss.wert);
+          return serieSum + (schuss.ring || Math.floor(schuss.wert));
         }, 0);
       }, 0);
       
@@ -476,7 +476,6 @@ export default function NeuerEintragPage() {
                   
                   {/* Ergebnis-Felder zwischen Serien und Notizen */}
                   <div>
-                    <Label htmlFor="ergebnis" className="text-sm font-medium">Ergebnis *</Label>
                     <div className="space-y-4">
                       <div>
                         <Label htmlFor="ergebnisGanzeRinge" className="text-sm font-medium flex items-center gap-2">
@@ -496,7 +495,7 @@ export default function NeuerEintragPage() {
                               setBerechneteErgebnisse(null);
                             }
                           }}
-                          placeholder="95"
+                          placeholder="335"
                           required
                           className="text-xl font-bold h-12"
                         />
@@ -505,7 +504,7 @@ export default function NeuerEintragPage() {
                       <div>
                         <Label htmlFor="ergebnis" className="text-sm font-medium flex items-center gap-2">
                           <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                          Zehntel-Ringe (optional)
+                          Zehntel-Ergebnis (optional)
                         </Label>
                         <Input
                           id="ergebnis"
@@ -521,10 +520,10 @@ export default function NeuerEintragPage() {
                               setBerechneteErgebnisse(null);
                             }
                           }}
-                          placeholder="109.0"
+                          placeholder="312.2"
                           className="text-xl font-bold h-12 border-green-200 focus:border-green-400"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">Präzisions-Bewertung (0-10.9 pro Schuss)</p>
+                        <p className="text-xs text-muted-foreground mt-1">Gesamtergebnis mit Zehntel (z.B. 312.2)</p>
                       </div>
                     </div>
                   </div>

@@ -109,9 +109,9 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
     const maxWert = disziplinConfig.maxRinge + (disziplinConfig.kommastellen ? 0.9 : 0);
     const validierterWert = Math.max(0, Math.min(maxWert, wert));
     
-    // Berechne ganze Ringe und Zehntel-Anteil
+    // Korrekte Berechnung: ganze Ringe und Zehntel-Anteil
     const ganzeRinge = Math.floor(validierterWert);
-    const zehntelAnteil = validierterWert - ganzeRinge;
+    const zehntelAnteil = Math.round((validierterWert - ganzeRinge) * 10) / 10; // Runde auf 1 Dezimalstelle
     
     serie.schuesse[schussIndex] = {
       ...serie.schuesse[schussIndex],
@@ -175,9 +175,6 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
               <div className="w-3 h-3 bg-primary rounded-full flex-shrink-0"></div>
               Ergebnisaufnahme - {disziplin}
             </span>
-            <Badge variant="default" className="text-lg px-3 w-fit">
-              {getGesamtErgebnis().toFixed(disziplinConfig.kommastellen ? 1 : 0)} Ringe
-            </Badge>
           </CardTitle>
           <CardDescription>
             {disziplinConfig.serienGroesse} Schuss pro Serie • Max. {disziplinConfig.maxRinge} Ringe
@@ -200,8 +197,9 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
             }}
           >
             Serie {serie.serienNummer}
-            <Badge variant="secondary" className="ml-2">
-              {serie.summe.toFixed(1)}
+            <Badge variant="secondary" className="ml-2 flex flex-col text-xs">
+              <span>{serie.summe.toFixed(1)}</span>
+              <span className="text-muted-foreground">({serie.schuesse.reduce((sum, schuss) => sum + (schuss.ring || Math.floor(schuss.wert)), 0)})</span>
             </Badge>
           </Button>
         ))}
@@ -253,56 +251,35 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
 
             {eingabeModus === 'einzelschuss' ? (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
                   {serien[activeSerieIndex].schuesse.map((schuss, schussIndex) => (
-                    <div key={schuss.nummer} className="space-y-2 p-3 border rounded-lg">
-                      <Label className="text-xs text-center block font-semibold">
+                    <div key={schuss.nummer} className="space-y-2 p-3 border rounded-lg bg-card">
+                      <Label className="text-sm text-center block font-semibold">
                         Schuss {schuss.nummer}
                       </Label>
                       
                       {disziplinConfig.kommastellen ? (
-                        // Zehntel-Eingabe: Separate Felder für ganze und Zehntel-Ringe
+                        // Zehntel-Eingabe: Ein Feld für Gesamtwert mit automatischer Berechnung
                         <div className="space-y-2">
                           <div>
-                            <Label className="text-xs text-muted-foreground">Ganze Ringe</Label>
+                            <Label className="text-xs text-muted-foreground">Schusswert (z.B. 10.8)</Label>
                             <Input
                               type="number"
                               min="0"
-                              max={disziplinConfig.maxRinge}
-                              step="1"
-                              value={schuss.ring || ""}
-                              onChange={(e) => {
-                                const ganzeRinge = parseInt(e.target.value) || 0;
-                                const zehntel = schuss.zehntel || 0;
-                                const gesamtWert = ganzeRinge + zehntel;
-                                updateSchuss(activeSerieIndex, schussIndex, gesamtWert);
-                              }}
-                              className="text-center font-mono text-sm h-8"
-                              placeholder="10"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Zehntel</Label>
-                            <Input
-                              type="number"
-                              min="0"
-                              max="0.9"
+                              max={disziplinConfig.maxRinge + 0.9}
                               step="0.1"
-                              value={schuss.zehntel ? schuss.zehntel.toFixed(1) : ""}
+                              value={schuss.wert || ""}
                               onChange={(e) => {
-                                const zehntel = parseFloat(e.target.value) || 0;
-                                const ganzeRinge = schuss.ring || 0;
-                                const gesamtWert = ganzeRinge + zehntel;
+                                const gesamtWert = parseFloat(e.target.value) || 0;
                                 updateSchuss(activeSerieIndex, schussIndex, gesamtWert);
                               }}
-                              className="text-center font-mono text-sm h-8 border-green-200"
-                              placeholder="0.5"
+                              className="text-center font-mono text-lg h-10"
+                              placeholder="10.8"
                             />
                           </div>
-                          <div className="text-center">
-                            <Badge variant="outline" className="text-xs">
-                              = {schuss.wert.toFixed(1)}
-                            </Badge>
+                          <div className="text-center text-xs text-muted-foreground bg-muted/20 p-2 rounded">
+                            <div>Ganze Ringe: <span className="font-semibold text-blue-600">{schuss.ring || 0}</span></div>
+                            <div>Zehntel: <span className="font-semibold text-green-600">{schuss.zehntel ? schuss.zehntel.toFixed(1) : '0.0'}</span></div>
                           </div>
                         </div>
                       ) : (
@@ -399,6 +376,11 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   Nur die Gesamtsumme wird gespeichert. Durchschnitt: {seriensummeInput ? (parseFloat(seriensummeInput) / disziplinConfig.serienGroesse).toFixed(disziplinConfig.kommastellen ? 1 : 0) : (serien[activeSerieIndex]?.summe ? (serien[activeSerieIndex].summe / disziplinConfig.serienGroesse).toFixed(disziplinConfig.kommastellen ? 1 : 0) : '0')} Ringe/Schuss
+                  {seriensummeInput && (
+                    <span className="block mt-1">
+                      Zehntel: {parseFloat(seriensummeInput).toFixed(1)} | Ganze: {Math.floor(parseFloat(seriensummeInput) || 0)}
+                    </span>
+                  )}
                 </p>
               </div>
             )}

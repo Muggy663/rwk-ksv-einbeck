@@ -32,6 +32,7 @@ export default function EintraegePage() {
 
   useEffect(() => {
     if (mounted) {
+      // Direkt laden ohne Cache-Invalidierung
       loadEinträge();
       checkSyncStatus();
     }
@@ -50,6 +51,7 @@ export default function EintraegePage() {
     try {
       const data = await SchießnachweisService.getEinträge();
       setEinträge(data);
+      console.log('Loaded entries:', data.length); // Debug log
     } catch (error) {
       logError('Fehler beim Laden der Einträge:', error);
     } finally {
