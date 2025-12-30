@@ -132,7 +132,7 @@ export function MobileBurgerMenu() {
                       >
                         <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground")} />
                         <span className="truncate">{item.label}</span>
-                        {item.href === '/schiessnachweis' && <span className="text-xs text-red-600 dark:text-red-400 font-semibold ml-1">Beta</span>}
+                        {item.href === '/schiessnachweis' && <span className="text-xs text-red-600 dark:text-red-400 font-semibold ml-1">Preview</span>}
                         {(item.href === '/social' || item.href === '/social/welcome') && <span className="text-xs text-green-600 dark:text-green-400 font-semibold ml-1">NEU</span>}
                       </Link>
                     )
