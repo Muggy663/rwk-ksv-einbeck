@@ -48,7 +48,8 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
           schuesse: Array.from({ length: disziplinConfig.serienGroesse }, (_, j) => ({
             nummer: j + 1,
             wert: 0,
-            ring: 0
+            ring: 0,
+            zehntel: 0
           })),
           summe: 0
         };
@@ -65,7 +66,8 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
         schuesse: Array.from({ length: disziplinConfig.serienGroesse }, (_, i) => ({
           nummer: i + 1,
           wert: 0,
-          ring: 0
+          ring: 0,
+          zehntel: 0
         })),
         summe: 0
       };
@@ -87,7 +89,8 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
       schuesse: Array.from({ length: disziplinConfig.serienGroesse }, (_, i) => ({
         nummer: i + 1,
         wert: 0,
-        ring: 0
+        ring: 0,
+        zehntel: 0
       })),
       summe: 0
     };
@@ -106,10 +109,15 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
     const maxWert = disziplinConfig.maxRinge + (disziplinConfig.kommastellen ? 0.9 : 0);
     const validierterWert = Math.max(0, Math.min(maxWert, wert));
     
+    // Berechne ganze Ringe und Zehntel-Anteil
+    const ganzeRinge = Math.floor(validierterWert);
+    const zehntelAnteil = validierterWert - ganzeRinge;
+    
     serie.schuesse[schussIndex] = {
       ...serie.schuesse[schussIndex],
       wert: validierterWert,
-      ring: Math.floor(validierterWert)
+      ring: ganzeRinge,
+      zehntel: zehntelAnteil
     };
     
     const rawSum = serie.schuesse.reduce((sum, schuss) => sum + schuss.wert, 0);
@@ -244,27 +252,78 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
             </div>
 
             {eingabeModus === 'einzelschuss' ? (
-              <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-3 mb-6">
-                {serien[activeSerieIndex].schuesse.map((schuss, schussIndex) => (
-                  <div key={schuss.nummer} className="space-y-2">
-                    <Label className="text-xs text-center block">
-                      Schuss {schuss.nummer}
-                    </Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max={disziplinConfig.maxRinge}
-                      step={disziplinConfig.kommastellen ? "0.1" : "1"}
-                      value={schuss.wert || ""}
-                      onChange={(e) => {
-                        const wert = parseFloat(e.target.value) || 0;
-                        updateSchuss(activeSerieIndex, schussIndex, wert);
-                      }}
-                      className="text-center font-mono text-lg"
-                      placeholder="0"
-                    />
-                  </div>
-                ))}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+                  {serien[activeSerieIndex].schuesse.map((schuss, schussIndex) => (
+                    <div key={schuss.nummer} className="space-y-2 p-3 border rounded-lg">
+                      <Label className="text-xs text-center block font-semibold">
+                        Schuss {schuss.nummer}
+                      </Label>
+                      
+                      {disziplinConfig.kommastellen ? (
+                        // Zehntel-Eingabe: Separate Felder für ganze und Zehntel-Ringe
+                        <div className="space-y-2">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Ganze Ringe</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max={disziplinConfig.maxRinge}
+                              step="1"
+                              value={schuss.ring || ""}
+                              onChange={(e) => {
+                                const ganzeRinge = parseInt(e.target.value) || 0;
+                                const zehntel = schuss.zehntel || 0;
+                                const gesamtWert = ganzeRinge + zehntel;
+                                updateSchuss(activeSerieIndex, schussIndex, gesamtWert);
+                              }}
+                              className="text-center font-mono text-sm h-8"
+                              placeholder="10"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Zehntel</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="0.9"
+                              step="0.1"
+                              value={schuss.zehntel ? schuss.zehntel.toFixed(1) : ""}
+                              onChange={(e) => {
+                                const zehntel = parseFloat(e.target.value) || 0;
+                                const ganzeRinge = schuss.ring || 0;
+                                const gesamtWert = ganzeRinge + zehntel;
+                                updateSchuss(activeSerieIndex, schussIndex, gesamtWert);
+                              }}
+                              className="text-center font-mono text-sm h-8 border-green-200"
+                              placeholder="0.5"
+                            />
+                          </div>
+                          <div className="text-center">
+                            <Badge variant="outline" className="text-xs">
+                              = {schuss.wert.toFixed(1)}
+                            </Badge>
+                          </div>
+                        </div>
+                      ) : (
+                        // Normale Eingabe: Ein Feld für ganze Ringe
+                        <Input
+                          type="number"
+                          min="0"
+                          max={disziplinConfig.maxRinge}
+                          step="1"
+                          value={schuss.wert || ""}
+                          onChange={(e) => {
+                            const wert = parseInt(e.target.value) || 0;
+                            updateSchuss(activeSerieIndex, schussIndex, wert);
+                          }}
+                          className="text-center font-mono text-lg"
+                          placeholder="0"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="mb-6">

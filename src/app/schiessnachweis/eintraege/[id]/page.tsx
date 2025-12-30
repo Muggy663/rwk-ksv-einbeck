@@ -117,7 +117,8 @@ export default function EintragBearbeitenPage() {
         });
         
         // Zurück zur Liste und neu laden
-        router.push("/schiessnachweis/eintraege?refresh=" + Date.now());
+        router.push("/schiessnachweis/eintraege");
+        router.refresh(); // Force page refresh
       } else {
         throw new Error("Update fehlgeschlagen");
       }
@@ -461,15 +462,21 @@ export default function EintragBearbeitenPage() {
                           step="0.1"
                           min="0"
                           max="1000"
-                          value={eintrag.ergebnis ? eintrag.ergebnis.toString() : ''}
-                          onChange={(e) => setEintrag({
-                            ...eintrag,
-                            ergebnis: parseFloat(e.target.value) || 0
-                          })}
-                          placeholder="109.0"
+                          value={eintrag.ergebnis && eintrag.ergebnisGanzeRinge ? 
+                            (eintrag.ergebnis - eintrag.ergebnisGanzeRinge).toFixed(1) : 
+                            (eintrag.ergebnis ? eintrag.ergebnis.toString() : '')}
+                          onChange={(e) => {
+                            const zehntelWert = parseFloat(e.target.value) || 0;
+                            const ganzeRinge = eintrag.ergebnisGanzeRinge || 0;
+                            setEintrag({
+                              ...eintrag,
+                              ergebnis: ganzeRinge + zehntelWert
+                            });
+                          }}
+                          placeholder="16.2"
                           className="text-xl font-bold h-12 border-green-200 focus:border-green-400"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">Präzisions-Bewertung (0-10.9 pro Schuss)</p>
+                        <p className="text-xs text-muted-foreground mt-1">Zehntel-Anteil zusätzlich zu den ganzen Ringen (z.B. 16.2)</p>
                       </div>
                     </div>
                   </div>

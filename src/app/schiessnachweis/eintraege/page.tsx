@@ -22,12 +22,20 @@ export default function EintraegePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [needsSync, setNeedsSync] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>('alle');
+  const [mounted, setMounted] = useState(false);
   const searchParams = useSearchParams();
 
+  // Hydration fix
   useEffect(() => {
-    loadEinträge();
-    checkSyncStatus();
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      loadEinträge();
+      checkSyncStatus();
+    }
+  }, [mounted]);
   
   // Reload when returning from edit with refresh parameter
   useEffect(() => {

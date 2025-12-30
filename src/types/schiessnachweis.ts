@@ -31,8 +31,9 @@ export interface ZehnerSerie {
 
 export interface Schuss {
   nummer: number;
-  wert: number; // Kann Kommastellen haben (z.B. 10.5)
-  ring?: number; // Für Ringwertung
+  wert: number; // Gesamtwert mit Zehntel (z.B. 10.5)
+  ring?: number; // Ganze Ringe (z.B. 10)
+  zehntel?: number; // Zehntel-Anteil (z.B. 0.5)
 }
 
 export interface SchießStatistik {
