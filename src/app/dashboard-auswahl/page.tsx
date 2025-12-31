@@ -139,8 +139,7 @@ export default function DashboardAuswahl() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 justify-center max-w-4xl mx-auto">
 
-
-        {/* RWK Dashboard */}
+        {/* RWK Dashboard - Links oben */}
         {(isSportleiter || isVorstand || isMannschaftsfuehrer || isLegacyVereinsvertreter || isLegacyVereinsvorstand || isLegacyMannschaftsfuehrer || isRWKAdmin) && (
           <Card className={`shadow-lg hover:shadow-xl transition-shadow ${isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand ? 'opacity-50 cursor-not-allowed' : ''}`}>
           <CardHeader className="pb-4">
@@ -204,7 +203,7 @@ export default function DashboardAuswahl() {
         </Card>
         )}
 
-        {/* KM Dashboard - In die Mitte */}
+        {/* KM Dashboard - Rechts oben */}
         <Card className={`shadow-lg hover:shadow-xl transition-shadow ${!hasKMAccess ? 'opacity-60' : ''}`}>
           <CardHeader className="pb-4">
             <div>
@@ -273,12 +272,51 @@ export default function DashboardAuswahl() {
 
       </div>
       
-      {/* Beta Features - Nach unten */}
+      {/* Preview Features - Nach unten */}
       <div className="mt-6">
-        <h2 className="text-xl font-semibold text-center mb-4 text-muted-foreground">🚀 Beta Features</h2>
+        <h2 className="text-xl font-semibold text-center mb-4 text-muted-foreground">🚀 Preview Features</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           
-          {/* Social Training */}
+          {/* Schießnachweis - Links unten */}
+          <Card className="shadow-lg hover:shadow-xl transition-shadow border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+            <CardHeader className="pb-4">
+              <div>
+                <CardTitle className="text-xl mb-2">
+                  🎯 Schießnachweis
+                  <Badge variant="secondary" className="ml-2 text-xs">Preview</Badge>
+                </CardTitle>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="outline">Cloud-Speicherung</Badge>
+                  <Badge variant="outline">PDF-Export</Badge>
+                </div>
+              </div>
+              <CardDescription>
+                Digitales Schießtagebuch für Sportschützen
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🆕 Features</h4>
+                  <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
+                    <div>• Training & Wettkampf erfassen</div>
+                    <div>• PDF-Export für Behörden</div>
+                    <div>• Cloud-Sync & Statistiken</div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Link href="/schiessnachweis" className="flex-1">
+                    <Button className="w-full">
+                      Schießnachweis öffnen
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Social Training - Rechts unten */}
           <Card className="shadow-lg hover:shadow-xl transition-shadow border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30">
             <CardHeader className="pb-4">
               <div>
@@ -303,7 +341,7 @@ export default function DashboardAuswahl() {
                   <div className="text-sm text-purple-700 dark:text-purple-200 space-y-1">
                     <div>• 👥 Trainingsgruppen erstellen</div>
                     <div>• ⚔️ Live-Wettkämpfe & Duelle</div>
-                    <div>• 🏅 Achievements sammeln</div>
+
                     <div>• 📊 Community-Statistiken</div>
                   </div>
                 </div>
@@ -318,54 +356,6 @@ export default function DashboardAuswahl() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Schießnachweis */}
-          <div className="max-w-2xl mx-auto">
-        <Card className="shadow-lg hover:shadow-xl transition-shadow border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
-          <CardHeader className="pb-4">
-            <div>
-              <CardTitle className="text-xl mb-2">
-                🎯 Schießnachweis
-                <Badge variant="secondary" className="ml-2 text-xs">Beta</Badge>
-              </CardTitle>
-              <div className="flex flex-wrap gap-1">
-                <Badge variant="outline">Cloud-Speicherung</Badge>
-                <Badge variant="outline">PDF-Export</Badge>
-              </div>
-            </div>
-            <CardDescription>
-              Digitales Schießtagebuch für Sportschützen
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🆕 Features</h4>
-                <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
-                  <div>• Training & Wettkampf erfassen</div>
-                  <div>• PDF-Export für Behörden</div>
-                  <div>• Cloud-Sync & Statistiken</div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
-                <h4 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">🚧 Testphase</h4>
-                <div className="text-sm text-orange-700 dark:text-orange-300">
-                  Feedback willkommen!
-                </div>
-              </div>
-              
-              <div className="flex gap-2">
-                <Link href="/schiessnachweis" className="flex-1">
-                  <Button className="w-full">
-                    Schießnachweis öffnen
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-          </div>
         </div>
       </div>
 

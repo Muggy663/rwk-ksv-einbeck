@@ -183,38 +183,40 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
         </CardHeader>
       </Card>
 
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-3 mb-4">
         {serien.map((serie, index) => (
           <Button
             key={serie.id}
             type="button"
             variant={activeSerieIndex === index ? "default" : "outline"}
-            size="sm"
+            size="lg"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               setActiveSerieIndex(index);
             }}
+            className="flex flex-col items-center gap-1 h-auto py-3 px-4 min-w-[100px]"
           >
-            Serie {serie.serienNummer}
-            <Badge variant="secondary" className="ml-2 flex flex-col text-xs">
-              <span>{serie.summe.toFixed(1)}</span>
+            <span className="text-sm font-medium">Serie {serie.serienNummer}</span>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="font-bold text-green-600">{serie.summe.toFixed(1)}</span>
               <span className="text-muted-foreground">({serie.schuesse.reduce((sum, schuss) => sum + (schuss.ring || Math.floor(schuss.wert)), 0)})</span>
-            </Badge>
+            </div>
           </Button>
         ))}
         <Button 
           type="button" 
           variant="outline" 
-          size="sm" 
+          size="lg" 
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             addSerie();
           }}
+          className="h-auto py-3 px-4"
         >
-          <Plus className="h-4 w-4 mr-1" />
-          Serie
+          <Plus className="h-4 w-4 mr-2" />
+          Serie hinzufügen
         </Button>
       </div>
 
