@@ -1,13 +1,14 @@
 {
   "name": "rwk-ksv-einbeck-live-tabellen-wettkampf-management",
-  "version": "2.3.7b_w",
+  "version": "2.3.7b_n",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "build:capacitor": "set NEXT_CONFIG=capacitor && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "update-version": "node scripts/update-version.js"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.2",

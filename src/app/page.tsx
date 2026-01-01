@@ -212,13 +212,13 @@ export default function HomePage() {
           
           {/* Kraftvolle Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-red-500 via-green-600 to-red-500 bg-clip-text text-transparent mb-4 animate-fade-in">
-            <span className="block sm:hidden">🎄 RWK<br />KSV Einbeck 🎅</span>
-            <span className="hidden sm:block">🎄 Frohe Weihnachten &<br />Willkommen beim RWK KSV Einbeck 🎅</span>
+            <span className="block sm:hidden">RWK<br />KSV Einbeck</span>
+            <span className="hidden sm:block">Willkommen beim RWK KSV Einbeck</span>
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            🎁 Aktuelle Ergebnisse, Tabellen und Informationen zu den Rundenwettkämpfen des Kreisschützenverbandes Einbeck e.V. 🎁<br/>
-            <span className="text-lg text-red-600 font-semibold">✨ Wir wünschen allen Schützen frohe Weihnachten und einen guten Rutsch ins neue Jahr! ✨</span>
+            🎯 Aktuelle Ergebnisse, Tabellen und Informationen zu den Rundenwettkämpfen des Kreisschützenverbandes Einbeck e.V. 🎯<br/>
+            <span className="text-lg text-red-600 font-semibold">✨ Wir wünschen allen Schützen ein frohes und sportlich erfolgreiches neues Jahr 2026! ✨</span>
           </p>
         </div>
       </section>
