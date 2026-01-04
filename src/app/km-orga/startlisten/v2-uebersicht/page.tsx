@@ -40,6 +40,7 @@ export default function StartlistenV2Uebersicht() {
   const [selectedVerein, setSelectedVerein] = useState('');
   const [neueStartzeit, setNeueStartzeit] = useState('13:00');
   const [showAnleitung, setShowAnleitung] = useState(false);
+  const [starterSuche, setStarterSuche] = useState('');
 
   useEffect(() => {
     loadVerfuegbareJahre();
@@ -456,17 +457,25 @@ export default function StartlistenV2Uebersicht() {
       altersklasse: meldung.altersklasse || 'Unbekannt',
       anmerkung: meldung.anmerkung || '',
       stand: '1',
-      startzeit: '14:00',
+      startzeit: editData.konfiguration?.startzeit || '14:00',
       durchgang: 1
     };
     
     const newStartliste = [...currentStartliste, newStarter];
-    const recalculatedStartliste = recalculateAllPositions(newStartliste);
     
-    setEditData({
-      ...editData,
-      startliste: recalculatedStartliste
-    });
+    if (editData.konfiguration?.autoRecalculate !== false) {
+      const recalculatedStartliste = recalculateAllPositions(newStartliste);
+      setEditData({
+        ...editData,
+        startliste: recalculatedStartliste
+      });
+    } else {
+      setEditData({
+        ...editData,
+        startliste: newStartliste
+      });
+    }
+    
     setShowAddShooter(false);
     setSearchTerm('');
   };
@@ -1370,6 +1379,21 @@ export default function StartlistenV2Uebersicht() {
                         />
                       </div>
                       <div>
+                        <label className="block text-sm font-medium mb-1">Auto-Berechnung</label>
+                        <label className="flex items-center gap-2 mt-2">
+                          <input
+                            type="checkbox"
+                            checked={editData.konfiguration?.autoRecalculate !== false}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              konfiguration: { ...editData.konfiguration, autoRecalculate: e.target.checked }
+                            })}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-xs">Positionen automatisch berechnen</span>
+                        </label>
+                      </div>
+                      <div>
                         <label className="block text-sm font-medium mb-1">Durchgang (Min)</label>
                         <input
                           type="number"
@@ -1510,11 +1534,13 @@ export default function StartlistenV2Uebersicht() {
                         </button>
                         <button
                           onClick={() => {
-                            const recalculatedStartliste = recalculateAllPositions(editData.startliste || []);
-                            setEditData({
-                              ...editData,
-                              startliste: recalculatedStartliste
-                            });
+                            if (editData.konfiguration?.autoRecalculate !== false) {
+                              const recalculatedStartliste = recalculateAllPositions(editData.startliste || []);
+                              setEditData({
+                                ...editData,
+                                startliste: recalculatedStartliste
+                              });
+                            }
                           }}
                           className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
                           title="Alle Positionen automatisch neu berechnen"
@@ -1658,6 +1684,55 @@ export default function StartlistenV2Uebersicht() {
                     )}
                   </div>
                   
+                  {/* Starter-Suche */}
+                  <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mb-4">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-yellow-900">🔍 Starter suchen:</label>
+                      <input
+                        type="text"
+                        value={starterSuche}
+                        onChange={(e) => {
+                          setStarterSuche(e.target.value);
+                          if (e.target.value) {
+                            // Finde ersten passenden Starter
+                            const suchbegriff = e.target.value.toLowerCase();
+                            const gefundenerIndex = editData.startliste?.findIndex(starter => 
+                              starter.name?.toLowerCase().includes(suchbegriff) ||
+                              starter.verein?.toLowerCase().includes(suchbegriff) ||
+                              starter.disziplin?.toLowerCase().includes(suchbegriff)
+                            );
+                            
+                            if (gefundenerIndex >= 0) {
+                              // Scrolle zum gefundenen Element
+                              setTimeout(() => {
+                                const element = document.querySelector(`[data-starter-index="${gefundenerIndex}"]`);
+                                if (element) {
+                                  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                  element.style.backgroundColor = '#fef3c7';
+                                  element.style.border = '2px solid #f59e0b';
+                                  setTimeout(() => {
+                                    element.style.backgroundColor = '';
+                                    element.style.border = '';
+                                  }, 2000);
+                                }
+                              }, 100);
+                            }
+                          }
+                        }}
+                        placeholder="Name, Verein oder Disziplin eingeben..."
+                        className="flex-1 px-3 py-1 border rounded text-sm"
+                      />
+                      {starterSuche && (
+                        <button
+                          onClick={() => setStarterSuche('')}
+                          className="px-2 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  
                   {/* Startliste bearbeiten */}
                   <div className="space-y-2 max-h-[60vh] overflow-y-auto bg-gray-50 rounded-lg p-3" id="startliste-container">
                     <div className="grid grid-cols-9 gap-2 p-2 bg-gray-200 dark:bg-gray-700 rounded font-medium text-sm dark:text-white">
@@ -1741,19 +1816,26 @@ export default function StartlistenV2Uebersicht() {
                                 // Bestehenden Starter verschieben
                                 const draggedIndex = dragData.starterIndex;
                                 
-                                if (draggedIndex === index) return;
+                                if (draggedIndex === editData.startliste.findIndex(s => s === starter)) return;
                                 
                                 const newStartliste = [...editData.startliste];
                                 const [draggedItem] = newStartliste.splice(draggedIndex, 1);
-                                newStartliste.splice(index, 0, draggedItem);
+                                const realIndex = editData.startliste.findIndex(s => s === starter);
+                                newStartliste.splice(realIndex, 0, draggedItem);
                                 
-                                // Recalculate positions for all starters
-                                const updatedStartliste = recalculateAllPositions(newStartliste);
-                                
-                                setEditData({
-                                  ...editData,
-                                  startliste: updatedStartliste
-                                });
+                                // Only recalculate if auto-recalculate is enabled
+                                if (editData.konfiguration?.autoRecalculate !== false) {
+                                  const updatedStartliste = recalculateAllPositions(newStartliste);
+                                  setEditData({
+                                    ...editData,
+                                    startliste: updatedStartliste
+                                  });
+                                } else {
+                                  setEditData({
+                                    ...editData,
+                                    startliste: newStartliste
+                                  });
+                                }
                               }
                             } catch (error) {
                               console.error('Drop Zone Fehler:', error);
@@ -1764,6 +1846,7 @@ export default function StartlistenV2Uebersicht() {
                         />
                         
                         <div 
+                          data-starter-index={index}
                           draggable={!swapMode}
                           onDragStart={(e) => {
                             if (swapMode) {
@@ -1797,7 +1880,8 @@ export default function StartlistenV2Uebersicht() {
                           }}
                           onClick={() => {
                             if (swapMode) {
-                              toggleSwapSelection(index);
+                              const realIndex = editData.startliste.findIndex(s => s === starter);
+                              toggleSwapSelection(realIndex);
                             }
                           }}
                           className={`grid grid-cols-9 gap-2 p-2 rounded border transition-all ${
@@ -1813,11 +1897,17 @@ export default function StartlistenV2Uebersicht() {
                           <input
                             type="text"
                             value={starter.name || starter.schuetzeName || ''}
-                            onChange={(e) => updateStarter(index, 'name', e.target.value)}
+                            onChange={(e) => {
+                              const realIndex = editData.startliste.findIndex(s => s === starter);
+                              updateStarter(realIndex, 'name', e.target.value);
+                            }}
                             className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-full"
                           />
                           <button
-                            onClick={() => removeStarter(index)}
+                            onClick={() => {
+                            const realIndex = editData.startliste.findIndex(s => s === starter);
+                            removeStarter(realIndex);
+                          }}
                             className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 mt-1"
                           >
                             ×
@@ -1826,13 +1916,19 @@ export default function StartlistenV2Uebersicht() {
                         <input
                           type="text"
                           value={starter.verein || ''}
-                          onChange={(e) => updateStarter(index, 'verein', e.target.value)}
+                          onChange={(e) => {
+                          const realIndex = editData.startliste.findIndex(s => s === starter);
+                          updateStarter(realIndex, 'verein', e.target.value);
+                        }}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-40"
                         />
                         <input
                           type="text"
                           value={starter.disziplin || ''}
-                          onChange={(e) => updateStarter(index, 'disziplin', e.target.value)}
+                          onChange={(e) => {
+                          const realIndex = editData.startliste.findIndex(s => s === starter);
+                          updateStarter(realIndex, 'disziplin', e.target.value);
+                        }}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-40"
                         />
                         <select
@@ -1953,14 +2049,20 @@ export default function StartlistenV2Uebersicht() {
                         <input
                           type="text"
                           value={starter.anmerkung || ''}
-                          onChange={(e) => updateStarter(index, 'anmerkung', e.target.value)}
+                          onChange={(e) => {
+                            const realIndex = editData.startliste.findIndex(s => s === starter);
+                            updateStarter(realIndex, 'anmerkung', e.target.value);
+                          }}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-24"
                         />
                         <div className="flex items-center justify-center">
                           <input
                             type="checkbox"
                             checked={starter.lmTeilnahme === true || meldungen.find(m => m.name === starter.name && m.disziplin === starter.disziplin)?.lmTeilnahme === true}
-                            onChange={(e) => updateStarter(index, 'lmTeilnahme', e.target.checked)}
+                            onChange={(e) => {
+                              const realIndex = editData.startliste.findIndex(s => s === starter);
+                              updateStarter(realIndex, 'lmTeilnahme', e.target.checked);
+                            }}
                             className="w-4 h-4 rounded"
                             title="Landesmeisterschaft Teilnahme"
                           />
