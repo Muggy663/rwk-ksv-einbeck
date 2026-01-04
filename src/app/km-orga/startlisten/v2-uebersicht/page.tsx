@@ -34,6 +34,12 @@ export default function StartlistenV2Uebersicht() {
   const [aenderungswuensche, setAenderungswuensche] = useState<Aenderungswunsch[]>([]);
   const [neuerWunsch, setNeuerWunsch] = useState('');
   const [showAenderungen, setShowAenderungen] = useState(true);
+  const [swapMode, setSwapMode] = useState(false);
+  const [selectedForSwap, setSelectedForSwap] = useState<number[]>([]);
+  const [showVereinsTools, setShowVereinsTools] = useState(false);
+  const [selectedVerein, setSelectedVerein] = useState('');
+  const [neueStartzeit, setNeueStartzeit] = useState('13:00');
+  const [showAnleitung, setShowAnleitung] = useState(false);
 
   useEffect(() => {
     loadVerfuegbareJahre();
@@ -488,6 +494,254 @@ export default function StartlistenV2Uebersicht() {
     setSearchTerm('');
   };
 
+  const swapShooters = () => {
+    if (selectedForSwap.length !== 2) {
+      toast({
+        title: "Fehler",
+        description: "Bitte genau 2 Schützen zum Tauschen auswählen.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const [index1, index2] = selectedForSwap;
+    const newStartliste = [...editData.startliste];
+    
+    // Speichere die Stand-, Zeit- und Durchgang-Daten der beiden Positionen
+    const position1 = {
+      stand: newStartliste[index1].stand,
+      startzeit: newStartliste[index1].startzeit,
+      durchgang: newStartliste[index1].durchgang
+    };
+    const position2 = {
+      stand: newStartliste[index2].stand,
+      startzeit: newStartliste[index2].startzeit,
+      durchgang: newStartliste[index2].durchgang
+    };
+    
+    // Tausche die beiden Schützen
+    [newStartliste[index1], newStartliste[index2]] = [newStartliste[index2], newStartliste[index1]];
+    
+    // Weise die ursprünglichen Positionen zu (Stand, Zeit, Durchgang bleiben an der Position)
+    newStartliste[index1].stand = position1.stand;
+    newStartliste[index1].startzeit = position1.startzeit;
+    newStartliste[index1].durchgang = position1.durchgang;
+    
+    newStartliste[index2].stand = position2.stand;
+    newStartliste[index2].startzeit = position2.startzeit;
+    newStartliste[index2].durchgang = position2.durchgang;
+    
+    setEditData({
+      ...editData,
+      startliste: newStartliste
+    });
+    
+    // Reset swap mode
+    setSwapMode(false);
+    setSelectedForSwap([]);
+    
+    toast({
+      title: "✅ Getauscht",
+      description: `${newStartliste[index2].name} ↔ ${newStartliste[index1].name}`
+    });
+  };
+
+  const toggleSwapSelection = (index: number) => {
+    if (selectedForSwap.includes(index)) {
+      setSelectedForSwap(selectedForSwap.filter(i => i !== index));
+    } else if (selectedForSwap.length < 2) {
+      setSelectedForSwap([...selectedForSwap, index]);
+    } else {
+      // Ersetze die erste Auswahl
+      setSelectedForSwap([selectedForSwap[1], index]);
+    }
+  };
+
+  const getVereinsUebersicht = () => {
+    if (!editData.startliste) return {};
+    
+    const uebersicht = {};
+    editData.startliste.forEach(starter => {
+      const verein = starter.verein || 'Unbekannt';
+      const startzeit = starter.startzeit || '14:00';
+      
+      if (!uebersicht[verein]) {
+        uebersicht[verein] = {};
+      }
+      if (!uebersicht[verein][startzeit]) {
+        uebersicht[verein][startzeit] = 0;
+      }
+      uebersicht[verein][startzeit]++;
+    });
+    
+    return uebersicht;
+  };
+
+  const getVerfuegbareVereine = () => {
+    if (!editData.startliste) return [];
+    const vereine = [...new Set(editData.startliste.map(s => s.verein).filter(Boolean))];
+    return vereine.sort();
+  };
+
+  const vereinVorziehen = () => {
+    if (!selectedVerein || !neueStartzeit) {
+      toast({
+        title: "Fehler",
+        description: "Bitte Verein und neue Startzeit auswählen.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newStartliste = [...editData.startliste];
+    const vereinsSchuetzen = newStartliste.filter(s => s.verein === selectedVerein);
+    
+    if (vereinsSchuetzen.length === 0) {
+      toast({
+        title: "Fehler",
+        description: `Keine Schützen von ${selectedVerein} gefunden.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Berechne neue Durchgänge und Stände für die neue Startzeit
+    const maxStaende = editData.konfiguration?.staende?.length || 9;
+    const durchgangMin = editData.konfiguration?.durchgang || 50;
+    const wechselMin = editData.konfiguration?.wechsel || 10;
+    
+    // Finde freie Plätze ab der neuen Startzeit
+    let neuerDurchgang = 1;
+    let neuerStand = 1;
+    
+    vereinsSchuetzen.forEach((schuetze, index) => {
+      // Finde den Schützen in der Startliste
+      const schuetzeIndex = newStartliste.findIndex(s => s.id === schuetze.id);
+      if (schuetzeIndex !== -1) {
+        // Berechne neue Position
+        const minutesOffset = (neuerDurchgang - 1) * (durchgangMin + wechselMin);
+        const baseTime = new Date(`1970-01-01T${neueStartzeit}:00`);
+        const startzeit = new Date(baseTime.getTime() + minutesOffset * 60000)
+          .toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        
+        newStartliste[schuetzeIndex] = {
+          ...newStartliste[schuetzeIndex],
+          startzeit: startzeit,
+          stand: neuerStand.toString(),
+          durchgang: neuerDurchgang
+        };
+        
+        // Nächste Position berechnen
+        neuerStand++;
+        if (neuerStand > maxStaende) {
+          neuerStand = 1;
+          neuerDurchgang++;
+        }
+      }
+    });
+    
+    setEditData({
+      ...editData,
+      startliste: newStartliste.sort((a, b) => {
+        if (a.startzeit !== b.startzeit) return a.startzeit.localeCompare(b.startzeit);
+        return parseInt(a.stand || '0') - parseInt(b.stand || '0');
+      })
+    });
+    
+    toast({
+      title: "✅ Verein vorgezogen",
+      description: `${vereinsSchuetzen.length} Schützen von ${selectedVerein} auf ${neueStartzeit} Uhr verschoben.`
+    });
+  };
+
+  const lueckenFuellen = () => {
+    if (!editData.startliste) return;
+    
+    const maxStaende = editData.konfiguration?.staende?.length || 9;
+    
+    // Gruppiere nach Startzeiten und sortiere innerhalb jeder Zeit
+    const nachStartzeit = editData.startliste.reduce((acc, starter) => {
+      const zeit = starter.startzeit || '14:00';
+      if (!acc[zeit]) acc[zeit] = [];
+      acc[zeit].push(starter);
+      return acc;
+    }, {});
+    
+    // Reorganisiere nur innerhalb jeder Startzeit
+    const neueSortierung = [];
+    Object.entries(nachStartzeit)
+      .sort(([zeitA], [zeitB]) => zeitA.localeCompare(zeitB))
+      .forEach(([startzeit, starter]) => {
+        starter.forEach((s, index) => {
+          const standNr = (index % maxStaende) + 1;
+          const durchgangNr = Math.floor(index / maxStaende) + 1;
+          
+          neueSortierung.push({
+            ...s,
+            stand: standNr.toString(),
+            startzeit: startzeit, // Behalte die ursprüngliche Startzeit
+            durchgang: durchgangNr
+          });
+        });
+      });
+    
+    setEditData({
+      ...editData,
+      startliste: neueSortierung
+    });
+    
+    toast({
+      title: "✅ Lücken gefüllt",
+      description: "Positionen wurden innerhalb der Startzeiten optimiert."
+    });
+  };
+
+  const getKonflikte = () => {
+    if (!editData.startliste) return [];
+    
+    const konflikte = [];
+    const belegtePositionen = new Map();
+    
+    editData.startliste.forEach((starter, index) => {
+      const key = `${starter.startzeit}-${starter.stand}`;
+      if (belegtePositionen.has(key)) {
+        belegtePositionen.get(key).push(index + 1);
+      } else {
+        belegtePositionen.set(key, [index + 1]);
+      }
+    });
+    
+    // Prüfe auf Doppelbelegungen
+    belegtePositionen.forEach((indices, key) => {
+      if (indices.length > 1) {
+        const [zeit, stand] = key.split('-');
+        konflikte.push(`Stand ${stand} um ${zeit} Uhr: Mehrfach belegt (Zeilen ${indices.join(', ')})`);
+      }
+    });
+    
+    // Prüfe auf Lücken in Ständen pro Startzeit
+    const nachStartzeit = editData.startliste.reduce((acc, starter) => {
+      const zeit = starter.startzeit || '14:00';
+      if (!acc[zeit]) acc[zeit] = [];
+      acc[zeit].push(parseInt(starter.stand || '0'));
+      return acc;
+    }, {});
+    
+    const konfigurierteStaende = editData.konfiguration?.staende || [1,2,3,4,5,6,7,8,9];
+    
+    Object.entries(nachStartzeit).forEach(([zeit, staende]) => {
+      const sortierteStaende = staende.sort((a, b) => a - b);
+      
+      konfigurierteStaende.forEach(stand => {
+        if (!sortierteStaende.includes(stand)) {
+          konflikte.push(`🕳️ Stand ${stand} um ${zeit} Uhr ist frei (Lücke in der Belegung)`);
+        }
+      });
+    });
+    
+    return konflikte;
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -525,6 +779,80 @@ export default function StartlistenV2Uebersicht() {
             )}
           </select>
         </div>
+      </div>
+
+      {/* Bedienungsanleitung */}
+      <div className="mb-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            📖 Bedienungsanleitung & Workflow
+          </h2>
+          <button
+            onClick={() => setShowAnleitung(!showAnleitung)}
+            className="text-gray-600 hover:text-gray-800 text-sm"
+          >
+            {showAnleitung ? 'Ausblenden' : 'Anzeigen'}
+          </button>
+        </div>
+        
+        {showAnleitung && (
+          <div className="space-y-4 text-sm text-gray-900 dark:text-white">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">🎯 Grundfunktionen</h3>
+                <ul className="space-y-1 text-gray-700 dark:text-gray-200">
+                  <li>• <strong>Bearbeiten:</strong> Startliste öffnen und anpassen</li>
+                  <li>• <strong>PDF Drucken:</strong> Offizielle Startlisten für Wettkampf</li>
+                  <li>• <strong>David21 Import:</strong> CSV-Export für Schießanlagen</li>
+                  <li>• <strong>Löschen:</strong> Startliste endgültig entfernen</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-purple-800 dark:text-purple-200 mb-2">🔄 Bearbeitungsmodus</h3>
+                <ul className="space-y-1 text-gray-700 dark:text-gray-200">
+                  <li>• <strong>Drag & Drop:</strong> Schützen zwischen Positionen ziehen</li>
+                  <li>• <strong>Schützen tauschen:</strong> 1:1 Tausch zwischen zwei Schützen</li>
+                  <li>• <strong>Schütze hinzufügen:</strong> Neue Schützen aus Meldungen</li>
+                  <li>• <strong>Positionen neu berechnen:</strong> Automatische Reorganisation</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="border-t pt-4">
+              <h3 className="font-semibold text-green-800 dark:text-green-200 mb-2">🏆 Vereins-Management Workflow</h3>
+              <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded border">
+                <p className="font-medium mb-2 dark:text-white">Beispiel: Salzderhelden muss früher starten</p>
+                <ol className="space-y-1 text-gray-700 dark:text-gray-200">
+                  <li>1. <strong>Startliste bearbeiten</strong> → "Bearbeiten" Button klicken</li>
+                  <li>2. <strong>Vereins-Management öffnen</strong> → "Anzeigen" klicken</li>
+                  <li>3. <strong>Verein auswählen</strong> → "Salzderhelden" aus Dropdown</li>
+                  <li>4. <strong>Neue Zeit eingeben</strong> → z.B. "13:00" statt "14:00"</li>
+                  <li>5. <strong>Vorziehen</strong> → Alle Schützen werden automatisch verschoben</li>
+                  <li>6. <strong>Lücken füllen</strong> → Optimiert die gesamte Startliste</li>
+                  <li>7. <strong>Speichern</strong> → Änderungen übernehmen</li>
+                </ol>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border">
+                <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">📊 Vereins-Übersicht</h4>
+                <p className="text-gray-700 dark:text-gray-200">Zeigt wie viele Schützen pro Verein zu welcher Zeit starten. Hilft bei der Planung.</p>
+              </div>
+              
+              <div className="bg-orange-50 dark:bg-orange-900/20 p-3 rounded border">
+                <h4 className="font-semibold text-orange-800 dark:text-orange-200 mb-2">⚠️ Konflikt-Warnung</h4>
+                <p className="text-gray-700 dark:text-gray-200">Automatische Erkennung von Doppelbelegungen und fehlenden Daten vor dem Speichern.</p>
+              </div>
+              
+              <div className="bg-purple-50 dark:bg-purple-900/20 p-3 rounded border">
+                <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-2">🔧 Lücken füllen</h4>
+                <p className="text-gray-700 dark:text-gray-200">Reorganisiert die komplette Startliste ohne Leerstellen für optimale Zeitnutzung.</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Änderungswünsche Panel */}
@@ -1086,35 +1414,17 @@ export default function StartlistenV2Uebersicht() {
                     </div>
                   </div>
                   
-                  {/* Probleme-Anzeige */}
+                  {/* Probleme-Anzeige mit Konflikten */}
                   <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                     <h4 className="font-medium text-yellow-900 mb-3 flex items-center">
                       <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
-                      Probleme in der Startliste
+                      Konflikte in der Startliste
                     </h4>
                     {(() => {
-                      const problems = [];
+                      const konflikte = getKonflikte();
                       const startliste = editData.startliste || [];
-                      
-                      // Prüfe auf doppelte Stände zur gleichen Zeit
-                      const standKonflikte = new Map();
-                      startliste.forEach((starter, index) => {
-                        const key = `${starter.startzeit}-${starter.stand}`;
-                        if (standKonflikte.has(key)) {
-                          standKonflikte.get(key).push(index + 1);
-                        } else {
-                          standKonflikte.set(key, [index + 1]);
-                        }
-                      });
-                      
-                      standKonflikte.forEach((indices, key) => {
-                        if (indices.length > 1) {
-                          const [zeit, stand] = key.split('-');
-                          problems.push(`⚠️ Stand ${stand} um ${zeit} Uhr: Mehrfach belegt (Zeilen ${indices.join(', ')})`);
-                        }
-                      });
                       
                       // Prüfe auf fehlende Stände
                       const ohneStand = startliste
@@ -1123,7 +1433,7 @@ export default function StartlistenV2Uebersicht() {
                         .map(({ index }) => index);
                       
                       if (ohneStand.length > 0) {
-                        problems.push(`🚫 Ohne Stand-Zuweisung: Zeilen ${ohneStand.join(', ')}`);
+                        konflikte.push(`🚫 Ohne Stand-Zuweisung: Zeilen ${ohneStand.join(', ')}`);
                       }
                       
                       // Prüfe auf fehlende Namen
@@ -1133,15 +1443,15 @@ export default function StartlistenV2Uebersicht() {
                         .map(({ index }) => index);
                       
                       if (ohneName.length > 0) {
-                        problems.push(`📝 Ohne Namen: Zeilen ${ohneName.join(', ')}`);
+                        konflikte.push(`📝 Ohne Namen: Zeilen ${ohneName.join(', ')}`);
                       }
                       
-                      return problems.length > 0 ? (
+                      return konflikte.length > 0 ? (
                         <ul className="space-y-1 text-sm text-yellow-800">
-                          {problems.map((problem, index) => (
+                          {konflikte.map((konflikt, index) => (
                             <li key={index} className="flex items-start">
                               <span className="mr-2">•</span>
-                              <span>{problem}</span>
+                              <span>{konflikt}</span>
                             </li>
                           ))}
                         </ul>
@@ -1150,7 +1460,7 @@ export default function StartlistenV2Uebersicht() {
                           <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
-                          ✅ Keine Probleme gefunden - Startliste ist bereit!
+                          ✅ Keine Konflikte gefunden - Startliste ist bereit!
                         </p>
                       );
                     })()}
@@ -1161,6 +1471,27 @@ export default function StartlistenV2Uebersicht() {
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="font-medium text-green-900">Schützen verwalten</h4>
                       <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setSwapMode(!swapMode);
+                            setSelectedForSwap([]);
+                          }}
+                          className={`px-3 py-1 rounded text-sm transition-colors ${
+                            swapMode 
+                              ? 'bg-orange-600 text-white hover:bg-orange-700' 
+                              : 'bg-orange-100 text-orange-800 hover:bg-orange-200'
+                          }`}
+                        >
+                          🔄 {swapMode ? 'Tausch-Modus beenden' : 'Schützen tauschen'}
+                        </button>
+                        {swapMode && selectedForSwap.length === 2 && (
+                          <button
+                            onClick={swapShooters}
+                            className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                          >
+                            ✅ Tauschen
+                          </button>
+                        )}
                         <button
                           onClick={() => setShowAddShooter(!showAddShooter)}
                           className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
@@ -1182,6 +1513,22 @@ export default function StartlistenV2Uebersicht() {
                         </button>
                       </div>
                     </div>
+                    
+                    {swapMode && (
+                      <div className="bg-orange-50 p-3 rounded border border-orange-200 mb-3">
+                        <p className="text-sm text-orange-800 mb-2">
+                          🔄 <strong>Tausch-Modus aktiv:</strong> Klicken Sie auf 2 Schützen, um ihre Positionen zu tauschen.
+                        </p>
+                        <p className="text-xs text-orange-600">
+                          Ausgewählt: {selectedForSwap.length}/2 Schützen
+                          {selectedForSwap.length > 0 && (
+                            <span className="ml-2">
+                              ({selectedForSwap.map(i => editData.startliste[i]?.name).join(' ↔ ')})
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    )}
                     
                     {showAddShooter && (
                       <div className="bg-white p-3 rounded border">
@@ -1232,6 +1579,70 @@ export default function StartlistenV2Uebersicht() {
                               </div>
                             ))
                           }
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {/* Vereins-Tools */}
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="font-medium text-purple-900">Vereins-Management</h4>
+                      <button
+                        onClick={() => setShowVereinsTools(!showVereinsTools)}
+                        className="text-purple-600 hover:text-purple-800 text-sm"
+                      >
+                        {showVereinsTools ? 'Ausblenden' : 'Anzeigen'}
+                      </button>
+                    </div>
+                    
+                    {showVereinsTools && (
+                      <div className="space-y-4">
+                        {/* Vereins-Übersicht */}
+                        <div className="bg-white p-3 rounded border">
+                          <h5 className="font-medium mb-2">📊 Vereins-Übersicht</h5>
+                          <div className="text-xs space-y-1 max-h-32 overflow-y-auto">
+                            {Object.entries(getVereinsUebersicht()).map(([verein, zeiten]) => (
+                              <div key={verein} className="flex justify-between border-b border-gray-100 dark:border-gray-700 py-1">
+                                <span className="font-medium">{verein}:</span>
+                                <span className="flex gap-3">
+                                  {Object.entries(zeiten as Record<string, number>).map(([zeit, anzahl]) => (
+                                    <span key={zeit} className="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
+                                      {zeit}h: {anzahl}
+                                    </span>
+                                  ))}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Verein vorziehen */}
+                        <div className="bg-white p-3 rounded border">
+                          <h5 className="font-medium mb-2">⏰ Verein vorziehen</h5>
+                          <div className="grid grid-cols-3 gap-2">
+                            <select
+                              value={selectedVerein}
+                              onChange={(e) => setSelectedVerein(e.target.value)}
+                              className="p-2 border rounded text-sm"
+                            >
+                              <option value="">Verein wählen...</option>
+                              {getVerfuegbareVereine().map(verein => (
+                                <option key={verein} value={verein}>{verein}</option>
+                              ))}
+                            </select>
+                            <input
+                              type="time"
+                              value={neueStartzeit}
+                              onChange={(e) => setNeueStartzeit(e.target.value)}
+                              className="p-2 border rounded text-sm"
+                            />
+                            <button
+                              onClick={vereinVorziehen}
+                              className="bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700"
+                            >
+                              ⏰ Vorziehen
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1357,8 +1768,12 @@ export default function StartlistenV2Uebersicht() {
                         />
                         
                         <div 
-                          draggable
+                          draggable={!swapMode}
                           onDragStart={(e) => {
+                            if (swapMode) {
+                              e.preventDefault();
+                              return;
+                            }
                             e.dataTransfer.setData('text/plain', JSON.stringify({
                               starterIndex: index,
                               starter: starter
@@ -1366,6 +1781,7 @@ export default function StartlistenV2Uebersicht() {
                             e.currentTarget.style.opacity = '0.5';
                           }}
                           onDrag={(e) => {
+                            if (swapMode) return;
                             // Auto-scroll während drag
                             const container = document.getElementById('startliste-container');
                             if (container) {
@@ -1380,10 +1796,22 @@ export default function StartlistenV2Uebersicht() {
                             }
                           }}
                           onDragEnd={(e) => {
+                            if (swapMode) return;
                             e.currentTarget.style.opacity = '1';
                           }}
-                          className="grid grid-cols-9 gap-2 p-2 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 cursor-move hover:bg-gray-100 transition-colors"
-                          title="🖱️ Ziehen & zwischen Cards ablegen"
+                          onClick={() => {
+                            if (swapMode) {
+                              toggleSwapSelection(index);
+                            }
+                          }}
+                          className={`grid grid-cols-9 gap-2 p-2 rounded border transition-all ${
+                            swapMode 
+                              ? selectedForSwap.includes(index)
+                                ? 'bg-orange-100 border-orange-400 cursor-pointer'
+                                : 'bg-white hover:bg-orange-50 border-gray-300 cursor-pointer'
+                              : 'bg-white dark:bg-gray-800 cursor-move hover:bg-gray-100 dark:border-gray-600'
+                          }`}
+                          title={swapMode ? '🔄 Zum Tauschen auswählen' : '🖱️ Ziehen & zwischen Cards ablegen'}
                         >
                         <div className="col-span-2">
                           <input
