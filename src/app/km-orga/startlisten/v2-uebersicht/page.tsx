@@ -117,7 +117,11 @@ export default function StartlistenV2Uebersicht() {
         ...doc.data()
       }));
       
-      setStartlisten(startlistenData.sort((a, b) => new Date(b.erstellt?.toDate?.() || b.erstellt) - new Date(a.erstellt?.toDate?.() || a.erstellt)));
+      setStartlisten(startlistenData.sort((a, b) => {
+        const dateA = new Date(a.konfiguration?.datum || a.erstellt?.toDate?.() || a.erstellt);
+        const dateB = new Date(b.konfiguration?.datum || b.erstellt?.toDate?.() || b.erstellt);
+        return dateB - dateA; // Neuestes Datum zuerst
+      }));
       
       if (saisonsRes.ok) {
         const saisonsData = await saisonsRes.json();
@@ -379,14 +383,15 @@ export default function StartlistenV2Uebersicht() {
   
   // Funktion zur Neuberechnung aller Positionen
   const recalculateAllPositions = (startliste) => {
-    const maxStaende = editData.konfiguration?.staende?.length || 9;
+    const konfigurierteStaende = editData.konfiguration?.staende || [1,2,3,4,5,6,7,8,9];
+    const maxStaende = konfigurierteStaende.length;
     const durchgangMin = editData.konfiguration?.durchgang || 50;
     const wechselMin = editData.konfiguration?.wechsel || 10;
     const baseTime = new Date(`1970-01-01T${editData.konfiguration?.startzeit || '14:00'}:00`);
     
     return startliste.map((starter, index) => {
       const durchgangNr = Math.floor(index / maxStaende) + 1;
-      const standNr = (index % maxStaende) + 1;
+      const standNr = konfigurierteStaende[index % maxStaende];
       const minutesOffset = (durchgangNr - 1) * (durchgangMin + wechselMin);
       const startzeit = new Date(baseTime.getTime() + minutesOffset * 60000)
         .toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
@@ -441,37 +446,6 @@ export default function StartlistenV2Uebersicht() {
 
   const addShooterToStartliste = async (meldung) => {
     const currentStartliste = editData.startliste || [];
-    const nextIndex = currentStartliste.length;
-    
-    // Berechne automatisch Stand, Startzeit und Durchgang basierend auf Position
-    const maxStaende = editData.konfiguration?.staende?.length || 9;
-    const durchgangMin = editData.konfiguration?.durchgang || 50;
-    const wechselMin = editData.konfiguration?.wechsel || 10;
-    const baseTime = new Date(`1970-01-01T${editData.konfiguration?.startzeit || '14:00'}:00`);
-    
-    const durchgangNr = Math.floor(nextIndex / maxStaende) + 1;
-    const standNr = (nextIndex % maxStaende) + 1;
-    const minutesOffset = (durchgangNr - 1) * (durchgangMin + wechselMin);
-    const startzeit = new Date(baseTime.getTime() + minutesOffset * 60000)
-      .toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    
-    // Berechne korrekte Altersklasse falls nicht vorhanden
-    let altersklasse = meldung.altersklasse || meldung.ageClass || meldung.wettkampfklasse;
-    if (!altersklasse || altersklasse === 'Unbekannt') {
-      // Hole Schützen-Daten für Altersklassen-Berechnung
-      try {
-        const shootersRes = await fetch('/api/shooters');
-        if (shootersRes.ok) {
-          const shootersData = await shootersRes.json();
-          const schuetze = shootersData.data?.find(s => s.name === meldung.name);
-          if (schuetze) {
-            altersklasse = calculateAgeClass(schuetze, meldung.disziplin, selectedSaison);
-          }
-        }
-      } catch (error) {
-        console.error('Fehler bei Altersklassen-Berechnung:', error);
-      }
-    }
     
     const newStarter = {
       id: `added_${Date.now()}`,
@@ -479,16 +453,19 @@ export default function StartlistenV2Uebersicht() {
       schuetzeName: meldung.name,
       verein: meldung.verein,
       disziplin: meldung.disziplin,
-      altersklasse: altersklasse,
+      altersklasse: meldung.altersklasse || 'Unbekannt',
       anmerkung: meldung.anmerkung || '',
-      stand: standNr.toString(),
-      startzeit: startzeit,
-      durchgang: durchgangNr
+      stand: '1',
+      startzeit: '14:00',
+      durchgang: 1
     };
+    
+    const newStartliste = [...currentStartliste, newStarter];
+    const recalculatedStartliste = recalculateAllPositions(newStartliste);
     
     setEditData({
       ...editData,
-      startliste: [...currentStartliste, newStarter]
+      startliste: recalculatedStartliste
     });
     setShowAddShooter(false);
     setSearchTerm('');
@@ -971,7 +948,12 @@ export default function StartlistenV2Uebersicht() {
             <div key={startliste.id} className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">Startliste vom {new Date(startliste.erstellt?.toDate?.() || startliste.erstellt).toLocaleDateString('de-DE')}</h3>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Startliste für den {startliste.konfiguration?.datum ? 
+                      new Date(startliste.konfiguration.datum).toLocaleDateString('de-DE') : 
+                      new Date(startliste.erstellt?.toDate?.() || startliste.erstellt).toLocaleDateString('de-DE')
+                    }
+                  </h3>
                   <p className="text-gray-600">
                     {startliste.startliste?.length || 0} Starter • Saison: {getSaisonName(startliste.saison)}
                   </p>
@@ -1350,7 +1332,7 @@ export default function StartlistenV2Uebersicht() {
                   {/* Konfiguration bearbeiten */}
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <h4 className="font-medium text-blue-900 mb-3">Konfiguration</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
                       <div>
                         <label className="block text-sm font-medium mb-1">Datum</label>
                         <input
@@ -1410,6 +1392,34 @@ export default function StartlistenV2Uebersicht() {
                           })}
                           className="w-full p-2 border rounded text-sm"
                         />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Stände ({(editData.konfiguration?.staende || []).length})</label>
+                        <div className="flex flex-wrap gap-1">
+                          {[1,2,3,4,5,6,7,8,9,101,102].map(stand => (
+                            <label key={stand} className="flex items-center gap-1 text-xs">
+                              <input
+                                type="checkbox"
+                                checked={(editData.konfiguration?.staende || []).includes(stand)}
+                                onChange={(e) => {
+                                  const aktuelleStaende = editData.konfiguration?.staende || [];
+                                  let neueStaende;
+                                  if (e.target.checked) {
+                                    neueStaende = [...aktuelleStaende, stand].sort((a,b) => a-b);
+                                  } else {
+                                    neueStaende = aktuelleStaende.filter(s => s !== stand);
+                                  }
+                                  setEditData({
+                                    ...editData,
+                                    konfiguration: { ...editData.konfiguration, staende: neueStaende }
+                                  });
+                                }}
+                                className="w-3 h-3"
+                              />
+                              {stand}
+                            </label>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1738,21 +1748,7 @@ export default function StartlistenV2Uebersicht() {
                                 newStartliste.splice(index, 0, draggedItem);
                                 
                                 // Recalculate positions for all starters
-                                const updatedStartliste = newStartliste.map((s, i) => {
-                                  const baseTime = new Date(`1970-01-01T${editData.konfiguration?.startzeit || '14:00'}:00`);
-                                  const durchgangMin = editData.konfiguration?.durchgang || 50;
-                                  const wechselMin = editData.konfiguration?.wechsel || 10;
-                                  const durchgangNr = Math.floor(i / 10) + 1;
-                                  const minutesOffset = (durchgangNr - 1) * (durchgangMin + wechselMin);
-                                  const newStartzeit = new Date(baseTime.getTime() + minutesOffset * 60000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                                  
-                                  return {
-                                    ...s,
-                                    stand: ((i % 10) + 1).toString(),
-                                    startzeit: newStartzeit,
-                                    durchgang: durchgangNr
-                                  };
-                                });
+                                const updatedStartliste = recalculateAllPositions(newStartliste);
                                 
                                 setEditData({
                                   ...editData,
@@ -1842,42 +1838,47 @@ export default function StartlistenV2Uebersicht() {
                         <select
                           value={starter.stand}
                           onChange={(e) => {
-                            const neuerStand = e.target.value;
+                            const neuerStand = parseInt(e.target.value);
+                            const konfigurierteStaende = editData.konfiguration?.staende || [1,2,3,4,5,6,7,8,9];
+                            const maxStand = Math.max(...konfigurierteStaende);
                             
-                            // Prüfe auf Konflikte
-                            const konflikt = editData.startliste.some(s => 
-                              s !== starter && s.startzeit === starter.startzeit && s.stand === neuerStand
-                            );
+                            if (neuerStand > maxStand) return;
                             
-                            if (konflikt) {
-                              const bestaetigung = confirm(
-                                `⚠️ Stand ${neuerStand} ist um ${starter.startzeit} bereits belegt!\n\n` +
-                                `✅ OK = Automatisch freien Stand finden\n` +
-                                `❌ Abbrechen = Änderung rückgängig machen`
-                              );
-                              
-                              if (bestaetigung) {
-                                // Finde freien Stand basierend auf Konfiguration
-                                const maxStaende = editData.konfiguration?.staende?.length || 9;
-                                const staende = Array.from({length: maxStaende}, (_, i) => i + 1);
-                                let freierStand = null;
-                                for (const stand of staende) {
-                                  const istFrei = !editData.startliste.some(s => 
-                                    s !== starter && s.startzeit === starter.startzeit && s.stand === stand.toString()
-                                  );
-                                  if (istFrei) {
-                                    freierStand = stand.toString();
-                                    break;
-                                  }
+                            const updatedStartliste = [...editData.startliste];
+                            const currentStarter = updatedStartliste[index];
+                            const currentStartzeit = currentStarter.startzeit;
+                            const oldStand = parseInt(currentStarter.stand || '0');
+                            
+                            // Finde alle Schützen zur gleichen Startzeit
+                            const schuetzenGleicheZeit = updatedStartliste
+                              .map((s, i) => ({ ...s, originalIndex: i }))
+                              .filter(s => s.startzeit === currentStartzeit);
+                            
+                            // Wenn der neue Stand bereits belegt ist, verschiebe alle nachfolgenden um +1
+                            if (neuerStand !== oldStand) {
+                              schuetzenGleicheZeit.forEach(schuetze => {
+                                const schuetzeStand = parseInt(schuetze.stand || '0');
+                                
+                                if (schuetze.originalIndex === index) {
+                                  // Der aktuelle Schütze bekommt den neuen Stand
+                                  updatedStartliste[schuetze.originalIndex].stand = neuerStand.toString();
+                                } else if (neuerStand <= schuetzeStand && schuetzeStand < maxStand) {
+                                  // Alle Schützen ab dem neuen Stand werden um +1 verschoben
+                                  updatedStartliste[schuetze.originalIndex].stand = (schuetzeStand + 1).toString();
                                 }
-                                updateStarter(index, 'stand', freierStand || neuerStand);
-                                if (freierStand && freierStand !== neuerStand) {
-                                  setTimeout(() => alert(`✅ Auf Stand ${freierStand} verschoben!`), 100);
-                                }
-                              }
-                            } else {
-                              updateStarter(index, 'stand', neuerStand);
+                              });
                             }
+                            
+                            // Sortiere nach Zeit und Stand
+                            const sortierteStartliste = updatedStartliste.sort((a, b) => {
+                              if (a.startzeit !== b.startzeit) return a.startzeit.localeCompare(b.startzeit);
+                              return parseInt(a.stand || '0') - parseInt(b.stand || '0');
+                            });
+                            
+                            setEditData({
+                              ...editData,
+                              startliste: sortierteStartliste
+                            });
                           }}
                           className={`p-1 border rounded text-sm ${
                             editData.startliste.some(s => 
@@ -1886,30 +1887,65 @@ export default function StartlistenV2Uebersicht() {
                           }`}
                         >
                           {(() => {
-                            const maxStaende = editData.konfiguration?.staende?.length || 9;
-                            const staende = Array.from({length: maxStaende}, (_, i) => i + 1);
-                            return staende.map(stand => {
+                            const konfigurierteStaende = editData.konfiguration?.staende || [1,2,3,4,5,6,7,8,9];
+                            return konfigurierteStaende.map(stand => {
                               const istBelegt = editData.startliste.some(s => 
                                 s !== starter && s.startzeit === starter.startzeit && s.stand === stand.toString()
                               );
                               return (
-                                <option key={stand} value={stand} disabled={istBelegt}>
+                                <option key={stand} value={stand}>
                                   Stand {stand} {istBelegt ? '❌' : '✅'}
                                 </option>
                               );
                             });
-                          })()}}
+                          })()}}}}
                         </select>
                         <input
                           type="time"
                           value={starter.startzeit}
-                          onChange={(e) => updateStarter(index, 'startzeit', e.target.value)}
+                          onChange={(e) => {
+                            const neueStartzeit = e.target.value;
+                            const updatedStartliste = [...editData.startliste];
+                            updatedStartliste[index] = {
+                              ...updatedStartliste[index],
+                              startzeit: neueStartzeit
+                            };
+                            
+                            // Automatisch sortieren nach Zeit und Stand
+                            const sortierteStartliste = updatedStartliste.sort((a, b) => {
+                              if (a.startzeit !== b.startzeit) return a.startzeit.localeCompare(b.startzeit);
+                              return parseInt(a.stand || '0') - parseInt(b.stand || '0');
+                            });
+                            
+                            setEditData({
+                              ...editData,
+                              startliste: sortierteStartliste
+                            });
+                          }}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-20"
                         />
                         <input
                           type="number"
                           value={starter.durchgang || ''}
-                          onChange={(e) => updateStarter(index, 'durchgang', e.target.value ? parseInt(e.target.value) : '')}
+                          onChange={(e) => {
+                            const neuerDurchgang = e.target.value ? parseInt(e.target.value) : '';
+                            const updatedStartliste = [...editData.startliste];
+                            updatedStartliste[index] = {
+                              ...updatedStartliste[index],
+                              durchgang: neuerDurchgang
+                            };
+                            
+                            // Automatisch sortieren nach Zeit und Stand
+                            const sortierteStartliste = updatedStartliste.sort((a, b) => {
+                              if (a.startzeit !== b.startzeit) return a.startzeit.localeCompare(b.startzeit);
+                              return parseInt(a.stand || '0') - parseInt(b.stand || '0');
+                            });
+                            
+                            setEditData({
+                              ...editData,
+                              startliste: sortierteStartliste
+                            });
+                          }}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-10 text-center"
                           min="1"
                           max="99"
@@ -2004,21 +2040,7 @@ export default function StartlistenV2Uebersicht() {
                                   newStartliste.push(draggedItem);
                                   
                                   // Recalculate positions for all starters
-                                  const updatedStartliste = newStartliste.map((s, i) => {
-                                    const baseTime = new Date(`1970-01-01T${editData.konfiguration?.startzeit || '14:00'}:00`);
-                                    const durchgangMin = editData.konfiguration?.durchgang || 50;
-                                    const wechselMin = editData.konfiguration?.wechsel || 10;
-                                    const durchgangNr = Math.floor(i / 10) + 1;
-                                    const minutesOffset = (durchgangNr - 1) * (durchgangMin + wechselMin);
-                                    const newStartzeit = new Date(baseTime.getTime() + minutesOffset * 60000).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                                    
-                                    return {
-                                      ...s,
-                                      stand: ((i % 10) + 1).toString(),
-                                      startzeit: newStartzeit,
-                                      durchgang: durchgangNr
-                                    };
-                                  });
+                                  const updatedStartliste = recalculateAllPositions(newStartliste);
                                   
                                   setEditData({
                                     ...editData,
