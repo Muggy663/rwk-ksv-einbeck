@@ -725,7 +725,7 @@ function RwkTabellenPageComponent() {
           let roundResultsTemp: { [key: string]: number[] } = {};
           for (let r = 1; r <= numRoundsForCompetition; r++) roundResultsTemp[`dg${r}`] = [];
           
-          // Duplikat-Filterung für Team-Scores
+          // Duplikat-Filterung für Team-Scores mit Ersatzschützen-Logik
           const teamScoresArray = teamScores.map(score => ({ ...score }));
           const teamDuplicateMap = new Map();
           teamScoresArray.forEach(score => {
@@ -734,16 +734,75 @@ function RwkTabellenPageComponent() {
               teamDuplicateMap.set(key, score);
             } else {
               const existing = teamDuplicateMap.get(key);
-              if (score.entryTimestamp && existing.entryTimestamp && 
-                  score.entryTimestamp.seconds > existing.entryTimestamp.seconds) {
+              // Prüfe auf Ersatzschützen-Kopien (isSubstitutionCopy)
+              if (score.isSubstitutionCopy && !existing.isSubstitutionCopy) {
+                // Behalte Original, ignoriere Kopie
+                return;
+              } else if (!score.isSubstitutionCopy && existing.isSubstitutionCopy) {
+                // Ersetze Kopie durch Original
+                teamDuplicateMap.set(key, score);
+              } else if (score.entryTimestamp && existing.entryTimestamp && 
+                        score.entryTimestamp.seconds > existing.entryTimestamp.seconds) {
                 teamDuplicateMap.set(key, score);
               }
             }
           });
           
+          // Automatische Ersatzschützen-Erkennung
+          const shootersByRound = new Map();
+          Array.from(teamDuplicateMap.values()).forEach(score => {
+            const roundKey = `dg${score.durchgang}`;
+            if (!shootersByRound.has(roundKey)) shootersByRound.set(roundKey, new Set());
+            shootersByRound.get(roundKey).add(score.shooterId);
+          });
+          
+          // Erkenne Ersatzschützen: Schütze der später dazukommt
+          const replacements = new Map(); // shooterId -> fromRound
+          for (let round = 2; round <= numRoundsForCompetition; round++) {
+            const currentRound = shootersByRound.get(`dg${round}`) || new Set();
+            const previousRound = shootersByRound.get(`dg${round-1}`) || new Set();
+            
+            // Neue Schützen in dieser Runde = Ersatzschützen
+            currentRound.forEach(shooterId => {
+              if (!previousRound.has(shooterId)) {
+                replacements.set(shooterId, round);
+              }
+            });
+          }
+          
           // Gruppiere bereinigte Scores nach Schützen für Team-Berechnung
           const scoresByShooter = new Map<string, ScoreEntry[]>();
           Array.from(teamDuplicateMap.values()).forEach(score => {
+            // Generische Ersatzschützen-Regel
+            const replacementFromRound = replacements.get(score.shooterId);
+            if (replacementFromRound && score.durchgang < replacementFromRound) {
+              return;
+            }
+            
+            // Finde ersetzte Schützen: Schütze der früher da war, aber später fehlt
+            let isReplaced = false;
+            for (let checkRound = score.durchgang + 1; checkRound <= numRoundsForCompetition; checkRound++) {
+              const laterRound = shootersByRound.get(`dg${checkRound}`) || new Set();
+              if (!laterRound.has(score.shooterId) && laterRound.size > 0) {
+                isReplaced = true;
+                break;
+              }
+            }
+            if (isReplaced) return;
+            
+            // Prüfe Ersatzschützen-Regel: Nur Ergebnisse ab fromRound für Teamwertung
+            const substitutionKey = `${teamData.id}-${score.shooterId}`;
+            const substitutionInfo = teamSubstitutions?.get?.(substitutionKey);
+            
+            if (substitutionInfo && substitutionInfo.fromRound && score.durchgang < substitutionInfo.fromRound) {
+              return;
+            }
+            
+            // Zusätzliche Prüfung: Ignoriere kopierte Ergebnisse (isSubstitutionCopy)
+            if (score.isSubstitutionCopy === true) {
+              return;
+            }
+            
             if (!scoresByShooter.has(score.shooterId)) scoresByShooter.set(score.shooterId, []);
             scoresByShooter.get(score.shooterId)!.push(score);
           });
@@ -767,22 +826,63 @@ function RwkTabellenPageComponent() {
             }
           });
 
-          // Berechne Team-Ergebnisse
+          // Debug-Ausgabe für spezifische Teams
+          if (teamData.name && teamData.name.includes('SGi Einbeck')) {
+            for (let r = 1; r <= numRoundsForCompetition; r++) {
+              const rk = `dg${r}`;
+              const scoresForRound = roundResultsTemp[rk];
+              const sortedScores = [...scoresForRound].sort((a, b) => b - a);
+              const bestThree = sortedScores.slice(0, MAX_SHOOTERS_PER_TEAM);
+              const manualSum = bestThree.reduce((sum, score) => sum + score, 0);
+            }
+          }
+          
+          // Berechne Team-Ergebnisse mit doppelter Überprüfung
           const roundResults: { [key: string]: number | null } = {};
           for (let r = 1; r <= numRoundsForCompetition; r++) {
             const rk = `dg${r}`;
-            const scoresForRound = roundResultsTemp[rk].sort((a, b) => b - a);
+            const scoresForRound = roundResultsTemp[rk]
+              .filter(score => typeof score === 'number' && !isNaN(score)) // Nur gültige Zahlen
+              .sort((a, b) => b - a); // Absteigende Sortierung
+            
             let roundSum = 0; 
             let contributingScoresCount = 0;
-            for (let sIdx = 0; sIdx < Math.min(scoresForRound.length, MAX_SHOOTERS_PER_TEAM); sIdx++) {
-                roundSum += scoresForRound[sIdx];
-                contributingScoresCount++;
+            const maxShooters = Math.min(scoresForRound.length, MAX_SHOOTERS_PER_TEAM);
+            
+            // Summiere die besten Schützen
+            for (let sIdx = 0; sIdx < maxShooters; sIdx++) {
+                const score = scoresForRound[sIdx];
+                if (typeof score === 'number' && !isNaN(score)) {
+                  roundSum += score;
+                  contributingScoresCount++;
+                }
             }
-            roundResults[rk] = contributingScoresCount === MAX_SHOOTERS_PER_TEAM ? roundSum : null;
+            
+            // Doppelte Rechenüberprüfung
+            const verificationSum = scoresForRound.slice(0, maxShooters)
+              .reduce((sum, score) => sum + (typeof score === 'number' ? score : 0), 0);
+            
+            if (Math.abs(roundSum - verificationSum) > 0.001) {
+              roundSum = verificationSum; // Verwende verifizierten Wert
+            }
+            
+            roundResults[rk] = contributingScoresCount === MAX_SHOOTERS_PER_TEAM ? Math.round(roundSum) : null;
           }
 
           let teamTotal = 0; let numScoredRds = 0;
           Object.values(roundResults).forEach(val => { if (val !== null) { teamTotal += val; numScoredRds++; } });
+          
+          // Zusätzliche Validierung für spezifische Teams
+          if (teamData.name && teamData.name.includes('SGi Einbeck')) {
+            // Manuelle Verifikation
+            const manualTotal = Object.values(roundResults)
+              .filter(val => val !== null)
+              .reduce((sum, val) => sum + (val as number), 0);
+            
+            if (teamTotal !== manualTotal) {
+              teamTotal = manualTotal; // Verwende manuelle Berechnung
+            }
+          }
 
           const teamDisplayItem: TeamDisplay = { 
             ...teamData, 
@@ -2150,7 +2250,7 @@ function RwkTabellenPageComponent() {
                                 </TableRow>
                                 {expandedTeamIds.includes(team.id) && (
                                   <TableRow className="bg-transparent hover:bg-transparent">
-                                    <TableCell colSpan={isNativeApp ? 3 + currentNumRoundsState : 5 + currentNumRoundsState + 1} className="p-0 border-t-0">
+                                    <TableCell colSpan={isNativeApp ? 3 + currentNumRoundsState : 5 + currentNumRoundsState + 1} className="p-0 border-t-0 pl-6">
                                       {loadingTeamShooters.has(team.id) ? (
                                         <div className="p-4 text-center">
                                           <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
