@@ -773,35 +773,27 @@ function RwkTabellenPageComponent() {
           // Gruppiere bereinigte Scores nach Schützen für Team-Berechnung
           const scoresByShooter = new Map<string, ScoreEntry[]>();
           Array.from(teamDuplicateMap.values()).forEach(score => {
-            // Generische Ersatzschützen-Regel
+            // Nur bei echten Ersatzschützen-Problemen filtern
             const replacementFromRound = replacements.get(score.shooterId);
             if (replacementFromRound && score.durchgang < replacementFromRound) {
-              return;
+              // Prüfe ob es wirklich ein Ersatz ist (mehr als 3 Schützen in früheren Runden)
+              const earlierRound = shootersByRound.get(`dg${score.durchgang}`) || new Set();
+              if (earlierRound.size > MAX_SHOOTERS_PER_TEAM) {
+                return; // Nur filtern wenn zu viele Schützen
+              }
             }
             
-            // Finde ersetzte Schützen: Schütze der früher da war, aber später fehlt
+            // Finde ersetzte Schützen: Nur wenn mehr als 3 Schützen vorhanden
             let isReplaced = false;
             for (let checkRound = score.durchgang + 1; checkRound <= numRoundsForCompetition; checkRound++) {
               const laterRound = shootersByRound.get(`dg${checkRound}`) || new Set();
-              if (!laterRound.has(score.shooterId) && laterRound.size > 0) {
+              const currentRoundShooters = shootersByRound.get(`dg${score.durchgang}`) || new Set();
+              if (!laterRound.has(score.shooterId) && laterRound.size > 0 && currentRoundShooters.size > MAX_SHOOTERS_PER_TEAM) {
                 isReplaced = true;
                 break;
               }
             }
             if (isReplaced) return;
-            
-            // Prüfe Ersatzschützen-Regel: Nur Ergebnisse ab fromRound für Teamwertung
-            const substitutionKey = `${teamData.id}-${score.shooterId}`;
-            const substitutionInfo = teamSubstitutions?.get?.(substitutionKey);
-            
-            if (substitutionInfo && substitutionInfo.fromRound && score.durchgang < substitutionInfo.fromRound) {
-              return;
-            }
-            
-            // Zusätzliche Prüfung: Ignoriere kopierte Ergebnisse (isSubstitutionCopy)
-            if (score.isSubstitutionCopy === true) {
-              return;
-            }
             
             if (!scoresByShooter.has(score.shooterId)) scoresByShooter.set(score.shooterId, []);
             scoresByShooter.get(score.shooterId)!.push(score);
