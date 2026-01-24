@@ -25,7 +25,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM, Schießnachweis und Vereinssoftware.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: 30.12.2025 - Version 2.3.6a_w - Altersklassen-Fix & Startlisten-Optimierungen
+            Stand: 24. Januar 2026 - Version 2.3.10_2026_01_24 - Ersatzschützen-Verbesserung & Sortierung korrigiert
           </p>
         </div>
       </div>

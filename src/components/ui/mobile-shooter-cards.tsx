@@ -47,7 +47,19 @@ export const MobileShooterCards: React.FC<MobileShooterCardsProps> = ({
                 <div className="text-right">
                   <div className="font-bold text-primary">{shooter.totalScore}</div>
                   <div className="text-xs text-muted-foreground">
-                    {shooter.averageScore ? shooter.averageScore.toFixed(1) : '-'}
+                    {(() => {
+                      // Prüfe ob Schütze ersetzt wurde (nur echte Ersetzungen)
+                      const isReplacedShooter = shooter.isReplacedShooter;
+                      
+                      // Für ersetzte Schützen: Zeige Gesamt statt Durchschnitt
+                      if (isReplacedShooter) {
+                        return <span className="text-orange-600 font-medium" title="Ersetzt - Gesamtwertung">{shooter.totalScore}</span>;
+                      }
+                      
+                      // Normale Durchschnittswertung
+                      return shooter.averageScore ? shooter.averageScore.toFixed(1) : '-';
+                    })()
+                  }
                   </div>
                 </div>
                 <LineChartIcon className="h-4 w-4 text-muted-foreground" />

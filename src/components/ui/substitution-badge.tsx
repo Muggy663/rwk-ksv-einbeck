@@ -9,9 +9,10 @@ interface SubstitutionBadgeProps {
   isSubstitute?: boolean;
   substitutionInfo?: {
     originalShooterName: string;
+    replacementShooterName?: string;
     fromRound: number;
     reason?: string;
-    type: 'individual_to_team' | 'new_shooter';
+    type: 'individual_to_team' | 'new_shooter' | 'replaced_shooter';
   };
   className?: string;
 }
@@ -23,11 +24,26 @@ export function SubstitutionBadge({
 }: SubstitutionBadgeProps) {
   if (!isSubstitute || !substitutionInfo) return null;
 
-  const tooltipText = `Ersatzschütze ab DG${substitutionInfo.fromRound} für ${substitutionInfo.originalShooterName}${
-    substitutionInfo.reason ? ` (${substitutionInfo.reason})` : ''
-  }${
-    substitutionInfo.type === 'individual_to_team' ? ' - Ergebnisse übertragen' : ''
-  }`;
+  // Spezielle Behandlung für ersetzte Schützen
+  const isReplacedShooter = substitutionInfo.type === 'replaced_shooter';
+  
+  const tooltipText = isReplacedShooter 
+    ? `Ersetzt ab DG${substitutionInfo.fromRound} durch ${substitutionInfo.replacementShooterName || 'Ersatzschütze'}${
+        substitutionInfo.reason ? ` (${substitutionInfo.reason})` : ''
+      }`
+    : `Ersatzschütze ab DG${substitutionInfo.fromRound} für ${substitutionInfo.originalShooterName}${
+        substitutionInfo.reason ? ` (${substitutionInfo.reason})` : ''
+      }${
+        substitutionInfo.type === 'individual_to_team' ? ' - Ergebnisse übertragen' : ''
+      }`;
+
+  const badgeText = isReplacedShooter 
+    ? `Ersetzt ab DG${substitutionInfo.fromRound}`
+    : `Ersatz ab DG${substitutionInfo.fromRound} für ${substitutionInfo.originalShooterName}`;
+
+  const badgeColor = isReplacedShooter 
+    ? "text-xs bg-orange-50 text-orange-700 border-orange-300 hover:bg-orange-100"
+    : "text-xs bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100";
 
   return (
     <TooltipProvider>
@@ -35,10 +51,10 @@ export function SubstitutionBadge({
         <TooltipTrigger>
           <Badge 
             variant="outline" 
-            className={`text-xs bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100 cursor-help inline-flex items-center w-fit ${className}`}
+            className={`${badgeColor} cursor-help inline-flex items-center w-fit ${className}`}
           >
             <UserPlus className="h-3 w-3 mr-1" />
-            Ersatz ab DG{substitutionInfo.fromRound} für {substitutionInfo.originalShooterName}
+            {badgeText}
           </Badge>
         </TooltipTrigger>
         <TooltipContent>

@@ -111,83 +111,6 @@ export async function generateLeaguePDFFixed(
   
   await generatePDFWithMobileSupport(
     async () => {
-      // Lade Schützen-Daten für alle Teams
-      const { db } = await import('@/lib/firebase/config');
-      const { collection, query, where, getDocs } = await import('firebase/firestore');
-      
-      for (const team of (league?.teams || [])) {
-        if (team.shooterIds && team.shooterIds.length > 0) {
-          const scoresQuery = query(
-            collection(db, 'rwk_scores'),
-            where('teamId', '==', team.id),
-            where('competitionYear', '==', competitionYear)
-          );
-          const scoresSnapshot = await getDocs(scoresQuery);
-          const scoresByShooter = new Map();
-          
-          scoresSnapshot.docs.forEach(scoreDoc => {
-            const score = scoreDoc.data();
-            if (!scoresByShooter.has(score.shooterId)) scoresByShooter.set(score.shooterId, []);
-            scoresByShooter.get(score.shooterId).push(score);
-          });
-          
-          const shootersResults = [];
-          for (const shooterId of team.shooterIds) {
-            const shooterScores = scoresByShooter.get(shooterId) || [];
-            const results = {};
-            let total = 0;
-            let roundsShot = 0;
-            
-            for (let r = 1; r <= numRounds; r++) results[`dg${r}`] = null;
-            
-            shooterScores.forEach(score => {
-              if (score.durchgang >= 1 && score.durchgang <= numRounds) {
-                results[`dg${score.durchgang}`] = score.totalRinge;
-                if (score.totalRinge) {
-                  total += score.totalRinge;
-                  roundsShot++;
-                }
-              }
-            });
-            
-            // Verwende den Namen aus den Scores oder lade ihn aus der Shooters-Collection
-            let shooterName = shooterScores[0]?.shooterName;
-            
-            // Falls kein Name in Scores, versuche aus Shooters-Collection zu laden
-            if (!shooterName) {
-              try {
-                const { doc, getDoc } = await import('firebase/firestore');
-                const shooterDocRef = doc(db, 'shooters', shooterId);
-                const shooterSnap = await getDoc(shooterDocRef);
-                
-                if (shooterSnap.exists()) {
-                  const shooterData = shooterSnap.data();
-                  const nameParts = [];
-                  if (shooterData.firstName) nameParts.push(shooterData.firstName);
-                  if (shooterData.lastName) nameParts.push(shooterData.lastName);
-                  shooterName = nameParts.length > 0 ? nameParts.join(' ') : (shooterData.name || `Schütze ${shooterId.substring(0,8)}`);
-                } else {
-                  shooterName = `Schütze ${shooterId.substring(0,8)}`;
-                }
-              } catch (error) {
-                logWarn(`Fehler beim Laden des Schützen ${shooterId}:`, error);
-                shooterName = `Schütze ${shooterId.substring(0,8)}`;
-              }
-            }
-            
-            shootersResults.push({
-              shooterId,
-              shooterName,
-              results,
-              total,
-              average: roundsShot > 0 ? total / roundsShot : null,
-              roundsShot
-            });
-          }
-          
-          team.shootersResults = shootersResults;
-        }
-      }
       // PDF im A4-Format erstellen
       const doc = new jsPDF({
         orientation: 'landscape',
@@ -237,24 +160,11 @@ export async function generateLeaguePDFFixed(
         { title: 'Schnitt', dataKey: 'averageScore' }
       );
       
-      // Daten für die Tabelle vorbereiten
-      const tableData = (league?.teams || []).map(team => {
-        const rowData: any = {
-          rank: team.outOfCompetition ? "AK" : team.rank,
-          name: team.outOfCompetition ? `${team.name} (Außer Konkurrenz)` : team.name,
-          totalScore: team.totalScore || '-',
-          averageScore: team.averageScore ? team.averageScore.toFixed(2) : '-',
-          isOutOfCompetition: team.outOfCompetition // Zusätzliches Feld für die Formatierung
-        };
-        
-        // Durchgangsergebnisse hinzufügen
-        for (let i = 1; i <= numRounds; i++) {
-          const key = `dg${i}`;
-          rowData[key] = team.roundResults[key] !== null ? team.roundResults[key] : '-';
-        }
-        
-        return rowData;
-      });
+      // Debug: Prüfe verfügbare Daten
+      console.log('League individualLeagueShooters:', league?.individualLeagueShooters?.length || 0);
+      if (league?.individualLeagueShooters?.length > 0) {
+        console.log('Sample shooter:', league.individualLeagueShooters[0]);
+      }
       
       // Erweiterte Tabelle mit Schützen pro Team
       let currentY = 35;
@@ -301,17 +211,19 @@ export async function generateLeaguePDFFixed(
         currentY = doc.lastAutoTable.finalY + 1;
         
         // Schützen des Teams
-        if (team.shootersResults && team.shootersResults.length > 0) {
+        const teamShooters = team.shootersResults || [];
+        if (teamShooters.length > 0) {
           const shooterHeaders = ['', 'Schütze'];
           for (let i = 1; i <= numRounds; i++) {
             shooterHeaders.push(`DG ${i}`);
           }
           shooterHeaders.push('Gesamt', 'Schnitt');
           
-          const shooterRows = team.shootersResults.map(shooter => {
-            const row = ['', shooter.shooterName || `Schütze ${shooter.shooterId?.substring(0,8) || 'Unbekannt'}`];
+          const shooterRows = teamShooters.map(shooter => {
+            const row = ['', shooter.shooterName || 'Unbekannt'];
             for (let i = 1; i <= numRounds; i++) {
-              row.push(shooter.results[`dg${i}`] !== null ? shooter.results[`dg${i}`].toString() : '-');
+              const key = `dg${i}`;
+              row.push(shooter.results[key] !== null && shooter.results[key] !== undefined ? shooter.results[key].toString() : '-');
             }
             row.push((shooter.total || 0).toString());
             row.push(shooter.average ? shooter.average.toFixed(2) : '-');
@@ -345,22 +257,9 @@ export async function generateLeaguePDFFixed(
           currentY += 2;
         }
         
-        // Neue Seite wenn nötig (später für mehr Inhalt)
+        // Neue Seite wenn nötig
         if (currentY > 200) {
           doc.addPage();
-          // Logo auf neuer Seite
-          try {
-            const response = await fetch('/images/logo2.png');
-            const blob = await response.blob();
-            const reader = new FileReader();
-            const logoBase64 = await new Promise<string>((resolve) => {
-              reader.onload = () => resolve(reader.result as string);
-              reader.readAsDataURL(blob);
-            });
-            doc.addImage(logoBase64, 'PNG', 250, 10, 25, 25);
-          } catch (e) {
-            logWarn('Logo konnte nicht geladen werden');
-          }
           currentY = 30;
         }
       }
@@ -458,7 +357,7 @@ export async function generateShootersPDFFixed(
           team: shooter.teamOutOfCompetition ? `${shooter.teamName} (AK)` : shooter.teamName,
           totalScore: shooter.totalScore || '-',
           averageScore: shooter.averageScore ? shooter.averageScore.toFixed(2) : '-',
-          isOutOfCompetition: shooter.teamOutOfCompetition // Zusätzliches Feld für die Formatierung
+          isOutOfCompetition: shooter.teamOutOfCompetition
         };
         
         // Durchgangsergebnisse hinzufügen
@@ -488,22 +387,9 @@ export async function generateShootersPDFFixed(
           cellPadding: 3
         },
         columnStyles: {
-          0: { cellWidth: 15 }, // Platz
-          1: { cellWidth: 40 }, // Name
-          2: { cellWidth: 40 }, // Mannschaft
-        },
-        // Spezielle Formatierung für Schützen "außer Konkurrenz"
-        didDrawCell: (data) => {
-          if (data.section === 'body') {
-            const row = tableData[data.row.index];
-            if (row.isOutOfCompetition) {
-              // Amber-Farbe für Schützen "außer Konkurrenz"
-              doc.setTextColor(194, 124, 14);
-            } else {
-              // Normale Textfarbe für andere Schützen
-              doc.setTextColor(0, 0, 0);
-            }
-          }
+          0: { cellWidth: 15 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 40 },
         }
       });
       

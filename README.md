@@ -1,6 +1,6 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.3.9** | **Android: 0.9.4.1**
+**Version: 2.3.10_2026_01_24** | **Android: 0.9.4.1**
 
 > **Social Training Platform für den deutschen Schießsport**
 
@@ -110,6 +110,18 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **Community-Ranglisten** mit erweiterten Statistiken und Performance-Analysen
 - **KI-Startlisten Generator** mit automatischer Optimierung und Altersklassen-Berechnung
 
+## 📋 Changelog
+
+### Version 2.3.10_2026_01_24
+- **🔧 Ersatzschützen-Verbesserung**: Ersetzte Schützen werden automatisch aus Einzelranglisten ausgeblendet
+- **📊 Sortierung korrigiert**: Ersatzschützen nach Gesamtpunktzahl, normale Schützen nach Durchschnitt
+- **🏷️ Substitution-Badges**: Verbesserte Anzeige von Ersatzschützen in Mannschaftstabellen
+- **🎯 Automatische Erkennung**: System erkennt ersetzte Schützen über team_substitutions Datenbank
+- **📱 Konsistente Darstellung**: Einheitliche Behandlung in Desktop-, Mobile- und PDF-Ansichten
+
+### Version 2.3.9
+- Vorherige Verbesserungen und Bugfixes
+
 ## 📸 Screenshots
 
 ### 🏠 Startseite & Navigation
@@ -148,7 +160,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 30. Dezember 2025 - Version 2.3.9*
+*Letzte Aktualisierung: 24. Januar 2026 - Version 2.3.10_2026_01_24*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

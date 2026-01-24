@@ -146,6 +146,25 @@ export const MobileTeamCards: React.FC<MobileTeamCardsProps> = ({
                           <span className="text-primary">Gesamt:</span>
                           <span className="text-primary">{shooter.total ?? '-'}</span>
                         </div>
+                        <div className="col-span-2 flex justify-between text-sm border-t pt-1">
+                          <span className="text-muted-foreground">Schnitt:</span>
+                          <span className="text-muted-foreground">
+                            {(() => {
+                              // Prüfe ob Schütze ersetzt wurde
+                              const substitutionInfo = teamSubstitutions.get(`${team.id}-${shooter.shooterId}`);
+                              const isReplacedShooter = substitutionInfo && substitutionInfo.type === 'replaced_shooter';
+                              
+                              // Für ersetzte Schützen: Zeige Gesamt statt Durchschnitt
+                              if (isReplacedShooter) {
+                                return <span className="text-orange-600 font-medium" title="Ersetzt - Gesamtwertung">{shooter.total ?? '-'}</span>;
+                              }
+                              
+                              // Normale Durchschnittswertung
+                              return shooter.average != null ? shooter.average.toFixed(2) : '-';
+                            })()
+                          }
+                          </span>
+                        </div>
                       </div>
                     </div>
                   )) || (

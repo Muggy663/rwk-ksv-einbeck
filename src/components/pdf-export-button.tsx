@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown } from 'lucide-react';
-import { generateLeaguePDF, generateShootersPDF } from '@/lib/services/pdf-service';
+import { generateLeaguePDF, generateShootersPDF } from '@/lib/services/pdf-service-fixed';
 import { useToast } from '@/hooks/use-toast';
 
 interface League {
