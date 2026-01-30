@@ -1,6 +1,6 @@
 {
   "name": "rwk-ksv-einbeck-live-tabellen-wettkampf-management",
-  "version": "2.3.10_2026_01_24",
+  "version": "2.3.11_2026_01_30",
   "private": true,
   "scripts": {
     "dev": "next dev",

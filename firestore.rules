@@ -375,9 +375,16 @@ service cloud.firestore {
        match /km_startlisten_v2/{startliste} {
       allow read: if true;
       allow write, delete: if isSuperAdmin() || 
+                           isAdminEmail() ||
                            (isAuthenticated() && getUserPermissions() != null && 
                             (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
-                             getUserPermissions().role == 'km_organisator'));
+                             getUserPermissions().kvRole == 'KV_WETTKAMPFLEITER' ||
+                             getUserPermissions().role == 'km_organisator' ||
+                             getUserPermissions().kvRoles != null && 
+                             (getUserPermissions().kvRoles.values().hasAny(['KV_KM_ORGA', 'KM_ORGANISATOR']) ||
+                              getUserPermissions().kvRoles.values().hasAny(['KV_WETTKAMPFLEITER'])) ||
+                             // Temporär: Alle authentifizierten Benutzer mit Berechtigungen
+                             (getUserPermissions().role != null || getUserPermissions().clubRoles != null)));
     }
 
     match /km_startlisten_aenderungen/{aenderung} {

@@ -11,44 +11,59 @@ declare module 'jspdf' {
 }
 
 export async function generateMeldelistePDF(
-  meldungen: KMMeldung[],
-  disziplinen: KMDisziplin[],
-  schuetzen: Shooter[],
-  vereine: Club[]
+  meldungen: any[],
+  disziplinen: any[],
+  schuetzen: any[],
+  vereine: any[]
 ): Promise<Blob> {
   
   const doc = new jsPDF();
   
   // Header
   doc.setFontSize(16);
-  doc.text('Kreismeisterschaft 2026 - Meldeliste', 20, 20);
+  doc.text('Kreismeisterschaft - Meldeliste', 20, 20);
   
   doc.setFontSize(10);
   doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-DE')}`, 20, 30);
   doc.text(`Anzahl Meldungen: ${meldungen.length}`, 20, 35);
   
   // Tabelle
-  const tableData = meldungen.map(meldung => {
+  const tableData = meldungen.map((meldung, index) => {
     const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-    const verein = vereine.find(v => v.id === schuetze?.clubId);
+    const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
+    const verein = vereine.find(v => v.id === vereinId);
     const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
     
+    const schuetzeName = schuetze?.firstName && schuetze?.lastName 
+      ? `${schuetze.firstName} ${schuetze.lastName}`
+      : schuetze?.name || 'Unbekannt';
+    
     return [
-      schuetze?.name || 'Unbekannt',
+      (index + 1).toString(), // Nummer
+      schuetzeName,
       verein?.name || 'Unbekannt',
-      disziplin ? `${disziplin.spoNummer} ${disziplin.name}` : 'Unbekannt',
+      disziplin ? `${disziplin.spoNummer} - ${disziplin.name}` : 'Unbekannt',
       meldung.lmTeilnahme ? 'Ja' : 'Nein',
-      meldung.vmErgebnis ? meldung.vmErgebnis.ringe.toString() : '-',
+      meldung.vmErgebnis?.ringe ? meldung.vmErgebnis.ringe.toString() : '-',
       meldung.anmerkung || ''
     ];
   });
   
   doc.autoTable({
-    head: [['Name', 'Verein', 'Disziplin', 'LM', 'VM-Ringe', 'Anmerkung']],
+    head: [['Nr.', 'Name', 'Verein', 'Disziplin', 'LM', 'VM-Ringe', 'Anmerkung']],
     body: tableData,
     startY: 45,
     styles: { fontSize: 8 },
-    headStyles: { fillColor: [41, 128, 185] }
+    headStyles: { fillColor: [41, 128, 185] },
+    columnStyles: {
+      0: { cellWidth: 10 }, // Nr.
+      1: { cellWidth: 30 }, // Name
+      2: { cellWidth: 25 }, // Verein
+      3: { cellWidth: 35 }, // Disziplin
+      4: { cellWidth: 15 }, // LM
+      5: { cellWidth: 20 }, // VM-Ringe
+      6: { cellWidth: 35 }  // Anmerkung
+    }
   });
   
   return new Blob([doc.output('blob')], { type: 'application/pdf' });

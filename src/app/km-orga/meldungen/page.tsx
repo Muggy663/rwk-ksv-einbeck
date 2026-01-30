@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { KMMeldungenPDFExport } from '@/components/km/km-meldungen-pdf-export';
 
 export default function KMAdminMeldungen() {
   const { toast } = useToast();
@@ -548,13 +549,24 @@ export default function KMAdminMeldungen() {
               </div>
             </div>
             <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <Button 
-                variant="outline" 
-                onClick={() => setFilter({ verein: '', disziplin: '', search: '' })}
-                className="w-full h-12 md:w-auto md:h-auto"
-              >
-                🔄 Filter zurücksetzen
-              </Button>
+              <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setFilter({ verein: '', disziplin: '', search: '' })}
+                  className="w-full h-12 md:w-auto md:h-auto"
+                >
+                  🔄 Filter zurücksetzen
+                </Button>
+                
+                <KMMeldungenPDFExport
+                  meldungen={filteredMeldungen}
+                  disziplinen={disziplinen}
+                  schuetzen={schuetzen}
+                  vereine={clubs}
+                  saisonName={saisons.find(s => s.id === selectedSaison)?.name || 'KM'}
+                  className="w-full h-12 md:w-auto md:h-auto"
+                />
+              </div>
               
               {selectedMeldungen.length > 0 && (
                 <div className="flex flex-col gap-2 md:flex-row md:items-center">
