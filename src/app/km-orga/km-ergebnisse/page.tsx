@@ -329,7 +329,7 @@ export default function KMErgebnissePage() {
       const response = await fetch('/api/km/ergebnisse-save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ meldungId, kmErgebnis: kmErgebnisData })
+        body: JSON.stringify({ meldungId, saisonId: selectedJahr, kmErgebnis: kmErgebnisData })
       });
       
       if (response.ok) {
