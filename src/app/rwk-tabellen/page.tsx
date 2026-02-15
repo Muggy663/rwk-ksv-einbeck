@@ -95,6 +95,9 @@ import { RWKLegend } from '@/components/ui/rwk-legend';
 import { SmartTable } from '@/components/ui/smart-table';
 import { MobileTeamCards } from '@/components/ui/mobile-team-cards';
 import { MobileShooterCards } from '@/components/ui/mobile-shooter-cards';
+import { deduplicateScores, groupScoresByShooter } from '@/lib/utils/score-deduplication';
+import { SubstitutionService } from '@/lib/services/substitution-service';
+import { TeamCalculationService } from '@/lib/services/team-calculation-service';
 
 
 const EXCLUDED_TEAM_NAME_PART = 'einzel'; // Case-insensitive check later
@@ -729,6 +732,9 @@ function RwkTabellenPageComponent() {
         } catch (e) { logError("RWK DEBUG: Error batch-fetching clubs", e); }
       }
 
+      // Lade Substitutions einmal für alle Teams (zentral)
+      const substitutions = await SubstitutionService.loadSubstitutions(config.year);
+
       for (const leagueDoc of leaguesSnapshot.docs) {
         const leagueData = leagueDoc.data() as Omit<League, 'id'>;
         const leagueDisplay: LeagueDisplay = { 
@@ -749,161 +755,21 @@ function RwkTabellenPageComponent() {
           }
           
           const clubName = teamData.clubId ? (clubCache.get(teamData.clubId) || "Unbek. Verein") : "Unbek. Verein";
-          // Berechne Team-Grunddaten aus Scores (ohne Schützen-Details)
+          
+          // Berechne Team-Grunddaten mit zentralem Service
           const teamScores = scoresByTeam.get(teamData.id) || [];
-          let roundResultsTemp: { [key: string]: number[] } = {};
-          for (let r = 1; r <= numRoundsForCompetition; r++) roundResultsTemp[`dg${r}`] = [];
           
-          // Duplikat-Filterung für Team-Scores mit Ersatzschützen-Logik
-          const teamScoresArray = teamScores.map(score => ({ ...score }));
-          const teamDuplicateMap = new Map();
-          teamScoresArray.forEach(score => {
-            const key = `${score.shooterId}|${score.durchgang}|${score.competitionYear}|${score.leagueType}`;
-            if (!teamDuplicateMap.has(key)) {
-              teamDuplicateMap.set(key, score);
-            } else {
-              const existing = teamDuplicateMap.get(key);
-              // Prüfe auf Ersatzschützen-Kopien (isSubstitutionCopy)
-              if (score.isSubstitutionCopy && !existing.isSubstitutionCopy) {
-                // Behalte Original, ignoriere Kopie
-                return;
-              } else if (!score.isSubstitutionCopy && existing.isSubstitutionCopy) {
-                // Ersetze Kopie durch Original
-                teamDuplicateMap.set(key, score);
-              } else if (score.entryTimestamp && existing.entryTimestamp && 
-                        score.entryTimestamp.seconds > existing.entryTimestamp.seconds) {
-                teamDuplicateMap.set(key, score);
-              }
-            }
-          });
+          const calculationResult = TeamCalculationService.calculateTeamResults(
+            teamData.id,
+            teamScores,
+            numRoundsForCompetition,
+            substitutions,
+            teamData.name
+          );
           
-          // Automatische Ersatzschützen-Erkennung
-          const shootersByRound = new Map();
-          Array.from(teamDuplicateMap.values()).forEach(score => {
-            const roundKey = `dg${score.durchgang}`;
-            if (!shootersByRound.has(roundKey)) shootersByRound.set(roundKey, new Set());
-            shootersByRound.get(roundKey).add(score.shooterId);
-          });
-          
-          // Erkenne Ersatzschützen: Schütze der später dazukommt
-          const replacements = new Map(); // shooterId -> fromRound
-          for (let round = 2; round <= numRoundsForCompetition; round++) {
-            const currentRound = shootersByRound.get(`dg${round}`) || new Set();
-            const previousRound = shootersByRound.get(`dg${round-1}`) || new Set();
-            
-            // Neue Schützen in dieser Runde = Ersatzschützen
-            currentRound.forEach(shooterId => {
-              if (!previousRound.has(shooterId)) {
-                replacements.set(shooterId, round);
-              }
-            });
-          }
-          
-          // Gruppiere bereinigte Scores nach Schützen für Team-Berechnung
-          const scoresByShooter = new Map<string, ScoreEntry[]>();
-          Array.from(teamDuplicateMap.values()).forEach(score => {
-            // Nur bei echten Ersatzschützen-Problemen filtern
-            const replacementFromRound = replacements.get(score.shooterId);
-            if (replacementFromRound && score.durchgang < replacementFromRound) {
-              // Prüfe ob es wirklich ein Ersatz ist (mehr als 3 Schützen in früheren Runden)
-              const earlierRound = shootersByRound.get(`dg${score.durchgang}`) || new Set();
-              if (earlierRound.size > MAX_SHOOTERS_PER_TEAM) {
-                return; // Nur filtern wenn zu viele Schützen
-              }
-            }
-            
-            // Finde ersetzte Schützen: Nur wenn mehr als 3 Schützen vorhanden
-            let isReplaced = false;
-            for (let checkRound = score.durchgang + 1; checkRound <= numRoundsForCompetition; checkRound++) {
-              const laterRound = shootersByRound.get(`dg${checkRound}`) || new Set();
-              const currentRoundShooters = shootersByRound.get(`dg${score.durchgang}`) || new Set();
-              if (!laterRound.has(score.shooterId) && laterRound.size > 0 && currentRoundShooters.size > MAX_SHOOTERS_PER_TEAM) {
-                isReplaced = true;
-                break;
-              }
-            }
-            if (isReplaced) return;
-            
-            if (!scoresByShooter.has(score.shooterId)) scoresByShooter.set(score.shooterId, []);
-            scoresByShooter.get(score.shooterId)!.push(score);
-          });
-
-          // Berechne beste Scores pro Runde für Team-Wertung
-          scoresByShooter.forEach(shooterScores => {
-            const shooterResults: { [key: string]: number | null } = {};
-            for (let r = 1; r <= numRoundsForCompetition; r++) shooterResults[`dg${r}`] = null;
-            
-            shooterScores.forEach(score => {
-              if (score.durchgang >= 1 && score.durchgang <= numRoundsForCompetition && typeof score.totalRinge === 'number') {
-                shooterResults[`dg${score.durchgang}`] = score.totalRinge;
-              }
-            });
-
-            for (let r = 1; r <= numRoundsForCompetition; r++) {
-              const rk = `dg${r}`;
-              if (shooterResults[rk] !== null && typeof shooterResults[rk] === 'number') {
-                roundResultsTemp[rk].push(shooterResults[rk] as number);
-              }
-            }
-          });
-
-          // Debug-Ausgabe für spezifische Teams
-          if (teamData.name && teamData.name.includes('SGi Einbeck')) {
-            for (let r = 1; r <= numRoundsForCompetition; r++) {
-              const rk = `dg${r}`;
-              const scoresForRound = roundResultsTemp[rk];
-              const sortedScores = [...scoresForRound].sort((a, b) => b - a);
-              const bestThree = sortedScores.slice(0, MAX_SHOOTERS_PER_TEAM);
-              const manualSum = bestThree.reduce((sum, score) => sum + score, 0);
-            }
-          }
-          
-          // Berechne Team-Ergebnisse mit doppelter Überprüfung
-          const roundResults: { [key: string]: number | null } = {};
-          for (let r = 1; r <= numRoundsForCompetition; r++) {
-            const rk = `dg${r}`;
-            const scoresForRound = roundResultsTemp[rk]
-              .filter(score => typeof score === 'number' && !isNaN(score)) // Nur gültige Zahlen
-              .sort((a, b) => b - a); // Absteigende Sortierung
-            
-            let roundSum = 0; 
-            let contributingScoresCount = 0;
-            const maxShooters = Math.min(scoresForRound.length, MAX_SHOOTERS_PER_TEAM);
-            
-            // Summiere die besten Schützen
-            for (let sIdx = 0; sIdx < maxShooters; sIdx++) {
-                const score = scoresForRound[sIdx];
-                if (typeof score === 'number' && !isNaN(score)) {
-                  roundSum += score;
-                  contributingScoresCount++;
-                }
-            }
-            
-            // Doppelte Rechenüberprüfung
-            const verificationSum = scoresForRound.slice(0, maxShooters)
-              .reduce((sum, score) => sum + (typeof score === 'number' ? score : 0), 0);
-            
-            if (Math.abs(roundSum - verificationSum) > 0.001) {
-              roundSum = verificationSum; // Verwende verifizierten Wert
-            }
-            
-            roundResults[rk] = contributingScoresCount === MAX_SHOOTERS_PER_TEAM ? Math.round(roundSum) : null;
-          }
-
-          let teamTotal = 0; let numScoredRds = 0;
-          Object.values(roundResults).forEach(val => { if (val !== null) { teamTotal += val; numScoredRds++; } });
-          
-          // Zusätzliche Validierung für spezifische Teams
-          if (teamData.name && teamData.name.includes('SGi Einbeck')) {
-            // Manuelle Verifikation
-            const manualTotal = Object.values(roundResults)
-              .filter(val => val !== null)
-              .reduce((sum, val) => sum + (val as number), 0);
-            
-            if (teamTotal !== manualTotal) {
-              teamTotal = manualTotal; // Verwende manuelle Berechnung
-            }
-          }
+          const roundResults = calculationResult.roundResults;
+          const teamTotal = calculationResult.totalScore;
+          const numScoredRds = calculationResult.numScoredRounds;
 
           const teamDisplayItem: TeamDisplay = { 
             ...teamData, 
@@ -914,67 +780,12 @@ function RwkTabellenPageComponent() {
             averageScore: numScoredRds > 0 ? parseFloat((teamTotal / numScoredRds).toFixed(2)) : null, 
             numScoredRounds: numScoredRds,
             leagueType: leagueDisplay.type,
-            sortingScore: 0, // Wird später berechnet
-            sortingAverage: 0 // Wird später berechnet
+            sortingScore: calculationResult.sortingScore,
+            sortingAverage: calculationResult.sortingAverage
           };
           teamDisplays.push(teamDisplayItem);
         }
-        // Sortiere Teams und berücksichtige "Außer Konkurrenz"-Status
-        // Prüfe, ob alle Teams IN WERTUNG den aktuellen Durchgang abgeschlossen haben
-        const determineCurrentRound = () => {
-          // Nur Teams in Wertung berücksichtigen (AK-Teams ignorieren)
-          const teamsInCompetition = teamDisplays.filter(team => !team.outOfCompetition);
-          
-          if (teamsInCompetition.length === 0) {
-            return 0; // Keine Teams in Wertung
-          }
-          
-          // Prüfe, ob ein Durchgang vollständig ist (nur Teams in Wertung)
-          const isRoundComplete = (round) => {
-            if (round === 0) return false;
-            const roundKey = `dg${round}`;
-            
-            // Prüfe nur für Teams in Wertung
-            for (const team of teamsInCompetition) {
-              if (!team.roundResults || team.roundResults[roundKey] === null) {
-                return false;
-              }
-            }
-            
-            return true;
-          };
-          
-          // Finde den höchsten vollständigen Durchgang
-          for (let r = numRoundsForCompetition; r >= 1; r--) {
-            if (isRoundComplete(r)) {
-              return r;
-            }
-          }
-          
-          return 0; // Kein vollständiger Durchgang gefunden
-        };
-        
-        const currentRound = determineCurrentRound();
-
-        
-        // Berechne die Punktzahl bis zum aktuellen vollständigen Durchgang
-        for (const team of teamDisplays) {
-          let totalScore = 0;
-          let completedRounds = 0;
-          
-          for (let r = 1; r <= currentRound; r++) {
-            const roundKey = `dg${r}`;
-            if (team.roundResults && team.roundResults[roundKey] !== null) {
-              totalScore += team.roundResults[roundKey];
-              completedRounds++;
-            }
-          }
-          
-          // Speichere die Werte für die Sortierung
-          team.sortingScore = totalScore;
-          team.sortingAverage = completedRounds > 0 ? totalScore / completedRounds : 0;
-        }
-        
+        // Sortiere Teams (sortingScore bereits durch TeamCalculationService berechnet)
         teamDisplays.sort((a, b) => {
           // Teams "außer Konkurrenz" immer nach Teams in Wertung
           if (a.outOfCompetition && !b.outOfCompetition) return 1;
@@ -1061,49 +872,9 @@ function RwkTabellenPageComponent() {
 
         fetchedLeaguesData.push(leagueDisplay);
       }
-      // Lade Substitutions-Daten (optional - bei Fehlern wird ignoriert)
-      try {
-        const substitutionsQuery = query(
-          collection(db, 'team_substitutions'),
-          where('competitionYear', '==', config.year)
-        );
-        const substitutionsSnapshot = await getDocs(substitutionsQuery);
-        const substitutionsMap = new Map();
-        substitutionsSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          const key = `${data.teamId}-${data.replacementShooterId}`;
-          substitutionsMap.set(key, {
-            originalShooterName: data.originalShooterName,
-            fromRound: data.fromRound,
-            reason: data.reason,
-            type: data.type
-          });
-        });
-        setTeamSubstitutions(substitutionsMap);
-
-        
-        // Füge Substitution-Informationen zu Team-Schützen hinzu
-        fetchedLeaguesData.forEach(league => {
-          league.teams.forEach(team => {
-            team.shootersResults.forEach(shooter => {
-              const substitution = substitutionsMap.get(`${team.id}-${shooter.shooterId}`);
-              if (substitution) {
-                shooter.isSubstitute = true;
-                shooter.substitutionInfo = {
-                  fromRound: substitution.fromRound,
-                  originalShooterName: substitution.originalShooterName,
-                  replacementShooterName: substitution.replacementShooterName || shooter.shooterName,
-                  reason: substitution.reason || ''
-                };
-              }
-            });
-          });
-        });
-      } catch (error) {
-        // Substitutions sind optional - bei Berechtigungsfehlern einfach ignorieren
-
-        setTeamSubstitutions(new Map());
-      }
+      // Lade Substitutions-Daten (zentral für alle Teams)
+      const substitutionsMap = await SubstitutionService.loadSubstitutions(config.year);
+      setTeamSubstitutions(substitutionsMap);
       
 
       return { id: `${config.year}-${config.discipline}`, config, leagues: fetchedLeaguesData };
@@ -1254,7 +1025,7 @@ function RwkTabellenPageComponent() {
           where('competitionYear', '==', config.year)
         );
         const substitutionsSnapshot = await getDocs(substitutionsQuery);
-        console.log('Substitutions gefunden:', substitutionsSnapshot.docs.length);
+        logInfo('Substitutions gefunden:', { data: substitutionsSnapshot.docs.length });
         substitutionsSnapshot.docs.forEach(doc => {
           const data = doc.data();
           const key = `${data.teamId}-${data.originalShooterId}`;

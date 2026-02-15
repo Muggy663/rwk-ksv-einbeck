@@ -3,6 +3,7 @@ import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger'
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { CompetitionDisplayConfig, IndividualShooterDisplayData, ScoreEntry } from '@/types/rwk';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
+import { batchGetShooters } from '@/lib/utils/batch-reads';
 
 export async function fetchShooterDataForCompetition(
   config: CompetitionDisplayConfig,
@@ -36,9 +37,14 @@ export async function fetchShooterDataForCompetition(
       allScores.push({ id: d.id, ...d.data() as ScoreEntry }); 
     });
     
-    // Schützendaten verarbeiten und erweiterte Informationen laden
+    // 🚀 OPTIMIERUNG: Batch-Load aller Shooter auf einmal (statt einzeln)
+    const uniqueShooterIds = [...new Set(allScores.map(s => s.shooterId).filter(Boolean))];
+    logDebug(`📦 Batch loading ${uniqueShooterIds.length} shooters...`);
+    const shooterDetailsCache = await batchGetShooters(uniqueShooterIds);
+    logDebug(`✅ Loaded ${shooterDetailsCache.size} shooters in batch`);
+    
+    // Schützendaten verarbeiten
     const shootersMap = new Map<string, IndividualShooterDisplayData>();
-    const shooterDetailsCache = new Map<string, any>();
     
     // Lade Substitution-Informationen
     const substitutionsQuery = query(collection(db, 'team_substitutions'), 
@@ -65,25 +71,8 @@ export async function fetchShooterDataForCompetition(
         const initialResults: { [key: string]: number | null } = {};
         for (let r = 1; r <= numRounds; r++) initialResults[`dg${r}`] = null;
         
-        // Lade erweiterte Schützendaten aus shooters
-        let shooterDetails = shooterDetailsCache.get(score.shooterId);
-        if (!shooterDetails) {
-          try {
-            const shooterDoc = await getDoc(doc(db, 'shooters', score.shooterId));
-            if (shooterDoc.exists()) {
-              shooterDetails = shooterDoc.data();
-              shooterDetailsCache.set(score.shooterId, shooterDetails);
-            } else {
-              // Schütze existiert nicht mehr - verwende Fallback-Daten
-              shooterDetails = null;
-              shooterDetailsCache.set(score.shooterId, null);
-            }
-          } catch (error) {
-            logError(`Fehler beim Laden von Schütze ${score.shooterId}:`, error);
-            shooterDetails = null;
-            shooterDetailsCache.set(score.shooterId, null);
-          }
-        }
+        // Hole Schützendaten aus Batch-Cache
+        const shooterDetails = shooterDetailsCache.get(score.shooterId) || null;
         
         // Erstelle vollständigen Namen aus firstName + lastName oder nutze shooterName als Fallback
         let displayName = score.shooterName || "Unbek. Schütze";

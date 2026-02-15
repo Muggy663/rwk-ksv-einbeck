@@ -76,19 +76,25 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
+  const sanitizeCSS = (value: string): string => {
+    return value.replace(/[<>"'&]/g, '').replace(/[^a-zA-Z0-9#(),. %\-]/g, '')
+  }
+
+  const escapedId = id.replace(/[^a-zA-Z0-9\-_]/g, '')
+
   return (
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
             ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${prefix} [data-chart=${escapedId}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
       itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
+    return color ? `  --color-${sanitizeCSS(key)}: ${sanitizeCSS(color)};` : null
   })
   .join("\n")}
 }

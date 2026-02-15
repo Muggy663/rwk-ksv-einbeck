@@ -203,6 +203,7 @@ export function useCamera(options: UseCameraOptions = {}) {
             type: 'image/jpeg',
             lastModified: Date.now()
           });
+          Object.defineProperty(file, 'name', { writable: false, configurable: false });
           resolve(file);
         } else {
           reject(new Error('Failed to create image blob'));

@@ -1,3 +1,4 @@
+import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
 // Migration Script: Übertrage fehlende Daten von shooters zu clubs/{clubId}/mitglieder
 // Führe dieses Script in der Browser-Konsole aus
 
@@ -5,7 +6,7 @@ const migrateMemberData = async () => {
   const clubId = '1icqJ91FFStTBn6ORukx';
   
   try {
-    console.log('Starte Migration der Mitgliederdaten...');
+    logInfo('Starte Migration der Mitgliederdaten...');
     
     // Lade alle Shooters für diesen Club
     const shootersQuery = query(
@@ -13,11 +14,11 @@ const migrateMemberData = async () => {
       where('clubId', '==', clubId)
     );
     const shootersSnapshot = await getDocs(shootersQuery);
-    console.log(`Gefunden: ${shootersSnapshot.docs.length} Shooters`);
+    logInfo(`Gefunden: ${shootersSnapshot.docs.length} Shooters`);
     
     // Lade alle Mitglieder aus neuer Collection
     const membersSnapshot = await getDocs(collection(db, `clubs/${clubId}/mitglieder`));
-    console.log(`Gefunden: ${membersSnapshot.docs.length} Mitglieder in neuer Collection`);
+    logInfo(`Gefunden: ${membersSnapshot.docs.length} Mitglieder in neuer Collection`);
     
     let updated = 0;
     
@@ -90,16 +91,16 @@ const migrateMemberData = async () => {
             await updateDoc(memberRef, updates);
             
             updated++;
-            console.log(`Updated: ${memberData.name} (${Object.keys(updates).length} Felder)`);
+            logInfo(`Updated: ${memberData.name} (${Object.keys(updates).length} Felder)`);
           }
         }
       }
     }
     
-    console.log(`Migration abgeschlossen! ${updated} Mitglieder aktualisiert.`);
+    logInfo(`Migration abgeschlossen! ${updated} Mitglieder aktualisiert.`);
     
   } catch (error) {
-    console.error('Fehler bei Migration:', error);
+    logError('Fehler bei Migration:', error);
   }
 };
 

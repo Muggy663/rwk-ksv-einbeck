@@ -14,6 +14,7 @@ import { useAuthContext } from '@/components/auth/AuthContext';
 import { BackButton } from '@/components/ui/back-button';
 import { KMProvider, useKMContext } from '@/contexts/KMContext';
 import { KMClubSwitcher } from '@/components/ui/km-club-switcher';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 
 function KMMeldungenContent() {
   const { toast } = useToast();
@@ -756,7 +757,7 @@ function KMMeldungenContent() {
                       return getLastName(a).localeCompare(getLastName(b));
                     })
                     .map(schuetze => {
-                      const club = clubs.find(c => c.id === (schuetze.rwkClubId || schuetze.clubId || schuetze.kmClubId));
+                      const club = clubs.find(c => c.id === getShooterClubId(schuetze));
                       const birthYearDisplay = schuetze.birthYear || 'Jahrgang fehlt';
                       const genderDisplay = schuetze.gender === 'male' ? 'm' : schuetze.gender === 'female' ? 'w' : 'Geschlecht fehlt';
                       
@@ -1248,7 +1249,7 @@ function KMMeldungenContent() {
                           return getLastName(a).localeCompare(getLastName(b));
                         })
                         .map(schuetze => {
-                          const club = clubs.find(c => c.id === (schuetze.rwkClubId || schuetze.clubId || schuetze.kmClubId));
+                          const club = clubs.find(c => c.id === getShooterClubId(schuetze));
                           const birthYearDisplay = schuetze.birthYear || 'Jahrgang fehlt';
                           const genderDisplay = schuetze.gender === 'male' ? 'm' : schuetze.gender === 'female' ? 'w' : 'Geschlecht fehlt';
                           

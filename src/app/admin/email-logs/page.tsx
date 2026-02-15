@@ -143,8 +143,8 @@ export default function EmailLogsPage() {
             </div>
             
             <div className="flex gap-2">
-              <Button onClick={() => console.clear()}>
-                Konsole leeren
+              <Button onClick={() => window.location.reload()}>
+                Seite neu laden
               </Button>
               <Button onClick={testEmailAPI} disabled={loading}>
                 {loading ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}

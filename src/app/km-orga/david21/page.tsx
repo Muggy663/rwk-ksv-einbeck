@@ -156,10 +156,6 @@ export default function David21Page() {
       const formData = new FormData();
       formData.append('file', importFile);
       formData.append('saisonId', importData.saisonId);
-      formData.append('disziplinen', JSON.stringify(importData.disziplinen));
-      if (importData.startlisteId) {
-        formData.append('startlisteId', importData.startlisteId);
-      }
 
       const response = await fetch('/api/km/david21-import', {
         method: 'POST',

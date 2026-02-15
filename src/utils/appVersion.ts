@@ -7,7 +7,7 @@ export const APP_VERSION = packageJson.version;
 export function checkAndClearOnUpdate() {
   if (typeof window === 'undefined') return;
   
-  const STORAGE_KEY = 'rwk_app_version';
+  const STORAGE_KEY = 'app_version_check';
   const currentVersion = APP_VERSION;
   const storedVersion = localStorage.getItem(STORAGE_KEY);
   

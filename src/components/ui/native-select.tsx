@@ -18,7 +18,7 @@ export function NativeSelect({
   return (
     <select
       className={cn(
-        "w-full h-10 px-3 py-2 text-sm border border-input bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>option]:max-h-48 [&>option]:overflow-y-auto",
+        "w-full h-10 px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>option]:bg-background [&>option]:text-foreground",
         className
       )}
       onChange={(e) => onValueChange?.(e.target.value)}

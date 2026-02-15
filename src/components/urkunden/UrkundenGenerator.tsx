@@ -49,6 +49,17 @@ export function UrkundenGenerator({ jubilare }: UrkundenGeneratorProps) {
       }
     };
 
+    // Sanitize user input to prevent XSS
+    const escapeHtml = (text: string): string => {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    };
+
+    const sanitizedName = escapeHtml(jubilar.name.toUpperCase());
+    const sanitizedDatum = escapeHtml(urkundenDatum);
+    const sanitizedJahre = escapeHtml(String(jubilar.jahre));
+
     urkundeDiv.innerHTML = `
       <div style="text-align: center; line-height: 1.4; background: white; font-family: 'Algerian', serif; padding: 10px;">
         
@@ -58,10 +69,10 @@ export function UrkundenGenerator({ jubilare }: UrkundenGeneratorProps) {
         <!-- Text Teil 1 -->
         <p style="font-family: 'Algerian', serif; font-size: 24px; margin: 15px 0; font-weight: bold;">${(jubilar.gender === 'female' || jubilar.gender === 'w' || jubilar.gender === 'W') ? 'DER SCHÜTZENSCHWESTER' : 'DEM SCHÜTZENBRUDER'}</p>
         
-        <h2 style="font-family: 'Algerian', serif; font-size: 36px; font-weight: bold; margin: 15px 0; letter-spacing: 2px;">${jubilar.name.toUpperCase()}</h2>
+        <h2 style="font-family: 'Algerian', serif; font-size: 36px; font-weight: bold; margin: 15px 0; letter-spacing: 2px;">${sanitizedName}</h2>
         
         <p style="font-family: 'Algerian', serif; font-size: 22px; margin: 10px 0;">WIRD HEUTE AUS ANLASS DER</p>
-        <p style="font-family: 'Algerian', serif; font-size: 22px; margin: 10px 0;">${jubilar.jahre}-JÄHRIGEN MITGLIEDSCHAFT</p>
+        <p style="font-family: 'Algerian', serif; font-size: 22px; margin: 10px 0;">${sanitizedJahre}-JÄHRIGEN MITGLIEDSCHAFT</p>
         <p style="font-family: 'Algerian', serif; font-size: 22px; margin: 10px 0;">IN DER</p>
         
         <!-- Großes Logo mittig -->
@@ -77,7 +88,7 @@ export function UrkundenGenerator({ jubilare }: UrkundenGeneratorProps) {
         <p style="font-family: 'Algerian', serif; font-size: 32px; font-weight: bold; margin: 20px 0; letter-spacing: 4px;">VERLIEHEN</p>
         
         <!-- Ort und Datum -->
-        <p style="font-family: 'Algerian', serif; font-size: 20px; margin: 20px 0;">EINBECK, DEN ${urkundenDatum}</p>
+        <p style="font-family: 'Algerian', serif; font-size: 20px; margin: 20px 0;">EINBECK, DEN ${sanitizedDatum}</p>
         
         <!-- Unterschrift untereinander -->
         <div style="margin-top: 20px; text-align: center; display: flex; flex-direction: column; align-items: center;">

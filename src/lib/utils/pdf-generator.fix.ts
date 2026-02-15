@@ -161,9 +161,9 @@ export async function generateLeaguePDFFixed(
       );
       
       // Debug: Prüfe verfügbare Daten
-      console.log('League individualLeagueShooters:', league?.individualLeagueShooters?.length || 0);
+      logInfo('League individualLeagueShooters:', { data: league?.individualLeagueShooters?.length || 0 });
       if (league?.individualLeagueShooters?.length > 0) {
-        console.log('Sample shooter:', league.individualLeagueShooters[0]);
+        logInfo('Sample shooter:', { data: league.individualLeagueShooters[0] });
       }
       
       // Erweiterte Tabelle mit Schützen pro Team

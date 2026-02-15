@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -101,7 +102,7 @@ export default function KMUebersicht() {
       if (meldungenRes.ok) {
         const meldungenData = await meldungenRes.json();
         allMeldungen = meldungenData.data || [];
-        console.log('Erste 3 Meldungen:', allMeldungen.slice(0, 3).map(m => ({ id: m.id, disziplinId: m.disziplinId })));
+        logInfo('Erste 3 Meldungen:', { data: allMeldungen.slice(0, 3).map(m => ({ id: m.id, disziplinId: m.disziplinId })) });
       }
       
       // Client-seitige Filterung
@@ -111,8 +112,8 @@ export default function KMUebersicht() {
       if (!isAdmin && userClubIds.length > 0) {
         // Filtere Schützen nach eigenen Vereinen
         filteredSchuetzen = allSchuetzen.filter((s: any) => {
-          const schuetzeClubIds = [s.clubId, s.kmClubId, s.rwkClubId].filter(Boolean);
-          return schuetzeClubIds.some((clubId: string) => userClubIds.includes(clubId));
+          const clubId = getShooterClubId(s);
+          return clubId && userClubIds.includes(clubId);
         });
         
         // Filtere Meldungen basierend auf gefilterten Schützen
@@ -122,8 +123,7 @@ export default function KMUebersicht() {
         // Zusätzliche Filterung nach ausgewähltem Verein
         if (selectedClubId) {
           filteredSchuetzen = filteredSchuetzen.filter((s: any) => {
-            const schuetzeClubIds = [s.clubId, s.kmClubId, s.rwkClubId].filter(Boolean);
-            return schuetzeClubIds.includes(selectedClubId);
+            return getShooterClubId(s) === selectedClubId;
           });
           
           const selectedSchuetzenIds = filteredSchuetzen.map(s => s.id);
@@ -138,7 +138,7 @@ export default function KMUebersicht() {
         const disziplinenRes = await fetch('/api/km/disziplinen');
         if (disziplinenRes.ok) {
           const disziplinenData = await disziplinenRes.json();
-          console.log('Geladene Disziplinen:', disziplinenData.data?.length || 0);
+          logInfo('Geladene Disziplinen:', { data: disziplinenData.data?.length || 0 });
           setData(prev => ({ ...prev, disziplinen: disziplinenData.data || [] }));
         }
       } catch (error) {

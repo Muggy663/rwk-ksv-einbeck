@@ -6,6 +6,7 @@ import { Loader2, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateMeldelistePDF } from '@/lib/services/km-pdf-service';
 import type { KMMeldung, KMDisziplin, Shooter, Club } from '@/types';
+import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
 
 interface KMMeldungenPDFExportProps {
   meldungen: any[];
@@ -72,7 +73,7 @@ export function KMMeldungenPDFExport({
         description: `Meldungen-PDF mit ${meldungen.length} Einträgen wurde heruntergeladen.`,
       });
     } catch (error) {
-      console.error('Fehler beim Erstellen der PDF:', error);
+      logError('Fehler beim Erstellen der PDF:', error);
       toast({
         title: 'Fehler',
         description: 'Die PDF-Datei konnte nicht erstellt werden.',

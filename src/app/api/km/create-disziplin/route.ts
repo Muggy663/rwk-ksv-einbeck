@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
+import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
 
 export async function POST(request: NextRequest) {
   try {
     const { id, data } = await request.json();
     
-    console.log(`📝 Erstelle Disziplin: ${id} - ${data.spoNummer} ${data.name}`);
+    logInfo(`📝 Erstelle Disziplin: ${id} - ${data.spoNummer} ${data.name}`);
     
     // Erstelle Disziplin mit exakter ID
     await adminDb.collection('km_disziplinen').doc(id).set(data);

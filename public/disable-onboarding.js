@@ -1,1 +1,0 @@
-// Disabled - Script wird als Text angezeigt statt ausgeführt

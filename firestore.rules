@@ -545,6 +545,12 @@ service cloud.firestore {
       allow read, update, delete: if isSuperAdmin();
     }
 
+    match /feedback/{feedbackId} {
+      allow create: if true;
+      allow read: if true; // Öffentlich lesbar für Durchschnittsbewertung
+      allow update, delete: if isSuperAdmin();
+    }
+
     match /protests/{protest} {
       allow read: if isSuperAdmin() || 
                   (isAuthenticated() && resource.data.submittedBy == request.auth.token.email);

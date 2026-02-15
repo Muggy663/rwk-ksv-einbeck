@@ -29,6 +29,8 @@ export default function CertificatesPage() {
   const [numTopTeams, setNumTopTeams] = useState<number>(2);
   const [generateOverallBest, setGenerateOverallBest] = useState<boolean>(false);
   const [ceremonyDate, setCeremonyDate] = useState<string>('');
+  
+  const todayFormatted = format(new Date(), 'dd.MM.yyyy', { locale: de });
 
   // Lade verfügbare Saisons
   useEffect(() => {
@@ -188,7 +190,7 @@ export default function CertificatesPage() {
         description: 'Die Urkunden werden generiert. Dies kann einen Moment dauern.',
       });
       
-      const currentDate = ceremonyDate ? 
+      const currentDateFormatted = ceremonyDate ? 
         format(new Date(ceremonyDate), 'dd. MMMM yyyy', { locale: de }) : 
         format(new Date(), 'dd. MMMM yyyy', { locale: de });
       const certificates = [];
@@ -241,7 +243,7 @@ export default function CertificatesPage() {
             clubName: shooter.clubName, // Verein separat speichern
             score: shooter.totalScore.toString(),
             rank: shooter.rank,
-            date: `Einbeck, ${currentDate}`
+            date: `Einbeck, ${currentDateFormatted}`
           });
         }
       }
@@ -308,7 +310,7 @@ export default function CertificatesPage() {
             teamMembersWithScores: teamMembersWithSubstitutions,
             score: team.totalScore.toString(),
             rank: team.rank,
-            date: `Einbeck, ${currentDate}`
+            date: `Einbeck, ${currentDateFormatted}`
           });
         }
       }
@@ -451,7 +453,7 @@ export default function CertificatesPage() {
         description: 'Die Urkunden für Gesamtsieger werden generiert. Dies kann einen Moment dauern.',
       });
       
-      const currentDate = ceremonyDate ? 
+      const currentDateFormatted = ceremonyDate ? 
         format(new Date(ceremonyDate), 'dd. MMMM yyyy', { locale: de }) : 
         format(new Date(), 'dd. MMMM yyyy', { locale: de });
       const certificates = [];
@@ -479,7 +481,7 @@ export default function CertificatesPage() {
           recipientName: bestShooters.bestMale.displayName || bestShooters.bestMale.name,
           score: bestShooters.bestMale.totalScore.toString(),
           rank: 1,
-          date: `Einbeck, ${currentDate}`
+          date: `Einbeck, ${currentDateFormatted}`
         });
       }
       
@@ -493,7 +495,7 @@ export default function CertificatesPage() {
           recipientName: bestShooters.bestFemale.displayName || bestShooters.bestFemale.name,
           score: bestShooters.bestFemale.totalScore.toString(),
           rank: 1,
-          date: `Einbeck, ${currentDate}`
+          date: `Einbeck, ${currentDateFormatted}`
         });
       }
       
@@ -507,7 +509,7 @@ export default function CertificatesPage() {
           recipientName: bestShooters.bestPistol.displayName || bestShooters.bestPistol.name,
           score: bestShooters.bestPistol.totalScore.toString(),
           rank: 1,
-          date: `Einbeck, ${currentDate}`
+          date: `Einbeck, ${currentDateFormatted}`
         });
       }
       
@@ -521,7 +523,7 @@ export default function CertificatesPage() {
           recipientName: bestShooters.bestKKPistol.displayName || bestShooters.bestKKPistol.name,
           score: bestShooters.bestKKPistol.totalScore.toString(),
           rank: 1,
-          date: `Einbeck, ${currentDate}`
+          date: `Einbeck, ${currentDateFormatted}`
         });
       }
       
@@ -558,8 +560,8 @@ export default function CertificatesPage() {
         }
         
         // PDF speichern
-        const seasonName = seasons.find(s => s.id === selectedSeason)?.name.replace('RWK ', '') || 'Saison';
-        certificateGenerator.save(`Urkunden_Gesamtsieger_${seasonName}.pdf`);
+        const seasonNameSafe = seasons.find(s => s.id === selectedSeason)?.name.replace('RWK ', '') || 'Saison';
+        certificateGenerator.save(`Urkunden_Gesamtsieger_${seasonNameSafe}.pdf`);
       } else {
         // Einzelne PDFs für jede Urkunde
         for (const cert of certificates) {
@@ -691,7 +693,7 @@ export default function CertificatesPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Leer lassen für heutiges Datum ({format(new Date(), 'dd.MM.yyyy')})
+                Leer lassen für heutiges Datum ({todayFormatted})
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
@@ -776,7 +778,7 @@ export default function CertificatesPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
             />
             <p className="text-xs text-gray-500 mt-1 mb-4">
-              Leer lassen für heutiges Datum ({format(new Date(), 'dd.MM.yyyy')})
+              Leer lassen für heutiges Datum ({todayFormatted})
             </p>
           </div>
           <div>

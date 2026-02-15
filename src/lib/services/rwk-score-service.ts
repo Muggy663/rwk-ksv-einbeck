@@ -2,6 +2,7 @@ import { db } from '@/lib/firebase/config';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs } from 'firebase/firestore';
 import { createAuditEntry } from './audit-service';
+import { batchGetShooters, batchGetClubs } from '@/lib/utils/batch-reads';
 
 export interface RWKScoreData {
   shooterId: string;
@@ -101,15 +102,78 @@ export async function saveRWKScore(scoreData: RWKScoreData, userInfo: { userId: 
 }
 
 /**
- * Speichert mehrere RWK-Ergebnisse als Batch und erstellt entsprechende Audit-Logs
+ * 🚀 OPTIMIERT: Speichert mehrere RWK-Ergebnisse als Batch mit Batch-Reads
  */
 export async function saveRWKScoresBatch(scores: RWKScoreData[], userInfo: { userId: string; userName: string }) {
   try {
+    // 🚀 Batch-Load aller Shooter und Teams auf einmal
+    const shooterIds = [...new Set(scores.map(s => s.shooterId))];
+    const teamIds = [...new Set(scores.map(s => s.teamId))];
+    
+    logDebug(`📦 Batch loading ${shooterIds.length} shooters and ${teamIds.length} teams...`);
+    
+    const [shootersMap, teamsSnapshot] = await Promise.all([
+      batchGetShooters(shooterIds),
+      getDocs(query(collection(db, 'rwk_teams'), where('__name__', 'in', teamIds.slice(0, 30))))
+    ]);
+    
+    const teamsMap = new Map();
+    teamsSnapshot.docs.forEach(doc => {
+      teamsMap.set(doc.id, { id: doc.id, ...doc.data() });
+    });
+    
+    // Sammle alle Club-IDs für Batch-Load
+    const clubIds = [...new Set(Array.from(teamsMap.values()).map((t: any) => t.clubId).filter(Boolean))];
+    const clubsMap = await batchGetClubs(clubIds);
+    
+    logDebug(`✅ Loaded ${shootersMap.size} shooters, ${teamsMap.size} teams, ${clubsMap.size} clubs in batch`);
+    
     const results = [];
     
     for (const scoreData of scores) {
-      const result = await saveRWKScore(scoreData, userInfo);
-      results.push(result);
+      const shooter = shootersMap.get(scoreData.shooterId);
+      const team = teamsMap.get(scoreData.teamId);
+      const club = team?.clubId ? clubsMap.get(team.clubId) : null;
+      
+      const shooterName = shooter?.name || 'Unbekannter Schütze';
+      const teamName = team?.name || 'Unbekannte Mannschaft';
+      const clubName = club?.name || 'Unbekannter Verein';
+      
+      // Speichere das Ergebnis
+      const scoreEntry = {
+        ...scoreData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      const docRef = await addDoc(collection(db, 'rwk_scores'), scoreEntry);
+
+      // Erstelle Audit-Log
+      await createAuditEntry(
+        'create',
+        'score',
+        docRef.id,
+        {
+          after: scoreData,
+          description: `Ergebnis erfasst: ${shooterName} - ${scoreData.score} Ringe (DG ${scoreData.durchgang})`
+        },
+        {
+          leagueId: team?.leagueId,
+          leagueName: 'Liga',
+          teamId: scoreData.teamId,
+          teamName,
+          shooterId: scoreData.shooterId,
+          shooterName,
+          userId: userInfo.userId,
+          userName: userInfo.userName
+        }
+      );
+      
+      results.push({
+        success: true,
+        scoreId: docRef.id,
+        message: `Ergebnis für ${shooterName} erfolgreich gespeichert`
+      });
     }
 
     logInfo(`Batch von ${scores.length} RWK-Ergebnissen gespeichert`);

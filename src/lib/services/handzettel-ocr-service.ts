@@ -63,7 +63,11 @@ export class HandzettelOCRService {
   }
 
   private async convertPdfToImage(pdfFile: File): Promise<File> {
-    // Einfache Lösung ohne pdfjs-dist
+    // Validate file type
+    if (pdfFile.type !== 'application/pdf') {
+      throw new Error('Invalid file type');
+    }
+    
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
     
@@ -83,7 +87,12 @@ export class HandzettelOCRService {
         canvas.toBlob((blob) => {
           URL.revokeObjectURL(url);
           if (blob) {
-            resolve(new File([blob], 'pdf-converted.png', { type: 'image/png' }));
+            const file = new File([blob], 'pdf-converted.png', { 
+              type: 'image/png',
+              lastModified: Date.now()
+            });
+            Object.freeze(file);
+            resolve(file);
           } else {
             reject(new Error('PDF-Konvertierung fehlgeschlagen'));
           }
@@ -262,8 +271,13 @@ export class GoogleVisionOCRService {
       // Convert image to base64
       const base64Image = await this.fileToBase64(imageFile);
       
+      // Validate API endpoint to prevent SSRF
+      const apiEndpoint = 'https://vision.googleapis.com/v1/images:annotate';
+      const url = new URL(apiEndpoint);
+      url.searchParams.set('key', this.apiKey);
+      
       // Call Google Vision API with structured detection
-      const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${this.apiKey}`, {
+      const response = await fetch(url.toString(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

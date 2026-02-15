@@ -25,7 +25,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM, Schießnachweis und Vereinssoftware.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: 24. Januar 2026 - Version 2.3.10_2026_01_24 - Ersatzschützen-Verbesserung & Sortierung korrigiert
+            Stand: 15. Februar 2026 - Version 2.4.0 - Next.js 16 Migration & Glassmorphism Design
           </p>
         </div>
       </div>

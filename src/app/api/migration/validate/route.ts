@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
@@ -32,7 +33,7 @@ export async function GET() {
     // 3. Schützen pro Verein zählen
     shootersSnapshot.docs.forEach(doc => {
       const shooterData = doc.data();
-      const clubId = shooterData.clubId || shooterData.rwkClubId;
+      const clubId = getShooterClubId(shooterData);
       const clubName = clubsMap.get(clubId) || 'Unbekannt';
       
       if (results.shooters.byClub[clubName] !== undefined) {

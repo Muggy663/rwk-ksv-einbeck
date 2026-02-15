@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { getShooterClubId, formatGender, getGenderBadgeClass } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -143,8 +144,8 @@ export default function KMAdminMitglieder() {
   };
 
   const addShooter = async () => {
-    if (!newShooter.firstName?.trim() || !newShooter.lastName?.trim()) {
-      toast({ title: 'Fehler', description: 'Vor- und Nachname sind erforderlich', variant: 'destructive' });
+    if (!newShooter.firstName?.trim() || !newShooter.lastName?.trim() || !newShooter.birthYear || !newShooter.gender || !newShooter.kmClubId) {
+      toast({ title: 'Fehler', description: 'Alle Felder sind erforderlich', variant: 'destructive' });
       return;
     }
 
@@ -152,10 +153,10 @@ export default function KMAdminMitglieder() {
       const shooterData = {
         firstName: newShooter.firstName.trim(),
         lastName: newShooter.lastName.trim(),
-        birthYear: newShooter.birthYear ? parseInt(newShooter.birthYear) : undefined,
-        gender: newShooter.gender || undefined,
-        mitgliedsnummer: newShooter.mitgliedsnummer?.trim() || undefined,
-        clubId: newShooter.kmClubId || undefined
+        birthYear: parseInt(newShooter.birthYear),
+        gender: newShooter.gender,
+        mitgliedsnummer: newShooter.mitgliedsnummer?.trim() || '',
+        clubId: newShooter.kmClubId
       };
 
       const response = await fetch('/api/shooters', {
@@ -176,7 +177,7 @@ export default function KMAdminMitglieder() {
   };
 
   const getClubName = (shooter: any) => {
-    const clubId = shooter.kmClubId || shooter.rwkClubId || shooter.clubId;
+    const clubId = getShooterClubId(shooter);
     if (!clubId) return '-';
     const club = clubs.find(c => c.id === clubId);
     return club?.name || 'Unbekannt';
@@ -205,7 +206,7 @@ export default function KMAdminMitglieder() {
   const filteredAndSortedShooters = shooters.filter(shooter => {
     // Vereinsfilter
     if (filter.verein) {
-      const clubId = shooter.kmClubId || shooter.rwkClubId || shooter.clubId;
+      const clubId = getShooterClubId(shooter);
       if (clubId !== filter.verein) return false;
     }
 
@@ -497,13 +498,8 @@ export default function KMAdminMitglieder() {
                           <option value="female">Weiblich</option>
                         </select>
                       ) : (
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          shooter.gender === 'male' ? 'bg-blue-100 text-blue-700' :
-                          shooter.gender === 'female' ? 'bg-pink-100 text-pink-700' :
-                          'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {shooter.gender === 'male' ? 'M' :
-                           shooter.gender === 'female' ? 'W' : '?'}
+                        <span className={`px-2 py-1 rounded text-xs ${getGenderBadgeClass(shooter.gender)}`}>
+                          {formatGender(shooter.gender)}
                         </span>
                       )}
                     </td>

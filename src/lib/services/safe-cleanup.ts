@@ -173,7 +173,7 @@ export async function performSafeCleanup(clubId: string, diagnosis: SafeCleanupD
 
   } catch (error) {
     logError('Error during safe cleanup:', error);
-    throw error;
+    throw new Error(`Cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   return {

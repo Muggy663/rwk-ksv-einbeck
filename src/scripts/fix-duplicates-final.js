@@ -1,3 +1,4 @@
+import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
 const admin = require('firebase-admin');
 
 if (!admin.apps.length) {
@@ -13,12 +14,12 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 async function fixDuplicates() {
-  console.log('🔧 Finale Duplikat-Bereinigung...');
+  logInfo('🔧 Finale Duplikat-Bereinigung...');
   
   try {
     // Lade alle rwk_scores
     const scoresSnapshot = await db.collection('rwk_scores').get();
-    console.log(`📊 Gefunden: ${scoresSnapshot.size} rwk_scores`);
+    logInfo(`📊 Gefunden: ${scoresSnapshot.size} rwk_scores`);
     
     // Gruppiere nach Schütze-Team-Durchgang
     const groups = new Map();
@@ -33,14 +34,14 @@ async function fixDuplicates() {
       groups.get(key).push({ id: doc.id, ...data });
     });
     
-    console.log(`🔍 Gefunden: ${groups.size} eindeutige Kombinationen`);
+    logInfo(`🔍 Gefunden: ${groups.size} eindeutige Kombinationen`);
     
     let totalDeleted = 0;
     
     // Finde und lösche Duplikate
     for (const [key, entries] of groups) {
       if (entries.length > 1) {
-        console.log(`\n🚨 Duplikat: ${key} (${entries.length} Einträge)`);
+        logInfo(`\n🚨 Duplikat: ${key} (${entries.length} Einträge)`);
         
         // Behalte den neuesten
         const keepEntry = entries.reduce((latest, current) => {
@@ -49,27 +50,27 @@ async function fixDuplicates() {
           return currentTime > latestTime ? current : latest;
         });
         
-        console.log(`✅ Behalte: ${keepEntry.id}`);
+        logInfo(`✅ Behalte: ${keepEntry.id}`);
         
         // Lösche alle anderen
         for (const entry of entries) {
           if (entry.id !== keepEntry.id) {
             try {
               await db.collection('rwk_scores').doc(entry.id).delete();
-              console.log(`🗑️ Gelöscht: ${entry.id}`);
+              logInfo(`🗑️ Gelöscht: ${entry.id}`);
               totalDeleted++;
             } catch (error) {
-              console.error(`❌ Fehler: ${entry.id}`, error);
+              logError(`❌ Fehler: ${entry.id}`, error);
             }
           }
         }
       }
     }
     
-    console.log(`\n🎉 Fertig! ${totalDeleted} Duplikate entfernt`);
+    logInfo(`\n🎉 Fertig! ${totalDeleted} Duplikate entfernt`);
     
   } catch (error) {
-    console.error('❌ Fehler:', error);
+    logError('❌ Fehler:', error);
   }
 }
 

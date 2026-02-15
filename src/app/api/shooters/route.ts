@@ -4,6 +4,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { secureLogger } from '@/lib/utils/secure-logger';
 import { sanitizeInput, InputValidator } from '@/lib/utils/input-validator';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 
 export async function POST(request: NextRequest) {
   try {
@@ -136,7 +137,7 @@ export async function GET(request: NextRequest) {
       // Filtere nach Verein wenn clubId angegeben
       if (clubId) {
         allShooters = uniqueShooters.filter(shooter => {
-          const shooterClubId = shooter.clubId || shooter.rwkClubId || shooter.kmClubId;
+          const shooterClubId = getShooterClubId(shooter);
           return shooterClubId === clubId;
         });
       } else {

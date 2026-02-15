@@ -11,6 +11,7 @@ import { MannschaftsbildungService } from '@/lib/services/mannschaftsbildung-ser
 import { BackButton } from '@/components/ui/back-button';
 import { KMProvider, useKMContext } from '@/contexts/KMContext';
 import { KMClubSwitcher } from '@/components/ui/km-club-switcher';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 
 interface Mannschaft {
   id: string;
@@ -685,7 +686,7 @@ function KMMannschaftenContent() {
                             <div className="space-y-2 max-h-32 overflow-y-auto">
                               {schuetzen
                                 .filter(s => !mannschaft.schuetzenIds.includes(s.id))
-                                .filter(s => s.clubId === mannschaft.vereinId || s.kmClubId === mannschaft.vereinId)
+                                .filter(s => getShooterClubId(s) === mannschaft.vereinId)
                                 .filter(s => {
                                   // Nur Schützen die für diese Disziplin gemeldet sind
                                   return meldungen.some(m => 
@@ -803,7 +804,7 @@ function KMMannschaftenContent() {
                                 ))}
                               {schuetzen.filter(s => 
                                 !mannschaft.schuetzenIds.includes(s.id) && 
-                                (s.clubId === mannschaft.vereinId || s.kmClubId === mannschaft.vereinId) &&
+                                getShooterClubId(s) === mannschaft.vereinId &&
                                 meldungen.some(m => m.schuetzeId === s.id && m.disziplinId === mannschaft.disziplinId) &&
                                 !mannschaften.some(otherTeam => 
                                   otherTeam.id !== mannschaft.id && 

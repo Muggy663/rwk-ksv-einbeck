@@ -192,16 +192,6 @@ export default function DokumentePage() {
                 📝 Formulare
               </button>
               <button
-                onClick={() => setActiveTab('ligalisten')}
-                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                  activeTab === 'ligalisten' 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-muted'
-                }`}
-              >
-                📊 Ligalisten
-              </button>
-              <button
                 onClick={() => setActiveTab('ordnungen')}
                 className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                   activeTab === 'ordnungen' 
@@ -270,8 +260,7 @@ export default function DokumentePage() {
             <TabsTrigger value="ausschreibungen" className="text-xs px-2 py-2">Ausschreibungen</TabsTrigger>
             <TabsTrigger value="formulare" className="text-xs px-2 py-2">Formulare</TabsTrigger>
           </TabsList>
-          <TabsList className="grid grid-cols-2 md:hidden gap-1 mb-4 h-auto">
-            <TabsTrigger value="ligalisten" className="text-xs px-2 py-2">Ligalisten</TabsTrigger>
+          <TabsList className="grid grid-cols-1 md:hidden gap-1 mb-4 h-auto">
             <TabsTrigger value="ordnungen" className="text-xs px-2 py-2">Regelwerke</TabsTrigger>
           </TabsList>
 

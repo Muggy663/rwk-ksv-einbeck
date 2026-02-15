@@ -15,6 +15,7 @@ import { db } from '@/lib/firebase/config';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import type { SupportTicket } from '@/types/rwk';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
 
 const SUPPORT_TICKETS_COLLECTION = "support_tickets";
 
@@ -378,6 +379,8 @@ export default function SupportPage() {
         </Card>
       )}
 
+      {/* Feedback Widget */}
+      <FeedbackWidget />
 
       {/* Konto-Löschung Sektion */}
       <Card className="shadow-lg max-w-2xl mx-auto border-destructive/20">

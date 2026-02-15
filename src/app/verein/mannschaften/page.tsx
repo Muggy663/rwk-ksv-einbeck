@@ -291,7 +291,7 @@ export default function VereinMannschaftenPage() {
       } as Shooter));
       
       const clubShooters = allShooters.filter(shooter => {
-        const shooterClubId = shooter.clubId || shooter.rwkClubId || (shooter as any).kmClubId;
+        const shooterClubId = getShooterClubId(shooter);
         return shooterClubId === activeClubId;
       });
       
@@ -396,7 +396,7 @@ export default function VereinMannschaftenPage() {
       
       // Filtere nach clubId/rwkClubId/kmClubId
       const clubShooters = allShooters.filter(shooter => {
-        const shooterClubId = shooter.clubId || shooter.rwkClubId || (shooter as any).kmClubId;
+        const shooterClubId = getShooterClubId(shooter);
         return shooterClubId === clubIdForDialog;
       });
       
@@ -941,13 +941,11 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
         
         try {
           const shooterPromises = shooterIds.map(async (shooterId) => {
-            // Prüfe shooters
             const rwkShooterDoc = await getFirestoreDoc(doc(db, SHOOTERS_COLLECTION, shooterId));
             if (rwkShooterDoc.exists()) {
               return { id: rwkShooterDoc.id, ...rwkShooterDoc.data() } as Shooter;
             }
             
-            // Prüfe km_shooters als Fallback
             try {
               const kmShooterDoc = await getFirestoreDoc(doc(db, 'km_shooters', shooterId));
               if (kmShooterDoc.exists()) {
@@ -957,7 +955,6 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
               // km_shooters nicht verfügbar
             }
             
-            // Zeige auch nicht gefundene IDs als Platzhalter
             return { 
               id: shooterId, 
               name: `Schütze nicht gefunden (ID: ${shooterId.substring(0, 8)}...)`,

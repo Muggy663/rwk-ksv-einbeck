@@ -70,7 +70,7 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
   const existingShooters = new Set(
     shootersSnapshot.docs.map(doc => {
       const data = doc.data();
-      return `${data.name}_${data.clubId || data.kmClubId || data.rwkClubId}`;
+      return `${data.name}_${getShooterClubId(data)}`;
     })
   );
 

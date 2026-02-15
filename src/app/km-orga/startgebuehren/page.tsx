@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 
 import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 
 interface StartgebührData {
   verein: string;
@@ -104,7 +105,7 @@ export default function StartgebührenPage() {
         const schuetze = schuetzenMap[meldung.schuetzeId];
         if (!schuetze) return;
 
-        const vereinId = schuetze.kmClubId || schuetze.rwkClubId || schuetze.clubId;
+        const vereinId = getShooterClubId(schuetze);
         const vereinName = vereinsMap[vereinId] || 'Unbekannt';
         
         if (!vereinId) {

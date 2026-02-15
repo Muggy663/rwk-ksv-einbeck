@@ -337,6 +337,9 @@ export default function AdminDashboardPage() {
               <Link href="/admin/season-transition" passHref>
                 <Button variant="outline" className="w-full">Saisonwechsel</Button>
               </Link>
+              <Link href="/admin/promotion-relegation" passHref>
+                <Button variant="outline" className="w-full">🔼🔽 Auf- & Abstiege</Button>
+              </Link>
               <Link href="/admin/league-settings">
                 <Button variant="outline" className="w-full">
                   <Settings className="mr-2 h-4 w-4" />
@@ -347,11 +350,6 @@ export default function AdminDashboardPage() {
                 <Button variant="outline" className="w-full">
                   <Award className="mr-2 h-4 w-4" />
                   Urkunden erstellen
-                </Button>
-              </Link>
-              <Link href="/admin/seasons/zeitungsbericht" passHref>
-                <Button variant="outline" className="w-full">
-                  📰 Zeitungsbericht
                 </Button>
               </Link>
             </div>
@@ -450,11 +448,16 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-             Eingegangene Support-Tickets einsehen und Status ändern.
+             Eingegangene Support-Tickets und Feedbacks einsehen.
             </CardDescription>
-            <Link href="/admin/support-tickets" passHref>
-              <Button className="w-full" variant="outline">Tickets anzeigen</Button>
-            </Link>
+            <div className="flex flex-col gap-2">
+              <Link href="/admin/support-tickets" passHref>
+                <Button className="w-full" variant="outline">Tickets anzeigen</Button>
+              </Link>
+              <Link href="/admin/feedback" passHref>
+                <Button className="w-full" variant="outline">💬 Feedbacks</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
         
@@ -464,14 +467,9 @@ export default function AdminDashboardPage() {
             <BarChart3 className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <CardDescription className="mb-4">
-              System-Überwachung und Fehlerberichte.
-            </CardDescription>
-            <div className="space-y-2">
-              <div className="text-center p-3 bg-green-50 rounded-md">
-                <p className="text-sm text-green-800 font-medium">✅ Error-Monitoring aktiv</p>
-                <p className="text-xs text-green-600">Fehler werden automatisch per E-Mail gesendet</p>
-              </div>
+            <div className="text-center p-3 bg-green-50 rounded-md">
+              <p className="text-sm text-green-800 font-medium">✅ Error-Monitoring aktiv</p>
+              <p className="text-xs text-green-600">Fehler werden automatisch per E-Mail gesendet</p>
             </div>
           </CardContent>
         </Card>
@@ -491,28 +489,21 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
         
-         <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Handzettel & Kommunikation</CardTitle> 
+            <CardTitle className="text-lg font-medium">Kommunikation</CardTitle> 
             <FileText className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Handzettel für Mannschaftsführer erstellen und Kommunikation verwalten.
+              Handzettel, E-Mails und Support-Zugang.
             </CardDescription>
              <div className="flex flex-col gap-2">
               <Link href="/admin/handzettel" passHref>
                 <Button className="w-full">Handzettel erstellen</Button>
               </Link>
               <Link href="/admin/email-system" passHref>
-                <Button className="w-full" variant="outline">E-Mail-System</Button>
-              </Link>
-
-              <Link href="/admin/email-settings" passHref>
-                <Button className="w-full" variant="outline">E-Mail-Einstellungen</Button>
-              </Link>
-              <Link href="/admin/email-logs" passHref>
-                <Button className="w-full" variant="outline">E-Mail-Logs</Button>
+                <Button className="w-full" variant="outline">📧 E-Mail-System</Button>
               </Link>
               <Link href="/admin/support-access" passHref>
                 <Button className="w-full" variant="outline">🛠️ Support-Zugang</Button>
@@ -528,58 +519,29 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Verwaltung der Social Training Features und Community-Funktionen.
+              Community-Funktionen und Moderation.
             </CardDescription>
-             <div className="flex flex-col gap-2">
-              <Link href="/admin/social/groups" passHref>
-                <Button className="w-full" variant="outline">👥 Trainingsgruppen</Button>
-              </Link>
-              <Link href="/admin/social/competitions" passHref>
-                <Button className="w-full" variant="outline">🏆 Live-Wettkämpfe</Button>
-              </Link>
-              <Link href="/admin/social/profiles" passHref>
-                <Button className="w-full" variant="outline">👤 Öffentliche Profile</Button>
-              </Link>
-              <Link href="/admin/social/moderation" passHref>
-                <Button className="w-full" variant="outline">🛡️ Moderation</Button>
-              </Link>
-            </div>
+            <Link href="/admin/social/moderation" passHref>
+              <Button className="w-full">🛡️ Social Training verwalten</Button>
+            </Link>
           </CardContent>
         </Card>
         
          <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">System & Berichte</CardTitle> 
+            <CardTitle className="text-lg font-medium">System</CardTitle> 
             <Settings className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              PDF-Exporte, Backups und andere Systemfunktionen.
+              Systemfunktionen und Protokolle.
             </CardDescription>
              <div className="flex flex-col gap-2">
-              <div className="bg-blue-50 p-3 rounded border border-blue-200">
-                <p className="text-sm font-medium text-blue-800 mb-2">📊 RWK Backup vor Migration</p>
-                <div className="flex flex-col gap-2">
-                  <Button asChild variant="outline" size="sm">
-                    <a href="/api/export/rwk-backup?year=2025&discipline=KK" download>
-                      📥 KK 2025
-                    </a>
-                  </Button>
-                  <Button asChild variant="outline" size="sm">
-                    <a href="/api/export/rwk-backup?year=2025&discipline=LG" download>
-                      📥 LG 2025
-                    </a>
-                  </Button>
-                </div>
-              </div>
-              <Link href="/admin/team-cleanup" passHref>
-                <Button className="w-full" variant="outline">Team-Bereinigung</Button>
+              <Link href="/admin/audit" passHref>
+                <Button className="w-full">Änderungsprotokoll</Button>
               </Link>
               <Link href="/admin/recovery" passHref>
                 <Button className="w-full" variant="outline">🔄 Datenwiederherstellung</Button>
-              </Link>
-              <Link href="/admin/audit" passHref>
-                <Button className="w-full" variant="outline">Änderungsprotokoll</Button>
               </Link>
             </div>
           </CardContent>

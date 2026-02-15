@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getDocs, collection, query, orderBy, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
 
 export default function StartlistenToolV2() {
   const searchParams = useSearchParams();
@@ -38,7 +40,7 @@ export default function StartlistenToolV2() {
           setSaisons(data.data || []);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der Saisons:', error);
+        logError('Fehler beim Laden der Saisons:', error);
       }
     };
     loadSaisons();
@@ -97,7 +99,7 @@ export default function StartlistenToolV2() {
             return {
               id: data.id,
               name: schuetze?.name || 'Unbekannt',
-              verein: vereineMap[schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId] || 'Unbekannt',
+              verein: vereineMap[getShooterClubId(schuetze)] || 'Unbekannt',
               disziplin: disziplinName,
               altersklasse: data.altersklasse || 'Unbekannt',
               anmerkung: data.anmerkung || '',
@@ -113,7 +115,7 @@ export default function StartlistenToolV2() {
         setLoading(false);
 
       } catch (error) {
-        console.error('Fehler beim Laden der Daten:', error);
+        logError('Fehler beim Laden der Daten:', error);
       } finally {
         setLoading(false);
       }
@@ -143,7 +145,7 @@ export default function StartlistenToolV2() {
 
   const generiereGemini = async () => {
     if (meldungen.length === 0) {
-      console.log('Keine Meldungen zum Generieren vorhanden');
+      logInfo('Keine Meldungen zum Generieren vorhanden');
       return;
     }
     
@@ -220,13 +222,13 @@ export default function StartlistenToolV2() {
             startliste: mappedStartliste
           });
           
-          console.log('✅ Gemini Startliste V2 gespeichert:', docRef.id);
+          logInfo('✅ Gemini Startliste V2 gespeichert:', { data: docRef.id });
         }
       } else {
-        console.error('Gemini Fehler:', result.error);
+        logError('Gemini Fehler:', result.error);
       }
     } catch (error) {
-      console.error('Fehler:', error.message);
+      logError('Fehler:', error.message);
     } finally {
       setGeminiLoading(false);
     }

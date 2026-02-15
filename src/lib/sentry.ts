@@ -29,16 +29,21 @@ export function initSentry() {
 }
 
 // Manuell Fehler loggen
-export function logError(error: Error, context?: Record<string, any>) {
-  logError('Error:', error);
+export function logErrorToSentry(error: Error, context?: Record<string, any>) {
+  const sanitizedMessage = error.message?.replace(/[\r\n]/g, ' ') || 'Unknown error';
+  logError('Error:', sanitizedMessage);
   
   if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+    const sanitizedContext = context ? Object.fromEntries(
+      Object.entries(context).map(([k, v]) => [k, typeof v === 'string' ? v.replace(/[\r\n]/g, ' ') : v])
+    ) : {};
+    
     Sentry.captureException(error, {
       tags: {
-        component: context?.component || 'unknown',
-        feature: context?.feature || 'unknown'
+        component: sanitizedContext?.component || 'unknown',
+        feature: sanitizedContext?.feature || 'unknown'
       },
-      extra: context,
+      extra: sanitizedContext,
     });
   }
 }

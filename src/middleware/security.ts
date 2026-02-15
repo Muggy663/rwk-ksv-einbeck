@@ -7,32 +7,37 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export function securityMiddleware(request: NextRequest) {
-  const response = NextResponse.next();
-  
-  // Security Headers setzen
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  
-  // CSP Header für XSS-Schutz
-  const cspHeader = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: https:",
-    "connect-src 'self' https://api.gemini.google.com https://vision.googleapis.com https://firestore.googleapis.com",
-    "frame-src 'self' https://www.google.com",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'"
-  ].join('; ');
-  
-  response.headers.set('Content-Security-Policy', cspHeader);
-  
-  return response;
+  try {
+    const response = NextResponse.next();
+    
+    // Security Headers setzen
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('X-XSS-Protection', '1; mode=block');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    
+    // CSP Header für XSS-Schutz
+    const cspHeader = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https:",
+      "connect-src 'self' https://api.gemini.google.com https://vision.googleapis.com https://firestore.googleapis.com",
+      "frame-src 'self' https://www.google.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'"
+    ].join('; ');
+    
+    response.headers.set('Content-Security-Policy', cspHeader);
+    
+    return response;
+  } catch (error) {
+    logError('Security middleware error:', error);
+    return NextResponse.next();
+  }
 }
 
 /**

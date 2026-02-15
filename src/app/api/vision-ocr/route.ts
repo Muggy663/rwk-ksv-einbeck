@@ -32,15 +32,11 @@ export async function POST(request: NextRequest) {
     const bytes = await imageFile.arrayBuffer();
     const base64Image = Buffer.from(bytes).toString('base64');
     
-    // Sichere URL-Validierung
-    const apiUrl = 'https://vision.googleapis.com/v1/images:annotate';
-    const sanitizedApiKey = HtmlSanitizer.sanitizeText(apiKey);
+    // SSRF Protection: Fixed API endpoint, no user input
+    const apiUrl = new URL('https://vision.googleapis.com/v1/images:annotate');
+    apiUrl.searchParams.set('key', apiKey);
     
-    if (!apiUrl.startsWith('https://vision.googleapis.com/')) {
-      throw new Error('Invalid API endpoint');
-    }
-    
-    const response = await fetch(`${apiUrl}?key=${sanitizedApiKey}`, {
+    const response = await fetch(apiUrl.toString(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

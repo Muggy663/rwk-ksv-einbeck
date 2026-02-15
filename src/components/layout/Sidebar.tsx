@@ -35,6 +35,7 @@ export function Sidebar() {
     { href: '/rwk-tabellen', label: 'RWK Tabellen', icon: FileBarChart },
     { href: '/statistiken', label: 'Statistiken', icon: TrendingUp },
     { href: '/termine', label: 'Termine', icon: CalendarDays },
+    { href: '/ligalisten', label: 'Ligalisten', icon: FileText },
     { href: '/dokumente', label: 'Dokumente', icon: FileText },
   ];
 
@@ -47,6 +48,7 @@ export function Sidebar() {
     { href: '/handbuch', label: 'Handbuch', icon: BookOpen },
     { href: '/schiesssport-erklaerung', label: 'Schießsport erklärt', icon: BookOpen },
     { href: '/support', label: 'Support', icon: MessageSquare },
+    { href: '/feedback', label: 'Feedback geben', icon: MessageSquare },
   ];
 
   const adminRoutes = [
@@ -75,8 +77,7 @@ export function Sidebar() {
       <div className="space-y-1">
         {routes.map((route) => {
           const Icon = route.icon;
-          const isActive = pathname === route.href || 
-            (route.href !== '/' && pathname.startsWith(route.href));
+          const isActive = pathname === route.href || (route.href !== '/' && pathname.startsWith(route.href));
           
           return (
             <Link

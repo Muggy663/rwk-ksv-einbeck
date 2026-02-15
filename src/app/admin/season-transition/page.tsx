@@ -20,6 +20,8 @@ import { IntelligentAdminRecommendations } from '@/components/ui/intelligent-adm
 import { calculateLeagueStandings, generatePromotionRelegationSuggestions, createNewSeason, applyPromotionRelegation } from '@/lib/services/season-transition-service';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 interface Season {
   id: string;
@@ -414,12 +416,14 @@ export default function SeasonTransitionPage() {
       logDebug('Logo konnte nicht geladen werden:', error);
     }
     
+    const todayFormatted = format(new Date(), 'dd.MM.yyyy', { locale: de });
+    
     // Header
     doc.setFontSize(16);
     doc.text('Auf-/Abstiegsanalyse RWK Einbeck', 20, 20);
     doc.setFontSize(12);
     doc.text(`Saison: ${selectedSeason?.name || 'Unbekannt'}`, 20, 30);
-    doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-DE')}`, 20, 40);
+    doc.text(`Erstellt am: ${todayFormatted}`, 20, 40);
     
     let yPosition = 50;
     

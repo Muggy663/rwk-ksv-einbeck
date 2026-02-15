@@ -105,9 +105,9 @@ export function NewsList({ showAll = false, onEdit, limit = 10 }: NewsListProps)
   const getPriorityBadge = (priority: NewsArticle['priority']) => {
     switch (priority) {
       case 'dringend':
-        return <Badge variant="destructive">Dringend</Badge>;
+        return <Badge variant="destructive" className="dark:bg-red-900/50 dark:text-red-200">Dringend</Badge>;
       case 'hoch':
-        return <Badge variant="default" className="bg-orange-600">Hoch</Badge>;
+        return <Badge variant="default" className="bg-orange-600 dark:bg-orange-900/50 dark:text-orange-200">Hoch</Badge>;
       case 'normal':
         return <Badge variant="outline">Normal</Badge>;
       default:
@@ -117,11 +117,11 @@ export function NewsList({ showAll = false, onEdit, limit = 10 }: NewsListProps)
 
   const getCategoryBadge = (category: NewsArticle['category']) => {
     const colors = {
-      'allgemein': 'bg-blue-600',
-      'ergebnisse': 'bg-green-600',
-      'termine': 'bg-purple-600',
-      'regelaenderung': 'bg-orange-600',
-      'wichtig': 'bg-red-600'
+      'allgemein': 'bg-blue-600 dark:bg-blue-900/50 dark:text-blue-200',
+      'ergebnisse': 'bg-green-600 dark:bg-green-900/50 dark:text-green-200',
+      'termine': 'bg-purple-600 dark:bg-purple-900/50 dark:text-purple-200',
+      'regelaenderung': 'bg-orange-600 dark:bg-orange-900/50 dark:text-orange-200',
+      'wichtig': 'bg-red-600 dark:bg-red-900/50 dark:text-red-200'
     };
 
     const labels = {

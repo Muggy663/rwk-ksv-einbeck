@@ -2,6 +2,7 @@
 "use client";
 import React, { useState, useEffect, FormEvent, useCallback, useMemo } from 'react';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Loader2, AlertTriangle, UserCircle as UserIcon } from 'lucide-react';
@@ -326,11 +327,7 @@ export default function VereinSchuetzenPage() {
   };
 
   const handleEditShooter = (shooter: Shooter) => {
-    const shooterBelongsToActiveClub = [
-      shooter.clubId,
-      shooter.rwkClubId,
-      shooter.kmClubId
-    ].includes(activeClubId);
+    const shooterBelongsToActiveClub = getShooterClubId(shooter) === activeClubId;
     
     if (!(isVereinsvertreter || isSportleiter) || !shooterBelongsToActiveClub) {
       toast({ title: "Nicht autorisiert", variant: "destructive" }); return;
@@ -344,7 +341,7 @@ export default function VereinSchuetzenPage() {
       gender: shooter.gender || 'male',
       birthYear: shooter.birthYear || undefined,
       mitgliedsnummer: shooter.mitgliedsnummer || '',
-      clubId: shooter.clubId || shooter.rwkClubId || shooter.kmClubId,
+      clubId: getShooterClubId(shooter),
       teamIds: shooter.teamIds || []
     };
     setCurrentShooter(editData);
@@ -354,11 +351,7 @@ export default function VereinSchuetzenPage() {
   };
 
   const handleDeleteConfirmation = (shooter: Shooter) => {
-    const shooterBelongsToActiveClub = [
-      shooter.clubId,
-      shooter.rwkClubId,
-      shooter.kmClubId
-    ].includes(activeClubId);
+    const shooterBelongsToActiveClub = getShooterClubId(shooter) === activeClubId;
     
     if (!(isVereinsvertreter || isSportleiter) || !shooterBelongsToActiveClub) {
       toast({ title: "Nicht autorisiert", variant: "destructive" }); return;

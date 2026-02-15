@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
-export default function EintraegePage() {
+function EintraegeContent() {
   const { toast } = useToast();
   const [einträge, setEinträge] = useState<SchießEintrag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,7 +51,7 @@ export default function EintraegePage() {
     try {
       const data = await SchießnachweisService.getEinträge();
       setEinträge(data);
-      console.log('Loaded entries:', data.length); // Debug log
+      logInfo('Loaded entries:', { data: data.length }); // Debug log
     } catch (error) {
       logError('Fehler beim Laden der Einträge:', error);
     } finally {
@@ -300,5 +300,13 @@ export default function EintraegePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function EintraegePage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-4 sm:p-6 max-w-4xl"><div className="text-center py-8"><p>Lade Einträge...</p></div></div>}>
+      <EintraegeContent />
+    </Suspense>
   );
 }

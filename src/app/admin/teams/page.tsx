@@ -274,7 +274,7 @@ export default function AdminTeamsPage() {
       } as Shooter));
       
       const clubShooters = allShooters.filter(shooter => {
-        const shooterClubId = shooter.clubId || shooter.rwkClubId || (shooter as any).kmClubId;
+        const shooterClubId = getShooterClubId(shooter);
         return shooterClubId === clubIdForDialog;
       });
       
@@ -1057,7 +1057,7 @@ export default function AdminTeamsPage() {
                                       <span>{(shooter.firstName || '') + ' ' + (shooter.lastName || shooter.name || '')}</span>
                                       {isSelected && ' ✓'}
                                     </div>
-                                    <span className='text-xs text-muted-foreground block'>(Verein: {getClubName(shooter.clubId || shooter.rwkClubId)})</span>
+                                    <span className='text-xs text-muted-foreground block'>(Verein: {getClubName(getShooterClubId(shooter))})</span>
                                     {finalIsDisabled && disableReason && <span className="text-xs text-destructive ml-1">{disableReason}</span>}
                                   </Label>
                                 </div>

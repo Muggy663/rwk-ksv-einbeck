@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 
 const KM_MANNSCHAFTEN_COLLECTION = 'km_mannschaften';
 
@@ -36,19 +37,19 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    console.log('Collection Name:', collectionName);
+    logInfo('Collection Name:', { data: collectionName });
     
     const meldungenSnapshot = await db.collection(collectionName).get();
     const alleMeldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
-    console.log('=== MANNSCHAFTS-DEBUG ===');
-    console.log('Gesuchte Saison:', saison);
-    console.log('Anzahl Meldungen gesamt:', alleMeldungen.length);
-    console.log('Beispiel Meldung:', alleMeldungen[0]);
+    logInfo('=== MANNSCHAFTS-DEBUG ===');
+    logInfo('Gesuchte Saison:', { data: saison });
+    logInfo('Anzahl Meldungen gesamt:', { data: alleMeldungen.length });
+    logInfo('Beispiel Meldung:', { data: alleMeldungen[0] });
     
     // Filtere nach saisonId UND nach Vereinszugehörigkeit
     const meldungen = alleMeldungen.filter(m => m.saisonId === saison);
-    console.log('Meldungen nach Saison-Filter:', meldungen.length);
+    logInfo('Meldungen nach Saison-Filter:', { data: meldungen.length });
     
     if (meldungen.length === 0) {
       return NextResponse.json({
@@ -81,14 +82,14 @@ export async function POST(request: NextRequest) {
       mannschaftsregeln = doc.data().regeln || {};
     }
     
-    console.log('Geladene Mannschaftsregeln:', Object.keys(mannschaftsregeln).length);
-    console.log('Beispiel-Regel:', Object.values(mannschaftsregeln)[0]);
-    console.log('Alle Regel-Keys:', Object.keys(mannschaftsregeln));
+    logInfo('Geladene Mannschaftsregeln:', { data: Object.keys(mannschaftsregeln).length });
+    logInfo('Beispiel-Regel:', { data: Object.values(mannschaftsregeln)[0] });
+    logInfo('Alle Regel-Keys:', { data: Object.keys(mannschaftsregeln) });
     
     // Mannschaftsregeln - Gruppiere nach echten Altersklassen
     const gruppiert = {};
     
-    console.log('Starte Gruppierung von', meldungen.length, 'Meldungen');
+    logInfo('Starte Gruppierung von', { data: meldungen.length, meldungen: true });
     
     for (const meldung of meldungen) {
       const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
       
       if (!schuetze || !disziplin) continue;
       
-      const vereinId = schuetze.kmClubId || schuetze.rwkClubId || schuetze.clubId;
+      const vereinId = getShooterClubId(schuetze);
       if (!vereinId) continue;
       
       // Bestimme Altersklasse nach echten KM-Regeln
@@ -209,14 +210,14 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    console.log('Erstellte Teams:', teams.length);
-    console.log('Teams Details:', teams.map(t => ({ name: t.name, mitglieder: t.mitglieder?.length })));
+    logInfo('Erstellte Teams:', { data: teams.length });
+    logInfo('Teams Details:', { data: teams.map(t => ({ name: t.name, mitglieder: t.mitglieder?.length })) });
     
     if (teams.length === 0) {
-      console.log('Keine Teams erstellt - Debug Info:');
-      console.log('Gruppiert Keys:', Object.keys(gruppiert));
+      logInfo('Keine Teams erstellt - Debug Info:');
+      logInfo('Gruppiert Keys:', { data: Object.keys(gruppiert) });
       for (const [key, gruppe] of Object.entries(gruppiert)) {
-        console.log(`Gruppe ${key}:`, {
+        logInfo(`Gruppe ${key}:`, {
           vereinId: gruppe.vereinId,
           disziplin: gruppe.disziplin?.name,
           schuetzenAnzahl: Object.values(gruppe.schuetzen).flat().length

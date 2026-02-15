@@ -1,3 +1,4 @@
+import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
 // src/lib/services/pdf-export-service.ts
 // Gemeinsame PDF-Export-Funktionen für Startlisten
 
@@ -105,7 +106,7 @@ export class PDFExportService {
       doc.save(fileName);
       
     } catch (error) {
-      console.error('PDF-Export Fehler:', error);
+      logError('PDF-Export Fehler:', error);
       throw error;
     }
   }
@@ -122,7 +123,7 @@ export class PDFExportService {
       logoImg.src = '/images/logo2.png';
       doc.addImage(logoImg, 'PNG', pageWidth / 2 - 25, 70, 50, 50);
     } catch (error) {
-      console.warn('Logo konnte nicht geladen werden:', error);
+      logWarn('Logo konnte nicht geladen werden:', { data: error });
     }
     
     doc.setFontSize(20);
@@ -144,7 +145,7 @@ export class PDFExportService {
       logoImg.src = '/images/logo2.png';
       doc.addImage(logoImg, 'PNG', 15, 10, 20, 20);
     } catch (error) {
-      console.warn('Logo konnte nicht geladen werden');
+      logWarn('Logo konnte nicht geladen werden');
     }
     
     doc.setFontSize(12);

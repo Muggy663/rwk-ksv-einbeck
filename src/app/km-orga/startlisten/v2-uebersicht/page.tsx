@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { getDocs, collection, doc, updateDoc, deleteDoc, addDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
 
 interface Aenderungswunsch {
   id: string;
@@ -93,7 +95,7 @@ export default function StartlistenV2Uebersicht() {
         setSelectedSaison(jahreArray[0]);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der verfügbaren Jahre:', error);
+      logError('Fehler beim Laden der verfügbaren Jahre:', error);
       // Fallback
       setVerfuegbareJahre(['2026']);
       setSelectedSaison('2026');
@@ -151,7 +153,7 @@ export default function StartlistenV2Uebersicht() {
           const meldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           alleMeldungen.push(...meldungen);
         } catch (e) {
-          console.warn(`Collection km_meldungen_${jahr}_${typ} nicht gefunden`);
+          logWarn(`Collection km_meldungen_${jahr}_${typ} nicht gefunden`);
         }
       }
       
@@ -193,7 +195,7 @@ export default function StartlistenV2Uebersicht() {
           const schuetze = schuetzenMap[data.schuetzeId];
           if (!schuetze) return null;
           
-          const vereinId = schuetze.kmClubId || schuetze.rwkClubId || schuetze.clubId;
+          const vereinId = getShooterClubId(schuetze);
           
           return {
             id: data.id,
@@ -212,7 +214,7 @@ export default function StartlistenV2Uebersicht() {
       setMeldungen(meldungenData);
       
     } catch (error) {
-      console.error('Fehler beim Laden:', error);
+      logError('Fehler beim Laden:', error);
     } finally {
       setLoading(false);
     }
@@ -242,7 +244,7 @@ export default function StartlistenV2Uebersicht() {
       
       setAenderungswuensche(aenderungenData);
     } catch (error) {
-      console.error('Fehler beim Laden der Änderungswünsche:', error);
+      logError('Fehler beim Laden der Änderungswünsche:', error);
     }
   };
 
@@ -271,7 +273,7 @@ export default function StartlistenV2Uebersicht() {
         description: "Der Wunsch wurde erfolgreich gespeichert."
       });
     } catch (error) {
-      console.error('Fehler beim Hinzufügen:', error);
+      logError('Fehler beim Hinzufügen:', error);
       toast({
         title: "Fehler",
         description: "Wunsch konnte nicht gespeichert werden.",
@@ -294,7 +296,7 @@ export default function StartlistenV2Uebersicht() {
         description: "Der Wunsch wurde erfolgreich entfernt."
       });
     } catch (error) {
-      console.error('Fehler beim Löschen:', error);
+      logError('Fehler beim Löschen:', error);
       toast({
         title: "Fehler",
         description: "Wunsch konnte nicht gelöscht werden.",
@@ -313,7 +315,7 @@ export default function StartlistenV2Uebersicht() {
       await updateDoc(doc(correctDb, 'km_startlisten_aenderungen', id), { status });
       loadAenderungswuensche();
     } catch (error) {
-      console.error('Fehler beim Update:', error);
+      logError('Fehler beim Update:', error);
     }
   };
 
@@ -339,7 +341,7 @@ export default function StartlistenV2Uebersicht() {
       setEditingId(null);
       loadData();
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
+      logError('Fehler beim Speichern:', error);
     }
   };
 
@@ -355,7 +357,7 @@ export default function StartlistenV2Uebersicht() {
         await deleteDoc(doc(correctDb, 'km_startlisten_v2', id));
         loadData();
       } catch (error) {
-        console.error('Fehler beim Löschen:', error);
+        logError('Fehler beim Löschen:', error);
       }
     }
   };
@@ -1041,7 +1043,7 @@ export default function StartlistenV2Uebersicht() {
                               });
                               doc.addImage(logoImg, 'PNG', pageWidth / 2 - 25, 70, 50, 50);
                             } catch (error) {
-                              console.warn('Logo konnte nicht geladen werden:', error);
+                              logWarn('Logo konnte nicht geladen werden:', { data: error });
                             }
                             
                             doc.setFontSize(20);
@@ -1102,7 +1104,7 @@ export default function StartlistenV2Uebersicht() {
                                     logoImg.src = '/images/logo2.png';
                                     doc.addImage(logoImg, 'PNG', 15, 10, 20, 20);
                                   } catch (error) {
-                                    console.warn('Logo konnte nicht geladen werden');
+                                    logWarn('Logo konnte nicht geladen werden');
                                   }
                                   
                                   doc.setFontSize(12);
@@ -1271,7 +1273,7 @@ export default function StartlistenV2Uebersicht() {
                             const fileName = `Startliste_KM_${veranstaltungsDatum}.pdf`;
                             doc.save(fileName);
                           } catch (error) {
-                            console.error('PDF-Export Fehler:', error);
+                            logError('PDF-Export Fehler:', error);
                           }
                         }}
                         className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
@@ -1788,7 +1790,7 @@ export default function StartlistenV2Uebersicht() {
                                       }
                                     }
                                   } catch (error) {
-                                    console.error('Fehler bei Altersklassen-Berechnung:', error);
+                                    logError('Fehler bei Altersklassen-Berechnung:', error);
                                   }
                                 }
                                 
@@ -1838,7 +1840,7 @@ export default function StartlistenV2Uebersicht() {
                                 }
                               }
                             } catch (error) {
-                              console.error('Drop Zone Fehler:', error);
+                              logError('Drop Zone Fehler:', error);
                             }
                           }}
                           className="h-4 transition-all duration-200 rounded bg-gray-200 border border-dashed border-gray-400 mb-2"
@@ -1994,7 +1996,7 @@ export default function StartlistenV2Uebersicht() {
                                 </option>
                               );
                             });
-                          })()}}}}
+                          })()}
                         </select>
                         <input
                           type="time"
@@ -2111,7 +2113,7 @@ export default function StartlistenV2Uebersicht() {
                                         }
                                       }
                                     } catch (error) {
-                                      console.error('Fehler bei Altersklassen-Berechnung:', error);
+                                      logError('Fehler bei Altersklassen-Berechnung:', error);
                                     }
                                   }
                                   
@@ -2150,7 +2152,7 @@ export default function StartlistenV2Uebersicht() {
                                   });
                                 }
                               } catch (error) {
-                                console.error('End Drop Zone Fehler:', error);
+                                logError('End Drop Zone Fehler:', error);
                               }
                             }}
                             className="h-4 transition-all duration-200 rounded mt-2 bg-gray-200 border border-dashed border-gray-400"

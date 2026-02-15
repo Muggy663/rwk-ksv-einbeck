@@ -17,8 +17,8 @@ export async function POST(request: Request) {
     // Konfiguriere den E-Mail-Transporter
     const transporter = nodemailer.createTransport({
       host: 'mail.gmx.com',
-      port: 587,
-      secure: false, // true für 465, false für andere Ports
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,

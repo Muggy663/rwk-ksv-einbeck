@@ -8,6 +8,14 @@ import 'jspdf-autotable';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
+const sanitizeText = (text: string | number | null | undefined): string => {
+  if (text === null || text === undefined) return '-';
+  return String(text).replace(/[<>\"'&]/g, (char) => {
+    const entities: Record<string, string> = { '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '&': '&amp;' };
+    return entities[char] || char;
+  });
+};
+
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
@@ -106,23 +114,23 @@ export function PDFButton({
     
     data.teams.forEach((team: any) => {
       // Mannschaftszeile
-      const teamRow = [team.rank, team.name];
+      const teamRow = [sanitizeText(team.rank), sanitizeText(team.name)];
       for (let i = 1; i <= data.numRounds; i++) {
-        teamRow.push(team.roundResults[`dg${i}`] || '-');
+        teamRow.push(sanitizeText(team.roundResults[`dg${i}`]));
       }
-      teamRow.push(team.totalScore || '-');
-      teamRow.push(team.averageScore ? team.averageScore.toFixed(2) : '-');
+      teamRow.push(sanitizeText(team.totalScore));
+      teamRow.push(team.averageScore ? sanitizeText(team.averageScore.toFixed(2)) : '-');
       tableData.push(teamRow);
       
       // Einzelschützen unter der Mannschaft
       if (team.shooters && team.shooters.length > 0) {
         team.shooters.forEach((shooter: any) => {
-          const shooterRow = ['', `  • ${shooter.name}`]; // Einrückung mit Bullet
+          const shooterRow = ['', `  • ${sanitizeText(shooter.name)}`]; // Einrückung mit Bullet
           for (let i = 1; i <= data.numRounds; i++) {
-            shooterRow.push(shooter.results[`dg${i}`] || '-');
+            shooterRow.push(sanitizeText(shooter.results[`dg${i}`]));
           }
-          shooterRow.push(shooter.totalScore || '-');
-          shooterRow.push(shooter.averageScore ? shooter.averageScore.toFixed(2) : '-');
+          shooterRow.push(sanitizeText(shooter.totalScore));
+          shooterRow.push(shooter.averageScore ? sanitizeText(shooter.averageScore.toFixed(2)) : '-');
           tableData.push(shooterRow);
         });
       }
@@ -187,12 +195,12 @@ export function PDFButton({
     headers.push('Gesamt', 'Schnitt');
     
     const tableData = data.shooters.map((shooter: any) => {
-      const row = [shooter.rank, shooter.name, shooter.teamName];
+      const row = [sanitizeText(shooter.rank), sanitizeText(shooter.name), sanitizeText(shooter.teamName)];
       for (let i = 1; i <= data.numRounds; i++) {
-        row.push(shooter.results[`dg${i}`] || '-');
+        row.push(sanitizeText(shooter.results[`dg${i}`]));
       }
-      row.push(shooter.totalScore || '-');
-      row.push(shooter.averageScore ? shooter.averageScore.toFixed(2) : '-');
+      row.push(sanitizeText(shooter.totalScore));
+      row.push(shooter.averageScore ? sanitizeText(shooter.averageScore.toFixed(2)) : '-');
       return row;
     });
     

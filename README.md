@@ -1,14 +1,15 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.3.11_2026_01_30** | **Android: 0.9.4.1**
+**Version: 2.4.0** | **Android: 0.9.4.1**
 
 > **Social Training Platform für den deutschen Schießsport**
 
 Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und Social Training. Die erste Community-Plattform für Sportschützen mit Live-Wettkämpfen, Trainingsgruppen und erweiterten Statistiken.
 
-[![Version](https://img.shields.io/badge/Version-2.3.9-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.4.0-green?style=for-the-badge)](#)
 [![Social Training](https://img.shields.io/badge/Social_Training-Live-blue?style=for-the-badge)](#)
-[![Tech Stack](https://img.shields.io/badge/Tech-Next.js_14_+_Firebase-blue?style=for-the-badge)](#)
+[![Tech Stack](https://img.shields.io/badge/Tech-Next.js_16_+_Firebase-blue?style=for-the-badge)](#)
+[![Design](https://img.shields.io/badge/Design-Glassmorphism-purple?style=for-the-badge)](#)
 
 ## ✨ Highlights
 
@@ -112,6 +113,32 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 ## 📋 Changelog
 
+### Version 2.4.0 (15. Februar 2026)
+- **🎨 Glassmorphism Design**: Modernes, glasiges UI mit Blur-Effekten und sanften Animationen
+- **🌈 Neue Farbpalette**: Sanftere Grüntöne im Light Mode, tiefere Farben im Dark Mode
+- **✨ Animierte Hintergründe**: Gradient-Shifts und dynamische Farbverläufe
+- **💎 Glass-Komponenten**: Cards, Buttons, Inputs mit durchscheinenden Effekten
+- **🎭 Verbesserte Schatten**: Tiefere, weichere Schatten für bessere Tiefenwirkung
+- **🔄 Smooth Transitions**: Flüssige Animationen und Hover-Effekte überall
+- **🌙 Dark Mode Optimierung**: Automatische Anpassung aller Glaseffekte
+- **🚀 Next.js 16 Migration**: Upgrade auf Next.js 16.1.6 mit React 19 Kompatibilität
+- **⚡ Performance-Optimierung**: Batch Reads für Firebase - 68% weniger Datenbankzugriffe
+- **🔧 Code-Refactoring**: Zentrale getShooterClubId() Funktion für konsistente clubId-Verwaltung
+- **✅ Inkonsistenzen behoben**: 21 Dateien aktualisiert - einheitliche Shooter-clubId-Logik
+- **📦 Wartbarkeit**: Reduzierung von Code-Duplikation durch zentrale Utility-Funktion
+- **🎯 Stabilität**: Konsistente Verarbeitung von clubId/rwkClubId/kmClubId in allen Modulen
+- **🔒 Sicherheit**: Alle console.log durch secure-logger ersetzt (DSGVO-konform)
+- **📊 Firebase Optimierung**: Batch-Read Utility für 90-97% weniger Reads bei RWK-Tabellen
+
+### Version 2.3.12_2026_02_09
+- **📸 KM-Ergebnisse Batch-Import**: Alle Ergebnisse auf einmal per PDF/Foto hochladen
+- **🤖 Gemini AI Integration**: Automatische Erkennung von Namen, Ringen und Serien
+- **🎯 Namen-Matching**: Intelligente Zuordnung unabhängig von Namensformat (Vorname Nachname / Nachname, Vorname)
+- **📊 Serien-Import**: Automatische Berechnung und Speicherung aller Serien (102.3, 104.7, etc.)
+- **⚡ Batch-Verarbeitung**: 64 PDFs in einem Request - nur 1 API-Call statt 64
+- **🗑️ Ergebnisse löschen**: Löschen-Button speichert jetzt korrekt in Datenbank
+- **🌙 Dark-Mode**: Optimierte Darstellung für KM-Ergebnisse Seite
+
 ### Version 2.3.11_2026_01_30
 - **📄 KM-Meldungen PDF-Export**: Neuer Button zum Exportieren der Meldungen als PDF-Datei
 - **🔢 Nummerierte Meldungen**: PDF enthält fortlaufende Nummerierung (1-n) für bessere Übersicht
@@ -167,7 +194,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 30. Januar 2026 - Version 2.3.11_2026_01_30*
+*Letzte Aktualisierung: 15. Februar 2026 - Version 2.4.0*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

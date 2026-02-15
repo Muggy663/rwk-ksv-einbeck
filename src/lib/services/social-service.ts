@@ -58,10 +58,59 @@ export class SocialService {
   
   // Statistiken aus bestehenden Schießnachweis-Daten berechnen
   static async calculateUserStatistics(userId: string) {
-    const schiessnachweisDatenRef = doc(db, 'schiessnachweis_data', userId);
-    const schiessnachweisDaten = await getDoc(schiessnachweisDatenRef);
-    
-    if (!schiessnachweisDaten.exists()) {
+    try {
+      const schiessnachweisDatenRef = doc(db, 'schiessnachweis_data', userId);
+      const schiessnachweisDaten = await getDoc(schiessnachweisDatenRef);
+      
+      if (!schiessnachweisDaten.exists()) {
+        return {
+          totalTrainings: 0,
+          totalCompetitions: 0,
+          favoriteDiscipline: '',
+          bestResult: { discipline: '', score: 0, date: new Date() },
+          recentActivity: new Date()
+        };
+      }
+      
+      const data = schiessnachweisDaten.data();
+      const einträge = data.einträge || [];
+      
+      const trainings = einträge.filter((e: any) => e.typ === 'training');
+      const wettkämpfe = einträge.filter((e: any) => e.typ === 'wettkampf' || e.typ === 'meisterschaft');
+      
+      // Lieblingsdisziplin ermitteln
+      const disziplinCount: { [key: string]: number } = {};
+      einträge.forEach((eintrag: any) => {
+        disziplinCount[eintrag.disziplin] = (disziplinCount[eintrag.disziplin] || 0) + 1;
+      });
+      
+      const favoriteDiscipline = Object.keys(disziplinCount).reduce((a, b) => 
+        disziplinCount[a] > disziplinCount[b] ? a : b, ''
+      );
+      
+      // Bestes Ergebnis ermitteln
+      const bestResult = einträge.reduce((best: any, current: any) => {
+        return current.ergebnis > best.ergebnis ? current : best;
+      }, { ergebnis: 0, disziplin: '', datum: new Date() });
+      
+      // Letzte Aktivität
+      const recentActivity = einträge.length > 0 
+        ? new Date(Math.max(...einträge.map((e: any) => new Date(e.datum.seconds * 1000).getTime())))
+        : new Date();
+      
+      return {
+        totalTrainings: trainings.length,
+        totalCompetitions: wettkämpfe.length,
+        favoriteDiscipline,
+        bestResult: {
+          discipline: bestResult.disziplin,
+          score: bestResult.ergebnis,
+          date: new Date(bestResult.datum.seconds * 1000)
+        },
+        recentActivity
+      };
+    } catch (error) {
+      logError('Error calculating user statistics:', error);
       return {
         totalTrainings: 0,
         totalCompetitions: 0,
@@ -70,44 +119,6 @@ export class SocialService {
         recentActivity: new Date()
       };
     }
-    
-    const data = schiessnachweisDaten.data();
-    const einträge = data.einträge || [];
-    
-    const trainings = einträge.filter((e: any) => e.typ === 'training');
-    const wettkämpfe = einträge.filter((e: any) => e.typ === 'wettkampf' || e.typ === 'meisterschaft');
-    
-    // Lieblingsdisziplin ermitteln
-    const disziplinCount: { [key: string]: number } = {};
-    einträge.forEach((eintrag: any) => {
-      disziplinCount[eintrag.disziplin] = (disziplinCount[eintrag.disziplin] || 0) + 1;
-    });
-    
-    const favoriteDiscipline = Object.keys(disziplinCount).reduce((a, b) => 
-      disziplinCount[a] > disziplinCount[b] ? a : b, ''
-    );
-    
-    // Bestes Ergebnis ermitteln
-    const bestResult = einträge.reduce((best: any, current: any) => {
-      return current.ergebnis > best.ergebnis ? current : best;
-    }, { ergebnis: 0, disziplin: '', datum: new Date() });
-    
-    // Letzte Aktivität
-    const recentActivity = einträge.length > 0 
-      ? new Date(Math.max(...einträge.map((e: any) => new Date(e.datum.seconds * 1000).getTime())))
-      : new Date();
-    
-    return {
-      totalTrainings: trainings.length,
-      totalCompetitions: wettkämpfe.length,
-      favoriteDiscipline,
-      bestResult: {
-        discipline: bestResult.disziplin,
-        score: bestResult.ergebnis,
-        date: new Date(bestResult.datum.seconds * 1000)
-      },
-      recentActivity
-    };
   }
   
   // Öffentliches Profil entfernen

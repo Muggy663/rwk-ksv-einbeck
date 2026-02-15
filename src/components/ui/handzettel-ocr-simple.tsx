@@ -12,6 +12,17 @@ import { doc, getDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger'
 
+const sanitizeText = (text: string | number | undefined | null): string => {
+  if (text === undefined || text === null) return ''
+  const str = String(text)
+  return str.replace(/[<>"'&]/g, (char) => {
+    const entities: Record<string, string> = {
+      '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '&': '&amp;'
+    }
+    return entities[char] || char
+  })
+}
+
 interface HandzettelOCRProps {
   imageFile: File
   availableTeams?: Team[]
@@ -92,6 +103,7 @@ export function HandzettelOCR({
               type: 'image/jpeg',
               lastModified: Date.now()
             })
+            Object.freeze(compressedFile)
             logDebug(`📱 Bild komprimiert: ${Math.round(file.size/1024)}KB → ${Math.round(compressedFile.size/1024)}KB`)
             resolve(compressedFile)
           } else {
@@ -110,7 +122,7 @@ export function HandzettelOCR({
     
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     
-    logDebug('🤖 Gemini Erkennung gestartet:', imageFile.name)
+    logDebug('🤖 Gemini Erkennung gestartet:', sanitizeText(imageFile.name))
     setIsProcessing(true)
     setProgress(0)
     
@@ -168,7 +180,7 @@ export function HandzettelOCR({
         
         if (isMobile) {
           logDebug('📱 Mobile Debug - Response Status:', geminiResponse.status)
-          setCurrentStep(`📱 Response: ${geminiResponse.status}`)
+          setCurrentStep(`📱 Response: ${sanitizeText(geminiResponse.status)}`)
         }
         
         setProgress(70)
@@ -186,14 +198,14 @@ export function HandzettelOCR({
           } else {
             logWarn('⚠️ Gemini lieferte keine Ergebnisse')
             if (isMobile) {
-              setCurrentStep(`📱 Keine Ergebnisse: ${geminiData.error || 'Unbekannt'}`)
+              setCurrentStep(`📱 Keine Ergebnisse: ${sanitizeText(geminiData.error) || 'Unbekannt'}`)
             }
           }
         } else {
           const errorText = await geminiResponse.text().catch(() => 'Unbekannter Fehler')
           logWarn('⚠️ Gemini API Fehler:', geminiResponse.status)
           if (isMobile) {
-            setCurrentStep(`📱 API Fehler: ${geminiResponse.status}`)
+            setCurrentStep(`📱 API Fehler: ${sanitizeText(geminiResponse.status)}`)
           }
         }
       } catch (geminiError) {
@@ -206,7 +218,7 @@ export function HandzettelOCR({
           } else if (geminiError.message.includes('fetch')) {
             errorMsg = 'Netzwerkfehler'
           } else {
-            errorMsg = geminiError.message
+            errorMsg = sanitizeText(geminiError.message)
           }
         }
         
@@ -220,7 +232,11 @@ export function HandzettelOCR({
         let errorDetails = 'Gemini OCR fehlgeschlagen.'
         
         if (isMobile) {
-          errorDetails += `\n\n📱 Mobile Details:\n• Bildgröße: ${Math.round(processedImage.size/1024)}KB\n• Teams: ${availableTeams.length}\n• Typ: ${processedImage.type}`
+          const sanitizedSize = Math.max(0, Math.round(processedImage.size/1024))
+          const sanitizedTeamCount = Math.max(0, availableTeams.length)
+          const sanitizedType = String(processedImage.type).replace(/[^a-zA-Z0-9\/\-]/g, '')
+          
+          errorDetails += `\n\n📱 Mobile Details:\n• Bildgröße: ${sanitizedSize}KB\n• Teams: ${sanitizedTeamCount}\n• Typ: ${sanitizedType}`
           
           // Spezifische Mobile-Tipps
           if (processedImage.size > 2 * 1024 * 1024) {
@@ -459,9 +475,9 @@ export function HandzettelOCR({
             <div className="space-y-1">
               {matchedResults.map((result, index) => (
                 <div key={index} className="flex justify-between text-sm p-2 bg-green-50 rounded">
-                  <span>{result.shooterName}</span>
-                  <span>{result.teamName}</span>
-                  <span>{result.score !== null ? `${result.score} Ringe` : 'Nicht angetreten'}</span>
+                  <span>{sanitizeText(result.shooterName)}</span>
+                  <span>{sanitizeText(result.teamName)}</span>
+                  <span>{result.score !== null ? `${sanitizeText(result.score)} Ringe` : 'Nicht angetreten'}</span>
                 </div>
               ))}
             </div>

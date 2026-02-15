@@ -1,3 +1,4 @@
+import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
 // Reparatur-Script für doppelte Schützen-Einträge
 // Ausführung: node src/scripts/repair-duplicates.js
 
@@ -39,42 +40,42 @@ const DUPLICATES_TO_FIX = [
 ];
 
 async function repairDuplicates() {
-  console.log('🔧 Starte Duplikat-Reparatur...');
+  logInfo('🔧 Starte Duplikat-Reparatur...');
   
   for (const duplicate of DUPLICATES_TO_FIX) {
     try {
-      console.log(`\n📝 Repariere: ${duplicate.name} (${duplicate.team})`);
+      logInfo(`\n📝 Repariere: ${duplicate.name} (${duplicate.team})`);
       
       // Beide Einträge laden
       const keepDoc = await db.collection('rwk_results_2025').doc(duplicate.keepId).get();
       const removeDoc = await db.collection('rwk_results_2025').doc(duplicate.removeId).get();
       
       if (!keepDoc.exists) {
-        console.log(`❌ Keep-Dokument ${duplicate.keepId} nicht gefunden`);
+        logInfo(`❌ Keep-Dokument ${duplicate.keepId} nicht gefunden`);
         continue;
       }
       
       if (!removeDoc.exists) {
-        console.log(`⚠️ Remove-Dokument ${duplicate.removeId} bereits gelöscht`);
+        logInfo(`⚠️ Remove-Dokument ${duplicate.removeId} bereits gelöscht`);
         continue;
       }
       
       const keepData = keepDoc.data();
       const removeData = removeDoc.data();
       
-      console.log(`📊 Keep (${duplicate.keepId}):`, keepData.results || 'Keine Ergebnisse');
-      console.log(`📊 Remove (${duplicate.removeId}):`, removeData.results || 'Keine Ergebnisse');
+      logInfo(`📊 Keep (${duplicate.keepId}):`, { data: keepData.results || 'Keine Ergebnisse' });
+      logInfo(`📊 Remove (${duplicate.removeId}):`, { data: removeData.results || 'Keine Ergebnisse' });
       
       // Duplikat löschen
       await db.collection('rwk_results_2025').doc(duplicate.removeId).delete();
-      console.log(`✅ Duplikat ${duplicate.removeId} gelöscht`);
+      logInfo(`✅ Duplikat ${duplicate.removeId} gelöscht`);
       
     } catch (error) {
-      console.error(`❌ Fehler bei ${duplicate.name}:`, error.message);
+      logError(`❌ Fehler bei ${duplicate.name}:`, error.message);
     }
   }
   
-  console.log('\n🎉 Duplikat-Reparatur abgeschlossen!');
+  logInfo('\n🎉 Duplikat-Reparatur abgeschlossen!');
 }
 
 // Script ausführen

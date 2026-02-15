@@ -2,6 +2,9 @@
 import { db } from '@/lib/firebase/config';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, query, where, orderBy, doc, writeBatch, addDoc, updateDoc } from 'firebase/firestore';
+import { deduplicateScores } from '@/lib/utils/score-deduplication';
+import { SubstitutionService } from './substitution-service';
+import { TeamCalculationService } from './team-calculation-service';
 
 export interface TeamStanding {
   teamId: string;
@@ -40,13 +43,20 @@ export interface PromotionRelegationRule {
  */
 export async function calculateLeagueStandings(leagueId: string, competitionYear: number): Promise<TeamStanding[]> {
   try {
-    // Teams der Liga laden
+    // Teams der Liga laden (nur Mannschaften, keine Einzelschützen)
     const teamsQuery = query(
       collection(db, 'rwk_teams'),
       where('leagueId', '==', leagueId),
       where('competitionYear', '==', competitionYear)
     );
     const teamsSnapshot = await getDocs(teamsQuery);
+    
+    // Filtere Einzelschützen aus (Teams ohne shooterIds oder mit weniger als 3 Schützen)
+    const mannschaftsTeams = teamsSnapshot.docs.filter(doc => {
+      const team = doc.data();
+      const shooterCount = team.shooterIds?.length || 0;
+      return shooterCount >= 3; // Nur echte Mannschaften (mind. 3 Schützen)
+    });
     
     // Clubs für Namen laden
     const clubsQuery = query(collection(db, 'clubs'));
@@ -63,50 +73,62 @@ export async function calculateLeagueStandings(leagueId: string, competitionYear
 
     const standings: TeamStanding[] = [];
 
-    for (const teamDoc of teamsSnapshot.docs) {
+    for (const teamDoc of mannschaftsTeams) {
       const team = teamDoc.data();
+      
+      // Bestimme die richtige Collection basierend auf Jahr und Typ
+      const season = await getDocs(query(collection(db, 'seasons'), where('competitionYear', '==', competitionYear)));
+      const seasonData = season.docs[0]?.data();
+      const seasonType = seasonData?.type || 'KK';
+      
+      // Normalisiere Typ: LG, LGA, LP, LPA -> LD
+      let normalizedType = seasonType;
+      if (['LG', 'LGA', 'LP', 'LPA'].includes(seasonType)) {
+        normalizedType = 'LD';
+      }
+      
+      const collectionName = `rwk_scores_${competitionYear}_${normalizedType}`;
+      
+      // Alle Rundenwettkämpfe haben 5 Durchgänge
+      const numRoundsForCompetition = 5;
+      
+      logInfo(`[DEBUG] Team ${team.name}: Suche in Collection ${collectionName} (Original-Typ: ${seasonType})`);
       
       // Ergebnisse für das Team laden
       const scoresQuery = query(
-        collection(db, 'rwk_scores'),
-        where('teamId', '==', teamDoc.id),
-        where('competitionYear', '==', competitionYear)
+        collection(db, collectionName),
+        where('teamId', '==', teamDoc.id)
       );
       const scoresSnapshot = await getDocs(scoresQuery);
       
-      // Duplikat-Filterung
-      const scoresMap = new Map();
-      scoresSnapshot.docs.forEach(scoreDoc => {
-        const score = scoreDoc.data();
-        const key = `${score.shooterId}|${score.durchgang}`;
-        if (!scoresMap.has(key) || (score.entryTimestamp && scoresMap.get(key).entryTimestamp && 
-            score.entryTimestamp.seconds > scoresMap.get(key).entryTimestamp.seconds)) {
-          scoresMap.set(key, score);
-        }
-      });
-
-      // Durchgangsergebnisse berechnen
-      const roundResults = new Map();
-      let totalScore = 0;
-      let roundsPlayed = 0;
-
-      Array.from(scoresMap.values()).forEach(score => {
-        const round = score.durchgang;
-        if (!roundResults.has(round)) {
-          roundResults.set(round, 0);
-        }
-        roundResults.set(round, roundResults.get(round) + (score.totalRinge || 0));
-      });
-
-      // Nur Durchgänge mit Ergebnissen zählen
-      roundResults.forEach(roundScore => {
-        if (roundScore > 0) {
-          totalScore += roundScore;
-          roundsPlayed++;
-        }
-      });
-
-      const averageScore = roundsPlayed > 0 ? totalScore / roundsPlayed : 0;
+      // Lade Ersatzschützen-Informationen (zentral über SubstitutionService)
+      const substitutions = await SubstitutionService.loadSubstitutions(competitionYear);
+      
+      logInfo(`[DEBUG] Team ${team.name}: ${scoresSnapshot.docs.length} Ergebnisse gefunden`);
+      
+      // Konvertiere Scores zu Array
+      const teamScores = scoresSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // Team-Berechnung über zentralen Service
+      const calculationResult = TeamCalculationService.calculateTeamResults(
+        teamDoc.id,
+        teamScores,
+        numRoundsForCompetition,
+        substitutions,
+        team.name
+      );
+      
+      // Warnings ausgeben falls vorhanden
+      if (calculationResult.warnings.length > 0) {
+        logWarn(`Team ${team.name}`, { warnings: calculationResult.warnings });
+      }
+      
+      // Debug-Ausgabe
+      logInfo(`[DEBUG] Team ${team.name}: GESAMT = ${calculationResult.totalScore} Ringe (${calculationResult.numScoredRounds} Durchgänge, Schnitt ${calculationResult.averageScore})`);
+      
+      const totalScore = calculationResult.totalScore;
+      const averageScore = calculationResult.averageScore || 0;
+      const roundsPlayed = calculationResult.numScoredRounds;
 
       standings.push({
         teamId: teamDoc.id,
@@ -198,10 +220,13 @@ export async function generatePromotionRelegationSuggestions(
           reason = 'Nach Meldeschluss abgemeldet - verbleibt (niedrigste Liga)';
         }
       }
-      // Meister steigt auf (außer höchste Liga oder Pistole)
+      // Meister steigt auf (außer höchste Liga oder offene Gruppen LG/LP)
       else if (team.position === 1) {
-        if (currentLeague.name.toLowerCase().includes('pistole')) {
-          reason = 'Meister - verbleibt (offene Klasse, keine Auf-/Abstiege)';
+        const isOpenGroup = currentLeague.type === 'LG' || currentLeague.type === 'LP' || 
+                           currentLeague.name.toLowerCase().includes('pistole') ||
+                           currentLeague.name.toLowerCase().includes('luftgewehr');
+        if (isOpenGroup) {
+          reason = 'Meister - verbleibt (offene Gruppe, keine Auf-/Abstiege)';
         } else if (higherLeague && !currentLeague.name.includes('Kreisoberliga')) {
           action = 'promote';
           reason = 'Meister - steigt automatisch auf';
@@ -210,9 +235,12 @@ export async function generatePromotionRelegationSuggestions(
           reason = 'Meister - verbleibt (höchste Liga)';
         }
       } else if (team.position === totalTeams) {
-        // Letzter steigt ab (außer bei Ligaverkleinerung, Pistole oder niedrigste Liga)
-        if (currentLeague.name.toLowerCase().includes('pistole')) {
-          reason = 'Letzter Platz - verbleibt (offene Klasse, keine Auf-/Abstiege)';
+        // Letzter steigt ab (außer bei Ligaverkleinerung, offene Gruppen LG/LP oder niedrigste Liga)
+        const isOpenGroup = currentLeague.type === 'LG' || currentLeague.type === 'LP' || 
+                           currentLeague.name.toLowerCase().includes('pistole') ||
+                           currentLeague.name.toLowerCase().includes('luftgewehr');
+        if (isOpenGroup) {
+          reason = 'Letzter Platz - verbleibt (offene Gruppe, keine Auf-/Abstiege)';
         } else if (currentLeague.name.toLowerCase().includes('2. kreisklasse')) {
           reason = 'Letzter Platz - verbleibt (niedrigste Liga)';
         } else if (lowerLeague && sizeReduction === 0) {
@@ -226,7 +254,13 @@ export async function generatePromotionRelegationSuggestions(
         } else {
           reason = 'Letzter Platz - verbleibt (niedrigste Liga)';
         }
-      } else if (team.position === 2 && higherLeague && !currentLeague.name.toLowerCase().includes('pistole')) {
+      } else if (team.position === 2 && higherLeague) {
+        const isOpenGroup = currentLeague.type === 'LG' || currentLeague.type === 'LP' || 
+                           currentLeague.name.toLowerCase().includes('pistole') ||
+                           currentLeague.name.toLowerCase().includes('luftgewehr');
+        if (isOpenGroup) {
+          reason = 'Zweiter - verbleibt (offene Gruppe, keine Auf-/Abstiege)';
+        } else {
         // Zweiter: Vergleich mit Vorletztem der höheren Liga
         if (additionalPromotionSlots > 0) {
           action = 'promote';
@@ -247,7 +281,15 @@ export async function generatePromotionRelegationSuggestions(
             reason = 'Zweiter - verbleibt (kein Vergleichsteam gefunden)';
           }
         }
-      } else if (team.position === totalTeams - 1 && lowerLeague && !currentLeague.name.toLowerCase().includes('pistole') && !currentLeague.name.toLowerCase().includes('2. kreisklasse')) {
+        }
+      } else if (team.position === totalTeams - 1 && lowerLeague) {
+        const isOpenGroup = currentLeague.type === 'LG' || currentLeague.type === 'LP' || 
+                           currentLeague.name.toLowerCase().includes('pistole') ||
+                           currentLeague.name.toLowerCase().includes('luftgewehr');
+        const isLowestLeague = currentLeague.name.toLowerCase().includes('2. kreisklasse');
+        if (isOpenGroup || isLowestLeague) {
+          reason = isOpenGroup ? 'Vorletzter - verbleibt (offene Gruppe, keine Auf-/Abstiege)' : 'Vorletzter - verbleibt (niedrigste Liga)';
+        } else {
         // Vorletzter: Vergleich mit Zweitem der niedrigeren Liga
         const lowerLeagueStandings = await calculateLeagueStandings(lowerLeague.id, competitionYear);
         const secondTeam = lowerLeagueStandings.find(t => t.position === 2);
@@ -260,6 +302,7 @@ export async function generatePromotionRelegationSuggestions(
           targetLeague = lowerLeague.name;
         } else {
           reason = 'Vorletzter - verbleibt (kein Vergleichsteam gefunden)';
+        }
         }
       } else if (sizeReduction > 0 && team.position > totalTeams - sizeReduction) {
         // Zusätzliche Absteiger bei Ligaverkleinerung
@@ -391,23 +434,38 @@ export async function createNewSeason(
       const existingTeam = sourceTeamsSnapshot.docs.find(doc => doc.data().clubId === clubId);
       
       if (!existingTeam && lowestLeagueNewId) {
-        // Neues Team für neuen Verein erstellen
-        const newTeamRef = doc(collection(db, 'rwk_teams'));
-        
-        // Club-Name laden
-        const clubDoc = await getDocs(query(collection(db, 'clubs'), where('__name__', '==', clubId)));
-        const clubName = clubDoc.docs[0]?.data()?.name || 'Neuer Verein';
-        
-        batch.set(newTeamRef, {
-          name: `${clubName} I`,
-          clubId: clubId,
-          clubName: clubName,
-          seasonId: newSeasonRef.id,
-          leagueId: lowestLeagueNewId,
-          competitionYear: targetYear,
-          shooterIds: [],
-          isNewClub: true
-        });
+        try {
+          // Neues Team für neuen Verein erstellen
+          const newTeamRef = doc(collection(db, 'rwk_teams'));
+          
+          // Club-Name laden
+          const clubDoc = await getDocs(query(collection(db, 'clubs'), where('__name__', '==', clubId)));
+          const clubName = clubDoc.docs[0]?.data()?.name || 'Neuer Verein';
+          
+          batch.set(newTeamRef, {
+            name: `${clubName} I`,
+            clubId: clubId,
+            clubName: clubName,
+            seasonId: newSeasonRef.id,
+            leagueId: lowestLeagueNewId,
+            competitionYear: targetYear,
+            shooterIds: [],
+            isNewClub: true
+          });
+        } catch (clubError) {
+          logWarn(`Failed to load club data for ${clubId}, using fallback name`, clubError);
+          const newTeamRef = doc(collection(db, 'rwk_teams'));
+          batch.set(newTeamRef, {
+            name: 'Neuer Verein I',
+            clubId: clubId,
+            clubName: 'Neuer Verein',
+            seasonId: newSeasonRef.id,
+            leagueId: lowestLeagueNewId,
+            competitionYear: targetYear,
+            shooterIds: [],
+            isNewClub: true
+          });
+        }
       }
     }
 
@@ -415,7 +473,7 @@ export async function createNewSeason(
     return newSeasonRef.id;
   } catch (error) {
     logError('Error creating new season:', error);
-    throw error;
+    throw new Error(`Failed to create new season: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 

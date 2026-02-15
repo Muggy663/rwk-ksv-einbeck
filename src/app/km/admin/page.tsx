@@ -33,7 +33,8 @@ export default function KMAdmin() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `KM2026_${type}.pdf`;
+        const sanitizedType = type.replace(/[^a-z-]/gi, '');
+        a.download = `KM2026_${sanitizedType}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -88,29 +89,39 @@ export default function KMAdmin() {
     }
   };
 
+  const escapeHtml = (text: string) => {
+    if (!text) return '';
+    return String(text).replace(/[<>"'&]/g, '');
+  };
+
+  const getShooterClubId = (shooter: Shooter): string => {
+    return shooter.clubId || shooter.rwkClubId || shooter.kmClubId || '';
+  };
+
   const getSchuetzeName = (schuetzeId: string) => {
     const schuetze = schuetzen.find(s => s.id === schuetzeId);
-    return schuetze?.name || 'Unbekannt';
+    return escapeHtml(schuetze?.name || 'Unbekannt');
   };
 
   const getVereinName = (schuetzeId: string) => {
     const schuetze = schuetzen.find(s => s.id === schuetzeId);
     if (!schuetze) return 'Unbekannt';
     
-    const clubId = schuetze.clubId || schuetze.kmClubId;
+    const clubId = getShooterClubId(schuetze);
     const verein = vereine.find(v => v.id === clubId);
-    return verein?.name || 'Unbekannt';
+    return escapeHtml(verein?.name || 'Unbekannt');
   };
 
   const getDisziplinName = (disziplinId: string) => {
     const disziplin = disziplinen.find(d => d.id === disziplinId);
-    return disziplin ? `${disziplin.spoNummer} ${disziplin.name}` : 'Unbekannt';
+    const name = disziplin ? `${disziplin.spoNummer} ${disziplin.name}` : 'Unbekannt';
+    return escapeHtml(name);
   };
 
   const filteredMeldungen = meldungen.filter(meldung => {
     const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
     const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-    const clubId = schuetze?.clubId || schuetze?.kmClubId;
+    const clubId = schuetze ? getShooterClubId(schuetze) : '';
     const verein = vereine.find(v => v.id === clubId);
     
     return (

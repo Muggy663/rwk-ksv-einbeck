@@ -37,7 +37,7 @@ export function Header() {
   }, []);
   
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="glass-header sticky top-0 z-40 w-full">
       <div className="container mx-auto flex h-16 items-center justify-between px-2 sm:px-4 lg:px-6 max-w-7xl overflow-hidden">
         <div className="flex-1"></div>
         

@@ -77,8 +77,9 @@ export default function DisziplinenVerwaltung() {
     const updatedDisziplinen = disziplinen.map(disziplin => {
       const updatedSchusszahlen = disziplin.schusszahlen?.map(schuss => {
         const entfernungCode = '1'; // 10m
-        const regelNummer = disziplin.spoNummer.replace('.', '').padStart(4, '0');
-        const schussCode = schuss.schusszahl.toString().padStart(3, '0');
+        const sanitizedSpoNummer = String(disziplin.spoNummer || '').replace(/[^0-9.]/g, '');
+        const regelNummer = sanitizedSpoNummer.replace('.', '').padStart(4, '0');
+        const schussCode = Math.abs(parseInt(String(schuss.schusszahl)) || 0).toString().padStart(3, '0');
         const kennziffer = `${entfernungCode}${regelNummer}${schussCode}`;
         
         return {

@@ -30,7 +30,7 @@ function GroupResultCard({ result }: { result: any }) {
     if (result.resultId) {
       SocialTrainingService.getResultById(result.resultId)
         .then(setFullResult)
-        .catch(console.error);
+        .catch((error) => logError('Error loading result:', error));
     }
   }, [result.resultId]);
   

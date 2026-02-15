@@ -40,20 +40,20 @@ export default function SocialWelcomePage() {
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="text-center p-4 bg-white/50 rounded-lg">
+            <div className="text-center p-4 glass-subtle rounded-lg">
               <Users className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-              <h3 className="font-semibold text-purple-800">Trainingsgruppen</h3>
-              <p className="text-sm text-purple-600">Gemeinsam trainieren macht mehr Spaß</p>
+              <h3 className="font-semibold text-purple-800 dark:text-purple-300">Trainingsgruppen</h3>
+              <p className="text-sm text-purple-600 dark:text-purple-400">Gemeinsam trainieren macht mehr Spaß</p>
             </div>
-            <div className="text-center p-4 bg-white/50 rounded-lg">
+            <div className="text-center p-4 glass-subtle rounded-lg">
               <Trophy className="h-8 w-8 mx-auto mb-2 text-orange-600" />
-              <h3 className="font-semibold text-orange-800">Live-Wettkämpfe</h3>
-              <p className="text-sm text-orange-600">Real-time Wettkämpfe mit Ranglisten</p>
+              <h3 className="font-semibold text-orange-800 dark:text-orange-300">Live-Wettkämpfe</h3>
+              <p className="text-sm text-orange-600 dark:text-orange-400">Real-time Wettkämpfe mit Ranglisten</p>
             </div>
-            <div className="text-center p-4 bg-white/50 rounded-lg">
+            <div className="text-center p-4 glass-subtle rounded-lg">
               <Target className="h-8 w-8 mx-auto mb-2 text-green-600" />
-              <h3 className="font-semibold text-green-800">Community</h3>
-              <p className="text-sm text-green-600">Andere Schützen entdecken</p>
+              <h3 className="font-semibold text-green-800 dark:text-green-300">Community</h3>
+              <p className="text-sm text-green-600 dark:text-green-400">Andere Schützen entdecken</p>
             </div>
           </div>
         </CardContent>

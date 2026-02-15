@@ -49,23 +49,27 @@ export class HtmlSanitizer {
    * Sanitisiert Objekte rekursiv
    */
   static sanitizeObject(obj: any): any {
-    if (typeof obj === 'string') {
-      return this.sanitizeText(obj);
-    }
-    
-    if (Array.isArray(obj)) {
-      return obj.map(item => this.sanitizeObject(item));
-    }
-    
-    if (obj && typeof obj === 'object') {
-      const sanitized: any = {};
-      for (const [key, value] of Object.entries(obj)) {
-        const safeKey = this.sanitizeText(key);
-        sanitized[safeKey] = this.sanitizeObject(value);
+    try {
+      if (typeof obj === 'string') {
+        return this.sanitizeText(obj);
       }
-      return sanitized;
+      
+      if (Array.isArray(obj)) {
+        return obj.map(item => this.sanitizeObject(item));
+      }
+      
+      if (obj && typeof obj === 'object') {
+        const sanitized: any = {};
+        for (const [key, value] of Object.entries(obj)) {
+          const safeKey = this.sanitizeText(key);
+          sanitized[safeKey] = this.sanitizeObject(value);
+        }
+        return sanitized;
+      }
+      
+      return obj;
+    } catch (error) {
+      return {};
     }
-    
-    return obj;
   }
 }

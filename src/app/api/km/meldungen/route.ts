@@ -47,11 +47,11 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     let gemeldeteVon = 'Unbekannter Benutzer';
     
-    if (authHeader) {
+    if (authHeader?.startsWith('Bearer ')) {
       try {
-        // Vereinfacht - in Produktion würde man den JWT Token validieren
-        const userInfo = JSON.parse(authHeader.replace('Bearer ', ''));
-        gemeldeteVon = userInfo.email || userInfo.displayName || 'Vereinsvertreter';
+        const token = authHeader.substring(7);
+        const decodedToken = await adminDb.app.auth().verifyIdToken(token);
+        gemeldeteVon = decodedToken.email || decodedToken.name || 'Vereinsvertreter';
       } catch {
         gemeldeteVon = 'Vereinsvertreter';
       }

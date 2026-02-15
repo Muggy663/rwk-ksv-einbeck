@@ -195,7 +195,8 @@ export default function TargetVisualization({
   useEffect(() => {
     if (!sceneRef.current || !isLoaded) return;
 
-    const THREE = require('three');
+    const loadShots = async () => {
+      const THREE = await import('three');
     
     // Entferne alte Schüsse
     const shotsToRemove = sceneRef.current.children.filter((child: any) => 
@@ -230,6 +231,9 @@ export default function TargetVisualization({
       
       sceneRef.current.add(shotMesh);
     });
+    };
+    
+    loadShots();
   }, [currentShot, isLoaded, displayShots, showAnimation]);
 
   const addNextShot = () => {

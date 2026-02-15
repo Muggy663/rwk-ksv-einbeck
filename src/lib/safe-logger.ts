@@ -56,7 +56,7 @@ export const safeLog = {
     if (process.env.NODE_ENV === 'development') {
       const safeMessage = sanitizeForLog(message);
       const safeData = data ? sanitizeForLog(data) : '';
-      console.debug(`🐛 ${safeMessage}`, safeData);
+      logDebug(`🐛 ${safeMessage}`, safeData);
     }
   }
 };

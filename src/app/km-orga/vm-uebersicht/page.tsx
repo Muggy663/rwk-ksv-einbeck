@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { validateQualifications } from '@/lib/services/startlisten-ki-service';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 
 interface VMMeldung {
   id: string;
@@ -138,7 +139,7 @@ export default function VMUebersichtPage() {
         const processedMeldungen = meldungenData.data?.map((m: any) => {
           const schuetze = schuetzenMap.get(m.schuetzeId);
           const disziplin = disziplinenMap.get(m.disziplinId);
-          const club = clubsMap.get(schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId);
+          const club = clubsMap.get(getShooterClubId(schuetze));
           
           const processedMeldung = {
             id: m.id,

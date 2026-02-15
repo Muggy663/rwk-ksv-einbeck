@@ -30,7 +30,7 @@ export async function generateMeldelistePDF(
   // Tabelle
   const tableData = meldungen.map((meldung, index) => {
     const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-    const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
+    const vereinId = getShooterClubId(schuetze);
     const verein = vereine.find(v => v.id === vereinId);
     const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
     

@@ -1,6 +1,7 @@
 // Migration ausführen - RWK/KM Trennung
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
 
 // Firebase Config aus .env.local
 const firebaseConfig = {
@@ -16,12 +17,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 async function executeMigration() {
-  console.log('🚀 Starte KM-Schützen Migration...');
+  logInfo('🚀 Starte KM-Schützen Migration...');
   
   try {
     // 1. Alle shooters laden
     const shootersSnap = await getDocs(collection(db, 'shooters'));
-    console.log(`📊 Gefunden: ${shootersSnap.docs.length} Schützen in shooters`);
+    logInfo(`📊 Gefunden: ${shootersSnap.docs.length} Schützen in shooters`);
     
     const batch = writeBatch(db);
     let kmCount = 0;
@@ -63,18 +64,18 @@ async function executeMigration() {
     });
     
     // Migration ausführen
-    console.log('💾 Schreibe km_shooters Collection...');
+    logInfo('💾 Schreibe km_shooters Collection...');
     await batch.commit();
     
-    console.log('✅ Migration abgeschlossen!');
-    console.log(`📊 KM-Schützen migriert: ${kmCount}`);
-    console.log(`📊 RWK-Schützen verbleiben: ${rwkCount}`);
-    console.log(`📊 Gemischte Einträge: ${mixedCount}`);
+    logInfo('✅ Migration abgeschlossen!');
+    logInfo(`📊 KM-Schützen migriert: ${kmCount}`);
+    logInfo(`📊 RWK-Schützen verbleiben: ${rwkCount}`);
+    logInfo(`📊 Gemischte Einträge: ${mixedCount}`);
     
     return { kmCount, rwkCount, mixedCount };
     
   } catch (error) {
-    console.error('❌ Migration fehlgeschlagen:', error);
+    logError('❌ Migration fehlgeschlagen:', error);
     throw error;
   }
 }
@@ -82,10 +83,10 @@ async function executeMigration() {
 // Migration ausführen
 executeMigration()
   .then(result => {
-    console.log('🎉 Migration erfolgreich!', result);
+    logInfo('🎉 Migration erfolgreich!', { data: result });
     process.exit(0);
   })
   .catch(error => {
-    console.error('💥 Migration Fehler:', error);
+    logError('💥 Migration Fehler:', error);
     process.exit(1);
   });

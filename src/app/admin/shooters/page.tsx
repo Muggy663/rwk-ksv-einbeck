@@ -3,6 +3,7 @@
 "use client";
 import React, { useState, useEffect, FormEvent, useCallback, useMemo } from 'react';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, UserCircle as UserIcon, Loader2, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
@@ -185,8 +186,7 @@ export default function AdminShootersPage() {
       // Client-seitige Filterung
       if (selectedClubIdFilter !== ALL_CLUBS_FILTER_VALUE) {
         fetchedShooters = fetchedShooters.filter(shooter => {
-          const clubId = shooter.clubId || shooter.rwkClubId || (shooter as any).kmClubId;
-          return clubId === selectedClubIdFilter;
+          return getShooterClubId(shooter) === selectedClubIdFilter;
         });
       }
       
@@ -367,7 +367,7 @@ export default function AdminShootersPage() {
       const duplicateSnap = await getDocs(qDuplicateName);
       const duplicateInSameClub = duplicateSnap.docs.some(doc => {
         const data = doc.data();
-        const shooterClubId = data.clubId || data.rwkClubId;
+        const shooterClubId = getShooterClubId(data);
         return shooterClubId === currentShooter.clubId;
       });
       if (duplicateInSameClub) {
@@ -517,7 +517,7 @@ export default function AdminShootersPage() {
   };
 
   const getClubName = useCallback((shooter: Shooter): string => {
-    const clubId = shooter.clubId || shooter.rwkClubId || (shooter as any).kmClubId;
+    const clubId = getShooterClubId(shooter);
     if (!clubId) return 'Kein Verein';
     return allClubsGlobal.find(c => c.id === clubId)?.name || 'Unbekannter Verein';
   }, [allClubsGlobal]);

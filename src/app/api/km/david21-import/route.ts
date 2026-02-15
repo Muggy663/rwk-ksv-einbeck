@@ -2,26 +2,24 @@
 // API Route für David21 Ergebnis-Import
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { David21Service } from '@/lib/services/david21-service';
+import { adminDb } from '@/lib/firebase/admin';
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const wettkampfId = formData.get('wettkampfId') as string;
+    const saisonId = formData.get('saisonId') as string;
     
-    if (!file) {
+    if (!file || !saisonId) {
       return NextResponse.json(
-        { success: false, error: 'Keine Datei hochgeladen' },
+        { success: false, error: 'Datei und Saison erforderlich' },
         { status: 400 }
       );
     }
 
-    // Datei-Inhalt lesen
     const content = await file.text();
-    
-    // David21 Ergebnisse parsen
     const results = David21Service.parseResults(content);
     
     if (results.length === 0) {
@@ -31,31 +29,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Hier würdest du die Ergebnisse in Firebase speichern
-    // Beispiel-Struktur für KM-Ergebnisse:
-    const kmErgebnisse = results.map(result => ({
-      wettkampfId,
-      startNummer: result.startNummer,
-      schuetzeName: `${result.vorname} ${result.nachname}`,
-      vereinsNummer: result.vereinsNummer,
-      ringe: result.ringe,
-      zehntel: result.zehntel,
-      innerZehner: result.innerZehner,
-      schussDetails: result.schussDetails,
-      bemerkung: result.bemerkung,
-      importDatum: new Date().toISOString()
-    }));
+    // Saison-Collection ermitteln
+    const saisonDoc = await adminDb.collection('km_saisons').doc(saisonId).get();
+    if (!saisonDoc.exists) {
+      return NextResponse.json(
+        { success: false, error: 'Saison nicht gefunden' },
+        { status: 404 }
+      );
+    }
+
+    const collectionName = saisonDoc.data()?.collectionName;
+    if (!collectionName) {
+      return NextResponse.json(
+        { success: false, error: 'Collection-Name fehlt in Saison' },
+        { status: 400 }
+      );
+    }
+
+    // Ergebnisse in Datenbank speichern
+    const batch = adminDb.batch();
+    const meldungenSnapshot = await adminDb.collection(collectionName).get();
+    
+    for (const result of results) {
+      const meldung = meldungenSnapshot.docs.find(doc => 
+        doc.data().startNummer === result.startNummer
+      );
+      
+      if (meldung) {
+        batch.update(meldung.ref, {
+          ringe: result.ringe,
+          zehntel: result.zehntel,
+          innerZehner: result.innerZehner,
+          schussDetails: result.schussDetails,
+          importDatum: new Date().toISOString()
+        });
+      }
+    }
+    
+    await batch.commit();
 
     return NextResponse.json({
       success: true,
-      message: `${results.length} Ergebnisse erfolgreich importiert`,
-      ergebnisse: kmErgebnisse,
-      statistik: {
-        teilnehmer: results.length,
-        durchschnitt: Math.round(results.reduce((sum, r) => sum + r.ringe, 0) / results.length * 10) / 10,
-        besterSchuss: Math.max(...results.map(r => r.ringe)),
-        schlechtesterSchuss: Math.min(...results.map(r => r.ringe))
-      }
+      message: `${results.length} Ergebnisse importiert`,
+      ergebnisse: results
     });
 
   } catch (error) {

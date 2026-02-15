@@ -276,7 +276,7 @@ export default function AdminEditResultsPage() {
         toast({ title: "Keine Ergebnisse", description: "Für die gewählten Filter wurden keine Ergebnisse gefunden." });
       }
     } catch (error) {
-      console.error("Raw error:", error);
+      logError("Raw error:", error);
       logError("Error searching scores for edit-results:", error);
       toast({ title: "Fehler bei der Ergebnissuche", description: (error as Error).message, variant: "destructive" });
     } finally {

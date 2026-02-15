@@ -21,7 +21,7 @@ export function getDisziplinGruppe(spoNummer: string): string {
 
 export function getStartVereinForDisziplin(schuetze: any, disziplin: any): string | null {
   if (!disziplin.spoNummer) {
-    return schuetze.rwkClubId || schuetze.kmClubId || schuetze.clubId || null;
+    return getShooterClubId(schuetze);
   }
   
   // Prüfe spezifische KM-Startrechte
@@ -32,7 +32,7 @@ export function getStartVereinForDisziplin(schuetze: any, disziplin: any): strin
   }
   
   // Fallback: Hauptverein
-  return schuetze.rwkClubId || schuetze.kmClubId || schuetze.clubId || null;
+  return getShooterClubId(schuetze);
 }
 
 export const STARTRECHT_LABELS = {

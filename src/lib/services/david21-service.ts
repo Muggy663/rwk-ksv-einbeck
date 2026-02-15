@@ -99,33 +99,45 @@ export class David21Service {
   }
   
   /**
-   * Parst David21 Ergebnis-Datei (.TXT)
+   * Parst Meyton Ergebnis-Datei (.TXT) - Tab-getrennt
    */
   static parseResults(content: string): David21ResultEntry[] {
     const lines = content.split('\n').filter(line => 
-      line.trim() && !line.startsWith('#') && !line.startsWith('[')
+      line.trim() && line.startsWith('MEYT')
     );
     
-    const results: David21ResultEntry[] = [];
+    const grouped = new Map<number, any[]>();
     
     for (const line of lines) {
-      const parts = line.split(';');
+      const parts = line.split('\t');
       if (parts.length >= 7) {
-        results.push({
-          startNummer: parseInt(parts[0]),
-          nachname: parts[1],
-          vorname: parts[2],
-          vereinsNummer: parseInt(parts[3]),
-          ringe: parseInt(parts[4]),
-          zehntel: parseInt(parts[5]),
-          innerZehner: parseInt(parts[6]),
-          schussDetails: parts[7] || '',
-          bemerkung: parts[8] || ''
-        });
+        const startNr = parseInt(parts[3]);
+        const ring = parseFloat(parts[6].replace(',', '.'));
+        
+        if (!grouped.has(startNr)) grouped.set(startNr, []);
+        grouped.get(startNr)!.push(ring);
       }
     }
     
-    return results;
+    const results: David21ResultEntry[] = [];
+    for (const [startNr, schuesse] of grouped) {
+      const summe = schuesse.reduce((a, b) => a + b, 0);
+      const ringe = Math.floor(summe);
+      const zehntel = Math.round((summe - ringe) * 10);
+      
+      results.push({
+        startNummer: startNr,
+        nachname: '',
+        vorname: '',
+        vereinsNummer: 0,
+        ringe,
+        zehntel,
+        innerZehner: schuesse.filter(s => s >= 10.0).length,
+        schussDetails: schuesse.map(s => s.toFixed(1)).join(', ')
+      });
+    }
+    
+    return results.sort((a, b) => a.startNummer - b.startNummer);
   }
   
   /**

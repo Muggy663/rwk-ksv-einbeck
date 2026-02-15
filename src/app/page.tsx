@@ -196,8 +196,7 @@ export default function HomePage() {
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            🎯 Aktuelle Ergebnisse, Tabellen und Informationen zu den Rundenwettkämpfen des Kreisschützenverbandes Einbeck e.V. 🎯<br/>
-            <span className="text-lg text-red-600 font-semibold">✨ Wir wünschen allen Schützen ein frohes und sportlich erfolgreiches neues Jahr 2026! ✨</span>
+            🎯 Aktuelle Ergebnisse, Tabellen und Informationen zu den Rundenwettkämpfen des Kreisschützenverbandes Einbeck e.V. 🎯
           </p>
         </div>
       </section>
@@ -207,11 +206,11 @@ export default function HomePage() {
       {/* Feature-Cards mit modernem Design */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 pwa-cards">
         {/* Letzte Ergebnis-Updates */}
-        <Card className="md:col-span-2 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-background via-background to-primary/5 border-primary/20 hover:border-primary/40 pwa-card-updates">
+        <Card className="md:col-span-2 glass-lift pwa-card-updates">
           <CardHeader>
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
-                <ListChecks className="h-7 w-7 text-primary animate-pulse" />
+              <div className="p-2 bg-muted/50 dark:bg-muted/30 rounded-lg hover:bg-muted/70 dark:hover:bg-muted/50 transition-colors">
+                <ListChecks className="h-7 w-7 text-primary" />
               </div>
               <CardTitle className="text-2xl text-primary font-bold">Letzte Ergebnis-Updates</CardTitle>
             </div>
@@ -237,7 +236,7 @@ export default function HomePage() {
                     : `/rwk-tabellen?year=${update.competitionYear}&league=${update.leagueId}`;
                   
                   return (
-                    <li key={update.id} className="p-4 bg-gradient-to-r from-muted/30 to-muted/50 rounded-lg shadow-sm hover:shadow-md hover:from-primary/10 hover:to-primary/5 transition-all duration-300 border border-transparent hover:border-primary/20">
+                    <li key={update.id} className="p-4 glass-subtle rounded-lg hover:glass-medium transition-all duration-300">
                       <Link href={linkHref} className="block hover:text-primary group">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                           <p className="text-md font-medium text-foreground dark:text-foreground">
@@ -262,7 +261,7 @@ export default function HomePage() {
         </Card>
         
         {/* Nächste Termine */}
-        <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-background via-background to-secondary/5 border-secondary/20 hover:border-secondary/40">
+        <Card className="glass-lift">
           <CardHeader>
             <CardTitle className="text-lg flex items-center">
               <div className="p-1 bg-secondary/10 rounded-md hover:bg-secondary/20 transition-colors mr-2">
@@ -285,7 +284,7 @@ export default function HomePage() {
                 {upcomingEvents.map((event, index) => {
                   const isToday = new Date(event.date).toDateString() === new Date().toDateString();
                   return (
-                    <div key={event.id || index} className={`flex flex-col space-y-1 pb-3 border-b last:border-0 hover:bg-muted/30 transition-colors rounded-md p-2 ${isToday ? 'bg-gradient-to-r from-primary/20 to-primary/10 border-primary/30' : ''}`}>
+                    <div key={event.id || index} className={`flex flex-col space-y-1 pb-3 border-b last:border-0 hover:bg-primary/5 transition-colors rounded-md p-2 ${isToday ? 'glass-glow bg-primary/10' : ''}`}>
                       <div className="flex justify-between items-start">
                         <span className={`font-medium ${isToday ? 'text-primary font-bold' : ''}`}>
                           {isToday && '🔥 '}{event.title}
@@ -331,7 +330,7 @@ export default function HomePage() {
         </Card>
         
         {/* RWK-News */}
-        <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] bg-gradient-to-br from-background via-background to-accent/5 border-accent/20 hover:border-accent/40">
+        <Card className="glass-lift">
           <CardHeader>
             <CardTitle className="text-lg flex items-center">
               <div className="p-1 bg-accent/10 rounded-md hover:bg-accent/20 transition-colors mr-2">
@@ -352,7 +351,7 @@ export default function HomePage() {
             ) : latestNews.length > 0 ? (
               <div className="space-y-3">
                 {latestNews.slice(0, 2).map((article) => (
-                  <div key={article.id} className="border-b last:border-0 pb-3 last:pb-0 hover:bg-muted/20 transition-colors rounded-md p-2 -m-2">
+                  <div key={article.id} className="border-b last:border-0 pb-3 last:pb-0 hover:bg-accent/5 dark:hover:bg-accent/5 transition-colors rounded-md p-2 -m-2">
                     <h4 className="font-medium text-sm line-clamp-2">{article.title}</h4>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                       {article.excerpt || article.content.substring(0, 100) + '...'}
@@ -362,12 +361,12 @@ export default function HomePage() {
                         {new Date(article.publishedAt || article.createdAt).toLocaleDateString('de-DE')}
                       </span>
                       {article.priority === 'dringend' && (
-                        <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                        <span className="bg-red-100 dark:bg-red-950/80 text-red-800 dark:text-red-100 text-xs px-2 py-1 rounded border border-red-200 dark:border-red-800">
                           Dringend
                         </span>
                       )}
                       {article.priority === 'hoch' && (
-                        <span className="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">
+                        <span className="bg-orange-100 dark:bg-orange-950/80 text-orange-800 dark:text-orange-100 text-xs px-2 py-1 rounded border border-orange-200 dark:border-orange-800">
                           Wichtig
                         </span>
                       )}

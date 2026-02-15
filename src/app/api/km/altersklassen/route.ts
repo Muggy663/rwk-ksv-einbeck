@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
+import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
 
 const defaultData = [
   { klassenId: 10, name: 'Herren I', minAlter: 21, maxAlter: 40, geschlecht: 1 },
@@ -49,7 +50,7 @@ export async function GET() {
     
     return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error('GET error:', error);
+    logError('GET error:', error);
     return NextResponse.json({ success: false, error: error?.message || 'Fehler' }, { status: 500 });
   }
 }
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
     const docRef = await adminDb.collection('km_altersklassen').add(dataToSave);
     return NextResponse.json({ success: true, id: docRef.id });
   } catch (error) {
-    console.error('POST error:', error);
+    logError('POST error:', error);
     return NextResponse.json({ success: false, error: error?.message || 'Fehler' }, { status: 500 });
   }
 }
@@ -74,7 +75,7 @@ export async function PUT(request: NextRequest) {
     await adminDb.collection('km_altersklassen').doc(id).update(data);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('PUT error:', error);
+    logError('PUT error:', error);
     return NextResponse.json({ success: false, error: error?.message || 'Fehler' }, { status: 500 });
   }
 }
@@ -87,7 +88,7 @@ export async function DELETE(request: NextRequest) {
     await adminDb.collection('km_altersklassen').doc(id).delete();
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('DELETE error:', error);
+    logError('DELETE error:', error);
     return NextResponse.json({ success: false, error: error?.message || 'Fehler' }, { status: 500 });
   }
 }

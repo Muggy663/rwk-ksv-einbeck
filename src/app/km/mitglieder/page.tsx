@@ -15,6 +15,7 @@ import { useKMAuth } from '@/hooks/useKMAuth';
 import { collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { ArrowUpDown, ArrowUp, ArrowDown, PlusCircle, Edit, Trash2, ArrowLeft } from 'lucide-react';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 
 export default function KMMitglieder() {
   const { toast } = useToast();
@@ -103,8 +104,8 @@ export default function KMMitglieder() {
     let bValue = b[sortField] || '';
     
     if (sortField === 'clubName') {
-      const aClub = clubs.find(c => c.id === (a.clubId || a.kmClubId));
-      const bClub = clubs.find(c => c.id === (b.clubId || b.kmClubId));
+      const aClub = clubs.find(c => c.id === getShooterClubId(a));
+      const bClub = clubs.find(c => c.id === getShooterClubId(b));
       aValue = aClub?.name || '';
       bValue = bClub?.name || '';
     }
@@ -345,8 +346,7 @@ export default function KMMitglieder() {
                     <td className="p-2">{schuetze.firstName || '-'}</td>
                     <td className="p-2 font-medium">{schuetze.lastName || '-'}</td>
                     <td className="p-2">{(() => {
-                      const clubId = schuetze.clubId || schuetze.kmClubId;
-                      const club = clubs.find(c => c.id === clubId);
+                      const club = clubs.find(c => c.id === getShooterClubId(schuetze));
                       return club?.name || 'Unbekannt';
                     })()}</td>
                     <td className="p-2">{schuetze.birthYear || '-'}</td>
@@ -433,8 +433,7 @@ export default function KMMitglieder() {
                 return fullName.includes(searchTerm.toLowerCase());
               })
               .map(schuetze => {
-                const clubId = schuetze.clubId || schuetze.kmClubId;
-                const club = clubs.find(c => c.id === clubId);
+                const club = clubs.find(c => c.id === getShooterClubId(schuetze));
                 
                 return (
                   <div key={schuetze.id} className="border rounded-lg p-4 bg-white">

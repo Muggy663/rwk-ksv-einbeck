@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 
 export default function KMMeldungenStatistik() {
   const { toast } = useToast();
@@ -71,7 +72,7 @@ export default function KMMeldungenStatistik() {
       totalMeldungen: meldungen.length,
       vereineCount: new Set(meldungen.map(m => {
         const schuetze = schuetzen.find(s => s.id === m.schuetzeId);
-        return schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
+        return getShooterClubId(schuetze);
       }).filter(Boolean)).size,
       lmTeilnehmer: meldungen.filter(m => m.lmTeilnahme).length,
       vmErgebnisse: meldungen.filter(m => m.vmErgebnis?.ringe).length,
@@ -92,7 +93,7 @@ export default function KMMeldungenStatistik() {
     // Nach Verein
     meldungen.forEach(meldung => {
       const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
-      const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
+      const vereinId = getShooterClubId(schuetze);
       const verein = clubs.find(c => c.id === vereinId);
       if (verein) {
         stats.byVerein[verein.name] = (stats.byVerein[verein.name] || 0) + 1;

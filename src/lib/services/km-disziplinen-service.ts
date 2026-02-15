@@ -180,14 +180,14 @@ export async function generateDisziplinen2026(): Promise<void> {
         ...disziplinData,
         createdAt: existing.data.createdAt // Behalte ursprüngliches Erstellungsdatum
       });
-      console.log(`✅ Aktualisiert: ${disziplin.spoNummer} (ID: ${existing.id})`);
+      logInfo(`✅ Aktualisiert: ${disziplin.spoNummer} (ID: ${existing.id})`);
     } else {
       // Erstelle neue Disziplin
       await collectionRef.add({
         ...disziplinData,
         createdAt: new Date()
       });
-      console.log(`🆕 Neu erstellt: ${disziplin.spoNummer}`);
+      logInfo(`🆕 Neu erstellt: ${disziplin.spoNummer}`);
     }
   }
 }

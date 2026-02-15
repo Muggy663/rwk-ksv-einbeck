@@ -35,17 +35,16 @@ export default function MigratePage() {
       // Dynamic import der Migration
       const { migrateRWKScores } = await import('@/scripts/migrate-rwk-scores');
       
-      // Override console.log für Live-Updates
-      const originalLog = console.log;
-      console.log = (...args) => {
+      // Capture logs for display
+      const originalLog = logInfo;
+      const captureLog = (...args: any[]) => {
         addLog(args.join(' '));
         originalLog(...args);
       };
 
       await migrateRWKScores();
       
-      // Restore console.log
-      console.log = originalLog;
+      // Logs are already captured via addLog
       
       setIsComplete(true);
       addLog('✅ Migration erfolgreich abgeschlossen!');

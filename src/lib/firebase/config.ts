@@ -40,7 +40,7 @@ const storage: FirebaseStorage = getStorage(app); // Firebase Storage initialisi
 
 // Debug-Info für Datenbank (nur in Development)
 if (typeof window === 'undefined' && process.env.NODE_ENV === 'development') {
-  console.log('🔥 Firebase Datenbank:', databaseId);
+  logInfo('🔥 Firebase Datenbank:', { data: databaseId });
 }
 
 // Alle Offline-Funktionen wurden deaktiviert, um Probleme zu vermeiden

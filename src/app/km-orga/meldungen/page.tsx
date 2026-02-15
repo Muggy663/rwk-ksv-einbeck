@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { getShooterClubId, berechneAltersklasse } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -138,8 +139,7 @@ export default function KMAdminMeldungen() {
     try {
       // Filtere aus bereits geladenen Schützen
       const vereinsSchuetzen = schuetzen.filter(shooter => {
-        const shooterClubId = shooter.clubId || shooter.rwkClubId || shooter.kmClubId;
-        return shooterClubId === vereinId;
+        return getShooterClubId(shooter) === vereinId;
       });
       setVereinSchuetzen(vereinsSchuetzen);
     } catch (error) {
@@ -181,9 +181,9 @@ export default function KMAdminMeldungen() {
             meldungenCount++;
           } else if (response.status === 409) {
             duplicateCount++;
-            console.log('Duplikat erkannt:', response.status);
+            logInfo('Duplikat erkannt:', { data: response.status });
           } else {
-            console.log('Anderer Fehler:', response.status);
+            logInfo('Anderer Fehler:', { data: response.status });
           }
         }
       }
@@ -344,7 +344,7 @@ export default function KMAdminMeldungen() {
   const filteredMeldungen = meldungen.filter(meldung => {
     const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
     const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-    const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
+    const vereinId = getShooterClubId(schuetze);
     
     if (filter.verein && vereinId !== filter.verein) return false;
     if (filter.disziplin && meldung.disziplinId !== filter.disziplin) return false;
@@ -369,8 +369,8 @@ export default function KMAdminMeldungen() {
     const schuetzeB = schuetzen.find(s => s.id === b.schuetzeId);
     const disziplinA = disziplinen.find(d => d.id === a.disziplinId);
     const disziplinB = disziplinen.find(d => d.id === b.disziplinId);
-    const vereinIdA = schuetzeA?.kmClubId || schuetzeA?.rwkClubId || schuetzeA?.clubId;
-    const vereinIdB = schuetzeB?.kmClubId || schuetzeB?.rwkClubId || schuetzeB?.clubId;
+    const vereinIdA = getShooterClubId(schuetzeA);
+    const vereinIdB = getShooterClubId(schuetzeB);
     const vereinA = clubs.find(c => c.id === vereinIdA);
     const vereinB = clubs.find(c => c.id === vereinIdB);
     
@@ -499,7 +499,7 @@ export default function KMAdminMeldungen() {
                     {clubs.map(club => {
                       const hatMeldungen = meldungen.some(m => {
                         const schuetze = schuetzen.find(s => s.id === m.schuetzeId);
-                        const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
+                        const vereinId = getShooterClubId(schuetze);
                         return vereinId === club.id;
                       });
                       return (
@@ -604,7 +604,7 @@ export default function KMAdminMeldungen() {
             {filteredMeldungen.map(meldung => {
               const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
               const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-              const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
+              const vereinId = getShooterClubId(schuetze);
               const verein = clubs.find(c => c.id === vereinId);
 
               return (
@@ -634,12 +634,12 @@ export default function KMAdminMeldungen() {
                           if (isAuflage) {
                             if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
                             if (age <= 50) return 'Senioren 0';
-                            if (age <= 60) return 'Senioren I';
-                            if (age <= 65) return 'Senioren II';
-                            if (age <= 70) return 'Senioren III';
-                            if (age <= 75) return 'Senioren IV';
-                            if (age <= 80) return 'Senioren V';
-                            return 'Senioren VI';
+                            if (age <= 60) return isMale ? 'Senioren I m' : 'Seniorinnen I';
+                            if (age <= 65) return isMale ? 'Senioren II m' : 'Seniorinnen II';
+                            if (age <= 70) return isMale ? 'Senioren III m' : 'Seniorinnen III';
+                            if (age <= 75) return isMale ? 'Senioren IV m' : 'Seniorinnen IV';
+                            if (age <= 80) return isMale ? 'Senioren V m' : 'Seniorinnen V';
+                            return isMale ? 'Senioren VI m' : 'Seniorinnen VI';
                           } else {
                             if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
                             if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;
@@ -822,7 +822,7 @@ export default function KMAdminMeldungen() {
                 {filteredMeldungen.map(meldung => {
                   const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
                   const disziplin = disziplinen.find(d => d.id === meldung.disziplinId);
-                  const vereinId = schuetze?.kmClubId || schuetze?.rwkClubId || schuetze?.clubId;
+                  const vereinId = getShooterClubId(schuetze);
                   const verein = clubs.find(c => c.id === vereinId);
 
                   return (
@@ -893,13 +893,13 @@ export default function KMAdminMeldungen() {
                             
                             if (isAuflage) {
                               if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-                              if (age <= 50) return 'Senioren 0';
-                              if (age <= 60) return 'Senioren I';
-                              if (age <= 65) return 'Senioren II';
-                              if (age <= 70) return 'Senioren III';
-                              if (age <= 75) return 'Senioren IV';
-                              if (age <= 80) return 'Senioren V';
-                              return 'Senioren VI';
+                              if (age <= 50) return isMale ? 'Senioren 0 m' : 'Seniorinnen 0';
+                              if (age <= 60) return isMale ? 'Senioren I m' : 'Seniorinnen I';
+                              if (age <= 65) return isMale ? 'Senioren II m' : 'Seniorinnen II';
+                              if (age <= 70) return isMale ? 'Senioren III m' : 'Seniorinnen III';
+                              if (age <= 75) return isMale ? 'Senioren IV m' : 'Seniorinnen IV';
+                              if (age <= 80) return isMale ? 'Senioren V m' : 'Seniorinnen V';
+                              return isMale ? 'Senioren VI m' : 'Seniorinnen VI';
                             } else {
                               if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
                               if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;

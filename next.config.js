@@ -1,12 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
-  swcMinify: true,
   // Security Headers & Cache-Busting
   async headers() {
     return [
@@ -70,9 +66,9 @@ const nextConfig = {
     
     return config;
   },
+  serverExternalPackages: ['undici'],
+  turbopack: {},
   experimental: {
-    serverComponentsExternalPackages: ['undici'],
-    esmExternals: false,
     optimizeCss: false,
   },
   compiler: {

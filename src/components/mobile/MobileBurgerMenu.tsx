@@ -22,6 +22,7 @@ const mainNavItems: NavItem[] = [
   { href: '/rwk-tabellen', icon: Trophy, label: 'RWK Tabellen' },
   { href: '/statistiken', icon: BarChart3, label: 'Statistiken' },
   { href: '/termine', icon: Calendar, label: 'Termine' },
+  { href: '/ligalisten', icon: FileText, label: 'Ligalisten' },
   { href: '/dokumente', icon: FileText, label: 'Dokumente' },
 ]
 

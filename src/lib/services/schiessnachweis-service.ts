@@ -150,31 +150,47 @@ export class SchießnachweisService {
   }
   
   private static async saveToIndexedDB(einträge: SchießEintrag[]): Promise<void> {
-    try {
-      const request = indexedDB.open('SchiessnachweisDB', 1);
-      
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains('eintraege')) {
-          db.createObjectStore('eintraege', { keyPath: 'key' });
-        }
-      };
-      
-      request.onsuccess = () => {
-        const db = request.result;
+    return new Promise((resolve, reject) => {
+      try {
+        const request = indexedDB.open('SchiessnachweisDB', 1);
         
-        // Prüfe ob Object Store existiert
-        if (!db.objectStoreNames.contains('eintraege')) {
-          return;
-        }
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains('eintraege')) {
+            db.createObjectStore('eintraege', { keyPath: 'key' });
+          }
+        };
         
-        const transaction = db.transaction(['eintraege'], 'readwrite');
-        const store = transaction.objectStore('eintraege');
-        store.put({ key: 'schiessnachweis', data: einträge, timestamp: Date.now() });
-      };
-    } catch (error) {
-      logWarn('IndexedDB Speicherung fehlgeschlagen:', error);
-    }
+        request.onsuccess = () => {
+          try {
+            const db = request.result;
+            
+            if (!db.objectStoreNames.contains('eintraege')) {
+              resolve();
+              return;
+            }
+            
+            const transaction = db.transaction(['eintraege'], 'readwrite');
+            const store = transaction.objectStore('eintraege');
+            store.put({ key: 'schiessnachweis', data: einträge, timestamp: Date.now() });
+            
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+          } catch (error) {
+            logWarn('IndexedDB transaction failed:', error);
+            resolve();
+          }
+        };
+        
+        request.onerror = () => {
+          logWarn('IndexedDB open failed:', request.error);
+          resolve();
+        };
+      } catch (error) {
+        logWarn('IndexedDB Speicherung fehlgeschlagen:', error);
+        resolve();
+      }
+    });
   }
   
   private static async loadFromIndexedDB(): Promise<SchießEintrag[]> {
