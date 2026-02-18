@@ -166,11 +166,11 @@ JSON Format:
         const disziplinName = disziplinenMap.get(meldung.data().disziplinId) || 'Unbekannt';
         
         if (alleMeldungen.length > 1) {
-          secureLogger.info(`Multiple meldungen for ${result.name?.replace(/[\r\n]/g, '')}, using: ${disziplinName}`);
+          secureLogger.info(`Multiple meldungen for ${result.name?.replace(/[\r\n]/g, '')}, using: ${String(disziplinName).replace(/[\r\n]/g, '')}`);
         }
         
         const schuetzeName = schuetzenMap.get(meldung.data().schuetzeId);
-        secureLogger.info(`Found meldung: ${meldung.id} for ${schuetzeName?.replace(/[\r\n]/g, '')}`);
+        secureLogger.info(`Found meldung: ${String(meldung.id).replace(/[\r\n]/g, '')} for ${schuetzeName?.replace(/[\r\n]/g, '')}`);
         
         const updateData: any = {
           kmRinge: (() => {

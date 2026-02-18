@@ -65,17 +65,16 @@ export class UnifiedTrainingService {
         logDebug('🔍 UnifiedTrainingService - groupId:', data.groupId);
         logDebug('🔍 UnifiedTrainingService - competitionId:', data.competitionId);
         
-        // Konvertiere Serien-Format
         const convertedSeries = schiessEintrag.serien?.map(serie => ({
           id: serie.id,
           seriesNumber: serie.serienNummer,
-          shots: serie.schuesse.map(schuss => ({
+          shots: serie.schuesse?.map(schuss => ({
             number: schuss.nummer,
             value: schuss.wert,
             ring: schuss.ring
-          })),
+          })) || [],
           total: serie.summe
-        }));
+        })) || null;
         
         const socialResultId = await SocialTrainingService.saveResult({
           userId,
@@ -83,7 +82,7 @@ export class UnifiedTrainingService {
           shots: data.schussAnzahl,
           rings: data.ergebnis,
           ringsWithDecimals: schiessEintrag.ergebnisZehntel || null,
-          average: data.ergebnis / data.schussAnzahl,
+          average: data.schussAnzahl > 0 ? data.ergebnis / data.schussAnzahl : 0,
           date: data.datum,
           typ: data.typ,
           location: data.standort,
@@ -102,12 +101,12 @@ export class UnifiedTrainingService {
         }, data.photo);
         
         // Falls Wettkampf ausgewählt, füge Ergebnis auch zum Wettkampf hinzu
-        if (data.competitionId) {
+        if (data.competitionId && data.groupId) {
           try {
             const { CompetitionsService } = await import('./competitions-service');
             
             // Ermittle nächste freie Runde für den User
-            const competitions = await CompetitionsService.getGroupCompetitions(data.groupId!);
+            const competitions = await CompetitionsService.getGroupCompetitions(data.groupId);
             const competition = competitions.find(c => c.id === data.competitionId);
             
             if (competition) {
@@ -139,8 +138,12 @@ export class UnifiedTrainingService {
         }
         
         // Lade das gespeicherte Ergebnis
-        const results = await SocialTrainingService.getUserResults(userId);
-        socialResult = results.find(r => r.id === socialResultId);
+        try {
+          const results = await SocialTrainingService.getUserResults(userId);
+          socialResult = results.find(r => r.id === socialResultId);
+        } catch (error) {
+          logWarn('Gespeichertes Social Training Ergebnis konnte nicht geladen werden:', error);
+        }
         
       } catch (error) {
         logError('Social Training Speicherung fehlgeschlagen:', error);
@@ -171,7 +174,13 @@ export class UnifiedTrainingService {
   }> {
     
     const schiessEinträge = await SchießnachweisService.getEinträge();
-    const socialResults = await SocialTrainingService.getUserResults(userId);
+    let socialResults: TrainingResult[] = [];
+    
+    try {
+      socialResults = await SocialTrainingService.getUserResults(userId);
+    } catch (error) {
+      logWarn('Social Training Ergebnisse konnten nicht geladen werden:', error);
+    }
     
     // Kombiniere und verknüpfe Daten
     const combined: any[] = [];

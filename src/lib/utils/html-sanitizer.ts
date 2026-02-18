@@ -13,12 +13,16 @@ export class HtmlSanitizer {
       return String(input || '').substring(0, 1000);
     }
     
-    return input
-      .replace(/<[^>]*>/g, '') // Entferne HTML-Tags
-      .replace(/[<>'"&]/g, '') // Entferne gefährliche Zeichen
-      .replace(/javascript:/gi, '') // Entferne JavaScript-URLs
-      .replace(/on\w+=/gi, '') // Entferne Event-Handler
-      .substring(0, 1000); // Begrenze Länge
+    try {
+      return input
+        .replace(/<[^>]*>/g, '') // Entferne HTML-Tags
+        .replace(/[<>'"&]/g, '') // Entferne gefährliche Zeichen
+        .replace(/javascript:/gi, '') // Entferne JavaScript-URLs
+        .replace(/on\w+=/gi, '') // Entferne Event-Handler
+        .substring(0, 1000); // Begrenze Länge
+    } catch (error) {
+      return '';
+    }
   }
   
   /**

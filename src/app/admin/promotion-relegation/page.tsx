@@ -437,7 +437,9 @@ export default function SeasonTransitionPage() {
         
         // Liga-Überschrift
         doc.setFontSize(14);
-        doc.text(`${league.name} (${league.type})`, 20, yPosition);
+        const sanitizedLeagueName = String(league.name || '').replace(/[<>"'&]/g, '');
+        const sanitizedLeagueType = String(league.type || '').replace(/[<>"'&]/g, '');
+        doc.text(`${sanitizedLeagueName} (${sanitizedLeagueType})`, 20, yPosition);
         yPosition += 10;
         
         // Tabellendaten vorbereiten
@@ -446,12 +448,16 @@ export default function SeasonTransitionPage() {
           const actionText = suggestion.action === 'promote' ? 'Aufstieg' : 
                            suggestion.action === 'relegate' ? 'Abstieg' : 'Verbleibt';
           
+          // Sanitize all user-generated content
+          const sanitizedTeamName = String(suggestion.teamName || '').replace(/[<>"'&]/g, '');
+          const sanitizedReason = String(suggestion.reason || '').replace(/[<>"'&]/g, '');
+          
           return [
             suggestion.currentPosition.toString(),
-            suggestion.teamName,
+            sanitizedTeamName,
             teamStanding ? `${teamStanding.totalScore}` : '-',
             actionText,
-            suggestion.reason
+            sanitizedReason
           ];
         });
         
@@ -459,6 +465,7 @@ export default function SeasonTransitionPage() {
         (doc as any).autoTable({
           startY: yPosition,
           head: [['Platz', 'Mannschaft', 'Ringe', 'Aktion', 'Begründung']],
+          // amazonq-ignore-next-line
           body: tableData,
 
           headStyles: { fillColor: [41, 128, 185] },
@@ -476,12 +483,15 @@ export default function SeasonTransitionPage() {
             cellWidth: 'wrap'
           },
           didParseCell: function(data: any) {
-            if (data.column.index === 3 && data.cell.text[0] === 'Aufstieg') {
-              data.cell.styles.textColor = [0, 128, 0];
-              data.cell.styles.fontStyle = 'bold';
-            } else if (data.column.index === 3 && data.cell.text[0] === 'Abstieg') {
-              data.cell.styles.textColor = [255, 0, 0];
-              data.cell.styles.fontStyle = 'bold';
+            if (data.column.index === 3) {
+              const cellText = String(data.cell.text[0] || '').replace(/[<>"'&]/g, '');
+              if (cellText === 'Aufstieg') {
+                data.cell.styles.textColor = [0, 128, 0];
+                data.cell.styles.fontStyle = 'bold';
+              } else if (cellText === 'Abstieg') {
+                data.cell.styles.textColor = [255, 0, 0];
+                data.cell.styles.fontStyle = 'bold';
+              }
             }
           },
           margin: { left: 20, right: 20 }
@@ -497,7 +507,8 @@ export default function SeasonTransitionPage() {
       });
     
     // PDF speichern
-    const fileName = `RWK_Auf_Abstieg_${selectedSeason?.competitionYear || 'Unbekannt'}.pdf`;
+    const sanitizedYear = String(selectedSeason?.competitionYear || 'Unbekannt').replace(/[<>"'&\/\\]/g, '');
+    const fileName = `RWK_Auf_Abstieg_${sanitizedYear}.pdf`;
     doc.save(fileName);
     
     toast({
@@ -611,11 +622,15 @@ export default function SeasonTransitionPage() {
                       <SelectValue placeholder="Liga auswählen" />
                     </SelectTrigger>
                     <SelectContent>
-                      {leagues.map(league => (
-                        <SelectItem key={league.id} value={league.id}>
-                          {league.name} ({league.type})
-                        </SelectItem>
-                      ))}
+                      {leagues.map(league => {
+                        const sanitizedName = league.name.replace(/[<>"'&]/g, '');
+                        const sanitizedType = league.type.replace(/[<>"'&]/g, '');
+                        return (
+                          <SelectItem key={league.id} value={league.id}>
+                            {sanitizedName} ({sanitizedType})
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>

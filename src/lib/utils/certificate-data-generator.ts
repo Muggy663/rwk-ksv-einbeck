@@ -182,39 +182,31 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
     const teamsSnapshot = await getDocs(teamsQuery);
     const teams = [];
     
+    const teamIds = teamsSnapshot.docs.filter(doc => !doc.data().name.toLowerCase().includes('einzel')).map(doc => doc.id);
+    if (teamIds.length === 0) return [];
+    
+    let allScoresQuery;
+    try {
+      const seasonSpecificCollection = getSeasonSpecificScoresCollection(seasonData.competitionYear, leagueData.type);
+      allScoresQuery = query(collection(db, seasonSpecificCollection), where('leagueId', '==', leagueId), where('competitionYear', '==', seasonData.competitionYear));
+    } catch (error) {
+      allScoresQuery = query(collection(db, 'rwk_scores'), where('leagueId', '==', leagueId));
+    }
+    
+    const allScoresSnapshot = await getDocs(allScoresQuery);
+    const scoresByTeam = new Map();
+    allScoresSnapshot.forEach(scoreDoc => {
+      const scoreData = { id: scoreDoc.id, ...scoreDoc.data() };
+      if (!teamIds.includes(scoreData.teamId)) return;
+      if (!scoresByTeam.has(scoreData.teamId)) scoresByTeam.set(scoreData.teamId, []);
+      scoresByTeam.get(scoreData.teamId).push(scoreData);
+    });
+    
     for (const teamDoc of teamsSnapshot.docs) {
       const teamData = teamDoc.data();
+      if (teamData.name.toLowerCase().includes('einzel')) continue;
       
-      // "Einzel"-Teams überspringen
-      if (teamData.name.toLowerCase().includes('einzel')) {
-        continue;
-      }
-      
-      // Ergebnisse für das Team abrufen - verwende saison-spezifische Collection
-      let scoresQuery;
-      try {
-        const seasonSpecificCollection = getSeasonSpecificScoresCollection(seasonData.competitionYear, leagueData.type);
-        scoresQuery = query(
-          collection(db, seasonSpecificCollection),
-          where('teamId', '==', teamDoc.id),
-          where('competitionYear', '==', seasonData.competitionYear)
-        );
-      } catch (error) {
-        // Fallback auf alte Collection
-        scoresQuery = query(
-          collection(db, 'rwk_scores'),
-          where('teamId', '==', teamDoc.id)
-        );
-      }
-      
-      const scoresSnapshot = await getDocs(scoresQuery);
-      
-      // Duplikat-Filterung für Team-Scores
-      const teamScoresArray = [];
-      scoresSnapshot.forEach(scoreDoc => {
-        teamScoresArray.push({ id: scoreDoc.id, ...scoreDoc.data() });
-      });
-      
+      const teamScoresArray = scoresByTeam.get(teamDoc.id) || [];
       const teamDuplicateMap = new Map();
       teamScoresArray.forEach(score => {
         const key = `${score.shooterId}|${score.durchgang}|${score.competitionYear}|${score.leagueType}`;

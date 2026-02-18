@@ -62,6 +62,115 @@ export default function DashboardAuswahl() {
   const isEhrenmitglied = clubRolesList.includes('EHRENMITGLIED');
   const isMannschaftsfuehrer = clubRolesList.includes('MANNSCHAFTSFUEHRER');
   
+  // Prüfe ob Benutzer nur Schießnachweis/Social Training Zugriff hat (INDIVIDUAL userType)
+  const isIndividualUser = userAppPermissions?.userType === 'INDIVIDUAL' || 
+                          (!userAppPermissions?.role && 
+                           !hasClubRoles && 
+                           !userAppPermissions?.kvRoles && 
+                           !userAppPermissions?.platformRole);
+  
+  // Wenn Individual User, zeige nur Schießnachweis/Social Training
+  if (isIndividualUser) {
+    return (
+      <div className="container py-8 max-w-6xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-primary mb-2">Willkommen!</h1>
+          <p className="text-muted-foreground">
+            Hallo {userAppPermissions?.displayName || user.displayName || user.email}!
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Schießnachweis */}
+          <Card className="shadow-lg hover:shadow-xl transition-shadow border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+            <CardHeader className="pb-4">
+              <div>
+                <CardTitle className="text-xl mb-2">
+                  🎯 Schießnachweis
+                </CardTitle>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="outline">Cloud-Speicherung</Badge>
+                  <Badge variant="outline">PDF-Export</Badge>
+                </div>
+              </div>
+              <CardDescription>
+                Digitales Schießtagebuch für Sportschützen
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🆕 Features</h4>
+                  <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
+                    <div>• Training & Wettkampf erfassen</div>
+                    <div>• PDF-Export für Behörden</div>
+                    <div>• Cloud-Sync & Statistiken</div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Link href="/schiessnachweis" className="flex-1">
+                    <Button className="w-full">
+                      Schießnachweis öffnen
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Social Training */}
+          <Card className="shadow-lg hover:shadow-xl transition-shadow border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30">
+            <CardHeader className="pb-4">
+              <div>
+                <CardTitle className="text-xl mb-2">
+                  👥 Social Training
+                  <Badge variant="default" className="ml-2 text-xs bg-green-600">NEU</Badge>
+                </CardTitle>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="outline">Trainingsgruppen</Badge>
+                  <Badge variant="outline">Live-Wettkämpfe</Badge>
+                  <Badge variant="outline">Community</Badge>
+                </div>
+              </div>
+              <CardDescription>
+                Trainieren Sie gemeinsam mit anderen Schützen und nehmen Sie an Live-Wettkämpfen teil
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                  <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">🆕 Features</h4>
+                  <div className="text-sm text-purple-700 dark:text-purple-200 space-y-1">
+                    <div>• 👥 Trainingsgruppen erstellen</div>
+                    <div>• ⚔️ Live-Wettkämpfe & Duelle</div>
+                    <div>• 📊 Community-Statistiken</div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Link href="/social" className="flex-1">
+                    <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                      Social Training öffnen
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="mt-8 text-center">
+          <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 max-w-2xl mx-auto">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              💡 <strong>Hinweis:</strong> Sie haben einen Schießnachweis-Account. Für Zugriff auf RWK/KM-Bereiche benötigen Sie eine Vereins-Berechtigung vom Kreisverband.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   // Rollen-spezifische Bereiche für Vereinssoftware (Phase 2)
   const getVereinssoftwareBereiche = () => {
     if (isVorstand) {

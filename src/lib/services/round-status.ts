@@ -12,18 +12,22 @@ export function determineCurrentRound(
   allScores: any[],
   maxRounds: number
 ): number {
-  // Wenn keine Ergebnisse vorhanden sind, ist der aktuelle Durchgang 0
-  if (!allScores || allScores.length === 0) return 0;
-  
-  // Finde den höchsten Durchgang, für den Ergebnisse vorhanden sind
-  let highestRound = 0;
-  
-  for (const score of allScores) {
-    if (score.durchgang && typeof score.durchgang === 'number') {
-      highestRound = Math.max(highestRound, score.durchgang);
+  try {
+    // Wenn keine Ergebnisse vorhanden sind, ist der aktuelle Durchgang 0
+    if (!allScores || allScores.length === 0) return 0;
+    
+    // Finde den höchsten Durchgang, für den Ergebnisse vorhanden sind
+    let highestRound = 0;
+    
+    for (const score of allScores) {
+      if (score.durchgang && typeof score.durchgang === 'number') {
+        highestRound = Math.max(highestRound, score.durchgang);
+      }
     }
+    
+    // Begrenze auf die maximale Anzahl an Durchgängen
+    return Math.min(highestRound, maxRounds);
+  } catch (error) {
+    return 0;
   }
-  
-  // Begrenze auf die maximale Anzahl an Durchgängen
-  return Math.min(highestRound, maxRounds);
 }

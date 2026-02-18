@@ -33,7 +33,7 @@ export default function KMAdmin() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const sanitizedType = type.replace(/[^a-z-]/gi, '');
+        const sanitizedType = String(type).replace(/[^a-z0-9-]/gi, '');
         a.download = `KM2026_${sanitizedType}.pdf`;
         document.body.appendChild(a);
         a.click();

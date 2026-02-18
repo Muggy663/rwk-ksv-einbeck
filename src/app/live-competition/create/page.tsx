@@ -14,6 +14,19 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { DISZIPLINEN, getDisziplinConfig } from "@/types/schiessnachweis";
 
+const sanitizeText = (text: string): string => {
+  return String(text || '').replace(/[<>"'&]/g, (char) => {
+    const entities: Record<string, string> = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '&': '&amp;'
+    };
+    return entities[char] || char;
+  });
+};
+
 export default function CreateCompetitionPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -98,11 +111,11 @@ export default function CreateCompetitionPage() {
       
       toast({
         title: "Wettkampf erstellt!",
-        description: `Live-Wettkampf "${formData.name}" wurde erfolgreich erstellt.`,
+        description: `Live-Wettkampf "${sanitizeText(formData.name)}" wurde erfolgreich erstellt.`,
       });
       
       // Redirect zum Wettkampf
-      window.location.href = `/live-competition/${competitionId}`;
+      window.location.href = `/live-competition/${encodeURIComponent(competitionId)}`;
     } catch (error: any) {
       toast({
         title: "Fehler",

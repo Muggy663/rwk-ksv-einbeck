@@ -31,30 +31,21 @@ export async function saveRWKScore(scoreData: RWKScoreData, userInfo: { userId: 
     const teamData = teamDoc.exists() ? teamDoc.data() : null;
     const teamName = teamData?.name || 'Unbekannte Mannschaft';
 
-    // Lade Liga-Daten
+    // Lade Liga-Daten und Vereins-Daten parallel
     let leagueName = 'Unbekannte Liga';
     let clubName = 'Unbekannter Verein';
     
-    if (teamData?.leagueId) {
-      try {
-        const leagueDoc = await getDoc(doc(db, 'rwk_leagues', teamData.leagueId));
-        if (leagueDoc.exists()) {
-          leagueName = leagueDoc.data()?.name || leagueName;
-        }
-      } catch (error) {
-        logWarn('Fehler beim Laden der Liga:', error);
-      }
+    const [leagueResult, clubResult] = await Promise.all([
+      teamData?.leagueId ? getDoc(doc(db, 'rwk_leagues', teamData.leagueId)).catch(() => null) : Promise.resolve(null),
+      teamData?.clubId ? getDoc(doc(db, 'clubs', teamData.clubId)).catch(() => null) : Promise.resolve(null)
+    ]);
+    
+    if (leagueResult?.exists()) {
+      leagueName = leagueResult.data()?.name || leagueName;
     }
-
-    if (teamData?.clubId) {
-      try {
-        const clubDoc = await getDoc(doc(db, 'clubs', teamData.clubId));
-        if (clubDoc.exists()) {
-          clubName = clubDoc.data()?.name || clubName;
-        }
-      } catch (error) {
-        logWarn('Fehler beim Laden des Vereins:', error);
-      }
+    
+    if (clubResult?.exists()) {
+      clubName = clubResult.data()?.name || clubName;
     }
 
     // Speichere das Ergebnis
@@ -131,49 +122,58 @@ export async function saveRWKScoresBatch(scores: RWKScoreData[], userInfo: { use
     const results = [];
     
     for (const scoreData of scores) {
-      const shooter = shootersMap.get(scoreData.shooterId);
-      const team = teamsMap.get(scoreData.teamId);
-      const club = team?.clubId ? clubsMap.get(team.clubId) : null;
-      
-      const shooterName = shooter?.name || 'Unbekannter Schütze';
-      const teamName = team?.name || 'Unbekannte Mannschaft';
-      const clubName = club?.name || 'Unbekannter Verein';
-      
-      // Speichere das Ergebnis
-      const scoreEntry = {
-        ...scoreData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
+      try {
+        const shooter = shootersMap.get(scoreData.shooterId);
+        const team = teamsMap.get(scoreData.teamId);
+        const club = team?.clubId ? clubsMap.get(team.clubId) : null;
+        
+        const shooterName = shooter?.name || 'Unbekannter Schütze';
+        const teamName = team?.name || 'Unbekannte Mannschaft';
+        const clubName = club?.name || 'Unbekannter Verein';
+        
+        // Speichere das Ergebnis
+        const scoreEntry = {
+          ...scoreData,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
 
-      const docRef = await addDoc(collection(db, 'rwk_scores'), scoreEntry);
+        const docRef = await addDoc(collection(db, 'rwk_scores'), scoreEntry);
 
-      // Erstelle Audit-Log
-      await createAuditEntry(
-        'create',
-        'score',
-        docRef.id,
-        {
-          after: scoreData,
-          description: `Ergebnis erfasst: ${shooterName} - ${scoreData.score} Ringe (DG ${scoreData.durchgang})`
-        },
-        {
-          leagueId: team?.leagueId,
-          leagueName: 'Liga',
-          teamId: scoreData.teamId,
-          teamName,
-          shooterId: scoreData.shooterId,
-          shooterName,
-          userId: userInfo.userId,
-          userName: userInfo.userName
-        }
-      );
-      
-      results.push({
-        success: true,
-        scoreId: docRef.id,
-        message: `Ergebnis für ${shooterName} erfolgreich gespeichert`
-      });
+        // Erstelle Audit-Log
+        await createAuditEntry(
+          'create',
+          'score',
+          docRef.id,
+          {
+            after: scoreData,
+            description: `Ergebnis erfasst: ${shooterName} - ${scoreData.score} Ringe (DG ${scoreData.durchgang})`
+          },
+          {
+            leagueId: team?.leagueId,
+            leagueName: 'Liga',
+            teamId: scoreData.teamId,
+            teamName,
+            shooterId: scoreData.shooterId,
+            shooterName,
+            userId: userInfo.userId,
+            userName: userInfo.userName
+          }
+        );
+        
+        results.push({
+          success: true,
+          scoreId: docRef.id,
+          message: `Ergebnis für ${shooterName} erfolgreich gespeichert`
+        });
+      } catch (error) {
+        logError('Fehler beim Speichern eines einzelnen Ergebnisses:', error);
+        results.push({
+          success: false,
+          scoreId: null,
+          message: `Fehler beim Speichern des Ergebnisses`
+        });
+      }
     }
 
     logInfo(`Batch von ${scores.length} RWK-Ergebnissen gespeichert`);

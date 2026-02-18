@@ -1,5 +1,5 @@
 // Automatische Synchronisation zwischen km_shooters und shooters
-import { doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 
@@ -10,22 +10,19 @@ export class ShooterSyncService {
     const shooterId = shooterData.id || doc(db, 'temp').id;
     
     try {
+      const batch = writeBatch(db);
+      const timestamp = new Date();
+      const data = { ...shooterData, createdAt: timestamp, syncedAt: timestamp };
+      
       // In Quell-Collection erstellen
-      await setDoc(doc(db, sourceCollection, shooterId), {
-        ...shooterData,
-        createdAt: new Date(),
-        syncedAt: new Date()
-      });
+      batch.set(doc(db, sourceCollection, shooterId), data);
       
       // In Ziel-Collection synchronisieren
       const targetCollection = sourceCollection === 'km_shooters' ? 'shooters' : 'km_shooters';
-      await setDoc(doc(db, targetCollection, shooterId), {
-        ...shooterData,
-        createdAt: new Date(),
-        syncedAt: new Date(),
-        syncedFrom: sourceCollection
-      });
+      batch.set(doc(db, targetCollection, shooterId), { ...data, syncedFrom: sourceCollection });
       
+      await batch.commit();
+      logInfo('✅ Schütze synchronisiert', { shooterId });
 
       return shooterId;
     } catch (error) {
@@ -48,11 +45,14 @@ export class ShooterSyncService {
       
       // In Ziel-Collection synchronisieren
       const targetCollection = sourceCollection === 'km_shooters' ? 'shooters' : 'km_shooters';
-      await updateDoc(doc(db, targetCollection, shooterId), {
-        ...syncData,
-        syncedFrom: sourceCollection
-      });
-      
+      try {
+        await updateDoc(doc(db, targetCollection, shooterId), {
+          ...syncData,
+          syncedFrom: sourceCollection
+        });
+      } catch (targetError) {
+        logWarn('Ziel-Collection konnte nicht synchronisiert werden', { data: targetError });
+      }
 
     } catch (error) {
       logError('❌ Sync-Fehler beim Aktualisieren:', error);
@@ -68,8 +68,11 @@ export class ShooterSyncService {
       
       // Aus Ziel-Collection synchronisieren
       const targetCollection = sourceCollection === 'km_shooters' ? 'shooters' : 'km_shooters';
-      await deleteDoc(doc(db, targetCollection, shooterId));
-      
+      try {
+        await deleteDoc(doc(db, targetCollection, shooterId));
+      } catch (targetError) {
+        logWarn('Ziel-Collection konnte nicht gelöscht werden', { data: targetError });
+      }
 
     } catch (error) {
       logError('❌ Sync-Fehler beim Löschen:', error);

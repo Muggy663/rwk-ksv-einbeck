@@ -20,7 +20,7 @@ export interface UserProfile {
     bestResult: {
       discipline: string;
       score: number;
-      date: Date;
+      date: Date | string;
     };
     recentActivity: Date;
   };

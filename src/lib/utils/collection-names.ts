@@ -3,7 +3,6 @@
  */
 
 import type { FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 /**
  * Generates season-specific collection name based on year and discipline
@@ -22,7 +21,6 @@ export function getSeasonSpecificScoresCollection(
   } else if (leagueType === 'KKP') {
     normalizedDiscipline = 'KKP';
   }
-  
   return `rwk_scores_${competitionYear}_${normalizedDiscipline}`;
 }
 

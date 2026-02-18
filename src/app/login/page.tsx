@@ -1,61 +1,426 @@
-// src/app/login/page.tsx
-"use client"; // Required for redirect and useAuth hook
-import { useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { useRouter } from 'next/navigation';
-import { LoginForm } from '@/components/auth/LoginForm';
-import { useAuth } from '@/hooks/use-auth';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2 } from 'lucide-react';
-import { BackButton } from '@/components/ui/back-button';
+"use client";
 
-export default function LoginPage() {
-  const { user, loading } = useAuth();
+import { useState, useEffect } from "react";
+import { logError, logDebug } from '@/lib/utils/secure-logger';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Lock, Mail, Eye, EyeOff } from "lucide-react";
+import { auth, db } from '@/lib/firebase/config';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { ReCaptcha } from '@/components/auth/ReCaptcha';
+
+export default function UnifiedLoginPage() {
+  const { toast } = useToast();
   const router = useRouter();
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
 
-  useEffect(() => {
-    if (!loading && user) {
-      // Redirect to dashboard selection for all users
-      router.push('/dashboard-auswahl');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setLoginError("");
+
+    if (!email || !password) {
+      toast({
+        title: "Fehler",
+        description: "Bitte füllen Sie alle Felder aus.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
     }
-  }, [user, loading, router]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="w-full max-w-md space-y-6">
-          <Skeleton className="h-10 w-1/2 mx-auto" />
-          <Skeleton className="h-8 w-3/4 mx-auto" />
-          <div className="space-y-4">
-            <Skeleton className="h-6 w-1/4" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <div className="space-y-4">
-            <Skeleton className="h-6 w-1/4" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <Skeleton className="h-12 w-full" />
-        </div>
-      </div>
-    );
-  }
+    if (password.length < 6) {
+      toast({
+        title: "Fehler",
+        description: "Passwort muss mindestens 6 Zeichen lang sein.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
-  if (!loading && user) {
-    // User is logged in and will be redirected, show minimal content or loading
-    return (
-       <div className="flex flex-col justify-center items-center py-12 space-y-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p>Sie sind bereits angemeldet. Weiterleitung...</p>
-      </div>
-    );
-  }
-  
+    const isPreview = window.location.hostname.includes('vercel.app') || window.location.hostname === 'localhost';
+    if (!recaptchaToken && !isPreview) {
+      toast({
+        title: "Fehler",
+        description: "Bitte bestätigen Sie, dass Sie kein Roboter sind.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      let user;
+      
+      if (isLogin) {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        user = userCredential.user;
+        toast({
+          title: "✅ Anmeldung erfolgreich",
+          description: "Willkommen zurück!",
+        });
+      } else {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        user = userCredential.user;
+        
+        // user_permissions erstellen
+        try {
+          const response = await fetch('/api/create-individual-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName
+            })
+          });
+          
+          if (!response.ok) {
+            logError('API-Fehler:', await response.text());
+          } else {
+            logDebug('user_permissions erfolgreich erstellt');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (apiError) {
+          logError('API-Aufruf fehlgeschlagen:', apiError);
+        }
+        
+        // E-Mail-Bestätigung
+        try {
+          await sendEmailVerification(user);
+          toast({
+            title: "🎉 Konto erfolgreich erstellt!",
+            description: "📧 Bestätigungs-E-Mail gesendet. Bitte auch im Spam-Ordner nachschauen!",
+            duration: 8000,
+          });
+        } catch (emailError) {
+          logError('E-Mail-Fehler:', emailError);
+        }
+      }
+
+      // Automatische Weiterleitung basierend auf Berechtigungen
+      await redirectBasedOnPermissions(user.uid);
+      
+    } catch (error: any) {
+      logError('Auth-Fehler:', error);
+      let errorMessage = "Anmeldung fehlgeschlagen";
+      
+      switch (error.code) {
+        case 'auth/invalid-credential':
+        case 'auth/wrong-password':
+        case 'auth/invalid-login-credentials':
+          errorMessage = "❌ Falsches Passwort oder E-Mail";
+          break;
+        case 'auth/user-not-found':
+          errorMessage = "❌ Benutzer nicht gefunden";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "❌ Ungültige E-Mail-Adresse";
+          break;
+        case 'auth/user-disabled':
+          errorMessage = "❌ Benutzerkonto wurde deaktiviert";
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = "⏰ Zu viele Fehlversuche. Bitte später erneut versuchen";
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = "🌐 Netzwerkfehler. Bitte Internetverbindung prüfen";
+          break;
+        default:
+          errorMessage = `❌ Anmeldung fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`;
+      }
+      
+      setLoginError(errorMessage);
+      toast({
+        title: "Anmeldung fehlgeschlagen",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const redirectBasedOnPermissions = async (uid: string) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'user_permissions', uid));
+      
+      if (!userDoc.exists()) {
+        // Kein Dokument = Schießnachweis-User
+        router.push('/schiessnachweis');
+        return;
+      }
+      
+      const data = userDoc.data();
+      
+      // Prüfe ob RWK/KM-Berechtigungen
+      const hasRWKAccess = data.role || data.clubRoles || data.kvRoles || data.platformRole;
+      const isIndividual = data.userType === 'INDIVIDUAL';
+      
+      if (isIndividual || !hasRWKAccess) {
+        // Nur Schießnachweis
+        router.push('/schiessnachweis');
+      } else {
+        // Hat RWK/KM-Zugriff
+        router.push('/dashboard-auswahl');
+      }
+    } catch (error) {
+      logError('Fehler beim Laden der Berechtigungen:', error);
+      // Fallback: Schießnachweis
+      router.push('/schiessnachweis');
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    if (!resetEmail) {
+      toast({
+        title: "Fehler",
+        description: "Bitte geben Sie Ihre E-Mail-Adresse ein.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      toast({
+        title: "✅ E-Mail gesendet",
+        description: "Passwort-Zurücksetzen-Link wurde an Ihre E-Mail gesendet.",
+      });
+      setShowResetPassword(false);
+      setResetEmail("");
+    } catch (error: any) {
+      logError('Password reset error:', error);
+      let errorMessage = "Fehler beim Senden der E-Mail";
+      
+      switch (error.code) {
+        case 'auth/user-not-found':
+          errorMessage = "❌ Keine Benutzer mit dieser E-Mail gefunden";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "❌ Ungültige E-Mail-Adresse";
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = "⏰ Zu viele Anfragen. Bitte später erneut versuchen";
+          break;
+      }
+      
+      toast({
+        title: "Fehler",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="container mx-auto max-w-2xl px-4 space-y-4">
-      <div className="flex items-center">
-        <BackButton className="mr-2" fallbackHref="/" />
-      </div>
-      <LoginForm />
+    <div className="container mx-auto p-4 sm:p-6 max-w-md">
+      <Card>
+        <CardHeader className="text-center">
+          <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
+            <Lock className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <CardTitle className="text-2xl">
+            {isLogin ? 'Anmelden' : 'Registrieren'}
+          </CardTitle>
+          <CardDescription>
+            Ein Login für Schießnachweis, Social Training und RWK/KM
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="email">E-Mail</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                  placeholder="ihre@email.de"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="password">Passwort</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <ReCaptcha onVerify={setRecaptchaToken} />
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting 
+                ? 'Wird verarbeitet...' 
+                : isLogin ? 'Anmelden' : 'Registrieren'
+              }
+            </Button>
+          </form>
+          
+          {loginError && (
+            <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">
+                {loginError}
+              </p>
+            </div>
+          )}
+
+          <div className="mt-4 text-center space-y-2">
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-sm text-muted-foreground hover:text-foreground block w-full"
+            >
+              {isLogin 
+                ? 'Noch kein Konto? Registrieren' 
+                : 'Bereits ein Konto? Anmelden'
+              }
+            </button>
+            {isLogin && (
+              <button
+                type="button"
+                onClick={() => setShowResetPassword(true)}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Passwort vergessen?
+              </button>
+            )}
+          </div>
+
+          <div className="mt-6 space-y-4">
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                🎯 Ein Login für alles
+              </h4>
+              <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                <li>✅ Schießnachweis (Digitales Schießtagebuch)</li>
+                <li>✅ Social Training (Community-Features)</li>
+                <li>✅ RWK/KM (Bei entsprechender Berechtigung)</li>
+              </ul>
+            </div>
+            
+            <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200">
+              <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">
+                💡 Neu hier?
+              </h4>
+              <p className="text-sm text-green-700 dark:text-green-300 mb-2">
+                <strong>Registrierung = Sofort Schießnachweis nutzen!</strong>
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-400 mb-2">
+                Nach der Registrierung haben Sie automatisch Zugriff auf Schießnachweis und Social Training.
+              </p>
+              <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
+                <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">
+                  🏆 RWK/KM-Vereinszugang benötigt?
+                </p>
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  Erst hier registrieren, dann E-Mail an <strong>rwk-leiter-ksve@gmx.de</strong> mit Ihrer Vereinsrolle. Ich schalte Ihnen dann die entsprechenden Rechte frei.
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Passwort zurücksetzen Modal */}
+      {showResetPassword && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl">
+            <CardHeader>
+              <CardTitle>Passwort zurücksetzen</CardTitle>
+              <CardDescription>
+                Geben Sie Ihre E-Mail-Adresse ein, um einen Link zum Zurücksetzen zu erhalten.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                <div>
+                  <Label htmlFor="reset-email">E-Mail</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      className="pl-10"
+                      placeholder="ihre@email.de"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => {
+                      setShowResetPassword(false);
+                      setResetEmail("");
+                    }}
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="flex-1"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Wird gesendet...' : 'Link senden'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

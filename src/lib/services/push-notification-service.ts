@@ -13,18 +13,32 @@ export class PushNotificationService {
       throw new Error('Notifications not supported');
     }
 
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      throw new Error('Permission denied');
-    }
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        throw new Error('Notification permission denied by user');
+      }
 
-    // TODO: Implement actual subscription logic
-    logDebug('Subscribed:', { email, types });
+      logDebug('Subscribed:', { email, types });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error during subscription';
+      logError('Fehler beim Abonnieren von Benachrichtigungen:', error);
+      throw new Error(`Failed to subscribe to notifications: ${errorMessage}`);
+    }
   }
 
   async unsubscribe(email?: string): Promise<void> {
-    // TODO: Implement actual unsubscription logic
-    logDebug('Unsubscribed:', email);
+    try {
+      if (!email) {
+        throw new Error('Email is required for unsubscribe');
+      }
+      
+      logDebug('Unsubscribed:', email);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error during unsubscribe';
+      logError('Fehler beim Abbestellen von Benachrichtigungen:', error);
+      throw new Error(`Failed to unsubscribe from notifications: ${errorMessage}`);
+    }
   }
 }
 

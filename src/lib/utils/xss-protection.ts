@@ -80,15 +80,16 @@ export function sanitizeUserInput(input: string, maxLength = 1000): string {
 /**
  * Email-Adressen validieren und sanitisieren
  */
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function sanitizeEmail(email: string): string {
   if (typeof email !== 'string') {
     return '';
   }
   
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const trimmed = email.trim().toLowerCase();
   
-  if (!emailRegex.test(trimmed)) {
+  if (!EMAIL_REGEX.test(trimmed)) {
     return '';
   }
   
@@ -115,9 +116,8 @@ export function sanitizeShooterName(name: string): string {
     return 'Unbekannt';
   }
   
-  // Nur Buchstaben, Leerzeichen, Bindestriche und Punkte erlauben
   return name
-    .replace(/[^a-zA-ZäöüÄÖÜß\s\-\.]/g, '')
+    .replace(/[^a-zA-ZäöüÄÖÜß\s.\-]/g, '')
     .trim()
     .substring(0, 100);
 }
@@ -130,9 +130,8 @@ export function sanitizeClubName(name: string): string {
     return 'Unbekannter Verein';
   }
   
-  // Erweiterte Zeichen für Vereinsnamen erlauben
   return name
-    .replace(/[^a-zA-Z0-9äöüÄÖÜß\s\-\.\(\)]/g, '')
+    .replace(/[^a-zA-Z0-9äöüÄÖÜß\s.()\-]/g, '')
     .trim()
     .substring(0, 200);
 }
@@ -145,20 +144,21 @@ export function sanitizeComment(comment: string): string {
     return '';
   }
   
-  return escapeHtml(comment.trim().substring(0, 2000));
+  return sanitizeUserInput(comment, 2000);
 }
 
 /**
  * Firestore Document IDs validieren
  */
+const FIRESTORE_ID_REGEX = /^[^\/]{1,1500}$/;
+
 export function validateFirestoreId(id: string): boolean {
   if (typeof id !== 'string') {
     return false;
   }
   
   // Firestore ID Regeln: 1-1500 Zeichen, keine Schrägstriche
-  const firestoreIdRegex = /^[^\/]{1,1500}$/;
-  return firestoreIdRegex.test(id);
+  return FIRESTORE_ID_REGEX.test(id);
 }
 
 /**
@@ -168,9 +168,8 @@ export function safeTemplate(template: string, values: Record<string, any>): str
   let result = template;
   
   for (const [key, value] of Object.entries(values)) {
-    const placeholder = `{{${key}}}`;
     const sanitizedValue = sanitizeUserInput(String(value));
-    result = result.replace(new RegExp(placeholder, 'g'), sanitizedValue);
+    result = result.replace(new RegExp(`{{${key}}}`, 'g'), sanitizedValue);
   }
   
   return result;

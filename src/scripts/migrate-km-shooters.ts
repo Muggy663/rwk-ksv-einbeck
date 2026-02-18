@@ -30,29 +30,33 @@ export async function migrateKMShooters() {
     let rwkCount = 0;
     
     shootersSnap.docs.forEach((docSnap) => {
-      const shooter = docSnap.data();
-      
-      // KM-Schütze identifizieren
-      if (shooter.kmClubId && !shooter.clubId) {
-        // Nach km_shooters kopieren
-        const kmShooterRef = doc(db, 'km_shooters', docSnap.id);
-        batch.set(kmShooterRef, {
-          firstName: shooter.firstName,
-          lastName: shooter.lastName,
-          title: shooter.title,
-          name: shooter.name,
-          kmClubId: shooter.kmClubId,
-          gender: shooter.gender,
-          birthYear: shooter.birthYear,
-          mitgliedsnummer: shooter.mitgliedsnummer,
-          isActive: shooter.isActive,
-          createdAt: shooter.createdAt || new Date(),
-          migratedAt: new Date(),
-          migratedFrom: 'shooters'
-        });
-        kmCount++;
-      } else if (shooter.clubId) {
-        rwkCount++;
+      try {
+        const shooter = docSnap.data();
+        
+        // KM-Schütze identifizieren
+        if (shooter.kmClubId && !shooter.clubId) {
+          // Nach km_shooters kopieren
+          const kmShooterRef = doc(db, 'km_shooters', docSnap.id);
+          batch.set(kmShooterRef, {
+            firstName: shooter.firstName,
+            lastName: shooter.lastName,
+            title: shooter.title,
+            name: shooter.name,
+            kmClubId: shooter.kmClubId,
+            gender: shooter.gender,
+            birthYear: shooter.birthYear,
+            mitgliedsnummer: shooter.mitgliedsnummer,
+            isActive: shooter.isActive,
+            createdAt: shooter.createdAt || new Date(),
+            migratedAt: new Date(),
+            migratedFrom: 'shooters'
+          });
+          kmCount++;
+        } else if (shooter.clubId) {
+          rwkCount++;
+        }
+      } catch (error) {
+        logWarn('Fehler beim Verarbeiten eines Schützen', { shooterId: docSnap.id, error });
       }
     });
     

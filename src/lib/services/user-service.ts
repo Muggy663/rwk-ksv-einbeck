@@ -30,14 +30,30 @@ export class UserService {
   static async getUserProfiles(userIds: string[]): Promise<{ [userId: string]: UserProfile }> {
     const profiles: { [userId: string]: UserProfile } = {};
     
-    await Promise.all(
-      userIds.map(async (userId) => {
-        const profile = await this.getUserProfile(userId);
-        if (profile) {
-          profiles[userId] = profile;
-        }
-      })
-    );
+    try {
+      const { getDocsFromCache, getDocsFromServer } = await import('firebase/firestore');
+      const { collection, query, where, documentId } = await import('firebase/firestore');
+      
+      if (userIds.length === 0) return profiles;
+      
+      const batchSize = 10;
+      for (let i = 0; i < userIds.length; i += batchSize) {
+        const batch = userIds.slice(i, i + batchSize);
+        const q = query(collection(db, 'user_permissions'), where(documentId(), 'in', batch));
+        const snapshot = await getDocsFromServer(q);
+        
+        snapshot.docs.forEach(doc => {
+          const data = doc.data();
+          profiles[doc.id] = {
+            uid: doc.id,
+            displayName: data.displayName,
+            email: data.email
+          };
+        });
+      }
+    } catch (error) {
+      logError('Error loading user profiles:', error);
+    }
     
     return profiles;
   }

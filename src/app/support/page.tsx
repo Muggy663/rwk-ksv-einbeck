@@ -124,7 +124,7 @@ export default function SupportPage() {
               const ctx = canvas.getContext('2d');
               const img = new Image();
               
-              const compressedData = await new Promise<string>((resolve) => {
+              const compressedData = await new Promise<string>((resolve, reject) => {
                 img.onload = () => {
                   const maxWidth = 800;
                   const maxHeight = 600;
@@ -141,15 +141,35 @@ export default function SupportPage() {
                   ctx?.drawImage(img, 0, 0, width, height);
                   resolve(canvas.toDataURL('image/jpeg', 0.6));
                 };
-                img.src = URL.createObjectURL(file);
+                img.onerror = () => reject(new Error('Image load failed'));
+                const objectUrl = URL.createObjectURL(file);
+                img.src = objectUrl;
+                // Clean up object URL after image loads
+                img.onload = () => {
+                  URL.revokeObjectURL(objectUrl);
+                  const maxWidth = 800;
+                  const maxHeight = 600;
+                  let { width, height } = img;
+                  
+                  if (width > maxWidth || height > maxHeight) {
+                    const ratio = Math.min(maxWidth / width, maxHeight / height);
+                    width *= ratio;
+                    height *= ratio;
+                  }
+                  
+                  canvas.width = width;
+                  canvas.height = height;
+                  ctx?.drawImage(img, 0, 0, width, height);
+                  resolve(canvas.toDataURL('image/jpeg', 0.6));
+                };
               });
               
               filesData.push({
-                name: file.name,
+                name: String(file.name).replace(/[<>"'&]/g, ''),
                 type: 'image/jpeg',
                 data: compressedData,
                 originalSize: file.size,
-                compressedSize: Math.round(compressedData.length * 0.75) // Schätzung
+                compressedSize: Math.round(compressedData.length * 0.75)
               });
             } else {
               // Nicht-Bilder: Nur kleine Dateien
@@ -161,7 +181,7 @@ export default function SupportPage() {
                 });
                 
                 filesData.push({
-                  name: file.name,
+                  name: String(file.name).replace(/[<>"'&]/g, ''),
                   type: file.type,
                   data: fileData,
                   originalSize: file.size

@@ -663,7 +663,7 @@ export default function CertificatesPage() {
                 className="w-full"
                 options={seasons.map(season => ({
                   value: season.id,
-                  label: season.name.replace('RWK ', '').replace('Kleinkaliber ', '').replace('Luftdruck ', '')
+                  label: season.name.replace('RWK ', '').replace('Kleinkaliber ', '').replace('Luftdruck ', '').replace(/[<>"'&]/g, '')
                 }))}
               />
             </div>
@@ -676,7 +676,7 @@ export default function CertificatesPage() {
                 disabled={leagues.length === 0 || loading}
                 placeholder="Liga auswählen"
                 className="w-full"
-                options={leagues.map(league => ({ value: league.id, label: league.name }))}
+                options={leagues.map(league => ({ value: league.id, label: league.name.replace(/[<>"'&]/g, '') }))}
               />
             </div>
           </div>
@@ -791,7 +791,7 @@ export default function CertificatesPage() {
               className="w-full"
               options={seasons.map(season => ({
                 value: season.id,
-                label: season.name.replace('RWK ', '').replace('Kleinkaliber ', '').replace('Luftdruck ', '')
+                label: season.name.replace('RWK ', '').replace('Kleinkaliber ', '').replace('Luftdruck ', '').replace(/[<>"'&]/g, '')
               }))}
             />
           </div>

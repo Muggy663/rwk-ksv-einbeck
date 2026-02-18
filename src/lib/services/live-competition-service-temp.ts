@@ -22,7 +22,7 @@ export class LiveCompetitionService {
       throw new Error('Live-Wettkämpfe erfordern eine Premium-Lizenz');
     }
     
-    const newCompetition: Omit<LiveCompetition, 'id'> = {
+    const competitionData: Omit<LiveCompetition, 'id'> = {
       name: competitionData.name,
       groupId: competitionData.groupId,
       discipline: competitionData.discipline,
@@ -38,7 +38,10 @@ export class LiveCompetitionService {
       requiresPremium: true
     };
     
-    const competitionRef = await addDoc(collection(db, 'live_competitions'), newCompetition);
+    const competitionRef = await addDoc(
+      collection(db, 'live_competitions'),
+      competitionData
+    );
     return competitionRef.id;
   }
   
@@ -63,14 +66,19 @@ export class LiveCompetitionService {
         throw new Error('Spätes Beitreten ist für diesen Wettkampf nicht erlaubt');
       }
       
-      // Füge Teilnehmer hinzu (arrayUnion verhindert automatisch Duplikate)
+      // Prüfe ob bereits Teilnehmer
+      if (competition.participants.includes(userId)) {
+        throw new Error('Sie nehmen bereits an diesem Wettkampf teil');
+      }
+      
+      // Füge Teilnehmer hinzu
       await updateDoc(competitionRef, {
         participants: arrayUnion(userId)
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logError('Failed to join competition:', error);
-      throw new Error(`Failed to join competition: ${errorMessage}`);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to join competition';
+      logError('Error joining competition:', error);
+      throw new Error(`Fehler beim Beitreten: ${errorMessage}`);
     }
   }
   
@@ -100,14 +108,14 @@ export class LiveCompetitionService {
         startTime: new Date()
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logError('Failed to start competition:', error);
-      throw new Error(`Failed to start competition: ${errorMessage}`);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start competition';
+      logError('Error starting competition:', error);
+      throw new Error(`Fehler beim Starten: ${errorMessage}`);
     }
   }
   
   // Ergebnis einreichen
-  static async submitResult(userId: string, competitionId: string, competitionResultData: {
+  static async submitResult(userId: string, competitionId: string, resultData: {
     serien: any[];
     totalScore: number;
     totalRings: number;
@@ -135,9 +143,9 @@ export class LiveCompetitionService {
     const competitionResult: CompetitionResult = {
       userId,
       competitionId,
-      serien: competitionResultData.serien,
-      totalScore: competitionResultData.totalScore,
-      totalRings: competitionResultData.totalRings,
+      serien: resultData.serien,
+      totalScore: resultData.totalScore,
+      totalRings: resultData.totalRings,
       submittedAt: new Date()
     };
     
@@ -149,67 +157,53 @@ export class LiveCompetitionService {
   
   // Prüfe ob Wettkampf abgeschlossen werden kann
   private static async checkCompetitionComplete(competitionId: string) {
-    try {
-      const competitionRef = doc(db, 'live_competitions', competitionId);
-      const competitionDoc = await getDoc(competitionRef);
-      
-      if (!competitionDoc.exists()) {
-        throw new Error(`Competition ${competitionId} not found`);
-      }
-      
-      const competition = competitionDoc.data() as LiveCompetition;
-      
-      // Lade alle Ergebnisse
-      const resultsRef = collection(db, 'live_competitions', competitionId, 'results');
-      const resultsSnapshot = await getDocs(resultsRef);
-      
-      // Wenn alle Teilnehmer Ergebnisse eingereicht haben
-      if (resultsSnapshot.size >= competition.participants.length) {
-        await this.finishCompetition(competitionId);
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logError(`Failed to check competition completion: ${errorMessage}`, error);
-      throw new Error(`Failed to check competition completion: ${errorMessage}`);
+    const competitionRef = doc(db, 'live_competitions', competitionId);
+    const competitionDoc = await getDoc(competitionRef);
+    
+    if (!competitionDoc.exists()) return;
+    
+    const competition = competitionDoc.data() as LiveCompetition;
+    
+    // Lade alle Ergebnisse
+    const resultsRef = collection(db, 'live_competitions', competitionId, 'results');
+    const resultsSnapshot = await getDocs(resultsRef);
+    
+    // Wenn alle Teilnehmer Ergebnisse eingereicht haben
+    if (resultsSnapshot.size >= competition.participants.length) {
+      await this.finishCompetition(competitionId);
     }
   }
   
   // Wettkampf beenden
   static async finishCompetition(competitionId: string) {
-    try {
-      const batch = writeBatch(db);
-      const competitionRef = doc(db, 'live_competitions', competitionId);
-      
-      // Berechne Platzierungen
-      const resultsRef = collection(db, 'live_competitions', competitionId, 'results');
-      const resultsSnapshot = await getDocs(resultsRef);
-      
-      const results = resultsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as CompetitionResult));
-      
-      // Sortiere nach Gesamtergebnis (höchste Punktzahl gewinnt)
-      results.sort((a, b) => b.totalScore - a.totalScore);
-      
-      // Weise Platzierungen zu mit Batch
-      results.forEach((result, index) => {
-        const resultRef = doc(db, 'live_competitions', competitionId, 'results', result.userId);
-        batch.update(resultRef, { position: index + 1 });
-      });
-      
-      // Markiere Wettkampf als beendet
-      batch.update(competitionRef, {
-        status: 'finished',
-        endTime: new Date()
-      });
-      
-      await batch.commit();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logError('Failed to finish competition:', error);
-      throw new Error(`Failed to finish competition: ${errorMessage}`);
-    }
+    const competitionRef = doc(db, 'live_competitions', competitionId);
+    
+    // Berechne Platzierungen
+    const resultsRef = collection(db, 'live_competitions', competitionId, 'results');
+    const resultsSnapshot = await getDocs(resultsRef);
+    
+    const results = resultsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as CompetitionResult));
+    
+    // Sortiere nach Gesamtergebnis (höchste Punktzahl gewinnt)
+    results.sort((a, b) => b.totalScore - a.totalScore);
+    
+    // Batch-Update für Platzierungen
+    const batch = writeBatch(db);
+    results.forEach((result, index) => {
+      const resultRef = doc(db, 'live_competitions', competitionId, 'results', result.userId);
+      batch.update(resultRef, { position: index + 1 });
+    });
+    
+    // Markiere Wettkampf als beendet
+    batch.update(competitionRef, {
+      status: 'finished',
+      endTime: new Date()
+    });
+    
+    await batch.commit();
   }
   
   // Live-Rangliste abrufen
@@ -270,7 +264,13 @@ export class LiveCompetitionService {
   // Wettkampf verlassen
   static async leaveCompetition(userId: string, competitionId: string) {
     const competitionRef = doc(db, 'live_competitions', competitionId);
-    const competitionDoc = await getDoc(competitionRef);
+    const resultRef = doc(db, 'live_competitions', competitionId, 'results', userId);
+    
+    // Lade beide Dokumente parallel
+    const [competitionDoc, resultDoc] = await Promise.all([
+      getDoc(competitionRef),
+      getDoc(resultRef)
+    ]);
     
     if (!competitionDoc.exists()) {
       throw new Error('Wettkampf nicht gefunden');
@@ -282,26 +282,17 @@ export class LiveCompetitionService {
       throw new Error('Sie können einen aktiven Wettkampf nicht verlassen');
     }
     
-    await updateDoc(competitionRef, {
+    // Batch-Update für beide Änderungen
+    const batch = writeBatch(db);
+    
+    batch.update(competitionRef, {
       participants: arrayRemove(userId)
     });
     
-    await this.markUserResultAsDeleted(competitionId, userId);
-  }
-  
-  // Benutzer-Ergebnis als gelöscht markieren
-  private static async markUserResultAsDeleted(competitionId: string, userId: string) {
-    try {
-      const resultRef = doc(db, 'live_competitions', competitionId, 'results', userId);
-      const resultDoc = await getDoc(resultRef);
-      
-      if (resultDoc.exists()) {
-        await updateDoc(resultRef, { deleted: true, deletedAt: new Date() });
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logError('Failed to mark result as deleted:', error);
-      throw new Error(`Failed to mark result as deleted: ${errorMessage}`);
+    if (resultDoc.exists()) {
+      batch.update(resultRef, { deleted: true, deletedAt: new Date() });
     }
+    
+    await batch.commit();
   }
 }

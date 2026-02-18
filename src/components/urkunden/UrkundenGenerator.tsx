@@ -59,6 +59,8 @@ export function UrkundenGenerator({ jubilare }: UrkundenGeneratorProps) {
     const sanitizedName = escapeHtml(jubilar.name.toUpperCase());
     const sanitizedDatum = escapeHtml(urkundenDatum);
     const sanitizedJahre = escapeHtml(String(jubilar.jahre));
+    const sanitizedGender = escapeHtml(String(jubilar.gender || ''));
+    const sanitizedEhrung = escapeHtml(jubilar.ehrung);
 
     urkundeDiv.innerHTML = `
       <div style="text-align: center; line-height: 1.4; background: white; font-family: 'Algerian', serif; padding: 10px;">
@@ -67,7 +69,7 @@ export function UrkundenGenerator({ jubilare }: UrkundenGeneratorProps) {
         <h1 style="font-family: 'Algerian', serif; font-size: 96px; font-weight: bold; margin: 0 0 80px 0; letter-spacing: 8px; color: #2d5016; text-shadow: 2px 2px 0px #FFD700, -2px -2px 0px #FFD700, 2px -2px 0px #FFD700, -2px 2px 0px #FFD700;">URKUNDE</h1>
         
         <!-- Text Teil 1 -->
-        <p style="font-family: 'Algerian', serif; font-size: 24px; margin: 15px 0; font-weight: bold;">${(jubilar.gender === 'female' || jubilar.gender === 'w' || jubilar.gender === 'W') ? 'DER SCHÜTZENSCHWESTER' : 'DEM SCHÜTZENBRUDER'}</p>
+        <p style="font-family: 'Algerian', serif; font-size: 24px; margin: 15px 0; font-weight: bold;">${(sanitizedGender === 'female' || sanitizedGender === 'w' || sanitizedGender === 'W') ? 'DER SCHÜTZENSCHWESTER' : 'DEM SCHÜTZENBRUDER'}</p>
         
         <h2 style="font-family: 'Algerian', serif; font-size: 36px; font-weight: bold; margin: 15px 0; letter-spacing: 2px;">${sanitizedName}</h2>
         
@@ -82,7 +84,7 @@ export function UrkundenGenerator({ jubilare }: UrkundenGeneratorProps) {
         </div>
         
         <!-- Auszeichnung -->
-        <p style="font-family: 'Algerian', serif; font-size: 28px; font-weight: bold; margin: 15px 0; letter-spacing: 1px;">${getEhrungText(jubilar.ehrung)}</p>
+        <p style="font-family: 'Algerian', serif; font-size: 28px; font-weight: bold; margin: 15px 0; letter-spacing: 1px;">${escapeHtml(getEhrungText(sanitizedEhrung))}</p>
         
         <!-- Verb -->
         <p style="font-family: 'Algerian', serif; font-size: 32px; font-weight: bold; margin: 20px 0; letter-spacing: 4px;">VERLIEHEN</p>
@@ -114,7 +116,8 @@ export function UrkundenGenerator({ jubilare }: UrkundenGeneratorProps) {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgData = canvas.toDataURL('image/png');
       pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
-      pdf.save(`Urkunde_${jubilar.name.replace(/\s+/g, '_')}_${jubilar.jahre}Jahre.pdf`);
+      const sanitizedFileName = jubilar.name.replace(/[<>"'&\/\\]/g, '').replace(/\s+/g, '_');
+      pdf.save(`Urkunde_${sanitizedFileName}_${jubilar.jahre}Jahre.pdf`);
     } finally {
       document.body.removeChild(urkundeDiv);
     }

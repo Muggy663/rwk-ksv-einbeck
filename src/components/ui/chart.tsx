@@ -77,28 +77,41 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   }
 
   const sanitizeCSS = (value: string): string => {
-    return value.replace(/[<>"'&]/g, '').replace(/[^a-zA-Z0-9#(),. %\-]/g, '')
+    // Remove all potentially dangerous characters and only allow safe CSS values
+    return String(value || '')
+      .replace(/[<>"'`&\\]/g, '')
+      .replace(/javascript:/gi, '')
+      .replace(/expression\(/gi, '')
+      .replace(/import/gi, '')
+      .replace(/@import/gi, '')
+      .replace(/url\(/gi, '')
+      .replace(/[^a-zA-Z0-9#(),. %\-]/g, '')
+      .slice(0, 100); // Limit length
   }
 
-  const escapedId = id.replace(/[^a-zA-Z0-9\-_]/g, '')
+  const escapedId = String(id || '').replace(/[^a-zA-Z0-9\-_]/g, '').slice(0, 50);
 
   return (
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${escapedId}] {
+            ([theme, prefix]) => {
+              const sanitizedPrefix = String(prefix || '').replace(/[^a-zA-Z0-9.\-_ ]/g, '').slice(0, 20);
+              return `
+${sanitizedPrefix} [data-chart=${escapedId}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
       itemConfig.color
-    return color ? `  --color-${sanitizeCSS(key)}: ${sanitizeCSS(color)};` : null
+    return color ? `  --color-${sanitizeCSS(key)}: ${sanitizeCSS(String(color))};` : null
   })
+  .filter(Boolean)
   .join("\n")}
 }
-`
+`;
+            }
           )
           .join("\n"),
       }}

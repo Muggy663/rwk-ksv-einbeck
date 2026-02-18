@@ -115,7 +115,8 @@ class SecureLogger {
     
     if (context) {
       const sanitizedContext = this.sanitizeObject(context);
-      logMessage += ` | Context: ${JSON.stringify(sanitizedContext)}`;
+      const contextStr = JSON.stringify(sanitizedContext).replace(/[\r\n\t]/g, ' ');
+      logMessage += ` | Context: ${contextStr}`;
     }
     
     return logMessage;
@@ -143,11 +144,12 @@ class SecureLogger {
    * Error-Level Logging
    */
   error(message: string, error?: Error, context?: LogContext): void {
-    // Globaler NOT_FOUND Abfang - stumm schalten für Build-Zeit
-    if (error && typeof error === 'object' && 'code' in error && error.code === '5') {
-      // NOT_FOUND Fehler während Build - nur als Warning loggen
-      this.warn(`Firestore NOT_FOUND (Build-Zeit): ${message}`, context);
-      return;
+    if (error && typeof error === 'object' && 'code' in error) {
+      const errorCode = String(error.code);
+      if (errorCode === '5') {
+        this.warn(`Firestore NOT_FOUND (Build-Zeit): ${message}`, context);
+        return;
+      }
     }
     
     const errorContext = error ? { error: this.sanitizeObject(error), ...context } : context;
@@ -171,7 +173,9 @@ class SecureLogger {
    */
   performance(operation: string, duration: number, context?: LogContext): void {
     if (this.isDevelopment) {
-      this.info(`Performance: ${operation} took ${duration}ms`, context);
+      const sanitizedOperation = this.sanitizeString(operation);
+      const sanitizedDuration = Math.max(0, Math.floor(Number(duration) || 0));
+      this.info(`Performance: ${sanitizedOperation} took ${sanitizedDuration}ms`, context);
     }
   }
 }
@@ -186,11 +190,14 @@ export const logError = (message: string, error?: Error, context?: LogContext) =
 export const logDebug = (message: string, context?: LogContext) => {
   try {
     secureLogger.debug(message, context);
-  } catch (error) {
-    // Fallback: silent fail in production
+  } catch (err) {
     if (process.env.NODE_ENV === 'development') {
-      console.warn('logDebug error:', error);
+      const sanitizedError = err instanceof Error ? err.message.replace(/[\r\n\t<>'"&]/g, '_') : String(err).replace(/[\r\n\t<>'"&]/g, '_');
+      console.warn('logDebug error:', sanitizedError);
     }
   }
 };
-export const logPerformance = (operation: string, duration: number, context?: LogContext) => secureLogger.performance(operation, duration, context);
+export const logPerformance = (operation: string, duration: number, context?: LogContext) => {
+  const sanitizedOperation = String(operation).replace(/[\r\n\t<>'"&]/g, '_').substring(0, 200);
+  secureLogger.performance(sanitizedOperation, duration, context);
+};

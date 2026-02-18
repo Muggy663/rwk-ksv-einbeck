@@ -2,11 +2,16 @@ import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger'
 const admin = require('firebase-admin');
 
 if (!admin.apps.length) {
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  if (!privateKey) {
+    throw new Error('FIREBASE_PRIVATE_KEY environment variable is required');
+  }
+  
   admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+      privateKey: privateKey.replace(/\\n/g, '\n')
     })
   });
 }
@@ -26,7 +31,7 @@ async function fixDuplicates() {
     
     scoresSnapshot.docs.forEach(doc => {
       const data = doc.data();
-      const key = `${data.shooterName}-${data.teamName}-${data.durchgang}-2025`;
+      const key = `${data.shooterName || ''}-${data.teamName || ''}-${data.durchgang || ''}-2025`;
       
       if (!groups.has(key)) {
         groups.set(key, []);

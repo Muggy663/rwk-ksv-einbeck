@@ -8,13 +8,13 @@ import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger'
 /**
  * Prüft, ob ein Durchgang für ein Team vollständig ist
  * @param teamScores Alle Scores für ein Team
- * @param durchgang Durchgangsnummer
+ * @param round Durchgangsnummer
  * @param shooterIds IDs der Schützen im Team
  * @returns true wenn der Durchgang vollständig ist, sonst false
  */
 export function isRoundComplete(
   teamScores: any[], 
-  durchgang: number, 
+  round: number, 
   shooterIds: string[]
 ): boolean {
   // Wenn keine Schützen im Team sind, kann der Durchgang nicht vollständig sein
@@ -24,7 +24,7 @@ export function isRoundComplete(
 
   // Filtere Scores für den angegebenen Durchgang
   const scoresForRound = teamScores.filter(score => 
-    score.durchgang === durchgang && 
+    score.durchgang === round && 
     typeof score.totalRinge === 'number' && 
     score.totalRinge > 0
   );
@@ -50,7 +50,7 @@ export function isRoundComplete(
  */
 export function isLeagueRoundComplete(
   teams: any[], 
-  durchgang: number, 
+  round: number, 
   allScores: any[]
 ): boolean {
   // Wenn keine Teams in der Liga sind, ist der Durchgang nicht vollständig
@@ -62,7 +62,7 @@ export function isLeagueRoundComplete(
   return teams.every(team => {
     // Filtere Scores für dieses Team
     const teamScores = allScores.filter(score => score.teamId === team.id);
-    return isRoundComplete(teamScores, durchgang, team.shooterIds || []);
+    return isRoundComplete(teamScores, round, team.shooterIds || []);
   });
 }
 
@@ -96,12 +96,12 @@ export function getHighestCompleteRound(
  */
 export function hasShooterResultForRound(
   shooterId: string,
-  durchgang: number,
+  round: number,
   allScores: any[]
 ): boolean {
   return allScores.some(score => 
     score.shooterId === shooterId && 
-    score.durchgang === durchgang && 
+    score.durchgang === round && 
     typeof score.totalRinge === 'number' && 
     score.totalRinge > 0
   );
@@ -116,28 +116,32 @@ export function hasShooterResultForRound(
  */
 export function findMissingResults(
   teams: any[],
-  durchgang: number,
+  round: number,
   allScores: any[]
 ): Array<{teamId: string, teamName: string, shooterId: string, shooterName: string}> {
   const missingResults = [];
   
-  for (const team of teams) {
-    const shooterIds = team.shooterIds || [];
-    
-    for (const shooterId of shooterIds) {
-      if (!hasShooterResultForRound(shooterId, durchgang, allScores)) {
-        // Finde Schützenname
-        const shooter = allScores.find(score => score.shooterId === shooterId);
-        const shooterName = shooter ? shooter.shooterName : 'Unbekannter Schütze';
-        
-        missingResults.push({
-          teamId: team.id,
-          teamName: team.name || 'Unbekanntes Team',
-          shooterId,
-          shooterName
-        });
+  try {
+    for (const team of teams) {
+      const shooterIds = team.shooterIds || [];
+      
+      for (const shooterId of shooterIds) {
+        if (!hasShooterResultForRound(shooterId, round, allScores)) {
+          // Finde Schützenname
+          const shooter = allScores.find(score => score.shooterId === shooterId);
+          const shooterName = shooter ? shooter.shooterName : 'Unbekannter Schütze';
+          
+          missingResults.push({
+            teamId: team.id,
+            teamName: team.name || 'Unbekanntes Team',
+            shooterId,
+            shooterName
+          });
+        }
       }
     }
+  } catch (error) {
+    logError('Fehler beim Finden fehlender Ergebnisse:', error);
   }
   
   return missingResults;

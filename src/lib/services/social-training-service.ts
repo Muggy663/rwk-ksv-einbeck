@@ -10,10 +10,13 @@ export class SocialTrainingService {
       let photoUrl = '';
       
       if (photo) {
-        // Upload Foto zu Firebase Storage
-        const photoRef = ref(storage, `social-training-results/${Date.now()}_${photo.name}`);
-        const snapshot = await uploadBytes(photoRef, photo);
-        photoUrl = await getDownloadURL(snapshot.ref);
+        try {
+          const photoRef = ref(storage, `social-training-results/${Date.now()}_${photo.name}`);
+          const snapshot = await uploadBytes(photoRef, photo);
+          photoUrl = await getDownloadURL(snapshot.ref);
+        } catch (uploadError) {
+          logWarn('Photo upload failed, continuing without photo', { error: uploadError });
+        }
       }
 
       // Speichere Ergebnis in Firestore

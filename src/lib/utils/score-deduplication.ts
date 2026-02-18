@@ -29,9 +29,10 @@ export function deduplicateScores(
   }
 ): ScoreEntry[] {
   const map = new Map<string, ScoreEntry>();
+  const groupByKey = options.groupBy || 'shooter-round-year-type';
 
   scores.forEach(score => {
-    const key = createDeduplicationKey(score, options.groupBy || 'shooter-round-year-type');
+    const key = createDeduplicationKey(score, groupByKey);
     const existing = map.get(key);
 
     if (!existing || shouldReplaceScore(existing, score, options)) {
@@ -46,13 +47,11 @@ export function deduplicateScores(
  * Erstellt eindeutigen Schlüssel für Duplikat-Erkennung
  */
 function createDeduplicationKey(score: ScoreEntry, groupBy: string): string {
-  const base = `${score.shooterId}|${score.durchgang}`;
-  
   if (groupBy === 'shooter-round-year-type') {
-    return `${base}|${score.competitionYear}|${score.leagueType}`;
+    return `${score.shooterId}|${score.durchgang}|${score.competitionYear}|${score.leagueType}`;
   }
   
-  return base;
+  return `${score.shooterId}|${score.durchgang}`;
 }
 
 /**

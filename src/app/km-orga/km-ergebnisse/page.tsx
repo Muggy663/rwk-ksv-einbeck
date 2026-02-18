@@ -557,7 +557,7 @@ export default function KMErgebnissePage() {
             const mannschaftsTableData = mannschaftsErgebnisse.map((m, index) => [
               (index + 1).toString(),
               sanitizeText(m.verein),
-              m.mannschaftsRinge.toString(),
+              sanitizeText(m.mannschaftsRinge.toString()),
               'Ringe'
             ]);
             
@@ -663,7 +663,7 @@ export default function KMErgebnissePage() {
         });
       });
       
-      const fileName = `Ergebnisliste_KM_${currentSaison?.name?.replace(/\s+/g, '_') || 'KM'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `Ergebnisliste_KM_${sanitizeText(currentSaison?.name?.replace(/\s+/g, '_') || 'KM')}_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
       
       toast({ title: 'PDF erstellt', description: `${fileName} wurde heruntergeladen.` });
@@ -983,13 +983,16 @@ export default function KMErgebnissePage() {
                               <Label className="text-xs">Serie {serieIndex + 1} ({seriesInfo.shotsPerSeries} Schuss)</Label>
                               <Input
                                 type="text"
+                                // amazonq-ignore-next-line
                                 value={seriesInputs[`${meldung.id}-${serieIndex}`] || (currentSeries[serieIndex] && currentSeries[serieIndex].length > 0 ? currentSeries[serieIndex].map(v => v.toFixed(1).replace('.', ',')).join(' ') : '')}
                                 onChange={(e) => {
+                                  const sanitizedValue = e.target.value.replace(/[<>"'&]/g, '');
                                   const inputKey = `${meldung.id}-${serieIndex}`;
-                                  setSeriesInputs(prev => ({ ...prev, [inputKey]: e.target.value }));
+                                  setSeriesInputs(prev => ({ ...prev, [inputKey]: sanitizedValue }));
                                 }}
                                 onBlur={(e) => {
-                                  const values = e.target.value.split(/[\s]+/).map(v => {
+                                  const sanitizedValue = e.target.value.replace(/[<>"'&]/g, '');
+                                  const values = sanitizedValue.split(/[\s]+/).map(v => {
                                     const num = parseFloat(v.trim().replace(',', '.'));
                                     return (!isNaN(num) && num >= 0 && num <= 109) ? num : null;
                                   }).filter(v => v !== null).slice(0, seriesInfo.shotsPerSeries);
@@ -1038,11 +1041,11 @@ export default function KMErgebnissePage() {
                           type="text"
                           value={inputValues[meldung.id] ?? (meldung.kmErgebnis ? meldung.kmErgebnis.ringe.toFixed(1).replace('.', ',') : '')}
                           onChange={(e) => {
-                            const value = e.target.value;
-                            setInputValues(prev => ({ ...prev, [meldung.id]: value }));
+                            const sanitizedValue = e.target.value.replace(/[<>"'&]/g, '');
+                            setInputValues(prev => ({ ...prev, [meldung.id]: sanitizedValue }));
                             
-                            if (value && !value.endsWith(',') && !value.endsWith('.')) {
-                              const { ringe, teiler } = parseInput(value);
+                            if (sanitizedValue && !sanitizedValue.endsWith(',') && !sanitizedValue.endsWith('.')) {
+                              const { ringe, teiler } = parseInput(sanitizedValue);
                               handleErgebnisChange(meldung.id, 'ringe', ringe.toString());
                               handleErgebnisChange(meldung.id, 'teiler', teiler.toString());
                             }

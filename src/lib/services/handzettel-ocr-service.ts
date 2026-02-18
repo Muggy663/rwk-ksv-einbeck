@@ -2,6 +2,19 @@
 import { createWorker, type Worker } from 'tesseract.js';
 import { secureLogger } from '@/lib/utils/secure-logger';
 
+const sanitizeText = (text: string | undefined | null): string => {
+  return String(text || '').replace(/[<>"'&]/g, (char) => {
+    const entities: Record<string, string> = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '&': '&amp;'
+    };
+    return entities[char] || char;
+  });
+};
+
 export interface OCRShooter {
   name: string;
   score: number;
@@ -189,7 +202,7 @@ export class HandzettelOCRService {
           const score = parseInt(shooterMatch[2]);
           if (score >= 0 && score <= 400) {
             currentShooters.push({
-              name: shooterMatch[1].trim(),
+              name: sanitizeText(shooterMatch[1].trim()),
               score: score,
               confidence: 0.85
             });
@@ -224,7 +237,7 @@ export class HandzettelOCRService {
             if (score >= 0 && score <= 400) {
               secureLogger.debug('Shooter recognized by Tesseract', 'handzettel-ocr');
               currentShooters.push({
-                name: shooterMatch[1].trim(),
+                name: sanitizeText(shooterMatch[1].trim()),
                 score: score,
                 confidence: 0.6 // Niedriger als Google Vision
               });

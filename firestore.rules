@@ -471,19 +471,13 @@ service cloud.firestore {
               getUserPermissions().premiumUntil > request.time);
     }
     
-    // Schießnachweis-Daten (Premium-Feature)
+    // Schießnachweis-Daten - Jeder angemeldete User kann seine eigenen Daten lesen/schreiben
     match /schiessnachweis_data/{userId} {
-      allow read, write: if isAuthenticated() && 
-                         request.auth.uid == userId &&
-                         (request.auth.token.email_verified == true ||
-                          (getUserPermissions() != null && getUserPermissions().emailVerifiedByAdmin == true));
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
     
     match /schiessnachweis_data/{userId}/{document=**} {
-      allow read, write: if isAuthenticated() && 
-                         request.auth.uid == userId &&
-                         (request.auth.token.email_verified == true ||
-                          (getUserPermissions() != null && getUserPermissions().emailVerifiedByAdmin == true));
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
     
     // Premium-Subscriptions
@@ -506,6 +500,8 @@ service cloud.firestore {
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['socialSettings', 'updatedAt']) ||
                       // Erlaube Notification Settings Updates
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notificationSettings', 'updatedAt']) ||
+                      // Erlaube Profil Updates
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'lastName', 'verein', 'kreisverband', 'strasse', 'plz', 'wohnort', 'updatedAt']) ||
                       // Erlaube Social Training Profile Updates
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'firstName', 'lastName', 'clubName', 'disciplines', 'birthYear', 'onboardingCompleted', 'updatedAt', 'createdAt'])));
       allow create: if isAuthenticated() && 

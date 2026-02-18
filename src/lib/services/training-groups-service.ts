@@ -132,10 +132,14 @@ export class TrainingGroupsService {
     
     // Deaktiviere Mitgliedschaft
     const memberRef = doc(db, 'training_groups', groupId, 'members', userId);
-    await updateDoc(memberRef, {
-      isActive: false,
-      leftAt: new Date()
-    });
+    try {
+      await updateDoc(memberRef, {
+        isActive: false,
+        leftAt: new Date()
+      });
+    } catch (error) {
+      logWarn(`Mitgliedschafts-Dokument konnte nicht aktualisiert werden: ${error}`);
+    }
     
     // Wenn letzter Admin, mache ersten Mitglied zum Admin
     const updatedGroup = await getDoc(groupRef);
@@ -147,11 +151,14 @@ export class TrainingGroupsService {
         admins: [newAdmin]
       });
       
-      // Update Mitglied-Rolle
       const newAdminRef = doc(db, 'training_groups', groupId, 'members', newAdmin);
-      await updateDoc(newAdminRef, {
-        role: 'admin'
-      });
+      try {
+        await updateDoc(newAdminRef, {
+          role: 'admin'
+        });
+      } catch (error) {
+        logWarn(`Admin-Rolle konnte nicht aktualisiert werden: ${error}`);
+      }
     }
     
     // Wenn keine Mitglieder mehr, deaktiviere Gruppe
@@ -262,8 +269,9 @@ export class TrainingGroupsService {
     // Lösche alle Subcollections
     const membersQuery = query(collection(db, 'training_groups', groupId, 'members'));
     const membersSnapshot = await getDocs(membersQuery);
-    const deletePromises = membersSnapshot.docs.map(doc => deleteDoc(doc.ref));
-    await Promise.all(deletePromises);
+    if (!membersSnapshot.empty) {
+      await Promise.all(membersSnapshot.docs.map(doc => deleteDoc(doc.ref)));
+    }
     
     // Lösche die Gruppe permanent
     await deleteDoc(groupRef);

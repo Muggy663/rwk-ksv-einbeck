@@ -10,7 +10,10 @@ export async function fetchShooterDataForCompetition(
   numRounds: number,
   filterByLeagueId?: string | null
 ): Promise<IndividualShooterDisplayData[]> {
-  if (!config || !config.year || !config.discipline) return [];
+  if (!config || !config.year || !config.discipline) {
+    logWarn('Invalid competition config provided', { config, numRounds, filterByLeagueId });
+    return [];
+  }
   
   try {
     // Direkte Abfrage der Scores nach Jahr mit saison-spezifischer Collection
@@ -52,7 +55,7 @@ export async function fetchShooterDataForCompetition(
     );
     const substitutionsSnapshot = await getDocs(substitutionsQuery);
     const substitutionsMap = new Map();
-    substitutionsSnapshot.docs.forEach(doc => {
+    for (const doc of substitutionsSnapshot.docs) {
       const sub = doc.data();
       substitutionsMap.set(sub.replacementShooterId, {
         isSubstitute: true,
@@ -61,7 +64,7 @@ export async function fetchShooterDataForCompetition(
         reason: sub.reason,
         type: sub.type
       });
-    });
+    }
     
     for (const score of allScores) {
       if (!score.shooterId) continue;

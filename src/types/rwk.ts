@@ -1,4 +1,3 @@
-// src/types/rwk.ts
 export type FirestoreLeagueSpecificDiscipline = 'KK' | 'KKP' | 'KKG' | 'LG' | 'LGA' | 'LGS' | 'LP' | 'LPA' | 'LD';
 
 export interface Season {

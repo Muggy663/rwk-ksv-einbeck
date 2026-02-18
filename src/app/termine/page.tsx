@@ -21,6 +21,19 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { cleanupExpiredEvents } from '@/lib/services/event-cleanup';
 
+const sanitizeText = (text: string | undefined | null): string => {
+  return String(text || '').replace(/[<>"'&]/g, (char) => {
+    const entities: Record<string, string> = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '&': '&amp;'
+    };
+    return entities[char] || char;
+  });
+};
+
 // Globale Variable für die nächsten Termine
 declare global {
   interface Window {
@@ -255,7 +268,7 @@ export default function TerminePage() {
       
       toast({
         title: 'Export erfolgreich',
-        description: `${validEvents.length} Termine wurden als iCal-Datei exportiert.`,
+        description: validEvents.length + ' Termine wurden als iCal-Datei exportiert.',
       });
     } catch (error) {
       logError('Fehler beim Exportieren der Termine:', error);
@@ -405,15 +418,15 @@ export default function TerminePage() {
                   {selectedEvents.map((event, index) => (
                     <div key={event.id || index} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start">
-                        <h3 className="font-semibold">{event.title}</h3>
+                        <h3 className="font-semibold">{sanitizeText(event.title)}</h3>
                         <Badge variant={getBadgeVariant(event.type, event.isKreisverband)}>
                           {getBadgeText(event.type, event.isKreisverband)}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">{event.location}</p>
-                      <p className="text-sm mt-2">Uhrzeit: {event.time} Uhr</p>
+                      <p className="text-sm text-muted-foreground mt-1">{sanitizeText(event.location)}</p>
+                      <p className="text-sm mt-2">Uhrzeit: {sanitizeText(event.time)} Uhr</p>
                       {event.description && (
-                        <p className="text-sm mt-2 text-muted-foreground">{event.description}</p>
+                        <p className="text-sm mt-2 text-muted-foreground">{sanitizeText(event.description)}</p>
                       )}
                       <div className="mt-4 flex justify-end">
                         <Button 
@@ -458,10 +471,10 @@ export default function TerminePage() {
                       <div key={event.id || index} className="py-3 border-b last:border-0">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <p className="font-medium">{event.title}</p>
-                            <p className="text-xs text-muted-foreground">{event.location}</p>
+                            <p className="font-medium">{sanitizeText(event.title)}</p>
+                            <p className="text-xs text-muted-foreground">{sanitizeText(event.location)}</p>
                             {event.description && (
-                              <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
+                              <p className="text-sm text-muted-foreground mt-1">{sanitizeText(event.description)}</p>
                             )}
                           </div>
                           <div className="flex flex-col items-end ml-4">

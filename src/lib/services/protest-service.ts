@@ -245,17 +245,21 @@ class ProtestService {
     try {
       const protests = await this.getAllProtests();
       
-      return {
-        total: protests.length,
-        eingereicht: protests.filter(p => p.status === 'eingereicht').length,
-        inBearbeitung: protests.filter(p => p.status === 'in_bearbeitung').length,
-        entschieden: protests.filter(p => p.status === 'entschieden').length,
-        abgelehnt: protests.filter(p => p.status === 'abgelehnt').length
-      };
+      return this.calculateProtestStats(protests);
     } catch (error) {
       logError('Fehler beim Laden der Protest-Statistiken:', error);
       throw error;
     }
+  }
+  
+  private calculateProtestStats(protests: Protest[]) {
+    return {
+      total: protests.length,
+      eingereicht: protests.filter(p => p.status === 'eingereicht').length,
+      inBearbeitung: protests.filter(p => p.status === 'in_bearbeitung').length,
+      entschieden: protests.filter(p => p.status === 'entschieden').length,
+      abgelehnt: protests.filter(p => p.status === 'abgelehnt').length
+    };
   }
 }
 

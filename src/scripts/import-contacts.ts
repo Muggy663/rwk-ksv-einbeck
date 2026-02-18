@@ -30,23 +30,25 @@ function parseEmailList(emailString: string): Contact[] {
     const parenMatch = entry.match(/^(.+?)\s*\((.+?)\)$/);
     const emailMatch = entry.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
     
-    if (angleMatch) {
+    if (angleMatch && angleMatch[1] && angleMatch[2]) {
       name = angleMatch[1].trim();
       email = angleMatch[2].trim();
-    } else if (parenMatch) {
+    } else if (parenMatch && parenMatch[1] && parenMatch[2]) {
       name = parenMatch[1].trim();
       email = parenMatch[2].trim();
     } else if (emailMatch) {
       email = entry.trim();
-      name = email.split('@')[0]; // Use part before @ as name
+      const emailParts = email.split('@');
+      name = emailParts[0] || ''; // Use part before @ as name
     } else {
       logWarn('Could not parse:', entry);
       return;
     }
     
     if (email && email.includes('@')) {
+      const fallbackName = email.split('@')[0] || '';
       contacts.push({
-        name: name || email.split('@')[0],
+        name: name || fallbackName,
         email: email.toLowerCase(),
         group: 'sportleiter',
         role: 'vereinsvertreter',
@@ -58,11 +60,8 @@ function parseEmailList(emailString: string): Contact[] {
   return contacts;
 }
 
-export async function importContacts() {
-
-  
+export async function importContacts(): Promise<void> {
   const contacts = parseEmailList(emailList);
-
   
   let imported = 0;
   let skipped = 0;
@@ -78,21 +77,14 @@ export async function importContacts() {
       
       if (existingDocs.empty) {
         await addDoc(collection(db, 'email_contacts'), contact);
-
         imported++;
       } else {
-
         skipped++;
       }
     } catch (error) {
       logError(`❌ Fehler bei ${contact.email}:`, error);
     }
   }
-  
-
-
-
-
 }
 
 // Für direkten Aufruf

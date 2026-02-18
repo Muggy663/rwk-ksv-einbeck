@@ -21,9 +21,13 @@ export function truncateString(str: string, maxLength: number): string {
  */
 export function toCamelCase(str: string): string {
   if (!str) return '';
-  return str
-    .toLowerCase()
-    .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase());
+  try {
+    return str
+      .toLowerCase()
+      .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase());
+  } catch (error) {
+    return str;
+  }
 }
 
 /**
@@ -33,8 +37,10 @@ export function toCamelCase(str: string): string {
  */
 export function toPascalCase(str: string): string {
   if (!str) return '';
-  const camelCase = toCamelCase(str);
-  return camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
+  return str
+    .toLowerCase()
+    .replace(/[^a-zA-Z0-9]+(.)/g, (_, chr) => chr.toUpperCase())
+    .replace(/^./, (chr) => chr.toUpperCase());
 }
 
 /**
@@ -81,12 +87,18 @@ export function removeUmlauts(str: string): string {
  * Generiert einen zufälligen String
  * @param length Die Länge des zu generierenden Strings
  * @returns Der generierte String
+ * @throws {Error} Wenn length negativ oder keine Zahl ist
  */
 export function generateRandomString(length: number): string {
+  if (length < 0 || !Number.isFinite(length)) {
+    throw new Error('Length must be a non-negative finite number');
+  }
+  
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charsLength = chars.length;
   let result = '';
   for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    result += chars.charAt(Math.floor(Math.random() * charsLength));
   }
   return result;
 }

@@ -49,23 +49,34 @@ class PlausibilityService {
   ): Promise<PlausibilityWarning[]> {
     const warnings: PlausibilityWarning[] = [];
 
-    // 1. Unmögliche Werte prüfen
-    const impossibleCheck = this.checkImpossibleValues(score, leagueType);
-    if (impossibleCheck) warnings.push(impossibleCheck);
+    try {
+      // 1. Unmögliche Werte prüfen
+      const impossibleCheck = this.checkImpossibleValues(score, leagueType);
+      if (impossibleCheck) warnings.push(impossibleCheck);
 
-    // 2. Schützen-Konsistenz prüfen
-    const shooterHistory = await this.getShooterHistory(shooterId, leagueType, competitionYear);
-    const consistencyCheck = this.checkShooterConsistency(shooterName, score, shooterHistory);
-    if (consistencyCheck) warnings.push(consistencyCheck);
+      // 2. Schützen-Konsistenz prüfen
+      const shooterHistory = await this.getShooterHistory(shooterId, leagueType, competitionYear);
+      const consistencyCheck = this.checkShooterConsistency(shooterName, score, shooterHistory);
+      if (consistencyCheck) warnings.push(consistencyCheck);
 
-    // 3. Team-Anomalie prüfen
-    const teamHistory = await this.getTeamHistory(teamId, leagueType, competitionYear);
-    const anomalyCheck = this.checkTeamAnomaly(teamName, score, teamHistory);
-    if (anomalyCheck) warnings.push(anomalyCheck);
+      // 3. Team-Anomalie prüfen
+      const teamHistory = await this.getTeamHistory(teamId, leagueType, competitionYear);
+      const anomalyCheck = this.checkTeamAnomaly(teamName, score, teamHistory);
+      if (anomalyCheck) warnings.push(anomalyCheck);
 
-    // 4. Positive Bestätigung bei guten Werten
-    const positiveCheck = this.checkPositiveIndicators(score, shooterHistory, teamHistory);
-    if (positiveCheck) warnings.push(positiveCheck);
+      // 4. Positive Bestätigung bei guten Werten
+      const positiveCheck = this.checkPositiveIndicators(score, shooterHistory, teamHistory);
+      if (positiveCheck) warnings.push(positiveCheck);
+    } catch (error) {
+      logError('Fehler bei Plausibilitätsprüfung:', error);
+      warnings.push({
+        type: 'info',
+        severity: 'info',
+        title: 'ℹ️ Hinweis',
+        message: 'Plausibilitätsprüfung konnte nicht vollständig durchgeführt werden.',
+        suggestion: 'Bitte prüfen Sie die Eingabe manuell.'
+      });
+    }
 
     return warnings;
   }
@@ -78,6 +89,7 @@ class PlausibilityService {
     };
 
     const maxScore = maxScores[leagueType] || 300;
+    const lowScoreThreshold = 0.5;
 
     if (score < 0) {
       return {
@@ -100,7 +112,7 @@ class PlausibilityService {
     }
 
     // Sehr niedrige Werte (unter 50% des Maximums)
-    if (score < maxScore * 0.5) {
+    if (score < maxScore * lowScoreThreshold) {
       return {
         type: 'anomaly',
         severity: 'warning',
@@ -147,9 +159,11 @@ class PlausibilityService {
     if (!history || history.totalRounds < 2) return null;
 
     // Prüfe ob der Einzelwert extrem vom Team-Durchschnitt abweicht
-    const teamAvgPerShooter = history.averageTeamScore / 5; // Annahme: 5 Schützen pro Team
+    const shootersPerTeam = 5; // Annahme: 5 Schützen pro Team
+    const teamAvgPerShooter = history.averageTeamScore / shootersPerTeam;
     const deviation = Math.abs(score - teamAvgPerShooter);
-    const threshold = teamAvgPerShooter * 0.2; // 20% Abweichung
+    const deviationThreshold = 0.2; // 20% Abweichung
+    const threshold = teamAvgPerShooter * deviationThreshold;
 
     if (deviation > threshold && deviation > 40) {
       return {
@@ -181,7 +195,8 @@ class PlausibilityService {
     }
 
     // Verbesserung gegenüber Durchschnitt
-    if (shooterHistory && score > shooterHistory.averageScore + 20) {
+    const improvementThreshold = 20;
+    if (shooterHistory && score > shooterHistory.averageScore + improvementThreshold) {
       return {
         type: 'info',
         severity: 'info',
@@ -286,7 +301,10 @@ class PlausibilityService {
         if (!roundScores.has(round)) {
           roundScores.set(round, []);
         }
-        roundScores.get(round)!.push(data.totalRinge);
+        const scores = roundScores.get(round);
+        if (scores) {
+          scores.push(data.totalRinge);
+        }
       });
 
       // Berechne Team-Summen pro Durchgang

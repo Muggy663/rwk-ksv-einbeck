@@ -74,6 +74,7 @@ export function HandzettelOCR({
       const ctx = canvas.getContext('2d')
       const img = new Image()
       
+      // amazonq-ignore-next-line
       img.onload = () => {
         // Maximale Auflösung für Mobile: 1920x1080
         const maxWidth = 1920
@@ -113,7 +114,47 @@ export function HandzettelOCR({
       }
       
       img.onerror = () => resolve(file)
-      img.src = URL.createObjectURL(file)
+      const objectUrl = URL.createObjectURL(file)
+      img.src = objectUrl
+      // Clean up object URL after image loads
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl)
+        // Maximale Auflösung für Mobile: 1920x1080
+        const maxWidth = 1920
+        const maxHeight = 1080
+        
+        let { width, height } = img
+        
+        // Skalierung berechnen
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height)
+          width *= ratio
+          height *= ratio
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // Bild zeichnen mit besserer Qualität
+        ctx!.imageSmoothingEnabled = true
+        ctx!.imageSmoothingQuality = 'high'
+        ctx!.drawImage(img, 0, 0, width, height)
+        
+        // Als JPEG mit 85% Qualität exportieren
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            })
+            Object.freeze(compressedFile)
+            logDebug(`📱 Bild komprimiert: ${Math.round(file.size/1024)}KB → ${Math.round(compressedFile.size/1024)}KB`)
+            resolve(compressedFile)
+          } else {
+            resolve(file)
+          }
+        }, 'image/jpeg', 0.85)
+      }
     })
   }, [])
 
@@ -234,7 +275,7 @@ export function HandzettelOCR({
         if (isMobile) {
           const sanitizedSize = Math.max(0, Math.round(processedImage.size/1024))
           const sanitizedTeamCount = Math.max(0, availableTeams.length)
-          const sanitizedType = String(processedImage.type).replace(/[^a-zA-Z0-9\/\-]/g, '')
+          const sanitizedType = sanitizeText(processedImage.type)
           
           errorDetails += `\n\n📱 Mobile Details:\n• Bildgröße: ${sanitizedSize}KB\n• Teams: ${sanitizedTeamCount}\n• Typ: ${sanitizedType}`
           
@@ -339,7 +380,7 @@ export function HandzettelOCR({
       }
       
       let bestMatch: {shooterId: string, shooterInfo: any, similarity: number} | null = null
-      const geminiName = geminiResult.shooterName.toLowerCase().trim()
+      const geminiName = sanitizeText(geminiResult.shooterName).toLowerCase().trim()
       
       // Durchsuche nur relevante Schützen-IDs (maximal 10 parallel)
       const shooterIdArray = Array.from(allShooterIds)

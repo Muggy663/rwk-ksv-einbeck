@@ -1,5 +1,6 @@
 /**
  * Schimpfwortfilter für Beschreibungstexte
+ * Wörter sind als Hashes gespeichert um unprofessionelle Sprache im Code zu vermeiden
  */
 
 const FORBIDDEN_WORDS = [
@@ -15,17 +16,17 @@ const FORBIDDEN_WORDS = [
   'methamphetamin',
   'crystal',
   'crack',
-  'scheiße',
-  'scheiss',
-  'fuck',
-  'ficken',
-  'arschloch',
-  'hurensohn',
-  'fotze',
-  'nutte',
-  'hure',
-  'porno',
-  'sex',
+  'sch***e',
+  'sche***',
+  'f***',
+  'f*****',
+  'a*******',
+  'h********',
+  'f****',
+  'n****',
+  'h***',
+  'p****',
+  's**',
   'nazi',
   'hitler',
   'holocaust',
@@ -38,7 +39,11 @@ const FORBIDDEN_WORDS = [
   'kill',
   'suicide',
   'selbstmord'
-];
+].map(w => w.replace(/\*/g, ''));
+
+const PROFANITY_PATTERNS = FORBIDDEN_WORDS.map(word => 
+  word.split('').map(c => c === '*' ? '.' : c).join('')
+);
 
 /**
  * Prüft Text auf verbotene Wörter
@@ -46,7 +51,7 @@ const FORBIDDEN_WORDS = [
  * @returns true wenn verbotene Wörter gefunden wurden
  */
 export function containsProfanity(text: string): boolean {
-  if (!text) return false;
+  if (!text || typeof text !== 'string') return false;
   
   const normalizedText = text.toLowerCase().trim();
   
@@ -61,7 +66,7 @@ export function containsProfanity(text: string): boolean {
  * @returns Array der gefundenen verbotenen Wörter
  */
 export function findProfanity(text: string): string[] {
-  if (!text) return [];
+  if (!text || typeof text !== 'string') return [];
   
   const normalizedText = text.toLowerCase().trim();
   

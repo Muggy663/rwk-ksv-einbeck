@@ -396,6 +396,19 @@ export default function SeasonTransitionPage() {
     }
   };
 
+  const sanitizeText = (text: string): string => {
+    return String(text || '').replace(/[<>"'&]/g, (char) => {
+      const entities: Record<string, string> = {
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+        '&': '&amp;'
+      };
+      return entities[char] || char;
+    });
+  };
+
   const exportToPDF = () => {
     if (allLeagueSuggestions.size === 0) {
       toast({
@@ -422,7 +435,7 @@ export default function SeasonTransitionPage() {
     doc.setFontSize(16);
     doc.text('Auf-/Abstiegsanalyse RWK Einbeck', 20, 20);
     doc.setFontSize(12);
-    doc.text(`Saison: ${selectedSeason?.name || 'Unbekannt'}`, 20, 30);
+    doc.text(`Saison: ${sanitizeText(selectedSeason?.name || 'Unbekannt')}`, 20, 30);
     doc.text(`Erstellt am: ${todayFormatted}`, 20, 40);
     
     let yPosition = 50;
@@ -440,7 +453,7 @@ export default function SeasonTransitionPage() {
         
         // Liga-Überschrift
         doc.setFontSize(14);
-        doc.text(`${league.name} (${league.type})`, 20, yPosition);
+        doc.text(`${sanitizeText(league.name)} (${sanitizeText(league.type)})`, 20, yPosition);
         yPosition += 10;
         
         // Tabellendaten vorbereiten
@@ -450,11 +463,11 @@ export default function SeasonTransitionPage() {
                            suggestion.action === 'relegate' ? 'Abstieg' : 'Verbleibt';
           
           return [
-            suggestion.currentPosition.toString(),
-            suggestion.teamName,
-            teamStanding ? `${teamStanding.totalScore}` : '-',
+            sanitizeText(suggestion.currentPosition.toString()),
+            sanitizeText(suggestion.teamName),
+            teamStanding ? sanitizeText(`${teamStanding.totalScore}`) : '-',
             actionText,
-            suggestion.reason
+            sanitizeText(suggestion.reason)
           ];
         });
         
@@ -500,12 +513,12 @@ export default function SeasonTransitionPage() {
       });
     
     // PDF speichern
-    const fileName = `RWK_Auf_Abstieg_${selectedSeason?.competitionYear || 'Unbekannt'}.pdf`;
+    const fileName = `RWK_Auf_Abstieg_${sanitizeText(String(selectedSeason?.competitionYear || 'Unbekannt'))}.pdf`;
     doc.save(fileName);
     
     toast({
       title: 'PDF erstellt',
-      description: `Auf-/Abstiegsanalyse wurde als ${fileName} gespeichert.`
+      description: `Auf-/Abstiegsanalyse wurde als ${sanitizeText(fileName)} gespeichert.`
     });
   };
 

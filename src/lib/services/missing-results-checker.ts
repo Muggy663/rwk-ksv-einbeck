@@ -5,13 +5,11 @@
 /**
  * Findet fehlende Ergebnisse für einen Schützen
  * @param results Ergebnisse des Schützen
- * @param maxRound Maximale Anzahl an Durchgängen
  * @param currentRound Aktueller Durchgang (höchster begonnener Durchgang)
  * @returns Array mit den Nummern der fehlenden Durchgänge
  */
 export function findMissingRounds(
   results: Record<string, number | null> | undefined,
-  maxRound: number,
   currentRound: number
 ): number[] {
   if (!results) return Array.from({ length: currentRound }, (_, i) => i + 1);
@@ -20,15 +18,17 @@ export function findMissingRounds(
   
   // Prüfe jeden Durchgang bis zum aktuellen
   for (let round = 1; round <= currentRound; round++) {
-    const roundKey = `dg${round}`;
-    
-    // Wenn das Ergebnis null oder undefined ist, fehlt es
-    if (results[roundKey] === null || results[roundKey] === undefined) {
+    if (isRoundMissing(results, round)) {
       missingRounds.push(round);
     }
   }
   
   return missingRounds;
+}
+
+function isRoundMissing(results: Record<string, number | null>, round: number): boolean {
+  const roundKey = `dg${round}`;
+  return results[roundKey] === null || results[roundKey] === undefined;
 }
 
 /**
@@ -47,14 +47,11 @@ export function hasLaterRoundsButMissingEarlier(
   
   // Prüfe von hinten nach vorne
   for (let round = maxRound; round >= 1; round--) {
-    const roundKey = `dg${round}`;
+    const hasResult = !isRoundMissing(results, round);
     
-    // Wenn ein späteres Ergebnis vorhanden ist
-    if (results[roundKey] !== null && results[roundKey] !== undefined) {
+    if (hasResult) {
       foundLater = true;
-    } 
-    // Wenn ein früheres Ergebnis fehlt, aber ein späteres vorhanden ist
-    else if (foundLater) {
+    } else if (foundLater) {
       return true;
     }
   }

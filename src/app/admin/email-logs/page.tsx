@@ -14,7 +14,10 @@ export default function EmailLogsPage() {
   const [loading, setLoading] = useState(false);
 
   const checkResendDashboard = () => {
-    window.open('https://resend.com/emails', '_blank');
+    const newWindow = window.open('https://resend.com/emails', '_blank', 'noopener,noreferrer');
+    if (newWindow) {
+      newWindow.opener = null;
+    }
   };
 
   const testEmailAPI = async () => {
@@ -79,7 +82,7 @@ export default function EmailLogsPage() {
                   <li>• API-Nutzung und Limits</li>
                 </ul>
               </div>
-              <Button onClick={checkResendDashboard} className="w-full">
+              <Button onClick={checkResendDashboard} className="w-full" rel="noopener noreferrer">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Resend Dashboard öffnen
               </Button>

@@ -1,7 +1,8 @@
 // src/lib/services/ocr-test.ts
 // Test-Funktion um zu beweisen, dass OCR funktioniert
+import { logDebug, logError } from '@/lib/utils/secure-logger';
 
-export const testOCRFunctionality = () => {
+export const testOCRFunctionality = (): boolean => {
   logDebug("🧪 OCR-System Test gestartet...");
   
   // Test 1: Service Import

@@ -44,11 +44,11 @@ export default function JoinGroupPage() {
       
       toast({
         title: "Erfolgreich beigetreten!",
-        description: `Sie sind der Trainingsgruppe beigetreten.`,
+        description: "Sie sind der Trainingsgruppe beigetreten.",
       });
       
       // Redirect zur Gruppen-Seite
-      window.location.href = `/training-groups/${groupId}`;
+      window.location.href = `/training-groups/${encodeURIComponent(groupId)}`;
     } catch (error: any) {
       logError('❌ Join error:', error);
       toast({

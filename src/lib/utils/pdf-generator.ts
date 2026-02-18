@@ -182,12 +182,12 @@ export class PdfGenerator {
     try {
       this.doc.autoTable({
         startY: tableStartY,
-        head: [tableData.columns.map(col => col.header)],
+        head: [tableData.columns.map(col => HtmlSanitizer.sanitizeText(col.header || ''))],
         body: tableData.rows.map(row => 
           tableData.columns.map(col => {
-            // Sicherstellen, dass undefined oder null als leerer String dargestellt wird
             const value = row[col.dataKey];
-            return value !== undefined && value !== null ? value : '';
+            const strValue = value !== undefined && value !== null ? String(value) : '';
+            return HtmlSanitizer.sanitizeText(strValue);
           })
         ),
         margin: { top: this.margin, right: this.margin, bottom: this.margin, left: this.margin },

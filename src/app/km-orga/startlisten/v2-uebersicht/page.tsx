@@ -1199,14 +1199,14 @@ export default function StartlistenV2Uebersicht() {
                                   const spoNummer = disziplinDoc?.spoNummer || '1.41';
                                   
                                   return [
-                                    s.stand || 'N/A',
-                                    mitgliedsNr,
-                                    nachname,
-                                    vorname,
-                                    s.verein,
-                                    spoNummer,
-                                    korrekteAltersklasse,
-                                    einzelMannschaft,
+                                    String(s.stand || 'N/A').replace(/[<>"'&]/g, ''),
+                                    String(mitgliedsNr).replace(/[<>"'&]/g, ''),
+                                    String(nachname).replace(/[<>"'&]/g, ''),
+                                    String(vorname).replace(/[<>"'&]/g, ''),
+                                    String(s.verein || '').replace(/[<>"'&]/g, ''),
+                                    String(spoNummer).replace(/[<>"'&]/g, ''),
+                                    String(korrekteAltersklasse).replace(/[<>"'&]/g, ''),
+                                    String(einzelMannschaft).replace(/[<>"'&]/g, ''),
                                     lmTeilnahme ? 'J' : 'N'
                                   ];
                                 });
@@ -1269,8 +1269,8 @@ export default function StartlistenV2Uebersicht() {
                               doc.text(`Seite ${i} von ${totalPages}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
                             }
                             
-                            const veranstaltungsDatum = new Date(startliste.konfiguration?.datum || new Date()).toISOString().split('T')[0];
-                            const fileName = `Startliste_KM_${veranstaltungsDatum}.pdf`;
+                            const sanitizedDatum = String(startliste.konfiguration?.datum || new Date().toISOString().split('T')[0]).replace(/[<>"'&\/\\]/g, '');
+                            const fileName = `Startliste_KM_${sanitizedDatum}.pdf`;
                             doc.save(fileName);
                           } catch (error) {
                             logError('PDF-Export Fehler:', error);
@@ -1293,19 +1293,20 @@ export default function StartlistenV2Uebersicht() {
                               return (a.startzeit || '').localeCompare(b.startzeit || '');
                             })
                             .map(s => {
-                              const nameParts = (s.schuetzeName || s.name).split(' ');
+                              const sanitizedName = String(s.schuetzeName || s.name || '').replace(/[<>"'&;]/g, '');
+                              const nameParts = sanitizedName.split(' ');
                               const vorname = nameParts.slice(0, -1).join(' ');
                               const nachname = nameParts[nameParts.length - 1];
                               
                               return [
                                 nachname,
                                 vorname,
-                                s.verein || '',
-                                s.altersklasse || '',
-                                s.disziplin || '',
-                                s.stand || '',
-                                s.startzeit || '',
-                                s.durchgang || '1'
+                                String(s.verein || '').replace(/[<>"'&;]/g, ''),
+                                String(s.altersklasse || '').replace(/[<>"'&;]/g, ''),
+                                String(s.disziplin || '').replace(/[<>"'&;]/g, ''),
+                                String(s.stand || '').replace(/[<>"'&;]/g, ''),
+                                String(s.startzeit || '').replace(/[<>"'&;]/g, ''),
+                                String(s.durchgang || '1').replace(/[<>"'&;]/g, '')
                               ].join(';');
                             })
                             .join('\n');
@@ -1317,7 +1318,8 @@ export default function StartlistenV2Uebersicht() {
                           const link = document.createElement('a');
                           const url = URL.createObjectURL(blob);
                           link.setAttribute('href', url);
-                          link.setAttribute('download', `startliste_david21_${startliste.konfiguration?.datum || 'export'}.csv`);
+                          const sanitizedDatum = String(startliste.konfiguration?.datum || 'export').replace(/[<>"'&\/\\]/g, '');
+                          link.setAttribute('download', `startliste_david21_${sanitizedDatum}.csv`);
                           link.style.visibility = 'hidden';
                           document.body.appendChild(link);
                           link.click();

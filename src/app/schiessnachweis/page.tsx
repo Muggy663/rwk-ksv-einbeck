@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { Target, Plus, Calendar, TrendingUp, FileText, Download, Upload, Crown, Users } from "lucide-react";
+import { Target, Plus, Calendar, TrendingUp, FileText, Download, Upload, Crown, Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -516,26 +516,33 @@ export default function SchießnachweisPage() {
               🔐 Anmeldung erforderlich
             </CardTitle>
             <CardDescription className="text-blue-700">
-              Für den Schießnachweis benötigen Sie einen kostenlosen Account. 
-              Dieser funktioniert auch für Social Training.
+              Für den Schießnachweis benötigen Sie einen kostenlosen Account.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-6">
             <Button asChild size="lg" className="w-full sm:w-auto px-8">
-              <Link href="/schiessnachweis/login">
+              <Link href="/login">
                 Jetzt anmelden oder registrieren
               </Link>
             </Button>
             
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="text-sm text-yellow-800 space-y-2">
-                <p>
-                  💡 <strong>Hinweis:</strong> Dies ist ein anderer Login als für RWK/KM-Bereiche des Kreisverbands
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="text-sm text-green-800 space-y-2">
+                <p className="font-medium">
+                  🎯 Ein Login für alles:
                 </p>
-                <p>
-                  🏆 <strong>RWK/KM-Nutzer?</strong> <Link href="/login" className="text-blue-600 hover:text-blue-800 underline font-medium">Hier zum Kreisverband-Login</Link>
-                </p>
+                <ul className="text-left space-y-1 ml-4">
+                  <li>✅ Schießnachweis (Digitales Schießtagebuch)</li>
+                  <li>✅ Social Training (Community-Features)</li>
+                  <li>✅ RWK/KM (Bei entsprechender Berechtigung)</li>
+                </ul>
               </div>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-xs text-blue-800">
+                💡 <strong>Neu hier?</strong> Nach der Registrierung haben Sie sofort Zugriff auf Schießnachweis und Social Training. Für RWK/KM-Vereinszugang kontaktieren Sie: <strong>rwk-leiter-ksve@gmx.de</strong>
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -595,6 +602,16 @@ export default function SchießnachweisPage() {
         </Button>
       </div>
 
+      {/* Profil-Button */}
+      <div className="mb-6 sm:mb-8">
+        <Button asChild variant="outline" size="lg" className="w-full flex items-center justify-center gap-3 h-14">
+          <Link href="/schiessnachweis/profil">
+            <User className="h-5 w-5" />
+            Mein Profil bearbeiten
+          </Link>
+        </Button>
+      </div>
+
       {/* Statistik-Übersicht */}
       {!isLoading && statistik && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 sm:mb-8">
@@ -639,6 +656,27 @@ export default function SchießnachweisPage() {
                   Ersten Eintrag erstellen
                 </Link>
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* E-Mail Bestätigungs-Hinweis */}
+      {user && !user.emailVerified && (
+        <Card className="mb-6 sm:mb-8 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border-yellow-200 dark:border-yellow-800">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-yellow-800 dark:text-yellow-200 text-base sm:text-lg flex items-center gap-2">
+              ⚠️ E-Mail noch nicht bestätigt
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Bitte bestätigen Sie Ihre E-Mail-Adresse. Wir haben Ihnen einen Bestätigungslink gesendet.
+              </p>
+              <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                📧 <strong>Tipp:</strong> Schauen Sie auch im Spam-Ordner nach!
+              </p>
             </div>
           </CardContent>
         </Card>

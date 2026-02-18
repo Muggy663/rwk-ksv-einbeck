@@ -2,6 +2,17 @@ import { SchießEintrag, SchießStatistik } from '@/types/schiessnachweis';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export class SchießnachweisService {
+  private static convertToDate(value: any, fallback?: Date): Date {
+    if (value && typeof value === 'object' && value.seconds) {
+      return new Date(value.seconds * 1000);
+    } else if (value && value.toDate) {
+      return value.toDate();
+    } else {
+      const date = new Date(value || fallback);
+      return isNaN(date.getTime()) ? (fallback || new Date()) : date;
+    }
+  }
+
   static async getEinträge(): Promise<SchießEintrag[]> {
     if (typeof window === 'undefined') return [];
     
@@ -34,35 +45,8 @@ export class SchießnachweisService {
       
       const data = docSnap.data();
       const einträge = (data.einträge || []).map((eintrag: any) => {
-        // Robuste Datum-Konvertierung
-        let datum;
-        let createdAt;
-        
-        // Firebase Timestamp oder ISO String
-        if (eintrag.datum && typeof eintrag.datum === 'object' && eintrag.datum.seconds) {
-          datum = new Date(eintrag.datum.seconds * 1000);
-        } else if (eintrag.datum && eintrag.datum.toDate) {
-          datum = eintrag.datum.toDate();
-        } else {
-          datum = new Date(eintrag.datum);
-        }
-        
-        if (eintrag.createdAt && typeof eintrag.createdAt === 'object' && eintrag.createdAt.seconds) {
-          createdAt = new Date(eintrag.createdAt.seconds * 1000);
-        } else if (eintrag.createdAt && eintrag.createdAt.toDate) {
-          createdAt = eintrag.createdAt.toDate();
-        } else {
-          createdAt = new Date(eintrag.createdAt || eintrag.datum);
-        }
-        
-        // Fallback für ungültige Daten
-        if (isNaN(datum.getTime())) {
-          datum = new Date();
-        }
-        
-        if (isNaN(createdAt.getTime())) {
-          createdAt = datum;
-        }
+        const datum = this.convertToDate(eintrag.datum);
+        const createdAt = this.convertToDate(eintrag.createdAt, datum);
         
         return {
           ...eintrag,
@@ -80,6 +64,25 @@ export class SchießnachweisService {
   }
 
   static async saveEintrag(eintrag: Omit<SchießEintrag, 'id' | 'createdAt'>): Promise<SchießEintrag> {
+    // Prüfe Auth-Status
+    const { auth } = await import('@/lib/firebase/config');
+    
+    if (!auth.currentUser) {
+      // Warte kurz auf Auth-Initialisierung
+      await new Promise((resolve) => {
+        const timeout = setTimeout(() => resolve(null), 2000);
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+          clearTimeout(timeout);
+          unsubscribe();
+          resolve(user);
+        });
+      });
+    }
+    
+    if (!auth.currentUser) {
+      throw new Error('❌ Sie müssen angemeldet sein, um Einträge zu speichern.\n\nBitte melden Sie sich an unter /schiessnachweis/login');
+    }
+    
     const neuerEintrag: SchießEintrag = {
       ...eintrag,
       id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
@@ -126,8 +129,7 @@ export class SchießnachweisService {
       // Entferne undefined Werte für Firebase
       const cleanedEinträge = einträge.map(eintrag => {
         const cleaned: any = {};
-        Object.keys(eintrag).forEach(key => {
-          const value = (eintrag as any)[key];
+        Object.entries(eintrag).forEach(([key, value]) => {
           if (value !== undefined) {
             cleaned[key] = value;
           }
@@ -214,29 +216,8 @@ export class SchießnachweisService {
           getRequest.onsuccess = () => {
             if (getRequest.result && getRequest.result.data) {
               resolve(getRequest.result.data.map((eintrag: any) => {
-                let datum;
-                let createdAt;
-                
-                // Firebase Timestamp oder ISO String
-                if (eintrag.datum && typeof eintrag.datum === 'object' && eintrag.datum.seconds) {
-                  datum = new Date(eintrag.datum.seconds * 1000);
-                } else {
-                  datum = new Date(eintrag.datum);
-                }
-                
-                if (eintrag.createdAt && typeof eintrag.createdAt === 'object' && eintrag.createdAt.seconds) {
-                  createdAt = new Date(eintrag.createdAt.seconds * 1000);
-                } else {
-                  createdAt = new Date(eintrag.createdAt || eintrag.datum);
-                }
-                
-                if (isNaN(datum.getTime())) {
-                  datum = new Date();
-                }
-                
-                if (isNaN(createdAt.getTime())) {
-                  createdAt = datum;
-                }
+                const datum = SchießnachweisService.convertToDate(eintrag.datum);
+                const createdAt = SchießnachweisService.convertToDate(eintrag.createdAt, datum);
                 
                 return {
                   ...eintrag,
@@ -260,9 +241,43 @@ export class SchießnachweisService {
   }
 
   static async getStatistik(): Promise<SchießStatistik> {
-    const einträge = await this.getEinträge();
-    
-    if (einträge.length === 0) {
+    try {
+      const einträge = await this.getEinträge();
+      
+      if (einträge.length === 0) {
+        return {
+          totalSchüsse: 0,
+          totalTrainings: 0,
+          totalWettkämpfe: 0,
+          durchschnittErgebnis: 0,
+          bestesErgebnis: 0,
+          letzteAktivität: null
+        };
+      }
+
+      const totalSchüsse = einträge.reduce((sum, e) => sum + e.schussAnzahl, 0);
+      const totalTrainings = einträge.filter(e => e.typ === 'training').length;
+      const totalWettkämpfe = einträge.filter(e => e.typ === 'wettkampf').length;
+      // Durchschnitt pro Schuss (nicht pro Eintrag)
+      const durchschnittProSchuss = totalSchüsse > 0 ? 
+        einträge.reduce((sum, e) => sum + e.ergebnis, 0) / totalSchüsse : 0;
+      
+      // Durchschnitt pro Eintrag (für Vergleichbarkeit)
+      const ergebnisse = einträge.map(e => e.ergebnis / e.schussAnzahl); // Ringe pro Schuss
+      const durchschnittErgebnis = ergebnisse.reduce((sum, e) => sum + e, 0) / ergebnisse.length;
+      const bestesErgebnis = Math.max(...ergebnisse);
+      const letzteAktivität = new Date(Math.max(...einträge.map(e => e.datum.getTime())));
+
+      return {
+        totalSchüsse,
+        totalTrainings,
+        totalWettkämpfe,
+        durchschnittErgebnis: Math.round(durchschnittErgebnis * 10) / 10,
+        bestesErgebnis,
+        letzteAktivität
+      };
+    } catch (error) {
+      logError('Fehler beim Berechnen der Statistik:', error);
       return {
         totalSchüsse: 0,
         totalTrainings: 0,
@@ -272,28 +287,6 @@ export class SchießnachweisService {
         letzteAktivität: null
       };
     }
-
-    const totalSchüsse = einträge.reduce((sum, e) => sum + e.schussAnzahl, 0);
-    const totalTrainings = einträge.filter(e => e.typ === 'training').length;
-    const totalWettkämpfe = einträge.filter(e => e.typ === 'wettkampf').length;
-    // Durchschnitt pro Schuss (nicht pro Eintrag)
-    const durchschnittProSchuss = totalSchüsse > 0 ? 
-      einträge.reduce((sum, e) => sum + e.ergebnis, 0) / totalSchüsse : 0;
-    
-    // Durchschnitt pro Eintrag (für Vergleichbarkeit)
-    const ergebnisse = einträge.map(e => e.ergebnis / e.schussAnzahl); // Ringe pro Schuss
-    const durchschnittErgebnis = ergebnisse.reduce((sum, e) => sum + e, 0) / ergebnisse.length;
-    const bestesErgebnis = Math.max(...ergebnisse);
-    const letzteAktivität = new Date(Math.max(...einträge.map(e => e.datum.getTime())));
-
-    return {
-      totalSchüsse,
-      totalTrainings,
-      totalWettkämpfe,
-      durchschnittErgebnis: Math.round(durchschnittErgebnis * 10) / 10,
-      bestesErgebnis,
-      letzteAktivität
-    };
   }
 
   static async exportData(): Promise<string> {
@@ -331,7 +324,9 @@ export class SchießnachweisService {
       await this.saveToDatabase(allEinträge);
       return importCount;
     } catch (error) {
-      throw new Error('Ungültiges Datenformat');
+      logError('Fehler beim Importieren der Daten:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Ungültiges Datenformat';
+      throw new Error(`Import fehlgeschlagen: ${errorMessage}`);
     }
   }
   
@@ -365,6 +360,8 @@ export class SchießnachweisService {
       'Notizen'
     ];
     
+    const sanitizeRegex = /[<>"'&]/g;
+    
     // CSV Zeilen erstellen
     const rows = einträge.map(eintrag => {
       const zehntelRinge = eintrag.ergebnis && eintrag.ergebnisGanzeRinge ? 
@@ -387,13 +384,13 @@ export class SchießnachweisService {
         zehntelRinge.toString().replace('.', ','), // Deutsche Formatierung mit Komma
         (eintrag.ergebnis || 0).toString().replace('.', ','), // Deutsche Formatierung
         durchschnitt.toString().replace('.', ','),
-        eintrag.standort || '',
-        eintrag.schiessstand || '',
-        eintrag.wetter || '',
-        eintrag.munition || '',
-        eintrag.waffe || '',
-        serienInfo,
-        eintrag.notizen || ''
+        (eintrag.standort || '').replace(sanitizeRegex, ''),
+        (eintrag.schiessstand || '').replace(sanitizeRegex, ''),
+        (eintrag.wetter || '').replace(sanitizeRegex, ''),
+        (eintrag.munition || '').replace(sanitizeRegex, ''),
+        (eintrag.waffe || '').replace(sanitizeRegex, ''),
+        serienInfo.replace(sanitizeRegex, ''),
+        (eintrag.notizen || '').replace(sanitizeRegex, '')
       ].map(field => `"${field.toString().replace(/"/g, '""')}"`); // CSV-Escaping
     });
     
@@ -409,7 +406,7 @@ export class SchießnachweisService {
     
     let deviceId = localStorage.getItem('schiessnachweis_device_id');
     if (!deviceId) {
-      deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
       localStorage.setItem('schiessnachweis_device_id', deviceId);
     }
     return deviceId;

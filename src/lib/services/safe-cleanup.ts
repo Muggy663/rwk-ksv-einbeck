@@ -73,23 +73,11 @@ export async function safeDiagnoseDatabaseInconsistencies(clubId: string): Promi
       const shooterExists = existingShooterIds.has(shooterId);
       
       if (!teamExists && !shooterExists) {
-        // Prüfe ob es noch Ergebnisse gibt
-        const scoresQuery = query(
-          collection(db, 'rwk_scores'),
-          where('teamId', '==', teamId),
-          where('shooterId', '==', shooterId)
-        );
-        const scoresSnapshot = await getDocs(scoresQuery);
-        
-        if (scoresSnapshot.empty) {
-          diagnosis.trulyOrphanedTeamShooters.push({
-            id: tsDoc.id,
-            teamId,
-            shooterId
-          });
-        } else {
-          diagnosis.warnings.push(`Team-Schützen-Verknüpfung ${tsDoc.id} hat noch ${scoresSnapshot.size} Ergebnisse`);
-        }
+        diagnosis.trulyOrphanedTeamShooters.push({
+          id: tsDoc.id,
+          teamId,
+          shooterId
+        });
       }
     }
 
@@ -143,27 +131,35 @@ export async function performSafeCleanup(clubId: string, diagnosis: SafeCleanupD
   try {
     // Nur wirklich verwaiste Team-Schützen-Verknüpfungen löschen
     for (const orphaned of diagnosis.trulyOrphanedTeamShooters) {
-      const docRef = doc(db, 'rwk_team_shooters', orphaned.id);
-      batch.delete(docRef);
-      batchCount++;
-      totalDeleted++;
-      
-      if (batchCount >= 450) {
-        await batch.commit();
-        batchCount = 0;
+      try {
+        const docRef = doc(db, 'rwk_team_shooters', orphaned.id);
+        batch.delete(docRef);
+        batchCount++;
+        totalDeleted++;
+        
+        if (batchCount >= 450) {
+          await batch.commit();
+          batchCount = 0;
+        }
+      } catch (error) {
+        logWarn('Fehler beim Löschen von Team-Schütze', { orphanedId: orphaned.id, error });
       }
     }
 
     // Nur wirklich verwaiste Ergebnisse löschen
     for (const orphaned of diagnosis.trulyOrphanedScores) {
-      const docRef = doc(db, 'rwk_scores', orphaned.id);
-      batch.delete(docRef);
-      batchCount++;
-      totalDeleted++;
-      
-      if (batchCount >= 450) {
-        await batch.commit();
-        batchCount = 0;
+      try {
+        const docRef = doc(db, 'rwk_scores', orphaned.id);
+        batch.delete(docRef);
+        batchCount++;
+        totalDeleted++;
+        
+        if (batchCount >= 450) {
+          await batch.commit();
+          batchCount = 0;
+        }
+      } catch (error) {
+        logWarn('Fehler beim Löschen von Score', { orphanedId: orphaned.id, error });
       }
     }
 

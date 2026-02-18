@@ -22,6 +22,10 @@ async function executeMigration() {
   try {
     // 1. Alle shooters laden
     const shootersSnap = await getDocs(collection(db, 'shooters'));
+    if (!shootersSnap || shootersSnap.empty) {
+      logWarn('⚠️ Keine Schützen gefunden');
+      return { kmCount: 0, rwkCount: 0, mixedCount: 0 };
+    }
     logInfo(`📊 Gefunden: ${shootersSnap.docs.length} Schützen in shooters`);
     
     const batch = writeBatch(db);
@@ -31,6 +35,10 @@ async function executeMigration() {
     
     shootersSnap.docs.forEach((docSnap) => {
       const shooter = docSnap.data();
+      if (!shooter) {
+        logWarn(`⚠️ Ungültiger Schütze: ${docSnap.id}`);
+        return;
+      }
       
       // KM-Schütze: hat kmClubId aber kein clubId
       if (shooter.kmClubId && !shooter.clubId) {
@@ -53,13 +61,13 @@ async function executeMigration() {
         });
         kmCount++;
       } 
-      // RWK-Schütze: hat clubId
-      else if (shooter.clubId) {
-        rwkCount++;
-      }
       // Gemischt: hat beide IDs
       else if (shooter.kmClubId && shooter.clubId) {
         mixedCount++;
+      }
+      // RWK-Schütze: hat clubId
+      else if (shooter.clubId) {
+        rwkCount++;
       }
     });
     

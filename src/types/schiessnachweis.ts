@@ -1,7 +1,7 @@
 export interface SchießEintrag {
   id: string;
   datum: Date;
-  typ: 'training' | 'wettkampf' | 'meisterschaft' | 'pokal';
+  typ: 'training' | 'wettkampf';
   disziplin: string;
   schussAnzahl: number;
   ergebnis: number; // Zehntel-Ergebnis (mit Kommastellen)
@@ -107,9 +107,7 @@ export const getDisziplinenByKategorie = (kategorie: string) => {
 
 export const WETTKAMPF_TYPEN = [
   { value: 'training', label: 'Training', icon: '🎯' },
-  { value: 'wettkampf', label: 'Wettkampf', icon: '🏆' },
-  { value: 'meisterschaft', label: 'Meisterschaft', icon: '🥇' },
-  { value: 'pokal', label: 'Pokalschießen', icon: '🏆' }
+  { value: 'wettkampf', label: 'Wettkampf', icon: '🏆' }
 ] as const;
 
 export const getDisziplinConfig = (name: string): DisziplinConfig | undefined => {

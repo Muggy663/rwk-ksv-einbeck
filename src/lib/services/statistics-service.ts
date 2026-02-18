@@ -162,8 +162,25 @@ export async function fetchTeamComparisonData(
   leagueId?: string
 ): Promise<TeamComparisonData[]> {
   try {
-    let teamsQuery;
+    const seasonQuery = query(
+      collection(db, 'seasons'),
+      where('__name__', '==', seasonId)
+    );
+    const seasonSnapshot = await getDocs(seasonQuery);
     
+    if (seasonSnapshot.empty) return [];
+    
+    const seasonData = seasonSnapshot.docs[0].data();
+    const competitionYear = seasonData.competitionYear;
+    
+    const leaguesQuery = query(
+      collection(db, 'rwk_leagues'),
+      where('seasonId', '==', seasonId)
+    );
+    const leaguesSnapshot = await getDocs(leaguesQuery);
+    const leaguesMap = new Map(leaguesSnapshot.docs.map(doc => [doc.id, doc.data()]));
+    
+    let teamsQuery;
     if (leagueId && leagueId !== 'all') {
       teamsQuery = query(
         collection(db, 'rwk_teams'),
@@ -185,46 +202,17 @@ export async function fetchTeamComparisonData(
       for (const teamDoc of teamsSnapshot.docs) {
         const teamData = teamDoc.data();
         
-        let scoresQuery;
-        try {
-          const seasonQuery = query(
-            collection(db, 'seasons'),
-            where('__name__', '==', seasonId)
-          );
-          const seasonSnapshot = await getDocs(seasonQuery);
-          
-          if (!seasonSnapshot.empty) {
-            const seasonData = seasonSnapshot.docs[0].data();
-            const competitionYear = seasonData.competitionYear;
-            
-            const leagueQuery = query(
-              collection(db, 'rwk_leagues'),
-              where('__name__', '==', teamData.leagueId)
-            );
-            const leagueSnapshot = await getDocs(leagueQuery);
-            
-            if (!leagueSnapshot.empty) {
-              const leagueType = leagueSnapshot.docs[0].data().type;
-              const workingCollection = await findWorkingCollection(competitionYear, leagueType);
-              
-              if (workingCollection) {
-                scoresQuery = query(
-                  collection(db, workingCollection),
-                  where('teamId', '==', teamDoc.id),
-                  where('competitionYear', '==', competitionYear)
-                );
-              } else {
-                continue; // Skip this team if no working collection found
-              }
-            } else {
-              continue; // Skip if league not found
-            }
-          } else {
-            continue; // Skip if season not found
-          }
-        } catch (error) {
-          continue; // Skip this team on error
-        }
+        const leagueData = leaguesMap.get(teamData.leagueId);
+        if (!leagueData) continue;
+        
+        const workingCollection = await findWorkingCollection(competitionYear, leagueData.type);
+        if (!workingCollection) continue;
+        
+        const scoresQuery = query(
+          collection(db, workingCollection),
+          where('teamId', '==', teamDoc.id),
+          where('competitionYear', '==', competitionYear)
+        );
         
         const scoresSnapshot = await getDocs(scoresQuery);
         let totalScore = 0;

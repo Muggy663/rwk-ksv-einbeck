@@ -88,8 +88,9 @@ export function PDFButton({
       const response = await fetch('/images/logo2.png');
       const blob = await response.blob();
       const reader = new FileReader();
-      const logoBase64 = await new Promise<string>((resolve) => {
+      const logoBase64 = await new Promise<string>((resolve, reject) => {
         reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('Failed to read logo'));
         reader.readAsDataURL(blob);
       });
       doc.addImage(logoBase64, 'PNG', 250, 10, 25, 25);
@@ -157,7 +158,7 @@ export function PDFButton({
       }
     });
     
-    doc.save(fileName);
+    doc.save(sanitizeText(fileName));
   };
 
   const generateShooterResultsPDF = async (data: any, fileName: string) => {
@@ -172,8 +173,9 @@ export function PDFButton({
       const response = await fetch('/images/logo2.png');
       const blob = await response.blob();
       const reader = new FileReader();
-      const logoBase64 = await new Promise<string>((resolve) => {
+      const logoBase64 = await new Promise<string>((resolve, reject) => {
         reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('Failed to read logo'));
         reader.readAsDataURL(blob);
       });
       doc.addImage(logoBase64, 'PNG', 250, 10, 25, 25);
@@ -213,7 +215,7 @@ export function PDFButton({
       styles: { fontSize: 10, cellPadding: 3 }
     });
     
-    doc.save(fileName);
+    doc.save(sanitizeText(fileName));
   };
 
   return (

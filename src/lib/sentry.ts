@@ -30,18 +30,21 @@ export function initSentry() {
 
 // Manuell Fehler loggen
 export function logErrorToSentry(error: Error, context?: Record<string, any>) {
-  const sanitizedMessage = error.message?.replace(/[\r\n]/g, ' ') || 'Unknown error';
+  const sanitizedMessage = String(error.message || 'Unknown error').replace(/[\r\n]/g, ' ');
   logError('Error:', sanitizedMessage);
   
   if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
     const sanitizedContext = context ? Object.fromEntries(
-      Object.entries(context).map(([k, v]) => [k, typeof v === 'string' ? v.replace(/[\r\n]/g, ' ') : v])
+      Object.entries(context).map(([k, v]) => [
+        String(k).replace(/[\r\n]/g, ''),
+        typeof v === 'string' ? String(v).replace(/[\r\n]/g, ' ') : v
+      ])
     ) : {};
     
     Sentry.captureException(error, {
       tags: {
-        component: sanitizedContext?.component || 'unknown',
-        feature: sanitizedContext?.feature || 'unknown'
+        component: String(sanitizedContext?.component || 'unknown').replace(/[\r\n]/g, ''),
+        feature: String(sanitizedContext?.feature || 'unknown').replace(/[\r\n]/g, '')
       },
       extra: sanitizedContext,
     });

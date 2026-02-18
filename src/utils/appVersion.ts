@@ -7,7 +7,7 @@ export const APP_VERSION = packageJson.version;
 export function checkAndClearOnUpdate() {
   if (typeof window === 'undefined') return;
   
-  const STORAGE_KEY = 'app_version_check';
+  const STORAGE_KEY = 'app_version_check_key';
   const currentVersion = APP_VERSION;
   const storedVersion = localStorage.getItem(STORAGE_KEY);
   
@@ -23,6 +23,8 @@ export function checkAndClearOnUpdate() {
         databases.forEach(db => {
           if (db.name) indexedDB.deleteDatabase(db.name);
         });
+      }).catch(error => {
+        logWarn('Fehler beim Löschen der IndexedDB:', { data: error });
       });
     }
     
@@ -30,6 +32,8 @@ export function checkAndClearOnUpdate() {
     if ('caches' in window) {
       caches.keys().then(names => {
         names.forEach(name => caches.delete(name));
+      }).catch(error => {
+        logWarn('Fehler beim Löschen des Cache:', { data: error });
       });
     }
     

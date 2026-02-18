@@ -77,7 +77,8 @@ export async function calculateLeagueStandings(leagueId: string, competitionYear
       const team = teamDoc.data();
       
       // Bestimme die richtige Collection basierend auf Jahr und Typ
-      const season = await getDocs(query(collection(db, 'seasons'), where('competitionYear', '==', competitionYear)));
+      const seasonQuery = query(collection(db, 'seasons'), where('competitionYear', '==', competitionYear));
+      const season = await getDocs(seasonQuery);
       const seasonData = season.docs[0]?.data();
       const seasonType = seasonData?.type || 'KK';
       
@@ -92,7 +93,7 @@ export async function calculateLeagueStandings(leagueId: string, competitionYear
       // Alle Rundenwettkämpfe haben 5 Durchgänge
       const numRoundsForCompetition = 5;
       
-      logInfo(`[DEBUG] Team ${team.name}: Suche in Collection ${collectionName} (Original-Typ: ${seasonType})`);
+      logDebug(`Team ${team.name}: Suche in Collection ${collectionName} (Original-Typ: ${seasonType})`);
       
       // Ergebnisse für das Team laden
       const scoresQuery = query(
@@ -104,7 +105,7 @@ export async function calculateLeagueStandings(leagueId: string, competitionYear
       // Lade Ersatzschützen-Informationen (zentral über SubstitutionService)
       const substitutions = await SubstitutionService.loadSubstitutions(competitionYear);
       
-      logInfo(`[DEBUG] Team ${team.name}: ${scoresSnapshot.docs.length} Ergebnisse gefunden`);
+      logDebug(`Team ${team.name}: ${scoresSnapshot.docs.length} Ergebnisse gefunden`);
       
       // Konvertiere Scores zu Array
       const teamScores = scoresSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -124,7 +125,7 @@ export async function calculateLeagueStandings(leagueId: string, competitionYear
       }
       
       // Debug-Ausgabe
-      logInfo(`[DEBUG] Team ${team.name}: GESAMT = ${calculationResult.totalScore} Ringe (${calculationResult.numScoredRounds} Durchgänge, Schnitt ${calculationResult.averageScore})`);
+      logDebug(`Team ${team.name}: GESAMT = ${calculationResult.totalScore} Ringe (${calculationResult.numScoredRounds} Durchgänge, Schnitt ${calculationResult.averageScore})`);
       
       const totalScore = calculationResult.totalScore;
       const averageScore = calculationResult.averageScore || 0;
@@ -205,6 +206,10 @@ export async function generatePromotionRelegationSuggestions(
     const targetSize = targetLeagueSizes.get(leagueId) || totalTeams;
     const sizeReduction = totalTeams - targetSize;
 
+    // Pre-load league standings for comparisons to avoid repeated queries
+    const higherLeagueStandings = higherLeague ? await calculateLeagueStandings(higherLeague.id, competitionYear) : [];
+    const lowerLeagueStandings = lowerLeague ? await calculateLeagueStandings(lowerLeague.id, competitionYear) : [];
+
     for (const team of standings) {
       let action: 'promote' | 'relegate' | 'stay' | 'compare' = 'stay';
       let reason = 'Verbleibt in aktueller Liga';
@@ -268,7 +273,6 @@ export async function generatePromotionRelegationSuggestions(
           targetLeague = higherLeague.name;
         } else {
           // Vorletzten der höheren Liga finden und vergleichen
-          const higherLeagueStandings = await calculateLeagueStandings(higherLeague.id, competitionYear);
           const penultimateTeam = higherLeagueStandings.find(t => t.position === higherLeagueStandings.length - 1);
           
           if (penultimateTeam && team.totalScore > penultimateTeam.totalScore) {
@@ -291,7 +295,6 @@ export async function generatePromotionRelegationSuggestions(
           reason = isOpenGroup ? 'Vorletzter - verbleibt (offene Gruppe, keine Auf-/Abstiege)' : 'Vorletzter - verbleibt (niedrigste Liga)';
         } else {
         // Vorletzter: Vergleich mit Zweitem der niedrigeren Liga
-        const lowerLeagueStandings = await calculateLeagueStandings(lowerLeague.id, competitionYear);
         const secondTeam = lowerLeagueStandings.find(t => t.position === 2);
         
         if (secondTeam && team.totalScore > secondTeam.totalScore) {
@@ -434,38 +437,26 @@ export async function createNewSeason(
       const existingTeam = sourceTeamsSnapshot.docs.find(doc => doc.data().clubId === clubId);
       
       if (!existingTeam && lowestLeagueNewId) {
+        const newTeamRef = doc(collection(db, 'rwk_teams'));
+        
+        let clubName = 'Neuer Verein';
         try {
-          // Neues Team für neuen Verein erstellen
-          const newTeamRef = doc(collection(db, 'rwk_teams'));
-          
-          // Club-Name laden
           const clubDoc = await getDocs(query(collection(db, 'clubs'), where('__name__', '==', clubId)));
-          const clubName = clubDoc.docs[0]?.data()?.name || 'Neuer Verein';
-          
-          batch.set(newTeamRef, {
-            name: `${clubName} I`,
-            clubId: clubId,
-            clubName: clubName,
-            seasonId: newSeasonRef.id,
-            leagueId: lowestLeagueNewId,
-            competitionYear: targetYear,
-            shooterIds: [],
-            isNewClub: true
-          });
+          clubName = clubDoc.docs[0]?.data()?.name || 'Neuer Verein';
         } catch (clubError) {
-          logWarn(`Failed to load club data for ${clubId}, using fallback name`, clubError);
-          const newTeamRef = doc(collection(db, 'rwk_teams'));
-          batch.set(newTeamRef, {
-            name: 'Neuer Verein I',
-            clubId: clubId,
-            clubName: 'Neuer Verein',
-            seasonId: newSeasonRef.id,
-            leagueId: lowestLeagueNewId,
-            competitionYear: targetYear,
-            shooterIds: [],
-            isNewClub: true
-          });
+          logWarn(`Failed to load club data for ${clubId}:`, clubError);
         }
+        
+        batch.set(newTeamRef, {
+          name: `${clubName} I`,
+          clubId: clubId,
+          clubName: clubName,
+          seasonId: newSeasonRef.id,
+          leagueId: lowestLeagueNewId,
+          competitionYear: targetYear,
+          shooterIds: [],
+          isNewClub: true
+        });
       }
     }
 

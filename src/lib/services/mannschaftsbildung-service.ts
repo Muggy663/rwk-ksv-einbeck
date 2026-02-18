@@ -2,75 +2,62 @@ export class MannschaftsbildungService {
   
   /**
    * Lädt die aktuellen Mannschaftsregeln
+   * @throws {Error} Wenn das Laden der Regeln fehlschlägt
    */
   static async loadRegeln() {
     try {
       const response = await fetch('/api/km/mannschaftsregeln');
-      if (response.ok) {
-        const data = await response.json();
-        return data.regeln;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      const data = await response.json();
+      return data.regeln;
     } catch (error) {
       logError('Fehler beim Laden der Mannschaftsregeln:', error);
+      throw new Error('Mannschaftsregeln konnten nicht geladen werden');
     }
-    return null;
   }
 
   /**
    * Prüft ob zwei Schützen in einer Mannschaft zusammen dürfen
+   * @param schuetze1 - Erster Schütze
+   * @param schuetze2 - Zweiter Schütze
+   * @param disziplin - Disziplin (z.B. 'LG', 'LP')
+   * @returns Promise<boolean> - true wenn Kombination erlaubt ist
    */
-  static async kannZusammenSpielen(schuetze1: any, schuetze2: any, disziplin: string) {
+  static async kannZusammenSpielen(schuetze1: any, schuetze2: any, disziplin: string): Promise<boolean> {
     const regeln = await this.loadRegeln();
-    if (!regeln) return true; // Fallback: erlauben wenn keine Regeln
-
-    const disziplinRegel = regeln.disziplinRegeln?.[disziplin];
-    if (!disziplinRegel || !disziplinRegel.aktiv) {
-      return false; // Keine Mannschaften für diese Disziplin
-    }
-
-    const erlaubteKombinationen = disziplinRegel.erlaubteKombinationen || [];
-    
-    // Prüfe alle erlaubten Kombinationen
-    for (const kombinationName of erlaubteKombinationen) {
-      const kombination = regeln.altersklassenKombinationen[kombinationName];
-      if (kombination && 
-          kombination.includes(schuetze1.altersklasse) && 
-          kombination.includes(schuetze2.altersklasse)) {
-        return true;
-      }
-    }
-    
-    return false;
+    return this.isValidShooterCombination(schuetze1, schuetze2, disziplin, regeln);
   }
 
   /**
    * Validiert eine komplette Mannschaft
+   * @param schuetzen - Array von Schützen
+   * @param disziplin - Disziplin
+   * @param regeln - Optional: Bereits geladene Regeln
+   * @returns Promise mit Validierungsergebnis
    */
-  static async validateMannschaft(schuetzen: any[], disziplin: string) {
-    const regeln = await this.loadRegeln();
+  static async validateMannschaft(schuetzen: any[], disziplin: string, regeln?: any): Promise<{ valid: boolean; errors: string[] }> {
+    const loadedRegeln = regeln || await this.loadRegeln();
     const errors: string[] = [];
     
-    if (!regeln) {
+    if (!loadedRegeln) {
       return { valid: true, errors: [] };
     }
 
-    // Grundregeln prüfen
-    if (schuetzen.length !== regeln.mannschaftsgroesse) {
-      errors.push(`Mannschaft muss ${regeln.mannschaftsgroesse} Schützen haben`);
+    if (schuetzen.length !== loadedRegeln.mannschaftsgroesse) {
+      errors.push(`Mannschaft muss ${loadedRegeln.mannschaftsgroesse} Schützen haben`);
     }
 
-    // Disziplin-Regel prüfen
-    const disziplinRegel = regeln.disziplinRegeln?.[disziplin];
+    const disziplinRegel = loadedRegeln.disziplinRegeln?.[disziplin];
     if (!disziplinRegel || !disziplinRegel.aktiv) {
       errors.push('Für diese Disziplin sind keine Mannschaften erlaubt');
       return { valid: false, errors };
     }
 
-    // Altersklassen-Kompatibilität prüfen
     for (let i = 0; i < schuetzen.length; i++) {
       for (let j = i + 1; j < schuetzen.length; j++) {
-        const kannZusammen = await this.kannZusammenSpielen(schuetzen[i], schuetzen[j], disziplin);
-        if (!kannZusammen) {
+        if (!this.isValidShooterCombination(schuetzen[i], schuetzen[j], disziplin, loadedRegeln)) {
           errors.push(`${schuetzen[i].altersklasse} und ${schuetzen[j].altersklasse} dürfen nicht zusammen`);
         }
       }
@@ -82,6 +69,23 @@ export class MannschaftsbildungService {
     };
   }
 
+  private static isValidShooterCombination(schuetze1: any, schuetze2: any, disziplin: string, regeln: any): boolean {
+    const disziplinRegel = regeln.disziplinRegeln?.[disziplin];
+    if (!disziplinRegel?.aktiv) return false;
+
+    const erlaubteKombinationen = disziplinRegel.erlaubteKombinationen || [];
+    
+    for (const kombinationName of erlaubteKombinationen) {
+      const kombination = regeln.altersklassenKombinationen?.[kombinationName];
+      if (kombination?.includes(schuetze1?.altersklasse) && 
+          kombination.includes(schuetze2?.altersklasse)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
   /**
    * Gibt alle möglichen Mannschaftskombinationen für eine Disziplin zurück
    */
@@ -91,23 +95,55 @@ export class MannschaftsbildungService {
 
     const disziplinRegel = regeln.disziplinRegeln?.[disziplin];
     if (!disziplinRegel || !disziplinRegel.aktiv) {
-      return []; // Keine Mannschaften für diese Disziplin
+      return [];
     }
 
     const mannschaftsgroesse = regeln.mannschaftsgroesse;
     const moeglicheMannschaften = [];
-
-    // Generiere alle möglichen Kombinationen
     const kombinationen = this.generateKombinationen(schuetzen, mannschaftsgroesse);
     
     for (const kombination of kombinationen) {
-      const validation = await this.validateMannschaft(kombination, disziplin);
+      const validation = this.validateMannschaftSync(kombination, disziplin, regeln);
       if (validation.valid) {
         moeglicheMannschaften.push(kombination);
       }
     }
 
     return moeglicheMannschaften;
+  }
+
+  /**
+   * Synchrone Validierung einer Mannschaft (für Performance)
+   */
+  private static validateMannschaftSync(schuetzen: any[], disziplin: string, regeln: any) {
+    const errors: string[] = [];
+    
+    if (!regeln) {
+      return { valid: true, errors: [] };
+    }
+
+    if (schuetzen.length !== regeln.mannschaftsgroesse) {
+      errors.push(`Mannschaft muss ${regeln.mannschaftsgroesse} Schützen haben`);
+    }
+
+    const disziplinRegel = regeln.disziplinRegeln?.[disziplin];
+    if (!disziplinRegel || !disziplinRegel.aktiv) {
+      errors.push('Für diese Disziplin sind keine Mannschaften erlaubt');
+      return { valid: false, errors };
+    }
+
+    for (let i = 0; i < schuetzen.length; i++) {
+      for (let j = i + 1; j < schuetzen.length; j++) {
+        if (!this.isValidShooterCombination(schuetzen[i], schuetzen[j], disziplin, regeln)) {
+          errors.push(`${schuetzen[i].altersklasse} und ${schuetzen[j].altersklasse} dürfen nicht zusammen`);
+        }
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
   }
 
   /**

@@ -8,16 +8,15 @@ export class PDFExportService {
       const { default: jsPDF } = await import('jspdf');
       const { default: autoTable } = await import('jspdf-autotable');
       
-      // Lade Mannschaften und Disziplinen für E/M Erkennung und SPO-Nummern
       const [schuetzenRes, mannschaftenRes, disziplinenRes] = await Promise.all([
-        fetch('/api/shooters'),
-        fetch('/api/km/mannschaften'),
-        fetch('/api/km/disziplinen')
+        fetch('/api/shooters').catch(() => ({ ok: false })),
+        fetch('/api/km/mannschaften').catch(() => ({ ok: false })),
+        fetch('/api/km/disziplinen').catch(() => ({ ok: false }))
       ]);
       
-      const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
-      const mannschaftenData = mannschaftenRes.ok ? (await mannschaftenRes.json()).data || [] : [];
-      const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
+      const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json().catch(() => ({ data: [] }))).data || [] : [];
+      const mannschaftenData = mannschaftenRes.ok ? (await mannschaftenRes.json().catch(() => ({ data: [] }))).data || [] : [];
+      const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json().catch(() => ({ data: [] }))).data || [] : [];
       
       // Schützen-Map für PDF Export
       const schuetzenMapPDF = {};
@@ -102,8 +101,9 @@ export class PDFExportService {
       this.createFooter(doc);
       
       const veranstaltungsDatum = config?.datum ? new Date(config.datum).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-      const fileName = `Startliste_KM_${veranstaltungsDatum}.pdf`;
-      doc.save(fileName);
+      const sanitizedDatum = veranstaltungsDatum.replace(/[^0-9-]/g, '');
+      const sanitizedFileName = `Startliste_KM_${sanitizedDatum}.pdf`.replace(/[^a-zA-Z0-9._-]/g, '_');
+      doc.save(sanitizedFileName);
       
     } catch (error) {
       logError('PDF-Export Fehler:', error);
@@ -121,7 +121,14 @@ export class PDFExportService {
     try {
       const logoImg = new Image();
       logoImg.src = '/images/logo2.png';
-      doc.addImage(logoImg, 'PNG', pageWidth / 2 - 25, 70, 50, 50);
+      
+      logoImg.onload = () => {
+        doc.addImage(logoImg, 'PNG', pageWidth / 2 - 25, 70, 50, 50);
+      };
+      
+      logoImg.onerror = () => {
+        logWarn('Logo konnte nicht geladen werden');
+      };
     } catch (error) {
       logWarn('Logo konnte nicht geladen werden:', { data: error });
     }
@@ -143,9 +150,16 @@ export class PDFExportService {
     try {
       const logoImg = new Image();
       logoImg.src = '/images/logo2.png';
-      doc.addImage(logoImg, 'PNG', 15, 10, 20, 20);
+      
+      logoImg.onload = () => {
+        doc.addImage(logoImg, 'PNG', 15, 10, 20, 20);
+      };
+      
+      logoImg.onerror = () => {
+        logWarn('Logo konnte nicht geladen werden');
+      };
     } catch (error) {
-      logWarn('Logo konnte nicht geladen werden');
+      logWarn('Logo konnte nicht geladen werden', { data: error });
     }
     
     doc.setFontSize(12);
@@ -166,6 +180,15 @@ export class PDFExportService {
   }
   
   private static createTableData(starter: any[], schuetzenMapPDF: any, mannschaftenData: any[], disziplinenData: any[], meldungen: any[]) {
+    // Create lookup maps for better performance
+    const mannschaftsSchuetzenIds = new Set(
+      mannschaftenData.flatMap(m => m.schuetzenIds || [])
+    );
+    
+    const disziplinMap = new Map(
+      disziplinenData.map(d => [d.name, d.spoNummer])
+    );
+    
     return starter.map((s) => {
       const schuetze = schuetzenMapPDF[s.name || s.schuetzeName];
       let mitgliedsNr = '08-000-0000';
@@ -183,14 +206,7 @@ export class PDFExportService {
       const vorname = nameParts.slice(0, -1).join(' ');
       
       // E/M: Prüfe ob Schütze in Mannschaft
-      let istMannschaft = false;
-      if (schuetze?.id) {
-        mannschaftenData.forEach(mannschaftData => {
-          if (mannschaftData.schuetzenIds?.includes(schuetze.id)) {
-            istMannschaft = true;
-          }
-        });
-      }
+      const istMannschaft = schuetze?.id ? mannschaftsSchuetzenIds.has(schuetze.id) : false;
       const einzelMannschaft = istMannschaft ? 'M' : 'E';
       
       // LM: Suche in ursprünglichen Meldungen
@@ -227,8 +243,7 @@ export class PDFExportService {
       }
       
       // Hole SPO-Nummer
-      const disziplinDoc = disziplinenData.find(d => d.name === s.disziplin);
-      const spoNummer = disziplinDoc?.spoNummer || '1.41';
+      const spoNummer = disziplinMap.get(s.disziplin) || '1.41';
       
       return [
         s.stand || 'N/A',
@@ -292,13 +307,14 @@ export class PDFExportService {
     const totalPages = doc.getNumberOfPages();
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
+    const footerDate = new Date().toLocaleDateString('de-DE');
     
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.text(
-        `Erstellt am ${new Date().toLocaleDateString('de-DE')} - RWK Einbeck`,
+        `Erstellt am ${footerDate} - RWK Einbeck`,
         pageWidth / 2,
         pageHeight - 10,
         { align: 'center' }

@@ -212,17 +212,19 @@ export class NotificationService {
   // Wettkampf-Start Benachrichtigung
   static async sendCompetitionStarted(participantIds: string[], competitionName: string, competitionId: string) {
     for (const userId of participantIds) {
-      // In-App Notification
-      await this.createNotification({
-        userId,
-        type: 'competition_started',
-        title: 'Wettkampf gestartet',
-        message: `Der Live-Wettkampf "${competitionName}" hat begonnen!`,
-        data: { competitionId },
-        read: false
-      });
+      try {
+        await this.createNotification({
+          userId,
+          type: 'competition_started',
+          title: 'Wettkampf gestartet',
+          message: `Der Live-Wettkampf "${competitionName}" hat begonnen!`,
+          data: { competitionId },
+          read: false
+        });
+      } catch (error) {
+        logError('In-App-Benachrichtigung fehlgeschlagen:', error);
+      }
       
-      // Push-Notification (nur wenn aktiviert)
       try {
         await this.sendPushNotification(userId, 'pushCompetitionUpdates', {
           title: 'Wettkampf gestartet!',
@@ -242,17 +244,19 @@ export class NotificationService {
                         position === 3 ? '🥉 3. Platz' : 
                         `${position}. Platz`;
     
-    // In-App Notification
-    await this.createNotification({
-      userId,
-      type: 'result_achieved',
-      title: 'Wettkampf-Ergebnis',
-      message: `Sie haben ${positionText} von ${totalParticipants} Teilnehmern in "${competitionName}" erreicht!`,
-      data: { competitionName, position, totalParticipants },
-      read: false
-    });
+    try {
+      await this.createNotification({
+        userId,
+        type: 'result_achieved',
+        title: 'Wettkampf-Ergebnis',
+        message: `Sie haben ${positionText} von ${totalParticipants} Teilnehmern in "${competitionName}" erreicht!`,
+        data: { competitionName, position, totalParticipants },
+        read: false
+      });
+    } catch (error) {
+      logError('In-App-Benachrichtigung fehlgeschlagen:', error);
+    }
     
-    // E-Mail (nur wenn aktiviert)
     try {
       await this.sendEmailNotification(userId, 'emailCompetitionResults', {
         subject: `Ihr Wettkampf-Ergebnis: ${positionText}`,

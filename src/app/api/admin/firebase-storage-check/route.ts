@@ -46,29 +46,36 @@ async function checkFirestoreUsage() {
     let collectionStats = [];
     
     for (const collectionName of collections) {
-      const snapshot = await db.collection(collectionName).get();
+      let snapshot = null;
+      try {
+        snapshot = await db.collection(collectionName).get();
       
-      // Schätze die Größe basierend auf der Dokumentenanzahl und durchschnittlicher Größe
-      const docCount = snapshot.size;
-      const sampleDocs = snapshot.docs.slice(0, Math.min(10, docCount));
+        // Schätze die Größe basierend auf der Dokumentenanzahl und durchschnittlicher Größe
+        const docCount = snapshot.size;
+        const sampleDocs = snapshot.docs.slice(0, Math.min(10, docCount));
       
-      let totalSampleSize = 0;
-      for (const doc of sampleDocs) {
-        const data = doc.data();
-        // Grobe Schätzung der JSON-Größe
-        totalSampleSize += JSON.stringify(data).length;
+        let totalSampleSize = 0;
+        for (const doc of sampleDocs) {
+          const data = doc.data();
+          // Grobe Schätzung der JSON-Größe
+          totalSampleSize += JSON.stringify(data).length;
+        }
+      
+        const avgDocSize = sampleDocs.length > 0 ? totalSampleSize / sampleDocs.length : 0;
+        const estimatedSizeInKB = (docCount * avgDocSize) / 1024;
+      
+        totalSizeInKB += estimatedSizeInKB;
+      
+        collectionStats.push({
+          collection: collectionName,
+          documentCount: docCount,
+          estimatedSizeInKB: Math.round(estimatedSizeInKB)
+        });
+      } catch (collectionError) {
+        logWarn(`Fehler beim Abrufen der Collection ${collectionName}:`, collectionError);
+      } finally {
+        snapshot = null;
       }
-      
-      const avgDocSize = sampleDocs.length > 0 ? totalSampleSize / sampleDocs.length : 0;
-      const estimatedSizeInKB = (docCount * avgDocSize) / 1024;
-      
-      totalSizeInKB += estimatedSizeInKB;
-      
-      collectionStats.push({
-        collection: collectionName,
-        documentCount: docCount,
-        estimatedSizeInKB: Math.round(estimatedSizeInKB)
-      });
     }
     
     // Runde auf 2 Dezimalstellen
@@ -112,5 +119,10 @@ export async function GET() {
       { error: 'Fehler beim Prüfen des Firestore-Speicherplatzes' },
       { status: 500 }
     );
+  } finally {
+    // Cleanup if needed
+    if (global.gc) {
+      global.gc();
+    }
   }
 }

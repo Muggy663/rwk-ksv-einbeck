@@ -54,7 +54,7 @@ export function UpdateNotification() {
     
     if (isPlayStoreApp) {
       // Öffne Play Store für Update
-      window.open('https://play.google.com/store/apps/details?id=de.rwk.einbeck', '_blank');
+      window.open('https://play.google.com/store/apps/details?id=de.rwk.einbeck', '_blank', 'noopener,noreferrer');
     } else {
       // Direkte APK für Web/Sideload
       if (latestRelease) {
@@ -63,7 +63,7 @@ export function UpdateNotification() {
         );
         
         if (apkAsset) {
-          window.open(apkAsset.browser_download_url, '_blank');
+          window.open(apkAsset.browser_download_url, '_blank', 'noopener,noreferrer');
         }
       }
     }
@@ -100,6 +100,7 @@ export function UpdateNotification() {
           <Button 
             onClick={downloadUpdate}
             className="bg-blue-600 hover:bg-blue-700 text-white"
+            rel="noopener noreferrer"
           >
             <Download className="h-4 w-4 mr-2" />
             {navigator.userAgent.includes('wv') ? 'Play Store öffnen' : 'APK herunterladen'}

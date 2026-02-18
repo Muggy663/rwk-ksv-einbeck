@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Save, Target, ChevronDown, Users } from "lucide-react";
+import { ArrowLeft, Save, Target, ChevronDown, Users, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
 import { UnifiedTrainingService } from "@/lib/services/unified-training-service";
@@ -32,6 +32,7 @@ export function NeuerEintragContent() {
   const [selectedGroupId, setSelectedGroupId] = useState(searchParams?.get('group') || '');
   const [selectedCompetitionId, setSelectedCompetitionId] = useState<string | null>(null);
   const [userGroups, setUserGroups] = useState<TrainingGroup[]>([]);
+  const [hasExistingEntries, setHasExistingEntries] = useState(false);
   
   const [formData, setFormData] = useState({
     datum: (() => {
@@ -72,6 +73,19 @@ export function NeuerEintragContent() {
     }
   }, [socialTraining, user]);
   
+  // Prüfe ob Einträge vorhanden sind
+  useEffect(() => {
+    const checkEntries = async () => {
+      try {
+        const einträge = await SchießnachweisService.getEinträge();
+        setHasExistingEntries(einträge.length > 0);
+      } catch (error) {
+        logError('Fehler beim Prüfen der Einträge:', error);
+      }
+    };
+    checkEntries();
+  }, []);
+  
   const loadUserGroups = async () => {
     if (!user) return;
     try {
@@ -82,12 +96,53 @@ export function NeuerEintragContent() {
     }
   };
   
+  const handleRepeatLast = async () => {
+    try {
+      const einträge = await SchießnachweisService.getEinträge();
+      if (einträge.length > 0) {
+        const letzter = einträge.sort((a, b) => b.datum.getTime() - a.datum.getTime())[0];
+        
+        // Finde Kategorie für die Disziplin
+        let kategorie = '';
+        for (const kat of KATEGORIEN) {
+          const disziplinen = getDisziplinenByKategorie(kat);
+          if (disziplinen.some(d => d.name === letzter.disziplin)) {
+            kategorie = kat;
+            break;
+          }
+        }
+        
+        setFormData(prev => ({
+          ...prev,
+          typ: letzter.typ,
+          kategorie: kategorie,
+          disziplin: letzter.disziplin,
+          schussAnzahl: letzter.schussAnzahl.toString(),
+          standort: letzter.standort,
+          schiessstand: letzter.schiessstand || '',
+          wetter: letzter.wetter || '',
+          munition: letzter.munition || '',
+          waffe: letzter.waffe || ''
+        }));
+        toast({
+          title: "✅ Daten übernommen",
+          description: "Letztes Training wurde geladen. Passen Sie die Werte an."
+        });
+      }
+    } catch (error) {
+      logError('Fehler:', error);
+    }
+  };
+  
   useEffect(() => {
     if (formData.kategorie) {
       const disziplinen = getDisziplinenByKategorie(formData.kategorie);
       logDebug('Kategorie:', formData.kategorie, 'Disziplinen:', disziplinen);
       setAvailableDisziplinen(disziplinen.map(d => d.name));
-      setFormData(prev => ({ ...prev, disziplin: '' }));
+      // Nur Disziplin zurücksetzen wenn sie nicht in der neuen Kategorie ist
+      if (formData.disziplin && !disziplinen.some(d => d.name === formData.disziplin)) {
+        setFormData(prev => ({ ...prev, disziplin: '' }));
+      }
     } else {
       setAvailableDisziplinen([]);
     }
@@ -226,11 +281,17 @@ export function NeuerEintragContent() {
 
       router.push(socialTraining ? '/social' : '/schiessnachweis');
     } catch (error) {
+      logError('Fehler beim Speichern:', error);
       toast({
-        title: "Fehler",
-        description: "Eintrag konnte nicht gespeichert werden.",
+        title: "Fehler beim Speichern",
+        description: error instanceof Error ? error.message : "Eintrag konnte nicht gespeichert werden.",
         variant: "destructive"
       });
+      
+      // Zeige auch Browser-Alert für bessere Sichtbarkeit
+      if (error instanceof Error && error.message.includes('angemeldet')) {
+        alert(error.message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -253,6 +314,12 @@ export function NeuerEintragContent() {
         <p className="text-muted-foreground">
           Professionelle Ergebniserfassung für alle DSB-Disziplinen
         </p>
+        {hasExistingEntries && (
+          <Button onClick={handleRepeatLast} variant="outline" size="sm" className="w-full sm:w-auto bg-green-50 hover:bg-green-100 border-green-300 text-green-700 mt-3">
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Letztes Training wiederholen
+          </Button>
+        )}
       </div>
 
       <Card>

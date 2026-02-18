@@ -7,7 +7,7 @@
 
 import { getApps, getApp } from 'firebase/app';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { getFirestore, collection, getDocs, doc, setDoc, writeBatch } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, setDoc, writeBatch, WriteBatch } from 'firebase/firestore';
 
 // Verwende bestehende Firebase App
 const app = getApps().length > 0 ? getApp() : null;
@@ -81,9 +81,9 @@ async function migrateRWKScores() {
       logDebug(`📈 Anzahl Scores: ${scores.length}`);
 
       // Batch-Write für bessere Performance
-      const batches: any[] = [];
+      const batches: WriteBatch[] = [];
       let currentBatch = writeBatch(db);
-      let batchCount = 0;
+      let operationCount = 0;
 
       for (const score of scores) {
         const newDocRef = doc(db, collectionName, score.id);
@@ -92,26 +92,26 @@ async function migrateRWKScores() {
         const { id, ...scoreData } = score;
         currentBatch.set(newDocRef, scoreData);
         
-        batchCount++;
+        operationCount++;
         
         // Firebase Batch-Limit: 500 Operationen
-        if (batchCount >= 500) {
+        if (operationCount >= 500) {
           batches.push(currentBatch);
           currentBatch = writeBatch(db);
-          batchCount = 0;
+          operationCount = 0;
         }
       }
       
       // Letzten Batch hinzufügen falls nicht leer
-      if (batchCount > 0) {
+      if (operationCount > 0) {
         batches.push(currentBatch);
       }
 
       // Alle Batches ausführen
       logDebug(`💾 Schreibe ${batches.length} Batch(es)...`);
-      for (let i = 0; i < batches.length; i++) {
-        await batches[i].commit();
-        logDebug(`✅ Batch ${i + 1}/${batches.length} geschrieben`);
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        await batches[batchIndex].commit();
+        logDebug(`✅ Batch ${batchIndex + 1}/${batches.length} geschrieben`);
       }
     }
 

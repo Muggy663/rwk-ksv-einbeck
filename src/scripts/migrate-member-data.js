@@ -16,6 +16,12 @@ const migrateMemberData = async () => {
     const shootersSnapshot = await getDocs(shootersQuery);
     logInfo(`Gefunden: ${shootersSnapshot.docs.length} Shooters`);
     
+    // Erstelle Map für schnellen Zugriff
+    const shootersMap = new Map();
+    shootersSnapshot.docs.forEach(doc => {
+      shootersMap.set(doc.id, doc.data());
+    });
+    
     // Lade alle Mitglieder aus neuer Collection
     const membersSnapshot = await getDocs(collection(db, `clubs/${clubId}/mitglieder`));
     logInfo(`Gefunden: ${membersSnapshot.docs.length} Mitglieder in neuer Collection`);
@@ -27,11 +33,10 @@ const migrateMemberData = async () => {
       const originalShooterId = memberData.originalShooterId;
       
       if (originalShooterId) {
-        // Finde den entsprechenden Shooter
-        const shooterDoc = shootersSnapshot.docs.find(doc => doc.id === originalShooterId);
+        // Finde den entsprechenden Shooter aus Map
+        const shooterData = shootersMap.get(originalShooterId);
         
-        if (shooterDoc) {
-          const shooterData = shooterDoc.data();
+        if (shooterData) {
           
           // Erstelle Update-Objekt mit fehlenden Daten
           const updates = {};

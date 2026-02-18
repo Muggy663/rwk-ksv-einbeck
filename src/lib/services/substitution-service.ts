@@ -44,6 +44,11 @@ export class SubstitutionService {
       snapshot.docs.forEach(doc => {
         const data = doc.data();
         
+        if (!data.teamId || !data.originalShooterId || !data.replacementShooterId || !data.fromRound) {
+          logError(`Ungültige Substitution-Daten in Dokument ${doc.id}:`, data);
+          return;
+        }
+        
         // Key für Ersatzschützen (neue Schützen)
         const replacementKey = `${data.teamId}-${data.replacementShooterId}`;
         substitutionsMap.set(replacementKey, {

@@ -493,17 +493,7 @@ export async function generateGesamtlistePDF(
       tableBody.push([
         { content: '', colSpan: 1 },
         { content: shooterName, colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 }
+        { content: '', colSpan: 11 }
       ]);
     }
     
@@ -520,17 +510,7 @@ export async function generateGesamtlistePDF(
     tableBody.push([
       { content: '', colSpan: 1 },
       { content: 'Total', colSpan: 1, styles: { fontStyle: 'bold' } },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 }
+      { content: '', colSpan: 11 }
     ]);
     
     // Leerzeile zwischen Mannschaften
@@ -555,17 +535,7 @@ export async function generateGesamtlistePDF(
       tableBody.push([
         { content: '', colSpan: 1 },
         { content: shooter.name, colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 },
-        { content: '', colSpan: 1 }
+        { content: '', colSpan: 11 }
       ]);
     }
     
@@ -573,17 +543,7 @@ export async function generateGesamtlistePDF(
     tableBody.push([
       { content: '', colSpan: 1 },
       { content: 'Total', colSpan: 1, styles: { fontStyle: 'bold' } },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 },
-      { content: '', colSpan: 1 }
+      { content: '', colSpan: 11 }
     ]);
   });
   

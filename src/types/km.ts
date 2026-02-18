@@ -88,6 +88,8 @@ export function calculateKMWettkampfklasse(
   // Sportjahr = Kalenderjahr - Alter im Sportjahr ist entscheidend
   const age = saison - birthYear;
   const suffix = gender === 'male' ? ' m' : ' w';
+  const prefix = gender === 'male' ? 'Herren' : 'Damen';
+  const seniorenPrefix = gender === 'male' ? 'Senioren' : 'Seniorinnen';
   
   // Standard-Wettkampfklassen (Freihand)
   if (!auflage) {
@@ -95,14 +97,14 @@ export function calculateKMWettkampfklasse(
     if (age <= 16) return 'Jugend' + suffix;
     if (age <= 18) return 'Junioren II' + suffix;
     if (age <= 20) return 'Junioren I' + suffix;
-    if (age <= 40) return (gender === 'male' ? 'Herren' : 'Damen') + ' I';
-    if (age <= 50) return (gender === 'male' ? 'Herren' : 'Damen') + ' II';
-    if (age <= 60) return (gender === 'male' ? 'Herren' : 'Damen') + ' III';
-    if (age <= 70) return (gender === 'male' ? 'Herren' : 'Damen') + ' IV';
-    return (gender === 'male' ? 'Herren' : 'Damen') + ' V';
+    if (age <= 40) return prefix + ' I';
+    if (age <= 50) return prefix + ' II';
+    if (age <= 60) return prefix + ' III';
+    if (age <= 70) return prefix + ' IV';
+    return prefix + ' V';
   }
   
-  // Auflage-Wettkampfklassen - NUR für Schüler und ab Senioren 0
+  // Auflage-Wettkampfklassen - nur für Schüler und ab Senioren 0
   if (age <= 14) return 'Schüler' + suffix; // Schüler dürfen Auflage
   
   // Ausnahme für Disziplin 1.41 (KK-Gewehr Auflage 50m) - kreisintern dürfen alle Altersklassen teilnehmen
@@ -110,19 +112,19 @@ export function calculateKMWettkampfklasse(
     if (age <= 16) return 'Jugend' + suffix;
     if (age <= 18) return 'Junioren II' + suffix;
     if (age <= 20) return 'Junioren I' + suffix;
-    return (gender === 'male' ? 'Herren' : 'Damen') + ' I';
+    return prefix + ' I';
   }
   
   if (age <= 40) return 'NICHT STARTBERECHTIGT - Auflage erst ab 41 Jahren';
   
   // Ab 41 Jahren: Senioren-Klassen für Auflage
-  if (age <= 50) return (gender === 'male' ? 'Senioren' : 'Seniorinnen') + ' 0'; // 41-50 Jahre
-  if (age <= 60) return (gender === 'male' ? 'Senioren' : 'Seniorinnen') + ' I';
-  if (age <= 65) return (gender === 'male' ? 'Senioren' : 'Seniorinnen') + ' II';
-  if (age <= 70) return (gender === 'male' ? 'Senioren' : 'Seniorinnen') + ' III';
-  if (age <= 75) return (gender === 'male' ? 'Senioren' : 'Seniorinnen') + ' IV';
-  if (age <= 80) return (gender === 'male' ? 'Senioren' : 'Seniorinnen') + ' V';
-  return (gender === 'male' ? 'Senioren' : 'Seniorinnen') + ' VI'; // ≥ 81 Jahre
+  if (age <= 50) return seniorenPrefix + ' 0'; // 41-50 Jahre
+  if (age <= 60) return seniorenPrefix + ' I';
+  if (age <= 65) return seniorenPrefix + ' II';
+  if (age <= 70) return seniorenPrefix + ' III';
+  if (age <= 75) return seniorenPrefix + ' IV';
+  if (age <= 80) return seniorenPrefix + ' V';
+  return seniorenPrefix + ' VI'; // ≥ 81 Jahre
 }
 
 // Vollständige Disziplinen-Liste für KM 2026

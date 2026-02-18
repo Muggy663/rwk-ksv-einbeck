@@ -127,22 +127,16 @@ export function kannMannschaftBilden(
 ): { erlaubt: boolean; regel?: MannschaftsRegel } {
   
   for (const regel of MANNSCHAFTS_REGELN) {
-    // Prüfe ob alle Wettkampfklassen in der Regel enthalten sind
     const klassenErlaubt = wettkampfklassen.every(klasse => 
       regel.wettkampfklassen.includes(klasse)
     );
     
-    if (klassenErlaubt) {
-      // Wenn gemischte Mannschaften nicht erlaubt sind, prüfe Geschlechter
-      if (!regel.geschlechtGemischt) {
-        const einheitlichesGeschlecht = geschlechter.every(g => g === geschlechter[0]);
-        if (!einheitlichesGeschlecht) {
-          continue; // Diese Regel passt nicht
-        }
-      }
-      
-      return { erlaubt: true, regel };
-    }
+    if (!klassenErlaubt) continue;
+    
+    const hatGemischteGeschlechter = new Set(geschlechter).size > 1;
+    if (!regel.geschlechtGemischt && hatGemischteGeschlechter) continue;
+    
+    return { erlaubt: true, regel };
   }
   
   return { erlaubt: false };

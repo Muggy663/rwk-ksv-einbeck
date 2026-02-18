@@ -6,11 +6,14 @@ const admin = require('firebase-admin');
 
 // Firebase Admin initialisieren
 if (!admin.apps.length) {
+  if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+    throw new Error('Fehlende Firebase-Umgebungsvariablen');
+  }
   admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
     })
   });
 }
@@ -63,8 +66,8 @@ async function repairDuplicates() {
       const keepData = keepDoc.data();
       const removeData = removeDoc.data();
       
-      logInfo(`📊 Keep (${duplicate.keepId}):`, { data: keepData.results || 'Keine Ergebnisse' });
-      logInfo(`📊 Remove (${duplicate.removeId}):`, { data: removeData.results || 'Keine Ergebnisse' });
+      logInfo(`📊 Keep (${duplicate.keepId}):`, keepData.results || 'Keine Ergebnisse');
+      logInfo(`📊 Remove (${duplicate.removeId}):`, removeData.results || 'Keine Ergebnisse');
       
       // Duplikat löschen
       await db.collection('rwk_results_2025').doc(duplicate.removeId).delete();
@@ -79,4 +82,4 @@ async function repairDuplicates() {
 }
 
 // Script ausführen
-repairDuplicates().catch(console.error);
+repairDuplicates().catch((error) => logError('Script-Fehler:', error));

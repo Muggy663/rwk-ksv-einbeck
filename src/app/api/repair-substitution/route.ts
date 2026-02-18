@@ -4,6 +4,8 @@ import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
+  let hartmutScoresSnapshot = null;
+  
   try {
     const { substitutionId } = await request.json();
     
@@ -23,12 +25,12 @@ export async function POST(request: NextRequest) {
         .where('competitionYear', '==', 2026)
         .where('durchgang', '<', 3); // DG1 und DG2
       
-      const hartmutScoresSnapshot = await hartmutScoresQuery.get();
-      
+      hartmutScoresSnapshot = await hartmutScoresQuery.get();
+    
       hartmutScoresSnapshot.docs.forEach(scoreDoc => {
         const scoreData = scoreDoc.data();
         const newScoreRef = adminDb.collection('rwk_scores').doc();
-        
+      
         // Erstelle neue Ergebnisse für Martin (Kopie von Hartmuts Ergebnissen)
         batch.set(newScoreRef, {
           ...scoreData,
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json({ 
         success: true, 
-        message: `Substitution repariert. fromRound: 13→3, ${hartmutScoresSnapshot.size} Ergebnisse für Martin kopiert. Hartmut behält seine als Einzelschütze.`
+        message: `Substitution repariert. fromRound: 13→3, ${hartmutScoresSnapshot?.size || 0} Ergebnisse für Martin kopiert. Hartmut behält seine als Einzelschütze.`
       });
     }
     
@@ -57,5 +59,7 @@ export async function POST(request: NextRequest) {
       error: 'Reparatur fehlgeschlagen',
       details: error instanceof Error ? error.message : 'Unbekannter Fehler'
     }, { status: 500 });
+  } finally {
+    hartmutScoresSnapshot = null;
   }
 }

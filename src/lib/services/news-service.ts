@@ -81,11 +81,6 @@ class NewsService {
         logError('Fehler beim Erstellen des Audit-Logs:', auditError);
       }
       
-      // TODO: Push-Notification senden wenn veröffentlicht
-      if (article.status === 'veroeffentlicht') {
-
-      }
-      
       return docRef.id;
     } catch (error) {
       logError('Fehler beim Erstellen des News-Artikels:', error);

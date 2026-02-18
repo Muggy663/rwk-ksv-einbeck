@@ -95,6 +95,10 @@ export function useCamera(options: UseCameraOptions = {}) {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      // Prevent stream modifications
+      Object.freeze(stream);
+      
       streamRef.current = stream;
 
       if (videoRef.current) {
@@ -177,6 +181,9 @@ export function useCamera(options: UseCameraOptions = {}) {
       captureCanvas.width = video.videoWidth;
       captureCanvas.height = video.videoHeight;
 
+      // Prevent canvas modifications
+      Object.freeze(captureCanvas);
+
       // Draw video frame to canvas
       ctx.drawImage(video, 0, 0);
 
@@ -199,11 +206,18 @@ export function useCamera(options: UseCameraOptions = {}) {
       // Convert to blob with high quality
       captureCanvas.toBlob((blob) => {
         if (blob) {
+          // Prevent blob modifications
+          Object.freeze(blob);
+          
           const file = new File([blob], `handzettel_${Date.now()}.jpg`, {
             type: 'image/jpeg',
             lastModified: Date.now()
           });
-          Object.defineProperty(file, 'name', { writable: false, configurable: false });
+          
+          // Prevent modifications to file object
+          Object.freeze(file);
+          Object.seal(file);
+          
           resolve(file);
         } else {
           reject(new Error('Failed to create image blob'));

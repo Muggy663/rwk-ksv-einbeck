@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { collection, query, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -39,37 +39,7 @@ export async function fetchLatestUpdates(count: number = 5): Promise<Update[]> {
     });
   } catch (error) {
     logError('Fehler beim Laden der letzten Updates:', error);
-    
-    // Fallback zu Beispieldaten, falls ein Fehler auftritt
-    return [
-      {
-        id: '1',
-        title: 'Kreisoberliga Luftgewehr',
-        date: new Date(),
-        description: 'Neue Ergebnisse für Durchgang 3 eingetragen',
-        leagueId: '1',
-        seasonId: '1',
-        type: 'result'
-      },
-      {
-        id: '2',
-        title: 'Kreisliga Luftgewehr',
-        date: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 Tag zurück
-        description: 'Neue Ergebnisse für Durchgang 3 eingetragen',
-        leagueId: '2',
-        seasonId: '1',
-        type: 'result'
-      },
-      {
-        id: '3',
-        title: 'Kreisoberliga Kleinkaliber',
-        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 Tage zurück
-        description: 'Neue Ergebnisse für Durchgang 2 eingetragen',
-        leagueId: '3',
-        seasonId: '2',
-        type: 'result'
-      }
-    ];
+    return [];
   }
 }
 

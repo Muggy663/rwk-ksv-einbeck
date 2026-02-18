@@ -24,11 +24,12 @@ export async function generateLeaguePDFFixed(
   numRounds: number,
   competitionYear: number
 ): Promise<Blob> {
-  const doc = new jsPDF({
-    orientation: 'landscape',
-    unit: 'mm',
-    format: 'a4'
-  });
+  try {
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
   
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(18);
@@ -68,7 +69,7 @@ export async function generateLeaguePDFFixed(
     
     // Schützen aus individualLeagueShooters holen (exakt wie Einzelschützen-PDF)
     // Normalisiere Teamnamen für Vergleich (entferne mehrfache Leerzeichen)
-    const normalizeTeamName = (name) => name?.replace(/\s+/g, ' ').trim();
+    const normalizeTeamName = (name: string | undefined) => name?.replace(/\s+/g, ' ').trim();
     
     const shooters = league.individualLeagueShooters?.filter(s => 
       normalizeTeamName(s.teamName) === normalizeTeamName(team.name)
@@ -123,6 +124,10 @@ export async function generateLeaguePDFFixed(
   }
   
   return doc.output('blob');
+  } catch (error) {
+    logError('Fehler beim Generieren des Liga-PDFs', { error, leagueName: league.name });
+    throw new Error('PDF-Generierung fehlgeschlagen');
+  }
 }
 
 /**
@@ -137,12 +142,13 @@ export async function generateShootersPDFFixed(
   numRounds: number,
   competitionYear: number
 ): Promise<Blob> {
-  // PDF im A4-Format erstellen
-  const doc = new jsPDF({
-    orientation: 'landscape',
-    unit: 'mm',
-    format: 'a4'
-  });
+  try {
+    // PDF im A4-Format erstellen
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
   
   // Schriftart setzen
   doc.setFont('helvetica', 'normal');
@@ -175,16 +181,11 @@ export async function generateShootersPDFFixed(
   
   // Daten für die Tabelle vorbereiten
   const tableData = league.individualLeagueShooters.map(shooter => {
+    const substitutionInfo = this.findSubstitutionInfo(shooter, league.teams);
     let shooterName = shooter.shooterName;
     
-    // Prüfe auf Ersatzschützen-Info - suche in allen Teams nach diesem Schützen
-    for (const team of league.teams) {
-      const teamShooter = team.shootersResults?.find(s => s.shooterId === shooter.shooterId);
-      if (teamShooter?.substitutionInfo) {
-        const sub = teamShooter.substitutionInfo;
-        shooterName += ` (Ersatz ab DG${sub.fromRound} für ${sub.originalShooterName})`;
-        break;
-      }
+    if (substitutionInfo) {
+      shooterName += ` (Ersatz ab DG${substitutionInfo.fromRound} für ${substitutionInfo.originalShooterName})`;
     }
     
     const rowData: any = {
@@ -244,4 +245,26 @@ export async function generateShootersPDFFixed(
   
   // PDF als Blob zurückgeben
   return doc.output('blob');
+  } catch (error) {
+    logError('Fehler beim Generieren des Einzelschützen-PDFs', { error, leagueName: league.name });
+    throw new Error('PDF-Generierung fehlgeschlagen');
+  }
+}
+
+/**
+ * Hilfsfunktion: Findet Ersatzschützen-Info für einen Schützen
+ */
+function findSubstitutionInfo(shooter: any, teams: TeamDisplay[]): any {
+  try {
+    for (const team of teams) {
+      const teamShooter = team.shootersResults?.find(s => s.shooterId === shooter.shooterId);
+      if (teamShooter?.substitutionInfo) {
+        return teamShooter.substitutionInfo;
+      }
+    }
+    return null;
+  } catch (error) {
+    logWarn('Fehler beim Suchen der Ersatzschützen-Info', { error, shooterId: shooter?.shooterId });
+    return null;
+  }
 }

@@ -2005,7 +2005,9 @@ function RwkTabellenPageComponent() {
                               const url = URL.createObjectURL(pdfBlob);
                               const a = document.createElement('a');
                               a.href = url;
-                              a.download = `${league.name}_Mannschaften_${selectedCompetition.year}.pdf`;
+                              const sanitizedLeagueName = String(league.name || '').replace(/[<>"'&\/\\]/g, '');
+                              const sanitizedYear = String(selectedCompetition.year || '').replace(/[<>"'&\/\\]/g, '');
+                              a.download = `${sanitizedLeagueName}_Mannschaften_${sanitizedYear}.pdf`;
                               document.body.appendChild(a);
                               a.click();
                               document.body.removeChild(a);
@@ -2059,7 +2061,9 @@ function RwkTabellenPageComponent() {
                               const url = URL.createObjectURL(pdfBlob);
                               const a = document.createElement('a');
                               a.href = url;
-                              a.download = `${league.name}_Einzelschützen_${selectedCompetition.year}.pdf`;
+                              const sanitizedLeagueName = String(league.name || '').replace(/[<>"'&\/\\]/g, '');
+                              const sanitizedYear = String(selectedCompetition.year || '').replace(/[<>"'&\/\\]/g, '');
+                              a.download = `${sanitizedLeagueName}_Einzelschützen_${sanitizedYear}.pdf`;
                               document.body.appendChild(a);
                               a.click();
                               document.body.removeChild(a);

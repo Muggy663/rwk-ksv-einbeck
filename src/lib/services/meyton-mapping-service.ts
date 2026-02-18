@@ -12,7 +12,7 @@ export interface MeytonKlasse {
 export class MeytonMappingService {
   
   // Meyton Klassen-Mapping
-  static readonly KLASSEN: MeytonKlasse[] = [
+  static readonly KLASSEN: readonly MeytonKlasse[] = [
     { id: 10, name: 'Herren I', minAlter: 21, maxAlter: 40, geschlecht: 1 },
     { id: 11, name: 'Damen I', minAlter: 21, maxAlter: 40, geschlecht: 0 },
     { id: 12, name: 'Herren II', minAlter: 41, maxAlter: 50, geschlecht: 1 },
@@ -41,7 +41,7 @@ export class MeytonMappingService {
     { id: 77, name: 'Senioren IV weibl.', minAlter: 71, maxAlter: 75, geschlecht: 0 },
     { id: 78, name: 'Senioren V männl.', minAlter: 76, maxAlter: 255, geschlecht: 1 },
     { id: 79, name: 'Senioren V weibl.', minAlter: 76, maxAlter: 255, geschlecht: 0 }
-  ];
+  ] as const;
 
   // Disziplinen-Mapping (wichtigste)
   static readonly DISZIPLINEN = {
@@ -53,34 +53,68 @@ export class MeytonMappingService {
 
   /**
    * Finde Meyton-Klassen-ID basierend auf Altersklasse
+   * @throws {Error} Wenn Altersklasse nicht zugeordnet werden kann
    */
   static getKlassenId(altersklasse: string, geschlecht: 'M' | 'W', geburtsjahr: number, saison: number = 2025): number {
+    if (!altersklasse || !geschlecht || !geburtsjahr) {
+      throw new Error('Ungültige Parameter: altersklasse, geschlecht und geburtsjahr sind erforderlich');
+    }
+    
+    if (geburtsjahr < 1900 || geburtsjahr > saison) {
+      throw new Error(`Ungültiges Geburtsjahr: ${geburtsjahr}`);
+    }
+    
+    if (geschlecht !== 'M' && geschlecht !== 'W') {
+      throw new Error(`Ungültiges Geschlecht: ${geschlecht}. Erwartet 'M' oder 'W'`);
+    }
+    
     const alter = saison - geburtsjahr;
     const isMale = geschlecht === 'M';
     
     // Direkte Zuordnung basierend auf Altersklasse
-    if (altersklasse.includes('Schüler')) return isMale ? 20 : 21;
-    if (altersklasse.includes('Jugend')) return isMale ? 30 : 31;
-    if (altersklasse.includes('Junioren II')) return isMale ? 42 : 43;
-    if (altersklasse.includes('Junioren I')) return isMale ? 40 : 41;
-    
-    // Senioren (Auflage)
-    if (altersklasse.includes('Senioren 0')) return isMale ? 50 : 51;
-    if (altersklasse.includes('Senioren I')) return isMale ? 70 : 71;
-    if (altersklasse.includes('Senioren II')) return isMale ? 72 : 73;
-    if (altersklasse.includes('Senioren III')) return isMale ? 74 : 75;
-    if (altersklasse.includes('Senioren IV')) return isMale ? 76 : 77;
-    if (altersklasse.includes('Senioren V')) return isMale ? 78 : 79;
-    
-    // Herren/Damen (Freihand) - Korrekte IDs
-    if (altersklasse.includes('Herren I') || altersklasse.includes('Damen I')) {
-      return isMale ? 10 : 11; // Herren I / Damen I
-    }
-    if (altersklasse.includes('Herren II') || altersklasse.includes('Damen II')) return isMale ? 12 : 13;
-    if (altersklasse.includes('Herren III') || altersklasse.includes('Damen III')) return isMale ? 14 : 15;
-    if (altersklasse.includes('Herren IV') || altersklasse.includes('Damen IV')) return isMale ? 16 : 17;
+    const klassenId = this.getKlassenIdByAltersklasse(altersklasse, isMale);
+    if (klassenId !== null) return klassenId;
     
     // Fallback basierend auf Alter
+    return this.getKlassenIdByAge(alter, isMale);
+  }
+  
+  private static getKlassenIdByAltersklasse(altersklasse: string, isMale: boolean): number | null {
+    const klassenMap: Record<string, [number, number]> = {
+      'Schüler': [20, 21],
+      'Jugend': [30, 31],
+      'Junioren II': [42, 43],
+      'Junioren I': [40, 41],
+      'Senioren 0': [50, 51],
+      'Senioren I': [70, 71],
+      'Senioren II': [72, 73],
+      'Senioren III': [74, 75],
+      'Senioren IV': [76, 77],
+      'Senioren V': [78, 79],
+      'Herren I': [10, 11],
+      'Damen I': [10, 11],
+      'Herren II': [12, 13],
+      'Damen II': [12, 13],
+      'Herren III': [14, 15],
+      'Damen III': [14, 15],
+      'Herren IV': [16, 17],
+      'Damen IV': [16, 17]
+    };
+    
+    for (const [key, [maleId, femaleId]] of Object.entries(klassenMap)) {
+      if (altersklasse.includes(key)) {
+        return isMale ? maleId : femaleId;
+      }
+    }
+    
+    return null;
+  }
+  
+  private static getKlassenIdByAge(alter: number, isMale: boolean): number {
+    if (typeof alter !== 'number' || isNaN(alter) || alter < 0) {
+      throw new Error(`Ungültiges Alter: ${alter}`);
+    }
+    
     if (alter <= 14) return isMale ? 20 : 21;
     if (alter <= 16) return isMale ? 30 : 31;
     if (alter <= 18) return isMale ? 42 : 43;
@@ -93,26 +127,38 @@ export class MeytonMappingService {
 
   /**
    * Finde Disziplin-Code basierend auf Disziplin-Name
+   * @throws {Error} Wenn Disziplin ungültig ist
    */
   static getDisziplinCode(disziplin: string): string {
-    if (disziplin.includes('Luftgewehr') && disziplin.includes('Auflage')) return '10111020';
-    if (disziplin.includes('Luftgewehr')) return '10110020';
-    if (disziplin.includes('Luftpistole') && disziplin.includes('Auflage')) return '10211030';
-    if (disziplin.includes('Luftpistole')) return '10210020';
-    return '10110020'; // Fallback
+    if (!disziplin || typeof disziplin !== 'string') {
+      throw new Error('Ungültige Disziplin: String erwartet');
+    }
+    
+    const normalized = disziplin.toLowerCase().trim();
+    
+    if (!normalized) {
+      throw new Error('Disziplin darf nicht leer sein');
+    }
+    
+    if (normalized.includes('luftgewehr') && normalized.includes('auflage')) return '10111020';
+    if (normalized.includes('luftgewehr')) return '10110020';
+    if (normalized.includes('luftpistole') && normalized.includes('auflage')) return '10211030';
+    if (normalized.includes('luftpistole')) return '10210020';
+    
+    throw new Error(`Unbekannte Disziplin: ${disziplin}`);
   }
   
   /**
    * Finde Disziplin-Code basierend auf SPO-Nummer
    */
   static getDisziplinCodeBySpoNummer(spoNummer: string): string {
-    // Format: [Entfernung][DSB-Regel][Schusszahl]
-    // 1=10m, 2=15m, 3=25m, 4=50m, 5=100m, 6=300m, 7=andere
+    if (!spoNummer) return '10110040';
+    
     switch (spoNummer) {
-      case '1.10': return '10110040'; // LG Freihand 40 Schuss
-      case '1.11': return '10111030'; // LG Auflage 30 Schuss
-      case '2.10': return '10210040'; // LP Freihand 40 Schuss
-      case '2.11': return '10211030'; // LP Auflage 30 Schuss
+      case '1.10': return '10110040';
+      case '1.11': return '10111030';
+      case '2.10': return '10210040';
+      case '2.11': return '10211030';
       default: return '10110040';
     }
   }

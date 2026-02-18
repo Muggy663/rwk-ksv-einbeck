@@ -26,7 +26,6 @@ export interface KIAnalyse {
 
 export function analyzeStartlist(meldungen: any[], startliste: any[], config: any): KIAnalyse {
   const konflikte: KIKonflikt[] = [];
-  const empfehlungen: KIEmpfehlung[] = [];
   const optimierungen: KIOptimierung[] = [];
 
   // Prüfe auf Stand-Zeit-Konflikte (nur bei gleicher Disziplin)
@@ -93,13 +92,7 @@ export function analyzeStartlist(meldungen: any[], startliste: any[], config: an
   // Berechne Score
   let score = 100;
   score -= konflikte.length * 20;
-  score -= empfehlungen.length * 5;
   score = Math.max(0, score);
 
-  return { score, konflikte, empfehlungen, optimierungen };
-}
-
-export function optimizeStartlist(startliste: any[], config: any): any[] {
-  // Einfache Optimierung: Sortiere nach Namen
-  return startliste.sort((a, b) => a.name.localeCompare(b.name));
+  return { score, konflikte, empfehlungen: [], optimierungen };
 }

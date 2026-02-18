@@ -57,16 +57,7 @@ export function cachePDF(type: string, params: Record<string, any>, pdfBlob: Blo
   
   // Wenn der Cache voll ist, entferne den ältesten Eintrag
   if (pdfCache.size >= MAX_CACHE_SIZE) {
-    let oldestKey: string | null = null;
-    let oldestTimestamp = Date.now();
-    
-    for (const [cacheKey, entry] of pdfCache.entries()) {
-      if (entry.timestamp < oldestTimestamp) {
-        oldestTimestamp = entry.timestamp;
-        oldestKey = cacheKey;
-      }
-    }
-    
+    const oldestKey = findOldestCacheKey();
     if (oldestKey) {
       pdfCache.delete(oldestKey);
     }
@@ -78,9 +69,20 @@ export function cachePDF(type: string, params: Record<string, any>, pdfBlob: Blo
     timestamp: Date.now(),
     key
   });
-  
-
 }
+
+function findOldestCacheKey(): string | null {
+  let oldestKey: string | null = null;
+  let oldestTimestamp = Date.now();
+  
+  for (const [cacheKey, entry] of pdfCache.entries()) {
+    if (entry.timestamp < oldestTimestamp) {
+      oldestTimestamp = entry.timestamp;
+      oldestKey = cacheKey;
+    }
+  }
+  
+  return oldestKey;}
 
 /**
  * Ruft ein PDF aus dem Cache ab
@@ -116,22 +118,14 @@ export function getCachedPDF(type: string, params: Record<string, any>): Blob | 
  */
 export function invalidatePDFCache(type: string, params: Record<string, any>): boolean {
   const key = generateCacheKey(type, params);
-  const result = pdfCache.delete(key);
-  
-  if (result) {
-
-  }
-  
-  return result;
+  return pdfCache.delete(key);
 }
 
 /**
  * Löscht alle PDF-Cache-Einträge
  */
 export function clearPDFCache(): void {
-  const cacheSize = pdfCache.size;
   pdfCache.clear();
-
 }
 
 /**

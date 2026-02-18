@@ -22,6 +22,19 @@ interface Disziplin {
   }>;
 }
 
+const sanitizeText = (text: string | undefined | null): string => {
+  return String(text || '').replace(/[<>"'&]/g, (char) => {
+    const entities: Record<string, string> = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '&': '&amp;'
+    };
+    return entities[char] || char;
+  });
+};
+
 export default function DisziplinenVerwaltung() {
   const { toast } = useToast();
   const [disziplinen, setDisziplinen] = useState<Disziplin[]>([]);
@@ -217,14 +230,14 @@ export default function DisziplinenVerwaltung() {
                       </div>
                     ) : (
                       <div>
-                        <h3 className="font-bold text-lg">{disziplin.name}</h3>
-                        <p className="text-sm text-muted-foreground">SPO-Nr: {disziplin.spoNummer}</p>
+                        <h3 className="font-bold text-lg">{sanitizeText(disziplin.name)}</h3>
+                        <p className="text-sm text-muted-foreground">SPO-Nr: {sanitizeText(disziplin.spoNummer)}</p>
                       </div>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="text-sm text-muted-foreground">
-                      Saison: {disziplin.saison}
+                      Saison: {sanitizeText(disziplin.saison)}
                     </div>
                     <Button 
                       variant="outline" 

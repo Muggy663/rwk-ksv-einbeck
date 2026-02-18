@@ -25,46 +25,31 @@ export async function generatePDFWithMobileSupport(
   fileName: string
 ): Promise<void> {
   try {
-    // Safari-Erkennung über Hilfsfunktion
-    const safariDetected = isSafari();
-    
-    // PDF generieren
     const pdfBlob = await generateFunction();
     
-    // Prüfen, ob wir in einer nativen App sind
     const isNativeApp = window.Capacitor && window.Capacitor.isNativePlatform();
-    
-    // Prüfen, ob es sich um ein mobiles Gerät handelt
     const isMobile = isMobileDevice();
-    
-    // Blob-URL erstellen
     const url = URL.createObjectURL(pdfBlob);
     
     if (isNativeApp) {
-      // In nativer App: Mit Capacitor öffnen
       try {
         await openWithAppChooser(url);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       } catch (nativeError) {
         logError('Fehler beim Öffnen mit nativer App:', nativeError);
-        // Fallback: Im Browser öffnen
         window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
       }
     } else if (isSafari()) {
-      // Safari-spezifische Behandlung mit optimierter Funktion
       logDebug('Safari erkannt - verwende Safari-optimierte PDF-Behandlung');
       
       try {
         await downloadPDFSafari(pdfBlob, fileName);
+        URL.revokeObjectURL(url);
       } catch (safariError) {
         logError('Safari PDF-Behandlung fehlgeschlagen:', safariError);
-        
-        // Letzter Fallback: Einfacher Blob-URL
-        const url = URL.createObjectURL(pdfBlob);
         window.open(url, '_blank');
-        
-        setTimeout(() => {
-          URL.revokeObjectURL(url);
-        }, 10000);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
       }
     } else if (isMobile) {
       // Auf anderen mobilen Geräten: PDF im Browser öffnen
@@ -135,9 +120,23 @@ export async function generateLeaguePDFFixed(
       // Schriftart setzen
       doc.setFont('helvetica', 'normal');
       
+      // Daten für die Tabelle vorbereiten
+      const sanitize = (str: string) => {
+        const text = String(str || '');
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#x27;')
+          .replace(/\//g, '&#x2F;')
+          .substring(0, 500);
+      };
+      
       // Titel
       doc.setFontSize(18);
-      doc.text(`${league?.name || 'Liga'} ${competitionYear}`, 14, 20);
+      const leagueNameSafe = league?.name || 'Liga';
+      doc.text(sanitize(`${leagueNameSafe} ${competitionYear}`), 14, 20);
       
       // Untertitel
       doc.setFontSize(12);
@@ -166,21 +165,19 @@ export async function generateLeaguePDFFixed(
         logInfo('Sample shooter:', { data: league.individualLeagueShooters[0] });
       }
       
-      // Erweiterte Tabelle mit Schützen pro Team
       let currentY = 35;
-      
       for (const team of (league?.teams || [])) {
-        // Team-Zeile
+        const teamNameSafe = team.name || '';
         const teamRowData = {
           rank: team.outOfCompetition ? "AK" : team.rank,
-          name: team.outOfCompetition ? `${team.name} (Außer Konkurrenz)` : team.name,
+          name: team.outOfCompetition ? sanitize(`${teamNameSafe} (Außer Konkurrenz)`) : sanitize(teamNameSafe),
           totalScore: team.totalScore || '-',
           averageScore: team.averageScore ? team.averageScore.toFixed(2) : '-'
         };
         
         for (let i = 1; i <= numRounds; i++) {
           const key = `dg${i}`;
-          teamRowData[key] = team.roundResults[key] !== null ? team.roundResults[key] : '-';
+          teamRowData[key] = team.roundResults?.[key] !== null && team.roundResults?.[key] !== undefined ? team.roundResults[key] : '-';
         }
         
         // Team-Tabelle
@@ -220,10 +217,11 @@ export async function generateLeaguePDFFixed(
           shooterHeaders.push('Gesamt', 'Schnitt');
           
           const shooterRows = teamShooters.map(shooter => {
-            const row = ['', shooter.shooterName || 'Unbekannt'];
+            const shooterNameSafe = shooter.shooterName || 'Unbekannt';
+            const row = ['', sanitize(shooterNameSafe)];
             for (let i = 1; i <= numRounds; i++) {
               const key = `dg${i}`;
-              row.push(shooter.results[key] !== null && shooter.results[key] !== undefined ? shooter.results[key].toString() : '-');
+              row.push(shooter.results?.[key] !== null && shooter.results?.[key] !== undefined ? shooter.results[key].toString() : '-');
             }
             row.push((shooter.total || 0).toString());
             row.push(shooter.average ? shooter.average.toFixed(2) : '-');
@@ -325,7 +323,8 @@ export async function generateShootersPDFFixed(
       
       // Titel
       doc.setFontSize(18);
-      doc.text(`Einzelschützen ${league?.name || 'Liga'} ${competitionYear}`, 14, 20);
+      const leagueNameSafe = league?.name || 'Liga';
+      doc.text(`Einzelschützen ${sanitize(leagueNameSafe)} ${competitionYear}`, 14, 20);
       
       // Untertitel
       doc.setFontSize(12);
@@ -350,20 +349,43 @@ export async function generateShootersPDFFixed(
       );
       
       // Daten für die Tabelle vorbereiten
-      const tableData = (league?.individualLeagueShooters || []).map(shooter => {
-        const rowData: any = {
+      const sanitize = (str: string) => {
+        const text = String(str || '');
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#x27;')
+          .replace(/\//g, '&#x2F;')
+          .substring(0, 500);
+      };
+      
+      interface ShooterRowData {
+        rank: string | number;
+        name: string;
+        team: string;
+        totalScore: string | number;
+        averageScore: string;
+        isOutOfCompetition: boolean;
+        [key: string]: string | number | boolean;
+      }
+      
+      const tableData: ShooterRowData[] = (league?.individualLeagueShooters || []).map(shooter => {
+        const teamNameSafe = shooter.teamName || '';
+        const shooterNameSafe = shooter.shooterName || '';
+        const rowData: ShooterRowData = {
           rank: shooter.teamOutOfCompetition ? "AK" : shooter.rank,
-          name: shooter.shooterName,
-          team: shooter.teamOutOfCompetition ? `${shooter.teamName} (AK)` : shooter.teamName,
+          name: sanitize(shooterNameSafe),
+          team: shooter.teamOutOfCompetition ? sanitize(`${teamNameSafe} (AK)`) : sanitize(teamNameSafe),
           totalScore: shooter.totalScore || '-',
           averageScore: shooter.averageScore ? shooter.averageScore.toFixed(2) : '-',
           isOutOfCompetition: shooter.teamOutOfCompetition
         };
         
-        // Durchgangsergebnisse hinzufügen
         for (let i = 1; i <= numRounds; i++) {
           const key = `dg${i}`;
-          rowData[key] = shooter.results[key] !== null ? shooter.results[key] : '-';
+          rowData[key] = shooter.results?.[key] !== null && shooter.results?.[key] !== undefined ? shooter.results[key] : '-';
         }
         
         return rowData;
