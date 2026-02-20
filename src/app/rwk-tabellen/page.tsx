@@ -102,6 +102,37 @@ import { TeamCalculationService } from '@/lib/services/team-calculation-service'
 
 const EXCLUDED_TEAM_NAME_PART = 'einzel'; // Case-insensitive check later
 
+/**
+ * Bestimmt den liga-weit vollständigen Durchgang
+ * (Alle Teams in der Liga haben diesen Durchgang vollständig)
+ */
+const determineLeagueCompleteRound = (teams: TeamDisplay[], numRounds: number): number => {
+  if (!teams || teams.length === 0) return 0;
+  
+  // Finde den niedrigsten vollständigen Durchgang über alle Teams
+  let leagueCompleteRound = numRounds;
+  
+  for (const team of teams) {
+    // Überspringe Teams "außer Konkurrenz"
+    if (team.outOfCompetition) continue;
+    
+    // Finde letzten lückenlosen Durchgang für dieses Team
+    let teamCompleteRound = 0;
+    for (let r = 1; r <= numRounds; r++) {
+      if (team.roundResults?.[`dg${r}`] !== null) {
+        teamCompleteRound = r;
+      } else {
+        break; // Lücke gefunden
+      }
+    }
+    
+    // Nimm das Minimum (schwächstes Glied)
+    leagueCompleteRound = Math.min(leagueCompleteRound, teamCompleteRound);
+  }
+  
+  return leagueCompleteRound;
+};
+
 interface TeamShootersTableProps {
   shootersResults: ShooterDisplayResults[];
   numRounds: number;
@@ -2094,6 +2125,11 @@ function RwkTabellenPageComponent() {
                     </div>
                     {league.teams.length > 0 ? (
                       isPortrait ? (
+                        (() => {
+                          // Berechne liga-weit vollständigen Durchgang auch für Mobile
+                          const leagueCompleteRound = determineLeagueCompleteRound(league.teams, currentNumRoundsState);
+                          
+                          return (
                         <div>
                           <MobileTeamCards
                           teams={league.teams.filter(team => showOutOfCompetitionTeams || !team.outOfCompetition)}
@@ -2104,9 +2140,17 @@ function RwkTabellenPageComponent() {
                           onToggleTeam={toggleTeamExpansion}
                           loadingTeams={loadingTeamShooters}
                           onLoadTeamShooters={loadTeamShooters}
+                          leagueCompleteRound={leagueCompleteRound}
                         />
                         </div>
+                          );
+                        })()
                       ) : (
+                        (() => {
+                          // Berechne liga-weit vollständigen Durchgang
+                          const leagueCompleteRound = determineLeagueCompleteRound(league.teams, currentNumRoundsState);
+                          
+                          return (
                         <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={needsSpecialTouch ? { 
                           touchAction: 'manipulation', 
                           maxHeight: '70vh',
@@ -2156,18 +2200,27 @@ function RwkTabellenPageComponent() {
                                     <TableCell key={`dg-val-${i + 1}-${team.id}`} className="text-center px-1 py-2">{(team.roundResults as any)?.[`dg${i + 1}`] ?? '-'}</TableCell>
                                   ))}
                                   <TableCell className="text-center px-2 py-2">
-                                    {team.sortingScore !== undefined && team.sortingScore !== team.totalScore ? (
-                                      <div className="flex flex-col items-center">
-                                        <span className="font-bold text-lg text-green-600 dark:text-green-400">{team.sortingScore}</span>
-                                        <span className="text-xs text-muted-foreground">Wertung</span>
-                                        <span className="text-xs text-gray-500">Gesamt: {team.totalScore ?? '-'}</span>
-                                      </div>
-                                    ) : (
-                                      <div className="flex flex-col items-center">
-                                        <span className="font-bold text-lg text-primary">{team.totalScore ?? '-'}</span>
-                                        <span className="text-xs text-muted-foreground">Ringe</span>
-                                      </div>
-                                    )}
+                                    {(() => {
+                                      // Berechne Wertungs-Score bis zum liga-weiten vollständigen Durchgang
+                                      let leagueScore = 0;
+                                      for (let r = 1; r <= leagueCompleteRound; r++) {
+                                        const score = team.roundResults?.[`dg${r}`];
+                                        if (score !== null && score !== undefined) {
+                                          leagueScore += score;
+                                        }
+                                      }
+                                      
+                                      const showBoth = leagueScore !== team.totalScore;
+                                      
+                                      return (
+                                        <div className="flex flex-col items-center">
+                                          <span className="font-bold text-lg text-primary">{leagueScore}</span>
+                                          {showBoth && (
+                                            <span className="text-xs text-muted-foreground">({team.totalScore ?? 0})</span>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
                                   </TableCell>
                                   {!isNativeApp && <TableCell className="text-center font-medium text-muted-foreground px-2 py-2">{team.averageScore != null ? team.averageScore.toFixed(2) : '-'}</TableCell>}
                                   {!isNativeApp && <TableCell className="text-right pr-4 px-2 py-2">
@@ -2195,6 +2248,8 @@ function RwkTabellenPageComponent() {
                           </TableBody>
                           </SmartTable>
                         </div>
+                          );
+                        })()
                       )
                     ) : (<p className="p-4 text-center text-muted-foreground">Keine Mannschaften in dieser Liga für {pageTitle} vorhanden.</p>)}
                     

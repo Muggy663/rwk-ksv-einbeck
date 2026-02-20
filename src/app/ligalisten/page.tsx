@@ -113,16 +113,16 @@ export default function LigalistenPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card className="border-2 border-primary/20 hover:border-primary/40 transition-colors">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-muted rounded-lg">
-                        <FileText className="h-8 w-8 text-primary" />
+                  <CardContent className="p-4 md:p-6">
+                    <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+                      <div className="p-3 bg-muted rounded-lg w-fit">
+                        <FileText className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-2">Durchgangs-Meldebögen</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Erstellen Sie Handzettel für einzelne Durchgänge</p>
+                        <h3 className="font-semibold text-base md:text-lg mb-1 md:mb-2">Durchgangs-Meldebögen</h3>
+                        <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">Erstellen Sie Handzettel für einzelne Durchgänge</p>
                         <Link href="/handzettel-generator">
-                          <Button className="w-full">
+                          <Button className="w-full h-9 md:h-10 text-sm">
                             <FileText className="h-4 w-4 mr-2" />
                             Handzettel erstellen
                           </Button>
@@ -133,16 +133,16 @@ export default function LigalistenPage() {
                 </Card>
                 
                 <Card className="border-2 border-primary/20 hover:border-primary/40 transition-colors">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-muted rounded-lg">
-                        <BarChart3 className="h-8 w-8 text-primary" />
+                  <CardContent className="p-4 md:p-6">
+                    <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+                      <div className="p-3 bg-muted rounded-lg w-fit">
+                        <BarChart3 className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-2">Gesamtergebnislisten</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Übersichten für alle 5 Durchgänge</p>
+                        <h3 className="font-semibold text-base md:text-lg mb-1 md:mb-2">Gesamtergebnislisten</h3>
+                        <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">Übersichten für alle 5 Durchgänge</p>
                         <Link href="/gesamtergebnisliste-generator">
-                          <Button className="w-full">
+                          <Button className="w-full h-9 md:h-10 text-sm">
                             <BarChart3 className="h-4 w-4 mr-2" />
                             Gesamtergebnisliste erstellen
                           </Button>

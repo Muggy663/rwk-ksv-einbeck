@@ -18,6 +18,7 @@ interface MobileTeamCardsProps {
   onToggleTeam: (teamId: string) => void;
   loadingTeams: Set<string>;
   onLoadTeamShooters: (teamId: string, teamData: any, numRounds: number) => void;
+  leagueCompleteRound?: number;
 }
 
 export const MobileTeamCards: React.FC<MobileTeamCardsProps> = ({
@@ -28,7 +29,8 @@ export const MobileTeamCards: React.FC<MobileTeamCardsProps> = ({
   expandedTeams,
   onToggleTeam,
   loadingTeams,
-  onLoadTeamShooters
+  onLoadTeamShooters,
+  leagueCompleteRound = 0
 }) => {
   return (
     <div className="space-y-4">
@@ -55,19 +57,30 @@ export const MobileTeamCards: React.FC<MobileTeamCardsProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 <div className="text-right">
-                  {/* Zeige Wertungsringe groß, wenn sie sich von Gesamtringen unterscheiden */}
-                  {team.sortingScore !== undefined && team.sortingScore !== team.totalScore ? (
-                    <div>
-                      <div className="font-bold text-lg text-primary">{team.sortingScore}</div>
-                      <div className="text-xs text-muted-foreground">Wertung</div>
-                      <div className="text-xs text-gray-500">Gesamt: {team.totalScore || 0}</div>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="font-bold text-lg text-primary">{team.totalScore || 0}</div>
-                      <div className="text-xs text-muted-foreground">Ringe</div>
-                    </div>
-                  )}
+                  {(() => {
+                    // Berechne Wertungs-Score bis zum liga-weiten vollständigen Durchgang
+                    let leagueScore = 0;
+                    for (let r = 1; r <= leagueCompleteRound; r++) {
+                      const score = team.roundResults?.[`dg${r}`];
+                      if (score !== null && score !== undefined) {
+                        leagueScore += score;
+                      }
+                    }
+                    
+                    const showBoth = leagueScore !== team.totalScore;
+                    
+                    return showBoth ? (
+                      <div>
+                        <div className="font-bold text-lg text-primary">{leagueScore}</div>
+                        <div className="text-xs text-muted-foreground">({team.totalScore || 0})</div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="font-bold text-lg text-primary">{team.totalScore || 0}</div>
+                        <div className="text-xs text-muted-foreground">Ringe</div>
+                      </div>
+                    );
+                  })()}
                 </div>
                 {expandedTeams.includes(team.id) ? 
                   <ChevronDown className="h-5 w-5 text-muted-foreground" /> : 

@@ -218,8 +218,8 @@ export class TeamCalculationService {
   }
   
   /**
-   * Bestimmt den aktuellen vollständigen Durchgang
-   * (Alle Teams haben diesen Durchgang abgeschlossen)
+   * Bestimmt den aktuellen vollständigen Durchgang FÜR DIESES TEAM
+   * (Nur Durchgänge wo ALLE 3 Schützen Ergebnisse haben)
    * 
    * @param roundResults - Durchgangs-Ergebnisse
    * @param numRounds - Anzahl Durchgänge
@@ -229,12 +229,16 @@ export class TeamCalculationService {
     roundResults: { [key: string]: number | null },
     numRounds: number
   ): number {
-    // Finde höchsten Durchgang mit Ergebnis
-    for (let r = numRounds; r >= 1; r--) {
+    // Finde letzten LÜCKENLOSEN Durchgang (alle vorherigen müssen auch vollständig sein)
+    let lastCompleteRound = 0;
+    for (let r = 1; r <= numRounds; r++) {
       if (roundResults[`dg${r}`] !== null) {
-        return r;
+        lastCompleteRound = r;
+      } else {
+        // Sobald eine Lücke kommt, stoppen
+        break;
       }
     }
-    return 0;
+    return lastCompleteRound;
   }
 }
