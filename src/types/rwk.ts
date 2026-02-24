@@ -5,7 +5,7 @@ export interface Season {
   name: string;
   competitionYear: number;
   type: string;
-  status: 'Vorbereitung' | 'Laufend' | 'Abgeschlossen';
+  status: 'Vorbereitung' | 'Anmeldung möglich' | 'Laufend' | 'Abgeschlossen';
   startDate?: Date;
   endDate?: Date;
 }

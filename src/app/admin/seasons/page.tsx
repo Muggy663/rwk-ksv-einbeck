@@ -91,7 +91,7 @@ export default function AdminSeasonsPage() {
 
   const handleAddNew = () => {
     setFormMode('new');
-    setCurrentSeason({ competitionYear: new Date().getFullYear() + 1, type: 'KK', status: 'Geplant' });
+    setCurrentSeason({ competitionYear: new Date().getFullYear() + 1, type: 'KK', status: 'Vorbereitung' });
     setIsFormOpen(true);
   };
 
@@ -369,11 +369,12 @@ export default function AdminSeasonsPage() {
                  <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">Status</Label>
                   <NativeSelect
-                      value={currentSeason.status || 'Geplant'} 
+                      value={currentSeason.status || 'Vorbereitung'} 
                       onValueChange={(value: Season['status']) => handleFormInputChange('status', value)}
                       placeholder="Status wählen"
                       options={[
-                        { value: 'Geplant', label: 'Geplant' },
+                        { value: 'Vorbereitung', label: 'Vorbereitung' },
+                        { value: 'Anmeldung möglich', label: 'Anmeldung möglich' },
                         { value: 'Laufend', label: 'Laufend' },
                         { value: 'Abgeschlossen', label: 'Abgeschlossen' }
                       ]}

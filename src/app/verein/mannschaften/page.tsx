@@ -63,6 +63,10 @@ const CLUBS_COLLECTION = "clubs";
 const TEAMS_COLLECTION = "rwk_teams";
 const SHOOTERS_COLLECTION = "shooters";
 
+function getShooterClubId(shooter: Shooter): string | null {
+  return shooter.clubId || shooter.rwkClubId || shooter.kmClubId || null;
+}
+
 export default function VereinMannschaftenPage() {
   const {
     userPermission,
@@ -157,9 +161,9 @@ export default function VereinMannschaftenPage() {
         seasonsSnapshotPromise, leaguesSnapshotPromise, clubsSnapshotPromise
       ]);
 
-      // Alle Saisons laden, aber nur laufende Saisons anzeigen
+      // Alle Saisons laden, aber nur Saisons mit Status "Anmeldung möglich" oder "Laufend" anzeigen
       const fetchedSeasons = seasonsSnapshot.docs.map(sDoc => ({ id: sDoc.id, ...sDoc.data() } as Season))
-        .filter(s => s.id && typeof s.id === 'string' && s.id.trim() !== "" && s.status === 'Laufend');
+        .filter(s => s.id && typeof s.id === 'string' && s.id.trim() !== "" && (s.status === 'Anmeldung möglich' || s.status === 'Laufend'));
       setAllSeasons(fetchedSeasons);
 
 
@@ -250,7 +254,29 @@ export default function VereinMannschaftenPage() {
 
       const teamsQuery = query(collection(db, TEAMS_COLLECTION), ...teamsQueryConstraints, orderBy("name", "asc"));
       const querySnapshot = await getDocs(teamsQuery);
-      const fetchedTeams = querySnapshot.docs.map(d => ({ id: d.id, ...d.data(), shooterIds: (d.data().shooterIds || []) as string[] } as Team));
+      let fetchedTeams = querySnapshot.docs.map(d => ({ id: d.id, ...d.data(), shooterIds: (d.data().shooterIds || []) as string[] } as Team));
+      
+      // Client-seitiger Filter: Nur Teams anzeigen, die zur Disziplin der Saison passen
+      if (selectedSeasonData.name) {
+        const seasonName = selectedSeasonData.name.toLowerCase();
+        if (seasonName.includes('kleinkaliber')) {
+          // Nur KKG und KKP Teams anzeigen
+          fetchedTeams = fetchedTeams.filter(team => 
+            team.leagueType === 'KKG' || team.leagueType === 'KKP'
+          );
+        } else if (seasonName.includes('luftgewehr')) {
+          // Nur LGA und LGS Teams anzeigen
+          fetchedTeams = fetchedTeams.filter(team => 
+            team.leagueType === 'LGA' || team.leagueType === 'LGS' || team.leagueType === 'LG'
+          );
+        } else if (seasonName.includes('luftpistole')) {
+          // Nur LP Teams anzeigen
+          fetchedTeams = fetchedTeams.filter(team => 
+            team.leagueType === 'LP'
+          );
+        }
+      }
+      
       setTeamsOfActiveClub(fetchedTeams);
 
     } catch (error) {
@@ -1057,7 +1083,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
             value={selectedSeasonId}
             onChange={(e) => { setSelectedSeasonId(e.target.value); setSelectedLeagueIdFilter(""); }}
             disabled={allSeasons.length === 0}
-            className="w-full h-10 px-3 py-2 text-sm border border-input bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full h-10 px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white dark:border-gray-600 [&>option]:dark:bg-gray-800 [&>option]:dark:text-white"
           >
             <option value="" disabled>{allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"}</option>
             {allSeasons
@@ -1081,7 +1107,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
               setSelectedLeagueIdFilter(e.target.value === "ALL_LEAGUES" ? "" : e.target.value);
             }}
             disabled={!selectedSeasonId || isLoadingTeams || availableLeaguesForFilter.length === 0}
-            className="w-full h-10 px-3 py-2 text-sm border border-input bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full h-10 px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-white dark:border-gray-600 [&>option]:dark:bg-gray-800 [&>option]:dark:text-white"
           >
             <option value="" disabled>{!selectedSeasonId ? "Saison wählen" : (isLoadingTeams ? "Lade Ligen..." : (availableLeaguesForFilter.length === 0 ? "Keine Ligen für Verein/Saison" : "Liga wählen"))}</option>
             <option value="ALL_LEAGUES">Alle Ligen anzeigen</option>
