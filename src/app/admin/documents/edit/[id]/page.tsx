@@ -11,21 +11,27 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 interface EditDocumentPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function EditDocumentPage({ params }: EditDocumentPageProps) {
   const [document, setDocument] = useState<Document | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [id, setId] = useState<string>('');
   const router = useRouter();
   const { toast } = useToast();
-  const { id } = params;
+
+  useEffect(() => {
+    params.then(p => setId(p.id));
+  }, [params]);
 
   useEffect(() => {
     async function loadDocument() {
+      if (!id) return;
+      
       try {
         setIsLoading(true);
         const doc = await getDocumentById(id);

@@ -7,9 +7,10 @@ const KM_SAISONS_COLLECTION = 'km_saisons';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { status, meldeschluss, beschreibung } = body;
 
@@ -21,7 +22,7 @@ export async function PATCH(
     if (meldeschluss !== undefined) updateData.meldeschluss = meldeschluss;
     if (beschreibung !== undefined) updateData.beschreibung = beschreibung;
 
-    await adminDb.collection(KM_SAISONS_COLLECTION).doc(params.id).update(updateData);
+    await adminDb.collection(KM_SAISONS_COLLECTION).doc(id).update(updateData);
 
     return NextResponse.json({
       success: true,
@@ -30,7 +31,7 @@ export async function PATCH(
 
   } catch (error) {
     logError('Fehler beim Aktualisieren der KM-Saison:', {
-      id: params.id,
+      id,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });

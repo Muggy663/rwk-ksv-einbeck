@@ -6,10 +6,11 @@ import { sanitizeInput } from '@/lib/utils/input-validator';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = sanitizeInput(params.id);
+    const { id: rawId } = await params;
+    const id = sanitizeInput(rawId);
 
     // Sichere ID-Validierung
     if (!id || id.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(id)) {

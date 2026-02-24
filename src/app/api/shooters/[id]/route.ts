@@ -39,25 +39,26 @@ async function validateUserPermissions(request: NextRequest, shooterId: string) 
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   return PATCH(request, { params });
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Validierung
-    if (!params.id || params.id.trim() === '') {
+    if (!id || id.trim() === '') {
       return NextResponse.json({
         success: false,
         error: 'Ungültige Schützen-ID'
       }, { status: 400 });
     }
 
-    await validateUserPermissions(request, params.id);
+    await validateUserPermissions(request, id);
 
     const body = await request.json();
     const { firstName, lastName, birthYear, gender, mitgliedsnummer, kmClubId } = body;
@@ -72,7 +73,7 @@ export async function PATCH(
     
     updateData.updatedAt = FieldValue.serverTimestamp();
 
-    await adminDb.collection('shooters').doc(params.id).update(updateData);
+    await adminDb.collection('shooters').doc(id).update(updateData);
 
     return NextResponse.json({
       success: true,
@@ -90,10 +91,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!params.id) {
+    const { id } = await params;
+    if (!id) {
       return NextResponse.json({ success: false, error: 'Keine ID' }, { status: 400 });
     }
 
@@ -104,7 +106,7 @@ export async function DELETE(
     }
 
     // Schütze einfach löschen
-    await adminDb.collection('shooters').doc(params.id).delete();
+    await adminDb.collection('shooters').doc(id).delete();
 
     return NextResponse.json({
       success: true,

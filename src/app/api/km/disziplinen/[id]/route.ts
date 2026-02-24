@@ -3,10 +3,10 @@ import { adminDb } from '@/lib/firebase/admin';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const data = await request.json();
     
     await adminDb.collection('km_disziplinen').doc(id).update(data);
@@ -26,10 +26,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     await adminDb.collection('km_disziplinen').doc(id).delete();
     
     return NextResponse.json({

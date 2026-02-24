@@ -10,10 +10,11 @@ import {
 // GET /api/documents/[id]
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const document = await getDocumentByIdFromMongo(params.id);
+    const { id } = await params;
+    const document = await getDocumentByIdFromMongo(id);
     
     if (!document) {
       return NextResponse.json(
@@ -35,12 +36,13 @@ export async function GET(
 // PUT /api/documents/[id]
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const updatedDocument = await request.json();
     
-    const document = await updateDocumentInMongo(params.id, updatedDocument);
+    const document = await updateDocumentInMongo(id, updatedDocument);
     
     if (!document) {
       return NextResponse.json(
@@ -62,10 +64,11 @@ export async function PUT(
 // DELETE /api/documents/[id]
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await deleteDocumentFromMongo(params.id);
+    const { id } = await params;
+    const success = await deleteDocumentFromMongo(id);
     
     if (!success) {
       return NextResponse.json(

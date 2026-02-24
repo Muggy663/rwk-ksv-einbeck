@@ -5,14 +5,15 @@ import { ObjectId } from 'mongodb';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const db = await getMongoDb();
     const collection = db.collection('documents');
     
     await collection.updateOne(
-      { _id: new ObjectId(params.id) },
+      { _id: new ObjectId(id) },
       { 
         $inc: { downloadCount: 1 },
         $set: { lastDownload: new Date() }

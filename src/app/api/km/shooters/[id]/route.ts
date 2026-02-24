@@ -6,10 +6,10 @@ export const dynamic = 'force-dynamic';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const shooterId = params.id;
+    const { id: shooterId } = await params;
     const updateData = await request.json();
 
     const shooterRef = adminDb.collection('shooters').doc(shooterId);
@@ -44,10 +44,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const shooterId = params.id;
+    const { id: shooterId } = await params;
     const shooterRef = adminDb.collection('shooters').doc(shooterId);
     
     // Check if shooter exists

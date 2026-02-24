@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { kmErgebnis, lmTeilnahme, vmErgebnis, anmerkung, disziplinId, saisonId } = body;
     
@@ -18,7 +19,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     
     for (const collectionName of collections) {
       try {
-        const docRef = adminDb.collection(collectionName).doc(params.id);
+        const docRef = adminDb.collection(collectionName).doc(id);
         const doc = await docRef.get();
         
         if (doc.exists) {
@@ -38,13 +39,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const collections = ['km_meldungen_2026_kk', 'km_meldungen_2026_ld', 'km_meldungen_2026_kkp'];
     
     for (const collectionName of collections) {
       try {
-        const docRef = adminDb.collection(collectionName).doc(params.id);
+        const docRef = adminDb.collection(collectionName).doc(id);
         const doc = await docRef.get();
         
         if (doc.exists) {
