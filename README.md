@@ -1,12 +1,12 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.4** | **Android: 0.9.4.1**
+**Version: 2.4.1** | **Android: 0.9.4.1**
 
 > **Social Training Platform für den deutschen Schießsport**
 
 Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und Social Training. Die erste Community-Plattform für Sportschützen mit Live-Wettkämpfen, Trainingsgruppen und erweiterten Statistiken.
 
-[![Version](https://img.shields.io/badge/Version-2.4-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.4.1-green?style=for-the-badge)](#)
 [![Social Training](https://img.shields.io/badge/Social_Training-Live-blue?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_16_+_Firebase-blue?style=for-the-badge)](#)
 [![Design](https://img.shields.io/badge/Design-Glassmorphism-purple?style=for-the-badge)](#)
@@ -113,6 +113,17 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 ## 📋 Changelog
 
+### Version 2.4.1 (17. Februar 2026)
+- **✨ UX-Verbesserungen**: Neue UI-Komponenten für bessere Benutzerfreundlichkeit
+- **🔘 LoadingButton**: Konsistente Loading-States mit Spinner in allen Buttons
+- **⚠️ ConfirmDialog**: Bestätigungs-Dialoge für kritische Aktionen (Löschen)
+- **📭 EmptyState**: Schöne leere Zustände statt leerer Tabellen
+- **🍞 Breadcrumbs**: Navigation-Pfad für bessere Orientierung
+- **📝 FormField**: Inline-Validierung mit sofortigem Fehler-Feedback
+- **⏱️ useDebounce**: Optimierte Suche ohne unnötige API-Calls
+- **🎯 Liga-weite Durchgangszählung**: Wertung nur bei vollständigen Durchgängen
+- **📱 Mobile Optimierung**: Ligalisten-Seite für Smartphones angepasst
+
 ### Version 2.4 (16. Februar 2026)
 - **🔐 Passwort-Reset**: "Passwort vergessen" Funktion auf Login-Seite hinzugefügt
 - **👤 Profil-Verwaltung**: Neue Profil-Seite für Schießnachweis-Benutzer
@@ -204,7 +215,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 16. Februar 2026 - Version 2.4*
+*Letzte Aktualisierung: 17. Februar 2026 - Version 2.4.1*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

@@ -86,7 +86,7 @@ export function DocumentCard({ document }: { document: Document }) {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex items-center w-full"
+                  className="flex items-center w-full min-h-[44px] touch-manipulation"
                   onClick={() => setPreviewOpen(true)}
                 >
                   <Eye className="h-4 w-4 mr-2" />
@@ -97,7 +97,7 @@ export function DocumentCard({ document }: { document: Document }) {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="flex items-center w-full"
+                    className="flex items-center w-full min-h-[44px] touch-manipulation"
                     onClick={async () => {
                       try {
                         // Tracking zuerst

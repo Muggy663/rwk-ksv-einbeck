@@ -26,6 +26,7 @@ import { Switch } from '@/components/ui/switch';
 import { DocumentFormData } from '@/lib/services/document-service';
 import { Upload, File, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { LoadingButton } from '@/components/ui/loading-button';
 
 interface DocumentFormProps {
   initialData?: Partial<DocumentFormData>;
@@ -321,9 +322,9 @@ export function DocumentForm({ initialData, onSubmit, isSubmitting }: DocumentFo
           )}
         />
 
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Wird gespeichert...' : 'Speichern'}
-        </Button>
+        <LoadingButton type="submit" loading={isSubmitting} loadingText="Wird gespeichert...">
+          Speichern
+        </LoadingButton>
       </form>
     </Form>
   );

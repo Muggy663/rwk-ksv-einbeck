@@ -25,7 +25,8 @@ import {
   Trash2, 
   Eye, 
   EyeOff,
-  Lock
+  Lock,
+  Loader2
 } from 'lucide-react';
 import { 
   getAllDocuments, 
@@ -35,10 +36,16 @@ import {
 import { Document } from '@/lib/services/document-service';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function DocumentsAdminPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,9 +71,10 @@ export default function DocumentsAdminPage() {
 
   async function handleToggleActive(id: string, currentActive: boolean) {
     try {
+      setActionLoading(id);
       await toggleDocumentActive(id, !currentActive);
       toast({
-        title: 'Erfolg',
+        title: 'Gespeichert',
         description: `Dokument wurde ${!currentActive ? 'aktiviert' : 'deaktiviert'}.`
       });
       loadDocuments();
@@ -77,20 +85,26 @@ export default function DocumentsAdminPage() {
         description: 'Der Status konnte nicht geändert werden.',
         variant: 'destructive'
       });
+    } finally {
+      setActionLoading(null);
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Möchten Sie dieses Dokument wirklich löschen?')) {
-      return;
-    }
+  function openDeleteDialog(id: string) {
+    setDocumentToDelete(id);
+    setDeleteDialogOpen(true);
+  }
+
+  async function handleDelete() {
+    if (!documentToDelete) return;
 
     try {
-      const success = await deleteDocument(id);
+      setActionLoading(documentToDelete);
+      const success = await deleteDocument(documentToDelete);
       if (success) {
         toast({
-          title: 'Erfolg',
-          description: 'Dokument wurde gelöscht.'
+          title: 'Gelöscht',
+          description: 'Dokument wurde erfolgreich gelöscht.'
         });
         loadDocuments();
       } else {
@@ -103,11 +117,20 @@ export default function DocumentsAdminPage() {
         description: 'Das Dokument konnte nicht gelöscht werden.',
         variant: 'destructive'
       });
+    } finally {
+      setActionLoading(null);
+      setDeleteDialogOpen(false);
+      setDocumentToDelete(null);
     }
   }
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Dokumente' }
+      ]} />
+      
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-primary">Dokumente verwalten</h1>
@@ -130,9 +153,23 @@ export default function DocumentsAdminPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-4">Dokumente werden geladen...</div>
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
           ) : documents.length === 0 ? (
-            <div className="text-center py-4">Keine Dokumente vorhanden.</div>
+            <EmptyState
+              icon={FileText}
+              title="Keine Dokumente vorhanden"
+              description="Erstellen Sie Ihr erstes Dokument"
+              action={
+                <Link href="/admin/documents/add">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Neues Dokument
+                  </Button>
+                </Link>
+              }
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -178,8 +215,11 @@ export default function DocumentsAdminPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleToggleActive(doc.id, doc.active)}
+                            disabled={actionLoading === doc.id}
                           >
-                            {doc.active ? (
+                            {actionLoading === doc.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : doc.active ? (
                               <EyeOff className="h-4 w-4" />
                             ) : (
                               <Eye className="h-4 w-4" />
@@ -193,7 +233,8 @@ export default function DocumentsAdminPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDelete(doc.id)}
+                            onClick={() => openDeleteDialog(doc.id)}
+                            disabled={actionLoading === doc.id}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -207,6 +248,16 @@ export default function DocumentsAdminPage() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDelete}
+        title="Dokument löschen?"
+        description="Möchten Sie dieses Dokument wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmText="Löschen"
+        cancelText="Abbrechen"
+      />
     </div>
   );
 }

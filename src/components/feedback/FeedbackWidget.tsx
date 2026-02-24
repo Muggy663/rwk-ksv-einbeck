@@ -107,7 +107,7 @@ export function FeedbackWidget() {
               <Label htmlFor="name">Name (optional)</Label>
               <Input
                 id="name"
-                placeholder="Max Mustermann"
+                placeholder="z.B. Max Mustermann"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -116,7 +116,7 @@ export function FeedbackWidget() {
               <Label htmlFor="club">Verein (optional)</Label>
               <Input
                 id="club"
-                placeholder="SV Beispiel"
+                placeholder="z.B. SV Musterhausen"
                 value={club}
                 onChange={(e) => setClub(e.target.value)}
               />
@@ -146,7 +146,7 @@ export function FeedbackWidget() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="feedback">Dein Feedback</Label>
+            <Label htmlFor="feedback">Feedback *</Label>
             <Textarea
               id="feedback"
               placeholder="Was gefällt dir? Was könnte verbessert werden? Welche Features wünschst du dir?"

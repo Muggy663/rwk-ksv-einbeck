@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, BarChart3, Calendar, Filter } from 'lucide-react';
+import { FileText, BarChart3, Calendar, Filter, Loader2 } from 'lucide-react';
 import { LigaGrouping } from '../dokumente/LigaGrouping';
 import { NativeSelect } from '@/components/ui/native-select';
 import Link from 'next/link';
@@ -10,6 +10,7 @@ import { Document } from '@/lib/services/document-service';
 import { useAuth } from '@/hooks/use-auth';
 import { BackButton } from '@/components/ui/back-button';
 import { logError } from '@/lib/utils/secure-logger';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function LigalistenPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -102,8 +103,8 @@ export default function LigalistenPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <p>Dokumente werden geladen...</p>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
         <Card>
@@ -168,13 +169,17 @@ export default function LigalistenPage() {
           </CardHeader>
           <CardContent>
             {documents.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                Keine Ligalisten oder Handtabellen verfügbar.
-              </div>
+              <EmptyState
+                icon={FileText}
+                title="Keine Dokumente verfügbar"
+                description="Es sind noch keine Ligalisten oder Handtabellen hochgeladen."
+              />
             ) : filteredLigalisten.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                Keine Ligalisten oder Handtabellen für {selectedYear} verfügbar.
-              </div>
+              <EmptyState
+                icon={Calendar}
+                title={`Keine Dokumente für ${selectedYear}`}
+                description="Wählen Sie ein anderes Jahr oder erstellen Sie neue Dokumente."
+              />
             ) : (
               <div className="space-y-4">
                 <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-md p-3 flex items-start">

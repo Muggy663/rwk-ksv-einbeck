@@ -4,7 +4,7 @@ import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Info, Lock, Calendar, Filter, LogIn, FileText, BarChart3 } from 'lucide-react';
+import { Info, Lock, Calendar, Filter, LogIn, FileText, BarChart3, Loader2 } from 'lucide-react';
 import { LigaGrouping } from './LigaGrouping';
 import { SearchBar } from './SearchBar';
 
@@ -14,6 +14,7 @@ import { DocumentCard } from './DocumentCard';
 import { Document } from '@/lib/services/document-service';
 import { useAuth } from '@/hooks/use-auth';
 import { BackButton } from '@/components/ui/back-button';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function DokumentePage() {
   const [activeTab, setActiveTab] = useState<string>('ausschreibungen');
@@ -244,8 +245,8 @@ export default function DokumentePage() {
         </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <p>Dokumente werden geladen...</p>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : error ? (
         <Card>
@@ -267,11 +268,11 @@ export default function DokumentePage() {
           <TabsContent value="ausschreibungen" className="space-y-4">
             <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Aktuelle Ausschreibungen</h2>
             {ausschreibungen.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center text-muted-foreground">
-                  Keine aktuellen Ausschreibungen verfügbar.
-                </CardContent>
-              </Card>
+              <EmptyState
+                icon={FileText}
+                title="Keine Ausschreibungen"
+                description={searchQuery ? "Keine Treffer für Ihre Suche" : "Aktuell sind keine Ausschreibungen verfügbar"}
+              />
             ) : (
               ausschreibungen.map(doc => (
                 <DocumentCard key={doc.id} document={doc} />
@@ -282,11 +283,11 @@ export default function DokumentePage() {
           <TabsContent value="formulare" className="space-y-4">
             <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Formulare</h2>
             {formulare.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center text-muted-foreground">
-                  Keine Formulare verfügbar.
-                </CardContent>
-              </Card>
+              <EmptyState
+                icon={FileText}
+                title="Keine Formulare"
+                description={searchQuery ? "Keine Treffer für Ihre Suche" : "Aktuell sind keine Formulare verfügbar"}
+              />
             ) : (
               formulare.map(doc => (
                 <DocumentCard key={doc.id} document={doc} />
@@ -363,13 +364,17 @@ export default function DokumentePage() {
               </CardHeader>
               <CardContent>
                 {ligalisten.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-8">
-                    Keine Ligalisten oder Handtabellen verfügbar.
-                  </div>
+                  <EmptyState
+                    icon={FileText}
+                    title="Keine Ligalisten"
+                    description="Aktuell sind keine Ligalisten oder Handtabellen verfügbar"
+                  />
                 ) : filteredLigalisten.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-8">
-                    Keine Ligalisten oder Handtabellen für {selectedYear} verfügbar.
-                  </div>
+                  <EmptyState
+                    icon={Calendar}
+                    title={`Keine Dokumente für ${selectedYear}`}
+                    description="Wählen Sie ein anderes Jahr"
+                  />
                 ) : (
                   <div className="space-y-4">
                     <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-md p-3 flex items-start">
@@ -391,11 +396,11 @@ export default function DokumentePage() {
           <TabsContent value="ordnungen" className="space-y-4">
             <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Regelwerke</h2>
             {ordnungen.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center text-muted-foreground">
-                  Keine Ordnungen verfügbar.
-                </CardContent>
-              </Card>
+              <EmptyState
+                icon={FileText}
+                title="Keine Regelwerke"
+                description={searchQuery ? "Keine Treffer für Ihre Suche" : "Aktuell sind keine Regelwerke verfügbar"}
+              />
             ) : (
               ordnungen.map(doc => (
                 <DocumentCard key={doc.id} document={doc} />

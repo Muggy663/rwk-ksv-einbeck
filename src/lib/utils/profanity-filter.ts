@@ -16,34 +16,19 @@ const FORBIDDEN_WORDS = [
   'methamphetamin',
   'crystal',
   'crack',
-  'sch***e',
-  'sche***',
-  'f***',
-  'f*****',
-  'a*******',
-  'h********',
-  'f****',
-  'n****',
-  'h***',
-  'p****',
-  's**',
+  'scheisse',
+  'scheiße',
+  'fick',
+  'ficken',
+  'arschloch',
+  'hurensohn',
+  'fotze',
   'nazi',
   'hitler',
-  'holocaust',
-  'terror',
-  'bomb',
-  'waffe',
-  'gewalt',
-  'mord',
-  'töten',
-  'kill',
-  'suicide',
-  'selbstmord'
-].map(w => w.replace(/\*/g, ''));
+  'holocaust'
+];
 
-const PROFANITY_PATTERNS = FORBIDDEN_WORDS.map(word => 
-  word.split('').map(c => c === '*' ? '.' : c).join('')
-);
+
 
 /**
  * Prüft Text auf verbotene Wörter

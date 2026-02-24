@@ -3,15 +3,17 @@ import { useState, useEffect } from 'react';
 import { BackButton } from '@/components/ui/back-button';
 import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquare, Star, User } from 'lucide-react';
+import { MessageSquare, Star, User, Loader2 } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
 import { Separator } from '@/components/ui/separator';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function FeedbackPage() {
   const [publicFeedbacks, setPublicFeedbacks] = useState<any[]>([]);
   const [avgRating, setAvgRating] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadPublicFeedbacks();
@@ -19,6 +21,7 @@ export default function FeedbackPage() {
 
   const loadPublicFeedbacks = async () => {
     try {
+      setLoading(true);
       const q = query(
         collection(db, 'feedback'),
         where('showPublicly', '==', true),
@@ -43,6 +46,8 @@ export default function FeedbackPage() {
       }
     } catch (error) {
       console.error('Fehler beim Laden der Feedbacks:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -90,7 +95,11 @@ export default function FeedbackPage() {
       <FeedbackWidget />
 
       {/* Öffentliche Feedbacks */}
-      {publicFeedbacks.length > 0 && (
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : publicFeedbacks.length > 0 ? (
         <div className="space-y-4">
           <Separator />
           <h2 className="text-2xl font-bold text-primary">Was andere sagen</h2>
@@ -130,7 +139,7 @@ export default function FeedbackPage() {
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

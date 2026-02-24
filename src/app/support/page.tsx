@@ -298,17 +298,17 @@ export default function SupportPage() {
                   <Label htmlFor="name" className="font-medium">Dein Name</Label>
                   <Input 
                     id="name" 
-                    placeholder="Max Mustermann" 
+                    placeholder="z.B. Max Mustermann" 
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="email" className="font-medium">Deine E-Mail Adresse</Label>
+                  <Label htmlFor="email" className="font-medium">E-Mail *</Label>
                   <Input 
                     id="email" 
                     type="email" 
-                    placeholder="max@beispiel.de"
+                    placeholder="z.B. max@beispiel.de"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required 
@@ -316,7 +316,7 @@ export default function SupportPage() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="subject" className="font-medium">Betreff</Label>
+                <Label htmlFor="subject" className="font-medium">Betreff *</Label>
                 <Input 
                   id="subject" 
                   placeholder="z.B. Problem mit Ergebniserfassung" 
@@ -326,17 +326,17 @@ export default function SupportPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="message" className="font-medium">Deine Nachricht</Label>
+                <Label htmlFor="message" className="font-medium">Nachricht *</Label>
                 <Textarea
                   id="message"
-                  placeholder="Bitte beschreibe dein Problem möglichst detailliert. Bei Fehlern oder Problemen beschreibe die Schritte, die zum Problem führen."
+                  placeholder="Beschreibe dein Problem möglichst detailliert. Bei Fehlern: Welche Schritte führten zum Problem?"
                   rows={6}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   required
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Hinweis: Wenn du einen Fehler meldest, gib bitte an, welchen Browser und welches Gerät du verwendest.
+                  Tipp: Bei Fehlern gib bitte Browser und Gerät an.
                 </p>
               </div>
               <div className="space-y-1.5">
