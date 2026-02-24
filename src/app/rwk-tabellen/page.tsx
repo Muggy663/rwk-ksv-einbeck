@@ -2081,24 +2081,12 @@ function RwkTabellenPageComponent() {
                                 individualLeagueShooters: shooterData
                               };
                               
-                              // Generiere PDF
-                              const pdfBlob = await generateShootersPDFFixed(
+                              // Generiere und lade PDF herunter (Funktion macht beides)
+                              await generateShootersPDFFixed(
                                 tempLeague, 
                                 currentNumRoundsState, 
                                 selectedCompetition.year
                               );
-                              
-                              // Download PDF
-                              const url = URL.createObjectURL(pdfBlob);
-                              const a = document.createElement('a');
-                              a.href = url;
-                              const sanitizedLeagueName = String(league.name || '').replace(/[<>"'&\/\\]/g, '');
-                              const sanitizedYear = String(selectedCompetition.year || '').replace(/[<>"'&\/\\]/g, '');
-                              a.download = `${sanitizedLeagueName}_Einzelschützen_${sanitizedYear}.pdf`;
-                              document.body.appendChild(a);
-                              a.click();
-                              document.body.removeChild(a);
-                              URL.revokeObjectURL(url);
                               
                               toast({
                                 title: 'PDF erstellt',
