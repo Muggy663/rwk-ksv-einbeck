@@ -17,16 +17,31 @@ declare module 'jspdf' {
 import { openWithAppChooser } from './open-external';
 
 /**
+ * Sanitize-Funktion für sichere PDF-Texte
+ */
+function sanitize(str: string): string {
+  const text = String(str || '');
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;')
+    .substring(0, 500);
+}
+
+/**
  * Verbesserte PDF-Generator-Funktion für mobile Geräte und Safari
  * Verwendet einen anderen Ansatz für mobile Geräte und Safari, um Kompatibilitätsprobleme zu vermeiden
  */
 export async function generatePDFWithMobileSupport(
   generateFunction: () => Promise<Blob>,
   fileName: string
-): Promise<void> {
+): Promise<Blob> {
+  const pdfBlob = await generateFunction();
+  
   try {
-    const pdfBlob = await generateFunction();
-    
     const isNativeApp = window.Capacitor && window.Capacitor.isNativePlatform();
     const isMobile = isMobileDevice();
     const url = URL.createObjectURL(pdfBlob);
@@ -76,8 +91,9 @@ export async function generatePDFWithMobileSupport(
     }
   } catch (error) {
     logError('Fehler beim Generieren oder Herunterladen des PDFs:', error);
-    throw error;
   }
+  
+  return pdfBlob;
 }
 
 /**
@@ -91,10 +107,10 @@ export async function generateLeaguePDFFixed(
   league: LeagueDisplay,
   numRounds: number,
   competitionYear: number
-): Promise<void> {
+): Promise<Blob> {
   const fileName = `${(league?.name || 'Liga').replace(/\s+/g, '_')}_Mannschaften_${competitionYear}.pdf`;
   
-  await generatePDFWithMobileSupport(
+  return await generatePDFWithMobileSupport(
     async () => {
       // PDF im A4-Format erstellen
       const doc = new jsPDF({
@@ -119,19 +135,6 @@ export async function generateLeaguePDFFixed(
       
       // Schriftart setzen
       doc.setFont('helvetica', 'normal');
-      
-      // Daten für die Tabelle vorbereiten
-      const sanitize = (str: string) => {
-        const text = String(str || '');
-        return text
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#x27;')
-          .replace(/\//g, '&#x2F;')
-          .substring(0, 500);
-      };
       
       // Titel
       doc.setFontSize(18);
@@ -292,10 +295,10 @@ export async function generateShootersPDFFixed(
   league: LeagueDisplay,
   numRounds: number,
   competitionYear: number
-): Promise<void> {
+): Promise<Blob> {
   const fileName = `${(league?.name || 'Liga').replace(/\s+/g, '_')}_Einzelschuetzen_${competitionYear}.pdf`;
   
-  await generatePDFWithMobileSupport(
+  return await generatePDFWithMobileSupport(
     async () => {
       // PDF im A4-Format erstellen
       const doc = new jsPDF({
@@ -347,19 +350,6 @@ export async function generateShootersPDFFixed(
         { title: 'Gesamt', dataKey: 'totalScore' },
         { title: 'Schnitt', dataKey: 'averageScore' }
       );
-      
-      // Daten für die Tabelle vorbereiten
-      const sanitize = (str: string) => {
-        const text = String(str || '');
-        return text
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#x27;')
-          .replace(/\//g, '&#x2F;')
-          .substring(0, 500);
-      };
       
       interface ShooterRowData {
         rank: string | number;
