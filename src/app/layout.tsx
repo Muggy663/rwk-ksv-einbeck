@@ -17,6 +17,7 @@ import { Metadata } from 'next';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { SkipLink } from '@/components/ui/skip-link';
+import '@/lib/utils/suppress-preload-warnings';
 
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { AppUpdateChecker } from '@/components/app-update-checker';

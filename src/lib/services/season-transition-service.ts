@@ -76,24 +76,19 @@ export async function calculateLeagueStandings(leagueId: string, competitionYear
     for (const teamDoc of mannschaftsTeams) {
       const team = teamDoc.data();
       
-      // Bestimme die richtige Collection basierend auf Jahr und Typ
-      const seasonQuery = query(collection(db, 'seasons'), where('competitionYear', '==', competitionYear));
-      const season = await getDocs(seasonQuery);
-      const seasonData = season.docs[0]?.data();
-      const seasonType = seasonData?.type || 'KK';
+      // Verwende leagueType vom Team, nicht seasonType!
+      const teamLeagueType = team.leagueType || leagueData?.type || 'KKG';
       
-      // Normalisiere Typ: LG, LGA, LP, LPA -> LD
-      let normalizedType = seasonType;
-      if (['LG', 'LGA', 'LP', 'LPA'].includes(seasonType)) {
-        normalizedType = 'LD';
-      }
+      // Normalisiere für Collection-Namen
+      let collectionSuffix = 'KK';
+      if (['KK', 'KKG'].includes(teamLeagueType)) collectionSuffix = 'KK';
+      else if (['LG', 'LGA', 'LP', 'LPA', 'LD'].includes(teamLeagueType)) collectionSuffix = 'LD';
+      else if (teamLeagueType === 'KKP') collectionSuffix = 'KKP';
       
-      const collectionName = `rwk_scores_${competitionYear}_${normalizedType}`;
-      
-      // Alle Rundenwettkämpfe haben 5 Durchgänge
+      const collectionName = `rwk_scores_${competitionYear}_${collectionSuffix}`;
       const numRoundsForCompetition = 5;
       
-      logDebug(`Team ${team.name}: Suche in Collection ${collectionName} (Original-Typ: ${seasonType})`);
+      logDebug(`Team ${team.name}: Collection ${collectionName} (LeagueType: ${teamLeagueType})`);
       
       // Ergebnisse für das Team laden
       const scoresQuery = query(
@@ -101,14 +96,12 @@ export async function calculateLeagueStandings(leagueId: string, competitionYear
         where('teamId', '==', teamDoc.id)
       );
       const scoresSnapshot = await getDocs(scoresQuery);
+      const teamScoresRaw = scoresSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
-      // Lade Ersatzschützen-Informationen (zentral über SubstitutionService)
+      logDebug(`Team ${team.name}: ${teamScoresRaw.length} Ergebnisse`);
+      
       const substitutions = await SubstitutionService.loadSubstitutions(competitionYear);
-      
-      logDebug(`Team ${team.name}: ${scoresSnapshot.docs.length} Ergebnisse gefunden`);
-      
-      // Konvertiere Scores zu Array
-      const teamScores = scoresSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const teamScores = teamScoresRaw;
       
       // Team-Berechnung über zentralen Service
       const calculationResult = TeamCalculationService.calculateTeamResults(

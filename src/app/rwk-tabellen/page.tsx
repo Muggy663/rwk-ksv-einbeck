@@ -2362,7 +2362,58 @@ function RwkTabellenPageComponent() {
                 {!topFemaleShooter && !loadingData && (<Card className="shadow-lg"><CardHeader><CardTitle className="text-accent">Keine Beste Dame</CardTitle></CardHeader><CardContent><p className="text-muted-foreground">Für die aktuelle Auswahl konnte keine beste Dame ermittelt werden.</p></CardContent></Card>)}
               </div>
               <Card className="shadow-lg">
-                <CardHeader><CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage)' : selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? '(🏆 Alle Luftdruck Auflage)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle><CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription></CardHeader>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle className="text-xl text-accent">Einzelrangliste {selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN' ? '(🏆 Alle KK Gewehr Auflage)' : selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? '(🏆 Alle Luftdruck Auflage)' : selectedIndividualLeagueFilter && availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter) ? `(Liga: ${availableLeaguesForIndividualFilter.find(l => l.id === selectedIndividualLeagueFilter)?.name})` : '(Alle Ligen der Disziplin)'}</CardTitle>
+                      <CardDescription>Alle Schützen sortiert nach Gesamtergebnis für {pageTitle}.</CardDescription>
+                    </div>
+                    {/* PDF Button für Gesamtlisten */}
+                    {(selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' || selectedIndividualLeagueFilter === 'KK_GEWEHR_EHRUNGEN') && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs px-3 py-2"
+                        onClick={async () => {
+                          try {
+                            const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
+                            
+                            // Erstelle temporäre Liga mit allen Schützendaten
+                            const tempLeague = {
+                              id: selectedIndividualLeagueFilter,
+                              name: selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? 'Alle Luftdruck Auflage' : 'Alle KK Gewehr Auflage',
+                              type: selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? 'LGA' : 'KKG',
+                              competitionYear: selectedCompetition.year,
+                              individualLeagueShooters: filteredIndividualData.filter(shooter => showOutOfCompetitionShooters || !shooter.teamOutOfCompetition)
+                            };
+                            
+                            // Generiere und lade PDF herunter
+                            await generateShootersPDFFixed(
+                              tempLeague, 
+                              currentNumRoundsState, 
+                              selectedCompetition.year
+                            );
+                            
+                            toast({
+                              title: 'PDF erstellt',
+                              description: 'Die PDF-Datei wurde erfolgreich erstellt.',
+                            });
+                          } catch (error) {
+                            logError('Fehler beim Erstellen der PDF:', error);
+                            toast({
+                              title: 'Fehler',
+                              description: 'Die PDF-Datei konnte nicht erstellt werden.',
+                              variant: 'destructive'
+                            });
+                          }
+                        }}
+                      >
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Gesamtliste als PDF
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
                 <CardContent>
                   {isPortrait ? (
                     <MobileShooterCards
