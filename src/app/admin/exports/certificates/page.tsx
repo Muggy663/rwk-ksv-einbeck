@@ -38,7 +38,6 @@ export default function CertificatesPage() {
       try {
         const seasonsQuery = query(
           collection(db, 'seasons'),
-          where('status', '==', 'Laufend'),
           orderBy('competitionYear', 'desc')
         );
         
