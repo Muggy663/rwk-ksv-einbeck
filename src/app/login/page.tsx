@@ -20,6 +20,7 @@ export default function UnifiedLoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState("");
@@ -85,7 +86,7 @@ export default function UnifiedLoginPage() {
             body: JSON.stringify({
               uid: user.uid,
               email: user.email,
-              displayName: user.displayName
+              displayName: displayName || null
             })
           });
           
@@ -264,6 +265,19 @@ export default function UnifiedLoginPage() {
                 />
               </div>
             </div>
+            
+            {!isLogin && (
+              <div>
+                <Label htmlFor="displayName">Name (Optional)</Label>
+                <Input
+                  id="displayName"
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="z.B. Max Mustermann"
+                />
+              </div>
+            )}
             
             <div>
               <Label htmlFor="password">Passwort *</Label>
