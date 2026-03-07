@@ -265,16 +265,16 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
               </p>
             </div>
           ) : (
-            <div className="border rounded-md overflow-x-auto">
+            <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>E-Mail</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Rolle</TableHead>
-                    <TableHead>Vereine</TableHead>
-                    <TableHead>Premium</TableHead>
-                    <TableHead className="text-right">Aktionen</TableHead>
+                    <TableHead className="w-[200px]">E-Mail</TableHead>
+                    <TableHead className="w-[150px]">Name</TableHead>
+                    <TableHead className="w-[200px]">Rolle</TableHead>
+                    <TableHead className="w-[250px]">Vereine</TableHead>
+                    <TableHead className="w-[100px]">Premium</TableHead>
+                    <TableHead className="w-[100px] text-right">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
