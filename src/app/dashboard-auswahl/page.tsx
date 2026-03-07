@@ -63,11 +63,8 @@ export default function DashboardAuswahl() {
   const isMannschaftsfuehrer = clubRolesList.includes('MANNSCHAFTSFUEHRER');
   
   // Prüfe ob Benutzer nur Schießnachweis/Social Training Zugriff hat (INDIVIDUAL userType)
-  const isIndividualUser = userAppPermissions?.userType === 'INDIVIDUAL' || 
-                          (!userAppPermissions?.role && 
-                           !hasClubRoles && 
-                           !userAppPermissions?.kvRoles && 
-                           !userAppPermissions?.platformRole);
+  const isIndividualUser = userAppPermissions?.userType === 'INDIVIDUAL' && 
+                          !userAppPermissions?.kvRoles;
   
   // Wenn Individual User, zeige nur Schießnachweis/Social Training
   if (isIndividualUser) {
@@ -313,7 +310,8 @@ export default function DashboardAuswahl() {
         )}
 
         {/* KM Dashboard - Rechts oben */}
-        <Card className={`shadow-lg hover:shadow-xl transition-shadow ${!hasKMAccess ? 'opacity-60' : ''}`}>
+        {hasKMAccess && (
+        <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="pb-4">
             <div>
               <CardTitle className="text-xl mb-2">
@@ -378,6 +376,7 @@ export default function DashboardAuswahl() {
             </div>
           </CardContent>
         </Card>
+        )}
 
       </div>
       
