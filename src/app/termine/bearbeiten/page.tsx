@@ -92,6 +92,20 @@ export default function EditEventPage() {
             "Schützenhaus Kreiensen",
             "Schützenhaus Salzderhelden"
           ]);
+          
+          // Wenn der gespeicherte Ort nicht in der Liste ist, als custom setzen
+          const savedLocation = data.location || '';
+          const allLocations = clubLocations.length > 0 ? clubLocations : [
+            "Schützenhaus Einbeck",
+            "Schützenhaus Markoldendorf",
+            "Schützenhaus Dassel",
+            "Schützenhaus Kreiensen",
+            "Schützenhaus Salzderhelden"
+          ];
+          if (savedLocation && !allLocations.includes(savedLocation)) {
+            setLocation('other');
+            setCustomLocation(savedLocation);
+          }
         } else {
           toast({
             title: 'Fehler',

@@ -284,7 +284,7 @@ export default function HomePage() {
                 {upcomingEvents.map((event, index) => {
                   const isToday = new Date(event.date).toDateString() === new Date().toDateString();
                   return (
-                    <div key={event.id || index} className={`flex flex-col space-y-1 pb-3 border-b last:border-0 hover:bg-primary/5 transition-colors rounded-md p-2 ${isToday ? 'glass-glow bg-primary/10' : ''}`}>
+                    <div key={event.id || index} className={`flex flex-col space-y-1 pb-3 border-b last:border-0 transition-colors rounded-md p-2 ${isToday ? 'glass-glow bg-primary/10' : ''}`}>
                       <div className="flex justify-between items-start">
                         <span className={`font-medium ${isToday ? 'text-primary font-bold' : ''}`}>
                           {isToday && '🔥 '}{event.title}

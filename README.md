@@ -1,6 +1,6 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.4.1** | **Android: 0.9.4.1**
+**Version: 2.4.2** | **Android: 0.9.4.1**
 
 > **Social Training Platform für den deutschen Schießsport**
 
@@ -112,6 +112,14 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **KI-Startlisten Generator** mit automatischer Optimierung und Altersklassen-Berechnung
 
 ## 📋 Changelog
+
+### Version 2.4.2 (5. März 2026)
+- **🔐 Registrierung**: Optionales Name-Feld bei der Registrierung hinzugefügt
+- **🏆 Urkunden**: Saison-Auswahl zeigt jetzt alle Saisons (nicht nur laufende)
+- **👥 Dashboard**: KM-Karte für KV_KM_ORGA Benutzer wieder sichtbar
+- **🐛 Tabellen-Flackern**: Hover-Effekt in User-Management Tabelle behoben
+- **📋 Mannschaften**: Status-Anzeige und Legende bei Saison-Auswahl
+- **🔒 Mannschaften**: Bearbeitung bei laufender Saison gesperrt (nur RWK-Leiter)
 
 ### Version 2.4.1 (17. Februar 2026)
 - **✨ UX-Verbesserungen**: Neue UI-Komponenten für bessere Benutzerfreundlichkeit

@@ -124,6 +124,9 @@ export default function VereinMannschaftenPage() {
                            Object.values(userPermission.clubRoles).includes('SPORTLEITER');
   const isAdmin = userPermission?.role === 'superadmin';
 
+  const selectedSeasonStatus = allSeasons.find(s => s.id === selectedSeasonId)?.status;
+  const isReadOnly = selectedSeasonStatus === 'Laufend';
+
   // Effect 1: Set activeClubId and activeClubName based on userPermission from context
   useEffect(() => {
 
@@ -1088,8 +1091,23 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
             <option value="" disabled>{allSeasons.length === 0 ? "Keine Saisons" : "Saison wählen"}</option>
             {allSeasons
                 .filter(s => s && typeof s.id === 'string' && s.id.trim() !== "")
-                .map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                .map(s => <option key={s.id} value={s.id}>{s.name} [{s.status}]</option>)}
           </select>
+          {selectedSeasonId && (
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                selectedSeasonStatus === 'Anmeldung möglich' ? 'bg-green-100 text-green-800' :
+                selectedSeasonStatus === 'Laufend' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+              }`}>
+                {selectedSeasonStatus === 'Anmeldung möglich' ? '✅ Anmeldung möglich' :
+                 selectedSeasonStatus === 'Laufend' ? '🟦 Laufend' : selectedSeasonStatus}
+              </span>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2 mt-1">
+            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">✅ Anmeldung möglich = bearbeitbar</span>
+            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">🟦 Laufend = nur Anzeige (Kontakt: RWK-Leiter)</span>
+          </div>
         </div>
         <div className="flex-grow space-y-1.5 w-full sm:w-auto">
           <div className="flex items-center">
@@ -1121,13 +1139,18 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
             <div className="flex flex-col gap-2">
               <Button
                   onClick={handleAddNewTeam}
-                  disabled={!selectedSeasonId || isLoadingTeams || isSubmittingForm || !activeClubId}
+                  disabled={!selectedSeasonId || isLoadingTeams || isSubmittingForm || !activeClubId || isReadOnly}
                   className="w-full sm:w-auto whitespace-nowrap bg-green-600 hover:bg-green-700 text-white font-medium"
                   size="default"
               >
                   <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft anlegen
               </Button>
-              {(!selectedSeasonId || !activeClubId) && (
+              {isReadOnly && (
+                <p className="text-xs text-amber-600 text-center sm:text-left">
+                  ℹ️ Saison läuft – nur Anzeige möglich
+                </p>
+              )}
+              {!isReadOnly && (!selectedSeasonId || !activeClubId) && (
                 <p className="text-xs text-muted-foreground text-center sm:text-left">
                   {!activeClubId ? 'Verein fehlt' : 'Saison wählen'}
                 </p>
@@ -1153,7 +1176,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                 {!selectedSeasonId && " Bitte wählen Sie zuerst eine Saison."}
               </CardDescription>
             </div>
-            {isVereinsvertreter && selectedSeasonId && activeClubId && (
+            {isVereinsvertreter && selectedSeasonId && activeClubId && !isReadOnly && (
               <Button
                   onClick={handleAddNewTeam}
                   disabled={isLoadingTeams || isSubmittingForm}
@@ -1162,6 +1185,11 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
               >
                   <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft
               </Button>
+            )}
+            {isReadOnly && selectedSeasonId && (
+              <div className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                ℹ️ Saison läuft – nur Anzeige möglich
+              </div>
             )}
           </div>
         </CardHeader>
@@ -1236,11 +1264,11 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                             variant="ghost" 
                             size="icon" 
                             onClick={() => handleEditTeam(team)} 
-                            disabled={isSubmittingForm || isDeletingTeam || (!isAdmin && teamsWithResults.has(team.id))}
+                            disabled={isSubmittingForm || isDeletingTeam || isReadOnly || (!isAdmin && teamsWithResults.has(team.id))}
                             className={`h-8 w-8 hover:bg-primary/10 ${
-                              !isAdmin && teamsWithResults.has(team.id) ? 'opacity-50 cursor-not-allowed' : ''
+                              isReadOnly || (!isAdmin && teamsWithResults.has(team.id)) ? 'opacity-50 cursor-not-allowed' : ''
                             }`}
-                            title={!isAdmin && teamsWithResults.has(team.id) 
+                            title={isReadOnly ? "Saison läuft – nur Anzeige möglich" : !isAdmin && teamsWithResults.has(team.id) 
                               ? "Bearbeitung gesperrt - Team hat Ergebnisse (nur Admin)" 
                               : "Mannschaft bearbeiten"
                             }
@@ -1253,11 +1281,11 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                                   variant="ghost" 
                                   size="icon" 
                                   className={`h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10 ${
-                                    !isAdmin && teamsWithResults.has(team.id) ? 'opacity-50 cursor-not-allowed' : ''
+                                    isReadOnly || (!isAdmin && teamsWithResults.has(team.id)) ? 'opacity-50 cursor-not-allowed' : ''
                                   }`}
                                   onClick={() => handleDeleteConfirmation(team)} 
-                                  disabled={isSubmittingForm || isDeletingTeam || (!isAdmin && (team.leagueId || teamsWithResults.has(team.id)))}
-                                  title={!isAdmin && team.leagueId 
+                                  disabled={isSubmittingForm || isDeletingTeam || isReadOnly || (!isAdmin && (team.leagueId || teamsWithResults.has(team.id)))}
+                                  title={isReadOnly ? "Saison läuft – nur Anzeige möglich" : !isAdmin && team.leagueId 
                                     ? "Löschen gesperrt - Liga zugewiesen (nur Admin)" 
                                     : !isAdmin && teamsWithResults.has(team.id) 
                                       ? "Löschen gesperrt - Team hat Ergebnisse (nur Admin)" 

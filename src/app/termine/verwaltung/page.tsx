@@ -34,13 +34,18 @@ export default function TermineVerwaltungPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
-  // Lade alle Termine
+  // Lade alle Termine und lösche abgelaufene (älter als 30 Tage)
   useEffect(() => {
     const loadEvents = async () => {
       setIsLoading(true);
       try {
+        // Auto-Cleanup via API (Admin-Rechte)
+        fetch('/api/cleanup-events').catch(() => {});
+        
         const eventsData = await fetchEvents();
-        setEvents(eventsData);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 30);
+        setEvents(eventsData.filter(e => e.date >= cutoff));
       } catch (error) {
         logError('Fehler beim Laden der Termine:', error);
         toast({
@@ -120,7 +125,7 @@ export default function TermineVerwaltungPage() {
   // Funktion zum Bearbeiten eines Termins
   const handleEditEvent = (event: Event) => {
     if (!event.id) return;
-    router.push(`/termine/bearbeiten?id=${event.id}`);
+    router.push(`/termine/edit/${event.id}`);
   };
 
   return (

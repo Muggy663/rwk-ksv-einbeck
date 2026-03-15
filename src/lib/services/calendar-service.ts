@@ -18,62 +18,40 @@ export interface Event {
   createdAt: Date;
 }
 
-/**
- * Lädt Termine aus der Datenbank
- * @param startDate - Startdatum für die Filterung
- * @param endDate - Enddatum für die Filterung
- * @param leagueId - Liga-ID für die Filterung
- * @returns Liste der Termine
- */
 export async function fetchEvents(
   startDate?: Date,
   endDate?: Date,
   leagueId?: string
 ): Promise<Event[]> {
   try {
-    
-    // Basis-Query erstellen
     const eventsRef = collection(db, 'events');
-    
-    // Queries für verschiedene Filter vorbereiten
-    let constraints = [];
-    
-    // Datum-Filter hinzufügen
-    if (startDate) {
-      constraints.push(where('date', '>=', Timestamp.fromDate(startDate)));
-    }
-    
-    if (endDate) {
-      constraints.push(where('date', '<=', Timestamp.fromDate(endDate)));
-    }
-    
-    // Liga-Filter hinzufügen
+    const constraints: any[] = [];
+
     if (leagueId && leagueId !== 'all') {
       constraints.push(where('leagueId', '==', leagueId));
     }
-    
-    // Sortierung hinzufügen
+
     constraints.push(orderBy('date', 'asc'));
-    
-    // Query ausführen
+
     const eventsQuery = query(eventsRef, ...constraints);
     const snapshot = await getDocs(eventsQuery);
-    
 
-    
-    // Ergebnisse mappen und filtern
     const events = snapshot.docs.map(doc => {
       const data = doc.data();
-      
-      // Datum korrekt konvertieren
-      let eventDate;
+
+      let eventDate: Date;
       try {
-        eventDate = data.date?.toDate();
+        if (data.date?.toDate) {
+          eventDate = data.date.toDate();
+        } else if (typeof data.date === 'string') {
+          eventDate = new Date(data.date);
+        } else {
+          eventDate = new Date();
+        }
       } catch (error) {
-        logError("Fehler beim Konvertieren des Datums:", error);
         eventDate = new Date();
       }
-      
+
       return {
         id: doc.id,
         title: data.title || 'Unbenannter Termin',
@@ -89,21 +67,20 @@ export async function fetchEvents(
         createdAt: data.createdAt?.toDate() || new Date()
       } as Event;
     });
-    
 
-    
-    return events;
+    // Client-seitiger Filter - funktioniert auch bei String-Daten
+    return events.filter(event => {
+      if (startDate && event.date < startDate) return false;
+      if (endDate && event.date > endDate) return false;
+      return true;
+    });
+
   } catch (error) {
     logError('Fehler beim Laden der Termine:', error);
     return [];
   }
 }
 
-/**
- * Erstellt einen neuen Termin
- * @param event - Termindaten
- * @returns ID des erstellten Termins oder null bei Fehler
- */
 export async function createEvent(event: Omit<Event, 'id' | 'createdAt'>): Promise<string | null> {
   try {
     const eventData = {
@@ -111,7 +88,7 @@ export async function createEvent(event: Omit<Event, 'id' | 'createdAt'>): Promi
       date: Timestamp.fromDate(event.date),
       createdAt: Timestamp.fromDate(new Date())
     };
-    
+
     const docRef = await addDoc(collection(db, 'events'), eventData);
     return docRef.id;
   } catch (error) {
@@ -120,20 +97,14 @@ export async function createEvent(event: Omit<Event, 'id' | 'createdAt'>): Promi
   }
 }
 
-/**
- * Aktualisiert einen Termin
- * @param id - ID des Termins
- * @param event - Zu aktualisierende Termindaten
- * @returns Erfolg der Aktualisierung
- */
 export async function updateEvent(id: string, event: Partial<Event>): Promise<boolean> {
   try {
-    const eventData = { ...event };
-    
+    const eventData: any = { ...event };
+
     if (event.date) {
       eventData.date = Timestamp.fromDate(event.date);
     }
-    
+
     await updateDoc(doc(db, 'events', id), eventData);
     return true;
   } catch (error) {
@@ -142,11 +113,6 @@ export async function updateEvent(id: string, event: Partial<Event>): Promise<bo
   }
 }
 
-/**
- * Löscht einen Termin
- * @param id - ID des Termins
- * @returns Erfolg des Löschvorgangs
- */
 export async function deleteEvent(id: string): Promise<boolean> {
   try {
     await deleteDoc(doc(db, 'events', id));
@@ -157,44 +123,35 @@ export async function deleteEvent(id: string): Promise<boolean> {
   }
 }
 
-/**
- * Generiert einen iCal-Eintrag für einen Termin
- * @param event - Termindaten
- * @returns iCal-Daten als String
- */
 export function generateICalEvent(event: Event): string {
   try {
     if (!event.date) {
       throw new Error('Ungültiges Datum für iCal-Export');
     }
-    
+
     const dateStart = format(event.date, 'yyyyMMdd');
     const timeStart = (event.time || '00:00').replace(':', '') + '00';
-    
-    // Endzeit ist 2 Stunden nach Startzeit
+
     let endHours = 0;
     let minutes = 0;
-    
+
     try {
       const [hours, mins] = (event.time || '00:00').split(':').map(Number);
       endHours = hours + 2;
       minutes = mins;
     } catch (error) {
-      logError('Fehler beim Parsen der Zeit:', error);
       endHours = 2;
       minutes = 0;
     }
-    
-    // Sicherstellen, dass die Stunden nicht über 23 gehen
+
     if (endHours > 23) {
       endHours = 23;
       minutes = 59;
     }
-    
+
     const timeEnd = `${endHours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}00`;
     const now = format(new Date(), "yyyyMMdd'T'HHmmss'Z'");
-    
-    // Escape special characters in text fields
+
     const escapeText = (text: string) => {
       return (text || '')
         .replace(/\\/g, '\\\\')
@@ -202,11 +159,11 @@ export function generateICalEvent(event: Event): string {
         .replace(/,/g, '\\,')
         .replace(/\n/g, '\\n');
     };
-    
+
     const title = escapeText(event.title || 'Unbenannter Termin');
     const location = escapeText(event.location || '');
     const description = escapeText(event.description || '');
-    
+
     return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//RWK Einbeck App//DE\nCALSCALE:GREGORIAN\nBEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${dateStart}T${timeStart}\nDTEND:${dateStart}T${timeEnd}\nLOCATION:${location}\nDESCRIPTION:${description}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT\nEND:VCALENDAR`;
   } catch (error) {
     logError('Fehler beim Generieren des iCal-Events:', error);
@@ -214,16 +171,10 @@ export function generateICalEvent(event: Event): string {
   }
 }
 
-/**
- * Generiert eine iCal-Datei für mehrere Termine
- * @param events - Liste der Termine
- * @returns iCal-Daten als String
- */
 export function generateICalFile(events: Event[]): string {
   try {
     let icalContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//RWK Einbeck App//DE\nCALSCALE:GREGORIAN\n`;
-    
-    // Escape special characters in text fields
+
     const escapeText = (text: string) => {
       return (text || '')
         .replace(/\\/g, '\\\\')
@@ -231,52 +182,46 @@ export function generateICalFile(events: Event[]): string {
         .replace(/,/g, '\\,')
         .replace(/\n/g, '\\n');
     };
-    
-    // Nur gültige Events verarbeiten
+
     const validEvents = events.filter(event => event && event.date);
-    
+
     for (const event of validEvents) {
       try {
         const dateStart = format(event.date, 'yyyyMMdd');
         const timeStart = (event.time || '00:00').replace(':', '') + '00';
-        
-        // Endzeit ist 2 Stunden nach Startzeit
+
         let endHours = 0;
         let minutes = 0;
-        
+
         try {
           const [hours, mins] = (event.time || '00:00').split(':').map(Number);
           endHours = hours + 2;
           minutes = mins;
         } catch (error) {
-          logError('Fehler beim Parsen der Zeit:', error);
           endHours = 2;
           minutes = 0;
         }
-        
-        // Sicherstellen, dass die Stunden nicht über 23 gehen
+
         if (endHours > 23) {
           endHours = 23;
           minutes = 59;
         }
-        
+
         const timeEnd = `${endHours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}00`;
         const now = format(new Date(), "yyyyMMdd'T'HHmmss'Z'");
-        
+
         const title = escapeText(event.title || 'Unbenannter Termin');
         const location = escapeText(event.location || '');
         const description = escapeText(event.description || '');
-        
+
         icalContent += `BEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${dateStart}T${timeStart}\nDTEND:${dateStart}T${timeEnd}\nLOCATION:${location}\nDESCRIPTION:${description}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT\n`;
       } catch (error) {
         logError('Fehler beim Verarbeiten eines Events für iCal:', error);
-        // Einzelnes Event überspringen, aber weitermachen
         continue;
       }
     }
-    
+
     icalContent += 'END:VCALENDAR';
-    
     return icalContent;
   } catch (error) {
     logError('Fehler beim Generieren der iCal-Datei:', error);
