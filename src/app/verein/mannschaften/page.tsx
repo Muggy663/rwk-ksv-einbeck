@@ -307,24 +307,22 @@ export default function VereinMannschaftenPage() {
     if (!activeClubId) return;
     
     try {
-      const shootersQuery = query(
-        collection(db, SHOOTERS_COLLECTION), 
-        orderBy("name", "asc")
-      );
-      const shootersSnapshot = await getDocs(shootersQuery);
-      
-      const allShooters = shootersSnapshot.docs.map(d => ({ 
-        id: d.id, 
-        ...d.data(), 
-        teamIds: (d.data().teamIds || []) as string[] 
-      } as Shooter));
-      
-      const clubShooters = allShooters.filter(shooter => {
-        const shooterClubId = getShooterClubId(shooter);
-        return shooterClubId === activeClubId;
+      const [s1, s2, s3] = await Promise.all([
+        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('clubId', '==', activeClubId))),
+        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('rwkClubId', '==', activeClubId))),
+        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('kmClubId', '==', activeClubId)))
+      ]);
+
+      const uniqueShooters = new Map<string, Shooter>();
+      [s1, s2, s3].forEach(snapshot => {
+        snapshot.docs.forEach(d => {
+          if (!uniqueShooters.has(d.id)) {
+            uniqueShooters.set(d.id, { id: d.id, ...d.data(), teamIds: d.data().teamIds || [] } as Shooter);
+          }
+        });
       });
-      
-      setAllClubShootersForDisplay(clubShooters);
+
+      setAllClubShootersForDisplay(Array.from(uniqueShooters.values()));
     } catch (error) {
       logError('Fehler beim Laden der Schützen für Anzeige:', error);
     }
@@ -394,42 +392,25 @@ export default function VereinMannschaftenPage() {
       const clubDoc = await getFirestoreDoc(doc(db, 'clubs', clubIdForDialog));
       const clubName = clubDoc.exists() ? clubDoc.data()?.name : null;
       
-      // Lade alle RWK-Schützen und filtere client-seitig
-      const shootersQuery = query(
-        collection(db, SHOOTERS_COLLECTION), 
-        orderBy("name", "asc")
-      );
-      
-      const kmShootersQuery = null; // Nicht mehr nötig, da wir alle laden
       const teamsForYearQuery = query(collection(db, TEAMS_COLLECTION), where("competitionYear", "==", compYearForDialog));
 
-      const promises = [
-        getDocs(shootersQuery),
+      const [s1, s2, s3, teamsForYearSnapshot] = await Promise.all([
+        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('clubId', '==', clubIdForDialog))),
+        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('rwkClubId', '==', clubIdForDialog))),
+        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('kmClubId', '==', clubIdForDialog))),
         getDocs(teamsForYearQuery)
-      ];
-      
-      if (kmShootersQuery) {
-        promises.splice(1, 0, getDocs(kmShootersQuery));
-      }
-      
-      const results = await Promise.all(promises);
-      const shootersSnapshot = results[0];
-      const teamsForYearSnapshot = results[1];
+      ]);
 
-      // Alle Schützen laden und nach Verein filtern
-      const allShooters = shootersSnapshot.docs.map(d => ({ 
-        id: d.id, 
-        ...d.data(), 
-        teamIds: (d.data().teamIds || []) as string[] 
-      } as Shooter));
-      
-      // Filtere nach clubId/rwkClubId/kmClubId
-      const clubShooters = allShooters.filter(shooter => {
-        const shooterClubId = getShooterClubId(shooter);
-        return shooterClubId === clubIdForDialog;
+      const uniqueShooters = new Map<string, Shooter>();
+      [s1, s2, s3].forEach(snapshot => {
+        snapshot.docs.forEach(d => {
+          if (!uniqueShooters.has(d.id)) {
+            uniqueShooters.set(d.id, { id: d.id, ...d.data(), teamIds: d.data().teamIds || [] } as Shooter);
+          }
+        });
       });
-      
-      setAllClubShootersForDialog(clubShooters);
+
+      setAllClubShootersForDialog(Array.from(uniqueShooters.values()).sort((a, b) => (a.name || '').localeCompare(b.name || '')));
 
 
       const leagueMap = new Map(allLeagues.map(l => [l.id, l]));
@@ -1558,7 +1539,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                 
                 <div className="space-y-2 pt-4 border-t mt-4">
                   <div className="flex justify-between items-center mb-1.5">
-                    <Label className="text-base font-medium">Schützen für diese Mannschaft auswählen</Label>
+                    <Label className="text-base font-medium">Schützen für diese Mannschaft auswählen ({allClubShootersForDialog.length} gefunden)</Label>
                     <span className="text-sm text-muted-foreground">{selectedShooterIdsInForm.length} / {MAX_SHOOTERS_PER_TEAM} ausgewählt</span>
                   </div>
                   
@@ -1617,7 +1598,10 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                             .filter(shooter => {
                               if (!shooter || !shooter.name) return false;
                               if (!shooterSearchQuery.trim()) return true;
-                              return shooter.name.toLowerCase().includes(shooterSearchQuery.toLowerCase());
+                              const searchTerm = shooterSearchQuery.toLowerCase();
+                              const fullName = `${shooter.firstName || ''} ${shooter.lastName || shooter.name || ''}`.toLowerCase();
+                              const reverseName = `${shooter.lastName || ''} ${shooter.firstName || ''}`.toLowerCase();
+                              return fullName.includes(searchTerm) || reverseName.includes(searchTerm) || (shooter.name || '').toLowerCase().includes(searchTerm);
                             })
                             .map(shooter => {
                               if (!shooter || !shooter.id) return null; 
