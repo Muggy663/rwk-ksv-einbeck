@@ -1,12 +1,12 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.4.3** | **Android: 0.9.4.1**
+**Version: 2.4.4** | **Android: 0.9.4.1**
 
 > **Social Training Platform für den deutschen Schießsport**
 
 Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und Social Training. Die erste Community-Plattform für Sportschützen mit Live-Wettkämpfen, Trainingsgruppen und erweiterten Statistiken.
 
-[![Version](https://img.shields.io/badge/Version-2.4.3-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.4.4-green?style=for-the-badge)](#)
 [![Social Training](https://img.shields.io/badge/Social_Training-Live-blue?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_16_+_Firebase-blue?style=for-the-badge)](#)
 [![Design](https://img.shields.io/badge/Design-Glassmorphism-purple?style=for-the-badge)](#)
@@ -112,6 +112,14 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **KI-Startlisten Generator** mit automatischer Optimierung und Altersklassen-Berechnung
 
 ## 📋 Changelog
+
+### Version 2.4.4 (21. März 2026)
+- **⚡ Startseite**: Skeleton Loading für alle Karten (Updates, Termine, News)
+- **📊 Startseite**: Gefühlte Ladezeit deutlich verbessert
+- **🔧 Mannschaften**: Speichern-Button Mobile-Fix (requestSubmit statt form-Attribut)
+- **🔧 Admin Teams**: 3-Query-Methode für Schützen-Laden
+- **➕ Admin Teams**: Neue Mannschaft anlegen möglich
+- **🔧 Admin Teams**: getShooterClubId Funktion ergänzt
 
 ### Version 2.4.3 (15. März 2026)
 - **👥 Mannschaften**: Schützen-Suche nach Vor- und Nachname

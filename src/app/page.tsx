@@ -220,9 +220,13 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             {loadingUpdates ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-3 text-muted-foreground">Lade Updates...</p>
+              <div className="space-y-4">
+                {[1,2,3,4,5].map(i => (
+                  <div key={i} className="p-4 rounded-lg bg-muted/30 animate-pulse">
+                    <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                    <div className="h-3 bg-muted rounded w-1/3" />
+                  </div>
+                ))}
               </div>
             ) : updates.length > 0 ? (
               <ul className="space-y-4 text-foreground dark:text-foreground">
@@ -275,9 +279,14 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             {isLoadingEvents ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <p className="ml-3 text-muted-foreground">Lade Termine...</p>
+              <div className="space-y-4">
+                {[1,2,3].map(i => (
+                  <div key={i} className="p-2 rounded-md animate-pulse">
+                    <div className="h-4 bg-muted rounded w-2/3 mb-2" />
+                    <div className="h-3 bg-muted rounded w-1/2 mb-1" />
+                    <div className="h-3 bg-muted rounded w-1/3" />
+                  </div>
+                ))}
               </div>
             ) : upcomingEvents.length > 0 ? (
               <div className="space-y-4">
@@ -344,9 +353,14 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             {isLoadingNews ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <p className="ml-3 text-muted-foreground">Lade News...</p>
+              <div className="space-y-3">
+                {[1,2].map(i => (
+                  <div key={i} className="p-2 rounded-md animate-pulse">
+                    <div className="h-4 bg-muted rounded w-full mb-2" />
+                    <div className="h-3 bg-muted rounded w-3/4 mb-1" />
+                    <div className="h-3 bg-muted rounded w-1/4" />
+                  </div>
+                ))}
               </div>
             ) : latestNews.length > 0 ? (
               <div className="space-y-3">

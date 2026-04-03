@@ -1393,10 +1393,13 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
               </Button>
               {isVereinsvertreter && (
                 <Button 
-                  type="submit" 
+                  type="button"
+                  onClick={() => {
+                    const form = document.getElementById('team-form') as HTMLFormElement;
+                    if (form) form.requestSubmit();
+                  }}
                   disabled={isSubmittingForm || isLoadingDialogData}
                   className="flex-1 sm:flex-none"
-                  form="team-form"
                 >
                   {isSubmittingForm && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isLoadingDialogData && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

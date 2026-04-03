@@ -50,6 +50,10 @@ const CLUBS_COLLECTION = "clubs";
 const TEAMS_COLLECTION = "rwk_teams";
 const SHOOTERS_COLLECTION = "shooters";
 
+function getShooterClubId(shooter: Shooter): string | null {
+  return shooter.clubId || shooter.rwkClubId || shooter.kmClubId || null;
+}
+
 export default function AdminTeamsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -256,29 +260,24 @@ export default function AdminTeamsPage() {
 
     setIsLoadingDialogData(true);
     try {
-      const shootersQuery = query(
-        collection(db, SHOOTERS_COLLECTION), 
-        orderBy("name", "asc")
-      );
       const teamsForYearQuery = query(collection(db, TEAMS_COLLECTION), where("competitionYear", "==", compYearForDialog));
 
-      const [shootersSnapshot, teamsForYearSnapshot] = await Promise.all([
-        getDocs(shootersQuery),
+      const [s1, s2, s3, teamsForYearSnapshot] = await Promise.all([
+        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('clubId', '==', clubIdForDialog))),
+        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('rwkClubId', '==', clubIdForDialog))),
+        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('kmClubId', '==', clubIdForDialog))),
         getDocs(teamsForYearQuery)
       ]);
 
-      const allShooters = shootersSnapshot.docs.map(d => ({ 
-        id: d.id, 
-        ...d.data(), 
-        teamIds: (d.data().teamIds || []) as string[] 
-      } as Shooter));
-      
-      const clubShooters = allShooters.filter(shooter => {
-        const shooterClubId = getShooterClubId(shooter);
-        return shooterClubId === clubIdForDialog;
+      const uniqueShooters = new Map<string, Shooter>();
+      [s1, s2, s3].forEach(snapshot => {
+        snapshot.docs.forEach(d => {
+          if (!uniqueShooters.has(d.id)) {
+            uniqueShooters.set(d.id, { id: d.id, ...d.data(), teamIds: d.data().teamIds || [] } as Shooter);
+          }
+        });
       });
-      
-      setAllClubShootersForDialog(clubShooters);
+      setAllClubShootersForDialog(Array.from(uniqueShooters.values()).sort((a, b) => (a.name || '').localeCompare(b.name || '')));
 
       const leagueMap = new Map(allLeagues.map(l => [l.id, l]));
       const teamsForValidationData: TeamValidationInfo[] = teamsForYearSnapshot.docs.map(d => {
@@ -518,6 +517,36 @@ export default function AdminTeamsPage() {
         >
             {isLoadingTeams ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TeamsIcon className="mr-2 h-5 w-5" />}
             Mannschaften laden
+        </Button>
+        <Button
+            onClick={() => {
+              if (!selectedSeasonId) {
+                toast({ title: "Saison fehlt", description: "Bitte zuerst eine Saison auswählen.", variant: "warning" });
+                return;
+              }
+              const season = allSeasons.find(s => s.id === selectedSeasonId);
+              setFormMode('new');
+              setCurrentTeam({
+                clubId: allClubsGlobal[0]?.id || '',
+                competitionYear: season?.competitionYear,
+                seasonId: selectedSeasonId,
+                name: '',
+                shooterIds: [],
+                leagueId: null,
+                captainName: '',
+                captainEmail: '',
+                captainPhone: '',
+              });
+              setTeamStrength("");
+              setSuggestedTeamName("");
+              setIsFormOpen(true);
+            }}
+            disabled={!selectedSeasonId}
+            className="w-full sm:w-auto whitespace-nowrap bg-green-600 hover:bg-green-700 text-white"
+            size="default"
+        >
+            <PlusCircle className="mr-2 h-5 w-5" />
+            Neue Mannschaft
         </Button>
       </div>
 
@@ -798,7 +827,12 @@ export default function AdminTeamsPage() {
               const shootersToAdd = selectedShooterIdsInForm.filter(id => !originalShooterIds.includes(id));
               const shootersToRemove = originalShooterIds.filter(id => !selectedShooterIdsInForm.includes(id) && allClubShootersForDialog.some(s => s.id === id));
               
-              if (formMode === 'edit' && currentTeam.id) {
+              if (formMode === 'new') {
+                const newTeamRef = doc(collection(db, TEAMS_COLLECTION));
+                teamIdForShooterUpdates = newTeamRef.id;
+                await setDoc(newTeamRef, {...teamDataToSave, shooterIds: selectedShooterIdsInForm});
+                toast({ title: "✅ Mannschaft erstellt!", description: `"${teamDataToSave.name}" wurde angelegt.`, duration: 5000 });
+              } else if (formMode === 'edit' && currentTeam.id) {
                 teamIdForShooterUpdates = currentTeam.id;
                 const teamDocRef = doc(db, TEAMS_COLLECTION, teamIdForShooterUpdates);
                 await updateDoc(teamDocRef, {...teamDataToSave, shooterIds: selectedShooterIdsInForm} as Partial<Team>);
