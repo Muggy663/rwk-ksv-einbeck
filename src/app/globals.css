@@ -67,26 +67,12 @@
   }
   body {
     @apply text-foreground;
-    background: linear-gradient(135deg, 
-      hsl(142, 40%, 96%) 0%, 
-      hsl(180, 45%, 94%) 25%,
-      hsl(200, 50%, 95%) 50%,
-      hsl(180, 45%, 94%) 75%,
-      hsl(142, 40%, 96%) 100%);
-    background-size: 400% 400%;
-    animation: gradient-shift 15s ease infinite;
+    background: hsl(142, 40%, 96%);
     min-height: 100vh;
   }
   
   .dark body {
-    background: linear-gradient(135deg, 
-      hsl(220, 25%, 8%) 0%, 
-      hsl(220, 30%, 10%) 25%,
-      hsl(230, 25%, 9%) 50%,
-      hsl(220, 30%, 10%) 75%,
-      hsl(220, 25%, 8%) 100%) !important;
-    background-size: 400% 400%;
-    animation: gradient-shift 15s ease infinite;
+    background: hsl(220, 25%, 8%) !important;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply text-primary font-bold;
@@ -327,13 +313,13 @@
 /* Fallback styles in case Tailwind doesn't load properly - LIGHT MODE */
 :root:not(.dark) html, 
 :root:not(.dark) body {
-  background: linear-gradient(135deg, #f0fdf4 0%, #e0f7fa 50%, #f0fdf4 100%) !important;
+  background: #f0fdf4 !important;
   color: #171717 !important;
   min-height: 100vh !important;
 }
 
 :root:not(.dark) .bg-background {
-  background: linear-gradient(135deg, #f0fdf4 0%, #e0f7fa 50%, #f0fdf4 100%) !important;
+  background: #f0fdf4 !important;
 }
 
 :root:not(.dark) .text-foreground {
@@ -379,12 +365,12 @@
 /* Fallback styles for DARK MODE */
 .dark html, 
 .dark body {
-  background: linear-gradient(135deg, #0f1419 0%, #141a24 50%, #0f1419 100%) !important;
+  background: #0f1419 !important;
   color: #fafaf9 !important;
 }
 
 .dark .bg-background {
-  background: linear-gradient(135deg, #0f1419 0%, #141a24 50%, #0f1419 100%) !important;
+  background: #0f1419 !important;
 }
 
 .dark .text-foreground {
@@ -542,23 +528,10 @@
   }
 }
 
-.animate-fade-in {
-  animation: fade-in 1s ease-out;
-}
-
-.animate-glow-pulse {
-  animation: glow-pulse 3s ease-in-out infinite;
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
-}
+.animate-fade-in {}
+.animate-glow-pulse {}
+.animate-float {}
+.animate-shimmer {}
 
 /* Glasmorphism-Effekte */
 .glass-card {
@@ -569,7 +542,6 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08),
               0 2px 8px rgba(0, 0, 0, 0.04),
               inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
@@ -577,7 +549,6 @@
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12),
               0 4px 12px rgba(0, 0, 0, 0.06),
               inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transform: translateY(-2px);
 }
 
 .dark .glass-card {
@@ -595,54 +566,18 @@
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5),
               0 4px 12px rgba(0, 0, 0, 0.3),
               inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  transform: translateY(-2px);
 }
 
 /* Hover-Effekte für Feature-Cards */
 .feature-card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
 
-.feature-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-  transition: left 0.5s;
-}
+.icon-bounce {}
 
-.feature-card:hover::before {
-  left: 100%;
-}
-
-.feature-card:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-}
-
-/* Icon-Animationen */
-.icon-bounce {
-  transition: transform 0.3s ease;
-}
-
-.icon-bounce:hover {
-  transform: scale(1.1) rotate(5deg);
-  animation: float 2s ease-in-out infinite;
-}
-
-/* Gradient-Text-Effekt */
 .gradient-text {
-  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)), hsl(var(--accent)));
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 3s ease-in-out infinite;
+  color: hsl(var(--primary));
 }
 
 /* Native App Status Bar */

@@ -82,7 +82,9 @@ export async function fetchTopShooters(leagueId: string, topCount: number = 3) {
         shootersMap.set(shooterId, {
           shooterId,
           name: scoreData.shooterName || 'Unbekannter Schütze',
+          teamId: scoreData.teamId || '',
           teamName: scoreData.teamName || 'Unbekanntes Team',
+          teamNameTimestamp: scoreData.entryTimestamp?.seconds || 0,
           clubName: scoreData.clubName || '',
           gender: scoreData.shooterGender || 'unknown',
           results: {},
@@ -92,6 +94,13 @@ export async function fetchTopShooters(leagueId: string, topCount: number = 3) {
       }
       
       const shooter = shootersMap.get(shooterId);
+      // teamName mit dem neuesten Score aktualisieren
+      const scoreTimestamp = scoreData.entryTimestamp?.seconds || 0;
+      if (scoreData.teamName && scoreTimestamp >= shooter.teamNameTimestamp) {
+        shooter.teamName = scoreData.teamName;
+        shooter.teamNameTimestamp = scoreTimestamp;
+        if (scoreData.teamId) shooter.teamId = scoreData.teamId;
+      }
       shooter.results[`dg${durchgang}`] = scoreData.totalRinge || 0;
       
       if (scoreData.totalRinge) {
@@ -100,6 +109,27 @@ export async function fetchTopShooters(leagueId: string, topCount: number = 3) {
       }
     });
     
+    // AK-Teams ermitteln um deren Schützen aus der normalen Wertung auszuschließen
+    const leagueTeamsForAkQuery = query(collection(db, 'rwk_teams'), where('leagueId', '==', leagueId));
+    const leagueTeamsForAkSnapshot = await getDocs(leagueTeamsForAkQuery);
+    const akShooterIds = new Set<string>();
+    const shooterToTeamMap = new Map<string, string>();
+    leagueTeamsForAkSnapshot.docs.forEach(teamDoc => {
+      const teamData = teamDoc.data();
+      const normalizedName = (teamData.name || '').replace(/\s+/g, ' ').trim();
+      (teamData.shooterIds || []).forEach((sid: string) => {
+        shooterToTeamMap.set(sid, normalizedName);
+        if (teamData.outOfCompetition) akShooterIds.add(sid);
+      });
+    });
+    // rwk_teams hat immer den aktuellen Namen - überschreibt Score-Daten
+    // AK-Schützen aus normaler Wertung entfernen
+    shootersMap.forEach((shooter: any, id: string) => {
+      if (akShooterIds.has(id)) { shootersMap.delete(id); return; }
+      const teamNameFromDb = shooterToTeamMap.get(id);
+      if (teamNameFromDb) shooter.teamName = teamNameFromDb;
+    });
+
     // Durchschnitt berechnen und in Array umwandeln
     const shooters = Array.from(shootersMap.values()).map(shooter => {
       shooter.averageScore = shooter.roundsShot > 0 ? shooter.totalScore / shooter.roundsShot : 0;
@@ -123,7 +153,7 @@ export async function fetchTopShooters(leagueId: string, topCount: number = 3) {
         }
       }
       
-      return 0; // Komplett gleich
+      return 0;
     });
     
     // Nur die Top-Schützen zurückgeben
@@ -182,8 +212,10 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
     const teamsSnapshot = await getDocs(teamsQuery);
     const teams = [];
     
-    const teamIds = teamsSnapshot.docs.filter(doc => !doc.data().name.toLowerCase().includes('einzel')).map(doc => doc.id);
-    if (teamIds.length === 0) return [];
+    const teamIds = teamsSnapshot.docs.filter(doc => !doc.data().name.toLowerCase().includes('einzel') && !doc.data().outOfCompetition).map(doc => doc.id);
+    const akTeamIds = teamsSnapshot.docs.filter(doc => !doc.data().name.toLowerCase().includes('einzel') && doc.data().outOfCompetition).map(doc => doc.id);
+    const allTeamIds = [...teamIds, ...akTeamIds];
+    if (allTeamIds.length === 0) return [];
     
     let allScoresQuery;
     try {
@@ -197,11 +229,12 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
     const scoresByTeam = new Map();
     allScoresSnapshot.forEach(scoreDoc => {
       const scoreData = { id: scoreDoc.id, ...scoreDoc.data() };
-      if (!teamIds.includes(scoreData.teamId)) return;
+      if (!allTeamIds.includes(scoreData.teamId)) return;
       if (!scoresByTeam.has(scoreData.teamId)) scoresByTeam.set(scoreData.teamId, []);
       scoresByTeam.get(scoreData.teamId).push(scoreData);
     });
     
+    const akTeams = [];
     for (const teamDoc of teamsSnapshot.docs) {
       const teamData = teamDoc.data();
       if (teamData.name.toLowerCase().includes('einzel')) continue;
@@ -296,33 +329,40 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
       // Korrigiere totalScore basierend auf den tatsächlichen Teammitgliedern
       const correctedTotalScore = teamMembers.reduce((sum, member) => sum + member.totalScore, 0);
       
-      teams.push({
+      const entry = {
         id: teamDoc.id,
-        name: teamData.name,
+        name: (teamData.name || '').replace(/\s+/g, ' ').trim(),
         clubName: teamData.clubName || '',
+        outOfCompetition: !!teamData.outOfCompetition,
         roundResults,
-        totalScore: correctedTotalScore, // Verwende das korrigierte Ergebnis
+        totalScore: correctedTotalScore,
         averageScore: teamMembers.length > 0 ? correctedTotalScore / teamMembers.length : 0,
         teamMembers: teamMembers.map(member => member.name),
         teamMembersWithScores: teamMembers
-      });
+      };
+      if (teamData.outOfCompetition) {
+        akTeams.push(entry);
+      } else {
+        teams.push(entry);
+      }
     }
     
-    // Teams nach dem korrigierten Gesamtergebnis sortieren
-    teams.sort((a, b) => b.totalScore - a.totalScore);
-    
-    // Nur die Top-Teams zurückgeben
-    const topTeams = teams.slice(0, topCount);
-    
-    // Zusätzliche Informationen hinzufügen und Rangplätze neu vergeben
-    return topTeams.map((team, index) => ({
-      ...team,
+    const extraInfo = (index: number, isAk: boolean) => ({
       rank: index + 1,
+      isOutOfCompetition: isAk,
       league: leagueData.name,
       discipline: getDisciplineName(leagueData.type).replace(/Kleinkaliber\s+Kleinkaliber/g, 'Kleinkaliber').replace(/Luftdruck\s+Luftdruck/g, 'Luftdruck'),
       category: leagueData.category || 'Offene Gruppe',
       season: seasonData.name
-    }));
+    });
+
+    teams.sort((a, b) => b.totalScore - a.totalScore);
+    akTeams.sort((a, b) => b.totalScore - a.totalScore);
+
+    return [
+      ...teams.slice(0, topCount).map((t, i) => ({ ...t, ...extraInfo(i, false) })),
+      ...akTeams.slice(0, topCount).map((t, i) => ({ ...t, ...extraInfo(i, true) }))
+    ];
   } catch (error) {
     logError('Fehler beim Abrufen der Top-Teams:', error);
     throw error;
@@ -334,40 +374,38 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
  * @param seasonId ID der Saison
  * @returns Objekt mit dem besten männlichen und weiblichen Schützen
  */
-export async function fetchBestOverallShooters(seasonId: string) {
+export async function fetchBestOverallShooters(seasonId: string, leagueId?: string, leagueIds?: string[]) {
   try {
-    // Saison-Informationen abrufen
     const seasonRef = doc(db, 'seasons', seasonId);
     const seasonSnap = await getDoc(seasonRef);
-    
-    if (!seasonSnap.exists()) {
-      throw new Error('Saison nicht gefunden');
-    }
+    if (!seasonSnap.exists()) throw new Error('Saison nicht gefunden');
     const seasonData = seasonSnap.data();
-    
-    // Alle Ligen der Saison abrufen
-    const leaguesQuery = query(
-      collection(db, 'rwk_leagues'),
-      where('seasonId', '==', seasonId)
-    );
-    
-    const leaguesSnapshot = await getDocs(leaguesQuery);
-    
-    // Ligen nach Typ gruppieren
-    const normalLeagueIds = [];
-    const pistolLeagueIds = [];
-    const kkPistolLeagueIds = [];
-    
-    leaguesSnapshot.forEach(leagueDoc => {
-      const leagueData = leagueDoc.data();
-      if (leagueData.type.includes('SP')) {
-        pistolLeagueIds.push(leagueDoc.id);
-      } else if (leagueData.type.includes('KKP')) {
-        kkPistolLeagueIds.push(leagueDoc.id);
-      } else {
-        normalLeagueIds.push(leagueDoc.id);
+
+    let normalLeagueIds = [];
+    let pistolLeagueIds = [];
+    let kkPistolLeagueIds = [];
+
+    // Direkte Liga-ID-Liste hat Vorrang
+    const idsToProcess = leagueIds || (leagueId ? [leagueId] : null);
+
+    if (idsToProcess) {
+      for (const lid of idsToProcess) {
+        const snap = await getDoc(doc(db, 'rwk_leagues', lid));
+        if (!snap.exists()) continue;
+        const t = snap.data().type;
+        if (t.includes('SP')) pistolLeagueIds.push(lid);
+        else if (t.includes('KKP')) kkPistolLeagueIds.push(lid);
+        else normalLeagueIds.push(lid);
       }
-    });
+    } else {
+      const leaguesSnapshot = await getDocs(query(collection(db, 'rwk_leagues'), where('seasonId', '==', seasonId)));
+      leaguesSnapshot.forEach(leagueDoc => {
+        const t = leagueDoc.data().type;
+        if (t.includes('SP')) pistolLeagueIds.push(leagueDoc.id);
+        else if (t.includes('KKP')) kkPistolLeagueIds.push(leagueDoc.id);
+        else normalLeagueIds.push(leagueDoc.id);
+      });
+    }
     
     // Beste männliche und weibliche Schützen für normale Ligen
     let bestMale = null;
@@ -411,11 +449,23 @@ async function fetchBestShooterByGender(leagueIds: string[], gender: 'male' | 'f
   if (leagueIds.length === 0) return null;
   
   try {
-    // Bei zu vielen Ligen müssen wir die Abfrage aufteilen (Vercel-Limit)
-    const maxLeaguesPerQuery = 10;
+    // AK-Schützen-IDs für alle Ligen laden
+    const akShooterIds = new Set<string>();
+    const shooterTeamNameMap = new Map<string, string>();
+    for (const lid of leagueIds) {
+      const teamsSnap = await getDocs(query(collection(db, 'rwk_teams'), where('leagueId', '==', lid)));
+      teamsSnap.docs.forEach(teamDoc => {
+        const td = teamDoc.data();
+        const normalizedName = (td.name || '').replace(/\s+/g, ' ').trim();
+        (td.shooterIds || []).forEach((sid: string) => {
+          shooterTeamNameMap.set(sid, normalizedName);
+          if (td.outOfCompetition) akShooterIds.add(sid);
+        });
+      });
+    }
     let allScores = [];
+    const maxLeaguesPerQuery = 10;
     
-    // Ligen in Gruppen aufteilen
     for (let i = 0; i < leagueIds.length; i += maxLeaguesPerQuery) {
       const leagueIdsChunk = leagueIds.slice(i, i + maxLeaguesPerQuery);
       
@@ -486,9 +536,9 @@ async function fetchBestShooterByGender(leagueIds: string[], gender: 'male' | 'f
       const shooterGender = scoreData.shooterGender || 'unknown';
       
       // Geschlechterfilter anwenden
-      if (gender !== 'all' && shooterGender !== gender) {
-        return;
-      }
+      if (gender !== 'all' && shooterGender !== gender) return;
+      // AK-Schützen herausfiltern
+      if (akShooterIds.has(shooterId)) return;
       
       if (!shooterId) return;
       
@@ -535,7 +585,7 @@ async function fetchBestShooterByGender(leagueIds: string[], gender: 'male' | 'f
     
     if (leagueSnap.exists()) {
       const leagueData = leagueSnap.data();
-      bestShooter.discipline = getDisciplineName(leagueData.type).replace(/Kleinkaliber\s+Kleinkaliber/g, 'Kleinkaliber').replace(/Luftdruck\s+Luftdruck/g, 'Luftdruck');
+      bestShooter.discipline = leagueData.name.replace(/\s+/g, ' ').trim();
       if (gender === 'male') {
         bestShooter.category = 'Bester Schütze';
       } else if (gender === 'female') {
@@ -549,7 +599,9 @@ async function fetchBestShooterByGender(leagueIds: string[], gender: 'male' | 'f
       }
       
       // Team-Info für bessere Anzeige hinzufügen
-      bestShooter.displayName = bestShooter.teamName ? 
+      const correctTeamName = shooterTeamNameMap.get(bestShooter.shooterId);
+      if (correctTeamName) bestShooter.teamName = correctTeamName;
+      bestShooter.displayName = bestShooter.teamName ?
         `${bestShooter.name}\n${bestShooter.teamName}` : bestShooter.name;
       bestShooter.season = seasonName;
     }

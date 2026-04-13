@@ -51,17 +51,14 @@
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-button:hover {
   background: rgba(255, 255, 255, 0.75);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
 }
 
 .glass-button:active {
-  transform: translateY(0);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -172,32 +169,6 @@
   overflow: hidden;
 }
 
-.glass-shimmer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.3), 
-    transparent);
-  animation: shimmer 3s infinite;
-}
-
-.dark .glass-shimmer::before {
-  background: linear-gradient(90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.1), 
-    transparent);
-}
-
-@keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
 /* Glow Effect */
 .glass-glow {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08),
@@ -211,11 +182,10 @@
 
 /* Hover Lift Effect */
 .glass-lift {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: box-shadow 0.3s ease;
 }
 
 .glass-lift:hover {
-  transform: translateY(-4px) scale(1.01);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
 }
 

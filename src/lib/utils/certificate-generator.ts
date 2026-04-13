@@ -105,10 +105,9 @@ export class CertificateGenerator {
     this.doc.setFontSize(16);
     this.doc.setFont('helvetica', 'normal');
     const seasonName = options.season.replace('RWK ', '').replace(/Kleinkaliber\s+Kleinkaliber/g, 'Kleinkaliber').replace(/Luftdruck\s+Luftdruck/g, 'Luftdruck');
-    this.doc.text(`Beim Rundenwettkampf ${seasonName}`, this.pageWidth / 2, this.margin + 65, { align: 'center' });
+    this.doc.text(`Rundenwettkampf ${seasonName}`, this.pageWidth / 2, this.margin + 65, { align: 'center' });
     this.doc.setFontSize(14);
-    const verbText = options.category.includes('Bester') || options.category.includes('Beste') ? 'wurde' : 'errang';
-    this.doc.text(verbText, this.pageWidth / 2, this.margin + 80, { align: 'center' });
+    this.doc.text('errang', this.pageWidth / 2, this.margin + 80, { align: 'center' });
   }
 
   private drawRecipientInfo(options: CertificateOptions): void {
@@ -123,21 +122,38 @@ export class CertificateGenerator {
   }
 
   private drawTeamCertificate(options: CertificateOptions): void {
-    const cleanName = options.recipientName.replace(/\s*\([^)]*\)/g, '');
-    this.doc.text(cleanName, this.pageWidth / 2, this.margin + 95, { align: 'center' });
+    const LH = 15; // Zeilenabstand
+    const cleanName = options.recipientName.replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+    const maxWidth = this.pageWidth - 2 * this.margin - 20;
+    let fontSize = 18;
+    this.doc.setFontSize(fontSize);
+    this.doc.setFont('helvetica', 'bold');
+    while (this.doc.getTextWidth(cleanName) > maxWidth && fontSize > 10) {
+      fontSize -= 1;
+      this.doc.setFontSize(fontSize);
+    }
+    let y = this.margin + 95;
+    this.doc.text(cleanName, this.pageWidth / 2, y, { align: 'center' });
+    y += LH - 4;
     this.doc.setFontSize(11);
     this.doc.setFont('helvetica', 'normal');
-    let yPos = this.margin + 105;
-    
     options.teamMembersWithScores!.forEach(member => {
-      this.doc.text(`${member.name} (${member.totalScore} Ring)`, this.pageWidth / 2, yPos, { align: 'center' });
-      yPos += 8;
+      this.doc.text(`${member.name} (${member.totalScore} Ring)`, this.pageWidth / 2, y, { align: 'center' });
+      y += 9;
     });
-    
+    y += 4;
+    this.doc.setFontSize(14);
+    this.getCategoryText(options).forEach(line => {
+      this.doc.text(line, this.pageWidth / 2, y, { align: 'center' });
+      y += LH;
+    });
+    this.doc.text('mit', this.pageWidth / 2, y, { align: 'center' });
+    y += LH;
     this.doc.setFontSize(16);
     this.doc.setFont('helvetica', 'bold');
-    this.doc.text(`${options.score} Ring`, this.pageWidth / 2, yPos + 10, { align: 'center' });
-    this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, yPos + 25, { align: 'center' });
+    this.doc.text(`${options.score} Ring`, this.pageWidth / 2, y, { align: 'center' });
+    y += LH;
+    this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, y, { align: 'center' });
   }
 
   private drawIndividualCertificate(options: CertificateOptions): void {
@@ -149,59 +165,97 @@ export class CertificateGenerator {
     }
   }
 
-  private drawMultilineRecipient(options: CertificateOptions, lines: string[]): void {
-    this.doc.text(lines[0], this.pageWidth / 2, this.margin + 95, { align: 'center' });
+  private getCategoryText(options: CertificateOptions): string[] {
+    const cat = options.category;
+    if (/bester|beste/i.test(cat)) return []; // Titel bereits in drawSeasonInfo
+    const isLeagueClass = /liga|klasse|oberliga/i.test(cat);
+    if (!isLeagueClass) return ['in der Klasse', cat];
+    return [`in der ${cat}`];
+  }
+
+  private drawCategoryLines(options: CertificateOptions, yStart: number): number {
+    const lines = this.getCategoryText(options);
     this.doc.setFontSize(14);
     this.doc.setFont('helvetica', 'normal');
-    this.doc.text(lines[1], this.pageWidth / 2, this.margin + 110, { align: 'center' });
-    this.doc.text(`in der ${options.category}`, this.pageWidth / 2, this.margin + 125, { align: 'center' });
-    this.doc.text('mit', this.pageWidth / 2, this.margin + 140, { align: 'center' });
-    this.doc.setFontSize(16);
+    lines.forEach((line, i) => {
+      this.doc.text(line, this.pageWidth / 2, yStart + i * 14, { align: 'center' });
+    });
+    return yStart + lines.length * 14;
+  }
+
+  private drawMultilineRecipient(options: CertificateOptions, lines: string[]): void {
+    const LH = 15;
+    const isTitle = /bester|beste/i.test(options.category);
+    let y = this.margin + 95;
+    this.doc.setFontSize(18);
     this.doc.setFont('helvetica', 'bold');
-    this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 155, { align: 'center' });
-    this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, this.margin + 170, { align: 'center' });
+    this.doc.text(lines[0].trim(), this.pageWidth / 2, y, { align: 'center' });
+    y += LH;
+    const line2 = lines[1].replace(/\s+/g, ' ').trim();
+    const maxWidth = this.pageWidth - 2 * this.margin - 20;
+    let fs2 = 14;
+    this.doc.setFontSize(fs2);
+    this.doc.setFont('helvetica', 'normal');
+    while (this.doc.getTextWidth(line2) > maxWidth && fs2 > 8) { fs2 -= 0.5; this.doc.setFontSize(fs2); }
+    this.doc.text(line2, this.pageWidth / 2, y, { align: 'center' });
+    y += LH;
+    this.doc.setFontSize(14);
+    if (isTitle) {
+      const isLeagueClass = /liga|klasse|oberliga/i.test(options.category);
+      if (!isLeagueClass) {
+        this.doc.text('in der Klasse', this.pageWidth / 2, y, { align: 'center' }); y += LH;
+        this.doc.text(options.discipline, this.pageWidth / 2, y, { align: 'center' }); y += LH;
+      }
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('den Titel', this.pageWidth / 2, y, { align: 'center' }); y += LH;
+      this.doc.setFontSize(20);
+      this.doc.text(options.category, this.pageWidth / 2, y, { align: 'center' });
+    } else {
+      this.getCategoryText(options).forEach(line => {
+        this.doc.text(line, this.pageWidth / 2, y, { align: 'center' }); y += LH;
+      });
+      this.doc.text('mit', this.pageWidth / 2, y, { align: 'center' }); y += LH;
+      this.doc.setFontSize(16);
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text(`${options.score} Ring`, this.pageWidth / 2, y, { align: 'center' }); y += LH;
+      this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, y, { align: 'center' });
+    }
   }
 
   private drawSingleLineRecipient(options: CertificateOptions): void {
-    const match = options.recipientName.match(/^(.+?)\s*\((.+)\)$/);
-    if (match) {
-      this.doc.text(match[1].trim(), this.pageWidth / 2, this.margin + 95, { align: 'center' });
-      this.doc.setFontSize(14);
-      this.doc.setFont('helvetica', 'normal');
-      this.doc.text(match[2].trim(), this.pageWidth / 2, this.margin + 110, { align: 'center' });
-      this.doc.text(`in der ${options.category}`, this.pageWidth / 2, this.margin + 125, { align: 'center' });
-      this.doc.text('mit', this.pageWidth / 2, this.margin + 140, { align: 'center' });
-    } else {
-      this.doc.text(options.recipientName, this.pageWidth / 2, this.margin + 95, { align: 'center' });
-    }
-    
-    if (options.teamMembers && options.teamMembers.length > 0) {
-      this.drawTeamMembers(options);
-    } else {
-      this.drawScore(options);
-    }
-  }
-
-  private drawTeamMembers(options: CertificateOptions): void {
-    this.doc.setFontSize(11);
-    this.doc.setFont('helvetica', 'normal');
-    let yPos = this.margin + 105;
-    options.teamMembers!.forEach(member => {
-      this.doc.text(member, this.pageWidth / 2, yPos, { align: 'center' });
-      yPos += 8;
-    });
-    this.doc.setFontSize(16);
+    const LH = 15;
+    const isTitle = /bester|beste/i.test(options.category);
+    let y = this.margin + 95;
+    const maxWidth = this.pageWidth - 2 * this.margin - 20;
+    let fontSize = 18;
+    this.doc.setFontSize(fontSize);
     this.doc.setFont('helvetica', 'bold');
-    this.doc.text(`${options.score} Ring`, this.pageWidth / 2, yPos + 10, { align: 'center' });
-    this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, yPos + 25, { align: 'center' });
-  }
-
-  private drawScore(options: CertificateOptions): void {
-    if (!options.recipientName.includes('\n')) {
+    while (this.doc.getTextWidth(options.recipientName) > maxWidth && fontSize > 10) {
+      fontSize -= 1; this.doc.setFontSize(fontSize);
+    }
+    this.doc.text(options.recipientName, this.pageWidth / 2, y, { align: 'center' });
+    y += LH;
+    this.doc.setFontSize(14);
+    this.doc.setFont('helvetica', 'normal');
+    if (isTitle) {
+      const isLeagueClass = /liga|klasse|oberliga/i.test(options.category);
+      if (!isLeagueClass) {
+        this.doc.text('in der Klasse', this.pageWidth / 2, y, { align: 'center' }); y += LH;
+        this.doc.text(options.discipline, this.pageWidth / 2, y, { align: 'center' }); y += LH;
+      }
+      this.doc.setFont('helvetica', 'bold');
+      this.doc.text('den Titel', this.pageWidth / 2, y, { align: 'center' }); y += LH;
+      this.doc.setFontSize(20);
+      this.doc.text(options.category, this.pageWidth / 2, y, { align: 'center' });
+    } else {
+      this.getCategoryText(options).forEach(line => {
+        this.doc.text(line, this.pageWidth / 2, y, { align: 'center' }); y += LH;
+      });
+      this.doc.text('mit', this.pageWidth / 2, y, { align: 'center' }); y += LH;
       this.doc.setFontSize(16);
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text(`${options.score} Ring`, this.pageWidth / 2, this.margin + 155, { align: 'center' });
-      this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, this.margin + 170, { align: 'center' });
+      this.doc.text(`${options.score} Ring`, this.pageWidth / 2, y, { align: 'center' }); y += LH;
+      this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, y, { align: 'center' });
     }
   }
 

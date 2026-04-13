@@ -23,11 +23,13 @@ export default function CertificatesPage() {
   const [selectedSeason, setSelectedSeason] = useState<string>('');
   const [selectedLeague, setSelectedLeague] = useState<string>('');
   const [seasons, setSeasons] = useState<Array<{ id: string; name: string }>>([]);
-  const [leagues, setLeagues] = useState<Array<{ id: string; name: string; type: string }>>([]);
+  const [leagues, setLeagues] = useState<Array<{ id: string; name: string; type: string; shortName: string; discipline: string }>>([]);
   const [combinePdf, setCombinePdf] = useState<boolean>(true);
   const [numTopShooters, setNumTopShooters] = useState<number>(3);
   const [numTopTeams, setNumTopTeams] = useState<number>(2);
+  const [includeAkCertificates, setIncludeAkCertificates] = useState<boolean>(true);
   const [generateOverallBest, setGenerateOverallBest] = useState<boolean>(false);
+  const [selectedDiscipline, setSelectedDiscipline] = useState<string>('ALL');
   const [ceremonyDate, setCeremonyDate] = useState<string>('');
   
   const todayFormatted = format(new Date(), 'dd.MM.yyyy', { locale: de });
@@ -79,10 +81,18 @@ export default function CertificatesPage() {
         );
         
         const snapshot = await getDocs(leaguesQuery);
+        const typeToDiscipline: Record<string, string> = {
+          'LGA': 'Luftgewehr Auflage', 'LG': 'Luftgewehr Freihand',
+          'LP': 'Luftpistole', 'LPA': 'Luftpistole Auflage',
+          'KK': 'Kleinkaliber', 'KKA': 'Kleinkaliber Auflage',
+          'KKP': 'KK Pistole', 'SP': 'Sportpistole'
+        };
         const leaguesData = snapshot.docs.map(doc => ({
           id: doc.id,
           name: doc.data().name,
-          type: doc.data().type
+          type: doc.data().type,
+          shortName: doc.data().type,
+          discipline: typeToDiscipline[doc.data().type] || doc.data().shotSettings?.discipline || doc.data().name
         }));
         
         setLeagues(leaguesData);
@@ -106,328 +116,142 @@ export default function CertificatesPage() {
     fetchLeagues();
   }, [selectedSeason, toast]);
 
-  // Einfache Testfunktion für die Urkunden-Generierung
-  const generateTestCertificate = async () => {
-    setLoading(true);
-    
-    try {
-      // Beispiel für eine Einzelschützen-Urkunde
-      const certificateGenerator = new CertificateGenerator({ orientation: 'portrait' });
-      
-      certificateGenerator.generateCertificate({
-        season: '2025',
-        discipline: 'Luftgewehr Auflage',
-        category: 'Kreisoberliga',
-        recipientName: 'Christa Heise',
-        score: '1274',
-        rank: 1,
-        date: 'Einbeck, 18. Mai 2025'
-      });
-      
-      // PDF öffnen
-      certificateGenerator.open();
-      
-      // Beispiel für eine Mannschafts-Urkunde
-      setTimeout(() => {
-        const teamCertificateGenerator = new CertificateGenerator({ orientation: 'portrait' });
-        
-        teamCertificateGenerator.generateCertificate({
-          season: '2025',
-          discipline: 'Luftgewehr Auflage',
-          category: 'Kreisoberliga',
-          recipientName: 'SV Edemissen III',
-          teamMembersWithScores: [
-            { name: 'Andreas Stitz', totalScore: 1520, rounds: 5, averageScore: 304 },
-            { name: 'Bernd Klie', totalScore: 1480, rounds: 5, averageScore: 296 },
-            { name: 'Thomas Jaeger', totalScore: 1427, rounds: 5, averageScore: 285.4 }
-          ],
-          score: '4.427',
-          rank: 1,
-          date: 'Einbeck, 18. Mai 2025'
-        });
-        
-        // PDF öffnen
-        teamCertificateGenerator.open();
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      logError('Fehler beim Generieren der Test-Urkunden:', error);
-      setLoading(false);
-      toast({
-        title: 'Fehler',
-        description: 'Die Test-Urkunden konnten nicht generiert werden.',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  // Generiere Urkunden für eine Liga
   const generateLeagueCertificates = async () => {
     if (!selectedLeague || !selectedSeason) {
-      toast({
-        title: 'Fehler',
-        description: 'Bitte wählen Sie eine Liga und Saison aus.',
-        variant: 'destructive'
-      });
+      toast({ title: 'Fehler', description: 'Bitte wählen Sie eine Liga und Saison aus.', variant: 'destructive' });
       return;
     }
-    
     if (numTopShooters === 0 && numTopTeams === 0) {
-      toast({
-        title: 'Fehler',
-        description: 'Bitte wählen Sie mindestens eine Art von Urkunden aus.',
-        variant: 'destructive'
-      });
+      toast({ title: 'Fehler', description: 'Bitte wählen Sie mindestens eine Art von Urkunden aus.', variant: 'destructive' });
       return;
     }
-    
     setLoading(true);
-    
     try {
-      toast({
-        title: 'Info',
-        description: 'Die Urkunden werden generiert. Dies kann einen Moment dauern.',
-      });
-      
-      const currentDateFormatted = ceremonyDate ? 
-        format(new Date(ceremonyDate), 'dd. MMMM yyyy', { locale: de }) : 
+      toast({ title: 'Info', description: 'Die Urkunden werden generiert. Dies kann einen Moment dauern.' });
+      const currentDateFormatted = ceremonyDate ?
+        format(new Date(ceremonyDate), 'dd. MMMM yyyy', { locale: de }) :
         format(new Date(), 'dd. MMMM yyyy', { locale: de });
-      const certificates = [];
-      
-      // Liga-Informationen abrufen
-      const leagueRef = doc(db, 'rwk_leagues', selectedLeague);
-      const leagueSnap = await getDoc(leagueRef);
-      
-      if (!leagueSnap.exists()) {
-        throw new Error('Liga nicht gefunden');
-      }
-      const leagueData = leagueSnap.data();
-      const leagueName = leagueData.name;
-      
-      // Saison-Informationen abrufen
-      const seasonRef = doc(db, 'seasons', selectedSeason);
-      const seasonSnap = await getDoc(seasonRef);
-      
-      if (!seasonSnap.exists()) {
-        throw new Error('Saison nicht gefunden');
-      }
-      const seasonData = seasonSnap.data();
-      
-      // Top-Schützen abrufen und Urkunden generieren
-      if (numTopShooters > 0) {
-        const topShooters = await fetchTopShooters(selectedLeague, numTopShooters);
-        
-        for (const shooter of topShooters) {
-          // Lade Substitution-Informationen für diesen Schützen
-          const substitutionsQuery = query(
-            collection(db, 'team_substitutions'),
-            where('replacementShooterId', '==', shooter.shooterId),
-            where('competitionYear', '==', seasonData.competitionYear)
-          );
-          const substitutionsSnapshot = await getDocs(substitutionsQuery);
-          
-          let displayName = shooter.name;
-          if (!substitutionsSnapshot.empty) {
-            const substitution = substitutionsSnapshot.docs[0].data();
-            displayName = `${shooter.name}\nErsatz ab DG${substitution.fromRound} für ${substitution.originalShooterName}`;
+
+      // Ligen bestimmen: eine oder alle
+      const leagueIdsToProcess = selectedLeague === 'ALL'
+        ? leagues.map(l => l.id)
+        : [selectedLeague];
+
+      const allCertificates = [];
+
+      for (const leagueId of leagueIdsToProcess) {
+        const leagueRef = doc(db, 'rwk_leagues', leagueId);
+        const leagueSnap = await getDoc(leagueRef);
+        if (!leagueSnap.exists()) continue;
+        const leagueData = leagueSnap.data();
+        const leagueName = leagueData.name;
+        const seasonRef = doc(db, 'seasons', selectedSeason);
+        const seasonSnap = await getDoc(seasonRef);
+        if (!seasonSnap.exists()) continue;
+        const seasonData = seasonSnap.data();
+        const certificates = [];
+
+        if (numTopShooters > 0) {
+          const topShooters = await fetchTopShooters(leagueId, numTopShooters);
+          for (const shooter of topShooters) {
+            const substitutionsQuery = query(
+              collection(db, 'team_substitutions'),
+              where('replacementShooterId', '==', shooter.shooterId),
+              where('competitionYear', '==', seasonData.competitionYear)
+            );
+            const substitutionsSnapshot = await getDocs(substitutionsQuery);
+            let displayName = shooter.name;
+            if (!substitutionsSnapshot.empty) {
+              const substitution = substitutionsSnapshot.docs[0].data();
+              displayName = `${shooter.name}\nErsatz ab DG${substitution.fromRound} für ${substitution.originalShooterName}`;
+            }
+            certificates.push({
+              type: 'shooter',
+              season: shooter.season.replace('RWK ', ''),
+              discipline: shooter.discipline,
+              category: leagueName,
+              recipientName: shooter.teamName ? `${displayName}\n${shooter.teamName}` : displayName,
+              score: shooter.totalScore.toString(),
+              rank: shooter.rank,
+              date: `Einbeck, ${currentDateFormatted}`
+            });
           }
-          
-          certificates.push({
-            type: 'shooter',
-            season: shooter.season.replace('RWK ', ''), // "RWK" entfernen
-            discipline: shooter.discipline,
-            category: leagueName, // Verwende den tatsächlichen Liga-Namen
-            recipientName: displayName, // Verwende displayName mit Substitution-Info
-            teamName: shooter.teamName, // Mannschaftsname separat
-            clubName: shooter.clubName, // Verein separat speichern
-            score: shooter.totalScore.toString(),
-            rank: shooter.rank,
-            date: `Einbeck, ${currentDateFormatted}`
-          });
         }
-      }
-      
-      // Top-Teams abrufen und Urkunden generieren
-      if (numTopTeams > 0) {
-        const topTeams = await fetchTopTeams(selectedLeague, numTopTeams);
-        
-        for (const team of topTeams) {
-          // Lade Substitution-Informationen für alle Teammitglieder
-          const teamMembersWithSubstitutions = [];
-          if (team.teamMembersWithScores) {
+
+        if (numTopTeams > 0) {
+          const topTeams = await fetchTopTeams(leagueId, numTopTeams);
+          for (const team of topTeams) {
+            if (team.isOutOfCompetition && !includeAkCertificates) continue;
             const replacedShooters = new Set();
-            
-            // Erst alle Ersatzschützen identifizieren und die ersetzten Schützen sammeln
-            for (const member of team.teamMembersWithScores) {
-              const substitutionsQuery = query(
-                collection(db, 'team_substitutions'),
-                where('replacementShooterName', '==', member.name),
-                where('competitionYear', '==', seasonData.competitionYear)
-              );
-              const substitutionsSnapshot = await getDocs(substitutionsQuery);
-              
-              if (!substitutionsSnapshot.empty) {
-                const substitution = substitutionsSnapshot.docs[0].data();
-                replacedShooters.add(substitution.originalShooterName);
+            const teamMembersWithSubstitutions = [];
+            if (team.teamMembersWithScores) {
+              for (const member of team.teamMembersWithScores) {
+                const q = query(collection(db, 'team_substitutions'), where('replacementShooterName', '==', member.name), where('competitionYear', '==', seasonData.competitionYear));
+                const snap = await getDocs(q);
+                if (!snap.empty) replacedShooters.add(snap.docs[0].data().originalShooterName);
+              }
+              for (const member of team.teamMembersWithScores) {
+                if (replacedShooters.has(member.name)) continue;
+                const q = query(collection(db, 'team_substitutions'), where('replacementShooterName', '==', member.name), where('competitionYear', '==', seasonData.competitionYear));
+                const snap = await getDocs(q);
+                let displayName = member.name;
+                if (!snap.empty) {
+                  const sub = snap.docs[0].data();
+                  displayName = `${member.name} (Ersatz ab DG${sub.fromRound} für ${sub.originalShooterName})`;
+                }
+                teamMembersWithSubstitutions.push({ ...member, name: displayName });
               }
             }
-            
-            // Dann die Teammitglieder verarbeiten und ersetzte Schützen ausschließen
-            for (const member of team.teamMembersWithScores) {
-              // Ersetzte Schützen überspringen
-              if (replacedShooters.has(member.name)) {
-                continue;
-              }
-              
-              const substitutionsQuery = query(
-                collection(db, 'team_substitutions'),
-                where('replacementShooterName', '==', member.name),
-                where('competitionYear', '==', seasonData.competitionYear)
-              );
-              const substitutionsSnapshot = await getDocs(substitutionsQuery);
-              
-              let displayName = member.name;
-              if (!substitutionsSnapshot.empty) {
-                const substitution = substitutionsSnapshot.docs[0].data();
-                displayName = `${member.name} (Ersatz ab DG${substitution.fromRound} für ${substitution.originalShooterName})`;
-              }
-              
-              teamMembersWithSubstitutions.push({
-                ...member,
-                name: displayName
-              });
-            }
+            certificates.push({
+              type: 'team',
+              season: team.season.replace('RWK ', ''),
+              discipline: team.discipline,
+              category: team.isOutOfCompetition ? `${leagueName} (Außer Konkurrenz)` : leagueName,
+              recipientName: team.name,
+              teamMembersWithScores: teamMembersWithSubstitutions,
+              score: team.totalScore.toString(),
+              rank: team.rank,
+              date: `Einbeck, ${currentDateFormatted}`
+            });
           }
-          
-          certificates.push({
-            type: 'team',
-            season: team.season.replace('RWK ', ''), // "RWK" entfernen
-            discipline: team.discipline,
-            category: leagueName, // Verwende den tatsächlichen Liga-Namen
-            recipientName: team.name,
-            teamMembers: team.teamMembers,
-            teamMembersWithScores: teamMembersWithSubstitutions,
-            score: team.totalScore.toString(),
-            rank: team.rank,
-            date: `Einbeck, ${currentDateFormatted}`
-          });
         }
+        allCertificates.push(...certificates);
       }
-      
-      // Urkunden generieren
-      if (certificates.length === 0) {
-        toast({
-          title: 'Info',
-          description: 'Es wurden keine Daten für Urkunden gefunden.',
-        });
+
+      if (allCertificates.length === 0) {
+        toast({ title: 'Info', description: 'Es wurden keine Daten für Urkunden gefunden.' });
         setLoading(false);
         return;
       }
-      
+
+      const renderCert = (gen: CertificateGenerator, cert: any) => {
+        if (cert.type === 'team') {
+          const uniqueMembers = (cert.teamMembersWithScores || []).filter((m: any, i: number, arr: any[]) => arr.findIndex((x: any) => x.name === m.name) === i);
+          const correctScore = uniqueMembers.reduce((s: number, m: any) => s + m.totalScore, 0);
+          gen.generateCertificate({ season: cert.season, discipline: cert.discipline, category: cert.category, recipientName: cert.recipientName, teamMembersWithScores: uniqueMembers, score: correctScore.toString(), rank: cert.rank, date: cert.date });
+        } else {
+          gen.generateCertificate({ season: cert.season, discipline: cert.discipline, category: cert.category, recipientName: cert.recipientName, score: cert.score, rank: cert.rank, date: cert.date });
+        }
+      };
+
       if (combinePdf) {
-        // Alle Urkunden in einem PDF
-        const certificateGenerator = new CertificateGenerator({ orientation: 'portrait' });
-        
-        for (let i = 0; i < certificates.length; i++) {
-          const cert = certificates[i];
-          
-          if (i > 0) {
-            certificateGenerator.addPage();
-          }
-          
-          if (cert.type === 'team') {
-            // Duplikate aus teamMembersWithScores entfernen
-            const uniqueMembers = cert.teamMembersWithScores ? 
-              cert.teamMembersWithScores.filter((member, index, arr) => 
-                arr.findIndex(m => m.name === member.name) === index
-              ) : [];
-            
-            // Berechne das korrekte Gesamtergebnis
-            const correctScore = uniqueMembers.reduce((sum, member) => sum + member.totalScore, 0);
-            
-            certificateGenerator.generateCertificate({
-              season: cert.season,
-              discipline: cert.discipline,
-              category: cert.category,
-              recipientName: cert.recipientName,
-              teamMembersWithScores: uniqueMembers,
-              score: correctScore.toString(),
-              rank: cert.rank,
-              date: cert.date
-            });
-          } else {
-            certificateGenerator.generateCertificate({
-              season: cert.season,
-              discipline: cert.discipline,
-              category: cert.category,
-              recipientName: cert.teamName ? `${cert.recipientName} (${cert.teamName})` : cert.recipientName,
-              score: cert.score,
-              rank: cert.rank,
-              date: cert.date
-            });
-          }
-        }
-        
-        // PDF speichern
-        const leagueName = leagues.find(l => l.id === selectedLeague)?.name || 'Liga';
-        certificateGenerator.save(`Urkunden_${leagueName}.pdf`);
+        const gen = new CertificateGenerator({ orientation: 'portrait' });
+        allCertificates.forEach((cert, i) => { if (i > 0) gen.addPage(); renderCert(gen, cert); });
+        const label = selectedLeague === 'ALL' ? 'Alle_Ligen' : (leagues.find(l => l.id === selectedLeague)?.name || 'Liga');
+        gen.save(`Urkunden_${label}.pdf`);
       } else {
-        // Einzelne PDFs für jede Urkunde
-        for (const cert of certificates) {
-          const certificateGenerator = new CertificateGenerator({ orientation: 'portrait' });
-          
-          if (cert.type === 'team') {
-            // Duplikate aus teamMembersWithScores entfernen
-            const uniqueMembers = cert.teamMembersWithScores ? 
-              cert.teamMembersWithScores.filter((member, index, arr) => 
-                arr.findIndex(m => m.name === member.name) === index
-              ) : [];
-            
-            // Berechne das korrekte Gesamtergebnis
-            const correctScore = uniqueMembers.reduce((sum, member) => sum + member.totalScore, 0);
-            
-            certificateGenerator.generateCertificate({
-              season: cert.season,
-              discipline: cert.discipline,
-              category: cert.category,
-              recipientName: cert.recipientName,
-              teamMembersWithScores: uniqueMembers,
-              score: correctScore.toString(),
-              rank: cert.rank,
-              date: cert.date
-            });
-            
-            // PDF speichern
-            certificateGenerator.save(`Urkunde_${cert.discipline}_${cert.recipientName}_Platz${cert.rank}.pdf`);
-          } else {
-            certificateGenerator.generateCertificate({
-              season: cert.season,
-              discipline: cert.discipline,
-              category: cert.category,
-              recipientName: cert.teamName ? `${cert.recipientName} (${cert.teamName})` : cert.recipientName,
-              score: cert.score,
-              rank: cert.rank,
-              date: cert.date
-            });
-            
-            // PDF speichern
-            const shooterName = cert.recipientName.split('(')[0].trim();
-            certificateGenerator.save(`Urkunde_${cert.discipline}_${shooterName}_Platz${cert.rank}.pdf`);
-          }
-        }
+        allCertificates.forEach(cert => {
+          const gen = new CertificateGenerator({ orientation: 'portrait' });
+          renderCert(gen, cert);
+          const name = cert.recipientName.split('\n')[0].trim();
+          gen.save(`Urkunde_${cert.discipline}_${name}_Platz${cert.rank}.pdf`);
+        });
       }
-      
-      toast({
-        title: 'Erfolg',
-        description: `${certificates.length} Urkunden wurden erfolgreich generiert.`,
-      });
+
+      toast({ title: 'Erfolg', description: `${allCertificates.length} Urkunden wurden erfolgreich generiert.` });
     } catch (error) {
       logError('Fehler beim Generieren der Urkunden:', error);
-      toast({
-        title: 'Fehler',
-        description: 'Die Urkunden konnten nicht generiert werden.',
-        variant: 'destructive'
-      });
+      toast({ title: 'Fehler', description: 'Die Urkunden konnten nicht generiert werden.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -436,163 +260,87 @@ export default function CertificatesPage() {
   // Generiere Urkunden für Gesamtsieger
   const generateOverallCertificates = async () => {
     if (!selectedSeason) {
-      toast({
-        title: 'Fehler',
-        description: 'Bitte wählen Sie eine Saison aus.',
-        variant: 'destructive'
-      });
+      toast({ title: 'Fehler', description: 'Bitte wählen Sie eine Saison aus.', variant: 'destructive' });
       return;
     }
-    
     setLoading(true);
-    
     try {
-      toast({
-        title: 'Info',
-        description: 'Die Urkunden für Gesamtsieger werden generiert. Dies kann einen Moment dauern.',
-      });
-      
-      const currentDateFormatted = ceremonyDate ? 
-        format(new Date(ceremonyDate), 'dd. MMMM yyyy', { locale: de }) : 
+      toast({ title: 'Info', description: 'Die Urkunden für Gesamtsieger werden generiert. Dies kann einen Moment dauern.' });
+      const currentDateFormatted = ceremonyDate ?
+        format(new Date(ceremonyDate), 'dd. MMMM yyyy', { locale: de }) :
         format(new Date(), 'dd. MMMM yyyy', { locale: de });
-      const certificates = [];
-      
-      // Beste Schützen über alle Ligen hinweg abrufen
-      const bestShooters = await fetchBestOverallShooters(selectedSeason);
-      
-      // Saison-Informationen abrufen
       const seasonRef = doc(db, 'seasons', selectedSeason);
       const seasonSnap = await getDoc(seasonRef);
-      
-      if (!seasonSnap.exists()) {
-        throw new Error('Saison nicht gefunden');
+      if (!seasonSnap.exists()) throw new Error('Saison nicht gefunden');
+      const seasonName = seasonSnap.data().name.replace('RWK ', '');
+      const certificates = [];
+
+      let ligaGroups: { ids: string[]; discipline: string }[];
+      if (selectedDiscipline === 'ALL') {
+        const groupMap = new Map<string, { ids: string[]; discipline: string }>();
+        for (const l of leagues) {
+          if (!groupMap.has(l.shortName)) groupMap.set(l.shortName, { ids: [], discipline: l.discipline });
+          groupMap.get(l.shortName)!.ids.push(l.id);
+        }
+        ligaGroups = Array.from(groupMap.values());
+      } else {
+        const matchingLeagues = leagues.filter(l => l.shortName === selectedDiscipline);
+        const discipline = matchingLeagues[0]?.discipline || selectedDiscipline;
+        ligaGroups = [{ ids: matchingLeagues.map(l => l.id), discipline }];
       }
-      const seasonData = seasonSnap.data();
-      const seasonName = seasonData.name.replace('RWK ', ''); // "RWK" entfernen
-      
-      // Bester männlicher Schütze
-      if (bestShooters.bestMale) {
-        certificates.push({
-          type: 'shooter',
-          season: seasonName,
-          discipline: bestShooters.bestMale.discipline,
-          category: bestShooters.bestMale.category,
-          recipientName: bestShooters.bestMale.displayName || bestShooters.bestMale.name,
-          score: bestShooters.bestMale.totalScore.toString(),
-          rank: 1,
-          date: `Einbeck, ${currentDateFormatted}`
-        });
+
+      for (const group of ligaGroups) {
+        const bestShooters = await fetchBestOverallShooters(selectedSeason, undefined, group.ids);
+
+        const addOverallCert = (shooter: any, categoryLabel: string) => {
+          if (!shooter) return;
+          const name = shooter.teamName
+            ? `${shooter.name}\n${shooter.teamName.replace(/\s+/g, ' ').trim()}`
+            : shooter.name;
+          certificates.push({
+            season: seasonName,
+            discipline: group.discipline,
+            category: categoryLabel,
+            recipientName: name,
+            score: shooter.totalScore.toString(),
+            rank: 1,
+            date: `Einbeck, ${currentDateFormatted}`
+          });
+        };
+
+        addOverallCert(bestShooters.bestMale, 'Bester Schütze');
+        addOverallCert(bestShooters.bestFemale, 'Beste Schützin');
+        addOverallCert(bestShooters.bestPistol, 'Bester Sportpistolenschütze');
+        addOverallCert(bestShooters.bestKKPistol, 'Bester KK-Pistolenschütze');
       }
-      
-      // Beste weibliche Schützin
-      if (bestShooters.bestFemale) {
-        certificates.push({
-          type: 'shooter',
-          season: seasonName,
-          discipline: bestShooters.bestFemale.discipline,
-          category: bestShooters.bestFemale.category,
-          recipientName: bestShooters.bestFemale.displayName || bestShooters.bestFemale.name,
-          score: bestShooters.bestFemale.totalScore.toString(),
-          rank: 1,
-          date: `Einbeck, ${currentDateFormatted}`
-        });
-      }
-      
-      // Bester Sportpistolenschütze
-      if (bestShooters.bestPistol) {
-        certificates.push({
-          type: 'shooter',
-          season: seasonName,
-          discipline: bestShooters.bestPistol.discipline,
-          category: bestShooters.bestPistol.category,
-          recipientName: bestShooters.bestPistol.displayName || bestShooters.bestPistol.name,
-          score: bestShooters.bestPistol.totalScore.toString(),
-          rank: 1,
-          date: `Einbeck, ${currentDateFormatted}`
-        });
-      }
-      
-      // Bester KK Pistolenschütze
-      if (bestShooters.bestKKPistol) {
-        certificates.push({
-          type: 'shooter',
-          season: seasonName,
-          discipline: bestShooters.bestKKPistol.discipline,
-          category: bestShooters.bestKKPistol.category,
-          recipientName: bestShooters.bestKKPistol.displayName || bestShooters.bestKKPistol.name,
-          score: bestShooters.bestKKPistol.totalScore.toString(),
-          rank: 1,
-          date: `Einbeck, ${currentDateFormatted}`
-        });
-      }
-      
-      // Urkunden generieren
+
       if (certificates.length === 0) {
-        toast({
-          title: 'Info',
-          description: 'Es wurden keine Daten für Urkunden gefunden.',
-        });
+        toast({ title: 'Info', description: 'Es wurden keine Daten für Urkunden gefunden.' });
         setLoading(false);
         return;
       }
-      
+
       if (combinePdf) {
-        // Alle Urkunden in einem PDF
-        const certificateGenerator = new CertificateGenerator({ orientation: 'portrait' });
-        
-        for (let i = 0; i < certificates.length; i++) {
-          const cert = certificates[i];
-          
-          if (i > 0) {
-            certificateGenerator.addPage();
-          }
-          
-          certificateGenerator.generateCertificate({
-            season: cert.season,
-            discipline: cert.discipline,
-            category: cert.category,
-            recipientName: cert.recipientName,
-            score: cert.score,
-            rank: cert.rank,
-            date: cert.date
-          });
-        }
-        
-        // PDF speichern
+        const gen = new CertificateGenerator({ orientation: 'portrait' });
+        certificates.forEach((cert, i) => {
+          if (i > 0) gen.addPage();
+          gen.generateCertificate(cert);
+        });
         const seasonNameSafe = seasons.find(s => s.id === selectedSeason)?.name.replace('RWK ', '') || 'Saison';
-        certificateGenerator.save(`Urkunden_Gesamtsieger_${seasonNameSafe}.pdf`);
+        gen.save(`Urkunden_Gesamtsieger_${seasonNameSafe}.pdf`);
       } else {
-        // Einzelne PDFs für jede Urkunde
-        for (const cert of certificates) {
-          const certificateGenerator = new CertificateGenerator({ orientation: 'portrait' });
-          
-          certificateGenerator.generateCertificate({
-            season: cert.season,
-            discipline: cert.discipline,
-            category: cert.category,
-            recipientName: cert.recipientName,
-            score: cert.score,
-            rank: cert.rank,
-            date: cert.date
-          });
-          
-          // PDF speichern
-          const shooterName = cert.recipientName.split('(')[0].trim();
-          certificateGenerator.save(`Urkunde_Gesamtsieger_${cert.discipline}_${shooterName}.pdf`);
-        }
+        certificates.forEach(cert => {
+          const gen = new CertificateGenerator({ orientation: 'portrait' });
+          gen.generateCertificate(cert);
+          const shooterName = cert.recipientName.split('\n')[0].trim();
+          gen.save(`Urkunde_Gesamtsieger_${cert.discipline}_${shooterName}.pdf`);
+        });
       }
-      
-      toast({
-        title: 'Erfolg',
-        description: `${certificates.length} Urkunden wurden erfolgreich generiert.`,
-      });
+
+      toast({ title: 'Erfolg', description: `${certificates.length} Urkunden wurden erfolgreich generiert.` });
     } catch (error) {
       logError('Fehler beim Generieren der Urkunden für Gesamtsieger:', error);
-      toast({
-        title: 'Fehler',
-        description: 'Die Urkunden für Gesamtsieger konnten nicht generiert werden.',
-        variant: 'destructive'
-      });
+      toast({ title: 'Fehler', description: 'Die Urkunden konnten nicht generiert werden.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -614,34 +362,6 @@ export default function CertificatesPage() {
           </Button>
         </Link>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Test-Urkunden</CardTitle>
-          <CardDescription>
-            Generieren Sie Test-Urkunden, um das Layout zu überprüfen.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button 
-            onClick={generateTestCertificate} 
-            disabled={loading}
-            className="w-full"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Urkunden werden erstellt...
-              </>
-            ) : (
-              <>
-                <Award className="mr-2 h-4 w-4" />
-                Test-Urkunden generieren
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>
@@ -675,7 +395,10 @@ export default function CertificatesPage() {
                 disabled={leagues.length === 0 || loading}
                 placeholder="Liga auswählen"
                 className="w-full"
-                options={leagues.map(league => ({ value: league.id, label: league.name.replace(/[<>"'&]/g, '') }))}
+                options={[
+                  { value: 'ALL', label: '-- Alle Ligen --' },
+                  ...leagues.map(league => ({ value: league.id, label: league.name.replace(/[<>"'&]/g, '') }))
+                ]}
               />
             </div>
           </div>
@@ -725,6 +448,17 @@ export default function CertificatesPage() {
               </div>
             </div>
             
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="include-ak" 
+                checked={includeAkCertificates} 
+                onCheckedChange={(checked) => setIncludeAkCertificates(!!checked)}
+                disabled={loading}
+              />
+              <Label htmlFor="include-ak">
+                Außer-Konkurrenz (AK) Mannschaften einschließen
+              </Label>
+            </div>
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="combine-pdf" 
@@ -794,7 +528,33 @@ export default function CertificatesPage() {
               }))}
             />
           </div>
+          <div>
+            <Label>Disziplin (optional)</Label>
+            <NativeSelect
+              value={selectedDiscipline}
+              onValueChange={setSelectedDiscipline}
+              disabled={leagues.length === 0 || loading}
+              placeholder="Disziplin auswählen"
+              className="w-full"
+              options={[
+                { value: 'ALL', label: '-- Alle Disziplinen --' },
+                ...Array.from(new Map(leagues.map(l => [l.shortName, l])).values())
+                  .map(l => ({ value: l.shortName, label: l.discipline }))
+              ]}
+            />
+          </div>
 
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="include-ak-overall" 
+              checked={includeAkCertificates} 
+              onCheckedChange={(checked) => setIncludeAkCertificates(!!checked)}
+              disabled={loading}
+            />
+            <Label htmlFor="include-ak-overall">
+              Außer-Konkurrenz (AK) Schützen einschließen
+            </Label>
+          </div>
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="combine-pdf-overall" 

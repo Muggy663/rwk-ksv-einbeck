@@ -98,6 +98,9 @@ export default function AdminTeamsPage() {
   const [teamShooters, setTeamShooters] = useState<Map<string, Shooter[]>>(new Map());
   const [loadingShooters, setLoadingShooters] = useState<Set<string>>(new Set());
 
+  // Altersübersicht
+  const [ageStats, setAgeStats] = useState<{ u21: number; a21: number; a41: number; unknown: number; total: number; meldungen: number } | null>(null);
+
   const isAdmin = user?.email === 'admin@rwk-einbeck.de';
 
   // Lade Basisdaten
@@ -216,7 +219,30 @@ export default function AdminTeamsPage() {
       });
       
       setTeamsForDisplay(fetchedTeams);
-      
+
+      // Altersübersicht berechnen
+      const allShooterIds = [...new Set(fetchedTeams.flatMap(t => t.shooterIds || []))];
+      const totalMeldungen = fetchedTeams.reduce((sum, t) => sum + (t.shooterIds?.length || 0), 0);
+      if (allShooterIds.length > 0) {
+        const currentYear = new Date().getFullYear();
+        const chunks: string[][] = [];
+        for (let i = 0; i < allShooterIds.length; i += 10) chunks.push(allShooterIds.slice(i, i + 10));
+        const snapshots = await Promise.all(chunks.map(chunk =>
+          getDocs(query(collection(db, SHOOTERS_COLLECTION), where(documentId(), 'in', chunk)))
+        ));
+        const stats = { u21: 0, a21: 0, a41: 0, unknown: 0, total: allShooterIds.length, meldungen: totalMeldungen };
+        snapshots.forEach(snap => snap.docs.forEach(d => {
+          const by = d.data().birthYear;
+          if (!by) { stats.unknown++; return; }
+          const age = currentYear - by;
+          if (age <= 20) stats.u21++;
+          else if (age <= 40) stats.a21++;
+          else stats.a41++;
+        }));
+        setAgeStats(stats);
+      } else {
+        setAgeStats(null);
+      }
       if (fetchedTeams.length === 0) {
         toast({title: "Keine Mannschaften", description: "Für die gewählten Filter wurden keine Mannschaften gefunden."});
       }
@@ -245,9 +271,18 @@ export default function AdminTeamsPage() {
     setIsFormOpen(true);
   };
 
-  // Dialog data fetching
+  // Dialog data fetching - nur bei clubId oder Dialog-Öffnung neu laden, nicht bei jedem Feld
+  const [dialogClubId, setDialogClubId] = useState<string>('');
+  const [dialogCompYear, setDialogCompYear] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (isFormOpen && currentTeam?.clubId && currentTeam.clubId !== dialogClubId) {
+      setDialogClubId(currentTeam.clubId);
+    }
+  }, [isFormOpen, currentTeam?.clubId]);
+
   const fetchDialogData = useCallback(async () => {
-    const clubIdForDialog = currentTeam?.clubId;
+    const clubIdForDialog = dialogClubId;
     const seasonForDialog = allSeasons.find(s => s.id === (currentTeam?.seasonId || selectedSeasonId));
     const compYearForDialog = currentTeam?.competitionYear || seasonForDialog?.competitionYear;
 
@@ -299,13 +334,13 @@ export default function AdminTeamsPage() {
     } finally {
       setIsLoadingDialogData(false);
     }
-  }, [isFormOpen, currentTeam?.clubId, selectedSeasonId, currentTeam, allSeasons, allLeagues, toast]);
+  }, [isFormOpen, dialogClubId, selectedSeasonId, currentTeam?.seasonId, currentTeam?.competitionYear, allSeasons, allLeagues, toast]);
 
   useEffect(() => {
-    if (isFormOpen) {
+    if (isFormOpen && dialogClubId) {
       fetchDialogData();
     }
-  }, [isFormOpen, fetchDialogData]);
+  }, [isFormOpen, dialogClubId, fetchDialogData]);
 
   // Set initial shooter selection for edit mode
   useEffect(() => {
@@ -321,6 +356,20 @@ export default function AdminTeamsPage() {
         setPersistedShooterIdsForTeam([]);
     }
   }, [isFormOpen, formMode, currentTeam?.id, currentTeam?.shooterIds, isLoadingDialogData, allClubShootersForDialog]);
+
+  // Auto-generate team name when club or strength changes (new mode only)
+  useEffect(() => {
+    if (!isFormOpen || formMode !== 'new') return;
+    const clubName = (allClubsGlobal.find(c => c.id === currentTeam?.clubId)?.name || '').trim().replace(/\s+/g, ' ');
+    if (clubName && teamStrength) {
+      const generated = `${clubName} ${teamStrength}`;
+      setSuggestedTeamName(generated);
+      setCurrentTeam(prev => prev ? { ...prev, name: generated } : null);
+    } else if (clubName) {
+      setSuggestedTeamName(clubName);
+      setCurrentTeam(prev => prev ? { ...prev, name: clubName } : null);
+    }
+  }, [currentTeam?.clubId, teamStrength, formMode, isFormOpen, allClubsGlobal]);
 
   const handleFormInputChange = (
     field: keyof Pick<Team, 'name' | 'captainName' | 'captainEmail' | 'captainPhone'>, 
@@ -550,6 +599,19 @@ export default function AdminTeamsPage() {
         </Button>
       </div>
 
+      {/* Altersübersicht */}
+      {ageStats && (
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-md border bg-card text-sm">
+          <span className="font-medium text-muted-foreground">Altersübersicht ({ageStats.total} Schützen, {ageStats.meldungen} Meldungen):</span>
+          <span className="flex items-center gap-1.5 bg-green-100 text-green-800 px-2.5 py-1 rounded-full font-medium">0–20 Jahre: {ageStats.u21}</span>
+          <span className="flex items-center gap-1.5 bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full font-medium">21–40 Jahre: {ageStats.a21}</span>
+          <span className="flex items-center gap-1.5 bg-orange-100 text-orange-800 px-2.5 py-1 rounded-full font-medium">Ab 41 Jahre: {ageStats.a41}</span>
+          {ageStats.unknown > 0 && (
+            <span className="flex items-center gap-1.5 bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">Unbekannt: {ageStats.unknown}</span>
+          )}
+        </div>
+      )}
+
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle>
@@ -755,6 +817,7 @@ export default function AdminTeamsPage() {
               setTeamStrength("");
               setSuggestedTeamName("");
               setShooterSearchQuery("");
+              setDialogClubId('');
             } 
             setIsFormOpen(open); 
           }}
@@ -903,7 +966,8 @@ export default function AdminTeamsPage() {
                             { value: "II", label: "II (Zweite Mannschaft)" },
                             { value: "III", label: "III (Dritte Mannschaft)" },
                             { value: "IV", label: "IV (Vierte Mannschaft)" },
-                            { value: "V", label: "V (Fünfte Mannschaft)" }
+                            { value: "V", label: "V (Fünfte Mannschaft)" },
+                            { value: "Einzel", label: "Einzel" }
                           ]}
                         />
                     </div>
