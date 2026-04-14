@@ -25,7 +25,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM, Schießnachweis und Vereinssoftware.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: 15. Februar 2026 - Version 2.4.0 - Next.js 16 Migration & Glassmorphism Design
+            Stand: heute - Version 2.4.6 - Next.js 16 + Glassmorphism Design
           </p>
         </div>
       </div>
@@ -220,7 +220,7 @@ export default function HandbuchPage() {
                 <p>Nach dem Login mit den vom Rundenwettkampfleiter erhaltenen Zugangsdaten kommt der Benutzer in den "Vereinsbereich". Hier kann er nur die Daten seines eigenen Vereins sehen und bearbeiten. Was genau er tun darf, hängt von seiner Rolle ab - entweder als "Vereinsvertreter" oder als "Mannschaftsführer".</p>
                 
                 <div className="mt-4 bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-100 dark:border-blue-800">
-                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🏢 Multi-Verein-System (Neu in Version 0.9.9)</h4>
+                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🏢 Multi-Verein-System</h4>
                   <p className="text-blue-700 dark:text-blue-300">Falls Sie mehreren Vereinen zugeordnet sind, erscheint nach dem Login eine <strong>Club-Auswahl-Seite</strong>. Wählen Sie den gewünschten Verein aus.</p>
                   <p className="text-blue-700 dark:text-blue-300 mt-1">In der Navigation finden Sie einen <strong>Club-Switcher</strong>, mit dem Sie jederzeit zwischen Ihren Vereinen wechseln können. Ihre Auswahl wird gespeichert.</p>
                 </div>
@@ -275,8 +275,9 @@ export default function HandbuchPage() {
                     <li><strong>Mannschaftsauswahl:</strong> Alle Mannschaften der ausgewählten Liga (eigene und gegnerische), damit Ergebnisse für Begegnungen eingetragen werden können.</li>
                     <li><strong>Schützenauswahl:</strong> Schützen der ausgewählten Mannschaft.</li>
                     <li><strong>Voice Input:</strong> Sprechen Sie "185 Ringe" statt zu tippen - Deutsche Zahlenerkennung für schnellere Eingabe.</li>
-                    <li><strong>Google Gemini AI OCR (NEU v1.9.2):</strong> Intelligenteste Handzettel-Erkennung mit KI-Power - fotografieren oder aus Galerie wählen.</li>
-                    <li><strong>Dual-Input-System (NEU v1.9.2):</strong> Kamera für neue Fotos + Galerie für WhatsApp-Bilder - maximale Flexibilität auf Mobile/PWA.</li>
+                    <li><strong>Google Gemini AI OCR:</strong> Intelligenteste Handzettel-Erkennung mit KI-Power - fotografieren oder aus Galerie wählen.</li>
+                    <li><strong>Dual-Input-System:</strong> Kamera für neue Fotos + Galerie für WhatsApp-Bilder - maximale Flexibilität auf Mobile/PWA.</li>
+                    <li><strong>Plausibilitätsprüfung:</strong> Live-Validierung der Ringzahlen beim Eingeben - ungewöhnliche Werte werden sofort markiert.</li>
                     <li><strong>Handzettel-Upload:</strong> Fotos werden automatisch per E-Mail an den RWK-Leiter gesendet. Kein manuelles Versenden mehr nötig!</li>
                     <li>Die Ergebnisse werden zunächst in einer Liste gesammelt, bevor Sie sie endgültig speichern. Bereits erfasste Schützen werden aus der Auswahlliste entfernt. Das System prüft automatisch, ob die eingegebenen Ringzahlen gültig sind. Es wird auch gespeichert, wer das Ergebnis eingetragen hat.</li>
                 </ul>
@@ -436,27 +437,24 @@ export default function HandbuchPage() {
               <p>Die RWK Einbeck App ist jetzt auch als native Android-App verfügbar für bessere Performance und einfachere Nutzung.</p>
               
               <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800 mb-4">
-                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">📱 Neue Android-App (Version 0.9.4.1)</h4>
-                <p className="text-green-700 dark:text-green-300">Die native Android-App bietet alle Funktionen der Web-App mit verbesserter Performance und einfacherer Installation.</p>
-                <p className="text-green-700 dark:text-green-300 mt-1"><strong>Neu in Version 0.9.4.1:</strong> Mobile-Optimierung & Stabilität mit Update-Benachrichtigung</p>
+                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">📱 Android-App (Version 0.9.4.1) - jetzt im Google Play Store!</h4>
+                <p className="text-green-700 dark:text-green-300">Die native Android-App bietet alle Funktionen der Web-App mit verbesserter Performance. Ab sofort im <strong>Google Play Store Beta</strong> verfügbar.</p>
               </div>
               
               <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li><strong>Download:</strong> APK-Datei über die App-Seite oder Dokumente-Bereich herunterladen</li>
-                <li><strong>Installation:</strong> 3 einfache Schritte - APK herunterladen, "Trotzdem installieren" bei "Unbekannte App", fertig!</li>
+                <li><strong>Play Store:</strong> Suchen Sie nach "RWK Einbeck" im Google Play Store (Beta-Test)</li>
+                <li><strong>Alternativ:</strong> APK-Datei über die App-Seite oder Dokumente-Bereich herunterladen</li>
                 <li><strong>Kompatibilität:</strong> Android 5.0+ (unterstützt 95% aller Android-Geräte)</li>
-                <li><strong>Updates:</strong> 90% der Updates erfolgen automatisch über die Web-App, nur bei neuen Features ist eine neue APK nötig</li>
-                <li><strong>Warum "Unbekannte Quelle"?</strong> Normal bei Apps außerhalb Play Store - die RWK App ist sicher und offiziell</li>
+                <li><strong>Updates:</strong> Erfolgen automatisch über den Play Store oder die Web-App</li>
                 <li><strong>iPhone-Nutzer:</strong> Können die Web-App im Safari-Browser nutzen oder als PWA zum Home-Bildschirm hinzufügen</li>
-                <li><strong>Versionierungsstrategie:</strong> Web-App (0.9.9.x) und Native App (0.9.x.y) haben unterschiedliche Versionsnummern</li>
               </ul>
               
               <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
-                <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Installation Schritt-für-Schritt:</h4>
+                <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Play Store Installation:</h4>
                 <ol className="list-decimal pl-5 space-y-1 text-blue-700 dark:text-blue-300">
-                  <li>APK-Datei mit Chrome-Browser herunterladen</li>
-                  <li>Bei Warnung "Unbekannte App" auf "Trotzdem installieren" tippen</li>
-                  <li>RWK-App-Icon antippen und loslegen!</li>
+                  <li>Google Play Store öffnen</li>
+                  <li>Nach "RWK Einbeck" suchen</li>
+                  <li>Installieren und loslegen!</li>
                 </ol>
               </div>
             </CardContent>
@@ -487,7 +485,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Kreismeisterschaften - Benutzerhandbuch</CardTitle>
-              <CardDescription>Anleitung zur Nutzung des Kreismeisterschafts-Moduls - Version 2.3.6a_w</CardDescription>
+              <CardDescription>Anleitung zur Nutzung des Kreismeisterschafts-Moduls - Version 2.4.6</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
@@ -563,7 +561,7 @@ export default function HandbuchPage() {
               <CardHeader><CardTitle className="text-xl text-accent">Intelligente Startlisten-Generierung mit KI</CardTitle></CardHeader>
               <CardContent>
                 <div className="bg-green-50 dark:bg-green-950/50 p-4 rounded-md border border-green-200 dark:border-green-800 mb-4">
-                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">🎯 Startlisten V2 (Neu in Version 2.3.6a_w)</h4>
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">🎯 Startlisten V2</h4>
                   <p className="text-green-700 dark:text-green-300">Das neue Startlisten-System generiert automatisch optimierte Startlisten mit KI-Unterstützung und berücksichtigt alle Besonderheiten des Schießsports. Manuell hinzugefügte Starter bekommen jetzt automatisch die korrekte Altersklasse.</p>
                 </div>
                 
@@ -602,7 +600,7 @@ export default function HandbuchPage() {
               <CardHeader><CardTitle className="text-xl text-accent">DSB-konforme Altersklassen-Berechnung</CardTitle></CardHeader>
               <CardContent>
                 <div className="bg-green-50 dark:bg-green-950/50 p-4 rounded-md border border-green-200 dark:border-green-800 mb-4">
-                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">✨ Altersklassen-Fix (Version 2.3.6a_w)</h4>
+                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">✨ Automatische Altersklassen-Berechnung</h4>
                   <p className="text-green-700 dark:text-green-300">Manuell hinzugefügte Starter in Startlisten bekommen jetzt automatisch die korrekte Altersklasse basierend auf ihren Schützen-Daten und der DSB-Sportordnung.</p>
                 </div>
                 
@@ -754,7 +752,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Schießnachweis - Benutzerhandbuch</CardTitle>
-              <CardDescription>Das digitale Schießtagebuch für Sportschützen - Version 1.0</CardDescription>
+              <CardDescription>Das digitale Schießtagebuch für Sportschützen - Version 2.4.6</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
@@ -920,7 +918,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Social Training Platform - Benutzerhandbuch</CardTitle>
-              <CardDescription>Version 2.0.0.2 - Die erste Community-Plattform für Sportschützen</CardDescription>
+              <CardDescription>Version 2.4.6 - Die erste Community-Plattform für Sportschützen</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
