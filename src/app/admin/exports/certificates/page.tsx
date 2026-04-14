@@ -209,7 +209,7 @@ export default function CertificatesPage() {
               category: team.isOutOfCompetition ? `${leagueName} (Außer Konkurrenz)` : leagueName,
               recipientName: team.name,
               teamMembersWithScores: teamMembersWithSubstitutions,
-              score: team.totalScore.toString(),
+              score: (team.displayScore || team.totalScore).toString(),
               rank: team.rank,
               date: `Einbeck, ${currentDateFormatted}`
             });
@@ -227,8 +227,7 @@ export default function CertificatesPage() {
       const renderCert = (gen: CertificateGenerator, cert: any) => {
         if (cert.type === 'team') {
           const uniqueMembers = (cert.teamMembersWithScores || []).filter((m: any, i: number, arr: any[]) => arr.findIndex((x: any) => x.name === m.name) === i);
-          const correctScore = uniqueMembers.reduce((s: number, m: any) => s + m.totalScore, 0);
-          gen.generateCertificate({ season: cert.season, discipline: cert.discipline, category: cert.category, recipientName: cert.recipientName, teamMembersWithScores: uniqueMembers, score: correctScore.toString(), rank: cert.rank, date: cert.date });
+          gen.generateCertificate({ season: cert.season, discipline: cert.discipline, category: cert.category, recipientName: cert.recipientName, teamMembersWithScores: uniqueMembers, score: cert.score, rank: cert.rank, date: cert.date });
         } else {
           gen.generateCertificate({ season: cert.season, discipline: cert.discipline, category: cert.category, recipientName: cert.recipientName, score: cert.score, rank: cert.rank, date: cert.date });
         }

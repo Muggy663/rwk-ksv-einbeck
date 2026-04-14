@@ -200,8 +200,8 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
     }
     const seasonData = seasonSnap.data();
     
-    // Anzahl der Durchgänge bestimmen
-    const numRounds = leagueData.type.startsWith('L') ? 4 : 5; // Luftdruck: 4, KK: 5
+    // Anzahl der Durchgänge bestimmen - immer 5
+    const numRounds = 5;
     
     // Teams für die Liga abrufen
     const teamsQuery = query(
@@ -261,17 +261,36 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
         roundResults[`dg${i}`] = null;
       }
       
-      // Ergebnisse nach Durchgang gruppieren (nur eindeutige Scores)
+      // Substitutions laden um ersetzte Schützen-IDs zu kennen
+      const subsSnap = await getDocs(query(
+        collection(db, 'team_substitutions'),
+        where('competitionYear', '==', seasonData.competitionYear)
+      ));
+      const replacedShooterIds = new Set<string>();
+      subsSnap.docs.forEach(d => {
+        const sub = d.data();
+        if (sub.originalShooterId) replacedShooterIds.add(sub.originalShooterId);
+      });
+
+      // Ergebnisse nach Durchgang gruppieren - ersetzte Schützen ausschließen
+      const scoresByRound = new Map<number, number[]>();
       Array.from(teamDuplicateMap.values()).forEach(scoreData => {
         const durchgang = scoreData.durchgang;
-        
-        if (durchgang >= 1 && durchgang <= numRounds) {
-          if (!roundResults[`dg${durchgang}`]) {
-            roundResults[`dg${durchgang}`] = 0;
-          }
-          
-          roundResults[`dg${durchgang}`] += scoreData.totalRinge || 0;
+        if (replacedShooterIds.has(scoreData.shooterId)) return;
+        if (durchgang >= 1 && durchgang <= numRounds && scoreData.totalRinge) {
+          if (!scoresByRound.has(durchgang)) scoresByRound.set(durchgang, []);
+          scoresByRound.get(durchgang)!.push(scoreData.totalRinge);
         }
+      });
+
+      // Mannschaftsstärke immer 3 (RWK-Regel)
+      const teamSize = 3;
+
+      scoresByRound.forEach((scores, durchgang) => {
+        // Absteigend sortieren und nur die besten [teamSize] nehmen
+        scores.sort((a, b) => b - a);
+        const top = scores.slice(0, teamSize);
+        roundResults[`dg${durchgang}`] = top.reduce((s, v) => s + v, 0);
       });
       
       // Gesamtergebnis und Durchschnitt berechnen
@@ -326,17 +345,15 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
         });
       });
       
-      // Korrigiere totalScore basierend auf den tatsächlichen Teammitgliedern
-      const correctedTotalScore = teamMembers.reduce((sum, member) => sum + member.totalScore, 0);
-      
       const entry = {
         id: teamDoc.id,
         name: (teamData.name || '').replace(/\s+/g, ' ').trim(),
         clubName: teamData.clubName || '',
         outOfCompetition: !!teamData.outOfCompetition,
         roundResults,
-        totalScore: correctedTotalScore,
-        averageScore: teamMembers.length > 0 ? correctedTotalScore / teamMembers.length : 0,
+        totalScore,
+        displayScore: totalScore,
+        averageScore: numScoredRounds > 0 ? totalScore / numScoredRounds : 0,
         teamMembers: teamMembers.map(member => member.name),
         teamMembersWithScores: teamMembers
       };

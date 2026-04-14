@@ -293,19 +293,19 @@ export default function HomePage() {
                 {upcomingEvents.map((event, index) => {
                   const isToday = new Date(event.date).toDateString() === new Date().toDateString();
                   return (
-                    <div key={event.id || index} className={`flex flex-col space-y-1 pb-3 border-b last:border-0 transition-colors rounded-md p-2 ${isToday ? 'glass-glow bg-primary/10' : ''}`}>
+                    <div key={event.id || index} className={`flex flex-col space-y-1 pb-3 border-b last:border-0 rounded-md p-2 ${isToday ? 'border border-primary/50' : 'transition-colors'}`} style={isToday ? { background: 'rgba(30,30,40,0.95)' } : {}}>
                       <div className="flex justify-between items-start">
-                        <span className={`font-medium ${isToday ? 'text-primary font-bold' : ''}`}>
+                        <span className="font-medium" style={isToday ? { color: '#4ade80', fontWeight: 700 } : {}}>
                           {isToday && '🔥 '}{event.title}
                         </span>
                         <Badge variant={getBadgeVariant(event.type, event.isKreisverband)}>
                           {formatEventType(event.type)}
                         </Badge>
                       </div>
-                      <div className={`text-sm ${isToday ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                      <div className={`text-sm ${!isToday ? 'text-muted-foreground' : ''}`} style={isToday ? { color: '#4ade80', fontWeight: 600 } : {}}>
                         {isToday ? 'HEUTE' : format(new Date(event.date), 'EEEE, d. MMMM', { locale: de })}
                       </div>
-                      <div className="text-sm">
+                      <div className="text-sm" style={isToday ? { color: '#e2e8f0' } : {}}>
                         {event.time} Uhr, {event.location}
                       </div>
                       {event.description && (
