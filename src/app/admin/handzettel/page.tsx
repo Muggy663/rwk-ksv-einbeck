@@ -412,7 +412,7 @@ export default function HandzettelPage() {
                                       </td>
                                     )}
                                     <td className="border p-0.5 text-xs">
-                                      {team.shooters?.[shooterIndex]?.name || `Schütze ${shooterIndex + 1}`}
+                                      {(() => { const s = team.shooters?.[shooterIndex]; if (!s) return `Schütze ${shooterIndex + 1}`; return (s.firstName && s.lastName) ? `${s.firstName} ${s.lastName}` : s.name || `Schütze ${shooterIndex + 1}`; })()}
                                     </td>
                                     <td className="border p-0.5 h-6"></td>
                                     <td className="border p-0.5 h-6"></td>
@@ -674,7 +674,15 @@ export default function HandzettelPage() {
                     <h2 className="text-md">Gesamtergebnisliste - {availableLeagues.find(l => l.id === selectedLeagueId)?.name || 'Liga'}</h2>
                   </div>
                   <div className="text-right text-xs">
-                    <div className="text-red-600 font-bold">Abgabetermin: 15. August 2025</div>
+                    <div className="text-red-600 font-bold">Abgabetermin: {(() => {
+                      const season = seasons.find(s => s.id === selectedSeasonId);
+                      if (!season) return '';
+                      const yearMatch = season.name.match(/(\d{4})/);
+                      const year = yearMatch ? yearMatch[1] : '';
+                      if (season.name.toLowerCase().includes('kleinkaliber')) return `15. August ${year}`;
+                      if (season.name.toLowerCase().includes('luftdruck')) return `1. März ${year}`;
+                      return '';
+                    })()}</div>
                   </div>
                 </div>
 
@@ -694,7 +702,7 @@ export default function HandzettelPage() {
                         <th className="border p-1 text-center" colSpan={2} style={{height: '20px'}}>Platz</th>
                       </tr>
                       <tr className="bg-yellow-100">
-                        <td className="border p-2 text-center text-xs" colSpan={2} style={{height: '60px'}}></td>
+                        <td className="border p-2 text-center text-xs font-bold" colSpan={2} style={{height: '60px'}}>{teams[0]?.name || ''}</td>
                         <td className="border p-2 text-center text-xs" colSpan={2} style={{height: '60px'}}></td>
                         <td className="border p-2 text-center text-xs" colSpan={2} style={{height: '60px'}}></td>
                         <td className="border p-2 text-center text-xs" colSpan={2} style={{height: '60px'}}></td>
@@ -749,7 +757,7 @@ export default function HandzettelPage() {
                                       </td>
                                     )}
                                     <td className="border p-1 text-xs" style={{whiteSpace: 'nowrap'}}>
-                                      {team.shooters?.[shooterIndex]?.name || `Schütze ${shooterIndex + 1}`}
+                                      {(() => { const s = team.shooters?.[shooterIndex]; if (!s) return `Schütze ${shooterIndex + 1}`; return (s.firstName && s.lastName) ? `${s.firstName} ${s.lastName}` : s.name || `Schütze ${shooterIndex + 1}`; })()}
                                     </td>
                                     <td className="border p-1"></td>
                                     <td className="border p-1"></td>

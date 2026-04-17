@@ -264,6 +264,19 @@ export default function GesamtergebnislisteGeneratorPage() {
                   <h1 className="text-lg font-bold">Kreisschützenverband Einbeck</h1>
                   <h2 className="text-md">{selectedSeasonId ? seasons.find(s => s.id === selectedSeasonId)?.name || 'Rundenwettkampf' : 'Rundenwettkampf'} - {availableLeagues.find(l => l.id === selectedLeagueId)?.name || 'Liga'}</h2>
                 </div>
+                <div className="text-right text-xs">
+                  {(() => {
+                    const season = seasons.find(s => s.id === selectedSeasonId);
+                    if (!season) return null;
+                    const yearMatch = season.name.match(/(\d{4})/);
+                    const year = yearMatch ? yearMatch[1] : '';
+                    let abgabe = '';
+                    if (season.name.toLowerCase().includes('kleinkaliber')) abgabe = `15. August ${year}`;
+                    else if (season.name.toLowerCase().includes('luftdruck')) abgabe = `1. März ${year}`;
+                    if (!abgabe) return null;
+                    return <div className="text-red-600 font-bold">Abgabetermin: {abgabe}</div>;
+                  })()}
+                </div>
               </div>
 
               {selectedLeagueId ? (
@@ -334,7 +347,7 @@ export default function GesamtergebnislisteGeneratorPage() {
                                   </td>
                                 )}
                                 <td className="border p-1 text-xs">
-                                  {team.shooters?.[shooterIndex]?.name || `Schütze ${shooterIndex + 1}`}
+                                  {(() => { const s = team.shooters?.[shooterIndex]; if (!s) return `Schütze ${shooterIndex + 1}`; return (s.firstName && s.lastName) ? `${s.firstName} ${s.lastName}` : s.name || `Schütze ${shooterIndex + 1}`; })()}
                                 </td>
                                 <td className="border p-1"></td>
                                 <td className="border p-1"></td>
