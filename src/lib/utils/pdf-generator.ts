@@ -1,3 +1,4 @@
+﻿import { logError } from '@/lib/utils/secure-logger';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
@@ -52,7 +53,7 @@ export class PdfGenerator {
       pageSize: 'a4',
       author: 'RWK Einbeck App',
       subject: 'Rundenwettkampf Einbeck',
-      keywords: 'rwk,einbeck,schützen',
+      keywords: 'rwk,einbeck,schÃ¼tzen',
       ...sanitizedOptions
     };
 
@@ -78,7 +79,7 @@ export class PdfGenerator {
   }
 
   /**
-   * Fügt eine Kopfzeile mit Titel und optionalem Logo hinzu
+   * FÃ¼gt eine Kopfzeile mit Titel und optionalem Logo hinzu
    */
   addHeader(): void {
     const headerHeight = 25;
@@ -96,8 +97,8 @@ export class PdfGenerator {
         25
       );
     } catch (error) {
-      logError('Fehler beim Hinzufügen des Logos:', error);
-      // Fehler beim Hinzufügen des Logos ignorieren
+      logError('Fehler beim HinzufÃ¼gen des Logos:', error);
+      // Fehler beim HinzufÃ¼gen des Logos ignorieren
     }
 
     // Titel
@@ -132,7 +133,7 @@ export class PdfGenerator {
   }
 
   /**
-   * Fügt eine Fußzeile mit Seitenzahl und Datum hinzu
+   * FÃ¼gt eine FuÃŸzeile mit Seitenzahl und Datum hinzu
    */
   addFooter(): void {
     const totalPages = this.doc.internal.getNumberOfPages();
@@ -153,7 +154,7 @@ export class PdfGenerator {
         this.pageHeight - 10
       );
       
-      // Benutzerdefinierter Fußzeilentext
+      // Benutzerdefinierter FuÃŸzeilentext
       if (this.options.footerText) {
         this.doc.text(
           this.options.footerText,
@@ -166,7 +167,7 @@ export class PdfGenerator {
   }
 
   /**
-   * Fügt eine Tabelle hinzu
+   * FÃ¼gt eine Tabelle hinzu
    */
   addTable(tableData: TableData, startY?: number): void {
     const tableStartY = startY || this.margin + 30;
@@ -205,9 +206,9 @@ export class PdfGenerator {
           }
           return styles;
         }, {} as Record<number, { cellWidth: number }>),
-        // Verbesserte Fehlerbehandlung für Umlaute
+        // Verbesserte Fehlerbehandlung fÃ¼r Umlaute
         didDrawCell: (data) => {
-          // Nichts tun, aber die Funktion ist notwendig für die Fehlerbehandlung
+          // Nichts tun, aber die Funktion ist notwendig fÃ¼r die Fehlerbehandlung
         }
       });
     } catch (error) {
@@ -220,7 +221,7 @@ export class PdfGenerator {
   }
 
   /**
-   * Fügt einen Textabschnitt hinzu
+   * FÃ¼gt einen Textabschnitt hinzu
    */
   addText(text: string, x: number, y: number, options?: { fontSize?: number; fontStyle?: string; align?: string }): void {
     const fontSize = options?.fontSize || 10;
@@ -236,12 +237,12 @@ export class PdfGenerator {
     } catch (error) {
       secureLogger.logError(error, 'PDF text addition failed');
       // Fallback: Text ohne spezielle Formatierung
-      this.doc.text('Fehler beim Hinzufügen von Text', x, y);
+      this.doc.text('Fehler beim HinzufÃ¼gen von Text', x, y);
     }
   }
 
   /**
-   * Generiert eine Ergebnisliste für eine Liga
+   * Generiert eine Ergebnisliste fÃ¼r eine Liga
    */
   generateLeagueResults(leagueData: {
     leagueName: string;
@@ -256,7 +257,7 @@ export class PdfGenerator {
     numRounds: number;
   }): void {
     try {
-      // Header hinzufügen
+      // Header hinzufÃ¼gen
       this.addHeader();
       
       // Ligainformationen
@@ -272,12 +273,12 @@ export class PdfGenerator {
         { header: 'Mannschaft', dataKey: 'name', width: 60 }
       ];
       
-      // Durchgänge als Spalten hinzufügen
+      // DurchgÃ¤nge als Spalten hinzufÃ¼gen
       for (let i = 1; i <= (leagueData.numRounds || 0); i++) {
         columns.push({ header: `DG ${i}`, dataKey: `dg${i}`, width: 20 });
       }
       
-      // Gesamt und Schnitt hinzufügen
+      // Gesamt und Schnitt hinzufÃ¼gen
       columns.push({ header: 'Gesamt', dataKey: 'totalScore', width: 25 });
       columns.push({ header: 'Schnitt', dataKey: 'averageScore', width: 25 });
       
@@ -290,7 +291,7 @@ export class PdfGenerator {
           averageScore: team.averageScore !== null ? team.averageScore.toFixed(2) : '-'
         };
         
-        // Durchgangsergebnisse hinzufügen
+        // Durchgangsergebnisse hinzufÃ¼gen
         for (let i = 1; i <= (leagueData.numRounds || 0); i++) {
           const key = `dg${i}`;
           rowData[key] = team.roundResults && team.roundResults[key] !== null ? team.roundResults[key] : '-';
@@ -299,14 +300,14 @@ export class PdfGenerator {
         return rowData;
       });
       
-      // Tabelle hinzufügen
+      // Tabelle hinzufÃ¼gen
       this.addTable({
         title: 'Mannschaftsergebnisse',
         columns,
         rows
       }, this.margin + 50);
       
-      // Fußzeile hinzufügen
+      // FuÃŸzeile hinzufÃ¼gen
       this.addFooter();
     } catch (error) {
       logError('Fehler beim Generieren der Ligaergebnisse:', error);
@@ -319,7 +320,7 @@ export class PdfGenerator {
   }
 
   /**
-   * Generiert eine Einzelschützenliste für eine Liga
+   * Generiert eine EinzelschÃ¼tzenliste fÃ¼r eine Liga
    */
   generateShooterResults(shooterData: {
     leagueName: string;
@@ -337,7 +338,7 @@ export class PdfGenerator {
     genderFilter?: 'all' | 'male' | 'female';
   }): void {
     try {
-      // Header hinzufügen
+      // Header hinzufÃ¼gen
       this.addHeader();
       
       // Ligainformationen
@@ -347,9 +348,9 @@ export class PdfGenerator {
       const seasonName = (shooterData.season || 'Unbekannt').replace('RWK ', '');
       this.addText(`Saison: ${seasonName}`, this.margin + 200, this.margin + 35, { fontSize: 14 });
       
-      // Geschlechterfilter-Info hinzufügen, falls vorhanden
+      // Geschlechterfilter-Info hinzufÃ¼gen, falls vorhanden
       if (shooterData.genderFilter && shooterData.genderFilter !== 'all') {
-        const genderText = shooterData.genderFilter === 'male' ? 'Männlich' : 'Weiblich';
+        const genderText = shooterData.genderFilter === 'male' ? 'MÃ¤nnlich' : 'Weiblich';
         this.addText(`Filter: ${genderText}`, this.margin + 350, this.margin + 35, { fontSize: 14 });
       }
       
@@ -360,17 +361,17 @@ export class PdfGenerator {
         { header: 'Mannschaft', dataKey: 'teamName', width: 50 }
       ];
       
-      // Geschlecht als Spalte hinzufügen, wenn alle angezeigt werden
+      // Geschlecht als Spalte hinzufÃ¼gen, wenn alle angezeigt werden
       if (shooterData.genderFilter === 'all' && shooterData.leagueName === 'Gesamtrangliste') {
         columns.push({ header: 'Geschl.', dataKey: 'genderDisplay', width: 20 });
       }
       
-      // Durchgänge als Spalten hinzufügen mit mehr Abstand
+      // DurchgÃ¤nge als Spalten hinzufÃ¼gen mit mehr Abstand
       for (let i = 1; i <= (shooterData.numRounds || 0); i++) {
         columns.push({ header: `DG ${i}`, dataKey: `dg${i}`, width: 25 });
       }
       
-      // Gesamt und Schnitt hinzufügen
+      // Gesamt und Schnitt hinzufÃ¼gen
       columns.push({ header: 'Gesamt', dataKey: 'totalScore', width: 25 });
       columns.push({ header: 'Schnitt', dataKey: 'averageScore', width: 25 });
       
@@ -385,7 +386,7 @@ export class PdfGenerator {
           averageScore: shooter.averageScore !== null ? shooter.averageScore.toFixed(2) : '-'
         };
         
-        // Durchgangsergebnisse hinzufügen
+        // Durchgangsergebnisse hinzufÃ¼gen
         for (let i = 1; i <= (shooterData.numRounds || 0); i++) {
           const key = `dg${i}`;
           rowData[key] = shooter.results && shooter.results[key] !== null ? shooter.results[key] : '-';
@@ -394,27 +395,27 @@ export class PdfGenerator {
         return rowData;
       });
       
-      // Tabelle hinzufügen
+      // Tabelle hinzufÃ¼gen
       this.addTable({
-        title: 'Einzelschützenergebnisse',
+        title: 'EinzelschÃ¼tzenergebnisse',
         columns,
         rows
       }, this.margin + 50);
       
-      // Fußzeile hinzufügen
+      // FuÃŸzeile hinzufÃ¼gen
       this.addFooter();
     } catch (error) {
-      logError('Fehler beim Generieren der Einzelschützenergebnisse:', error);
+      logError('Fehler beim Generieren der EinzelschÃ¼tzenergebnisse:', error);
       // Fallback: Einfache Fehlermeldung
       this.doc.setFontSize(14);
       this.doc.setFont('helvetica', 'bold');
-      this.doc.text('Fehler beim Generieren der Einzelschützenergebnisse', this.margin, this.margin + 50);
+      this.doc.text('Fehler beim Generieren der EinzelschÃ¼tzenergebnisse', this.margin, this.margin + 50);
       this.addFooter();
     }
   }
 
   /**
-   * Generiert eine Urkunde für einen Schützen oder eine Mannschaft
+   * Generiert eine Urkunde fÃ¼r einen SchÃ¼tzen oder eine Mannschaft
    */
   generateCertificate(data: {
     title: string;
@@ -425,7 +426,7 @@ export class PdfGenerator {
     additionalText?: string;
   }): void {
     try {
-      // Seitenränder für die Urkunde
+      // SeitenrÃ¤nder fÃ¼r die Urkunde
       const margin = 30;
       
       // Hintergrund (optional)
@@ -452,7 +453,7 @@ export class PdfGenerator {
       this.doc.setFont('helvetica', 'normal');
       this.doc.text(data.title || '', this.pageWidth / 2, margin + 45, { align: 'center' });
       
-      // Empfänger
+      // EmpfÃ¤nger
       this.doc.setFontSize(18);
       this.doc.setFont('helvetica', 'bold');
       this.doc.text(data.recipientName || '', this.pageWidth / 2, this.pageHeight / 2 - 20, { align: 'center' });
@@ -462,7 +463,7 @@ export class PdfGenerator {
       this.doc.setFont('helvetica', 'normal');
       this.doc.text(data.achievement || '', this.pageWidth / 2, this.pageHeight / 2, { align: 'center' });
       
-      // Zusätzlicher Text
+      // ZusÃ¤tzlicher Text
       if (data.additionalText) {
         this.doc.setFontSize(12);
         this.doc.text(data.additionalText, this.pageWidth / 2, this.pageHeight / 2 + 20, { align: 'center' });
@@ -496,7 +497,7 @@ export class PdfGenerator {
   }
 
   /**
-   * Speichert das PDF oder gibt es als Blob zurück
+   * Speichert das PDF oder gibt es als Blob zurÃ¼ck
    */
   save(filename?: string): string | Blob {
     try {
@@ -508,13 +509,13 @@ export class PdfGenerator {
       }
     } catch (error) {
       logError('Fehler beim Speichern des PDFs:', error);
-      // Fallback: Leeres Blob zurückgeben
+      // Fallback: Leeres Blob zurÃ¼ckgeben
       return new Blob(['Fehler beim Generieren des PDFs'], { type: 'text/plain' });
     }
   }
 
   /**
-   * Öffnet das PDF in einem neuen Tab
+   * Ã–ffnet das PDF in einem neuen Tab
    */
   open(): void {
     try {
@@ -525,8 +526,9 @@ export class PdfGenerator {
         newWindow.location.href = pdfUrl;
       }
     } catch (error) {
-      logError('Fehler beim Öffnen des PDFs:', error);
-      alert('Fehler beim Öffnen des PDFs. Bitte versuchen Sie es erneut.');
+      logError('Fehler beim Ã–ffnen des PDFs:', error);
+      alert('Fehler beim Ã–ffnen des PDFs. Bitte versuchen Sie es erneut.');
     }
   }
 }
+

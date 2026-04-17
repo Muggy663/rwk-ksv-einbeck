@@ -1,12 +1,11 @@
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove, onSnapshot, writeBatch } from 'firebase/firestore';
 import { LiveCompetition, CompetitionResult } from '@/types/social';
 
 export class LiveCompetitionService {
-  
-  // Neuen Live-Wettkampf erstellen (Premium)
-  static async createCompetition(userId: string, competitionData: {
+
+  static async createCompetition(userId: string, input: {
     name: string;
     groupId: string;
     discipline: string;
@@ -15,284 +14,152 @@ export class LiveCompetitionService {
     allowLateJoin: boolean;
     showLiveResults: boolean;
   }): Promise<string> {
-    
-    // Prüfe Premium-Status
     const isPremium = await this.checkPremiumStatus(userId);
-    if (!isPremium) {
-      throw new Error('Live-Wettkämpfe erfordern eine Premium-Lizenz');
-    }
-    
-    const competitionData: Omit<LiveCompetition, 'id'> = {
-      name: competitionData.name,
-      groupId: competitionData.groupId,
-      discipline: competitionData.discipline,
-      shotCount: competitionData.shotCount,
+    if (!isPremium) throw new Error('Live-Wettkämpfe erfordern eine Premium-Lizenz');
+
+    const newCompetition: Omit<LiveCompetition, 'id'> = {
+      name: input.name,
+      groupId: input.groupId,
+      discipline: input.discipline,
+      shotCount: input.shotCount,
       createdBy: userId,
       status: 'waiting',
       participants: [userId],
       settings: {
-        timeLimit: competitionData.timeLimit,
-        allowLateJoin: competitionData.allowLateJoin,
-        showLiveResults: competitionData.showLiveResults
+        timeLimit: input.timeLimit,
+        allowLateJoin: input.allowLateJoin,
+        showLiveResults: input.showLiveResults
       },
       requiresPremium: true
     };
-    
-    const competitionRef = await addDoc(
-      collection(db, 'live_competitions'),
-      competitionData
-    );
+
+    const competitionRef = await addDoc(collection(db, 'live_competitions'), newCompetition);
     return competitionRef.id;
   }
-  
-  // Wettkampf beitreten
+
   static async joinCompetition(userId: string, competitionId: string) {
     try {
       const competitionRef = doc(db, 'live_competitions', competitionId);
       const competitionDoc = await getDoc(competitionRef);
-      
-      if (!competitionDoc.exists()) {
-        throw new Error('Wettkampf nicht gefunden');
-      }
-      
+      if (!competitionDoc.exists()) throw new Error('Wettkampf nicht gefunden');
+
       const competition = competitionDoc.data() as LiveCompetition;
-      
-      // Prüfe Status
-      if (competition.status === 'finished') {
-        throw new Error('Dieser Wettkampf ist bereits beendet');
-      }
-      
-      if (competition.status === 'active' && !competition.settings.allowLateJoin) {
-        throw new Error('Spätes Beitreten ist für diesen Wettkampf nicht erlaubt');
-      }
-      
-      // Prüfe ob bereits Teilnehmer
-      if (competition.participants.includes(userId)) {
-        throw new Error('Sie nehmen bereits an diesem Wettkampf teil');
-      }
-      
-      // Füge Teilnehmer hinzu
-      await updateDoc(competitionRef, {
-        participants: arrayUnion(userId)
-      });
+      if (competition.status === 'finished') throw new Error('Dieser Wettkampf ist bereits beendet');
+      if (competition.status === 'active' && !competition.settings.allowLateJoin) throw new Error('Spätes Beitreten ist nicht erlaubt');
+      if (competition.participants.includes(userId)) throw new Error('Sie nehmen bereits an diesem Wettkampf teil');
+
+      await updateDoc(competitionRef, { participants: arrayUnion(userId) });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to join competition';
       logError('Error joining competition:', error);
-      throw new Error(`Fehler beim Beitreten: ${errorMessage}`);
+      throw error instanceof Error ? error : new Error('Fehler beim Beitreten');
     }
   }
-  
-  // Wettkampf starten
+
   static async startCompetition(userId: string, competitionId: string) {
     try {
       const competitionRef = doc(db, 'live_competitions', competitionId);
       const competitionDoc = await getDoc(competitionRef);
-      
-      if (!competitionDoc.exists()) {
-        throw new Error('Wettkampf nicht gefunden');
-      }
-      
+      if (!competitionDoc.exists()) throw new Error('Wettkampf nicht gefunden');
+
       const competition = competitionDoc.data() as LiveCompetition;
-      
-      // Prüfe Berechtigung
-      if (competition.createdBy !== userId) {
-        throw new Error('Nur der Ersteller kann den Wettkampf starten');
-      }
-      
-      if (competition.status !== 'waiting') {
-        throw new Error('Wettkampf kann nicht gestartet werden');
-      }
-      
-      await updateDoc(competitionRef, {
-        status: 'active',
-        startTime: new Date()
-      });
+      if (competition.createdBy !== userId) throw new Error('Nur der Ersteller kann den Wettkampf starten');
+      if (competition.status !== 'waiting') throw new Error('Wettkampf kann nicht gestartet werden');
+
+      await updateDoc(competitionRef, { status: 'active', startTime: new Date() });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to start competition';
       logError('Error starting competition:', error);
-      throw new Error(`Fehler beim Starten: ${errorMessage}`);
+      throw error instanceof Error ? error : new Error('Fehler beim Starten');
     }
   }
-  
-  // Ergebnis einreichen
+
   static async submitResult(userId: string, competitionId: string, resultData: {
-    serien: any[];
-    totalScore: number;
-    totalRings: number;
+    serien: any[]; totalScore: number; totalRings: number;
   }) {
     const competitionRef = doc(db, 'live_competitions', competitionId);
     const competitionDoc = await getDoc(competitionRef);
-    
-    if (!competitionDoc.exists()) {
-      throw new Error('Wettkampf nicht gefunden');
-    }
-    
+    if (!competitionDoc.exists()) throw new Error('Wettkampf nicht gefunden');
+
     const competition = competitionDoc.data() as LiveCompetition;
-    
-    // Prüfe Teilnahme-Berechtigung
-    if (!competition.participants.includes(userId)) {
-      throw new Error('Sie nehmen nicht an diesem Wettkampf teil');
-    }
-    
-    if (competition.status !== 'active') {
-      throw new Error('Wettkampf ist nicht aktiv');
-    }
-    
-    // Speichere Ergebnis
+    if (!competition.participants.includes(userId)) throw new Error('Sie nehmen nicht an diesem Wettkampf teil');
+    if (competition.status !== 'active') throw new Error('Wettkampf ist nicht aktiv');
+
     const resultRef = doc(db, 'live_competitions', competitionId, 'results', userId);
     const competitionResult: CompetitionResult = {
-      userId,
-      competitionId,
+      userId, competitionId,
       serien: resultData.serien,
       totalScore: resultData.totalScore,
       totalRings: resultData.totalRings,
       submittedAt: new Date()
     };
-    
+
     await setDoc(resultRef, competitionResult);
-    
-    // Prüfe ob alle Ergebnisse eingereicht wurden
     await this.checkCompetitionComplete(competitionId);
   }
-  
-  // Prüfe ob Wettkampf abgeschlossen werden kann
+
   private static async checkCompetitionComplete(competitionId: string) {
-    const competitionRef = doc(db, 'live_competitions', competitionId);
-    const competitionDoc = await getDoc(competitionRef);
-    
+    const competitionDoc = await getDoc(doc(db, 'live_competitions', competitionId));
     if (!competitionDoc.exists()) return;
-    
+
     const competition = competitionDoc.data() as LiveCompetition;
-    
-    // Lade alle Ergebnisse
-    const resultsRef = collection(db, 'live_competitions', competitionId, 'results');
-    const resultsSnapshot = await getDocs(resultsRef);
-    
-    // Wenn alle Teilnehmer Ergebnisse eingereicht haben
+    const resultsSnapshot = await getDocs(collection(db, 'live_competitions', competitionId, 'results'));
     if (resultsSnapshot.size >= competition.participants.length) {
       await this.finishCompetition(competitionId);
     }
   }
-  
-  // Wettkampf beenden
+
   static async finishCompetition(competitionId: string) {
     const competitionRef = doc(db, 'live_competitions', competitionId);
-    
-    // Berechne Platzierungen
-    const resultsRef = collection(db, 'live_competitions', competitionId, 'results');
-    const resultsSnapshot = await getDocs(resultsRef);
-    
-    const results = resultsSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as CompetitionResult));
-    
-    // Sortiere nach Gesamtergebnis (höchste Punktzahl gewinnt)
+    const resultsSnapshot = await getDocs(collection(db, 'live_competitions', competitionId, 'results'));
+
+    const results = resultsSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as CompetitionResult));
     results.sort((a, b) => b.totalScore - a.totalScore);
-    
-    // Batch-Update für Platzierungen
+
     const batch = writeBatch(db);
     results.forEach((result, index) => {
-      const resultRef = doc(db, 'live_competitions', competitionId, 'results', result.userId);
-      batch.update(resultRef, { position: index + 1 });
+      batch.update(doc(db, 'live_competitions', competitionId, 'results', result.userId), { position: index + 1 });
     });
-    
-    // Markiere Wettkampf als beendet
-    batch.update(competitionRef, {
-      status: 'finished',
-      endTime: new Date()
-    });
-    
+    batch.update(competitionRef, { status: 'finished', endTime: new Date() });
     await batch.commit();
   }
-  
-  // Live-Rangliste abrufen
+
   static subscribeToLiveRanking(competitionId: string, callback: (results: CompetitionResult[]) => void) {
-    const resultsRef = collection(db, 'live_competitions', competitionId, 'results');
-    
-    return onSnapshot(resultsRef, (snapshot) => {
-      const results = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as CompetitionResult));
-      
-      // Sortiere nach Gesamtergebnis
+    return onSnapshot(collection(db, 'live_competitions', competitionId, 'results'), (snapshot) => {
+      const results = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as CompetitionResult));
       results.sort((a, b) => b.totalScore - a.totalScore);
-      
       callback(results);
     });
   }
-  
-  // Wettkampf-Details abrufen
+
   static async getCompetitionDetails(competitionId: string): Promise<LiveCompetition | null> {
-    const competitionRef = doc(db, 'live_competitions', competitionId);
-    const competitionDoc = await getDoc(competitionRef);
-    
-    if (!competitionDoc.exists()) {
-      return null;
-    }
-    
-    return {
-      id: competitionDoc.id,
-      ...competitionDoc.data()
-    } as LiveCompetition;
+    const competitionDoc = await getDoc(doc(db, 'live_competitions', competitionId));
+    if (!competitionDoc.exists()) return null;
+    return { id: competitionDoc.id, ...competitionDoc.data() } as LiveCompetition;
   }
-  
-  // Benutzer-Wettkämpfe laden
+
   static async getUserCompetitions(userId: string): Promise<LiveCompetition[]> {
-    const competitionsRef = collection(db, 'live_competitions');
-    const q = query(competitionsRef, where('participants', 'array-contains', userId));
-    const snapshot = await getDocs(q);
-    
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as LiveCompetition));
+    const snapshot = await getDocs(query(collection(db, 'live_competitions'), where('participants', 'array-contains', userId)));
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as LiveCompetition));
   }
-  
-  // Premium-Status prüfen
+
   private static async checkPremiumStatus(userId: string): Promise<boolean> {
-    const userPermissionsRef = doc(db, 'user_permissions', userId);
-    const userPermissions = await getDoc(userPermissionsRef);
-    
-    if (!userPermissions.exists()) return false;
-    
-    const userData = userPermissions.data();
-    return userData.isPremium === true;
+    const userDoc = await getDoc(doc(db, 'user_permissions', userId));
+    if (!userDoc.exists()) return false;
+    return userDoc.data().isPremium === true;
   }
-  
-  // Wettkampf verlassen
+
   static async leaveCompetition(userId: string, competitionId: string) {
     const competitionRef = doc(db, 'live_competitions', competitionId);
     const resultRef = doc(db, 'live_competitions', competitionId, 'results', userId);
-    
-    // Lade beide Dokumente parallel
-    const [competitionDoc, resultDoc] = await Promise.all([
-      getDoc(competitionRef),
-      getDoc(resultRef)
-    ]);
-    
-    if (!competitionDoc.exists()) {
-      throw new Error('Wettkampf nicht gefunden');
-    }
-    
+
+    const [competitionDoc, resultDoc] = await Promise.all([getDoc(competitionRef), getDoc(resultRef)]);
+    if (!competitionDoc.exists()) throw new Error('Wettkampf nicht gefunden');
+
     const competition = competitionDoc.data() as LiveCompetition;
-    
-    if (competition.status === 'active') {
-      throw new Error('Sie können einen aktiven Wettkampf nicht verlassen');
-    }
-    
-    // Batch-Update für beide Änderungen
+    if (competition.status === 'active') throw new Error('Sie können einen aktiven Wettkampf nicht verlassen');
+
     const batch = writeBatch(db);
-    
-    batch.update(competitionRef, {
-      participants: arrayRemove(userId)
-    });
-    
-    if (resultDoc.exists()) {
-      batch.update(resultRef, { deleted: true, deletedAt: new Date() });
-    }
-    
+    batch.update(competitionRef, { participants: arrayRemove(userId) });
+    if (resultDoc.exists()) batch.update(resultRef, { deleted: true, deletedAt: new Date() });
     await batch.commit();
   }
 }

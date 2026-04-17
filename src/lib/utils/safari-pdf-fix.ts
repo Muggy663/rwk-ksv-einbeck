@@ -3,6 +3,8 @@
  * Safari hat bekannte Probleme mit PDF-Generierung und Downloads
  */
 
+import { logWarn, logError } from '@/lib/utils/secure-logger';
+
 export function isSafari(): boolean {
   if (typeof window === 'undefined') return false;
   

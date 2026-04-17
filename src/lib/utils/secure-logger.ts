@@ -1,6 +1,5 @@
 /**
  * Secure Logger - Verhindert Log Injection (CWE-117)
- * Sanitisiert alle Log-Ausgaben und verhindert XSS in Logs
  */
 
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
@@ -12,166 +11,107 @@ interface LogContext {
   [key: string]: any;
 }
 
+type LogContextArg = LogContext | string | number | boolean | undefined;
+
 class SecureLogger {
   private isDevelopment = process.env.NODE_ENV === 'development';
 
-  /**
-   * Sanitisiert Strings für sichere Log-Ausgabe
-   */
   private sanitizeString(value: any): string {
-    if (typeof value !== 'string') {
-      return String(value);
-    }
-    
-    // Entferne potentiell gefährliche Zeichen
+    if (typeof value !== 'string') return String(value);
     return value
-      .replace(/[\r\n\t]/g, ' ') // Zeilenumbrüche entfernen
-      .replace(/[<>'"&]/g, '_') // HTML/Script-Zeichen ersetzen
-      .substring(0, 500); // Länge begrenzen
+      .replace(/[\r\n\t]/g, ' ')
+      .replace(/[<>'"&]/g, '_')
+      .substring(0, 500);
   }
 
-  /**
-   * Sanitisiert Objekte für sichere Log-Ausgabe
-   */
   private sanitizeObject(obj: any, maxDepth = 3, currentDepth = 0): any {
-    if (currentDepth >= maxDepth) {
-      return '[Object too deep]';
-    }
-
-    if (obj === null || obj === undefined) {
-      return obj;
-    }
-
-    if (typeof obj === 'string') {
-      return this.sanitizeString(obj);
-    }
-
-    if (typeof obj === 'number' || typeof obj === 'boolean') {
-      return obj;
-    }
+    if (currentDepth >= maxDepth) return '[Object too deep]';
+    if (obj === null || obj === undefined) return obj;
+    if (typeof obj === 'string') return this.sanitizeString(obj);
+    if (typeof obj === 'number' || typeof obj === 'boolean') return obj;
 
     if (obj instanceof Error) {
       return {
         name: this.sanitizeString(obj.name),
         message: this.sanitizeString(obj.message),
-        code: obj.code ? this.sanitizeString(obj.code) : undefined,
+        code: (obj as any).code ? this.sanitizeString(String((obj as any).code)) : undefined,
         stack: obj.stack ? this.sanitizeString(obj.stack.substring(0, 200)) : undefined
       };
     }
 
     if (Array.isArray(obj)) {
-      if (obj.length > 10) {
-        return `[Array with ${obj.length} items]`;
-      }
+      if (obj.length > 10) return `[Array with ${obj.length} items]`;
       return obj.slice(0, 10).map(item => this.sanitizeObject(item, maxDepth, currentDepth + 1));
     }
 
     if (typeof obj === 'object') {
       const sanitized: any = {};
-      const keys = Object.keys(obj).slice(0, 10); // Nur erste 10 Keys
-      
+      const keys = Object.keys(obj).slice(0, 10);
       for (const key of keys) {
         const sanitizedKey = this.sanitizeString(key);
-        
-        // Sensible Daten ausschließen
-        if (this.isSensitiveKey(sanitizedKey)) {
-          sanitized[sanitizedKey] = '[REDACTED]';
-        } else {
-          sanitized[sanitizedKey] = this.sanitizeObject(obj[key], maxDepth, currentDepth + 1);
-        }
+        sanitized[sanitizedKey] = this.isSensitiveKey(sanitizedKey)
+          ? '[REDACTED]'
+          : this.sanitizeObject(obj[key], maxDepth, currentDepth + 1);
       }
-      
-      if (Object.keys(obj).length > 10) {
-        sanitized['...'] = `[${Object.keys(obj).length - 10} more keys]`;
-      }
-      
+      if (Object.keys(obj).length > 10) sanitized['...'] = `[${Object.keys(obj).length - 10} more keys]`;
       return sanitized;
     }
 
     return this.sanitizeString(obj);
   }
 
-  /**
-   * Prüft ob ein Key sensible Daten enthält
-   */
   private isSensitiveKey(key: string): boolean {
-    const sensitiveKeys = [
-      'password', 'token', 'secret', 'key', 'auth', 'credential',
-      'email', 'phone', 'address', 'ssn', 'credit', 'card'
-    ];
-    
-    const lowerKey = key.toLowerCase();
-    return sensitiveKeys.some(sensitive => lowerKey.includes(sensitive));
+    const sensitiveKeys = ['password', 'token', 'secret', 'key', 'auth', 'credential', 'email', 'phone', 'address', 'ssn', 'credit', 'card'];
+    return sensitiveKeys.some(s => key.toLowerCase().includes(s));
   }
 
-  /**
-   * Erstellt sichere Log-Nachricht
-   */
+  private normalizeContext(context?: LogContextArg): LogContext | undefined {
+    if (context === undefined) return undefined;
+    if (typeof context === 'string' || typeof context === 'number' || typeof context === 'boolean') {
+      return { value: String(context) };
+    }
+    return context as LogContext;
+  }
+
   private createLogMessage(level: LogLevel, message: string, context?: LogContext): string {
     const timestamp = new Date().toISOString();
     const sanitizedMessage = this.sanitizeString(message);
-    
     let logMessage = `[${timestamp}] ${level.toUpperCase()}: ${sanitizedMessage}`;
-    
     if (context) {
-      const sanitizedContext = this.sanitizeObject(context);
-      const contextStr = JSON.stringify(sanitizedContext).replace(/[\r\n\t]/g, ' ');
+      const contextStr = JSON.stringify(this.sanitizeObject(context)).replace(/[\r\n\t]/g, ' ');
       logMessage += ` | Context: ${contextStr}`;
     }
-    
     return logMessage;
   }
 
-  /**
-   * Info-Level Logging
-   */
-  info(message: string, context?: LogContext): void {
+  info(message: string, context?: LogContextArg): void {
     if (this.isDevelopment) {
-      const logMessage = this.createLogMessage('info', message, context);
-      console.info(logMessage);
+      console.info(this.createLogMessage('info', message, this.normalizeContext(context)));
     }
   }
 
-  /**
-   * Warning-Level Logging
-   */
-  warn(message: string, context?: LogContext): void {
-    const logMessage = this.createLogMessage('warn', message, context);
-    console.warn(logMessage);
+  warn(message: string, context?: LogContextArg): void {
+    console.warn(this.createLogMessage('warn', message, this.normalizeContext(context)));
   }
 
-  /**
-   * Error-Level Logging
-   */
-  error(message: string, error?: Error, context?: LogContext): void {
+  error(message: string, error?: Error, context?: LogContextArg): void {
     if (error && typeof error === 'object' && 'code' in error) {
-      const errorCode = String(error.code);
-      if (errorCode === '5') {
+      if (String((error as any).code) === '5') {
         this.warn(`Firestore NOT_FOUND (Build-Zeit): ${message}`, context);
         return;
       }
     }
-    
-    const errorContext = error ? { error: this.sanitizeObject(error), ...context } : context;
-    const logMessage = this.createLogMessage('error', message, errorContext);
-    console.error(logMessage);
+    const errorContext = error ? { error: this.sanitizeObject(error), ...this.normalizeContext(context) } : this.normalizeContext(context);
+    console.error(this.createLogMessage('error', message, errorContext));
   }
 
-  /**
-   * Debug-Level Logging (nur in Development)
-   */
-  debug(message: string, context?: LogContext): void {
+  debug(message: string, context?: LogContextArg): void {
     if (this.isDevelopment) {
-      const logMessage = this.createLogMessage('debug', message, context);
-      console.debug(logMessage);
+      console.debug(this.createLogMessage('debug', message, this.normalizeContext(context)));
     }
-    // In production: no-op (empty function to prevent errors)
   }
 
-  /**
-   * Performance Logging
-   */
-  performance(operation: string, duration: number, context?: LogContext): void {
+  performance(operation: string, duration: number, context?: LogContextArg): void {
     if (this.isDevelopment) {
       const sanitizedOperation = this.sanitizeString(operation);
       const sanitizedDuration = Math.max(0, Math.floor(Number(duration) || 0));
@@ -180,14 +120,13 @@ class SecureLogger {
   }
 }
 
-// Singleton Instance
 export const secureLogger = new SecureLogger();
 
-// Convenience exports
-export const logInfo = (message: string, context?: LogContext) => secureLogger.info(message, context);
-export const logWarn = (message: string, context?: LogContext) => secureLogger.warn(message, context);
-export const logError = (message: string, error?: Error, context?: LogContext) => secureLogger.error(message, error, context);
-export const logDebug = (message: string, context?: LogContext) => {
+export const logInfo = (message: string, context?: LogContextArg) => secureLogger.info(message, context);
+export const logWarn = (message: string, context?: LogContextArg) => secureLogger.warn(message, context);
+export const logError = (message: string, error?: unknown, context?: LogContextArg) =>
+  secureLogger.error(message, error instanceof Error ? error : error !== undefined ? new Error(String(error)) : undefined, context);
+export const logDebug = (message: string, context?: LogContextArg) => {
   try {
     secureLogger.debug(message, context);
   } catch (err) {
@@ -197,7 +136,7 @@ export const logDebug = (message: string, context?: LogContext) => {
     }
   }
 };
-export const logPerformance = (operation: string, duration: number, context?: LogContext) => {
+export const logPerformance = (operation: string, duration: number, context?: LogContextArg) => {
   const sanitizedOperation = String(operation).replace(/[\r\n\t<>'"&]/g, '_').substring(0, 200);
   secureLogger.performance(sanitizedOperation, duration, context);
 };

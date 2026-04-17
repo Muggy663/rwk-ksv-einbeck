@@ -144,52 +144,30 @@ export default function SeasonTransitionPage() {
 
   const handleCreateNewSeason = async () => {
     if (!user || user.email !== 'admin@rwk-einbeck.de') {
-      toast({
-        title: 'Nicht autorisiert',
-        description: 'Sie müssen als Administrator angemeldet sein, um diese Funktion zu nutzen.',
-        variant: 'destructive'
-      });
+      toast({ title: 'Nicht autorisiert', description: 'Sie müssen als Administrator angemeldet sein.', variant: 'destructive' });
       return;
     }
-    
-    if (!selectedSourceSeason || selectedTargetSeason !== 'new') {
-      toast({
-        title: 'Fehlende Auswahl',
-        description: 'Bitte wählen Sie eine Quell-Saison und "Neue Saison erstellen" aus.',
-        variant: 'destructive'
-      });
+    if (!selectedSourceSeason) {
+      toast({ title: 'Fehlende Auswahl', description: 'Bitte wählen Sie eine Quell-Saison aus.', variant: 'destructive' });
       return;
     }
-    
+    const sourceSeason = seasons.find(s => s.id === selectedSourceSeason);
+    if (!sourceSeason) return;
+    const targetYear = sourceSeason.competitionYear + 1;
+    const alreadyExists = seasons.some(s => s.competitionYear === targetYear && s.type === sourceSeason.type);
+    if (alreadyExists) {
+      toast({ title: 'Saison existiert bereits', description: `RWK ${targetYear} ${sourceSeason.type === 'KK' ? 'Kleinkaliber' : 'Luftdruck'} ist bereits vorhanden.`, variant: 'destructive' });
+      return;
+    }
     setIsProcessing(true);
     try {
-      const sourceSeason = seasons.find(s => s.id === selectedSourceSeason);
-      if (!sourceSeason) throw new Error('Quell-Saison nicht gefunden');
-      
-      const targetYear = sourceSeason.competitionYear + 1;
-      const newSeasonId = await createNewSeason(selectedSourceSeason, targetYear, sourceSeason.type as 'KK' | 'LD');
-      
-      toast({
-        title: 'Neue Saison erstellt',
-        description: `Saison ${targetYear} wurde erfolgreich basierend auf ${sourceSeason.name} erstellt.`,
-      });
-      
-      // Saisons neu laden
-      const seasonsQuery = query(collection(db, 'seasons'), orderBy('competitionYear', 'desc'));
-      const snapshot = await getDocs(seasonsQuery);
-      const fetchedSeasons = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Season[];
-      setSeasons(fetchedSeasons);
-      
+      await createNewSeason(selectedSourceSeason, targetYear, sourceSeason.type as 'KK' | 'LD');
+      toast({ title: 'Neue Saison erstellt', description: `RWK ${targetYear} wurde erfolgreich erstellt.` });
+      const snapshot = await getDocs(query(collection(db, 'seasons'), orderBy('competitionYear', 'desc')));
+      setSeasons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Season[]);
     } catch (error: any) {
       logError('Error creating new season:', error);
-      toast({
-        title: 'Fehler',
-        description: error.message || 'Bei der Erstellung der neuen Saison ist ein Fehler aufgetreten.',
-        variant: 'destructive'
-      });
+      toast({ title: 'Fehler', description: error.message || 'Fehler beim Erstellen der Saison.', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
@@ -597,52 +575,43 @@ export default function SeasonTransitionPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="sourceSeason">Quell-Saison</Label>
-                  <Select
-                    value={selectedSourceSeason}
-                    onValueChange={setSelectedSourceSeason}
-                    disabled={isLoading || isProcessing}
-                  >
-                    <SelectTrigger id="sourceSeason">
-                      <SelectValue placeholder="Quell-Saison auswählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {seasons.map(season => (
-                        <SelectItem key={season.id} value={season.id}>
-                          {season.name} ({season.competitionYear})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="targetSeason">Ziel-Saison</Label>
-                  <Select
-                    value={selectedTargetSeason}
-                    onValueChange={setSelectedTargetSeason}
-                    disabled={isLoading || isProcessing}
-                  >
-                    <SelectTrigger id="targetSeason">
-                      <SelectValue placeholder="Ziel-Saison auswählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">Neue Saison erstellen</SelectItem>
-                      {seasons.map(season => (
-                        <SelectItem key={season.id} value={season.id}>
-                          {season.name} ({season.competitionYear})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="sourceSeason">Quell-Saison</Label>
+                <Select
+                  value={selectedSourceSeason}
+                  onValueChange={setSelectedSourceSeason}
+                  disabled={isLoading || isProcessing}
+                >
+                  <SelectTrigger id="sourceSeason">
+                    <SelectValue placeholder="Quell-Saison auswählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {seasons.map(season => (
+                      <SelectItem key={season.id} value={season.id}>
+                        {season.name} ({season.competitionYear})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+              {selectedSourceSeason && (() => {
+                const src = seasons.find(s => s.id === selectedSourceSeason);
+                if (!src) return null;
+                const targetYear = src.competitionYear + 1;
+                const exists = seasons.some(s => s.competitionYear === targetYear && s.type === src.type);
+                return (
+                  <div className={`p-3 rounded-md text-sm ${exists ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-green-50 border border-green-200 text-green-700'}`}>
+                    {exists
+                      ? `⚠️ RWK ${targetYear} ${src.type === 'KK' ? 'Kleinkaliber' : 'Luftdruck'} existiert bereits.`
+                      : `→ Erstellt: RWK ${targetYear} ${src.type === 'KK' ? 'Kleinkaliber' : 'Luftdruck'}`
+                    }
+                  </div>
+                );
+              })()}
 
               <Button
                 onClick={handleCreateNewSeason}
-                disabled={!selectedSourceSeason || !selectedTargetSeason || isProcessing || !user}
+                disabled={!selectedSourceSeason || isProcessing || !user}
                 className="w-full"
               >
                 {isProcessing ? (

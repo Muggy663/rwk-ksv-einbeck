@@ -1,7 +1,7 @@
 // Sicherer Logger für RWK Einbeck App
 // Verhindert Log Injection Angriffe
 
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger'
+import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger'
 
 /**
  * Bereinigt Input für sichere Logs

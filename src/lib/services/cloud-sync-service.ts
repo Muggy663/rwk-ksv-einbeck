@@ -2,8 +2,10 @@
 "use client";
 
 import { SchießEintrag } from "@/types/schiessnachweis";
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { PremiumService } from "./premium-service";
+import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
+
+// Premium-Check: aktuell immer true (kein separates Premium-Modul)
+const isPremium = async (): Promise<boolean> => true;
 
 export interface SyncStatus {
   isOnline: boolean;
@@ -25,7 +27,6 @@ export class CloudSyncService {
 
   static getDeviceId(): string {
     if (typeof window === 'undefined') return 'server';
-    
     let deviceId = localStorage.getItem(this.DEVICE_ID_KEY);
     if (!deviceId) {
       deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -36,122 +37,69 @@ export class CloudSyncService {
 
   static getSyncStatus(): SyncStatus {
     if (typeof window === 'undefined') {
-      return {
-        isOnline: false,
-        lastSync: null,
-        pendingChanges: 0,
-        syncInProgress: false
-      };
+      return { isOnline: false, lastSync: null, pendingChanges: 0, syncInProgress: false };
     }
-
     try {
       const stored = localStorage.getItem(this.SYNC_STATUS_KEY);
       if (!stored) {
-        return {
-          isOnline: navigator.onLine,
-          lastSync: null,
-          pendingChanges: 0,
-          syncInProgress: false
-        };
+        return { isOnline: navigator.onLine, lastSync: null, pendingChanges: 0, syncInProgress: false };
       }
-
       const status = JSON.parse(stored);
-      return {
-        ...status,
-        isOnline: navigator.onLine,
-        lastSync: status.lastSync ? new Date(status.lastSync) : null
-      };
+      return { ...status, isOnline: navigator.onLine, lastSync: status.lastSync ? new Date(status.lastSync) : null };
     } catch (error) {
       logError('Fehler beim Laden des Sync-Status:', error);
-      return {
-        isOnline: navigator.onLine,
-        lastSync: null,
-        pendingChanges: 0,
-        syncInProgress: false
-      };
+      return { isOnline: navigator.onLine, lastSync: null, pendingChanges: 0, syncInProgress: false };
     }
   }
 
   static updateSyncStatus(updates: Partial<SyncStatus>): void {
     if (typeof window === 'undefined') return;
-
     const current = this.getSyncStatus();
     const updated = { ...current, ...updates };
-    
     localStorage.setItem(this.SYNC_STATUS_KEY, JSON.stringify(updated));
-    
-    // Event für UI-Updates
-    window.dispatchEvent(new CustomEvent('syncStatusChanged', { 
-      detail: updated 
-    }));
+    window.dispatchEvent(new CustomEvent('syncStatusChanged', { detail: updated }));
   }
 
   static async syncToCloud(einträge: SchießEintrag[]): Promise<boolean> {
-    logDebug('🔍 Cloud-Sync gestartet mit', einträge.length, 'Einträgen');
-    
-    if (!(await PremiumService.isPremium())) {
-      logDebug('❌ Premium-Check fehlgeschlagen');
+    logDebug('Cloud-Sync gestartet');
+
+    if (!(await isPremium())) {
       throw new Error('Cloud-Sync ist nur für Premium-Nutzer verfügbar');
     }
-    logDebug('✅ Premium-Check erfolgreich');
 
     if (!navigator.onLine) {
-      logDebug('❌ Offline');
       throw new Error('Keine Internetverbindung');
     }
-    logDebug('✅ Online');
 
     this.updateSyncStatus({ syncInProgress: true });
 
     try {
-      logDebug('💾 Speichere in Firebase:', einträge.length, 'Einträge');
-      
-      // Firebase-Imports
       const { doc, setDoc } = await import('firebase/firestore');
       const { auth, db } = await import('@/lib/firebase/config');
-      
+
       if (!auth.currentUser) {
-        logDebug('❌ Benutzer nicht angemeldet');
         throw new Error('Benutzer nicht angemeldet');
       }
-      logDebug('✅ Benutzer angemeldet:', auth.currentUser.uid, auth.currentUser.email);
-      
-      // Entferne undefined Werte für Firebase
+
       const cleanedEinträge = einträge.map(eintrag => {
-        const cleaned: any = {};
+        const cleaned: Record<string, unknown> = {};
         Object.keys(eintrag).forEach(key => {
-          const value = (eintrag as any)[key];
-          if (value !== undefined) {
-            cleaned[key] = value;
-          }
+          const value = (eintrag as Record<string, unknown>)[key];
+          if (value !== undefined) cleaned[key] = value;
         });
         return cleaned;
       });
-      logDebug('✅ Daten bereinigt:', cleanedEinträge.length, 'Einträge');
-      logDebug('🔍 Debug - Beispiel Eintrag:', cleanedEinträge[0]);
-      
+
       const cloudData: CloudData = {
-        einträge: cleanedEinträge,
+        einträge: cleanedEinträge as SchießEintrag[],
         lastModified: new Date(),
         deviceId: this.getDeviceId()
       };
-      logDebug('💾 CloudData erstellt:', cloudData);
-      
-      // In Firebase speichern
-      logDebug('🔥 Speichere in Firebase Collection: schiessnachweis_data, Doc:', auth.currentUser.uid);
+
       await setDoc(doc(db, 'schiessnachweis_data', auth.currentUser.uid), cloudData);
-      logDebug('✅ Firebase gespeichert:', auth.currentUser.uid, '- Einträge:', einträge.length);
-      logDebug('🔍 Debug - Gespeicherte CloudData:', cloudData);
-
-      // Auch lokal als Backup speichern
       localStorage.setItem(this.CLOUD_STORAGE_KEY, JSON.stringify(cloudData));
-      
-      this.updateSyncStatus({
-        lastSync: new Date(),
-        pendingChanges: 0,
-        syncInProgress: false
-      });
 
+      this.updateSyncStatus({ lastSync: new Date(), pendingChanges: 0, syncInProgress: false });
       return true;
     } catch (error) {
       logError('Cloud-Sync fehlgeschlagen:', error);
@@ -161,51 +109,33 @@ export class CloudSyncService {
   }
 
   static async syncFromCloud(): Promise<SchießEintrag[]> {
-    if (!(await PremiumService.isPremium())) {
-      throw new Error('Cloud-Sync ist nur für Premium-Nutzer verfügbar');
-    }
-
-    if (!navigator.onLine) {
-      throw new Error('Keine Internetverbindung');
-    }
+    if (!(await isPremium())) throw new Error('Cloud-Sync ist nur für Premium-Nutzer verfügbar');
+    if (!navigator.onLine) throw new Error('Keine Internetverbindung');
 
     this.updateSyncStatus({ syncInProgress: true });
 
     try {
-      logDebug('Lade Daten aus Firebase...');
-      
-      // Firebase-Imports
       const { doc, getDoc } = await import('firebase/firestore');
       const { auth, db } = await import('@/lib/firebase/config');
-      
-      if (!auth.currentUser) {
-        throw new Error('Benutzer nicht angemeldet');
-      }
-      
+
+      if (!auth.currentUser) throw new Error('Benutzer nicht angemeldet');
+
       const docRef = doc(db, 'schiessnachweis_data', auth.currentUser.uid);
       const docSnap = await getDoc(docRef);
-      
+
       if (!docSnap.exists()) {
-        logDebug('Keine Cloud-Daten für User:', auth.currentUser.uid);
         this.updateSyncStatus({ syncInProgress: false });
         return [];
       }
-      
+
       const cloudData = docSnap.data() as CloudData;
-      logDebug('✅ Firebase geladen:', auth.currentUser.uid, '- Einträge:', cloudData.einträge.length);
-      
-      // Konvertiere Firebase Timestamps zu Date-Objekten
       const einträge = cloudData.einträge.map(eintrag => ({
         ...eintrag,
-        datum: eintrag.datum.toDate ? eintrag.datum.toDate() : new Date(eintrag.datum),
-        createdAt: eintrag.createdAt.toDate ? eintrag.createdAt.toDate() : new Date(eintrag.createdAt)
+        datum: (eintrag.datum as any)?.toDate ? (eintrag.datum as any).toDate() : new Date(eintrag.datum as any),
+        createdAt: (eintrag.createdAt as any)?.toDate ? (eintrag.createdAt as any).toDate() : new Date(eintrag.createdAt as any)
       }));
 
-      this.updateSyncStatus({
-        lastSync: new Date(),
-        syncInProgress: false
-      });
-
+      this.updateSyncStatus({ lastSync: new Date(), syncInProgress: false });
       return einträge;
     } catch (error) {
       logError('Cloud-Download fehlgeschlagen:', error);
@@ -215,20 +145,13 @@ export class CloudSyncService {
   }
 
   static async autoSync(einträge: SchießEintrag[]): Promise<void> {
-    if (!(await PremiumService.isPremium()) || !navigator.onLine) {
-      return;
-    }
+    if (!(await isPremium()) || !navigator.onLine) return;
 
     const status = this.getSyncStatus();
-    
-    // Auto-Sync nur wenn letzte Sync älter als 30 Sekunden (für bessere UX)
-    if (status.lastSync && (Date.now() - status.lastSync.getTime()) < 30 * 1000) {
-      return;
-    }
+    if (status.lastSync && (Date.now() - status.lastSync.getTime()) < 30 * 1000) return;
 
     try {
       await this.syncToCloud(einträge);
-      logDebug('✅ Auto-Sync erfolgreich');
     } catch (error) {
       logWarn('Auto-Sync fehlgeschlagen:', error);
     }
@@ -236,36 +159,20 @@ export class CloudSyncService {
 
   static markPendingChanges(count: number = 1): void {
     const status = this.getSyncStatus();
-    this.updateSyncStatus({
-      pendingChanges: status.pendingChanges + count
-    });
-    
-    // Event für UI-Updates
+    this.updateSyncStatus({ pendingChanges: status.pendingChanges + count });
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('syncStatusChanged', { 
-        detail: this.getSyncStatus() 
-      }));
+      window.dispatchEvent(new CustomEvent('syncStatusChanged', { detail: this.getSyncStatus() }));
     }
   }
 
   static getCloudInfo(): { hasCloudData: boolean; lastModified: Date | null; deviceId: string | null } {
-    if (typeof window === 'undefined') {
-      return { hasCloudData: false, lastModified: null, deviceId: null };
-    }
-
+    if (typeof window === 'undefined') return { hasCloudData: false, lastModified: null, deviceId: null };
     try {
       const stored = localStorage.getItem(this.CLOUD_STORAGE_KEY);
-      if (!stored) {
-        return { hasCloudData: false, lastModified: null, deviceId: null };
-      }
-
+      if (!stored) return { hasCloudData: false, lastModified: null, deviceId: null };
       const cloudData: CloudData = JSON.parse(stored);
-      return {
-        hasCloudData: true,
-        lastModified: new Date(cloudData.lastModified),
-        deviceId: cloudData.deviceId
-      };
-    } catch (error) {
+      return { hasCloudData: true, lastModified: new Date(cloudData.lastModified), deviceId: cloudData.deviceId };
+    } catch {
       return { hasCloudData: false, lastModified: null, deviceId: null };
     }
   }

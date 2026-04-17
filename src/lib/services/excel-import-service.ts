@@ -1,40 +1,35 @@
-// src/lib/services/excel-import-service.ts
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { logError, logDebug } from '@/lib/utils/secure-logger';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 
-// Erweiterte Geschlechts-Erkennung basierend auf Vornamen
+function getShooterClubId(shooter: any): string | null {
+  return shooter?.clubId || shooter?.rwkClubId || shooter?.kmClubId || null;
+}
+
 const MALE_NAMES = [
-  'alexander', 'andreas', 'christian', 'daniel', 'david', 'frank', 'hans', 'jürgen', 'klaus', 'manfred', 'martin', 'michael', 'peter', 'stefan', 'thomas', 'uwe', 'wolfgang',
-  'bernd', 'otto', 'helmut', 'werner', 'günter', 'horst', 'dieter', 'gerhard', 'rolf', 'herbert', 'walter', 'rainer', 'norbert', 'jörg', 'detlef', 'reinhard', 'gerd', 'hartmut', 'volker', 'axel',
-  'dirk', 'rüdiger', 'friedhelm', 'wilfried', 'siegfried', 'alfred', 'ernst', 'georg', 'heinrich', 'hermann', 'kurt', 'ludwig', 'rudolf', 'wilhelm', 'johann', 'josef', 'richard', 'robert', 'willi',
-  'lars', 'marcel', 'markus', 'matthias', 'oliver', 'ralf', 'roland', 'sebastian', 'thorsten', 'tobias', 'jan', 'jens', 'kai', 'marco', 'sven', 'tim', 'tom', 'björn', 'carsten', 'dennis'
+  'alexander', 'andreas', 'christian', 'daniel', 'david', 'frank', 'hans', 'juergen', 'klaus', 'manfred', 'martin', 'michael', 'peter', 'stefan', 'thomas', 'uwe', 'wolfgang',
+  'bernd', 'otto', 'helmut', 'werner', 'guenter', 'horst', 'dieter', 'gerhard', 'rolf', 'herbert', 'walter', 'rainer', 'norbert', 'joerg', 'detlef', 'reinhard', 'gerd', 'hartmut', 'volker', 'axel',
+  'dirk', 'ruediger', 'friedhelm', 'wilfried', 'siegfried', 'alfred', 'ernst', 'georg', 'heinrich', 'hermann', 'kurt', 'ludwig', 'rudolf', 'wilhelm', 'johann', 'josef', 'richard', 'robert', 'willi',
+  'lars', 'marcel', 'markus', 'matthias', 'oliver', 'ralf', 'roland', 'sebastian', 'thorsten', 'tobias', 'jan', 'jens', 'kai', 'marco', 'sven', 'tim', 'tom', 'bjoern', 'carsten', 'dennis'
 ];
 
 const FEMALE_NAMES = [
   'andrea', 'angela', 'anna', 'barbara', 'birgit', 'brigitte', 'christine', 'claudia', 'doris', 'elisabeth', 'gabi', 'heike', 'ingrid', 'karin', 'martina', 'monika', 'petra', 'sabine', 'susanne', 'ursula',
   'maria', 'eva', 'lisa', 'sarah', 'renate', 'christa', 'helga', 'inge', 'margot', 'ruth', 'edith', 'elfriede', 'erna', 'gerda', 'gertrud', 'gisela', 'hannelore', 'hedwig', 'herta', 'hildegard',
   'alexandra', 'antje', 'astrid', 'beate', 'bettina', 'cornelia', 'dagmar', 'diana', 'elke', 'franziska', 'gabriela', 'iris', 'jasmin', 'julia', 'katja', 'katrin', 'manuela', 'melanie', 'nadine', 'nicole',
-  'silke', 'simone', 'stefanie', 'tanja', 'ute', 'vanessa', 'yvonne', 'angelika', 'anke', 'annette', 'bärbel', 'christiane', 'daniela', 'jutta', 'michaela', 'regina', 'silvia', 'sonja', 'ulrike'
+  'silke', 'simone', 'stefanie', 'tanja', 'ute', 'vanessa', 'yvonne', 'angelika', 'anke', 'annette', 'baerbel', 'christiane', 'daniela', 'jutta', 'michaela', 'regina', 'silvia', 'sonja', 'ulrike'
 ];
 
 function guessGender(vorname: string): 'male' | 'female' | 'unknown' {
   const name = vorname.toLowerCase().trim();
-  
-  // Exakte Übereinstimmung zuerst
   if (MALE_NAMES.includes(name)) return 'male';
   if (FEMALE_NAMES.includes(name)) return 'female';
-  
-  // Teilstring-Suche
   if (MALE_NAMES.some(n => name.includes(n) || n.includes(name))) return 'male';
   if (FEMALE_NAMES.some(n => name.includes(n) || n.includes(name))) return 'female';
-  
-  // Endungen-basierte Erkennung
   if (name.endsWith('a') && !name.endsWith('cha') && !name.endsWith('sha')) return 'female';
   if (name.endsWith('e') && name.length > 3 && !name.endsWith('ke') && !name.endsWith('le')) return 'female';
   if (name.endsWith('ine') || name.endsWith('ina') || name.endsWith('ela')) return 'female';
   if (name.endsWith('er') || name.endsWith('en') || name.endsWith('us') || name.endsWith('an')) return 'male';
-  
   return 'unknown';
 }
 
@@ -48,24 +43,14 @@ export interface ExcelMember {
 
 export async function importMembersFromExcel(members: ExcelMember[]) {
   const TARGET_CLUB = 'SV Salzderhelden';
-  
-  const results = {
-    imported: 0,
-    skipped: 0,
-    errors: [] as string[]
-  };
+  const results = { imported: 0, skipped: 0, errors: [] as string[] };
 
-  // Filtere nur SV Salzderhelden
   const filteredMembers = members.filter(m => m.verein === TARGET_CLUB);
-  logDebug(`Gefiltert: ${filteredMembers.length} von ${members.length} für ${TARGET_CLUB}`);
+  logDebug(`Gefiltert: ${filteredMembers.length} von ${members.length}`);
 
-  // Lade bestehende Vereine und Schützen
   const clubsSnapshot = await getDocs(collection(db, 'clubs'));
-  const existingClubs = new Map(
-    clubsSnapshot.docs.map(doc => [doc.data().name, doc.id])
-  );
+  const existingClubs = new Map(clubsSnapshot.docs.map(doc => [doc.data().name, doc.id]));
 
-  // Lade bestehende Schützen für Duplikat-Prüfung
   const shootersSnapshot = await getDocs(collection(db, 'shooters'));
   const existingShooters = new Set(
     shootersSnapshot.docs.map(doc => {
@@ -74,61 +59,43 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
     })
   );
 
-  for (let i = 0; i < filteredMembers.length; i++) {
-    const member = filteredMembers[i];
-
-    
+  for (const member of filteredMembers) {
     try {
-      // Überspringe leere oder ungültige Zeilen
-      if (!member.name || !member.vorname || 
-          member.name.trim() === '' || member.vorname.trim() === '' ||
-          member.name === 'Name' || member.vorname === 'Vorname') {
-
+      if (!member.name?.trim() || !member.vorname?.trim() || member.name === 'Name') {
         results.skipped++;
         continue;
       }
 
-      // Finde oder erstelle Verein
       let clubId = existingClubs.get(member.verein);
       if (!clubId) {
-        const clubDoc = await addDoc(collection(db, 'clubs'), {
-          name: member.verein,
-          createdAt: new Date(),
-          isActive: true
-        });
+        const clubDoc = await addDoc(collection(db, 'clubs'), { name: member.verein, createdAt: new Date(), isActive: true });
         clubId = clubDoc.id;
         existingClubs.set(member.verein, clubId);
       }
 
-      // Berechne Geburtsjahr mit besserer Validierung
       let birthYear = null;
-      if (member.geburtsdatum && member.geburtsdatum.trim() !== '') {
+      if (member.geburtsdatum?.trim()) {
         const date = new Date(member.geburtsdatum);
         if (!isNaN(date.getTime()) && date.getFullYear() > 1920 && date.getFullYear() < 2020) {
           birthYear = date.getFullYear();
         }
       }
 
-      // Geschlechts-Erkennung
       const gender = guessGender(member.vorname);
-
       const shooterName = `${member.vorname} ${member.name}`;
       const duplicateKey = `${shooterName}_${clubId}`;
-      
-      // Prüfe auf Duplikat
+
       if (existingShooters.has(duplicateKey)) {
-        logDebug(`Überspringe Duplikat: ${shooterName}`);
         results.skipped++;
         continue;
       }
 
-      // Erstelle Schütze für SV Salzderhelden
-      const docRef = await addDoc(collection(db, 'shooters'), {
+      await addDoc(collection(db, 'shooters'), {
         firstName: member.vorname,
         lastName: member.name,
         name: shooterName,
-        clubId: clubId,           // Direkt für RWK
-        kmClubId: clubId,         // Auch für KM
+        clubId,
+        kmClubId: clubId,
         birthYear,
         gender: gender === 'unknown' ? 'male' : gender,
         mitgliedsnummer: member.mitgliedsnummer,
@@ -138,16 +105,15 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
         importedAt: new Date(),
         source: 'excel_import'
       });
-      
+
       existingShooters.add(duplicateKey);
-
-
       results.imported++;
     } catch (error) {
+      logError(`Import Fehler ${member.vorname} ${member.name}:`, error);
       results.errors.push(`${member.vorname} ${member.name}: ${error}`);
     }
   }
 
-  logDebug(`Import abgeschlossen: ${results.imported} importiert, ${results.skipped} übersprungen`);
+  logDebug(`Import: ${results.imported} importiert, ${results.skipped} uebersprungen`);
   return results;
 }

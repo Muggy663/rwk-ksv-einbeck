@@ -4,18 +4,15 @@ if (typeof window !== 'undefined') {
   throw new Error('Firebase Admin SDK kann nur server-seitig verwendet werden!');
 }
 
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { initializeApp, getApps, getApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// Service Account aus Environment Variables
 const serviceAccount = {
   projectId: process.env.FIREBASE_PROJECT_ID,
   clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
   privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
 };
 
-// Admin App initialisieren (nur einmal)
 if (!getApps().length) {
   initializeApp({
     credential: cert(serviceAccount),
@@ -23,14 +20,13 @@ if (!getApps().length) {
   });
 }
 
-// Admin Services exportieren
+const app = getApp();
 const databaseId = process.env.FIREBASE_DATABASE_ID || 'restored-main';
-export const adminDb = getFirestore(undefined, databaseId);
+export const adminDb = getFirestore(app, databaseId);
 
-// Admin Auth für API-Auth Helper
 import { getAuth } from 'firebase-admin/auth';
-export const adminAuth = getAuth();
+export const adminAuth = getAuth(app);
 export const admin = {
-  auth: () => getAuth(),
-  firestore: () => getFirestore(undefined, databaseId)
+  auth: () => getAuth(app),
+  firestore: () => getFirestore(app, databaseId)
 };

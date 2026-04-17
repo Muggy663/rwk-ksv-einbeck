@@ -1,3 +1,5 @@
+import { logDebug, logError } from '@/lib/utils/secure-logger';
+
 export class PushNotificationService {
   getPermissionStatus(): NotificationPermission {
     if (typeof window === 'undefined' || !('Notification' in window)) return 'denied';
