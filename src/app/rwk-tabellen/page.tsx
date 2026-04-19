@@ -713,24 +713,34 @@ function RwkTabellenPageComponent() {
         teamsByLeague.get(leagueId)!.push({id: teamDoc.id, ...teamData});
       });
 
-      // Batch-load ALLE Scores auf einmal - verwende saison-spezifische Collection falls vorhanden
+      // Batch-load ALLE Scores auf einmal - lade aus allen relevanten Collections
       let allScoresSnapshot;
       try {
-        // Verwende neue Collection-Naming-Logik
-        const seasonSpecificCollection = getSeasonSpecificScoresCollection(config.year, firestoreTypesToQuery[0]);
+        // Bestimme alle einzigartigen Collections für die Disziplin-Typen
+        const collectionsToQuery = [...new Set(
+          firestoreTypesToQuery.map(type => 
+            getSeasonSpecificScoresCollection(config.year, type as any)
+          )
+        )];
         
-        logDebug(`🔍 Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
-        
-        const seasonSpecificQuery = query(
-          collection(db, seasonSpecificCollection),
-          where("competitionYear", "==", config.year),
-          where("leagueType", "in", firestoreTypesToQuery)
+        // Lade aus allen Collections parallel
+        const snapshots = await Promise.all(
+          collectionsToQuery.map(collectionName =>
+            getDocs(query(
+              collection(db, collectionName),
+              where("competitionYear", "==", config.year),
+              where("leagueType", "in", firestoreTypesToQuery)
+            ))
+          )
         );
-        allScoresSnapshot = await getDocs(seasonSpecificQuery);
         
-        logDebug(`✅ Saison-spezifische Collection gefunden: ${allScoresSnapshot.docs.length} Scores`);
+        // Kombiniere alle Docs zu einem virtuellen Snapshot
+        const allDocs = snapshots.flatMap(snap => snap.docs);
+        allScoresSnapshot = { docs: allDocs };
+        
+        logDebug(`✅ Scores geladen aus ${collectionsToQuery.length} Collections: ${allDocs.length} Scores`);
       } catch (error) {
-        logDebug(`⚠️ Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
+        logDebug(`⚠️ Saison-spezifische Collections nicht gefunden, verwende rwk_scores`);
         
         // Fallback auf ursprüngliche Collection
         const allScoresQuery = query(
@@ -1026,27 +1036,30 @@ function RwkTabellenPageComponent() {
         ];
       }
       
-      // Versuche saison-spezifische Collection zu verwenden
+      // Versuche saison-spezifische Collections zu verwenden
+      const allScores: ScoreEntry[] = [];
       let scoresQuery;
       try {
-        // Verwende neue Collection-Naming-Logik
-        const seasonSpecificCollection = getSeasonSpecificScoresCollection(config.year, config.discipline as FirestoreLeagueSpecificDiscipline);
+        // Bestimme alle einzigartigen Collections für die Disziplin
+        const selectedUIDiscOption = uiDisciplineFilterOptions.find(opt => opt.value === config.discipline);
+        const allTypes = selectedUIDiscOption ? selectedUIDiscOption.firestoreTypes : [config.discipline as any];
+        const collectionsToQuery = [...new Set(
+          allTypes.map(type => getSeasonSpecificScoresCollection(config.year, type as any))
+        )];
         
-        if (process.env.NODE_ENV === 'development') {
-          logDebug('Individual: Versuche saison-spezifische Collection');
-        }
-        
-        scoresQuery = query(collection(db, seasonSpecificCollection), ...scoresQueryConstraints);
+        // Lade aus allen Collections parallel und kombiniere
+        const snapshots = await Promise.all(
+          collectionsToQuery.map(collectionName =>
+            getDocs(query(collection(db, collectionName), ...scoresQueryConstraints))
+          )
+        );
+        const allDocs = snapshots.flatMap(snap => snap.docs);
+        allDocs.forEach(d => { allScores.push({ id: d.id, ...d.data() as ScoreEntry }); });
       } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          logDebug('Individual: Saison-spezifische Collection nicht gefunden, verwende rwk_scores');
-        }
         scoresQuery = query(collection(db, "rwk_scores"), ...scoresQueryConstraints);
+        const scoresSnapshot = await getDocs(scoresQuery);
+        scoresSnapshot.docs.forEach(d => { allScores.push({ id: d.id, ...d.data() as ScoreEntry }); });
       }
-      
-      const scoresSnapshot = await getDocs(scoresQuery);
-      const allScores: ScoreEntry[] = [];
-      scoresSnapshot.docs.forEach(d => { allScores.push({ id: d.id, ...d.data() as ScoreEntry }); });
       
       // Lade Substitutions-Daten für diese Liga
       let substitutionsMap = new Map();
