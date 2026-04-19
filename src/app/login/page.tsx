@@ -25,6 +25,7 @@ export default function UnifiedLoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [recaptchaReady, setRecaptchaReady] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
 
@@ -53,11 +54,12 @@ export default function UnifiedLoginPage() {
       return;
     }
 
+    // reCAPTCHA v2 Invisible: Token wird automatisch gesetzt, auf localhost/preview überspringen
     const isPreview = window.location.hostname.includes('vercel.app') || window.location.hostname === 'localhost';
     if (!recaptchaToken && !isPreview) {
       toast({
         title: "Fehler",
-        description: "Bitte bestätigen Sie, dass Sie kein Roboter sind.",
+        description: "Sicherheitsprüfung läuft noch, bitte kurz warten.",
         variant: "destructive"
       });
       setIsSubmitting(false);
@@ -304,9 +306,7 @@ export default function UnifiedLoginPage() {
               </div>
             </div>
 
-            <div className="flex justify-center">
-              <ReCaptcha onVerify={setRecaptchaToken} />
-            </div>
+            <ReCaptcha onVerify={(token) => { setRecaptchaToken(token); setRecaptchaReady(!!token); }} />
 
             <Button 
               type="submit" 
@@ -318,6 +318,13 @@ export default function UnifiedLoginPage() {
                 : isLogin ? 'Anmelden' : 'Registrieren'
               }
             </Button>
+
+            {!recaptchaReady && (
+              <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-amber-400 animate-pulse"></span>
+                Sicherheitsprüfung läuft...
+              </p>
+            )}
           </form>
           
           {loginError && (

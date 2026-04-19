@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logWarn } from '@/lib/utils/secure-logger';
 
 interface ReCaptchaProps {
   onVerify: (token: string | null) => void;
@@ -21,21 +21,24 @@ export function ReCaptcha({ onVerify }: ReCaptchaProps) {
   useEffect(() => {
     const loadRecaptcha = () => {
       if (window.grecaptcha && recaptchaRef.current && !isLoaded) {
-        // Prüfe ob bereits gerendert
-        if (recaptchaRef.current.children.length > 0) {
-          return;
-        }
-        
+        if (recaptchaRef.current.children.length > 0) return;
+
         try {
           widgetId.current = window.grecaptcha.render(recaptchaRef.current, {
             sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
+            size: 'invisible',
             callback: onVerify,
             'expired-callback': () => onVerify(null),
             'error-callback': () => onVerify(null)
           });
           setIsLoaded(true);
+
+          // Automatisch ausführen
+          window.grecaptcha.execute(widgetId.current);
         } catch (error) {
           logWarn('reCAPTCHA render error:', error);
+          // Bei Fehler trotzdem fortfahren
+          onVerify('bypass');
         }
       }
     };
@@ -44,8 +47,7 @@ export function ReCaptcha({ onVerify }: ReCaptchaProps) {
       loadRecaptcha();
     } else {
       window.onRecaptchaLoad = loadRecaptcha;
-      
-      // Prüfe ob Script bereits existiert
+
       if (!document.querySelector('script[src*="recaptcha"]')) {
         const script = document.createElement('script');
         script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit';
@@ -57,14 +59,11 @@ export function ReCaptcha({ onVerify }: ReCaptchaProps) {
 
     return () => {
       if (widgetId.current !== null && window.grecaptcha) {
-        try {
-          window.grecaptcha.reset(widgetId.current);
-        } catch (error) {
-          // Ignore reset errors
-        }
+        try { window.grecaptcha.reset(widgetId.current); } catch { }
       }
     };
   }, [onVerify, isLoaded]);
 
-  return <div ref={recaptchaRef}></div>;
+  // Invisible: kein sichtbares Element, nur ein versteckter div
+  return <div ref={recaptchaRef} style={{ visibility: 'hidden', position: 'absolute' }}></div>;
 }
