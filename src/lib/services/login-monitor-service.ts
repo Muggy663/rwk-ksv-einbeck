@@ -43,6 +43,15 @@ export async function getLoginStats(days = 7) {
   const failed = events.filter(e => e.type === 'failed').length;
   const blocked = events.filter(e => e.type === 'blocked').length;
 
+  const failedReasons: Record<string, number> = {};
+  events.filter(e => e.type === 'failed' && e.errorCode).forEach(e => {
+    failedReasons[e.errorCode!] = (failedReasons[e.errorCode!] || 0) + 1;
+  });
+
+  const blockedReasons: Record<string, number> = {};
+  events.filter(e => e.type === 'blocked' && e.errorCode).forEach(e => {
+    blockedReasons[e.errorCode!] = (blockedReasons[e.errorCode!] || 0) + 1;
+  });
   // Unique E-Mails mit Fehlversuchen
   const failedByEmail: Record<string, number> = {};
   events.filter(e => e.type === 'failed' || e.type === 'blocked').forEach(e => {
@@ -57,5 +66,5 @@ export async function getLoginStats(days = 7) {
 
   const recent = events.slice(0, 10);
 
-  return { success, failed, blocked, suspiciousAccounts, recent, total: events.length };
+  return { success, failed, blocked, failedReasons, blockedReasons, suspiciousAccounts, recent, total: events.length };
 }

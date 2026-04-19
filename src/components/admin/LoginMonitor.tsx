@@ -12,6 +12,8 @@ interface Stats {
   success: number;
   failed: number;
   blocked: number;
+  failedReasons: Record<string, number>;
+  blockedReasons: Record<string, number>;
   suspiciousAccounts: { email: string; count: number }[];
   recent: LoginEvent[];
   total: number;
@@ -24,6 +26,18 @@ function formatTime(ts: Timestamp) {
 function maskEmail(email: string) {
   const [user, domain] = email.split('@');
   return `${user.slice(0, 2)}***@${domain}`;
+}
+
+function errorLabel(code?: string) {
+  switch (code) {
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/invalid-login-credentials': return 'Falsches Passwort';
+    case 'auth/user-not-found': return 'User nicht gefunden';
+    case 'auth/too-many-requests': return 'Zu viele Versuche';
+    case 'auth/user-disabled': return 'Account deaktiviert';
+    default: return code ?? 'Unbekannt';
+  }
 }
 
 export function LoginMonitor() {
@@ -81,11 +95,17 @@ export function LoginMonitor() {
                 <ShieldX className="h-5 w-5 text-amber-600 mx-auto mb-1" />
                 <div className="text-2xl font-bold text-amber-700">{stats.failed}</div>
                 <div className="text-xs text-amber-600">Fehlgeschlagen</div>
+                {stats.failedReasons && Object.entries(stats.failedReasons).map(([reason, count]) => (
+                  <div key={reason} className="text-xs text-amber-500 mt-1">{errorLabel(reason)}: {count}x</div>
+                ))}
               </div>
               <div className="text-center p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200">
                 <ShieldAlert className="h-5 w-5 text-red-600 mx-auto mb-1" />
                 <div className="text-2xl font-bold text-red-700">{stats.blocked}</div>
                 <div className="text-xs text-red-600">Gesperrt</div>
+                {stats.blockedReasons && Object.entries(stats.blockedReasons).map(([reason, count]) => (
+                  <div key={reason} className="text-xs text-red-500 mt-1">{errorLabel(reason)}: {count}x</div>
+                ))}
               </div>
             </div>
 
@@ -120,6 +140,9 @@ export function LoginMonitor() {
                       {e.type === 'failed' && <span className="text-amber-600">⚠️</span>}
                       {e.type === 'blocked' && <span className="text-red-600">🚫</span>}
                       <span className="font-mono text-muted-foreground">{maskEmail(e.email)}</span>
+                      {e.errorCode && (
+                        <span className="text-muted-foreground/70 italic">{errorLabel(e.errorCode)}</span>
+                      )}
                     </div>
                     <span className="text-muted-foreground">{formatTime(e.timestamp)}</span>
                   </div>
