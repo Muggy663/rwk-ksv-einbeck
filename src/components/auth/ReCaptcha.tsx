@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { logWarn } from '@/lib/utils/secure-logger';
 
 interface ReCaptchaProps {
   onVerify: (token: string | null) => void;
+  onExecuteReady?: (fn: () => void) => void;
 }
 
 declare global {
@@ -13,41 +14,50 @@ declare global {
   }
 }
 
-export function ReCaptcha({ onVerify }: ReCaptchaProps) {
+export function ReCaptcha({ onVerify, onExecuteReady }: ReCaptchaProps) {
   const recaptchaRef = useRef<HTMLDivElement>(null);
   const widgetId = useRef<number | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const initialized = useRef(false);
+  const onVerifyRef = useRef(onVerify);
+  onVerifyRef.current = onVerify;
+
+  const executeRecaptcha = useCallback(() => {
+    if (widgetId.current !== null && window.grecaptcha) {
+      try {
+        window.grecaptcha.reset(widgetId.current);
+        window.grecaptcha.execute(widgetId.current);
+      } catch { }
+    }
+  }, []);
 
   useEffect(() => {
-    const loadRecaptcha = () => {
-      if (window.grecaptcha && recaptchaRef.current && !isLoaded) {
-        if (recaptchaRef.current.children.length > 0) return;
+    if (initialized.current) return;
 
-        try {
-          widgetId.current = window.grecaptcha.render(recaptchaRef.current, {
-            sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
-            size: 'invisible',
-            callback: onVerify,
-            'expired-callback': () => onVerify(null),
-            'error-callback': () => onVerify(null)
-          });
-          setIsLoaded(true);
+    const init = () => {
+      if (!window.grecaptcha?.render || !recaptchaRef.current) return;
+      if (initialized.current) return;
+      initialized.current = true;
 
-          // Automatisch ausführen
-          window.grecaptcha.execute(widgetId.current);
-        } catch (error) {
-          logWarn('reCAPTCHA render error:', error);
-          // Bei Fehler trotzdem fortfahren
-          onVerify('bypass');
-        }
+      try {
+        widgetId.current = window.grecaptcha.render(recaptchaRef.current, {
+          sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
+          size: 'invisible',
+          callback: (token: string) => onVerifyRef.current(token),
+          'expired-callback': () => onVerifyRef.current(null),
+          'error-callback': () => onVerifyRef.current(null),
+        });
+        onExecuteReady?.(executeRecaptcha);
+        window.grecaptcha.execute(widgetId.current);
+      } catch (error) {
+        logWarn('reCAPTCHA render error:', error);
+        onVerifyRef.current('bypass');
       }
     };
 
-    if (window.grecaptcha && window.grecaptcha.render) {
-      loadRecaptcha();
+    if (window.grecaptcha?.render) {
+      init();
     } else {
-      window.onRecaptchaLoad = loadRecaptcha;
-
+      window.onRecaptchaLoad = init;
       if (!document.querySelector('script[src*="recaptcha"]')) {
         const script = document.createElement('script');
         script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit';
@@ -56,14 +66,7 @@ export function ReCaptcha({ onVerify }: ReCaptchaProps) {
         document.head.appendChild(script);
       }
     }
+  }, []);
 
-    return () => {
-      if (widgetId.current !== null && window.grecaptcha) {
-        try { window.grecaptcha.reset(widgetId.current); } catch { }
-      }
-    };
-  }, [onVerify, isLoaded]);
-
-  // Invisible: kein sichtbares Element, nur ein versteckter div
   return <div ref={recaptchaRef} style={{ visibility: 'hidden', position: 'absolute' }}></div>;
 }

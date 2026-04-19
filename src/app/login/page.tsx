@@ -13,6 +13,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { ReCaptcha } from '@/components/auth/ReCaptcha';
+import { useRef } from 'react';
 
 export default function UnifiedLoginPage() {
   const { toast } = useToast();
@@ -26,6 +27,7 @@ export default function UnifiedLoginPage() {
   const [loginError, setLoginError] = useState("");
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const [recaptchaReady, setRecaptchaReady] = useState(false);
+  const recaptchaExecuteRef = useRef<(() => void) | null>(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
 
@@ -54,13 +56,15 @@ export default function UnifiedLoginPage() {
       return;
     }
 
-    // reCAPTCHA v2 Invisible: Token wird automatisch gesetzt, auf localhost/preview überspringen
-    const isPreview = window.location.hostname.includes('vercel.app') || window.location.hostname === 'localhost';
-    if (!recaptchaToken && !isPreview) {
+    // reCAPTCHA: Token prüfen, bei Bedarf neu anfordern
+    const isLocal = window.location.hostname === 'localhost';
+    if (!recaptchaToken && !isLocal) {
+      // Token noch nicht da – neu anfordern und warten
+      recaptchaExecuteRef.current?.();
       toast({
-        title: "Fehler",
-        description: "Sicherheitsprüfung läuft noch, bitte kurz warten.",
-        variant: "destructive"
+        title: "Sicherheitsprüfung",
+        description: "Bitte in 2 Sekunden erneut versuchen.",
+        variant: "default"
       });
       setIsSubmitting(false);
       return;
@@ -306,7 +310,10 @@ export default function UnifiedLoginPage() {
               </div>
             </div>
 
-            <ReCaptcha onVerify={(token) => { setRecaptchaToken(token); setRecaptchaReady(!!token); }} />
+            <ReCaptcha
+              onVerify={(token) => { setRecaptchaToken(token); setRecaptchaReady(!!token); }}
+              onExecuteReady={(fn) => { recaptchaExecuteRef.current = fn; }}
+            />
 
             <Button 
               type="submit" 
