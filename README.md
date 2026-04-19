@@ -115,7 +115,10 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 ### Version 2.5.0 (aktuell)
 - **🔒 reCAPTCHA**: Umstellung auf v2 Invisible - keine Bildaufgaben mehr beim Login
-- **⚡ Login**: Status-Anzeige während Sicherheitsprüfung läuft
+- **⚡ Login**: Dynamische Sicherheitshinweise mit rotierenden wahrheitsgemäßen Texten
+- **📊 Login-Monitoring**: Admin-Widget mit Erfolgs-/Fehlversuche-Statistiken und Fehlergründen
+- **🚨 Verdächtige Accounts**: Automatische Erkennung bei ≥3 Fehlversuchen
+- **📋 Ereignislog**: Letzte Login-Versuche mit E-Mail (maskiert), Grund und Uhrzeit
 - **🏆 RWK-Tabellen**: KKP/KKG Scores werden jetzt korrekt aus allen Collections geladen (Mannschafts-Gesamt 0 Bug behoben)
 - **📄 Handzettel**: Abgabetermin dynamisch aus Saison-Name (KK = 15. August, LG = 1. März)
 - **📊 Gesamtergebnisliste**: Abgabetermin ebenfalls dynamisch eingefügt
