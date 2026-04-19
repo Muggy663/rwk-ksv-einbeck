@@ -528,6 +528,12 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /login_events/{event} {
+      allow create: if true; // Jeder kann Login-Events schreiben (auch nicht eingeloggt)
+      allow read: if isSuperAdmin();
+      allow update, delete: if false;
+    }
+
     // === LEGACY & FALLBACK ===
     
     match /events/{event} {

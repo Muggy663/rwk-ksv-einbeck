@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AdminStats } from '@/components/admin/AdminStats';
+import { LoginMonitor } from '@/components/admin/LoginMonitor';
 import { BackButton } from '@/components/ui/back-button';
 
 interface AgendaItem {
@@ -319,6 +320,9 @@ export default function AdminDashboardPage() {
 
       {/* Admin-Statistiken */}
       <AdminStats />
+
+      {/* Login-Monitoring */}
+      <LoginMonitor />
       
       <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         <Card className="shadow-lg hover:shadow-xl transition-shadow">

@@ -12,8 +12,40 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVe
 import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { ReCaptcha } from '@/components/auth/ReCaptcha';
-import { useRef } from 'react';
+import { logLoginEvent } from '@/lib/services/login-monitor-service';
+
+const SECURITY_HINTS = [
+  "🔒 Verbindung ist SSL-verschlüsselt",
+  "📋 Alle Login-Versuche werden protokolliert",
+  "⏱️ Fehlversuche führen zur Sperrung",
+  "🛡️ Angriffserkennung durch Firebase Security aktiv",
+  "🚫 Bei Missbrauch wird die IP-Adresse gesperrt",
+];
+
+function SecurityHint() {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex(i => (i + 1) % SECURITY_HINTS.length);
+        setVisible(true);
+      }, 400);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <p
+      className="text-xs text-center text-muted-foreground transition-opacity duration-400"
+      style={{ opacity: visible ? 1 : 0 }}
+    >
+      {SECURITY_HINTS[index]}
+    </p>
+  );
+}
 
 export default function UnifiedLoginPage() {
   const { toast } = useToast();
@@ -25,9 +57,7 @@ export default function UnifiedLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState("");
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-  const [recaptchaReady, setRecaptchaReady] = useState(false);
-  const recaptchaExecuteRef = useRef<(() => void) | null>(null);
+
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
 
@@ -56,26 +86,13 @@ export default function UnifiedLoginPage() {
       return;
     }
 
-    // reCAPTCHA: Token prüfen, bei Bedarf neu anfordern
-    const isLocal = window.location.hostname === 'localhost';
-    if (!recaptchaToken && !isLocal) {
-      // Token noch nicht da – neu anfordern und warten
-      recaptchaExecuteRef.current?.();
-      toast({
-        title: "Sicherheitsprüfung",
-        description: "Bitte in 2 Sekunden erneut versuchen.",
-        variant: "default"
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
       let user;
       
       if (isLogin) {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         user = userCredential.user;
+        await logLoginEvent('success', email);
         toast({
           title: "✅ Anmeldung erfolgreich",
           description: "Willkommen zurück!",
@@ -131,24 +148,29 @@ export default function UnifiedLoginPage() {
         case 'auth/wrong-password':
         case 'auth/invalid-login-credentials':
           errorMessage = "❌ Falsches Passwort oder E-Mail";
+          await logLoginEvent('failed', email, error.code);
           break;
         case 'auth/user-not-found':
           errorMessage = "❌ Benutzer nicht gefunden";
+          await logLoginEvent('failed', email, error.code);
           break;
         case 'auth/invalid-email':
           errorMessage = "❌ Ungültige E-Mail-Adresse";
           break;
         case 'auth/user-disabled':
           errorMessage = "❌ Benutzerkonto wurde deaktiviert";
+          await logLoginEvent('blocked', email, error.code);
           break;
         case 'auth/too-many-requests':
           errorMessage = "⏰ Zu viele Fehlversuche. Bitte später erneut versuchen";
+          await logLoginEvent('blocked', email, error.code);
           break;
         case 'auth/network-request-failed':
           errorMessage = "🌐 Netzwerkfehler. Bitte Internetverbindung prüfen";
           break;
         default:
           errorMessage = `❌ Anmeldung fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`;
+          await logLoginEvent('failed', email, error.code);
       }
       
       setLoginError(errorMessage);
@@ -310,11 +332,6 @@ export default function UnifiedLoginPage() {
               </div>
             </div>
 
-            <ReCaptcha
-              onVerify={(token) => { setRecaptchaToken(token); setRecaptchaReady(!!token); }}
-              onExecuteReady={(fn) => { recaptchaExecuteRef.current = fn; }}
-            />
-
             <Button 
               type="submit" 
               className="w-full" 
@@ -326,12 +343,7 @@ export default function UnifiedLoginPage() {
               }
             </Button>
 
-            {!recaptchaReady && (
-              <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-amber-400 animate-pulse"></span>
-                Sicherheitsprüfung läuft...
-              </p>
-            )}
+            <SecurityHint />
           </form>
           
           {loginError && (
