@@ -113,7 +113,12 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 ## 📋 Changelog
 
-### Version 2.5.0 (aktuell)
+### Version 2.5.1 (aktuell)
+- **🔒 Mannschaften**: Kontaktdaten Mannschaftsführer auch bei laufender Saison bearbeitbar
+- **📝 Selektive Sperre**: Alle anderen Felder (Name, Disziplin, Schützen) bleiben bei laufender Saison gesperrt
+- **ℹ️ Hinweis im Dialog**: Klarer Hinweis wenn nur Kontaktdaten geändert werden können
+
+### Version 2.5.0
 - **🔒 reCAPTCHA**: Umstellung auf v2 Invisible - keine Bildaufgaben mehr beim Login
 - **⚡ Login**: Dynamische Sicherheitshinweise mit rotierenden wahrheitsgemäßen Texten
 - **📊 Login-Monitoring**: Admin-Widget mit Erfolgs-/Fehlversuche-Statistiken und Fehlergründen
