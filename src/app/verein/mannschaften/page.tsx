@@ -373,24 +373,19 @@ export default function VereinMannschaftenPage() {
   // Effect 5: Fetch data for the dialog (shooters of the club, all teams for year for validation)
   const fetchDialogData = useCallback(async () => {
     const clubIdForDialog = activeClubId;
-    const seasonForDialog = allSeasons.find(s => s.id === (currentTeam?.seasonId || selectedSeasonId));
-    const compYearForDialog = currentTeam?.competitionYear || seasonForDialog?.competitionYear;
-
-
+    const seasonForDialog = allSeasons.find(s => s.id === selectedSeasonId);
+    const compYearForDialog = seasonForDialog?.competitionYear;
 
     if (!isFormOpen || !clubIdForDialog || compYearForDialog === undefined) {
       setAllClubShootersForDialog([]);
       setAllTeamsForValidation([]);
       setIsLoadingDialogData(false);
-
       return;
     }
 
     setIsLoadingDialogData(true);
     try {
-      // Hole Vereinsname für Excel-Import-Abfrage
       const clubDoc = await getFirestoreDoc(doc(db, 'clubs', clubIdForDialog));
-      const clubName = clubDoc.exists() ? clubDoc.data()?.name : null;
       
       const teamsForYearQuery = query(collection(db, TEAMS_COLLECTION), where("competitionYear", "==", compYearForDialog));
 
@@ -412,9 +407,7 @@ export default function VereinMannschaftenPage() {
 
       setAllClubShootersForDialog(Array.from(uniqueShooters.values()).sort((a, b) => (a.name || '').localeCompare(b.name || '')));
 
-
       const leagueMap = new Map(allLeagues.map(l => [l.id, l]));
-
       const teamsForValidationData: TeamValidationInfo[] = teamsForYearSnapshot.docs.map(d => {
         const teamData = d.data() as Team;
         const leagueInfo = teamData.leagueId ? leagueMap.get(teamData.leagueId) : null;
@@ -429,14 +422,13 @@ export default function VereinMannschaftenPage() {
       });
       setAllTeamsForValidation(teamsForValidationData);
 
-
     } catch (error) {
       logError("VMP DIALOG DEBUG: Error fetching dialog data:", error);
       toast({title: "Fehler Dialogdaten", description: (error as Error).message, variant: "destructive"});
     } finally {
       setIsLoadingDialogData(false);
     }
-  }, [isFormOpen, activeClubId, selectedSeasonId, currentTeam, allSeasons, allLeagues, toast]);
+  }, [isFormOpen, activeClubId, selectedSeasonId, allSeasons, allLeagues, toast]);
 
   useEffect(() => {
     if (isFormOpen) {
