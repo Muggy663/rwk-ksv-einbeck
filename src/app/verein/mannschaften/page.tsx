@@ -498,8 +498,8 @@ export default function VereinMannschaftenPage() {
       toast({ title: "Nicht autorisiert", description: "Sie können nur Mannschaften Ihres aktuell ausgewählten Vereins bearbeiten.", variant: "destructive" }); return;
     }
     
-    // Prüfung ob Team Ergebnisse hat und Benutzer kein Admin ist
-    if (!isAdmin && teamsWithResults.has(team.id)) {
+    // Bei laufender Saison: nur Kontaktdaten bearbeitbar (kein Block mehr)
+    if (!isReadOnly && !isAdmin && teamsWithResults.has(team.id)) {
       toast({ 
         title: "Bearbeitung nicht möglich", 
         description: "Diese Mannschaft hat bereits Ergebnisse eingetragen. Nur der RWK-Leiter (Admin) kann Mannschaften mit Ergebnissen bearbeiten.", 
@@ -603,6 +603,24 @@ export default function VereinMannschaftenPage() {
     if (!currentTeam || !currentTeam.name?.trim() || !activeClubId || !selectedSeasonId) {
       toast({ title: "Ungültige Eingabe", description: "Name der Mannschaft, Verein und Saison sind erforderlich.", variant: "destructive" });
       setIsSubmittingForm(false); 
+      return;
+    }
+
+    // Bei laufender Saison: Speichert nur Kontaktdaten
+    if (isReadOnly && !isAdmin) {
+      const teamDocRef = doc(db, TEAMS_COLLECTION, currentTeam.id!);
+      updateDoc(teamDocRef, {
+        captainName: currentTeam.captainName?.trim() || '',
+        captainEmail: currentTeam.captainEmail?.trim() || '',
+        captainPhone: currentTeam.captainPhone?.trim() || '',
+      }).then(() => {
+        toast({ title: "✅ Kontaktdaten gespeichert", description: "Mannschaftsführer-Daten wurden aktualisiert.", duration: 4000 });
+        setIsFormOpen(false);
+        setCurrentTeam(null);
+        fetchTeamsForClubAndSeason();
+      }).catch((error) => {
+        toast({ title: "Fehler", description: error.message, variant: "destructive" });
+      });
       return;
     }
 
@@ -1245,13 +1263,15 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                             variant="ghost" 
                             size="icon" 
                             onClick={() => handleEditTeam(team)} 
-                            disabled={isSubmittingForm || isDeletingTeam || isReadOnly || (!isAdmin && teamsWithResults.has(team.id))}
+                            disabled={isSubmittingForm || isDeletingTeam || (!isAdmin && !isReadOnly && teamsWithResults.has(team.id))}
                             className={`h-8 w-8 hover:bg-primary/10 ${
-                              isReadOnly || (!isAdmin && teamsWithResults.has(team.id)) ? 'opacity-50 cursor-not-allowed' : ''
+                              (!isAdmin && !isReadOnly && teamsWithResults.has(team.id)) ? 'opacity-50 cursor-not-allowed' : ''
                             }`}
-                            title={isReadOnly ? "Saison läuft – nur Anzeige möglich" : !isAdmin && teamsWithResults.has(team.id) 
-                              ? "Bearbeitung gesperrt - Team hat Ergebnisse (nur Admin)" 
-                              : "Mannschaft bearbeiten"
+                            title={isReadOnly 
+                              ? "🔒 Saison läuft – nur Kontaktdaten änderbar" 
+                              : !isAdmin && teamsWithResults.has(team.id) 
+                                ? "Bearbeitung gesperrt - Team hat Ergebnisse (nur Admin)" 
+                                : "Mannschaft bearbeiten"
                             }
                           >
                             <Edit className="h-4 w-4" />
@@ -1414,7 +1434,10 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                 <Alert variant="default" className="mb-4 bg-blue-50 border-blue-300 text-blue-700">
                     <InfoIcon className="h-4 w-4 text-blue-600" />
                     <UiAlertDescription>
-                        Hinweis zur Mannschaftsstärke: Bitte wählen Sie die Stärke Ihrer Mannschaft aus (I für die stärkste, II für die zweitstärkste usw.). Der Mannschaftsname wird automatisch vorgeschlagen. Die Ligazuweisung erfolgt durch den Rundenwettkampfleiter.
+                        {isReadOnly && !isAdmin
+                          ? "🔒 Saison läuft – nur Kontaktdaten des Mannschaftsführers können geändert werden."
+                          : "Hinweis zur Mannschaftsstärke: Bitte wählen Sie die Stärke Ihrer Mannschaft aus (I für die stärkste, II für die zweitstärkste usw.). Der Mannschaftsname wird automatisch vorgeschlagen. Die Ligazuweisung erfolgt durch den Rundenwettkampfleiter."
+                        }
                     </UiAlertDescription>
                 </Alert>
 
@@ -1431,6 +1454,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                           value={teamStrength}
                           onValueChange={handleTeamStrengthChange}
                           placeholder="Mannschaftsstärke wählen"
+                          disabled={isReadOnly && !isAdmin}
                           options={[
                             { value: "I", label: "I (Erste Mannschaft)" },
                             { value: "II", label: "II (Zweite Mannschaft)" },
@@ -1453,6 +1477,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                           onValueChange={(value) => setCurrentTeam(prev => prev ? {...prev, leagueType: value as FirestoreLeagueSpecificDiscipline} : null)}
                           required
                           placeholder="Disziplin wählen"
+                          disabled={isReadOnly && !isAdmin}
                           options={[
                             { value: "KKG", label: "Kleinkaliber Gewehr" },
                             { value: "KKP", label: "Kleinkaliber Pistole" },
@@ -1475,6 +1500,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                             id="vvm-teamOutOfCompetitionDialog"
                             checked={currentTeam?.outOfCompetition || false}
                             onCheckedChange={(checked) => setCurrentTeam(prev => prev ? {...prev, outOfCompetition: !!checked} : null)}
+                            disabled={isReadOnly && !isAdmin}
                           />
                           <Label htmlFor="vvm-teamOutOfCompetitionDialog" className="text-sm font-normal">
                             Diese Mannschaft außer Konkurrenz melden
@@ -1489,6 +1515,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                               onChange={(e) => setCurrentTeam(prev => prev ? {...prev, outOfCompetitionReason: e.target.value} : null)}
                               placeholder="z.B. Nachwuchsmannschaft, Gastmannschaft"
                               className="mt-1"
+                              disabled={isReadOnly && !isAdmin}
                             />
                           </div>
                         )}
@@ -1512,7 +1539,8 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                       value={currentTeam?.name || ''} 
                       onChange={(e) => handleFormInputChange('name', e.target.value)} 
                       placeholder={suggestedTeamName || "Wird automatisch generiert nach Auswahl der Mannschaftsstärke"}
-                      required 
+                      required
+                      disabled={isReadOnly && !isAdmin}
                     />
                     {suggestedTeamName && formMode === 'new' && (
                       <p className="text-xs text-muted-foreground mt-1">
