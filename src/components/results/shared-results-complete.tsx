@@ -507,6 +507,17 @@ export default function SharedResultsPage({
     
     const parsedRound = parseInt(selectedRound, 10);
     
+    // Duplikat-Prüfung
+    const isDuplicate = 
+      pendingScores.some(ps => ps.shooterId === selectedShooterId && ps.durchgang === parsedRound && ps.teamId === selectedTeamId) ||
+      justSavedScoreIdentifiers.some(js => js.shooterId === selectedShooterId && js.durchgang === parsedRound) ||
+      existingScoresForTeamAndRound.some(es => es.shooterId === selectedShooterId && es.durchgang === parsedRound);
+    
+    if (isDuplicate) {
+      toast({ title: "Ergebnis existiert bereits", description: `${shooter.name} hat bereits ein Ergebnis für Durchgang ${parsedRound}.`, variant: "destructive" });
+      return;
+    }
+    
     const newEntry = {
       tempId: Date.now().toString(),
       seasonId: selectedSeasonId,
@@ -741,7 +752,7 @@ export default function SharedResultsPage({
               
               const emailFormData = new FormData();
               emailFormData.append('subject', 'Neue Ergebnisse eingegangen');
-              emailFormData.append('message', `Neue Ergebnisse eingegangen:\r\n\r\nMannschaft: ${teamName}\r\nLiga: ${leagueName}\r\nDurchgang: ${entry.durchgang}\r\nAnzahl Ergebnisse: ${pendingScores.filter(p => p.durchgang === entry.durchgang).length}\r\nZeitpunkt: ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}\r\n\r\n📊 Ergebnis-Details:\r\n${resultDetails}\r\n\r\nEingegeben von: ${userName}\r\n\r\nDie Ergebnisse wurden digital erfasst und sind sofort in den RWK-Tabellen verfügbar.\r\n\r\nWICHTIGER HINWEIS:\r\nBitte antworten Sie NICHT auf diese E-Mail.\r\nBei Fragen oder Rückmeldungen schreiben Sie an: rwk-leiter-ksve@gmx.de\r\n\r\nMit sportlichen Grüßen\r\nMarcel Bünger\r\nRundenwettkampfleiter KSVE Einbeck`);
+              emailFormData.append('message', `Neue Ergebnisse eingegangen:\r\n\r\nMannschaft: ${teamName}\r\nLiga: ${leagueName}\r\nDurchgang: ${entry.durchgang}\r\nAnzahl Ergebnisse: ${pendingScores.filter(p => p.durchgang === entry.durchgang).length}\r\nZeitpunkt: ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}\r\n\r\n📊 Ergebnis-Details:\r\n${resultDetails}\r\n\r\nEingegeben von: ${userName}\r\n\r\nDie Ergebnisse wurden digital erfasst und sind sofort in den RWK-Tabellen verfügbar.`);
               emailFormData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
               
               const emailResponse = await fetch('/api/send-email', {

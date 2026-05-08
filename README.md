@@ -113,7 +113,12 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 ## 📋 Changelog
 
-### Version 2.5.1 (aktuell)
+### Version 2.5.1.1 (aktuell)
+- **🐛 Duplikat-Ergebnisse**: Doppelte Einträge beim manuellen Hinzufügen werden jetzt blockiert (Prüfung gegen DB, Zwischenliste und gerade gespeicherte Ergebnisse)
+- **📧 E-Mail Signatur**: Doppelte Signatur in Benachrichtigungs-E-Mails behoben
+- **🔍 Firestore Index**: `orderBy` aus dynamischen Collection-Queries entfernt, clientseitige Sortierung stattdessen (kein manueller Index-Aufwand pro Saison mehr)
+
+### Version 2.5.1
 - **🔒 Mannschaften**: Kontaktdaten Mannschaftsführer auch bei laufender Saison bearbeitbar
 - **📝 Selektive Sperre**: Alle anderen Felder (Name, Disziplin, Schützen) bleiben bei laufender Saison gesperrt
 - **ℹ️ Hinweis im Dialog**: Klarer Hinweis wenn nur Kontaktdaten geändert werden können

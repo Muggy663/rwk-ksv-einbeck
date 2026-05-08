@@ -263,14 +263,20 @@ export default function AdminEditResultsPage() {
         
         logDebug(`🔍 Admin: Versuche saison-spezifische Collection: ${seasonSpecificCollection}`);
         
-        scoresQuery = query(collection(db, seasonSpecificCollection), ...qConstraints, orderBy("entryTimestamp", "desc"));
+        scoresQuery = query(collection(db, seasonSpecificCollection), ...qConstraints);
       } catch (error) {
         logDebug(`⚠️ Admin: Saison-spezifische Collection nicht gefunden, verwende rwk_scores`);
-        scoresQuery = query(collection(db, SCORES_COLLECTION), ...qConstraints, orderBy("entryTimestamp", "desc"));
+        scoresQuery = query(collection(db, SCORES_COLLECTION), ...qConstraints);
       }
 
       const snapshot = await getDocs(scoresQuery);
-      const fetchedScores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScoreEntry));
+      const fetchedScores = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as ScoreEntry))
+        .sort((a, b) => {
+          const aTs = (a.entryTimestamp as Timestamp)?.toMillis() ?? 0;
+          const bTs = (b.entryTimestamp as Timestamp)?.toMillis() ?? 0;
+          return bTs - aTs;
+        });
       setDisplayedScores(fetchedScores);
       if (fetchedScores.length === 0) {
         toast({ title: "Keine Ergebnisse", description: "Für die gewählten Filter wurden keine Ergebnisse gefunden." });
