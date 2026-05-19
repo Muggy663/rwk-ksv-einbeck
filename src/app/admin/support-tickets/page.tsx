@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessagesSquare, Loader2, ExternalLink, Image as ImageIcon, Trash2, Reply } from 'lucide-react';
+import { MessagesSquare, Loader2, ExternalLink, Image as ImageIcon, Trash2, Reply, MailCheck } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, orderBy, getDocs, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -47,6 +47,8 @@ export default function SupportTicketsPage() {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [deletingTicket, setDeletingTicket] = useState<string | null>(null);
+  const [sendingVerification, setSendingVerification] = useState(false);
+  const [verificationSent, setVerificationSent] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -170,7 +172,25 @@ RWK Einbeck`
     }
   };
 
+  const handleSendVerification = async (email: string) => {
+    setSendingVerification(true);
+    try {
+      const res = await fetch('/api/admin/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: '', email }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      setVerificationSent(email);
+    } catch (error: any) {
+      alert('Fehler: ' + error.message);
+    } finally {
+      setSendingVerification(false);
+    }
+  };
+
   const openTicketDetails = (ticket: SupportTicket) => {
+    setVerificationSent(null);
     setSelectedTicket(ticket);
     setIsDialogOpen(true);
   };
@@ -425,6 +445,19 @@ RWK Einbeck`
                       <Reply className="h-4 w-4 mr-1" />
                       Antworten
                     </a>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSendVerification(selectedTicket.email)}
+                    disabled={sendingVerification || verificationSent === selectedTicket.email}
+                    className="border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300"
+                  >
+                    {sendingVerification
+                      ? <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      : <MailCheck className="h-4 w-4 mr-1" />}
+                    {verificationSent === selectedTicket.email ? '✅ Gesendet' : 'Verifizierungs-E-Mail senden'}
                   </Button>
                 </div>
               </div>

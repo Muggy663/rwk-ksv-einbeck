@@ -60,6 +60,8 @@ export default function UnifiedLoginPage() {
 
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +94,12 @@ export default function UnifiedLoginPage() {
       if (isLogin) {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         user = userCredential.user;
+        if (!user.emailVerified) {
+          setShowResendVerification(true);
+          setLoginError("📧 E-Mail-Adresse noch nicht bestätigt. Bitte prüfe deinen Posteingang (auch Spam).");
+          setIsSubmitting(false);
+          return;
+        }
         await logLoginEvent('success', email);
         toast({
           title: "✅ Anmeldung erfolgreich",
@@ -211,6 +219,30 @@ export default function UnifiedLoginPage() {
       logError('Fehler beim Laden der Berechtigungen:', error);
       // Fallback: Schießnachweis
       router.push('/schiessnachweis');
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setIsSendingVerification(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(userCredential.user);
+      toast({
+        title: "📧 Bestätigungs-E-Mail gesendet",
+        description: "Bitte auch im Spam-Ordner nachschauen!",
+        duration: 8000,
+      });
+      setShowResendVerification(false);
+    } catch (error: any) {
+      toast({
+        title: "Fehler",
+        description: error.code === 'auth/too-many-requests'
+          ? "⏰ Zu viele Anfragen. Bitte später erneut versuchen."
+          : "E-Mail konnte nicht gesendet werden.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingVerification(false);
     }
   };
 
@@ -347,10 +379,22 @@ export default function UnifiedLoginPage() {
           </form>
           
           {loginError && (
-            <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg space-y-2">
               <p className="text-sm text-red-700 dark:text-red-300 font-medium">
                 {loginError}
               </p>
+              {showResendVerification && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-red-300 text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-300"
+                  onClick={handleResendVerification}
+                  disabled={isSendingVerification}
+                >
+                  {isSendingVerification ? 'Wird gesendet...' : '📧 Bestätigungs-E-Mail erneut senden'}
+                </Button>
+              )}
             </div>
           )}
 

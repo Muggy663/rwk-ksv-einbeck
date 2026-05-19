@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Search, Loader2, UserCog } from 'lucide-react';
+import { Edit, Trash2, Search, Loader2, UserCog, MailCheck } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy, doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -40,6 +40,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
   const [userToDelete, setUserToDelete] = useState<UserPermission | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sendingVerificationFor, setSendingVerificationFor] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -118,6 +119,23 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
       setUserToDelete(null);
+    }
+  };
+
+  const handleResendVerification = async (user: UserPermission) => {
+    setSendingVerificationFor(user.uid);
+    try {
+      const res = await fetch('/api/admin/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: user.uid, email: user.email }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      toast({ title: '📧 Bestätigungs-E-Mail gesendet', description: `E-Mail an ${user.email} verschickt.` });
+    } catch (error: any) {
+      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+    } finally {
+      setSendingVerificationFor(null);
     }
   };
 
@@ -313,6 +331,17 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Bestätigungs-E-Mail erneut senden"
+                            onClick={() => handleResendVerification(user)}
+                            disabled={sendingVerificationFor === user.uid}
+                          >
+                            {sendingVerificationFor === user.uid
+                              ? <Loader2 className="h-4 w-4 animate-spin" />
+                              : <MailCheck className="h-4 w-4 text-blue-500" />}
+                          </Button>
                           <Button 
                             variant="ghost" 
                             size="icon" 
