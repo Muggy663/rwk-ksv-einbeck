@@ -95,10 +95,15 @@ export default function UnifiedLoginPage() {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         user = userCredential.user;
         if (!user.emailVerified && user.email !== 'admin@rwk-einbeck.de') {
-          setShowResendVerification(true);
-          setLoginError("📧 E-Mail-Adresse noch nicht bestätigt. Bitte prüfe deinen Posteingang (auch Spam).");
-          setIsSubmitting(false);
-          return;
+          // Fallback: Prüfe ob Admin das Konto manuell verifiziert hat
+          const permDoc = await getDoc(doc(db, 'user_permissions', user.uid));
+          const isAdminVerified = permDoc.exists() && permDoc.data()?.emailVerifiedByAdmin === true;
+          if (!isAdminVerified) {
+            setShowResendVerification(true);
+            setLoginError("📧 E-Mail-Adresse noch nicht bestätigt. Bitte prüfe deinen Posteingang (auch Spam).");
+            setIsSubmitting(false);
+            return;
+          }
         }
         await logLoginEvent('success', email);
         toast({

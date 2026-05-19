@@ -661,26 +661,45 @@ export default function SchießnachweisPage() {
         </Card>
       )}
 
-      {/* E-Mail Bestätigungs-Hinweis */}
-      {user && !user.emailVerified && (
-        <Card className="mb-6 sm:mb-8 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border-yellow-200 dark:border-yellow-800">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-yellow-800 dark:text-yellow-200 text-base sm:text-lg flex items-center gap-2">
-              ⚠️ E-Mail noch nicht bestätigt
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                Bitte bestätigen Sie Ihre E-Mail-Adresse. Wir haben Ihnen einen Bestätigungslink gesendet.
-              </p>
-              <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                📧 <strong>Tipp:</strong> Schauen Sie auch im Spam-Ordner nach!
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* E-Mail Bestätigungs-Hinweis mit Countdown */}
+      {user && !user.emailVerified && (() => {
+        const createdAt = user.metadata?.creationTime ? new Date(user.metadata.creationTime) : new Date();
+        const deadline = new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const now = new Date();
+        const daysLeft = Math.max(0, Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+        const isExpired = daysLeft === 0;
+        return (
+          <Card className={`mb-6 sm:mb-8 border-2 ${
+            isExpired
+              ? 'bg-red-50 dark:bg-red-950/20 border-red-400'
+              : daysLeft <= 2
+              ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-400'
+              : 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300'
+          }`}>
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className={`text-2xl font-bold min-w-[3rem] text-center rounded-lg p-2 ${
+                  isExpired ? 'bg-red-200 text-red-800' : daysLeft <= 2 ? 'bg-orange-200 text-orange-800' : 'bg-yellow-200 text-yellow-800'
+                }`}>
+                  {isExpired ? '!' : daysLeft}
+                </div>
+                <div className="flex-1">
+                  <p className={`font-semibold text-sm ${
+                    isExpired ? 'text-red-800 dark:text-red-200' : 'text-yellow-800 dark:text-yellow-200'
+                  }`}>
+                    {isExpired
+                      ? '⚠️ Bestätigungsfrist abgelaufen'
+                      : `⏳ Noch ${daysLeft} Tag${daysLeft !== 1 ? 'e' : ''} zur E-Mail-Bestätigung`}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Bitte bestätige deine E-Mail-Adresse. Schau auch im Spam-Ordner nach!
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Tipp des Tages */}
       <TippDesTagesCard />

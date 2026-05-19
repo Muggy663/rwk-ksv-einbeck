@@ -411,6 +411,7 @@ export default function AdminDashboardPage() {
               <Link href="/admin/license-management" passHref>
                 <Button className="w-full" variant="outline">💎 Vereinssoftware-Lizenzen</Button>
               </Link>
+              <BulkVerifyButton />
             </div>
           </CardContent>
         </Card>
