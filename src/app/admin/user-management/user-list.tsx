@@ -292,6 +292,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
                     <TableHead className="w-[200px]">Rolle</TableHead>
                     <TableHead className="w-[250px]">Vereine</TableHead>
                     <TableHead className="w-[100px]">Premium</TableHead>
+                    <TableHead className="w-[80px]">E-Mail ✓</TableHead>
                     <TableHead className="w-[100px] text-right">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -329,7 +330,13 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell>
+                        {(user as any).emailVerifiedByAdmin ? (
+                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300">✅ Ja</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-300">❌ Nein</Badge>
+                        )}
+                      </TableCell>
                         <div className="flex justify-end space-x-2">
                           <Button
                             variant="ghost"
