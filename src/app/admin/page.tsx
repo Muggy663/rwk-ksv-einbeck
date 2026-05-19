@@ -26,6 +26,21 @@ interface AgendaItem {
   versionTarget?: string; // Zielversion
 }
 
+
+function BulkVerifyButton() {
+  const [loading, setLoading] = React.useState(false);
+  const [done, setDone] = React.useState(null);
+  const handleClick = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/verify-existing-users', { method: 'POST' });
+      const data = await res.json();
+      setDone(data.updated ?? 0);
+    } catch (e) { setDone(-1); } finally { setLoading(false); }
+  };
+  if (done !== null) return <p className="text-xs text-green-600 font-medium">{done >= 0 ? done + ' User als verifiziert markiert' : 'Fehler'}</p>;
+  return <Button variant="outline" className="w-full text-xs" onClick={handleClick} disabled={loading}>{loading ? 'Laeuft...' : 'Bestehende User verifizieren'}</Button>;
+}
 export default function AdminDashboardPage() {
   const agendaItems: AgendaItem[] = [
     // Version 0.3.x - Stabilisierung & Kern-UX
