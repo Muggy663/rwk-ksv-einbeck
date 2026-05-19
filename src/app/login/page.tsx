@@ -94,7 +94,7 @@ export default function UnifiedLoginPage() {
       if (isLogin) {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         user = userCredential.user;
-        if (!user.emailVerified) {
+        if (!user.emailVerified && user.email !== 'admin@rwk-einbeck.de') {
           setShowResendVerification(true);
           setLoginError("📧 E-Mail-Adresse noch nicht bestätigt. Bitte prüfe deinen Posteingang (auch Spam).");
           setIsSubmitting(false);
