@@ -1,12 +1,12 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.5.1.2** | **Android: 0.9.4.1**
+**Version: 2.5.2** | **Android: 0.9.4.1**
 
 > **Social Training Platform für den deutschen Schießsport**
 
 Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und Social Training. Die erste Community-Plattform für Sportschützen mit Live-Wettkämpfen, Trainingsgruppen und erweiterten Statistiken.
 
-[![Version](https://img.shields.io/badge/Version-2.5.1.2-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.5.2-green?style=for-the-badge)](#)
 [![Social Training](https://img.shields.io/badge/Social_Training-Live-blue?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_16_+_Firebase-blue?style=for-the-badge)](#)
 [![Design](https://img.shields.io/badge/Design-Glassmorphism-purple?style=for-the-badge)](#)
@@ -115,7 +115,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
-**Aktuell: Version 2.5.1.2** – E-Mail-Verifizierung: Resend-Button auf Login-Seite + direkt im Admin Support-Ticket-Dialog.
+**Aktuell: Version 2.5.2** – TypeScript-Sicherheitsfixes: alle catch-Blöcke und ungetypte reduce-Aufrufe gesichert, API-Routen mit Auth-Checks versehen.
 
 ## 📸 Screenshots
 
@@ -155,7 +155,7 @@ Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: heute - Version 2.5.1.2*
+*Letzte Aktualisierung: heute - Version 2.5.2*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

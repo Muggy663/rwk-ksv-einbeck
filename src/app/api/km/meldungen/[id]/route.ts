@@ -35,7 +35,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     
   } catch (error) {
     logError('Fehler beim Update der Meldung:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: getErrorMessage(error) }, { status: 500 });
   }
 }
 
@@ -62,6 +62,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     
   } catch (error) {
     logError('Fehler beim Löschen der Meldung:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: getErrorMessage(error) }, { status: 500 });
   }
 }

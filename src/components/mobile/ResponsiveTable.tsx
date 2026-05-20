@@ -23,35 +23,32 @@ export function ResponsiveTable({
   // Füge mobile-spezifische Klassen zu den Tabellenzellen hinzu
   const enhancedChildren = React.Children.map(children, (child) => {
     if (!React.isValidElement(child)) return child;
+    type AnyProps = Record<string, unknown> & { children?: React.ReactNode; className?: string };
 
-    // Wenn es sich um eine Tabelle handelt
     if (child.type === 'table') {
-      return React.cloneElement(child, {
-        className: cn(
-          child.props.className,
-          'rwk-table',
-          fullWidth && 'w-full'
-        ),
-        children: React.Children.map(child.props.children, (tableChild) => {
+      const tableEl = child as React.ReactElement<AnyProps>;
+      return React.cloneElement(tableEl, {
+        className: cn(tableEl.props.className, 'rwk-table', fullWidth && 'w-full'),
+        children: React.Children.map(tableEl.props.children, (tableChild) => {
           if (!React.isValidElement(tableChild)) return tableChild;
+          const tableChildEl = tableChild as React.ReactElement<AnyProps>;
 
-          // Für thead, tbody, tfoot
-          if (['thead', 'tbody', 'tfoot'].includes(tableChild.type as string)) {
-            return React.cloneElement(tableChild, {
-              children: React.Children.map(tableChild.props.children, (rowChild) => {
+          if (['thead', 'tbody', 'tfoot'].includes(tableChildEl.type as string)) {
+            return React.cloneElement(tableChildEl, {
+              children: React.Children.map(tableChildEl.props.children, (rowChild) => {
                 if (!React.isValidElement(rowChild)) return rowChild;
+                const rowEl = rowChild as React.ReactElement<AnyProps>;
 
-                // Für tr
-                if (rowChild.type === 'tr') {
-                  return React.cloneElement(rowChild, {
-                    children: React.Children.map(rowChild.props.children, (cellChild, cellIndex) => {
+                if (rowEl.type === 'tr') {
+                  return React.cloneElement(rowEl, {
+                    children: React.Children.map(rowEl.props.children, (cellChild, cellIndex) => {
                       if (!React.isValidElement(cellChild)) return cellChild;
+                      const cellEl = cellChild as React.ReactElement<AnyProps>;
 
-                      // Für th und td
-                      if (['th', 'td'].includes(cellChild.type as string)) {
-                        return React.cloneElement(cellChild, {
+                      if (['th', 'td'].includes(cellEl.type as string)) {
+                        return React.cloneElement(cellEl, {
                           className: cn(
-                            cellChild.props.className,
+                            cellEl.props.className,
                             hiddenColumns.includes(cellIndex) && 'hide-on-mobile'
                           )
                         });

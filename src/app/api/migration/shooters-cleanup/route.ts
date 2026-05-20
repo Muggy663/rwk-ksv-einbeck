@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
 
@@ -47,7 +47,7 @@ export async function POST() {
     logError('❌ MIGRATION ERROR:', error);
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     }, { status: 500 });
   }
 }

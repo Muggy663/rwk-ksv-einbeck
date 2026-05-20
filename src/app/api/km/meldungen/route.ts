@@ -1,6 +1,6 @@
 // src/app/api/km/meldungen/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { KMMeldung } from '@/types/km';
@@ -145,15 +145,15 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logError('Fehler beim Erstellen der Meldung:', error);
     logError('Error details:', {
-      message: error.message,
-      code: error.code,
-      stack: error.stack
+      message: getErrorMessage(error),
+      code: getErrorMessage(error),
+      stack: getErrorMessage(error)
     });
     return NextResponse.json({
       success: false,
-      error: `Fehler: ${error.message}`,
-      details: error.code || 'unknown',
-      fullError: error.toString()
+      error: `Fehler: ${getErrorMessage(error)}`,
+      details: getErrorMessage(error) || 'unknown',
+      fullError: getErrorMessage(error)
     }, { status: 500 });
   }
 }
@@ -234,7 +234,7 @@ export async function GET(request: NextRequest) {
         }));
         alleMeldungen.push(...meldungen);
       } catch (e) {
-        logError(`DEBUG: Fehler bei Collection ${disziplin}:`, e.message);
+        logError(`DEBUG: Fehler bei Collection ${disziplin}:`, getErrorMessage(e));
       }
     }
     
@@ -266,7 +266,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: [],
-      message: `Fehler beim Laden: ${error.message}`
+      message: `Fehler beim Laden: ${getErrorMessage(error)}`
     });
   }
 }

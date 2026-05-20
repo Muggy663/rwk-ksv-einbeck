@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -98,7 +98,7 @@ export default function GeneratorPage() {
         alert('Gemini Fehler: ' + result.error);
       }
     } catch (error) {
-      alert('Fehler: ' + error.message);
+      alert('Fehler: ' + getErrorMessage(error));
     } finally {
       setGeminiLoading(false);
     }
@@ -127,7 +127,7 @@ export default function GeneratorPage() {
         alert('Gemini Fehler: ' + result.error);
       }
     } catch (error) {
-      alert('Fehler: ' + error.message);
+      alert('Fehler: ' + getErrorMessage(error));
     } finally {
       setGeminiLoading(false);
     }

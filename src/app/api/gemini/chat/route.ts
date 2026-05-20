@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { GoogleGenAI } from '@google/genai';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
@@ -89,7 +89,7 @@ Beachte dabei:
     logError('Gemini Chat Fehler:', error);
     return NextResponse.json({
       success: false,
-      error: `Chat Fehler: ${error.message}`
+      error: `Chat Fehler: ${getErrorMessage(error)}`
     }, { status: 500 });
   }
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     logError('Fehler bei der Migration:', error);
     return NextResponse.json({
       success: false,
-      error: `Migration fehlgeschlagen: ${error.message}`
+      error: `Migration fehlgeschlagen: ${getErrorMessage(error)}`
     }, { status: 500 });
   }
 }

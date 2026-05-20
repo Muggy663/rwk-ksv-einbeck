@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { GoogleGenAI } from '@google/genai';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
@@ -70,9 +70,8 @@ Erstelle einen kurzen, professionellen Text in ICH-FORM für Behörden.`;
   } catch (error) {
     logError('❌ Gemini Behördentext Fehler:', error);
     logError('Error Details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
+      message: getErrorMessage(error),
+      name: error instanceof Error ? error.name : 'unknown'
     });
     
     try {
@@ -104,8 +103,8 @@ Erstelle einen kurzen, professionellen Text in ICH-FORM für Behörden.`;
       logError('❌ Auch Fallback fehlgeschlagen:', fallbackError);
       return NextResponse.json({
         success: false,
-        error: `Fehler bei Textgenerierung: ${error.message}`,
-        fallbackError: fallbackError.message
+        error: `Fehler bei Textgenerierung: ${getErrorMessage(error)}`,
+        fallbackError: getErrorMessage(fallbackError)
       }, { status: 500 });
     }
   }

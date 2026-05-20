@@ -1,9 +1,10 @@
 {
   "name": "rwk-ksv-einbeck-portal",
-  "version": "2.5.1.2",
+  "version": "2.5.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:webpack": "next dev --no-turbopack",
     "build": "next build",
     "build:capacitor": "set NEXT_CONFIG=capacitor && next build",
     "start": "next start",

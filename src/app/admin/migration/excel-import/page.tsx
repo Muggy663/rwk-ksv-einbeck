@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, FileSpreadsheet, CheckCircle, XCircle } from 'lucide-react';
@@ -37,7 +37,7 @@ export default function ExcelImportPage() {
     } catch (error) {
       setResult({
         success: false,
-        error: 'Fehler beim Import: ' + error.message
+        error: 'Fehler beim Import: ' + getErrorMessage(error)
       });
     } finally {
       setLoading(false);

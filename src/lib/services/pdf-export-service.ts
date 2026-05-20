@@ -40,12 +40,12 @@ export class PDFExportService {
       const gefilterteStartliste = startliste.startliste || startliste || [];
       
       // Gruppiere nur nach Startzeiten und sortiere korrekt
-      const nachStartzeit = gefilterteStartliste.reduce((acc, s) => {
+      const nachStartzeit = gefilterteStartliste.reduce((acc: Record<string, any[]>, s) => {
         const zeit = s.startzeit || config?.startzeit || '14:00';
         if (!acc[zeit]) acc[zeit] = [];
         acc[zeit].push(s);
         return acc;
-      }, {});
+      }, {} as Record<string, any[]>);
       
       const datum = config?.datum ? new Date(config.datum).toLocaleDateString('de-DE', {
         weekday: 'long',
@@ -60,7 +60,7 @@ export class PDFExportService {
       
       Object.entries(nachStartzeit)
         .sort(([zeitA], [zeitB]) => zeitA.localeCompare(zeitB)) // Sortiere Uhrzeiten korrekt
-        .forEach(([startzeit, starterGruppe], startzeitIndex) => {
+        .forEach(([startzeit, starterGruppe]: [string, any[]], startzeitIndex) => {
           if (isFirstStart) {
             doc.addPage();
             isFirstStart = false;

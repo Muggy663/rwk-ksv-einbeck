@@ -140,3 +140,16 @@ export const logPerformance = (operation: string, duration: number, context?: Lo
   const sanitizedOperation = String(operation).replace(/[\r\n\t<>'"&]/g, '_').substring(0, 200);
   secureLogger.performance(sanitizedOperation, duration, context);
 };
+
+/**
+ * Hilfsfunktion: Extrahiert eine lesbare Fehlermeldung aus einem unknown catch-Wert.
+ * Verhindert TS18046-Fehler bei `catch (error) { error.message }`.
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return String(error);
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -397,7 +397,7 @@ export default function KMErgebnissePage() {
       logError('❌ Speichern fehlgeschlagen:', error);
       toast({ 
         title: '❌ Speichern fehlgeschlagen', 
-        description: `${meldung.schuetzenName}: ${error.message || 'Unbekannter Fehler'}`,
+        description: `${meldung.schuetzenName}: ${getErrorMessage(error) || 'Unbekannter Fehler'}`,
         variant: 'destructive',
         duration: 5000
       });
@@ -479,7 +479,7 @@ export default function KMErgebnissePage() {
             return acc;
           }, {} as {[verein: string]: any[]});
           
-          const hatMannschaften = Object.values(vereinsgruppen).some(schuetzen => schuetzen.length >= 3);
+          const hatMannschaften = Object.values(vereinsgruppen).some((schuetzen: any[]) => schuetzen.length >= 3);
           
           if (hatMannschaften) {
             uebersichtData.push([
@@ -531,8 +531,8 @@ export default function KMErgebnissePage() {
           }, {} as {[verein: string]: any[]});
           
           const mannschaftsErgebnisse = Object.entries(vereinsgruppen)
-            .filter(([verein, schuetzen]) => schuetzen.length >= 3)
-            .map(([verein, schuetzen]) => {
+            .filter(([verein, schuetzen]: [string, any[]]) => schuetzen.length >= 3)
+            .map(([verein, schuetzen]: [string, any[]]) => {
               const beste3 = schuetzen
                 .sort((a, b) => (b.kmErgebnis?.ringe || 0) - (a.kmErgebnis?.ringe || 0))
                 .slice(0, 3);

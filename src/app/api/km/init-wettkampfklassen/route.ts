@@ -1,6 +1,6 @@
 // src/app/api/km/init-wettkampfklassen/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 
@@ -90,11 +90,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     logError('Fehler beim Initialisieren der Wettkampfklassen:', error);
-    
     return NextResponse.json({
       success: false,
-      error: `Fehler beim Initialisieren der Wettkampfklassen: ${error.message}`,
-      details: error.toString()
+      error: `Fehler beim Initialisieren der Wettkampfklassen: ${getErrorMessage(error)}`,
+      details: String(error)
     }, { status: 500 });
   }
 }

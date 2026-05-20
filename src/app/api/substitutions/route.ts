@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn } from '@/lib/utils/secure-logger';
+import { verifyApiAuth } from '@/lib/auth/api-auth';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
+  // Authentifizierung erforderlich – nur eingeloggte Benutzer mit Berechtigung
+  const user = await verifyApiAuth(request);
+  if (!user) {
+    logWarn('Unauthorized access attempt to substitutions', 'substitutions-api');
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
   try {
     const { action, substitutionId, teamId } = await request.json();
 

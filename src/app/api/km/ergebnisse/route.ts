@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     logError('Fehler beim Speichern des KM-Ergebnisses:', error);
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     }, { status: 500 });
   }
 }

@@ -1,6 +1,6 @@
 // src/app/api/km/mannschaften/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
 export async function PUT(
@@ -33,7 +33,7 @@ export async function PUT(
     logError('Fehler beim Aktualisieren der Mannschaft:', error);
     return NextResponse.json({
       success: false,
-      error: `Fehler: ${error.message}`
+      error: getErrorMessage(error)
     }, { status: 500 });
   }
 }
@@ -63,7 +63,7 @@ export async function DELETE(
     logError('Fehler beim Löschen der Mannschaft:', error);
     return NextResponse.json({
       success: false,
-      error: `Fehler: ${error.message}`
+      error: `Fehler: ${getErrorMessage(error)}`
     }, { status: 500 });
   }
 }

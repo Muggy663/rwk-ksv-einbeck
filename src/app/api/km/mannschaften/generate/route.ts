@@ -1,6 +1,6 @@
 // src/app/api/km/mannschaften/generate/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     logInfo('Alle Regel-Keys:', { data: Object.keys(mannschaftsregeln) });
     
     // Mannschaftsregeln - Gruppiere nach echten Altersklassen
-    const gruppiert = {};
+    const gruppiert: Record<string, { vereinId: string; disziplin: any; gruppenKey: string; schuetzen: any[]; club: any }> = {};
     
     logInfo('Starte Gruppierung von', { data: meldungen.length, meldungen: true });
     
@@ -269,7 +269,7 @@ export async function POST(request: NextRequest) {
     logError('Fehler beim Generieren der Mannschaften:', error);
     return NextResponse.json({
       success: false,
-      error: `Fehler: ${error.message}`
+      error: `Fehler: ${getErrorMessage(error)}`
     }, { status: 500 });
   }
 }

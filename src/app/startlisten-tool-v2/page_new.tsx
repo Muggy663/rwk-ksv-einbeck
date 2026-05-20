@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { getDocs, collection, query, orderBy, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
-import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
+import { logInfo, logWarn, logError, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
 
 export default function StartlistenToolV2() {
   const searchParams = useSearchParams();
@@ -131,7 +131,7 @@ export default function StartlistenToolV2() {
       verarbeitet = verarbeitet.filter(m => selectedDisziplinen.includes(m.disziplin));
     }
 
-    const nachDisziplin = {};
+    const nachDisziplin: Record<string, typeof meldungen> = {};
     verarbeitet.forEach(m => {
       const disziplinName = m.disziplin;
       if (!nachDisziplin[disziplinName]) {
@@ -228,7 +228,7 @@ export default function StartlistenToolV2() {
         logError('Gemini Fehler:', result.error);
       }
     } catch (error) {
-      logError('Fehler:', error.message);
+      logError('Fehler:', getErrorMessage(error));
     } finally {
       setGeminiLoading(false);
     }

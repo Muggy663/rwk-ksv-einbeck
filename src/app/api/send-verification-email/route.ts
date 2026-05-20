@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { Resend } from 'resend';
+import { sanitizeInput, validateEmail } from '@/lib/utils/input-validator';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, verificationLink, displayName } = await request.json();
+    const body = await request.json();
+
+    // Input-Validierung und Sanitisierung
+    const email = sanitizeInput(body.email || '');
+    const verificationLink = sanitizeInput(body.verificationLink || '');
+    const displayName = sanitizeInput(body.displayName || '');
 
     if (!email || !verificationLink) {
       return NextResponse.json(
@@ -14,6 +20,26 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // E-Mail-Adresse validieren
+    if (!validateEmail(email)) {
+      logWarn('Invalid email address in send-verification-email', 'verification-email-api');
+      return NextResponse.json(
+        { error: 'Ungültige E-Mail-Adresse' },
+        { status: 400 }
+      );
+    }
+
+    // Verification-Link muss eine HTTPS-URL sein
+    if (!verificationLink.startsWith('https://')) {
+      logWarn('Invalid verification link in send-verification-email', 'verification-email-api');
+      return NextResponse.json(
+        { error: 'Ungültiger Bestätigungslink' },
+        { status: 400 }
+      );
+    }
+
+    const safeDisplayName = displayName || 'beim Schießnachweis';
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -29,7 +55,7 @@ export async function POST(request: NextRequest) {
           </div>
           
           <div style="background: #f9fafb; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
-            <h2 style="color: #1f2937; margin-top: 0;">Willkommen ${displayName ? displayName : 'beim Schießnachweis'}</h2>
+            <h2 style="color: #1f2937; margin-top: 0;">Willkommen ${safeDisplayName}</h2>
             <p>Vielen Dank für Ihre Registrierung beim digitalen Schießnachweis der RWK Einbeck App.</p>
             <p>Um Ihr Konto zu aktivieren, bestätigen Sie bitte Ihre E-Mail-Adresse:</p>
             
@@ -76,7 +102,6 @@ export async function POST(request: NextRequest) {
       to: email,
       subject: 'E-Mail Bestätigung - RWK Einbeck Schießnachweis',
       html: emailHtml,
-      // Spam-Score verbessern
       headers: {
         'X-Priority': '3',
         'X-MSMail-Priority': 'Normal',

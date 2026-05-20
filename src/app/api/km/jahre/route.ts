@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     logError('Fehler beim Erstellen der KM-Saison:', error);
     return NextResponse.json({
       success: false,
-      error: `Fehler: ${error.message}`
+      error: `Fehler: ${getErrorMessage(error)}`
     }, { status: 500 });
   }
 }
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: [],
-      message: `Fehler beim Laden: ${error.message}`
+      message: `Fehler beim Laden: ${getErrorMessage(error)}`
     });
   }
 }

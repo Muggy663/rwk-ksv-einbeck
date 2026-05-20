@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, getErrorMessage, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,7 +48,7 @@ export default function ClubMigrationPage() {
       setMigrationStatus(prev => ({ ...prev, shooters: 'error' }));
       setMigrationResults(prev => ({ 
         ...prev, 
-        errors: [...(prev.errors || []), `Shooter-Migration: ${error.message}`]
+        errors: [...(prev.errors || []), `Shooter-Migration: ${getErrorMessage(error)}`]
       }));
     }
   };
@@ -65,7 +65,7 @@ export default function ClubMigrationPage() {
       setMigrationStatus(prev => ({ ...prev, vereinsrecht: 'error' }));
       setMigrationResults(prev => ({ 
         ...prev, 
-        errors: [...(prev.errors || []), `Vereinsrecht-Migration: ${error.message}`]
+        errors: [...(prev.errors || []), `Vereinsrecht-Migration: ${getErrorMessage(error)}`]
       }));
     }
   };

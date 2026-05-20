@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -636,7 +636,7 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
                             loadCompetitions();
                           } catch (error) {
                             logError('Join competition error:', error);
-                            toast({ title: "Fehler", description: `Beitritt fehlgeschlagen: ${error.message}`, variant: "destructive" });
+                            toast({ title: "Fehler", description: `Beitritt fehlgeschlagen: ${getErrorMessage(error)}`, variant: "destructive" });
                           }
                         }}
                         disabled={competition.participants.includes(user?.uid || '')}

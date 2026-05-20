@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
 import { Target, Plus, Calendar, TrendingUp, FileText, Download, Upload, Crown, Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -157,7 +157,7 @@ export default function SchießnachweisPage() {
         }
       }
     } catch (error) {
-      logDebug('Cloud-Sync übersprungen:', error.message);
+      logDebug('Cloud-Sync übersprungen:', getErrorMessage(error));
     }
   };
 
@@ -208,7 +208,7 @@ export default function SchießnachweisPage() {
       logError('Excel-Export fehlgeschlagen:', error);
       toast({
         title: "Export fehlgeschlagen",
-        description: error instanceof Error ? error.message : "Unbekannter Fehler",
+        description: error instanceof Error ? getErrorMessage(error) : "Unbekannter Fehler",
         variant: "destructive"
       });
     }
@@ -306,7 +306,7 @@ export default function SchießnachweisPage() {
     } catch (error) {
       toast({
         title: "Import fehlgeschlagen",
-        description: error instanceof Error ? error.message : "Unbekannter Fehler",
+        description: error instanceof Error ? getErrorMessage(error) : "Unbekannter Fehler",
         variant: "destructive"
       });
     }
@@ -336,7 +336,7 @@ export default function SchießnachweisPage() {
       logError('Daten-Aktualisierung fehlgeschlagen:', error);
       toast({
         title: "Aktualisierung fehlgeschlagen",
-        description: error instanceof Error ? error.message : "Unbekannter Fehler",
+        description: error instanceof Error ? getErrorMessage(error) : "Unbekannter Fehler",
         variant: "destructive"
       });
     }

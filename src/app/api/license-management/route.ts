@@ -1,33 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { db } from '@/lib/firebase/config';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { logError, logWarn } from '@/lib/utils/secure-logger';
+import { verifyApiAuth } from '@/lib/auth/api-auth';
+import { adminDb } from '@/lib/firebase/admin';
 
 export async function POST(request: NextRequest) {
+  // SuperAdmin-Authentifizierung erforderlich
+  const user = await verifyApiAuth(request);
+  if (!user) {
+    logWarn('Unauthorized access attempt to license-management', 'license-management-api');
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  if (user.email !== 'admin@rwk-einbeck.de') {
+    logWarn(`Forbidden access attempt to license-management by ${user.email}`, 'license-management-api');
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
-    const { action, userEmail, licenseType, duration } = await request.json();
-    
-    if (!userEmail) {
+    const { action, userEmail, duration } = await request.json();
+
+    if (!userEmail || typeof userEmail !== 'string') {
       return NextResponse.json({ error: 'User email required' }, { status: 400 });
     }
 
-    const userRef = doc(db, 'user_permissions', userEmail);
-    const userDoc = await getDoc(userRef);
-    
-    if (!userDoc.exists()) {
+    // Suche User über Admin SDK (sicherer als Client SDK)
+    const userPermissionsRef = adminDb.collection('user_permissions').doc(userEmail);
+    const userDoc = await userPermissionsRef.get();
+
+    if (!userDoc.exists) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    let updateData: any = {
+    let updateData: Record<string, unknown> = {
       updatedAt: new Date()
     };
 
     switch (action) {
-      case 'activate_trial':
-        // 3 Monate Testlizenz
+      case 'activate_trial': {
         const trialEnd = new Date();
         trialEnd.setMonth(trialEnd.getMonth() + 3);
-        
         updateData = {
           ...updateData,
           vereinssoftwareLicense: true,
@@ -37,34 +48,34 @@ export async function POST(request: NextRequest) {
           trialActivatedAt: new Date()
         };
         break;
+      }
 
-      case 'activate_full':
-        // Vollversion (unbegrenzt)
+      case 'activate_full': {
         updateData = {
           ...updateData,
           vereinssoftwareLicense: true,
           licenseType: 'FULL',
           licenseStartDate: new Date(),
-          licenseEndDate: null, // Unbegrenzt
+          licenseEndDate: null,
           fullLicenseActivatedAt: new Date()
         };
         break;
+      }
 
-      case 'extend_trial':
-        // Testzeit verlängern
-        const currentEnd = userDoc.data().licenseEndDate?.toDate() || new Date();
+      case 'extend_trial': {
+        const currentEnd = (userDoc.data()?.licenseEndDate as any)?.toDate?.() || new Date();
         const newEnd = new Date(currentEnd);
-        newEnd.setMonth(newEnd.getMonth() + (duration || 1));
-        
+        const months = typeof duration === 'number' && duration > 0 ? duration : 1;
+        newEnd.setMonth(newEnd.getMonth() + months);
         updateData = {
           ...updateData,
           licenseEndDate: newEnd,
           trialExtendedAt: new Date()
         };
         break;
+      }
 
-      case 'deactivate':
-        // Lizenz deaktivieren
+      case 'deactivate': {
         updateData = {
           ...updateData,
           vereinssoftwareLicense: false,
@@ -72,17 +83,17 @@ export async function POST(request: NextRequest) {
           licenseDeactivatedAt: new Date()
         };
         break;
+      }
 
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    await updateDoc(userRef, updateData);
+    await userPermissionsRef.update(updateData);
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `Lizenz-Aktion '${action}' für ${userEmail} erfolgreich`,
-      data: updateData
+    return NextResponse.json({
+      success: true,
+      message: `Lizenz-Aktion '${action}' für ${userEmail} erfolgreich`
     });
 
   } catch (error) {

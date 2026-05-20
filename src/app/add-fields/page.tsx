@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
@@ -68,7 +68,7 @@ export default function AddFieldsPage() {
           }
           
         } catch (error) {
-          setResult(prev => prev + `❌ Fehler bei ${docSnapshot.id}: ${error.message}\n`);
+          setResult(prev => prev + `❌ Fehler bei ${docSnapshot.id}: ${getErrorMessage(error)}\n`);
         }
       }
       
@@ -93,7 +93,7 @@ export default function AddFieldsPage() {
       setResult(prev => prev + '📱 Jetzt funktioniert die Mobil-Spalte überall!\n');
       
     } catch (error) {
-      setResult(prev => prev + `❌ Hauptfehler: ${error.message}\n`);
+      setResult(prev => prev + `❌ Hauptfehler: ${getErrorMessage(error)}\n`);
     } finally {
       setLoading(false);
     }

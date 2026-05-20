@@ -5,8 +5,16 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { secureLogger } from '@/lib/utils/secure-logger';
 import { sanitizeInput, InputValidator } from '@/lib/utils/input-validator';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { verifyApiAuth } from '@/lib/auth/api-auth';
 
 export async function POST(request: NextRequest) {
+  // Authentifizierung erforderlich
+  const user = await verifyApiAuth(request);
+  if (!user) {
+    secureLogger.warn('Unauthorized access attempt to POST /api/shooters', 'shooters-api');
+    return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const firstName = sanitizeInput(body.firstName);
@@ -160,6 +168,17 @@ export async function GET(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  // Nur SuperAdmin darf Schützen-Cleanup durchführen
+  const user = await verifyApiAuth(request);
+  if (!user) {
+    secureLogger.warn('Unauthorized access attempt to DELETE /api/shooters', 'shooters-api');
+    return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+  }
+  if (user.email !== 'admin@rwk-einbeck.de') {
+    secureLogger.warn(`Forbidden DELETE /api/shooters attempt by ${user.email}`, 'shooters-api');
+    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const url = new URL(request.url);
     const action = url.searchParams.get('action');

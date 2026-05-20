@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
@@ -103,7 +103,7 @@ export default function BulkUpdatePage() {
           await new Promise(resolve => setTimeout(resolve, 100));
           
         } catch (error) {
-          setResult(prev => prev + `❌ Fehler: ${error.message}\n`);
+          setResult(prev => prev + `❌ Fehler: ${getErrorMessage(error)}\n`);
           errors++;
         }
       }
@@ -116,7 +116,7 @@ export default function BulkUpdatePage() {
       setResult(prev => prev + '🚀 Jetzt in Vereinssoftware prüfen!\n');
       
     } catch (error) {
-      setResult(prev => prev + `❌ Hauptfehler: ${error.message}\n`);
+      setResult(prev => prev + `❌ Hauptfehler: ${getErrorMessage(error)}\n`);
     } finally {
       setLoading(false);
     }

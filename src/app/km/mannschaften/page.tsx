@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -253,7 +253,7 @@ function KMMannschaftenContent() {
       logError('❌ Generate error:', error);
       toast({ 
         title: '❌ Fehler', 
-        description: `Generierung fehlgeschlagen: ${error.message}`, 
+        description: `Generierung fehlgeschlagen: ${getErrorMessage(error)}`, 
         variant: 'destructive' 
       });
     } finally {

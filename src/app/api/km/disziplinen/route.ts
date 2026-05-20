@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError } from '@/lib/utils/secure-logger';
+import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { getAllDisziplinen } from '@/lib/services/km-disziplinen-service';
 import { adminDb } from '@/lib/firebase/admin';
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       success: false,
-      error: `Fehler beim Erstellen: ${error.message}`
+      error: `Fehler beim Erstellen: ${getErrorMessage(error)}`
     }, { status: 500 });
   }
 }

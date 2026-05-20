@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, getErrorMessage, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
@@ -102,7 +102,7 @@ export default function MigrationPage() {
       
     } catch (error) {
       logError('Migration Fehler:', error);
-      setMigrationStatus(`Fehler: ${error.message}`);
+      setMigrationStatus(`Fehler: ${getErrorMessage(error)}`);
     } finally {
       setIsRunning(false);
     }
@@ -209,7 +209,7 @@ export default function MigrationPage() {
       
     } catch (error) {
       logError('Update Fehler:', error);
-      setMigrationStatus(`Fehler: ${error.message}`);
+      setMigrationStatus(`Fehler: ${getErrorMessage(error)}`);
     } finally {
       setIsRunning(false);
     }

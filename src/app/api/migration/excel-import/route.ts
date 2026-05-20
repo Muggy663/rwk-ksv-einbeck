@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
+import { verifyApiAuth } from '@/lib/auth/api-auth';
 import { db } from '@/lib/firebase/config';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
 
 export async function POST(request: NextRequest) {
+  // Nur SuperAdmin darf Migrations-Imports durchführen
+  const user = await verifyApiAuth(request);
+  if (!user) {
+    logWarn('Unauthorized access attempt to excel-import', 'excel-import-api');
+    return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+  }
+
+  if (user.email !== 'admin@rwk-einbeck.de') {
+    logWarn(`Forbidden access attempt to excel-import by ${user.email}`, 'excel-import-api');
+    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     logDebug('📊 MIGRATION: Starte Excel-Import...');
     
@@ -136,7 +149,7 @@ export async function POST(request: NextRequest) {
         }
         
       } catch (error) {
-        errors.push(`Zeile ${i + 1}: ${error.message}`);
+        errors.push(`Zeile ${i + 1}: ${getErrorMessage(error)}`);
         skipped++;
       }
     }
@@ -158,7 +171,7 @@ export async function POST(request: NextRequest) {
     logError('❌ MIGRATION IMPORT ERROR:', error);
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     }, { status: 500 });
   }
 }

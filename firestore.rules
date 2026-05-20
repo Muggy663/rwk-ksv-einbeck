@@ -669,6 +669,20 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
     
+    // === AUSBILDUNGSMODUL ===
+
+    // Kurse: öffentlich lesbar (nur nicht-Entwürfe), schreiben nur Admin
+    match /ausbildung_kurse/{kursId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // Anmeldungen: erstellen für alle (auch nicht eingeloggt), lesen/verwalten nur Admin
+    match /ausbildung_anmeldungen/{anmeldungId} {
+      allow create: if true; // Anmeldung ohne Login möglich
+      allow read, update, delete: if isSuperAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

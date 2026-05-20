@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,12 @@ import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 
 export default function MannschaftsregelnAdmin() {
   const { toast } = useToast();
-  const [regeln, setRegeln] = useState(null);
+  const [regeln, setRegeln] = useState<{
+    version: string;
+    mannschaftsgroesse: number;
+    disziplinRegeln: Record<string, { altersklassenRegeln: string; aktiv: boolean }>;
+    altersklassenKombinationen: Record<string, string[]>;
+  } | null>(null);
   const [disziplinen, setDisziplinen] = useState([]);
   const [loading, setLoading] = useState(true);
 

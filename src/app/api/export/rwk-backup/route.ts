@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import * as XLSX from 'xlsx';
 
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     logError('❌ BACKUP ERROR:', error);
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     }, { status: 500 });
   } finally {
     scoresSnapshot = null;

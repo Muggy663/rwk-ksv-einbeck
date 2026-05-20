@@ -166,7 +166,7 @@ Format: [{"shooterName": "Max Mustermann", "teamName": "Team A", "score": 285, "
         // Race zwischen Response und Timeout
         response = await Promise.race([
           responsePromise,
-          new Promise((_, reject) => 
+          new Promise<never>((_, reject) => 
             setTimeout(() => reject(new Error('Gemini API timeout')), timeoutMs)
           )
         ]);

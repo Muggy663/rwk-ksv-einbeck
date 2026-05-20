@@ -4,7 +4,17 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
-## Version 2.5.1.2 (aktuell)
+## Version 2.5.2 (aktuell)
+- **🔒 Sicherheit**: Alle ungeschützten API-Routen mit Auth-Checks versehen (bulk-delete, license-management, substitutions, shooters, set-download-count, send-verification-email, excel-import, assign-roles)
+- **🗑️ API**: `/api/repair-substitution` deaktiviert (war einmaliger DB-Fix mit hardcodierten IDs)
+- **🛡️ XSS-Fix**: Benutzereingaben in Support-E-Mails werden jetzt sanitisiert
+- **⚙️ Middleware**: `securityMiddleware` wird jetzt tatsächlich aufgerufen – Security Headers aktiv
+- **🔧 TypeScript**: Alle 120 TS18046-Fehler behoben – `catch (error)` Blöcke überall mit `getErrorMessage()` gesichert
+- **🔧 TypeScript**: Ungetypte `reduce({})` Aufrufe in Startlisten, PDF-Export und KM-Seiten mit expliziten Typen versehen
+- **🔧 TypeScript**: React-Children-Traversal in `smart-table.tsx` und `ResponsiveTable.tsx` korrekt getyped
+- **🎓 Ausbildung**: Grundgerüst für Ausbildungsmodul angelegt (`/ausbildung`) – noch nicht öffentlich verlinkt
+
+## Version 2.5.1.2
 - **📧 E-Mail-Verifizierung (Login)**: "Bestätigungs-E-Mail erneut senden"-Button auf der Login-Seite – erscheint automatisch wenn ein Konto noch nicht verifiziert ist
 - **🛠️ E-Mail-Verifizierung (Admin)**: Neuer Button direkt im Support-Ticket-Dialog – Verifizierungslink per Firebase Admin SDK generieren und per E-Mail versenden ohne Umweg über die Benutzerverwaltung
 - **⚙️ API**: Neue Route `/api/admin/resend-verification` für serverseitiges Generieren von Verifizierungslinks

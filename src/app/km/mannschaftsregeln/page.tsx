@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,12 @@ import { useKMAuth } from '@/hooks/useKMAuth';
 export default function KMMannschaftsregelnAdmin() {
   const { hasKMAccess, userRole, loading: authLoading } = useKMAuth();
   const { toast } = useToast();
-  const [regeln, setRegeln] = useState(null);
+  const [regeln, setRegeln] = useState<{
+    version: string;
+    mannschaftsgroesse: number;
+    disziplinRegeln: Record<string, { erlaubteKombinationen: string[]; aktiv: boolean }>;
+    altersklassenKombinationen: Record<string, string[]>;
+  } | null>(null);
   const [disziplinen, setDisziplinen] = useState([]);
   const [altersklassen, setAltersklassen] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +67,7 @@ export default function KMMannschaftsregelnAdmin() {
       }
     } catch (error) {
       logError('Fehler beim Laden:', error);
-      setError(error.message);
+      setError(getErrorMessage(error));
     } finally {
       setLoading(false);
     }

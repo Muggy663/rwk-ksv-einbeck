@@ -2,7 +2,7 @@
 // src/app/admin/results/page.tsx
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, getErrorMessage, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -581,7 +581,7 @@ Die Handzettel sind als Anhang beigefügt.`);
       }
     } catch (error) {
       logError('Handzettel-Versand Fehler:', error);
-      const errorDetails = error instanceof Error ? error.message : String(error);
+      const errorDetails = error instanceof Error ? getErrorMessage(error) : String(error);
       
       toast({ 
         title: "❌ Versand fehlgeschlagen", 
@@ -727,10 +727,10 @@ Die Handzettel sind als Anhang beigefügt.`);
             }
           } catch (error) {
             logError('Handzettel-Upload Fehler:', error);
-            progressToast.error(`E-Mail-Versand fehlgeschlagen: ${error.message || error}`);
+            progressToast.error(`E-Mail-Versand fehlgeschlagen: ${getErrorMessage(error) || error}`);
             
             // Detaillierte Fehlermeldung für Debugging
-            const errorDetails = error instanceof Error ? error.message : String(error);
+            const errorDetails = error instanceof Error ? getErrorMessage(error) : String(error);
             logDebug('Detaillierte E-Mail-Fehlerinfo:', {
               error: errorDetails,
               userRole: user?.uid,

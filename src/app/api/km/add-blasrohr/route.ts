@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
+import { getErrorMessage } from '@/lib/utils/secure-logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     }, { status: 500 });
   }
 }

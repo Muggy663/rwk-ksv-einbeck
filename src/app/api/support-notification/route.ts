@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
+import { sanitizeInput, validateEmail } from '@/lib/utils/input-validator';
 import nodemailer from 'nodemailer';
 
 interface SupportTicketData {
@@ -12,9 +13,29 @@ interface SupportTicketData {
 export async function POST(request: Request) {
   try {
     const data: SupportTicketData = await request.json();
-    const { name, email, subject, message } = data;
 
-    // Konfiguriere den E-Mail-Transporter
+    // Alle Eingaben sanitisieren (verhindert HTML-Injection in E-Mails)
+    const name = sanitizeInput(data.name);
+    const email = sanitizeInput(data.email);
+    const subject = sanitizeInput(data.subject);
+    const message = sanitizeInput(data.message);
+
+    // Pflichtfelder prüfen
+    if (!name || !email || !subject || !message) {
+      return NextResponse.json(
+        { error: 'Alle Felder sind erforderlich' },
+        { status: 400 }
+      );
+    }
+
+    // E-Mail-Adresse validieren
+    if (!validateEmail(email)) {
+      return NextResponse.json(
+        { error: 'Ungültige E-Mail-Adresse' },
+        { status: 400 }
+      );
+    }
+
     const transporter = nodemailer.createTransport({
       host: 'mail.gmx.com',
       port: 465,
@@ -25,7 +46,7 @@ export async function POST(request: Request) {
       },
     });
 
-    // E-Mail-Inhalt
+    // Alle Werte sind bereits sanitisiert – sicher für HTML-Templates
     const mailOptions = {
       from: '"RWK App Einbeck" <rwk-leiter-ksve@gmx.de>',
       to: 'rwk-leiter-ksve@gmx.de',
@@ -46,7 +67,6 @@ export async function POST(request: Request) {
       `,
     };
 
-    // Sende die E-Mail
     await transporter.sendMail(mailOptions);
 
     return NextResponse.json({ success: true });

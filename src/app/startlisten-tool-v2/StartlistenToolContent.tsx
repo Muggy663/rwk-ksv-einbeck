@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { getDocs, collection, query, orderBy, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
-import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
+import { logInfo, logWarn, logError, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
 
 export function StartlistenToolV2Content() {
   const searchParams = useSearchParams();
@@ -191,8 +191,8 @@ export function StartlistenToolV2Content() {
     return { verarbeitet };
   };
 
-  const getAlleDisziplinen = () => {
-    const nachDisziplin = {};
+  const getAlleDisziplinen = (): Record<string, typeof meldungen> => {
+    const nachDisziplin: Record<string, typeof meldungen> = {};
     meldungen.forEach(m => {
       const disziplinName = m.disziplin;
       if (!nachDisziplin[disziplinName]) {
@@ -286,7 +286,7 @@ export function StartlistenToolV2Content() {
         }
       }
     } catch (error) {
-      logError('Fehler:', error.message);
+      logError('Fehler:', getErrorMessage(error));
     } finally {
       setGeminiLoading(false);
     }
@@ -535,8 +535,8 @@ export function StartlistenToolV2Content() {
               
               {/* Konflikterkennung */}
               {(() => {
-                const konflikte = [];
-                const zeitStandMap = {};
+                const konflikte: Array<{zeit: string; stand: string; starter: string[]; indices: number[]; alternativen: string[]}> = [];
+                const zeitStandMap: Record<string, Array<{schuetzeName?: string; name?: string; index: number; stand?: string; startzeit?: string}>> = {};
                 const belegteZeiten = new Set();
                 
                 // Sammle alle belegten Zeit/Stand Kombinationen
@@ -1348,12 +1348,12 @@ export function StartlistenToolV2Content() {
                       const gefilterteStartliste = geminiResult?.startliste || [];
                       
                       // Gruppiere nur nach Startzeiten
-                      const nachStartzeit = gefilterteStartliste.reduce((acc, s) => {
+                      const nachStartzeit = gefilterteStartliste.reduce((acc: Record<string, any[]>, s) => {
                         const zeit = s.startzeit || startzeit || '14:00';
                         if (!acc[zeit]) acc[zeit] = [];
                         acc[zeit].push(s);
                         return acc;
-                      }, {});
+                      }, {} as Record<string, any[]>);
                       
                       const datumFormatted = datum ? new Date(datum).toLocaleDateString('de-DE', {
                         weekday: 'long',
@@ -1368,7 +1368,7 @@ export function StartlistenToolV2Content() {
                       
                       Object.entries(nachStartzeit)
                         .sort(([zeitA], [zeitB]) => zeitA.localeCompare(zeitB)) // Sortiere Uhrzeiten korrekt
-                        .forEach(([startzeit, starterGruppe], startzeitIndex) => {
+                        .forEach(([startzeit, starterGruppe]: [string, any[]], startzeitIndex) => {
                         if (isFirstStart) {
                           doc.addPage();
                           isFirstStart = false;

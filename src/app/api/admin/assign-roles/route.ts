@@ -1,9 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
+import { verifyApiAuth } from '@/lib/auth/api-auth';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
 export async function POST(request: NextRequest) {
+  // Nur SuperAdmin darf Rollen zuweisen
+  const user = await verifyApiAuth(request);
+  if (!user) {
+    logWarn('Unauthorized access attempt to assign-roles', 'assign-roles-api');
+    return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+  }
+
+  if (user.email !== 'admin@rwk-einbeck.de') {
+    logWarn(`Forbidden access attempt to assign-roles by ${user.email}`, 'assign-roles-api');
+    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+  }
+
   try {
     const { action } = await request.json();
     

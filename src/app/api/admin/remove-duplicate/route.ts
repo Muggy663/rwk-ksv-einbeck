@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     logError('Remove duplicate error:', error);
     return NextResponse.json({ 
       error: 'Fehler beim Entfernen des Duplikats', 
-      details: error.message 
+      details: getErrorMessage(error) 
     }, { status: 500 });
   }
 }

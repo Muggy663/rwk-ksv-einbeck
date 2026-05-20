@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -8,7 +8,12 @@ export async function GET() {
   try {
     logDebug('🔍 VALIDATION: Starte System-Validierung...');
     
-    const results = {
+    const results: {
+      shooters: { total: number; byClub: Record<string, number> };
+      clubs: { total: number; withShooters: number };
+      teams: { total: number; withShooters: number };
+      issues: string[];
+    } = {
       shooters: { total: 0, byClub: {} },
       clubs: { total: 0, withShooters: 0 },
       teams: { total: 0, withShooters: 0 },
@@ -101,7 +106,7 @@ export async function GET() {
     logError('❌ VALIDATION ERROR:', error);
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     }, { status: 500 });
   }
 }

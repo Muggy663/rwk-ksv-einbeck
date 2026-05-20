@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +68,7 @@ export default function CreateGroupPage() {
       logError('Fehler beim Erstellen der Gruppe:', error);
       toast({
         title: "Fehler",
-        description: `Die Gruppe konnte nicht erstellt werden: ${error.message || error}`,
+        description: `Die Gruppe konnte nicht erstellt werden: ${getErrorMessage(error) || error}`,
         variant: "destructive"
       });
     } finally {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { ClubMigrationService } from '@/lib/services/club-migration-service';
 
 export async function POST(request: NextRequest) {
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     logError('Migration-Fehler:', error);
     return NextResponse.json({
       success: false,
-      error: `Migration fehlgeschlagen: ${error.message}`
+      error: `Migration fehlgeschlagen: ${getErrorMessage(error)}`
     }, { status: 500 });
   }
 }

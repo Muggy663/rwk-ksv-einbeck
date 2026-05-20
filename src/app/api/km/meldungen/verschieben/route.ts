@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
     logError('Fehler beim Verschieben der Meldungen:', error);
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: getErrorMessage(error)
     }, { status: 500 });
   }
 }

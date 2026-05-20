@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -108,7 +108,7 @@ export default function KMErgebnissePage() {
       logError('❌ Speichern fehlgeschlagen:', error);
       toast({ 
         title: '❌ Speichern fehlgeschlagen', 
-        description: `${meldung.schuetzenName}: ${error.message || 'Unbekannter Fehler'}`,
+        description: `${meldung.schuetzenName}: ${getErrorMessage(error) || 'Unbekannter Fehler'}`,
         variant: 'destructive',
         duration: 5000
       });

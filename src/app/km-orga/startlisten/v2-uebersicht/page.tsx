@@ -648,18 +648,18 @@ export default function StartlistenV2Uebersicht() {
     const maxStaende = editData.konfiguration?.staende?.length || 9;
     
     // Gruppiere nach Startzeiten und sortiere innerhalb jeder Zeit
-    const nachStartzeit = editData.startliste.reduce((acc, starter) => {
+    const nachStartzeit = editData.startliste.reduce((acc: Record<string, any[]>, starter) => {
       const zeit = starter.startzeit || '14:00';
       if (!acc[zeit]) acc[zeit] = [];
       acc[zeit].push(starter);
       return acc;
-    }, {});
+    }, {} as Record<string, any[]>);
     
     // Reorganisiere nur innerhalb jeder Startzeit
     const neueSortierung = [];
     Object.entries(nachStartzeit)
       .sort(([zeitA], [zeitB]) => zeitA.localeCompare(zeitB))
-      .forEach(([startzeit, starter]) => {
+      .forEach(([startzeit, starter]: [string, any[]]) => {
         starter.forEach((s, index) => {
           const standNr = (index % maxStaende) + 1;
           const durchgangNr = Math.floor(index / maxStaende) + 1;
@@ -708,16 +708,16 @@ export default function StartlistenV2Uebersicht() {
     });
     
     // Prüfe auf Lücken in Ständen pro Startzeit
-    const nachStartzeit = editData.startliste.reduce((acc, starter) => {
+    const nachStartzeit = editData.startliste.reduce((acc: Record<string, number[]>, starter) => {
       const zeit = starter.startzeit || '14:00';
       if (!acc[zeit]) acc[zeit] = [];
       acc[zeit].push(parseInt(starter.stand || '0'));
       return acc;
-    }, {});
+    }, {} as Record<string, number[]>);
     
     const konfigurierteStaende = editData.konfiguration?.staende || [1,2,3,4,5,6,7,8,9];
     
-    Object.entries(nachStartzeit).forEach(([zeit, staende]) => {
+    Object.entries(nachStartzeit).forEach(([zeit, staende]: [string, number[]]) => {
       const sortierteStaende = staende.sort((a, b) => a - b);
       
       konfigurierteStaende.forEach(stand => {
@@ -1063,12 +1063,12 @@ export default function StartlistenV2Uebersicht() {
                             const gefilterteStartliste = startliste.startliste || [];
                             
                             // Gruppiere nur nach Startzeiten
-                            const nachStartzeit = gefilterteStartliste.reduce((acc, s) => {
+                            const nachStartzeit = gefilterteStartliste.reduce((acc: Record<string, any[]>, s) => {
                               const zeit = s.startzeit || startliste.konfiguration?.startzeit || '14:00';
                               if (!acc[zeit]) acc[zeit] = [];
                               acc[zeit].push(s);
                               return acc;
-                            }, {});
+                            }, {} as Record<string, any[]>);
                             
                             const datum = new Date(startliste.konfiguration?.datum || '').toLocaleDateString('de-DE', {
                               weekday: 'long',
@@ -1083,7 +1083,7 @@ export default function StartlistenV2Uebersicht() {
                             
                             Object.entries(nachStartzeit)
                               .sort(([zeitA], [zeitB]) => zeitA.localeCompare(zeitB)) // Sortiere Uhrzeiten korrekt
-                              .forEach(([startzeit, starterGruppe], startzeitIndex) => {
+                              .forEach(([startzeit, starterGruppe]: [string, any[]], startzeitIndex) => {
                               if (isFirstStart) {
                                 doc.addPage();
                                 isFirstStart = false;
