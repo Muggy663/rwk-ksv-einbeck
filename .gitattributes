@@ -1,0 +1,22 @@
+# Automatische Zeilenenden-Normalisierung
+* text=auto eol=lf
+
+# Windows-spezifische Dateien behalten CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binärdateien nicht konvertieren
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.jar binary
+*.apk binary
+*.keystore binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
