@@ -25,7 +25,7 @@ export function securityMiddleware(request: NextRequest) {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https:",
-      "connect-src 'self' https://api.gemini.google.com https://vision.googleapis.com https://firestore.googleapis.com",
+      "connect-src 'self' https://api.gemini.google.com https://vision.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebase.googleapis.com https://firebasestorage.googleapis.com https://fcmregistrations.googleapis.com https://www.googleapis.com https://generativelanguage.googleapis.com https://resend.com https://sentry.io https://*.sentry.io",
       "frame-src 'self' https://www.google.com",
       "object-src 'none'",
       "base-uri 'self'",

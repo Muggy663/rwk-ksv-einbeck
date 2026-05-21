@@ -364,7 +364,7 @@ function AnmeldeFormular({ kurs, onClose }: { kurs: Kurs; onClose: () => void })
           {error}
         </div>
       )}      <div className="bg-blue-50 dark:bg-blue-950/30 rounded p-3 text-xs text-blue-700 dark:text-blue-300 flex gap-2">
-        <Info className="h-4 w-4 shrink-0 mt-0.5" />
+        <Info className="h-4 w-4 shrink-0 mt-0.5 text-blue-500" />
         <span>Deine Daten werden nur für die Kursverwaltung verwendet und nicht an Dritte weitergegeben.</span>
       </div>
 
@@ -597,9 +597,9 @@ export default function AusbildungPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-blue-700 dark:text-blue-300 space-y-1 pt-0">
-          <p>• <strong>Erweitertes Führungszeugnis</strong> vor Lehrgangsbeginn beantragen und mitbringen</p>
-          <p>• <strong>Erste-Hilfe-Nachweis</strong> nicht älter als 2 Jahre ist in Kopie abzugeben</p>
-          <p>• <strong>Mindestteilnehmer:</strong> 8 Personen · <strong>Höchstteilnehmer:</strong> 20 Personen</p>
+          <p>• <strong className="text-blue-900 dark:text-blue-200">Erweitertes Führungszeugnis</strong> vor Lehrgangsbeginn beantragen und mitbringen</p>
+          <p>• <strong className="text-blue-900 dark:text-blue-200">Erste-Hilfe-Nachweis</strong> nicht älter als 2 Jahre ist in Kopie abzugeben</p>
+          <p>• <strong className="text-blue-900 dark:text-blue-200">Mindestteilnehmer:</strong> 8 Personen · <strong className="text-blue-900 dark:text-blue-200">Höchstteilnehmer:</strong> 20 Personen</p>
           <p>• Berücksichtigung nach Eingangsdatum der Anmeldungen</p>
           <p>• Teilnahme ohne Waffensachkundelehrgang möglich – Lizenz gilt dann nur für Luft- und Federdruckwaffen</p>
           <p>• NSSV Qualifizierungsplan vor Lehrgangsbeginn lesen (Seiten 41 ff.)</p>
