@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { plausibilityService } from '@/lib/services/plausibility-service';
 import Link from 'next/link';
-import { collection, getDocs, query, where, orderBy, writeBatch, serverTimestamp, doc, Timestamp, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, getDocs, getDoc, query, where, orderBy, writeBatch, serverTimestamp, doc, Timestamp, updateDoc, addDoc } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 const SEASONS_COLLECTION = "seasons";
@@ -656,7 +656,7 @@ export default function SharedResultsPage({
     try {
       const batch = writeBatch(db);
       
-      pendingScores.forEach((entry) => {
+      for (const entry of pendingScores) {
         const { tempId, ...dataToSave } = entry;
         
         // Bestimme die richtige Collection basierend auf Jahr und Disziplin
@@ -677,24 +677,26 @@ export default function SharedResultsPage({
           entryTimestamp: serverTimestamp()
         });
         
-        // Schützen-Eintrag erstellen falls nicht vorhanden
+        // Schützen-Eintrag NUR erstellen wenn nicht vorhanden - gender niemals überschreiben!
         const shooterDocRef = doc(db, SHOOTERS_COLLECTION, entry.shooterId);
-        const shooterData = {
-          name: entry.shooterName,
-          gender: entry.shooterGender || 'unknown',
-          createdAt: serverTimestamp(),
-          createdBy: 'auto-from-scores'
-        };
-        
-        const nameParts = entry.shooterName.split(' ');
-        if (nameParts.length >= 2) {
-          shooterData.firstName = nameParts[0];
-          shooterData.lastName = nameParts.slice(1).join(' ');
+        const shooterSnap = await getDoc(shooterDocRef);
+        if (!shooterSnap.exists()) {
+          const shooterData: any = {
+            name: entry.shooterName,
+            gender: entry.shooterGender || 'unknown',
+            createdAt: serverTimestamp(),
+            createdBy: 'auto-from-scores'
+          };
+          
+          const nameParts = entry.shooterName.split(' ');
+          if (nameParts.length >= 2) {
+            shooterData.firstName = nameParts[0];
+            shooterData.lastName = nameParts.slice(1).join(' ');
+          }
+          
+          batch.set(shooterDocRef, shooterData);
         }
-        
-        // Nur erstellen wenn nicht existiert (merge: true)
-        batch.set(shooterDocRef, shooterData, { merge: true });
-      });
+      }
       
       await batch.commit();
       

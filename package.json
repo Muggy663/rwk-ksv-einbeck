@@ -1,6 +1,6 @@
 {
   "name": "rwk-ksv-einbeck-portal",
-  "version": "2.5.2",
+  "version": "2.5.3",
   "private": true,
   "scripts": {
     "dev": "next dev",

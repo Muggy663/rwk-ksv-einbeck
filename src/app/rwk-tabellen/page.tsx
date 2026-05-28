@@ -1743,19 +1743,22 @@ function RwkTabellenPageComponent() {
                 const nameFromScore = scoreData.shooterName;
 
                 
-                // Erstelle shooters Eintrag
+                // Erstelle shooters Eintrag NUR wenn nicht vorhanden - gender niemals überschreiben!
                 try {
                   const shooterDocRef = doc(db, "shooters", shooterId);
-                  const nameParts = nameFromScore.split(' ');
-                  const shooterData = {
-                    name: nameFromScore,
-                    firstName: nameParts[0] || '',
-                    lastName: nameParts.slice(1).join(' ') || '',
-                    gender: scoreData.shooterGender || 'unknown',
-                    createdAt: new Date(),
-                    createdBy: 'auto-from-scores'
-                  };
-                  await setDoc(shooterDocRef, shooterData);
+                  const existingSnap = await getDoc(shooterDocRef);
+                  if (!existingSnap.exists()) {
+                    const nameParts = nameFromScore.split(' ');
+                    const shooterData = {
+                      name: nameFromScore,
+                      firstName: nameParts[0] || '',
+                      lastName: nameParts.slice(1).join(' ') || '',
+                      gender: scoreData.shooterGender || 'unknown',
+                      createdAt: new Date(),
+                      createdBy: 'auto-from-scores'
+                    };
+                    await setDoc(shooterDocRef, shooterData);
+                  }
 
                 } catch (createError) {
                   logError(`Fehler beim Erstellen von Schütze ${shooterId}:`, createError);

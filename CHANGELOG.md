@@ -4,7 +4,13 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
-## Version 2.5.2 (aktuell)
+## Version 2.5.3 (aktuell)
+- **🐛 Bugfix**: Geschlecht (gender) von Schützen wird beim Ergebnis-Eintragen nicht mehr überschrieben
+- **🔒 Datenschutz**: Schützen-Dokumente werden beim Speichern von Ergebnissen nur noch angelegt wenn sie noch nicht existieren – bestehende Daten bleiben unberührt
+- **🔧 Refactoring**: `forEach` → `for...of` in `shared-results-complete.tsx` für korrekte async/await-Unterstützung
+- **📁 Betroffene Dateien**: `shared-results-complete.tsx`, `verein/ergebnisse/page.tsx`, `rwk-tabellen/page.tsx`
+
+## Version 2.5.2
 - **🔒 Sicherheit**: Alle ungeschützten API-Routen mit Auth-Checks versehen (bulk-delete, license-management, substitutions, shooters, set-download-count, send-verification-email, excel-import, assign-roles)
 - **🗑️ API**: `/api/repair-substitution` deaktiviert (war einmaliger DB-Fix mit hardcodierten IDs)
 - **🛡️ XSS-Fix**: Benutzereingaben in Support-E-Mails werden jetzt sanitisiert
