@@ -35,6 +35,7 @@ const vereinNavItems = [
   { href: '/verein/dashboard', label: 'Übersicht', icon: LayoutDashboard },
   { href: '/verein/mannschaften', label: 'Meine Mannschaften', icon: Users },
   { href: '/verein/schuetzen', label: 'Meine Schützen', icon: UserCircle },
+  { href: '/verein/mitglieder-import', label: 'Mitcom-Import', icon: FileDown },
   { href: '/verein/ergebnisse', label: 'Ergebnisse erfassen', icon: ListChecks },
   { href: '/verein/handtabellen', label: 'Handtabellen', icon: FileText },
   { href: '/termine', label: 'Terminkalender', icon: CalendarDays },

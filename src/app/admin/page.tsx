@@ -388,6 +388,7 @@ export default function AdminDashboardPage() {
                 <Link href="/admin/clubs" passHref><Button variant="outline" className="w-full">Vereine</Button></Link>
                 <Link href="/admin/teams" passHref><Button variant="outline" className="w-full">Mannschaften</Button></Link>
                 <Link href="/admin/shooters" passHref><Button variant="outline" className="w-full">Schützen</Button></Link>
+                <Link href="/admin/mitglieder-import" passHref><Button variant="outline" className="w-full"><FileUp className="mr-2 h-4 w-4" />Mitcom-Import</Button></Link>
              </div>
           </CardContent>
         </Card>

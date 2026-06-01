@@ -203,6 +203,22 @@ export default function HomePage() {
 
       <Separator className="my-6" />
 
+      {/* Neuigkeiten-Banner v2.6.0 */}
+      <div className="mb-6 rounded-xl border border-green-200 dark:border-green-800 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/40 p-4 flex items-start gap-3 shadow-sm">
+        <div className="flex-shrink-0 mt-0.5">
+          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/60 text-green-700 dark:text-green-300 text-lg">🆕</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/60 px-2 py-0.5 rounded-full">Version 2.6.0</span>
+            <span className="font-semibold text-green-900 dark:text-green-100">Mitcom-Import jetzt verfügbar</span>
+          </div>
+          <p className="text-sm text-green-800 dark:text-green-200 mt-1">
+            Vereine können ihre Mitgliederdaten jetzt direkt aus der Mitcom-Excel importieren — Geschlecht, Geburtsjahr und Mitgliedsnummer werden automatisch übernommen. Zu finden im Vereinsbereich unter <strong>Meine Schützen → Mitcom-Import</strong>.
+          </p>
+        </div>
+      </div>
+
       {/* Feature-Cards mit modernem Design */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 pwa-cards">
         {/* Letzte Ergebnis-Updates */}

@@ -6,7 +6,7 @@ import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, FileText, BarChart3, Calendar, Key, Play, Sparkles, Target, Trophy, Shield, HelpCircle } from 'lucide-react';
+import { Users, FileText, BarChart3, Calendar, Key, Play, Sparkles, Target, Trophy, Shield, HelpCircle, FileSpreadsheet } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 import Link from 'next/link';
@@ -231,11 +231,19 @@ export default function VereinDashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild className="w-full h-12 text-sm font-semibold">
-                <Link href="/verein/schuetzen">
-                  <span className="truncate">Schützen verwalten</span>
-                </Link>
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button asChild className="w-full h-12 text-sm font-semibold">
+                  <Link href="/verein/schuetzen">
+                    <span className="truncate">Schützen verwalten</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full text-sm">
+                  <Link href="/verein/mitglieder-import">
+                    <FileSpreadsheet className="mr-2 h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">Mitcom-Import</span>
+                  </Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}

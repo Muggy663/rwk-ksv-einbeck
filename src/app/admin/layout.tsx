@@ -20,6 +20,7 @@ export const adminNavItems = [
   { href: '/admin/clubs', label: 'Vereine', icon: Users },
   { href: '/admin/teams', label: 'Mannschaften', icon: Users },
   { href: '/admin/shooters', label: 'Schützen', icon: Users },
+  { href: '/admin/mitglieder-import', label: 'Mitcom-Import', icon: FileUp },
   { href: '/admin/results', label: 'Ergebnisse erfassen', icon: ListChecks },
   { href: '/admin/edit-results', label: 'Ergebnisse bearbeiten', icon: Edit3 },
   { href: '/admin/user-management', label: 'Benutzerverwaltung', icon: UserCog },

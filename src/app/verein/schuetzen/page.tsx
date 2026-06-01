@@ -5,7 +5,7 @@ import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger'
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Loader2, AlertTriangle, UserCircle as UserIcon } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2, AlertTriangle, UserCircle as UserIcon, FileSpreadsheet } from 'lucide-react';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { BackButton } from '@/components/ui/back-button';
 import {
@@ -644,9 +644,14 @@ export default function VereinSchuetzenPage() {
           {contextTeamName && <p className="text-xs text-muted-foreground">Kontext: Mannschaft "{contextTeamName}" {isContextTeamNameLoading && "(Lade...)"}</p>}
         </div>
         {(isVereinsvertreter || isSportleiter) && (
-          <Button onClick={handleAddNewShooter} disabled={isLoadingClubSpecificData || isFormSubmitting || isDeleting} className="bg-primary hover:bg-primary/90">
-            <PlusCircle className="mr-2 h-5 w-5" /> 🎯 Neuen Schützen anlegen
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button onClick={handleAddNewShooter} disabled={isLoadingClubSpecificData || isFormSubmitting || isDeleting} className="bg-primary hover:bg-primary/90">
+              <PlusCircle className="mr-2 h-5 w-5" /> 🎯 Neuen Schützen anlegen
+            </Button>
+            <Button variant="outline" onClick={() => window.location.href = '/verein/mitglieder-import'}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Mitcom-Import
+            </Button>
+          </div>
         )}
       </div>
       
@@ -750,8 +755,8 @@ export default function VereinSchuetzenPage() {
                         const result = sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
                         return result;
                       case 'gender':
-                        aValue = a.gender === 'male' ? 'M' : 'W';
-                        bValue = b.gender === 'male' ? 'M' : 'W';
+                        aValue = a.gender === 'male' ? 'M' : a.gender === 'female' ? 'W' : '?';
+                        bValue = b.gender === 'male' ? 'M' : b.gender === 'female' ? 'W' : '?';
                         break;
                       default:
                         aValue = a.lastName || (a.name ? a.name.split(' ').slice(-1)[0] : '');
@@ -772,7 +777,7 @@ export default function VereinSchuetzenPage() {
                       <span>{shooter.firstName || (shooter.name ? shooter.name.split(' ').slice(0, -1).join(' ') : '-')}</span>
                     </TableCell>
                     <TableCell label="Geburtsjahr">{shooter.birthYear || '-'}</TableCell>
-                    <TableCell label="Geschlecht">{shooter.gender === 'male' ? 'M' : 'W'}</TableCell>
+                    <TableCell label="Geschlecht">{shooter.gender === 'male' ? 'M' : shooter.gender === 'female' ? 'W' : '?'}</TableCell>
                     <TableCell label="Mannschaften" className="text-xs">{getTeamInfoForShooter(shooter)}</TableCell>
                     {(isVereinsvertreter || isSportleiter || isVorstand) && (
                       <TableCell className="text-right space-x-1">

@@ -4,7 +4,21 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
-## Version 2.5.3 (aktuell)
+## Version 2.6.0 (aktuell)
+- **📥 Mitcom-Import**: Vereine können ihre Mitgliederdaten direkt aus der Mitcom-Excel importieren
+- **🎯 Automatisches Matching**: Schützen werden per Verbandsnummer oder Name erkannt und aktualisiert
+- **👤 Geschlecht & Geburtsjahr**: Werden aus Mitcom übernommen — kein manuelles Nachpflegen mehr
+- **🔢 Mitgliedsnummer**: Wird korrekt im Format `08-XXX-XXXX` gespeichert (führende 0 wird automatisch entfernt)
+- **🛡️ Vereinsnummer-Prüfung**: Mitglieder anderer Vereine werden beim Import automatisch erkannt und übersprungen — kein versehentliches Überschreiben von Schützen anderer Vereine (z.B. Doppelmitglieder)
+- **🏢 Vereinsbereich**: Import unter "Meine Schützen → Mitcom-Import" für jeden Verein selbst
+- **🛡️ Admin**: Import mit Vereinsauswahl unter Admin → Stammdaten → Mitcom-Import
+- **🔗 KM-Dashboard**: Mitcom-Import Button direkt unter "Mitglieder verwalten" erreichbar
+- **🐛 Bugfix Geschlecht**: In `/verein/schuetzen` wurde `unknown` fälschlicherweise als `W` angezeigt — jetzt korrekt `?`
+- **🔒 Bugfix Gender-Überschreibung**: Geschlecht wird beim Ergebnis-Eintragen nicht mehr überschrieben (aus v2.5.3 übernommen)
+- **⚙️ Nur Excel**: Import ausschließlich per .xls/.xlsx — kein PDF, kein CSV
+- **📢 Startseite**: Neuigkeiten-Banner für Version 2.6.0
+
+## Version 2.5.3
 - **🐛 Bugfix**: Geschlecht (gender) von Schützen wird beim Ergebnis-Eintragen nicht mehr überschrieben
 - **🔒 Datenschutz**: Schützen-Dokumente werden beim Speichern von Ergebnissen nur noch angelegt wenn sie noch nicht existieren – bestehende Daten bleiben unberührt
 - **🔧 Refactoring**: `forEach` → `for...of` in `shared-results-complete.tsx` für korrekte async/await-Unterstützung

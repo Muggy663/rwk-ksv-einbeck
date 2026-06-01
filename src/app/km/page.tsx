@@ -5,7 +5,7 @@ import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileSpreadsheet } from 'lucide-react';
 import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { useAuthContext } from '@/components/auth/AuthContext';
@@ -209,6 +209,11 @@ function KMDashboardContent() {
             <div className="space-y-3">
               <Link href="/km/mitglieder">
                 <Button className="w-full bg-green-600 hover:bg-green-700">👥 Mitglieder verwalten</Button>
+              </Link>
+              <Link href="/verein/mitglieder-import">
+                <Button variant="outline" className="w-full">
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />Mitcom-Import
+                </Button>
               </Link>
               {(userRole === 'admin' || userRole === 'km_organisator') && (
                 <>
