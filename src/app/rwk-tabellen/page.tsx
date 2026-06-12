@@ -826,15 +826,24 @@ function RwkTabellenPageComponent() {
           };
           teamDisplays.push(teamDisplayItem);
         }
-        // Sortiere Teams (sortingScore bereits durch TeamCalculationService berechnet)
+        // Sortiere Teams — Basis ist liga-weiter vollständiger Durchgang (Minimum aller Teams)
+        // Damit wird verhindert dass ein Team das einen Durchgang mehr eingetragen hat nach oben sortiert wird
+        const leagueCompleteRoundForSort = determineLeagueCompleteRound(teamDisplays, numRoundsForCompetition);
+        
         teamDisplays.sort((a, b) => {
           // Teams "außer Konkurrenz" immer nach Teams in Wertung
           if (a.outOfCompetition && !b.outOfCompetition) return 1;
           if (!a.outOfCompetition && b.outOfCompetition) return -1;
           
-          // Sortierung nach Punkten bis zum aktuellen vollständigen Durchgang
-          return (b.sortingScore ?? 0) - (a.sortingScore ?? 0) || 
-                 (b.sortingAverage ?? 0) - (a.sortingAverage ?? 0) || 
+          // Sortier-Score nur bis zum liga-weit vollständigen Durchgang berechnen
+          const scoreA = Array.from({length: leagueCompleteRoundForSort}, (_, i) => 
+            a.roundResults?.[`dg${i+1}`] ?? 0).reduce((s, v) => s + v, 0);
+          const scoreB = Array.from({length: leagueCompleteRoundForSort}, (_, i) => 
+            b.roundResults?.[`dg${i+1}`] ?? 0).reduce((s, v) => s + v, 0);
+          const avgA = leagueCompleteRoundForSort > 0 ? scoreA / leagueCompleteRoundForSort : 0;
+          const avgB = leagueCompleteRoundForSort > 0 ? scoreB / leagueCompleteRoundForSort : 0;
+          
+          return (scoreB - scoreA) || (avgB - avgA) ||
                  a.clubName.localeCompare(b.clubName) || 
                  a.name.localeCompare(b.name);
         });

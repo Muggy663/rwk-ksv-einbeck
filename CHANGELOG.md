@@ -4,7 +4,12 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
-## Version 2.6.0 (aktuell)
+## Version 2.6.1 (aktuell)
+- **🐛 Bugfix RWK-Tabellen**: Tabellensortierung basiert jetzt auf dem liga-weit vollständigen Durchgang — ein Team das einen Durchgang mehr eingetragen hat wird nicht mehr vorzeitig nach oben sortiert
+- **🔢 Sortierlogik**: Neu berechneter Sortierscore verwendet `leagueCompleteRound` (Minimum aller Teams) statt des individuellen Team-Durchgangs
+- **👁️ Vorschau bleibt**: Der Gesamtwert in Klammern (z.B. `(2513)`) wird weiterhin als Vorschau angezeigt — nur die Sortierung ist angepasst
+
+## Version 2.6.0
 - **📥 Mitcom-Import**: Vereine können ihre Mitgliederdaten direkt aus der Mitcom-Excel importieren
 - **🎯 Automatisches Matching**: Schützen werden per Verbandsnummer oder Name erkannt und aktualisiert
 - **👤 Geschlecht & Geburtsjahr**: Werden aus Mitcom übernommen — kein manuelles Nachpflegen mehr
