@@ -91,6 +91,13 @@ export default function MitgliederImportPage() {
       const clubSnap = await getDoc(doc(db, 'clubs', effectiveClubId || ''));
       const clubNumber: string = clubSnap.exists() ? (clubSnap.data().clubNumber || '') : '';
       const vereinsnummer = clubNumber ? clubNumber.split('-')[1] || '' : '';
+      if (!vereinsnummer) {
+        toast({
+          title: 'Hinweis: Keine Vereinsnummer hinterlegt',
+          description: 'Für deinen Verein ist keine Vereinsnummer (08-XXX) gepflegt. Die Prüfung auf Mitglieder anderer Vereine ist deaktiviert. Bitte den Administrator informieren.',
+          variant: 'destructive'
+        });
+      }
 
       const buffer = await file.arrayBuffer();
       const wb = XLSX.read(buffer, { type: 'array' });

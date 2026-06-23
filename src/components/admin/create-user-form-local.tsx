@@ -30,7 +30,6 @@ export function CreateUserFormLocal({ clubs, onUserCreated }: CreateUserFormLoca
     kvRole: 'NO_KV_ROLE',
     clubRole: 'NO_CLUB_ROLE',
     clubId: '',
-    vereinssoftwareLicense: false
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,12 +94,6 @@ export function CreateUserFormLocal({ clubs, onUserCreated }: CreateUserFormLoca
         permissionData.representedClubs = [formData.clubId];
       }
       
-      // Vereinssoftware-Lizenz
-      if (formData.vereinssoftwareLicense) {
-        permissionData.vereinssoftwareLicense = true;
-        permissionData.vereinssoftwareLicenseActivatedAt = Timestamp.now();
-      }
-      
       await setDoc(userPermissionRef, permissionData);
       
       toast({
@@ -117,7 +110,6 @@ export function CreateUserFormLocal({ clubs, onUserCreated }: CreateUserFormLoca
         kvRole: 'NO_KV_ROLE',
         clubRole: 'NO_CLUB_ROLE',
         clubId: '',
-        vereinssoftwareLicense: false
       });
       
       // Callback zur Aktualisierung der Benutzerliste
@@ -281,21 +273,6 @@ export function CreateUserFormLocal({ clubs, onUserCreated }: CreateUserFormLoca
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label>💰 Vereinssoftware-Lizenz</Label>
-              <div className="flex items-center space-x-2 pt-2">
-                <input 
-                  type="checkbox" 
-                  id="vereinssoftwareLicense"
-                  checked={formData.vereinssoftwareLicense}
-                  onChange={(e) => setFormData(prev => ({ ...prev, vereinssoftwareLicense: e.target.checked }))}
-                  className="rounded"
-                />
-                <Label htmlFor="vereinssoftwareLicense" className="text-sm">
-                  Vereinssoftware-Lizenz aktivieren
-                </Label>
-              </div>
-            </div>
           </div>
           
           <Button type="submit" className="w-full" disabled={isSubmitting}>

@@ -40,7 +40,6 @@ export function Sidebar() {
   ];
 
   const betaRoutes = [
-    { href: user ? '/social' : '/social/welcome', label: 'Social Training', icon: Users },
     { href: '/schiessnachweis', label: 'Schießnachweis', icon: Target },
   ];
 
@@ -56,7 +55,6 @@ export function Sidebar() {
     { href: '/protests', label: 'Proteste', icon: AlertTriangle },
     { href: '/news', label: 'News', icon: Newspaper },
     { href: '/notifications', label: 'Benachrichtigungen', icon: Bell },
-    { href: '/updates', label: 'Updates', icon: Bell },
   ];
 
   const userRoutes = [

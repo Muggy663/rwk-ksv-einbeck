@@ -226,7 +226,7 @@ export function Onboarding() {
                     <li>Optimierte PDF-Layouts mit neuem Kreisverbandslogo</li>
                   </ul>
                   <div className="mt-2">
-                    <a href="/updates" className="text-primary hover:underline text-sm">Alle Versionen anzeigen →</a>
+                    <a href="/handbuch" className="text-primary hover:underline text-sm">Zum Handbuch →</a>
                   </div>
                 </CardContent>
               </Card>
@@ -238,7 +238,6 @@ export function Onboarding() {
                   <ul className="list-disc pl-5 space-y-1">
                     <li><a href="/handbuch" className="text-primary hover:underline">Benutzerhandbuch</a></li>
                     <li><a href="/rwk-ordnung" className="text-primary hover:underline">RWK-Ordnung</a></li>
-                    <li><a href="/updates" className="text-primary hover:underline">Updates & Changelog</a></li>
                     <li><a href="/support" className="text-primary hover:underline">Support-Formular</a></li>
                   </ul>
                 </CardContent>

@@ -28,7 +28,6 @@ const mainNavItems: NavItem[] = [
 
 // Beta Features - wird dynamisch in der Komponente gesetzt
 const getBetaNavItems = (user: any): NavItem[] => [
-  { href: user ? '/social' : '/social/welcome', icon: Users, label: 'Social Training' },
   { href: '/schiessnachweis', icon: Target, label: 'Schießnachweis' },
 ]
 

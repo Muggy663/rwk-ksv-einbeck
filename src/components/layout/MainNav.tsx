@@ -107,12 +107,6 @@ export function MainNav() {
       active: pathname === '/schiessnachweis',
     },
     {
-      href: '/social',
-      label: 'Social Training',
-      icon: <Users className="h-4 w-4 mr-2" />,
-      active: pathname === '/social' || pathname.startsWith('/training-groups') || pathname.startsWith('/live-competition'),
-    },
-    {
       href: '/termine',
       label: 'Termine',
       icon: <CalendarDays className="h-4 w-4 mr-2" />,
@@ -142,12 +136,6 @@ export function MainNav() {
       icon: <MessageSquare className="h-4 w-4 mr-2" />,
       active: pathname === '/support',
     },
-    {
-      href: '/updates',
-      label: 'Updates',
-      icon: <Bell className="h-4 w-4 mr-2" />,
-      active: pathname === '/updates',
-    },
   ];
 
   const adminRoutes: RouteItem[] = [
@@ -173,10 +161,6 @@ export function MainNav() {
       {/* Desktop Navigation */}
       <div className="hidden lg:flex lg:items-center lg:space-x-2">
         {routes.filter(route => {
-          // Updates nur für Admins
-          if (route.href === '/updates') {
-            return isAdmin;
-          }
           return true;
         }).map((route) => (
           <Link
@@ -193,20 +177,7 @@ export function MainNav() {
           </Link>
         ))}
         
-        {/* Admin-only Updates Link */}
-        {isAdmin && (
-          <Link
-            href="/updates"
-            className={cn(
-              "text-sm font-medium transition-colors hover:text-primary flex items-center",
-              pathname === '/updates' ? "text-primary" : "text-muted-foreground"
-            )}
-          >
-            <Bell className="h-4 w-4 mr-2" />
-            Updates
-          </Link>
-        )}
-
+        {/* Admin-only Links */}
         {isAdmin && adminRoutes.map((route) => (
           <Link
             key={route.href}

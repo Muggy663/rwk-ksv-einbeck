@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, Users, Trophy, ListChecks, Edit3, Settings, UserCog, 
-  MessagesSquare, FileUp, ArrowLeft, LogOut, History, FileText, Database, RefreshCw, Target
+  MessagesSquare, FileUp, ArrowLeft, LogOut, History, FileText, Database, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -26,10 +26,8 @@ export const adminNavItems = [
   { href: '/admin/user-management', label: 'Benutzerverwaltung', icon: UserCog },
   { href: '/admin/team-managers', label: 'Mannschaftsführer', icon: UserCog },
   { href: '/admin/documents', label: 'Dokumente', icon: FileText },
-  { href: '/admin/migrate', label: 'Daten-Migration', icon: FileUp },
   { href: '/admin/storage', label: 'Speichernutzung', icon: Database },
   { href: '/admin/recovery', label: 'Datenwiederherstellung', icon: RefreshCw },
-  { href: '/admin/emergency-data-entry', label: 'Notfall-Eingabe', icon: Target },
   { href: '/admin/support-tickets', label: 'Support-Tickets', icon: MessagesSquare },
   { href: '/admin/audit', label: 'Änderungsprotokoll', icon: History },
 ];

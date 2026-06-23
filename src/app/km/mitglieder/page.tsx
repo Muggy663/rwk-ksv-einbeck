@@ -350,7 +350,7 @@ export default function KMMitglieder() {
                       return club?.name || 'Unbekannt';
                     })()}</td>
                     <td className="p-2">{schuetze.birthYear || '-'}</td>
-                    <td className="p-2">{schuetze.gender === 'male' ? 'M' : schuetze.gender === 'female' ? 'W' : '-'}</td>
+                    <td className="p-2">{schuetze.gender === 'male' ? 'M' : schuetze.gender === 'female' ? 'W' : '?'}</td>
                     <td className="p-2">{schuetze.mitgliedsnummer ? `08-${schuetze.mitgliedsnummer.slice(1,4)}-${schuetze.mitgliedsnummer.slice(4)}` : '-'}</td>
                     <td className="p-2 text-xs">
                       {schuetze.birthYear && schuetze.gender ? (() => {
@@ -479,7 +479,7 @@ export default function KMMitglieder() {
                       </div>
                       <div>
                         <span className="text-gray-500">Geschlecht:</span>
-                        <span className="ml-1 font-medium">{schuetze.gender === 'male' ? 'M' : schuetze.gender === 'female' ? 'W' : '-'}</span>
+                        <span className="ml-1 font-medium">{schuetze.gender === 'male' ? 'M' : schuetze.gender === 'female' ? 'W' : '?'}</span>
                       </div>
                       <div>
                         <span className="text-gray-500">Mitgliedsnr.:</span>

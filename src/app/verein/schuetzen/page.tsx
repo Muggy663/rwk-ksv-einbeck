@@ -407,6 +407,10 @@ export default function VereinSchuetzenPage() {
       toast({ title: "Ungültige Eingabe", description: "Nachname und Vorname sind erforderlich.", variant: "destructive" });
       setIsFormSubmitting(false); return;
     }
+    if (!currentShooter.birthYear || isNaN(Number(currentShooter.birthYear)) || Number(currentShooter.birthYear) < 1920 || Number(currentShooter.birthYear) > new Date().getFullYear()) {
+      toast({ title: "Ungültige Eingabe", description: "Bitte ein gültiges Geburtsjahr eingeben (z.B. 1985).", variant: "destructive" });
+      setIsFormSubmitting(false); return;
+    }
 
     setIsFormSubmitting(true);
     const combinedName = `${currentShooter.firstName.trim()} ${currentShooter.lastName.trim()}`;

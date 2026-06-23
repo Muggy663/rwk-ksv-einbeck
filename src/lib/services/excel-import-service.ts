@@ -97,7 +97,7 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
         clubId,
         kmClubId: clubId,
         birthYear,
-        gender: gender === 'unknown' ? 'male' : gender,
+        gender,
         mitgliedsnummer: member.mitgliedsnummer,
         teamIds: [],
         isActive: true,

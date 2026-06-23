@@ -418,14 +418,11 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Neue 3-Tier-Rollensystem: Platform, KV und Club-Rollen verwalten.
+              Neues 3-Tier-Rollensystem: Platform, KV und Club-Rollen verwalten.
             </CardDescription>
             <div className="flex flex-col gap-2">
               <Link href="/admin/user-management" passHref>
                 <Button className="w-full" variant="outline">👥 Benutzer & Rollen</Button>
-              </Link>
-              <Link href="/admin/license-management" passHref>
-                <Button className="w-full" variant="outline">💎 Vereinssoftware-Lizenzen</Button>
               </Link>
               <BulkVerifyButton />
             </div>
@@ -533,20 +530,6 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
         
-         <Card className="shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Social Training</CardTitle> 
-            <Users className="h-6 w-6 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="mb-4">
-              Community-Funktionen und Moderation.
-            </CardDescription>
-            <Link href="/admin/social/moderation" passHref>
-              <Button className="w-full">🛡️ Social Training verwalten</Button>
-            </Link>
-          </CardContent>
-        </Card>
         
          <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

@@ -66,18 +66,6 @@ export default function HandbuchPage() {
           <span>Schießnachweis</span>
           <span className="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">Beta</span>
         </button>
-        <button
-          onClick={() => setActiveTab('social')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors w-full md:w-auto ${
-            activeTab === 'social' 
-              ? 'bg-background text-primary shadow-sm' 
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Users className="h-4 w-4" />
-          <span>Social Training</span>
-          <span className="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">Beta</span>
-        </button>
 
       </div>
 
@@ -762,7 +750,6 @@ export default function HandbuchPage() {
                 <li><a href="#sn-statistiken" className="text-primary hover:underline">4. Statistiken & Auswertungen</a></li>
                 <li><a href="#sn-export" className="text-primary hover:underline">5. Export & Backup</a></li>
                 <li><a href="#sn-digital-import" className="text-primary hover:underline">6. Import von digitalen Anlagen</a></li>
-                <li><a href="#social-training" className="text-primary hover:underline">7. Social Training Platform (NEU v2.0)</a></li>
               </ul>
             </CardContent>
           </Card>
@@ -862,63 +849,15 @@ export default function HandbuchPage() {
           </section>
           
           <Separator className="my-6" />
-          
-          <section id="social-training" className="space-y-4 scroll-mt-20">
-            <h2 className="text-3xl font-semibold text-primary border-b pb-2">7. Social Training Platform (NEU v2.0)</h2>
-            <Card>
-              <CardHeader><CardTitle className="text-xl text-accent">Community-Features für Sportschützen</CardTitle></CardHeader>
-              <CardContent>
-                <p>Die neue Social Training Platform verwandelt die RWK App in eine Community-Plattform für gemeinsames Training und Wettkämpfe.</p>
-                
-                <div className="mt-4 bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800">
-                  <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">🚀 Neue Features in Version 2.0:</h4>
-                  <ul className="list-disc pl-5 space-y-1 text-blue-700 dark:text-blue-300">
-                    <li><strong>👥 Trainingsgruppen:</strong> Erstellen Sie Gruppen mit 6-stelligen Beitrittscodes</li>
-                    <li><strong>⚔️ Live-Wettkämpfe:</strong> Real-time Wettkämpfe mit Live-Ranglisten</li>
-                    <li><strong>🎯 Duelle-System:</strong> 1vs1 Herausforderungen zwischen Schützen</li>
-                    <li><strong>🔔 Smart Notifications:</strong> DSGVO-konforme Push-Benachrichtigungen</li>
-                    <li><strong>📊 Community-Statistiken:</strong> Erweiterte Performance-Analysen</li>
-                    <li><strong>🏆 Ranglisten:</strong> Community-weite Leistungsvergleiche</li>
-                  </ul>
-                </div>
-                
-                <h4 className="font-semibold mt-4 mb-2">So nutzen Sie Social Training:</h4>
-                <ol className="list-decimal pl-5 space-y-2">
-                  <li><strong>Profil freigeben:</strong> Aktivieren Sie die Sichtbarkeit in den Einstellungen</li>
-                  <li><strong>Trainingsgruppe erstellen:</strong> Laden Sie Freunde mit einem 6-stelligen Code ein</li>
-                  <li><strong>Live-Wettkämpfe starten:</strong> Organisieren Sie Real-time Wettkämpfe</li>
-                  <li><strong>Duelle austragen:</strong> Fordern Sie andere Schützen zu 1vs1 Duellen heraus</li>
-                  <li><strong>Community entdecken:</strong> Finden Sie andere Schützen in Ihrer Nähe</li>
-                </ol>
-                
-                <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800 mt-4">
-                  <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">✅ Verfügbare Features:</h4>
-                  <ul className="list-disc pl-5 space-y-1 text-green-700 dark:text-green-300">
-                    <li>Profil-Freigabe</li>
-                    <li>Trainingsgruppen</li>
-                    <li>Community entdecken</li>
-                    <li>Live-Wettkämpfe</li>
-                    <li>Duelle-System</li>
-                    <li>Erweiterte Statistiken</li>
-                    <li>Performance-Charts</li>
-                    <li>Export-Funktionen</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-          
-          <Separator className="my-6" />
           <p className="text-center text-sm text-muted-foreground"><em>Schießnachweis-Handbuch wird parallel zur Entwicklung aktualisiert.</em></p>
         </>
       )}
       
-      {activeTab === 'social' && (
+      {activeTab === 'vereinssoftware' && (
         <>
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl text-accent">Social Training Platform - Benutzerhandbuch</CardTitle>
-              <CardDescription>Version 2.4.6 - Die erste Community-Plattform für Sportschützen</CardDescription>
+              <CardTitle className="text-2xl text-accent">Vereinssoftware - Benutzerhandbuch</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">

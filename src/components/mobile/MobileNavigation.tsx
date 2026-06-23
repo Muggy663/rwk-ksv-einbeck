@@ -41,13 +41,6 @@ const navItems: NavItem[] = [
     requiresSchiessnachweis: true,
   },
   {
-    href: '/social',
-    icon: Users,
-    label: 'Social',
-    requiresAuth: true,
-    requiresSchiessnachweis: true,
-  },
-  {
     href: '/statistiken',
     icon: BarChart3,
     label: 'Stats',

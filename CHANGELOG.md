@@ -4,7 +4,19 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
-## Version 2.6.1 (aktuell)
+## Version 2.6.2 (aktuell)
+- **🔒 API-Sicherheit**: `/api/admin/fix-mitgliedsnummer` jetzt mit Bearer-Token Auth-Check — nur Admin kann die Route aufrufen
+- **🐛 excel-import-service**: `unknown` wird nicht mehr auf `male` gesetzt — Geschlecht bleibt `unknown` wenn nicht erkennbar
+- **📊 RWK-Tabellen Schnitt**: Schnitt-Spalte basiert jetzt ebenfalls auf dem liga-weiten vollständigen Durchgang — konsistent mit der Sortierung
+- **💡 Tooltip Vorschau**: Klammer-Wert `(2513)` hat jetzt einen erklärenden Tooltip beim Hover
+- **✅ Geburtsjahr Pflichtfeld**: Beim Anlegen eines neuen Schützen im Vereinsbereich ist ein gültiges Geburtsjahr jetzt Pflicht
+- **🎯 Geschlecht vereinheitlicht**: `unknown`-Gender wird überall als `?` angezeigt (statt `-` in km/mitglieder)
+- **⚠️ Vereinsnummer-Warnung**: Import warnt wenn kein `clubNumber`-Feld für den Verein gepflegt ist
+- **🧹 Aufräumen Admin**: 9 veraltete/einmalige Admin-Seiten entfernt (migrate, migration, migrations, club-migration, dev-setup, import-contacts, km-users, kommunikation, auf-abstieg, captains)
+- **🗑️ Vereinssoftware-Reste entfernt**: license-management Seite, Vereinssoftware-Lizenz Checkbox im Benutzerformular entfernt
+- **📋 Admin-Navigation bereinigt**: Sidebar nur noch mit aktiv genutzten Seiten
+
+## Version 2.6.1
 - **🐛 Bugfix RWK-Tabellen**: Tabellensortierung basiert jetzt auf dem liga-weit vollständigen Durchgang — ein Team das einen Durchgang mehr eingetragen hat wird nicht mehr vorzeitig nach oben sortiert
 - **🔢 Sortierlogik**: Neu berechneter Sortierscore verwendet `leagueCompleteRound` (Minimum aller Teams) statt des individuellen Team-Durchgangs
 - **👁️ Vorschau bleibt**: Der Gesamtwert in Klammern (z.B. `(2513)`) wird weiterhin als Vorschau angezeigt — nur die Sortierung ist angepasst

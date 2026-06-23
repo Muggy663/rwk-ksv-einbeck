@@ -70,6 +70,7 @@ import type {
 import { uiDisciplineFilterOptions, getUIDisciplineValueFromSpecificType, leagueDisciplineOptions, MAX_SHOOTERS_PER_TEAM } from '@/types/rwk';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { db } from '@/lib/firebase/config';
 import { collection, doc, getDoc, getDocs, query, where, orderBy, limit, documentId, setDoc } from 'firebase/firestore';
@@ -859,73 +860,26 @@ function RwkTabellenPageComponent() {
         });
         leagueDisplay.teams = teamDisplays;
         
-        // Populate individualLeagueShooters
-        const leagueShootersMap = new Map<string, IndividualShooterDisplayData>();
-        leagueDisplay.teams.forEach(team => {
-            (team.shootersResults || []).forEach(sr => {
-                if (!leagueShootersMap.has(sr.shooterId)) {
-                    leagueShootersMap.set(sr.shooterId, {
-                        shooterId: sr.shooterId,
-                        shooterName: sr.shooterName,
-                        shooterGender: sr.shooterGender,
-                        teamName: team.name, // Team name for context in league's individual list
-                        results: {...sr.results},
-                        totalScore: sr.total || 0,
-                        averageScore: sr.average,
-                        roundsShot: sr.roundsShot,
-                        competitionYear: team.competitionYear,
-                        leagueId: leagueDisplay.id,
-                        leagueType: leagueDisplay.type,
-                        teamOutOfCompetition: team.outOfCompetition || false,
-                        teamOutOfCompetitionReason: team.outOfCompetitionReason,
-                    });
-                }
-            });
-        });
-        // Filtere und sortiere Schützen - zeige alle Schützen, auch ohne Ergebnisse
-        leagueDisplay.individualLeagueShooters = Array.from(leagueShootersMap.values())
-            // Entferne Filter für roundsShot > 0, um alle Schützen zu zeigen
-            .sort((a, b) => {
-              // Schützen "außer Konkurrenz" immer nach Schützen in Wertung
-              if (a.teamOutOfCompetition && !b.teamOutOfCompetition) return 1;
-              if (!a.teamOutOfCompetition && b.teamOutOfCompetition) return -1;
-              
-              // Sortierung nach Durchschnitt
-              const avgDiff = (b.averageScore ?? 0) - (a.averageScore ?? 0);
-              if (avgDiff !== 0) return avgDiff;
-              
-              // Bei Gleichstand: Nach Gesamtpunkten
-              const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
-              if (totalDiff !== 0) return totalDiff;
-              
-              // Bei Gleichstand: Stichentscheid vom letzten zum ersten Durchgang
-              for (let round = numRounds; round >= 1; round--) {
-                const aScore = a.results[`dg${round}`] ?? 0;
-                const bScore = b.results[`dg${round}`] ?? 0;
-                if (bScore !== aScore) return bScore - aScore;
-              }
-              
-              // Falls immer noch gleich: Alphabetisch nach Namen
-              return a.shooterName.localeCompare(b.shooterName);
-            });
+        // Populate individualLeagueShooters — wird nach dem Return asynchron via fetchIndividualShooterData befüllt
+        leagueDisplay.individualLeagueShooters = [];
         
-        // Vergebe Rangplätze nur für Schützen in Wertung
-        let shooterRankCounter = 1;
-        leagueDisplay.individualLeagueShooters.forEach(shooter => {
-          if (!shooter.teamOutOfCompetition) {
-            shooter.rank = shooterRankCounter++;
-          } else {
-            shooter.rank = null; // Kein Rang für Schützen "außer Konkurrenz"
-          }
-        });
-
-
+        // Vergebe Rangplätze (leer vorerst, wird nach Nachladen gesetzt)
         fetchedLeaguesData.push(leagueDisplay);
       }
       // Lade Substitutions-Daten (zentral für alle Teams)
       const substitutionsMap = await SubstitutionService.loadSubstitutions(config.year);
       setTeamSubstitutions(substitutionsMap);
-      
+
+      // Lade Einzelranglisten für alle Ligen parallel via fetchIndividualShooterData
+      // Das stellt sicher dass alle Schützen korrekt erfasst werden, unabhängig vom Aufklappen
+      await Promise.all(fetchedLeaguesData.map(async (league) => {
+        try {
+          const shooters = await fetchIndividualShooterData(config, numRoundsForCompetition, league.id);
+          league.individualLeagueShooters = shooters;
+        } catch {
+          league.individualLeagueShooters = [];
+        }
+      }));
 
       return { id: `${config.year}-${config.discipline}`, config, leagues: fetchedLeaguesData };
     } catch (err: any) {
@@ -1081,13 +1035,14 @@ function RwkTabellenPageComponent() {
         logInfo('Substitutions gefunden:', { data: substitutionsSnapshot.docs.length });
         substitutionsSnapshot.docs.forEach(doc => {
           const data = doc.data();
-          const key = `${data.teamId}-${data.originalShooterId}`;
+          const key = `${data.teamId}|${data.originalShooterId}`;
           substitutionsMap.set(key, {
             originalShooterName: data.originalShooterName,
             replacementShooterName: data.replacementShooterName,
             fromRound: data.fromRound,
             reason: data.reason,
-            type: data.type
+            type: data.type,
+            leagueId: data.leagueId || null,
           });
         });
       } catch (error) {
@@ -1288,7 +1243,7 @@ function RwkTabellenPageComponent() {
         for (const [teamId, teamData] of teamInfoMap) {
           if (teamData.shooterIds && teamData.shooterIds.includes(shooterId)) {
             // Prüfe ob dieser Schütze der ursprüngliche (ersetzte) Schütze ist
-            const originalSubstitutionKey = `${teamId}-${shooterId}`;
+            const originalSubstitutionKey = `${teamId}|${shooterId}`;
             const originalSubstitution = substitutionsMap.get(originalSubstitutionKey);
             if (originalSubstitution) {
               shooterData.isReplacedShooter = true;
@@ -1322,14 +1277,18 @@ function RwkTabellenPageComponent() {
       
       const rankedShooters = deduplicatedShooters
         // Zeige alle Schützen, auch ohne Ergebnisse
-        // .filter(s => s.roundsShot > 0) // Entfernt, um alle Schützen zu zeigen 
         // Filtere ersetzte Schützen aus
         .filter(shooter => {
-          // Prüfe alle Substitution-Keys
+          // Prüfe alle Substitution-Keys mit sicherem Separator '|'
           for (const [key, substitution] of substitutionsMap) {
-            const [teamId, originalShooterId] = key.split('-');
-            if (originalShooterId === shooter.shooterId) {
-              return false; // Ersetzte Schützen ausblenden
+            // Key-Format: teamId|originalShooterId
+            const parts = key.split('|');
+            if (parts.length === 2 && parts[1] === shooter.shooterId) {
+              // Nur filtern wenn die Substitution zur gleichen Liga gehört
+              // oder keine Liga-ID gespeichert ist (Fallback: filtern)
+              if (!substitution.leagueId || substitution.leagueId === shooter.leagueId) {
+                return false; // Ersetzte Schützen ausblenden
+              }
             }
           }
           return true;
@@ -2229,13 +2188,31 @@ function RwkTabellenPageComponent() {
                                         <div className="flex flex-col items-center">
                                           <span className="font-bold text-lg text-primary">{leagueScore}</span>
                                           {showBoth && (
-                                            <span className="text-xs text-muted-foreground">({team.totalScore ?? 0})</span>
+                                            <TooltipProvider>
+                                              <UITooltip>
+                                                <TooltipTrigger asChild>
+                                                  <span className="text-xs text-muted-foreground cursor-help">({team.totalScore ?? 0})</span>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                  <p>Vorschau inkl. noch nicht von allen Mannschaften abgeschlossener Durchgänge</p>
+                                                </TooltipContent>
+                                              </UITooltip>
+                                            </TooltipProvider>
                                           )}
                                         </div>
                                       );
                                     })()}
                                   </TableCell>
-                                  {!isNativeApp && <TableCell className="text-center font-medium text-muted-foreground px-2 py-2">{team.averageScore != null ? team.averageScore.toFixed(2) : '-'}</TableCell>}
+                                  {!isNativeApp && <TableCell className="text-center font-medium text-muted-foreground px-2 py-2">{(() => {
+                                    // Schnitt nur bis zum liga-weiten vollständigen Durchgang
+                                    if (leagueCompleteRound === 0) return '-';
+                                    let leagueScoreForAvg = 0;
+                                    for (let r = 1; r <= leagueCompleteRound; r++) {
+                                      const score = team.roundResults?.[`dg${r}`];
+                                      if (score !== null && score !== undefined) leagueScoreForAvg += score;
+                                    }
+                                    return (leagueScoreForAvg / leagueCompleteRound).toFixed(2);
+                                  })()}</TableCell>}
                                   {!isNativeApp && <TableCell className="text-right pr-4 px-2 py-2">
                                     <Button variant="ghost" size="icon" onClick={(e) => {e.stopPropagation(); toggleTeamExpansion(team.id);}} aria-label={`Details für ${team.name} ${expandedTeamIds.includes(team.id) ? 'ausblenden' : 'anzeigen'}`} className="hover:bg-accent/20 rounded-md">
                                       {expandedTeamIds.includes(team.id) ? <ChevronDown className="h-5 w-5 transition-transform duration-200 rotate-180" /> : <ChevronRight className="h-5 w-5 transition-transform duration-200" />}

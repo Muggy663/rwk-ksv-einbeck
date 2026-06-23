@@ -124,6 +124,13 @@ export default function AdminMitgliederImportPage() {
       const clubNumber: string = clubSnap.exists() ? (clubSnap.data().clubNumber || '') : '';
       // Vereinsnummer extrahieren: "08-017" → "017"
       const vereinsnummer = clubNumber ? clubNumber.split('-')[1] || '' : '';
+      if (!vereinsnummer) {
+        toast({
+          title: 'Hinweis: Keine Vereinsnummer hinterlegt',
+          description: 'Für diesen Verein ist keine Vereinsnummer (08-XXX) gepflegt. Die Prüfung auf Mitglieder anderer Vereine ist deaktiviert. Bitte unter Admin → Vereine die Vereinsnummer nachtragen.',
+          variant: 'destructive'
+        });
+      }
       logInfo(`Vereinsnummer für Import: ${clubNumber} → "${vereinsnummer}"`);
 
       const buffer = await file.arrayBuffer();
