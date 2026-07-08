@@ -118,46 +118,6 @@ export default function DashboardAuswahl() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Social Training */}
-          <Card className="shadow-lg hover:shadow-xl transition-shadow border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30">
-            <CardHeader className="pb-4">
-              <div>
-                <CardTitle className="text-xl mb-2">
-                  👥 Social Training
-                  <Badge variant="default" className="ml-2 text-xs bg-green-600">NEU</Badge>
-                </CardTitle>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="outline">Trainingsgruppen</Badge>
-                  <Badge variant="outline">Live-Wettkämpfe</Badge>
-                  <Badge variant="outline">Community</Badge>
-                </div>
-              </div>
-              <CardDescription>
-                Trainieren Sie gemeinsam mit anderen Schützen und nehmen Sie an Live-Wettkämpfen teil
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
-                  <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">🆕 Features</h4>
-                  <div className="text-sm text-purple-700 dark:text-purple-200 space-y-1">
-                    <div>• 👥 Trainingsgruppen erstellen</div>
-                    <div>• ⚔️ Live-Wettkämpfe & Duelle</div>
-                    <div>• 📊 Community-Statistiken</div>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Link href="/social" className="flex-1">
-                    <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                      Social Training öffnen
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
         
         <div className="mt-8 text-center">
@@ -420,47 +380,6 @@ export default function DashboardAuswahl() {
                   <Link href="/schiessnachweis" className="flex-1">
                     <Button className="w-full">
                       Schießnachweis öffnen
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Social Training - Rechts unten */}
-          <Card className="shadow-lg hover:shadow-xl transition-shadow border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30">
-            <CardHeader className="pb-4">
-              <div>
-                <CardTitle className="text-xl mb-2">
-                  👥 Social Training
-                  <Badge variant="default" className="ml-2 text-xs bg-green-600">NEU</Badge>
-                </CardTitle>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="outline">Trainingsgruppen</Badge>
-                  <Badge variant="outline">Live-Wettkämpfe</Badge>
-                  <Badge variant="outline">Community</Badge>
-                </div>
-              </div>
-              <CardDescription>
-                Trainieren Sie gemeinsam mit anderen Schützen und nehmen Sie an Live-Wettkämpfen teil
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
-                  <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">🆕 Features</h4>
-                  <div className="text-sm text-purple-700 dark:text-purple-200 space-y-1">
-                    <div>• 👥 Trainingsgruppen erstellen</div>
-                    <div>• ⚔️ Live-Wettkämpfe & Duelle</div>
-
-                    <div>• 📊 Community-Statistiken</div>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Link href="/social" className="flex-1">
-                    <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                      Social Training öffnen
                     </Button>
                   </Link>
                 </div>
