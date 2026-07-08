@@ -63,8 +63,11 @@ export default function DashboardAuswahl() {
   const isMannschaftsfuehrer = clubRolesList.includes('MANNSCHAFTSFUEHRER');
   
   // Prüfe ob Benutzer nur Schießnachweis/Social Training Zugriff hat (INDIVIDUAL userType)
+  // Wichtig: clubRoles ODER kvRoles ODER platformRole überschreiben INDIVIDUAL
   const isIndividualUser = userAppPermissions?.userType === 'INDIVIDUAL' && 
-                          !userAppPermissions?.kvRoles;
+                          !userAppPermissions?.clubRoles &&
+                          !userAppPermissions?.kvRoles &&
+                          !userAppPermissions?.platformRole;
   
   // Wenn Individual User, zeige nur Schießnachweis/Social Training
   if (isIndividualUser) {

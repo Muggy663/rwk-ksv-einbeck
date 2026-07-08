@@ -1,6 +1,6 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.6.2** | **Android: 0.9.4.1**
+**Version: 2.6.3** | **Android: 0.9.4.1**
 
 > **Social Training Platform für den deutschen Schießsport**
 

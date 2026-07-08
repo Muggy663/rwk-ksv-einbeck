@@ -211,7 +211,8 @@ export default function UnifiedLoginPage() {
       
       // Prüfe ob RWK/KM-Berechtigungen
       const hasRWKAccess = data.role || data.clubRoles || data.kvRoles || data.platformRole;
-      const isIndividual = data.userType === 'INDIVIDUAL';
+      // INDIVIDUAL nur wenn keine Club/KV/Platform-Rollen vorhanden
+      const isIndividual = data.userType === 'INDIVIDUAL' && !data.clubRoles && !data.kvRoles && !data.platformRole;
       
       if (isIndividual || !hasRWKAccess) {
         // Nur Schießnachweis

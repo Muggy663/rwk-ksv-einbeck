@@ -4,7 +4,11 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
-## Version 2.6.2 (aktuell)
+## Version 2.6.3 (aktuell)
+- **🐛 Bugfix Login**: Benutzer mit `userType: INDIVIDUAL` und gleichzeitig gesetzten `clubRoles` (z.B. SPORTLEITER) werden jetzt korrekt zum RWK/KM-Dashboard weitergeleitet statt nur zum Schießnachweis
+- **🐛 Bugfix Dashboard**: Gleiche Prüfung im Dashboard-Auswahl — `clubRoles` haben jetzt Vorrang vor `userType: INDIVIDUAL`
+
+## Version 2.6.2
 - **🔒 API-Sicherheit**: `/api/admin/fix-mitgliedsnummer` jetzt mit Bearer-Token Auth-Check — nur Admin kann die Route aufrufen
 - **🐛 excel-import-service**: `unknown` wird nicht mehr auf `male` gesetzt — Geschlecht bleibt `unknown` wenn nicht erkennbar
 - **📊 RWK-Tabellen Schnitt**: Schnitt-Spalte basiert jetzt ebenfalls auf dem liga-weiten vollständigen Durchgang — konsistent mit der Sortierung
@@ -15,6 +19,10 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 - **🧹 Aufräumen Admin**: 9 veraltete/einmalige Admin-Seiten entfernt (migrate, migration, migrations, club-migration, dev-setup, import-contacts, km-users, kommunikation, auf-abstieg, captains)
 - **🗑️ Vereinssoftware-Reste entfernt**: license-management Seite, Vereinssoftware-Lizenz Checkbox im Benutzerformular entfernt
 - **📋 Admin-Navigation bereinigt**: Sidebar nur noch mit aktiv genutzten Seiten
+- **🔇 Social Training deaktiviert**: Weiterleitung zur Startseite, aus allen Navigationen entfernt
+- **📄 Updates-Seite entfernt**: Inhalte sind im CHANGELOG.md — kein Duplikat mehr
+- **🏠 Handbuch bereinigt**: Social Training Tab und Inhalte entfernt
+- **🐛 RWK Einzelrangliste**: Schützen die in einer anderen Liga/Disziplin als Ersatzschütze eingetragen sind werden nicht mehr fälschlicherweise aus anderen Ligen gefiltert (Hartmut Kahl Bug)
 
 ## Version 2.6.1
 - **🐛 Bugfix RWK-Tabellen**: Tabellensortierung basiert jetzt auf dem liga-weit vollständigen Durchgang — ein Team das einen Durchgang mehr eingetragen hat wird nicht mehr vorzeitig nach oben sortiert
