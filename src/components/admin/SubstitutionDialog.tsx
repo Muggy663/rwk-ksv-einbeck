@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, addDoc, serverTimestamp, updateDoc, doc, writeBatch, arrayRemove, arrayUnion } from 'firebase/firestore';
 import type { Team, Shooter, TeamSubstitution, UserPermission } from '@/types/rwk';
-import { UserCircle, Users, AlertCircle } from 'lucide-react';
+import { UserCircle, Users, AlertCircle, Search } from 'lucide-react';
 
 interface SubstitutionDialogProps {
   isOpen: boolean;
@@ -42,6 +42,7 @@ export function SubstitutionDialog({
   const [reason, setReason] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [replacementSearchTerm, setReplacementSearchTerm] = useState('');
 
   // Lade aktuelle Mannschaftsschützen und verfügbare Ersatzschützen
   useEffect(() => {
@@ -265,6 +266,7 @@ export function SubstitutionDialog({
     setFromRound(1);
     setSubstitutionType('new_shooter');
     setReason('');
+    setReplacementSearchTerm('');
   };
 
   const handleClose = () => {
@@ -315,21 +317,53 @@ export function SubstitutionDialog({
 
             <div>
               <Label htmlFor="replacementShooter">Ersatzschütze *</Label>
-              <Select value={selectedReplacementShooter} onValueChange={setSelectedReplacementShooter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Ersatzschütze auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableShooters.map(shooter => (
-                    <SelectItem key={shooter.id} value={shooter.id}>
-                      <div className="flex items-center">
-                        <UserCircle className="mr-2 h-4 w-4" />
-                        {shooter.name}
+              <div className="space-y-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Name suchen..."
+                    value={replacementSearchTerm}
+                    onChange={(e) => setReplacementSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Select value={selectedReplacementShooter} onValueChange={setSelectedReplacementShooter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Ersatzschütze auswählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableShooters
+                      .filter(s => {
+                        if (!replacementSearchTerm) return true;
+                        const term = replacementSearchTerm.toLowerCase();
+                        return s.name?.toLowerCase().includes(term) ||
+                          s.firstName?.toLowerCase().includes(term) ||
+                          s.lastName?.toLowerCase().includes(term);
+                      })
+                      .map(shooter => (
+                        <SelectItem key={shooter.id} value={shooter.id}>
+                          <div className="flex items-center">
+                            <UserCircle className="mr-2 h-4 w-4" />
+                            {shooter.firstName && shooter.lastName
+                              ? `${shooter.firstName} ${shooter.lastName}`
+                              : shooter.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    {availableShooters.filter(s => {
+                      if (!replacementSearchTerm) return true;
+                      const term = replacementSearchTerm.toLowerCase();
+                      return s.name?.toLowerCase().includes(term) ||
+                        s.firstName?.toLowerCase().includes(term) ||
+                        s.lastName?.toLowerCase().includes(term);
+                    }).length === 0 && (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">
+                        Keine Schützen gefunden
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
               {availableShooters.length === 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
                   Keine verfügbaren Schützen im Verein gefunden.

@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where, orderBy, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, deleteDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { SubstitutionDialog } from '@/components/admin/SubstitutionDialog';
-import { UserPlus, Search, Trash2, Calendar, Users, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { TeamRestructureDialog } from '@/components/admin/TeamRestructureDialog';
+import { UserPlus, Search, Trash2, Calendar, Users, AlertCircle, ChevronDown, ChevronRight, Wrench, Pencil, Check, X } from 'lucide-react';
 import type { Team, TeamSubstitution, UserPermission, Season, Shooter } from '@/types/rwk';
 
 export default function SubstitutionsPage() {
@@ -28,6 +29,11 @@ export default function SubstitutionsPage() {
   const [showDialog, setShowDialog] = useState(false);
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
   const [teamShooters, setTeamShooters] = useState<Map<string, Shooter[]>>(new Map());
+  const [showRestructureDialog, setShowRestructureDialog] = useState(false);
+  const [restructureTeam, setRestructureTeam] = useState<Team | null>(null);
+  const [currentNumRounds, setCurrentNumRounds] = useState(5);
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [editingTeamName, setEditingTeamName] = useState('');
 
   const userPermission: UserPermission = {
     uid: 'admin',
@@ -121,10 +127,11 @@ export default function SubstitutionsPage() {
         orderBy('substitutionDate', 'desc')
       );
       const substitutionsSnapshot = await getDocs(substitutionsQuery);
-      const substitutionsData = substitutionsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as TeamSubstitution));
+      const leagueIdsForSeason = new Set(leaguesData.map(l => l.id));
+      const substitutionsData = substitutionsSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as TeamSubstitution))
+        // Nur Substitutionen anzeigen die zur gewählten Saison gehören
+        .filter(s => !s.leagueId || leagueIdsForSeason.has(s.leagueId));
       setSubstitutions(substitutionsData);
 
     } catch (error) {
@@ -161,11 +168,13 @@ export default function SubstitutionsPage() {
     }
   };
 
-  const filteredSubstitutions = substitutions.filter(sub =>
-    sub.teamName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sub.originalShooterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sub.replacementShooterName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSubstitutions = substitutions.filter(sub => {
+    const matchesSearch = sub.teamName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sub.originalShooterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sub.replacementShooterName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesLeague = !selectedLeagueId || selectedLeagueId === 'all' || sub.leagueId === selectedLeagueId;
+    return matchesSearch && matchesLeague;
+  });
 
   const filteredTeams = teams.filter(team => {
     const matchesSearch = team.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -175,6 +184,32 @@ export default function SubstitutionsPage() {
   });
   
   const availableDisciplines = [...new Set(teams.map(t => t.leagueType).filter(Boolean))].sort();
+
+  const handleRenameTeam = async (teamId: string) => {
+    if (!editingTeamName.trim()) return;
+    try {
+      await updateDoc(doc(db, 'rwk_teams', teamId), { name: editingTeamName.trim() });
+      toast({ title: 'Umbenannt', description: `Mannschaft wurde umbenannt.` });
+      setEditingTeamId(null);
+      setEditingTeamName('');
+      loadData();
+    } catch (err) {
+      logError('Fehler beim Umbenennen:', err);
+      toast({ title: 'Fehler', description: 'Umbenennung fehlgeschlagen.', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteTeam = async (team: Team) => {
+    if (!confirm(`Mannschaft "${team.name}" wirklich löschen? Dies kann nicht rückgängig gemacht werden.`)) return;
+    try {
+      await deleteDoc(doc(db, 'rwk_teams', team.id));
+      toast({ title: 'Gelöscht', description: `"${team.name}" wurde gelöscht.` });
+      loadData();
+    } catch (err) {
+      logError('Fehler beim Löschen:', err);
+      toast({ title: 'Fehler', description: 'Löschen fehlgeschlagen.', variant: 'destructive' });
+    }
+  };
 
   const toggleTeamExpansion = async (teamId: string, shooterIds: string[]) => {
     const newExpanded = new Set(expandedTeams);
@@ -375,7 +410,29 @@ export default function SubstitutionsPage() {
                             }
                           </Button>
                           <div>
-                            <h4 className="font-medium">{team.name}</h4>
+                            {editingTeamId === team.id ? (
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  value={editingTeamName}
+                                  onChange={(e) => setEditingTeamName(e.target.value)}
+                                  className="h-7 text-sm w-48"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleRenameTeam(team.id);
+                                    if (e.key === 'Escape') { setEditingTeamId(null); setEditingTeamName(''); }
+                                  }}
+                                  autoFocus
+                                />
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-600" onClick={() => handleRenameTeam(team.id)}><Check className="h-3 w-3" /></Button>
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500" onClick={() => { setEditingTeamId(null); setEditingTeamName(''); }}><X className="h-3 w-3" /></Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <h4 className="font-medium">{team.name}</h4>
+                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 opacity-50 hover:opacity-100" onClick={() => { setEditingTeamId(team.id); setEditingTeamName(team.name); }}>
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <span>{team.shooterIds?.length || 0} Schützen</span>
                               {team.leagueType && <Badge variant="outline">{team.leagueType}</Badge>}
@@ -392,6 +449,27 @@ export default function SubstitutionsPage() {
                           }}
                         >
                           <UserPlus className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                          onClick={() => {
+                            setRestructureTeam(team);
+                            setShowRestructureDialog(true);
+                          }}
+                          title="Mannschaft umbauen"
+                        >
+                          <Wrench className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 border-red-300 hover:bg-red-50"
+                          onClick={() => handleDeleteTeam(team)}
+                          title="Mannschaft löschen"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
@@ -442,6 +520,25 @@ export default function SubstitutionsPage() {
             loadData();
             setShowDialog(false);
             setSelectedTeam(null);
+          }}
+        />
+      )}
+
+      {showRestructureDialog && restructureTeam && (
+        <TeamRestructureDialog
+          isOpen={showRestructureDialog}
+          onClose={() => {
+            setShowRestructureDialog(false);
+            setRestructureTeam(null);
+          }}
+          sourceTeam={restructureTeam}
+          allTeams={teams}
+          competitionYear={seasons.find(s => s.id === selectedSeasonId)?.competitionYear || 2026}
+          numRounds={currentNumRounds}
+          onRestructured={() => {
+            loadData();
+            setShowRestructureDialog(false);
+            setRestructureTeam(null);
           }}
         />
       )}
