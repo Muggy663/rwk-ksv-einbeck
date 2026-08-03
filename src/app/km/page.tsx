@@ -239,7 +239,7 @@ function KMDashboardContent() {
               📊 Aktuelle Kreismeisterschaften
             </CardTitle>
             <CardDescription>
-              KM 2026 - Wichtige Informationen
+              Aktive Kreismeisterschaften - Wichtige Informationen
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -300,7 +300,7 @@ function KMDashboardContent() {
                           isExpired ? 'text-red-800' : 'text-green-800'
                         }`}>
                           <span>🎯</span>
-                          <span>KM 2026 - {saison.name}</span>
+                          <span>KM {saison.jahr} - {saison.name}</span>
                         </div>
                         <div className={`flex items-center gap-2 font-medium ${
                           isExpired ? 'text-red-700' : 'text-green-700'
@@ -336,15 +336,9 @@ function KMDashboardContent() {
                   );
                 })
               ) : (
-                <div className="bg-green-50 p-3 rounded border border-green-200">
-                  <div className="text-green-700">
-                    <div className="flex items-center gap-2 font-medium">
-                      <span>✅</span>
-                      <span>Meldeschluss: 15.12.2025</span>
-                      <Badge className="ml-2 text-xs bg-green-600">
-                        Aktiv
-                      </Badge>
-                    </div>
+                <div className="bg-gray-50 p-3 rounded border border-gray-200">
+                  <div className="text-gray-600 text-sm">
+                    Keine aktiven Kreismeisterschaften vorhanden.
                   </div>
                 </div>
               )}

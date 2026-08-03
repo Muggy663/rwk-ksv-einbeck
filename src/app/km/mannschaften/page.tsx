@@ -31,6 +31,8 @@ interface Shooter {
 }
 
 function KMMannschaftenContent() {
+  // Sportjahr dynamisch: ab 1. Juli gilt das Folgejahr
+  const sportjahr = (new Date().getMonth() >= 6) ? new Date().getFullYear() + 1 : new Date().getFullYear();
   const { toast } = useToast();
   const { hasKMAccess, userRole, loading: authLoading } = useKMAuth();
   const { currentClubId, userClubIds } = useKMContext();
@@ -529,7 +531,7 @@ function KMMannschaftenContent() {
                                 const berechnet = teamSchuetzen.map(schuetze => {
                                   if (!schuetze?.birthYear || !schuetze?.gender) return 'Unbekannt';
                                   
-                                  const age = 2026 - schuetze.birthYear;
+                                  const age = sportjahr - schuetze.birthYear;
                                   const isAuflage = disziplin?.auflage;
                                   const isMale = schuetze.gender === 'male';
                                   
@@ -624,7 +626,7 @@ function KMMannschaftenContent() {
                                     const disziplin = disziplinen.find(d => d.id === mannschaft.disziplinId);
                                     if (!disziplin) return 'Unbekannt';
                                     
-                                    const age = 2026 - schuetze.birthYear;
+                                    const age = sportjahr - schuetze.birthYear;
                                     const gender = schuetze.gender;
                                     const istAuflage = disziplin.auflage;
                                     
@@ -762,7 +764,7 @@ function KMMannschaftenContent() {
                                           const disziplin = disziplinen.find(d => d.id === mannschaft.disziplinId);
                                           if (!schuetze.birthYear || !schuetze.gender || !disziplin) return 'Unbekannt';
                                           
-                                          const age = 2026 - schuetze.birthYear;
+                                          const age = sportjahr - schuetze.birthYear;
                                           const gender = schuetze.gender;
                                           const istAuflage = disziplin.auflage;
                                           

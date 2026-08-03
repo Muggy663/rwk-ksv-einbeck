@@ -21,7 +21,7 @@ function KMMeldungenContent() {
   const { isMultiClub, userRole } = useKMAuth();
   const { currentClubId, userClubIds } = useKMContext();
   const { user } = useAuthContext();
-  const [meldeModus, setMeldeModus] = useState<'schuetze-disziplinen' | 'disziplin-schuetzen'>('schuetze-disziplinen');
+  const [meldeModus, setMeldeModus] = useState<'schuetze-disziplinen' | 'disziplin-schuetzen'>('disziplin-schuetzen');
   const [selectedSchuetze, setSelectedSchuetze] = useState('');
   const [selectedSchuetzen, setSelectedSchuetzen] = useState<string[]>([]);
   const [selectedDisziplinen, setSelectedDisziplinen] = useState<string[]>([]);
@@ -48,6 +48,27 @@ function KMMeldungenContent() {
   const [saisons, setSaisons] = useState<any[]>([]);
   const [selectedSaison, setSelectedSaison] = useState<string>('');
 
+  // Gefilterte Disziplinen für gewählte Saison
+  // Disziplinen sind zeitlos — Filterung nur nach Disziplin-Typ (KK/LD/KKP) der gewählten Saison
+  const filteredDisziplinenForSaison = (() => {
+    if (!selectedSaison) return [];
+    const selectedSaisonData = saisons.find(s => s.id === selectedSaison);
+    if (!selectedSaisonData) return [];
+    const disziplinTyp = selectedSaisonData?.disziplinTyp?.toUpperCase() || '';
+    
+    // Alle Disziplinen anzeigen die zum Typ passen
+    return disziplinen.filter(d => {
+      if (!disziplinTyp) return true; // Kein Typ → alle zeigen
+      // KK = Gewehr Disziplinen (spoNummer 1.xx und 3.xx)
+      if (disziplinTyp === 'KK') return d.spoNummer?.startsWith('1.') || d.spoNummer?.startsWith('3.');
+      // LD = Luftdruck (spoNummer 1.xx und 2.xx)
+      if (disziplinTyp === 'LD') return d.spoNummer?.startsWith('1.') || d.spoNummer?.startsWith('2.');
+      // KKP = Pistole (spoNummer 4.xx)
+      if (disziplinTyp === 'KKP') return d.spoNummer?.startsWith('4.');
+      return true;
+    });
+  })();
+
   useEffect(() => {
     loadData();
   }, []);
@@ -68,7 +89,7 @@ function KMMeldungenContent() {
       const saison = saisons.find(s => s.id === selectedSaison);
       const disziplinTyp = saison?.disziplinTyp?.toLowerCase() || 'kk';
       
-      const meldungenSnapshot = await getDocs(collection(db, `km_meldungen_2026_${disziplinTyp}`));
+      const meldungenSnapshot = await getDocs(collection(db, `km_meldungen_${saison?.jahr || 2027}_${disziplinTyp}`));
       const saisonMeldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setMeldungen(saisonMeldungen);
     } catch (error) {
@@ -105,8 +126,9 @@ function KMMeldungenContent() {
       setDisziplinen(allDisziplinen);
       setClubs(allClubs);
       
-      // Lade Meldungen aus allen Collections
-      const jahr = 2026;
+      // Lade Meldungen aus allen Collections für das aktive Jahr
+      const aktiveSaisonDaten = sortedSaisons.length > 0 ? sortedSaisons[0] : null;
+      const jahr = aktiveSaisonDaten?.jahr || new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0);
       const collections = ['kk', 'kkp', 'ld'];
       let alleMeldungen = [];
       
@@ -144,8 +166,10 @@ function KMMeldungenContent() {
       
       logDebug('DEBUG: Verarbeitete Meldungen:', verarbeitete.length);
       
-      // Sortiere Saisons
-      const sortedSaisons = allSaisons.sort((a, b) => {
+      // Sortiere Saisons — nur aktive anzeigen
+      const sortedSaisons = allSaisons
+        .filter(s => s.status === 'aktiv' || s.status === 'Aktiv')
+        .sort((a, b) => {
         const today = new Date();
         const getDeadline = (s) => {
           if (!s.meldeschluss) return new Date(0);
@@ -467,7 +491,8 @@ function KMMeldungenContent() {
       };
     }
     
-    const sportjahr = 2026;
+    const selectedSaisonData = saisons.find(s => s.id === selectedSaison);
+    const sportjahr = selectedSaisonData?.jahr || new Date().getFullYear();
     const age = sportjahr - schuetze.birthYear;
     const gender = schuetze.gender;
     
@@ -493,8 +518,9 @@ function KMMeldungenContent() {
         return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
       }
       
-      // KM-Sonderregelung: Jugend/Junioren bei Auflage kreisintern (1.11)
-      if (spoNummer === '1.11' && age >= 15 && age <= 40) {
+      // KM-Sonderregelung: 15-40 Jahre bei Auflage kreisintern erlaubt (KM ja, LM nein)
+      // Gilt für alle Auflage-Disziplinen im Kreisverband
+      if (age >= 15 && age <= 40) {
         let klasse;
         if (age <= 16) klasse = gender === 'male' ? 'Jugend m' : 'Jugend w';
         else if (age <= 18) klasse = gender === 'male' ? 'Junioren II m' : 'Junioren II w';
@@ -505,17 +531,7 @@ function KMMeldungenContent() {
           klasse,
           kmErlaubt: true,
           lmErlaubt: false,
-          warnung: 'KM erlaubt, aber nicht LM-berechtigt (Sonderregelung Auflage kreisintern)'
-        };
-      }
-      
-      // Nicht teilnahmeberechtigt (15-40 Jahre bei normaler Auflage)
-      if (age < 41) {
-        return {
-          klasse: 'Nicht teilnahmeberechtigt',
-          kmErlaubt: false,
-          lmErlaubt: false,
-          warnung: 'Auflage-Disziplinen nur für Schüler (12-14) und Senioren (41+)'
+          warnung: 'KM erlaubt, aber nicht LM-berechtigt (Sonderregelung Kreisverband Auflage)'
         };
       }
       
@@ -894,7 +910,8 @@ function KMMeldungenContent() {
                       {(() => {
                         const schuetze = schuetzen.find(s => s.id === selectedSchuetze);
                         if (!schuetze) return '';
-                        const sportjahr = 2026; // Sportjahr KM 2026
+                        const selectedSaisonInfo = saisons.find(s => s.id === selectedSaison);
+                        const sportjahr = selectedSaisonInfo?.jahr || new Date().getFullYear();
                         const age = sportjahr - schuetze.birthYear;
                         return `Alter Sportjahr ${sportjahr}: ${age} Jahre, ${schuetze.gender === 'male' ? 'Männlich' : 'Weiblich'}`;
                       })()}
@@ -957,15 +974,15 @@ function KMMeldungenContent() {
               {/* Disziplinen - Mehrfachauswahl */}
               <div>
                 <label className="block text-sm font-medium mb-2">Disziplinen auswählen (Mehrfachauswahl möglich)</label>
-                {disziplinen.filter(d => d.saisonId === selectedSaison).length === 0 ? (
+                {filteredDisziplinenForSaison.length === 0 ? (
                   <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
                     <p className="text-sm text-yellow-700">
-                      Keine Disziplinen verfügbar. Bitte gehen Sie zu <Link href="/km/init" className="underline">System initialisieren</Link>.
+                      Für diese Saison sind noch keine Disziplinen hinterlegt. Bitte wende dich an den KM-Organisator.
                     </p>
                   </div>
                 ) : (
                   <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded p-2 bg-white dark:bg-gray-800">
-                    {disziplinen.filter(d => d.saisonId === selectedSaison).map(disziplin => {
+                    {filteredDisziplinenForSaison.map(disziplin => {
                       // Prüfe Meldeschluss
                       const today = new Date();
                       let isExpired = false;
@@ -1188,7 +1205,7 @@ function KMMeldungenContent() {
                     className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   >
                     <option value="">-- Disziplin wählen --</option>
-                    {disziplinen.filter(d => d.saisonId === selectedSaison).map(disziplin => (
+                    {filteredDisziplinenForSaison.map(disziplin => (
                       <option key={disziplin.id} value={disziplin.id}>
                         {disziplin.spoNummer} - {disziplin.name}
                         {disziplin.nurVereinsmeisterschaft ? ' (VM)' : ''}

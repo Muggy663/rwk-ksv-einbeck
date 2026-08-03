@@ -51,7 +51,8 @@ export default function KMMannschaftsregelnAdmin() {
       
       wettkampfklassenSnapshot.docs.forEach(doc => {
         const data = doc.data();
-        if (data.name && data.saison === '2026') {
+        // Alle Wettkampfklassen laden (jahresunabhängig)
+        if (data.name) {
           altersklassenListe.push(data.name);
         }
       });
@@ -254,7 +255,7 @@ export default function KMMannschaftsregelnAdmin() {
         {/* Übersicht vorhandener Altersklassen */}
         <Card>
           <CardHeader>
-            <CardTitle>📋 Vorhandene Altersklassen in KM 2026</CardTitle>
+            <CardTitle>📋 Vorhandene Altersklassen</CardTitle>
             <p className="text-sm text-muted-foreground">Ziehen Sie Altersklassen per Drag & Drop in die Kombinationen unten</p>
           </CardHeader>
           <CardContent>

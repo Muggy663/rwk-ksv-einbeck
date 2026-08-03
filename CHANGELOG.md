@@ -4,11 +4,30 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
-## Version 2.6.3 (aktuell)
-- **🐛 Bugfix Login**: Benutzer mit `userType: INDIVIDUAL` und gleichzeitig gesetzten `clubRoles` (z.B. SPORTLEITER) werden jetzt korrekt zum RWK/KM-Dashboard weitergeleitet statt nur zum Schießnachweis
-- **🐛 Bugfix Dashboard**: Gleiche Prüfung im Dashboard-Auswahl — `clubRoles` haben jetzt Vorrang vor `userType: INDIVIDUAL`
+## Version 2.7.0 (03.08.2026)
+- **📥 Mannschafts-Umbau**: Neuer Dialog zum Auflösen und Neuordnen von Mannschaften mit selektiver Ergebnis-Übertragung
+- **🔧 Team-Verwaltung in Substitutions-Seite**: Inline-Umbenennen, Löschen und Umbauen direkt in der Übersicht
+- **🔍 Ersatzschütze Namenssuche**: Suchfeld im Dialog zum schnellen Finden des Ersatzschützens
+- **🐛 RWK Einzelrangliste**: Substitutionen werden jetzt liga-spezifisch gefiltert — Schütze in anderer Liga wird nicht mehr fälschlicherweise ausgeblendet
+- **🐛 RWK Einzelrangliste**: Alle Schützen werden jetzt direkt aus Scores geladen — kein Aufklappen der Mannschaft mehr nötig
+- **📊 KKG Gesamtliste**: Filtert korrekt nach Liga-IDs statt leagueType — keine KKP-Vermischung mehr
+- **🔢 KM dynamisches Sportjahr**: Alle KM-Seiten berechnen das Sportjahr automatisch (ab 1. Juli → Folgejahr)
+- **📋 KM Disziplinen**: Jahresunabhängig — werden nach Typ der Saison gefiltert, kein manuelles Initialisieren mehr nötig
+- **🔒 KM Meldungen**: Nur noch aktive Saisons im Dropdown, archivierte ausgeblendet
+- **🎯 KM Auflage-Regel**: Sonderregelung Kreisverband — alle ab 15 dürfen an KM Auflage teilnehmen (nicht LM-berechtigt)
+- **🗑️ KM Meldung löschen**: Neue API-Route `/api/km/meldungen/[id]` für das Löschen einzelner Meldungen
+- **📋 Substitutions Liga-Filter**: Zeigt nur Ersatzschützen der gewählten Saison/Liga an
+- **🧹 Social Training entfernt**: Aus Dashboard-Auswahl, Navigationen, Handbuch
+- **📄 Updates-Seite entfernt**: Inhalte sind im CHANGELOG.md
+- **🔇 Admin bereinigt**: 11 veraltete Seiten gelöscht, Vereinssoftware-Reste entfernt
+- **🐛 Login-Fix**: INDIVIDUAL userType blockiert nicht mehr den Zugang wenn clubRoles vorhanden
 
-## Version 2.6.2
+## Version 2.6.3 (03.08.2026)
+- **🐛 Bugfix Login**: Benutzer mit `userType: INDIVIDUAL` und gleichzeitig gesetzten `clubRoles` werden korrekt zum RWK/KM-Dashboard weitergeleitet
+- **🐛 Bugfix Dashboard**: `clubRoles` haben Vorrang vor `userType: INDIVIDUAL`
+- **🗑️ Social Training**: Aus Dashboard-Auswahl entfernt
+
+## Version 2.6.2 (03.08.2026)
 - **🔒 API-Sicherheit**: `/api/admin/fix-mitgliedsnummer` jetzt mit Bearer-Token Auth-Check — nur Admin kann die Route aufrufen
 - **🐛 excel-import-service**: `unknown` wird nicht mehr auf `male` gesetzt — Geschlecht bleibt `unknown` wenn nicht erkennbar
 - **📊 RWK-Tabellen Schnitt**: Schnitt-Spalte basiert jetzt ebenfalls auf dem liga-weiten vollständigen Durchgang — konsistent mit der Sortierung

@@ -8,45 +8,52 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export default function KMAltersklassen() {
-  const sportjahr = 2026;
+  // Sportjahr dynamisch: ab 1. Juli gilt das Folgejahr als Sportjahr
+  const now = new Date();
+  const sportjahr = (now.getMonth() >= 6) ? now.getFullYear() + 1 : now.getFullYear();
+
+  const berechneGeburtsjahre = (alterVon: number, alterBis?: number) => {
+    if (!alterBis) return `${sportjahr - alterVon} und früher`;
+    return `${sportjahr - alterBis}-${sportjahr - alterVon}`;
+  };
 
   const auflageKlassen = [
-    { name: 'Schüler I m', alter: '12-14', geburtsjahre: '2012-2014' },
-    { name: 'Schüler I w', alter: '12-14', geburtsjahre: '2012-2014' },
-    { name: 'Senioren 0', alter: '41-50', geburtsjahre: '1976-1985', gemischt: true },
-    { name: 'Senioren I m', alter: '51-60', geburtsjahre: '1966-1975' },
-    { name: 'Seniorinnen I', alter: '51-60', geburtsjahre: '1966-1975' },
-    { name: 'Senioren II m', alter: '61-65', geburtsjahre: '1961-1965' },
-    { name: 'Seniorinnen II', alter: '61-65', geburtsjahre: '1961-1965' },
-    { name: 'Senioren III m', alter: '66-70', geburtsjahre: '1956-1960' },
-    { name: 'Seniorinnen III', alter: '66-70', geburtsjahre: '1956-1960' },
-    { name: 'Senioren IV m', alter: '71-75', geburtsjahre: '1951-1955' },
-    { name: 'Seniorinnen IV', alter: '71-75', geburtsjahre: '1951-1955' },
-    { name: 'Senioren V m', alter: '76-80', geburtsjahre: '1946-1950' },
-    { name: 'Seniorinnen V', alter: '76-80', geburtsjahre: '1946-1950' },
-    { name: 'Senioren VI m', alter: '81+', geburtsjahre: '1945 und früher' },
-    { name: 'Seniorinnen VI', alter: '81+', geburtsjahre: '1945 und früher' }
+    { name: 'Schüler I m', alter: '12-14', geburtsjahre: berechneGeburtsjahre(12, 14) },
+    { name: 'Schüler I w', alter: '12-14', geburtsjahre: berechneGeburtsjahre(12, 14) },
+    { name: 'Senioren 0', alter: '41-50', geburtsjahre: berechneGeburtsjahre(41, 50), gemischt: true },
+    { name: 'Senioren I m', alter: '51-60', geburtsjahre: berechneGeburtsjahre(51, 60) },
+    { name: 'Seniorinnen I', alter: '51-60', geburtsjahre: berechneGeburtsjahre(51, 60) },
+    { name: 'Senioren II m', alter: '61-65', geburtsjahre: berechneGeburtsjahre(61, 65) },
+    { name: 'Seniorinnen II', alter: '61-65', geburtsjahre: berechneGeburtsjahre(61, 65) },
+    { name: 'Senioren III m', alter: '66-70', geburtsjahre: berechneGeburtsjahre(66, 70) },
+    { name: 'Seniorinnen III', alter: '66-70', geburtsjahre: berechneGeburtsjahre(66, 70) },
+    { name: 'Senioren IV m', alter: '71-75', geburtsjahre: berechneGeburtsjahre(71, 75) },
+    { name: 'Seniorinnen IV', alter: '71-75', geburtsjahre: berechneGeburtsjahre(71, 75) },
+    { name: 'Senioren V m', alter: '76-80', geburtsjahre: berechneGeburtsjahre(76, 80) },
+    { name: 'Seniorinnen V', alter: '76-80', geburtsjahre: berechneGeburtsjahre(76, 80) },
+    { name: 'Senioren VI m', alter: '81+', geburtsjahre: `${sportjahr - 81} und früher` },
+    { name: 'Seniorinnen VI', alter: '81+', geburtsjahre: `${sportjahr - 81} und früher` }
   ];
 
   const freihandKlassen = [
-    { name: 'Schüler I m', alter: '12-14', geburtsjahre: '2012-2014' },
-    { name: 'Schüler I w', alter: '12-14', geburtsjahre: '2012-2014' },
-    { name: 'Jugend m', alter: '15-16', geburtsjahre: '2010-2011' },
-    { name: 'Jugend w', alter: '15-16', geburtsjahre: '2010-2011' },
-    { name: 'Junioren II m', alter: '17-18', geburtsjahre: '2008-2009' },
-    { name: 'Junioren II w', alter: '17-18', geburtsjahre: '2008-2009' },
-    { name: 'Junioren I m', alter: '19-20', geburtsjahre: '2006-2007' },
-    { name: 'Junioren I w', alter: '19-20', geburtsjahre: '2006-2007' },
-    { name: 'Herren I', alter: '21-40', geburtsjahre: '1986-2005' },
-    { name: 'Damen I', alter: '21-40', geburtsjahre: '1986-2005' },
-    { name: 'Herren II', alter: '41-50', geburtsjahre: '1976-1985' },
-    { name: 'Damen II', alter: '41-50', geburtsjahre: '1976-1985' },
-    { name: 'Herren III', alter: '51-60', geburtsjahre: '1966-1975' },
-    { name: 'Damen III', alter: '51-60', geburtsjahre: '1966-1975' },
-    { name: 'Herren IV', alter: '61-70', geburtsjahre: '1956-1965' },
-    { name: 'Damen IV', alter: '61-70', geburtsjahre: '1956-1965' },
-    { name: 'Herren V', alter: '71+', geburtsjahre: '1955 und früher' },
-    { name: 'Damen V', alter: '71+', geburtsjahre: '1955 und früher' }
+    { name: 'Schüler I m', alter: '12-14', geburtsjahre: berechneGeburtsjahre(12, 14) },
+    { name: 'Schüler I w', alter: '12-14', geburtsjahre: berechneGeburtsjahre(12, 14) },
+    { name: 'Jugend m', alter: '15-16', geburtsjahre: berechneGeburtsjahre(15, 16) },
+    { name: 'Jugend w', alter: '15-16', geburtsjahre: berechneGeburtsjahre(15, 16) },
+    { name: 'Junioren II m', alter: '17-18', geburtsjahre: berechneGeburtsjahre(17, 18) },
+    { name: 'Junioren II w', alter: '17-18', geburtsjahre: berechneGeburtsjahre(17, 18) },
+    { name: 'Junioren I m', alter: '19-20', geburtsjahre: berechneGeburtsjahre(19, 20) },
+    { name: 'Junioren I w', alter: '19-20', geburtsjahre: berechneGeburtsjahre(19, 20) },
+    { name: 'Herren I', alter: '21-40', geburtsjahre: berechneGeburtsjahre(21, 40) },
+    { name: 'Damen I', alter: '21-40', geburtsjahre: berechneGeburtsjahre(21, 40) },
+    { name: 'Herren II', alter: '41-50', geburtsjahre: berechneGeburtsjahre(41, 50) },
+    { name: 'Damen II', alter: '41-50', geburtsjahre: berechneGeburtsjahre(41, 50) },
+    { name: 'Herren III', alter: '51-60', geburtsjahre: berechneGeburtsjahre(51, 60) },
+    { name: 'Damen III', alter: '51-60', geburtsjahre: berechneGeburtsjahre(51, 60) },
+    { name: 'Herren IV', alter: '61-70', geburtsjahre: berechneGeburtsjahre(61, 70) },
+    { name: 'Damen IV', alter: '61-70', geburtsjahre: berechneGeburtsjahre(61, 70) },
+    { name: 'Herren V', alter: '71+', geburtsjahre: `${sportjahr - 71} und früher` },
+    { name: 'Damen V', alter: '71+', geburtsjahre: `${sportjahr - 71} und früher` }
   ];
 
   return (
@@ -75,7 +82,7 @@ export default function KMAltersklassen() {
           <CardContent>
             <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded">
               <p className="text-sm text-orange-700 font-medium">
-                ⚠️ Nicht teilnahmeberechtigt: 15-40 Jahre (Geburtsjahre 1986-2011)
+                ⚠️ Sonderregelung Kreisverband: 15-40 Jahre dürfen bei Auflage an KM teilnehmen (nicht LM-berechtigt)
               </p>
             </div>
             {/* Desktop Table */}

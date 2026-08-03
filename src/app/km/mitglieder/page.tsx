@@ -18,6 +18,9 @@ import { ArrowUpDown, ArrowUp, ArrowDown, PlusCircle, Edit, Trash2, ArrowLeft } 
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 
 export default function KMMitglieder() {
+  // Sportjahr dynamisch: ab 1. Juli gilt das Folgejahr
+  const now = new Date();
+  const sportjahr = (now.getMonth() >= 6) ? now.getFullYear() + 1 : now.getFullYear();
   const { toast } = useToast();
   const { hasKMAccess, loading: authLoading, userClubIds, userRole } = useKMAuth();
   const [schuetzen, setSchuetzen] = useState<any[]>([]);
@@ -327,8 +330,8 @@ export default function KMMitglieder() {
                       Mitgliedsnr. {getSortIcon('mitgliedsnummer')}
                     </Button>
                   </th>
-                  <th className="p-2 text-left">AK Auflage 2026</th>
-                  <th className="p-2 text-left">AK Freihand 2026</th>
+                  <th className="p-2 text-left">AK Auflage {sportjahr}</th>
+                  <th className="p-2 text-left">AK Freihand {sportjahr}</th>
                   <th className="p-2 text-left">Status</th>
                   <th className="p-2 text-right">Aktionen</th>
                 </tr>
@@ -354,7 +357,7 @@ export default function KMMitglieder() {
                     <td className="p-2">{schuetze.mitgliedsnummer ? `08-${schuetze.mitgliedsnummer.slice(1,4)}-${schuetze.mitgliedsnummer.slice(4)}` : '-'}</td>
                     <td className="p-2 text-xs">
                       {schuetze.birthYear && schuetze.gender ? (() => {
-                        const sportjahr = 2026;
+                        // sportjahr aus Komponenten-Variable
                         const age = sportjahr - schuetze.birthYear;
                         const gender = schuetze.gender;
                         if (age >= 12 && age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
@@ -370,7 +373,7 @@ export default function KMMitglieder() {
                     </td>
                     <td className="p-2 text-xs">
                       {schuetze.birthYear && schuetze.gender ? (() => {
-                        const sportjahr = 2026;
+                        // sportjahr aus Komponenten-Variable
                         const age = sportjahr - schuetze.birthYear;
                         const gender = schuetze.gender;
                         if (age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
@@ -492,7 +495,7 @@ export default function KMMitglieder() {
                         <span className="text-gray-500">AK Auflage:</span>
                         <span className="ml-1 font-medium">
                           {schuetze.birthYear && schuetze.gender ? (() => {
-                            const age = 2026 - schuetze.birthYear;
+                            const age = sportjahr - schuetze.birthYear;
                             const gender = schuetze.gender;
                             if (age >= 12 && age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
                             if (age < 41) return '-';
@@ -510,7 +513,7 @@ export default function KMMitglieder() {
                         <span className="text-gray-500">AK Freihand:</span>
                         <span className="ml-1 font-medium">
                           {schuetze.birthYear && schuetze.gender ? (() => {
-                            const age = 2026 - schuetze.birthYear;
+                            const age = sportjahr - schuetze.birthYear;
                             const gender = schuetze.gender;
                             if (age <= 14) return gender === 'male' ? 'Schüler I m' : 'Schüler I w';
                             if (age <= 16) return gender === 'male' ? 'Jugend m' : 'Jugend w';

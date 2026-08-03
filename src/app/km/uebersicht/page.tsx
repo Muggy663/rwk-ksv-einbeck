@@ -46,7 +46,7 @@ export default function KMUebersicht() {
       const response = await fetch('/api/km/saisons');
       if (response.ok) {
         const data = await response.json();
-        setSaisons(data.data || []);
+        setSaisons((data.data || []).sort((a, b) => (b.jahr || 0) - (a.jahr || 0)));
         // Keine automatische Auswahl - Benutzer muss bewusst wählen
       }
     } catch (error) {
@@ -216,8 +216,8 @@ export default function KMUebersicht() {
           <h1 className="text-3xl font-bold text-primary">📊 KM-Übersicht</h1>
           <p className="text-muted-foreground">
             {userPermission?.role === 'admin' 
-              ? 'Statistiken und Übersicht der Kreismeisterschaften 2026'
-              : `Ihre Meldungen für die Kreismeisterschaften 2026`
+              ? 'Statistiken und Übersicht der Kreismeisterschaften'
+              : `Ihre Meldungen für die Kreismeisterschaften`
             }
           </p>
         </div>
@@ -388,7 +388,7 @@ export default function KMUebersicht() {
                 // Berechne Altersklasse
                 let altersklasse = 'Unbekannt';
                 if (schuetze?.birthYear && schuetze?.gender && (disziplin || disziplinFallback)) {
-                  const age = 2026 - schuetze.birthYear;
+                  const age = (aktivesJahr || 2027) - schuetze.birthYear;
                   const gender = schuetze.gender;
                   const istAuflage = (disziplin || disziplinFallback).auflage;
                   

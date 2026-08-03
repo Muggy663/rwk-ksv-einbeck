@@ -898,30 +898,20 @@ function RwkTabellenPageComponent() {
       // Lade zuerst alle Teams der Liga, um alle Schützen zu bekommen
       let teamsQuery;
       if (filterByLeagueId === "KK_GEWEHR_EHRUNGEN") {
-        // Lade alle Teams für KK Gewehr Auflage Ligen
-        const seasonsQuery = query(
-          collection(db, "seasons"),
+        // Alle KK Gewehr Ligen = type "KK" (nicht KKP)
+        const leaguesSnap = await getDocs(query(
+          collection(db, "rwk_leagues"),
           where("competitionYear", "==", config.year),
-          where("type", "in", ["KK", "KKG"])
-        );
-        const seasonsSnapshot = await getDocs(seasonsQuery);
-        const seasonIds = seasonsSnapshot.docs.map(doc => doc.id);
-        
-        if (seasonIds.length > 0) {
-          const leaguesQuery = query(
-            collection(db, "rwk_leagues"),
-            where("seasonId", "in", seasonIds)
+          where("type", "==", "KK")
+        ));
+        const kkLeagueIds = leaguesSnap.docs.map(d => d.id);
+
+        if (kkLeagueIds.length > 0) {
+          teamsQuery = query(
+            collection(db, "rwk_teams"),
+            where("leagueId", "in", kkLeagueIds),
+            where("competitionYear", "==", config.year)
           );
-          const leaguesSnapshot = await getDocs(leaguesQuery);
-          const leagueIds = leaguesSnapshot.docs.map(doc => doc.id);
-          
-          if (leagueIds.length > 0) {
-            teamsQuery = query(
-              collection(db, "rwk_teams"),
-              where("leagueId", "in", leagueIds),
-              where("competitionYear", "==", config.year)
-            );
-          }
         }
       } else if (filterByLeagueId === "LGA_GESAMTLISTE") {
         // Direkte Liga-IDs für Luftdruck-Ligen verwenden
@@ -980,10 +970,21 @@ function RwkTabellenPageComponent() {
       
       // Spezialfall: KK Gewehr Ehrungen - alle KK Gewehr Auflage Ligen
       if (filterByLeagueId === "KK_GEWEHR_EHRUNGEN") {
-        scoresQueryConstraints = [
+        // Scores nach KK Gewehr Liga-IDs filtern (type "KK", nicht "KKP")
+        const leaguesSnap2 = await getDocs(query(
+          collection(db, "rwk_leagues"),
           where("competitionYear", "==", config.year),
-          where("leagueType", "in", ["KK", "KKG"]) // KK Gewehr Auflage
-        ];
+          where("type", "==", "KK")
+        ));
+        const kkLeagueIds2 = leaguesSnap2.docs.map(d => d.id);
+        if (kkLeagueIds2.length > 0) {
+          scoresQueryConstraints = [
+            where("competitionYear", "==", config.year),
+            where("leagueId", "in", kkLeagueIds2)
+          ];
+        } else {
+          return [];
+        }
       } else if (filterByLeagueId === "LGA_GESAMTLISTE") {
         // Verwende die spezifischen Liga-IDs für Scores
         const luftdruckLeagueIds = ["vOHbDJw7mktQI53Mzs5d", "wxotHc2CVAa4kflVhaPd", "YLpb9AklRcU7mpF870vP", "sTcYhFYKOmJ6AJ5w3IyN"];
@@ -1276,7 +1277,13 @@ function RwkTabellenPageComponent() {
       });
       
       const rankedShooters = deduplicatedShooters
-        // Zeige alle Schützen, auch ohne Ergebnisse
+        // Bei Gesamtlisten: nur Schützen mit mindestens einem Score anzeigen
+        .filter(shooter => {
+          if (filterByLeagueId === 'KK_GEWEHR_EHRUNGEN' || filterByLeagueId === 'LGA_GESAMTLISTE') {
+            return shooter.roundsShot > 0;
+          }
+          return true; // Bei normalen Ligen: alle anzeigen (auch ohne Ergebnisse)
+        })
         // Filtere ersetzte Schützen aus
         .filter(shooter => {
           // Prüfe alle Substitution-Keys mit sicherem Separator '|'
