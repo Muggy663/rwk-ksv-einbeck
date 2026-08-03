@@ -403,9 +403,9 @@ export default function DashboardAuswahl() {
                 <p className="text-sm text-red-700 dark:text-red-300 mb-3">
                   Temporären Support-Zugang für das Support-Team generieren
                 </p>
-                <Link href="/vereinssoftware/support">
+                <Link href="/support">
                   <Button className="w-full bg-red-600 hover:bg-red-700">
-                    Support-Code generieren
+                    Support kontaktieren
                   </Button>
                 </Link>
               </CardContent>

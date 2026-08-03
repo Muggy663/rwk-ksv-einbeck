@@ -17,6 +17,7 @@ export default function KMUebersicht() {
   const { activeClubId } = useClubContext();
   const [selectedClubId, setSelectedClubId] = useState('');
   const [selectedSaison, setSelectedSaison] = useState('');
+  const [aktivesJahr, setAktivesJahr] = useState(2027);
   const [editingMeldung, setEditingMeldung] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>({});
   const [saisons, setSaisons] = useState([]);
@@ -71,14 +72,15 @@ export default function KMUebersicht() {
       
       // Hole aktuelles Jahr
       const jahresRes = await fetch('/api/km/aktuelles-jahr');
-      let aktivesJahr = 2026;
+      let aktivesJahrLocal = 2027;
       if (jahresRes.ok) {
         const jahresData = await jahresRes.json();
-        aktivesJahr = jahresData.data.jahr;
+        aktivesJahrLocal = jahresData.data.jahr;
       }
+      setAktivesJahr(aktivesJahrLocal);
       
       // Lade alle Daten parallel
-      let meldungenUrl = `/api/km/meldungen?jahr=${aktivesJahr}`;
+      let meldungenUrl = `/api/km/meldungen?jahr=${aktivesJahrLocal}`;
       if (selectedSaison) {
         meldungenUrl += `&saison=${selectedSaison}`;
       }
