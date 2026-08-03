@@ -61,11 +61,8 @@ export function Sidebar() {
     { href: '/dashboard-auswahl', label: 'Arbeitsbereich', icon: Settings },
   ];
   
-  // Vereins-spezifische Routes nur für Vereinssoftware anzeigen
-  const isOnClubSoftware = pathname.startsWith('/vereinssoftware');
-  const clubRoutes = isOnClubSoftware ? [
-    { href: '/vereinssoftware', label: 'Vereinssoftware', icon: User },
-  ] : [];
+  // Vereins-spezifische Routes entfernt (Vereinssoftware eingestellt)
+  const clubRoutes: any[] = [];
 
   const NavSection = ({ title, routes }: { title: string; routes: any[] }) => (
     <div className="mb-6">

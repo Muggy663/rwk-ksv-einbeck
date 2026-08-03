@@ -427,9 +427,9 @@ const faqDatabase: FAQItem[] = [
   {
     id: "was-darf-vorstand",
     question: "Was darf der Vorstand?",
-    answer: "Der Vorstand hat Vollzugriff auf alle Vereinssoftware-Bereiche: Mitgliederverwaltung, Finanzen & SEPA, Geburtstage & Jubiläen, Lizenzen & Ausbildungen, Vereinsrecht & Protokolle, Aufgaben-Management. Zusätzlich RWK- und KM-Zugriff.",
+    answer: "Der Vorstand hat als Sportleiter Zugriff auf RWK- und KM-Verwaltung: Mannschaften und Schützen verwalten, Ergebnisse erfassen, Mitcom-Import durchführen.",
     section: "Rollen-System",
-    keywords: ["vorstand", "vollzugriff", "mitglieder", "finanzen", "sepa", "protokolle", "aufgaben"]
+    keywords: ["vorstand", "vollzugriff", "mitglieder", "sportleiter"]
   },
   {
     id: "was-darf-kassenwart",
@@ -507,13 +507,6 @@ const faqDatabase: FAQItem[] = [
     answer: "Das Ehrenmitglied kann Vereinsgeschichte einsehen, Ehrungen verwalten, historische Daten einsehen und Jubiläums-Termine verwalten. Spezieller Status für verdiente Mitglieder.",
     section: "Rollen-System",
     keywords: ["ehrenmitglied", "geschichte", "ehrungen", "historisch", "jubiläum", "verdient"]
-  },
-  {
-    id: "vereinssoftware-lizenz",
-    question: "Was ist die Vereinssoftware-Lizenz?",
-    answer: "Die Vereinssoftware ist ein kostenpflichtiges Zusatzmodul. Es gibt 3-monatige kostenlose Testlizenzen und Vollversionen. Ohne Lizenz ist kein Zugriff auf die Vereinssoftware möglich. Kontakt: rwk-leiter-ksve@gmx.de",
-    section: "Rollen-System",
-    keywords: ["vereinssoftware", "lizenz", "kostenpflichtig", "test", "vollversion", "kontakt"]
   },
   {
     id: "wie-rolle-bekommen",
