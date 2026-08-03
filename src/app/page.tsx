@@ -203,18 +203,18 @@ export default function HomePage() {
 
       <Separator className="my-6" />
 
-      {/* Neuigkeiten-Banner v2.6.0 */}
+      {/* Neuigkeiten-Banner v2.7.0 */}
       <div className="mb-6 rounded-xl border border-green-200 dark:border-green-800 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/40 p-4 flex items-start gap-3 shadow-sm">
         <div className="flex-shrink-0 mt-0.5">
           <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/60 text-green-700 dark:text-green-300 text-lg">🆕</span>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/60 px-2 py-0.5 rounded-full">Version 2.6.0</span>
-            <span className="font-semibold text-green-900 dark:text-green-100">Mitcom-Import jetzt verfügbar</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/60 px-2 py-0.5 rounded-full">Version 2.7.0</span>
+            <span className="font-semibold text-green-900 dark:text-green-100">KM-System & Mannschafts-Umbau</span>
           </div>
           <p className="text-sm text-green-800 dark:text-green-200 mt-1">
-            Vereine können ihre Mitgliederdaten jetzt direkt aus der Mitcom-Excel importieren — Geschlecht, Geburtsjahr und Mitgliedsnummer werden automatisch übernommen. Zu finden im Vereinsbereich unter <strong>Meine Schützen → Mitcom-Import</strong>.
+            Das KM-System berechnet Sportjahr und Altersklassen jetzt automatisch. Mannschaften können direkt in der Ersatzschützen-Verwaltung umgebaut werden — inkl. selektiver Ergebnis-Übertragung. Außerdem: Mitcom-Import mit Vereinsnummer-Prüfung unter <strong>Meine Schützen → Mitcom-Import</strong>.
           </p>
         </div>
       </div>

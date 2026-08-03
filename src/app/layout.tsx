@@ -23,6 +23,7 @@ import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import { AppUpdateChecker } from '@/components/app-update-checker';
 import { NativeAppProvider } from '@/components/ui/native-app-detector';
 import { AppVersionChecker } from '@/components/AppVersionChecker';
+import { VersionCheck } from '@/components/VersionCheck';
 // import { ForceRefresh } from '@/components/ui/force-refresh'; // Temporarily disabled
 import { PWAInstallPrompt } from '@/components/ui/pwa-install-prompt';
 import { SessionTimeoutProvider } from '@/components/auth/SessionTimeoutProvider';
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body className="font-sans app-container safe-area-inset" suppressHydrationWarning>
         {/* <ForceRefresh /> */}
         <AppVersionChecker />
+        <VersionCheck />
         {/* Mobile Status Bar Overlay */}
         <div className="mobile-header-overlay"></div>
         <ThemeProvider>
