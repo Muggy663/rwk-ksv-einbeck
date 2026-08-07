@@ -755,7 +755,12 @@ export default function SharedResultsPage({
               const emailFormData = new FormData();
               emailFormData.append('subject', 'Neue Ergebnisse eingegangen');
               emailFormData.append('message', `Neue Ergebnisse eingegangen:\r\n\r\nMannschaft: ${teamName}\r\nLiga: ${leagueName}\r\nDurchgang: ${entry.durchgang}\r\nAnzahl Ergebnisse: ${pendingScores.filter(p => p.durchgang === entry.durchgang).length}\r\nZeitpunkt: ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}\r\n\r\n📊 Ergebnis-Details:\r\n${resultDetails}\r\n\r\nEingegeben von: ${userName}\r\n\r\nDie Ergebnisse wurden digital erfasst und sind sofort in den RWK-Tabellen verfügbar.`);
-              emailFormData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
+              // Mail an Admin UND an den Eintragenden senden
+              const recipients = [{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}];
+              if (user?.email && user.email !== 'admin@rwk-einbeck.de') {
+                recipients.push({name: userName, email: user.email});
+              }
+              emailFormData.append('recipients', JSON.stringify(recipients));
               
               const emailResponse = await fetch('/api/send-email', {
                 method: 'POST',

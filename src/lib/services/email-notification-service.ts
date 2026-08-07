@@ -94,9 +94,14 @@ Mit sportlichen Grüßen
 Marcel Bünger
 Rundenwettkampfleiter KSVE Einbeck`);
 
-    emailFormData.append('recipients', JSON.stringify([
+    // Mail an Admin UND an den Eintragenden senden
+    const recipients: Array<{name: string, email: string}> = [
       { name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de' }
-    ]));
+    ];
+    if (data.userName && data.userName.includes('@') && data.userName !== 'admin@rwk-einbeck.de') {
+      recipients.push({ name: data.userName, email: data.userName });
+    }
+    emailFormData.append('recipients', JSON.stringify(recipients));
 
     // E-Mail senden
     const emailResponse = await fetch('/api/send-email', {
