@@ -499,14 +499,6 @@ export default function SchießnachweisPage() {
             <h3 className="font-semibold text-green-800 mb-2">PDF für Behörden</h3>
             <p className="text-sm text-green-600">Offizieller Nachweis für die Waffenbehörde</p>
           </Card>
-          
-          <Card className="text-center p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="h-6 w-6 text-purple-600" />
-            </div>
-            <h3 className="font-semibold text-purple-800 mb-2">Social Training</h3>
-            <p className="text-sm text-purple-600">Gleicher Account für Community-Features</p>
-          </Card>
         </div>
 
         {/* Login Section */}
@@ -533,7 +525,6 @@ export default function SchießnachweisPage() {
                 </p>
                 <ul className="text-left space-y-1 ml-4">
                   <li>✅ Schießnachweis (Digitales Schießtagebuch)</li>
-                  <li>✅ Social Training (Community-Features)</li>
                   <li>✅ RWK/KM (Bei entsprechender Berechtigung)</li>
                 </ul>
               </div>
@@ -541,7 +532,7 @@ export default function SchießnachweisPage() {
             
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-xs text-blue-800">
-                💡 <strong>Neu hier?</strong> Nach der Registrierung haben Sie sofort Zugriff auf Schießnachweis und Social Training. Für RWK/KM-Vereinszugang kontaktieren Sie: <strong>rwk-leiter-ksve@gmx.de</strong>
+                💡 <strong>Neu hier?</strong> Nach der Registrierung haben Sie sofort Zugriff auf den Schießnachweis. Für RWK/KM-Vereinszugang kontaktieren Sie: <strong>rwk-leiter-ksve@gmx.de</strong>
               </p>
             </div>
           </CardContent>

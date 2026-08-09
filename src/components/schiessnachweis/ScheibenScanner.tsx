@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Camera, Loader2, CheckCircle2, AlertCircle, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -109,12 +108,12 @@ export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenSca
         <CardTitle className="flex items-center gap-2 text-lg">
           <Camera className="h-5 w-5 text-purple-600" />
           📸 Scheibe fotografieren
-          <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">Beta</Badge>
+          <span className="text-xs bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full ml-2">Beta</span>
         </CardTitle>
-        <CardDescription>
-          Fotografiere deine Scheibe — die Ringe werden automatisch erkannt
-          <Badge variant="outline" className="ml-2">{disciplineLabel}</Badge>
-          <Badge variant="outline" className="ml-1">{shotCount} Schuss</Badge>
+        <CardDescription className="text-sm text-muted-foreground">
+          Fotografiere deine Scheibe — die Ringe werden automatisch erkannt.
+          <span className="ml-2 inline-flex items-center rounded-full border px-2 py-0.5 text-xs">{disciplineLabel}</span>
+          <span className="ml-1 inline-flex items-center rounded-full border px-2 py-0.5 text-xs">{shotCount} Schuss</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -183,9 +182,9 @@ export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenSca
                   <span className="font-medium text-green-800 dark:text-green-200">
                     {result.shotCount} Schuss erkannt — {result.totalWholeRings} Ringe
                   </span>
-                  <Badge className={result.confidence >= 80 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${result.confidence >= 80 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                     {result.confidence}% Vertrauen
-                  </Badge>
+                  </span>
                 </div>
 
                 {result.shots && (

@@ -1,737 +1,528 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { useRouter, useSearchParams } from "next/navigation";
+import { logError, logDebug } from '@/lib/utils/secure-logger';
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Save, Target, ChevronDown, Users, RotateCcw } from "lucide-react";
+import { ArrowLeft, Save, Camera, Hash, List, ChevronRight, ChevronLeft, MapPin, FileText } from "lucide-react";
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
-import { UnifiedTrainingService } from "@/lib/services/unified-training-service";
-import { TrainingGroupsService } from "@/lib/services/training-groups-service";
 import { KATEGORIEN, getDisziplinenByKategorie, getDisziplinConfig, WETTKAMPF_TYPEN, BELIEBTE_SCHIESSSTAENDE, ZehnerSerie } from "@/types/schiessnachweis";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { ErgebnisaufnahmeForm } from "@/components/schiessnachweis/ErgebnisaufnahmeForm";
 import { ScheibenScanner } from "@/components/schiessnachweis/ScheibenScanner";
 import { DigitalAnlageImport } from "@/components/schiessnachweis/DigitalAnlageImport";
-import { TrainingGroup } from "@/types/social";
-import { CompetitionSelector } from "@/components/schiessnachweis/CompetitionSelector";
+
+type WizardStep = 'disziplin' | 'methode' | 'ergebnis' | 'details';
+type InputMethod = 'schnell' | 'serien' | 'foto' | 'digital';
 
 export function NeuerEintragContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
-  const [socialTraining, setSocialTraining] = useState(searchParams?.get('social') === 'true');
-  const [selectedGroupId, setSelectedGroupId] = useState(searchParams?.get('group') || '');
-  const [selectedCompetitionId, setSelectedCompetitionId] = useState<string | null>(null);
-  const [userGroups, setUserGroups] = useState<TrainingGroup[]>([]);
-  const [hasExistingEntries, setHasExistingEntries] = useState(false);
-  
+
+  const [step, setStep] = useState<WizardStep>('disziplin');
+  const [inputMethod, setInputMethod] = useState<InputMethod>('schnell');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [formData, setFormData] = useState({
-    datum: (() => {
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    })(),
-    typ: 'training' as any,
+    datum: new Date().toISOString().split('T')[0],
+    typ: 'training' as string,
     kategorie: '',
     disziplin: '',
     schussAnzahl: '',
     ergebnis: '',
     ergebnisGanzeRinge: '',
     standort: '',
-    schiessstand: '',
+    notizen: '',
     wetter: '',
-    munition: '',
     waffe: '',
-    notizen: ''
+    munition: '',
   });
-  
+
   const [serien, setSerien] = useState<ZehnerSerie[]>([]);
-  const [showDetailedEntry, setShowDetailedEntry] = useState(false);
   const [berechneteErgebnisse, setBerechneteErgebnisse] = useState<{
     mitZehntel: number;
     ohneZehntel: number;
   } | null>(null);
-  const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [availableDisziplinen, setAvailableDisziplinen] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Lade Benutzer-Gruppen wenn Social Training aktiviert ist
-  useEffect(() => {
-    if (socialTraining && user) {
-      loadUserGroups();
-    }
-  }, [socialTraining, user]);
-  
-  // Prüfe ob Einträge vorhanden sind
-  useEffect(() => {
-    const checkEntries = async () => {
-      try {
-        const einträge = await SchießnachweisService.getEinträge();
-        setHasExistingEntries(einträge.length > 0);
-      } catch (error) {
-        logError('Fehler beim Prüfen der Einträge:', error);
-      }
-    };
-    checkEntries();
-  }, []);
-  
-  const loadUserGroups = async () => {
-    if (!user) return;
-    try {
-      const groups = await TrainingGroupsService.getUserGroups(user.uid);
-      setUserGroups(groups);
-    } catch (error) {
-      logError('Error loading groups:', error);
-    }
-  };
-  
-  const handleRepeatLast = async () => {
-    try {
-      const einträge = await SchießnachweisService.getEinträge();
-      if (einträge.length > 0) {
-        const letzter = einträge.sort((a, b) => b.datum.getTime() - a.datum.getTime())[0];
-        
-        // Finde Kategorie für die Disziplin
-        let kategorie = '';
-        for (const kat of KATEGORIEN) {
-          const disziplinen = getDisziplinenByKategorie(kat);
-          if (disziplinen.some(d => d.name === letzter.disziplin)) {
-            kategorie = kat;
-            break;
-          }
-        }
-        
-        setFormData(prev => ({
-          ...prev,
-          typ: letzter.typ,
-          kategorie: kategorie,
-          disziplin: letzter.disziplin,
-          schussAnzahl: letzter.schussAnzahl.toString(),
-          standort: letzter.standort,
-          schiessstand: letzter.schiessstand || '',
-          wetter: letzter.wetter || '',
-          munition: letzter.munition || '',
-          waffe: letzter.waffe || ''
-        }));
-        toast({
-          title: "✅ Daten übernommen",
-          description: "Letztes Training wurde geladen. Passen Sie die Werte an."
-        });
-      }
-    } catch (error) {
-      logError('Fehler:', error);
-    }
-  };
-  
+
+  // Disziplinen laden wenn Kategorie gewählt
   useEffect(() => {
     if (formData.kategorie) {
       const disziplinen = getDisziplinenByKategorie(formData.kategorie);
-      logDebug('Kategorie:', formData.kategorie, 'Disziplinen:', disziplinen);
       setAvailableDisziplinen(disziplinen.map(d => d.name));
-      // Nur Disziplin zurücksetzen wenn sie nicht in der neuen Kategorie ist
-      if (formData.disziplin && !disziplinen.some(d => d.name === formData.disziplin)) {
-        setFormData(prev => ({ ...prev, disziplin: '' }));
-      }
-    } else {
-      setAvailableDisziplinen([]);
+      setFormData(prev => ({ ...prev, disziplin: '' }));
     }
   }, [formData.kategorie]);
-  
+
+  // Schussanzahl automatisch setzen
   useEffect(() => {
     if (formData.disziplin) {
       const config = getDisziplinConfig(formData.disziplin);
-      if (config && config.schussAnzahl.length === 1) {
-        setFormData(prev => ({ ...prev, schussAnzahl: config.schussAnzahl[0].toString() }));
+      if (config?.defaultSchussanzahl) {
+        setFormData(prev => ({ ...prev, schussAnzahl: config.defaultSchussanzahl.toString() }));
       }
     }
   }, [formData.disziplin]);
-  
+
+  // Serien-Berechnung
   useEffect(() => {
-    if (serien.length > 0 && showDetailedEntry) {
-      // Berechne Ergebnis mit Zehntel (exakt)
-      const mitZehntel = serien.reduce((sum, serie) => sum + serie.summe, 0);
-      // Berechne ganze Ringe (jeder Schuss einzeln abgerundet)
-      const ohneZehntel = serien.reduce((sum, serie) => {
-        return sum + serie.schuesse.reduce((serieSum, schuss) => {
-          return serieSum + (schuss.ring || Math.floor(schuss.wert));
-        }, 0);
-      }, 0);
-      
-      setBerechneteErgebnisse({ mitZehntel, ohneZehntel });
-      
-      // Setze beide Ergebnisse
-      if (mitZehntel > 0) {
-        setFormData(prev => ({ 
-          ...prev, 
-          ergebnis: Math.round(mitZehntel * 10) / 10, // Auf 1 Nachkommastelle runden
-          ergebnisGanzeRinge: ohneZehntel.toString()
-        }));
-      }
+    if (serien.length > 0) {
+      let mitZehntel = 0;
+      let ohneZehntel = 0;
+      serien.forEach(serie => {
+        if (Array.isArray(serie.schuesse)) {
+          serie.schuesse.forEach(schuss => {
+            // Schuss kann ein Objekt {wert, ring, zehntel} oder eine Zahl sein
+            const wert = typeof schuss === 'number' ? schuss : (schuss?.wert || 0);
+            if (wert && !isNaN(wert)) {
+              mitZehntel += wert;
+              ohneZehntel += Math.floor(wert);
+            }
+          });
+        }
+        // Fallback: verwende serie.summe wenn vorhanden
+        if (mitZehntel === 0 && serie.summe > 0) {
+          mitZehntel += serie.summe;
+          ohneZehntel += Math.floor(serie.summe);
+        }
+      });
+      const mitZehntelRounded = Math.round(mitZehntel * 10) / 10;
+      setBerechneteErgebnisse({ mitZehntel: mitZehntelRounded || 0, ohneZehntel: ohneZehntel || 0 });
+      setFormData(prev => ({
+        ...prev,
+        ergebnis: (mitZehntelRounded || 0).toString(),
+        ergebnisGanzeRinge: (ohneZehntel || 0).toString()
+      }));
     } else {
       setBerechneteErgebnisse(null);
     }
-  }, [serien, showDetailedEntry]);
+  }, [serien]);
 
   const handleSubmit = async () => {
-    
-    // Detaillierte Validierung mit spezifischen Fehlermeldungen
-    const missingFields = [];
-    if (!formData.disziplin) missingFields.push('Disziplin');
-    if (!formData.schussAnzahl) missingFields.push('Anzahl Schüsse');
-    if (!formData.ergebnisGanzeRinge && !berechneteErgebnisse?.ohneZehntel) missingFields.push('Ergebnis (Ganze Ringe)');
-    if (!formData.standort || !formData.standort.trim()) missingFields.push('Ort/Stadt');
-    
-    if (missingFields.length > 0) {
-      toast({
-        title: "Pflichtfelder fehlen",
-        description: `Bitte ausfüllen: ${missingFields.join(', ')}`,
-        variant: "destructive"
-      });
-      
-      // Browser-Alert für bessere Sichtbarkeit
-      alert(`Pflichtfelder fehlen!\n\nBitte ausfüllen: ${missingFields.join(', ')}`);
-      
+    if (!formData.disziplin || !formData.schussAnzahl || (!formData.ergebnisGanzeRinge && !berechneteErgebnisse)) {
+      toast({ title: "Pflichtfelder fehlen", description: "Disziplin, Schussanzahl und Ergebnis sind erforderlich.", variant: "destructive" });
       return;
     }
-    
-    // Verwende berechnete Ergebnisse wenn verfügbar, sonst Eingabefelder
+
     const ganzeRinge = berechneteErgebnisse?.ohneZehntel || parseFloat(formData.ergebnisGanzeRinge);
-    const zehntelErgebnis = berechneteErgebnisse?.mitZehntel || (formData.ergebnis ? parseFloat(formData.ergebnis) : undefined);
-    
-    // Prüfe ob Ergebnis > 0 ist
     if (ganzeRinge <= 0) {
-      toast({
-        title: "Fehler",
-        description: "Bitte geben Sie ein gültiges Ergebnis ein.",
-        variant: "destructive"
-      });
-      
-      // Browser-Alert
-      alert('Ungültiges Ergebnis!\n\nBitte geben Sie ein gültiges Ergebnis ein.');
-      
+      toast({ title: "Ungültiges Ergebnis", description: "Bitte ein gültiges Ergebnis eingeben.", variant: "destructive" });
       return;
     }
 
     setIsSubmitting(true);
-    
     try {
-      // Debug: Prüfe Ergebnis-Felder
-      logDebug('🔍 Debug - ergebnisGanzeRinge:', ganzeRinge);
-      logDebug('🔍 Debug - ergebnis (Zehntel):', zehntelErgebnis);
-      logDebug('🔍 Debug - serien:', serien);
-      logDebug('🔍 Debug - selectedGroupId:', selectedGroupId);
-      logDebug('🔍 Debug - socialTraining:', socialTraining);
-      
-      logDebug('🔍 Parsed - ganzeRinge:', ganzeRinge);
-      logDebug('🔍 Parsed - zehntelErgebnis:', zehntelErgebnis);
-      
-      // Verwende Unified Training Service für nahtlose Integration
-      const result = await UnifiedTrainingService.saveTrainingResult({
+      const result = await SchießnachweisService.addEintrag({
         datum: new Date(formData.datum),
-        typ: formData.typ,
+        typ: formData.typ as any,
+        kategorie: formData.kategorie,
         disziplin: formData.disziplin,
         schussAnzahl: parseInt(formData.schussAnzahl),
-        ergebnis: zehntelErgebnis || ganzeRinge, // Zehntel-Ergebnis oder Ganze Ringe als Fallback
-        ergebnisGanzeRinge: ganzeRinge, // Ganze Ringe
-        standort: formData.standort,
-        schiessstand: formData.schiessstand || undefined,
-        wetter: formData.wetter || undefined,
-        munition: formData.munition || undefined,
-        waffe: formData.waffe || undefined,
+        ergebnis: ganzeRinge,
+        ergebnisZehntel: berechneteErgebnisse?.mitZehntel || (formData.ergebnis ? parseFloat(formData.ergebnis) : undefined),
+        standort: (formData.standort && formData.standort !== '__custom__') ? formData.standort : undefined,
         notizen: formData.notizen || undefined,
-        serien: serien || undefined,
-        socialTraining,
-        groupId: selectedGroupId || undefined,
-        competitionId: selectedCompetitionId || undefined,
-        proofType: 'verified'
+        wetter: formData.wetter || undefined,
+        waffe: formData.waffe || undefined,
+        munition: formData.munition || undefined,
+        serien: serien.length > 0 ? serien : undefined,
+        socialTraining: false,
+        groupId: undefined,
+        competitionId: undefined,
       });
-      
       logDebug('✅ Ergebnis gespeichert:', result);
-      
-      // Debug: Prüfe ob Social Training Ergebnis erstellt wurde
-      if (result.socialTraining) {
-        logDebug('✅ Social Training Ergebnis ID:', result.socialTraining.id);
-        logDebug('✅ Social Training groupId:', result.socialTraining.groupId);
-      } else {
-        logDebug('❌ Kein Social Training Ergebnis erstellt');
-      }
-      
-      // Daten sind bereits in der Datenbank gespeichert
-      logDebug('✅ Daten automatisch in Datenbank gespeichert');
-
-
-
-      toast({
-        title: "Erfolgreich gespeichert",
-        description: result.socialTraining 
-          ? `${WETTKAMPF_TYPEN.find(t => t.value === formData.typ)?.label} wurde in Schießnachweis und Social Training gespeichert.`
-          : `${WETTKAMPF_TYPEN.find(t => t.value === formData.typ)?.label} wurde hinzugefügt.`,
-      });
-
-      router.push(socialTraining ? '/social' : '/schiessnachweis');
+      toast({ title: "✅ Gespeichert", description: `${ganzeRinge} Ringe erfolgreich eingetragen.` });
+      router.push('/schiessnachweis');
     } catch (error) {
       logError('Fehler beim Speichern:', error);
-      toast({
-        title: "Fehler beim Speichern",
-        description: error instanceof Error ? error.message : "Eintrag konnte nicht gespeichert werden.",
-        variant: "destructive"
-      });
-      
-      // Zeige auch Browser-Alert für bessere Sichtbarkeit
-      if (error instanceof Error && error.message.includes('angemeldet')) {
-        alert(error.message);
-      }
+      toast({ title: "Fehler", description: "Eintrag konnte nicht gespeichert werden.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Fortschrittsanzeige
+  const steps: WizardStep[] = ['disziplin', 'methode', 'ergebnis', 'details'];
+  const currentStepIndex = steps.indexOf(step);
+
   return (
-    <div className="container mx-auto p-4 sm:p-6 max-w-4xl">
-      <div className="mb-6">
-        <Button asChild variant="ghost" className="mb-4">
-          <Link href="/schiessnachweis">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Zurück zum Schießnachweis
-          </Link>
-        </Button>
-        
-        <div className="flex items-center gap-3 mb-2">
-          <Target className="h-8 w-8 text-blue-600" />
-          <h1 className="text-2xl font-bold">Neuer Eintrag</h1>
-        </div>
-        <p className="text-muted-foreground">
-          Professionelle Ergebniserfassung für alle DSB-Disziplinen
-        </p>
-        {hasExistingEntries && (
-          <Button onClick={handleRepeatLast} variant="outline" size="sm" className="w-full sm:w-auto bg-green-50 hover:bg-green-100 border-green-300 text-green-700 mt-3">
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Letztes Training wiederholen
+    <div className="container mx-auto p-3 sm:p-6 max-w-lg md:max-w-2xl">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <Link href="/schiessnachweis">
+          <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+            <ArrowLeft className="h-5 w-5" />
           </Button>
-        )}
+        </Link>
+        <h1 className="text-xl font-bold text-primary">Neuer Eintrag</h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Schießaktivität erfassen</CardTitle>
-          <CardDescription>
-            Alle Felder mit * sind Pflichtfelder
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
+      {/* Fortschrittsbalken */}
+      <div className="flex gap-1 mb-5">
+        {steps.map((s, i) => (
+          <div key={s} className={`h-1.5 flex-1 rounded-full ${i <= currentStepIndex ? 'bg-primary' : 'bg-muted'}`} />
+        ))}
+      </div>
+
+      {/* SCHRITT 1: Disziplin */}
+      {step === 'disziplin' && (
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <h2 className="text-lg font-semibold">Was hast du geschossen?</h2>
+
             <div>
-              <Label htmlFor="datum">Datum *</Label>
+              <Label>Datum</Label>
               <Input
-                id="datum"
                 type="date"
                 value={formData.datum}
                 onChange={(e) => setFormData(prev => ({ ...prev, datum: e.target.value }))}
-                required
-                className="text-lg"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="typ">Art der Aktivität *</Label>
-              <NativeSelect
-                value={formData.typ}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, typ: value }))}
-                options={WETTKAMPF_TYPEN.map(typ => ({
-                  value: typ.value,
-                  label: `${typ.icon} ${typ.label}`
-                }))}
-                className="text-lg"
+                className="h-12"
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-2">
+              {WETTKAMPF_TYPEN.map(typ => (
+                <button
+                  key={typ.value}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, typ: typ.value }))}
+                  className={`p-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                    formData.typ === typ.value
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-border bg-card text-card-foreground hover:border-primary/50'
+                  }`}
+                >
+                  {typ.label}
+                </button>
+              ))}
+            </div>
+
             <div>
-              <Label htmlFor="kategorie">Kategorie *</Label>
+              <Label>Kategorie</Label>
               <NativeSelect
                 value={formData.kategorie}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, kategorie: value }))}
-                placeholder="Kategorie auswählen..."
-                options={KATEGORIEN.map(kategorie => ({
-                  value: kategorie,
-                  label: kategorie
-                }))}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, kategorie: v }))}
+                placeholder="Kategorie wählen..."
+                options={KATEGORIEN.map(k => ({ value: k, label: k }))}
               />
             </div>
-            
+
             {formData.kategorie && (
               <div>
-                <Label htmlFor="disziplin">Disziplin *</Label>
+                <Label>Disziplin</Label>
                 <NativeSelect
                   value={formData.disziplin}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, disziplin: value }))}
-                  placeholder="Disziplin auswählen..."
-                  options={availableDisziplinen.map(disziplin => ({
-                    value: disziplin,
-                    label: disziplin
-                  }))}
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, disziplin: v }))}
+                  placeholder="Disziplin wählen..."
+                  options={availableDisziplinen.map(d => ({ value: d, label: d }))}
                 />
               </div>
             )}
 
-            {formData.disziplin && (() => {
-              const config = getDisziplinConfig(formData.disziplin);
-              return (
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <Label htmlFor="schussAnzahl">Anzahl Schüsse *</Label>
-                    {config && config.schussAnzahl.length > 1 ? (
-                      <NativeSelect
-                        value={formData.schussAnzahl}
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, schussAnzahl: value }))}
-                        placeholder="Schussanzahl wählen..."
-                        options={config.schussAnzahl.map(anzahl => ({
-                          value: anzahl.toString(),
-                          label: `${anzahl} Schuss`
-                        }))}
-                        className="text-lg"
-                      />
-                    ) : (
-                      <Input
-                        id="schussAnzahl"
-                        type="number"
-                        min="1"
-                        max="1000"
-                        value={formData.schussAnzahl}
-                        onChange={(e) => setFormData(prev => ({ ...prev, schussAnzahl: e.target.value }))}
-                        placeholder={config ? config.schussAnzahl[0].toString() : "z.B. 40"}
-                        required
-                        className="text-lg font-semibold"
-                      />
-                    )}
-                  </div>
+            {formData.disziplin && (
+              <div>
+                <Label>Anzahl Schüsse</Label>
+                <Input
+                  type="number"
+                  value={formData.schussAnzahl}
+                  onChange={(e) => setFormData(prev => ({ ...prev, schussAnzahl: e.target.value }))}
+                  placeholder="z.B. 40"
+                  className="text-lg h-12"
+                />
+              </div>
+            )}
+
+            <Button
+              className="w-full h-12 text-base"
+              disabled={!formData.disziplin || !formData.schussAnzahl}
+              onClick={() => setStep('methode')}
+            >
+              Weiter <ChevronRight className="ml-2 h-5 w-5" />
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* SCHRITT 2: Eingabemethode */}
+      {step === 'methode' && (
+        <Card>
+          <CardContent className="pt-6 space-y-3">
+            <h2 className="text-lg font-semibold">Wie möchtest du eingeben?</h2>
+            <p className="text-sm text-muted-foreground">{formData.disziplin} — {formData.schussAnzahl} Schuss</p>
+
+            <button
+              type="button"
+              onClick={() => { setInputMethod('schnell'); setStep('ergebnis'); }}
+              className="w-full p-4 rounded-lg border-2 border-muted hover:border-primary text-left flex items-center gap-4 transition-colors"
+            >
+              <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg"><Hash className="h-6 w-6 text-green-700 dark:text-green-300" /></div>
+              <div>
+                <div className="font-medium">Schnelleingabe</div>
+                <div className="text-sm text-muted-foreground">Nur Gesamtringzahl eingeben</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setInputMethod('serien'); setStep('ergebnis'); }}
+              className="w-full p-4 rounded-lg border-2 border-muted hover:border-primary text-left flex items-center gap-4 transition-colors"
+            >
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg"><List className="h-6 w-6 text-blue-700 dark:text-blue-300" /></div>
+              <div>
+                <div className="font-medium">Serien erfassen</div>
+                <div className="text-sm text-muted-foreground">Einzelne Schüsse / 10er-Serien eintragen</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setInputMethod('foto'); setStep('ergebnis'); }}
+              className="w-full p-4 rounded-lg border-2 border-purple-200 dark:border-purple-700 hover:border-purple-400 bg-purple-50 dark:bg-purple-950/20 text-left flex items-center gap-4 transition-colors"
+            >
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg"><Camera className="h-6 w-6 text-purple-700 dark:text-purple-300" /></div>
+              <div>
+                <div className="font-medium">Scheibe fotografieren <span className="text-xs bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 px-1.5 py-0.5 rounded ml-1">Beta</span></div>
+                <div className="text-sm text-muted-foreground">KI erkennt die Ringe automatisch</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setInputMethod('digital'); setStep('ergebnis'); }}
+              className="w-full p-4 rounded-lg border-2 border-muted hover:border-primary text-left flex items-center gap-4 transition-colors"
+            >
+              <div className="p-2 bg-orange-100 dark:bg-orange-900/50 rounded-lg"><FileText className="h-6 w-6 text-orange-700 dark:text-orange-300" /></div>
+              <div>
+                <div className="font-medium">Ausdruck digitale Anlage <span className="text-xs bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 px-1.5 py-0.5 rounded ml-1">Beta</span></div>
+                <div className="text-sm text-muted-foreground">Meyton, Sius, Disag etc. — Foto scannen</div>
+              </div>
+            </button>
+
+            <Button variant="ghost" onClick={() => setStep('disziplin')} className="w-full">
+              <ChevronLeft className="mr-2 h-4 w-4" /> Zurück
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* SCHRITT 3: Ergebnis */}
+      {step === 'ergebnis' && (
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">
+                {inputMethod === 'schnell' && 'Ergebnis eingeben'}
+                {inputMethod === 'serien' && 'Serien erfassen'}
+                {inputMethod === 'foto' && 'Scheibe analysieren'}
+                {inputMethod === 'digital' && 'Ausdruck scannen'}
+              </h2>
+              <span className="text-sm text-muted-foreground">{formData.schussAnzahl} Schuss</span>
+            </div>
+
+            {/* Schnelleingabe */}
+            {inputMethod === 'schnell' && (
+              <div className="space-y-3">
+                <div>
+                  <Label>Gesamtergebnis (ganze Ringe)</Label>
+                  <Input
+                    type="number"
+                    value={formData.ergebnisGanzeRinge}
+                    onChange={(e) => setFormData(prev => ({ ...prev, ergebnisGanzeRinge: e.target.value }))}
+                    placeholder="z.B. 285"
+                    className="text-2xl h-14 text-center font-bold"
+                    autoFocus
+                  />
                 </div>
-              );
-            })()}
+                <div>
+                  <Label className="text-xs text-muted-foreground">Mit Zehntel (optional)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={formData.ergebnis}
+                    onChange={(e) => setFormData(prev => ({ ...prev, ergebnis: e.target.value }))}
+                    placeholder="z.B. 285.3"
+                    className="h-10"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Serien */}
+            {inputMethod === 'serien' && (
+              <ErgebnisaufnahmeForm
+                disziplin={formData.disziplin}
+                onSerienChange={setSerien}
+                initialSerien={serien}
+                schussAnzahl={parseInt(formData.schussAnzahl) || undefined}
+              />
+            )}
+
+            {/* Foto */}
+            {inputMethod === 'foto' && (
+              <ScheibenScanner
+                discipline={(() => {
+                  const d = formData.disziplin.toLowerCase();
+                  if (d.includes('luftpistole') || d.includes('sportpistole') || d.includes('schnellfeuer') || d.includes('zentralfeuer')) return 'LP';
+                  if (d.includes('kk') || d.includes('kleinkaliber')) return 'KK';
+                  return 'LG'; // Default: Luftgewehr
+                })()}
+                shotCount={parseInt(formData.schussAnzahl) || 10}
+                onResult={(result) => {
+                  const newSerien: ZehnerSerie[] = [];
+                  for (let i = 0; i < result.shots.length; i += 10) {
+                    const chunk = result.shots.slice(i, i + 10);
+                    newSerien.push({ nummer: Math.floor(i / 10) + 1, schuesse: chunk, summe: chunk.reduce((a, b) => a + b, 0) });
+                  }
+                  setSerien(newSerien);
+                  setFormData(prev => ({ ...prev, ergebnis: result.totalWithDecimal.toString(), ergebnisGanzeRinge: result.totalWholeRings.toString() }));
+                  setBerechneteErgebnisse({ mitZehntel: result.totalWithDecimal, ohneZehntel: result.totalWholeRings });
+                }}
+              />
+            )}
+
+            {/* Digital-Anlage Import */}
+            {inputMethod === 'digital' && (
+              <DigitalAnlageImport
+                disziplin={formData.disziplin}
+                onImport={(importedSerien) => {
+                  setSerien(importedSerien);
+                }}
+              />
+            )}
+
+            {/* Berechnetes Ergebnis anzeigen */}
+            {berechneteErgebnisse && (inputMethod === 'serien' || inputMethod === 'foto' || inputMethod === 'digital') && (
+              <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 rounded-lg p-3 text-center">
+                <span className="text-2xl font-bold text-green-700">{berechneteErgebnisse.ohneZehntel || 0}</span>
+                <span className="text-sm text-green-600 ml-2">Ringe ({(berechneteErgebnisse.mitZehntel || 0).toFixed(1)} mit Zehntel)</span>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => setStep('methode')} className="flex-1">
+                <ChevronLeft className="mr-1 h-4 w-4" /> Zurück
+              </Button>
+              <Button
+                className="flex-1 h-12"
+                disabled={!formData.ergebnisGanzeRinge && !berechneteErgebnisse}
+                onClick={() => setStep('details')}
+              >
+                Weiter <ChevronRight className="ml-1 h-5 w-5" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* SCHRITT 4: Details + Speichern */}
+      {step === 'details' && (
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <h2 className="text-lg font-semibold">Fast fertig!</h2>
+
+            {/* Zusammenfassung */}
+            <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
+              <div><strong>{formData.disziplin}</strong> — {formData.schussAnzahl} Schuss</div>
+              <div className="text-lg font-bold text-primary">
+                {berechneteErgebnisse?.ohneZehntel || formData.ergebnisGanzeRinge} Ringe
+              </div>
+              <div className="text-muted-foreground">{formData.datum} • {WETTKAMPF_TYPEN.find(t => t.value === formData.typ)?.label}</div>
+            </div>
 
             <div>
-              <Label htmlFor="standort">Ort/Stadt *</Label>
-              <Input
-                id="standort"
+              <Label className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Ort / Schießstand (optional)</Label>
+              <select
                 value={formData.standort}
                 onChange={(e) => setFormData(prev => ({ ...prev, standort: e.target.value }))}
-                placeholder="z.B. Einbeck"
-                required
-                className="text-lg"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="schiessstand">Schießstand</Label>
-              <Input
-                id="schiessstand"
-                value={formData.schiessstand}
-                onChange={(e) => setFormData(prev => ({ ...prev, schiessstand: e.target.value }))}
-                placeholder="z.B. Einbecker Schützengilde"
-                className="text-lg"
-              />
-            </div>
-            
-            {/* Optionale Details */}
-            <div className="border-t pt-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4">
-                <Label className="text-base font-semibold">Zusätzliche Details (optional)</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowOptionalFields(!showOptionalFields)}
-                  className="w-full sm:w-auto"
-                >
-                  <ChevronDown className={`h-4 w-4 mr-2 transition-transform ${showOptionalFields ? 'rotate-180' : ''}`} />
-                  {showOptionalFields ? 'Weniger' : 'Mehr Details'}
-                </Button>
-              </div>
-              
-              {showOptionalFields && (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="wetter">Wetter</Label>
-                    <NativeSelect
-                      value={formData.wetter}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, wetter: value }))}
-                      placeholder="Wetter wählen..."
-                      options={[
-                        { value: "Sonnig", label: "☀️ Sonnig" },
-                        { value: "Bewölkt", label: "☁️ Bewölkt" },
-                        { value: "Regen", label: "🌧️ Regen" },
-                        { value: "Wind", label: "💨 Windig" },
-                        { value: "Halle", label: "🏢 Halle" }
-                      ]}
-                      className="text-lg"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="munition">Munition</Label>
-                    <Input
-                      id="munition"
-                      value={formData.munition}
-                      onChange={(e) => setFormData(prev => ({ ...prev, munition: e.target.value }))}
-                      placeholder="z.B. RWS R50"
-                      className="text-lg"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="waffe">Waffe</Label>
-                    <Input
-                      id="waffe"
-                      value={formData.waffe}
-                      onChange={(e) => setFormData(prev => ({ ...prev, waffe: e.target.value }))}
-                      placeholder="z.B. Anschütz 1827"
-                      className="text-lg"
-                    />
-                  </div>
-                </div>
+                className="w-full h-10 px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Standort wählen...</option>
+                {BELIEBTE_SCHIESSSTAENDE.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+                <option value="__custom__">✏️ Anderen Standort eingeben...</option>
+              </select>
+              {(formData.standort === '__custom__' || (formData.standort && !BELIEBTE_SCHIESSSTAENDE.includes(formData.standort as any) && formData.standort !== '')) && (
+                <Input
+                  className="mt-2 h-12"
+                  value={formData.standort === '__custom__' ? '' : formData.standort}
+                  onChange={(e) => setFormData(prev => ({ ...prev, standort: e.target.value }))}
+                  placeholder="Standort eingeben..."
+                  autoFocus
+                />
               )}
             </div>
 
-            {formData.disziplin && (
-              <div className="border-t pt-4 space-y-6">
-                {/* Digital Import */}
-                <DigitalAnlageImport
-                  disziplin={formData.disziplin}
-                  onImport={(importedSerien) => {
-                    setSerien(importedSerien);
-                    setShowDetailedEntry(true);
-                  }}
-                />
-                
-                {/* Manuelle Erfassung */}
-                <div>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4">
-                    <div>
-                      <Label className="text-base font-semibold">Detaillierte Serien-Erfassung (optional)</Label>
-                      <p className="text-sm text-muted-foreground mt-1">Serien sind optional - das Gesamtergebnis unten reicht zum Speichern</p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowDetailedEntry(!showDetailedEntry)}
-                      className="w-full sm:w-auto flex-shrink-0"
-                    >
-                      <ChevronDown className={`h-4 w-4 mr-2 transition-transform ${showDetailedEntry ? 'rotate-180' : ''}`} />
-                      {showDetailedEntry ? 'Einfache Eingabe' : 'Serien erfassen'}
-                    </Button>
-                  </div>
-                  
-                  {showDetailedEntry && (
-                    <>
-                      {/* Scheiben-Scanner */}
-                      {formData.disziplin && (
-                        <ScheibenScanner
-                          discipline={formData.kategorie === 'Luftpistole' ? 'LP' : formData.kategorie === 'Kleinkaliber Pistole' ? 'KKP' : formData.kategorie === 'Kleinkaliber' ? 'KK' : 'LG'}
-                          shotCount={parseInt(formData.schussAnzahl) || 10}
-                          onResult={(result) => {
-                            // Serien aus den Einzelschüssen aufbauen (10er-Gruppen)
-                            const newSerien: ZehnerSerie[] = [];
-                            for (let i = 0; i < result.shots.length; i += 10) {
-                              const chunk = result.shots.slice(i, i + 10);
-                              newSerien.push({
-                                nummer: Math.floor(i / 10) + 1,
-                                schuesse: chunk,
-                                summe: chunk.reduce((a, b) => a + b, 0),
-                              });
-                            }
-                            setSerien(newSerien);
-                            // Gesamtergebnis setzen
-                            setFormData(prev => ({
-                              ...prev,
-                              ergebnis: result.totalWithDecimal.toString(),
-                              ergebnisGanzeRinge: result.totalWholeRings.toString(),
-                            }));
-                            setBerechneteErgebnisse({
-                              mitZehntel: result.totalWithDecimal,
-                              ohneZehntel: result.totalWholeRings,
-                            });
-                          }}
-                        />
-                      )}
-                      <ErgebnisaufnahmeForm
-                      disziplin={formData.disziplin}
-                      onSerienChange={setSerien}
-                      initialSerien={serien}
-                      schussAnzahl={parseInt(formData.schussAnzahl) || undefined}
-                    />
-                    </>
-                  )}
-                  
-                  {/* Ergebnis-Felder zwischen Serien und Notizen */}
-                  <div>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="ergebnisGanzeRinge" className="text-sm font-medium flex items-center gap-2">
-                          <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
-                          Ganze Ringe *
-                        </Label>
-                        <Input
-                          id="ergebnisGanzeRinge"
-                          type="number"
-                          min="0"
-                          max="1000"
-                          value={berechneteErgebnisse?.ohneZehntel || formData.ergebnisGanzeRinge}
-                          onChange={(e) => {
-                            setFormData(prev => ({ ...prev, ergebnisGanzeRinge: e.target.value }));
-                            // Reset berechnete Ergebnisse bei manueller Eingabe
-                            if (e.target.value !== (berechneteErgebnisse?.ohneZehntel?.toString() || '')) {
-                              setBerechneteErgebnisse(null);
-                            }
-                          }}
-                          placeholder="335"
-                          required
-                          className="text-xl font-bold h-12"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">Standard-Bewertung (0-10 pro Schuss)</p>
-                      </div>
-                      <div>
-                        <Label htmlFor="ergebnis" className="text-sm font-medium flex items-center gap-2">
-                          <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                          Zehntel-Ergebnis (optional)
-                        </Label>
-                        <Input
-                          id="ergebnis"
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="1000"
-                          value={berechneteErgebnisse?.mitZehntel ? (Math.round(berechneteErgebnisse.mitZehntel * 10) / 10).toString() : formData.ergebnis}
-                          onChange={(e) => {
-                            setFormData(prev => ({ ...prev, ergebnis: e.target.value }));
-                            // Reset berechnete Ergebnisse bei manueller Eingabe
-                            if (e.target.value !== (berechneteErgebnisse?.mitZehntel ? (Math.round(berechneteErgebnisse.mitZehntel * 10) / 10).toString() : '')) {
-                              setBerechneteErgebnisse(null);
-                            }
-                          }}
-                          placeholder="312.2"
-                          className="text-xl font-bold h-12 border-green-200 focus:border-green-400"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">Gesamtergebnis mit Zehntel (z.B. 312.2)</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
             <div>
-              <Label htmlFor="notizen">Notizen (optional)</Label>
+              <Label>Notizen (optional)</Label>
               <Textarea
-                id="notizen"
                 value={formData.notizen}
                 onChange={(e) => setFormData(prev => ({ ...prev, notizen: e.target.value }))}
-                placeholder="Zusätzliche Bemerkungen..."
-                rows={3}
+                placeholder="Bemerkungen zum Training..."
+                rows={2}
               />
             </div>
 
-            {/* Social Training Checkbox */}
-            <div className="border-t pt-4">
-              <div className="space-y-4 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="socialTraining" 
-                    checked={socialTraining}
-                    onCheckedChange={(checked) => {
-                      setSocialTraining(checked);
-                      if (checked && user) {
-                        loadUserGroups();
-                      }
-                    }}
+            {/* Optionale Details */}
+            <details className="group">
+              <summary className="text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground">
+                ▸ Weitere Details (Wetter, Waffe, Munition)
+              </summary>
+              <div className="mt-3 space-y-3 pl-2 border-l-2 border-muted">
+                <div>
+                  <Label className="text-xs">Wetter</Label>
+                  <Input
+                    value={formData.wetter}
+                    onChange={(e) => setFormData(prev => ({ ...prev, wetter: e.target.value }))}
+                    placeholder="z.B. Sonnig, 20°C"
+                    className="h-10"
                   />
-                  <div className="flex-1">
-                    <Label htmlFor="socialTraining" className="flex items-center gap-2 cursor-pointer">
-                      <Users className="h-4 w-4 text-purple-600" />
-                      <span className="font-medium">Auch in Social Training speichern</span>
-                    </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Ergebnis wird für Community-Features gespeichert. Alle Daten werden in der Datenbank gesichert.
-                    </p>
-                  </div>
                 </div>
-                
-                {/* Gruppen-Auswahl */}
-                {socialTraining && (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="groupSelection">Trainingsgruppe (optional)</Label>
-                      <NativeSelect
-                        value={selectedGroupId}
-                        onValueChange={setSelectedGroupId}
-                        placeholder="Keine Gruppe auswählen..."
-                        options={[
-                          { value: '', label: 'Keine Gruppe (nur persönlich)' },
-                          ...userGroups.map(group => ({
-                            value: group.id!,
-                            label: `${group.name} (${group.members?.length || 0} Mitglieder)`
-                          }))
-                        ]}
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {selectedGroupId 
-                          ? 'Ergebnis wird in der ausgewählten Gruppe geteilt und für Vergleiche verwendet.'
-                          : 'Ergebnis wird nur in Ihrem persönlichen Social Training Profil gespeichert.'}
-                      </p>
-                      {userGroups.length === 0 && (
-                        <p className="text-xs text-orange-600 mt-1">
-                          Sie sind noch keiner Trainingsgruppe beigetreten. <Link href="/training-groups" className="underline">Gruppe erstellen oder beitreten</Link>
-                        </p>
-                      )}
-                    </div>
-                    
-                    {/* Wettkampf-Auswahl */}
-                    {selectedGroupId && (
-                      <CompetitionSelector 
-                        groupId={selectedGroupId}
-                        discipline={formData.disziplin}
-                        onCompetitionChange={(competitionId) => {
-                          setSelectedCompetitionId(competitionId);
-                          logDebug('🏆 Selected competition ID:', competitionId);
-                          logDebug('🏆 Expected competition ID: Kg8GG35V5Z8b0OAy5jtQ');
-                        }}
-                      />
-                    )}
-                  </div>
-                )}
+                <div>
+                  <Label className="text-xs">Waffe</Label>
+                  <Input
+                    value={formData.waffe}
+                    onChange={(e) => setFormData(prev => ({ ...prev, waffe: e.target.value }))}
+                    placeholder="z.B. Feinwerkbau 800X"
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Munition</Label>
+                  <Input
+                    value={formData.munition}
+                    onChange={(e) => setFormData(prev => ({ ...prev, munition: e.target.value }))}
+                    placeholder="z.B. RWS R10 Match"
+                    className="h-10"
+                  />
+                </div>
               </div>
-            </div>
+            </details>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button 
-                type="button" 
-                onClick={handleSubmit} 
-                disabled={isSubmitting} 
-                className="flex items-center gap-2"
+            <div className="flex gap-2 pt-2">
+              <Button variant="ghost" onClick={() => setStep('ergebnis')} className="flex-shrink-0">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                className="flex-1 h-12 text-base"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
               >
-                <Save className="h-4 w-4" />
+                <Save className="mr-2 h-5 w-5" />
                 {isSubmitting ? 'Speichere...' : 'Eintrag speichern'}
               </Button>
-              <Button asChild variant="outline">
-                <Link href="/schiessnachweis">
-                  Abbrechen
-                </Link>
-              </Button>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

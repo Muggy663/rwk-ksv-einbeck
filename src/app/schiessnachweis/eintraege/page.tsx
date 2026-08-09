@@ -140,12 +140,6 @@ function EintraegeContent() {
                 Neuer Eintrag
               </Link>
             </Button>
-            <Button asChild variant="outline" className="w-full sm:w-auto">
-              <Link href="/social">
-                <Users className="h-4 w-4 mr-2" />
-                Social Training
-              </Link>
-            </Button>
           </div>
         </div>
       </div>

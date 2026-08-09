@@ -119,12 +119,20 @@ export type DisziplinName = typeof DISZIPLIN_NAMES[number];
 export type WettkampfTyp = typeof WETTKAMPF_TYPEN[number]['value'];
 
 export const BELIEBTE_SCHIESSSTAENDE = [
-  'Schützenhaus Einbeck',
-  'Schützenverein Northeim', 
-  'SV Alfeld',
-  'Schützenhaus Göttingen',
-  'KK-Stand Hildesheim',
-  'Luftgewehr-Halle',
-  'Vereinsheim',
-  'Sonstiger Standort'
+  'HSC Linnenkamp e.V.',
+  'LSV Lüthorst e.V.',
+  'Post SV Einbeck e.V.',
+  'SC Naensen e.V.',
+  'SGi Einbeck e.V.',
+  'SSC Avendshausen e.V.',
+  'SV Dassel e.V.',
+  'SV Dörrigsen e.V.',
+  'SV Edemissen e.V.',
+  'SV Krimmensen e.V.',
+  'SV Lauenberg e.V.',
+  'SV Mackensen e.V.',
+  'SV Markoldendorf e.V.',
+  'SV Salzderhelden e.V.',
+  'SV Vogelbeck e.V.',
+  'Schießsportgemeinschaft Einbeck',
 ] as const;
