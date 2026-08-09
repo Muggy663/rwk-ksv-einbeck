@@ -1,3 +1,4 @@
+import { AI_CONFIG } from '@/lib/ai/config';
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { secureLogger } from '@/lib/utils/secure-logger';
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
           const prompt = contextFromBody || `Analysiere diesen Text und extrahiere Schießergebnisse:\n\n${textInput}\n\nExtrahiere alle Schützen-Namen und ihre Ergebnisse. Rückgabe als JSON-Array:\n[{"shooterName": "Name", "score": 285, "confidence": 0.9}]`;
           
           const response = await genAI.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: AI_CONFIG.model,
             contents: [{ role: 'user', parts: [{ text: prompt }] }]
           });
           
@@ -148,7 +149,7 @@ Format: [{"shooterName": "Max Mustermann", "teamName": "Team A", "score": 285, "
         const timeoutMs = isMobileRequest ? 40000 : 25000;
         
         const responsePromise = genAI.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: AI_CONFIG.model,
           contents: [{
             role: 'user',
             parts: [
@@ -267,3 +268,4 @@ Format: [{"shooterName": "Max Mustermann", "teamName": "Team A", "score": 285, "
     }, { status: 500 });
   }
 }
+

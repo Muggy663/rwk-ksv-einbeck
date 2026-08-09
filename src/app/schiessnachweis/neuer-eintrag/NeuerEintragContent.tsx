@@ -19,6 +19,7 @@ import { KATEGORIEN, getDisziplinenByKategorie, getDisziplinConfig, WETTKAMPF_TY
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { ErgebnisaufnahmeForm } from "@/components/schiessnachweis/ErgebnisaufnahmeForm";
+import { ScheibenScanner } from "@/components/schiessnachweis/ScheibenScanner";
 import { DigitalAnlageImport } from "@/components/schiessnachweis/DigitalAnlageImport";
 import { TrainingGroup } from "@/types/social";
 import { CompetitionSelector } from "@/components/schiessnachweis/CompetitionSelector";
@@ -533,12 +534,44 @@ export function NeuerEintragContent() {
                   </div>
                   
                   {showDetailedEntry && (
-                    <ErgebnisaufnahmeForm
+                    <>
+                      {/* Scheiben-Scanner */}
+                      {formData.disziplin && (
+                        <ScheibenScanner
+                          discipline={formData.kategorie === 'Luftpistole' ? 'LP' : formData.kategorie === 'Kleinkaliber Pistole' ? 'KKP' : formData.kategorie === 'Kleinkaliber' ? 'KK' : 'LG'}
+                          shotCount={parseInt(formData.schussAnzahl) || 10}
+                          onResult={(result) => {
+                            // Serien aus den Einzelschüssen aufbauen (10er-Gruppen)
+                            const newSerien: ZehnerSerie[] = [];
+                            for (let i = 0; i < result.shots.length; i += 10) {
+                              const chunk = result.shots.slice(i, i + 10);
+                              newSerien.push({
+                                nummer: Math.floor(i / 10) + 1,
+                                schuesse: chunk,
+                                summe: chunk.reduce((a, b) => a + b, 0),
+                              });
+                            }
+                            setSerien(newSerien);
+                            // Gesamtergebnis setzen
+                            setFormData(prev => ({
+                              ...prev,
+                              ergebnis: result.totalWithDecimal.toString(),
+                              ergebnisGanzeRinge: result.totalWholeRings.toString(),
+                            }));
+                            setBerechneteErgebnisse({
+                              mitZehntel: result.totalWithDecimal,
+                              ohneZehntel: result.totalWholeRings,
+                            });
+                          }}
+                        />
+                      )}
+                      <ErgebnisaufnahmeForm
                       disziplin={formData.disziplin}
                       onSerienChange={setSerien}
                       initialSerien={serien}
                       schussAnzahl={parseInt(formData.schussAnzahl) || undefined}
                     />
+                    </>
                   )}
                   
                   {/* Ergebnis-Felder zwischen Serien und Notizen */}

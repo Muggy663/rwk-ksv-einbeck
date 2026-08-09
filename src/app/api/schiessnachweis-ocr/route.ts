@@ -1,3 +1,4 @@
+import { AI_CONFIG } from '@/lib/ai/config';
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { secureLogger } from '@/lib/utils/secure-logger';
@@ -69,7 +70,7 @@ Gib die Daten als JSON zurück:
 Antworte NUR mit dem JSON, keine Erklärungen.`;
 
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: AI_CONFIG.model,
       contents: [{
         role: 'user',
         parts: [

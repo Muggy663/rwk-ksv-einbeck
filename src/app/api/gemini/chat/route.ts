@@ -1,3 +1,4 @@
+import { AI_CONFIG } from '@/lib/ai/config';
 import { NextRequest, NextResponse } from 'next/server';
 import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { GoogleGenAI } from '@google/genai';
@@ -54,7 +55,7 @@ Beachte dabei:
       `${systemPrompt}\n\nFrage: ${message}`;
 
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: AI_CONFIG.model,
       contents: [{ role: 'user', parts: [{ text: fullPrompt }] }]
     });
 
@@ -93,3 +94,4 @@ Beachte dabei:
     }, { status: 500 });
   }
 }
+

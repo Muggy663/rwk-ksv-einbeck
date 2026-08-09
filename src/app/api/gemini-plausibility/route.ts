@@ -1,3 +1,4 @@
+import { AI_CONFIG } from '@/lib/ai/config';
 import { NextRequest, NextResponse } from 'next/server';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { GoogleGenAI } from '@google/genai';
@@ -26,7 +27,7 @@ Gib eine kurze Einschätzung (max 50 Wörter):
 - Empfehlung zur Überprüfung?`;
 
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: AI_CONFIG.model,
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
@@ -46,3 +47,4 @@ Gib eine kurze Einschätzung (max 50 Wörter):
     }, { status: 500 });
   }
 }
+

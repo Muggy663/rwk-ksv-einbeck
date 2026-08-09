@@ -1,3 +1,4 @@
+import { AI_CONFIG } from '@/lib/ai/config';
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { secureLogger } from '@/lib/utils/secure-logger';
@@ -55,7 +56,7 @@ Schreibe sachlich und kompetent für Schießsport-Kenner.`;
 
 
     const response = await genAI.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: AI_CONFIG.model,
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
@@ -74,3 +75,4 @@ Schreibe sachlich und kompetent für Schießsport-Kenner.`;
     }, { status: 500 });
   }
 }
+
