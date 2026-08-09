@@ -2,12 +2,11 @@
 
 **Version: 2.7.0** | **Android: 0.9.4.1** | **03.08.2026**
 
-> **Social Training Platform für den deutschen Schießsport**
+> **Digitale Plattform für den deutschen Schießsport**
 
-Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und Social Training. Die erste Community-Plattform für Sportschützen mit Live-Wettkämpfen, Trainingsgruppen und erweiterten Statistiken.
+Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und den digitalen Schießnachweis. Automatische Tabellen, KI-gestützte Ergebniserfassung und moderne Vereinsverwaltung.
 
 [![Version](https://img.shields.io/badge/Version-2.7.0-green?style=for-the-badge)](#)
-[![Social Training](https://img.shields.io/badge/Social_Training-Live-blue?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_16_+_Firebase-blue?style=for-the-badge)](#)
 [![Design](https://img.shields.io/badge/Design-Glassmorphism-purple?style=for-the-badge)](#)
 
@@ -20,16 +19,6 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **Automatische Tabellen** - Live-Berechnung mit Statistiken
 - **Google Gemini AI OCR** - Intelligente Handzettel-Erkennung
 - **Schießnachweis** - Digitales Schießtagebuch
-
-### 🚀 NEU: Social Training Platform (Version 2.0+)
-- **👥 Trainingsgruppen** - Gemeinsam trainieren mit Freunden (6-stellige Beitrittscodes)
-- **⚔️ Live-Wettkämpfe** - Real-time Wettkämpfe mit Live-Ranglisten
-- **🎯 Duelle-System** - 1vs1 Herausforderungen mit Firebase-Integration
-- **📊 Community-Statistiken** - Erweiterte Performance-Analysen
-- **🔔 Smart Notifications** - DSGVO-konforme Push-Benachrichtigungen
-- **🏅 Ranglisten** - Community-weite Leistungsvergleiche
-- **📱 Real-time Updates** - Live-Synchronisation aller Ergebnisse
-- **🎮 Einheitliche Eingabe** - Über Schießnachweis mit Social Training Checkbox
 
 ## 🚀 Hauptfunktionen
 
@@ -58,15 +47,6 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **Erweiterte Statistiken** - Detaillierte Leistungsanalysen
 - **PDF-Export für Behörden** - Offizieller Nachweis für Waffenbehörde
 
-### 👥 Social Training
-- **Trainingsgruppen erstellen** - Mit 6-stelligen Beitrittscodes
-- **Live-Wettkämpfe** - Real-time Ranglisten mit Rundenbasiertem System
-- **Duelle-System** - 1vs1 Herausforderungen mit Firebase-Integration
-- **Community entdecken** - Schützen-Profile durchsuchen
-- **Einheitliche Ergebnis-Eingabe** - Über Schießnachweis mit Social Training Checkbox
-- **Admin-Kontrollen** - Wettkampf-Ersteller können Ergebnisse verwalten
-- **Automatische Ranglisten** - Live-Updates basierend auf Gruppen-Ergebnissen
-
 ### 📊 Verwaltung & Organisation
 - **Disziplinen-Verwaltung** flexibel konfigurierbar
 - **Statistik-Dashboard** mit Auswertungen
@@ -76,9 +56,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 - **KM-System** - Vollständige Kreismeisterschafts-Verwaltung
 - **Meyton Integration** - Export für elektronische Schießanlagen
 - **Google Gemini AI** - Intelligenteste OCR-Erkennung für Handzettel
-- **Community-Ranglisten** - Automatische Sortierung und Performance-Analysen
-- **Community entdecken** - Profile durchsuchen und zu Gruppen einladen
-- **Smart Notifications** - DSGVO-konforme Push-Benachrichtigungen
+- **Scheiben-Scanner (Beta)** - KI-basierte Erkennung von Einschusslöchern
 
 
 
@@ -93,29 +71,27 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 ## 🌟 Warum RWK Einbeck App?
 
-### ❌ Vorher (Analog + Einzelkämpfer)
+### ❌ Vorher (Analog)
 - Excel-Tabellen manuell pflegen
 - Papier-basierte Meldungen
-- Isoliertes Training ohne Community
-- Keine Live-Wettkämpfe möglich
+- Keine automatische Auswertung
 - Zeitaufwändige Kommunikation
 - Manuelle Altersklassen-Berechnung
 - Fehleranfällige Startlisten-Erstellung
 
-### ✅ Nachher (Digital + Community)
+### ✅ Nachher (Digital)
 - **Automatische Berechnung** aller Tabellen und Ranglisten
-- **Live-Wettkämpfe** mit Real-time Ranglisten
-- **Trainingsgruppen** mit 6-stelligen Beitrittscodes und Community-Features
-- **Duelle-System** mit 1vs1 Herausforderungen und Firebase-Backend
-- **Einheitliche Eingabe** über Schießnachweis mit Social Training Integration
-- **Community-Ranglisten** mit erweiterten Statistiken und Performance-Analysen
+- **KI-gestützte Ergebnis-Eingabe** via Foto (Handzettel-OCR + Scheiben-Scanner)
+- **Mitcom-Import** für Vereinsmitglieder mit automatischer Geschlechts- und Altersklassen-Zuordnung
+- **Dynamisches KM-System** — Sportjahr, Altersklassen und Disziplinen berechnen sich automatisch
 - **KI-Startlisten Generator** mit automatischer Optimierung und Altersklassen-Berechnung
+- **Schießnachweis** mit Wizard-UI für schnelle Eingabe auf dem Smartphone
 
 ## 📋 Changelog
 
 Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
-**Aktuell: Version 2.7.0 (03.08.2026)** – Mannschafts-Umbau, KM-System vollständig dynamisch, Einzelrangliste-Fixes, Social Training entfernt.
+**Aktuell: Version 2.7.0 (03.08.2026)** – Schießnachweis Wizard-UI, Scheiben-Scanner Beta, Mannschafts-Umbau, KM dynamisch, Einzelrangliste-Fixes, Social Training & Vereinssoftware entfernt.
 
 ## 📸 Screenshots
 

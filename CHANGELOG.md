@@ -4,7 +4,7 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
-## Version 2.7.0 (03.08.2026)
+## Version 2.7.0 
 - **📥 Mannschafts-Umbau**: Neuer Dialog zum Auflösen und Neuordnen von Mannschaften mit selektiver Ergebnis-Übertragung
 - **🔧 Team-Verwaltung in Substitutions-Seite**: Inline-Umbenennen, Löschen und Umbauen direkt in der Übersicht
 - **🔍 Ersatzschütze Namenssuche**: Suchfeld im Dialog zum schnellen Finden des Ersatzschützens
@@ -17,17 +17,25 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 - **🎯 KM Auflage-Regel**: Sonderregelung Kreisverband — alle ab 15 dürfen an KM Auflage teilnehmen (nicht LM-berechtigt)
 - **🗑️ KM Meldung löschen**: Neue API-Route `/api/km/meldungen/[id]` für das Löschen einzelner Meldungen
 - **📋 Substitutions Liga-Filter**: Zeigt nur Ersatzschützen der gewählten Saison/Liga an
-- **🧹 Social Training entfernt**: Aus Dashboard-Auswahl, Navigationen, Handbuch
+- **🧹 Social Training entfernt**: Aus Dashboard-Auswahl, Navigationen, Handbuch, Schießnachweis
 - **📄 Updates-Seite entfernt**: Inhalte sind im CHANGELOG.md
 - **🔇 Admin bereinigt**: 11 veraltete Seiten gelöscht, Vereinssoftware-Reste entfernt
 - **🐛 Login-Fix**: INDIVIDUAL userType blockiert nicht mehr den Zugang wenn clubRoles vorhanden
+- **🔄 Versions-Check**: Banner bei veraltetem Browser-Tab — fordert zum Neuladen auf
+- **📸 Scheiben-Scanner (Beta)**: KI-basierte Erkennung von Einschusslöchern auf Papierscheiben im Schießnachweis
+- **🤖 Zentrale AI-Config**: Gemini-Modell wird zentral in einer Datei konfiguriert — einfache Updates
+- **📧 Ergebnis-Mail CC**: Eintragender bekommt jetzt eine Kopie der Ergebnis-Benachrichtigung
+- **📱 Schießnachweis Wizard-UI**: Komplett neue mobile-optimierte Eingabe in 4 Schritten statt endlosem Scroll
+- **🎯 4 Eingabemethoden**: Schnelleingabe, Serien, Scheibe fotografieren, Ausdruck digitale Anlage
+- **🏢 Schießstände aktualisiert**: Alle Vereine des Kreisverbands als Standorte hinterlegt
+- **📝 Optionale Felder**: Wetter, Waffe, Munition als aufklappbare Zusatzdetails
 
-## Version 2.6.3 (03.08.2026)
+## Version 2.6.3 
 - **🐛 Bugfix Login**: Benutzer mit `userType: INDIVIDUAL` und gleichzeitig gesetzten `clubRoles` werden korrekt zum RWK/KM-Dashboard weitergeleitet
 - **🐛 Bugfix Dashboard**: `clubRoles` haben Vorrang vor `userType: INDIVIDUAL`
 - **🗑️ Social Training**: Aus Dashboard-Auswahl entfernt
 
-## Version 2.6.2 (03.08.2026)
+## Version 2.6.2 
 - **🔒 API-Sicherheit**: `/api/admin/fix-mitgliedsnummer` jetzt mit Bearer-Token Auth-Check — nur Admin kann die Route aufrufen
 - **🐛 excel-import-service**: `unknown` wird nicht mehr auf `male` gesetzt — Geschlecht bleibt `unknown` wenn nicht erkennbar
 - **📊 RWK-Tabellen Schnitt**: Schnitt-Spalte basiert jetzt ebenfalls auf dem liga-weiten vollständigen Durchgang — konsistent mit der Sortierung
