@@ -3,12 +3,13 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Camera, Loader2, CheckCircle2, AlertCircle, RotateCcw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Camera, Loader2, CheckCircle2, AlertCircle, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ScheibenScannerProps {
-  discipline: string; // 'LG', 'LP', 'KK' etc.
-  shotCount: number; // Erwartete Schussanzahl (10, 20, 40)
+  discipline: string;
+  shotCount: number;
   onResult: (result: {
     shots: number[];
     totalWithDecimal: number;
@@ -18,27 +19,32 @@ interface ScheibenScannerProps {
   }) => void;
 }
 
+interface ScannedTarget {
+  id: string;
+  preview: string;
+  shots: number[];
+  confidence: number;
+}
+
 export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenScannerProps) {
   const { toast } = useToast();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [result, setResult] = useState<any>(null);
+  const [scannedTargets, setScannedTargets] = useState<ScannedTarget[]>([]);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
     if (!file) return;
-
-    // Vorschau zeigen
-    const reader = new FileReader();
-    reader.onload = (e) => setPreview(e.target?.result as string);
-    reader.readAsDataURL(file);
-
-    // Analyse starten
     setIsAnalyzing(true);
     setError(null);
-    setResult(null);
+
+    // Vorschau
+    const previewUrl = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.readAsDataURL(file);
+    });
 
     try {
       const formData = new FormData();
@@ -57,49 +63,67 @@ export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenSca
       }
 
       const data = await response.json();
-      
-      if (data.success) {
-        setResult(data);
-        toast({
-          title: '✅ Scheibe erkannt',
-          description: `${data.shotCount} Schuss erkannt — ${data.totalWholeRings} Ringe (Vertrauen: ${data.confidence}%)`,
-        });
+
+      if (data.success && data.shots) {
+        setScannedTargets(prev => [...prev, {
+          id: Date.now().toString(),
+          preview: previewUrl,
+          shots: data.shots,
+          confidence: data.confidence || 0,
+        }]);
+        toast({ title: '✅ Scheibe erkannt', description: `${data.shots.length} Schuss erkannt` });
       } else {
-        throw new Error(data.error || 'Unbekannter Fehler');
+        throw new Error('Keine Schüsse erkannt');
       }
     } catch (err: any) {
       setError(err.message);
-      toast({
-        title: 'Fehler bei der Erkennung',
-        description: err.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Fehler', description: err.message, variant: 'destructive' });
     } finally {
       setIsAnalyzing(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (cameraInputRef.current) cameraInputRef.current.value = '';
     }
+  };
+
+  const updateShot = (targetIndex: number, shotIndex: number, value: string) => {
+    setScannedTargets(prev => {
+      const updated = [...prev];
+      const parsed = parseFloat(value);
+      updated[targetIndex].shots[shotIndex] = isNaN(parsed) ? 0 : parsed;
+      return updated;
+    });
+  };
+
+  const removeTarget = (targetId: string) => {
+    setScannedTargets(prev => prev.filter(t => t.id !== targetId));
   };
 
   const handleConfirm = () => {
-    if (result) {
-      onResult(result);
-      reset();
-    }
+    const allShots = scannedTargets.flatMap(t => t.shots);
+    if (allShots.length === 0) return;
+
+    const totalWithDecimal = Math.round(allShots.reduce((a, b) => a + b, 0) * 10) / 10;
+    const totalWholeRings = allShots.reduce((a, b) => a + Math.floor(b), 0);
+    const avgConfidence = scannedTargets.length > 0
+      ? Math.round(scannedTargets.reduce((a, t) => a + t.confidence, 0) / scannedTargets.length)
+      : 0;
+
+    onResult({
+      shots: allShots,
+      totalWithDecimal,
+      totalWholeRings,
+      shotCount: allShots.length,
+      confidence: avgConfidence,
+    });
+
+    setScannedTargets([]);
   };
 
-  const reset = () => {
-    setPreview(null);
-    setResult(null);
-    setError(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
-  };
+  const totalShots = scannedTargets.reduce((sum, t) => sum + t.shots.length, 0);
+  const totalRings = Math.round(scannedTargets.flatMap(t => t.shots).reduce((a, b) => a + b, 0) * 10) / 10;
 
-  // Disziplin-Label
   const disciplineLabel = {
-    'LG': 'Luftgewehr',
-    'LP': 'Luftpistole',
-    'KK': 'Kleinkaliber',
-    'KKP': 'KK Pistole',
+    'LG': 'Luftgewehr', 'LP': 'Luftpistole', 'KK': 'Kleinkaliber', 'KKP': 'KK Pistole',
   }[discipline] || discipline;
 
   return (
@@ -111,16 +135,15 @@ export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenSca
           <span className="text-xs bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full ml-2">Beta</span>
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground">
-          Fotografiere deine Scheibe — die Ringe werden automatisch erkannt.
-          <span className="ml-2 inline-flex items-center rounded-full border px-2 py-0.5 text-xs">{disciplineLabel}</span>
-          <span className="ml-1 inline-flex items-center rounded-full border px-2 py-0.5 text-xs">{shotCount} Schuss</span>
+          {disciplineLabel} — {shotCount} Schuss. Mehrere Scheiben möglich.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {!preview && !isAnalyzing && (
-          <div className="space-y-2">
-            {/* Kamera-Button (Mobile) */}
-            <div className="block md:hidden">
+
+        {/* Upload-Buttons — immer sichtbar */}
+        {!isAnalyzing && (
+          <div className="flex gap-2">
+            <div className="block md:hidden flex-1">
               <input
                 ref={cameraInputRef}
                 type="file"
@@ -131,16 +154,14 @@ export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenSca
               />
               <Button
                 type="button"
-                className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-base"
+                className="w-full bg-purple-600 hover:bg-purple-700 h-11"
                 onClick={() => cameraInputRef.current?.click()}
               >
-                <Camera className="mr-2 h-5 w-5" />
-                Scheibe fotografieren
+                <Camera className="mr-2 h-4 w-4" />
+                {scannedTargets.length > 0 ? 'Weitere Scheibe' : 'Fotografieren'}
               </Button>
             </div>
-
-            {/* Datei-Auswahl (Desktop + Mobile) */}
-            <div>
+            <div className="flex-1">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -151,10 +172,11 @@ export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenSca
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full h-11"
                 onClick={() => fileInputRef.current?.click()}
               >
-                📁 Aus Galerie wählen
+                <Plus className="mr-2 h-4 w-4" />
+                {scannedTargets.length > 0 ? 'Weitere Scheibe' : 'Aus Galerie'}
               </Button>
             </div>
           </div>
@@ -162,80 +184,91 @@ export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenSca
 
         {/* Analyse läuft */}
         {isAnalyzing && (
-          <div className="flex flex-col items-center gap-3 py-6">
+          <div className="flex flex-col items-center gap-3 py-4">
             <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
             <p className="text-sm text-muted-foreground">Scheibe wird analysiert...</p>
           </div>
         )}
 
-        {/* Vorschau + Ergebnis */}
-        {preview && !isAnalyzing && (
-          <div className="space-y-3">
-            <div className="relative">
-              <img src={preview} alt="Scheibe" className="rounded-lg max-h-48 mx-auto object-contain" />
-            </div>
-
-            {result && (
-              <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-3 space-y-2">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <span className="font-medium text-green-800 dark:text-green-200">
-                    {result.shotCount} Schuss erkannt — {result.totalWholeRings} Ringe
-                  </span>
-                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${result.confidence >= 80 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                    {result.confidence}% Vertrauen
-                  </span>
-                </div>
-
-                {result.shots && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {result.shots.map((shot: number, i: number) => (
-                      <span key={i} className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium ${
-                        shot >= 10 ? 'bg-green-200 text-green-800' :
-                        shot >= 9 ? 'bg-blue-200 text-blue-800' :
-                        shot >= 8 ? 'bg-yellow-200 text-yellow-800' :
-                        'bg-red-200 text-red-800'
-                      }`}>
-                        {Number.isInteger(shot) ? shot : shot.toFixed(1)}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {result.notes && (
-                  <p className="text-xs text-muted-foreground">{result.notes}</p>
-                )}
-
-                <div className="flex gap-2 pt-1">
-                  <Button size="sm" onClick={handleConfirm} className="bg-green-600 hover:bg-green-700">
-                    <CheckCircle2 className="h-4 w-4 mr-1" /> Übernehmen
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={reset}>
-                    <RotateCcw className="h-4 w-4 mr-1" /> Neue Aufnahme
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
-                <span className="text-sm text-red-700">{error}</span>
-                <Button size="sm" variant="outline" onClick={reset} className="ml-auto">
-                  Erneut versuchen
-                </Button>
-              </div>
-            )}
+        {/* Fehler */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-2 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+            <span className="text-sm text-red-700">{error}</span>
           </div>
         )}
 
-        <p className="text-xs text-muted-foreground">
-          💡 Tipps: Scheibe flach fotografieren, gutes Licht, möglichst ohne Schatten. Die KI-Erkennung muss immer kontrolliert werden.
-        </p>
+        {/* Gescannte Scheiben mit editierbaren Werten */}
+        {scannedTargets.length > 0 && (
+          <div className="space-y-3">
+            {scannedTargets.map((target, targetIdx) => (
+              <div key={target.id} className="border rounded-lg p-3 bg-white dark:bg-background space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <img src={target.preview} alt={`Scheibe ${targetIdx + 1}`} className="h-10 w-10 rounded object-cover" />
+                    <span className="text-sm font-medium">Scheibe {targetIdx + 1}</span>
+                    <span className="text-xs text-muted-foreground">({target.shots.length} Schuss)</span>
+                  </div>
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500" onClick={() => removeTarget(target.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+
+                {/* Editierbare Schusswerte */}
+                <div className="grid grid-cols-5 gap-1.5">
+                  {target.shots.map((shot, shotIdx) => (
+                    <Input
+                      key={shotIdx}
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="10.9"
+                      value={shot || ''}
+                      onChange={(e) => updateShot(targetIdx, shotIdx, e.target.value)}
+                      className={`h-9 text-center text-sm font-medium p-1 ${
+                        shot >= 10 ? 'bg-green-50 border-green-300' :
+                        shot >= 9 ? 'bg-blue-50 border-blue-300' :
+                        shot >= 8 ? 'bg-yellow-50 border-yellow-300' :
+                        'bg-red-50 border-red-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <div className="text-xs text-muted-foreground text-right">
+                  Summe: <strong>{Math.round(target.shots.reduce((a, b) => a + b, 0) * 10) / 10}</strong> Ringe
+                </div>
+              </div>
+            ))}
+
+            {/* Gesamtergebnis + Übernehmen */}
+            <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 rounded-lg p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <span className="font-medium text-green-800 dark:text-green-200">
+                    Gesamt: {totalShots} Schuss — <strong>{totalRings}</strong> Ringe (Zehntel)
+                  </span>
+                  <br />
+                  <span className="text-sm text-green-700 dark:text-green-300">
+                    Ganze Ringe: <strong>{scannedTargets.flatMap(t => t.shots).reduce((a, b) => a + Math.floor(b), 0)}</strong>
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 flex-1">
+                  <CheckCircle2 className="h-4 w-4 mr-1" /> Übernehmen
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setScannedTargets([])}>
+                  <RotateCcw className="h-4 w-4 mr-1" /> Zurücksetzen
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded p-2">
           <p className="text-xs text-orange-700 dark:text-orange-300">
-            ⚠️ <strong>Beta-Funktion:</strong> Die automatische Scheiben-Erkennung befindet sich noch in der Entwicklung. 
-            Die erkannten Werte müssen immer manuell überprüft werden. Bei Problemen bitte Feedback an rwk-leiter-ksve@gmx.de.
+            ⚠️ <strong>Beta:</strong> Erkannte Werte immer prüfen und korrigieren. Bei mehreren Scheiben (z.B. 5 Schuss pro Scheibe) einfach nacheinander fotografieren.
           </p>
         </div>
       </CardContent>

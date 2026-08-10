@@ -22,6 +22,10 @@ function EintraegeContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [needsSync, setNeedsSync] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>('alle');
+  const [selectedMonth, setSelectedMonth] = useState<string>('alle');
+  const [selectedDisziplin, setSelectedDisziplin] = useState<string>('alle');
+  const [selectedTyp, setSelectedTyp] = useState<string>('alle');
+  const [sortBy, setSortBy] = useState<'datum-desc' | 'datum-asc' | 'ergebnis-desc' | 'ergebnis-asc'>('datum-desc');
   const [mounted, setMounted] = useState(false);
   const searchParams = useSearchParams();
 
@@ -111,10 +115,52 @@ function EintraegeContent() {
     return years;
   }, [einträge]);
 
-  const filteredEinträge = useMemo(() => {
-    if (selectedYear === 'alle') return einträge;
-    return einträge.filter(e => new Date(e.datum).getFullYear() === parseInt(selectedYear));
+  const availableDisziplinen = useMemo(() => {
+    return [...new Set(einträge.map(e => e.disziplin).filter(Boolean))].sort();
+  }, [einträge]);
+
+  const availableMonths = useMemo(() => {
+    if (selectedYear === 'alle') return [];
+    const months = [...new Set(
+      einträge
+        .filter(e => new Date(e.datum).getFullYear() === parseInt(selectedYear))
+        .map(e => new Date(e.datum).getMonth())
+    )].sort((a, b) => b - a);
+    return months;
   }, [einträge, selectedYear]);
+
+  const filteredEinträge = useMemo(() => {
+    let result = [...einträge];
+
+    // Jahr
+    if (selectedYear !== 'alle') {
+      result = result.filter(e => new Date(e.datum).getFullYear() === parseInt(selectedYear));
+    }
+    // Monat
+    if (selectedMonth !== 'alle') {
+      result = result.filter(e => new Date(e.datum).getMonth() === parseInt(selectedMonth));
+    }
+    // Disziplin
+    if (selectedDisziplin !== 'alle') {
+      result = result.filter(e => e.disziplin === selectedDisziplin);
+    }
+    // Typ
+    if (selectedTyp !== 'alle') {
+      result = result.filter(e => e.typ === selectedTyp);
+    }
+    // Sortierung
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'datum-desc': return new Date(b.datum).getTime() - new Date(a.datum).getTime();
+        case 'datum-asc': return new Date(a.datum).getTime() - new Date(b.datum).getTime();
+        case 'ergebnis-desc': return (b.ergebnis || 0) - (a.ergebnis || 0);
+        case 'ergebnis-asc': return (a.ergebnis || 0) - (b.ergebnis || 0);
+        default: return 0;
+      }
+    });
+
+    return result;
+  }, [einträge, selectedYear, selectedMonth, selectedDisziplin, selectedTyp, sortBy]);
 
   return (
     <div className="container mx-auto p-4 sm:p-6 max-w-4xl">
@@ -145,20 +191,74 @@ function EintraegeContent() {
       </div>
 
       {availableYears.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Jahr auswählen" />
+        <div className="mb-6 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select value={selectedYear} onValueChange={(v) => { setSelectedYear(v); setSelectedMonth('alle'); }}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Jahr" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="alle">Alle Jahre</SelectItem>
                 {availableYears.map(year => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+
+            {selectedYear !== 'alle' && availableMonths.length > 0 && (
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="Monat" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="alle">Alle Monate</SelectItem>
+                  {availableMonths.map(month => (
+                    <SelectItem key={month} value={month.toString()}>
+                      {new Date(2026, month).toLocaleString('de-DE', { month: 'long' })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {availableDisziplinen.length > 1 && (
+              <Select value={selectedDisziplin} onValueChange={setSelectedDisziplin}>
+                <SelectTrigger className="w-44">
+                  <SelectValue placeholder="Disziplin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="alle">Alle Disziplinen</SelectItem>
+                  {availableDisziplinen.map(d => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            <Select value={selectedTyp} onValueChange={setSelectedTyp}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Typ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Alle</SelectItem>
+                <SelectItem value="training">Training</SelectItem>
+                <SelectItem value="wettkampf">Wettkampf</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Sortierung:</span>
+            <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+              <SelectTrigger className="w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="datum-desc">Neueste zuerst</SelectItem>
+                <SelectItem value="datum-asc">Älteste zuerst</SelectItem>
+                <SelectItem value="ergebnis-desc">Beste zuerst</SelectItem>
+                <SelectItem value="ergebnis-asc">Schlechteste zuerst</SelectItem>
               </SelectContent>
             </Select>
           </div>
