@@ -142,8 +142,8 @@ export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenSca
 
         {/* Upload-Buttons — immer sichtbar */}
         {!isAnalyzing && (
-          <div className="flex gap-2">
-            <div className="block md:hidden flex-1">
+          <div className="space-y-2">
+            <div className="block md:hidden">
               <input
                 ref={cameraInputRef}
                 type="file"
@@ -158,10 +158,10 @@ export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenSca
                 onClick={() => cameraInputRef.current?.click()}
               >
                 <Camera className="mr-2 h-4 w-4" />
-                {scannedTargets.length > 0 ? 'Weitere Scheibe' : 'Fotografieren'}
+                {scannedTargets.length > 0 ? 'Weitere Scheibe fotografieren' : 'Scheibe fotografieren'}
               </Button>
             </div>
-            <div className="flex-1">
+            <div>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -176,7 +176,7 @@ export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenSca
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                {scannedTargets.length > 0 ? 'Weitere Scheibe' : 'Aus Galerie'}
+                {scannedTargets.length > 0 ? 'Weitere Scheibe aus Galerie' : 'Aus Galerie wählen'}
               </Button>
             </div>
           </div>
@@ -235,8 +235,9 @@ export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenSca
                   ))}
                 </div>
 
-                <div className="text-xs text-muted-foreground text-right">
-                  Summe: <strong>{Math.round(target.shots.reduce((a, b) => a + b, 0) * 10) / 10}</strong> Ringe
+                <div className="text-xs text-muted-foreground text-right space-x-3">
+                  <span>Ganze Ringe: <strong>{target.shots.reduce((a, b) => a + Math.floor(b), 0)}</strong></span>
+                  <span>Mit Zehntel: <strong>{(Math.round(target.shots.reduce((a, b) => a + b, 0) * 10) / 10).toFixed(1)}</strong></span>
                 </div>
               </div>
             ))}
@@ -246,17 +247,51 @@ export function ScheibenScanner({ discipline, shotCount, onResult }: ScheibenSca
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <span className="font-medium text-green-800 dark:text-green-200">
-                    Gesamt: {totalShots} Schuss — <strong>{totalRings}</strong> Ringe (Zehntel)
+                    Gesamt: {totalShots} / {shotCount} Schuss
                   </span>
                   <br />
                   <span className="text-sm text-green-700 dark:text-green-300">
                     Ganze Ringe: <strong>{scannedTargets.flatMap(t => t.shots).reduce((a, b) => a + Math.floor(b), 0)}</strong>
                   </span>
+                  <span className="text-sm text-green-600 dark:text-green-400 ml-3">
+                    Mit Zehntel: <strong>{totalRings.toFixed(1)}</strong>
+                  </span>
                 </div>
               </div>
+
+              {/* Hinweis: Noch Schüsse offen */}
+              {totalShots < shotCount && (
+                <div className="bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg p-3 mb-2">
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
+                    ⚠️ Noch {shotCount - totalShots} Schuss fehlen — weitere Scheibe hinzufügen?
+                  </p>
+                  <div className="space-y-2">
+                    <div className="block md:hidden">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="w-full bg-purple-600 hover:bg-purple-700"
+                        onClick={() => cameraInputRef.current?.click()}
+                      >
+                        <Camera className="mr-2 h-4 w-4" /> Weitere Scheibe fotografieren
+                      </Button>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Plus className="mr-2 h-4 w-4" /> Weitere Scheibe aus Galerie
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleConfirm} className="bg-green-600 hover:bg-green-700 flex-1">
-                  <CheckCircle2 className="h-4 w-4 mr-1" /> Übernehmen
+                <Button size="sm" onClick={handleConfirm} className={`flex-1 ${totalShots < shotCount ? 'bg-gray-500 hover:bg-gray-600' : 'bg-green-600 hover:bg-green-700'}`}>
+                  <CheckCircle2 className="h-4 w-4 mr-1" /> {totalShots < shotCount ? 'Trotzdem übernehmen' : 'Übernehmen'}
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setScannedTargets([])}>
                   <RotateCcw className="h-4 w-4 mr-1" /> Zurücksetzen

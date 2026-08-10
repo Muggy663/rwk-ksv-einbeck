@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect } from "@/components/ui/native-select";
-import { ArrowLeft, Save, Camera, Hash, List, ChevronRight, ChevronLeft, MapPin, FileText } from "lucide-react";
+import { ArrowLeft, Save, Camera, Hash, List, ChevronRight, ChevronLeft, MapPin, FileText, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
 import { KATEGORIEN, getDisziplinenByKategorie, getDisziplinConfig, WETTKAMPF_TYPEN, BELIEBTE_SCHIESSSTAENDE, ZehnerSerie } from "@/types/schiessnachweis";
@@ -62,12 +62,12 @@ export function NeuerEintragContent() {
     }
   }, [formData.kategorie]);
 
-  // Schussanzahl automatisch setzen
+  // Schussanzahl automatisch setzen (erste verfügbare Schussanzahl als Default)
   useEffect(() => {
     if (formData.disziplin) {
       const config = getDisziplinConfig(formData.disziplin);
-      if (config?.defaultSchussanzahl) {
-        setFormData(prev => ({ ...prev, schussAnzahl: config.defaultSchussanzahl.toString() }));
+      if (config?.schussAnzahl && config.schussAnzahl.length > 0) {
+        setFormData(prev => ({ ...prev, schussAnzahl: config.schussAnzahl[0].toString() }));
       }
     }
   }, [formData.disziplin]);
@@ -376,10 +376,22 @@ export function NeuerEintragContent() {
                 })()}
                 shotCount={parseInt(formData.schussAnzahl) || 10}
                 onResult={(result) => {
+                  const serienGroesse = getDisziplinConfig(formData.disziplin)?.serienGroesse || 10;
                   const newSerien: ZehnerSerie[] = [];
-                  for (let i = 0; i < result.shots.length; i += 10) {
-                    const chunk = result.shots.slice(i, i + 10);
-                    newSerien.push({ nummer: Math.floor(i / 10) + 1, schuesse: chunk, summe: chunk.reduce((a, b) => a + b, 0) });
+                  for (let i = 0; i < result.shots.length; i += serienGroesse) {
+                    const chunk = result.shots.slice(i, i + serienGroesse);
+                    const serieNr = Math.floor(i / serienGroesse) + 1;
+                    newSerien.push({
+                      id: `foto-serie-${Date.now()}-${serieNr}`,
+                      serienNummer: serieNr,
+                      schuesse: chunk.map((wert, idx) => ({
+                        nummer: idx + 1,
+                        wert: wert,
+                        ring: Math.floor(wert),
+                        zehntel: Math.round((wert % 1) * 10) / 10,
+                      })),
+                      summe: Math.round(chunk.reduce((a, b) => a + b, 0) * 10) / 10,
+                    });
                   }
                   setSerien(newSerien);
                   setFormData(prev => ({ ...prev, ergebnis: result.totalWithDecimal.toString(), ergebnisGanzeRinge: result.totalWholeRings.toString() }));
@@ -407,9 +419,24 @@ export function NeuerEintragContent() {
             )}
 
             <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => setStep('methode')} className="flex-1">
+              <Button variant="ghost" onClick={() => {
+                // Ergebnis zurücksetzen beim Zurückgehen
+                setSerien([]);
+                setBerechneteErgebnisse(null);
+                setFormData(prev => ({ ...prev, ergebnis: '', ergebnisGanzeRinge: '' }));
+                setStep('methode');
+              }} className="flex-1">
                 <ChevronLeft className="mr-1 h-4 w-4" /> Zurück
               </Button>
+              {(berechneteErgebnisse || formData.ergebnisGanzeRinge) && (
+                <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => {
+                  setSerien([]);
+                  setBerechneteErgebnisse(null);
+                  setFormData(prev => ({ ...prev, ergebnis: '', ergebnisGanzeRinge: '' }));
+                }}>
+                  <RotateCcw className="mr-1 h-4 w-4" /> Zurücksetzen
+                </Button>
+              )}
               <Button
                 className="flex-1 h-12"
                 disabled={!formData.ergebnisGanzeRinge && !berechneteErgebnisse}

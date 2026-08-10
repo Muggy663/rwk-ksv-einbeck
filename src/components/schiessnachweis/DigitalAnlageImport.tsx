@@ -130,8 +130,8 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
 
         {/* Upload-Buttons */}
         {disziplin && !isProcessing && recognizedSerien.length === 0 && (
-          <div className="flex gap-2">
-            <div className="block md:hidden flex-1">
+          <div className="space-y-2">
+            <div className="block md:hidden">
               <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
                 onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
               <Button type="button" className="w-full h-11 bg-orange-600 hover:bg-orange-700"
@@ -139,7 +139,7 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
                 <Camera className="mr-2 h-4 w-4" /> Fotografieren
               </Button>
             </div>
-            <div className="flex-1">
+            <div>
               <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
                 onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
               <Button type="button" variant="outline" className="w-full h-11"
@@ -169,7 +169,10 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
               <div key={serie.id} className="border rounded-lg p-3 bg-white dark:bg-background space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Serie {serie.serienNummer}</span>
-                  <span className="text-xs text-muted-foreground">Summe: <strong>{serie.summe}</strong></span>
+                  <span className="text-xs text-muted-foreground">
+                    Ganze: <strong>{serie.schuesse.reduce((a, sc) => a + Math.floor(sc.wert || 0), 0)}</strong>
+                    {' · '}Zehntel: <strong>{serie.summe.toFixed(1)}</strong>
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-5 gap-1.5">
@@ -199,11 +202,11 @@ export function DigitalAnlageImport({ onImport, disziplin }: DigitalAnlageImport
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <span className="font-medium text-green-800 dark:text-green-200">
-                    Gesamt: <strong>{Math.round(totalRings * 10) / 10}</strong> Ringe (Zehntel)
+                    Ganze Ringe: <strong>{recognizedSerien.reduce((sum, s) => sum + s.schuesse.reduce((a, sc) => a + Math.floor(sc.wert || 0), 0), 0)}</strong>
                   </span>
                   <br />
-                  <span className="text-sm text-green-700 dark:text-green-300">
-                    Ganze Ringe: <strong>{recognizedSerien.reduce((sum, s) => sum + s.schuesse.reduce((a, sc) => a + Math.floor(sc.wert || 0), 0), 0)}</strong>
+                  <span className="text-sm text-green-600 dark:text-green-400">
+                    Mit Zehntel: <strong>{(Math.round(totalRings * 10) / 10).toFixed(1)}</strong>
                   </span>
                 </div>
               </div>
