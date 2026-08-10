@@ -120,7 +120,7 @@ export function NeuerEintragContent() {
 
     setIsSubmitting(true);
     try {
-      const result = await SchießnachweisService.addEintrag({
+      const result = await SchießnachweisService.saveEintrag({
         datum: new Date(formData.datum),
         typ: formData.typ as any,
         kategorie: formData.kategorie,
