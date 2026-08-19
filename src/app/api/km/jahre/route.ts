@@ -40,10 +40,14 @@ export async function POST(request: NextRequest) {
     }
 
     const disziplinName = disziplinTyp === 'KK' ? 'Kleinkaliber' : disziplinTyp === 'LD' ? 'Luftdruck' : 'Kleinkaliber Pistole';
+    const collectionKuerzel = disziplinTyp.toLowerCase(); // kk, ld, kkp
+    const meldungenCollectionName = `km_meldungen_${jahr}_${collectionKuerzel}`;
+    
     const kmSaison = {
       jahr: parseInt(jahr),
       disziplinTyp,
       name: `KM ${jahr} ${disziplinName}`,
+      collectionName: meldungenCollectionName,
       meldeschluss,
       status: status || 'vorbereitung',
       beschreibung: beschreibung || '',
@@ -52,6 +56,8 @@ export async function POST(request: NextRequest) {
     };
 
     const docRef = await adminDb.collection(KM_SAISONS_COLLECTION).add(kmSaison);
+
+    logInfo(`Saison ${kmSaison.name} erstellt, Collection: ${meldungenCollectionName}`);
 
     return NextResponse.json({
       success: true,

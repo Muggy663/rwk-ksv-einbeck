@@ -1,6 +1,6 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.7.0** | **Android: 0.9.4.1** | **03.08.2026**
+**Version: 2.7.1** | **Android: 0.9.4.1** | **19.08.2026**
 
 > **Digitale Plattform für den deutschen Schießsport**
 
@@ -40,12 +40,15 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 ### 🎯 Schießnachweis
 - **Digitales Schießtagebuch** für Sportschützen
+- **4-Schritt Wizard-UI** — mobile-optimierte Eingabe (Disziplin → Methode → Ergebnis → Details)
 - **Training & Wettkampf** Dokumentation
-- **Import von digitalen Anlagen** - Meyton, Sius, Disag, Sport Quantum
-- **KI-gestützte Erkennung** - Google Gemini AI für automatischen Import
-- **Cloud-Synchronisation** - Multi-Device-Zugriff
-- **Erweiterte Statistiken** - Detaillierte Leistungsanalysen
-- **PDF-Export für Behörden** - Offizieller Nachweis für Waffenbehörde
+- **4 Eingabemethoden** — Schnelleingabe, Serien, Scheibe fotografieren (Beta), Ausdruck scannen (Beta)
+- **Scheiben-Scanner (Beta)** — KI erkennt Einschusslöcher auf Papierscheiben automatisch
+- **Import von digitalen Anlagen** — Meyton, Sius, Disag, Sport Quantum
+- **Mitcom Excel-Import** — Vereinsmitglieder mit automatischem Matching importieren
+- **Cloud-Synchronisation** — Multi-Device-Zugriff
+- **Erweiterte Statistiken** — Detaillierte Leistungsanalysen mit Filtern
+- **PDF-Export für Behörden** — Offizieller Nachweis für Waffenbehörde
 
 ### 📊 Verwaltung & Organisation
 - **Disziplinen-Verwaltung** flexibel konfigurierbar
@@ -91,7 +94,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
-**Aktuell: Version 2.7.0 (03.08.2026)** – Schießnachweis Wizard-UI, Scheiben-Scanner Beta, Mannschafts-Umbau, KM dynamisch, Einzelrangliste-Fixes, Social Training & Vereinssoftware entfernt.
+**Aktuell: Version 2.7.1 (19.08.2026)** – KM Mannschaftsregeln überarbeitet, Schützen-Deduplizierung Fix, Login Social Training entfernt, KM Meldungen sortiert.
 
 ## 📸 Screenshots
 
@@ -131,7 +134,7 @@ Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 03.08.2026 - Version 2.7.0*
+*Letzte Aktualisierung: 19.08.2026 - Version 2.7.1*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

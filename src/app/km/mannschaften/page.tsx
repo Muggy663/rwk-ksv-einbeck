@@ -44,6 +44,7 @@ function KMMannschaftenContent() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedDisziplin, setSelectedDisziplin] = useState('');
   const [meldungen, setMeldungen] = useState<any[]>([]);
 
   const [saisons, setSaisons] = useState<any[]>([]);
@@ -199,16 +200,22 @@ function KMMannschaftenContent() {
     }
   };
 
-  const generateMannschaften = async () => {
+  const generateMannschaften = async (disziplinId?: string) => {
     setIsGenerating(true);
-    toast({ title: '🚀 Generierung gestartet', description: 'Mannschaften werden automatisch erstellt...' });
+    const desc = disziplinId 
+      ? `Mannschaften für gewählte Disziplin werden erstellt...`
+      : 'Mannschaften für ALLE Disziplinen werden erstellt...';
+    toast({ title: '🚀 Generierung gestartet', description: desc });
     
     try {
 
       const response = await fetch('/api/km/mannschaften/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ saison: selectedSaison || saisons[0]?.id || '2026' })
+        body: JSON.stringify({ 
+          saison: selectedSaison || saisons[0]?.id || '2026',
+          ...(disziplinId ? { disziplinId } : {})
+        })
       });
 
       const result = await response.json();
@@ -404,46 +411,48 @@ function KMMannschaftenContent() {
               
               {selectedSaison && (
               <div className="mb-4 space-y-3">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button 
-                    onClick={generateMannschaften}
-                    disabled={isGenerating || loading}
-                    className="relative w-full sm:w-auto"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Generiere...
-                      </>
-                    ) : (
-                      '🚀 Automatisch generieren'
-                    )}
-                  </Button>
-                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Disziplin wählen</label>
                     <select 
-                      id="disziplinSelect"
-                      className="border rounded px-3 py-2 min-w-[200px]"
-                      defaultValue=""
+                      value={selectedDisziplin}
+                      onChange={(e) => setSelectedDisziplin(e.target.value)}
+                      className="border rounded px-3 py-2 w-full"
                     >
-                      <option value="">Disziplin wählen...</option>
-                      {disziplinen.map(d => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
+                      <option value="">— Alle Disziplinen —</option>
+                      {[...disziplinen].sort((a, b) => {
+                        const numA = parseFloat(a.spoNummer || '0') || 0;
+                        const numB = parseFloat(b.spoNummer || '0') || 0;
+                        return numA - numB;
+                      }).map(d => (
+                        <option key={d.id} value={d.id}>{d.spoNummer ? `${d.spoNummer} - ` : ''}{d.name}</option>
                       ))}
                     </select>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button 
+                      onClick={() => generateMannschaften(selectedDisziplin || undefined)}
+                      disabled={isGenerating || loading}
+                      className="relative w-full sm:w-auto"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Generiere...
+                        </>
+                      ) : selectedDisziplin ? (
+                        '🚀 KI generieren (gewählte Disziplin) — Beta'
+                      ) : (
+                        '🚀 KI generieren (alle Disziplinen) — Beta'
+                      )}
+                    </Button>
                     <Button 
                       variant="outline"
+                      disabled={!selectedDisziplin}
                       onClick={() => {
-                        const selectElement = document.getElementById('disziplinSelect') as HTMLSelectElement;
-                        const selectedDisziplinId = selectElement?.value;
-                        
-                        if (!selectedDisziplinId) {
-                          toast({ title: 'Fehler', description: 'Bitte wählen Sie eine Disziplin aus', variant: 'destructive' });
-                          return;
-                        }
-                        
                         const newTeam = {
                           vereinId: userClubIds[0] || 'unknown',
-                          disziplinId: selectedDisziplinId,
+                          disziplinId: selectedDisziplin,
                           wettkampfklassen: ['Unbekannt'],
                           schuetzenIds: [],
                           name: `Neue Mannschaft`,
@@ -458,7 +467,6 @@ function KMMannschaftenContent() {
                           if (res.ok) {
                             toast({ title: 'Erfolg', description: 'Leere Mannschaft erstellt' });
                             loadData();
-                            selectElement.value = '';
                           } else {
                             toast({ title: 'Fehler', description: 'Mannschaft konnte nicht erstellt werden', variant: 'destructive' });
                           }
@@ -471,6 +479,9 @@ function KMMannschaftenContent() {
                       ➕ Manuell erstellen
                     </Button>
                   </div>
+                  {!selectedDisziplin && (
+                    <p className="text-xs text-muted-foreground">💡 Für &quot;Manuell erstellen&quot; bitte oben eine Disziplin auswählen</p>
+                  )}
                 </div>
                 {(() => {
                   const filteredMannschaften = mannschaften.filter(m => {
@@ -582,7 +593,8 @@ function KMMannschaftenContent() {
                                     });
                                     if (response.ok) {
                                       toast({ title: 'Erfolg', description: 'Mannschaft gelöscht' });
-                                      loadData();
+                                      // Sofort aus State entfernen
+                                      setMannschaften(prev => prev.filter(m => m.id !== mannschaft.id));
                                     } else {
                                       toast({ title: 'Fehler', description: 'Löschen fehlgeschlagen', variant: 'destructive' });
                                     }
@@ -688,22 +700,21 @@ function KMMannschaftenContent() {
                             <div className="space-y-2 max-h-32 overflow-y-auto">
                               {schuetzen
                                 .filter(s => !mannschaft.schuetzenIds.includes(s.id))
-                                .filter(s => getShooterClubId(s) === mannschaft.vereinId)
                                 .filter(s => {
                                   // Nur Schützen die für diese Disziplin gemeldet sind
+                                  // Wenn gemeldet, dann gehört der Schütze auch zum Verein
                                   return meldungen.some(m => 
                                     m.schuetzeId === s.id && 
                                     m.disziplinId === mannschaft.disziplinId
                                   );
                                 })
                                 .filter(s => {
-                                  // Prüfe ob Schütze bereits in einer anderen Mannschaft DERSELBEN DISZIPLIN ist
-                                  const istBereitsInDieserDisziplin = mannschaften.some(otherTeam => 
+                                  // Nicht schon in anderer Mannschaft derselben Disziplin
+                                  return !mannschaften.some(otherTeam => 
                                     otherTeam.id !== mannschaft.id && 
                                     otherTeam.disziplinId === mannschaft.disziplinId &&
                                     otherTeam.schuetzenIds.includes(s.id)
                                   );
-                                  return !istBereitsInDieserDisziplin;
                                 })
                                 .filter(s => {
                                   // Prüfe Kompatibilität mit Service
@@ -719,25 +730,77 @@ function KMMannschaftenContent() {
                                     
                                     if (!schuetzeMeldung?.altersklasse || !teamMeldung?.altersklasse) return true;
                                     
-                                    // Nutze die konfigurierten Regeln aus system_config
                                     const ak1 = schuetzeMeldung.altersklasse;
                                     const ak2 = teamMeldung.altersklasse;
                                     
-                                    // TODO: Hier sollten die echten Regeln aus system_config verwendet werden
-                                    // Vorerst vereinfachte Prüfung bis Service async-kompatibel ist
+                                    // Bestimme ob Auflage-Disziplin
+                                    const disziplinObj = disziplinen.find(d => d.id === mannschaft.disziplinId);
+                                    const istAuflage = disziplinObj?.auflage;
                                     
-                                    // Senioren 0 nur untereinander
-                                    if (ak1.includes('Senioren 0') || ak2.includes('Senioren 0')) {
-                                      return ak1.includes('Senioren 0') && ak2.includes('Senioren 0');
+                                    if (istAuflage) {
+                                      // Auflage: Alle Senioren-Gruppen m/w gemischt
+                                      // Senioren 0 nur untereinander
+                                      const isSen0 = (ak: string) => ak.includes('Senioren 0') || ak.includes('Seniorinnen 0');
+                                      if (isSen0(ak1) || isSen0(ak2)) {
+                                        return isSen0(ak1) && isSen0(ak2);
+                                      }
+                                      
+                                      // Senioren I+II gemischt (m/w egal)
+                                      const isSenI_II = (ak: string) => /Senioren\s?(I|II)\b/.test(ak) || /Seniorinnen\s?(I|II)\b/.test(ak);
+                                      if (isSenI_II(ak1) || isSenI_II(ak2)) {
+                                        return isSenI_II(ak1) && isSenI_II(ak2);
+                                      }
+                                      
+                                      // Senioren III-VI gemischt (m/w egal)
+                                      const isSenIII_VI = (ak: string) => /Senioren\s?(III|IV|V|VI)\b/.test(ak) || /Seniorinnen\s?(III|IV|V|VI)\b/.test(ak);
+                                      if (isSenIII_VI(ak1) || isSenIII_VI(ak2)) {
+                                        return isSenIII_VI(ak1) && isSenIII_VI(ak2);
+                                      }
+                                      
+                                      // Kreisintern: Junioren I m/w zusammen
+                                      const isJunI = (ak: string) => ak.includes('Junioren I');
+                                      if (isJunI(ak1) || isJunI(ak2)) {
+                                        return isJunI(ak1) && isJunI(ak2);
+                                      }
+                                      
+                                      // Kreisintern: Junioren II m/w zusammen
+                                      const isJunII = (ak: string) => ak.includes('Junioren II');
+                                      if (isJunII(ak1) || isJunII(ak2)) {
+                                        return isJunII(ak1) && isJunII(ak2);
+                                      }
+                                      
+                                      // Kreisintern: Schützen I / Damen I zusammen
+                                      const isSchuetzenDamen = (ak: string) => ak.includes('Schützen I') || ak.includes('Damen I') || ak.includes('Herren I');
+                                      if (isSchuetzenDamen(ak1) || isSchuetzenDamen(ak2)) {
+                                        return isSchuetzenDamen(ak1) && isSchuetzenDamen(ak2);
+                                      }
+                                      
+                                      return ak1 === ak2;
+                                    } else {
+                                      // Freihand: Schüler m/w gemischt, Jugend m/w gemischt
+                                      const isSchueler = (ak: string) => ak.includes('Schüler');
+                                      if (isSchueler(ak1) || isSchueler(ak2)) {
+                                        return isSchueler(ak1) && isSchueler(ak2);
+                                      }
+                                      
+                                      const isJugend = (ak: string) => ak.includes('Jugend');
+                                      if (isJugend(ak1) || isJugend(ak2)) {
+                                        return isJugend(ak1) && isJugend(ak2);
+                                      }
+                                      
+                                      // Junioren I+II zusammen, aber Geschlecht getrennt
+                                      const isJuniorenM = (ak: string) => ak.includes('Junioren') && ak.includes(' m');
+                                      const isJuniorenW = (ak: string) => ak.includes('Junioren') && ak.includes(' w');
+                                      if (isJuniorenM(ak1) || isJuniorenM(ak2)) {
+                                        return isJuniorenM(ak1) && isJuniorenM(ak2);
+                                      }
+                                      if (isJuniorenW(ak1) || isJuniorenW(ak2)) {
+                                        return isJuniorenW(ak1) && isJuniorenW(ak2);
+                                      }
+                                      
+                                      // Herren/Damen: exakt gleiche Klasse
+                                      return ak1 === ak2;
                                     }
-                                    
-                                    // Senioren I+II zusammen
-                                    if ((ak1.includes('Senioren I') || ak1.includes('Senioren II')) && 
-                                        (ak2.includes('Senioren I') || ak2.includes('Senioren II'))) {
-                                      return true;
-                                    }
-                                    
-                                    return ak1 === ak2;
                                   });
                                 })
                                 .slice(0, 10)

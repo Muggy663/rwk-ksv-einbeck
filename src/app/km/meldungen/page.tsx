@@ -66,6 +66,10 @@ function KMMeldungenContent() {
       // KKP = Pistole (spoNummer 4.xx)
       if (disziplinTyp === 'KKP') return d.spoNummer?.startsWith('4.');
       return true;
+    }).sort((a, b) => {
+      const numA = parseFloat(a.spoNummer || '0') || 0;
+      const numB = parseFloat(b.spoNummer || '0') || 0;
+      return numA - numB;
     });
   })();
 
@@ -126,6 +130,33 @@ function KMMeldungenContent() {
       setDisziplinen(allDisziplinen);
       setClubs(allClubs);
       
+      // Sortiere Saisons — nur aktive anzeigen
+      const sortedSaisons = allSaisons
+        .filter(s => s.status === 'aktiv' || s.status === 'Aktiv')
+        .sort((a, b) => {
+        const today = new Date();
+        const getDeadline = (s) => {
+          if (!s.meldeschluss) return new Date(0);
+          if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
+            const [day, month, year] = s.meldeschluss.split('.');
+            return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          } else {
+            const [day, month] = s.meldeschluss.split('.');
+            return new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
+          }
+        };
+        
+        const aExpired = today > getDeadline(a);
+        const bExpired = today > getDeadline(b);
+        
+        if (aExpired !== bExpired) {
+          return aExpired ? 1 : -1;
+        }
+        return b.jahr - a.jahr;
+      });
+      
+      setSaisons(sortedSaisons);
+      
       // Lade Meldungen aus allen Collections für das aktive Jahr
       const aktiveSaisonDaten = sortedSaisons.length > 0 ? sortedSaisons[0] : null;
       const jahr = aktiveSaisonDaten?.jahr || new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0);
@@ -165,33 +196,6 @@ function KMMeldungenContent() {
       });
       
       logDebug('DEBUG: Verarbeitete Meldungen:', verarbeitete.length);
-      
-      // Sortiere Saisons — nur aktive anzeigen
-      const sortedSaisons = allSaisons
-        .filter(s => s.status === 'aktiv' || s.status === 'Aktiv')
-        .sort((a, b) => {
-        const today = new Date();
-        const getDeadline = (s) => {
-          if (!s.meldeschluss) return new Date(0);
-          if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
-            const [day, month, year] = s.meldeschluss.split('.');
-            return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-          } else {
-            const [day, month] = s.meldeschluss.split('.');
-            return new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
-          }
-        };
-        
-        const aExpired = today > getDeadline(a);
-        const bExpired = today > getDeadline(b);
-        
-        if (aExpired !== bExpired) {
-          return aExpired ? 1 : -1;
-        }
-        return b.jahr - a.jahr;
-      });
-      
-      setSaisons(sortedSaisons);
       
     } catch (error) {
       logError('Fehler beim Laden der Daten:', error);

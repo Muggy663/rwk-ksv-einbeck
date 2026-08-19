@@ -311,7 +311,7 @@ export default function UnifiedLoginPage() {
             {isLogin ? 'Anmelden' : 'Registrieren'}
           </CardTitle>
           <CardDescription>
-            Ein Login für Schießnachweis, Social Training und RWK/KM
+            Ein Login für Schießnachweis und RWK/KM
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -433,7 +433,6 @@ export default function UnifiedLoginPage() {
               </h4>
               <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
                 <li>✅ Schießnachweis (Digitales Schießtagebuch)</li>
-                <li>✅ Social Training (Community-Features)</li>
                 <li>✅ RWK/KM (Bei entsprechender Berechtigung)</li>
               </ul>
             </div>
@@ -446,7 +445,7 @@ export default function UnifiedLoginPage() {
                 <strong>Registrierung = Sofort Schießnachweis nutzen!</strong>
               </p>
               <p className="text-xs text-green-600 dark:text-green-400 mb-2">
-                Nach der Registrierung haben Sie automatisch Zugriff auf Schießnachweis und Social Training.
+                Nach der Registrierung haben Sie automatisch Zugriff auf den Schießnachweis.
               </p>
               <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
                 <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">

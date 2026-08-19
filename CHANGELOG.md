@@ -4,6 +4,27 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
+## Version 2.7.1
+- **🏆 KM Mannschaftsregeln**: Komplett überarbeitete Generierung nach NSSV-Disziplinenplan und Kreisausschreibung
+- **🔀 Auflage Mannschaften**: Senioren 0, I-II, III-VI jeweils m/w gemischt; Kreisintern Junioren I/II m/w + Schützen I/Damen I zusammen
+- **🎯 Freihand Mannschaften**: Schüler/Jugend m/w gemischt, Junioren I+II zusammen (Geschlecht getrennt), Herren/Damen getrennt
+- **⚡ KI-Generierung pro Disziplin**: Optional nur für eine gewählte Disziplin generieren statt alle
+- **🏷️ Beta-Hinweis**: KI-Generierung als Beta gekennzeichnet
+- **📋 Disziplinen sortiert**: spoNummer-Sortierung in KM Meldungen und Mannschaften
+- **🐛 Schützen-Deduplizierung entfernt**: Doppelt existierende Schützen (z.B. RWK + KM Verein) werden nicht mehr fälschlich ausgeblendet
+- **🐛 KM Meldungen Ladefix**: `sortedSaisons` wurde vor Deklaration verwendet — behoben
+- **🐛 KM Collection-Name**: Generate-Route findet jetzt korrekt `km_meldungen_2027_kk` statt `km_meldungen`
+- **🗑️ Sofortiges Löschen**: Meldungen und Mannschaften verschwinden sofort aus der Liste (optimistic update)
+- **📱 Mannschaften Layout**: Buttons bleiben bei kleinen Fenstern innerhalb der Card
+- **💡 Manuell erstellen**: Button ausgegraut wenn keine Disziplin gewählt + Hinweistext
+- **🔓 Login bereinigt**: Social Training entfernt aus Login-Texten
+- **📸 Schießnachweis Zehntel-Fix**: Ganze Ringe und Zehntel getrennt angezeigt (immer .0 bei ganzen Zahlen)
+- **🔄 Wizard Reset-Button**: Ergebnis wird beim Zurückgehen automatisch zurückgesetzt
+- **⚠️ Scheiben-Scanner Hinweis**: Zeigt fehlende Schüsse an und bietet direkt weitere Aufnahme an
+- **📐 DigitalAnlage Buttons**: Fotografieren/Galerie-Buttons untereinander gestapelt
+- **🔧 Serien-Datentyp**: Scheiben-Scanner erzeugt korrekte Schuss-Objekte statt roher Arrays
+- **🔢 Schussanzahl Default**: Erste verfügbare Schussanzahl wird automatisch voreingestellt
+
 ## Version 2.7.0 
 - **📥 Mannschafts-Umbau**: Neuer Dialog zum Auflösen und Neuordnen von Mannschaften mit selektiver Ergebnis-Übertragung
 - **🔧 Team-Verwaltung in Substitutions-Seite**: Inline-Umbenennen, Löschen und Umbauen direkt in der Übersicht
@@ -29,6 +50,13 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 - **🎯 4 Eingabemethoden**: Schnelleingabe, Serien, Scheibe fotografieren, Ausdruck digitale Anlage
 - **🏢 Schießstände aktualisiert**: Alle Vereine des Kreisverbands als Standorte hinterlegt
 - **📝 Optionale Felder**: Wetter, Waffe, Munition als aufklappbare Zusatzdetails
+- **📥 Mitcom-Import (Verein & Admin)**: Excel-Import für Mitgliedsdaten mit automatischem Matching und Vereinsnummer-Schutz
+- **📊 Einträge-Übersicht**: Filter nach Monat, Disziplin, Typ + Sortierung nach Datum/Ergebnis
+- **🔢 Zehntel-Anzeige korrigiert**: Ganze Ringe und Zehntel werden überall getrennt und korrekt angezeigt (z.B. 47 ganze Ringe + 49.0 mit Zehntel)
+- **🔄 Reset-Button im Wizard**: Ergebnis wird beim Zurückgehen automatisch zurückgesetzt — kein altes Ergebnis mehr beim erneuten Eingeben
+- **⚠️ Fehlende Schüsse Hinweis**: Scheiben-Scanner zeigt aktiv an wenn noch Scheiben fehlen und bietet direkt den Upload an
+- **📐 Buttons gestapelt**: Fotografieren/Galerie-Buttons untereinander für bessere mobile Bedienbarkeit
+- **🔧 Serien-Datentyp Fix**: Scheiben-Scanner erzeugt jetzt korrekte Schuss-Objekte statt roher Zahlenarrays
 
 ## Version 2.6.3 
 - **🐛 Bugfix Login**: Benutzer mit `userType: INDIVIDUAL` und gleichzeitig gesetzten `clubRoles` werden korrekt zum RWK/KM-Dashboard weitergeleitet

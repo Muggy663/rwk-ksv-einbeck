@@ -569,7 +569,10 @@ export default function KMUebersicht() {
                                         const res = await fetch(`/api/km/meldungen/${meldung.id}`, { method: 'DELETE' });
                                         if (res.ok) {
                                           toast({ title: 'Meldung gelöscht' });
-                                          loadData();
+                                          // Sofort aus State entfernen für schnelles UI-Feedback
+                                          setData(prev => ({ ...prev, meldungen: prev.meldungen.filter((m: any) => m.id !== meldung.id) }));
+                                        } else {
+                                          toast({ title: 'Fehler beim Löschen', variant: 'destructive' });
                                         }
                                       } catch (error) {
                                         toast({ title: 'Fehler beim Löschen', variant: 'destructive' });
