@@ -29,7 +29,7 @@ export class CertificateGenerator {
   private doc: jsPDF;
   private pageWidth: number;
   private pageHeight: number;
-  private margin = 20;
+  private margin = 10;
 
   constructor(options: { orientation?: 'portrait' | 'landscape' }) {
     this.doc = new jsPDF({
@@ -75,39 +75,37 @@ export class CertificateGenerator {
   private drawBackground(): void {
     this.doc.setFillColor(255, 255, 255);
     this.doc.rect(0, 0, this.pageWidth, this.pageHeight, 'F');
-    this.doc.setDrawColor(0, 0, 0);
-    this.doc.setLineWidth(0.5);
-    this.doc.rect(this.margin, this.margin, this.pageWidth - 2 * this.margin, this.pageHeight - 2 * this.margin, 'S');
+    // Kein schwarzer Rand — sieht beim Ausdruck besser aus
   }
 
   private drawLogos(): void {
     try {
-      this.doc.addImage('/images/logo2.png', 'PNG', this.margin + 10, this.margin + 10, 25, 25);
+      this.doc.addImage('/images/logo2.png', 'PNG', this.margin + 5, this.margin + 5, 35, 35);
     } catch (error) {
       logError('Fehler beim Hinzufügen des Logos:', error);
     }
     try {
-      this.doc.addImage('/images/nssv.png', 'PNG', this.pageWidth - this.margin - 35, this.margin + 10, 25, 25);
+      this.doc.addImage('/images/nssv.png', 'PNG', this.pageWidth - this.margin - 40, this.margin + 5, 35, 35);
     } catch (error) {
       logError('Fehler beim Hinzufügen des NSSV-Logos:', error);
     }
   }
 
   private drawTitle(): void {
-    this.doc.setFontSize(36);
+    this.doc.setFontSize(44);
     this.doc.setFont('times', 'italic');
     this.doc.setTextColor(218, 165, 32);
-    this.doc.text('Urkunde', this.pageWidth / 2, this.margin + 50, { align: 'center' });
+    this.doc.text('Urkunde', this.pageWidth / 2, this.margin + 55, { align: 'center' });
     this.doc.setTextColor(0, 0, 0);
   }
 
   private drawSeasonInfo(options: CertificateOptions): void {
-    this.doc.setFontSize(16);
+    this.doc.setFontSize(18);
     this.doc.setFont('helvetica', 'normal');
     const seasonName = options.season.replace('RWK ', '').replace(/Kleinkaliber\s+Kleinkaliber/g, 'Kleinkaliber').replace(/Luftdruck\s+Luftdruck/g, 'Luftdruck');
-    this.doc.text(`Rundenwettkampf ${seasonName}`, this.pageWidth / 2, this.margin + 65, { align: 'center' });
-    this.doc.setFontSize(14);
-    this.doc.text('errang', this.pageWidth / 2, this.margin + 80, { align: 'center' });
+    this.doc.text(`Rundenwettkampf ${seasonName}`, this.pageWidth / 2, this.margin + 75, { align: 'center' });
+    this.doc.setFontSize(16);
+    this.doc.text('errang', this.pageWidth / 2, this.margin + 92, { align: 'center' });
   }
 
   private drawRecipientInfo(options: CertificateOptions): void {
@@ -122,34 +120,34 @@ export class CertificateGenerator {
   }
 
   private drawTeamCertificate(options: CertificateOptions): void {
-    const LH = 15; // Zeilenabstand
+    const LH = 16; // Zeilenabstand
     const cleanName = options.recipientName.replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
     const maxWidth = this.pageWidth - 2 * this.margin - 20;
-    let fontSize = 18;
+    let fontSize = 22;
     this.doc.setFontSize(fontSize);
     this.doc.setFont('helvetica', 'bold');
-    while (this.doc.getTextWidth(cleanName) > maxWidth && fontSize > 10) {
+    while (this.doc.getTextWidth(cleanName) > maxWidth && fontSize > 12) {
       fontSize -= 1;
       this.doc.setFontSize(fontSize);
     }
-    let y = this.margin + 95;
+    let y = this.margin + 110;
     this.doc.text(cleanName, this.pageWidth / 2, y, { align: 'center' });
-    y += LH - 4;
-    this.doc.setFontSize(11);
+    y += LH - 2;
+    this.doc.setFontSize(13);
     this.doc.setFont('helvetica', 'normal');
     options.teamMembersWithScores!.forEach(member => {
       this.doc.text(`${member.name} (${member.totalScore} Ring)`, this.pageWidth / 2, y, { align: 'center' });
-      y += 9;
+      y += 10;
     });
-    y += 4;
-    this.doc.setFontSize(14);
+    y += 6;
+    this.doc.setFontSize(16);
     this.getCategoryText(options).forEach(line => {
       this.doc.text(line, this.pageWidth / 2, y, { align: 'center' });
       y += LH;
     });
     this.doc.text('mit', this.pageWidth / 2, y, { align: 'center' });
     y += LH;
-    this.doc.setFontSize(16);
+    this.doc.setFontSize(20);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text(`${options.score} Ring`, this.pageWidth / 2, y, { align: 'center' });
     y += LH;
@@ -184,22 +182,22 @@ export class CertificateGenerator {
   }
 
   private drawMultilineRecipient(options: CertificateOptions, lines: string[]): void {
-    const LH = 15;
+    const LH = 17;
     const isTitle = /bester|beste/i.test(options.category);
-    let y = this.margin + 95;
-    this.doc.setFontSize(18);
+    let y = this.margin + 110;
+    this.doc.setFontSize(22);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text(lines[0].trim(), this.pageWidth / 2, y, { align: 'center' });
     y += LH;
     const line2 = lines[1].replace(/\s+/g, ' ').trim();
     const maxWidth = this.pageWidth - 2 * this.margin - 20;
-    let fs2 = 14;
+    let fs2 = 16;
     this.doc.setFontSize(fs2);
     this.doc.setFont('helvetica', 'normal');
-    while (this.doc.getTextWidth(line2) > maxWidth && fs2 > 8) { fs2 -= 0.5; this.doc.setFontSize(fs2); }
+    while (this.doc.getTextWidth(line2) > maxWidth && fs2 > 9) { fs2 -= 0.5; this.doc.setFontSize(fs2); }
     this.doc.text(line2, this.pageWidth / 2, y, { align: 'center' });
     y += LH;
-    this.doc.setFontSize(14);
+    this.doc.setFontSize(16);
     if (isTitle) {
       const isLeagueClass = /liga|klasse|oberliga/i.test(options.category);
       if (!isLeagueClass) {
@@ -208,14 +206,14 @@ export class CertificateGenerator {
       }
       this.doc.setFont('helvetica', 'bold');
       this.doc.text('den Titel', this.pageWidth / 2, y, { align: 'center' }); y += LH;
-      this.doc.setFontSize(20);
+      this.doc.setFontSize(24);
       this.doc.text(options.category, this.pageWidth / 2, y, { align: 'center' });
     } else {
       this.getCategoryText(options).forEach(line => {
         this.doc.text(line, this.pageWidth / 2, y, { align: 'center' }); y += LH;
       });
       this.doc.text('mit', this.pageWidth / 2, y, { align: 'center' }); y += LH;
-      this.doc.setFontSize(16);
+      this.doc.setFontSize(20);
       this.doc.setFont('helvetica', 'bold');
       this.doc.text(`${options.score} Ring`, this.pageWidth / 2, y, { align: 'center' }); y += LH;
       this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, y, { align: 'center' });
@@ -223,19 +221,19 @@ export class CertificateGenerator {
   }
 
   private drawSingleLineRecipient(options: CertificateOptions): void {
-    const LH = 15;
+    const LH = 17;
     const isTitle = /bester|beste/i.test(options.category);
-    let y = this.margin + 95;
+    let y = this.margin + 110;
     const maxWidth = this.pageWidth - 2 * this.margin - 20;
-    let fontSize = 18;
+    let fontSize = 22;
     this.doc.setFontSize(fontSize);
     this.doc.setFont('helvetica', 'bold');
-    while (this.doc.getTextWidth(options.recipientName) > maxWidth && fontSize > 10) {
+    while (this.doc.getTextWidth(options.recipientName) > maxWidth && fontSize > 12) {
       fontSize -= 1; this.doc.setFontSize(fontSize);
     }
     this.doc.text(options.recipientName, this.pageWidth / 2, y, { align: 'center' });
     y += LH;
-    this.doc.setFontSize(14);
+    this.doc.setFontSize(16);
     this.doc.setFont('helvetica', 'normal');
     if (isTitle) {
       const isLeagueClass = /liga|klasse|oberliga/i.test(options.category);
@@ -245,14 +243,14 @@ export class CertificateGenerator {
       }
       this.doc.setFont('helvetica', 'bold');
       this.doc.text('den Titel', this.pageWidth / 2, y, { align: 'center' }); y += LH;
-      this.doc.setFontSize(20);
+      this.doc.setFontSize(24);
       this.doc.text(options.category, this.pageWidth / 2, y, { align: 'center' });
     } else {
       this.getCategoryText(options).forEach(line => {
         this.doc.text(line, this.pageWidth / 2, y, { align: 'center' }); y += LH;
       });
       this.doc.text('mit', this.pageWidth / 2, y, { align: 'center' }); y += LH;
-      this.doc.setFontSize(16);
+      this.doc.setFontSize(20);
       this.doc.setFont('helvetica', 'bold');
       this.doc.text(`${options.score} Ring`, this.pageWidth / 2, y, { align: 'center' }); y += LH;
       this.doc.text(`den     ${options.rank}.    Platz`, this.pageWidth / 2, y, { align: 'center' });
@@ -260,33 +258,33 @@ export class CertificateGenerator {
   }
 
   private drawFooter(options: CertificateOptions): void {
-    this.doc.setFontSize(12);
+    this.doc.setFontSize(14);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(0, 128, 0);
-    this.doc.text('KREISSCHÜTZENVERBAND EINBECK e.V.', this.pageWidth / 2, this.pageHeight - this.margin - 50, { align: 'center' });
+    this.doc.text('KREISSCHÜTZENVERBAND EINBECK e.V.', this.pageWidth / 2, this.pageHeight - this.margin - 55, { align: 'center' });
     this.doc.setTextColor(0, 0, 0);
     this.drawSignatures();
     const dateText = options.date || `Einbeck, ${format(new Date(), 'dd. MMMM yyyy', { locale: de })}`;
-    this.doc.setFontSize(10);
-    this.doc.text(dateText, this.pageWidth / 2, this.pageHeight - this.margin - 15, { align: 'center' });
+    this.doc.setFontSize(11);
+    this.doc.text(dateText, this.pageWidth / 2, this.pageHeight - this.margin - 10, { align: 'center' });
   }
 
   private drawSignatures(): void {
     this.doc.setLineWidth(0.5);
     this.doc.setDrawColor(0, 0, 0);
-    this.doc.line(this.margin + 30, this.pageHeight - this.margin - 35, this.margin + 80, this.pageHeight - this.margin - 35);
-    this.doc.setFontSize(9);
+    this.doc.line(this.margin + 20, this.pageHeight - this.margin - 32, this.margin + 80, this.pageHeight - this.margin - 32);
+    this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'normal');
-    this.doc.text('Präsident', this.margin + 55, this.pageHeight - this.margin - 27, { align: 'center' });
+    this.doc.text('Präsident', this.margin + 50, this.pageHeight - this.margin - 23, { align: 'center' });
     try {
-      this.doc.addImage('/images/Unterschrift Lars Sander.png', 'PNG', this.margin + 30, this.pageHeight - this.margin - 50, 50, 15);
+      this.doc.addImage('/images/Unterschrift Lars Sander.png', 'PNG', this.margin + 20, this.pageHeight - this.margin - 50, 60, 18);
     } catch (error) {
       logError('Fehler beim Hinzufügen der Präsidenten-Unterschrift:', error);
     }
-    this.doc.line(this.pageWidth - this.margin - 80, this.pageHeight - this.margin - 35, this.pageWidth - this.margin - 30, this.pageHeight - this.margin - 35);
-    this.doc.text('Rundenwettkampfleiter', this.pageWidth - this.margin - 55, this.pageHeight - this.margin - 27, { align: 'center' });
+    this.doc.line(this.pageWidth - this.margin - 80, this.pageHeight - this.margin - 32, this.pageWidth - this.margin - 20, this.pageHeight - this.margin - 32);
+    this.doc.text('Rundenwettkampfleiter', this.pageWidth - this.margin - 50, this.pageHeight - this.margin - 23, { align: 'center' });
     try {
-      this.doc.addImage('/images/Unterschrift Marcel Buenger.png', 'PNG', this.pageWidth - this.margin - 80, this.pageHeight - this.margin - 50, 50, 15);
+      this.doc.addImage('/images/Unterschrift Marcel Buenger.png', 'PNG', this.pageWidth - this.margin - 80, this.pageHeight - this.margin - 50, 60, 18);
     } catch (error) {
       logError('Fehler beim Hinzufügen der Rundenwettkampfleiter-Unterschrift:', error);
     }

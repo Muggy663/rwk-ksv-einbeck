@@ -594,6 +594,12 @@ function RwkTabellenPageComponent() {
       });
       
       // Prioritize "Laufend" competitions, then "Abgeschlossen"
+      // Bei Abgeschlossenen: KK vor LD vor KKP (typische Saisonreihenfolge)
+      const disciplinePriority: Record<string, number> = { 'KK': 1, 'KKP': 2, 'LD': 3 };
+      abgeschlossenCompetitions.sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year; // Neuestes Jahr zuerst
+        return (disciplinePriority[a.discipline] || 99) - (disciplinePriority[b.discipline] || 99);
+      });
       const allCompetitions = [...laufendCompetitions, ...abgeschlossenCompetitions];
       
         // Remove duplicates

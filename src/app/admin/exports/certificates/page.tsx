@@ -31,6 +31,7 @@ export default function CertificatesPage() {
   const [generateOverallBest, setGenerateOverallBest] = useState<boolean>(false);
   const [selectedDiscipline, setSelectedDiscipline] = useState<string>('ALL');
   const [ceremonyDate, setCeremonyDate] = useState<string>('');
+  const [ceremonyLocation, setCeremonyLocation] = useState<string>('Einbeck');
   
   const todayFormatted = format(new Date(), 'dd.MM.yyyy', { locale: de });
 
@@ -173,7 +174,7 @@ export default function CertificatesPage() {
               recipientName: shooter.teamName ? `${displayName}\n${shooter.teamName}` : displayName,
               score: shooter.totalScore.toString(),
               rank: shooter.rank,
-              date: `Einbeck, ${currentDateFormatted}`
+              date: `${ceremonyLocation}, ${currentDateFormatted}`
             });
           }
         }
@@ -211,7 +212,7 @@ export default function CertificatesPage() {
               teamMembersWithScores: teamMembersWithSubstitutions,
               score: (team.displayScore || team.totalScore).toString(),
               rank: team.rank,
-              date: `Einbeck, ${currentDateFormatted}`
+              date: `${ceremonyLocation}, ${currentDateFormatted}`
             });
           }
         }
@@ -303,7 +304,7 @@ export default function CertificatesPage() {
             recipientName: name,
             score: shooter.totalScore.toString(),
             rank: 1,
-            date: `Einbeck, ${currentDateFormatted}`
+            date: `${ceremonyLocation}, ${currentDateFormatted}`
           });
         };
 
@@ -417,6 +418,21 @@ export default function CertificatesPage() {
                 Leer lassen für heutiges Datum ({todayFormatted})
               </p>
             </div>
+            <div>
+              <Label htmlFor="ceremony-location">Ort</Label>
+              <input
+                id="ceremony-location"
+                type="text"
+                value={ceremonyLocation}
+                onChange={(e) => setCeremonyLocation(e.target.value)}
+                disabled={loading}
+                placeholder="Einbeck"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Wird auf der Urkunde als &quot;Ort, Datum&quot; angezeigt
+              </p>
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="num-shooters">Anzahl Top-Schützen (0 = keine)</Label>
@@ -514,6 +530,18 @@ export default function CertificatesPage() {
             </p>
           </div>
           <div>
+            <Label htmlFor="ceremony-location-overall">Ort</Label>
+            <input
+              id="ceremony-location-overall"
+              type="text"
+              value={ceremonyLocation}
+              onChange={(e) => setCeremonyLocation(e.target.value)}
+              disabled={loading}
+              placeholder="Einbeck"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
+            />
+          </div>
+          <div>
             <Label htmlFor="season-select-overall">Saison</Label>
             <NativeSelect
               value={selectedSeason}
@@ -588,3 +616,4 @@ export default function CertificatesPage() {
     </div>
   );
 }
+

@@ -235,6 +235,14 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
     });
     
     const akTeams = [];
+    
+    // Substitutions einmalig für alle Teams laden
+    const allSubsSnap = await getDocs(query(
+      collection(db, 'team_substitutions'),
+      where('competitionYear', '==', seasonData.competitionYear)
+    ));
+    const allSubstitutions = allSubsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    
     for (const teamDoc of teamsSnapshot.docs) {
       const teamData = teamDoc.data();
       if (teamData.name.toLowerCase().includes('einzel')) continue;
@@ -261,15 +269,12 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
         roundResults[`dg${i}`] = null;
       }
       
-      // Substitutions laden um ersetzte Schützen-IDs zu kennen
-      const subsSnap = await getDocs(query(
-        collection(db, 'team_substitutions'),
-        where('competitionYear', '==', seasonData.competitionYear)
-      ));
+      // Substitutions — NUR für dieses Team, um ersetzte Schützen-IDs zu kennen
       const replacedShooterIds = new Set<string>();
-      subsSnap.docs.forEach(d => {
-        const sub = d.data();
-        if (sub.originalShooterId) replacedShooterIds.add(sub.originalShooterId);
+      allSubstitutions.forEach(sub => {
+        if (sub.originalShooterId && sub.teamId === teamDoc.id) {
+          replacedShooterIds.add(sub.originalShooterId);
+        }
       });
 
       // Ergebnisse nach Durchgang gruppieren - ersetzte Schützen ausschließen
