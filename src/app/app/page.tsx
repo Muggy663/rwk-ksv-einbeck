@@ -19,26 +19,37 @@ export default function AppPage() {
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2 text-2xl text-green-900">
             <Smartphone className="h-6 w-6" />
-            RWK Einbeck v1.0.0
+            RWK Einbeck App
           </CardTitle>
           <CardDescription className="text-green-700">
-            Kostenlos im Google Play Store • Keine Werbung • Automatische Updates
+            Kostenlos für Android • Keine Werbung • Automatische Updates
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
           <div className="mb-6">
+            <div className="bg-orange-100 border border-orange-300 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold text-orange-900 mb-2">🚀 App wird für den Play Store vorbereitet!</h3>
+              <p className="text-orange-800 text-sm mb-3">
+                Bevor Google die App für alle veröffentlicht, brauchen wir <strong>mindestens 12 Tester</strong> die die App 14 Tage lang testen.
+              </p>
+              <div className="space-y-2 text-sm text-orange-700">
+                <p><strong>So hilfst du:</strong></p>
+                <p>1. 📧 Sende deine <strong>Google-Mail-Adresse</strong> (Gmail) an die E-Mail unten</p>
+                <p>2. 📱 Du erhältst einen Test-Link zum Installieren</p>
+                <p>3. ✅ App installieren und kurz ausprobieren — fertig!</p>
+              </div>
+            </div>
             <Button 
               size="lg" 
               asChild 
               className="bg-green-600 hover:bg-green-700"
             >
-              <a href="https://play.google.com/store/apps/details?id=de.rwk.ksv.einbeck" target="_blank" rel="noopener noreferrer">
-                <Download className="h-5 w-5 mr-2" />
-                Im Play Store herunterladen
+              <a href="mailto:rwk-leiter-ksve@gmx.de?subject=Play Store Test - Meine Gmail-Adresse&body=Hallo Marcel,%0D%0A%0D%0AIch möchte die RWK App testen.%0D%0A%0D%0AMeine Google-Mail-Adresse: [HIER GMAIL EINFÜGEN]%0D%0A%0D%0AViele Grüße">
+                📧 Gmail-Adresse zum Testen senden
               </a>
             </Button>
-            <p className="text-sm text-muted-foreground mt-3">
-              Android 7.0+ • Automatische Updates über den Play Store
+            <p className="text-xs text-muted-foreground mt-2">
+              An: rwk-leiter-ksve@gmx.de • Deine E-Mail wird nur für den Test verwendet
             </p>
           </div>
 
@@ -54,7 +65,7 @@ export default function AppPage() {
               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
                 <Zap className="h-5 w-5 text-blue-600" />
               </div>
-              <p className="text-xs font-medium">Schnell & offline-fähig</p>
+              <p className="text-xs font-medium">Schnell & einfach</p>
             </div>
             <div className="text-center">
               <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">

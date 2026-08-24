@@ -443,8 +443,8 @@ export default function HomePage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">📱 Android App im Play Store</h2>
-                <p style={{color: 'white'}}>Jetzt kostenlos herunterladen</p>
+                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">📱 Android App — Tester gesucht!</h2>
+                <p style={{color: 'white'}}>Hilf mit, die App in den Play Store zu bringen</p>
               </div>
               <div className="text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
