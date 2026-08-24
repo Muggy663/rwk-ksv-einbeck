@@ -1,6 +1,6 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.7.1** | **Android: 0.9.4.1** | **19.08.2026**
+**Version: 2.7.1** | **Android: 1.0.0** | **24.08.2026**
 
 > **Digitale Plattform für den deutschen Schießsport**
 
@@ -134,7 +134,7 @@ Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 19.08.2026 - Version 2.7.1*
+*Letzte Aktualisierung: 24.08.2026 - Version 2.7.1*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

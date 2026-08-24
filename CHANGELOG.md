@@ -5,6 +5,7 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 ---
 
 ## Version 2.7.1
+- **📱 Android App 1.0.0**: Erste offizielle Vollversion im Google Play Store
 - **🏆 KM Mannschaftsregeln**: Komplett überarbeitete Generierung nach NSSV-Disziplinenplan und Kreisausschreibung
 - **🔀 Auflage Mannschaften**: Senioren 0, I-II, III-VI jeweils m/w gemischt; Kreisintern Junioren I/II m/w + Schützen I/Damen I zusammen
 - **🎯 Freihand Mannschaften**: Schüler/Jugend m/w gemischt, Junioren I+II zusammen (Geschlecht getrennt), Herren/Damen getrennt
