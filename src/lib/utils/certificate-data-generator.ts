@@ -316,11 +316,13 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
       const shootersMap = new Map();
       
       // Alle eindeutigen Scores für das Team durchgehen und Schützen sammeln
+      // Ersetzte Schützen ausschließen
       Array.from(teamDuplicateMap.values()).forEach(scoreData => {
         const shooterId = scoreData.shooterId;
         const shooterName = scoreData.shooterName;
         
         if (!shooterId || !shooterName) return;
+        if (replacedShooterIds.has(shooterId)) return; // Ersetzte Schützen nicht anzeigen
         
         if (!shootersMap.has(shooterId)) {
           shootersMap.set(shooterId, {
@@ -337,9 +339,10 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
         }
       });
       
-      // Schützen in Array umwandeln und nach totalScore sortieren
+      // Schützen in Array umwandeln und nach totalScore sortieren — nur Top 3 für Urkunde
       const sortedShooters = Array.from(shootersMap.values())
-        .sort((a, b) => b.totalScore - a.totalScore);
+        .sort((a, b) => b.totalScore - a.totalScore)
+        .slice(0, 3);
       
       sortedShooters.forEach(shooter => {
         teamMembers.push({
@@ -447,9 +450,13 @@ export async function fetchBestOverallShooters(seasonId: string, leagueId?: stri
       bestPistol = await fetchBestShooterByGender(pistolLeagueIds, 'all', seasonData.name);
     }
     
-    // Bester Schütze für KK Pistole
+    // Bester Schütze für KK Pistole — auch nach Geschlecht
     if (kkPistolLeagueIds.length > 0) {
-      bestKKPistol = await fetchBestShooterByGender(kkPistolLeagueIds, 'all', seasonData.name);
+      bestKKPistol = await fetchBestShooterByGender(kkPistolLeagueIds, 'male', seasonData.name);
+      // Beste Dame bei KKP nur wenn keine normale Dame gefunden
+      if (!bestFemale) {
+        bestFemale = await fetchBestShooterByGender(kkPistolLeagueIds, 'female', seasonData.name);
+      }
     }
     
     return {

@@ -92,10 +92,10 @@ export class CertificateGenerator {
   }
 
   private drawTitle(): void {
-    this.doc.setFontSize(44);
+    this.doc.setFontSize(52);
     this.doc.setFont('times', 'italic');
     this.doc.setTextColor(218, 165, 32);
-    this.doc.text('Urkunde', this.pageWidth / 2, this.margin + 55, { align: 'center' });
+    this.doc.text('Urkunde', this.pageWidth / 2, this.margin + 58, { align: 'center' });
     this.doc.setTextColor(0, 0, 0);
   }
 
@@ -103,9 +103,9 @@ export class CertificateGenerator {
     this.doc.setFontSize(18);
     this.doc.setFont('helvetica', 'normal');
     const seasonName = options.season.replace('RWK ', '').replace(/Kleinkaliber\s+Kleinkaliber/g, 'Kleinkaliber').replace(/Luftdruck\s+Luftdruck/g, 'Luftdruck');
-    this.doc.text(`Rundenwettkampf ${seasonName}`, this.pageWidth / 2, this.margin + 75, { align: 'center' });
+    this.doc.text(`Rundenwettkampf ${seasonName}`, this.pageWidth / 2, this.margin + 78, { align: 'center' });
     this.doc.setFontSize(16);
-    this.doc.text('errang', this.pageWidth / 2, this.margin + 92, { align: 'center' });
+    this.doc.text('errang', this.pageWidth / 2, this.margin + 95, { align: 'center' });
   }
 
   private drawRecipientInfo(options: CertificateOptions): void {
@@ -120,7 +120,7 @@ export class CertificateGenerator {
   }
 
   private drawTeamCertificate(options: CertificateOptions): void {
-    const LH = 16; // Zeilenabstand
+    const LH = 14; // Zeilenabstand
     const cleanName = options.recipientName.replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
     const maxWidth = this.pageWidth - 2 * this.margin - 20;
     let fontSize = 22;
@@ -130,24 +130,24 @@ export class CertificateGenerator {
       fontSize -= 1;
       this.doc.setFontSize(fontSize);
     }
-    let y = this.margin + 110;
+    let y = this.margin + 105;
     this.doc.text(cleanName, this.pageWidth / 2, y, { align: 'center' });
-    y += LH - 2;
-    this.doc.setFontSize(13);
+    y += LH;
+    this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'normal');
     options.teamMembersWithScores!.forEach(member => {
       this.doc.text(`${member.name} (${member.totalScore} Ring)`, this.pageWidth / 2, y, { align: 'center' });
-      y += 10;
+      y += 9;
     });
-    y += 6;
-    this.doc.setFontSize(16);
+    y += 4;
+    this.doc.setFontSize(15);
     this.getCategoryText(options).forEach(line => {
       this.doc.text(line, this.pageWidth / 2, y, { align: 'center' });
       y += LH;
     });
     this.doc.text('mit', this.pageWidth / 2, y, { align: 'center' });
     y += LH;
-    this.doc.setFontSize(20);
+    this.doc.setFontSize(18);
     this.doc.setFont('helvetica', 'bold');
     this.doc.text(`${options.score} Ring`, this.pageWidth / 2, y, { align: 'center' });
     y += LH;
@@ -270,24 +270,47 @@ export class CertificateGenerator {
   }
 
   private drawSignatures(): void {
-    this.doc.setLineWidth(0.5);
-    this.doc.setDrawColor(0, 0, 0);
-    this.doc.line(this.margin + 20, this.pageHeight - this.margin - 32, this.margin + 80, this.pageHeight - this.margin - 32);
-    this.doc.setFontSize(10);
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.text('Präsident', this.margin + 50, this.pageHeight - this.margin - 23, { align: 'center' });
+    const lineY = this.pageHeight - this.margin - 30;
+    const labelY = lineY + 8;
+    const sigWidth = 60;
+    
+    // --- Linke Seite: Präsident ---
+    const leftCenter = this.margin + 50;
+    const leftStart = leftCenter - sigWidth / 2;
+    
+    // Unterschrift-Bild (sitzt auf der Linie)
     try {
-      this.doc.addImage('/images/Unterschrift Lars Sander.png', 'PNG', this.margin + 20, this.pageHeight - this.margin - 50, 60, 18);
+      this.doc.addImage('/images/Unterschrift Lars Sander.png', 'PNG', leftStart, lineY - 16, sigWidth, 16);
     } catch (error) {
       logError('Fehler beim Hinzufügen der Präsidenten-Unterschrift:', error);
     }
-    this.doc.line(this.pageWidth - this.margin - 80, this.pageHeight - this.margin - 32, this.pageWidth - this.margin - 20, this.pageHeight - this.margin - 32);
-    this.doc.text('Rundenwettkampfleiter', this.pageWidth - this.margin - 50, this.pageHeight - this.margin - 23, { align: 'center' });
+    
+    // Linie
+    this.doc.setLineWidth(0.4);
+    this.doc.setDrawColor(0, 0, 0);
+    this.doc.line(leftStart, lineY, leftStart + sigWidth, lineY);
+    
+    // Beschriftung
+    this.doc.setFontSize(10);
+    this.doc.setFont('helvetica', 'normal');
+    this.doc.text('Präsident', leftCenter, labelY, { align: 'center' });
+    
+    // --- Rechte Seite: Rundenwettkampfleiter ---
+    const rightCenter = this.pageWidth - this.margin - 45;
+    const rightStart = rightCenter - sigWidth / 2;
+    
+    // Unterschrift-Bild (sitzt auf der Linie, leicht nach rechts versetzt für optische Mitte)
     try {
-      this.doc.addImage('/images/Unterschrift Marcel Buenger.png', 'PNG', this.pageWidth - this.margin - 80, this.pageHeight - this.margin - 50, 60, 18);
+      this.doc.addImage('/images/Unterschrift Marcel Buenger.png', 'PNG', rightStart + 5, lineY - 16, sigWidth, 16);
     } catch (error) {
       logError('Fehler beim Hinzufügen der Rundenwettkampfleiter-Unterschrift:', error);
     }
+    
+    // Linie
+    this.doc.line(rightStart, lineY, rightStart + sigWidth, lineY);
+    
+    // Beschriftung
+    this.doc.text('Rundenwettkampfleiter', rightCenter, labelY, { align: 'center' });
   }
 
   /**

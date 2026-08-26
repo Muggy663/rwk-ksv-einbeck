@@ -158,7 +158,8 @@ export default function CertificatesPage() {
             const substitutionsQuery = query(
               collection(db, 'team_substitutions'),
               where('replacementShooterId', '==', shooter.shooterId),
-              where('competitionYear', '==', seasonData.competitionYear)
+              where('competitionYear', '==', seasonData.competitionYear),
+              where('leagueId', '==', leagueId)
             );
             const substitutionsSnapshot = await getDocs(substitutionsQuery);
             let displayName = shooter.name;
@@ -186,14 +187,16 @@ export default function CertificatesPage() {
             const replacedShooters = new Set();
             const teamMembersWithSubstitutions = [];
             if (team.teamMembersWithScores) {
+              // Erste Runde: Ersetzte Original-Schützen finden (nur für DIESES Team)
               for (const member of team.teamMembersWithScores) {
-                const q = query(collection(db, 'team_substitutions'), where('replacementShooterName', '==', member.name), where('competitionYear', '==', seasonData.competitionYear));
+                const q = query(collection(db, 'team_substitutions'), where('replacementShooterName', '==', member.name), where('competitionYear', '==', seasonData.competitionYear), where('teamId', '==', team.id));
                 const snap = await getDocs(q);
                 if (!snap.empty) replacedShooters.add(snap.docs[0].data().originalShooterName);
               }
+              // Zweite Runde: Anzeige-Namen erstellen
               for (const member of team.teamMembersWithScores) {
                 if (replacedShooters.has(member.name)) continue;
-                const q = query(collection(db, 'team_substitutions'), where('replacementShooterName', '==', member.name), where('competitionYear', '==', seasonData.competitionYear));
+                const q = query(collection(db, 'team_substitutions'), where('replacementShooterName', '==', member.name), where('competitionYear', '==', seasonData.competitionYear), where('teamId', '==', team.id));
                 const snap = await getDocs(q);
                 let displayName = member.name;
                 if (!snap.empty) {
