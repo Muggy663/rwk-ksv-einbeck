@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { logError, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

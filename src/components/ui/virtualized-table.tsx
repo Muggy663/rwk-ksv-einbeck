@@ -5,7 +5,6 @@
 "use client";
 
 import React, { useRef, useState, useEffect, UIEvent } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Table, TableHeader, TableRow, TableHead, TableBody } from './table';
 
 interface TableColumn {

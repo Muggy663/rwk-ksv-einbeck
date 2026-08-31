@@ -1,6 +1,6 @@
 // src/lib/utils/club-utils.ts
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { doc, getDoc } from 'firebase/firestore';
 
 /**

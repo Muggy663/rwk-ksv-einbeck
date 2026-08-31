@@ -2,7 +2,7 @@
 // Migration von Legacy-Rollen zu neuer 3-Ebenen-Architektur
 
 import { adminDb } from '@/lib/firebase/admin';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logDebug } from '@/lib/utils/secure-logger';
 import type { UserPermissions, ClubRole } from './roles';
 
 export async function migrateLegacyRoles() {

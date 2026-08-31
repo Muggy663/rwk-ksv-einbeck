@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { logError, logWarn, logInfo, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
+import { getErrorMessage } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore';

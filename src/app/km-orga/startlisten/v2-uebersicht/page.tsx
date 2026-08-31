@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
+import { logWarn, logError } from '@/lib/utils/secure-logger';
 
 interface Aenderungswunsch {
   id: string;

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { MongoClient } from 'mongodb';
 
 const STORAGE_THRESHOLD_MB = 450;

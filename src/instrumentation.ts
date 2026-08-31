@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/nextjs';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {

@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logWarn } from '@/lib/utils/secure-logger';
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove, Timestamp, deleteDoc } from 'firebase/firestore';
 import { TrainingGroup } from '@/types/social';
 

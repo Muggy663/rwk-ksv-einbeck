@@ -1,7 +1,7 @@
 // src/components/auth/AuthProvider.tsx
 "use client";
 import { useEffect, useState, useCallback, useRef, ReactNode } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { onAuthStateChanged, signInWithEmail, signOutUser, updateUserPassword } from '@/lib/firebase/auth';
 import { AuthContext, FirebaseUser, UserPermission } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';

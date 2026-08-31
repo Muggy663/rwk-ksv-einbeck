@@ -1,6 +1,6 @@
 // Migration: Trennung RWK und KM Schützen
 import { initializeApp } from 'firebase/app';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { getFirestore, collection, getDocs, writeBatch, doc } from 'firebase/firestore';
 
 const firebaseConfig = {

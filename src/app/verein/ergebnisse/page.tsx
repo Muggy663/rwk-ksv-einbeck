@@ -2,7 +2,7 @@
 // /app/verein/ergebnisse/page.tsx
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { logError, logWarn, logInfo, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
+import { logError, logWarn, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';

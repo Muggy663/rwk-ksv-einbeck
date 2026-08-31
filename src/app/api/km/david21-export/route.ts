@@ -2,7 +2,7 @@
 // API Route für David21 Export
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { David21Service } from '@/lib/services/david21-service';
 import { adminDb } from '@/lib/firebase/admin';
 

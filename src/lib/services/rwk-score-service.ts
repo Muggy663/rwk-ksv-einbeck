@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs } from 'firebase/firestore';
 import { createAuditEntry } from './audit-service';
 import { batchGetShooters, batchGetClubs } from '@/lib/utils/batch-reads';

@@ -3,7 +3,7 @@
  * Hilft bei der Diagnose von mobilen OCR-Problemen
  */
 
-import { logDebug, logWarn, logError } from '@/lib/utils/secure-logger';
+import { logDebug } from '@/lib/utils/secure-logger';
 
 export interface MobileDebugInfo {
   isMobile: boolean;

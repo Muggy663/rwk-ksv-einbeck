@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Document } from '@/lib/services/document-service';

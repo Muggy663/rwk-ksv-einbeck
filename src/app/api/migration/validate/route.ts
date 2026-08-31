@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
+import { logError, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where } from 'firebase/firestore';

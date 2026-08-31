@@ -2,7 +2,7 @@
 // src/app/admin/seasons/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Eye, Loader2 } from 'lucide-react';

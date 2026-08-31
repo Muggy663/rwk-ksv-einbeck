@@ -3,7 +3,7 @@
  */
 
 import { MAX_SHOOTERS_PER_TEAM } from '@/types/rwk';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 
 /**
  * Prüft, ob ein Durchgang für ein Team vollständig ist

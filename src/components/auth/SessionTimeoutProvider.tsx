@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from '@/hooks/use-auth';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 
 interface SessionTimeoutProviderProps {

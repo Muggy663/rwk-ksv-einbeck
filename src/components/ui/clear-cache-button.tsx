@@ -1,6 +1,6 @@
 "use client";
 import { Button } from '@/components/ui/button';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 

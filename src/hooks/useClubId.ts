@@ -1,6 +1,6 @@
 // src/hooks/useClubId.ts
 import { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { auth } from '@/lib/firebase/config';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { getUserClubId } from '@/lib/utils/club-utils';

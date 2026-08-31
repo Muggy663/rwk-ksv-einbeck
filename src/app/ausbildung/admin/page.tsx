@@ -19,7 +19,6 @@ import {
   createKurs, updateKurs,
   type Kurs, type Anmeldung, type KursKategorie, type KursStatus
 } from '@/lib/services/ausbildung-service';
-import { logError } from '@/lib/utils/secure-logger';
 
 // ─── Kurs-Formular ────────────────────────────────────────────────────────────
 

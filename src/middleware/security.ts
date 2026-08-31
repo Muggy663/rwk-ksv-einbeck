@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn } from '@/lib/utils/secure-logger';
 
 export function securityMiddleware(request: NextRequest) {
   try {

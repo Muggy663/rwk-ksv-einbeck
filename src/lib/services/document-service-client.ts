@@ -1,6 +1,6 @@
 // src/lib/services/document-service-client.ts
 import { Document, DocumentFormData } from './document-service';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 
 /**
  * Lädt alle Dokumente über die API

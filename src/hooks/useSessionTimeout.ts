@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { toast } from 'sonner';
 
 export function useSessionTimeout(isActive: boolean = true) {

@@ -1,7 +1,6 @@
 "use client";
 
 import React from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { NotificationSettings } from '@/components/notifications/NotificationSettings';
 import { Bell } from 'lucide-react';
 

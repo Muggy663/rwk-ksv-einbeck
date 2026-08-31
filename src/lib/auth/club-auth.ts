@@ -1,6 +1,6 @@
 // src/lib/auth/club-auth.ts
 import { auth } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { getUserClubId } from '@/lib/utils/club-utils';
 
 /**

@@ -1,5 +1,5 @@
 import { SchießnachweisService } from './schiessnachweis-service';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
 import { SocialTrainingService } from './social-training-service';
 import { SchießEintrag } from '@/types/schiessnachweis';
 import { TrainingResult } from '@/types/social-training';

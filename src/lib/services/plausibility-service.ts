@@ -1,6 +1,6 @@
 // Live-Plausibilitätsprüfung für Ergebniserfassung
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 

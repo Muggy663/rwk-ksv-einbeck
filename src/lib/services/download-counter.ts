@@ -1,5 +1,5 @@
 import { adminDb } from '@/lib/firebase/admin';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { FieldValue } from 'firebase-admin/firestore';
 
 const COUNTER_DOC_ID = 'app_downloads';

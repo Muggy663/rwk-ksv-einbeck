@@ -1,6 +1,5 @@
 // src/hooks/useClubPermissions.ts
 import { useAuthContext } from '@/components/auth/AuthContext';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useClubId } from '@/hooks/useClubId';
 
 export type ClubRole = 'SPORTLEITER' | 'VORSTAND' | 'KASSENWART' | 'SCHRIFTFUEHRER' | 'JUGENDWART' | 'DAMENWART' | 'ZEUGWART' | 'PRESSEWART' | 'TRAINER' | 'AUSBILDER' | 'VEREINSSCHUETZE' | 'EHRENMITGLIED';

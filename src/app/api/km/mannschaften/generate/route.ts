@@ -1,6 +1,6 @@
 // src/app/api/km/mannschaften/generate/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
+import { logError, logInfo, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getShooterClubId } from '@/lib/utils/altersklassen';

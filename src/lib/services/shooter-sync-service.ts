@@ -1,6 +1,6 @@
 // Automatische Synchronisation zwischen km_shooters und shooters
 import { doc, setDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logInfo } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 
 export class ShooterSyncService {

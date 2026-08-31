@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown, AlertTriangle } from 'lucide-react';
 import { generateLeaguePDFFixed, generateShootersPDFFixed } from '@/lib/utils/pdf-generator.fix';

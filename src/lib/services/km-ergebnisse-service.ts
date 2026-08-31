@@ -2,7 +2,7 @@
 // Optimierter Service für KM-Ergebnisse
 
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, updateDoc, doc, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 export interface KMErgebnis {

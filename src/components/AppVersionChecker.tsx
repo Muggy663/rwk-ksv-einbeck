@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { checkAndClearOnUpdate } from '@/utils/appVersion';
 
 export function AppVersionChecker() {

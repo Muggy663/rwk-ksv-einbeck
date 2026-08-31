@@ -1,6 +1,5 @@
 // src/types/documents.ts
 import { Timestamp } from 'firebase/firestore';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export interface DocumentMeta {
   id: string;

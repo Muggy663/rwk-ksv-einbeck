@@ -13,7 +13,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logDebug } from '@/lib/utils/secure-logger';
 
 export interface Competition {
   id?: string;

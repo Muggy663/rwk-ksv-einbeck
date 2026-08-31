@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useCallback, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 

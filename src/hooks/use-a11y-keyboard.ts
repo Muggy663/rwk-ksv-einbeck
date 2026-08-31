@@ -4,7 +4,6 @@
 "use client";
 
 import { useCallback } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import type { KeyboardEvent } from 'react';
 
 type KeyboardEventHandler = (event: KeyboardEvent) => void;

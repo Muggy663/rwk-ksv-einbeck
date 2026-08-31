@@ -1,6 +1,6 @@
 // src/lib/services/season-transition-service.ts
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, query, where, orderBy, doc, writeBatch, addDoc, updateDoc } from 'firebase/firestore';
 import { deduplicateScores } from '@/lib/utils/score-deduplication';
 import { SubstitutionService } from './substitution-service';

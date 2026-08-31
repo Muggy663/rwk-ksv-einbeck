@@ -2,7 +2,6 @@
 "use client";
 
 import { useState } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export function useOnboarding() {
   const [showGuide, setShowGuide] = useState(false);

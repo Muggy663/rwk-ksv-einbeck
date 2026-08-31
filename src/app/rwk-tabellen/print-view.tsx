@@ -1,7 +1,6 @@
 // src/app/rwk-tabellen/print-view.tsx
 "use client";
 import React, { useRef } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Printer, X } from 'lucide-react';

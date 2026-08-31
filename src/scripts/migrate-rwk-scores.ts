@@ -6,7 +6,7 @@
  */
 
 import { getApps, getApp } from 'firebase/app';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { getFirestore, collection, getDocs, doc, setDoc, writeBatch, WriteBatch } from 'firebase/firestore';
 
 // Verwende bestehende Firebase App

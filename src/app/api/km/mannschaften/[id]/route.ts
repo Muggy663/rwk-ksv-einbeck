@@ -1,6 +1,6 @@
 // src/app/api/km/mannschaften/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
+import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
 export async function PUT(

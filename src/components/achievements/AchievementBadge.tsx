@@ -1,5 +1,4 @@
 import { Achievement } from '@/types/achievements';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 interface AchievementBadgeProps {
   achievement: Achievement;

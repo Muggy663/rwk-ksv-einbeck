@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { CompetitionDisplayConfig, IndividualShooterDisplayData, ScoreEntry } from '@/types/rwk';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';

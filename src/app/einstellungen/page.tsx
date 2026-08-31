@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { DarkModeDemo } from '@/components/dark-mode-demo';
 import { SocialSettingsPage } from '@/components/social/ProfileSettings';
 import { useAuth } from '@/hooks/use-auth';

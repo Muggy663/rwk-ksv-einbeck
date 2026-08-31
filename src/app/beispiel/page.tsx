@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { OptimizedCard } from '@/components/optimized-card';
 import { OptimizedImage } from '@/components/optimized-image';
 import { LazyComponent } from '@/components/lazy-component';

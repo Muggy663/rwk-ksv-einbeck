@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { ShooterComparisonSelector, Shooter } from '@/components/statistics/ShooterComparisonSelector';
 import { ShooterComparisonChart } from '@/components/statistics/ShooterComparisonChart';
 import { NativeSelect } from '@/components/ui/native-select';

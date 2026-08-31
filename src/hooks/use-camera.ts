@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 
 interface CameraCapabilities {
   hasCamera: boolean;

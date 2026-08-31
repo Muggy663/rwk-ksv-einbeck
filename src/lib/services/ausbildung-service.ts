@@ -6,7 +6,7 @@ import {
   collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc,
   query, where, orderBy, Timestamp, serverTimestamp
 } from 'firebase/firestore';
-import { logError, logInfo, getErrorMessage } from '@/lib/utils/secure-logger';
+import { logError, logInfo } from '@/lib/utils/secure-logger';
 
 // ─── Typen ───────────────────────────────────────────────────────────────────
 

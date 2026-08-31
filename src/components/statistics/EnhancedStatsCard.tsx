@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Minus, Target, Trophy, Calendar } from "lucide-react";
 

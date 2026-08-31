@@ -2,7 +2,7 @@
 // src/app/admin/shooters/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent, useCallback, useMemo } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

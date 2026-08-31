@@ -1,5 +1,4 @@
 import React from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { render, screen } from '@testing-library/react';
 import { Alert, AlertTitle, AlertDescription } from '../alert';
 

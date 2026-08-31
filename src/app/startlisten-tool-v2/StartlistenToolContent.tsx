@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { getDocs, collection, query, orderBy, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
-import { logInfo, logWarn, logError, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
+import { logInfo, logWarn, logError, getErrorMessage } from '@/lib/utils/secure-logger';
 
 export function StartlistenToolV2Content() {
   const searchParams = useSearchParams();

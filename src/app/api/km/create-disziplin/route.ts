@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
-import { logInfo, logWarn, logError, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
+import { logInfo, getErrorMessage } from '@/lib/utils/secure-logger';
 
 export async function POST(request: NextRequest) {
   try {

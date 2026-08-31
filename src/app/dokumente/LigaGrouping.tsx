@@ -1,5 +1,4 @@
 import React from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Document } from '@/lib/services/document-service';
 import { DocumentCard } from './DocumentCard';
 

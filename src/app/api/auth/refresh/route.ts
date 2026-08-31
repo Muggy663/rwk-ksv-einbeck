@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { verifyApiAuth } from '@/lib/auth/api-auth';
 
 export async function POST(request: NextRequest) {

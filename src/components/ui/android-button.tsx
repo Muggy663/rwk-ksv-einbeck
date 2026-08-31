@@ -2,7 +2,6 @@
 "use client";
 
 import React, { forwardRef } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button, ButtonProps } from './button';
 import { useMobileDetection } from '@/hooks/use-mobile-detection';
 import { cn } from '@/lib/utils';

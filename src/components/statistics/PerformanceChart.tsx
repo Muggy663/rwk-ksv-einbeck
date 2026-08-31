@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, BarChart3 } from "lucide-react";

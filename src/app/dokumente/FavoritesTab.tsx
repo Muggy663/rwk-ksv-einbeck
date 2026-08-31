@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent } from '@/components/ui/card';
 import { DocumentCard } from './DocumentCard';
 import { Document } from '@/lib/services/document-service';

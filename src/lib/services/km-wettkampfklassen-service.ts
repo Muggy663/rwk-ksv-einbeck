@@ -1,6 +1,5 @@
 // src/lib/services/km-wettkampfklassen-service.ts
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, writeBatch, doc } from 'firebase/firestore';
 
 // Wettkampfklassen-Definitionen für 2026

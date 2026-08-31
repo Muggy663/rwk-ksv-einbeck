@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';

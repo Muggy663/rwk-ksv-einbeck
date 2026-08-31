@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useVereinAuth } from '@/app/verein/layout';
 import { db } from '@/lib/firebase/config';
 import { doc, getDoc } from 'firebase/firestore';

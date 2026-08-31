@@ -1,6 +1,6 @@
 // src/app/api/km/mannschaften/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
+import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 

@@ -1,5 +1,4 @@
 import mannschaftsregeln from '@/config/km-mannschaftsregeln.json';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 export interface MannschaftsRegelConfig {
   mannschaftsregeln: {

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { memo } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface OptimizedCardProps {

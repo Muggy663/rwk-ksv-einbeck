@@ -6,7 +6,7 @@ import { Loader2, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateMeldelistePDF } from '@/lib/services/km-pdf-service';
 import type { KMMeldung, KMDisziplin, Shooter, Club } from '@/types';
-import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 
 interface KMMeldungenPDFExportProps {
   meldungen: any[];

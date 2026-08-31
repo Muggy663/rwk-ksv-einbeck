@@ -1,6 +1,5 @@
 "use client";
 import { useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useRouter } from 'next/navigation';
 import { PasswordChangeForm } from '@/components/auth/PasswordChangeForm';
 import { useAuth } from '@/hooks/use-auth';

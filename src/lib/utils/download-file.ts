@@ -1,5 +1,5 @@
 import { isMobileDevice } from './is-mobile';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 
 /**
  * Lädt eine Datei herunter und funktioniert auch auf mobilen Geräten

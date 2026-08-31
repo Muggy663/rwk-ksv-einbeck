@@ -1,5 +1,4 @@
 import { type ClassValue, clsx } from "clsx";
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { twMerge } from "tailwind-merge";
 
 /**

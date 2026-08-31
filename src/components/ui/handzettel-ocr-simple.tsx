@@ -10,9 +10,7 @@ import { simpleOCR, type SimpleOCRResult } from "@/lib/services/simple-ocr-servi
 import type { Team, Shooter } from "@/types/rwk"
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger'
-
-const sanitizeText = (text: string | number | undefined | null): string => {
+import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';const sanitizeText = (text: string | number | undefined | null): string => {
   if (text === undefined || text === null) return ''
   const str = String(text)
   return str.replace(/[<>"'&]/g, (char) => {

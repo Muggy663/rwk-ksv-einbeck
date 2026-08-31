@@ -1,6 +1,6 @@
 // src/hooks/useNativeFeatures.ts
 import { useEffect, useState } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logWarn } from '@/lib/utils/secure-logger';
 import { Capacitor } from '@capacitor/core';
 
 export const useNativeFeatures = () => {

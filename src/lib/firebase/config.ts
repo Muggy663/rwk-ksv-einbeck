@@ -1,6 +1,6 @@
 // src/lib/firebase/config.ts
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logInfo } from '@/lib/utils/secure-logger';
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getFunctions, Functions } from "firebase/functions";

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logDebug } from '@/lib/utils/secure-logger';
 
 export function ForceRefresh() {
   useEffect(() => {

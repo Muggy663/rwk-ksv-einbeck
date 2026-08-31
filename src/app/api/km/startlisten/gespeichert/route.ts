@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
+import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
 export async function GET(request: NextRequest) {

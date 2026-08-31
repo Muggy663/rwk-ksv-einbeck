@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { logError, logWarn, logInfo, logDebug , getErrorMessage} from '@/lib/utils/secure-logger';
+import { logError, logWarn, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { Target, Plus, Calendar, TrendingUp, FileText, Download, Upload, Crown, Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

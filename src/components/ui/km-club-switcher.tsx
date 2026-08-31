@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Building } from 'lucide-react';
 import { useKMContext } from '@/contexts/KMContext';
-import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 
 export const KMClubSwitcher: React.FC = () => {
   const { currentClubId, switchClub, userClubIds } = useKMContext();

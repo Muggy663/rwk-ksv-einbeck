@@ -1,7 +1,6 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import NextError from "next/error";
 import { useEffect } from "react";
 

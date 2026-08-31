@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
+import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { ClubMigrationService } from '@/lib/services/club-migration-service';
 
 export async function POST(request: NextRequest) {

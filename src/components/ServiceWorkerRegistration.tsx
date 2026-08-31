@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 
 /**
  * Komponente zur Registrierung des Service Workers

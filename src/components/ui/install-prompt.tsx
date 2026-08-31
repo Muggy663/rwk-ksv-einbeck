@@ -1,7 +1,6 @@
 // src/components/ui/install-prompt.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Smartphone, X, Download } from 'lucide-react';

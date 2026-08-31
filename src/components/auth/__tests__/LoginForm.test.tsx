@@ -1,5 +1,4 @@
 import React from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { render, screen, fireEvent, waitFor } from '@/utils/test-utils';
 import { LoginForm } from '../LoginForm';
 import { useAuth } from '@/hooks/use-auth';

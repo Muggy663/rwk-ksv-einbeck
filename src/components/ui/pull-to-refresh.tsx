@@ -2,7 +2,6 @@
 "use client";
 
 import React, { ReactNode } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { Loader2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';

@@ -3,7 +3,6 @@
  */
 
 import { useCallback, useEffect, useRef } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 /**
  * Debounce-Hook für die Verzögerung von Funktionsaufrufen

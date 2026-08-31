@@ -1,6 +1,6 @@
 // Duplikat-Bereinigung für Mitglieder
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 export async function cleanupDuplicatesAllClubs() {

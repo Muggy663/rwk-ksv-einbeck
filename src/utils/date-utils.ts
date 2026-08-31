@@ -2,7 +2,7 @@
  * Utility-Funktionen für die Arbeit mit Datumswerten
  */
 import { format, parseISO, isValid, differenceInDays, addDays, isBefore, isAfter } from 'date-fns';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { de } from 'date-fns/locale';
 
 /**

@@ -1,6 +1,6 @@
 // src/app/api/km/init-wettkampfklassen/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
+import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 

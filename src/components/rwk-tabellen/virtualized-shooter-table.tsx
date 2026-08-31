@@ -4,7 +4,6 @@
 "use client";
 
 import React, { UIEvent } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useVirtualizedData } from '@/hooks/use-virtualized-data';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';

@@ -2,7 +2,6 @@
 "use client";
 
 import React from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from './button';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
 import { useVoiceInput } from '@/hooks/use-voice-input';

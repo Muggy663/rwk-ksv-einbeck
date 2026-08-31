@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Loader2, Share, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';

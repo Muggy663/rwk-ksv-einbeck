@@ -1,7 +1,7 @@
 // src/hooks/use-local-storage.ts
 "use client";
 import { useState, useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
   // State zum Speichern des Werts

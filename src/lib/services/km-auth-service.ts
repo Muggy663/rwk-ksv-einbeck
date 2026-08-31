@@ -1,6 +1,6 @@
 // src/lib/services/km-auth-service.ts
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import type { KMUserPermission } from '@/types/km-auth';
 

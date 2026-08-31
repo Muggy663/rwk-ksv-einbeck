@@ -1,7 +1,6 @@
 import { AI_CONFIG } from '@/lib/ai/config';
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
-import { secureLogger } from '@/lib/utils/secure-logger';
 import { validateImageUpload } from '@/lib/utils/input-validator';
 import { logError } from '@/lib/utils/secure-logger';
 

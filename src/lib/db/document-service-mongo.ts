@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { getMongoDb } from './mongodb';
 import { Document, DocumentFormData } from '../services/document-service';
 

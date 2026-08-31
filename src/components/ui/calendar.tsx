@@ -4,7 +4,6 @@ import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker } from "react-day-picker"
 import { de } from 'date-fns/locale';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"

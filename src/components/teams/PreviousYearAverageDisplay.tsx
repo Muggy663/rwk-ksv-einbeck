@@ -1,7 +1,6 @@
 "use client";
 
 import React from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { PreviousYearAverage } from '@/components/stats/PreviousYearAverage';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { InfoIcon } from 'lucide-react';

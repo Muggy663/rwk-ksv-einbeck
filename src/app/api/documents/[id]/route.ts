@@ -1,6 +1,6 @@
 // src/app/api/documents/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { 
   getDocumentByIdFromMongo, 
   updateDocumentInMongo, 

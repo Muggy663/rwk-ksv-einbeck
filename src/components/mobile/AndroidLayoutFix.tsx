@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useMobileDetection } from '@/hooks/use-mobile-detection';
 
 export function AndroidLayoutFix() {

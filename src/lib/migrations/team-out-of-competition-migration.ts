@@ -1,5 +1,5 @@
 import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase';
 
 /**

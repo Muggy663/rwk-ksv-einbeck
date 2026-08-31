@@ -1,6 +1,6 @@
 // src/lib/services/km-disziplinen-service.ts
 import { adminDb } from '@/lib/firebase/admin';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logInfo } from '@/lib/utils/secure-logger';
 
 // Altersklassen-Definitionen
 export const ALTERSKLASSEN = [

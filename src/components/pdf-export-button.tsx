@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown } from 'lucide-react';
 import { generateLeaguePDF, generateShootersPDF } from '@/lib/services/pdf-service-fixed';

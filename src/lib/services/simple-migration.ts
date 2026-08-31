@@ -1,6 +1,6 @@
 // Einfache Migration ohne komplexe Logik
 import { db } from '@/lib/firebase/config';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
 
 export async function simpleMigration() {

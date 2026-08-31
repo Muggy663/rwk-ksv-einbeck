@@ -1,5 +1,5 @@
 import { fetchShooterDataForCompetition } from '@/lib/services/shooter-data-service';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { CompetitionDisplayConfig, IndividualShooterDisplayData } from '@/types/rwk';
 
 /**

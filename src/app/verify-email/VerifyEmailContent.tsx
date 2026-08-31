@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

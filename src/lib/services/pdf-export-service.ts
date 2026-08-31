@@ -1,4 +1,4 @@
-import { logInfo, logWarn, logError, logDebug } from '@/lib/utils/secure-logger';
+import { logWarn, logError } from '@/lib/utils/secure-logger';
 // src/lib/services/pdf-export-service.ts
 // Gemeinsame PDF-Export-Funktionen für Startlisten
 
