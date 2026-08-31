@@ -44,3 +44,32 @@ oder Funktion zu verändern.
 **Toter Code entfernt (~230 Zeilen):** ungenutzte Handler `handleExportExcel`, `handleExportODS`, `handleImportCSV`, `handleRefreshData` + Helfer `convertToCSV`, `convertToODS`, `importFromCSV` — nirgends im JSX verwendet; die echte Export/Import-Funktion liegt auf `/schiessnachweis/datensicherung`. Zugehörige ungenutzte Imports bereinigt.
 
 **Gegengecheckt:** `tsc --noEmit` für die Datei = 0 Fehler. Kein JSX/keine sichtbare UI verändert (nur tote Handler + Logik entfernt, States typisiert).
+
+#### Weitere Schießnachweis-Dateien
+
+- **`components/schiessnachweis/CloudSyncStatus.tsx`** → **gelöscht**. Verwaiste Komponente: nirgends gerendert, importierte nicht existentes `premium-service`-Modul und rief nicht existente Service-Methoden (`getSyncStatus`, `syncToCloud`) auf. Das gesamte Premium/Cloud-Sync-System ist entkoppelt (bestätigt: `PremiumService` wird nur hier verwendet).
+
+- **`app/schiessnachweis/eintraege/[id]/page.tsx`** — **echter Bug**: `updateEintrag(...)` wurde ohne `await` aufgerufen → `if (updated)` immer true, Fehlerbehandlung (else-Zweig mit throw) unerreichbar. `await` ergänzt. Dazu: ungenutzte `config`-IIFE-Variable + `getDisziplinConfig`-Import entfernt.
+
+- **`app/schiessnachweis/eintraege/page.tsx`** — tote Cloud-Sync-Insel entfernt: `handleCloudSync` (nirgends aufgerufen, nutzte `UnifiedTrainingService.syncAllData`), `checkSyncStatus` + `needsSync`-State (nur gesetzt, nie gelesen). Ungenutzte Imports bereinigt.
+
+- **`app/schiessnachweis/neuer-eintrag/NeuerEintragContent.tsx`** — **echte Typfehler**: `standort` konnte `undefined` sein (Pflichtfeld `string`) → Fallback `''`. Nicht existente Felder `kategorie`, `socialTraining`, `groupId`, `competitionId` aus `saveEintrag`-Objekt entfernt (Reste des Social-Training-Features, nicht im `SchießEintrag`-Typ). Ungenutzten `useAuth`/`user` entfernt.
+
+- **`components/schiessnachweis/ErgebnisaufnahmeForm.tsx`** — Prop `disziplin: DisziplinName` → `string` gelockert (SchießEintrag.disziplin ist string; `getDisziplinConfig` verträgt beliebige Werte). Behob Disziplin-Typfehler an 2 Aufrufstellen. Tote Funktionen `getGesamtErgebnis`/`getSchnellwerte` + ungenutzte Imports entfernt.
+
+- **`app/schiessnachweis/statistiken/page.tsx`**, **`profil/page.tsx`**, **`eintraege/[id]/details/page.tsx`**, **`components/schiessnachweis/DigitalAnlageImport.tsx`** — ungenutzte Imports/Params bereinigt (Callback-Params mit `_`-Präfix statt Entfernen).
+
+- **`lib/services/cloud-sync-service.ts`** — Typfehler behoben (Casts über `unknown`, `getErrorMessage` für `unknown`-Fehler). Datei ist aktuell verwaist (nirgends importiert), aber **bewusst behalten** — Nutzer-Entscheidung offen, ob Cloud-Sync-Feature reaktiviert wird.
+
+**Offene Design-Frage:** `cloud-sync-service.ts` ist toter Code — löschen oder als geplantes Feature behalten?
+
+**Bereich Schießnachweis gegengecheckt:** `tsc --noEmit` für den Bereich = 0 Fehler. Gesamt: 2645 → 2577.
+
+---
+
+## Fortschritts-Tabelle (aktualisiert)
+
+| Bereich | Fehler vorher | Fehler nachher | Status |
+|---------|---------------|----------------|--------|
+| Schießnachweis (page + eintraege + neuer-eintrag + statistiken + profil + Komponenten + cloud-sync) | ~68 | 0 | ✅ fertig |
+| Gesamt-Projekt | 2645 | 2577 | läuft |

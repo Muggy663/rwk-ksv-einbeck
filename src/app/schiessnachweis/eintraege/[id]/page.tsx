@@ -12,7 +12,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { ArrowLeft, Save, Trash2, ChevronDown, Target } from "lucide-react";
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
-import { SchießEintrag, KATEGORIEN, getDisziplinenByKategorie, getDisziplinConfig, WETTKAMPF_TYPEN, ZehnerSerie } from "@/types/schiessnachweis";
+import { SchießEintrag, KATEGORIEN, getDisziplinenByKategorie, WETTKAMPF_TYPEN, ZehnerSerie } from "@/types/schiessnachweis";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ErgebnisaufnahmeForm } from "@/components/schiessnachweis/ErgebnisaufnahmeForm";
@@ -92,7 +92,7 @@ export default function EintragBearbeitenPage() {
     setIsSaving(true);
     try {
       logDebug('Speichere Eintrag mit Standort:', eintrag.standort);
-      const updated = SchießnachweisService.updateEintrag(eintrag.id, {
+      const updated = await SchießnachweisService.updateEintrag(eintrag.id, {
         datum: eintrag.datum,
         typ: eintrag.typ,
         disziplin: eintrag.disziplin,
@@ -285,7 +285,6 @@ export default function EintragBearbeitenPage() {
             )}
 
             {eintrag.disziplin && (() => {
-              const config = getDisziplinConfig(eintrag.disziplin);
               return (
                 <div className="grid grid-cols-1 gap-4">
                   <div>

@@ -14,7 +14,6 @@ import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
 import { KATEGORIEN, getDisziplinenByKategorie, getDisziplinConfig, WETTKAMPF_TYPEN, BELIEBTE_SCHIESSSTAENDE, ZehnerSerie } from "@/types/schiessnachweis";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
 import { ErgebnisaufnahmeForm } from "@/components/schiessnachweis/ErgebnisaufnahmeForm";
 import { ScheibenScanner } from "@/components/schiessnachweis/ScheibenScanner";
 import { DigitalAnlageImport } from "@/components/schiessnachweis/DigitalAnlageImport";
@@ -25,7 +24,6 @@ type InputMethod = 'schnell' | 'serien' | 'foto' | 'digital';
 export function NeuerEintragContent() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user } = useAuth();
 
   const [step, setStep] = useState<WizardStep>('disziplin');
   const [inputMethod, setInputMethod] = useState<InputMethod>('schnell');
@@ -123,20 +121,16 @@ export function NeuerEintragContent() {
       const result = await SchießnachweisService.saveEintrag({
         datum: new Date(formData.datum),
         typ: formData.typ as any,
-        kategorie: formData.kategorie,
         disziplin: formData.disziplin,
         schussAnzahl: parseInt(formData.schussAnzahl),
         ergebnis: ganzeRinge,
         ergebnisZehntel: berechneteErgebnisse?.mitZehntel || (formData.ergebnis ? parseFloat(formData.ergebnis) : undefined),
-        standort: (formData.standort && formData.standort !== '__custom__') ? formData.standort : undefined,
+        standort: (formData.standort && formData.standort !== '__custom__') ? formData.standort : '',
         notizen: formData.notizen || undefined,
         wetter: formData.wetter || undefined,
         waffe: formData.waffe || undefined,
         munition: formData.munition || undefined,
         serien: serien.length > 0 ? serien : undefined,
-        socialTraining: false,
-        groupId: undefined,
-        competitionId: undefined,
       });
       logDebug('✅ Ergebnis gespeichert:', result);
       toast({ title: "✅ Gespeichert", description: `${ganzeRinge} Ringe erfolgreich eingetragen.` });

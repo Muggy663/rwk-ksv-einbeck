@@ -8,11 +8,11 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { ArrowLeft, TrendingUp, Calendar, Target, Trophy, Download, Crown, Lock } from "lucide-react";
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
-import { SchießEintrag, DISZIPLIN_NAMES } from "@/types/schiessnachweis";
+import { SchießEintrag } from "@/types/schiessnachweis";
 
 import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
+import { format, subMonths } from "date-fns";
 import { de } from "date-fns/locale";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
@@ -345,7 +345,7 @@ export default function StatistikenPage() {
                     <XAxis dataKey="datum" />
                     <YAxis />
                     <Tooltip 
-                      formatter={(value, name, props) => {
+                      formatter={(value, _name, props) => {
                         if (value === null) return ['Kein Wert', 'Fehlend'];
                         return [
                           `${value} Ringe`,
@@ -477,7 +477,7 @@ export default function StatistikenPage() {
                           dataKey="value"
                           label={({ name, percentage }) => `${name}: ${percentage}%`}
                         >
-                          {disziplinendaten.map((entry, index) => (
+                          {disziplinendaten.map((_entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>

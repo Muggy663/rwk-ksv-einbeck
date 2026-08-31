@@ -2,7 +2,7 @@
 "use client";
 
 import { SchießEintrag } from "@/types/schiessnachweis";
-import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 
 // Premium-Check: aktuell immer true (kein separates Premium-Modul)
 const isPremium = async (): Promise<boolean> => true;
@@ -84,14 +84,14 @@ export class CloudSyncService {
       const cleanedEinträge = einträge.map(eintrag => {
         const cleaned: Record<string, unknown> = {};
         Object.keys(eintrag).forEach(key => {
-          const value = (eintrag as Record<string, unknown>)[key];
+          const value = (eintrag as unknown as Record<string, unknown>)[key];
           if (value !== undefined) cleaned[key] = value;
         });
         return cleaned;
       });
 
       const cloudData: CloudData = {
-        einträge: cleanedEinträge as SchießEintrag[],
+        einträge: cleanedEinträge as unknown as SchießEintrag[],
         lastModified: new Date(),
         deviceId: this.getDeviceId()
       };
@@ -153,7 +153,7 @@ export class CloudSyncService {
     try {
       await this.syncToCloud(einträge);
     } catch (error) {
-      logWarn('Auto-Sync fehlgeschlagen:', error);
+      logWarn('Auto-Sync fehlgeschlagen:', getErrorMessage(error));
     }
   }
 

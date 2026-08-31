@@ -30,7 +30,8 @@ export default function ProfilPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
-  const [originalData, setOriginalData] = useState({displayName: "", lastName: "", verein: "", kreisverband: "", strasse: "", plz: "", wohnort: ""});
+  // originalData-Wert wird aktuell nicht gelesen, nur gesetzt (für spätere "Änderungen verwerfen"-Funktion vorgehalten)
+  const [, setOriginalData] = useState({displayName: "", lastName: "", verein: "", kreisverband: "", strasse: "", plz: "", wohnort: ""});
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
