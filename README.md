@@ -1,12 +1,12 @@
 # 🎯 RWK Einbeck App
 
-**Version: 2.7.2** | **Android: 1.0.0** | **31.08.2026**
+**Version: 2.8.0** | **Android: 1.0.0** | **31.08.2026**
 
 > **Digitale Plattform für den deutschen Schießsport**
 
 Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und den digitalen Schießnachweis. Automatische Tabellen, KI-gestützte Ergebniserfassung und moderne Vereinsverwaltung.
 
-[![Version](https://img.shields.io/badge/Version-2.7.2-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-2.8.0-green?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_16_+_Firebase-blue?style=for-the-badge)](#)
 [![Design](https://img.shields.io/badge/Design-Glassmorphism-purple?style=for-the-badge)](#)
 
@@ -94,7 +94,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
-**Aktuell: Version 2.7.2 (31.08.2026)** – Behörden-PDF mit modernem Layout, PDF-Export-Absturz behoben, CSV-Export Excel-kompatibel (Umlaute), CSV-Import erkennt CSV & JSON.
+**Aktuell: Version 2.8.0 (31.08.2026)** – Große Code-Bereinigung: ~3850 Zeilen toter Code entfernt, ungenutzte Logger-Importe in 479 Dateien bereinigt, Bugfix Vereins-Migration, typecheck-Skript. Rein wartend, keine funktionalen Änderungen.
 
 ## 📸 Screenshots
 
@@ -134,7 +134,7 @@ Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
 **Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 31.08.2026 - Version 2.7.2*
+*Letzte Aktualisierung: 31.08.2026 - Version 2.8.0*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

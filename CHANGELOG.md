@@ -4,6 +4,13 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
+## Version 2.8.0
+- **🧹 Große Code-Bereinigung**: Toten und veralteten Code entfernt (~3850 Zeilen) — alte Suffix-Duplikate (`page-fixed`, `page_new`, `page-modified`, `page-clean`, `page-with-*`), doppelte PDF-/Zertifikat-Basisdateien, Pages-Router-Rest `_app.tsx`, ungenutzte UI-Varianten (enhanced-/improved-card, native-/android-button) und toter Context
+- **🔧 Logger-Imports bereinigt**: In 479 Dateien pauschal eingefügte, ungenutzte `secure-logger`-Importe entfernt bzw. auf tatsächlich genutzte Funktionen reduziert — rein auf Import-Ebene, keine Funktionslogik verändert
+- **🐛 Bugfix Vereins-Migration**: Nicht existierende `secureLogger.logError`-Aufrufe korrigiert (hätten zur Laufzeit einen TypeError ausgelöst und die Migration abgebrochen)
+- **✅ Qualität**: Neues `npm run typecheck`-Skript; TypeScript-Meldungen um über 1200 reduziert (~3860 → ~2645) ohne funktionale Änderungen
+- **📦 Keine funktionalen Änderungen**: Diese Version ist reine Wartung/Aufräumung — alle Features verhalten sich unverändert
+
 ## Version 2.7.2
 - **🔄 Update-Hinweis verbessert**: Bei neuer Version wird jetzt die richtige Tastenkombination angezeigt (Strg+Shift+R unter Windows/Linux, Cmd+Shift+R am Mac) — ein normales F5 reicht nicht. Der „Aktualisieren“-Button leert zusätzlich Cache und Service Worker für ein echtes Neuladen
 - **🐛 PDF-Export Absturz behoben**: Der Behörden-Nachweis brach bei Einträgen mit fehlenden Feldern (z.B. Disziplin/Standort) still ab — jetzt robust gegen unvollständige Datensätze
