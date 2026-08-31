@@ -547,7 +547,7 @@ export default function SchießnachweisPage() {
         <div className="flex justify-center items-center gap-2 sm:gap-3 mb-4">
           <Target className="h-8 w-8 sm:h-12 sm:w-12 text-blue-600" />
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Schießnachweis <span className="text-red-600 dark:text-red-400 text-xl sm:text-2xl">Preview</span></h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Schießnachweis</h1>
             <Badge variant="secondary" className="mt-1 text-xs sm:text-sm">Digitales Schießtagebuch</Badge>
           </div>
         </div>
@@ -563,7 +563,7 @@ export default function SchießnachweisPage() {
       </div>
 
       {/* Schnellaktionen */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8">
         <Button asChild size="lg" className="flex items-center justify-center gap-3 h-16 text-base font-semibold">
           <Link href="/schiessnachweis/neuer-eintrag">
             <Plus className="h-6 w-6" />
@@ -593,6 +593,46 @@ export default function SchießnachweisPage() {
         </Button>
       </div>
 
+      {/* Behörden-Nachweis (prominent hervorgehoben) */}
+      <Card className="mb-6 sm:mb-8 border-2 border-green-300 dark:border-green-800 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 shadow-sm">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/60 flex items-center justify-center">
+                <FileText className="h-6 w-6 text-green-700 dark:text-green-300" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-semibold text-green-900 dark:text-green-100 text-base sm:text-lg flex items-center gap-2 flex-wrap">
+                  Nachweis für Behörden
+                  <Badge className="bg-green-600 hover:bg-green-600 text-white text-xs">PDF</Badge>
+                </h3>
+                <p className="text-sm text-green-700 dark:text-green-300 mt-0.5">
+                  Offizieller Nachweis Ihrer Schießtätigkeit für die Waffenbehörde. Persönliche Daten eingeben, Zeitraum wählen und PDF erstellen – optional mit KI-Begleittext.
+                </p>
+              </div>
+            </div>
+            <Button
+              asChild
+              size="lg"
+              className="w-full md:w-auto flex-shrink-0 bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 h-14"
+              disabled={isMobile}
+            >
+              {isMobile ? (
+                <span>
+                  <FileText className="h-5 w-5" />
+                  Nur am Desktop
+                </span>
+              ) : (
+                <Link href="/schiessnachweis/pdf-export">
+                  <FileText className="h-5 w-5" />
+                  Nachweis vorbereiten
+                </Link>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Profil-Button */}
       <div className="mb-6 sm:mb-8">
         <Button asChild variant="outline" size="lg" className="w-full flex items-center justify-center gap-3 h-14">
@@ -605,7 +645,7 @@ export default function SchießnachweisPage() {
 
       {/* Statistik-Übersicht */}
       {!isLoading && statistik && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 sm:mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 border-blue-200">
             <CardContent className="p-4 sm:p-6 text-center">
               <div className="text-2xl sm:text-3xl font-bold text-blue-600 mb-2">{statistik.totalSchüsse}</div>

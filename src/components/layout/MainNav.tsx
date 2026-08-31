@@ -173,7 +173,7 @@ export function MainNav() {
           >
             {route.icon}
             {route.label}
-            {route.href === '/schiessnachweis' && <span className="text-xs text-red-600 dark:text-red-400 font-semibold ml-1">Preview</span>}
+
           </Link>
         ))}
         

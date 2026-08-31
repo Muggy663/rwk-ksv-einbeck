@@ -4,6 +4,14 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
+## Version 2.7.2
+- **🐛 PDF-Export Absturz behoben**: Der Behörden-Nachweis brach bei Einträgen mit fehlenden Feldern (z.B. Disziplin/Standort) still ab — jetzt robust gegen unvollständige Datensätze
+- **🎨 PDF-Design modernisiert**: Farbiges Kopfband, Info-Karten für Persönliche Daten und Schießtätigkeit, KI-Begleittext in eigener Box
+- **📊 PDF-Tabelle über AutoTable**: Saubere Kopfzeile mit Zebra-Streifen statt handgezeichneter Linien — die verrutschte Trennlinie in der ersten Zeile ist behoben
+- **📄 Seitenfußzeile**: Jede PDF-Seite hat jetzt eine Fußzeile mit Seitenzahl ("Seite x von y")
+- **📥 CSV-Export Excel-kompatibel**: UTF-8-BOM und CRLF-Zeilenenden ergänzt — Umlaute (ä, ö, ü, ß) werden in Excel korrekt dargestellt
+- **🔄 CSV-Import repariert**: Import erkennt jetzt automatisch CSV und JSON — die eigene exportierte CSV kann wieder eingelesen werden
+
 ## Version 2.7.1
 - **📱 Android App 1.0.0**: Erste offizielle Vollversion im Google Play Store
 - **🏆 KM Mannschaftsregeln**: Komplett überarbeitete Generierung nach NSSV-Disziplinenplan und Kreisausschreibung

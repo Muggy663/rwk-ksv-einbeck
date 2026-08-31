@@ -343,9 +343,9 @@ export default function DashboardAuswahl() {
 
       </div>
       
-      {/* Preview Features - Nach unten */}
+      {/* Weitere Funktionen - Nach unten */}
       <div className="mt-6">
-        <h2 className="text-xl font-semibold text-center mb-4 text-muted-foreground">🚀 Preview Features</h2>
+        <h2 className="text-xl font-semibold text-center mb-4 text-muted-foreground">🎯 Schießnachweis</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           
           {/* Schießnachweis - Links unten */}
@@ -354,7 +354,6 @@ export default function DashboardAuswahl() {
               <div>
                 <CardTitle className="text-xl mb-2">
                   🎯 Schießnachweis
-                  <Badge variant="secondary" className="ml-2 text-xs">Preview</Badge>
                 </CardTitle>
                 <div className="flex flex-wrap gap-1">
                   <Badge variant="outline">Cloud-Speicherung</Badge>

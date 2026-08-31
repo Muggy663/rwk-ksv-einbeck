@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,19 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { ArrowLeft, FileText, Download, Calendar, User } from "lucide-react";
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
-import { SchießEintrag, DISZIPLIN_NAMES } from "@/types/schiessnachweis";
+import { SchießEintrag } from "@/types/schiessnachweis";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfYear, endOfYear, subYears } from "date-fns";
+import { format, startOfYear, endOfYear } from "date-fns";
 import { de } from "date-fns/locale";
 import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+    lastAutoTable?: { finalY: number };
+  }
+}
 
 export default function PDFExportPage() {
   const { toast } = useToast();
@@ -23,7 +31,10 @@ export default function PDFExportPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   
   // Filter-Optionen
-  const [filterJahr, setFilterJahr] = useState<string>(new Date().getFullYear().toString());
+  // Zeitraum-Filter: "alle" = kein Jahresfilter, sonst Spanne von/bis (inklusive)
+  const [filterAlleJahre, setFilterAlleJahre] = useState<boolean>(false);
+  const [filterVonJahr, setFilterVonJahr] = useState<string>(new Date().getFullYear().toString());
+  const [filterBisJahr, setFilterBisJahr] = useState<string>(new Date().getFullYear().toString());
   const [filterDisziplin, setFilterDisziplin] = useState<string>("alle");
   const [filterTyp, setFilterTyp] = useState<string>("alle");
   const [includeAIText, setIncludeAIText] = useState<boolean>(false);
@@ -101,15 +112,32 @@ export default function PDFExportPage() {
     }
   };
 
+  // Lesbare Bezeichnung des gewählten Zeitraums (für PDF-Statistik)
+  const getZeitraumLabel = () => {
+    if (filterAlleJahre) return 'Gesamter Zeitraum';
+    const von = Math.min(parseInt(filterVonJahr), parseInt(filterBisJahr));
+    const bis = Math.max(parseInt(filterVonJahr), parseInt(filterBisJahr));
+    return von === bis ? `Jahr ${von}` : `Jahre ${von} – ${bis}`;
+  };
+
+  // Zeitraum-Kürzel für den Dateinamen
+  const getZeitraumDateiname = () => {
+    if (filterAlleJahre) return 'Gesamt';
+    const von = Math.min(parseInt(filterVonJahr), parseInt(filterBisJahr));
+    const bis = Math.max(parseInt(filterVonJahr), parseInt(filterBisJahr));
+    return von === bis ? `${von}` : `${von}-${bis}`;
+  };
+
   // Gefilterte Daten
   const getFilteredData = () => {
     let filtered = [...einträge];
     
-    // Jahr-Filter
-    if (filterJahr !== "alle") {
-      const year = parseInt(filterJahr);
-      const startDate = startOfYear(new Date(year, 0, 1));
-      const endDate = endOfYear(new Date(year, 0, 1));
+    // Zeitraum-Filter (Spanne von/bis, inklusive)
+    if (!filterAlleJahre) {
+      const vonYear = Math.min(parseInt(filterVonJahr), parseInt(filterBisJahr));
+      const bisYear = Math.max(parseInt(filterVonJahr), parseInt(filterBisJahr));
+      const startDate = startOfYear(new Date(vonYear, 0, 1));
+      const endDate = endOfYear(new Date(bisYear, 0, 1));
       filtered = filtered.filter(e => e.datum >= startDate && e.datum <= endDate);
     }
     
@@ -153,155 +181,224 @@ export default function PDFExportPage() {
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.width;
       const pageHeight = pdf.internal.pageSize.height;
-      let yPosition = 20;
+      const marginX = 18;
+      const contentWidth = pageWidth - marginX * 2;
 
-      // Header mit Logo (falls verfügbar)
-      pdf.setFontSize(16);
+      // Farbschema (passend zum App-Blau)
+      const accent: [number, number, number] = [37, 99, 235];       // blue-600
+      const accentDark: [number, number, number] = [30, 58, 138];   // blue-900
+      const lightBg: [number, number, number] = [239, 246, 255];    // blue-50
+      const textMuted: [number, number, number] = [100, 116, 139];  // slate-500
+      const textDark: [number, number, number] = [30, 41, 59];      // slate-800
+
+      // ---- Kopfband ----
+      pdf.setFillColor(...accent);
+      pdf.rect(0, 0, pageWidth, 34, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Schießnachweis für Behörden', pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 10;
-      
-      pdf.setFontSize(12);
+      pdf.text('Schießnachweis', marginX, 16);
+      pdf.setFontSize(10.5);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Nachweis regelmäßiger Schießtätigkeit', pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 20;
+      pdf.text('Nachweis regelmäßiger Schießtätigkeit für Behörden', marginX, 25);
+      pdf.setFontSize(8.5);
+      pdf.text(
+        `Erstellt am ${format(new Date(), 'dd.MM.yyyy', { locale: de })}`,
+        pageWidth - marginX,
+        16,
+        { align: 'right' }
+      );
+
+      let yPosition = 46;
 
       // Statistik-Daten vorbereiten
-      const stats = await SchießnachweisService.getStatistik();
       const filteredStats = {
-        totalSchüsse: filteredData.reduce((sum, e) => sum + e.schussAnzahl, 0),
+        totalSchüsse: filteredData.reduce((sum, e) => sum + (e.schussAnzahl ?? 0), 0),
         totalTrainings: filteredData.filter(e => e.typ === 'training').length,
         totalWettkämpfe: filteredData.filter(e => e.typ === 'wettkampf').length,
-        zeitraum: filterJahr !== "alle" ? `Jahr ${filterJahr}` : 'Gesamter Zeitraum'
+        zeitraum: getZeitraumLabel()
       };
 
-      // Optional: KI-generierter Begleittext
+      // Kleiner Helfer für Abschnitts-Überschriften
+      const sectionTitle = (title: string, y: number) => {
+        pdf.setFillColor(...accent);
+        pdf.rect(marginX, y - 4, 3, 5.5, 'F');
+        pdf.setTextColor(...accentDark);
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(title, marginX + 6, y);
+        return y + 8;
+      };
+
+      // ---- Optional: KI-generierter Begleittext ----
       if (includeAIText) {
         const aiText = await generateAIText(personalData, filteredStats);
-        pdf.setFontSize(10);
+        yPosition = sectionTitle('Begleitschreiben', yPosition);
+
+        const lines: string[] = pdf.splitTextToSize(aiText, contentWidth - 10);
+        const boxHeight = lines.length * 5 + 8;
+        pdf.setFillColor(...lightBg);
+        pdf.setDrawColor(...accent);
+        pdf.roundedRect(marginX, yPosition - 4, contentWidth, boxHeight, 2, 2, 'FD');
+
+        pdf.setTextColor(...textDark);
+        pdf.setFontSize(9.5);
         pdf.setFont('helvetica', 'normal');
-        
-        const lines = pdf.splitTextToSize(aiText, pageWidth - 40);
+        let lineY = yPosition + 2;
         lines.forEach((line: string) => {
-          pdf.text(line, 20, yPosition);
-          yPosition += 5;
+          pdf.text(line, marginX + 5, lineY);
+          lineY += 5;
         });
-        yPosition += 10;
+        yPosition += boxHeight + 8;
       }
 
-      // Persönliche Daten
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Persönliche Daten:', 20, yPosition);
-      yPosition += 10;
-      
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      
+      // ---- Persönliche Daten + Statistik (zwei Karten nebeneinander) ----
       const personalInfo = [
-        `Name: ${personalData.name}, ${personalData.vorname}`,
-        personalData.geburtsdatum ? `Geburtsdatum: ${personalData.geburtsdatum}` : '',
-        personalData.adresse ? `Adresse: ${personalData.adresse}` : '',
-        personalData.plz && personalData.ort ? `${personalData.plz} ${personalData.ort}` : '',
-        personalData.vereinsname ? `Verein: ${personalData.vereinsname}` : '',
-        personalData.waffenbesitzkarte ? `WBK-Nr.: ${personalData.waffenbesitzkarte}` : ''
-      ].filter(Boolean);
-      
-      personalInfo.forEach(info => {
-        pdf.text(info, 20, yPosition);
-        yPosition += 6;
-      });
-      
-      yPosition += 10;
+        ['Name', `${personalData.name}, ${personalData.vorname}`],
+        personalData.geburtsdatum ? ['Geburtsdatum', personalData.geburtsdatum] : null,
+        personalData.adresse ? ['Adresse', personalData.adresse] : null,
+        personalData.plz && personalData.ort ? ['Ort', `${personalData.plz} ${personalData.ort}`] : null,
+        personalData.vereinsname ? ['Verein', personalData.vereinsname] : null,
+        personalData.waffenbesitzkarte ? ['WBK-Nr.', personalData.waffenbesitzkarte] : null
+      ].filter(Boolean) as [string, string][];
 
-      // Zeitraum und Statistik
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Schießtätigkeit:', 20, yPosition);
-      yPosition += 10;
-      
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      
-      const statsInfo = [
-        `Zeitraum: ${filteredStats.zeitraum}`,
-        `Trainingseinheiten: ${filteredStats.totalTrainings}`,
-        `Wettkämpfe: ${filteredStats.totalWettkämpfe}`,
-        `Gesamtschüsse: ${filteredStats.totalSchüsse}`,
-        `Einträge gesamt: ${filteredData.length}`
+      const statsInfo: [string, string][] = [
+        ['Zeitraum', filteredStats.zeitraum],
+        ['Trainingseinheiten', filteredStats.totalTrainings.toString()],
+        ['Wettkämpfe', filteredStats.totalWettkämpfe.toString()],
+        ['Gesamtschüsse', filteredStats.totalSchüsse.toString()],
+        ['Einträge gesamt', filteredData.length.toString()]
       ];
-      
-      statsInfo.forEach(info => {
-        pdf.text(info, 20, yPosition);
-        yPosition += 6;
-      });
-      
-      yPosition += 10;
 
-      // Tabelle mit Einträgen
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Detaillierte Aufstellung:', 20, yPosition);
-      yPosition += 10;
+      const cardGap = 8;
+      const cardWidth = (contentWidth - cardGap) / 2;
+      const rows = Math.max(personalInfo.length, statsInfo.length);
+      const cardBodyHeight = rows * 6.5 + 4;
+      const cardHeight = cardBodyHeight + 10;
+      const cardTop = yPosition;
 
-      // Tabellen-Header
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'bold');
-      
-      const colWidths = [25, 30, 40, 25, 25, 30, 35];
-      const headers = ['Datum', 'Typ', 'Disziplin', 'Schüsse', 'Ergebnis', 'Standort', 'Notizen'];
-      let xPosition = 20;
-      
-      headers.forEach((header, index) => {
-        pdf.text(header, xPosition, yPosition);
-        xPosition += colWidths[index];
-      });
-      
-      yPosition += 8;
-      
-      // Linie unter Header
-      pdf.line(20, yPosition - 2, pageWidth - 20, yPosition - 2);
-      
-      // Tabellen-Daten
-      pdf.setFont('helvetica', 'normal');
-      
-      filteredData.forEach((eintrag, index) => {
-        if (yPosition > pageHeight - 30) {
-          pdf.addPage();
-          yPosition = 20;
-        }
-        
-        xPosition = 20;
-        const rowData = [
-          format(eintrag.datum, 'dd.MM.yy', { locale: de }),
-          eintrag.typ === 'training' ? 'Training' : 'Wettkampf',
-          eintrag.disziplin.length > 15 ? eintrag.disziplin.substring(0, 12) + '...' : eintrag.disziplin,
-          eintrag.schussAnzahl.toString(),
-          eintrag.ergebnis.toString(),
-          eintrag.standort.length > 15 ? eintrag.standort.substring(0, 12) + '...' : eintrag.standort,
-          eintrag.notizen ? (eintrag.notizen.length > 20 ? eintrag.notizen.substring(0, 17) + '...' : eintrag.notizen) : ''
-        ];
-        
-        rowData.forEach((data, colIndex) => {
-          pdf.text(data, xPosition, yPosition);
-          xPosition += colWidths[colIndex];
+      const drawCard = (x: number, heading: string, entries: [string, string][]) => {
+        // Karten-Rahmen
+        pdf.setFillColor(255, 255, 255);
+        pdf.setDrawColor(226, 232, 240); // slate-200
+        pdf.roundedRect(x, cardTop, cardWidth, cardHeight, 2, 2, 'FD');
+        // Karten-Titel
+        pdf.setTextColor(...accentDark);
+        pdf.setFontSize(10.5);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(heading, x + 5, cardTop + 7);
+        pdf.setDrawColor(...lightBg);
+        pdf.line(x + 5, cardTop + 9.5, x + cardWidth - 5, cardTop + 9.5);
+        // Zeilen
+        let rowY = cardTop + 16;
+        entries.forEach(([label, value]) => {
+          pdf.setTextColor(...textMuted);
+          pdf.setFontSize(8);
+          pdf.setFont('helvetica', 'normal');
+          pdf.text(label, x + 5, rowY);
+          pdf.setTextColor(...textDark);
+          pdf.setFontSize(9);
+          pdf.setFont('helvetica', 'bold');
+          const valLines: string[] = pdf.splitTextToSize(value, cardWidth - 10);
+          pdf.text(valLines[0] ?? '', x + cardWidth - 5, rowY, { align: 'right' });
+          rowY += 6.5;
         });
-        
-        yPosition += 6;
+      };
+
+      drawCard(marginX, 'Persönliche Daten', personalInfo);
+      drawCard(marginX + cardWidth + cardGap, 'Schießtätigkeit', statsInfo);
+      yPosition = cardTop + cardHeight + 10;
+
+      // ---- Detaillierte Aufstellung (autoTable) ----
+      yPosition = sectionTitle('Detaillierte Aufstellung', yPosition);
+
+      const tableBody = filteredData.map((eintrag) => {
+        const disziplin = eintrag.disziplin ?? '';
+        const standort = eintrag.standort ?? '';
+        const notizen = eintrag.notizen ?? '';
+        return [
+          eintrag.datum ? format(eintrag.datum, 'dd.MM.yy', { locale: de }) : '',
+          eintrag.typ === 'training' ? 'Training' : 'Wettkampf',
+          disziplin,
+          (eintrag.schussAnzahl ?? 0).toString(),
+          (eintrag.ergebnis ?? 0).toString(),
+          standort,
+          notizen
+        ];
       });
 
-      // Footer
-      yPosition = pageHeight - 30;
-      pdf.setFontSize(10);
+      pdf.autoTable({
+        head: [['Datum', 'Typ', 'Disziplin', 'Schüsse', 'Ergebnis', 'Standort', 'Notizen']],
+        body: tableBody,
+        startY: yPosition,
+        margin: { left: marginX, right: marginX },
+        theme: 'grid',
+        styles: {
+          fontSize: 8,
+          cellPadding: 2.5,
+          textColor: textDark,
+          lineColor: [226, 232, 240],
+          lineWidth: 0.1
+        },
+        headStyles: {
+          fillColor: accent,
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'left'
+        },
+        alternateRowStyles: { fillColor: lightBg },
+        columnStyles: {
+          0: { cellWidth: 18 },
+          1: { cellWidth: 22 },
+          2: { cellWidth: 34 },
+          3: { cellWidth: 16, halign: 'center' },
+          4: { cellWidth: 18, halign: 'center' },
+          5: { cellWidth: 32 },
+          6: { cellWidth: 'auto' }
+        }
+      });
+
+      // ---- Footer / Unterschriften ----
+      let afterTableY = (pdf.lastAutoTable?.finalY ?? yPosition) + 22;
+      if (afterTableY > pageHeight - 30) {
+        pdf.addPage();
+        afterTableY = 30;
+      }
+      pdf.setDrawColor(...textMuted);
+      pdf.setLineWidth(0.3);
+      pdf.setTextColor(...textMuted);
+      pdf.setFontSize(8.5);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(`Erstellt am: ${format(new Date(), 'dd.MM.yyyy', { locale: de })}`, 20, yPosition);
-      pdf.text('Digitaler Schießnachweis - RWK Einbeck App', pageWidth - 20, yPosition, { align: 'right' });
-      
-      yPosition += 10;
-      pdf.text('Unterschrift: ________________________', 20, yPosition);
+
+      // Linke Unterschrift: Antragsteller
+      const leftLineWidth = 70;
+      pdf.line(marginX, afterTableY, marginX + leftLineWidth, afterTableY);
+      pdf.text('Ort, Datum, Unterschrift', marginX, afterTableY + 5);
+
+      // Rechte Unterschrift: Vereinsschießsportleiter (Stempel & Unterschrift)
+      const rightLineWidth = 70;
+      const rightLineEnd = pageWidth - marginX;
+      const rightLineStart = rightLineEnd - rightLineWidth;
+      pdf.line(rightLineStart, afterTableY, rightLineEnd, afterTableY);
+      pdf.text('Stempel und Unterschrift', rightLineEnd, afterTableY + 5, { align: 'right' });
+      pdf.text('Vereinsschießsportleiter', rightLineEnd, afterTableY + 9.5, { align: 'right' });
+
+      // Fußzeile auf jeder Seite
+      const pageCount = pdf.getNumberOfPages();
+      for (let p = 1; p <= pageCount; p++) {
+        pdf.setPage(p);
+        pdf.setDrawColor(226, 232, 240);
+        pdf.setLineWidth(0.3);
+        pdf.line(marginX, pageHeight - 14, pageWidth - marginX, pageHeight - 14);
+        pdf.setTextColor(...textMuted);
+        pdf.setFontSize(7.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('Digitaler Schießnachweis · RWK Einbeck App', marginX, pageHeight - 9);
+        pdf.text(`Seite ${p} von ${pageCount}`, pageWidth - marginX, pageHeight - 9, { align: 'right' });
+      }
 
       // PDF speichern
-      const fileName = `Schiessnachweis_${personalData.name}_${filterJahr !== "alle" ? filterJahr : 'Gesamt'}.pdf`;
+      const fileName = `Schiessnachweis_${personalData.name}_${getZeitraumDateiname()}.pdf`;
       pdf.save(fileName);
       
       toast({
@@ -478,7 +575,7 @@ export default function PDFExportPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="name">Name *</Label>
                 <Input
@@ -519,7 +616,7 @@ export default function PDFExportPage() {
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="plz">PLZ</Label>
                 <Input
@@ -579,18 +676,45 @@ export default function PDFExportPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="jahr">Jahr</Label>
-              <NativeSelect
-                value={filterJahr}
-                onValueChange={setFilterJahr}
-                options={[
-                  { value: "alle", label: "Alle Jahre" },
-                  ...availableYears().map(year => ({
-                    value: year.toString(),
-                    label: year.toString()
-                  }))
-                ]}
-              />
+              <Label>Zeitraum</Label>
+              <div className="grid grid-cols-2 gap-3 mt-1">
+                <div>
+                  <span className="text-xs text-muted-foreground">Von Jahr</span>
+                  <NativeSelect
+                    value={filterVonJahr}
+                    onValueChange={setFilterVonJahr}
+                    disabled={filterAlleJahre}
+                    options={availableYears().map(year => ({
+                      value: year.toString(),
+                      label: year.toString()
+                    }))}
+                  />
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">Bis Jahr</span>
+                  <NativeSelect
+                    value={filterBisJahr}
+                    onValueChange={setFilterBisJahr}
+                    disabled={filterAlleJahre}
+                    options={availableYears().map(year => ({
+                      value: year.toString(),
+                      label: year.toString()
+                    }))}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="alleJahre"
+                  checked={filterAlleJahre}
+                  onChange={(e) => setFilterAlleJahre(e.target.checked)}
+                  className="rounded"
+                />
+                <Label htmlFor="alleJahre" className="text-sm font-normal">
+                  Alle Jahre (kein Zeitraum-Filter)
+                </Label>
+              </div>
             </div>
             
             <div>

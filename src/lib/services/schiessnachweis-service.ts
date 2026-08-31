@@ -1,5 +1,5 @@
 import { SchießEintrag, SchießStatistik } from '@/types/schiessnachweis';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logDebug } from '@/lib/utils/secure-logger';
 
 export class SchießnachweisService {
   private static convertToDate(value: any, fallback?: Date): Date {
@@ -151,95 +151,6 @@ export class SchießnachweisService {
     }
   }
   
-  private static async saveToIndexedDB(einträge: SchießEintrag[]): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        const request = indexedDB.open('SchiessnachweisDB', 1);
-        
-        request.onupgradeneeded = () => {
-          const db = request.result;
-          if (!db.objectStoreNames.contains('eintraege')) {
-            db.createObjectStore('eintraege', { keyPath: 'key' });
-          }
-        };
-        
-        request.onsuccess = () => {
-          try {
-            const db = request.result;
-            
-            if (!db.objectStoreNames.contains('eintraege')) {
-              resolve();
-              return;
-            }
-            
-            const transaction = db.transaction(['eintraege'], 'readwrite');
-            const store = transaction.objectStore('eintraege');
-            store.put({ key: 'schiessnachweis', data: einträge, timestamp: Date.now() });
-            
-            transaction.oncomplete = () => resolve();
-            transaction.onerror = () => reject(transaction.error);
-          } catch (error) {
-            logWarn('IndexedDB transaction failed:', error);
-            resolve();
-          }
-        };
-        
-        request.onerror = () => {
-          logWarn('IndexedDB open failed:', request.error);
-          resolve();
-        };
-      } catch (error) {
-        logWarn('IndexedDB Speicherung fehlgeschlagen:', error);
-        resolve();
-      }
-    });
-  }
-  
-  private static async loadFromIndexedDB(): Promise<SchießEintrag[]> {
-    return new Promise((resolve) => {
-      try {
-        const request = indexedDB.open('SchiessnachweisDB', 1);
-        
-        request.onsuccess = () => {
-          const db = request.result;
-          
-          // Prüfe ob Object Store existiert
-          if (!db.objectStoreNames.contains('eintraege')) {
-            resolve([]);
-            return;
-          }
-          
-          const transaction = db.transaction(['eintraege'], 'readonly');
-          const store = transaction.objectStore('eintraege');
-          const getRequest = store.get('schiessnachweis');
-          
-          getRequest.onsuccess = () => {
-            if (getRequest.result && getRequest.result.data) {
-              resolve(getRequest.result.data.map((eintrag: any) => {
-                const datum = SchießnachweisService.convertToDate(eintrag.datum);
-                const createdAt = SchießnachweisService.convertToDate(eintrag.createdAt, datum);
-                
-                return {
-                  ...eintrag,
-                  datum,
-                  createdAt
-                };
-              }));
-            } else {
-              resolve([]);
-            }
-          };
-          
-          getRequest.onerror = () => resolve([]);
-        };
-        
-        request.onerror = () => resolve([]);
-      } catch (error) {
-        resolve([]);
-      }
-    });
-  }
-
   static async getStatistik(): Promise<SchießStatistik> {
     try {
       const einträge = await this.getEinträge();
@@ -258,11 +169,8 @@ export class SchießnachweisService {
       const totalSchüsse = einträge.reduce((sum, e) => sum + e.schussAnzahl, 0);
       const totalTrainings = einträge.filter(e => e.typ === 'training').length;
       const totalWettkämpfe = einträge.filter(e => e.typ === 'wettkampf').length;
-      // Durchschnitt pro Schuss (nicht pro Eintrag)
-      const durchschnittProSchuss = totalSchüsse > 0 ? 
-        einträge.reduce((sum, e) => sum + e.ergebnis, 0) / totalSchüsse : 0;
-      
-      // Durchschnitt pro Eintrag (für Vergleichbarkeit)
+
+      // Durchschnitt pro Eintrag (Ringe pro Schuss, für Vergleichbarkeit)
       const ergebnisse = einträge.map(e => e.ergebnis / e.schussAnzahl); // Ringe pro Schuss
       const durchschnittErgebnis = ergebnisse.reduce((sum, e) => sum + e, 0) / ergebnisse.length;
       const bestesErgebnis = Math.max(...ergebnisse);
@@ -294,33 +202,48 @@ export class SchießnachweisService {
     return JSON.stringify(einträge, null, 2);
   }
 
-  static async importData(jsonData: string): Promise<number> {
+  static async importData(rawData: string): Promise<number> {
     try {
-      const importedEinträge = JSON.parse(jsonData);
+      // BOM entfernen, falls vorhanden
+      const data = rawData.replace(/^\uFEFF/, '').trim();
+
+      if (!data) {
+        throw new Error('Die Datei ist leer.');
+      }
+
+      // Format automatisch erkennen: JSON (beginnt mit [ oder {) oder CSV
+      const isJson = data.startsWith('[') || data.startsWith('{');
+      const importedEinträge = isJson ? JSON.parse(data) : this.parseCSV(data);
+
+      if (!Array.isArray(importedEinträge)) {
+        throw new Error('Kein gültiges Datenformat erkannt.');
+      }
+
       const existingEinträge = await this.getEinträge();
-      
+
       // Merge und Duplikate vermeiden
       const allEinträge = [...existingEinträge];
       let importCount = 0;
-      
+
       importedEinträge.forEach((imported: any) => {
-        const exists = allEinträge.some(existing => 
-          existing.datum.getTime() === new Date(imported.datum).getTime() &&
+        const importDatum = new Date(imported.datum);
+        const exists = allEinträge.some(existing =>
+          existing.datum.getTime() === importDatum.getTime() &&
           existing.disziplin === imported.disziplin &&
           existing.ergebnis === imported.ergebnis
         );
-        
+
         if (!exists) {
           allEinträge.push({
             ...imported,
-            id: Date.now().toString() + Math.random(),
-            datum: new Date(imported.datum),
+            id: Date.now().toString() + '_' + Math.random().toString(36).substring(2, 9),
+            datum: importDatum,
             createdAt: new Date(imported.createdAt || imported.datum)
           });
           importCount++;
         }
       });
-      
+
       await this.saveToDatabase(allEinträge);
       return importCount;
     } catch (error) {
@@ -328,6 +251,106 @@ export class SchießnachweisService {
       const errorMessage = error instanceof Error ? error.message : 'Ungültiges Datenformat';
       throw new Error(`Import fehlgeschlagen: ${errorMessage}`);
     }
+  }
+
+  /**
+   * Parst eine CSV-Datei im Format des eigenen Exports (Semikolon-getrennt,
+   * Werte in Anführungszeichen, deutsche Zahlenformatierung mit Komma).
+   */
+  private static parseCSV(csv: string): Partial<SchießEintrag>[] {
+    const lines = csv.split(/\r?\n/).filter(line => line.trim().length > 0);
+
+    if (lines.length < 2) {
+      throw new Error('CSV enthält keine Datenzeilen.');
+    }
+
+    const parseLine = (line: string): string[] => {
+      const fields: string[] = [];
+      let current = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"'; // Escapetes Anführungszeichen
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ';' && !inQuotes) {
+          fields.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      fields.push(current);
+      return fields.map(f => f.trim());
+    };
+
+    const headers = parseLine(lines[0]);
+    const colIndex = (name: string) => headers.findIndex(h => h.toLowerCase() === name.toLowerCase());
+
+    const idxDatum = colIndex('Datum');
+    const idxTyp = colIndex('Typ');
+    const idxDisziplin = colIndex('Disziplin');
+    const idxSchuss = colIndex('Schussanzahl');
+    const idxGanzeRinge = colIndex('Ergebnis_Ganze_Ringe');
+    const idxGesamt = colIndex('Ergebnis_Gesamt');
+    const idxStandort = colIndex('Standort');
+    const idxSchiessstand = colIndex('Schießstand');
+    const idxWetter = colIndex('Wetter');
+    const idxMunition = colIndex('Munition');
+    const idxWaffe = colIndex('Waffe');
+    const idxNotizen = colIndex('Notizen');
+
+    if (idxDatum === -1 || idxDisziplin === -1) {
+      throw new Error('CSV-Format nicht erkannt (Spalten "Datum"/"Disziplin" fehlen).');
+    }
+
+    // Deutsches Datum (dd.MM.yyyy) in Date umwandeln
+    const parseDate = (value: string): Date => {
+      const match = value.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
+      if (match) {
+        const [, d, m, y] = match;
+        const year = y.length === 2 ? 2000 + parseInt(y) : parseInt(y);
+        return new Date(year, parseInt(m) - 1, parseInt(d));
+      }
+      const fallback = new Date(value);
+      return isNaN(fallback.getTime()) ? new Date() : fallback;
+    };
+
+    // Deutsche Zahl (Komma als Dezimaltrenner) in number umwandeln
+    const parseNum = (value: string): number => {
+      if (!value) return 0;
+      const n = parseFloat(value.replace(/\./g, '').replace(',', '.'));
+      return isNaN(n) ? 0 : n;
+    };
+
+    const get = (fields: string[], idx: number) => (idx >= 0 && idx < fields.length ? fields[idx] : '');
+
+    return lines.slice(1).map(line => {
+      const fields = parseLine(line);
+      const typRaw = get(fields, idxTyp).toLowerCase();
+      const ganzeRinge = parseNum(get(fields, idxGanzeRinge));
+      const gesamt = parseNum(get(fields, idxGesamt));
+
+      return {
+        datum: parseDate(get(fields, idxDatum)),
+        typ: typRaw === 'wettkampf' ? 'wettkampf' : 'training',
+        disziplin: get(fields, idxDisziplin),
+        schussAnzahl: parseNum(get(fields, idxSchuss)),
+        ergebnis: gesamt || ganzeRinge,
+        ergebnisGanzeRinge: ganzeRinge || undefined,
+        standort: get(fields, idxStandort),
+        schiessstand: get(fields, idxSchiessstand) || undefined,
+        wetter: get(fields, idxWetter) || undefined,
+        munition: get(fields, idxMunition) || undefined,
+        waffe: get(fields, idxWaffe) || undefined,
+        notizen: get(fields, idxNotizen) || undefined,
+      } as Partial<SchießEintrag>;
+    });
   }
   
   static async refreshData(): Promise<SchießEintrag[]> {
@@ -394,10 +417,11 @@ export class SchießnachweisService {
       ].map(field => `"${field.toString().replace(/"/g, '""')}"`); // CSV-Escaping
     });
     
-    // CSV zusammenfügen
-    const csvContent = [headers.join(';'), ...rows.map(row => row.join(';'))].join('\n');
+    // CSV zusammenfügen (CRLF für maximale Excel-Kompatibilität)
+    const csvContent = [headers.join(';'), ...rows.map(row => row.join(';'))].join('\r\n');
     
-    return csvContent;
+    // UTF-8 BOM voranstellen, damit Excel Umlaute (ä, ö, ü, ß) korrekt darstellt
+    return '\uFEFF' + csvContent;
   }
 
   // Hilfsfunktion für Device-ID
