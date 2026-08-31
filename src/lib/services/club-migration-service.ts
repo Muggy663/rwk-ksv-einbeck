@@ -25,7 +25,6 @@ export class ClubMigrationService {
       
       for (const clubDoc of clubsSnapshot.docs) {
         const clubId = clubDoc.id;
-        const clubData = clubDoc.data();
         secureLogger.info('Migriere Verein', `ClubId: ${clubId}`);
         
         try {
@@ -33,7 +32,7 @@ export class ClubMigrationService {
           totalMigrated += migrated;
           clubsProcessed.push(`Club: ${migrated} Mitglieder`);
         } catch (error) {
-          secureLogger.logError(error, `Migration error for club: ${clubId}`);
+          secureLogger.error(`Migration error for club: ${clubId}`, error instanceof Error ? error : new Error(String(error)));
           clubsProcessed.push(`Club: FEHLER`);
         }
       }
@@ -42,7 +41,7 @@ export class ClubMigrationService {
       return { totalMigrated, clubsProcessed };
       
     } catch (error) {
-      secureLogger.logError(error, 'Gesamt-Migration failed');
+      secureLogger.error('Gesamt-Migration failed', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -113,16 +112,17 @@ export class ClubMigrationService {
           migriert: true
         };
         
-        // Entferne alle undefined Werte
-        Object.keys(mitgliedData).forEach(key => {
-          if (mitgliedData[key] === undefined) {
-            delete mitgliedData[key];
+        // Entferne alle undefined Werte (dynamischer Zugriff -> lokale any-Referenz)
+        const cleanData = mitgliedData as Record<string, any>;
+        Object.keys(cleanData).forEach(key => {
+          if (cleanData[key] === undefined) {
+            delete cleanData[key];
           }
           // Bereinige auch verschachtelte Objekte
-          if (typeof mitgliedData[key] === 'object' && mitgliedData[key] !== null) {
-            Object.keys(mitgliedData[key]).forEach(subKey => {
-              if (mitgliedData[key][subKey] === undefined) {
-                mitgliedData[key][subKey] = null;
+          if (typeof cleanData[key] === 'object' && cleanData[key] !== null) {
+            Object.keys(cleanData[key]).forEach(subKey => {
+              if (cleanData[key][subKey] === undefined) {
+                cleanData[key][subKey] = null;
               }
             });
           }
@@ -137,7 +137,7 @@ export class ClubMigrationService {
       return migratedCount;
       
     } catch (error) {
-      secureLogger.logError(error, `Migration failed for club: ${clubId}`);
+      secureLogger.error(`Migration failed for club: ${clubId}`, error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -166,7 +166,7 @@ export class ClubMigrationService {
       // Weitere Collections...
       
     } catch (error) {
-      secureLogger.logError(error, `Vereinsrecht-Migration failed for club: ${clubId}`);
+      secureLogger.error(`Vereinsrecht-Migration failed for club: ${clubId}`, error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -209,7 +209,7 @@ export class ClubMigrationService {
       const snapshot = await getDocs(collection(db, mitgliederCollection));
       return snapshot.docs.length > 0;
     } catch (error) {
-      secureLogger.logError(error, 'Migration check failed');
+      secureLogger.error('Migration check failed', error instanceof Error ? error : new Error(String(error)));
       return false;
     }
   }
