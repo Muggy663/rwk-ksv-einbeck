@@ -111,3 +111,30 @@ oder Funktion zu verändern.
 |---------|--------|
 | Premium/Cloud-Sync + Tests entfernt | ✅ |
 | Gesamt-Projekt | 2645 → 2335 |
+
+### Bereich: Verein (teilweise)
+
+**Zentraler Fix mit großer Hebelwirkung:**
+- **`components/auth/AuthContext.tsx`**: `UserPermission`-Typ um die real in Firestore gespeicherten Felder der 3-Ebenen-Rollenstruktur ergänzt (`platformRole`, `kvRoles`, `clubRoles`). Der Typ war unvollständig — überall wurde `(x as any).clubRoles` als Workaround genutzt. Behob ~30 Fehler projektweit (nicht nur im Verein-Bereich).
+- **`types/rwk.ts`**: `UserPermission.role` um `'superadmin'` erweitert, `assignedClubId` ergänzt (beide real genutzt).
+
+**`app/verein/layout.tsx`** (21 → 0): Der zentrale Verein-Layout-Wrapper mit `useVereinAuth`-Context. `clubRoles`-Fehler durch AuthContext-Fix behoben; `setUserPermissionForContext`-Typkonflikte (zwei divergierende `UserPermission`-Typen) mit dokumentiertem Cast gelöst; ungenutzte Imports/Destrukturierung bereinigt.
+
+**`app/verein/mannschaften/page.tsx`** (31 → 4): Große Datei (~1700 Zeilen).
+- Bug-Fix: `variant: "warning"` existiert im Toast nicht → `"destructive"` (2 Stellen; Warnungen wurden vorher gar nicht angezeigt).
+- `window.shooterSearchTimeout` typsicher gemacht (`window as any`).
+- `getShooterClubId`-Funktion entfernt (behob nebenbei `kmClubId`-Fehler).
+- `logWarn(..., error)` → `getErrorMessage(error)` (3 Stellen).
+- Viele ungenutzte Imports/Variablen/nicht existente Exporte (`GEWEHR_DISCIPLINES` etc.) bereinigt.
+- **Vorsicht-Lektion**: Beim Entfernen von `categoryOfCurrentTeam` versehentlich `teamLeagueData` mitgelöscht (wird woanders genutzt) — durch tsc-Check sofort erkannt und wiederhergestellt.
+
+**Noch offen in mannschaften/page.tsx (4 Fehler, brauchen mehr Kontext):**
+- Zeile 21: TS6192 "all imports unused" (unklar, `GlobalResponsiveDialog` wird eigentlich genutzt — genauer prüfen)
+- `getClubName` ungenutzte Funktion
+- HelpTooltip mit falschen Props (`{ text, side, className }` passt nicht zu `HelpTooltipProps`)
+- TS2322 `string | boolean` → `boolean | undefined` bei einem Prop
+
+| Bereich | Fehler vorher | Fehler nachher | Status |
+|---------|---------------|----------------|--------|
+| Verein (layout ✅, mannschaften fast) | 113 | 66 | teilweise |
+| Gesamt-Projekt | 2335 | 2274 | läuft |

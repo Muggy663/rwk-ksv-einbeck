@@ -176,8 +176,9 @@ export interface UserPermission {
   uid: string;
   email: string;
   displayName?: string;
-  role?: 'admin' | 'vereinsvertreter' | 'mannschaftsfuehrer' | 'km_orga';
+  role?: 'admin' | 'superadmin' | 'vereinsvertreter' | 'mannschaftsfuehrer' | 'km_orga';
   clubId?: string;
+  assignedClubId?: string;
   representedClubs?: string[];
   isActive?: boolean;
   createdAt?: Date;

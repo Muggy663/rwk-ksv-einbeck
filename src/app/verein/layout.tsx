@@ -1,9 +1,9 @@
 "use client";
-import React, { type ReactNode, createContext, useContext, useState, useEffect, useMemo } from 'react'; // Added useMemo
+import { type ReactNode, createContext, useContext, useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, AlertTriangle, ShieldAlert, UserCog, FileDown, CalendarDays, User, HelpCircle, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, ShieldAlert, UserCog, FileDown, CalendarDays, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -13,7 +13,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { PasswordChangePrompt } from '@/components/auth/PasswordChangePrompt';
-import { LogoutButton } from '@/components/auth/LogoutButton';
 
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";
 
@@ -53,8 +52,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
     userAppPermissions,
     loadingAppPermissions,
     appPermissionsError: authProviderPermissionError,
-    signOut,
-    resetInactivityTimer
+    signOut
   } = useAuth();
 
   // State for derived permission error specific to this layout's logic
@@ -205,7 +203,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
           
         if (clubIds.length > 0) {
 
-          setUserPermissionForContext(userAppPermissions);
+          setUserPermissionForContext(userAppPermissions as unknown as UserPermission);
           setAssignedClubIdArray(clubIds);
           
           // Multi-Verein: Weiterleitung zur Club-Auswahl
@@ -236,7 +234,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
         } else {
           // Role is valid, but no valid clubs assigned
           setDerivedPermissionError("Benutzer hat Rolle, aber keinen gültigen Verein zugewiesen.");
-          setUserPermissionForContext(userAppPermissions);
+          setUserPermissionForContext(userAppPermissions as unknown as UserPermission);
           setAssignedClubIdArray([]);
         }
       } else {
@@ -244,7 +242,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
         const roleInfo = role || (userAppPermissions.clubRoles ? Object.values(userAppPermissions.clubRoles).join(', ') : 'Keine Rollen gefunden');
 
         setDerivedPermissionError(`Benutzer hat keine gültige Rolle für den Vereinsbereich. Benötigt: SPORTLEITER, VORSTAND oder Legacy-Rollen. Aktuelle Rollen: ${roleInfo}`);
-        setUserPermissionForContext(userAppPermissions); // Store for potential role display in error
+        setUserPermissionForContext(userAppPermissions as unknown as UserPermission); // Store for potential role display in error
         setAssignedClubIdArray([]);
       }
     }

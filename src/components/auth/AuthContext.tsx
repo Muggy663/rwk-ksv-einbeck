@@ -18,6 +18,10 @@ export interface UserPermission {
   clubId: string | null;
   clubIds?: string[]; // Für mehrere Vereine
   representedClubs?: string[]; // Für KM-Zugang
+  // 3-Ebenen-Rollenstruktur (wird in Firestore gespeichert)
+  platformRole?: string;
+  kvRoles?: Record<string, string>;
+  clubRoles?: Record<string, string>;
 }
 
 export interface AuthContextType {
