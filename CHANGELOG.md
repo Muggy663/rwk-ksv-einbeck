@@ -5,6 +5,7 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 ---
 
 ## Version 2.7.2
+- **🔄 Update-Hinweis verbessert**: Bei neuer Version wird jetzt die richtige Tastenkombination angezeigt (Strg+Shift+R unter Windows/Linux, Cmd+Shift+R am Mac) — ein normales F5 reicht nicht. Der „Aktualisieren“-Button leert zusätzlich Cache und Service Worker für ein echtes Neuladen
 - **🐛 PDF-Export Absturz behoben**: Der Behörden-Nachweis brach bei Einträgen mit fehlenden Feldern (z.B. Disziplin/Standort) still ab — jetzt robust gegen unvollständige Datensätze
 - **🎨 PDF-Design modernisiert**: Farbiges Kopfband, Info-Karten für Persönliche Daten und Schießtätigkeit, KI-Begleittext in eigener Box
 - **📊 PDF-Tabelle über AutoTable**: Saubere Kopfzeile mit Zebra-Streifen statt handgezeichneter Linien — die verrutschte Trennlinie in der ersten Zeile ist behoben
