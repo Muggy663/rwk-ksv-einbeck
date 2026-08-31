@@ -99,3 +99,15 @@ oder Funktion zu verändern.
 |---------|---------------|----------------|--------|
 | Kern (lib/utils/types) + PDF-Services | ~45 | 0 (in bearbeiteten Dateien) | teilweise |
 | Gesamt-Projekt | 2577 | 2532 | läuft |
+
+### Aufräumung: Premium/Cloud-Sync + Test-Infrastruktur (entschieden vom Nutzer)
+
+- **`cloud-sync-service.ts` gelöscht**: War Teil des nie umgesetzten Premium-Modells. Überflüssig, weil eingeloggte Nutzer ihre Ergebnisse ohnehin direkt aus Firestore (Nutzerprofil) sehen — kein separater Sync nötig.
+- **Test-Infrastruktur gelöscht (Weg A)**: `utils/test-utils.tsx` + 11 Test-Dateien (`components/ui/__tests__/*`, `components/auth/__tests__/*`, `components/layout/__tests__/SiteFooter.test.tsx`). Hingen alle an nicht installiertem `@testing-library/react`, liefen nie (kein Test-Runner konfiguriert). Falls später Tests gewünscht: frisch mit Vitest/Jest aufsetzen.
+
+**Gegengecheckt:** keine Verweise auf gelöschte Dateien. Gesamt: 2532 → 2335.
+
+| Bereich | Status |
+|---------|--------|
+| Premium/Cloud-Sync + Tests entfernt | ✅ |
+| Gesamt-Projekt | 2645 → 2335 |
