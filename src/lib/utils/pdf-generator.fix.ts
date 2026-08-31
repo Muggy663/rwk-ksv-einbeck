@@ -1,16 +1,18 @@
 import { jsPDF } from 'jspdf';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import 'jspdf-autotable';
-import { LeagueDisplay, TeamDisplay } from '@/types/rwk';
+import { LeagueDisplay } from '@/types/rwk';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { isMobileDevice } from './is-mobile';
-import { isSafari, isIOS, downloadPDFSafari } from './safari-pdf-fix';
+import { isSafari, downloadPDFSafari } from './safari-pdf-fix';
 
 // Erweitere die jsPDF-Typen für autotable
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
+    lastAutoTable?: { finalY: number };
+    getNumberOfPages: () => number;
   }
 }
 
@@ -171,7 +173,7 @@ export async function generateLeaguePDFFixed(
       let currentY = 35;
       for (const team of (league?.teams || [])) {
         const teamNameSafe = team.name || '';
-        const teamRowData = {
+        const teamRowData: Record<string, string | number | null | undefined> = {
           rank: team.outOfCompetition ? "AK" : team.rank,
           name: team.outOfCompetition ? sanitize(`${teamNameSafe} (Außer Konkurrenz)`) : sanitize(teamNameSafe),
           totalScore: team.totalScore || '-',
@@ -208,7 +210,7 @@ export async function generateLeaguePDFFixed(
           }
         });
         
-        currentY = doc.lastAutoTable.finalY + 1;
+        currentY = (doc.lastAutoTable?.finalY ?? currentY) + 1;
         
         // Schützen des Teams
         const teamShooters = team.shootersResults || [];
@@ -253,7 +255,7 @@ export async function generateLeaguePDFFixed(
             }
           });
           
-          currentY = doc.lastAutoTable.finalY + 2;
+          currentY = (doc.lastAutoTable?.finalY ?? currentY) + 2;
         } else {
           currentY += 2;
         }
@@ -266,7 +268,7 @@ export async function generateLeaguePDFFixed(
       }
       
       // Fußzeile
-      const pageCount = doc.internal.getNumberOfPages();
+      const pageCount = doc.getNumberOfPages();
       doc.setFontSize(8);
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -365,12 +367,12 @@ export async function generateShootersPDFFixed(
         const teamNameSafe = shooter.teamName || '';
         const shooterNameSafe = shooter.shooterName || '';
         const rowData: ShooterRowData = {
-          rank: shooter.teamOutOfCompetition ? "AK" : shooter.rank,
+          rank: shooter.teamOutOfCompetition ? "AK" : (shooter.rank ?? '-'),
           name: sanitize(shooterNameSafe),
           team: shooter.teamOutOfCompetition ? sanitize(`${teamNameSafe} (AK)`) : sanitize(teamNameSafe),
           totalScore: shooter.totalScore || '-',
           averageScore: shooter.averageScore ? shooter.averageScore.toFixed(2) : '-',
-          isOutOfCompetition: shooter.teamOutOfCompetition
+          isOutOfCompetition: shooter.teamOutOfCompetition ?? false
         };
         
         for (let i = 1; i <= numRounds; i++) {
@@ -406,7 +408,7 @@ export async function generateShootersPDFFixed(
       });
       
       // Fußzeile
-      const pageCount = doc.internal.getNumberOfPages();
+      const pageCount = doc.getNumberOfPages();
       doc.setFontSize(8);
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);

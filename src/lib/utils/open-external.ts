@@ -28,11 +28,11 @@ export async function openWithAppChooser(url: string): Promise<void> {
     }
     
     // Prüfe, ob wir in einer nativen App sind
-    const isNativeApp = window.Capacitor && window.Capacitor.isNativePlatform();
+    const isNativeApp = window.Capacitor?.isNativePlatform();
     
     if (isNativeApp) {
       // Prüfe die Plattform
-      const platform = window.Capacitor.getPlatform();
+      const platform = window.Capacitor?.getPlatform();
       
       if (platform === 'android') {
         // Für Android: Versuche verschiedene Methoden

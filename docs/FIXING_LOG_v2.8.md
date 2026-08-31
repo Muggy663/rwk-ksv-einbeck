@@ -73,3 +73,29 @@ oder Funktion zu verändern.
 |---------|---------------|----------------|--------|
 | Schießnachweis (page + eintraege + neuer-eintrag + statistiken + profil + Komponenten + cloud-sync) | ~68 | 0 | ✅ fertig |
 | Gesamt-Projekt | 2645 | 2577 | läuft |
+
+### Bereich: Kern (lib / utils / types) + PDF-Services
+
+**Echte Bugs behoben:**
+- **`components/pdf-export-button.tsx`**: Importierte `generateLeaguePDF`/`generateShootersPDF`, die so nicht existieren (Service exportiert `...Fixed`). Der PDF-Export-Button hätte zur Laufzeit gecrasht (`undefined is not a function`). Import per Alias korrigiert; überflüssiges `{ useCache }`-Argument entfernt (Funktionen nehmen keine Optionen).
+- **`lib/services/pdf-service-fixed.ts`**: `this.findSubstitutionInfo(...)` in einer freien Modul-Funktion aufgerufen (`this` ist dort `undefined`) → hätte gecrasht. Zu direktem Funktionsaufruf korrigiert.
+- **`lib/services/shooter-data-service.ts`**: `{ id: d.id, ...d.data() }` → Spread überschrieb die echte Doc-ID. Reihenfolge zu `{ ...d.data(), id: d.id }` korrigiert (echte ID gewinnt).
+- **`lib/db/document-service-mongo.ts`**: 7 Funktionen griffen auf `db.collection()` zu, obwohl `getMongoDb()` `null` liefern kann (MongoDB ist optional) → Null-Zugriff möglich. Guards `if (!db) return ...` mit passendem Fallback (`[]`/`null`/`false`) ergänzt.
+
+**Null-Safety / Typfehler:**
+- **`shooter-data-service.ts`**: `currentShooterData` (aus `Map.get()`, evtl. undefined) → Guard `if (!currentShooterData) continue;` nach dem Init-Block (behob 12 Fehler).
+- **`pdf-service-fixed.ts` / `pdf-generator.fix.ts`**: `doc.lastAutoTable?.finalY ?? currentY`; jsPDF-Modul-Deklaration um `lastAutoTable`/`getNumberOfPages` erweitert; `doc.internal.getNumberOfPages()` → `doc.getNumberOfPages()`; Zeilen-Arrays/Objekte korrekt als `(string|number)[]` bzw. `Record<...>` typisiert; Null-Fallbacks bei `rank`/`isOutOfCompetition`.
+- **`types/rwk.ts`**: `IndividualShooterDisplayData` um optionale Felder `isSubstitute` und `substitutionInfo` erweitert (wurden vom Service gesetzt und vom PDF-Generator gelesen, fehlten aber im Typ).
+- **`utils/memoization.ts`**: fehlenden `React`-Namespace-Import ergänzt.
+- **`lib/utils/open-external.ts`**: `window.Capacitor?.` optional chaining (möglicherweise undefined).
+
+**Gegengecheckt:** Alle genannten Dateien `tsc`-fehlerfrei. `types/rwk.ts`-Änderung nur additive optionale Felder → keine Folgefehler (Gesamtzahl gesunken, nicht gestiegen). Gesamt: 2577 → 2532.
+
+**Offene Themen für später:**
+- Test-Infrastruktur (`__tests__/`, `test-utils.tsx`): hängt an nicht installiertem `@testing-library/react`, läuft nicht. Entscheidung: löschen oder Test-Setup einrichten?
+- `cloud-sync-service.ts`: verwaist (Premium/Cloud-Sync-Feature, durch direkten Firestore-Zugriff ersetzt). Löschen?
+
+| Bereich | Fehler vorher | Fehler nachher | Status |
+|---------|---------------|----------------|--------|
+| Kern (lib/utils/types) + PDF-Services | ~45 | 0 (in bearbeiteten Dateien) | teilweise |
+| Gesamt-Projekt | 2577 | 2532 | läuft |

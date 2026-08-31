@@ -9,6 +9,8 @@ import { de } from 'date-fns/locale';
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
+    lastAutoTable?: { finalY: number };
+    getNumberOfPages: () => number;
   }
 }
 
@@ -65,7 +67,7 @@ export async function generateLeaguePDFFixed(
       styles: { fontSize: 8 }
     });
     
-    currentY = doc.lastAutoTable.finalY + 2;
+    currentY = (doc.lastAutoTable?.finalY ?? currentY) + 2;
     
     // Schützen aus individualLeagueShooters holen (exakt wie Einzelschützen-PDF)
     // Normalisiere Teamnamen für Vergleich (entferne mehrfache Leerzeichen)
@@ -92,7 +94,7 @@ export async function generateLeaguePDFFixed(
           shooterName += ` (Ersatz ab DG${sub.fromRound} für ${sub.originalShooterName})`;
         }
         
-        const row = ['', shooterName];
+        const row: (string | number)[] = ['', shooterName];
         for (let i = 1; i <= numRounds; i++) {
           const key = `dg${i}`;
           row.push(shooter.results[key] !== null ? shooter.results[key] : '-');
@@ -115,7 +117,7 @@ export async function generateLeaguePDFFixed(
       styles: { cellPadding: 1 }
     });
     
-    currentY = doc.lastAutoTable.finalY + 5;
+    currentY = (doc.lastAutoTable?.finalY ?? currentY) + 5;
     
     if (currentY > 200) {
       doc.addPage();
@@ -181,7 +183,7 @@ export async function generateShootersPDFFixed(
   
   // Daten für die Tabelle vorbereiten
   const tableData = league.individualLeagueShooters.map(shooter => {
-    const substitutionInfo = this.findSubstitutionInfo(shooter, league.teams);
+    const substitutionInfo = findSubstitutionInfo(shooter, league.teams);
     let shooterName = shooter.shooterName;
     
     if (substitutionInfo) {
@@ -231,7 +233,7 @@ export async function generateShootersPDFFixed(
   });
   
   // Fußzeile
-  const pageCount = doc.internal.getNumberOfPages();
+  const pageCount = doc.getNumberOfPages();
   doc.setFontSize(8);
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);

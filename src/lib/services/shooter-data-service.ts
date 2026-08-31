@@ -1,6 +1,6 @@
 import { db } from '@/lib/firebase/config';
 import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { CompetitionDisplayConfig, IndividualShooterDisplayData, ScoreEntry } from '@/types/rwk';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 import { batchGetShooters } from '@/lib/utils/batch-reads';
@@ -37,7 +37,7 @@ export async function fetchShooterDataForCompetition(
     const scoresSnapshot = await getDocs(scoresQuery);
     const allScores: ScoreEntry[] = [];
     scoresSnapshot.docs.forEach(d => { 
-      allScores.push({ id: d.id, ...d.data() as ScoreEntry }); 
+      allScores.push({ ...(d.data() as ScoreEntry), id: d.id }); 
     });
     
     // 🚀 OPTIMIERUNG: Batch-Load aller Shooter auf einmal (statt einzeln)
@@ -110,7 +110,11 @@ export async function fetchShooterDataForCompetition(
         };
         shootersMap.set(score.shooterId, currentShooterData);
       }
-      
+
+      // Ab hier ist currentShooterData garantiert gesetzt (oben aus Map geholt
+      // oder im if-Block neu erstellt). TypeScript kann das nicht selbst ableiten.
+      if (!currentShooterData) continue;
+
       // Gender und Team-Name aktualisieren
       const genderFromScore = score.shooterGender?.toLowerCase();
       if (genderFromScore === 'female' || genderFromScore === 'w') {

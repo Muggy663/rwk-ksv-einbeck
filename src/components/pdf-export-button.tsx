@@ -1,9 +1,9 @@
 "use client";
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown } from 'lucide-react';
-import { generateLeaguePDF, generateShootersPDF } from '@/lib/services/pdf-service-fixed';
+import { generateLeaguePDFFixed as generateLeaguePDF, generateShootersPDFFixed as generateShootersPDF } from '@/lib/services/pdf-service-fixed';
 import { useToast } from '@/hooks/use-toast';
 
 interface League {
@@ -30,7 +30,6 @@ export function PDFExportButton({
   competitionYear,
   type,
   className,
-  useCache = true
 }: PDFExportButtonProps) {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
@@ -55,10 +54,10 @@ export function PDFExportButton({
       }, 200);
       
       if (type === 'teams') {
-        pdfBlob = await generateLeaguePDF(league, numRounds, competitionYear, { useCache });
+        pdfBlob = await generateLeaguePDF(league as any, numRounds, competitionYear);
         fileName = `${league.name.replace(/\s+/g, '_')}_Mannschaften_${competitionYear}.pdf`;
       } else {
-        pdfBlob = await generateShootersPDF(league, numRounds, competitionYear, { useCache });
+        pdfBlob = await generateShootersPDF(league as any, numRounds, competitionYear);
         fileName = `${league.name.replace(/\s+/g, '_')}_Einzelschuetzen_${competitionYear}.pdf`;
       }
       

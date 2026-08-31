@@ -325,6 +325,8 @@ export interface IndividualShooterDisplayData {
   teamOutOfCompetition?: boolean;
   teamOutOfCompetitionReason?: string;
   rank?: number | null;
+  isSubstitute?: boolean;
+  substitutionInfo?: { isSubstitute?: boolean; fromRound?: number; originalShooterName?: string } | null;
 }
 
 export interface LeagueDisplay {
