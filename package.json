@@ -9,6 +9,7 @@
     "build:capacitor": "set NEXT_CONFIG=capacitor && next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "update-version": "node scripts/update-version.js"
   },
   "dependencies": {
