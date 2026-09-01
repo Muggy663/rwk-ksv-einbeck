@@ -1,7 +1,7 @@
 // src/components/ui/pull-to-refresh.tsx
 "use client";
 
-import { ReactNode } from 'react';
+import { ReactNode, RefObject } from 'react';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { Loader2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -38,7 +38,7 @@ export function PullToRefresh({
 
   return (
     <div 
-      ref={containerRef}
+      ref={containerRef as RefObject<HTMLDivElement>}
       className={cn("relative overflow-auto", className)}
       style={{ 
         transform: isPulling ? `translateY(${Math.min(pullDistance * 0.5, 40)}px)` : 'translateY(0)',

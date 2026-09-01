@@ -20,6 +20,7 @@ export function NotificationBell() {
       const interval = setInterval(loadUnreadCount, 30000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [user]);
 
   const loadUnreadCount = async () => {

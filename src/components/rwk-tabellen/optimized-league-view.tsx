@@ -98,7 +98,6 @@ export function OptimizedLeagueView({
     <ErrorBoundary>
       <AriaLive 
         message={loadingState.isLoading ? loadingState.message : ''} 
-        politeness="polite"
       />
       
       <Accordion 

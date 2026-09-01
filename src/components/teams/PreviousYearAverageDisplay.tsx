@@ -2,7 +2,6 @@
 
 import { PreviousYearAverage } from '@/components/stats/PreviousYearAverage';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
-import { InfoIcon } from 'lucide-react';
 
 interface PreviousYearAverageDisplayProps {
   shooterId: string;
@@ -26,9 +25,7 @@ export function PreviousYearAverageDisplay({
       {showLabel && (
         <div className="flex items-center">
           <span className="text-sm text-muted-foreground mr-1">Vorjahr:</span>
-          <HelpTooltip content="Durchschnitt des Schützen aus dem Vorjahr in dieser Disziplin">
-            <InfoIcon className="h-4 w-4 text-muted-foreground" />
-          </HelpTooltip>
+          <HelpTooltip text="Durchschnitt des Schützen aus dem Vorjahr in dieser Disziplin" />
         </div>
       )}
       <PreviousYearAverage

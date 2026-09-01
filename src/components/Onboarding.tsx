@@ -40,6 +40,7 @@ export function Onboarding() {
       }, 1000); // Verzögerung für bessere Benutzererfahrung
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [hasSeenOnboarding, user, userAppPermissions]);
 
   const handleClose = () => {

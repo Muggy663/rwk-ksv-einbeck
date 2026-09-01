@@ -85,7 +85,7 @@ export function ReportButton({
       <DialogTrigger asChild>
         <Button 
           variant={variant} 
-          size={size}
+          size={size === 'md' ? 'default' : size}
           className="text-red-600 hover:text-red-700 hover:bg-red-50"
         >
           <Flag className="h-4 w-4 mr-1" />

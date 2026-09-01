@@ -27,7 +27,7 @@ export default function TargetVisualization({
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<any>(null);
   const rendererRef = useRef<any>(null);
-  const animationIdRef = useRef<number>();
+  const animationIdRef = useRef<number | undefined>(undefined);
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentShot, setCurrentShot] = useState(0);
 
@@ -55,7 +55,7 @@ export default function TargetVisualization({
         THREE = await import('three');
         setIsLoaded(true);
         
-        if (!mountRef.current) return;
+        if (!mountRef.current) return undefined;
 
         // Scene Setup
         const scene = new THREE.Scene();
@@ -177,6 +177,7 @@ export default function TargetVisualization({
       } catch (error) {
         logError('Fehler beim Laden von Three.js:', error);
       }
+      return undefined;
     };
 
     initThreeJS();

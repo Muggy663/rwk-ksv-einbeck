@@ -129,7 +129,7 @@ export function SubstitutionDialog({
       const substitution: Omit<TeamSubstitution, 'id'> = {
         teamId: team.id,
         teamName: team.name,
-        leagueId: team.leagueId,
+        leagueId: team.leagueId || '',
         competitionYear: team.competitionYear,
         originalShooterId: selectedOriginalShooter,
         originalShooterName: originalShooter.name,

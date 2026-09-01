@@ -3,7 +3,6 @@
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
-import { Info } from 'lucide-react';
 
 interface TeamStrengthSelectorProps {
   value: string;
@@ -41,9 +40,7 @@ export function TeamStrengthSelector({
         <Label htmlFor="team-strength" className={required ? 'after:content-["*"] after:ml-0.5 after:text-destructive' : ''}>
           {label}
         </Label>
-        <HelpTooltip content={tooltip}>
-          <Info className="h-4 w-4 text-muted-foreground" />
-        </HelpTooltip>
+        <HelpTooltip text={tooltip} />
       </div>
       
       <NativeSelect

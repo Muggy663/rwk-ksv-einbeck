@@ -3,6 +3,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 interface TeamStatusBadgeProps {
   outOfCompetition?: boolean;
+  reason?: string;
   className?: string;
   showTooltip?: boolean;
 }
@@ -12,6 +13,7 @@ interface TeamStatusBadgeProps {
  */
 export function TeamStatusBadge({ 
   outOfCompetition, 
+  reason,
   className,
   showTooltip = true
 }: TeamStatusBadgeProps) {
@@ -36,7 +38,7 @@ export function TeamStatusBadge({
             {badge}
           </TooltipTrigger>
           <TooltipContent>
-            <p className="text-sm">Außer Konkurrenz</p>
+            <p className="text-sm">{reason || 'Außer Konkurrenz'}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

@@ -44,7 +44,7 @@ export function CreateDuelDialog({ groupId, onDuelCreated }: CreateDuelDialogPro
     try {
       const group = await TrainingGroupsService.getGroupDetails(groupId);
       // Filter out current user
-      const otherMembers = group.members?.filter((memberId: string) => memberId !== user?.uid) || [];
+      const otherMembers = group?.members?.filter((memberId: string) => memberId !== user?.uid) || [];
       setMembers(otherMembers);
     } catch (error) {
       logError('Error loading members:', error);

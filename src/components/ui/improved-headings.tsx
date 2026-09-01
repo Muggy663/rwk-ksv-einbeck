@@ -14,7 +14,7 @@ export function Heading({
   children, 
   ...props 
 }: HeadingProps) {
-  const Component = `h${level}` as keyof JSX.IntrinsicElements;
+  const Component = `h${level}` as React.ElementType;
   
   return (
     <Component 

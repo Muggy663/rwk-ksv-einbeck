@@ -79,10 +79,10 @@ export function PasswordChangePrompt() {
         currentPassword
       );
       
-      await reauthenticateWithCredential(user, credential);
+      await reauthenticateWithCredential(user as any, credential);
       
       // Passwort ändern
-      await updatePassword(user, newPassword);
+      await updatePassword(user as any, newPassword);
       
       // Erfolg speichern
       try {

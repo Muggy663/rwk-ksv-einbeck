@@ -31,7 +31,7 @@ export function NativeAppProvider({ children }: { children: ReactNode }) {
       
       // PWA Check
       const isPWAMode = window.matchMedia('(display-mode: standalone)').matches || 
-                       window.navigator.standalone === true || 
+                       (window.navigator as any).standalone === true || 
                        document.referrer.includes('android-app://');
       setIsPWA(isPWAMode);
       
@@ -88,6 +88,7 @@ export function HideInNativeApp({ children, exceptIn = [] }: { children: ReactNo
       window.addEventListener('popstate', handleRouteChange);
       return () => window.removeEventListener('popstate', handleRouteChange);
     }
+    return undefined;
   }, []);
   
   // Prüfe, ob der aktuelle Pfad in den Ausnahmen enthalten ist
@@ -116,6 +117,7 @@ export function HideInMobile({ children, exceptIn = [] }: { children: ReactNode,
       window.addEventListener('popstate', handleRouteChange);
       return () => window.removeEventListener('popstate', handleRouteChange);
     }
+    return undefined;
   }, []);
   
   const isExcepted = exceptIn.some(path => currentPath.includes(path));

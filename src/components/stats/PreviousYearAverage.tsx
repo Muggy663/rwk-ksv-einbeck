@@ -42,7 +42,7 @@ export function PreviousYearAverage({
         const previousYear = currentYear - 1;
         
         // Abfrage für Ergebnisse des Vorjahres mit saison-spezifischer Collection
-        const collectionName = getSeasonSpecificScoresCollection(previousYear, leagueType || 'KKG');
+        const collectionName = getSeasonSpecificScoresCollection(previousYear, (leagueType || 'KKG') as any);
         let scoresQuery = query(
           collection(db, collectionName),
           where('shooterId', '==', shooterId),

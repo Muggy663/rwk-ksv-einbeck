@@ -1,14 +1,14 @@
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { TeamCompetitionStatus } from '@/types/rwk';
 
 interface TeamStatusBadgeProps {
-  status: TeamCompetitionStatus;
+  outOfCompetition?: boolean;
+  reason?: string;
   className?: string;
 }
 
-export function TeamStatusBadge({ status, className = '' }: TeamStatusBadgeProps) {
-  if (!status.outOfCompetition) {
+export function TeamStatusBadge({ outOfCompetition, reason, className = '' }: TeamStatusBadgeProps) {
+  if (!outOfCompetition) {
     return null;
   }
 
@@ -22,7 +22,7 @@ export function TeamStatusBadge({ status, className = '' }: TeamStatusBadgeProps
         </TooltipTrigger>
         <TooltipContent>
           <p className="text-sm">
-            {status.outOfCompetitionReason || 'Außer Konkurrenz'}
+            {reason || 'Außer Konkurrenz'}
           </p>
         </TooltipContent>
       </Tooltip>
