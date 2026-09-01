@@ -1,6 +1,6 @@
 // src/app/admin/league-settings/page.tsx
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -102,11 +102,11 @@ export default function LeagueSettingsPage() {
   const updateLeagueSetting = (leagueId: string, field: string, value: any) => {
     setLeagues(prev => prev.map(league => {
       if (league.id === leagueId) {
-        const shotSettings = league.shotSettings || {};
+        const shotSettings: NonNullable<League['shotSettings']> = league.shotSettings || { discipline: 'Kleinkaliber Gewehr', shotCount: 30, maxRings: 300 };
         
         if (field === 'discipline' && value !== 'Benutzerdefiniert') {
           const defaults = DEFAULT_SETTINGS[value as keyof typeof DEFAULT_SETTINGS];
-          const newSettings = {
+          const newSettings: NonNullable<League['shotSettings']> = {
             ...shotSettings,
             discipline: value,
             shotCount: defaults?.shotCount || shotSettings.shotCount || 30,
@@ -144,7 +144,7 @@ export default function LeagueSettingsPage() {
           const leagueRef = doc(db, 'rwk_leagues', league.id);
           
           // Entferne undefined Werte
-          const cleanSettings = {
+          const cleanSettings: { discipline: string; shotCount: number; maxRings: number; description: string; customDiscipline?: string } = {
             discipline: league.shotSettings.discipline || 'Kleinkaliber Gewehr',
             shotCount: league.shotSettings.shotCount || 30,
             maxRings: league.shotSettings.maxRings || 300,

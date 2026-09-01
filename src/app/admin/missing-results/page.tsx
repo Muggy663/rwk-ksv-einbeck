@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import Link from 'next/link';
-import { findMissingResults, isLeagueRoundComplete } from '@/lib/services/result-validation';
+import { isLeagueRoundComplete } from '@/lib/services/result-validation';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 export default function MissingResultsPage() {
@@ -19,8 +19,8 @@ export default function MissingResultsPage() {
   const [loading, setLoading] = useState(false);
   const [seasons, setSeasons] = useState<any[]>([]);
   const [leagues, setLeagues] = useState<any[]>([]);
-  const [teams, setTeams] = useState<any[]>([]);
-  const [scores, setScores] = useState<any[]>([]);
+  const [, setTeams] = useState<any[]>([]);
+  const [, setScores] = useState<any[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>('');
   const [selectedLeague, setSelectedLeague] = useState<string>('');
   const [missingResults, setMissingResults] = useState<any[]>([]);
@@ -107,7 +107,7 @@ export default function MissingResultsPage() {
       const teamsData = teamsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as Array<{ id: string; competitionYear?: number; [key: string]: any }>;
       setTeams(teamsData);
 
       // Lade Scores - verwende saison-spezifische Collection falls vorhanden

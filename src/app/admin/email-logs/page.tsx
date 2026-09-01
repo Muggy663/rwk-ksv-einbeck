@@ -1,16 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Mail, RefreshCw, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react';
+import { Mail, RefreshCw, ExternalLink, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function EmailLogsPage() {
   const { toast } = useToast();
-  const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   const checkResendDashboard = () => {
@@ -28,8 +26,7 @@ export default function EmailLogsPage() {
         body: new FormData()
       });
       
-      const result = await response.json();
-
+      await response.json();
       
       toast({
         title: 'API-Test',
