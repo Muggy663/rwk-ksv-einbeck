@@ -125,7 +125,6 @@ export async function saveRWKScoresBatch(scores: RWKScoreData[], userInfo: { use
       try {
         const shooter = shootersMap.get(scoreData.shooterId);
         const team = teamsMap.get(scoreData.teamId);
-        const club = team?.clubId ? clubsMap.get(team.clubId) : null;
         
         const shooterName = shooter?.name || 'Unbekannter Schütze';
         const teamName = team?.name || 'Unbekannte Mannschaft';

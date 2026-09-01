@@ -187,7 +187,7 @@ export class LiveCompetitionService {
       const results = resultsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      } as CompetitionResult));
+      } as unknown as CompetitionResult));
       
       // Sortiere nach Gesamtergebnis (höchste Punktzahl gewinnt)
       results.sort((a, b) => b.totalScore - a.totalScore);

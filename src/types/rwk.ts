@@ -149,6 +149,7 @@ export interface ScoreEntry {
   entryTimestamp?: any;
   teamOutOfCompetition?: boolean;
   teamOutOfCompetitionReason?: string;
+  isSubstitutionCopy?: boolean;
 }
 
 // Neue Interfaces für Ersatzschützen

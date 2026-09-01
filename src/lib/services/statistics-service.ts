@@ -37,7 +37,7 @@ const AVAILABLE_COLLECTIONS = [
 
 async function findWorkingCollection(competitionYear: number, leagueType: string): Promise<string | null> {
   // Erst gewünschte Collection versuchen
-  const preferredCollection = getSeasonSpecificScoresCollection(competitionYear, leagueType);
+  const preferredCollection = getSeasonSpecificScoresCollection(competitionYear, leagueType as any);
   
   const collectionsToTry = [preferredCollection, ...AVAILABLE_COLLECTIONS];
   

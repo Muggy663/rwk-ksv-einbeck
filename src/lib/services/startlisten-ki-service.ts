@@ -70,7 +70,7 @@ export function analyzeStartlist(_meldungen: any[], startliste: any[], config: a
           beschreibung: `${starter.length} Starter (${disziplinen[0]}) haben gleichen Stand zur gleichen Zeit: ${zeitStand}`,
           betroffeneStarter: starter.map(s => s.id),
           loesungsvorschlaege: [
-            `Verschieben Sie einen der Starter auf einen anderen Stand (${config.verfuegbareStaende?.filter(s => s !== stand).slice(0, 3).join(', ')})`,
+            `Verschieben Sie einen der Starter auf einen anderen Stand (${config.verfuegbareStaende?.filter((s: string) => s !== stand).slice(0, 3).join(', ')})`,
             `Ändern Sie die Startzeit für einen Starter (z.B. +${config.durchgangsDauer + config.wechselzeit} Min)`,
             `Betroffene Starter: ${betroffeneNamen.join(', ')}`,
             'Klicken Sie auf die Dropdown-Felder um Stand oder Zeit zu ändern'
