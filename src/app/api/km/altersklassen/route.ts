@@ -51,7 +51,7 @@ export async function GET() {
     return NextResponse.json({ success: true, data });
   } catch (error) {
     logError('GET error:', error);
-    return NextResponse.json({ success: false, error: error?.message || 'Fehler' }, { status: 500 });
+    return NextResponse.json({ success: false, error: (error as any)?.message || 'Fehler' }, { status: 500 });
   }
 }
 
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, id: docRef.id });
   } catch (error) {
     logError('POST error:', error);
-    return NextResponse.json({ success: false, error: error?.message || 'Fehler' }, { status: 500 });
+    return NextResponse.json({ success: false, error: (error as any)?.message || 'Fehler' }, { status: 500 });
   }
 }
 
@@ -76,7 +76,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     logError('PUT error:', error);
-    return NextResponse.json({ success: false, error: error?.message || 'Fehler' }, { status: 500 });
+    return NextResponse.json({ success: false, error: (error as any)?.message || 'Fehler' }, { status: 500 });
   }
 }
 
@@ -89,6 +89,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     logError('DELETE error:', error);
-    return NextResponse.json({ success: false, error: error?.message || 'Fehler' }, { status: 500 });
+    return NextResponse.json({ success: false, error: (error as any)?.message || 'Fehler' }, { status: 500 });
   }
 }

@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import type { KMMeldung } from '@/types/km';
 import { sendKMMeldungNotificationEmail } from '@/lib/services/email-notification-service';
 
 const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => {
@@ -13,22 +12,6 @@ const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => {
   if (kuerzel === 'kkp' || kuerzel === 'kleinkaliberpistole') return `km_meldungen_${jahr}_kkp`;
   if (kuerzel === 'ld' || kuerzel === 'luftdruck') return `km_meldungen_${jahr}_ld`;
   return `km_meldungen_${jahr}_${kuerzel}`;
-};
-
-// Disziplin-ID zu Kürzel Mapping
-const getDisziplinKuerzel = async (disziplinId: string): Promise<string> => {
-  try {
-    const disziplinDoc = await adminDb.collection('km_disziplinen').doc(disziplinId).get();
-    if (disziplinDoc.exists) {
-      const disziplin = disziplinDoc.data();
-      const name = disziplin?.name?.toLowerCase() || '';
-      if (name.includes('kleinkaliber') || name.includes('kk')) return 'kk';
-      if (name.includes('luftdruck') || name.includes('ld') || name.includes('luftgewehr') || name.includes('lg') || name.includes('luftpistole') || name.includes('lp')) return 'ld';
-    }
-  } catch (e) {
-    logWarn('Fallback Disziplin-Kürzel:', e);
-  }
-  return 'ld'; // Fallback
 };
 
 export async function POST(request: NextRequest) {
@@ -50,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (authHeader?.startsWith('Bearer ')) {
       try {
         const token = authHeader.substring(7);
-        const decodedToken = await adminDb.app.auth().verifyIdToken(token);
+        const decodedToken = await (adminDb as any).app.auth().verifyIdToken(token);
         gemeldeteVon = decodedToken.email || decodedToken.name || 'Vereinsvertreter';
       } catch {
         gemeldeteVon = 'Vereinsvertreter';
@@ -66,7 +49,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const saisonData = saisonDoc.data();
+    const saisonData = saisonDoc.data() as any;
     const aktivesJahr = saisonData.jahr;
     const disziplinTyp = saisonData.disziplinTyp; // 'KK' oder 'LD'
 
@@ -172,7 +155,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ success: true, data: [] });
       }
       
-      const saisonData = saisonDoc.data();
+      const saisonData = saisonDoc.data() as any;
       const disziplinTyp = saisonData.disziplinTyp || 'KK';
       const saisonJahr = saisonData.jahr || 2026;
       
@@ -198,7 +181,7 @@ export async function GET(request: NextRequest) {
         id: doc.id,
         ...doc.data(),
         _collection: disziplinTyp.toLowerCase()
-      }));
+      })) as Array<{ id: string; [key: string]: any }>;
       
       if (clubId) {
         const shootersSnapshot = await adminDb.collection('shooters').where('clubId', '==', clubId).get();
@@ -214,7 +197,7 @@ export async function GET(request: NextRequest) {
     
     // Fallback: Alle Disziplinen für ein Jahr laden
     const collections = ['kk', 'kkp', 'ld'];
-    let alleMeldungen = [];
+    let alleMeldungen: Array<{ id: string; [key: string]: any }> = [];
     
     logDebug('DEBUG: Suche in Jahr:', jahr);
     

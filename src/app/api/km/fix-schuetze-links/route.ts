@@ -4,7 +4,7 @@ import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
 
     
@@ -14,8 +14,8 @@ export async function POST(request: NextRequest) {
       getDocs(collection(db, 'shooters'))
     ]);
     
-    const meldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const schuetzen = schuetzenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const meldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
+    const schuetzen = schuetzenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
     
 
     

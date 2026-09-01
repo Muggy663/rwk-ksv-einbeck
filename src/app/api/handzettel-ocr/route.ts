@@ -2,7 +2,7 @@ import { AI_CONFIG } from '@/lib/ai/config';
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { secureLogger } from '@/lib/utils/secure-logger';
-import { sanitizeInput, validateImageUpload } from '@/lib/utils/input-validator';
+import { validateImageUpload } from '@/lib/utils/input-validator';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   
   try {
     if (!process.env.GEMINI_API_KEY) {
-      secureLogger.error('GEMINI_API_KEY missing', 'handzettel-ocr');
+      secureLogger.error('GEMINI_API_KEY missing', undefined, 'handzettel-ocr');
       return NextResponse.json({ 
         error: 'OCR service not configured'
       }, { status: 500 });
@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const image = formData.get('image') as File;
-    const availableTeamsRaw = formData.get('availableTeams') as string;
     
     if (!image) {
       secureLogger.warn('No image provided', 'handzettel-ocr');
@@ -77,7 +76,7 @@ Gib die Daten als JSON-Array zurück mit shooterName, teamName, score und confid
       ]
     });
 
-    const text = response.text;
+    const text = response.text || '';
     
     try {
       // Extrahiere JSON aus Markdown Code-Block
@@ -85,7 +84,7 @@ Gib die Daten als JSON-Array zurück mit shooterName, teamName, score und confid
       if (text.includes('```json')) {
         const match = text.match(/```json\s*([\s\S]*?)\s*```/);
         if (match) {
-          jsonText = match[1];
+          jsonText = match[1] || '';
         }
       }
       
@@ -96,14 +95,14 @@ Gib die Daten als JSON-Array zurück mit shooterName, teamName, score und confid
         ocrSource: 'gemini'
       });
     } catch (parseError) {
-      secureLogger.error('Failed to parse Gemini response', 'handzettel-ocr');
+      secureLogger.error('Failed to parse Gemini response', undefined, 'handzettel-ocr');
       return NextResponse.json({ 
         error: 'Invalid response format from OCR service'
       }, { status: 500 });
     }
 
   } catch (error) {
-    secureLogger.error('Handzettel OCR processing failed', 'handzettel-ocr');
+    secureLogger.error('Handzettel OCR processing failed', error instanceof Error ? error : undefined, 'handzettel-ocr');
     return NextResponse.json({ 
       error: 'OCR processing failed'
     }, { status: 500 });

@@ -70,11 +70,11 @@ Gib JSON zurück:
       }]
     });
 
-    const text = response.text;
+    const text = response.text || '';
     let jsonText = text;
     if (text.includes('```json')) {
       const match = text.match(/```json\s*([\s\S]*?)\s*```/);
-      if (match) jsonText = match[1];
+      if (match) jsonText = match[1] || '';
     }
 
     const parsedResults = JSON.parse(jsonText);
@@ -120,7 +120,7 @@ Gib JSON zurück:
     });
 
   } catch (error) {
-    secureLogger.error('KM OCR Import Error:', error);
+    secureLogger.error('KM OCR Import Error:', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Import fehlgeschlagen' }, { status: 500 });
   }
 }

@@ -112,13 +112,13 @@ JSON Format:
         }]
       });
 
-      let jsonText = response.text;
+      let jsonText = response.text || '';
       secureLogger.info(`Gemini response length: ${jsonText.length}`);
       secureLogger.info(`Gemini response preview: ${jsonText.substring(0, 500)}`);
       
       if (jsonText.includes('```json')) {
         const match = jsonText.match(/```json\s*([\s\S]*?)\s*```/);
-        if (match) jsonText = match[1];
+        if (match) jsonText = match[1] || '';
       }
 
       const parsedResults = JSON.parse(jsonText);
@@ -129,17 +129,17 @@ JSON Format:
         secureLogger.info(`Looking for name: ${result.name?.replace(/[\r\n]/g, '')}`);
         
         const resultName = (result.name || '').toLowerCase().trim();
-        const resultNameParts = resultName.split(/[,\s]+/).filter(p => p);
+        const resultNameParts = resultName.split(/[,\s]+/).filter((p: any) => p);
         
         // Finde ALLE Meldungen für diesen Schützen
         const alleMeldungen = meldungenSnapshot.docs.filter(doc => {
           const data = doc.data();
           const schuetzeId = data.schuetzeId;
           const schuetzeName = schuetzenMap.get(schuetzeId) || '';
-          const schuetzeNameParts = schuetzeName.split(/[,\s]+/).filter(p => p);
+          const schuetzeNameParts = schuetzeName.split(/[,\s]+/).filter((p: any) => p);
           
-          return resultNameParts.every(part => schuetzeNameParts.includes(part)) &&
-                 schuetzeNameParts.every(part => resultNameParts.includes(part));
+          return resultNameParts.every((part: any) => schuetzeNameParts.includes(part)) &&
+                 schuetzeNameParts.every((part: any) => resultNameParts.includes(part));
         });
         
         if (alleMeldungen.length === 0) {
@@ -176,10 +176,10 @@ JSON Format:
         const updateData: any = {
           kmRinge: (() => {
             if (result.schuesse && Array.isArray(result.schuesse) && result.schuesse.length > 0) {
-              const serien = [];
+              const serien: number[] = [];
               for (let i = 0; i < result.schuesse.length; i += 10) {
                 const serie = result.schuesse.slice(i, i + 10);
-                const summe = serie.reduce((a, b) => a + b, 0);
+                const summe = serie.reduce((a: number, b: number) => a + b, 0);
                 serien.push(summe);
               }
               return parseFloat(serien.reduce((a, b) => a + b, 0).toFixed(1));
@@ -191,10 +191,10 @@ JSON Format:
         };
         
         if (result.schuesse && Array.isArray(result.schuesse) && result.schuesse.length > 0) {
-          const serien = [];
+          const serien: string[] = [];
           for (let i = 0; i < result.schuesse.length; i += 10) {
             const serie = result.schuesse.slice(i, i + 10);
-            const summe = serie.reduce((a, b) => a + b, 0);
+            const summe = serie.reduce((a: number, b: number) => a + b, 0);
             serien.push(summe.toFixed(1));
           }
           if (serien[0]) updateData.kmSerie1 = serien[0];
@@ -211,7 +211,7 @@ JSON Format:
       await batch.commit();
 
     } catch (fileError) {
-      secureLogger.error('Batch processing error:', fileError);
+      secureLogger.error('Batch processing error:', fileError instanceof Error ? fileError : undefined);
       
       if (fileError instanceof Error && fileError.message.includes('quota')) {
         secureLogger.error('Quota exceeded');
@@ -228,7 +228,7 @@ JSON Format:
     });
 
   } catch (error) {
-    secureLogger.error('Batch Import Error:', error);
+    secureLogger.error('Batch Import Error:', error instanceof Error ? error : undefined);
     
     let errorMsg = 'Import fehlgeschlagen';
     if (error instanceof Error && error.message.includes('quota')) {

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     secureLogger.info('Email API called', 'send-email-api');
     
     if (!resend) {
-      secureLogger.error('RESEND_API_KEY missing', 'send-email-api');
+      secureLogger.error('RESEND_API_KEY missing', undefined, 'send-email-api');
       return NextResponse.json({ 
         success: false, 
         message: 'E-Mail-Service nicht konfiguriert. RESEND_API_KEY fehlt.' 
@@ -148,7 +148,7 @@ ${signature}`.trim();
         });
         
       } catch (error) {
-        secureLogger.error('Email batch failed', 'send-email-api');
+        secureLogger.error('Email batch failed', error instanceof Error ? error : undefined, 'send-email-api');
         errors.push({
           batchNumber: Math.floor(i/batchSize) + 1,
           recipients: batch.length,
@@ -158,7 +158,7 @@ ${signature}`.trim();
     }
 
     const successfulRecipients = results.reduce((sum, batch) => sum + batch.recipients, 0);
-    const failedRecipients = errors.reduce((sum, batch) => sum + batch.recipients.length, 0);
+    const failedRecipients = errors.reduce((sum, batch) => sum + (batch.recipients as any).length, 0);
     
     return NextResponse.json({
       success: errors.length === 0,
@@ -175,7 +175,7 @@ ${signature}`.trim();
     });
     
   } catch (error) {
-    secureLogger.error('Email API error', 'send-email-api');
+    secureLogger.error('Email API error', error instanceof Error ? error : undefined, 'send-email-api');
     return NextResponse.json({
       success: false,
       message: 'E-Mail konnte nicht versendet werden. Bitte versuchen Sie es später erneut.'

@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     logInfo('Collection Name:', { data: collectionName });
     
     const meldungenSnapshot = await db.collection(collectionName).get();
-    const alleMeldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const alleMeldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
     
     logInfo('=== MANNSCHAFTS-DEBUG ===');
     logInfo('Gesuchte Saison:', { data: saison });
@@ -79,9 +79,9 @@ export async function POST(request: NextRequest) {
     // Lade alle Disziplinen (sie haben saison: '2026', nicht saisonId)
     const disziplinenSnapshot = await db.collection('km_disziplinen').get();
     
-    const schuetzen = schuetzenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const disziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const clubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const schuetzen = schuetzenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
+    const disziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
+    const clubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
     
     // Lade Mannschaftsregeln aus der Datenbank
     const mannschaftsregelnSnapshot = await db.collection('system_config')
@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
     // Erstelle Teams - alle Gruppen mit 3+ Schützen
     const teams = [];
     
-    for (const [key, gruppe] of Object.entries(gruppiert)) {
+    for (const [, gruppe] of Object.entries(gruppiert)) {
       const { vereinId, disziplin, gruppenKey, schuetzen: verfuegbareSchuetzen, club } = gruppe;
       
       if (verfuegbareSchuetzen.length >= 3) {

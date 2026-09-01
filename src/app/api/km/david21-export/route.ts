@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const startliste = { id: startlisteDoc.id, ...startlisteDoc.data() };
-    const vereine = {};
+    const startliste = { id: startlisteDoc.id, ...startlisteDoc.data() } as { id: string; [key: string]: any };
+    const vereine: Record<string, any> = {};
     vereineSnapshot.docs.forEach(doc => {
       vereine[doc.id] = doc.data().name;
     });
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       adminDb.collection('km_altersklassen').get()
     ]);
     
-    const schuetzenMap = {};
+    const schuetzenMap: Record<string, any> = {};
     schuetzenSnapshot.docs.forEach(doc => {
       const data = doc.data();
       schuetzenMap[data.name] = {
@@ -61,12 +61,12 @@ export async function POST(request: NextRequest) {
       };
     });
     
-    const disziplinenMap = {};
+    const disziplinenMap: Record<string, any> = {};
     disziplinenSnapshot.docs.forEach(doc => {
       const data = doc.data();
       // Erstelle Map für alle Schusszahlen einer Disziplin
       if (data.schusszahlen && Array.isArray(data.schusszahlen)) {
-        data.schusszahlen.forEach(schuss => {
+        data.schusszahlen.forEach((schuss: any) => {
           if (schuss.kennziffer) {
             const key = `${data.name}_${schuss.schusszahl}_${schuss.altersklassen?.join('_') || 'alle'}`;
             disziplinenMap[key] = {
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       }
     });
     
-    const altersklassenMap = {};
+    const altersklassenMap: Record<string, any> = {};
     altersklassenSnapshot.docs.forEach(doc => {
       const data = doc.data();
       altersklassenMap[`${data.minAlter}-${data.maxAlter}-${data.geschlecht}`] = data.klassenId;

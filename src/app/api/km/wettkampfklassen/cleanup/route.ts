@@ -4,13 +4,13 @@ import { logError } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const snapshot = await getDocs(collection(db, 'km_wettkampfklassen'));
     const klassen = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })) as Array<{ id: string; [key: string]: any }>;
 
     // Gruppiere nach Name
     const grouped = new Map();
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     let deletedCount = 0;
     
     // Lösche Duplikate (behalte jeweils das erste)
-    for (const [name, docs] of grouped) {
+    for (const [, docs] of grouped) {
       if (docs.length > 1) {
         // Lösche alle außer dem ersten
         for (let i = 1; i < docs.length; i++) {

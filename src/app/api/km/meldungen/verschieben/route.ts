@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logError, logInfo } from '@/lib/utils/secure-logger';
+import { logError, logInfo, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
 const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => {
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const nachSaisonData = nachSaisonDoc.data();
+    const nachSaisonData = nachSaisonDoc.data() as any;
     const zielJahr = nachSaisonData.jahr;
     const zielDisziplinTyp = nachSaisonData.disziplinTyp.toLowerCase();
     const zielCollection = getKMMeldungenCollection(zielJahr, zielDisziplinTyp);
@@ -42,12 +42,12 @@ export async function POST(request: NextRequest) {
     for (const meldungId of meldungIds) {
       try {
         // Versuche verschiedene Collection-Namen für Quell-Meldung
-        let alteMeldungRef = null;
-        let alteMeldungDoc = null;
+        let alteMeldungRef: any = null;
+        let alteMeldungDoc: any = null;
         
         // Hole Quell-Saison-Daten für dynamische Collection-Namen
         const vonSaisonDoc = await adminDb.collection('km_saisons').doc(vonSaison).get();
-        const quellJahr = vonSaisonDoc.exists ? vonSaisonDoc.data().jahr : 2026;
+        const quellJahr = vonSaisonDoc.exists ? (vonSaisonDoc.data() as any).jahr : 2026;
         
         // Mögliche Collection-Namen probieren (dynamisch basierend auf Jahr)
         const possibleCollections = [

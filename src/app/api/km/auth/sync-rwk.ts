@@ -7,10 +7,10 @@ export async function syncRWKUsersToKM() {
   try {
     // Lade alle RWK-Benutzer mit Vereinsvertreter-Rolle
     const rwkUsersSnapshot = await getDocs(collection(db, 'user_permissions'));
-    const rwkUsers = rwkUsersSnapshot.docs.map(doc => ({
+    const rwkUsers = (rwkUsersSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    })).filter(user => user.role === 'vereinsvertreter' && user.isActive);
+    })) as Array<{ id: string; [key: string]: any }>).filter(user => user.role === 'vereinsvertreter' && user.isActive);
 
     let syncedCount = 0;
 
@@ -20,7 +20,7 @@ export async function syncRWKUsersToKM() {
       const kmUserDoc = await getDoc(kmUserRef);
 
       // Bestimme Vereine (Multi-Verein-Support)
-      const kmUserData = {
+      const kmUserData: Record<string, any> = {
         role: 'verein_vertreter',
         isActive: rwkUser.isActive,
         syncedFromRWK: true,

@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   
   try {
     if (!process.env.GEMINI_API_KEY) {
-      secureLogger.error('GEMINI_API_KEY missing', 'schiessnachweis-ocr');
+      secureLogger.error('GEMINI_API_KEY missing', undefined, 'schiessnachweis-ocr');
       return NextResponse.json({ 
         error: 'OCR service not configured'
       }, { status: 500 });
@@ -85,14 +85,14 @@ Antworte NUR mit dem JSON, keine Erklärungen.`;
       }]
     });
 
-    const text = response.text;
+    const text = response.text || '';
     
     try {
       let jsonText = text;
       if (text.includes('```json')) {
         const match = text.match(/```json\s*([\s\S]*?)\s*```/);
         if (match) {
-          jsonText = match[1];
+          jsonText = match[1] || '';
         }
       }
       
@@ -103,14 +103,14 @@ Antworte NUR mit dem JSON, keine Erklärungen.`;
         ocrSource: 'gemini'
       });
     } catch (parseError) {
-      secureLogger.error('Failed to parse Gemini response', 'schiessnachweis-ocr');
+      secureLogger.error('Failed to parse Gemini response', undefined, 'schiessnachweis-ocr');
       return NextResponse.json({ 
         error: 'Invalid response format from OCR service'
       }, { status: 500 });
     }
 
   } catch (error) {
-    secureLogger.error('Schießnachweis OCR processing failed', 'schiessnachweis-ocr');
+    secureLogger.error('Schießnachweis OCR processing failed', error instanceof Error ? error : undefined, 'schiessnachweis-ocr');
     return NextResponse.json({ 
       error: 'OCR processing failed'
     }, { status: 500 });

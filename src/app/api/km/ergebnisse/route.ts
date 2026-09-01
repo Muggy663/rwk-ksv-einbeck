@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const saisonData = saisonDoc.data();
+    const saisonData = saisonDoc.data() as any;
     const saisonJahr = saisonData.jahr || 2026;
     
     // Collection-Name basierend auf Saison
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data: [] });
     }
 
-    const saisonData = saisonDoc.data();
+    const saisonData = saisonDoc.data() as any;
     const saisonJahr = saisonData.jahr || 2026;
     
     // Collection-Name basierend auf Saison
