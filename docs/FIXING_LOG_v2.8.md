@@ -274,3 +274,32 @@ Weitere Dateien nach denselben etablierten Mustern (teils an Sub-Agents delegier
 |---------|--------|
 | km-orga | ✅ 0 Fehler |
 | Gesamt-Projekt | ~1033 |
+
+### Bereich: admin — KOMPLETT SAUBER (0 Fehler)
+
+Von 282 → 0. ~55 Dateien, überwiegend Long-Tail (über die Hälfte der Fehler waren TS6133 = ungenutzte Imports/Variablen).
+
+Vorgehen: erst die großen Dateien (in Batches, teils delegiert + verifiziert), dann der Long-Tail (React-Imports per Skript-Massenfix wo sicher, Rest einzeln), zuletzt die Dateien mit echten Typfehlern.
+
+Größter Fund: **`results/page.tsx`** enthielt eine tote **`LegacyAdminResultsPage`-Funktion (~1380 Zeilen)**, die nie aufgerufen wurde — die aktive Komponente ist `SharedResultsPage` (analog zum Verein-Bereich). Entfernt, aktive Komponente per Read verifiziert.
+
+Wiederkehrende Muster (wie in km/km-orga):
+- Ungenutzte Imports (`React` bei React19, Icons, Card-Sub-Komponenten, Hooks), ungenutzte States (`[, setX]`/`[x]`/entfernt), ungenutzte lokale Vars/tote Funktionen (`SearchParamsWrapper`), ungenutzte Params (`_`-Präfix).
+- `useState([])`/`useState({})` ohne Typ → typisiert; `let x = []` → `let x: any[]`.
+- `.map(doc => ({id, ...doc.data()}))` → `as Array<{id;...}>`-Cast.
+- `League.shotSettings`/`cleanSettings` sauber typisiert (`NonNullable<League['shotSettings']>`).
+- `.filter(Boolean)` → `.filter((d): d is string => Boolean(d))` type-guard.
+- Toast/Alert `variant:"warning"` → gültige Variante; `clubId: null` → `undefined`; `string|null` → `undefined` bei SDK-Aufrufen.
+- `logWarn/logDebug(msg, obj/unknown)` → Template-String bzw. `getErrorMessage`-Muster.
+- `NativeSelect onValueChange` erwartet `(value: string)` → Param als `string` + `as`-Cast auf Enum.
+- `BackButton`: nicht existente Props `href`/`label` → `fallbackHref` (Komponente hat kein Label-Prop).
+- Lucide-Icon mit ungültigem `title`-Prop → in `<span title=...>` gewrappt.
+
+**BUGFIX (real):** `seasons/zeitungsbericht/page.tsx` nutzte in einem Zweig `s.category` als Fallback, wo `s` im Scope gar nicht existierte (hätte zur Laufzeit einen ReferenceError geworfen, falls der Fallback-Pfad je erreicht wird) → auf `''` korrigiert. Zusätzlich `data.saison` → `reportData.saison` (null-sicher).
+
+**Hinweis Arbeitsweise:** Die große Datei-Batch-Delegation lief anfangs über Sub-Agents; ein paralleler Lauf wurde vom Nutzer abgebrochen, hatte aber bereits gültige Arbeit im Working Tree hinterlassen (12 Dateien). Diese wurde vom Hauptagent verifiziert (0 Fehler, aktive Komponenten intakt, ein versehentliches BOM in `admin/page.tsx` entfernt) und committet. Der Rest wurde vom Hauptagent direkt erledigt.
+
+| Bereich | Status |
+|---------|--------|
+| admin | ✅ 0 Fehler |
+| Gesamt-Projekt | ~751 |
