@@ -65,7 +65,7 @@ export default function LiveCompetitionPage() {
       
       for (const group of groups) {
         const groupCompetitions = await CompetitionsService.getGroupCompetitions(group.id);
-        allCompetitions.push(...groupCompetitions);
+        allCompetitions.push(...(groupCompetitions as unknown as Competition[]));
       }
       
       const active = allCompetitions.filter(c => c.status === 'active');

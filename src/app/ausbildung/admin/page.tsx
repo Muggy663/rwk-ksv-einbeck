@@ -3,7 +3,7 @@
 // Admin-Seite für Kursverwaltung – nur für admin@rwk-einbeck.de
 // Erreichbar unter: /ausbildung/admin
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   GraduationCap, Plus, Pencil, Trash2, Users, ChevronDown,
-  ChevronUp, CheckCircle2, Clock, AlertCircle, Download, Mail
+  ChevronUp, CheckCircle2, AlertCircle, Download
 } from 'lucide-react';
 import {
   getKurse, getAnmeldungenFuerKurs, updateAnmeldungStatus, deleteKurs,

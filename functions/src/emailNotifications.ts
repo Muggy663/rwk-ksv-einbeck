@@ -4,25 +4,13 @@ import * as admin from 'firebase-admin';
 // Resend API Key aus Environment Variables
 const RESEND_API_KEY = functions.config().resend?.api_key || process.env.RESEND_API_KEY;
 
-interface ScoreNotificationData {
-  teamName: string;
-  leagueName: string;
-  shooterName: string;
-  clubName: string;
-  score: number;
-  durchgang: number;
-  userName: string;
-  userEmail: string;
-  timestamp: Date;
-}
-
 /**
  * Erweiterte E-Mail-Benachrichtigung für RWK-Ergebnisse
  * Nutzt Audit-Log-Daten für detaillierte Informationen
  */
 export const onAuditLogCreated = functions.firestore
   .document('audit_logs/{auditId}')
-  .onCreate(async (snap, context) => {
+  .onCreate(async (snap, _context) => {
     try {
       const auditData = snap.data();
       
@@ -197,7 +185,7 @@ Rundenwettkampfleiter KSVE Einbeck
 /**
  * Manuelle Funktion zum Testen der E-Mail-Benachrichtigungen
  */
-export const testScoreNotification = functions.https.onCall(async (data, context) => {
+export const testScoreNotification = functions.https.onCall(async (_data, context) => {
   // Nur für Admins
   if (!context.auth || context.auth.token.email !== 'admin@rwk-einbeck.de') {
     throw new functions.https.HttpsError(

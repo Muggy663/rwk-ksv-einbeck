@@ -189,7 +189,7 @@ export function generateCSPNonce(): string {
  */
 export function safeJsonStringify(obj: any): string {
   try {
-    return JSON.stringify(obj, (key, value) => {
+    return JSON.stringify(obj, (_key, value) => {
       if (typeof value === 'string') {
         return escapeHtml(value);
       }

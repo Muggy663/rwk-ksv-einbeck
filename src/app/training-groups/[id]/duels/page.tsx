@@ -5,7 +5,7 @@ import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Swords, Trophy, Clock, Users } from 'lucide-react';
+import { Swords, Trophy, Clock } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { DuelsService, Duel } from '@/lib/services/duels-service';
 import { CreateDuelDialog } from '@/components/duels/create-duel-dialog';

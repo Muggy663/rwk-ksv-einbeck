@@ -23,7 +23,7 @@ export default function TrainingGroupsPage() {
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   
-  const { isRefreshing } = usePullToRefresh(async () => {
+  usePullToRefresh(async () => {
     await loadMyGroups();
   });
 

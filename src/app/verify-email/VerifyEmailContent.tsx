@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { auth } from '@/lib/firebase/config';
-import { applyActionCode } from 'firebase/auth';
 import { useToast } from "@/hooks/use-toast";
 
 export function VerifyEmailContent() {

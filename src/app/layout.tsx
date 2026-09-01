@@ -7,7 +7,6 @@ import '@/components/ui/heading-styles.css';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import { ClubProvider } from '@/contexts/ClubContext';
 import { Toaster } from '@/components/ui/toaster';
-import Script from 'next/script';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';

@@ -26,7 +26,7 @@ export function useClubId() {
       try {
         // Prüfe zuerst Support-Zugang oder Dev-Zugang für Super-Admin
         if (currentUser.email === 'admin@rwk-einbeck.de') {
-          const { doc, getDoc, collection, getDocs, query, limit } = await import('firebase/firestore');
+          const { doc, getDoc } = await import('firebase/firestore');
           const { db } = await import('@/lib/firebase/config');
           
           const userPermissionsDoc = await getDoc(doc(db, 'user_permissions', currentUser.uid));

@@ -1,6 +1,6 @@
 import { db } from '@/lib/firebase/config';
 import { logError } from '@/lib/utils/secure-logger';
-import { collection, query, where, getDocs, orderBy, doc, getDoc, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 /**
@@ -50,7 +50,7 @@ export async function fetchTopShooters(leagueId: string, topCount: number = 3) {
     const shootersMap = new Map();
     
     // Duplikat-Filterung: Sammle alle Scores und entferne Duplikate
-    const scoresArray = [];
+    const scoresArray: Array<{ id: string; [key: string]: any }> = [];
     scoresSnapshot.forEach(scoreDoc => {
       scoresArray.push({ id: scoreDoc.id, ...scoreDoc.data() });
     });
@@ -228,7 +228,7 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
     const allScoresSnapshot = await getDocs(allScoresQuery);
     const scoresByTeam = new Map();
     allScoresSnapshot.forEach(scoreDoc => {
-      const scoreData = { id: scoreDoc.id, ...scoreDoc.data() };
+      const scoreData: { id: string; [key: string]: any } = { id: scoreDoc.id, ...scoreDoc.data() };
       if (!allTeamIds.includes(scoreData.teamId)) return;
       if (!scoresByTeam.has(scoreData.teamId)) scoresByTeam.set(scoreData.teamId, []);
       scoresByTeam.get(scoreData.teamId).push(scoreData);
@@ -241,7 +241,7 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
       collection(db, 'team_substitutions'),
       where('competitionYear', '==', seasonData.competitionYear)
     ));
-    const allSubstitutions = allSubsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const allSubstitutions = allSubsSnap.docs.map(d => ({ id: d.id, ...d.data() })) as Array<{ id: string; [key: string]: any }>;
     
     for (const teamDoc of teamsSnapshot.docs) {
       const teamData = teamDoc.data();
@@ -249,7 +249,7 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
       
       const teamScoresArray = scoresByTeam.get(teamDoc.id) || [];
       const teamDuplicateMap = new Map();
-      teamScoresArray.forEach(score => {
+      teamScoresArray.forEach((score: any) => {
         const key = `${score.shooterId}|${score.durchgang}|${score.competitionYear}|${score.leagueType}`;
         if (!teamDuplicateMap.has(key)) {
           teamDuplicateMap.set(key, score);
@@ -262,7 +262,7 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
         }
       });
       
-      const roundResults = {};
+      const roundResults: Record<string, number | null> = {};
       
       // Durchgangsergebnisse initialisieren
       for (let i = 1; i <= numRounds; i++) {
@@ -309,10 +309,8 @@ export async function fetchTopTeams(leagueId: string, topCount: number = 2) {
         }
       });
       
-      const averageScore = numScoredRounds > 0 ? totalScore / numScoredRounds : 0;
-      
       // Teammitglieder aus den bereits gefilterten Scores extrahieren
-      const teamMembers = [];
+      const teamMembers: Array<{ name: string; totalScore: number; rounds: number; averageScore: number }> = [];
       const shootersMap = new Map();
       
       // Alle eindeutigen Scores für das Team durchgehen und Schützen sammeln
@@ -492,7 +490,7 @@ async function fetchBestShooterByGender(leagueIds: string[], gender: 'male' | 'f
         });
       });
     }
-    let allScores = [];
+    let allScores: any[] = [];
     const maxLeaguesPerQuery = 10;
     
     for (let i = 0; i < leagueIds.length; i += maxLeaguesPerQuery) {
@@ -538,7 +536,7 @@ async function fetchBestShooterByGender(leagueIds: string[], gender: 'male' | 'f
     }
     
     // Duplikat-Filterung für Gesamtsieger
-    const overallScoresArray = [];
+    const overallScoresArray: Array<{ id: string; [key: string]: any }> = [];
     allScores.forEach(scoreDoc => {
       overallScoresArray.push({ id: scoreDoc.id, ...scoreDoc.data() });
     });

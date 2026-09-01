@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Smartphone, Shield, Zap } from 'lucide-react';
+import { Smartphone, Shield, Zap } from 'lucide-react';
 
 export default function AppPage() {
   return (

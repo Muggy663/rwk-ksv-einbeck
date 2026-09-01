@@ -1,10 +1,10 @@
 // src/app/handbuch/page.tsx
 "use client"; 
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { BookOpenCheck, Target, Trophy, Users } from 'lucide-react';
+import { BookOpenCheck, Target, Trophy } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth'; 
 
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";

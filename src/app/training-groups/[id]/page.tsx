@@ -97,6 +97,7 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
   const { toast } = useToast();
   // TODO: Premium check - PremiumProvider nicht verfügbar in diesem Kontext
   const isPremium = true; // Temporär: Annahme dass User Premium hat
+  void isPremium;
   const [group, setGroup] = useState<TrainingGroup | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
@@ -630,7 +631,7 @@ export default function GroupDetailPage({ params }: { params: { id: string } }) 
                         variant="outline"
                         onClick={async () => {
                           try {
-                            logDebug('Joining competition:', competition.id, 'User:', user?.uid);
+                            logDebug(`Joining competition: ${competition.id} User: ${user?.uid}`);
                             await CompetitionsService.joinCompetition(competition.id!, user!.uid);
                             toast({ title: "Beigetreten!", description: "Sie nehmen jetzt am Wettkampf teil." });
                             loadCompetitions();

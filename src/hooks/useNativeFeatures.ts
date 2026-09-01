@@ -7,7 +7,7 @@ export const useNativeFeatures = () => {
   const [isNative, setIsNative] = useState(false);
   const [haptics, setHaptics] = useState<any>(null);
   const [share, setShare] = useState<any>(null);
-  const [statusBar, setStatusBar] = useState<any>(null);
+  const [, setStatusBar] = useState<any>(null);
 
   useEffect(() => {
     const initNativeFeatures = async () => {
@@ -26,10 +26,10 @@ export const useNativeFeatures = () => {
           
           // Configure status bar
           await StatusBar.setOverlaysWebView({ overlay: false });
-          await StatusBar.setStyle({ style: 'DARK' });
+          await StatusBar.setStyle({ style: 'DARK' as any });
           await StatusBar.setBackgroundColor({ color: '#ffffff' });
         } catch (error) {
-          logWarn('Native features not available:', error);
+          logWarn('Native features not available:', error instanceof Error ? error.message : String(error));
         }
       }
     };
@@ -52,7 +52,7 @@ export const useNativeFeatures = () => {
             break;
         }
       } catch (error) {
-        logWarn('Haptic feedback failed:', error);
+        logWarn('Haptic feedback failed:', error instanceof Error ? error.message : String(error));
       }
     }
   };
@@ -67,7 +67,7 @@ export const useNativeFeatures = () => {
           dialogTitle: 'RWK Einbeck teilen'
         });
       } catch (error) {
-        logWarn('Share failed:', error);
+        logWarn('Share failed:', error instanceof Error ? error.message : String(error));
       }
     } else {
       // Fallback for web
@@ -75,7 +75,7 @@ export const useNativeFeatures = () => {
         try {
           await navigator.share({ title, text, url });
         } catch (error) {
-          logWarn('Web share failed:', error);
+          logWarn('Web share failed:', error instanceof Error ? error.message : String(error));
         }
       }
     }

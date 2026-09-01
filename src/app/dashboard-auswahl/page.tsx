@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,13 +39,13 @@ export default function DashboardAuswahl() {
 
   const isRWKAdmin = userAppPermissions?.role === 'superadmin' || user?.email === 'admin@rwk-einbeck.de';
   // Legacy-Rollen für Rückwärtskompatibilität
-  const isLegacyVereinsvertreter = userAppPermissions?.role === 'vereinsvertreter' || userAppPermissions?.role === 'club_representative';
+  const isLegacyVereinsvertreter = userAppPermissions?.role === 'vereinsvertreter' || (userAppPermissions?.role as any) === 'club_representative';
   const isLegacyVereinsvorstand = userAppPermissions?.role === 'vereinsvorstand';
   const isLegacyMannschaftsfuehrer = userAppPermissions?.role === 'mannschaftsfuehrer';
   
   // Neue Club-Rollen
   const hasClubRoles = userAppPermissions?.clubRoles && Object.keys(userAppPermissions.clubRoles).length > 0;
-  const clubRolesList = hasClubRoles ? Object.values(userAppPermissions.clubRoles) : [];
+  const clubRolesList: string[] = hasClubRoles && userAppPermissions?.clubRoles ? Object.values(userAppPermissions.clubRoles) : [];
   const isSportleiter = clubRolesList.includes('SPORTLEITER');
   const isVorstand = clubRolesList.includes('VORSTAND');
   const isKassenwart = clubRolesList.includes('KASSENWART');
@@ -63,7 +62,7 @@ export default function DashboardAuswahl() {
   
   // Prüfe ob Benutzer nur Schießnachweis/Social Training Zugriff hat (INDIVIDUAL userType)
   // Wichtig: clubRoles ODER kvRoles ODER platformRole überschreiben INDIVIDUAL
-  const isIndividualUser = userAppPermissions?.userType === 'INDIVIDUAL' && 
+  const isIndividualUser = (userAppPermissions as any)?.userType === 'INDIVIDUAL' && 
                           !userAppPermissions?.clubRoles &&
                           !userAppPermissions?.kvRoles &&
                           !userAppPermissions?.platformRole;
@@ -188,6 +187,9 @@ export default function DashboardAuswahl() {
     if (isEhrenmitglied) return 'Vereinsgeschichte und Ehrungen';
     return 'Basis-Zugriff auf Vereinssoftware';
   };
+  // Reserviert für Phase-2-Vereinssoftware-Ansicht (aktuell nicht gerendert)
+  void getVereinssoftwareBereiche;
+  void getRollenBeschreibung;
   
   // Debug entfernt - verhindert Endlosschleife
   

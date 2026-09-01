@@ -7,7 +7,7 @@
 
 import { getApps, getApp } from 'firebase/app';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
-import { getFirestore, collection, getDocs, doc, setDoc, writeBatch, WriteBatch } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, writeBatch, WriteBatch } from 'firebase/firestore';
 
 // Verwende bestehende Firebase App
 const app = getApps().length > 0 ? getApp() : null;

@@ -11,7 +11,7 @@ interface VirtualizedDataOptions {
 }
 
 interface VirtualizedDataResult<T> {
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   visibleData: T[];
   visibleStartIndex: number;
   visibleEndIndex: number;

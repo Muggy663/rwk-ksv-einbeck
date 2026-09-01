@@ -39,6 +39,8 @@ export interface TrainingGroup {
   admins: string[]; // userIds
   isActive: boolean;
   maxMembers: number;
+  ownerId?: string; // Legacy-Feld für Eigentümer-Prüfung
+  archiveReason?: string; // Grund der Archivierung (falls archiviert)
   
   settings: {
     allowCompetitions: boolean;

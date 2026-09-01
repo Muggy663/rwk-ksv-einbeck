@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { getErrorMessage } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { collection, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function AddFieldsPage() {
@@ -34,7 +34,7 @@ export default function AddFieldsPage() {
           const data = docSnapshot.data();
           
           // Prüfe welche Felder fehlen
-          const missingFields = {};
+          const missingFields: Record<string, any> = {};
           
           if (!data.hasOwnProperty('strasse')) missingFields.strasse = '';
           if (!data.hasOwnProperty('plz')) missingFields.plz = '';

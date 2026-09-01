@@ -36,7 +36,7 @@ export async function batchGetShooters(shooterIds: string[]): Promise<Map<string
         shooterMap.set(doc.id, { id: doc.id, ...doc.data() });
       });
     } catch (error) {
-      logWarn('Batch get shooters error:', error);
+      logWarn('Batch get shooters error:', error instanceof Error ? error.message : String(error));
     }
   }
   
@@ -74,7 +74,7 @@ export async function batchGetClubs(clubIds: string[]): Promise<Map<string, any>
         clubMap.set(doc.id, { id: doc.id, ...doc.data() });
       });
     } catch (error) {
-      logWarn('Batch get clubs error:', error);
+      logWarn('Batch get clubs error:', error instanceof Error ? error.message : String(error));
     }
   }
   

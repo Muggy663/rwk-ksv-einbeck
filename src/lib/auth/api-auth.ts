@@ -13,7 +13,7 @@ export async function verifyApiAuth(request: Request) {
     const decodedToken = await admin.auth().verifyIdToken(token);
     return decodedToken;
   } catch (error) {
-    secureLogger.error('Token verification failed', 'api-auth');
+    secureLogger.error('Token verification failed', error instanceof Error ? error : undefined, 'api-auth');
     return null;
   }
 }

@@ -22,6 +22,7 @@ export interface UserPermission {
   platformRole?: string;
   kvRoles?: Record<string, string>;
   clubRoles?: Record<string, string>;
+  vereinssoftwareLicense?: boolean | string | number; // Kaufprodukt-Lizenzflag
 }
 
 export interface AuthContextType {

@@ -1,5 +1,4 @@
 "use client";
-import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,8 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { BackButton } from '@/components/ui/back-button';
 import { 
-  Trophy, 
-  Users, 
   Smartphone, 
   Clock, 
   CheckCircle, 

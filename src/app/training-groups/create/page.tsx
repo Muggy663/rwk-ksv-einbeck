@@ -48,7 +48,7 @@ export default function CreateGroupPage() {
         throw new Error('Nicht angemeldet');
       }
       
-      const groupId = await TrainingGroupsService.createGroup(auth.currentUser.uid, {
+      await TrainingGroupsService.createGroup(auth.currentUser.uid, {
         name: formData.name.trim(),
         description: formData.description.trim(),
         maxMembers: formData.maxMembers,

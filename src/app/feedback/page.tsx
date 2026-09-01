@@ -2,12 +2,11 @@
 import { useState, useEffect } from 'react';
 import { BackButton } from '@/components/ui/back-button';
 import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { MessageSquare, Star, User, Loader2 } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
 import { Separator } from '@/components/ui/separator';
-import { EmptyState } from '@/components/ui/empty-state';
 
 export default function FeedbackPage() {
   const [publicFeedbacks, setPublicFeedbacks] = useState<any[]>([]);

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Users, Clock, Target, ArrowLeft } from "lucide-react";
+import { Trophy, Users, Target, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { LiveCompetitionService } from "@/lib/services/live-competition-service";

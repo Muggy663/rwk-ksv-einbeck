@@ -223,7 +223,7 @@ Rundenwettkampfleiter KSVE Einbeck
  */
 export const onRWKScoreBatch = functions.firestore
   .document('rwk_scores/{scoreId}')
-  .onCreate(async (snap, context) => {
+  .onCreate(async (snap, _context) => {
     try {
       const scoreData = snap.data();
       
@@ -265,10 +265,9 @@ export const onRWKScoreBatch = functions.firestore
  */
 export const onTeamCreated = functions.firestore
   .document('rwk_teams/{teamId}')
-  .onCreate(async (snap, context) => {
+  .onCreate(async (snap, _context) => {
     try {
       const teamData = snap.data();
-      const teamId = context.params.teamId;
       
       // Club-Name laden
       let clubName = 'Unbekannter Verein';

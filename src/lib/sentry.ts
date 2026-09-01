@@ -63,5 +63,5 @@ export function setUserContext(user: { id: string; role?: string }) {
 
 // Performance Monitoring
 export function startTransaction(name: string) {
-  return Sentry.startTransaction({ name });
+  return (Sentry as any).startTransaction({ name });
 }

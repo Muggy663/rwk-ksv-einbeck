@@ -28,7 +28,7 @@ export function useKMAuth() {
     userAppPermissions?.role === 'superadmin' ||
     isKVWettkampfleiter ||
     isKVKmOrga ||
-    userAppPermissions?.role === 'km_organisator' ||
+    (userAppPermissions?.role as any) === 'km_organisator' ||
     isSportleiter ||
     isVorstand ||
     userAppPermissions?.role === 'vereinsvertreter' ||

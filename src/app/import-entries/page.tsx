@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { getErrorMessage } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,6 @@ import { db } from '@/lib/firebase';
 export default function ImportEntriesPage() {
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
-  const [csvData, setCsvData] = useState('');
 
   const parseAndImport = async () => {
     setLoading(true);
@@ -129,7 +128,7 @@ Zieseniß	Peter	2009	2009`;
           const vereinseintritt = parts[2].trim();
           const dsbeintritt = parts[3].trim();
           
-          const convertYear = (yearStr) => {
+          const convertYear = (yearStr: string) => {
             if (!yearStr || yearStr === '-' || yearStr.trim() === '') return '';
             const year = yearStr.trim();
             // Nur Jahr verwenden, 01.01. als Standard-Datum
@@ -166,7 +165,7 @@ Zieseniß	Peter	2009	2009`;
           if (!snapshot.empty) {
             const docRef = snapshot.docs[0];
             
-            const updateData = {};
+            const updateData: Record<string, any> = {};
             if (entry.vereinseintritt) updateData.vereinseintritt = entry.vereinseintritt;
             if (entry.dsbeintritt) updateData.dsbeintritt = entry.dsbeintritt;
             updateData.updatedAt = new Date();

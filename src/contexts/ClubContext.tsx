@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase/config';
@@ -41,7 +41,7 @@ export function ClubProvider({ children }: ClubProviderProps) {
     const loadUserClubs = async () => {
       if (!user?.uid) {
         setRepresentedClubs([]);
-        setActiveClubId(null);
+        setActiveClubId(null as any);
         setIsLoading(false);
         return;
       }

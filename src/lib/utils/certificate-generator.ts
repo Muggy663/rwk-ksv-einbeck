@@ -171,16 +171,6 @@ export class CertificateGenerator {
     return [`in der ${cat}`];
   }
 
-  private drawCategoryLines(options: CertificateOptions, yStart: number): number {
-    const lines = this.getCategoryText(options);
-    this.doc.setFontSize(14);
-    this.doc.setFont('helvetica', 'normal');
-    lines.forEach((line, i) => {
-      this.doc.text(line, this.pageWidth / 2, yStart + i * 14, { align: 'center' });
-    });
-    return yStart + lines.length * 14;
-  }
-
   private drawMultilineRecipient(options: CertificateOptions, lines: string[]): void {
     const LH = 17;
     const isTitle = /bester|beste/i.test(options.category);
