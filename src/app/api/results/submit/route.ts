@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { logDebug, logError } from '@/lib/utils/secure-logger';
 
 export async function POST(request: NextRequest) {
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
       totalRinge: parseInt(totalRinge),
       scoreInputType: scoreInputType || 'regular',
       competitionYear: parseInt(competitionYear),
-      entryTimestamp: (adminDb as any).FieldValue.serverTimestamp(),
+      entryTimestamp: FieldValue.serverTimestamp(),
       enteredByUserId,
       enteredByUserName,
       // Markiere als Substitution falls zutreffend
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
       leagueName: teamData?.leagueName,
       competitionYear: parseInt(competitionYear),
       leagueId,
-      timestamp: (adminDb as any).FieldValue.serverTimestamp()
+      timestamp: FieldValue.serverTimestamp()
     });
 
     return NextResponse.json({

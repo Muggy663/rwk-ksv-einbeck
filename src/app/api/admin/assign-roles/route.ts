@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         try {
           const userDoc = await adminDb.collection('user_permissions').doc(assignment.email).get();
           
-          if ((userDoc.exists as any)()) {
+          if (userDoc.exists) {
             const data = userDoc.data();
             const existingClubRoles = data?.clubRoles || {};
             
