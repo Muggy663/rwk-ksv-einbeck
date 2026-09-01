@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logWarn, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
-import { MannschaftsbildungService } from '@/lib/services/mannschaftsbildung-service';
 import { BackButton } from '@/components/ui/back-button';
 import { KMProvider, useKMContext } from '@/contexts/KMContext';
 import { KMClubSwitcher } from '@/components/ui/km-club-switcher';
@@ -16,6 +15,7 @@ import { getShooterClubId } from '@/lib/utils/altersklassen';
 interface Mannschaft {
   id: string;
   vereinId: string;
+  clubId?: string;
   disziplinId: string;
   wettkampfklassen: string[];
   schuetzenIds: string[];
@@ -26,6 +26,8 @@ interface Mannschaft {
 interface Shooter {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   birthYear: number;
   gender: 'male' | 'female';
 }
@@ -73,9 +75,9 @@ function KMMannschaftenContent() {
       const saisonRes = await fetch('/api/km/saisons?status=aktiv');
       if (saisonRes.ok) {
         const saisonData = await saisonRes.json();
-        const aktiveSaisons = (saisonData.data || []).sort((a, b) => {
+        const aktiveSaisons = (saisonData.data || []).sort((a: { jahr?: number; meldeschluss?: string }, b: { jahr?: number; meldeschluss?: string }) => {
           const today = new Date();
-          const getDeadline = (s) => {
+          const getDeadline = (s: { meldeschluss?: string }) => {
             if (!s.meldeschluss) return new Date(0);
             if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
               const [day, month, year] = s.meldeschluss.split('.');
@@ -92,7 +94,7 @@ function KMMannschaftenContent() {
           if (aExpired !== bExpired) {
             return aExpired ? 1 : -1;
           }
-          return b.jahr - a.jahr;
+          return (b.jahr || 0) - (a.jahr || 0);
         });
         setSaisons(aktiveSaisons);
       }
@@ -122,18 +124,18 @@ function KMMannschaftenContent() {
           logDebug('🔍 User club IDs:', userClubIds);
           
           // Debug jede Mannschaft einzeln
-          (data.data || []).forEach((m, i) => {
-            logDebug(`Mannschaft ${i+1}:`, {
+          (data.data || []).forEach((m: any, i: number) => {
+            logDebug(`Mannschaft ${i+1}: ${JSON.stringify({
               vereinId: m.vereinId,
               clubId: m.clubId,
               matchesFilter: userClubIds.includes(m.vereinId || m.clubId)
-            });
+            })}`);
           });
           
-          const filtered = (data.data || []).filter(m => 
+          const filtered = (data.data || []).filter((m: any) => 
             userClubIds.includes(m.vereinId || m.clubId)
           );
-          logDebug('🔍 Filtered mannschaften:', filtered.length, filtered);
+          logDebug(`🔍 Filtered mannschaften: ${filtered.length} ${JSON.stringify(filtered)}`);
           
           setMannschaften(data.data || []);
         } else {
@@ -230,18 +232,18 @@ function KMMannschaftenContent() {
         // Debug-Info anzeigen
         if (result.debugInfo && result.debugInfo.length > 0) {
           logDebug('🔍 Debug Info:', result.debugInfo);
-          result.debugInfo.forEach((info, i) => {
+          result.debugInfo.forEach((info: any, i: number) => {
             if (info.type === 'grouping') {
               logDebug(`🔍 Gruppierung: ${info.name} → ${info.klasse} → ${info.gruppenKey}`);
             } else {
-              logDebug(`Team ${i+1}:`, {
+              logDebug(`Team ${i+1}: ${JSON.stringify({
                 shooters: info.shooterNames,
                 classes: info.uniqueKlassen,
                 rejected: info.rejected,
                 teamSize: info.teamSize,
                 auflage: info.istAuflage,
                 spoNummer: info.spoNummer
-              });
+              })}`);
             }
           });
         }
@@ -470,7 +472,7 @@ function KMMannschaftenContent() {
                           } else {
                             toast({ title: 'Fehler', description: 'Mannschaft konnte nicht erstellt werden', variant: 'destructive' });
                           }
-                        }).catch(error => {
+                        }).catch(() => {
                           toast({ title: 'Fehler', description: 'Netzwerkfehler', variant: 'destructive' });
                         });
                       }}
@@ -487,7 +489,7 @@ function KMMannschaftenContent() {
                   const filteredMannschaften = mannschaften.filter(m => {
                     const saisonMatch = !selectedSaison || m.saison === selectedSaison;
                     if (userClubIds.length === 0) return saisonMatch;
-                    const clubMatch = userClubIds.includes(m.vereinId || m.clubId);
+                    const clubMatch = userClubIds.includes(m.vereinId || m.clubId || '');
                     const currentClubMatch = !currentClubId || (m.vereinId || m.clubId) === currentClubId;
                     return saisonMatch && clubMatch && currentClubMatch;
                   });
@@ -519,7 +521,7 @@ function KMMannschaftenContent() {
                       
                       if (userClubIds.length === 0) return saisonMatch;
                       
-                      const clubMatch = userClubIds.includes(mannschaft.vereinId || mannschaft.clubId);
+                      const clubMatch = userClubIds.includes(mannschaft.vereinId || mannschaft.clubId || '');
                       const currentClubMatch = !currentClubId || (mannschaft.vereinId || mannschaft.clubId) === currentClubId;
                       return saisonMatch && clubMatch && currentClubMatch;
                     })
@@ -720,11 +722,8 @@ function KMMannschaftenContent() {
                                   // Prüfe Kompatibilität mit Service
                                   if (teamSchuetzen.length === 0) return true;
                                   
-                                  // Erstelle Test-Team mit diesem Schützen
-                                  const testTeam = [...teamSchuetzen, s];
-                                  
                                   // Synchrone Prüfung - vereinfacht für UI
-                                  return teamSchuetzen.every(teamSchuetze => {
+                                  return teamSchuetzen.every((teamSchuetze: any) => {
                                     const schuetzeMeldung = meldungen.find(m => m.schuetzeId === s.id && m.disziplinId === mannschaft.disziplinId);
                                     const teamMeldung = meldungen.find(m => m.schuetzeId === teamSchuetze.id && m.disziplinId === mannschaft.disziplinId);
                                     
