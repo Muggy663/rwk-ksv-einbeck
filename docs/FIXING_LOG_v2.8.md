@@ -256,3 +256,21 @@ Wiederkehrende Muster in diesem Bereich:
 | Bereich | Status |
 |---------|--------|
 | km (app) | ✅ 0 Fehler |
+
+### Bereich: km-orga — KOMPLETT SAUBER (0 Fehler)
+
+Von 451 → 0. Aktiv genutzter Bereich (Kreismeisterschaft-Organisation), zusammen mit km priorisiert.
+
+Größte Einzeldatei des gesamten Projekts: **`startlisten/v2-uebersicht/page.tsx`** hatte allein 246 Fehler. Ursache: mehrere `useState([])`/`useState({})` ohne Typ-Argument, deren Elemente (`.startliste`, `.konfiguration`, `.erstellt` etc.) überall im Code genutzt wurden. Fix: zentrale Typen `StartlistenDoc`, `Starter`, `StartlistenKonfiguration` definiert und die States damit typisiert → löste ~150 Folgefehler auf einen Schlag. Rest (Callback-Param-Typisierung, `editData.startliste`-Null-Fallbacks, `querySelector<HTMLElement>`, Index-`Record<string,any>`, `Date.getTime()` bei Subtraktion) mechanisch. Tote Funktion `lueckenFuellen` (nirgends aufgerufen) und ungültige autoTable-Property `cellHeight` entfernt — per Diff verifiziert, dass kein onClick-Handler verloren ging.
+
+Weitere Dateien nach denselben etablierten Mustern (teils an Sub-Agents delegiert, danach vom Hauptagent verifiziert):
+- km-ergebnisse (52): progress-State-Setter auf funktionale Form `setImportProgress(prev => ({...prev, ...}))` umgestellt (erhält `pauseReason`, verhaltensgleich); `String()` bei number→string in PDF-Serien; columnStyles/IIFE/Object.entries-Casts.
+- startlisten/generator (39) + startlisten/page (28): untypisierte States → typisiert (löst never-Kaskaden); `disziplinen`-State-Typ um genutzte Felder erweitert; `durchgangsDauer: number | string`.
+- mannschaften/mitglieder/meldungen/layout/david21 + 10 kleinere: React-Import (React19), untypisierte States, Callback-Params, doc-map-Casts, `setX((prev: any) => ...)`, logWarn-unknown, `|| ''`-Fallbacks, ungenutzte Imports/tote Funktionen entfernt.
+
+**Muster-Erkenntnis (zentral für beide KM-Bereiche):** Die mit Abstand häufigste Fehlerquelle war **`useState([])`/`useState({})` ohne Typ-Argument** → TS inferiert `never[]`/`{}` → jeder Feldzugriff auf State-Elemente wird zum Fehler. Ein einziger Typ-Fix am State beseitigt oft 10-150 Folgefehler. Immer zuerst die State-Deklarationen typisieren, bevor man Einzelfehler angeht.
+
+| Bereich | Status |
+|---------|--------|
+| km-orga | ✅ 0 Fehler |
+| Gesamt-Projekt | ~1033 |
