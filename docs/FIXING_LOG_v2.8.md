@@ -156,3 +156,13 @@ Fortsetzung. Alle Verein-Seiten jetzt fehlerfrei.
 |---------|--------|
 | Verein (alle Seiten) | ✅ 0 Fehler |
 | Gesamt-Projekt | 2274 → 2211 |
+
+### Bereich: lib/services (begonnen)
+
+- **`season-transition-service.ts`** (15 → 0): ungenutzte Imports (`orderBy`, `addDoc`, `updateDoc`, `deduplicateScores`) entfernt; tote Funktion `checkIfNewClub` entfernt; echte Typfehler behoben (`{id}[]` → `ScoreEntry[]`-Cast, `.order`-Zugriff typisiert); ungenutzte Parameter mit `_`-Präfix (`_newClubs`, `_targetSeasonId`); ungenutzte lokale Variablen entfernt; Logger-`unknown` typsicher gemacht.
+
+lib/services gesamt: 121 → 106. Projekt weiter in Arbeit.
+
+| Bereich | Status |
+|---------|--------|
+| lib/services | begonnen (season-transition ✅) |

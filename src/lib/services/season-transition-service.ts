@@ -1,8 +1,7 @@
 // src/lib/services/season-transition-service.ts
 import { db } from '@/lib/firebase/config';
 import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
-import { collection, getDocs, query, where, orderBy, doc, writeBatch, addDoc, updateDoc } from 'firebase/firestore';
-import { deduplicateScores } from '@/lib/utils/score-deduplication';
+import { collection, getDocs, query, where, doc, writeBatch } from 'firebase/firestore';
 import { SubstitutionService } from './substitution-service';
 import { TeamCalculationService } from './team-calculation-service';
 
@@ -96,7 +95,7 @@ export async function calculateLeagueStandings(leagueId: string, competitionYear
         where('teamId', '==', teamDoc.id)
       );
       const scoresSnapshot = await getDocs(scoresQuery);
-      const teamScoresRaw = scoresSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const teamScoresRaw = scoresSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as import('@/types/rwk').ScoreEntry[];
       
       logDebug(`Team ${team.name}: ${teamScoresRaw.length} Ergebnisse`);
       
@@ -163,7 +162,7 @@ export async function generatePromotionRelegationSuggestions(
   allLeagues: any[],
   withdrawnTeams: string[] = [], // Abgemeldete Teams
   targetLeagueSizes: Map<string, number> = new Map(), // Gewünschte Ligagrößen
-  newClubs: string[] = [] // Neue Vereine (starten in niedrigster Liga)
+  _newClubs: string[] = [] // Neue Vereine (starten in niedrigster Liga)
 ): Promise<PromotionRelegationRule[]> {
   try {
     const standings = await calculateLeagueStandings(leagueId, competitionYear);
@@ -185,12 +184,11 @@ export async function generatePromotionRelegationSuggestions(
 
     // Prüfe auf Abmeldungen in dieser Liga
     const withdrawnInThisLeague = standings.filter(team => withdrawnTeams.includes(team.teamId));
-    const activeTeams = standings.filter(team => !withdrawnTeams.includes(team.teamId));
     
     // Berechne verfügbare Plätze basierend auf Abmeldungen aus höheren Ligen
     const withdrawnFromHigherLeagues = allLeagues
       .filter(league => (league.order || 0) < (currentLeague.order || 0))
-      .reduce((count, league) => {
+      .reduce((count) => {
         // Hier würde man die Abmeldungen aus höheren Ligen zählen
         return count;
       }, 0);
@@ -398,7 +396,7 @@ export async function createNewSeason(
     
     // Finde niedrigste Liga für neue Vereine (RWK-Ordnung §7)
     const lowestLeague = sourceLeaguesSnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .map(doc => ({ id: doc.id, ...doc.data() } as { id: string; order?: number }))
       .sort((a, b) => (b.order || 0) - (a.order || 0))[0]; // Höchste order = niedrigste Liga
     
     const lowestLeagueNewId = leagueMapping.get(lowestLeague?.id);
@@ -437,7 +435,7 @@ export async function createNewSeason(
           const clubDoc = await getDocs(query(collection(db, 'clubs'), where('__name__', '==', clubId)));
           clubName = clubDoc.docs[0]?.data()?.name || 'Neuer Verein';
         } catch (clubError) {
-          logWarn(`Failed to load club data for ${clubId}:`, clubError);
+          logWarn(`Failed to load club data for ${clubId}:`, clubError instanceof Error ? clubError.message : String(clubError));
         }
         
         batch.set(newTeamRef, {
@@ -466,7 +464,7 @@ export async function createNewSeason(
  */
 export async function applyPromotionRelegation(
   suggestions: PromotionRelegationRule[],
-  targetSeasonId: string
+  _targetSeasonId: string
 ): Promise<void> {
   try {
     const batch = writeBatch(db);
@@ -490,11 +488,4 @@ export async function applyPromotionRelegation(
   }
 }
 
-/**
- * Prüft ob ein Team von einem neuen Verein stammt (RWK-Ordnung §7)
- * Alle Teams die bereits in dieser Saison spielen sind nicht mehr neu
- */
-async function checkIfNewClub(clubId: string, competitionYear: number): Promise<boolean> {
-  // Alle Teams die bereits in der aktuellen Saison spielen sind nicht mehr neu
-  return false;
-}
+
