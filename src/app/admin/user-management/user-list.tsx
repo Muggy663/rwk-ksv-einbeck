@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,11 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Search, Loader2, UserCog, MailCheck } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs, orderBy, doc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { UserPermission, Club } from '@/types/rwk';
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +52,7 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
       const snapshot = await getDocs(usersQuery);
       const fetchedUsers = snapshot.docs.map(doc => {
         const data = doc.data();
-        logDebug('User data for', data.email, ':', data);
+        logDebug(`User data for ${data.email}:`, data);
         return {
           ...data,
           uid: doc.id
@@ -226,8 +224,8 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
     }
     
     // KV-Rollen (neue Struktur hat Priorität)
-    if (user.kvRole) {
-      roles.push(<Badge key="kv-new" variant="outline" className="bg-yellow-100">{user.kvRole}</Badge>);
+    if ((user as any).kvRole) {
+      roles.push(<Badge key="kv-new" variant="outline" className="bg-yellow-100">{(user as any).kvRole}</Badge>);
     } else if (user.kvRoles) {
       Object.entries(user.kvRoles).forEach(([kvId, role]) => {
         roles.push(<Badge key={`kv-${kvId}`} variant="outline" className="bg-yellow-100">{role}</Badge>);

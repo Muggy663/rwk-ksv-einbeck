@@ -42,6 +42,12 @@ const TEAMS_COLLECTION = "rwk_teams";
 const SHOOTERS_COLLECTION = "shooters";
 const SCORES_COLLECTION = "rwk_scores";
 
+type EditableScoreEntry = ScoreEntry & {
+  leagueName?: string;
+  lastEditTimestamp?: any;
+  lastEditedByUserName?: string;
+};
+
 export default function AdminEditResultsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -57,13 +63,13 @@ export default function AdminEditResultsPage() {
   const [selectedShooterId, setSelectedShooterId] = useState<string>('');
   const [selectedRound, setSelectedRound] = useState<string>('');
 
-  const [displayedScores, setDisplayedScores] = useState<ScoreEntry[]>([]);
+  const [displayedScores, setDisplayedScores] = useState<EditableScoreEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingFilters, setIsLoadingFilters] = useState(true);
 
   // Edit Dialog States
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentScoreToEdit, setCurrentScoreToEdit] = useState<ScoreEntry | null>(null);
+  const [currentScoreToEdit, setCurrentScoreToEdit] = useState<EditableScoreEntry | null>(null);
   const [editFormScore, setEditFormScore] = useState<string>('');
   const [editFormResultType, setEditFormResultType] = useState<'regular' | 'pre' | 'post'>('regular');
   const [editFormRound, setEditFormRound] = useState<string>('');
@@ -271,7 +277,7 @@ export default function AdminEditResultsPage() {
 
       const snapshot = await getDocs(scoresQuery);
       const fetchedScores = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() } as ScoreEntry))
+        .map(doc => ({ id: doc.id, ...doc.data() } as EditableScoreEntry))
         .sort((a, b) => {
           const aTs = (a.entryTimestamp as Timestamp)?.toMillis() ?? 0;
           const bTs = (b.entryTimestamp as Timestamp)?.toMillis() ?? 0;

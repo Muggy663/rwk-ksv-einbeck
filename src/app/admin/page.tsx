@@ -5,30 +5,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { 
-  LayoutDashboard, Users, Trophy, ListChecks, Edit3, Settings, UserCog, 
-  MessagesSquare, FileUp, Award, BarChart3, ShieldQuestion, GitPullRequestClosed, 
-  BookOpenCheck, Printer, ClipboardList, KeyRound, ListTree, 
-  Table as TableIcon, Info as InfoIcon, CheckCircle, AlertCircle, ShieldCheck as AdminShieldIcon, FileText,
-  CalendarDays, Smartphone, Euro
+  Users, Trophy, ListChecks, Settings, UserCog, 
+  MessagesSquare, FileUp, Award, BarChart3, 
+  Info as InfoIcon, FileText,
+  Euro
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { AdminStats } from '@/components/admin/AdminStats';
 import { LoginMonitor } from '@/components/admin/LoginMonitor';
 import { BackButton } from '@/components/ui/back-button';
 
-interface AgendaItem {
-  text: string;
-  status: string; // z.B. "Erledigt (vX.Y.Z)", "In Arbeit (vX.Y.Z)", "Offen (vX.Y.Z)", "Zukunft"
-  icon: React.ElementType;
-  iconColor?: string;
-  isMajor?: boolean; // Für größere geplante Versionssprünge
-  versionTarget?: string; // Zielversion
-}
-
-
 function BulkVerifyButton() {
   const [loading, setLoading] = React.useState(false);
-  const [done, setDone] = React.useState(null);
+  const [done, setDone] = React.useState<number | null>(null);
   const handleClick = async () => {
     setLoading(true);
     try {
@@ -41,280 +29,6 @@ function BulkVerifyButton() {
   return <Button variant="outline" className="w-full text-xs" onClick={handleClick} disabled={loading}>{loading ? 'Laeuft...' : 'Bestehende User verifizieren'}</Button>;
 }
 export default function AdminDashboardPage() {
-  const agendaItems: AgendaItem[] = [
-    // Version 0.3.x - Stabilisierung & Kern-UX
-    { 
-      text: "Basis-Admin-Funktionen (Stammdaten CRUD, Ergebniserfassung/-bearbeitung) implementiert.", 
-      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600" 
-    },
-    { 
-      text: "Basis-VV/MF-Funktionen (Dashboard, Mannschafts-/Schützenansicht, Ergebniserfassung für eigenen Verein über user_permissions) implementiert.", 
-      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-    { 
-      text: "RWK-Tabellen: Funktionalität mit Filtern, Detailansichten, URL-Parameter-Verarbeitung und Standard-Sortierung.", 
-      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600" 
-    },
-    {
-      text: "Handbuch, Impressum, RWK-Ordnung und Support-Formular (mit DB-Speicherung) erstellt.",
-      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-     {
-      text: "Admin-Benutzerverwaltung: Zuweisung von Rolle und einem Verein zu Benutzern (UID-basiert, Speicherung in `user_permissions`) implementiert.",
-      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-    {
-      text: "Regeln für Mannschaftszuordnung (max. 3 Schützen/Team; 1x pro Schütze/Disziplinkategorie/Jahr) in Admin- und VV-Bereichen implementiert.",
-      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-    {
-      text: "Diverse UI-Verbesserungen und Fehlerbehebungen (Layouts, Importfehler, Vercel Build-Fehler).",
-      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-    {
-      text: "Anzeige der Mannschaftsführer-Kontaktdaten und Hinweis zur Mannschaftsstärke in Team-Dialogen.",
-      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-
-    // Version 0.4.0 (Sicherheit & VV/MF Kernfunktionen finalisieren)
-    { 
-      text: "Firestore Sicherheitsregeln vollständig implementieren und gründlich testen (basierend auf `user_permissions` und Rollen VV/MF).", 
-      status: "Erledigt (v0.4.0)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-    {
-      text: "Client-seitige Nutzung der `user_permissions` für VV/MF finalisieren und `VV_CLUB_ASSIGNMENTS`-Map entfernen.",
-      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-    {
-      text: "Tooltips für bessere Benutzerführung in allen Bereichen hinzufügen.",
-      status: "Erledigt (v0.4.0)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-    {
-      text: "Ergebniserfassung für Vereinsvertreter verbessern (Erfassung für alle Mannschaften in einer Liga).",
-      status: "Erledigt (v0.4.0)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-    {
-      text: "Seite für 'Dokumente/Ausschreibungen' erstellen (Basis).",
-      status: "Erledigt (v0.4.0)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-
-    // Version 0.5.0 (UX-Verbesserungen, Vorbereitung für erste breitere Tests)
-    {
-      text: "Ergebniserfassung (VV/MF/Admin): UX-Verbesserungen (z.B. Vorauswahl Durchgang, Anzeige fehlender Schützen, Live-Validierung Ringzahlen).",
-      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0", isMajor: true
-    },
-    {
-      text: "Admin-Panel: Liste aller Mannschaftsführer einer Saison (mit Kontaktdaten).",
-      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
-    },
-    {
-      text: "Login: Passwort-Reset-Funktion implementieren.",
-      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
-    },
-    {
-      text: "Anzeige 'Mannschaften (Info)' verfeinern: Name des einen Teams anzeigen, wenn nur ein Team zugeordnet (ohne Kontext).",
-      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
-    },
-    {
-      text: "RWK-Tabellen: Druckfunktion für Ligaergebnisse (ohne sensible Daten).",
-      status: "Offen (v0.7.0)", icon: Printer, iconColor: "text-purple-600", versionTarget: "0.7.0"
-    },
-    {
-      text: "Hauptnavigation: Icons überprüfen/optimieren, 'KM'-Link entfernt/auskommentiert.",
-      status: "Erledigt (v0.3.1)", icon: CheckCircle, iconColor: "text-green-600"
-    },
-    {
-      text: "Admin-Benutzerverwaltung: UI-Verbesserungen (Auflisten, einfacheres Bearbeiten).",
-      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
-    },
-    {
-      text: "Vereinfachte Mannschaftsanlage mit Dropdown für Mannschaftsstärke und automatischen Namensvorschlägen.",
-      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
-    },
-    {
-      text: "Suchfunktion für Schützen bei größeren Vereinen implementiert.",
-      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
-    },
-    {
-      text: "Deutlichere visuelle Unterscheidung zwischen verfügbaren und zugewiesenen Schützen.",
-      status: "Erledigt (v0.5.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.5.0"
-    },
-
-
-    // Version 0.6.0 bis 0.6.3 (Implementierte Features)
-    { 
-      text: "Vercel-Kompatibilität: Ersetzung von useSearchParams durch clientseitiges Parsen mit window.location.search.", 
-      status: "Erledigt (v0.6.3)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.3", isMajor: true
-    },
-    { 
-      text: "Behebung von Fehlern beim statischen Rendering auf Vercel.", 
-      status: "Erledigt (v0.6.3)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.3"
-    },
-    { 
-      text: "Optimierte Firestore-Abfragen für Vercel-Limits und verbesserte Asset-Handhabung.", 
-      status: "Erledigt (v0.6.3)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.3"
-    },
-    { 
-      text: "Audit-Trail für Ergebniserfassung (Admin): Protokollierung von Änderungen.", 
-      status: "Erledigt (v0.6.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.0", isMajor: true
-    },
-    { 
-      text: "Platzhalter 'Schnitt Vorjahr' in den Team-Dialogen mit echter Funktionalität versehen.", 
-      status: "Erledigt (v0.6.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.0"
-    },
-    { 
-      text: "PDF-Generierung (Erweitert): Gesamtlisten mit Geschlechterfilter.", 
-      status: "Erledigt (v0.6.3)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.3"
-    },
-    { 
-      text: "Urkunden-Generator für Schützen und Mannschaften mit Vercel-Kompatibilität.", 
-      status: "Erledigt (v0.6.3)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.3"
-    },
-    {
-      text: "Onboarding-Assistent für neue Benutzer implementiert.",
-      status: "Erledigt (v0.6.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.0"
-    },
-    {
-      text: "Passwortänderungsaufforderung nach dem ersten Login.",
-      status: "Erledigt (v0.6.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.0"
-    },
-    {
-      text: "RWK-Tabellen: Druckfunktion für Ligaergebnisse implementiert.",
-      status: "Erledigt (v0.6.1)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.1", isMajor: true
-    },
-    {
-      text: "Optimierte PDF-Layouts für bessere Lesbarkeit.",
-      status: "Erledigt (v0.6.1)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.1"
-    },
-    {
-      text: "Integration des Vorjahresdurchschnitts in Team-Dialoge.",
-      status: "Erledigt (v0.6.1)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.1"
-    },
-    {
-      text: "Hilfs-Tooltips für komplexe Funktionen.",
-      status: "Erledigt (v0.6.1)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.6.1"
-    },
-    
-    // Version 0.7.0 (Statistik & Mobile) - Abgeschlossen
-    {
-      text: "Statistik-Dashboard mit erweiterten Visualisierungen.",
-      status: "Erledigt (v0.7.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.7.0", isMajor: true
-    },
-    {
-      text: "Schützenvergleich-Funktion mit Auswahl von bis zu 6 Schützen.",
-      status: "Erledigt (v0.7.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.7.0"
-    },
-    {
-      text: "Terminkalender für Wettkämpfe mit iCal-Export.",
-      status: "Erledigt (v0.7.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.7.0"
-    },
-    {
-      text: "Mobile Optimierung und Progressive Web App (PWA).",
-      status: "Erledigt (v0.7.0)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "0.7.0"
-    },
-    
-    // Version 1.5.5 (KM-Jahresverwaltung & Inline-Bearbeitung) - Neu abgeschlossen
-    {
-      text: "KM-Jahresverwaltung: Jahre anlegen, Meldeschlüsse verwalten und Status ändern.",
-      status: "Erledigt (v1.5.5)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "1.5.5", isMajor: true
-    },
-    {
-      text: "Jahresspezifische Collections: km_meldungen_JAHR_DISZIPLIN für bessere Organisation.",
-      status: "Erledigt (v1.5.5)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "1.5.5"
-    },
-    {
-      text: "Automatische Firestore Rules für alle KM-Jahre (Wildcard-Pattern).",
-      status: "Erledigt (v1.5.5)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "1.5.5"
-    },
-    {
-      text: "Inline-Bearbeitung in KM-Meldungen-Tabelle: LM-Teilnahme, VM-Ergebnis direkt ändern.",
-      status: "Erledigt (v1.5.5)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "1.5.5"
-    },
-    {
-      text: "Migration-System für bestehende KM-Daten in neue Collections.",
-      status: "Erledigt (v1.5.5)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "1.5.5"
-    },
-    {
-      text: "Dynamisches Jahr-Loading: Alle KM-Bereiche arbeiten automatisch mit aktivem Jahr.",
-      status: "Erledigt (v1.5.5)", icon: CheckCircle, iconColor: "text-green-600", versionTarget: "1.5.5"
-    },
-    
-    // Ziel: Version 1.5.6 (Nächste Verbesserungen)
-    {
-      text: "Standard-Statistik-Seite korrigieren, insbesondere den Mannschaftsvergleich.",
-      status: "Als Nächstes (v1.5.6)", icon: AlertCircle, iconColor: "text-destructive", versionTarget: "1.5.6", isMajor: true
-    },
-    {
-      text: "\"Erste Schritte starten\"-Button mit Funktionalität versehen.",
-      status: "Offen (v1.5.6)", icon: ShieldQuestion, iconColor: "text-purple-600", versionTarget: "1.5.6"
-    },
-    {
-      text: "\"Passwort ändern\"-Funktion implementieren.",
-      status: "Offen (v1.5.6)", icon: KeyRound, iconColor: "text-purple-600", versionTarget: "1.5.6"
-    },
-    {
-      text: "Vereinfachung der Benutzeroberfläche (Navigation, Terminkalender, etc.).",
-      status: "Offen (v1.5.6)", icon: Settings, iconColor: "text-purple-600", versionTarget: "1.5.6"
-    },
-
-    // Ziel: Version 1.6.0 (Nächste Major-Version)
-    {
-      text: "Benachrichtigungssystem für neue Ergebnisse und wichtige Ereignisse.", 
-      status: "Zukunft (v1.6.0)", icon: MessagesSquare, iconColor: "text-muted-foreground", versionTarget: "1.6.0", isMajor: true
-    },
-    {
-      text: "Erweiterte Benutzerberechtigungen und Vereinfachung der Benutzerverwaltung.", 
-      status: "Zukunft (v1.6.0)", icon: UserCog, iconColor: "text-muted-foreground", versionTarget: "1.6.0"
-    },
-    {
-      text: "Automatischer Saisonabschluss / Auf- und Abstieg (komplex).", 
-      status: "In Vorbereitung (v1.6.0)", icon: Trophy, iconColor: "text-blue-600", versionTarget: "1.6.0"
-    },
-    
-    // Zukunft (Nach Beta / v1.0+)
-    {
-      text: "'Unbehandelte Benutzer'-Widget im Admin-Dashboard (weniger relevant durch aktuellen Admin-Workflow).", 
-      status: "Zurückgestellt", icon: Users, iconColor: "text-muted-foreground/70" 
-    },
-    {
-      text: "RWK-Tabellen: Detailliertere Disziplin-Filterung (z.B. KKG, LGA), falls doch gewünscht.",
-      status: "Zurückgestellt", icon: ListChecks, iconColor: "text-muted-foreground/70"
-    },
-    {
-      text: "RWK-Tabellen: Anzeige einer Kreuztabelle/Paarungsübersicht pro Liga.",
-      status: "Zukunftsmusik", icon: TableIcon, iconColor: "text-muted-foreground/70"
-    },
-    {
-      text: "Login/VV-Dashboard: Mechanismus/Aufforderung zur Passwortänderung nach Erstanmeldung.",
-      status: "Zukunft", icon: KeyRound, iconColor: "text-muted-foreground/70"
-    },
-    { 
-      text: "Automatischer Saisonabschluss / Auf- und Abstieg (komplex).", 
-      status: "Zukunft", icon: Trophy, iconColor: "text-muted-foreground/70" 
-    },
-    {
-      text: "CSV Import-Funktion für Stammdaten (aktuell nicht benötigt).",
-      status: "Zurückgestellt", icon: FileUp, iconColor: "text-muted-foreground/70"
-    },
-     { 
-      text: "Captcha auf der Login-Seite (Platzhalter).", 
-      status: "Zukunft (Nach Beta-Test)", icon: AdminShieldIcon, iconColor: "text-muted-foreground/70" 
-    },
-    {
-      text: "Archivierungsfunktion für alte Saisons (z.B. älter als 5 Jahre).",
-      status: "Zukunft", icon: ListTree, iconColor: "text-muted-foreground/70"
-    },
-  ];
-
-  const getStatusColor = (status: string) => {
-    if (status.startsWith("Erledigt")) return "text-green-600";
-    if (status.startsWith("Als Nächstes")) return "text-destructive";
-    if (status.startsWith("In Arbeit")) return "text-blue-600";
-    if (status.startsWith("Offen")) return "text-orange-600";
-    return "text-muted-foreground";
-  };
-
-
   return (
     <div className="px-2 md:px-4 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -322,12 +36,12 @@ export default function AdminDashboardPage() {
           <BackButton className="mr-2" fallbackHref="/dashboard-auswahl" />
           <div>
             <h1 className="text-xl md:text-3xl font-bold text-primary">Admin Dashboard</h1>
-            <p className="text-sm md:text-base text-muted-foreground">Verwaltung der Rundenwettkämpfe.</p>
+            <p className="text-sm md:text-base text-muted-foreground">Verwaltung der RundenwettkÃ¤mpfe.</p>
           </div>
         </div>
         <Link href="/km-orga" className="w-full md:w-auto">
           <Button variant="outline" className="w-full md:w-auto">
-            🏆 KM-Orga-Dashboard
+            ðŸ† KM-Orga-Dashboard
           </Button>
         </Link>
       </div>
@@ -346,7 +60,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Saisons, Ligen und zugehörige Daten verwalten.
+              Saisons, Ligen und zugehÃ¶rige Daten verwalten.
             </CardDescription>
             <div className="flex flex-col gap-2">
               <Link href="/admin/seasons" passHref>
@@ -356,7 +70,7 @@ export default function AdminDashboardPage() {
                 <Button variant="outline" className="w-full">Saisonwechsel</Button>
               </Link>
               <Link href="/admin/promotion-relegation" passHref>
-                <Button variant="outline" className="w-full">🔼🔽 Auf- & Abstiege</Button>
+                <Button variant="outline" className="w-full">ðŸ”¼ðŸ”½ Auf- & Abstiege</Button>
               </Link>
               <Link href="/admin/league-settings">
                 <Button variant="outline" className="w-full">
@@ -381,12 +95,12 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Vereine, Mannschaften und Schützen pflegen.
+              Vereine, Mannschaften und SchÃ¼tzen pflegen.
             </CardDescription>
              <div className="flex flex-col gap-2">
                 <Link href="/admin/clubs" passHref><Button variant="outline" className="w-full">Vereine</Button></Link>
                 <Link href="/admin/teams" passHref><Button variant="outline" className="w-full">Mannschaften</Button></Link>
-                <Link href="/admin/shooters" passHref><Button variant="outline" className="w-full">Schützen</Button></Link>
+                <Link href="/admin/shooters" passHref><Button variant="outline" className="w-full">SchÃ¼tzen</Button></Link>
                 <Link href="/admin/mitglieder-import" passHref><Button variant="outline" className="w-full"><FileUp className="mr-2 h-4 w-4" />Mitcom-Import</Button></Link>
              </div>
           </CardContent>
@@ -403,9 +117,9 @@ export default function AdminDashboardPage() {
             </CardDescription>
             <div className="flex flex-col gap-2">
                 <Link href="/admin/results" passHref><Button className="w-full">Erfassen</Button></Link>
-                <Link href="/admin/edit-results" passHref><Button variant="outline" className="w-full">Bearbeiten/Löschen</Button></Link>
-                <Link href="/admin/missing-results" passHref><Button variant="outline" className="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200">Fehlende Ergebnisse prüfen</Button></Link>
-                <Link href="/admin/substitutions" passHref><Button variant="outline" className="w-full bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200">🔄 Ersatzschützen verwalten</Button></Link>
+                <Link href="/admin/edit-results" passHref><Button variant="outline" className="w-full">Bearbeiten/LÃ¶schen</Button></Link>
+                <Link href="/admin/missing-results" passHref><Button variant="outline" className="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200">Fehlende Ergebnisse prÃ¼fen</Button></Link>
+                <Link href="/admin/substitutions" passHref><Button variant="outline" className="w-full bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200">ðŸ”„ ErsatzschÃ¼tzen verwalten</Button></Link>
             </div>
           </CardContent>
         </Card>
@@ -421,7 +135,7 @@ export default function AdminDashboardPage() {
             </CardDescription>
             <div className="flex flex-col gap-2">
               <Link href="/admin/user-management" passHref>
-                <Button className="w-full" variant="outline">👥 Benutzer & Rollen</Button>
+                <Button className="w-full" variant="outline">ðŸ‘¥ Benutzer & Rollen</Button>
               </Link>
               <BulkVerifyButton />
             </div>
@@ -445,15 +159,15 @@ export default function AdminDashboardPage() {
         
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Mannschaftsführer</CardTitle>
+            <CardTitle className="text-lg font-medium">MannschaftsfÃ¼hrer</CardTitle>
             <Users className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Liste aller Mannschaftsführer nach Saison und Liga mit Kontaktdaten.
+              Liste aller MannschaftsfÃ¼hrer nach Saison und Liga mit Kontaktdaten.
             </CardDescription>
             <Link href="/admin/team-managers" passHref>
-              <Button className="w-full" variant="outline">Mannschaftsführer anzeigen</Button>
+              <Button className="w-full" variant="outline">MannschaftsfÃ¼hrer anzeigen</Button>
             </Link>
           </CardContent>
         </Card>
@@ -472,7 +186,7 @@ export default function AdminDashboardPage() {
                 <Button className="w-full" variant="outline">Tickets anzeigen</Button>
               </Link>
               <Link href="/admin/feedback" passHref>
-                <Button className="w-full" variant="outline">💬 Feedbacks</Button>
+                <Button className="w-full" variant="outline">ðŸ’¬ Feedbacks</Button>
               </Link>
             </div>
           </CardContent>
@@ -485,7 +199,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-center p-3 bg-green-50 rounded-md">
-              <p className="text-sm text-green-800 font-medium">✅ Error-Monitoring aktiv</p>
+              <p className="text-sm text-green-800 font-medium">âœ… Error-Monitoring aktiv</p>
               <p className="text-xs text-green-600">Fehler werden automatisch per E-Mail gesendet</p>
             </div>
           </CardContent>
@@ -498,7 +212,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Startgelder berechnen und Kostenübersicht für den Schatzmeister.
+              Startgelder berechnen und KostenÃ¼bersicht fÃ¼r den Schatzmeister.
             </CardDescription>
             <Link href="/admin/startgelder" passHref>
               <Button className="w-full">Startgelder verwalten</Button>
@@ -520,10 +234,10 @@ export default function AdminDashboardPage() {
                 <Button className="w-full">Handzettel erstellen</Button>
               </Link>
               <Link href="/admin/email-system" passHref>
-                <Button className="w-full" variant="outline">📧 E-Mail-System</Button>
+                <Button className="w-full" variant="outline">ðŸ“§ E-Mail-System</Button>
               </Link>
               <Link href="/admin/support-access" passHref>
-                <Button className="w-full" variant="outline">🛠️ Support-Zugang</Button>
+                <Button className="w-full" variant="outline">ðŸ› ï¸ Support-Zugang</Button>
               </Link>
             </div>
           </CardContent>
@@ -541,10 +255,10 @@ export default function AdminDashboardPage() {
             </CardDescription>
              <div className="flex flex-col gap-2">
               <Link href="/admin/audit" passHref>
-                <Button className="w-full">Änderungsprotokoll</Button>
+                <Button className="w-full">Ã„nderungsprotokoll</Button>
               </Link>
               <Link href="/admin/recovery" passHref>
-                <Button className="w-full" variant="outline">🔄 Datenwiederherstellung</Button>
+                <Button className="w-full" variant="outline">ðŸ”„ Datenwiederherstellung</Button>
               </Link>
             </div>
           </CardContent>
@@ -558,7 +272,7 @@ export default function AdminDashboardPage() {
           <CardTitle className="text-xl text-accent flex items-center"><InfoIcon className="mr-2 h-5 w-5" /> Wichtige Hinweise</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>Dies ist der Administrationsbereich. Änderungen hier haben direkte Auswirkungen auf die angezeigten Daten in der App.</p>
+          <p>Dies ist der Administrationsbereich. Ã„nderungen hier haben direkte Auswirkungen auf die angezeigten Daten in der App.</p>
           <p>Stellen Sie sicher, dass alle Eingaben korrekt sind, bevor Sie sie speichern.</p>
         </CardContent>
       </Card>
