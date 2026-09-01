@@ -19,7 +19,6 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createEvent } from '@/lib/services/calendar-service';
-import { fetchLeagues, fetchSeasons } from '@/lib/services/statistics-service';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
@@ -40,10 +39,6 @@ export default function AddTerminPage() {
   const [type, setType] = useState<string>("durchgang");
   const [popoverOpen, setPopoverOpen] = useState(false);
   
-  const [seasons, setSeasons] = useState<Array<{ id: string; name: string; year: number }>>([]);
-  const [leagues, setLeagues] = useState<Array<{ id: string; name: string; type: string }>>([]);
-  const [selectedSeason, setSelectedSeason] = useState<string>("");
-  const [selectedLeague, setSelectedLeague] = useState<string>("");
   const [locations, setLocations] = useState<string[]>([]);
   
   const [isSubmitting, setIsSubmitting] = useState(false);

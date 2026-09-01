@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from 'react';
 import { logDebug } from '@/lib/utils/secure-logger';
 import { ResultEntry } from '@/components/social/ResultEntry';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { SocialTrainingService } from '@/lib/services/social-training-service';
 
 export default function ResultEntryPage() {
   const { toast } = useToast();

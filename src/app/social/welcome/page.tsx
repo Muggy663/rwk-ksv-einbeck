@@ -1,9 +1,8 @@
 // src/app/social/welcome/page.tsx
 "use client";
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Trophy, Target, ArrowRight, Crown, Zap } from 'lucide-react';
+import { Users, Trophy, Target, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SocialWelcomePage() {

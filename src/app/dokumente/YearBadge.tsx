@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed (React 19 automatic JSX runtime)
 import { Calendar } from 'lucide-react';
 
 interface YearBadgeProps {

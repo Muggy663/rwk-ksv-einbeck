@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -51,7 +51,7 @@ export default function DiscoverPage() {
     try {
       const { SocialService } = await import('@/lib/services/social-service');
       const publicProfiles = await SocialService.searchPublicProfiles();
-      setProfiles(publicProfiles.filter(p => p.id !== user?.uid));
+      setProfiles(publicProfiles.filter(p => p.id !== user?.uid) as UserProfile[]);
     } catch (error) {
       logError('Fehler beim Laden der Profile:', error);
     } finally {

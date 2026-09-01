@@ -1,21 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
-import { AlertCircle, CalendarPlus, Download, FileDown, Pencil } from 'lucide-react';
+import { CalendarPlus, Download, FileDown, Pencil } from 'lucide-react';
 import { BackButton } from '@/components/ui/back-button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { NativeSelect } from '@/components/ui/native-select';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { fetchEvents, generateICalEvent, generateICalFile, Event } from '@/lib/services/calendar-service';
 import { fetchLeagues, fetchSeasons } from '@/lib/services/statistics-service';
-import { format, isSameDay, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
+import { format, isSameDay, startOfMonth, endOfMonth } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
@@ -50,10 +47,10 @@ export default function TerminePage() {
   const [selectedEvents, setSelectedEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
-  const [seasons, setSeasons] = useState<Array<{ id: string; name: string; year: number }>>([]);
-  const [leagues, setLeagues] = useState<Array<{ id: string; name: string; type: string }>>([]);
+  const [, setSeasons] = useState<Array<{ id: string; name: string; year: number }>>([]);
+  const [, setLeagues] = useState<Array<{ id: string; name: string; type: string }>>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>('');
-  const [selectedLeague, setSelectedLeague] = useState<string>('all');
+  const [selectedLeague] = useState<string>('all');
   
   // Lade Saisons beim ersten Rendern
   useEffect(() => {
@@ -234,7 +231,7 @@ export default function TerminePage() {
       toast({
         title: 'Keine Termine',
         description: 'Es sind keine Termine zum Exportieren vorhanden.',
-        variant: 'warning'
+        variant: 'destructive'
       });
       return;
     }
@@ -247,7 +244,7 @@ export default function TerminePage() {
         toast({
           title: 'Keine gültigen Termine',
           description: 'Es sind keine gültigen Termine zum Exportieren vorhanden.',
-          variant: 'warning'
+          variant: 'destructive'
         });
         return;
       }
@@ -302,13 +299,6 @@ export default function TerminePage() {
     }
   };
   
-  // Funktion zum Ändern des aktuellen Monats
-  const changeMonth = (direction: 'prev' | 'next') => {
-    setCurrentMonth(prev => 
-      direction === 'prev' ? subMonths(prev, 1) : addMonths(prev, 1)
-    );
-  };
-
   return (
     <div className="container py-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">

@@ -1,7 +1,7 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Info, Lock, Calendar, Filter, LogIn, FileText, BarChart3, Loader2 } from 'lucide-react';
@@ -101,7 +101,7 @@ export default function DokumentePage() {
             }
           }
         } catch (apiErr) {
-          logWarn('Fehler beim Laden der Dokumente aus MongoDB, fallback zu JSON:', apiErr);
+          logWarn('Fehler beim Laden der Dokumente aus MongoDB, fallback zu JSON:', apiErr instanceof Error ? apiErr.message : String(apiErr));
         }
         
         // Fallback: Lade Dokumente aus der JSON-Datei

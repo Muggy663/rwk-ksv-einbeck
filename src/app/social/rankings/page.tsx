@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Trophy, Target, Users, Medal } from "lucide-react";
+import { ArrowLeft, Trophy, Target, Users } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,7 +14,7 @@ import { TrainingGroupsService } from "@/lib/services/training-groups-service";
 export default function RankingsPage() {
   const { user } = useAuth();
   const [groupRankings, setGroupRankings] = useState<any[]>([]);
-  const [userGroups, setUserGroups] = useState<any[]>([]);
+  const [, setUserGroups] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

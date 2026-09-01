@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Document } from '@/lib/services/document-service';
 import { Button } from '@/components/ui/button';
-import { Download, X, ExternalLink, Share2 } from 'lucide-react';
+import { Download, X, ExternalLink } from 'lucide-react';
 import { isMobileDevice } from '@/lib/utils/is-mobile';
 import { openWithAppChooser } from '@/lib/utils/open-external';
 
@@ -23,7 +23,7 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
     setIsMobile(isMobileDevice());
     
     // Prüfe, ob wir in einer nativen App sind
-    setIsNativeApp(window.Capacitor && window.Capacitor.isNativePlatform());
+    setIsNativeApp(!!(window.Capacitor && window.Capacitor.isNativePlatform()));
   }, []);
   
   // Funktion zur Generierung des korrekten Pfads
@@ -47,7 +47,7 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
     try {
       await fetch(`/api/documents/${document.id}/download`, { method: 'POST' });
     } catch (err) {
-      logWarn('Download-Tracking fehlgeschlagen:', err);
+      logWarn('Download-Tracking fehlgeschlagen:', err instanceof Error ? err.message : String(err));
     }
   };
   
@@ -87,12 +87,12 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
         await openWithAppChooser(documentPath);
       } else {
         // Auf Desktop-Geräten
-        const link = document.createElement('a');
+        const link = window.document.createElement('a');
         link.href = documentPath;
         link.download = document.title + '.pdf';
-        document.body.appendChild(link);
+        window.document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        window.document.body.removeChild(link);
       }
     } catch (error) {
       logError('Fehler beim Herunterladen:', error);
@@ -138,48 +138,6 @@ export function DocumentPreview({ document, isOpen, onClose }: DocumentPreviewPr
       }
     } catch (error) {
       logError('Fehler beim Öffnen im Browser:', error);
-    }
-  };
-  
-  const handleAppOpen = async () => {
-    try {
-      // Dialog schließen, bevor wir weitere Aktionen ausführen
-      onClose();
-      
-      // Tracking
-      await trackDownload();
-      
-      // Kurze Verzögerung
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Stelle sicher, dass die URL absolut ist
-      let fullPath = documentPath;
-      if (!fullPath.startsWith('http')) {
-        const baseUrl = window.location.origin;
-        fullPath = `${baseUrl}${fullPath.startsWith('/') ? '' : '/'}${fullPath}`;
-      }
-      
-      // Mit App öffnen - direkte Methode für native App
-      if (isNativeApp && window.Capacitor) {
-
-        
-        if (window.Capacitor.getPlatform() === 'android') {
-          // Android: Verwende Intent-URL
-
-          // Direkte Intent-URL für PDF-Viewer
-          window.location.href = `intent:${fullPath}#Intent;action=android.intent.action.VIEW;type=application/pdf;end`;
-        } else {
-          // iOS: Verwende _system
-          window.open(fullPath, '_system');
-        }
-      } else {
-        // Mobiler Browser
-        await openWithAppChooser(fullPath);
-      }
-    } catch (error) {
-      logError('Fehler beim Öffnen mit App:', error);
-      // Fallback bei Fehler
-      window.open(documentPath, '_blank');
     }
   };
   

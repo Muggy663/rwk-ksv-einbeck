@@ -1,16 +1,15 @@
 // src/app/dokumente/DocumentCard.tsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Calendar, Info, Eye, Lock, ExternalLink, Share2 } from 'lucide-react';
+import { FileText, Download, Calendar, Info, Eye, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { Document } from '@/lib/services/document-service';
 import { YearBadge } from './YearBadge';
 import { FavoriteButton } from './FavoriteButton';
 import { DocumentPreview } from './DocumentPreview';
 import { isMobileDevice } from '@/lib/utils/is-mobile';
-import { openWithAppChooser } from '@/lib/utils/open-external';
 import { downloadFile } from '@/lib/utils/download-file';
 import { useNativeApp } from '@/components/ui/native-app-detector';
 
@@ -30,7 +29,7 @@ function getDocumentPath(path: string): string {
 
 export function DocumentCard({ document }: { document: Document }) {
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [, setIsMobile] = useState(false);
   const { isNativeApp } = useNativeApp();
   const documentPath = getDocumentPath(document.path);
   
@@ -48,7 +47,9 @@ export function DocumentCard({ document }: { document: Document }) {
                 <FileText className="h-4 w-4 md:h-5 md:w-5 mr-2 text-primary" />
                 {document.title}
                 {document.restricted && (
-                  <Lock className="h-4 w-4 ml-2 text-amber-500" title="Nur für Vereinsvertreter/Mannschaftsführer" />
+                  <span title="Nur für Vereinsvertreter/Mannschaftsführer">
+                    <Lock className="h-4 w-4 ml-2 text-amber-500" />
+                  </span>
                 )}
                 {document.category === 'ligaliste' && (
                   <YearBadge title={document.title} description={document.description} />

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, Plus, FileText } from 'lucide-react';
@@ -11,7 +11,6 @@ import { useAuth } from '@/hooks/use-auth';
 
 export default function ProtestsPage() {
   const { user } = useAuth();
-  const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
 
   const isAdmin = user?.email === 'admin@rwk-einbeck.de';

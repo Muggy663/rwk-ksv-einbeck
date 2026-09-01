@@ -5,7 +5,7 @@ import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Users, Target, Trophy, Calendar, Mail } from "lucide-react";
+import { ArrowLeft, Users, Calendar, Mail } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { InviteToGroupDialog } from "@/components/social/InviteToGroupDialog";
@@ -33,7 +33,7 @@ interface UserProfile {
 }
 
 export default function ProfilePage({ params }: { params: { userId: string } }) {
-  const { user } = useAuth();
+  useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 

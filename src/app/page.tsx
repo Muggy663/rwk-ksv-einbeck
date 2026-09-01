@@ -1,22 +1,20 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ListChecks, Loader2, Info, CalendarDays, ChevronRight, Newspaper } from 'lucide-react';
+import { ListChecks, Info, CalendarDays, ChevronRight, Newspaper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getUIDisciplineValueFromSpecificType, uiDisciplineFilterOptions } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import { collection, query, orderBy, limit as firestoreLimit, getDocs, Timestamp } from 'firebase/firestore';
-import { format, addDays } from 'date-fns';
+import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { fetchEvents } from '@/lib/services/calendar-service';
-import { cleanupExpiredEvents } from '@/lib/services/event-cleanup';
 import { newsService } from '@/lib/services/news-service';
-import { MaintenanceBanner } from '@/components/MaintenanceBanner';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
@@ -37,6 +35,7 @@ interface Event {
   location: string;
   type?: string;
   isKreisverband?: boolean;
+  description?: string;
 }
 
 export default function HomePage() {
@@ -50,7 +49,7 @@ export default function HomePage() {
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsNativeApp(window.Capacitor && window.Capacitor.isNativePlatform());
+      setIsNativeApp(!!(window.Capacitor && window.Capacitor.isNativePlatform()));
     }
   }, []);
 
@@ -231,8 +230,8 @@ export default function HomePage() {
             ) : updates.length > 0 ? (
               <ul className="space-y-4 text-foreground dark:text-foreground">
                 {updates.map((update) => {
-                  const uiDiscValueForLink = getUIDisciplineValueFromSpecificType(update.leagueType);
-                  const disciplineOption = uiDisciplineFilterOptions.find(opt => opt.firestoreTypes.includes(update.leagueType));
+                  const uiDiscValueForLink = getUIDisciplineValueFromSpecificType(update.leagueType as any);
+                  const disciplineOption = uiDisciplineFilterOptions.find(opt => opt.firestoreTypes.includes(update.leagueType as any));
                   const uiDiscDisplayLabel = disciplineOption ? disciplineOption.label.replace(/\s*\(.*\)\s*$/, '').trim() : update.leagueType;
                   
                   const linkHref = uiDiscValueForLink 
@@ -247,7 +246,7 @@ export default function HomePage() {
                             Ergebnisse in der Liga <strong className="text-primary dark:text-primary">{update.leagueName} {uiDiscDisplayLabel ? `(${uiDiscDisplayLabel})` : ''}</strong> ({update.competitionYear}) hinzugefügt.
                           </p>
                           <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1 sm:mt-0">
-                            {update.timestamp ? format((update.timestamp instanceof Timestamp ? update.timestamp : Timestamp.fromDate(new Date(update.timestamp))).toDate(), 'dd. MMMM yyyy, HH:mm', { locale: de }) : '-'} Uhr
+                            {update.timestamp ? format((update.timestamp instanceof Timestamp ? update.timestamp : Timestamp.fromDate(new Date(update.timestamp as any))).toDate(), 'dd. MMMM yyyy, HH:mm', { locale: de }) : '-'} Uhr
                           </p>
                         </div>
                       </Link>

@@ -1,11 +1,9 @@
 "use client";
 
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BarChart3, Users, ArrowRight, LineChart, TrendingUp } from 'lucide-react';
-import { BackButton } from '@/components/ui/back-button';
+import { BarChart3, Users, ArrowRight, TrendingUp } from 'lucide-react';
 
 export default function StatistikPage() {
   return (

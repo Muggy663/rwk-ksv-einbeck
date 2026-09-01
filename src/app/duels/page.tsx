@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { logError } from '@/lib/utils/secure-logger';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Swords, Trophy, Clock, Users, Target, Plus } from "lucide-react";
+import { ArrowLeft, Swords, Trophy, Clock, Users, Target } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { DuelService, Duel } from "@/lib/services/duel-service";
@@ -80,7 +80,7 @@ export default function DuelsPage() {
     }
   };
 
-  const handleSubmitResult = (duelId: string) => {
+  const handleSubmitResult = (_duelId: string) => {
     toast({
       title: "Ergebnis-Eingabe",
       description: "Ergebnis-Eingabe wird in Kürze verfügbar sein."

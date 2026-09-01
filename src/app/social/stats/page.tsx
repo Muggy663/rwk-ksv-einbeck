@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, BarChart3, Trophy, Target, TrendingUp, Users, Calendar } from "lucide-react";
+import { ArrowLeft, BarChart3, Trophy, Target, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -25,8 +24,7 @@ export default function SocialStatsPage() {
 
   const loadStats = async () => {
     try {
-      // Lade echte Daten aus UnifiedTrainingService
-      const { UnifiedTrainingService } = await import('@/lib/services/unified-training-service');
+      // Lade echte Daten aus SocialTrainingService
       const { SocialTrainingService } = await import('@/lib/services/social-training-service');
       
       if (!user?.uid) {
@@ -47,7 +45,7 @@ export default function SocialStatsPage() {
       
       // Performance-Daten für Charts
       const performanceData = socialResults.slice(-7).map(result => {
-        const date = result.date?.toDate ? result.date.toDate() : new Date(result.date);
+        const date = (result.date as any)?.toDate ? (result.date as any).toDate() : new Date(result.date as any);
         return {
           date: date.toISOString().split('T')[0],
           score: result.rings,
@@ -76,9 +74,9 @@ export default function SocialStatsPage() {
         
         // Activity (Echt)
         lastActive: socialResults.length > 0 ? 
-          (socialResults[socialResults.length - 1].date?.toDate ? 
-            socialResults[socialResults.length - 1].date.toDate() : 
-            new Date(socialResults[socialResults.length - 1].date)) : 
+          ((socialResults[socialResults.length - 1].date as any)?.toDate ? 
+            (socialResults[socialResults.length - 1].date as any).toDate() : 
+            new Date(socialResults[socialResults.length - 1].date as any)) : 
           new Date(),
         totalSessions: socialResults.length,
         weeklyActivity: [0, 0, 0, 0, 0, 0, socialResults.length > 0 ? 100 : 0],

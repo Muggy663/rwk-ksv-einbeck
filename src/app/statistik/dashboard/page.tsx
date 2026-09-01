@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { Download, ChevronLeft, TrendingUp } from 'lucide-react';
+import { Download, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,7 +20,6 @@ import {
   fetchGenderDistributionData
 } from '@/lib/services/statistics-service';
 {/* CrossSeasonStats-Import entfernt */}
-import { LeagueTrendAnalysis } from '@/components/statistics/LeagueTrendAnalysis';
 import { TrendAnalysis } from '@/components/statistics/TrendAnalysis';
 import { IntelligentInsights } from '@/components/ui/intelligent-insights';
 import { useSwipe } from '@/hooks/use-swipe';
@@ -412,7 +411,7 @@ export default function StatistikDashboardPage() {
                       <Tooltip />
                       <Legend />
                       <Bar dataKey="durchschnitt" name="Durchschnitt">
-                        {teamData.map((entry, index) => (
+                        {teamData.map((_entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Bar>
@@ -464,7 +463,7 @@ export default function StatistikDashboardPage() {
                         dataKey="value"
                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                       >
-                        {genderData.map((entry, index) => (
+                        {genderData.map((_entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { ShooterComparisonSelector, Shooter } from '@/components/statistics/ShooterComparisonSelector';
 import { ShooterComparisonChart } from '@/components/statistics/ShooterComparisonChart';

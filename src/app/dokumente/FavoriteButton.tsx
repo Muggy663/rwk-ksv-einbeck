@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Document } from '@/lib/services/document-service';
