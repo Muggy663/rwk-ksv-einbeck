@@ -79,6 +79,8 @@ export interface Shooter {
   // KM-spezifische Felder
   mitgliedsnummer?: string;
   sondergenehmigung?: boolean; // Für Schützen unter 12 Jahren
+  kmClubId?: string; // Verein für Kreismeisterschaft (kann vom RWK-Verein abweichen)
+  kmStartrechte?: Record<string, string>; // Startrechte je Disziplin/Bereich für KM
 }
 
 // Wettkampfklassen für automatische Zuordnung
