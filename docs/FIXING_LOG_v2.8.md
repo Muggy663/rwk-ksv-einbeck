@@ -235,3 +235,24 @@ Der mechanische Long-Tail (~145 Fehler über ~96 Dateien: `React`-Import bei Rea
 |---------|--------|
 | components | ✅ 0 Fehler |
 | Gesamt-Projekt | ~1672 |
+
+### Bereich: km (app) — KOMPLETT SAUBER (0 Fehler)
+
+Von 187 → 0. Aktiv genutzter Bereich (Kreismeisterschaft-Meldungen), daher priorisiert.
+
+Zentraler Fix mit projektweiter Wirkung: **`Shooter`-Typ** in types/rwk um real genutzte KM-Felder erweitert: `kmClubId?`, `kmStartrechte?: Record<string,string>`.
+
+Wiederkehrende Muster in diesem Bereich:
+- **`useState([])` ohne Typ-Argument** → inferiert `never[]` → alle Feldzugriffe (`.id`, `.name`, `.jahr`, `.status`, `.meldeschluss`) schlagen fehl. Fix: State explizit typisieren (inline-Objekttypen mit den benötigten Feldern). Löste jeweils 10-30 Folgefehler pro Datei (uebersicht, mannschaftsregeln, page, mannschaften, mitglieder).
+- **`.map(doc => ({id, ...doc.data()}))`** → `{id:string}[]` → mit State-Typen gecastet (`as unknown as Shooter[]/KMDisziplin[]/KMMeldung[]` bzw. inline).
+- **`setX(prev => ...)` mit `prev is possibly null`** (mannschaftsregeln): Null-Guards `if (!prev) return prev;` und typisierte Callback-Parameter.
+- **implizite `any`-Parameter** in sort/filter/forEach/map/getDeadline-Callbacks → explizit typisiert.
+- **`logDebug(msg, a, b)` mit 3+ Args** → Template-Strings / `JSON.stringify`.
+- **`.filter(Boolean)` narrowt nicht** → `.filter((c): c is string => Boolean(c))` type-guard; alternativ `x || ''`-Fallback bei `Array.includes`.
+- Lokale Typen (km/mannschaften: eigenes `Mannschaft`/`Shooter`-Interface) um real genutzte Felder erweitert (`clubId?`, `firstName?`, `lastName?`).
+- `EventTarget.value` → `e.currentTarget.value`; `useState<number>()` bzw. optionale `.jahr` mit `|| 0`; `vmDatum.toDate` cast.
+- Tote lokale Funktionen/Variablen entfernt (handleEdit/DeleteMeldung, createDefaultRegeln, testTeam, clubFilter), ungenutzte Imports/States bereinigt.
+
+| Bereich | Status |
+|---------|--------|
+| km (app) | ✅ 0 Fehler |

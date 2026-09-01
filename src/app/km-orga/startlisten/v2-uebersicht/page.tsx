@@ -21,14 +21,55 @@ interface Aenderungswunsch {
   saison: string;
 }
 
+// Ein einzelner Starter innerhalb einer Startliste (zur Laufzeit aus Firestore, daher locker typisiert)
+interface Starter {
+  name?: string;
+  schuetzeName?: string;
+  schuetzeId?: string;
+  verein?: string;
+  disziplin?: string;
+  altersklasse?: string;
+  anmerkung?: string;
+  stand?: string | number;
+  startzeit?: string;
+  durchgang?: number;
+  lmTeilnahme?: boolean;
+  [key: string]: any;
+}
+
+// Konfiguration einer Startliste
+interface StartlistenKonfiguration {
+  datum?: string;
+  staende?: number[];
+  durchgang?: number;
+  wechsel?: number;
+  startzeit?: string;
+  austragungsort?: string;
+  selectedDisziplinen?: string[];
+  autoRecalculate?: boolean;
+  [key: string]: any;
+}
+
+// Eine gespeicherte Startliste (Firestore-Dokument)
+interface StartlistenDoc {
+  id: string;
+  name?: string;
+  saison?: string;
+  disziplin?: string;
+  startliste?: Starter[];
+  konfiguration?: StartlistenKonfiguration;
+  erstellt?: any;
+  [key: string]: any;
+}
+
 export default function StartlistenV2Uebersicht() {
   const { toast } = useToast();
-  const [startlisten, setStartlisten] = useState([]);
-  const [saisons, setSaisons] = useState([]);
-  const [meldungen, setMeldungen] = useState([]);
+  const [startlisten, setStartlisten] = useState<StartlistenDoc[]>([]);
+  const [saisons, setSaisons] = useState<Array<{ id: string; jahr?: number; name?: string; status?: string; [key: string]: any }>>([]);
+  const [meldungen, setMeldungen] = useState<Array<{ id: string; name?: string; disziplin?: string; verein?: string; altersklasse?: string; anmerkung?: string; lmTeilnahme?: boolean; [key: string]: any }>>([]);
   const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editData, setEditData] = useState<Partial<StartlistenDoc> & Record<string, any>>({});
   const [showAddShooter, setShowAddShooter] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSaison, setSelectedSaison] = useState('');
