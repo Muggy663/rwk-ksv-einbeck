@@ -303,3 +303,24 @@ Wiederkehrende Muster (wie in km/km-orga):
 |---------|--------|
 | admin | ✅ 0 Fehler |
 | Gesamt-Projekt | ~751 |
+
+---
+
+## Zwischenstand / Übergabe (Ende der Session, ~870/1000 Credits)
+
+**Projekt gesamt: ~3860 → 751 Fehler.**
+
+Fertig und KOMPLETT SAUBER (0 Fehler): Schießnachweis, Verein, Kern (types/utils), lib/services, components, km, km-orga, admin.
+
+**Einziger offener Bereich: app-Rest (~530 Fehler).** Verteilung:
+- `startlisten-tool-v2/` — 186 (größter Einzelbrocken; vermutlich das `useState([])`→`never`-Muster wie bei km-orga/v2-uebersicht → zuerst State-Typen setzen, löst die Masse)
+- `api/` — 140 (API-Routen; andere Fehlerarten als UI-Seiten, genau lesen)
+- `rwk-tabellen/` — 44
+- `social/` — 22, `termine/` — 22, `dokumente/` — 21, `statistik/` — 10
+- Rest je < 10: add-fields, import-entries, training-groups, dashboard-auswahl, duels, ausbildung, support, protests, live-competition, fuer-vereine, gesamtergebnisliste-generator, feedback, rwk-ordnung u.a.
+
+**Bekanntes Alt-Thema (aus früherer Runde):** in `live-competition/page.tsx` + ausbildung kollidieren zwei gleichnamige `Kurs`/`Competition`-Typen aus verschiedenen Modulen.
+
+**Nächster empfohlener Schritt:** mit `startlisten-tool-v2` beginnen (State-Typen zuerst), dann `api/`, dann rwk-tabellen und der kleinere Rest.
+
+**Alle etablierten Muster** stehen oben im Log (Kurzform): `useState([])`/`{}` → typisieren (löst never-Kaskaden); `.map(doc=>({id,...doc.data()}))` → `as Array<{...}>`; ungenutzte Imports/React (React19)/Vars entfernen bzw. `_`-Präfix; `setX(prev:any=>)`; `logWarn/Debug(unknown/3+Args)` → getErrorMessage/Template; `.filter((x):x is T=>Boolean(x))`; `variant:"warning/success"` → gültige Variante; `null`→`undefined` bei optionalen Feldern/SDK; tote Legacy-Funktionen/Duplikate GANZ löschen (vorher immer per grep auf Import-Nutzung prüfen).
