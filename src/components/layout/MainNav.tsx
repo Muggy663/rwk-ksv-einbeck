@@ -7,15 +7,12 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { 
-  BarChart3, 
   CalendarDays, 
   FileBarChart, 
   Home, 
   LogOut, 
   ShieldCheck, 
-  User, 
   BookOpen,
-  Edit3,
   LogIn,
   FileText,
   MessageSquare,
@@ -25,8 +22,7 @@ import {
   TrendingUp,
   AlertTriangle,
   Newspaper,
-  Target,
-  Users
+  Target
 } from 'lucide-react';
 
 interface RouteItem {
@@ -38,12 +34,11 @@ interface RouteItem {
 
 export function MainNav() {
   const pathname = usePathname();
-  const { user, loading, signOut, resetInactivityTimer } = useAuth();
+  const { user, signOut, resetInactivityTimer } = useAuth();
 
   const [timeLeft, setTimeLeft] = useState<number>(10 * 60);
 
   const isAdmin = user && user.email === 'admin@rwk-einbeck.de';
-  const isVereinsvertreterOrMannschaftsfuehrer = user && user.email !== 'admin@rwk-einbeck.de';
 
   useEffect(() => {
     if (!user) return;
@@ -146,22 +141,11 @@ export function MainNav() {
     },
   ];
 
-  const vereinsvertreterRoutes: RouteItem[] = [
-    {
-      href: '/verein/dashboard',
-      label: 'Vereinsbereich',
-      icon: <User className="h-4 w-4 mr-2" />,
-      active: pathname === '/verein/dashboard' || pathname.startsWith('/verein/'),
-    },
-  ];
-
   return (
     <nav className="flex items-center space-x-4 lg:space-x-6">
       {/* Desktop Navigation */}
       <div className="hidden lg:flex lg:items-center lg:space-x-2">
-        {routes.filter(route => {
-          return true;
-        }).map((route) => (
+        {routes.map((route) => (
           <Link
             key={route.href}
             href={route.href}

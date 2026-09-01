@@ -3,11 +3,10 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Zap, CheckCircle, AlertTriangle, Camera, Loader } from "lucide-react"
-import { simpleOCR, type SimpleOCRResult } from "@/lib/services/simple-ocr-service"
-import type { Team, Shooter } from "@/types/rwk"
+import { Zap, CheckCircle, Loader } from "lucide-react"
+import { type SimpleOCRResult } from "@/lib/services/simple-ocr-service"
+import type { Team } from "@/types/rwk"
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase/config"
 import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';const sanitizeText = (text: string | number | undefined | null): string => {
@@ -44,8 +43,6 @@ export interface OCRMatchResult {
 export function HandzettelOCR({ 
   imageFile, 
   availableTeams = [], 
-  selectedLeagueId, 
-  selectedRound, 
   onOCRComplete, 
   onError,
   autoStart = false
@@ -53,7 +50,7 @@ export function HandzettelOCR({
   const [isProcessing, setIsProcessing] = React.useState(false)
   const [progress, setProgress] = React.useState(0)
   const [currentStep, setCurrentStep] = React.useState("")
-  const [ocrResult, setOcrResult] = React.useState<SimpleOCRResult | null>(null)
+  const [ocrResult] = React.useState<SimpleOCRResult | null>(null)
   const [matchedResults, setMatchedResults] = React.useState<OCRMatchResult[]>([])
   const [hasProcessed, setHasProcessed] = React.useState(false)
   const shooterCacheRef = React.useRef<Map<string, {name: string, teamId: string, teamName: string}> | null>(null)
@@ -182,9 +179,9 @@ export function HandzettelOCR({
       
       // Mobile Debug Info
       if (isMobile) {
-        logDebug('📱 Mobile Debug - Original:', Math.round(imageFile.size/1024), 'KB')
-        logDebug('📱 Mobile Debug - Komprimiert:', Math.round(processedImage.size/1024), 'KB')
-        logDebug('📱 Mobile Debug - Teams:', availableTeams.length)
+        logDebug(`📱 Mobile Debug - Original: ${Math.round(imageFile.size/1024)} KB`)
+        logDebug(`📱 Mobile Debug - Komprimiert: ${Math.round(processedImage.size/1024)} KB`)
+        logDebug(`📱 Mobile Debug - Teams: ${availableTeams.length}`)
       }
       
       // Versuche Gemini OCR mit Timeout
@@ -232,7 +229,7 @@ export function HandzettelOCR({
             setProgress(80)
             
             matches = await processGeminiResults(geminiData.results)
-            logDebug('✅ Gemini Erkennung erfolgreich:', matches.length, 'Matches')
+            logDebug(`✅ Gemini Erkennung erfolgreich: ${matches.length} Matches`)
             geminiSuccess = true
           } else {
             logWarn('⚠️ Gemini lieferte keine Ergebnisse')
@@ -241,14 +238,14 @@ export function HandzettelOCR({
             }
           }
         } else {
-          const errorText = await geminiResponse.text().catch(() => 'Unbekannter Fehler')
+          await geminiResponse.text().catch(() => 'Unbekannter Fehler')
           logWarn('⚠️ Gemini API Fehler:', geminiResponse.status)
           if (isMobile) {
             setCurrentStep(`📱 API Fehler: ${sanitizeText(geminiResponse.status)}`)
           }
         }
       } catch (geminiError) {
-        logWarn('⚠️ Gemini Erkennung fehlgeschlagen:', geminiError)
+        logWarn('⚠️ Gemini Erkennung fehlgeschlagen:', geminiError instanceof Error ? geminiError.message : String(geminiError))
         
         let errorMsg = 'Unbekannter Fehler'
         if (geminiError instanceof Error) {
@@ -356,6 +353,7 @@ export function HandzettelOCR({
       }, 100)
       return () => clearTimeout(timeoutId)
     }
+    return undefined
   }, [autoStart, imageFile.name, hasProcessed, processOCR])
 
   const processGeminiResults = async (geminiResults: any[]): Promise<OCRMatchResult[]> => {
