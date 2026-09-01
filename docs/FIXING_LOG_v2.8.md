@@ -138,3 +138,21 @@ oder Funktion zu verändern.
 |---------|---------------|----------------|--------|
 | Verein (layout ✅, mannschaften fast) | 113 | 66 | teilweise |
 | Gesamt-Projekt | 2335 | 2274 | läuft |
+
+### Bereich: Verein — KOMPLETT SAUBER (0 Fehler)
+
+Fortsetzung. Alle Verein-Seiten jetzt fehlerfrei.
+
+- **`mannschaften/page.tsx`** (Rest): Dialog-Import-Block entfernt (nur AlertDialog genutzt), HelpTooltip `side`-Prop entfernt (existiert nicht), `disabled`-Prop mit `!!` zu boolean, tote `getClubName`-Funktion entfernt.
+- **`ergebnisse/page.tsx`**: **~1900 Zeilen tote `LegacyVereinErgebnissePage`-Funktion entfernt** (nie aufgerufen, aktive Komponente nutzt `SharedResultsPage`). Datei-Kopf schlank neu geschrieben — von ~1980 auf 31 Zeilen.
+- **`schuetzen/page.tsx`**: `League`-Import ergänzt (fehlte, TS2304), ungenutzte Typen/Imports entfernt, 2× `variant:"warning"`→`"destructive"`, HelpTooltip `side` entfernt, ungenutzte Setter aus useState-Tupeln entfernt (Werte bleiben genutzt).
+- **Kleine Verein-Dateien**: `React`-Imports entfernt (React 19 JSX-Transform), ungenutzte `user`/`userPermission`/`assignedClubId`-Destrukturierungen bereinigt. `dashboard/page.tsx`: `useState([])` → typisiert (behob `never`-Folgefehler). `mitglieder-import/page.tsx`: `BackButton` mit falschen Props (`href`/`label`) → `fallbackHref`/`size` (die Komponente kennt nur diese).
+
+**Wichtiger zentraler Fix (wirkte projektweit):** `AuthContext.UserPermission` + `rwk.UserPermission` um real genutzte Felder ergänzt (`clubRoles`, `platformRole`, `kvRoles`, `superadmin`-Rolle, `assignedClubId`).
+
+**Gegengecheckt:** Gesamter Verein-Bereich `tsc` = 0 Fehler. Gesamt: 2274 → 2211.
+
+| Bereich | Status |
+|---------|--------|
+| Verein (alle Seiten) | ✅ 0 Fehler |
+| Gesamt-Projekt | 2274 → 2211 |

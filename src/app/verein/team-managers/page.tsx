@@ -1,13 +1,13 @@
 "use client"; // Ganz wichtig für Next.js App Router, damit React Hooks funktionieren
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Users, Mail, Phone, Search } from 'lucide-react';
+import { Loader2, Mail, Phone, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase/config';
@@ -30,7 +30,7 @@ interface TeamManager {
 
 export default function TeamManagersPage() {
   const { toast } = useToast();
-  const { user, userAppPermissions } = useAuth();
+  const { userAppPermissions } = useAuth();
   const [seasons, setSeasons] = useState<Array<{ id: string; name: string; year: number }>>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>('');
   const [leagues, setLeagues] = useState<Array<{ id: string; name: string }>>([]);

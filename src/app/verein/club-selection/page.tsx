@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Building2, Loader2 } from 'lucide-react';
@@ -14,7 +14,7 @@ interface Club {
 }
 
 export default function ClubSelectionPage() {
-  const { user, userAppPermissions } = useAuth();
+  const { userAppPermissions } = useAuth();
   const router = useRouter();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);

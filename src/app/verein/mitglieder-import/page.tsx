@@ -68,7 +68,7 @@ interface ImportResult {
 }
 
 export default function MitgliederImportPage() {
-  const { userPermission, loadingPermissions, currentClubId } = useVereinAuth();
+  const { loadingPermissions, currentClubId } = useVereinAuth();
   const { activeClubId } = useClubContext();
   const { toast } = useToast();
 
@@ -333,7 +333,7 @@ export default function MitgliederImportPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <BackButton href="/verein/schuetzen" label="Zurück zu Meine Schützen" />
+      <BackButton fallbackHref="/verein/schuetzen" size="sm" />
 
       <Card>
         <CardHeader>

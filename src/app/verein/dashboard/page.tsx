@@ -1,7 +1,7 @@
 // src/app/verein/dashboard/page.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ export default function VereinDashboardPage() {
   const { userPermission, currentClubId, assignedClubId } = useVereinAuth();
   const { userAppPermissions } = useAuthContext();
   const [showGuide, setShowGuide] = useState(false);
-  const [allClubsGlobal, setAllClubsGlobal] = useState([]);
+  const [allClubsGlobal, setAllClubsGlobal] = useState<Array<{ id: string; name?: string; [key: string]: any }>>([]);
 
   const onboardingSteps = [
     {

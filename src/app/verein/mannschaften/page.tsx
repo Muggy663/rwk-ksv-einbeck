@@ -19,15 +19,6 @@ import {
 import { NativeSelect } from '@/components/ui/native-select';
 import { GlobalResponsiveDialog } from '@/components/ui/global-responsive-dialog-wrapper';
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription as DialogDescriptionComponent, // Renamed to avoid conflict
-  DialogFooter
-} from "@/components/ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -934,11 +925,6 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
     return type;
   };
 
-  const getClubName = (clubId?: string | null): string => {
-    if (!clubId) return 'N/A';
-    return allClubsGlobal.find(c => c.id === clubId)?.name || 'Unbek. Verein';
-  };
-
   const toggleTeamExpansion = async (teamId: string, shooterIds: string[]) => {
     const newExpanded = new Set(expandedTeams);
     
@@ -1048,7 +1034,6 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
           <h1 className="text-2xl font-semibold text-primary">Meine Mannschaften</h1>
           <HelpTooltip 
             text="Hier können Sie Mannschaften für Ihren Verein anlegen und verwalten." 
-            side="right" 
             className="ml-2"
           />
         </div>
@@ -1269,7 +1254,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                                     isReadOnly || (!isAdmin && teamsWithResults.has(team.id)) ? 'opacity-50 cursor-not-allowed' : ''
                                   }`}
                                   onClick={() => handleDeleteConfirmation(team)} 
-                                  disabled={isSubmittingForm || isDeletingTeam || isReadOnly || (!isAdmin && (team.leagueId || teamsWithResults.has(team.id)))}
+                                  disabled={isSubmittingForm || isDeletingTeam || isReadOnly || (!isAdmin && (!!team.leagueId || teamsWithResults.has(team.id)))}
                                   title={isReadOnly ? "Saison läuft – nur Anzeige möglich" : !isAdmin && team.leagueId 
                                     ? "Löschen gesperrt - Liga zugewiesen (nur Admin)" 
                                     : !isAdmin && teamsWithResults.has(team.id) 

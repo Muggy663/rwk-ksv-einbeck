@@ -1,11 +1,11 @@
 // /app/verein/schuetzen/page.tsx
 "use client";
-import React, { useState, useEffect, FormEvent, useCallback, useMemo } from 'react';
+import { useState, useEffect, FormEvent, useCallback, useMemo } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Loader2, AlertTriangle, UserCircle as UserIcon, FileSpreadsheet } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { BackButton } from '@/components/ui/back-button';
 import {
@@ -31,7 +31,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -43,12 +42,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useVereinAuth } from '@/app/verein/layout';
 import { useClubContext } from '@/contexts/ClubContext';
-import type { Shooter, Club, Team, UserPermission, FirestoreLeagueSpecificDiscipline, TeamValidationInfo } from '@/types/rwk';
+import type { Shooter, Club, Team, League, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
 import { MAX_SHOOTERS_PER_TEAM, leagueDisciplineOptions } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import {
   collection,
-  addDoc,
   getDocs,
   doc,
   updateDoc,
@@ -56,13 +54,10 @@ import {
   where,
   orderBy,
   documentId,
-  getDoc as getFirestoreDoc,
   arrayUnion,
-  Timestamp,
   setDoc
-, deleteDoc } from 'firebase/firestore';
+} from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 
 const SHOOTERS_COLLECTION = "shooters";
 const TEAMS_COLLECTION = "rwk_teams";
@@ -73,7 +68,6 @@ export default function VereinSchuetzenPage() {
   const { userPermission, loadingPermissions, permissionError, assignedClubId, currentClubId } = useVereinAuth();
   const { activeClubId: contextActiveClubId } = useClubContext();
   const { toast } = useToast();
-  const router = useRouter();
   const [queryTeamId, setQueryTeamId] = useState<string | null>(null);
   
   // Extrahiere URL-Parameter auf Client-Seite
@@ -105,8 +99,8 @@ export default function VereinSchuetzenPage() {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
-  const [contextTeamName, setContextTeamName] = useState<string | null>(null);
-  const [isContextTeamNameLoading, setIsContextTeamNameLoading] = useState<boolean>(false);
+  const [contextTeamName] = useState<string | null>(null);
+  const [isContextTeamNameLoading] = useState<boolean>(false);
   const [shooterSearchQuery, setShooterSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>('lastName');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -194,9 +188,6 @@ export default function VereinSchuetzenPage() {
     }
     setIsLoadingClubSpecificData(true);
     try {
-      // Optimierte Abfrage: Verwende 'in' Operator für bessere Performance
-      const clubIdVariants = [activeClubId];
-      
       // Batch-Abfragen für bessere Performance
       const [shootersSnapshot, teamsSnapshot] = await Promise.all([
         // Haupt-Query für clubId
@@ -294,7 +285,7 @@ export default function VereinSchuetzenPage() {
         if (contextTeam && (contextTeam.currentShooterCount || 0) < MAX_SHOOTERS_PER_TEAM) {
           setSelectedTeamIdsInForm([queryTeamId]);
         } else if (contextTeam) {
-          toast({ title: "Mannschaft voll", description: `Kontext-Mannschaft "${contextTeam.name}" ist voll.`, variant: "warning" });
+          toast({ title: "Mannschaft voll", description: `Kontext-Mannschaft "${contextTeam.name}" ist voll.`, variant: "destructive" });
         }
       } else {
         setSelectedTeamIdsInForm([]);
@@ -553,7 +544,7 @@ export default function VereinSchuetzenPage() {
 
     if (checked) { 
       if (isTeamFull(teamBeingChanged)) {
-        toast({ title: "Mannschaft voll", variant: "warning" }); 
+        toast({ title: "Mannschaft voll", variant: "destructive" }); 
         return; 
       }
       
@@ -640,7 +631,6 @@ export default function VereinSchuetzenPage() {
             <h1 className="text-3xl font-bold text-primary">🎯 Vereinsschützen</h1>
             <HelpTooltip 
               text="Hier können Sie Schützen für Ihren Verein anlegen und verwalten." 
-              side="right" 
               className="ml-2"
             />
           </div>
