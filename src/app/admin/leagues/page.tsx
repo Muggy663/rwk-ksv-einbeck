@@ -1,6 +1,6 @@
 // src/app/admin/leagues/page.tsx
 "use client";
-import React, { useState, useEffect, FormEvent, useCallback, Suspense } from 'react';
+import { useState, useEffect, FormEvent, useCallback, Suspense } from 'react';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
