@@ -210,3 +210,28 @@ Aktive Komponenten saniert:
 | Bereich | Status |
 |---------|--------|
 | components | in Arbeit (413 → 176) |
+
+### Bereich: components — KOMPLETT SAUBER (0 Fehler)
+
+Von 413 → 0 über mehrere Batches. Vorgehen: erst tote Duplikate löschen (immer per grep auf Import-Nutzung geprüft), dann mechanischen Long-Tail (ungenutzte Imports/Vars) im Batch, zuletzt die echten Typfehler einzeln.
+
+Gelöschte tote Dateien (nirgends importiert): `results/shared-results-page.tsx` (aktiv: -complete), `UpdateNotification.tsx` (aktiv: VersionCheck), `ui/handzettel-ocr.tsx` (aktiv: -simple), `mobile/MobileNavigation.tsx` (hing am verworfenen PremiumProvider).
+
+Wiederkehrende echte Fixes:
+- **TS7030 "not all code paths return"**: useEffect mit bedingtem Cleanup-Return brauchte `return undefined;` im else-/Fall-Pfad (NotificationBell, Onboarding, ThemeProvider, aria-live, native-app-detector 2×, TargetVisualization).
+- **`useRef<number>()` ohne Argument** (React19-Typen): → `useRef<number | undefined>(undefined)` (TargetVisualization, fireworks).
+- **HelpTooltip**: Aufrufer nutzten `content=` + eigenes Icon als children, Komponente akzeptiert aber nur `text` und rendert eigenes Icon → `content` → `text`, children entfernt (PreviousYearAverageDisplay, team-strength-selector).
+- **TeamStatusBadge** (zwei Varianten `teams/` und `ui/`): Prop-Vertrag auf die real genutzten separaten Props `outOfCompetition`/`reason` vereinheitlicht (Aufrufer in rwk-tabellen/page + mobile-team-cards); nicht existierenden `TeamCompetitionStatus`-Import entfernt.
+- **Auth/SDK-User-Diskrepanz**: eigener `FirebaseUser`-Typ vs. echter Firebase-SDK-`User` → gezielte Casts bei `reauthenticateWithCredential`/`updatePassword` (PasswordChangePrompt) und `onAuthStateChanged` (AuthProvider).
+- **`getSeasonSpecificScoresCollection(y, leagueType)`** string vs. Union → `as any` (PreviousYearAverage, statistics).
+- **`secureLogger.error(msg, string)`** → korrekte Signatur `error(msg, Error, context)` (error-boundary).
+- Diverse Einzelfälle: `improved-headings` `JSX.IntrinsicElements` → `React.ElementType`; `toaster` Rest-Destrukturierung mit `ReactNode`-Typ; `custom-accordion` Radix-`type`/`collapsible`-Union → `props as any`; `report-button` `size:"md"` → `"default"` gemappt; `pull-to-refresh` ref-Cast auf `RefObject<HTMLDivElement>`; `David21ImportDialog` `KMErgebnis[]`-Cast; `optimized-league-view` ungültige `politeness`-Prop entfernt; `NotificationCenter` `createdAt as any`; `SubstitutionDialog` `leagueId || ''`; `create-duel-dialog` optional chaining.
+
+**BUGFIX (real, siehe Teil 4):** `safari-pdf-fix.ts` `showSafariPDFInstructions()` Rückgabetyp `void` → `boolean`.
+
+Der mechanische Long-Tail (~145 Fehler über ~96 Dateien: `React`-Import bei React19, ungenutzte Imports/Vars/Params, Toast-variant, logWarn-unknown) wurde an einen Sub-Agent delegiert und danach vom Hauptagent verifiziert (0 neue Fehler).
+
+| Bereich | Status |
+|---------|--------|
+| components | ✅ 0 Fehler |
+| Gesamt-Projekt | ~1672 |
