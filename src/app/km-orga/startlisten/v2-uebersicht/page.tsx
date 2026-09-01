@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { getDocs, collection, doc, updateDoc, deleteDoc, addDoc, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -108,7 +107,7 @@ export default function StartlistenV2Uebersicht() {
         'km_meldungen_2026_kk', 'km_meldungen_2026_kkp', 'km_meldungen_2026_ld'
       ];
       
-      const gefundeneJahre = new Set();
+      const gefundeneJahre = new Set<string>();
       
       for (const collectionName of knownCollections) {
         try {
@@ -159,12 +158,12 @@ export default function StartlistenV2Uebersicht() {
       const startlistenData = startlistenSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as StartlistenDoc[];
       
       setStartlisten(startlistenData.sort((a, b) => {
         const dateA = new Date(a.konfiguration?.datum || a.erstellt?.toDate?.() || a.erstellt);
         const dateB = new Date(b.konfiguration?.datum || b.erstellt?.toDate?.() || b.erstellt);
-        return dateB - dateA; // Neuestes Datum zuerst
+        return dateB.getTime() - dateA.getTime(); // Neuestes Datum zuerst
       }));
       
       if (saisonsRes.ok) {
@@ -177,7 +176,7 @@ export default function StartlistenV2Uebersicht() {
       const { db: dbFirebase } = await import('@/lib/firebase/config');
       
       const shootersSnapshot = await getDocsFirebase(query(collectionFirebase(dbFirebase, 'shooters'), orderBy('lastName', 'asc')));
-      const schuetzenMap = {};
+      const schuetzenMap: Record<string, any> = {};
       shootersSnapshot.docs.forEach(doc => {
         schuetzenMap[doc.id] = { id: doc.id, ...doc.data() };
       });
@@ -185,13 +184,13 @@ export default function StartlistenV2Uebersicht() {
       // Lade Meldungen für die spezifische Saison
       const jahr = parseInt(selectedSaison);
       const collections = ['kk', 'kkp', 'ld'];
-      let alleMeldungen = [];
+      let alleMeldungen: Array<{ id: string; [key: string]: any }> = [];
       
       for (const typ of collections) {
         try {
           const collectionName = `km_meldungen_${jahr}_${typ}`;
           const meldungenSnapshot = await getDocsFirebase(collectionFirebase(dbFirebase, collectionName));
-          const meldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const meldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
           alleMeldungen.push(...meldungen);
         } catch (e) {
           logWarn(`Collection km_meldungen_${jahr}_${typ} nicht gefunden`);
@@ -210,12 +209,12 @@ export default function StartlistenV2Uebersicht() {
         fetch('/api/clubs')
       ]);
       
-      let disziplinenMap = {};
-      let clubsMap = {};
+      let disziplinenMap: Record<string, any> = {};
+      let clubsMap: Record<string, any> = {};
       
       if (disziplinenRes.ok) {
         const disziplinenData = await disziplinenRes.json();
-        (disziplinenData.data || []).forEach(d => {
+        (disziplinenData.data || []).forEach((d: any) => {
           disziplinenMap[d.id] = {
             name: d.name,
             spoNummer: d.spoNummer || '1.41'
@@ -225,7 +224,7 @@ export default function StartlistenV2Uebersicht() {
       
       if (clubsRes.ok) {
         const clubsData = await clubsRes.json();
-        (clubsData.data || []).forEach(c => {
+        (clubsData.data || []).forEach((c: any) => {
           clubsMap[c.id] = c.name;
         });
       }
@@ -236,7 +235,7 @@ export default function StartlistenV2Uebersicht() {
           const schuetze = schuetzenMap[data.schuetzeId];
           if (!schuetze) return null;
           
-          const vereinId = getShooterClubId(schuetze);
+          const vereinId = getShooterClubId(schuetze) as string;
           
           return {
             id: data.id,
@@ -250,7 +249,7 @@ export default function StartlistenV2Uebersicht() {
             lmTeilnahme: data.lmTeilnahme || false
           };
         })
-        .filter(Boolean);
+        .filter(Boolean) as any[];
       
       setMeldungen(meldungenData);
       
@@ -275,12 +274,12 @@ export default function StartlistenV2Uebersicht() {
         )
       );
       
-      const aenderungenData = aenderungenSnapshot.docs
+      const aenderungenData = (aenderungenSnapshot.docs
         .map(doc => ({
           id: doc.id,
           ...doc.data(),
           timestamp: doc.data().timestamp?.toDate() || new Date()
-        }))
+        })) as Aenderungswunsch[])
         .filter(a => a.saison === selectedSaison);
       
       setAenderungswuensche(aenderungenData);
@@ -360,12 +359,12 @@ export default function StartlistenV2Uebersicht() {
     }
   };
 
-  const getSaisonName = (saisonId) => {
+  const getSaisonName = (saisonId: string) => {
     const saison = saisons.find(s => s.id === saisonId);
     return saison?.name || saisonId;
   };
 
-  const handleEdit = (startliste) => {
+  const handleEdit = (startliste: StartlistenDoc) => {
     setEditingId(startliste.id);
     setEditData(startliste);
   };
@@ -378,7 +377,7 @@ export default function StartlistenV2Uebersicht() {
       const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
       const correctDb = getFirestore(app, databaseId);
       
-      await updateDoc(doc(correctDb, 'km_startlisten_v2', editingId), editData);
+      await updateDoc(doc(correctDb, 'km_startlisten_v2', editingId || ''), editData);
       setEditingId(null);
       loadData();
     } catch (error) {
@@ -386,7 +385,7 @@ export default function StartlistenV2Uebersicht() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Startliste wirklich löschen?')) {
       try {
         // Verwende die korrekte Datenbank-Instanz
@@ -403,8 +402,8 @@ export default function StartlistenV2Uebersicht() {
     }
   };
 
-  const updateStarter = (starterIndex, field, value) => {
-    const updatedStartliste = [...editData.startliste];
+  const updateStarter = (starterIndex: number, field: string, value: any) => {
+    const updatedStartliste = [...(editData.startliste || [])];
     updatedStartliste[starterIndex] = {
       ...updatedStartliste[starterIndex],
       [field]: value
@@ -426,14 +425,14 @@ export default function StartlistenV2Uebersicht() {
   };
   
   // Funktion zur Neuberechnung aller Positionen
-  const recalculateAllPositions = (startliste) => {
+  const recalculateAllPositions = (startliste: Starter[]) => {
     const konfigurierteStaende = editData.konfiguration?.staende || [1,2,3,4,5,6,7,8,9];
     const maxStaende = konfigurierteStaende.length;
     const durchgangMin = editData.konfiguration?.durchgang || 50;
     const wechselMin = editData.konfiguration?.wechsel || 10;
     const baseTime = new Date(`1970-01-01T${editData.konfiguration?.startzeit || '14:00'}:00`);
     
-    return startliste.map((starter, index) => {
+    return startliste.map((starter: Starter, index: number) => {
       const durchgangNr = Math.floor(index / maxStaende) + 1;
       const standNr = konfigurierteStaende[index % maxStaende];
       const minutesOffset = (durchgangNr - 1) * (durchgangMin + wechselMin);
@@ -449,15 +448,15 @@ export default function StartlistenV2Uebersicht() {
     });
   };
 
-  const removeStarter = (starterIndex) => {
-    const updatedStartliste = editData.startliste.filter((_, index) => index !== starterIndex);
+  const removeStarter = (starterIndex: number) => {
+    const updatedStartliste = (editData.startliste || []).filter((_, index) => index !== starterIndex);
     setEditData({
       ...editData,
       startliste: updatedStartliste
     });
   };
 
-  const calculateAgeClass = (schuetze, disziplin, selectedSaison) => {
+  const calculateAgeClass = (schuetze: any, disziplin: any, selectedSaison: any) => {
     if (!schuetze?.birthYear) return 'Unbekannt';
     
     const currentSaison = saisons.find(s => s.id === selectedSaison);
@@ -488,7 +487,7 @@ export default function StartlistenV2Uebersicht() {
     }
   };
 
-  const addShooterToStartliste = async (meldung) => {
+  const addShooterToStartliste = async (meldung: any) => {
     const currentStartliste = editData.startliste || [];
     
     const newStarter = {
@@ -534,7 +533,7 @@ export default function StartlistenV2Uebersicht() {
     }
 
     const [index1, index2] = selectedForSwap;
-    const newStartliste = [...editData.startliste];
+    const newStartliste = [...(editData.startliste || [])];
     
     // Speichere die Stand-, Zeit- und Durchgang-Daten der beiden Positionen
     const position1 = {
@@ -589,8 +588,8 @@ export default function StartlistenV2Uebersicht() {
   const getVereinsUebersicht = () => {
     if (!editData.startliste) return {};
     
-    const uebersicht = {};
-    editData.startliste.forEach(starter => {
+    const uebersicht: Record<string, any> = {};
+    editData.startliste.forEach((starter: Starter) => {
       const verein = starter.verein || 'Unbekannt';
       const startzeit = starter.startzeit || '14:00';
       
@@ -622,7 +621,7 @@ export default function StartlistenV2Uebersicht() {
       return;
     }
 
-    const newStartliste = [...editData.startliste];
+    const newStartliste = [...(editData.startliste || [])];
     const vereinsSchuetzen = newStartliste.filter(s => s.verein === selectedVerein);
     
     if (vereinsSchuetzen.length === 0) {
@@ -643,7 +642,7 @@ export default function StartlistenV2Uebersicht() {
     let neuerDurchgang = 1;
     let neuerStand = 1;
     
-    vereinsSchuetzen.forEach((schuetze, index) => {
+    vereinsSchuetzen.forEach((schuetze) => {
       // Finde den Schützen in der Startliste
       const schuetzeIndex = newStartliste.findIndex(s => s.id === schuetze.id);
       if (schuetzeIndex !== -1) {
@@ -672,8 +671,8 @@ export default function StartlistenV2Uebersicht() {
     setEditData({
       ...editData,
       startliste: newStartliste.sort((a, b) => {
-        if (a.startzeit !== b.startzeit) return a.startzeit.localeCompare(b.startzeit);
-        return parseInt(a.stand || '0') - parseInt(b.stand || '0');
+        if (a.startzeit !== b.startzeit) return String(a.startzeit || '').localeCompare(String(b.startzeit || ''));
+        return parseInt(String(a.stand || '0')) - parseInt(String(b.stand || '0'));
       })
     });
     
@@ -683,58 +682,16 @@ export default function StartlistenV2Uebersicht() {
     });
   };
 
-  const lueckenFuellen = () => {
-    if (!editData.startliste) return;
-    
-    const maxStaende = editData.konfiguration?.staende?.length || 9;
-    
-    // Gruppiere nach Startzeiten und sortiere innerhalb jeder Zeit
-    const nachStartzeit = editData.startliste.reduce((acc: Record<string, any[]>, starter) => {
-      const zeit = starter.startzeit || '14:00';
-      if (!acc[zeit]) acc[zeit] = [];
-      acc[zeit].push(starter);
-      return acc;
-    }, {} as Record<string, any[]>);
-    
-    // Reorganisiere nur innerhalb jeder Startzeit
-    const neueSortierung = [];
-    Object.entries(nachStartzeit)
-      .sort(([zeitA], [zeitB]) => zeitA.localeCompare(zeitB))
-      .forEach(([startzeit, starter]: [string, any[]]) => {
-        starter.forEach((s, index) => {
-          const standNr = (index % maxStaende) + 1;
-          const durchgangNr = Math.floor(index / maxStaende) + 1;
-          
-          neueSortierung.push({
-            ...s,
-            stand: standNr.toString(),
-            startzeit: startzeit, // Behalte die ursprüngliche Startzeit
-            durchgang: durchgangNr
-          });
-        });
-      });
-    
-    setEditData({
-      ...editData,
-      startliste: neueSortierung
-    });
-    
-    toast({
-      title: "✅ Lücken gefüllt",
-      description: "Positionen wurden innerhalb der Startzeiten optimiert."
-    });
-  };
-
   const getKonflikte = () => {
     if (!editData.startliste) return [];
     
-    const konflikte = [];
-    const belegtePositionen = new Map();
+    const konflikte: string[] = [];
+    const belegtePositionen = new Map<string, number[]>();
     
     editData.startliste.forEach((starter, index) => {
       const key = `${starter.startzeit}-${starter.stand}`;
       if (belegtePositionen.has(key)) {
-        belegtePositionen.get(key).push(index + 1);
+        belegtePositionen.get(key)!.push(index + 1);
       } else {
         belegtePositionen.set(key, [index + 1]);
       }
@@ -752,7 +709,7 @@ export default function StartlistenV2Uebersicht() {
     const nachStartzeit = editData.startliste.reduce((acc: Record<string, number[]>, starter) => {
       const zeit = starter.startzeit || '14:00';
       if (!acc[zeit]) acc[zeit] = [];
-      acc[zeit].push(parseInt(starter.stand || '0'));
+      acc[zeit].push(parseInt(String(starter.stand || '0')));
       return acc;
     }, {} as Record<string, number[]>);
     
@@ -1007,7 +964,7 @@ export default function StartlistenV2Uebersicht() {
                     }
                   </h3>
                   <p className="text-gray-600">
-                    {startliste.startliste?.length || 0} Starter • Saison: {getSaisonName(startliste.saison)}
+                    {startliste.startliste?.length || 0} Starter • Saison: {getSaisonName(startliste.saison || '')}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -1041,7 +998,7 @@ export default function StartlistenV2Uebersicht() {
                             const { default: autoTable } = await import('jspdf-autotable');
                             
                             // Lade Mannschaften und Disziplinen für E/M Erkennung und SPO-Nummern
-                            const [schuetzenRes, mannschaftenRes, disziplinenRes, kmMeldungenRes] = await Promise.all([
+                            const [schuetzenRes, mannschaftenRes, disziplinenRes] = await Promise.all([
                               fetch('/api/shooters'),
                               fetch('/api/km/mannschaften'),
                               fetch('/api/km/disziplinen'),
@@ -1051,11 +1008,10 @@ export default function StartlistenV2Uebersicht() {
                             const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
                             const mannschaftenData = mannschaftenRes.ok ? (await mannschaftenRes.json()).data || [] : [];
                             const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
-                            const kmMeldungenData = kmMeldungenRes.ok ? (await kmMeldungenRes.json()).data || [] : [];
                             
                             // Schützen-Map für PDF Export
-                            const schuetzenMapPDF = {};
-                            schuetzenData.forEach(data => {
+                            const schuetzenMapPDF: Record<string, any> = {};
+                            schuetzenData.forEach((data: any) => {
                               schuetzenMapPDF[data.name] = {
                                 id: data.id,
                                 birthYear: data.birthYear,
@@ -1124,7 +1080,7 @@ export default function StartlistenV2Uebersicht() {
                             
                             Object.entries(nachStartzeit)
                               .sort(([zeitA], [zeitB]) => zeitA.localeCompare(zeitB)) // Sortiere Uhrzeiten korrekt
-                              .forEach(([startzeit, starterGruppe]: [string, any[]], startzeitIndex) => {
+                              .forEach(([startzeit, starterGruppe]: [string, any[]], _startzeitIndex) => {
                               if (isFirstStart) {
                                 doc.addPage();
                                 isFirstStart = false;
@@ -1194,7 +1150,7 @@ export default function StartlistenV2Uebersicht() {
                                   // E/M: Prüfe ob Schütze in Mannschaft
                                   let istMannschaft = false;
                                   if (schuetze?.id) {
-                                    mannschaftenData.forEach(mannschaftData => {
+                                    mannschaftenData.forEach((mannschaftData: any) => {
                                       if (mannschaftData.schuetzenIds?.includes(schuetze.id)) {
                                         istMannschaft = true;
                                       }
@@ -1236,7 +1192,7 @@ export default function StartlistenV2Uebersicht() {
                                   }
                                   
                                   // Hole SPO-Nummer
-                                  const disziplinDoc = disziplinenData.find(d => d.name === s.disziplin);
+                                  const disziplinDoc = disziplinenData.find((d: any) => d.name === s.disziplin);
                                   const spoNummer = disziplinDoc?.spoNummer || '1.41';
                                   
                                   return [
@@ -1263,8 +1219,7 @@ export default function StartlistenV2Uebersicht() {
                                     fillColor: [255, 255, 255],
                                     valign: 'middle',
                                     halign: 'center',
-                                    minCellHeight: 16,
-                                    cellHeight: 16
+                                    minCellHeight: 16
                                   },
                                   headStyles: { 
                                     fillColor: [220, 220, 220],
@@ -1328,8 +1283,8 @@ export default function StartlistenV2Uebersicht() {
                             .filter(s => s.name && s.name !== 'EMPTY')
                             .sort((a, b) => {
                               if (a.durchgang !== b.durchgang) return (a.durchgang || 1) - (b.durchgang || 1);
-                              const standA = parseInt(a.stand || '0');
-                              const standB = parseInt(b.stand || '0');
+                              const standA = parseInt(String(a.stand || '0'));
+                              const standB = parseInt(String(b.stand || '0'));
                               if (standA !== standB) return standA - standB;
                               return (a.startzeit || '').localeCompare(b.startzeit || '');
                             })
@@ -1445,7 +1400,7 @@ export default function StartlistenV2Uebersicht() {
                           value={editData.konfiguration?.durchgang || ''}
                           onChange={(e) => setEditData({
                             ...editData,
-                            konfiguration: { ...editData.konfiguration, durchgang: e.target.value ? parseInt(e.target.value) : '' }
+                            konfiguration: { ...editData.konfiguration, durchgang: e.target.value ? parseInt(e.target.value) : '' } as any
                           })}
                           className="w-full p-2 border rounded text-sm"
                         />
@@ -1457,7 +1412,7 @@ export default function StartlistenV2Uebersicht() {
                           value={editData.konfiguration?.wechsel || ''}
                           onChange={(e) => setEditData({
                             ...editData,
-                            konfiguration: { ...editData.konfiguration, wechsel: e.target.value ? parseInt(e.target.value) : '' }
+                            konfiguration: { ...editData.konfiguration, wechsel: e.target.value ? parseInt(e.target.value) : '' } as any
                           })}
                           className="w-full p-2 border rounded text-sm"
                         />
@@ -1604,7 +1559,7 @@ export default function StartlistenV2Uebersicht() {
                           Ausgewählt: {selectedForSwap.length}/2 Schützen
                           {selectedForSwap.length > 0 && (
                             <span className="ml-2">
-                              ({selectedForSwap.map(i => editData.startliste[i]?.name).join(' ↔ ')})
+                              ({selectedForSwap.map(i => (editData.startliste || [])[i]?.name).join(' ↔ ')})
                             </span>
                           )}
                         </p>
@@ -1747,10 +1702,10 @@ export default function StartlistenV2Uebersicht() {
                               starter.disziplin?.toLowerCase().includes(suchbegriff)
                             );
                             
-                            if (gefundenerIndex >= 0) {
+                            if (gefundenerIndex !== undefined && gefundenerIndex >= 0) {
                               // Scrolle zum gefundenen Element
                               setTimeout(() => {
-                                const element = document.querySelector(`[data-starter-index="${gefundenerIndex}"]`);
+                                const element = document.querySelector<HTMLElement>(`[data-starter-index="${gefundenerIndex}"]`);
                                 if (element) {
                                   element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                   element.style.backgroundColor = '#fef3c7';
@@ -1827,7 +1782,7 @@ export default function StartlistenV2Uebersicht() {
                                     const shootersRes = await fetch('/api/shooters');
                                     if (shootersRes.ok) {
                                       const shootersData = await shootersRes.json();
-                                      const schuetze = shootersData.data?.find(s => s.name === dragData.meldung.name);
+                                      const schuetze = shootersData.data?.find((s: any) => s.name === dragData.meldung.name);
                                       if (schuetze) {
                                         altersklasse = calculateAgeClass(schuetze, dragData.meldung.disziplin, selectedSaison);
                                       }
@@ -1850,7 +1805,7 @@ export default function StartlistenV2Uebersicht() {
                                   durchgang: 1
                                 };
                                 
-                                const newStartliste = [...editData.startliste];
+                                const newStartliste = [...(editData.startliste || [])];
                                 newStartliste.splice(index, 0, newStarter);
                                 
                                 setEditData({
@@ -1861,11 +1816,11 @@ export default function StartlistenV2Uebersicht() {
                                 // Bestehenden Starter verschieben
                                 const draggedIndex = dragData.starterIndex;
                                 
-                                if (draggedIndex === editData.startliste.findIndex(s => s === starter)) return;
+                                if (draggedIndex === (editData.startliste || []).findIndex(s => s === starter)) return;
                                 
-                                const newStartliste = [...editData.startliste];
+                                const newStartliste = [...(editData.startliste || [])];
                                 const [draggedItem] = newStartliste.splice(draggedIndex, 1);
-                                const realIndex = editData.startliste.findIndex(s => s === starter);
+                                const realIndex = (editData.startliste || []).findIndex(s => s === starter);
                                 newStartliste.splice(realIndex, 0, draggedItem);
                                 
                                 // Only recalculate if auto-recalculate is enabled
@@ -1925,7 +1880,7 @@ export default function StartlistenV2Uebersicht() {
                           }}
                           onClick={() => {
                             if (swapMode) {
-                              const realIndex = editData.startliste.findIndex(s => s === starter);
+                              const realIndex = (editData.startliste || []).findIndex(s => s === starter);
                               toggleSwapSelection(realIndex);
                             }
                           }}
@@ -1943,14 +1898,14 @@ export default function StartlistenV2Uebersicht() {
                             type="text"
                             value={starter.name || starter.schuetzeName || ''}
                             onChange={(e) => {
-                              const realIndex = editData.startliste.findIndex(s => s === starter);
+                              const realIndex = (editData.startliste || []).findIndex(s => s === starter);
                               updateStarter(realIndex, 'name', e.target.value);
                             }}
                             className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-full"
                           />
                           <button
                             onClick={() => {
-                            const realIndex = editData.startliste.findIndex(s => s === starter);
+                            const realIndex = (editData.startliste || []).findIndex(s => s === starter);
                             removeStarter(realIndex);
                           }}
                             className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 mt-1"
@@ -1962,7 +1917,7 @@ export default function StartlistenV2Uebersicht() {
                           type="text"
                           value={starter.verein || ''}
                           onChange={(e) => {
-                          const realIndex = editData.startliste.findIndex(s => s === starter);
+                          const realIndex = (editData.startliste || []).findIndex(s => s === starter);
                           updateStarter(realIndex, 'verein', e.target.value);
                         }}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-40"
@@ -1971,7 +1926,7 @@ export default function StartlistenV2Uebersicht() {
                           type="text"
                           value={starter.disziplin || ''}
                           onChange={(e) => {
-                          const realIndex = editData.startliste.findIndex(s => s === starter);
+                          const realIndex = (editData.startliste || []).findIndex(s => s === starter);
                           updateStarter(realIndex, 'disziplin', e.target.value);
                         }}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-40"
@@ -1985,10 +1940,10 @@ export default function StartlistenV2Uebersicht() {
                             
                             if (neuerStand > maxStand) return;
                             
-                            const updatedStartliste = [...editData.startliste];
+                            const updatedStartliste = [...(editData.startliste || [])];
                             const currentStarter = updatedStartliste[index];
                             const currentStartzeit = currentStarter.startzeit;
-                            const oldStand = parseInt(currentStarter.stand || '0');
+                            const oldStand = parseInt(String(currentStarter.stand || '0'));
                             
                             // Finde alle Schützen zur gleichen Startzeit
                             const schuetzenGleicheZeit = updatedStartliste
@@ -1998,7 +1953,7 @@ export default function StartlistenV2Uebersicht() {
                             // Wenn der neue Stand bereits belegt ist, verschiebe alle nachfolgenden um +1
                             if (neuerStand !== oldStand) {
                               schuetzenGleicheZeit.forEach(schuetze => {
-                                const schuetzeStand = parseInt(schuetze.stand || '0');
+                                const schuetzeStand = parseInt(String(schuetze.stand || '0'));
                                 
                                 if (schuetze.originalIndex === index) {
                                   // Der aktuelle Schütze bekommt den neuen Stand
@@ -2012,8 +1967,8 @@ export default function StartlistenV2Uebersicht() {
                             
                             // Sortiere nach Zeit und Stand
                             const sortierteStartliste = updatedStartliste.sort((a, b) => {
-                              if (a.startzeit !== b.startzeit) return a.startzeit.localeCompare(b.startzeit);
-                              return parseInt(a.stand || '0') - parseInt(b.stand || '0');
+                              if (a.startzeit !== b.startzeit) return String(a.startzeit || '').localeCompare(String(b.startzeit || ''));
+                              return parseInt(String(a.stand || '0')) - parseInt(String(b.stand || '0'));
                             });
                             
                             setEditData({
@@ -2022,7 +1977,7 @@ export default function StartlistenV2Uebersicht() {
                             });
                           }}
                           className={`p-1 border rounded text-sm ${
-                            editData.startliste.some(s => 
+                            (editData.startliste || []).some(s => 
                               s !== starter && s.startzeit === starter.startzeit && s.stand === starter.stand
                             ) ? 'border-red-500 bg-red-50' : 'border-gray-300'
                           }`}
@@ -2030,7 +1985,7 @@ export default function StartlistenV2Uebersicht() {
                           {(() => {
                             const konfigurierteStaende = editData.konfiguration?.staende || [1,2,3,4,5,6,7,8,9];
                             return konfigurierteStaende.map(stand => {
-                              const istBelegt = editData.startliste.some(s => 
+                              const istBelegt = (editData.startliste || []).some(s => 
                                 s !== starter && s.startzeit === starter.startzeit && s.stand === stand.toString()
                               );
                               return (
@@ -2046,7 +2001,7 @@ export default function StartlistenV2Uebersicht() {
                           value={starter.startzeit}
                           onChange={(e) => {
                             const neueStartzeit = e.target.value;
-                            const updatedStartliste = [...editData.startliste];
+                            const updatedStartliste = [...(editData.startliste || [])];
                             updatedStartliste[index] = {
                               ...updatedStartliste[index],
                               startzeit: neueStartzeit
@@ -2054,8 +2009,8 @@ export default function StartlistenV2Uebersicht() {
                             
                             // Automatisch sortieren nach Zeit und Stand
                             const sortierteStartliste = updatedStartliste.sort((a, b) => {
-                              if (a.startzeit !== b.startzeit) return a.startzeit.localeCompare(b.startzeit);
-                              return parseInt(a.stand || '0') - parseInt(b.stand || '0');
+                              if (a.startzeit !== b.startzeit) return String(a.startzeit || '').localeCompare(String(b.startzeit || ''));
+                              return parseInt(String(a.stand || '0')) - parseInt(String(b.stand || '0'));
                             });
                             
                             setEditData({
@@ -2070,16 +2025,16 @@ export default function StartlistenV2Uebersicht() {
                           value={starter.durchgang || ''}
                           onChange={(e) => {
                             const neuerDurchgang = e.target.value ? parseInt(e.target.value) : '';
-                            const updatedStartliste = [...editData.startliste];
+                            const updatedStartliste = [...(editData.startliste || [])];
                             updatedStartliste[index] = {
                               ...updatedStartliste[index],
                               durchgang: neuerDurchgang
-                            };
+                            } as any;
                             
                             // Automatisch sortieren nach Zeit und Stand
                             const sortierteStartliste = updatedStartliste.sort((a, b) => {
-                              if (a.startzeit !== b.startzeit) return a.startzeit.localeCompare(b.startzeit);
-                              return parseInt(a.stand || '0') - parseInt(b.stand || '0');
+                              if (a.startzeit !== b.startzeit) return String(a.startzeit || '').localeCompare(String(b.startzeit || ''));
+                              return parseInt(String(a.stand || '0')) - parseInt(String(b.stand || '0'));
                             });
                             
                             setEditData({
@@ -2095,7 +2050,7 @@ export default function StartlistenV2Uebersicht() {
                           type="text"
                           value={starter.anmerkung || ''}
                           onChange={(e) => {
-                            const realIndex = editData.startliste.findIndex(s => s === starter);
+                            const realIndex = (editData.startliste || []).findIndex(s => s === starter);
                             updateStarter(realIndex, 'anmerkung', e.target.value);
                           }}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-24"
@@ -2105,7 +2060,7 @@ export default function StartlistenV2Uebersicht() {
                             type="checkbox"
                             checked={starter.lmTeilnahme === true || meldungen.find(m => m.name === starter.name && m.disziplin === starter.disziplin)?.lmTeilnahme === true}
                             onChange={(e) => {
-                              const realIndex = editData.startliste.findIndex(s => s === starter);
+                              const realIndex = (editData.startliste || []).findIndex(s => s === starter);
                               updateStarter(realIndex, 'lmTeilnahme', e.target.checked);
                             }}
                             className="w-4 h-4 rounded"
@@ -2150,7 +2105,7 @@ export default function StartlistenV2Uebersicht() {
                                       const shootersRes = await fetch('/api/shooters');
                                       if (shootersRes.ok) {
                                         const shootersData = await shootersRes.json();
-                                        const schuetze = shootersData.data?.find(s => s.name === dragData.meldung.name);
+                                        const schuetze = shootersData.data?.find((s: any) => s.name === dragData.meldung.name);
                                         if (schuetze) {
                                           altersklasse = calculateAgeClass(schuetze, dragData.meldung.disziplin, selectedSaison);
                                         }
@@ -2173,7 +2128,7 @@ export default function StartlistenV2Uebersicht() {
                                     durchgang: 1
                                   };
                                   
-                                  const newStartliste = [...editData.startliste, newStarter];
+                                  const newStartliste = [...(editData.startliste || []), newStarter];
                                   
                                   setEditData({
                                     ...editData,
@@ -2182,7 +2137,7 @@ export default function StartlistenV2Uebersicht() {
                                 } else {
                                   const draggedIndex = dragData.starterIndex;
                                   
-                                  const newStartliste = [...editData.startliste];
+                                  const newStartliste = [...(editData.startliste || [])];
                                   const [draggedItem] = newStartliste.splice(draggedIndex, 1);
                                   newStartliste.push(draggedItem);
                                   
