@@ -70,17 +70,32 @@ export interface Shooter {
   gender: 'male' | 'female' | 'unknown';
   birthYear?: number;
   birthDate?: Date;
-  clubId?: string;
-  rwkClubId?: string;
-  email?: string;
-  phone?: string;
-  isActive?: boolean;
+  clubId?: string; // EINZIGES Vereinsfeld (Neuanlage/Update schreiben nur dieses)
+  rwkClubId?: string; // Legacy (Altdaten) — wird nicht mehr geschrieben
+  isActive?: boolean; // false = Soft-Delete (aus Verwaltungslisten ausgeblendet)
   teamIds?: string[]; // Array der Team-IDs, in denen der Schütze ist
+  // Kontakt-/Stammdaten (real vorhanden, u.a. aus Mitcom-Import)
+  email?: string;
+  telefon?: string;
+  mobil?: string;
+  phone?: string; // Legacy-Feld (frühere RWK-Anlage) — nur Lese-Fallback
+  strasse?: string;
+  plz?: string;
+  ort?: string;
   // KM-spezifische Felder
-  mitgliedsnummer?: string;
+  mitgliedsnummer?: string; // Verbandsnummer (ohne führende 0)
   sondergenehmigung?: boolean; // Für Schützen unter 12 Jahren
-  kmClubId?: string; // Verein für Kreismeisterschaft (kann vom RWK-Verein abweichen)
+  kmClubId?: string; // Legacy (Altdaten) — wird nicht mehr geschrieben
   kmStartrechte?: Record<string, string>; // Startrechte je Disziplin/Bereich für KM
+  // Meta / Herkunft / Audit
+  genderGuessed?: boolean;
+  source?: string; // 'mitcom_import' | 'manual' | 'migration_excel' | 'auto-from-scores'
+  createdBy?: string;
+  createdAt?: any;
+  importedAt?: any;
+  updatedAt?: any;
+  deletedAt?: any;
+  deletedBy?: string;
 }
 
 // Wettkampfklassen für automatische Zuordnung
