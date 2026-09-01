@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { getMemberPermissions } from '@/lib/permissions/memberPermissions';
 import Link from 'next/link';
 
 export default function DashboardAuswahl() {
@@ -198,6 +199,9 @@ export default function DashboardAuswahl() {
 
   }
 
+  // Zentrale Mitgliederverwaltung: nur für Sportleiter, KM-Orga und Admin sichtbar.
+  const memberPermissions = getMemberPermissions(userAppPermissions, user?.email);
+
   return (
     <div className="container py-8 max-w-6xl mx-auto">
       <div className="text-center mb-8">
@@ -337,6 +341,38 @@ export default function DashboardAuswahl() {
                   </p>
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+        )}
+
+        {/* Zentrale Mitgliederliste - für RWK und KM gemeinsam */}
+        {memberPermissions.canViewMembers && (
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 md:col-span-2">
+          <CardHeader className="pb-4">
+            <div>
+              <CardTitle className="text-xl mb-2">👥 Mitglieder</CardTitle>
+              <div className="flex flex-wrap gap-1">
+                {memberPermissions.role === 'admin' && <Badge variant="default">Admin</Badge>}
+                {memberPermissions.role === 'km_orga' && <Badge variant="secondary">KM-Organisator</Badge>}
+                {memberPermissions.role === 'sportleiter' && <Badge variant="outline">Sportleiter</Badge>}
+              </div>
+            </div>
+            <CardDescription>
+              Eine zentrale Mitgliederliste für Rundenwettkampf und Kreismeisterschaft
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  ℹ️ Diese Liste gilt für <strong>RWK und KM</strong> gemeinsam. Mitglieder hier
+                  anlegen, bearbeiten oder entfernen – beide Bereiche greifen darauf zu.
+                </p>
+              </div>
+              <Link href="/mitglieder" className="block">
+                <Button className="w-full">Mitglieder verwalten</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
