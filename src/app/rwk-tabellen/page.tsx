@@ -142,7 +142,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
   onShooterClick,
   teamSubstitutions,
 }) => {
-  const { isNativeApp, isPWA, isMobile } = useNativeApp();
+  const { isNativeApp } = useNativeApp();
   if (!shootersResults || shootersResults.length === 0) {
     return (
       <div className="p-3 text-sm text-center text-muted-foreground bg-muted/30 rounded-b-md">
@@ -208,7 +208,7 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
                       >
                         {shooterRes.shooterName}
                       </Button>
-                      <LineChartIcon className="h-3 w-3 text-muted-foreground" title="Klicken Sie auf den Namen für Statistik-Diagramm" />
+                      <span title="Klicken Sie auf den Namen für Statistik-Diagramm"><LineChartIcon className="h-3 w-3 text-muted-foreground" /></span>
                       {hasLaterRoundsButMissingEarlier(shooterRes.results, numRounds) && (
                         <span className="bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-sm" title="Spätere Durchgänge geschossen, aber frühere fehlen">
                           Lücken
@@ -473,7 +473,7 @@ function RwkTabellenPageComponent() {
   const [activeTab, setActiveTab] = useState<'mannschaften' | 'einzelschützen'>('mannschaften');
 
   const [teamData, setTeamData] = useState<AggregatedCompetitionData | null>(null);
-  const [allIndividualDataForDiscipline, setAllIndividualDataForDiscipline] = useState<IndividualShooterDisplayData[]>([]);
+  const [, setAllIndividualDataForDiscipline] = useState<IndividualShooterDisplayData[]>([]);
   const [filteredIndividualData, setFilteredIndividualData] = useState<IndividualShooterDisplayData[]>([]);
   
   // Lazy loading states
@@ -547,9 +547,9 @@ function RwkTabellenPageComponent() {
   const initialLeagueIdFromParams = useMemo(() => urlParams.league, [urlParams.league]);
 
   const fetchAvailableCompetitions = useCallback(async (): Promise<CompetitionDisplayConfig[]> => {
+    // Add request deduplication
+    const requestKey = 'fetchAvailableCompetitions';
     try {
-      // Add request deduplication
-      const requestKey = 'fetchAvailableCompetitions';
       if ((window as any)[requestKey]) {
         return (window as any)[requestKey];
       }
@@ -598,9 +598,9 @@ function RwkTabellenPageComponent() {
           index === self.findIndex(c => c.year === comp.year && c.discipline === comp.discipline)
         );
         
-        const result = uniqueCompetitions.length > 0 ? uniqueCompetitions : [
+        const result = uniqueCompetitions.length > 0 ? uniqueCompetitions : ([
           { year: new Date().getFullYear(), discipline: 'KK', displayName: `${new Date().getFullYear()} Kleinkaliber` }
-        ];
+        ] as CompetitionDisplayConfig[]);
         
         delete (window as any)[requestKey];
         return result;
@@ -689,7 +689,6 @@ function RwkTabellenPageComponent() {
       
       const fetchedLeaguesData: LeagueDisplay[] = [];
       const clubCache = new Map<string, string>(); 
-      const shooterCache = new Map<string, Shooter>();
 
 
 
@@ -752,7 +751,7 @@ function RwkTabellenPageComponent() {
       allScoresSnapshot.docs.forEach(scoreDoc => {
         const score = scoreDoc.data() as ScoreEntry;
         if (!scoresByTeam.has(score.teamId)) scoresByTeam.set(score.teamId, []);
-        scoresByTeam.get(score.teamId)!.push({id: scoreDoc.id, ...score});
+        scoresByTeam.get(score.teamId)!.push({...score, id: scoreDoc.id});
       });
 
       // Batch-load alle Clubs auf einmal (mit IN-Limit Handling)
@@ -1015,11 +1014,11 @@ function RwkTabellenPageComponent() {
           )
         );
         const allDocs = snapshots.flatMap(snap => snap.docs);
-        allDocs.forEach(d => { allScores.push({ id: d.id, ...d.data() as ScoreEntry }); });
+        allDocs.forEach(d => { allScores.push({ ...d.data() as ScoreEntry, id: d.id }); });
       } catch (error) {
         scoresQuery = query(collection(db, "rwk_scores"), ...scoresQueryConstraints);
         const scoresSnapshot = await getDocs(scoresQuery);
-        scoresSnapshot.docs.forEach(d => { allScores.push({ id: d.id, ...d.data() as ScoreEntry }); });
+        scoresSnapshot.docs.forEach(d => { allScores.push({ ...d.data() as ScoreEntry, id: d.id }); });
       }
       
       // Lade Substitutions-Daten für diese Liga
@@ -1091,7 +1090,7 @@ function RwkTabellenPageComponent() {
         ...Array.from(allShooterIdsFromTeams),
         ...allScores.map(s => s.shooterId).filter(Boolean)
       ])];
-      const shooterNamesMap = new Map<string, string>();
+      const shooterNamesMap = new Map<string, { name: string; gender: string }>();
       
       // Batch-lade Schützen-Infos für bessere Namen (mit IN-Limit Handling)
       if (allShooterIds.length > 0) {
@@ -1121,7 +1120,7 @@ function RwkTabellenPageComponent() {
           }
         } catch (error) {
           if (process.env.NODE_ENV === 'development') {
-            logWarn('RWK DEBUG: Fehler beim Laden der Schützen-Namen:', error?.message || 'Unknown error');
+            logWarn('RWK DEBUG: Fehler beim Laden der Schützen-Namen:', (error as any)?.message || 'Unknown error');
           }
         }
       }
@@ -1139,7 +1138,7 @@ function RwkTabellenPageComponent() {
           let leagueId = filterByLeagueId;
           let leagueType = undefined;
           
-          for (const [teamId, teamData] of teamInfoMap) {
+          for (const [, teamData] of teamInfoMap) {
             if (teamData.shooterIds && teamData.shooterIds.includes(shooterId)) {
               teamName = teamData.name || "Unbek. Team";
               teamOutOfCompetition = teamData.outOfCompetition || false;
@@ -1260,13 +1259,13 @@ function RwkTabellenPageComponent() {
         shootersByName.get(key).push(shooter);
       });
       
-      const deduplicatedShooters = [];
+      const deduplicatedShooters: any[] = [];
       shootersByName.forEach(shooters => {
         if (shooters.length === 1) {
           deduplicatedShooters.push(shooters[0]);
         } else {
           // Behalte den mit den meisten Scores
-          const best = shooters.reduce((best, current) => 
+          const best = shooters.reduce((best: any, current: any) => 
             current.roundsShot > best.roundsShot ? current : best
           );
           deduplicatedShooters.push(best);
@@ -1490,6 +1489,7 @@ function RwkTabellenPageComponent() {
       
       return () => clearTimeout(timeoutId);
     }
+    return undefined;
   }, [selectedCompetition, activeTab, selectedIndividualLeagueFilter, isLoadingInitialCompetitions]);
   
   // Load substitutions when teamData is available
@@ -1787,7 +1787,6 @@ function RwkTabellenPageComponent() {
             originalShooterName: substitutionInfo.originalShooterName,
             replacementShooterName: shooterDisplayName,
             reason: substitutionInfo.reason || '',
-            type: substitutionInfo.type || 'new_shooter'
           } : undefined,
         };
         for (let r = 1; r <= numRounds; r++) sResults.results[`dg${r}`] = null;
@@ -1897,7 +1896,7 @@ function RwkTabellenPageComponent() {
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <NativeSelect
             value={selectedCompetition ? `${selectedCompetition.year}-${selectedCompetition.discipline}` : ""}
-            onChange={(e) => handleCompetitionChange(e.target.value)}
+            onValueChange={(value) => handleCompetitionChange(value)}
             disabled={availableCompetitions.length === 0 || loadingData}
             className="w-full sm:w-[300px] shadow-md"
             placeholder={availableCompetitions.length === 0 ? "Keine Wettkämpfe" : "Wettkampf wählen"}
@@ -2275,7 +2274,7 @@ function RwkTabellenPageComponent() {
                     <NativeSelect
                       id="individualLeagueFilter"
                       value={selectedIndividualLeagueFilter || ""}
-                      onChange={(e) => setSelectedIndividualLeagueFilter(e.target.value)}
+                      onValueChange={(value) => setSelectedIndividualLeagueFilter(value)}
                       disabled={loadingData || !teamData || availableLeaguesForIndividualFilter.length === 0}
                       className="w-full sm:w-[350px] mt-1 shadow-sm border-blue-300"
                       placeholder="-- Bitte Liga auswählen --"
@@ -2284,7 +2283,7 @@ function RwkTabellenPageComponent() {
                           value: "KK_GEWEHR_EHRUNGEN",
                           label: "🏆 Alle KK Gewehr Auflage"
                         }] : []),
-                        ...((selectedCompetition?.discipline === 'LG' || selectedCompetition?.discipline === 'LP') ? [{
+                        ...(((selectedCompetition?.discipline as string) === 'LG' || (selectedCompetition?.discipline as string) === 'LP') ? [{
                           value: "LGA_GESAMTLISTE",
                           label: "🏆 Alle Luftdruck Auflage (Gesamtliste)"
                         }] : []),
@@ -2391,7 +2390,7 @@ function RwkTabellenPageComponent() {
                               type: selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? 'LGA' : 'KKG',
                               competitionYear: selectedCompetition.year,
                               individualLeagueShooters: filteredIndividualData.filter(shooter => showOutOfCompetitionShooters || !shooter.teamOutOfCompetition)
-                            };
+                            } as unknown as LeagueDisplay;
                             
                             // Generiere und lade PDF herunter
                             await generateShootersPDFFixed(
@@ -2473,7 +2472,7 @@ function RwkTabellenPageComponent() {
                                 <Button variant="link" className="p-0 h-auto text-sm text-left hover:text-primary whitespace-normal text-wrap font-normal" onClick={() => handleShooterNameClick(shooter)}>
                                   {shooter.shooterName}
                                 </Button>
-                                <LineChartIcon className="h-3 w-3 text-muted-foreground" title="Klicken Sie auf den Namen für Statistik-Diagramm" />
+                                <span title="Klicken Sie auf den Namen für Statistik-Diagramm"><LineChartIcon className="h-3 w-3 text-muted-foreground" /></span>
                               </div>
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground" data-label="Mannschaft">
