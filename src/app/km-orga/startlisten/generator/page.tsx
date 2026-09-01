@@ -11,13 +11,13 @@ export default function GeneratorPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const configId = searchParams.get('id');
-  const [meldungen, setMeldungen] = React.useState([]);
-  const [startliste, setStartliste] = React.useState([]);
-  const [config, setConfig] = React.useState({});
+  const [meldungen, setMeldungen] = React.useState<Array<{ id?: string; schuetzeName?: string; verein?: string; disziplin?: string; wettkampfklasse?: string; gewehrSharing?: boolean; [key: string]: any }>>([]);
+  const [startliste, setStartliste] = React.useState<Array<{ id?: string; schuetzeId?: any; name?: string; verein?: string; disziplin?: string; wettkampfklasse?: string; stand?: any; startzeit?: string; durchgang?: number; hinweise?: string; [key: string]: any }>>([]);
+  const [config, setConfig] = React.useState<{ verfuegbareStaende?: any[]; [key: string]: any }>({});
   const [loading, setLoading] = React.useState(false);
   const [geminiLoading, setGeminiLoading] = React.useState(false);
   const [showGemini, setShowGemini] = React.useState(false);
-  const [geminiResult, setGeminiResult] = React.useState(null);
+  const [geminiResult, setGeminiResult] = React.useState<any>(null);
 
   React.useEffect(() => {
     loadData();
@@ -56,8 +56,8 @@ export default function GeneratorPage() {
   const generiereKlassisch = () => {
     // Klassische Sortierung
     const sortiert = [...meldungen].sort((a, b) => {
-      if (a.verein !== b.verein) return a.verein.localeCompare(b.verein);
-      return a.schuetzeName.localeCompare(b.schuetzeName);
+      if (a.verein !== b.verein) return (a.verein || '').localeCompare(b.verein || '');
+      return (a.schuetzeName || '').localeCompare(b.schuetzeName || '');
     });
     
     const liste = sortiert.map((m, i) => ({
@@ -67,9 +67,9 @@ export default function GeneratorPage() {
       verein: m.verein,
       disziplin: m.disziplin,
       wettkampfklasse: m.wettkampfklasse,
-      stand: config.verfuegbareStaende[i % config.verfuegbareStaende.length],
-      startzeit: `${9 + Math.floor(i / config.verfuegbareStaende.length)}:${(i % 2) * 30 < 10 ? '0' : ''}${(i % 2) * 30}`,
-      durchgang: Math.floor(i / config.verfuegbareStaende.length) + 1,
+      stand: (config.verfuegbareStaende || [])[i % (config.verfuegbareStaende || []).length],
+      startzeit: `${9 + Math.floor(i / (config.verfuegbareStaende || []).length)}:${(i % 2) * 30 < 10 ? '0' : ''}${(i % 2) * 30}`,
+      durchgang: Math.floor(i / (config.verfuegbareStaende || []).length) + 1,
       hinweise: m.gewehrSharing ? 'Gewehr geteilt' : ''
     }));
     
@@ -202,11 +202,11 @@ export default function GeneratorPage() {
                 {geminiResult.konflikte?.length > 0 && (
                   <div className="mb-3">
                     <p className="text-sm font-medium text-red-700">⚠️ Konflikte ({geminiResult.konflikte.length}):</p>
-                    {geminiResult.konflikte.map((k, i) => (
+                    {geminiResult.konflikte.map((k: any, i: number) => (
                       <div key={i} className="text-xs text-red-600 mb-1">
                         <div className="font-medium">• {k.typ || 'Konflikt'}: {k.beschreibung || k}</div>
                         {k.betroffene && <div className="ml-2 text-red-500">Betroffen: {k.betroffene.join(', ')}</div>}
-                        {k.loesungen && k.loesungen.map((l, j) => (
+                        {k.loesungen && k.loesungen.map((l: any, j: number) => (
                           <div key={j} className="ml-2 text-red-400">→ {l}</div>
                         ))}
                       </div>
@@ -216,7 +216,7 @@ export default function GeneratorPage() {
                 {geminiResult.optimierungen?.length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-green-700">✅ Optimierungen:</p>
-                    {geminiResult.optimierungen.map((o, i) => (
+                    {geminiResult.optimierungen.map((o: any, i: number) => (
                       <p key={i} className="text-xs text-green-600">• {o.beschreibung || o}</p>
                     ))}
                   </div>
@@ -239,7 +239,7 @@ export default function GeneratorPage() {
           <CardContent>
             {startliste.length > 0 ? (
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {startliste.map((starter, i) => (
+                {startliste.map((starter, _i) => (
                   <div key={starter.id} className="p-2 bg-gray-50 rounded text-sm">
                     <div className="font-medium">{starter.name}</div>
                     <div className="text-gray-600">
