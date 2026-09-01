@@ -166,3 +166,22 @@ lib/services gesamt: 121 → 106. Projekt weiter in Arbeit.
 | Bereich | Status |
 |---------|--------|
 | lib/services | begonnen (season-transition ✅) |
+
+### Bereich: lib/services — KOMPLETT SAUBER (0 Fehler)
+
+Alle Service-Dateien fehlerfrei. Über mehrere Batches (~121 → 0):
+- Ungenutzte Imports/Variablen/Parameter (Params mit `_`-Präfix), tote Funktionen/Methoden entfernt (checkIfNewClub, fuzzyMatch).
+- `logDebug('text:', a, b)` mit 3+ Args → Template-Strings.
+- `logWarn/logError(..., error)` mit `unknown` → `error instanceof Error ? error.message : String(error)`.
+- `secureLogger.error(msg, string)` → korrekte Signatur `error(msg, Error, context)`.
+- `.map(doc => ({id, ...doc.data()}))` → `as {...}`- bzw. `as unknown as X`-Casts für Feldzugriffe.
+- `|| null` bei optionalen Zielfeldern → `|| undefined`.
+- `getSeasonSpecificScoresCollection(year, leagueType)` → `leagueType as any` (string vs. Union).
+- **Typ-Ergänzungen** (real genutzt): `ScoreEntry.isSubstitutionCopy`, `Notification.createdAt` optional gemacht.
+
+**Offene Themen (in app-Seiten, nicht services):** zwei gleichnamige `Kurs`/`Competition`-Typen aus verschiedenen Modulen kollidieren (`live-competition/page.tsx`, ausbildung) — gehört zur app-Bereinigung.
+
+| Bereich | Status |
+|---------|--------|
+| lib/services | ✅ 0 Fehler |
+| Gesamt-Projekt | ~2091 |

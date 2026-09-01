@@ -262,7 +262,7 @@ export class TrainingGroupsService {
     const groupData = groupDoc.data() as TrainingGroup;
     
     // Prüfe ob User der Ersteller oder Admin ist
-    if (groupData.createdBy !== userId && groupData.ownerId !== userId && !groupData.admins?.includes(userId)) {
+    if (groupData.createdBy !== userId && (groupData as any).ownerId !== userId && !groupData.admins?.includes(userId)) {
       throw new Error('Nur der Ersteller oder ein Admin kann die Gruppe löschen');
     }
     
@@ -303,7 +303,7 @@ export class TrainingGroupsService {
     
     for (const doc of snapshot.docs) {
       const group = doc.data() as TrainingGroup & { inactivityWarning?: Date; warningCount?: number };
-      const lastActivity = group.lastActivity?.toDate() || group.createdAt.toDate();
+      const lastActivity = (group.lastActivity as any)?.toDate?.() || (group.createdAt as any).toDate();
       
       // Archivieren nach 120 Tagen
       if (lastActivity < archiveDate) {

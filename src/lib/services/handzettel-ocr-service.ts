@@ -43,7 +43,7 @@ export class HandzettelOCRService {
     if (!this.worker) {
       this.worker = await createWorker('deu');
       await this.worker.setParameters({
-        tessedit_pageseg_mode: '8', // Single word - besser für Zahlen
+        tessedit_pageseg_mode: '8' as any, // Single word - besser für Zahlen
         tessedit_ocr_engine_mode: '1', // LSTM only - besser für Handschrift
         tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜabcdefghijklmnopqrstuvwxyzäöüß .:,-/()[]',
         classify_bln_numeric_mode: '1', // Zahlen-Modus
@@ -348,7 +348,7 @@ export class GoogleVisionOCRService {
         };
       }
     } catch (error) {
-      secureLogger.error('Google Vision OCR failed', 'google-vision');
+      secureLogger.error('Google Vision OCR failed', error instanceof Error ? error : new Error(String(error)), 'google-vision');
       throw error;
     }
   }
@@ -643,38 +643,6 @@ export class GoogleVisionOCRService {
     return null;
   }
   
-  private fuzzyMatch(str1: string, str2: string): number {
-    const s1 = str1.toLowerCase().replace(/[^a-z]/g, '');
-    const s2 = str2.toLowerCase().replace(/[^a-z]/g, '');
-    
-    if (s1 === s2) return 1;
-    if (s1.includes(s2) || s2.includes(s1)) return 0.9;
-    
-    // Levenshtein distance
-    const matrix = [];
-    for (let i = 0; i <= s2.length; i++) {
-      matrix[i] = [i];
-    }
-    for (let j = 0; j <= s1.length; j++) {
-      matrix[0][j] = j;
-    }
-    for (let i = 1; i <= s2.length; i++) {
-      for (let j = 1; j <= s1.length; j++) {
-        if (s2.charAt(i - 1) === s1.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1];
-        } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1,
-            matrix[i][j - 1] + 1,
-            matrix[i - 1][j] + 1
-          );
-        }
-      }
-    }
-    const distance = matrix[s2.length][s1.length];
-    return 1 - distance / Math.max(s1.length, s2.length);
-  }
-
   private extractTeamsWithNumbers(text: string): OCRTeam[] {
     const teams: OCRTeam[] = [];
     const lines = text.split('\n').filter(line => line.trim());
@@ -937,7 +905,7 @@ export class GoogleVisionOCRService {
             localUsedScores.add(bestScore.lineIndex);
             usedShooters.add(element.lineIndex);
             teamShooters.push({
-              name: element.name,
+              name: (element as any).name,
               score: bestScore.value,
               confidence: 0.95
             });

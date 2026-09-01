@@ -26,7 +26,7 @@ export interface Notification {
   message: string;
   data?: any;
   read: boolean;
-  createdAt: Date;
+  createdAt?: Date;
   expiresAt?: Date;
 }
 

@@ -220,7 +220,7 @@ export class LiveCompetitionService {
       const results = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      } as CompetitionResult));
+      } as unknown as CompetitionResult));
       
       // Sortiere nach Gesamtergebnis
       results.sort((a, b) => b.totalScore - a.totalScore);
