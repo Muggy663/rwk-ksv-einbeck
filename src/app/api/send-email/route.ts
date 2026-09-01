@@ -158,7 +158,7 @@ ${signature}`.trim();
     }
 
     const successfulRecipients = results.reduce((sum, batch) => sum + batch.recipients, 0);
-    const failedRecipients = errors.reduce((sum, batch) => sum + (batch.recipients as any).length, 0);
+    const failedRecipients = errors.reduce((sum, batch) => sum + batch.recipients, 0);
     
     return NextResponse.json({
       success: errors.length === 0,
