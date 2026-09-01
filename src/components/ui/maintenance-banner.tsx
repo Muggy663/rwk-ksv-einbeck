@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Clock } from 'lucide-react';
 

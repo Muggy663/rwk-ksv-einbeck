@@ -49,7 +49,7 @@ export function ReCaptcha({ onVerify, onExecuteReady }: ReCaptchaProps) {
         onExecuteReady?.(executeRecaptcha);
         window.grecaptcha.execute(widgetId.current);
       } catch (error) {
-        logWarn('reCAPTCHA render error:', error);
+        logWarn('reCAPTCHA render error:', error instanceof Error ? error.message : String(error));
         onVerifyRef.current('bypass');
       }
     };

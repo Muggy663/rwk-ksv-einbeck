@@ -1,7 +1,7 @@
 // src/components/admin/TeamRestructureDialog.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import {
-  collection, getDocs, query, where, doc, updateDoc,
+  collection, getDocs, query, where, doc,
   writeBatch, serverTimestamp, addDoc, arrayRemove, arrayUnion, getDoc
 } from 'firebase/firestore';
 import type { Team, Shooter } from '@/types/rwk';
@@ -42,7 +42,6 @@ export function TeamRestructureDialog({
   sourceTeam,
   allTeams,
   competitionYear,
-  numRounds,
   onRestructured,
 }: TeamRestructureDialogProps) {
   const { toast } = useToast();

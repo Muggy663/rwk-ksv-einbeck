@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ export function PasswordChangePrompt() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [passwordChanged, setPasswordChanged] = useState(false);
+  const [, setPasswordChanged] = useState(false);
 
   // Überprüfen, ob der Benutzer das Passwort bereits geändert hat
   useEffect(() => {

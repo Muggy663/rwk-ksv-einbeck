@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronRight, LineChart as LineChartIcon } from 'lucide-react';
 import { TeamStatusBadge } from '@/components/ui/team-status-badge';
 import { SubstitutionBadge } from '@/components/ui/substitution-badge';
-import { cn } from '@/lib/utils';
 
 interface MobileTeamCardsProps {
   teams: any[];

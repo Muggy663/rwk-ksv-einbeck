@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Clock, Target, Users, CheckCircle, XCircle } from "lucide-react";
+import { Trophy, Clock, Target, CheckCircle, XCircle } from "lucide-react";
 import { Duel } from "@/lib/services/duel-service";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";

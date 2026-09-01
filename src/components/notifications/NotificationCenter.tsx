@@ -5,7 +5,7 @@ import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Check, CheckCheck, Users, Trophy, Mail, X } from "lucide-react";
+import { Bell, Check, CheckCheck, Users, Trophy } from "lucide-react";
 import { NotificationService, Notification } from "@/lib/services/notification-service";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDistanceToNow } from "date-fns";

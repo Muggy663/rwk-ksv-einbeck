@@ -1,7 +1,6 @@
 // src/components/MaintenanceBanner.tsx
 "use client";
 
-import React from 'react';
 import { AlertTriangle, Calendar } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 

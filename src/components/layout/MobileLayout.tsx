@@ -1,7 +1,7 @@
 // src/components/layout/MobileLayout.tsx
 "use client";
 
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { useMobileDetection } from '@/hooks/use-mobile-detection';
 import { cn } from '@/lib/utils';
 

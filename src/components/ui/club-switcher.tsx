@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useVereinAuth } from '@/app/verein/layout';
 import { db } from '@/lib/firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
 import { NativeSelect } from '@/components/ui/native-select';
-import { useClubContext } from '@/contexts/ClubContext';
 import { Building2 } from 'lucide-react';
 
 export function ClubSwitcher() {

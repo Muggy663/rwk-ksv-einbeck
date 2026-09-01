@@ -1,7 +1,7 @@
 // src/components/ui/global-responsive-dialog-wrapper.tsx
 "use client";
 
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { ResponsiveDialog } from './responsive-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './dialog';
 import { useMobileDetection } from '@/hooks/use-mobile-detection';

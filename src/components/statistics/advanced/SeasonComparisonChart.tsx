@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 interface Shooter {
@@ -14,7 +13,7 @@ interface SeasonComparisonChartProps {
   numberOfSeasons: number;
 }
 
-export function SeasonComparisonChart({ shooters, numberOfSeasons }: SeasonComparisonChartProps) {
+export function SeasonComparisonChart({}: SeasonComparisonChartProps) {
   return (
     <Card className="shadow-lg">
       <CardHeader>

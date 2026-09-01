@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
-import { Loader2 } from 'lucide-react';
 import { fetchTopShootersWithTrend } from '@/lib/services/enhanced-statistics-service';
 import { TrendAnalysisCard } from '@/components/statistics/advanced/TrendAnalysisCard';
 import { Skeleton } from '@/components/ui/skeleton';

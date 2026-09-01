@@ -28,7 +28,7 @@ export function ProfileSettings() {
     availableForCompetitions: false,
     showClubAffiliation: false
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {

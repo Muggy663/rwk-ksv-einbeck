@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Bell, Mail, Smartphone, Users, Trophy } from "lucide-react";
+import { Bell, Mail, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface NotificationPreferences {
@@ -82,8 +82,6 @@ export function NotificationSettings() {
     try {
       logDebug('🔔 Saving notification settings:', preferences);
       
-      const { useAuth } = await import('@/hooks/use-auth');
-      const { SocialService } = await import('@/lib/services/social-service');
       
       if (!user) {
         throw new Error('Nicht angemeldet');

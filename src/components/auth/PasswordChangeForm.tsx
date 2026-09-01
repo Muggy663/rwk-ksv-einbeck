@@ -68,8 +68,7 @@ export function PasswordChangeForm() {
         reset();
         toast({
           title: "Passwort geändert",
-          description: "Ihr Passwort wurde erfolgreich geändert.",
-          variant: "success"
+          description: "Ihr Passwort wurde erfolgreich geändert."
         });
         
         // Nach 2 Sekunden zur Startseite zurückkehren

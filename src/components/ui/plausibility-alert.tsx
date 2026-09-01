@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, AlertTriangle, Info, CheckCircle } from 'lucide-react';
 import type { PlausibilityWarning } from '@/lib/services/plausibility-service';

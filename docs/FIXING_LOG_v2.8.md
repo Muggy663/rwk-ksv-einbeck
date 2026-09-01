@@ -185,3 +185,28 @@ Alle Service-Dateien fehlerfrei. Über mehrere Batches (~121 → 0):
 |---------|--------|
 | lib/services | ✅ 0 Fehler |
 | Gesamt-Projekt | ~2091 |
+
+### Bereich: components (in Arbeit, 413 → 176)
+
+Tote Duplikat-Dateien komplett gelöscht (vor Löschung immer per grep auf Import-Nutzung geprüft):
+- **`results/shared-results-page.tsx`** gelöscht (69 Fehler) — nirgends importiert; aktive Version ist `shared-results-complete.tsx`.
+- **`UpdateNotification.tsx`** gelöscht (5) — nirgends importiert; aktiver Update-Hinweis ist `VersionCheck`.
+- **`ui/handzettel-ocr.tsx`** gelöscht (8) — nirgends importiert; aktive OCR-Komponente ist `handzettel-ocr-simple.tsx`.
+
+Aktive Komponenten saniert:
+- **`handzettel/HandzettelGenerator.tsx`** (58 → 0): `document.querySelector(...)`/`querySelectorAll(...)` zu `<HTMLElement>` typisiert (`.style`-Zugriff); lokaler Typ `TeamWithShooters = Team & { shooters?... }` für zur Laufzeit aufgelöste Schützen (statt `.shooterIds`); `resultsData` als `Record<string, string|number>`; `gesamt`/`teamGesamt` als `number|string`; ungenutztes `idx` entfernt.
+- **`results/shared-results-complete.tsx`** (16 → 0, zentral genutzt): ungenutzte Imports/State; `RadioGroup`-Import korrigiert (wird real genutzt), `Table`-Import entfernt (echt unused); `as const` auf Ternary entfernt + Objekt als `PendingScoreEntry` gecastet; 3× `logWarn(unknown)` → getErrorMessage-Muster.
+- **`statistics/team-season-stats.tsx`** (15 → 0) und **`cross-season-stats.tsx`** (13 → 0): `React`-Import entfernt; **redeclare** von `years`/`allScores` in derselben Funktion umbenannt (`statYears`/`allRingScores`); `disc as any`; doc-map `as unknown as X`; `logWarn(unknown)`-Fix; ungenutzter recharts-formatter-Param `_name`; teams-map mit explizitem Objekttyp.
+- **`ui/handzettel-ocr-simple.tsx`** (14 → 0): ungenutzte Imports; ungenutzte Props aus Destrukturierung entfernt (Interface unverändert, Aufrufer bleiben kompatibel); `setOcrResult` weggelassen; `logDebug` 3-Args → Template-String; `logWarn(unknown)`-Fix; `useEffect` `return undefined` (TS7030 "not all code paths return").
+- **`layout/MainNav.tsx`** (7 → 0): ungenutzte Icons/`loading`; tote `vereinsvertreterRoutes`-Konstante + Bool-Variable; No-Op-`.filter(route => true)` entfernt.
+- **`onboarding/OnboardingWizard.tsx`** (6 → 0): `userPermissions` → `userAppPermissions` (echter AuthContext-Feldname); ungenutzte Imports/State; `variant:"warning"` → `"destructive"`.
+- **`onboarding/InteractiveGuide.tsx`** (6 → 0), **`dark-mode-demo.tsx`** (5 → 0): ungenutzte Imports.
+- **`auth/AuthProvider.tsx`** (5 → 0): `kvRole` → `kvRoles` mit `Object.values().some()` (analog clubRoles); `onAuthStateChanged`-User via Cast auf `FirebaseUser` gemappt; `variant:"success"` entfernt.
+- **`ui/native-pdf-button.tsx`** (5 → 0): ungenutzte Imports/`numRounds`-Prop/toter dynamischer Import/`fileName` entfernt.
+- **`ui/pdf-button.tsx`** (5 → 0): `React`-Import, `league as any`, `safariDetected` entfernt.
+
+**BUGFIX (real):** `lib/utils/safari-pdf-fix.ts` — `showSafariPDFInstructions()` war als Rückgabetyp `void` deklariert, gab aber `confirm(...)` (boolean) zurück; der Aufrufer in `pdf-button.tsx` prüfte `!showSafariPDFInstructions()` (Abbruch-Entscheidung). Rückgabetyp auf `boolean` korrigiert — Abbruch-Logik ist jetzt typkorrekt. Datei zusätzlich bereinigt (logWarn-unknown, 3 ungenutzte forEach-Index-Params).
+
+| Bereich | Status |
+|---------|--------|
+| components | in Arbeit (413 → 176) |

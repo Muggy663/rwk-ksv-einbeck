@@ -39,7 +39,7 @@ export function CreateCompetitionDialog({ groupId, onCompetitionCreated }: Creat
 
     setLoading(true);
     try {
-      const competitionId = await CompetitionsService.createCompetition({
+      await CompetitionsService.createCompetition({
         groupId,
         name,
         discipline,

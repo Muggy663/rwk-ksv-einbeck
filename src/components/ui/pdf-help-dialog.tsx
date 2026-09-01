@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { HelpCircle, Smartphone, Monitor, AlertTriangle } from 'lucide-react';
-import { isSafari, isIOS } from '@/lib/utils/safari-pdf-fix';
+import { isSafari } from '@/lib/utils/safari-pdf-fix';
 import { useNativeApp } from '@/components/ui/native-app-detector';
 
 export function PDFHelpDialog() {
@@ -17,7 +17,6 @@ export function PDFHelpDialog() {
   const { isNativeApp } = useNativeApp();
   
   const safariDetected = isSafari();
-  const iosDetected = isIOS();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

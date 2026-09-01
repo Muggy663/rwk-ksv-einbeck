@@ -12,7 +12,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { CalendarIcon, Upload, X, AlertTriangle } from 'lucide-react';
+import { CalendarIcon, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { protestService, Protest } from '@/lib/services/protest-service';
@@ -151,25 +151,6 @@ export function ProtestForm({ onSuccess, onCancel }: ProtestFormProps) {
       });
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const getCategoryLabel = (cat: string) => {
-    switch (cat) {
-      case 'ergebnis': return 'Ergebnis-Einspruch';
-      case 'verhalten': return 'Verhalten';
-      case 'regelverstoß': return 'Regelverstoß';
-      case 'sonstiges': return 'Sonstiges';
-      default: return cat;
-    }
-  };
-
-  const getPriorityLabel = (prio: string) => {
-    switch (prio) {
-      case 'niedrig': return 'Niedrig';
-      case 'mittel': return 'Mittel';
-      case 'hoch': return 'Hoch';
-      default: return prio;
     }
   };
 

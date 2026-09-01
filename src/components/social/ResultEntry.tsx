@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Camera, Upload, Shield, Loader2, Sparkles, Link as LinkIcon } from 'lucide-react';
+import { Camera, Loader2, Sparkles, Link as LinkIcon } from 'lucide-react';
 import { SocialTrainingService } from '@/lib/services/social-training-service';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';

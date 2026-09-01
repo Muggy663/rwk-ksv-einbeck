@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ export function ProtestList({ showAll = false }: ProtestListProps) {
   const { user } = useAuth();
   const [protests, setProtests] = useState<Protest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedProtest, setSelectedProtest] = useState<Protest | null>(null);
+  const [, setSelectedProtest] = useState<Protest | null>(null);
   const [newComment, setNewComment] = useState('');
   const [newStatus, setNewStatus] = useState<Protest['status']>('eingereicht');
   const [decision, setDecision] = useState('');

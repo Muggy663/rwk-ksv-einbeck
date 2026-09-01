@@ -8,7 +8,6 @@ import { Home, Users, Trophy, BarChart3, FileText, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useAccess } from '@/components/schiessnachweis/PremiumProvider';
-import { MobileBurgerMenu } from './MobileBurgerMenu';
 
 interface NavItem {
   href: string;
@@ -63,7 +62,7 @@ const navItems: NavItem[] = [
 export function MobileNavigation() {
   const pathname = usePathname();
   const { user } = useAuth();
-  const { canAccessRWK, canAccessKM, canAccessSchiessnachweis, userType } = useAccess();
+  const { canAccessRWK, canAccessKM, canAccessSchiessnachweis } = useAccess();
 
   const filteredItems = navItems.filter(item => {
     if (item.requiresAuth && !user) return false;

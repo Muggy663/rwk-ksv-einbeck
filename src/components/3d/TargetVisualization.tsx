@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -205,7 +205,7 @@ export default function TargetVisualization({
     shotsToRemove.forEach((shot: any) => sceneRef.current.remove(shot));
 
     // Füge neue Schüsse hinzu
-    displayShots.slice(0, currentShot + 1).forEach((shot, index) => {
+    displayShots.slice(0, currentShot + 1).forEach((shot, _index) => {
       const shotGeometry = new THREE.SphereGeometry(0.05, 16, 16);
       
       // Farbe basierend auf Ring-Wert (LG/KK Standard)

@@ -1,10 +1,10 @@
 // src/components/ui/responsive-dialog.tsx
 "use client";
 
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { X, ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useMobileDetection } from '@/hooks/use-mobile-detection';
 import { cn } from '@/lib/utils';
 

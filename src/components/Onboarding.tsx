@@ -1,10 +1,10 @@
 // src/components/Onboarding.tsx
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Users, ListChecks, UserCog, MessagesSquare, FileText, X } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useAuth } from '@/hooks/use-auth';

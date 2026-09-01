@@ -215,7 +215,7 @@ export function TouchFriendlyChart({
                 fill={colors[0]}
                 barSize={mergedConfig.barSize}
               >
-                {data.map((entry, index) => (
+                {data.map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                 ))}
               </Bar>
@@ -236,7 +236,7 @@ export function TouchFriendlyChart({
               dataKey={dataKey as string}
               label={mergedConfig.label}
             >
-              {data.map((entry, index) => (
+              {data.map((_entry, index) => (
                 <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
               ))}
             </Pie>

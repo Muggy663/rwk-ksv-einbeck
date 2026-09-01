@@ -2,13 +2,13 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronUp, Wifi, WifiOff } from 'lucide-react';
+import { ChevronUp, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Pull-to-Refresh Hook
 export function usePullToRefresh(onRefresh: () => Promise<void>) {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [startY, setStartY] = useState(0);
+  const [, setStartY] = useState(0);
   const [pullDistance, setPullDistance] = useState(0);
 
   useEffect(() => {

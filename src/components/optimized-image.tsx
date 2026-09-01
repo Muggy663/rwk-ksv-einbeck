@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo } from 'react';
+import { memo } from 'react';
 import Image, { ImageProps } from 'next/image';
 
 interface OptimizedImageProps extends Omit<ImageProps, 'loading'> {

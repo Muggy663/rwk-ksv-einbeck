@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react';
 import { PreviousYearAverage } from '@/components/stats/PreviousYearAverage';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { InfoIcon } from 'lucide-react';

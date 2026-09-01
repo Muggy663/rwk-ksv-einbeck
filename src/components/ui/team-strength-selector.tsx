@@ -1,6 +1,5 @@
 // src/components/ui/team-strength-selector.tsx
 "use client";
-import React from 'react';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
