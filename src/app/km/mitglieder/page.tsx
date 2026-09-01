@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useKMAuth } from '@/hooks/useKMAuth';
-import { collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { ArrowUpDown, ArrowUp, ArrowDown, PlusCircle, Edit, Trash2, ArrowLeft } from 'lucide-react';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
@@ -51,7 +51,7 @@ export default function KMMitglieder() {
       const allSchuetzen = shootersSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as Array<{ id: string; clubId?: string; kmClubId?: string; rwkClubId?: string; [key: string]: any }>;
 
       const allClubs = clubsSnapshot.docs.map(doc => ({
         id: doc.id,
@@ -70,9 +70,9 @@ export default function KMMitglieder() {
       const vereinsSchuetzen = (userRole === 'admin' || userRole === 'km_organisator') 
         ? allSchuetzen // Admin/KM-Organisator sieht alle
         : allSchuetzen.filter(s => 
-            userClubIds.includes(s.clubId) || 
-            userClubIds.includes(s.kmClubId) || 
-            userClubIds.includes(s.rwkClubId)
+            userClubIds.includes(s.clubId || '') || 
+            userClubIds.includes(s.kmClubId || '') || 
+            userClubIds.includes(s.rwkClubId || '')
           );
 
       setSchuetzen(vereinsSchuetzen);
@@ -565,7 +565,7 @@ export default function KMMitglieder() {
                 <Input
                   id="firstName"
                   value={currentShooter?.firstName || ''}
-                  onChange={(e) => setCurrentShooter(prev => ({ ...prev, firstName: e.target.value }))}
+                  onChange={(e) => setCurrentShooter((prev: any) => ({ ...prev, firstName: e.target.value }))}
                   required
                 />
               </div>
@@ -574,7 +574,7 @@ export default function KMMitglieder() {
                 <Input
                   id="lastName"
                   value={currentShooter?.lastName || ''}
-                  onChange={(e) => setCurrentShooter(prev => ({ ...prev, lastName: e.target.value }))}
+                  onChange={(e) => setCurrentShooter((prev: any) => ({ ...prev, lastName: e.target.value }))}
                   required
                 />
               </div>
@@ -583,7 +583,7 @@ export default function KMMitglieder() {
               <Label htmlFor="clubId">Verein</Label>
               <NativeSelect
                 value={currentShooter?.clubId || ''}
-                onValueChange={(value) => setCurrentShooter(prev => ({ ...prev, clubId: value }))}
+                onValueChange={(value) => setCurrentShooter((prev: any) => ({ ...prev, clubId: value }))}
                 placeholder="Verein auswählen"
                 options={clubs.map(club => ({ value: club.id, label: club.name }))}
               />
@@ -593,7 +593,7 @@ export default function KMMitglieder() {
                 <Label htmlFor="gender">Geschlecht</Label>
                 <NativeSelect
                   value={currentShooter?.gender || 'male'}
-                  onValueChange={(value) => setCurrentShooter(prev => ({ ...prev, gender: value }))}
+                  onValueChange={(value) => setCurrentShooter((prev: any) => ({ ...prev, gender: value }))}
                   options={[
                     { value: "male", label: "Männlich" },
                     { value: "female", label: "Weiblich" }
@@ -608,7 +608,7 @@ export default function KMMitglieder() {
                   min="1920"
                   max="2020"
                   value={currentShooter?.birthYear || ''}
-                  onChange={(e) => setCurrentShooter(prev => ({ ...prev, birthYear: e.target.value }))}
+                  onChange={(e) => setCurrentShooter((prev: any) => ({ ...prev, birthYear: e.target.value }))}
                 />
               </div>
               <div>
@@ -621,7 +621,7 @@ export default function KMMitglieder() {
                     id="mitgliedsnummer"
                     className="rounded-l-none"
                     value={currentShooter?.mitgliedsnummer || ''}
-                    onChange={(e) => setCurrentShooter(prev => ({ ...prev, mitgliedsnummer: e.target.value }))}
+                    onChange={(e) => setCurrentShooter((prev: any) => ({ ...prev, mitgliedsnummer: e.target.value }))}
                     placeholder="8018085 (ohne führende 0)"
                   />
                 </div>

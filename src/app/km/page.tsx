@@ -17,8 +17,8 @@ function KMDashboardContent() {
   const { hasKMAccess, userRole, loading } = useKMAuth();
   const { user, userAppPermissions } = useAuthContext();
   const [isInstructionOpen, setIsInstructionOpen] = useState(false);
-  const [aktiveSaisons, setAktiveSaisons] = useState([]);
-  const [isLoadingSaisons, setIsLoadingSaisons] = useState(true);
+  const [aktiveSaisons, setAktiveSaisons] = useState<Array<{ id: string; jahr?: number; name?: string; status?: string; meldeschluss?: string; aktivAb?: string; [key: string]: any }>>([]);
+  const [, setIsLoadingSaisons] = useState(true);
   
   React.useEffect(() => {
     loadAktiveSaisons();
@@ -30,8 +30,8 @@ function KMDashboardContent() {
       if (response.ok) {
         const data = await response.json();
         const aktiveSaisons = data.data
-          .filter(s => s.status === 'aktiv')
-          .sort((a, b) => b.jahr - a.jahr); // Neueste zuerst
+          .filter((s: { status?: string }) => s.status === 'aktiv')
+          .sort((a: { jahr?: number }, b: { jahr?: number }) => (b.jahr || 0) - (a.jahr || 0)); // Neueste zuerst
         setAktiveSaisons(aktiveSaisons);
       }
     } catch (error) {
@@ -64,8 +64,6 @@ function KMDashboardContent() {
     );
   }
 
-  const isVerein = userRole === 'verein';
-  
   return (
     <div className="container py-4 px-2 max-w-full mx-auto">
       <div className="mb-6">
@@ -249,7 +247,7 @@ function KMDashboardContent() {
                   .sort((a, b) => {
                     // Aktive Meldeschlüsse zuerst, dann nach Jahr sortiert
                     const today = new Date();
-                    const getDeadline = (s) => {
+                    const getDeadline = (s: { meldeschluss?: string }) => {
                       if (!s.meldeschluss) return new Date(0);
                       if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
                         const [day, month, year] = s.meldeschluss.split('.');
@@ -266,7 +264,7 @@ function KMDashboardContent() {
                     if (aExpired !== bExpired) {
                       return aExpired ? 1 : -1; // Aktive zuerst
                     }
-                    return b.jahr - a.jahr; // Dann nach Jahr
+                    return (b.jahr || 0) - (a.jahr || 0); // Dann nach Jahr
                   })
                   .map((saison) => {
                   // Prüfe ob Meldeschluss abgelaufen ist
