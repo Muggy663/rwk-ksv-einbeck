@@ -1,6 +1,6 @@
 import { db } from '@/lib/firebase/config';
 import { logError } from '@/lib/utils/secure-logger';
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 export interface Achievement {
   id: string;
