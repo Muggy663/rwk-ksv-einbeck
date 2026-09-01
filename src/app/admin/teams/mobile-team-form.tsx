@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Users, User, Settings } from 'lucide-react';
 import type { Team, Club, League, Season, Shooter } from '@/types/rwk';
@@ -31,7 +31,6 @@ export function MobileTeamForm({
   currentTeam,
   formMode,
   allClubs,
-  allSeasons,
   availableLeagues,
   availableShooters,
   selectedShooterIds,

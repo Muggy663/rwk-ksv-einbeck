@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BackButton } from '@/components/ui/back-button';
-import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -358,7 +357,7 @@ export default function AdminMitgliederImportPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <BackButton href="/admin/shooters" label="Zurück zu Schützen" />
+      <BackButton fallbackHref="/admin/shooters" />
 
       <Card>
         <CardHeader>

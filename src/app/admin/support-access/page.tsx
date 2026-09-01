@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Shield, Clock, Users, Key, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, addDoc, deleteDoc, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, orderBy, Timestamp } from 'firebase/firestore';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import Link from 'next/link';
 

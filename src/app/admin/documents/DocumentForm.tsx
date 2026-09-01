@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { DocumentFormData } from '@/lib/services/document-service';
-import { Upload, File, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LoadingButton } from '@/components/ui/loading-button';
 

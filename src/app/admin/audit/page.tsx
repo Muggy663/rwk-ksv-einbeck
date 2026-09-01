@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { AuditTrail } from '@/components/audit/AuditTrail';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { History, BarChart3, Activity, Users, FileText } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { History, BarChart3, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { auditLogService } from '@/lib/services/audit-service';
 import Link from 'next/link';

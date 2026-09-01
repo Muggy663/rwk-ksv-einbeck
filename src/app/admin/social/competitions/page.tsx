@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BackButton } from '@/components/ui/back-button';
-import { Trophy, Users, Clock, AlertTriangle, Play, Pause, Square } from 'lucide-react';
+import { Trophy, Users, Clock, Play, Pause, Square } from 'lucide-react';
 import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { toast } from '@/hooks/use-toast';

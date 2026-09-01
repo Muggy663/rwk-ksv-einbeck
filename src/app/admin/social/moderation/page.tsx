@@ -31,14 +31,14 @@ export default function AdminModerationPage() {
     }
   ]);
 
-  const handleResolve = (reportId: string) => {
+  const handleResolve = (_reportId: string) => {
     toast({
       title: "Meldung bearbeitet",
       description: "Die Meldung wurde als bearbeitet markiert."
     });
   };
 
-  const handleDismiss = (reportId: string) => {
+  const handleDismiss = (_reportId: string) => {
     toast({
       title: "Meldung abgelehnt",
       description: "Die Meldung wurde abgelehnt."

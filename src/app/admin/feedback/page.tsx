@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase/config';
 import { collection, query, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Trash2, Star, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
