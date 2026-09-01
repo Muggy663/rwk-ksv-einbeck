@@ -81,17 +81,17 @@ export class UnifiedTrainingService {
           discipline: data.disziplin,
           shots: data.schussAnzahl,
           rings: data.ergebnis,
-          ringsWithDecimals: schiessEintrag.ergebnisZehntel || null,
+          ringsWithDecimals: schiessEintrag.ergebnisZehntel || undefined,
           average: data.schussAnzahl > 0 ? data.ergebnis / data.schussAnzahl : 0,
           date: data.datum,
           typ: data.typ,
           location: data.standort,
-          shootingRange: data.schiessstand || null,
-          weather: schiessEintrag.wetter || null,
-          ammunition: schiessEintrag.munition || null,
-          weapon: schiessEintrag.waffe || null,
-          series: convertedSeries || null,
-          notes: data.notizen || null,
+          shootingRange: data.schiessstand || undefined,
+          weather: schiessEintrag.wetter || undefined,
+          ammunition: schiessEintrag.munition || undefined,
+          weapon: schiessEintrag.waffe || undefined,
+          series: convertedSeries || undefined,
+          notes: data.notizen || undefined,
           proofType: data.proofType || 'verified',
           verified: true,
           sourceType: 'schiessnachweis',
@@ -142,7 +142,7 @@ export class UnifiedTrainingService {
           const results = await SocialTrainingService.getUserResults(userId);
           socialResult = results.find(r => r.id === socialResultId);
         } catch (error) {
-          logWarn('Gespeichertes Social Training Ergebnis konnte nicht geladen werden:', error);
+          logWarn('Gespeichertes Social Training Ergebnis konnte nicht geladen werden:', error instanceof Error ? error.message : String(error));
         }
         
       } catch (error) {
@@ -179,7 +179,7 @@ export class UnifiedTrainingService {
     try {
       socialResults = await SocialTrainingService.getUserResults(userId);
     } catch (error) {
-      logWarn('Social Training Ergebnisse konnten nicht geladen werden:', error);
+      logWarn('Social Training Ergebnisse konnten nicht geladen werden:', error instanceof Error ? error.message : String(error));
     }
     
     // Kombiniere und verknüpfe Daten

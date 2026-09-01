@@ -6,12 +6,12 @@ export class PDFExportService {
   static async exportStartlisteToPDF(startliste: any, config: any, meldungen: any[] = []) {
     try {
       const { default: jsPDF } = await import('jspdf');
-      const { default: autoTable } = await import('jspdf-autotable');
+      await import('jspdf-autotable');
       
       const [schuetzenRes, mannschaftenRes, disziplinenRes] = await Promise.all([
-        fetch('/api/shooters').catch(() => ({ ok: false })),
-        fetch('/api/km/mannschaften').catch(() => ({ ok: false })),
-        fetch('/api/km/disziplinen').catch(() => ({ ok: false }))
+        fetch('/api/shooters').catch(() => ({ ok: false } as Response)),
+        fetch('/api/km/mannschaften').catch(() => ({ ok: false } as Response)),
+        fetch('/api/km/disziplinen').catch(() => ({ ok: false } as Response))
       ]);
       
       const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json().catch(() => ({ data: [] }))).data || [] : [];
@@ -19,8 +19,8 @@ export class PDFExportService {
       const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json().catch(() => ({ data: [] }))).data || [] : [];
       
       // Schützen-Map für PDF Export
-      const schuetzenMapPDF = {};
-      schuetzenData.forEach(data => {
+      const schuetzenMapPDF: Record<string, any> = {};
+      schuetzenData.forEach((data: any) => {
         schuetzenMapPDF[data.name] = {
           id: data.id,
           birthYear: data.birthYear,
@@ -40,7 +40,7 @@ export class PDFExportService {
       const gefilterteStartliste = startliste.startliste || startliste || [];
       
       // Gruppiere nur nach Startzeiten und sortiere korrekt
-      const nachStartzeit = gefilterteStartliste.reduce((acc: Record<string, any[]>, s) => {
+      const nachStartzeit = gefilterteStartliste.reduce((acc: Record<string, any[]>, s: any) => {
         const zeit = s.startzeit || config?.startzeit || '14:00';
         if (!acc[zeit]) acc[zeit] = [];
         acc[zeit].push(s);
@@ -58,9 +58,9 @@ export class PDFExportService {
       let isFirstStart = true;
       let currentY = 35;
       
-      Object.entries(nachStartzeit)
+      (Object.entries(nachStartzeit) as [string, any[]][])
         .sort(([zeitA], [zeitB]) => zeitA.localeCompare(zeitB)) // Sortiere Uhrzeiten korrekt
-        .forEach(([startzeit, starterGruppe]: [string, any[]], startzeitIndex) => {
+        .forEach(([startzeit, starterGruppe]) => {
           if (isFirstStart) {
             doc.addPage();
             isFirstStart = false;
