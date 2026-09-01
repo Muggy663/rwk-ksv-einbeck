@@ -4,6 +4,19 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
+## Version 3.0.0
+- **🏗️ Große TypeScript-Grundsanierung**: Die gesamte Codebasis wurde systematisch typsicher gemacht — TypeScript-Meldungen von ~3860 auf aktuell ~1030 reduziert (Arbeit läuft weiter). Ziel: langfristige Wartbarkeit, weniger versteckte Laufzeit-Bugs, schnelleres sicheres Weiterentwickeln
+- **📦 Keine funktionalen Änderungen an bestehenden Features**: Design und Bedienung bleiben unverändert — es wurden Typen ergänzt, tote Duplikate entfernt und einige echte Bugs behoben
+- **✅ Komplett saubere Bereiche (0 TypeScript-Fehler)**: Schießnachweis, Vereinsbereich, Kern (Typen/Utils), Services, UI-Komponenten, Kreismeisterschaft (KM) und KM-Organisation (km-orga)
+- **🐛 Bugfix Safari-PDF**: Die Abbruch-Rückfrage beim PDF-Export unter Safari war fehlerhaft typisiert und konnte den Ablauf durcheinanderbringen — korrigiert
+- **🐛 Bugfix KM-Ergebnis-Import**: Der Fortschrittsdialog beim Foto-/PDF-Batch-Import verlor bei jedem Schritt interne Zustandsinfos (z.B. den Pausengrund bei API-Limit) — jetzt bleibt der Zustand korrekt erhalten
+- **🐛 Bugfix Handzettel-Generator**: Druck-/Style-Zugriffe und die Schützen-Auflösung robuster gemacht
+- **🧹 Tote Duplikat-Dateien entfernt**: veraltete Alternativ-Versionen (`shared-results-page`, alte OCR- und Update-Komponenten, ungenutzte Mobile-Navigation, ~1900 Zeilen tote Legacy-Ergebnisseite u.a.) — jeweils vorher geprüft, dass sie nirgends verwendet werden
+- **🔧 Zentrale Typen erweitert**: Nutzer-Berechtigungen (Rollen je Verein/Kreis/Plattform) und Schützen-Datenfelder (u.a. KM-Startrechte, KM-Verein) einheitlich abgebildet — Grundlage für konsistentere Daten
+- **📝 Nachvollziehbarkeit**: Jede Reparatur ist dokumentiert (`docs/FIXING_LOG_v2.8.md`) und in kleinen, thematischen Schritten festgehalten
+- **🔜 Geplant (noch offen)**: Restliche Bereiche Admin und übrige App-Seiten typsicher machen
+- **💡 Idee für später (vorgemerkt)**: Mitgliederliste im Vereinsbereich (RWK) und im KM-Bereich zusammenführen. Beide greifen bereits auf dieselbe Datenbank (`shooters`) zu, sind aber unterschiedlich aufgebaut. Ziel: ein gemeinsames Datenmodell mit einheitlichen Feldnamen und einer gemeinsamen Listen-Ansicht, bei der der KM-Modus mehr Felder anzeigt als der RWK-Modus (KM braucht z.B. Startrechte, Mitgliedsnummer, genauere Altersklassen). Umsetzung sinnvoll erst nach Abschluss der TypeScript-Sanierung, da saubere Typen die Voraussetzung dafür sind
+
 ## Version 2.8.0
 - **🧹 Große Code-Bereinigung**: Toten und veralteten Code entfernt (~3850 Zeilen) — alte Suffix-Duplikate (`page-fixed`, `page_new`, `page-modified`, `page-clean`, `page-with-*`), doppelte PDF-/Zertifikat-Basisdateien, Pages-Router-Rest `_app.tsx`, ungenutzte UI-Varianten (enhanced-/improved-card, native-/android-button) und toter Context
 - **🔧 Logger-Imports bereinigt**: In 479 Dateien pauschal eingefügte, ungenutzte `secure-logger`-Importe entfernt bzw. auf tatsächlich genutzte Funktionen reduziert — rein auf Import-Ebene, keine Funktionslogik verändert
