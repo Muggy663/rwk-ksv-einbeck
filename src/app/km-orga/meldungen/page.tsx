@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { getShooterClubId, berechneAltersklasse } from '@/lib/utils/altersklassen';
+import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -67,7 +67,7 @@ export default function KMAdminMeldungen() {
         const saisonsList = data.data || [];
         
         // Sortiere Saisons: Neueste zuerst (LD 2026 > KKP 2026 > KK 2026)
-        const sortedSaisons = saisonsList.sort((a, b) => {
+        const sortedSaisons = saisonsList.sort((a: any, b: any) => {
           // Priorisiere LD (Luftdruck) als neueste Saison
           if (a.name?.includes('Luftdruck') && !b.name?.includes('Luftdruck')) return -1;
           if (!a.name?.includes('Luftdruck') && b.name?.includes('Luftdruck')) return 1;
@@ -658,7 +658,7 @@ export default function KMAdminMeldungen() {
                           {editingMeldung === meldung.id ? (
                             <select
                               value={editData.disziplinId || meldung.disziplinId}
-                              onChange={(e) => setEditData(prev => ({...prev, disziplinId: e.target.value}))}
+                              onChange={(e) => setEditData((prev: any) => ({...prev, disziplinId: e.target.value}))}
                               className="w-full p-1 border rounded text-sm mt-1"
                             >
                               {disziplinen.map(d => (
@@ -681,7 +681,7 @@ export default function KMAdminMeldungen() {
                             <input
                               type="checkbox"
                               checked={editData.lmTeilnahme || false}
-                              onChange={(e) => setEditData(prev => ({...prev, lmTeilnahme: e.target.checked}))}
+                              onChange={(e) => setEditData((prev: any) => ({...prev, lmTeilnahme: e.target.checked}))}
                               className="w-4 h-4 ml-2"
                             />
                           ) : (
@@ -701,7 +701,7 @@ export default function KMAdminMeldungen() {
                               type="number"
                               step="0.1"
                               value={editData.vmRinge || ''}
-                              onChange={(e) => setEditData(prev => ({...prev, vmRinge: e.target.value}))}
+                              onChange={(e) => setEditData((prev: any) => ({...prev, vmRinge: e.target.value}))}
                               className="w-20 p-1 border rounded text-sm ml-2"
                               placeholder="Ringe"
                             />
@@ -860,7 +860,7 @@ export default function KMAdminMeldungen() {
                         {editingMeldung === meldung.id ? (
                           <select
                             value={editData.disziplinId || meldung.disziplinId}
-                            onChange={(e) => setEditData(prev => ({...prev, disziplinId: e.target.value}))}
+                            onChange={(e) => setEditData((prev: any) => ({...prev, disziplinId: e.target.value}))}
                             className="w-full p-1 border rounded text-sm"
                           >
                             {disziplinen.map(d => (
@@ -916,7 +916,7 @@ export default function KMAdminMeldungen() {
                           <input
                             type="checkbox"
                             checked={editData.lmTeilnahme || false}
-                            onChange={(e) => setEditData(prev => ({...prev, lmTeilnahme: e.target.checked}))}
+                            onChange={(e) => setEditData((prev: any) => ({...prev, lmTeilnahme: e.target.checked}))}
                             className="w-4 h-4"
                           />
                         ) : (
@@ -935,7 +935,7 @@ export default function KMAdminMeldungen() {
                             type="number"
                             step="0.1"
                             value={editData.vmRinge || ''}
-                            onChange={(e) => setEditData(prev => ({...prev, vmRinge: e.target.value}))}
+                            onChange={(e) => setEditData((prev: any) => ({...prev, vmRinge: e.target.value}))}
                             className="w-20 p-1 border rounded text-sm"
                             placeholder="Ringe"
                           />

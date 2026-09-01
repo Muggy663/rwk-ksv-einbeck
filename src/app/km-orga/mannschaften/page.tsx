@@ -1,17 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft, Plus } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowLeft } from 'lucide-react';
 import { useKMAuth } from '@/hooks/useKMAuth';
-import { MannschaftsbildungService } from '@/lib/services/mannschaftsbildung-service';
 
 export default function KMAdminMannschaften() {
   const { toast } = useToast();
@@ -20,21 +16,13 @@ export default function KMAdminMannschaften() {
   const [schuetzen, setSchuetzen] = useState<any[]>([]);
   const [disziplinen, setDisziplinen] = useState<any[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
-  const [meldungen, setMeldungen] = useState<any[]>([]);
-  const [altersklassen, setAltersklassen] = useState<any[]>([]);
-  const [mannschaftsregeln, setMannschaftsregeln] = useState<any>({});
+  const [, setMeldungen] = useState<any[]>([]);
+  const [, setAltersklassen] = useState<any[]>([]);
+  const [, setMannschaftsregeln] = useState<any>({});
   const [loading, setLoading] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [editingTeam, setEditingTeam] = useState<string | null>(null);
-  const [filter, setFilter] = useState({ verein: '', disziplin: '' });
+  const [filter] = useState({ verein: '', disziplin: '' });
   const [saisons, setSaisons] = useState<any[]>([]);
   const [selectedSaison, setSelectedSaison] = useState('');
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [createForm, setCreateForm] = useState({
-    vereinId: '',
-    disziplinId: '',
-    schuetzenIds: [] as string[]
-  });
 
   useEffect(() => {
     if (hasFullAccess && !authLoading) {
@@ -301,7 +289,7 @@ export default function KMAdminMannschaften() {
                     filteredMannschaften.map(mannschaft => {
                       const verein = clubs.find(c => c.id === mannschaft.vereinId);
                       const disziplin = disziplinen.find(d => d.id === mannschaft.disziplinId);
-                      const teamSchuetzen = mannschaft.schuetzenIds.map(id => 
+                      const teamSchuetzen = mannschaft.schuetzenIds.map((id: string) => 
                         schuetzen.find(s => s.id === id)
                       ).filter(Boolean);
 
@@ -334,7 +322,7 @@ export default function KMAdminMannschaften() {
                           </div>
 
                           <div className="space-y-2">
-                            {teamSchuetzen.map((schuetze) => (
+                            {teamSchuetzen.map((schuetze: any) => (
                               <div key={schuetze?.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                                 <div>
                                   <span>

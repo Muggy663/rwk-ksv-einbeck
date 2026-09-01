@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logWarn } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -116,7 +116,7 @@ export default function KMMeldungenStatistik() {
           );
           stats.byAltersklasse[altersklasse] = (stats.byAltersklasse[altersklasse] || 0) + 1;
         } catch (error) {
-          logWarn('Altersklasse calculation failed:', error);
+          logWarn('Altersklasse calculation failed:', error instanceof Error ? error.message : String(error));
         }
       }
     });

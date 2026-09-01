@@ -106,7 +106,7 @@ export default function StartgebührenPage() {
         if (!schuetze) return;
 
         const vereinId = getShooterClubId(schuetze);
-        const vereinName = vereinsMap[vereinId] || 'Unbekannt';
+        const vereinName = vereinsMap[vereinId || ''] || 'Unbekannt';
         
         if (!vereinId) {
           logDebug('Schütze ohne Verein:', schuetze);

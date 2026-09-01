@@ -43,9 +43,9 @@ export default function David21Page() {
         const startlistenData = startlistenSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        })) as Array<{ id: string; [key: string]: any }>;
         
-        setStartlisten(startlistenData.sort((a, b) => new Date(b.erstellt?.toDate?.() || b.erstellt) - new Date(a.erstellt?.toDate?.() || a.erstellt)));
+        setStartlisten(startlistenData.sort((a, b) => (new Date(b.erstellt?.toDate?.() || b.erstellt) as any) - (new Date(a.erstellt?.toDate?.() || a.erstellt) as any)));
       } catch (error) {
         logError('Fehler beim Laden der Startlisten:', error);
       }
@@ -222,7 +222,7 @@ export default function David21Page() {
                     options={startlisten.map(s => {
                       const datum = s.konfiguration?.datum ? new Date(s.konfiguration.datum).toLocaleDateString('de-DE') : 'Kein Datum';
                       const starterCount = s.startliste?.length || 0;
-                      const disziplinen = [...new Set(s.startliste?.map((starter: any) => starter.disziplin).filter(Boolean))] || [];
+                      const disziplinen = [...new Set(s.startliste?.map((starter: any) => starter.disziplin).filter(Boolean))];
                       const austragungsort = s.konfiguration?.austragungsort || 'Unbekannt';
                       
                       return {

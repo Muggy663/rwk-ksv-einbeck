@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getShooterClubId, formatGender, getGenderBadgeClass } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -341,19 +341,19 @@ export default function KMAdminMitglieder() {
                 type="text"
                 placeholder="Vorname *"
                 value={newShooter.firstName || ''}
-                onChange={(e) => setNewShooter(prev => ({ ...prev, firstName: e.target.value }))}
+                onChange={(e) => setNewShooter((prev: any) => ({ ...prev, firstName: e.target.value }))}
                 className="p-2 border rounded"
               />
               <input
                 type="text"
                 placeholder="Nachname *"
                 value={newShooter.lastName || ''}
-                onChange={(e) => setNewShooter(prev => ({ ...prev, lastName: e.target.value }))}
+                onChange={(e) => setNewShooter((prev: any) => ({ ...prev, lastName: e.target.value }))}
                 className="p-2 border rounded"
               />
               <select
                 value={newShooter.kmClubId || ''}
-                onChange={(e) => setNewShooter(prev => ({ ...prev, kmClubId: e.target.value }))}
+                onChange={(e) => setNewShooter((prev: any) => ({ ...prev, kmClubId: e.target.value }))}
                 className="p-2 border rounded"
               >
                 <option value="">Verein wählen</option>
@@ -365,14 +365,14 @@ export default function KMAdminMitglieder() {
                 type="number"
                 placeholder="Geburtsjahr"
                 value={newShooter.birthYear || ''}
-                onChange={(e) => setNewShooter(prev => ({ ...prev, birthYear: e.target.value }))}
+                onChange={(e) => setNewShooter((prev: any) => ({ ...prev, birthYear: e.target.value }))}
                 className="p-2 border rounded"
                 min="1920"
                 max="2020"
               />
               <select
                 value={newShooter.gender || ''}
-                onChange={(e) => setNewShooter(prev => ({ ...prev, gender: e.target.value }))}
+                onChange={(e) => setNewShooter((prev: any) => ({ ...prev, gender: e.target.value }))}
                 className="p-2 border rounded"
               >
                 <option value="">Geschlecht</option>
@@ -383,7 +383,7 @@ export default function KMAdminMitglieder() {
                 type="text"
                 placeholder="Mitgliedsnummer"
                 value={newShooter.mitgliedsnummer || ''}
-                onChange={(e) => setNewShooter(prev => ({ ...prev, mitgliedsnummer: e.target.value }))}
+                onChange={(e) => setNewShooter((prev: any) => ({ ...prev, mitgliedsnummer: e.target.value }))}
                 className="p-2 border rounded"
               />
             </div>
@@ -436,7 +436,7 @@ export default function KMAdminMitglieder() {
                         <input
                           type="text"
                           value={editData.firstName || ''}
-                          onChange={(e) => setEditData(prev => ({ ...prev, firstName: e.target.value }))}
+                          onChange={(e) => setEditData((prev: any) => ({ ...prev, firstName: e.target.value }))}
                           className="w-full p-1 border rounded text-sm"
                         />
                       ) : (
@@ -448,7 +448,7 @@ export default function KMAdminMitglieder() {
                         <input
                           type="text"
                           value={editData.lastName || ''}
-                          onChange={(e) => setEditData(prev => ({ ...prev, lastName: e.target.value }))}
+                          onChange={(e) => setEditData((prev: any) => ({ ...prev, lastName: e.target.value }))}
                           className="w-full p-1 border rounded text-sm"
                         />
                       ) : (
@@ -459,7 +459,7 @@ export default function KMAdminMitglieder() {
                       {editingId === shooter.id ? (
                         <select
                           value={editData.kmClubId || ''}
-                          onChange={(e) => setEditData(prev => ({ ...prev, kmClubId: e.target.value }))}
+                          onChange={(e) => setEditData((prev: any) => ({ ...prev, kmClubId: e.target.value }))}
                           className="w-full p-1 border rounded text-sm"
                         >
                           <option value="">Verein wählen</option>
@@ -476,7 +476,7 @@ export default function KMAdminMitglieder() {
                         <input
                           type="number"
                           value={editData.birthYear || ''}
-                          onChange={(e) => setEditData(prev => ({ ...prev, birthYear: parseInt(e.target.value) || undefined }))}
+                          onChange={(e) => setEditData((prev: any) => ({ ...prev, birthYear: parseInt(e.target.value) || undefined }))}
                           className="w-20 p-1 border rounded text-sm"
                           min="1920"
                           max="2020"
@@ -489,7 +489,7 @@ export default function KMAdminMitglieder() {
                       {editingId === shooter.id ? (
                         <select
                           value={editData.gender || ''}
-                          onChange={(e) => setEditData(prev => ({ ...prev, gender: e.target.value }))}
+                          onChange={(e) => setEditData((prev: any) => ({ ...prev, gender: e.target.value }))}
                           className="p-1 border rounded text-sm"
                         >
                           <option value="">Unbekannt</option>
@@ -507,7 +507,7 @@ export default function KMAdminMitglieder() {
                         <input
                           type="text"
                           value={editData.mitgliedsnummer || ''}
-                          onChange={(e) => setEditData(prev => ({ ...prev, mitgliedsnummer: e.target.value }))}
+                          onChange={(e) => setEditData((prev: any) => ({ ...prev, mitgliedsnummer: e.target.value }))}
                           className="w-20 p-1 border rounded text-sm"
                         />
                       ) : (

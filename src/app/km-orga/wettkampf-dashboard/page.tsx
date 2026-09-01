@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -60,12 +60,12 @@ export default function WettkampfDashboardPage() {
         const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
         
         const disziplinenMap = new Map();
-        disziplinenData.forEach(disziplin => {
+        disziplinenData.forEach((disziplin: any) => {
           disziplinenMap.set(disziplin.id, disziplin.name);
         });
         
         const schuetzenMap = new Map();
-        schuetzenData.forEach(schuetze => {
+        schuetzenData.forEach((schuetze: any) => {
           const name = schuetze.firstName && schuetze.lastName 
             ? `${schuetze.firstName} ${schuetze.lastName}` 
             : schuetze.name || 'Unbekannt';
@@ -79,7 +79,7 @@ export default function WettkampfDashboardPage() {
           fehlendStarter: string[];
         }>();
         
-        meldungenData.forEach(meldung => {
+        meldungenData.forEach((meldung: any) => {
           const disziplinName = disziplinenMap.get(meldung.disziplinId) || 'Unbekannt';
           const schuetzeName = schuetzenMap.get(meldung.schuetzeId) || 'Unbekannt';
           

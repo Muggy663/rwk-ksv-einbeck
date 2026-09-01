@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trophy, AlertTriangle, CheckCircle, Filter, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { validateQualifications } from '@/lib/services/startlisten-ki-service';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 
@@ -87,7 +86,7 @@ export default function VMUebersichtPage() {
         const data = await response.json();
         const saisonsList = data.data || [];
         
-        const sortedSaisons = saisonsList.sort((a, b) => {
+        const sortedSaisons = saisonsList.sort((a: any, b: any) => {
           if (a.name?.includes('Luftdruck') && !b.name?.includes('Luftdruck')) return -1;
           if (!a.name?.includes('Luftdruck') && b.name?.includes('Luftdruck')) return 1;
           const yearA = a.jahr || 0;
@@ -160,7 +159,7 @@ export default function VMUebersichtPage() {
         setMeldungen(processedMeldungen);
         
         // Unique Disziplinen extrahieren
-        const uniqueDisziplinen = [...new Set(processedMeldungen.map((m: VMMeldung) => m.disziplin))];
+        const uniqueDisziplinen = [...new Set(processedMeldungen.map((m: VMMeldung) => m.disziplin))] as string[];
         setDisziplinen(uniqueDisziplinen);
       }
     } catch (error) {

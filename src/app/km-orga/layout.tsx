@@ -1,16 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
-  Trophy, Users, ListChecks, ArrowLeft, LogOut, Target, Settings
+  Trophy, Users, ListChecks, Target
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useKMAuth } from '@/hooks/useKMAuth';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
 
 export const kmOrgaNavItems = [
   { href: '/km-orga', label: 'KM-Dashboard', icon: Trophy },
@@ -25,8 +21,7 @@ export default function KMOrgaLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
   const { hasKMAccess, userRole, loading: kmLoading } = useKMAuth();
 
   const isAdmin = user?.email === 'admin@rwk-einbeck.de';
@@ -41,11 +36,6 @@ export default function KMOrgaLayout({
       }
     }
   }, [loading, kmLoading, user, hasAccess, router]);
-
-  const handleLogout = useCallback(async () => {
-    await signOut();
-    router.push('/');
-  }, [signOut, router]);
 
   if (loading || kmLoading || (!user) || (!hasAccess && !loading && !kmLoading)) {
     return null;
