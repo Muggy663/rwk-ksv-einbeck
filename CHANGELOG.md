@@ -5,6 +5,12 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 ---
 
 ## Version 3.0.0
+- **👥 Zentrale Mitgliederliste (RWK + KM)**: Es gibt jetzt eine einzige, gemeinsame Mitgliederliste unter `/mitglieder` für beide Bereiche — ein Datenbestand, zwei Ansichten. Die KM-Ansicht zeigt zusätzlich Mitgliedsnummer und die Altersklassen (Auflage/Freihand) fürs aktuelle Sportjahr. Suche, Sortierung und eine mobiltaugliche Darstellung (Tabelle am Desktop, Karten am Handy) sind enthalten
+- **🔐 Neue abgesicherte Mitglieder-API**: Anlegen, Bearbeiten und Löschen laufen ausschließlich über eine serverseitig geschützte Schnittstelle (`/api/members`). Die Berechtigungen werden verbindlich auf dem Server geprüft — nicht mehr nur in der Oberfläche
+- **👤 Klare Rollen für die Mitgliederverwaltung**: Admin und KM-Organisation sehen und verwalten alle Vereine; Sportleiter verwalten ihre zugeordneten Vereine (RWK + KM + Mitglieder); Mannschaftsführer tragen weiterhin nur RWK-Ergebnisse ein
+- **🗑️ Sanftes Löschen mit Sicherheitsnetz**: Beim Entfernen eines Mitglieds wird es deaktiviert und aus allen aktiven Mannschaften (RWK und KM) genommen — bereits erfasste Ergebnisse und Meldungen bleiben erhalten, und der Vorgang wird protokolliert
+- **🧭 Aufgeräumte Einstiege**: Die bisherigen getrennten Listen (Vereinsbereich „Schützen“, KM „Mitglieder“, KM-Orga „Alle Mitglieder“) führen jetzt alle zur zentralen Liste. Im Dashboard erscheint die Mitglieder-Kachel nur mit passender Berechtigung, mit Hinweis, dass die Liste für RWK und KM gemeinsam gilt
+- **📇 Einheitliches Mitglieder-Datenmodell**: Vereinszuordnung über ein einziges Feld, Kontakt-/Stammdaten (Telefon, Mobil, Adresse) vereinheitlicht; der Mitcom-Import schreibt jetzt konsistent ins gemeinsame Modell
 - **🏗️ Große TypeScript-Grundsanierung (abgeschlossen)**: Die gesamte Codebasis wurde systematisch typsicher gemacht — TypeScript-Meldungen von ~3860 auf **0** reduziert. Ziel: langfristige Wartbarkeit, weniger versteckte Laufzeit-Bugs, schnelleres und sichereres Weiterentwickeln
 - **✅ Komplett sauber (0 TypeScript-Fehler) in allen Bereichen**: Schießnachweis, Vereinsbereich, Kern (Typen/Utils), Services, UI-Komponenten, Kreismeisterschaft (KM), KM-Organisation, Admin, öffentliche RWK-Tabellen, API-Routen und alle übrigen App-Seiten
 - **📦 Keine funktionalen Änderungen an bestehenden Features**: Design und Bedienung bleiben unverändert — es wurden Typen ergänzt, toter Code entfernt und mehrere echte Bugs behoben
@@ -18,7 +24,7 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 - **🔧 Zentrale Typen vereinheitlicht**: Nutzer-Berechtigungen (Rollen je Verein/Kreis/Plattform) und Schützen-/Team-Datenfelder (u.a. KM-Startrechte, KM-Verein) sauber abgebildet — Grundlage für konsistentere Daten
 - **📝 Nachvollziehbarkeit**: Jede Reparatur ist dokumentiert (`docs/FIXING_LOG_v2.8.md`) und in kleinen, thematischen Schritten festgehalten
 - **📋 Vermerkte Empfehlungen fürs nächste Update** (kein Fehler, aber Aufräumbedarf): Sentry-Tracing auf die neue API migrieren; `send-email`-Empfängerzählung prüfen
-- **💡 Idee für später (vorgemerkt in `docs/IDEE_Mitgliederlisten_zusammenfuehren.md`)**: Mitgliederliste im Vereinsbereich (RWK) und im KM-Bereich zusammenführen — ein gemeinsames Datenmodell mit einheitlichen Feldnamen und einer gemeinsamen Listen-Ansicht (KM-Modus zeigt mehr Felder als RWK). Jetzt umsetzbar, da die Typen sauber sind
+- **✅ Umgesetzt**: Die zuvor vorgemerkte Zusammenführung der Mitgliederlisten (Vereinsbereich RWK + KM) ist in dieser Version realisiert — siehe „Zentrale Mitgliederliste (RWK + KM)“ oben
 
 ## Version 2.8.0
 - **🧹 Große Code-Bereinigung**: Toten und veralteten Code entfernt (~3850 Zeilen) — alte Suffix-Duplikate (`page-fixed`, `page_new`, `page-modified`, `page-clean`, `page-with-*`), doppelte PDF-/Zertifikat-Basisdateien, Pages-Router-Rest `_app.tsx`, ungenutzte UI-Varianten (enhanced-/improved-card, native-/android-button) und toter Context
