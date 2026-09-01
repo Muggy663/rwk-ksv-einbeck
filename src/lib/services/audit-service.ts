@@ -1,6 +1,6 @@
 import { db } from '@/lib/firebase/config';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, where, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
 
 /**
  * Erstellt einen Audit-Eintrag in der Datenbank
