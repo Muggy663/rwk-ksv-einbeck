@@ -267,7 +267,6 @@ export default function MitgliederImportPage() {
           lastName: member.nachname,
           name: `${member.vorname} ${member.nachname}`,
           clubId: effectiveClubId,
-          kmClubId: effectiveClubId,
           isActive: true,
         };
 
@@ -276,7 +275,7 @@ export default function MitgliederImportPage() {
         if (member.geburtsjahr) shooterData.birthYear = member.geburtsjahr;
         if (member.verbandsnummer) shooterData.mitgliedsnummer = member.verbandsnummer;
         if (member.email) shooterData.email = member.email;
-        if (member.telefon) shooterData.phone = member.telefon;
+        if (member.telefon) shooterData.telefon = member.telefon;
 
         if (member.action === 'update' && member.matchedShooterId) {
           // Nur vorhandene Felder aktualisieren — niemals überschreiben was schon gesetzt ist
@@ -285,7 +284,7 @@ export default function MitgliederImportPage() {
           if (member.geburtsjahr) updatePayload.birthYear = member.geburtsjahr;
           if (member.verbandsnummer) updatePayload.mitgliedsnummer = member.verbandsnummer;
           if (member.email) updatePayload.email = member.email;
-          if (member.telefon) updatePayload.phone = member.telefon;
+          if (member.telefon) updatePayload.telefon = member.telefon;
           updatePayload.firstName = member.vorname;
           updatePayload.lastName = member.nachname;
           updatePayload.name = `${member.vorname} ${member.nachname}`;
@@ -333,7 +332,7 @@ export default function MitgliederImportPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <BackButton fallbackHref="/verein/schuetzen" size="sm" />
+      <BackButton fallbackHref="/mitglieder" size="sm" />
 
       <Card>
         <CardHeader>

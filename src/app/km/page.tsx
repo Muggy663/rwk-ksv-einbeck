@@ -205,7 +205,7 @@ function KMDashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <Link href="/km/mitglieder">
+              <Link href="/mitglieder">
                 <Button className="w-full bg-green-600 hover:bg-green-700">👥 Mitglieder verwalten</Button>
               </Link>
               <Link href="/verein/mitglieder-import">

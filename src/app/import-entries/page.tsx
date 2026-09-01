@@ -224,7 +224,7 @@ Zieseniß	Peter	2009	2009`;
             )}
             
             <div className="flex gap-2">
-              <a href="/km/mitglieder">
+              <a href="/mitglieder">
                 <Button variant="outline">Zur Mitgliederverwaltung</Button>
               </a>
               <a href="/import-birthdays">

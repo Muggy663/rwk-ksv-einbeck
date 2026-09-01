@@ -278,7 +278,7 @@ export default function KMAdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-2">
-              <Link href="/km-orga/mitglieder">
+              <Link href="/mitglieder">
                 <Button variant="outline" className="w-full h-12 text-left justify-start">👥 Alle Mitglieder</Button>
               </Link>
               <Link href="/km-orga/disziplinen">

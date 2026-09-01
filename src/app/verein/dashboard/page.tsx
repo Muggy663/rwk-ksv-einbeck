@@ -225,16 +225,16 @@ export default function VereinDashboardPage() {
                 </div>
                 <Badge variant="secondary">Wichtig</Badge>
               </div>
-              <CardTitle className="text-xl">Schützen</CardTitle>
+              <CardTitle className="text-xl">Mitglieder</CardTitle>
               <CardDescription className="text-base">
-                Füge neue Schützen hinzu und bearbeite deren Stammdaten
+                Zentrale Mitgliederliste (RWK und KM) sowie Mitcom-Import
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2">
                 <Button asChild className="w-full h-12 text-sm font-semibold">
-                  <Link href="/verein/schuetzen">
-                    <span className="truncate">Schützen verwalten</span>
+                  <Link href="/mitglieder">
+                    <span className="truncate">Mitglieder verwalten</span>
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full text-sm">

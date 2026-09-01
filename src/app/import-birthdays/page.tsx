@@ -198,7 +198,7 @@ export default function ImportBirthdaysPage() {
             )}
             
             <div className="flex gap-2">
-              <a href="/km/mitglieder">
+              <a href="/mitglieder">
                 <Button variant="outline">
                   Zur Mitgliederverwaltung
                 </Button>
