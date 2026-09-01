@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -102,7 +102,7 @@ export function TeamSeasonStats() {
       const teams = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as Array<{ id: string; name: string; clubId: string }>;
       
       // Hole die Vereinsnamen für die Teams
       const clubIds = [...new Set(teams.map(team => team.clubId))];
@@ -159,7 +159,7 @@ export function TeamSeasonStats() {
       for (const year of years) {
         for (const disc of disciplines) {
           try {
-            const collectionName = getSeasonSpecificScoresCollection(year, disc);
+            const collectionName = getSeasonSpecificScoresCollection(year, disc as any);
             const scoresRef = collection(db, collectionName);
             
             const q = query(
@@ -173,12 +173,12 @@ export function TeamSeasonStats() {
             const scores: TeamScore[] = querySnapshot.docs.map(doc => ({
               ...doc.data(),
               id: doc.id
-            })) as TeamScore[];
+            })) as unknown as TeamScore[];
             
             allScores = [...allScores, ...scores];
           } catch (error) {
             // Collection existiert möglicherweise nicht - das ist ok
-            logWarn(`Collection ${disc} für Jahr ${year} nicht gefunden:`, error);
+            logWarn(`Collection ${disc} für Jahr ${year} nicht gefunden:`, error instanceof Error ? error.message : String(error));
           }
         }
       }
@@ -206,7 +206,7 @@ export function TeamSeasonStats() {
       }
       
       // Statistiken berechnen
-      const years = Array.from(new Set(scores.map(score => score.competitionYear))).sort();
+      const statYears = Array.from(new Set(scores.map(score => score.competitionYear))).sort();
       const averageByYear: { [year: number]: number } = {};
       const totalByYear: { [year: number]: number } = {};
       const roundsByYear: { [year: number]: number } = {};
@@ -222,9 +222,9 @@ export function TeamSeasonStats() {
         };
       } = {};
       
-      let allScores: number[] = [];
+      let allRingScores: number[] = [];
       
-      years.forEach(year => {
+      statYears.forEach(year => {
         const yearScores = scores
           .filter(score => score.competitionYear === year)
           .map(score => score.totalRinge);
@@ -234,7 +234,7 @@ export function TeamSeasonStats() {
         roundsByYear[year] = yearScores.length;
         averageByYear[year] = totalByYear[year] / roundsByYear[year];
         
-        allScores = [...allScores, ...yearScores];
+        allRingScores = [...allRingScores, ...yearScores];
         
         // Schützenstatistiken für dieses Jahr
         scores
@@ -272,9 +272,9 @@ export function TeamSeasonStats() {
         });
       });
       
-      const bestScore = Math.max(...allScores);
-      const worstScore = Math.min(...allScores);
-      const overallAverage = allScores.reduce((sum, score) => sum + score, 0) / allScores.length;
+      const bestScore = Math.max(...allRingScores);
+      const worstScore = Math.min(...allRingScores);
+      const overallAverage = allRingScores.reduce((sum, score) => sum + score, 0) / allRingScores.length;
       
       setTeamStats({
         teamId,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -119,7 +119,7 @@ export function CrossSeasonStats() {
       for (const year of years) {
         for (const disc of disciplines) {
           try {
-            const collectionName = getSeasonSpecificScoresCollection(year, disc);
+            const collectionName = getSeasonSpecificScoresCollection(year, disc as any);
             const scoresRef = collection(db, collectionName);
             
             const q = query(
@@ -133,12 +133,12 @@ export function CrossSeasonStats() {
             const scores: ShooterScore[] = querySnapshot.docs.map(doc => ({
               ...doc.data(),
               id: doc.id
-            })) as ShooterScore[];
+            })) as unknown as ShooterScore[];
             
             allScores = [...allScores, ...scores];
           } catch (error) {
             // Collection existiert möglicherweise nicht - das ist ok
-            logWarn(`Collection ${disc} für Jahr ${year} nicht gefunden:`, error);
+            logWarn(`Collection ${disc} für Jahr ${year} nicht gefunden:`, error instanceof Error ? error.message : String(error));
           }
         }
       }
@@ -166,15 +166,15 @@ export function CrossSeasonStats() {
       }
       
       // Statistiken berechnen
-      const years = Array.from(new Set(scores.map(score => score.competitionYear))).sort();
+      const statYears = Array.from(new Set(scores.map(score => score.competitionYear))).sort();
       const averageByYear: { [year: number]: number } = {};
       const totalByYear: { [year: number]: number } = {};
       const roundsByYear: { [year: number]: number } = {};
       const scoresByYear: { [year: number]: number[] } = {};
       
-      let allScores: number[] = [];
+      let allRingScores: number[] = [];
       
-      years.forEach(year => {
+      statYears.forEach(year => {
         const yearScores = scores
           .filter(score => score.competitionYear === year)
           .map(score => score.totalRinge);
@@ -184,12 +184,12 @@ export function CrossSeasonStats() {
         roundsByYear[year] = yearScores.length;
         averageByYear[year] = totalByYear[year] / roundsByYear[year];
         
-        allScores = [...allScores, ...yearScores];
+        allRingScores = [...allRingScores, ...yearScores];
       });
       
-      const bestScore = Math.max(...allScores);
-      const worstScore = Math.min(...allScores);
-      const overallAverage = allScores.reduce((sum, score) => sum + score, 0) / allScores.length;
+      const bestScore = Math.max(...allRingScores);
+      const worstScore = Math.min(...allRingScores);
+      const overallAverage = allRingScores.reduce((sum, score) => sum + score, 0) / allRingScores.length;
       
       setShooterStats({
         shooterId,
@@ -329,7 +329,7 @@ export function CrossSeasonStats() {
                 borderRadius: 'var(--radius)'
               }} 
               labelStyle={{ color: 'hsl(var(--foreground))' }}
-              formatter={(value, name, props) => {
+              formatter={(value, _name, props) => {
                 const item = data[props.payload.index];
                 return [`${value} Ringe`, `${item.year} DG${item.round}`];
               }}
