@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle, ChevronRight, ChevronLeft, X, Users, ListChecks, Trophy, User } from 'lucide-react';
+import { CheckCircle, ChevronRight, ChevronLeft, Users, ListChecks, Trophy, User } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,11 +19,11 @@ interface OnboardingStep {
 const ONBOARDING_COMPLETED_KEY_PREFIX = 'rwk-onboarding-completed-';
 
 export function OnboardingWizard() {
-  const { user, userPermissions } = useAuth();
+  const { user, userAppPermissions } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+  const [, setHasSeenOnboarding] = useState(false);
   const [storageError, setStorageError] = useState(false);
 
   // Überprüfen, ob der Benutzer das Onboarding bereits gesehen hat
@@ -46,9 +45,8 @@ export function OnboardingWizard() {
     }
   }, [user]);
 
-  const role = userPermissions?.role || '';
+  const role = userAppPermissions?.role || '';
   const isVereinsvertreter = role === 'vereinsvertreter';
-  const isMannschaftsfuehrer = role === 'mannschaftsfuehrer';
 
   // Gemeinsame Schritte für beide Rollen
   const commonSteps: OnboardingStep[] = [
@@ -177,7 +175,7 @@ export function OnboardingWizard() {
     toast({
       title: "Hinweis",
       description: "Ihr Browser unterstützt keine lokale Speicherung. Die Einführung wird bei jedem Besuch angezeigt.",
-      variant: "warning",
+      variant: "destructive",
     });
   }
 

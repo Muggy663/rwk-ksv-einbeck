@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown, AlertTriangle } from 'lucide-react';
@@ -52,9 +52,9 @@ function PDFButtonComponent({
     
     try {
       if (type === 'teams') {
-        await generateLeaguePDFFixed(league, numRounds, competitionYear);
+        await generateLeaguePDFFixed(league as any, numRounds, competitionYear);
       } else {
-        await generateShootersPDFFixed(league, numRounds, competitionYear);
+        await generateShootersPDFFixed(league as any, numRounds, competitionYear);
       }
       
       toast({
@@ -81,9 +81,6 @@ function PDFButtonComponent({
     }
   };
 
-  // Safari-Erkennung über Hilfsfunktion
-  const safariDetected = isSafari();
-  
   // In nativer App ausblenden
   if (isNative) {
     return null;
