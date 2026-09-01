@@ -181,7 +181,7 @@ class PlausibilityService {
   private checkPositiveIndicators(
     score: number,
     shooterHistory: ShooterHistory | null,
-    teamHistory: TeamHistory | null
+    _teamHistory: TeamHistory | null
   ): PlausibilityWarning | null {
     // Sehr gute Werte bestätigen
     if (score >= 350) {
@@ -226,7 +226,7 @@ class PlausibilityService {
 
     try {
       // Letzte 20 Ergebnisse des Schützen in dieser Disziplin laden
-      const collectionName = getSeasonSpecificScoresCollection(competitionYear, leagueType);
+      const collectionName = getSeasonSpecificScoresCollection(competitionYear, leagueType as any);
       const scoresQuery = query(
         collection(db, collectionName),
         where('shooterId', '==', shooterId),
@@ -279,7 +279,7 @@ class PlausibilityService {
 
     try {
       // Team-Ergebnisse der letzten Durchgänge laden
-      const collectionName = getSeasonSpecificScoresCollection(competitionYear, leagueType);
+      const collectionName = getSeasonSpecificScoresCollection(competitionYear, leagueType as any);
       const scoresQuery = query(
         collection(db, collectionName),
         where('teamId', '==', teamId),

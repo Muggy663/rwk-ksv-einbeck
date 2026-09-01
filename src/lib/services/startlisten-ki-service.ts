@@ -24,7 +24,7 @@ export interface KIAnalyse {
   optimierungen: KIOptimierung[];
 }
 
-export function analyzeStartlist(meldungen: any[], startliste: any[], config: any): KIAnalyse {
+export function analyzeStartlist(_meldungen: any[], startliste: any[], config: any): KIAnalyse {
   const konflikte: KIKonflikt[] = [];
   const optimierungen: KIOptimierung[] = [];
 
@@ -62,8 +62,8 @@ export function analyzeStartlist(meldungen: any[], startliste: any[], config: an
       
       // Echter Konflikt: Mehrere Starter gleicher Disziplin
       if (starter.length > 1) {
-        const [stand, zeit] = zeitStand.split('-');
-        const betroffeneNamen = starter.map(s => s.name || 'Unbekannt');
+        const [stand] = zeitStand.split('-');
+        const betroffeneNamen = starter.map((s: any) => s.name || 'Unbekannt');
         
         konflikte.push({
           titel: 'Stand-Zeit-Konflikt',

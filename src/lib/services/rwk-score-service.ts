@@ -129,7 +129,6 @@ export async function saveRWKScoresBatch(scores: RWKScoreData[], userInfo: { use
         
         const shooterName = shooter?.name || 'Unbekannter Schütze';
         const teamName = team?.name || 'Unbekannte Mannschaft';
-        const clubName = club?.name || 'Unbekannter Verein';
         
         // Speichere das Ergebnis
         const scoreEntry = {

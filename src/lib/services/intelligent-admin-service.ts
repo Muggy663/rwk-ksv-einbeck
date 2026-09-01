@@ -46,7 +46,7 @@ class IntelligentAdminService {
   
   async generateSeasonPlanningRecommendations(
     currentSeasonId: string,
-    targetYear: number
+    _targetYear: number
   ): Promise<AdminRecommendation[]> {
     const recommendations: AdminRecommendation[] = [];
     
