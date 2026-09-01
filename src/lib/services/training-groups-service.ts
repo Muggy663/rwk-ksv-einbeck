@@ -1,6 +1,6 @@
 import { db } from '@/lib/firebase/config';
 import { logWarn } from '@/lib/utils/secure-logger';
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove, Timestamp, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { TrainingGroup } from '@/types/social';
 
 export class TrainingGroupsService {

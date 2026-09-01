@@ -7,7 +7,7 @@ export const testOCRFunctionality = (): boolean => {
   
   // Test 1: Service Import
   try {
-    const { handzettelOCR } = require('./handzettel-ocr-service');
+    require('./handzettel-ocr-service');
     logDebug("✅ OCR-Service erfolgreich importiert");
   } catch (error) {
     logError("❌ OCR-Service Import fehlgeschlagen:", error);
@@ -16,7 +16,7 @@ export const testOCRFunctionality = (): boolean => {
   
   // Test 2: Tesseract.js verfügbar
   try {
-    const tesseract = require('tesseract.js');
+    require('tesseract.js');
     logDebug("✅ Tesseract.js erfolgreich geladen");
   } catch (error) {
     logError("❌ Tesseract.js nicht verfügbar:", error);

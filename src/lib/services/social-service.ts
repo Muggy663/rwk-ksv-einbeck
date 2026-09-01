@@ -137,7 +137,7 @@ export class SocialService {
     
     // Client-seitige Filterung nach Suchbegriff
     if (searchTerm) {
-      profiles = profiles.filter(profile => 
+      profiles = profiles.filter((profile: any) => 
         profile.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         profile.clubName?.toLowerCase().includes(searchTerm.toLowerCase())
       );

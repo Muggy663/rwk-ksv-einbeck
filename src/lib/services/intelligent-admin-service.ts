@@ -127,7 +127,7 @@ class IntelligentAdminService {
         }
         
         // Finde aktuelle Liga
-        const currentLeague = leagues.find(l => l.id === teamData.leagueId);
+        const currentLeague = leagues.find(l => l.id === teamData.leagueId) as any;
         if (!currentLeague) continue;
         
         // Analysiere, ob Team in anderer Liga besser aufgehoben waere
