@@ -47,14 +47,10 @@ import {
   FileDown,
   Info,
 } from 'lucide-react';
-import { PDFButton } from '@/components/ui/pdf-button';
-import { NativePDFButton } from '@/components/ui/native-pdf-button';
-import { PDFHelpDialog } from '@/components/ui/pdf-help-dialog';
 import { useNativeApp } from '@/components/ui/native-app-detector';
 import type {
   Season,
   League,
-  Team,
   Club,
   Shooter,
   ScoreEntry,
@@ -67,7 +63,7 @@ import type {
   TeamDisplay,
   LeagueDisplay,
 } from '@/types/rwk';
-import { uiDisciplineFilterOptions, getUIDisciplineValueFromSpecificType, leagueDisciplineOptions, MAX_SHOOTERS_PER_TEAM } from '@/types/rwk';
+import { uiDisciplineFilterOptions, getUIDisciplineValueFromSpecificType } from '@/types/rwk';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -85,8 +81,6 @@ import {
   Line,
   ReferenceLine,
 } from 'recharts';
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
@@ -96,7 +90,6 @@ import { RWKLegend } from '@/components/ui/rwk-legend';
 import { SmartTable } from '@/components/ui/smart-table';
 import { MobileTeamCards } from '@/components/ui/mobile-team-cards';
 import { MobileShooterCards } from '@/components/ui/mobile-shooter-cards';
-import { deduplicateScores, groupScoresByShooter } from '@/lib/utils/score-deduplication';
 import { SubstitutionService } from '@/lib/services/substitution-service';
 import { TeamCalculationService } from '@/lib/services/team-calculation-service';
 
@@ -150,8 +143,6 @@ const TeamShootersTable: React.FC<TeamShootersTableProps> = ({
   teamSubstitutions,
 }) => {
   const { isNativeApp, isPWA, isMobile } = useNativeApp();
-  const needsSpecialTouch = isNativeApp || isPWA || isMobile;
-  
   if (!shootersResults || shootersResults.length === 0) {
     return (
       <div className="p-3 text-sm text-center text-muted-foreground bg-muted/30 rounded-b-md">
