@@ -324,3 +324,33 @@ Fertig und KOMPLETT SAUBER (0 Fehler): Schießnachweis, Verein, Kern (types/util
 **Nächster empfohlener Schritt:** mit `startlisten-tool-v2` beginnen (State-Typen zuerst), dann `api/`, dann rwk-tabellen und der kleinere Rest.
 
 **Alle etablierten Muster** stehen oben im Log (Kurzform): `useState([])`/`{}` → typisieren (löst never-Kaskaden); `.map(doc=>({id,...doc.data()}))` → `as Array<{...}>`; ungenutzte Imports/React (React19)/Vars entfernen bzw. `_`-Präfix; `setX(prev:any=>)`; `logWarn/Debug(unknown/3+Args)` → getErrorMessage/Template; `.filter((x):x is T=>Boolean(x))`; `variant:"warning/success"` → gültige Variante; `null`→`undefined` bei optionalen Feldern/SDK; tote Legacy-Funktionen/Duplikate GANZ löschen (vorher immer per grep auf Import-Nutzung prüfen).
+
+---
+
+## 🎯 SANIERUNG KOMPLETT — PROJEKT 0 TypeScript-Fehler
+
+**~3860 → 0.** Alle Bereiche sauber: Schießnachweis, Verein, Kern (types/utils), lib/services, components, km, km-orga, admin, **app-Rest komplett** (startlisten-tool-v2, api, rwk-tabellen, termine, social, dokumente, statistik, hooks, contexts, lib, ausbildung, duels, protests, support u.a.).
+
+### Letzte Runde (app-Rest, ~565 → 0)
+- **startlisten-tool-v2/StartlistenToolContent.tsx** (186→0): eine Datei; State-Typen zuerst (löste ~114 never/{}-Folgefehler), Rest mechanisch.
+- **api/** (297→0): ~70 Route-Dateien in 2 Batches. doc.data()-Casts, possibly-undefined-Guards (Statuscodes/Response unverändert), secureLogger-Signatur, ungenutzte Imports/tote Funktionen.
+- **rwk-tabellen/page.tsx** (40→0): aktiv genutzte öffentliche Seite; Lucide-title→span, NativeSelect onChange→onValueChange, doppeltes id im Spread, shooterNamesMap-Typ korrigiert, diverse Casts. `IndividualShooterDisplayData.isReplacedShooter?` ergänzt.
+- **app-Rest UI + hooks/lib/contexts** (Batch A+B): React19-Imports, untypisierte States/Arrays, doc-map-Casts, Null-Fallbacks, variant-Fixes. `TrainingGroup.ownerId?/archiveReason?`, `UserPermission.vereinssoftwareLicense?` ergänzt.
+
+### Echte Bugs gefunden & behoben (nicht nur Kosmetik)
+- **api/results/submit**: `adminDb.FieldValue.serverTimestamp()` → `FieldValue` aus `firebase-admin/firestore` importiert. `adminDb.FieldValue` war zur Laufzeit `undefined` → TypeError beim **Ergebnis-Speichern** (2 Stellen).
+- **api/admin/assign-roles**: `userDoc.exists()` → `userDoc.exists` (firebase-admin: `exists` ist boolean-Property, kein Aufruf → hätte die Rollenvergabe-Schleife gecrasht).
+- **api/gemini/behoerdentext**: Scope-Bug (catch griff auf try-lokale Vars zu) → Variablen in Funktions-Scope gehoben.
+- Frühere Bereiche: safari-pdf-fix Rückgabetyp, km-ergebnisse Import-Fortschritts-State, admin/zeitungsbericht undefinierte Variable `s`.
+
+### Verwaiste Dateien gelöscht (statt @ts-ignore auf fehlende npm-Pakete)
+- `ai/genkit.ts` (genkit nicht installiert, nirgends importiert), `rwk-tabellen/print-view.tsx` + `print-button.tsx` (react-to-print nicht installiert, nirgends importiert). Plus früher: diverse tote Legacy-Funktionen/Duplikate (LegacyAdminResultsPage ~1380 Z., LegacyVereinErgebnissePage ~1900 Z., tote OCR-/Update-/Navigations-Komponenten).
+
+### Offene Empfehlungen fürs Team (kein TS-Fehler, aber vermerkt)
+- **sentry.ts**: `Sentry.startTransaction(...)` ist in neueren `@sentry/nextjs`-Versionen entfernt → auf `Sentry.startSpan` migrieren (aktuell nur typsicher via `as any`, läuft zur Laufzeit evtl. ins Leere).
+- **capacitor.config.ts**: `appVersion` ist kein Standard-CapacitorConfig-Feld (wird zur Laufzeit ignoriert).
+- **send-email**: `batch.recipients.length` auf einem `number` (bestehender Logikfehler, nur typsicher gemacht).
+
+| Bereich | Status |
+|---------|--------|
+| GESAMTES PROJEKT | ✅ 0 TypeScript-Fehler |
