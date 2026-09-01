@@ -72,11 +72,11 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     
-    return new Promise((resolve) => {
-      uploadStream.end(buffer, (error) => {
+    return new Promise<NextResponse>((resolve) => {
+      (uploadStream.end as any)(buffer, (error: any) => {
         if (error) {
           // Sichere Logging ohne sensitive Daten
-          secureLogger.error('GridFS Upload error', 'upload-api');
+          secureLogger.error('GridFS Upload error', undefined, 'upload-api');
           resolve(NextResponse.json(
             { error: 'Fehler beim Hochladen der Datei' },
             { status: 500 }
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     // Sichere Logging ohne sensitive Daten
-    secureLogger.error('Upload error', 'upload-api');
+    secureLogger.error('Upload error', undefined, 'upload-api');
     return NextResponse.json(
       { error: 'Fehler beim Hochladen der Datei' },
       { status: 500 }

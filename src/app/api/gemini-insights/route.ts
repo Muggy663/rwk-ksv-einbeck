@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const leagueId = sanitizeInput(body.leagueId);
     const leagueName = sanitizeInput(body.leagueName);
     const seasonYear = sanitizeInput(body.seasonYear);
     const teamData = Array.isArray(body.teamData) ? body.teamData : [];
@@ -60,7 +59,7 @@ Schreibe sachlich und kompetent für Schießsport-Kenner.`;
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
-    const insights = response.text.trim();
+    const insights = (response.text || '').trim();
     
     return NextResponse.json({ 
       success: true, 
@@ -68,7 +67,7 @@ Schreibe sachlich und kompetent für Schießsport-Kenner.`;
     });
 
   } catch (error) {
-    secureLogger.error('League insights generation failed', 'gemini-insights');
+    secureLogger.error('League insights generation failed', undefined, 'gemini-insights');
     return NextResponse.json({ 
       error: 'Analysis failed',
       message: 'Liga-Analyse konnte nicht erstellt werden.'

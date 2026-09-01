@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
 
-    const results = await importMembersFromExcel(members);
+    const results = await importMembersFromExcel(members as any);
 
 
     return NextResponse.json({
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    secureLogger.error('Excel import failed', 'excel-import');
+    secureLogger.error('Excel import failed', undefined, 'excel-import');
     return NextResponse.json({
       success: false,
       error: 'Fehler beim Import'

@@ -18,8 +18,7 @@ export async function POST(request: NextRequest) {
     
     // Bei Bounce/Fehler nur loggen (E-Mail-Benachrichtigung deaktiviert wegen Loop)
     if (data.type === 'email.bounced' || data.type === 'email.complained' || data.type === 'email.delivery_delayed') {
-      const failedEmail = data.data.to;
-      const reason = data.data.bounce?.reason || data.data.complaint?.reason || 'Unbekannt';
+      // failedEmail/reason wurden hier ermittelt, werden aber aktuell nicht weiterverarbeitet (siehe TODO unten)
       
 
 

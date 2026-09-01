@@ -5,8 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const { idToken, plan } = await request.json();
     
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
-    const userId = decodedToken.uid;
+    await adminAuth.verifyIdToken(idToken);
     
     // Simulate Stripe checkout (replace with real Stripe)
     const sessionId = `cs_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

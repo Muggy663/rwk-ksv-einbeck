@@ -9,8 +9,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let id: string | undefined;
   try {
-    const { id } = await params;
+    ({ id } = await params);
     const body = await request.json();
     const { status, meldeschluss, beschreibung } = body;
 

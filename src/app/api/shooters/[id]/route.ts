@@ -5,7 +5,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 
 // Authentifizierung und Berechtigung prüfen
-async function validateUserPermissions(request: NextRequest, shooterId: string) {
+async function validateUserPermissions(request: NextRequest, _shooterId: string) {
   const authHeader = request.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     throw new Error('Keine gültige Authentifizierung');

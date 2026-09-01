@@ -41,12 +41,12 @@ export async function POST(request: NextRequest) {
     }
     
     // Serien als separate String-Felder
-    const updateData = {
+    const updateData: Record<string, any> = {
       kmRinge: kmErgebnis.ringe
     };
     
     if (kmErgebnis.serien && kmErgebnis.serien.length > 0) {
-      kmErgebnis.serien.forEach((serie, index) => {
+      kmErgebnis.serien.forEach((serie: any, index: number) => {
         updateData[`kmSerie${index + 1}`] = serie.join(',');
       });
     }

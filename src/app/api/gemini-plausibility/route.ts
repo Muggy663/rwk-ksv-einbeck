@@ -31,7 +31,7 @@ Gib eine kurze Einschätzung (max 50 Wörter):
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
-    const analysis = response.text.trim();
+    const analysis = (response.text || '').trim();
     
     return NextResponse.json({ 
       success: true, 

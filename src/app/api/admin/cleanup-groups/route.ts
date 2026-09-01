@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError } from '@/lib/utils/secure-logger';
 import { TrainingGroupsService } from '@/lib/services/training-groups-service';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const result = await TrainingGroupsService.cleanupInactiveGroups();
     

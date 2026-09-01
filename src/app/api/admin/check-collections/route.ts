@@ -11,7 +11,7 @@ const COLLECTIONS_TO_CHECK = [
 ];
 
 export async function GET() {
-  const results = {};
+  const results: Record<string, any> = {};
   
   for (const collectionName of COLLECTIONS_TO_CHECK) {
     try {
@@ -19,7 +19,7 @@ export async function GET() {
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as Array<{ id: string; [key: string]: any }>;
       
       results[collectionName] = {
         count: snapshot.size,

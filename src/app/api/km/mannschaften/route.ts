@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const saison = request.nextUrl.searchParams.get('saison');
     
-    let query = adminDb.collection(KM_MANNSCHAFTEN_COLLECTION);
+    let query: FirebaseFirestore.Query = adminDb.collection(KM_MANNSCHAFTEN_COLLECTION);
     if (saison) {
       query = query.where('saison', '==', saison);
     }

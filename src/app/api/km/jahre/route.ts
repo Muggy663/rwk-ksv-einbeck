@@ -5,8 +5,6 @@ import { FieldValue } from 'firebase-admin/firestore';
 
 const KM_SAISONS_COLLECTION = 'km_saisons';
 
-type DisziplinTyp = 'KK' | 'LD' | 'KKP';
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -74,7 +72,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const snapshot = await adminDb.collection(KM_SAISONS_COLLECTION)
       .orderBy('jahr', 'desc')

@@ -4,7 +4,7 @@ import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const schuetzenSnapshot = await getDocs(collection(db, 'km_shooters'));
     

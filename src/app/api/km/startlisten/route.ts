@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const snapshot = await adminDb.collection('km_startlisten_v2').orderBy('createdAt', 'desc').get();
     const startlisten = snapshot.docs.map(doc => ({

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
 import { getErrorMessage } from '@/lib/utils/secure-logger';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Prüfe ob Blasrohr bereits existiert
     const existing = await adminDb.collection('km_disziplinen')

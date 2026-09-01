@@ -39,23 +39,8 @@ const WETTKAMPFKLASSEN_2026 = [
   { name: 'Seniorinnen VI', minAlter: 80, maxAlter: 99, geschlecht: 'female' }
 ];
 
-async function generateWettkampfklassen2026() {
-  const collectionRef = collection(db, 'km_wettkampfklassen');
-  
-  for (const klasse of WETTKAMPFKLASSEN_2026) {
-    await addDoc(collectionRef, {
-      ...klasse,
-      saison: '2026',
-      createdAt: new Date()
-    });
-  }
-}
-
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    // Debug: Auth-Token prüfen
-    const authHeader = request.headers.get('authorization');
-
     
 
     const collectionRef = collection(db, 'km_wettkampfklassen');

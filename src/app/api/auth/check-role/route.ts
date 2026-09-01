@@ -58,11 +58,11 @@ export async function GET(request: Request) {
         authenticated: true
       }, { status: 200 });
     } catch (error) {
-      secureLogger.error('Token verification failed', 'auth-check');
+      secureLogger.error('Token verification failed', undefined, 'auth-check');
       return NextResponse.json({ role: null, authenticated: false }, { status: 401 });
     }
   } catch (error) {
-    secureLogger.error('Role check failed', 'auth-check');
+    secureLogger.error('Role check failed', undefined, 'auth-check');
     return NextResponse.json({ error: 'Interner Serverfehler' }, { status: 500 });
   }
 }

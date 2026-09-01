@@ -6,7 +6,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 const KM_JAHRE_COLLECTION = 'km_jahre';
 const KM_SAISONS_COLLECTION = 'km_saisons';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Lade alle bestehenden KM-Jahre
     const jahreSnapshot = await adminDb.collection(KM_JAHRE_COLLECTION).get();

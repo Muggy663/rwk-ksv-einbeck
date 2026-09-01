@@ -4,7 +4,7 @@ import { logError, logInfo } from '@/lib/utils/secure-logger';
 
 // DELETE /api/km/meldungen/[id]
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

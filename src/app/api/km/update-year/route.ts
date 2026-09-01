@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Lade alle Meldungen
     const snapshot = await adminDb.collection('km_meldungen').get();

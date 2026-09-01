@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       totalRinge: parseInt(totalRinge),
       scoreInputType: scoreInputType || 'regular',
       competitionYear: parseInt(competitionYear),
-      entryTimestamp: adminDb.FieldValue.serverTimestamp(),
+      entryTimestamp: (adminDb as any).FieldValue.serverTimestamp(),
       enteredByUserId,
       enteredByUserName,
       // Markiere als Substitution falls zutreffend
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       leagueName: teamData?.leagueName,
       competitionYear: parseInt(competitionYear),
       leagueId,
-      timestamp: adminDb.FieldValue.serverTimestamp()
+      timestamp: (adminDb as any).FieldValue.serverTimestamp()
     });
 
     return NextResponse.json({
