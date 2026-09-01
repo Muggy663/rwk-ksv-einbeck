@@ -32,11 +32,18 @@ Da beide auf dieselbe Collection schreiben und lesen, führen inkonsistente Feld
 
 3. **Abweichender lokaler Typ:** `src/app/km/mannschaften/page.tsx` hatte einen **eigenen, engeren lokalen `Shooter`-Typ** definiert — mit `vereinId` statt `clubId`. Solche lokalen Abweichungen sind fehleranfällig und sollten verschwinden.
 
-4. **Doku vs. Realität:** `docs/database-structure.md` erwähnt an einer Stelle eine separate Collection **`km_shooters`** (KM-Beziehungen). Der **reale Code** der KM-Seiten liest jedoch aus **`shooters`** (dieselbe wie RWK). Vor einer Zusammenführung muss geklärt werden, ob `km_shooters` tatsächlich (noch) existiert/genutzt wird oder ein Doku-Altstand ist. **Nicht raten — im echten Firestore prüfen.**
+4. **Doku vs. Realität — GEKLÄRT (31.08.2026):** Die tatsächliche Firestore-Collection-Liste wurde geprüft. Es gibt **KEINE** `km_shooters`-Collection. Der `km_shooters`-Verweis in `docs/database-structure.md` ist ein **Doku-Altstand**. → Real existiert nur **eine** Schützen-Quelle: `shooters`. Für die Zusammenführung heißt das: **keine Collection-Migration nötig**, nur Feld-/Anzeige-Struktur vereinheitlichen.
+
+5. **Analoge Doppelstruktur bei Berechtigungen:** In der echten DB existieren **zwei** getrennte Collections: `user_permissions` (RWK/allgemein) UND `km_user_permissions` (KM). Dieselbe RWK/KM-Trennung wie bei den Schützen. Nicht Teil dieser Mitglieder-Idee, aber im Hinterkopf behalten (evtl. eigenes späteres Konsolidierungsthema).
+
+6. **Keine `clubs/{clubId}/mitglieder`-Subcollection:** Die in der DB-Doku beschriebene "Vereinssoftware Multi-Tenant"-Mitgliederstruktur existiert real (noch) NICHT. Es geht bei dieser Idee also ausschließlich um `shooters` — keine dritte Mitgliederquelle.
+
+### Tatsächlicher Datenbank-Stand (Collections, 31.08.2026)
+Relevant für dieses Thema: `shooters` (einzige Schützen-Quelle), `clubs`, `user_permissions` + `km_user_permissions`, `km_meldungen_2026_kk|kkp|ld` / `km_meldungen_2027_kk`, `km_saisons`, `km_disziplinen`, `km_wettkampfklassen`, `km_altersklassen`, `rwk_teams`, `km_mannschaften`. (Keine `km_shooters`, keine `clubs/*/mitglieder`.)
 
 ## Lösungsskizze (Vorschlag, noch nicht final)
 
-1. **Eine Datenquelle:** `shooters` bleibt die einzige Collection (so ist es real bereits). `km_shooters` klären und ggf. konsolidieren/migrieren.
+1. **Eine Datenquelle:** `shooters` ist bereits real die einzige Schützen-Collection (bestätigt — keine `km_shooters`). Es ist **keine Collection-Migration** nötig, nur die Vereinheitlichung von Feldnamen und Anzeige.
 2. **Ein gemeinsamer Basis-Typ** `Shooter` mit den Kernfeldern, die beide teilen:
    - `id`, `firstName`/`lastName` (bzw. `name`), `birthYear`, `gender`, ein **einheitliches** Vereinsfeld
 3. **Vereins-ID vereinheitlichen:** langfristig die drei Felder (`clubId`/`rwkClubId`/`kmClubId`) auf ein klares Modell reduzieren. Entweder ein `clubId` + optional abweichender `kmClubId` (dokumentiert, warum), oder eine bewusste Migration. `getShooterClubId()` als einzige Zugriffsstelle behalten, bis migriert ist.
@@ -49,7 +56,7 @@ Da beide auf dieselbe Collection schreiben und lesen, führen inkonsistente Feld
 ## Empfohlenes Vorgehen
 
 - Als **Spec** anlegen (Requirements → Design → Tasks), nicht als schneller Vibe-Fix — es berührt Datenmodell, mehrere Seiten und potenziell eine Migration.
-- **Vor Design:** im echten Firestore prüfen, welche Felder real befüllt sind und ob `km_shooters` existiert.
+- **Vor Design:** im echten Firestore prüfen, welche **Felder** auf `shooters`-Dokumenten real befüllt sind (Collection-Frage ist geklärt: nur `shooters`). Besonders: sind `rwkClubId`/`kmClubId` bei vielen Schützen wirklich unterschiedlich befüllt, oder meist leer/identisch? Das entscheidet, wie aggressiv man die ClubId-Felder konsolidieren kann.
 - **Reihenfolge:** erst nach der TS-Sanierung, damit auf konsistenten Typen aufgesetzt wird.
 - **Firestore Rules** dabei NICHT ungefragt anfassen (bestehende Projekt-Regel).
 
