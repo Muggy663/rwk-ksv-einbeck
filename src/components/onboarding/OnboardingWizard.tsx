@@ -115,16 +115,16 @@ export function OnboardingWizard() {
       )
     },
     {
-      title: "Schützenverwaltung",
-      description: "So verwalten Sie Ihre Schützen",
+      title: "Mitgliederverwaltung",
+      description: "So verwalten Sie Ihre Mitglieder",
       icon: <User className="h-8 w-8 text-primary" />,
       content: (
         <div className="space-y-4">
-          <p>Als Vereinsvertreter können Sie Schützen für Ihren Verein verwalten:</p>
+          <p>Mitglieder werden zentral unter „Mitglieder" gepflegt – eine gemeinsame Liste für Rundenwettkampf und Kreismeisterschaft:</p>
           <ol className="list-decimal list-inside space-y-2">
-            <li>Unter "Meine Schützen" sehen Sie alle Schützen Ihres Vereins</li>
-            <li>Sie können neue Schützen anlegen (Name, Vorname, Geschlecht)</li>
-            <li>Bestehende Schützen können bearbeitet oder gelöscht werden</li>
+            <li>Unter "Mitglieder" sehen Sie alle Mitglieder Ihrer Vereine</li>
+            <li>Neue Mitglieder anlegen (Vorname, Nachname, Geschlecht, Verein; optional Mitgliedsnummer und Kontaktdaten)</li>
+            <li>Bestehende Mitglieder bearbeiten oder entfernen (dabei werden sie deaktiviert; Ergebnisse bleiben erhalten)</li>
             <li>Die Zuordnung zu Mannschaften erfolgt in der Mannschaftsverwaltung</li>
           </ol>
         </div>

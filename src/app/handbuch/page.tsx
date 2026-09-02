@@ -63,7 +63,6 @@ export default function HandbuchPage() {
         >
           <Target className="h-4 w-4" />
           <span>Schießnachweis</span>
-          <span className="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">Beta</span>
         </button>
 
       </div>
@@ -99,7 +98,7 @@ export default function HandbuchPage() {
                              <li><a href="#umgang-mit-einzelschuetzen-vv" className="text-primary hover:underline">Umgang mit Einzelschützen (ohne volle Mannschaft)</a></li>
                            </ul>
                         </li>
-                        <li><a href="#schuetzenverwaltung-vv" className="text-primary hover:underline">Schützenverwaltung (nur Vereinsvertreter)</a></li>
+                        <li><a href="#schuetzenverwaltung-vv" className="text-primary hover:underline">Mitgliederverwaltung (Sportleiter, KM-Orga, Admin)</a></li>
                         <li><a href="#ergebniserfassung-vvmf" className="text-primary hover:underline">Ergebniserfassung (Vereinsvertreter und Mannschaftsführer)</a></li>
                     </ul>
                 </li>
@@ -179,9 +178,13 @@ export default function HandbuchPage() {
                 <h4 className="font-medium mt-4 mb-2">Benutzerrollen</h4>
                 <p>Je nach Ihrer Funktion erhalten Sie eine der folgenden Rollen:</p>
                 <ul className="list-disc pl-5 mt-1 space-y-1">
-                  <li><strong>Vereinsvertreter:</strong> Sie können Mannschaften und Schützen Ihres Vereins verwalten sowie Ergebnisse eintragen.</li>
-                  <li><strong>Mannschaftsführer:</strong> Sie können Ergebnisse für Ihre Mannschaften eintragen, aber keine Mannschaften oder Schützen verwalten.</li>
+                  <li><strong>Sportleiter:</strong> Verwalten die zugeordneten Vereine – Mannschaften, Ergebnisse (RWK), Kreismeisterschaft (KM) und die Mitglieder Ihres Vereins.</li>
+                  <li><strong>Mannschaftsführer:</strong> Tragen Ergebnisse für Ihre Mannschaften ein, verwalten aber keine Mannschaften oder Mitglieder.</li>
+                  <li><strong>KM-Organisation / Admin:</strong> Sehen und verwalten die Mitglieder aller Vereine und die gesamte Kreismeisterschaft.</li>
                 </ul>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Hinweis: Mitglieder werden zentral unter „Mitglieder" gepflegt – eine gemeinsame Liste für Rundenwettkampf und Kreismeisterschaft.
+                </p>
             </CardContent>
         </Card>
       </section>
@@ -243,13 +246,13 @@ export default function HandbuchPage() {
             </CardContent>
         </Card>
         <Card>
-            <CardHeader><CardTitle id="schuetzenverwaltung-vv" className="text-xl text-accent scroll-mt-24">Schützenverwaltung (nur Vereinsvertreter)</CardTitle></CardHeader>
+            <CardHeader><CardTitle id="schuetzenverwaltung-vv" className="text-xl text-accent scroll-mt-24">Mitgliederverwaltung (Sportleiter, KM-Orga, Admin)</CardTitle></CardHeader>
             <CardContent>
-                <p>Diese Funktion ist nur für Benutzer mit der Rolle "vereinsvertreter" verfügbar. Mannschaftsführer können Schützenlisten einsehen, aber keine Änderungen vornehmen.</p>
+                <p>Die Mitglieder werden zentral unter „Mitglieder" gepflegt – eine gemeinsame Liste für Rundenwettkampf und Kreismeisterschaft. Verwalten dürfen Sportleiter (ihre zugeordneten Vereine) sowie die KM-Organisation und Administratoren (alle Vereine). Mannschaftsführer haben keinen Zugriff auf die Mitgliederverwaltung.</p>
                  <ul className="list-disc pl-5 space-y-1 mt-2">
-                    <li><strong>Anzeige:</strong> Schützen des ausgewählten/zugewiesenen Vereins.</li>
-                    <li><strong>Anlegen (VV):</strong> Neue Schützen für den eigenen Verein erstellen (Nachname, Vorname, Geschlecht). Die Zuordnung zu Mannschaften erfolgt über die Seite "Meine Mannschaften".</li>
-                    <li><strong>Bearbeiten/Löschen (VV):</strong> Stammdaten eigener Schützen ändern oder Schützen entfernen.</li>
+                    <li><strong>Anzeige:</strong> Mitglieder der erlaubten Vereine; KM-Ansicht zeigt zusätzlich Mitgliedsnummer und Altersklassen.</li>
+                    <li><strong>Anlegen:</strong> Neue Mitglieder erstellen (Vorname, Nachname, Geschlecht, Verein; optional Geburtsjahr, Mitgliedsnummer und Kontaktdaten). Die Zuordnung zu RWK-Mannschaften erfolgt weiterhin über „Meine Mannschaften".</li>
+                    <li><strong>Bearbeiten/Entfernen:</strong> Stammdaten ändern; beim Entfernen wird ein Mitglied deaktiviert und aus allen aktiven Mannschaften genommen – bereits erfasste Ergebnisse und Meldungen bleiben erhalten.</li>
                 </ul>
             </CardContent>
         </Card>
@@ -769,8 +772,8 @@ export default function HandbuchPage() {
                     <li><strong>Detaillierte Serienerfassung:</strong> Einzelschuss-Dokumentation möglich</li>
                     <li><strong>Import von digitalen Anlagen:</strong> Meyton, Sius, Disag, Sport Quantum</li>
                     <li><strong>Statistiken & Auswertungen:</strong> Leistungsentwicklung verfolgen</li>
-                    <li><strong>PDF-Export für Behörden:</strong> Offizieller Nachweis für Waffenbehörde</li>
-                    <li><strong>Offline-Speicherung:</strong> Alle Daten bleiben auf Ihrem Gerät</li>
+                    <li><strong>PDF-Export für Behörden:</strong> Offizieller Nachweis für die Waffenbehörde – mit Empfänger-Anschrift passend für Fensterumschlag und Unterschriftsfeld für Schütze und Vereinsschießsportleiter</li>
+                    <li><strong>Cloud-Speicherung:</strong> Alle Daten werden sicher gespeichert und sind auf mehreren Geräten verfügbar</li>
                   </ul>
                 </div>
               </CardContent>
