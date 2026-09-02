@@ -144,19 +144,20 @@ export function MainNav() {
   return (
     <nav className="flex items-center space-x-4 lg:space-x-6">
       {/* Desktop Navigation */}
-      <div className="hidden lg:flex lg:items-center lg:space-x-2">
+      <div className="hidden lg:flex lg:items-center lg:gap-1">
         {routes.map((route) => (
           <Link
             key={route.href}
             href={route.href}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary flex items-center whitespace-nowrap",
-              route.active ? "text-primary" : "text-muted-foreground"
+              "flex items-center whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-all",
+              route.active
+                ? "bg-primary/10 text-primary shadow-sm"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
             {route.icon}
             {route.label}
-
           </Link>
         ))}
         
@@ -166,8 +167,10 @@ export function MainNav() {
             key={route.href}
             href={route.href}
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary flex items-center",
-              route.active ? "text-primary" : "text-muted-foreground"
+              "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all",
+              route.active
+                ? "bg-primary/10 text-primary shadow-sm"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
             {route.icon}
@@ -180,8 +183,8 @@ export function MainNav() {
             <Link
               href="/protests"
               className={cn(
-                "text-sm font-medium transition-colors hover:text-primary flex items-center",
-                pathname === '/protests' ? "text-primary" : "text-muted-foreground"
+                "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                pathname === '/protests' ? "bg-primary/10 text-primary shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               <AlertTriangle className="h-4 w-4 mr-2" />
@@ -190,8 +193,8 @@ export function MainNav() {
             <Link
               href="/news"
               className={cn(
-                "text-sm font-medium transition-colors hover:text-primary flex items-center",
-                pathname === '/news' ? "text-primary" : "text-muted-foreground"
+                "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                pathname === '/news' ? "bg-primary/10 text-primary shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               <Newspaper className="h-4 w-4 mr-2" />
@@ -200,8 +203,8 @@ export function MainNav() {
             <Link
               href="/notifications"
               className={cn(
-                "text-sm font-medium transition-colors hover:text-primary flex items-center",
-                pathname === '/notifications' ? "text-primary" : "text-muted-foreground"
+                "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                pathname === '/notifications' ? "bg-primary/10 text-primary shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               <Bell className="h-4 w-4 mr-2" />
@@ -214,8 +217,8 @@ export function MainNav() {
           <Link
             href="/dashboard-auswahl"
             className={cn(
-              "text-sm font-medium transition-colors hover:text-primary flex items-center",
-              pathname === '/dashboard-auswahl' || pathname.startsWith('/admin') || pathname.startsWith('/verein') || pathname.startsWith('/km') ? "text-primary" : "text-muted-foreground"
+              "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all",
+              pathname === '/dashboard-auswahl' || pathname.startsWith('/admin') || pathname.startsWith('/verein') || pathname.startsWith('/km') ? "bg-primary/10 text-primary shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
             <Settings className="h-4 w-4 mr-2" />
@@ -223,7 +226,7 @@ export function MainNav() {
           </Link>
         )}
 
-        <div className="flex items-center space-x-2 ml-4">
+        <div className="ml-3 flex items-center gap-1 border-l pl-3">
           {user && resetInactivityTimer && (
             <Button 
               variant="ghost" 
