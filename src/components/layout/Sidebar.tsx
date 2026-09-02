@@ -83,8 +83,6 @@ export function Sidebar() {
             >
               <Icon className="h-4 w-4 mr-3" />
               {route.label}
-
-              {(route.href === '/social' || route.href === '/social/welcome') && <span className="text-xs text-green-600 dark:text-green-400 font-semibold ml-2">NEU</span>}
             </Link>
           );
         })}
