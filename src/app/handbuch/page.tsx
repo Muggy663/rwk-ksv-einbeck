@@ -427,7 +427,7 @@ export default function HandbuchPage() {
               <p>Die RWK Einbeck App ist jetzt auch als native Android-App verfügbar für bessere Performance und einfachere Nutzung.</p>
               
               <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800 mb-4">
-                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">📱 Android-App (Version 1.0.0) - jetzt im Google Play Store!</h4>
+                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">📱 Android-App - jetzt im Google Play Store!</h4>
                 <p className="text-green-700 dark:text-green-300">Die native Android-App bietet alle Funktionen der Web-App mit verbesserter Performance. Ab sofort im <strong>Google Play Store</strong> verfügbar.</p>
               </div>
               
