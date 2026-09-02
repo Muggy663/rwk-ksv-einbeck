@@ -108,6 +108,20 @@ export function CrossSeasonStats() {
   const fetchShooterStats = async (shooterId: string, discipline: string) => {
     setIsLoading(true);
     try {
+      // Ein Schütze kann als mehrere shooter-Dokumente existieren (z.B. RWK- und
+      // KM-Anlage, oder Dubletten). Wir sammeln daher ALLE IDs mit gleichem Namen
+      // wie der ausgewählte Schütze und fragen die Scores über alle IDs ab.
+      const selectedName =
+        searchResults.find(r => r.id === shooterId)?.name || '';
+      let shooterIds: string[] = [shooterId];
+      if (selectedName) {
+        const sameName = searchResults
+          .filter(r => r.name === selectedName)
+          .map(r => r.id);
+        // 'in'-Query erlaubt max. 10 Werte
+        shooterIds = Array.from(new Set([shooterId, ...sameName])).slice(0, 10);
+      }
+
       // Da wir saisonübergreifend suchen, müssen wir alle Collections durchsuchen
       const currentYear = new Date().getFullYear();
       const years = [currentYear - 3, currentYear - 2, currentYear - 1, currentYear, currentYear + 1];
@@ -123,11 +137,13 @@ export function CrossSeasonStats() {
             const collectionName = getSeasonSpecificScoresCollection(year, disc as any);
             const scoresRef = collection(db, collectionName);
             
+            // Bewusst OHNE orderBy: die Kombination where('shooterId') + orderBy
+            // bräuchte einen zusammengesetzten Index; fehlt der, wirft die Query
+            // einen Fehler, der hier als "keine Ergebnisse" verschluckt würde.
+            // Sortiert wird ohnehin clientseitig beim Aggregieren.
             const q = query(
               scoresRef,
-              where('shooterId', '==', shooterId),
-              orderBy('competitionYear'),
-              orderBy('durchgang')
+              where('shooterId', 'in', shooterIds)
             );
             
             const querySnapshot = await getDocs(q);
@@ -145,9 +161,11 @@ export function CrossSeasonStats() {
       }
       
       // Entferne Duplikate basierend auf einer eindeutigen Kombination
+      // Dedup über Jahr+Durchgang+Disziplin (bewusst OHNE shooterId, damit
+      // Ergebnisse aus mehreren shooter-Dokumenten desselben Schützen zusammengeführt
+      // und nicht doppelt gezählt werden).
       const uniqueScores = allScores.filter((score, index, self) => 
         index === self.findIndex(s => 
-          s.shooterId === score.shooterId && 
           s.competitionYear === score.competitionYear && 
           s.durchgang === score.durchgang &&
           s.leagueType === score.leagueType
