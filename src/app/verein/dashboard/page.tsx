@@ -215,35 +215,28 @@ export default function VereinDashboardPage() {
           </Card>
         )}
 
-        {/* Schützen - Nur für Sportleiter/Vorstand */}
+        {/* Mitcom-Import - Nur für Sportleiter/Vorstand. Die Mitgliederverwaltung
+            selbst läuft zentral über /mitglieder (Dashboard-Auswahl). */}
         {(userPermission?.clubRoles && (Object.values(userPermission.clubRoles).includes('SPORTLEITER') || Object.values(userPermission.clubRoles).includes('VORSTAND')) || userPermission?.role === 'vereinsvertreter' || user?.email === 'admin@rwk-einbeck.de') && (
           <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-blue-500">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="h-6 w-6 text-blue-600" />
+                  <FileSpreadsheet className="h-6 w-6 text-blue-600" />
                 </div>
-                <Badge variant="secondary">Wichtig</Badge>
               </div>
-              <CardTitle className="text-xl">Mitglieder</CardTitle>
+              <CardTitle className="text-xl">Mitcom-Import</CardTitle>
               <CardDescription className="text-base">
-                Zentrale Mitgliederliste (RWK und KM) sowie Mitcom-Import
+                Mitgliederdaten aus Mitcom importieren. Die Mitgliederverwaltung selbst findest du zentral unter „Mitglieder“.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col gap-2">
-                <Button asChild className="w-full h-12 text-sm font-semibold">
-                  <Link href="/mitglieder">
-                    <span className="truncate">Mitglieder verwalten</span>
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full text-sm">
-                  <Link href="/verein/mitglieder-import">
-                    <FileSpreadsheet className="mr-2 h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">Mitcom-Import</span>
-                  </Link>
-                </Button>
-              </div>
+              <Button asChild className="w-full h-12 text-sm font-semibold">
+                <Link href="/verein/mitglieder-import">
+                  <FileSpreadsheet className="mr-2 h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Mitcom-Import öffnen</span>
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         )}
