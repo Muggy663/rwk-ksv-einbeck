@@ -340,7 +340,7 @@ export default function StatistikDashboardPage() {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 mb-8 h-auto sticky top-0 z-10 bg-background">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 mb-8 h-auto sticky top-0 z-10 glass-card border-0 shadow-sm">
           <TabsTrigger value="performance" className="text-xs sm:text-sm p-2">Leistung</TabsTrigger>
           <TabsTrigger value="comparison" className="text-xs sm:text-sm p-2">Teams</TabsTrigger>
           <TabsTrigger value="distribution" className="text-xs sm:text-sm p-2">Geschlecht</TabsTrigger>
@@ -350,7 +350,7 @@ export default function StatistikDashboardPage() {
         <div ref={swipeRef} className="touch-pan-y">
         
         <TabsContent value="performance">
-          <Card>
+          <Card className="glass-card border-0 shadow-md transition-all duration-300 hover:shadow-xl animate-fade-in">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle>Leistungsentwicklung über die Saison</CardTitle>
@@ -372,7 +372,7 @@ export default function StatistikDashboardPage() {
                   <Skeleton className="h-[350px] w-full" />
                 </div>
               ) : shooterData.length > 0 ? (
-                <div id="shooter-performance-chart" className="h-[400px] w-full">
+                <div id="shooter-performance-chart" className="h-[400px] w-full rounded-xl border bg-background/40 p-3">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
                       data={shooterData}
@@ -420,7 +420,7 @@ export default function StatistikDashboardPage() {
         </TabsContent>
         
         <TabsContent value="comparison">
-          <Card>
+          <Card className="glass-card border-0 shadow-md transition-all duration-300 hover:shadow-xl animate-fade-in">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle>Mannschaftsvergleich</CardTitle>
@@ -442,7 +442,7 @@ export default function StatistikDashboardPage() {
                   <Skeleton className="h-[350px] w-full" />
                 </div>
               ) : teamData.length > 0 ? (
-                <div id="team-comparison-chart" className="h-[400px] w-full">
+                <div id="team-comparison-chart" className="h-[400px] w-full rounded-xl border bg-background/40 p-3">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={teamData}
@@ -471,7 +471,7 @@ export default function StatistikDashboardPage() {
         </TabsContent>
         
         <TabsContent value="distribution">
-          <Card>
+          <Card className="glass-card border-0 shadow-md transition-all duration-300 hover:shadow-xl animate-fade-in">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle>Geschlechterverteilung</CardTitle>
@@ -493,7 +493,7 @@ export default function StatistikDashboardPage() {
                   <Skeleton className="h-[350px] w-full" />
                 </div>
               ) : genderData.length > 0 && (genderData[0].value > 0 || genderData[1].value > 0) ? (
-                <div id="gender-distribution-chart" className="h-[400px] w-full flex justify-center">
+                <div id="gender-distribution-chart" className="h-[400px] w-full flex justify-center rounded-xl border bg-background/40 p-3">
                   <ResponsiveContainer width="100%" height="100%" className="max-w-md mx-auto">
                     <PieChart>
                       <Pie
