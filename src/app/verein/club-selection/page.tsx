@@ -1,51 +1,26 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Building2, Loader2 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { db } from '@/lib/firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
-
-interface Club {
-  id: string;
-  name: string;
-}
+import { useClubContext } from '@/contexts/ClubContext';
 
 export default function ClubSelectionPage() {
-  const { userAppPermissions } = useAuth();
   const router = useRouter();
-  const [clubs, setClubs] = useState<Club[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Vereine + aktiver Verein kommen aus der Single Source of Truth.
+  const { representedClubs: clubs, isLoading: loading, setActiveClubId } = useClubContext();
 
+  // Bei höchstens einem Verein gibt es nichts auszuwählen → zurück ins Dashboard.
   useEffect(() => {
-    const loadClubs = async () => {
-      if (!userAppPermissions?.representedClubs) {
-        router.push('/verein/dashboard');
-        return;
-      }
-
-      const clubData: Club[] = [];
-      for (const clubId of userAppPermissions.representedClubs) {
-        const clubDoc = await getDoc(doc(db, 'clubs', clubId));
-        if (clubDoc.exists()) {
-          clubData.push({ id: clubDoc.id, name: clubDoc.data().name });
-        }
-      }
-      setClubs(clubData);
-      setLoading(false);
-    };
-
-    if (userAppPermissions) {
-      loadClubs();
+    if (!loading && clubs.length <= 1) {
+      router.push('/verein/dashboard');
     }
-  }, [userAppPermissions, router]);
+  }, [loading, clubs.length, router]);
 
   const selectClub = (clubId: string) => {
-
-    localStorage.setItem('currentClubId', clubId);
-    // Force reload to ensure context picks up the change
+    setActiveClubId(clubId);
+    // Full reload, damit alle Kontexte den neuen aktiven Verein übernehmen.
     window.location.href = '/verein/dashboard';
   };
 

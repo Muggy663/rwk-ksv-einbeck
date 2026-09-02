@@ -1,6 +1,7 @@
 // src/hooks/useKMAuth.ts
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '@/components/auth/AuthContext';
+import { deriveUserClubIds } from '@/lib/clubs/userClubs';
 
 export function useKMAuth() {
   const { user, loading: authLoading, userAppPermissions } = useAuthContext();
@@ -49,9 +50,8 @@ export function useKMAuth() {
 
   let userClubIds: string[] = [];
   if (userRole !== 'admin' && userRole !== 'km_organisator') {
-    userClubIds = userAppPermissions?.representedClubs ||
-                  (Object.keys(clubRoles).length ? Object.keys(clubRoles) : null) ||
-                  (userAppPermissions?.clubId ? [userAppPermissions.clubId] : []);
+    // Zentrale, einheitliche Vereins-Ableitung.
+    userClubIds = deriveUserClubIds(userAppPermissions);
   }
 
   return {
