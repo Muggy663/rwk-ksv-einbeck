@@ -11,7 +11,7 @@ import { useKMAuth } from '@/hooks/useKMAuth';
 export const kmOrgaNavItems = [
   { href: '/km-orga', label: 'KM-Dashboard', icon: Trophy },
   { href: '/km-orga/meldungen', label: 'Meldungen verwalten', icon: ListChecks },
-  { href: '/km-orga/mitglieder', label: 'Mitglieder verwalten', icon: Users },
+  { href: '/mitglieder', label: 'Mitglieder verwalten', icon: Users },
   { href: '/km-orga/mannschaften', label: 'Mannschaften verwalten', icon: Target },
 ];
 
