@@ -95,7 +95,6 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
         lastName: member.name,
         name: shooterName,
         clubId,
-        kmClubId: clubId,
         birthYear,
         gender,
         mitgliedsnummer: member.mitgliedsnummer,

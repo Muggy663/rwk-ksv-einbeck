@@ -120,8 +120,8 @@ ${signature}`.trim();
     const results = [];
     const errors = [];
     
-    for (let i = 0; i < recipients.length; i += batchSize) {
-      const batch = recipients.slice(i, i + batchSize);
+    for (let i = 0; i < validRecipients.length; i += batchSize) {
+      const batch = validRecipients.slice(i, i + batchSize);
       
       try {
         const emailData = {
@@ -166,7 +166,7 @@ ${signature}`.trim();
         ? `E-Mail erfolgreich an ${successfulRecipients} Empfänger gesendet.`
         : `${successfulRecipients} erfolgreich, ${failedRecipients} fehlgeschlagen.`,
       details: {
-        totalRecipients: recipients.length,
+        totalRecipients: validRecipients.length,
         successful: successfulRecipients,
         failed: failedRecipients,
         batches: results.length,

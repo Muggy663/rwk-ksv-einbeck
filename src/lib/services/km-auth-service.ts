@@ -3,6 +3,7 @@ import { db } from '@/lib/firebase/config';
 import { logError } from '@/lib/utils/secure-logger';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import type { KMUserPermission } from '@/types/km-auth';
+import { deriveUserClubIds } from '@/lib/clubs/userClubs';
 
 export const kmAuthService = {
   async checkKMPermission(uid: string) {
@@ -67,21 +68,8 @@ export const kmAuthService = {
         return { hasAccess: false, isActive: false, clubIds: [], role: rwkPermission.role };
       }
       
-      // Sammle Club-IDs für Vereinsvertreter
-      const clubIds = [];
-      
-      // Haupt-Club-ID
-      if (rwkPermission.clubId) {
-        clubIds.push(rwkPermission.clubId);
-      }
-      
-      // Zusätzliche Clubs aus representedClubs
-      if (rwkPermission.representedClubs && Array.isArray(rwkPermission.representedClubs)) {
-        clubIds.push(...rwkPermission.representedClubs);
-      }
-      
-      // Duplikate entfernen
-      const uniqueClubIds = [...new Set(clubIds)];
+      // Club-IDs zentral ableiten (einheitliche Priorität + Dedupe)
+      const uniqueClubIds = deriveUserClubIds(rwkPermission as any);
 
       
       return {

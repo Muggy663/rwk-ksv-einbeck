@@ -4,6 +4,8 @@
 // Der Server (getServerMemberPermissions) ist für die Autorisierung maßgeblich;
 // die Client-Variante (getMemberPermissions) steuert nur die UI-Sichtbarkeit.
 
+import { deriveUserClubIds } from '@/lib/clubs/userClubs';
+
 export type MemberRole = 'admin' | 'km_orga' | 'sportleiter' | 'mannschaftsfuehrer' | 'none';
 
 export interface MemberPermissions {
@@ -67,15 +69,8 @@ export function derivePermissions(
     !isSportleiter &&
     (clubRoleList.includes('MANNSCHAFTSFUEHRER') || p?.role === 'mannschaftsfuehrer');
 
-  // Zugeordnete Vereine (nur für Sportleiter relevant)
-  const allowedClubIds: string[] = (() => {
-    if (p?.representedClubs && p.representedClubs.length) return [...p.representedClubs];
-    const clubRoleKeys = p?.clubRoles ? Object.keys(p.clubRoles) : [];
-    if (clubRoleKeys.length) return clubRoleKeys;
-    if (p?.clubIds && p.clubIds.length) return [...p.clubIds];
-    if (p?.clubId) return [p.clubId];
-    return [];
-  })();
+  // Zugeordnete Vereine (nur für Sportleiter relevant) — zentrale Ableitung.
+  const allowedClubIds: string[] = deriveUserClubIds(p);
 
   if (isAdmin || isKmOrga) {
     return {

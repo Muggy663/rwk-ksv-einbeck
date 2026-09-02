@@ -313,7 +313,6 @@ export default function AdminMitgliederImportPage() {
             lastName: member.nachname,
             name: `${member.vorname} ${member.nachname}`,
             clubId: selectedClubId,
-            kmClubId: selectedClubId,
             isActive: true,
             gender: member.geschlecht !== 'unknown' ? member.geschlecht : 'unknown',
             teamIds: [],

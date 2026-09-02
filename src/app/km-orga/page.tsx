@@ -297,7 +297,7 @@ export default function KMAdminDashboard() {
                 <Button variant="outline" className="w-full h-12 text-left justify-start">🔑 Passwort ändern</Button>
               </Link>
               {!isOrganisator && (
-                <Link href="/km-orga/mitglieder/import">
+                <Link href="/mitglieder/import">
                   <Button variant="outline" className="w-full h-12 text-left justify-start">📥 Mitglieder importieren</Button>
                 </Link>
               )}
