@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, Info } from 'lucide-react';
+import { PageHero } from '@/components/layout/PageHero';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { getMemberPermissions } from '@/lib/permissions/memberPermissions';
 import { MemberList, type MemberListMode } from '@/components/members/MemberList';
@@ -69,15 +70,13 @@ export default function MitgliederPage() {
 
   return (
     <div className="container mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-8">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="rounded-lg bg-primary/10 p-2 text-primary">
-          <Users className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold sm:text-2xl">Mitglieder</h1>
-          <p className="text-sm text-muted-foreground">Zentrale Liste für RWK und Kreismeisterschaft</p>
-        </div>
-      </div>
+      <PageHero
+        icon={Users}
+        title="Mitglieder"
+        description="Zentrale Liste für RWK und Kreismeisterschaft"
+        accent="primary"
+      />
+
 
       {/* Ansicht-Umschalter: gleiche Daten, unterschiedlicher Spaltensatz */}
       <div className="mb-4 inline-flex rounded-lg border p-1">
