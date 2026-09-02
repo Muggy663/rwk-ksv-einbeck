@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { logWarn, logError } from '@/lib/utils/secure-logger';
+import { authFetch } from '@/lib/auth/authFetch';
 
 interface Aenderungswunsch {
   id: string;
@@ -999,7 +1000,7 @@ export default function StartlistenV2Uebersicht() {
                             
                             // Lade Mannschaften und Disziplinen für E/M Erkennung und SPO-Nummern
                             const [schuetzenRes, mannschaftenRes, disziplinenRes] = await Promise.all([
-                              fetch('/api/shooters'),
+                              authFetch('/api/shooters'),
                               fetch('/api/km/mannschaften'),
                               fetch('/api/km/disziplinen'),
                               fetch('/api/km/meldungen')
@@ -1779,7 +1780,7 @@ export default function StartlistenV2Uebersicht() {
                                 if (!altersklasse || altersklasse === 'Unbekannt') {
                                   // Hole Schützen-Daten für Altersklassen-Berechnung
                                   try {
-                                    const shootersRes = await fetch('/api/shooters');
+                                    const shootersRes = await authFetch('/api/shooters');
                                     if (shootersRes.ok) {
                                       const shootersData = await shootersRes.json();
                                       const schuetze = shootersData.data?.find((s: any) => s.name === dragData.meldung.name);
@@ -2102,7 +2103,7 @@ export default function StartlistenV2Uebersicht() {
                                   if (!altersklasse || altersklasse === 'Unbekannt') {
                                     // Hole Schützen-Daten für Altersklassen-Berechnung
                                     try {
-                                      const shootersRes = await fetch('/api/shooters');
+                                      const shootersRes = await authFetch('/api/shooters');
                                       if (shootersRes.ok) {
                                         const shootersData = await shootersRes.json();
                                         const schuetze = shootersData.data?.find((s: any) => s.name === dragData.meldung.name);

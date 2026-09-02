@@ -11,6 +11,7 @@ import { BackButton } from '@/components/ui/back-button';
 import { KMProvider, useKMContext } from '@/contexts/KMContext';
 import { KMClubSwitcher } from '@/components/ui/km-club-switcher';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { authFetch } from '@/lib/auth/authFetch';
 
 interface Mannschaft {
   id: string;
@@ -149,7 +150,7 @@ function KMMannschaftenContent() {
       
       try {
 
-        const schuetzenRes = await fetch('/api/shooters');
+        const schuetzenRes = await authFetch('/api/shooters');
 
         if (schuetzenRes.ok) {
           const data = await schuetzenRes.json();

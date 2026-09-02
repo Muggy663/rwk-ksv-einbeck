@@ -8,8 +8,9 @@ export class PDFExportService {
       const { default: jsPDF } = await import('jspdf');
       await import('jspdf-autotable');
       
+      const { authFetch } = await import('@/lib/auth/authFetch');
       const [schuetzenRes, mannschaftenRes, disziplinenRes] = await Promise.all([
-        fetch('/api/shooters').catch(() => ({ ok: false } as Response)),
+        authFetch('/api/shooters').catch(() => ({ ok: false } as Response)),
         fetch('/api/km/mannschaften').catch(() => ({ ok: false } as Response)),
         fetch('/api/km/disziplinen').catch(() => ({ ok: false } as Response))
       ]);

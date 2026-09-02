@@ -6,6 +6,7 @@ import { getDocs, collection, query, orderBy, addDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { logInfo, logWarn, logError, getErrorMessage } from '@/lib/utils/secure-logger';
+import { authFetch } from '@/lib/auth/authFetch';
 
 export function StartlistenToolV2Content() {
   const searchParams = useSearchParams();
@@ -1285,7 +1286,7 @@ export function StartlistenToolV2Content() {
                       
                       // Lade Mannschaften und Disziplinen für E/M Erkennung und SPO-Nummern
                       const [schuetzenRes, mannschaftenRes, disziplinenRes] = await Promise.all([
-                        fetch('/api/shooters'),
+                        authFetch('/api/shooters'),
                         fetch('/api/km/mannschaften'),
                         fetch('/api/km/disziplinen'),
                         fetch('/api/km/meldungen')

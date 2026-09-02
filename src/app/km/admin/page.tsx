@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import type { KMMeldung, KMDisziplin, Shooter, Club } from '@/types';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { authFetch } from '@/lib/auth/authFetch';
 
 export default function KMAdmin() {
   const { toast } = useToast();
@@ -58,7 +59,7 @@ export default function KMAdmin() {
       const [meldungenRes, disziplinenRes, schuetzenRes, vereineRes] = await Promise.all([
         fetch('/api/km/meldungen'),
         fetch('/api/km/disziplinen'),
-        fetch('/api/shooters'),
+        authFetch('/api/shooters'),
         fetch('/api/clubs')
       ]);
       

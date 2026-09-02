@@ -11,6 +11,7 @@ import { useKMAuth } from '@/hooks/useKMAuth';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { db } from '@/lib/firebase/config';
+import { authFetch } from '@/lib/auth/authFetch';
 import { collection, getDocs } from 'firebase/firestore';
 
 interface WettkampfStatus {
@@ -53,7 +54,7 @@ export default function WettkampfDashboardPage() {
         // Lade Disziplinen und Schützen über API
         const [disziplinenRes, schuetzenRes] = await Promise.all([
           fetch('/api/km/disziplinen'),
-          fetch('/api/shooters')
+          authFetch('/api/shooters')
         ]);
         
         const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];

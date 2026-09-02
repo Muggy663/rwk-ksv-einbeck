@@ -6,6 +6,8 @@ import { secureLogger } from '@/lib/utils/secure-logger';
 import { sanitizeInput, InputValidator } from '@/lib/utils/input-validator';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { verifyApiAuth } from '@/lib/auth/api-auth';
+import { getServerMemberPermissions } from '@/app/api/members/route';
+import { isClubAllowed } from '@/lib/permissions/memberPermissions';
 
 export async function POST(request: NextRequest) {
   // Authentifizierung erforderlich
@@ -62,8 +64,7 @@ export async function POST(request: NextRequest) {
       birthYear: birthYear,
       gender: normalizedGender,
       mitgliedsnummer: mitgliedsnummer ? mitgliedsnummer.substring(0, 20) : null,
-      kmClubId: clubId.substring(0, 50),
-      rwkClubId: null,
+      clubId: clubId.substring(0, 50),
       isActive: true,
       genderGuessed: false,
       createdAt: FieldValue.serverTimestamp(),
@@ -88,6 +89,16 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  // Authentifizierung erforderlich – die Route liefert personenbezogene Daten.
+  const user = await verifyApiAuth(request);
+  if (!user) {
+    secureLogger.warn('Unauthorized access attempt to GET /api/shooters', 'shooters-api');
+    return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+  }
+
+  // Rechte des Nutzers bestimmen (Admin/KM-Orga sehen alle, sonst nur erlaubte Vereine).
+  const perms = await getServerMemberPermissions(user.uid, user.email);
+
   try {
     const url = new URL(request.url);
     const includeMembers = url.searchParams.get('includeMembers') === 'true';
@@ -138,6 +149,14 @@ export async function GET(request: NextRequest) {
       } else {
         allShooters = allShooters_combined;
       }
+    }
+
+    // Rollenbasierter PII-Schutz: Wer nicht alle Vereine sehen darf (z.B. Sportleiter),
+    // erhält nur Schützen der erlaubten Vereine. Admin/KM-Orga sehen alle.
+    if (!perms.canViewAllClubs) {
+      allShooters = allShooters.filter((shooter) =>
+        isClubAllowed(perms, getShooterClubId(shooter))
+      );
     }
 
     return NextResponse.json({
