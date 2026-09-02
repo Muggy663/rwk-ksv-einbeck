@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
-import { Download, ChevronLeft } from 'lucide-react';
+import { Download, ChevronLeft, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,7 +24,8 @@ import { TrendAnalysis } from '@/components/statistics/TrendAnalysis';
 import { IntelligentInsights } from '@/components/ui/intelligent-insights';
 import { useSwipe } from '@/hooks/use-swipe';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#ff7300'];
+// Kräftige, gut unterscheidbare Palette – Startfarbe = App-Grün (Primärfarbe)
+const COLORS = ['#16a34a', '#2563eb', '#f59e0b', '#dc2626', '#8b5cf6', '#0891b2', '#db2777', '#ea580c'];
 
 export default function StatistikDashboardPage() {
   // Filter-States
@@ -240,19 +241,61 @@ export default function StatistikDashboardPage() {
     }
   };
 
+  // KPI-Kennzahlen aus den geladenen Daten ableiten
+  const teamAverage =
+    teamData.length > 0
+      ? (teamData.reduce((s, t) => s + (t.durchschnitt || 0), 0) / teamData.length).toFixed(1)
+      : '–';
+  const bestTeam = teamData.length > 0 ? teamData[0].name : '–';
+  const shooterCount = (genderData[0]?.value || 0) + (genderData[1]?.value || 0);
+
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-primary">Statistik-Dashboard</h1>
-        <Button asChild variant="outline" className="w-full sm:w-auto">
-          <Link href="/statistik" className="flex items-center justify-center">
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Zurück zur Übersicht
-          </Link>
-        </Button>
+      {/* Hero */}
+      <div className="relative mb-6 overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/10 via-background to-background p-6 animate-fade-in">
+        <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-gradient-to-br from-primary to-emerald-600 p-2.5 text-white shadow-lg">
+              <BarChart3 className="h-7 w-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary via-emerald-600 to-primary bg-clip-text text-transparent">
+                Statistik-Dashboard
+              </h1>
+              <p className="text-sm text-muted-foreground">Leistung, Teams und Verteilung der ausgewählten Saison</p>
+            </div>
+          </div>
+          <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Link href="/statistik" className="flex items-center justify-center">
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Übersicht
+            </Link>
+          </Button>
+        </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+      {/* KPI-Kacheln */}
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="glass-card rounded-xl border-0 p-4 shadow-sm">
+          <p className="text-xs text-muted-foreground">Ø Team-Ringe</p>
+          <p className="mt-1 text-2xl font-bold text-primary">{teamAverage}</p>
+        </div>
+        <div className="glass-card rounded-xl border-0 p-4 shadow-sm">
+          <p className="text-xs text-muted-foreground">Bestes Team</p>
+          <p className="mt-1 truncate text-lg font-semibold" title={bestTeam}>{bestTeam}</p>
+        </div>
+        <div className="glass-card rounded-xl border-0 p-4 shadow-sm">
+          <p className="text-xs text-muted-foreground">Schützen</p>
+          <p className="mt-1 text-2xl font-bold text-emerald-600">{shooterCount || '–'}</p>
+        </div>
+        <div className="glass-card rounded-xl border-0 p-4 shadow-sm">
+          <p className="text-xs text-muted-foreground">Teams gewertet</p>
+          <p className="mt-1 text-2xl font-bold text-blue-600">{teamData.length || '–'}</p>
+        </div>
+      </div>
+
+      <div className="glass-card mb-6 grid grid-cols-1 gap-4 rounded-xl border-0 p-4 shadow-sm md:grid-cols-3">
         <div>
           <Label htmlFor="season-select" className="text-base font-medium">Saison</Label>
           <NativeSelect
