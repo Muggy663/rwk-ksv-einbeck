@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { logError, logWarn, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { authFetch } from '@/lib/auth/authFetch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -359,7 +360,7 @@ export default function KMErgebnissePage() {
 
       logDebug('💾 Speichere KM-Ergebnis:', { meldungId, saisonId: selectedJahr, kmErgebnisData });
 
-      const response = await fetch('/api/km/ergebnisse-save', {
+      const response = await authFetch('/api/km/ergebnisse-save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ meldungId, saisonId: selectedJahr, kmErgebnis: kmErgebnisData })
@@ -805,7 +806,7 @@ export default function KMErgebnissePage() {
                         formData.append('saisonId', selectedJahr);
                         
                         try {
-                          const response = await fetch('/api/km/ergebnisse-batch-import', {
+                          const response = await authFetch('/api/km/ergebnisse-batch-import', {
                             method: 'POST',
                             body: formData
                           });
@@ -1067,7 +1068,7 @@ export default function KMErgebnissePage() {
                               variant="outline"
                               onClick={async () => {
                                 try {
-                                  const response = await fetch('/api/km/ergebnisse-save', {
+                                  const response = await authFetch('/api/km/ergebnisse-save', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ 

@@ -3,11 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { secureLogger } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth erforderlich (schützt Schreibzugriff + Gemini-Kosten).
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({ error: 'OCR service not configured' }, { status: 500 });
     }
