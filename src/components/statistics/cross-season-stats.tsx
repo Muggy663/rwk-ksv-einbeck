@@ -55,7 +55,26 @@ export function CrossSeasonStats() {
   const [selectedDiscipline, setSelectedDiscipline] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
   const [shooterStats, setShooterStats] = useState<ShooterStats | null>(null);
-  const [searchResults, setSearchResults] = useState<{ id: string; name: string }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ id: string; name: string; clubName?: string }[]>([]);
+  const [clubMap, setClubMap] = useState<Record<string, string>>({});
+
+  // Vereine einmalig laden (id → Name), um sie in der Trefferliste anzuzeigen.
+  useEffect(() => {
+    const loadClubs = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'clubs'));
+        const map: Record<string, string> = {};
+        snap.forEach(d => {
+          const data = d.data() as any;
+          map[d.id] = data.shortName || data.name || d.id;
+        });
+        setClubMap(map);
+      } catch {
+        // Vereinsnamen sind optional – bei Fehler bleibt die Suche ohne Verein nutzbar.
+      }
+    };
+    loadClubs();
+  }, []);
 
   const handleSearch = async () => {
     if (searchTerm.trim().length < 3) {
@@ -79,10 +98,15 @@ export function CrossSeasonStats() {
       );
       
       const querySnapshot = await getDocs(q);
-      const results = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().name
-      }));
+      const results = querySnapshot.docs.map(doc => {
+        const data = doc.data() as any;
+        const clubId = data.clubId || data.kmClubId || data.rwkClubId;
+        return {
+          id: doc.id,
+          name: data.name,
+          clubName: clubId ? (clubMap[clubId] || undefined) : undefined,
+        };
+      });
       
       setSearchResults(results);
       
@@ -438,10 +462,15 @@ export function CrossSeasonStats() {
                   <li key={result.id}>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start text-left"
+                      className="w-full justify-start text-left h-auto py-2"
                       onClick={() => handleShooterSelect(result.id)}
                     >
-                      {result.name}
+                      <span className="font-medium">{result.name}</span>
+                      {result.clubName && (
+                        <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                          {result.clubName}
+                        </span>
+                      )}
                     </Button>
                   </li>
                 ))}
