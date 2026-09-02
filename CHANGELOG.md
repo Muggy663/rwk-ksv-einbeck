@@ -38,7 +38,7 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 - **🐛 Bugfix Handzettel-Generator**: Druck-/Style-Zugriffe und die Schützen-Auflösung robuster gemacht
 - **🧹 Toter Code entfernt**: mehrere tausend Zeilen ungenutzte Legacy-Funktionen (u.a. zwei alte Ergebnis-Seiten mit zusammen ~3300 Zeilen), veraltete Alternativ-Versionen und verwaiste Komponenten — jeweils vorher geprüft, dass sie nirgends verwendet werden
 - **🔧 Zentrale Typen vereinheitlicht**: Nutzer-Berechtigungen (Rollen je Verein/Kreis/Plattform) und Schützen-/Team-Datenfelder (u.a. KM-Startrechte, KM-Verein) sauber abgebildet — Grundlage für konsistentere Daten
-- **📝 Nachvollziehbarkeit**: Jede Reparatur ist dokumentiert (`docs/FIXING_LOG_v2.8.md`) und in kleinen, thematischen Schritten festgehalten
+- **📝 Nachvollziehbarkeit**: Jede Reparatur wurde in kleinen, thematischen Schritten festgehalten
 - **📋 Vermerkte Empfehlungen fürs nächste Update** (kein Fehler, aber Aufräumbedarf): Sentry-Tracing auf die neue API migrieren; `send-email`-Empfängerzählung prüfen
 - **✅ Umgesetzt**: Die zuvor vorgemerkte Zusammenführung der Mitgliederlisten (Vereinsbereich RWK + KM) ist in dieser Version realisiert — siehe „Zentrale Mitgliederliste (RWK + KM)“ oben
 
