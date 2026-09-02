@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { CheckCircle, ChevronRight, ChevronLeft, Users, ListChecks, Trophy, User } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { getMemberPermissions } from '@/lib/permissions/memberPermissions';
 
 interface OnboardingStep {
   title: string;
@@ -46,7 +47,11 @@ export function OnboardingWizard() {
   }, [user]);
 
   const role = userAppPermissions?.role || '';
-  const isVereinsvertreter = role === 'vereinsvertreter';
+  // Verwaltungs-Schritte (Mannschaften + Mitglieder) für alle, die tatsächlich
+  // verwalten dürfen: Sportleiter, KM-Orga und Admin (über die zentrale
+  // Rechte-Logik) sowie die Legacy-Rolle "vereinsvertreter" für Bestandsnutzer.
+  const memberPerms = getMemberPermissions(userAppPermissions, user?.email);
+  const canManage = memberPerms.canEdit || role === 'vereinsvertreter';
 
   // Gemeinsame Schritte für beide Rollen
   const commonSteps: OnboardingStep[] = [
@@ -96,15 +101,15 @@ export function OnboardingWizard() {
     }
   ];
 
-  // Spezifische Schritte für Vereinsvertreter
-  const vereinsvertreterSteps: OnboardingStep[] = [
+  // Verwaltungs-Schritte (für Sportleiter, KM-Orga, Admin und Legacy-Vereinsvertreter)
+  const verwaltungSteps: OnboardingStep[] = [
     {
       title: "Mannschaftsverwaltung",
       description: "So verwalten Sie Ihre Mannschaften",
       icon: <Users className="h-8 w-8 text-primary" />,
       content: (
         <div className="space-y-4">
-          <p>Als Vereinsvertreter können Sie Mannschaften für Ihren Verein verwalten:</p>
+          <p>Unter "Meine Mannschaften" können Sie die Mannschaften Ihres Vereins verwalten:</p>
           <ol className="list-decimal list-inside space-y-2">
             <li>Unter "Meine Mannschaften" können Sie neue Mannschaften anlegen</li>
             <li>Wählen Sie die Saison und geben Sie einen Namen ein</li>
@@ -132,9 +137,9 @@ export function OnboardingWizard() {
     }
   ];
 
-  // Zusammenstellen der Schritte basierend auf der Rolle
-  const steps = isVereinsvertreter 
-    ? [...commonSteps, ...vereinsvertreterSteps] 
+  // Zusammenstellen der Schritte basierend auf den tatsächlichen Rechten
+  const steps = canManage 
+    ? [...commonSteps, ...verwaltungSteps] 
     : commonSteps;
 
   const handleComplete = () => {
