@@ -292,14 +292,14 @@ export default function VereinMannschaftenPage() {
     if (!activeClubId) return;
     
     try {
-      const [s1, s2, s3] = await Promise.all([
+      // Vereinszuordnung: clubId (aktuell) + kmClubId (Altdaten). rwkClubId existiert real nicht.
+      const [s1, s3] = await Promise.all([
         getDocs(query(collection(db, SHOOTERS_COLLECTION), where('clubId', '==', activeClubId))),
-        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('rwkClubId', '==', activeClubId))),
         getDocs(query(collection(db, SHOOTERS_COLLECTION), where('kmClubId', '==', activeClubId)))
       ]);
 
       const uniqueShooters = new Map<string, Shooter>();
-      [s1, s2, s3].forEach(snapshot => {
+      [s1, s3].forEach(snapshot => {
         snapshot.docs.forEach(d => {
           if (!uniqueShooters.has(d.id)) {
             uniqueShooters.set(d.id, { id: d.id, ...d.data(), teamIds: d.data().teamIds || [] } as Shooter);
@@ -372,15 +372,15 @@ export default function VereinMannschaftenPage() {
     try {
       const teamsForYearQuery = query(collection(db, TEAMS_COLLECTION), where("competitionYear", "==", compYearForDialog));
 
-      const [s1, s2, s3, teamsForYearSnapshot] = await Promise.all([
+      // Vereinszuordnung: clubId (aktuell) + kmClubId (Altdaten). rwkClubId existiert real nicht.
+      const [s1, s3, teamsForYearSnapshot] = await Promise.all([
         getDocs(query(collection(db, SHOOTERS_COLLECTION), where('clubId', '==', clubIdForDialog))),
-        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('rwkClubId', '==', clubIdForDialog))),
         getDocs(query(collection(db, SHOOTERS_COLLECTION), where('kmClubId', '==', clubIdForDialog))),
         getDocs(teamsForYearQuery)
       ]);
 
       const uniqueShooters = new Map<string, Shooter>();
-      [s1, s2, s3].forEach(snapshot => {
+      [s1, s3].forEach(snapshot => {
         snapshot.docs.forEach(d => {
           if (!uniqueShooters.has(d.id)) {
             uniqueShooters.set(d.id, { id: d.id, ...d.data(), teamIds: d.data().teamIds || [] } as Shooter);

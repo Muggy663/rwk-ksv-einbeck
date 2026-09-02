@@ -1,4 +1,4 @@
-﻿function getShooterClubId(s: any): string | null { return s?.clubId || s?.rwkClubId || s?.kmClubId || null; }
+﻿function getShooterClubId(s: any): string | null { return s?.clubId || s?.kmClubId || null; }
 import jsPDF from 'jspdf';
 
 import 'jspdf-autotable';
