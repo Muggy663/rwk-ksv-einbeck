@@ -24,6 +24,9 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 - **✉️ E-Mail-Versand genauer**: Ungültige E-Mail-Adressen werden jetzt vor dem Versand aussortiert und nicht mehr mitgezählt — die Erfolgsmeldung („an X Empfänger gesendet") stimmt jetzt
 - **🧩 Vereinszuordnung vereinheitlicht (technisch)**: Die Ermittlung, welche Vereine einem Nutzer gehören, läuft jetzt überall über dieselbe Logik — verhindert unterschiedliche Ergebnisse in verschiedenen Bereichen
 - **🧹 Datenmodell weiter bereinigt**: Alle verbliebenen Anlege-/Import-Wege schreiben Mitglieder jetzt einheitlich mit einem einzigen Vereinsfeld (kein doppeltes Alt-Feld mehr)
+- **🐛 Bugfix VM-Qualifikation**: In der VM-Übersicht wurde das Qualifikationslimit immer nach „Herren" bewertet — Damen wird jetzt korrekt das Damen-Limit zugeordnet
+- **🧹 Weiterer Code-Frühjahrsputz**: Mehrere ungenutzte Alt-Komponenten entfernt (doppelte Onboarding-/Theme-/Wartungs-Bausteine, ungenutztes Suchfeld). Reduziert Ballast, keine sichtbaren Änderungen
+- **📉 Sentry im Live-Betrieb sparsamer**: Detail-Aufzeichnung (Tracing) in Produktion auf 10% reduziert (spart Ressourcen, in der Entwicklung weiterhin vollständig)
 - **🏗️ Große TypeScript-Grundsanierung (abgeschlossen)**: Die gesamte Codebasis wurde systematisch typsicher gemacht — TypeScript-Meldungen von ~3860 auf **0** reduziert. Ziel: langfristige Wartbarkeit, weniger versteckte Laufzeit-Bugs, schnelleres und sichereres Weiterentwickeln
 - **✅ Komplett sauber (0 TypeScript-Fehler) in allen Bereichen**: Schießnachweis, Vereinsbereich, Kern (Typen/Utils), Services, UI-Komponenten, Kreismeisterschaft (KM), KM-Organisation, Admin, öffentliche RWK-Tabellen, API-Routen und alle übrigen App-Seiten
 - **📦 Keine funktionalen Änderungen an bestehenden Features**: Design und Bedienung bleiben unverändert — es wurden Typen ergänzt, toter Code entfernt und mehrere echte Bugs behoben
