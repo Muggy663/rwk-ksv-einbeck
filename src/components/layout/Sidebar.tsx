@@ -29,13 +29,10 @@ export function Sidebar() {
     { href: '/', label: 'Startseite', icon: Home },
     { href: '/rwk-tabellen', label: 'RWK Tabellen', icon: FileBarChart },
     { href: '/statistiken', label: 'Statistiken', icon: TrendingUp },
+    { href: '/schiessnachweis', label: 'Schießnachweis', icon: Target },
     { href: '/termine', label: 'Termine', icon: CalendarDays },
     { href: '/ligalisten', label: 'Ligalisten', icon: FileText },
     { href: '/dokumente', label: 'Dokumente', icon: FileText },
-  ];
-
-  const betaRoutes = [
-    { href: '/schiessnachweis', label: 'Schießnachweis', icon: Target },
   ];
 
   const helpRoutes = [
@@ -95,8 +92,6 @@ export function Sidebar() {
     <div className="w-64 h-full bg-background border-r flex flex-col">
       <div className="p-6 pt-8 flex-1 overflow-y-auto">
         <NavSection title="Hauptbereich" routes={publicRoutes} />
-        
-        <NavSection title="Beta Features" routes={betaRoutes} />
         
         {user && (
           <NavSection title="Mein Bereich" routes={userRoutes} />

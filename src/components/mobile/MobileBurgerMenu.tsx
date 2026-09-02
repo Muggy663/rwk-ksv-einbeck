@@ -21,14 +21,10 @@ const mainNavItems: NavItem[] = [
   { href: '/', icon: Home, label: 'Startseite' },
   { href: '/rwk-tabellen', icon: Trophy, label: 'RWK Tabellen' },
   { href: '/statistiken', icon: BarChart3, label: 'Statistiken' },
+  { href: '/schiessnachweis', icon: Target, label: 'Schießnachweis' },
   { href: '/termine', icon: Calendar, label: 'Termine' },
   { href: '/ligalisten', icon: FileText, label: 'Ligalisten' },
   { href: '/dokumente', icon: FileText, label: 'Dokumente' },
-]
-
-// Beta Features - wird dynamisch in der Komponente gesetzt
-const getBetaNavItems = (_user: any): NavItem[] => [
-  { href: '/schiessnachweis', icon: Target, label: 'Schießnachweis' },
 ]
 
 // Hilfe & Support
@@ -56,7 +52,6 @@ export function MobileBurgerMenu() {
   })
 
   const filteredMainItems = filterItems(mainNavItems)
-  const filteredBetaItems = filterItems(getBetaNavItems(user))
   const filteredHelpItems = filterItems(helpNavItems)
   const filteredUserItems = filterItems(userNavItems)
 
@@ -112,28 +107,6 @@ export function MobileBurgerMenu() {
                       >
                         <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground")} />
                         <span className="truncate">{item.label}</span>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Beta Features */}
-              <div>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">Beta Features</h3>
-                <div className="space-y-1">
-                  {filteredBetaItems.map((item) => {
-                    const Icon = item.icon
-                    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
-                    return (
-                      <Link key={item.href} href={item.href} onClick={closeMenu}
-                        className={cn("flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full min-w-0 text-sm font-medium overflow-hidden",
-                          isActive ? "text-primary-foreground bg-primary dark:text-white dark:bg-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}
-                      >
-                        <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground")} />
-                        <span className="truncate">{item.label}</span>
-
-                        {(item.href === '/social' || item.href === '/social/welcome') && <span className="text-xs text-green-600 dark:text-green-400 font-semibold ml-1">NEU</span>}
                       </Link>
                     )
                   })}

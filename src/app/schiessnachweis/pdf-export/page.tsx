@@ -52,6 +52,24 @@ export default function PDFExportPage() {
     waffenbesitzkarte: ''
   });
 
+  // Empfänger-/Behördendaten (Adressblock im PDF + Gegenzeichnung)
+  const [behoerdenData, setBehoerdenData] = useState({
+    name: '',
+    adresse: '',
+    plz: '',
+    ort: '',
+  });
+
+  // Beispiel-Adresse des Niedersächsischen Sportschützenverbandes (NSSV)
+  const setNSSVBeispiel = () => {
+    setBehoerdenData({
+      name: 'Niedersächsischer Sportschützenverband e.V. (NSSV)',
+      adresse: 'Anton-Rieke-Weg 5',
+      plz: '30539',
+      ort: 'Hannover',
+    });
+  };
+
   useEffect(() => {
     // Mobile Detection
     const checkMobile = () => {
@@ -91,6 +109,10 @@ export default function PDFExportPage() {
       if (saved) {
         setPersonalData(JSON.parse(saved));
       }
+      const savedBehoerde = localStorage.getItem('rwk_behoerden_data');
+      if (savedBehoerde) {
+        setBehoerdenData(JSON.parse(savedBehoerde));
+      }
     } catch (error) {
       logError('Fehler beim Laden der persönlichen Daten:', error);
     }
@@ -99,6 +121,7 @@ export default function PDFExportPage() {
   const savePersonalData = () => {
     try {
       localStorage.setItem('rwk_personal_data', JSON.stringify(personalData));
+      localStorage.setItem('rwk_behoerden_data', JSON.stringify(behoerdenData));
       toast({
         title: "Gespeichert",
         description: "Persönliche Daten wurden gespeichert.",
@@ -210,6 +233,29 @@ export default function PDFExportPage() {
       );
 
       let yPosition = 46;
+
+      // ---- Empfänger-Adressblock (oben rechts, wie im Brief) ----
+      const behoerdeZeilen = [
+        behoerdenData.name,
+        behoerdenData.adresse,
+        [behoerdenData.plz, behoerdenData.ort].filter(Boolean).join(' '),
+      ].filter((z) => z && z.trim().length > 0);
+
+      if (behoerdeZeilen.length > 0) {
+        pdf.setTextColor(...textMuted);
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('An', marginX, yPosition);
+        pdf.setTextColor(...textDark);
+        pdf.setFontSize(9.5);
+        let addrY = yPosition + 5;
+        behoerdeZeilen.forEach((zeile, idx) => {
+          pdf.setFont('helvetica', idx === 0 ? 'bold' : 'normal');
+          pdf.text(zeile, marginX, addrY);
+          addrY += 5;
+        });
+        yPosition = addrY + 6;
+      }
 
       // Statistik-Daten vorbereiten
       const filteredStats = {
@@ -375,13 +421,16 @@ export default function PDFExportPage() {
       pdf.line(marginX, afterTableY, marginX + leftLineWidth, afterTableY);
       pdf.text('Ort, Datum, Unterschrift', marginX, afterTableY + 5);
 
-      // Rechte Unterschrift: Vereinsschießsportleiter (Stempel & Unterschrift)
+      // Rechte Unterschrift: gegenzeichnende Stelle (Stempel & Unterschrift)
       const rightLineWidth = 70;
       const rightLineEnd = pageWidth - marginX;
       const rightLineStart = rightLineEnd - rightLineWidth;
       pdf.line(rightLineStart, afterTableY, rightLineEnd, afterTableY);
       pdf.text('Stempel und Unterschrift', rightLineEnd, afterTableY + 5, { align: 'right' });
-      pdf.text('Vereinsschießsportleiter', rightLineEnd, afterTableY + 9.5, { align: 'right' });
+      // Beschriftung: eingetragene Stelle bevorzugen, sonst Vereinsschießsportleiter
+      const gegenzeichner = behoerdenData.name?.trim() || 'Vereinsschießsportleiter';
+      const gegenzeichnerLines: string[] = pdf.splitTextToSize(gegenzeichner, rightLineWidth);
+      pdf.text(gegenzeichnerLines[0] ?? '', rightLineEnd, afterTableY + 9.5, { align: 'right' });
 
       // Fußzeile auf jeder Seite
       const pageCount = pdf.getNumberOfPages();
@@ -655,6 +704,61 @@ export default function PDFExportPage() {
                 onChange={(e) => setPersonalData(prev => ({ ...prev, waffenbesitzkarte: e.target.value }))}
                 placeholder="Optional"
               />
+            </div>
+
+            {/* Empfänger / Behörde (wird oben im PDF als Adressblock angezeigt) */}
+            <div className="mt-2 rounded-lg border border-dashed p-4">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div>
+                  <Label className="text-sm font-semibold">Empfänger / gegenzeichnende Stelle</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Behörde oder Verband, an die/den der Nachweis gerichtet ist (optional)
+                  </p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={setNSSVBeispiel} className="shrink-0">
+                  NSSV einsetzen
+                </Button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="behoerdeName">Name der Stelle</Label>
+                  <Input
+                    id="behoerdeName"
+                    value={behoerdenData.name}
+                    onChange={(e) => setBehoerdenData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="z.B. Waffenbehörde Landkreis Northeim"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="behoerdeAdresse">Straße & Hausnr.</Label>
+                  <Input
+                    id="behoerdeAdresse"
+                    value={behoerdenData.adresse}
+                    onChange={(e) => setBehoerdenData(prev => ({ ...prev, adresse: e.target.value }))}
+                    placeholder="Musterstraße 1"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="behoerdePlz">PLZ</Label>
+                    <Input
+                      id="behoerdePlz"
+                      value={behoerdenData.plz}
+                      onChange={(e) => setBehoerdenData(prev => ({ ...prev, plz: e.target.value }))}
+                      placeholder="37154"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="behoerdeOrt">Ort</Label>
+                    <Input
+                      id="behoerdeOrt"
+                      value={behoerdenData.ort}
+                      onChange={(e) => setBehoerdenData(prev => ({ ...prev, ort: e.target.value }))}
+                      placeholder="Northeim"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
             
             <Button onClick={savePersonalData} variant="outline" className="w-full">
