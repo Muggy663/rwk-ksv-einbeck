@@ -21,10 +21,14 @@ const mainNavItems: NavItem[] = [
   { href: '/', icon: Home, label: 'Startseite' },
   { href: '/rwk-tabellen', icon: Trophy, label: 'RWK Tabellen' },
   { href: '/statistiken', icon: BarChart3, label: 'Statistiken' },
-  { href: '/schiessnachweis', icon: Target, label: 'Schießnachweis' },
   { href: '/termine', icon: Calendar, label: 'Termine' },
   { href: '/ligalisten', icon: FileText, label: 'Ligalisten' },
   { href: '/dokumente', icon: FileText, label: 'Dokumente' },
+]
+
+// Zusatz-Feature (kein Kern-RWK/KM) – im Menü bewusst abgesetzt
+const extraNavItems: NavItem[] = [
+  { href: '/schiessnachweis', icon: Target, label: 'Schießnachweis' },
 ]
 
 // Hilfe & Support
@@ -52,6 +56,7 @@ export function MobileBurgerMenu() {
   })
 
   const filteredMainItems = filterItems(mainNavItems)
+  const filteredExtraItems = filterItems(extraNavItems)
   const filteredHelpItems = filterItems(helpNavItems)
   const filteredUserItems = filterItems(userNavItems)
 
@@ -98,6 +103,29 @@ export function MobileBurgerMenu() {
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">Hauptbereich</h3>
                 <div className="space-y-1">
                   {filteredMainItems.map((item) => {
+                    const Icon = item.icon
+                    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+                    return (
+                      <Link key={item.href} href={item.href} onClick={closeMenu}
+                        className={cn("flex items-center gap-3 px-3 py-3 rounded-lg transition-colors w-full min-w-0 text-sm font-medium overflow-hidden",
+                          isActive ? "text-primary-foreground bg-primary dark:text-white dark:bg-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50")}
+                      >
+                        <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground")} />
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Extra – abgesetztes Zusatz-Feature */}
+              <div className="border-t pt-3">
+                <h3 className="mb-2 flex items-center gap-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Extra
+                  <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium normal-case text-primary">Bonus</span>
+                </h3>
+                <div className="space-y-1">
+                  {filteredExtraItems.map((item) => {
                     const Icon = item.icon
                     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
                     return (
