@@ -60,15 +60,7 @@ export default function PDFExportPage() {
     ort: '',
   });
 
-  // Beispiel-Adresse des Niedersächsischen Sportschützenverbandes (NSSV)
-  const setNSSVBeispiel = () => {
-    setBehoerdenData({
-      name: 'Niedersächsischer Sportschützenverband e.V. (NSSV)',
-      adresse: 'Anton-Rieke-Weg 5',
-      plz: '30539',
-      ort: 'Hannover',
-    });
-  };
+
 
   useEffect(() => {
     // Mobile Detection
@@ -214,48 +206,70 @@ export default function PDFExportPage() {
       const textMuted: [number, number, number] = [100, 116, 139];  // slate-500
       const textDark: [number, number, number] = [30, 41, 59];      // slate-800
 
-      // ---- Kopfband ----
-      pdf.setFillColor(...accent);
-      pdf.rect(0, 0, pageWidth, 34, 'F');
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(18);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Schießnachweis', marginX, 16);
-      pdf.setFontSize(10.5);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Nachweis regelmäßiger Schießtätigkeit für Behörden', marginX, 25);
-      pdf.setFontSize(8.5);
-      pdf.text(
-        `Erstellt am ${format(new Date(), 'dd.MM.yyyy', { locale: de })}`,
-        pageWidth - marginX,
-        16,
-        { align: 'right' }
-      );
+      // ================================================================
+      // DIN-5008-konformer Briefkopf (passend für Fensterumschlag)
+      // Anschriftfeld: links 20 mm, Anschriftzone ab ca. 45 mm von oben.
+      // Kein farbiges Kopfband im Fensterbereich – der Titel folgt darunter.
+      // ================================================================
+      const windowLeft = 20;             // linker Rand Anschriftfeld (mm)
+      const senderY = 45;                // Rücksendeangabe (kleine Zeile)
+      const addressStartY = 50;          // Beginn der sichtbaren Anschriftzeilen
 
-      let yPosition = 46;
+      // Kleine Rücksendeangabe (Absender) – eine Zeile über der Empfängeradresse
+      const absenderZeile = [
+        `${personalData.vorname} ${personalData.name}`.trim(),
+        personalData.adresse,
+        [personalData.plz, personalData.ort].filter(Boolean).join(' '),
+      ].filter((z) => z && z.trim().length > 0).join(' · ');
 
-      // ---- Empfänger-Adressblock (oben rechts, wie im Brief) ----
       const behoerdeZeilen = [
         behoerdenData.name,
         behoerdenData.adresse,
         [behoerdenData.plz, behoerdenData.ort].filter(Boolean).join(' '),
       ].filter((z) => z && z.trim().length > 0);
 
-      if (behoerdeZeilen.length > 0) {
+      if (absenderZeile) {
         pdf.setTextColor(...textMuted);
-        pdf.setFontSize(8);
+        pdf.setFontSize(7);
         pdf.setFont('helvetica', 'normal');
-        pdf.text('An', marginX, yPosition);
-        pdf.setTextColor(...textDark);
-        pdf.setFontSize(9.5);
-        let addrY = yPosition + 5;
-        behoerdeZeilen.forEach((zeile, idx) => {
-          pdf.setFont('helvetica', idx === 0 ? 'bold' : 'normal');
-          pdf.text(zeile, marginX, addrY);
-          addrY += 5;
-        });
-        yPosition = addrY + 6;
+        pdf.text(absenderZeile, windowLeft, senderY);
+        // dünne Trennlinie unter der Rücksendeangabe (wie im Geschäftsbrief)
+        pdf.setDrawColor(...textMuted);
+        pdf.setLineWidth(0.1);
+        pdf.line(windowLeft, senderY + 1, windowLeft + 85, senderY + 1);
       }
+
+      // Empfänger-Anschrift im Fensterbereich (linksbündig, Normposition)
+      if (behoerdeZeilen.length > 0) {
+        pdf.setTextColor(...textDark);
+        pdf.setFontSize(11);
+        let addrY = addressStartY + 4;
+        behoerdeZeilen.forEach((zeile) => {
+          pdf.setFont('helvetica', 'normal');
+          pdf.text(zeile, windowLeft, addrY);
+          addrY += 5.5;
+        });
+      }
+
+      // ---- Titelbereich (unter dem Anschriftfeld, außerhalb des Fensters) ----
+      let yPosition = 92;
+      pdf.setFillColor(...accent);
+      pdf.rect(0, yPosition - 10, pageWidth, 20, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(17);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Schießnachweis', marginX, yPosition);
+      pdf.setFontSize(9.5);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Nachweis regelmäßiger Schießtätigkeit', marginX, yPosition + 6);
+      pdf.setFontSize(8.5);
+      pdf.text(
+        `Erstellt am ${format(new Date(), 'dd.MM.yyyy', { locale: de })}`,
+        pageWidth - marginX,
+        yPosition,
+        { align: 'right' }
+      );
+      yPosition += 20;
 
       // Statistik-Daten vorbereiten
       const filteredStats = {
@@ -421,16 +435,14 @@ export default function PDFExportPage() {
       pdf.line(marginX, afterTableY, marginX + leftLineWidth, afterTableY);
       pdf.text('Ort, Datum, Unterschrift', marginX, afterTableY + 5);
 
-      // Rechte Unterschrift: gegenzeichnende Stelle (Stempel & Unterschrift)
+      // Rechte Unterschrift: Vereinsschießsportleiter (Stempel & Unterschrift)
+      // Die Behörde unterschreibt NICHT – sie ist nur Empfänger.
       const rightLineWidth = 70;
       const rightLineEnd = pageWidth - marginX;
       const rightLineStart = rightLineEnd - rightLineWidth;
       pdf.line(rightLineStart, afterTableY, rightLineEnd, afterTableY);
       pdf.text('Stempel und Unterschrift', rightLineEnd, afterTableY + 5, { align: 'right' });
-      // Beschriftung: eingetragene Stelle bevorzugen, sonst Vereinsschießsportleiter
-      const gegenzeichner = behoerdenData.name?.trim() || 'Vereinsschießsportleiter';
-      const gegenzeichnerLines: string[] = pdf.splitTextToSize(gegenzeichner, rightLineWidth);
-      pdf.text(gegenzeichnerLines[0] ?? '', rightLineEnd, afterTableY + 9.5, { align: 'right' });
+      pdf.text('Vereinsschießsportleiter', rightLineEnd, afterTableY + 9.5, { align: 'right' });
 
       // Fußzeile auf jeder Seite
       const pageCount = pdf.getNumberOfPages();
@@ -708,16 +720,11 @@ export default function PDFExportPage() {
 
             {/* Empfänger / Behörde (wird oben im PDF als Adressblock angezeigt) */}
             <div className="mt-2 rounded-lg border border-dashed p-4">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <div>
-                  <Label className="text-sm font-semibold">Empfänger / gegenzeichnende Stelle</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Behörde oder Verband, an die/den der Nachweis gerichtet ist (optional)
-                  </p>
-                </div>
-                <Button type="button" variant="outline" size="sm" onClick={setNSSVBeispiel} className="shrink-0">
-                  NSSV einsetzen
-                </Button>
+              <div className="mb-3">
+                <Label className="text-sm font-semibold">Empfänger (Behörde / Verband)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Anschrift, an die der Nachweis gerichtet ist – erscheint oben im Brieffenster (optional)
+                </p>
               </div>
               <div className="space-y-3">
                 <div>
