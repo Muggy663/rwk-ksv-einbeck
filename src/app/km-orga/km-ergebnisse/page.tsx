@@ -103,7 +103,7 @@ export default function KMErgebnissePage() {
         const { db } = await import('@/lib/firebase/config');
         
         const [meldungenRes, shootersSnapshot, disziplinenRes, clubsRes, altersklassenRes] = await Promise.all([
-          fetch(`/api/km/meldungen?saison=${selectedJahr}`),
+          authFetch(`/api/km/meldungen?saison=${selectedJahr}`),
           getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
           fetch('/api/km/disziplinen'),
           fetch('/api/clubs'),
@@ -115,7 +115,7 @@ export default function KMErgebnissePage() {
         const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
         const altersklassenData = altersklassenRes.ok ? (await altersklassenRes.json()).data || [] : [];
 
-        const kmErgebnisseRes = await fetch(`/api/km/ergebnisse?saison=${selectedJahr}`);
+        const kmErgebnisseRes = await authFetch(`/api/km/ergebnisse?saison=${selectedJahr}`);
         const kmErgebnisseData = kmErgebnisseRes.ok ? (await kmErgebnisseRes.json()).data || [] : [];
         
         logDebug('🔍 Geladene KM-Ergebnisse:', kmErgebnisseData.length);

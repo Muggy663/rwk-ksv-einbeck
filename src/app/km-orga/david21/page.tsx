@@ -111,7 +111,7 @@ export default function David21Page() {
         startzeit: exportData.startzeit
       };
 
-      const response = await fetch('/api/km/david21-export', {
+      const response = await authFetch('/api/km/david21-export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(exportPayload)

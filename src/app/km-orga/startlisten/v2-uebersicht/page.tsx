@@ -1003,7 +1003,7 @@ export default function StartlistenV2Uebersicht() {
                               authFetch('/api/shooters'),
                               fetch('/api/km/mannschaften'),
                               fetch('/api/km/disziplinen'),
-                              fetch('/api/km/meldungen')
+                              authFetch('/api/km/meldungen')
                             ]);
                             
                             const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];

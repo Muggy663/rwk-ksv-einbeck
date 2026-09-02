@@ -100,6 +100,10 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
     const { searchParams } = new URL(request.url);
     const saisonId = searchParams.get('saison');
     

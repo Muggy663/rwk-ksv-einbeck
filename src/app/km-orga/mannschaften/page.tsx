@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { authFetch } from '@/lib/auth/authFetch';
 import { useKMAuth } from '@/hooks/useKMAuth';
 
 export default function KMAdminMannschaften() {
@@ -133,7 +134,7 @@ export default function KMAdminMannschaften() {
         getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs'),
-        fetch(`/api/km/meldungen?saison=${selectedSaison}`),
+        authFetch(`/api/km/meldungen?saison=${selectedSaison}`),
         fetch('/api/km/altersklassen')
       ]);
       

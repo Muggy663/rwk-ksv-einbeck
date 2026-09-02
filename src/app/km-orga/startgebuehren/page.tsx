@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { authFetch } from '@/lib/auth/authFetch';
 
 interface StartgebührData {
   verein: string;
@@ -68,7 +69,7 @@ export default function StartgebührenPage() {
       const [clubsRes, disziplinenRes, meldungenRes, shootersSnapshot] = await Promise.all([
         fetch('/api/clubs'),
         fetch('/api/km/disziplinen'),
-        fetch(`/api/km/meldungen?saison=${selectedSaison}`),
+        authFetch(`/api/km/meldungen?saison=${selectedSaison}`),
         getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc')))
       ]);
 

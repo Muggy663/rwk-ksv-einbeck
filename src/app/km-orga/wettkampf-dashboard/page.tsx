@@ -36,7 +36,7 @@ export default function WettkampfDashboardPage() {
       try {
         // Lade Daten über API und Firebase
         const [meldungenRes] = await Promise.all([
-          fetch('/api/km/meldungen?jahr=2026')
+          authFetch('/api/km/meldungen?jahr=2026')
         ]);
         
         const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];

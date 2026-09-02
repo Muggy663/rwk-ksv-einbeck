@@ -5,9 +5,14 @@ import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { generateMeldelistePDF, generateStartlistePDF, generateLMMeldungenPDF } from '@/lib/services/km-pdf-service';
 import type { KMMeldung, KMDisziplin, Shooter, Club, KMMannschaft } from '@/types';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
     const body = await request.json();
     const { type, saison = '2026' } = body;
 

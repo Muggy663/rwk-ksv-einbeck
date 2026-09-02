@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
+import { authFetch } from '@/lib/auth/authFetch';
 import { ALTERSKLASSEN, getSchiesszeit } from '@/lib/constants/km-constants';
 
 interface StartlistConfig {
@@ -174,7 +175,7 @@ export default function StartlistenPage() {
       
       try {
         logDebug('Loading KM-Meldungen für Saison:', selectedSaison);
-        const response = await fetch(`/api/km/meldungen?saison=${selectedSaison}`);
+        const response = await authFetch(`/api/km/meldungen?saison=${selectedSaison}`);
         
         if (response.ok) {
           const data = await response.json();

@@ -22,7 +22,7 @@ export default function KMAdmin() {
 
   const handlePDFExport = async (type: 'meldeliste' | 'startliste' | 'lm-meldungen') => {
     try {
-      const response = await fetch('/api/km/export', {
+      const response = await authFetch('/api/km/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type })
@@ -57,7 +57,7 @@ export default function KMAdmin() {
   const loadData = async () => {
     try {
       const [meldungenRes, disziplinenRes, schuetzenRes, vereineRes] = await Promise.all([
-        fetch('/api/km/meldungen'),
+        authFetch('/api/km/meldungen'),
         fetch('/api/km/disziplinen'),
         authFetch('/api/shooters'),
         fetch('/api/clubs')

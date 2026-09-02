@@ -163,7 +163,7 @@ function KMMannschaftenContent() {
       
       try {
 
-        const meldungenRes = await fetch(`/api/km/meldungen?saison=${selectedSaison}`);
+        const meldungenRes = await authFetch(`/api/km/meldungen?saison=${selectedSaison}`);
         if (meldungenRes.ok) {
           const data = await meldungenRes.json();
           setMeldungen(data.data || []);

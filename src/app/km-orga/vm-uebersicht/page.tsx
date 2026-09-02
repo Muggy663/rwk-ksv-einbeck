@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { authFetch } from '@/lib/auth/authFetch';
 
 interface VMMeldung {
   id: string;
@@ -110,7 +111,7 @@ export default function VMUebersichtPage() {
       const { db } = await import('@/lib/firebase/config');
       
       const [meldungenRes, shootersSnapshot, disziplinenRes, clubsRes] = await Promise.all([
-        fetch(`/api/km/meldungen?saison=${selectedSaison}`),
+        authFetch(`/api/km/meldungen?saison=${selectedSaison}`),
         getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs')

@@ -93,7 +93,7 @@ export default function KMAdminMeldungen() {
   const loadData = async () => {
     try {
       const [meldungenRes, disziplinenRes, clubsRes] = await Promise.all([
-        fetch(`/api/km/meldungen?saison=${selectedSaison}`),
+        authFetch(`/api/km/meldungen?saison=${selectedSaison}`),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs')
       ]);

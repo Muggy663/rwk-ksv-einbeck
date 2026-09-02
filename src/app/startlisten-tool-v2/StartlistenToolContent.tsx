@@ -93,7 +93,7 @@ export function StartlistenToolV2Content() {
         logInfo('DEBUG: Vereine aus Firebase:', { data: Object.keys(vereineMap).length });
         
         // Lade Meldungen über die gleiche API wie KM-Orga
-        const meldungenRes = await fetch(`/api/km/meldungen?saison=${selectedSaison}`);
+        const meldungenRes = await authFetch(`/api/km/meldungen?saison=${selectedSaison}`);
         let saisonMeldungen: any[] = [];
         
         if (meldungenRes.ok) {
@@ -1289,7 +1289,7 @@ export function StartlistenToolV2Content() {
                         authFetch('/api/shooters'),
                         fetch('/api/km/mannschaften'),
                         fetch('/api/km/disziplinen'),
-                        fetch('/api/km/meldungen')
+                        authFetch('/api/km/meldungen')
                       ]);
                       
                       const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];

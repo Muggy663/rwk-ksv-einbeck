@@ -36,8 +36,8 @@ export default function VMErgebnissePage() {
     const loadData = async () => {
       try {
         const [meldungenRes, ergebnisseRes] = await Promise.all([
-          fetch('/api/km/meldungen'),
-          fetch('/api/km/ergebnisse')
+          authFetch('/api/km/meldungen'),
+          authFetch('/api/km/ergebnisse')
         ]);
         
         const meldungenData: Meldung[] = [];
