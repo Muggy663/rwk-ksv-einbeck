@@ -32,6 +32,8 @@ export interface GenderDistributionData {
 const AVAILABLE_COLLECTIONS = [
   'rwk_scores_2025_KK',
   'rwk_scores_2025_KKP',
+  'rwk_scores_2026_KK',
+  'rwk_scores_2026_KKP',
   'rwk_scores_2026_LD'
 ];
 

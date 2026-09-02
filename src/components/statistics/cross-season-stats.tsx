@@ -110,8 +110,9 @@ export function CrossSeasonStats() {
     try {
       // Da wir saisonübergreifend suchen, müssen wir alle Collections durchsuchen
       const currentYear = new Date().getFullYear();
-      const years = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1]; // Letzte 2 Jahre + aktuell + nächstes
-      const disciplines = discipline === 'all' ? ['KKG', 'KKP', 'LGA', 'LGS', 'LP'] : [discipline];
+      const years = [currentYear - 3, currentYear - 2, currentYear - 1, currentYear, currentYear + 1];
+      // Normalisierte Disziplin-Codes (entsprechen den Collection-Suffixen rwk_scores_JAHR_XX)
+      const disciplines = discipline === 'all' ? ['KK', 'KKP', 'LD'] : [discipline];
       
       let allScores: ShooterScore[] = [];
       
@@ -194,7 +195,7 @@ export function CrossSeasonStats() {
       setShooterStats({
         shooterId,
         shooterName: scores[0].shooterName,
-        years,
+        years: statYears,
         averageByYear,
         totalByYear,
         roundsByYear,
@@ -403,12 +404,9 @@ export function CrossSeasonStats() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Alle Disziplinen</SelectItem>
-                  <SelectItem value="KK">Kleinkaliber</SelectItem>
-                  <SelectItem value="KKG">Kleinkaliber Gewehr</SelectItem>
-                  <SelectItem value="LG">Luftgewehr</SelectItem>
-                  <SelectItem value="LGA">Luftgewehr Auflage</SelectItem>
-                  <SelectItem value="LP">Luftpistole</SelectItem>
-                  <SelectItem value="LPA">Luftpistole Auflage</SelectItem>
+                  <SelectItem value="KK">Kleinkaliber Gewehr (KK)</SelectItem>
+                  <SelectItem value="KKP">Kleinkaliber Pistole (KKP)</SelectItem>
+                  <SelectItem value="LD">Luftdruck (LG/LP)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
