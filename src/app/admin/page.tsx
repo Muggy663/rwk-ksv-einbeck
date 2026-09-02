@@ -20,7 +20,8 @@ function BulkVerifyButton() {
   const handleClick = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/verify-existing-users', { method: 'POST' });
+      const { authFetch } = await import('@/lib/auth/authFetch');
+      const res = await authFetch('/api/admin/verify-existing-users', { method: 'POST' });
       const data = await res.json();
       setDone(data.updated ?? 0);
     } catch (e) { setDone(-1); } finally { setLoading(false); }

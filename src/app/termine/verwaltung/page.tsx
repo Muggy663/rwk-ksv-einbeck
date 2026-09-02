@@ -39,8 +39,8 @@ export default function TermineVerwaltungPage() {
     const loadEvents = async () => {
       setIsLoading(true);
       try {
-        // Auto-Cleanup via API (Admin-Rechte)
-        fetch('/api/cleanup-events').catch(() => {});
+        // Auto-Cleanup via API (nur für angemeldete Nutzer)
+        import('@/lib/auth/authFetch').then(({ authFetch }) => authFetch('/api/cleanup-events').catch(() => {}));
         
         const eventsData = await fetchEvents();
         const cutoff = new Date();

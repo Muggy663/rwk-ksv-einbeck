@@ -1,16 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logError } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
+import { verifyApiAuth } from '@/lib/auth/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { uid, email, displayName } = await request.json();
+    // Authentifizierung: Nutzer kann NUR sein eigenes Berechtigungs-Dokument anlegen.
+    const authUser = await verifyApiAuth(request);
+    if (!authUser) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    const { displayName } = await request.json();
+    const uid = authUser.uid;
+    const email = authUser.email;
 
     if (!uid || !email) {
       return NextResponse.json(
         { error: 'UID und E-Mail sind erforderlich' },
         { status: 400 }
       );
+    }
+
+    // Bestehendes Dokument NICHT überschreiben (verhindert Rechte-Reset/Manipulation).
+    const existing = await adminDb.collection('user_permissions').doc(uid).get();
+    if (existing.exists) {
+      return NextResponse.json({ success: true, message: 'Bereits vorhanden' });
     }
 
     await adminDb.collection('user_permissions').doc(uid).set({
@@ -25,12 +40,6 @@ export async function POST(request: NextRequest) {
         rwk: false,
         km: false,
         admin: false
-      },
-      premium: {
-        isActive: true,
-        type: 'free_premium',
-        startDate: new Date(),
-        endDate: new Date('2099-12-31') // Läuft nie ab
       }
     });
 
