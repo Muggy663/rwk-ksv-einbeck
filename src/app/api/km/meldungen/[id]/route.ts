@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
 import { logError, logInfo } from '@/lib/utils/secure-logger';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 // DELETE /api/km/meldungen/[id]
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     const { id } = await params;
     
     if (!id) {

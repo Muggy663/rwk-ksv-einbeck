@@ -212,7 +212,7 @@ function KMMannschaftenContent() {
     
     try {
 
-      const response = await fetch('/api/km/mannschaften/generate', {
+      const response = await authFetch('/api/km/mannschaften/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

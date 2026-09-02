@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { logError, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { authFetch } from '@/lib/auth/authFetch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -171,7 +172,7 @@ export default function KMAdminMeldungen() {
             gemeldeteVon: 'km-orga'
           };
 
-          const response = await fetch('/api/km/meldungen', {
+          const response = await authFetch('/api/km/meldungen', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(meldungData)
@@ -234,7 +235,7 @@ export default function KMAdminMeldungen() {
 
   const updateMeldung = async (meldungId: string) => {
     try {
-      const response = await fetch(`/api/km/meldungen/${meldungId}`, {
+      const response = await authFetch(`/api/km/meldungen/${meldungId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -260,7 +261,7 @@ export default function KMAdminMeldungen() {
     if (!confirm('Meldung wirklich löschen?')) return;
     
     try {
-      const response = await fetch(`/api/km/meldungen/${meldungId}`, {
+      const response = await authFetch(`/api/km/meldungen/${meldungId}`, {
         method: 'DELETE'
       });
       
@@ -304,7 +305,7 @@ export default function KMAdminMeldungen() {
         nachCollectionName = 'km_meldungen_2026_kk';
       }
       
-      const response = await fetch('/api/km/meldungen/verschieben', {
+      const response = await authFetch('/api/km/meldungen/verschieben', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

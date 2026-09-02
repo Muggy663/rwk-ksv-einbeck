@@ -4,6 +4,7 @@ import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/uti
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendKMMeldungNotificationEmail } from '@/lib/services/email-notification-service';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => {
   const kuerzel = disziplinKuerzel.toLowerCase();
@@ -16,6 +17,13 @@ const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => {
 
 export async function POST(request: NextRequest) {
   try {
+    // Authentifizierung erforderlich (nur eingeloggte KM-Berechtigte).
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+    const gemeldeteVon = auth.email || 'Vereinsvertreter';
+
     const body = await request.json();
     const { schuetzeId, disziplinId, saisonId, lmTeilnahme, anmerkung, vmErgebnis } = body;
 
@@ -24,20 +32,6 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Schütze, Disziplin und Saison sind erforderlich'
       }, { status: 400 });
-    }
-
-    // Hole Benutzerinformationen aus Authorization Header
-    const authHeader = request.headers.get('authorization');
-    let gemeldeteVon = 'Unbekannter Benutzer';
-    
-    if (authHeader?.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.substring(7);
-        const decodedToken = await (adminDb as any).app.auth().verifyIdToken(token);
-        gemeldeteVon = decodedToken.email || decodedToken.name || 'Vereinsvertreter';
-      } catch {
-        gemeldeteVon = 'Vereinsvertreter';
-      }
     }
 
     // Hole Saison-Daten

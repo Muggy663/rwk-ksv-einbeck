@@ -4,11 +4,17 @@ import { logError, logInfo, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 const KM_MANNSCHAFTEN_COLLECTION = 'km_mannschaften';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     const body = await request.json();
     const { saison, disziplinId } = body;
     
@@ -83,16 +89,11 @@ export async function POST(request: NextRequest) {
     const disziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
     const clubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
     
-    // Lade Mannschaftsregeln aus der Datenbank
-    const mannschaftsregelnSnapshot = await db.collection('system_config')
-      .where('type', '==', 'mannschaftsregeln')
-      .get();
-    
-    let mannschaftsregeln = {};
-    if (!mannschaftsregelnSnapshot.empty) {
-      const doc = mannschaftsregelnSnapshot.docs[0];
-      mannschaftsregeln = doc.data().regeln || {};
-    }
+    // Lade Mannschaftsregeln aus der Datenbank.
+    // Gespeichert wird direkt unter system_config/mannschaftsregeln (Root-Felder),
+    // daher hier per Doc-ID laden (früher fälschlich per where('type') gesucht).
+    const mannschaftsregelnDoc = await db.collection('system_config').doc('mannschaftsregeln').get();
+    const mannschaftsregeln = mannschaftsregelnDoc.exists ? (mannschaftsregelnDoc.data() || {}) : {};
     
     logInfo('Geladene Mannschaftsregeln:', { data: Object.keys(mannschaftsregeln).length });
     logInfo('Beispiel-Regel:', { data: Object.values(mannschaftsregeln)[0] });

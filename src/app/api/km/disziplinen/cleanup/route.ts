@@ -3,9 +3,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
     const snapshot = await getDocs(collection(db, 'km_disziplinen'));
     const disziplinen = snapshot.docs.map(doc => ({
       id: doc.id,

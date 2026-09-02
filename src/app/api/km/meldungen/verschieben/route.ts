@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logError, logInfo, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => {
   const kuerzel = disziplinKuerzel.toLowerCase();
@@ -13,6 +14,11 @@ const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
     const { meldungIds, vonSaison, nachSaison } = await request.json();
     
     if (!meldungIds || !Array.isArray(meldungIds) || !vonSaison || !nachSaison) {

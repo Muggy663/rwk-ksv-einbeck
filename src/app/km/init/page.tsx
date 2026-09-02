@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { authFetch } from '@/lib/auth/authFetch';
 import Link from 'next/link';
 
 export default function KMInit() {
@@ -21,7 +22,7 @@ export default function KMInit() {
   const handleInitWettkampfklassen = async () => {
     setLoading(prev => ({ ...prev, wettkampfklassen: true }));
     try {
-      const response = await fetch('/api/km/init-wettkampfklassen', {
+      const response = await authFetch('/api/km/init-wettkampfklassen', {
         method: 'POST'
       });
       
@@ -105,7 +106,7 @@ export default function KMInit() {
                 </Button>
                 <Button 
                   onClick={async () => {
-                    const response = await fetch('/api/km/wettkampfklassen/cleanup', { method: 'POST' });
+                    const response = await authFetch('/api/km/wettkampfklassen/cleanup', { method: 'POST' });
                     const result = await response.json();
                     toast({ title: result.success ? 'Erfolg' : 'Fehler', description: result.message });
                   }}
@@ -150,7 +151,7 @@ export default function KMInit() {
                 </Button>
                 <Button 
                   onClick={async () => {
-                    const response = await fetch('/api/km/disziplinen/cleanup', { method: 'POST' });
+                    const response = await authFetch('/api/km/disziplinen/cleanup', { method: 'POST' });
                     const result = await response.json();
                     toast({ title: result.success ? 'Erfolg' : 'Fehler', description: result.message });
                   }}
@@ -163,7 +164,7 @@ export default function KMInit() {
                 <Button 
                   onClick={async () => {
                     try {
-                      const response = await fetch('/api/km/add-blasrohr', { 
+                      const response = await authFetch('/api/km/add-blasrohr', { 
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' }
                       });
