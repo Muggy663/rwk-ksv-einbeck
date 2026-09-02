@@ -24,7 +24,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM und Schießnachweis.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: heute - Version 2.4.6 - Next.js 16 + Glassmorphism Design
+            Stand: Version 3.0.0 - Next.js 16 + Glassmorphism Design
           </p>
         </div>
       </div>
@@ -427,12 +427,12 @@ export default function HandbuchPage() {
               <p>Die RWK Einbeck App ist jetzt auch als native Android-App verfügbar für bessere Performance und einfachere Nutzung.</p>
               
               <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800 mb-4">
-                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">📱 Android-App (Version 0.9.4.1) - jetzt im Google Play Store!</h4>
-                <p className="text-green-700 dark:text-green-300">Die native Android-App bietet alle Funktionen der Web-App mit verbesserter Performance. Ab sofort im <strong>Google Play Store Beta</strong> verfügbar.</p>
+                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">📱 Android-App (Version 1.0.0) - jetzt im Google Play Store!</h4>
+                <p className="text-green-700 dark:text-green-300">Die native Android-App bietet alle Funktionen der Web-App mit verbesserter Performance. Ab sofort im <strong>Google Play Store</strong> verfügbar.</p>
               </div>
               
               <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li><strong>Play Store:</strong> Suchen Sie nach "RWK Einbeck" im Google Play Store (Beta-Test)</li>
+                <li><strong>Play Store:</strong> Suchen Sie nach "RWK Einbeck" im Google Play Store</li>
                 <li><strong>Alternativ:</strong> APK-Datei über die App-Seite oder Dokumente-Bereich herunterladen</li>
                 <li><strong>Kompatibilität:</strong> Android 5.0+ (unterstützt 95% aller Android-Geräte)</li>
                 <li><strong>Updates:</strong> Erfolgen automatisch über den Play Store oder die Web-App</li>
@@ -475,7 +475,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Kreismeisterschaften - Benutzerhandbuch</CardTitle>
-              <CardDescription>Anleitung zur Nutzung des Kreismeisterschafts-Moduls - Version 2.4.6</CardDescription>
+              <CardDescription>Anleitung zur Nutzung des Kreismeisterschafts-Moduls - Version 3.0.0</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
@@ -742,7 +742,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Schießnachweis - Benutzerhandbuch</CardTitle>
-              <CardDescription>Das digitale Schießtagebuch für Sportschützen - Version 2.4.6</CardDescription>
+              <CardDescription>Das digitale Schießtagebuch für Sportschützen - Version 3.0.0</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
