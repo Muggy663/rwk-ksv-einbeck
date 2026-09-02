@@ -122,7 +122,7 @@ export function MobileBurgerMenu() {
               <div className="border-t pt-3">
                 <h3 className="mb-2 flex items-center gap-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Extra
-                  <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium normal-case text-primary">Bonus</span>
+                  <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium normal-case text-primary-foreground">Bonus</span>
                 </h3>
                 <div className="space-y-1">
                   {filteredExtraItems.map((item) => {

@@ -101,7 +101,7 @@ export function Sidebar() {
         <div className="mt-2 mb-6 border-t pt-5">
           <h3 className="mb-3 flex items-center gap-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Extra
-            <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium normal-case text-primary">
+            <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium normal-case text-primary-foreground">
               Bonus
             </span>
           </h3>
