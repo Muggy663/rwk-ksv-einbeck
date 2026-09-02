@@ -9,7 +9,7 @@ import { useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Info, ChevronLeft } from 'lucide-react';
+import { Users, Info, ChevronLeft, FileSpreadsheet } from 'lucide-react';
 import { PageHero } from '@/components/layout/PageHero';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { useClubContext } from '@/contexts/ClubContext';
@@ -97,12 +97,22 @@ export default function MitgliederPage() {
         description="Eine gemeinsame Liste für RWK und Kreismeisterschaft"
         accent="primary"
         actions={
-          <Button asChild variant="outline" className="w-full sm:w-auto">
-            <Link href="/dashboard-auswahl" className="flex items-center justify-center">
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Zurück zur Auswahl
-            </Link>
-          </Button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            {permissions.canEdit && (
+              <Button asChild variant="outline" className="w-full sm:w-auto">
+                <Link href="/mitglieder/import" className="flex items-center justify-center">
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Mitcom-Import
+                </Link>
+              </Button>
+            )}
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link href="/dashboard-auswahl" className="flex items-center justify-center">
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Zurück zur Auswahl
+              </Link>
+            </Button>
+          </div>
         }
       />
 

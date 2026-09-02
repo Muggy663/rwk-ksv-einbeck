@@ -6,7 +6,7 @@ import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, FileText, BarChart3, Calendar, Key, Play, Sparkles, Target, Trophy, Shield, HelpCircle, FileSpreadsheet } from 'lucide-react';
+import { Users, FileText, BarChart3, Calendar, Key, Play, Sparkles, Target, Trophy, Shield, HelpCircle } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 import Link from 'next/link';
@@ -209,32 +209,6 @@ export default function VereinDashboardPage() {
               <Button asChild className="w-full h-12 text-sm font-semibold">
                 <Link href="/verein/mannschaften">
                   <span className="truncate">Mannschaften verwalten</span>
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Mitcom-Import - Nur für Sportleiter/Vorstand. Die Mitgliederverwaltung
-            selbst läuft zentral über /mitglieder (Dashboard-Auswahl). */}
-        {(userPermission?.clubRoles && (Object.values(userPermission.clubRoles).includes('SPORTLEITER') || Object.values(userPermission.clubRoles).includes('VORSTAND')) || userPermission?.role === 'vereinsvertreter' || user?.email === 'admin@rwk-einbeck.de') && (
-          <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-blue-500">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <FileSpreadsheet className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-              <CardTitle className="text-xl">Mitcom-Import</CardTitle>
-              <CardDescription className="text-base">
-                Mitgliederdaten aus Mitcom importieren. Die Mitgliederverwaltung selbst findest du zentral unter „Mitglieder“.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full h-12 text-sm font-semibold">
-                <Link href="/verein/mitglieder-import">
-                  <FileSpreadsheet className="mr-2 h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">Mitcom-Import öffnen</span>
                 </Link>
               </Button>
             </CardContent>

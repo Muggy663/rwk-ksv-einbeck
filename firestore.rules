@@ -375,23 +375,18 @@ service cloud.firestore {
        match /km_startlisten_v2/{startliste} {
       allow read: if true;
       allow write, delete: if isSuperAdmin() || 
-                           isAdminEmail() ||
                            (isAuthenticated() && getUserPermissions() != null && 
                             (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
-                             getUserPermissions().kvRole == 'KV_WETTKAMPFLEITER' ||
-                             getUserPermissions().role == 'km_organisator' ||
-                             getUserPermissions().kvRoles != null && 
-                             (getUserPermissions().kvRoles.values().hasAny(['KV_KM_ORGA', 'KM_ORGANISATOR']) ||
-                              getUserPermissions().kvRoles.values().hasAny(['KV_WETTKAMPFLEITER'])) ||
-                             // Temporär: Alle authentifizierten Benutzer mit Berechtigungen
-                             (getUserPermissions().role != null || getUserPermissions().clubRoles != null)));
+                             getUserPermissions().role == 'km_organisator'));
     }
+
 
     match /km_startlisten_aenderungen/{aenderung} {
       allow read: if true;
       allow write, delete: if isSuperAdmin() || 
                            (isAuthenticated() && getUserPermissions() != null && 
                             (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
+                            getUserPermissions().kvRole == 'KV_WETTKAMPFLEITER' ||
                              getUserPermissions().role == 'km_organisator'));
     }
 
@@ -471,7 +466,7 @@ service cloud.firestore {
               getUserPermissions().premiumUntil > request.time);
     }
     
-    // Schießnachweis-Daten - Jeder angemeldete User kann seine eigenen Daten lesen/schreiben
+   // Schießnachweis-Daten - Jeder angemeldete User kann seine eigenen Daten lesen/schreiben
     match /schiessnachweis_data/{userId} {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
@@ -527,7 +522,7 @@ service cloud.firestore {
       allow create: if true; // AdminSDK erstellt Logs
       allow update, delete: if false;
     }
-
+    
     match /login_events/{event} {
       allow create: if true; // Jeder kann Login-Events schreiben (auch nicht eingeloggt)
       allow read: if isSuperAdmin();
@@ -669,7 +664,7 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
     
-    // === AUSBILDUNGSMODUL ===
+// === AUSBILDUNGSMODUL ===
 
     // Kurse: öffentlich lesbar (nur nicht-Entwürfe), schreiben nur Admin
     match /ausbildung_kurse/{kursId} {

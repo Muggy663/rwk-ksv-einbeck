@@ -3,7 +3,7 @@ import { type ReactNode, createContext, useContext, useState, useEffect, useMemo
 import Link from 'next/link';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, ShieldAlert, UserCog, FileDown, CalendarDays, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, ShieldAlert, UserCog, CalendarDays, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useClubContext } from '@/contexts/ClubContext';
 import { deriveUserClubIds } from '@/lib/clubs/userClubs';
@@ -35,8 +35,7 @@ interface VereinLayoutProps {
 const vereinNavItems = [
   { href: '/verein/dashboard', label: 'Übersicht', icon: LayoutDashboard },
   { href: '/verein/mannschaften', label: 'Meine Mannschaften', icon: Users },
-  { href: '/verein/schuetzen', label: 'Meine Schützen', icon: UserCircle },
-  { href: '/verein/mitglieder-import', label: 'Mitcom-Import', icon: FileDown },
+  { href: '/mitglieder', label: 'Mitglieder', icon: UserCircle },
   { href: '/verein/ergebnisse', label: 'Ergebnisse erfassen', icon: ListChecks },
   { href: '/verein/handtabellen', label: 'Handtabellen', icon: FileText },
   { href: '/termine', label: 'Terminkalender', icon: CalendarDays },
