@@ -465,9 +465,9 @@ export function CrossSeasonStats() {
                       className="w-full justify-start text-left h-auto py-2"
                       onClick={() => handleShooterSelect(result.id)}
                     >
-                      <span className="font-medium">{result.name}</span>
+                      <span className="font-medium text-foreground">{result.name}</span>
                       {result.clubName && (
-                        <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                        <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
                           {result.clubName}
                         </span>
                       )}
