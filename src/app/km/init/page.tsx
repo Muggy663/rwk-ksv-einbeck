@@ -43,7 +43,7 @@ export default function KMInit() {
   const handleInitDisziplinen = async () => {
     setLoading(prev => ({ ...prev, disziplinen: true }));
     try {
-      const response = await fetch('/api/km/disziplinen', {
+      const response = await authFetch('/api/km/disziplinen', {
         method: 'POST'
       });
       

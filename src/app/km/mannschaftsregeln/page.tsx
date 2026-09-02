@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { authFetch } from '@/lib/auth/authFetch';
 
 export default function KMMannschaftsregelnAdmin() {
   const { hasKMAccess, userRole, loading: authLoading } = useKMAuth();
@@ -75,7 +76,7 @@ export default function KMMannschaftsregelnAdmin() {
 
   const saveRegeln = async () => {
     try {
-      const response = await fetch('/api/km/mannschaftsregeln', {
+      const response = await authFetch('/api/km/mannschaftsregeln', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ regeln })

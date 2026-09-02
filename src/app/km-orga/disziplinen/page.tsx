@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Edit, Save, X, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { authFetch } from '@/lib/auth/authFetch';
 
 interface Disziplin {
   id: string;
@@ -70,7 +71,7 @@ export default function DisziplinenVerwaltung() {
 
   const saveEdit = async () => {
     try {
-      const response = await fetch(`/api/km/disziplinen/${editingId}`, {
+      const response = await authFetch(`/api/km/disziplinen/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editData)
@@ -88,7 +89,7 @@ export default function DisziplinenVerwaltung() {
 
   const addNewDisziplin = async () => {
     try {
-      const response = await fetch('/api/km/disziplinen', {
+      const response = await authFetch('/api/km/disziplinen', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -120,7 +121,7 @@ export default function DisziplinenVerwaltung() {
     if (!confirm(`Disziplin "${name}" wirklich löschen?`)) return;
     
     try {
-      const response = await fetch(`/api/km/disziplinen/${id}`, {
+      const response = await authFetch(`/api/km/disziplinen/${id}`, {
         method: 'DELETE'
       });
       if (response.ok) {

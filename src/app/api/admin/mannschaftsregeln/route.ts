@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 export async function GET() {
   try {
@@ -34,6 +35,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
     const { regeln } = await request.json();
     
     regeln.lastUpdated = new Date().toISOString();

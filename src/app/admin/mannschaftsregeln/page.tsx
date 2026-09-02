@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
+import { authFetch } from '@/lib/auth/authFetch';
 
 export default function MannschaftsregelnAdmin() {
   const { toast } = useToast();
@@ -65,7 +66,7 @@ export default function MannschaftsregelnAdmin() {
 
   const saveRegeln = async () => {
     try {
-      const response = await fetch('/api/admin/mannschaftsregeln', {
+      const response = await authFetch('/api/admin/mannschaftsregeln', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ regeln })

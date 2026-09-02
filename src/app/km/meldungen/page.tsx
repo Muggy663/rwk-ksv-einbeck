@@ -10,17 +10,16 @@ import Link from 'next/link';
 import type { Shooter, KMDisziplin, KMMeldung } from '@/types';
 import { getStartVereinForDisziplin } from '@/lib/services/km-startrechte-service';
 import { useKMAuth } from '@/hooks/useKMAuth';
-import { useAuthContext } from '@/components/auth/AuthContext';
 import { BackButton } from '@/components/ui/back-button';
 import { KMProvider, useKMContext } from '@/contexts/KMContext';
 import { KMClubSwitcher } from '@/components/ui/km-club-switcher';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { authFetch } from '@/lib/auth/authFetch';
 
 function KMMeldungenContent() {
   const { toast } = useToast();
   const { userRole } = useKMAuth();
   const { currentClubId, userClubIds } = useKMContext();
-  const { user } = useAuthContext();
   const [meldeModus, setMeldeModus] = useState<'schuetze-disziplinen' | 'disziplin-schuetzen'>('disziplin-schuetzen');
   const [selectedSchuetze, setSelectedSchuetze] = useState('');
   const [selectedSchuetzen, setSelectedSchuetzen] = useState<string[]>([]);
@@ -246,11 +245,10 @@ function KMMeldungenContent() {
       logDebug(`Creating promises for ${pendingMeldungen.length} meldungen`);
       const promises = pendingMeldungen.map((meldung, index) => {
         logDebug(`Creating promise ${index + 1}: ${JSON.stringify(meldung)}`);
-        return fetch('/api/km/meldungen', {
+        return authFetch('/api/km/meldungen', {
           method: 'POST',
           headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${JSON.stringify({ email: user?.email, displayName: user?.displayName })}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             ...meldung,
@@ -327,11 +325,10 @@ function KMMeldungenContent() {
       if (editingMeldung) {
         // Update bestehende Meldung
         const vmData = vmErgebnisse[selectedDisziplinen[0]];
-        const response = await fetch(`/api/km/meldungen/${editingMeldung.id}`, {
+        const response = await authFetch(`/api/km/meldungen/${editingMeldung.id}`, {
           method: 'PUT',
           headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${JSON.stringify({ email: user?.email, displayName: user?.displayName })}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             lmTeilnahme: lmTeilnahme[selectedDisziplinen[0]] || false,
@@ -357,11 +354,10 @@ function KMMeldungenContent() {
         // Erstelle neue Meldungen
         const meldungsPromises = selectedDisziplinen.map(disziplinId => {
           const vmData = vmErgebnisse[disziplinId];
-          return fetch('/api/km/meldungen', {
+          return authFetch('/api/km/meldungen', {
             method: 'POST',
             headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${JSON.stringify({ email: user?.email, displayName: user?.displayName })}`
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
               schuetzeId: selectedSchuetze,

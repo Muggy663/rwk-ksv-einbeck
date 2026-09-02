@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 export async function GET(_request: NextRequest) {
   try {
@@ -25,6 +26,8 @@ export async function GET(_request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
     const { configId, startliste, datum } = await request.json();
     
     const docRef = await adminDb.collection('km_startlisten_v2').add({
@@ -50,6 +53,8 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
     const { id, configId, startliste, datum } = await request.json();
     
     if (!id) {
@@ -80,6 +85,8 @@ export async function PUT(request: NextRequest) {
 }
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
     const { id } = await request.json();
     
     if (!id) {

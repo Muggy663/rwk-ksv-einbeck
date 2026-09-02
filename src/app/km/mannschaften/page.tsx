@@ -280,7 +280,7 @@ function KMMannschaftenContent() {
         m.id === mannschaftId ? { ...m, schuetzenIds: newSchuetzenIds } : m
       ));
 
-      const response = await fetch(`/api/km/mannschaften/${mannschaftId}`, {
+      const response = await authFetch(`/api/km/mannschaften/${mannschaftId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ schuetzenIds: newSchuetzenIds })
@@ -591,7 +591,7 @@ function KMMannschaftenContent() {
                               onClick={async () => {
                                 if (confirm('Mannschaft wirklich löschen?')) {
                                   try {
-                                    const response = await fetch(`/api/km/mannschaften/${mannschaft.id}`, {
+                                    const response = await authFetch(`/api/km/mannschaften/${mannschaft.id}`, {
                                       method: 'DELETE'
                                     });
                                     if (response.ok) {

@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { useClubContext } from '@/contexts/ClubContext';
 import Link from 'next/link';
+import { authFetch } from '@/lib/auth/authFetch';
 
 export default function KMUebersicht() {
   const { toast } = useToast();
@@ -481,7 +482,7 @@ export default function KMUebersicht() {
                                         bemerkung: meldung.vmErgebnis?.bemerkung || ''
                                       } : meldung.vmErgebnis
                                     };
-                                    const res = await fetch(`/api/km/meldungen/${meldung.id}`, {
+                                    const res = await authFetch(`/api/km/meldungen/${meldung.id}`, {
                                       method: 'PUT',
                                       headers: { 'Content-Type': 'application/json' },
                                       body: JSON.stringify(updateData)
@@ -561,7 +562,7 @@ export default function KMUebersicht() {
                                   onClick={async () => {
                                     if (confirm('Meldung wirklich löschen?')) {
                                       try {
-                                        const res = await fetch(`/api/km/meldungen/${meldung.id}`, { method: 'DELETE' });
+                                        const res = await authFetch(`/api/km/meldungen/${meldung.id}`, { method: 'DELETE' });
                                         if (res.ok) {
                                           toast({ title: 'Meldung gelöscht' });
                                           // Sofort aus State entfernen für schnelles UI-Feedback

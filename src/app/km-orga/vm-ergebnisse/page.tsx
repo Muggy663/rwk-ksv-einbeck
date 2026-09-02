@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { authFetch } from '@/lib/auth/authFetch';
 
 
 interface Meldung {
@@ -92,7 +93,7 @@ export default function VMErgebnissePage() {
 
     setSaving(true);
     try {
-      const response = await fetch('/api/km/ergebnisse', {
+      const response = await authFetch('/api/km/ergebnisse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

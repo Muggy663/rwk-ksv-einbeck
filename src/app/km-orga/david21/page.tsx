@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Download, Upload, FileText, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { David21Service } from '@/lib/services/david21-service';
+import { authFetch } from '@/lib/auth/authFetch';
 
 export default function David21Page() {
   const router = useRouter();
@@ -157,7 +158,7 @@ export default function David21Page() {
       formData.append('file', importFile);
       formData.append('saisonId', importData.saisonId);
 
-      const response = await fetch('/api/km/david21-import', {
+      const response = await authFetch('/api/km/david21-import', {
         method: 'POST',
         body: formData
       });
