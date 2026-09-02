@@ -46,11 +46,11 @@ import {
 import { calculateAgeClass } from '@/types/rwk';
 import type { MemberPermissions } from '@/lib/permissions/memberPermissions';
 
-export type MemberListMode = 'rwk' | 'km';
-
 interface MemberListProps {
-  mode: MemberListMode;
   permissions: MemberPermissions;
+  /** Wenn gesetzt: nur Mitglieder dieses Vereins laden/anzeigen (Vereinsfilter). */
+  activeClubId?: string | null;
+  /** Vorbelegter Verein im Anlegen-Dialog. */
   defaultClubId?: string;
 }
 
@@ -122,7 +122,7 @@ async function getToken(): Promise<string | null> {
   return user.getIdToken();
 }
 
-export function MemberList({ mode, permissions, defaultClubId }: MemberListProps) {
+export function MemberList({ permissions, activeClubId, defaultClubId }: MemberListProps) {
   const { toast } = useToast();
   const sportjahr = currentSportjahr();
 
@@ -159,9 +159,14 @@ export function MemberList({ mode, permissions, defaultClubId }: MemberListProps
         return;
       }
 
+      // Bei gesetztem Vereinsfilter nur diesen Verein laden (kein gemischtes Ergebnis).
+      const membersUrl = activeClubId
+        ? `/api/members?clubId=${encodeURIComponent(activeClubId)}`
+        : '/api/members';
+
       // Vereine (für Namen/Dropdown) parallel laden – Lesezugriff clientseitig unkritisch.
       const [membersRes, clubsSnap] = await Promise.all([
-        fetch('/api/members', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(membersUrl, { headers: { Authorization: `Bearer ${token}` } }),
         getDocs(collection(db, 'clubs')),
       ]);
 
@@ -183,7 +188,7 @@ export function MemberList({ mode, permissions, defaultClubId }: MemberListProps
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, activeClubId]);
 
   useEffect(() => {
     loadMembers();
@@ -351,7 +356,8 @@ export function MemberList({ mode, permissions, defaultClubId }: MemberListProps
   };
 
   const canEdit = permissions.canEdit;
-  const showMitgliedsnummer = mode === 'km';
+  // Einheitliche Liste: Mitgliedsnummer und Altersklassen immer anzeigen.
+  const showMitgliedsnummer = true;
 
   return (
     <div className="space-y-4">
@@ -405,12 +411,8 @@ export function MemberList({ mode, permissions, defaultClubId }: MemberListProps
                   <th className="cursor-pointer px-3 py-2 text-left" onClick={() => handleSort('clubName')}>
                     <span className="inline-flex items-center gap-1">Verein {sortIcon('clubName')}</span>
                   </th>
-                  {mode === 'km' && (
-                    <>
-                      <th className="px-3 py-2 text-left">AK Auflage</th>
-                      <th className="px-3 py-2 text-left">AK Freihand</th>
-                    </>
-                  )}
+                  <th className="px-3 py-2 text-left">AK Auflage</th>
+                  <th className="px-3 py-2 text-left">AK Freihand</th>
                   {canEdit && <th className="px-3 py-2 text-right">Aktionen</th>}
                 </tr>
               </thead>
@@ -424,12 +426,8 @@ export function MemberList({ mode, permissions, defaultClubId }: MemberListProps
                       <td className="px-3 py-2">{m.birthYear || '—'}</td>
                       <td className="px-3 py-2">{m.gender === 'male' ? 'm' : m.gender === 'female' ? 'w' : '—'}</td>
                       <td className="px-3 py-2">{clubName(m.clubId)}</td>
-                      {mode === 'km' && (
-                        <>
-                          <td className="px-3 py-2">{ak.auflage}</td>
-                          <td className="px-3 py-2">{ak.freihand}</td>
-                        </>
-                      )}
+                      <td className="px-3 py-2">{ak.auflage}</td>
+                      <td className="px-3 py-2">{ak.freihand}</td>
                       {canEdit && (
                         <td className="px-3 py-2 text-right">
                           <div className="inline-flex gap-1">
@@ -494,18 +492,14 @@ export function MemberList({ mode, permissions, defaultClubId }: MemberListProps
                           {m.mitgliedsnummer || '—'}
                         </div>
                       )}
-                      {mode === 'km' && (
-                        <>
-                          <div>
-                            <span className="text-muted-foreground">AK Auflage: </span>
-                            {ak.auflage}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">AK Freihand: </span>
-                            {ak.freihand}
-                          </div>
-                        </>
-                      )}
+                      <div>
+                        <span className="text-muted-foreground">AK Auflage: </span>
+                        {ak.auflage}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">AK Freihand: </span>
+                        {ak.freihand}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -515,7 +509,7 @@ export function MemberList({ mode, permissions, defaultClubId }: MemberListProps
 
           <p className="text-xs text-muted-foreground">
             {filteredSorted.length} {filteredSorted.length === 1 ? 'Mitglied' : 'Mitglieder'}
-            {mode === 'km' ? ` · Altersklassen für Sportjahr ${sportjahr}` : ''}
+            {` · Altersklassen für Sportjahr ${sportjahr}`}
           </p>
         </>
       )}
@@ -633,9 +627,9 @@ export function MemberList({ mode, permissions, defaultClubId }: MemberListProps
               </div>
             </div>
 
-            {mode === 'rwk' && formMode === 'new' && (
+            {formMode === 'new' && (
               <p className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
-                Hinweis: Die Zuordnung zu einer RWK-Mannschaft erfolgt weiterhin über die
+                Hinweis: Die Zuordnung zu einer RWK-Mannschaft erfolgt über die
                 Mannschaftsverwaltung. Hier werden nur die Stammdaten angelegt.
               </p>
             )}
