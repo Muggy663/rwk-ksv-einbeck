@@ -145,6 +145,7 @@ export default function VMUebersichtPage() {
             schuetzeName: schuetze ? `${schuetze.firstName || schuetze.vorname || ''} ${schuetze.lastName || schuetze.nachname || ''}`.trim() : 'Unbekannt',
             verein: club?.name || 'Unbekannt',
             disziplin: disziplin?.name || 'Unbekannt',
+            gender: schuetze?.gender,
             vmErgebnis: m.vmErgebnis,
             lmTeilnahme: m.lmTeilnahme,
             nurVereinsmeisterschaft: m.nurVereinsmeisterschaft
@@ -176,8 +177,8 @@ export default function VMUebersichtPage() {
     }
     
     if (meldung.lmTeilnahme && meldung.vmErgebnis) {
-      // Geschlecht aus Namen schätzen oder Default verwenden
-      const geschlecht = 'Herren'; // TODO: Echtes Geschlecht aus Schützendaten
+      // Geschlecht aus den Schützendaten (Limits sind nach Herren/Damen getrennt).
+      const geschlecht = meldung.gender === 'female' ? 'Damen' : 'Herren';
       const limitKey = `${meldung.disziplin} ${geschlecht}`;
       const limit = qualifikationsLimits[limitKey as keyof typeof qualifikationsLimits];
       
