@@ -5,7 +5,7 @@ import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronUp, FileSpreadsheet } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { useAuthContext } from '@/components/auth/AuthContext';
@@ -193,42 +193,32 @@ function KMDashboardContent() {
           </CardContent>
         </Card>
 
-        {/* Mitgliederverwaltung */}
+        {/* Verwaltung (nur Admin/KM-Orga). Mitglieder laufen zentral über /mitglieder. */}
+        {(userRole === 'admin' || userRole === 'km_organisator') && (
         <Card className="hover:shadow-md transition-shadow border-green-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-800">
-              👥 Mitgliederverwaltung
+              ⚙️ Verwaltung
             </CardTitle>
             <CardDescription>
-              Schützen und Vereinsmitglieder verwalten
+              Einstellungen für die Kreismeisterschaft
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <Link href="/mitglieder">
-                <Button className="w-full bg-green-600 hover:bg-green-700">👥 Mitglieder verwalten</Button>
+              <Link href="/km/mannschaftsregeln">
+                <Button variant="outline" className="w-full">⚙️ Mannschaftsregeln</Button>
               </Link>
-              <Link href="/verein/mitglieder-import">
-                <Button variant="outline" className="w-full">
-                  <FileSpreadsheet className="mr-2 h-4 w-4" />Mitcom-Import
-                </Button>
+              <Link href="/km/init">
+                <Button variant="outline" className="w-full">⚙️ System Init</Button>
               </Link>
-              {(userRole === 'admin' || userRole === 'km_organisator') && (
-                <>
-                  <Link href="/km/mannschaftsregeln">
-                    <Button variant="outline" className="w-full">⚙️ Mannschaftsregeln</Button>
-                  </Link>
-                  <Link href="/km/init">
-                    <Button variant="outline" className="w-full">⚙️ System Init</Button>
-                  </Link>
-                  <Link href="/change-password">
-                    <Button variant="outline" className="w-full">🔑 Passwort ändern</Button>
-                  </Link>
-                </>
-              )}
+              <Link href="/change-password">
+                <Button variant="outline" className="w-full">🔑 Passwort ändern</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Statistiken */}
         <Card className="hover:shadow-md transition-shadow border-orange-200">

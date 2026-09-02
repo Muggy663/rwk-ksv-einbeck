@@ -215,7 +215,7 @@ export default function DashboardAuswahl() {
 
         {/* RWK Dashboard - Links oben */}
         {(isSportleiter || isVorstand || isMannschaftsfuehrer || isLegacyVereinsvertreter || isLegacyVereinsvorstand || isLegacyMannschaftsfuehrer || isRWKAdmin) && (
-          <Card className={`shadow-lg hover:shadow-xl transition-shadow ${isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand ? 'opacity-50 cursor-not-allowed' : ''}`}>
+          <Card className={`shadow-lg hover:shadow-xl transition-shadow h-full flex flex-col ${isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand ? 'opacity-50 cursor-not-allowed' : ''}`}>
           <CardHeader className="pb-4">
             <div>
               <CardTitle className="text-xl mb-2">
@@ -279,7 +279,7 @@ export default function DashboardAuswahl() {
 
         {/* KM Dashboard - Rechts oben */}
         {hasKMAccess && (
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow h-full flex flex-col">
           <CardHeader className="pb-4">
             <div>
               <CardTitle className="text-xl mb-2">

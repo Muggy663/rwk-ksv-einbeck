@@ -106,7 +106,7 @@ export default function MitgliederPage() {
         }
       />
 
-      <div className="mb-4 flex items-start gap-2 rounded-md border border-primary/20 bg-primary/5 p-3 text-sm text-muted-foreground">
+      <div className="mb-4 flex items-start gap-2 rounded-md border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
         <span>
           Diese Liste gilt für RWK und Kreismeisterschaft gemeinsam. Sie enthält alle Stammdaten

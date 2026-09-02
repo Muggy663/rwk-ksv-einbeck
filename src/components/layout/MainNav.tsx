@@ -1,6 +1,6 @@
 // src/components/layout/MainNav.tsx
 "use client";
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -34,43 +34,12 @@ interface RouteItem {
 
 export function MainNav() {
   const pathname = usePathname();
-  const { user, signOut, resetInactivityTimer } = useAuth();
-
-  const [timeLeft, setTimeLeft] = useState<number>(10 * 60);
+  // timeLeft kommt zentral aus dem AuthProvider (echte Inaktivitäts-Restzeit).
+  // Kein eigener, divergierender Timer mehr – Anzeige ist mit dem echten Logout gekoppelt.
+  const { user, signOut, resetInactivityTimer, timeLeft = 0 } = useAuth();
 
   const isAdmin = user && user.email === 'admin@rwk-einbeck.de';
 
-  useEffect(() => {
-    if (!user) return;
-    
-    const timer = setInterval(() => {
-      setTimeLeft(prev => Math.max(0, prev - 1));
-    }, 1000);
-    
-    return () => {
-      clearInterval(timer);
-    };
-  }, [user]);
-  
-  useEffect(() => {
-    if (!user || !resetInactivityTimer) return;
-    
-    const handleUserActivity = () => {
-      setTimeLeft(10 * 60);
-    };
-    
-    const activityEvents = ['mousedown', 'keypress', 'scroll', 'touchstart'];
-    activityEvents.forEach(event => {
-      window.addEventListener(event, handleUserActivity, true);
-    });
-    
-    return () => {
-      activityEvents.forEach(event => {
-        window.removeEventListener(event, handleUserActivity, true);
-      });
-    };
-  }, [user, resetInactivityTimer]);
-  
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
@@ -231,10 +200,7 @@ export function MainNav() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => {
-                resetInactivityTimer();
-                setTimeLeft(10 * 60);
-              }}
+              onClick={() => resetInactivityTimer()}
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary flex items-center"
             >
               <Clock className="h-4 w-4 mr-2" />

@@ -361,6 +361,19 @@ export function MemberList({ permissions, activeClubId, defaultClubId }: MemberL
 
   return (
     <div className="space-y-4">
+      {/* Anzahl-Anzeige oben */}
+      {!loading && (
+        <div className="flex items-center gap-2 text-sm">
+          <span className="inline-flex items-center rounded-full bg-primary px-3 py-1 font-semibold text-primary-foreground">
+            {filteredSorted.length}
+          </span>
+          <span className="text-muted-foreground">
+            {filteredSorted.length === 1 ? 'Mitglied' : 'Mitglieder'}
+            {searchTerm && members.length !== filteredSorted.length ? ` (von ${members.length})` : ''}
+          </span>
+        </div>
+      )}
+
       {/* Kopfzeile: Suche + Anlegen */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-xs">
@@ -413,6 +426,9 @@ export function MemberList({ permissions, activeClubId, defaultClubId }: MemberL
                   </th>
                   <th className="px-3 py-2 text-left">AK Auflage</th>
                   <th className="px-3 py-2 text-left">AK Freihand</th>
+                  <th className="px-3 py-2 text-left">E-Mail</th>
+                  <th className="px-3 py-2 text-left">Telefon</th>
+                  <th className="px-3 py-2 text-left">Ort</th>
                   {canEdit && <th className="px-3 py-2 text-right">Aktionen</th>}
                 </tr>
               </thead>
@@ -428,6 +444,9 @@ export function MemberList({ permissions, activeClubId, defaultClubId }: MemberL
                       <td className="px-3 py-2">{clubName(m.clubId)}</td>
                       <td className="px-3 py-2">{ak.auflage}</td>
                       <td className="px-3 py-2">{ak.freihand}</td>
+                      <td className="px-3 py-2">{m.email || '—'}</td>
+                      <td className="px-3 py-2">{m.telefon || m.mobil || m.phone || '—'}</td>
+                      <td className="px-3 py-2">{m.ort ? `${m.plz || ''} ${m.ort}`.trim() : '—'}</td>
                       {canEdit && (
                         <td className="px-3 py-2 text-right">
                           <div className="inline-flex gap-1">
