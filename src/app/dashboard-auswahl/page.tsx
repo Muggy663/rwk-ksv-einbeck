@@ -348,7 +348,7 @@ export default function DashboardAuswahl() {
 
         {/* Zentrale Mitgliederliste - für RWK und KM gemeinsam */}
         {memberPermissions.canViewMembers && (
-        <Card className="shadow-lg hover:shadow-xl transition-shadow border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 md:col-span-2">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
           <CardHeader className="pb-4">
             <div>
               <CardTitle className="text-xl mb-2">👥 Mitglieder</CardTitle>
@@ -362,67 +362,59 @@ export default function DashboardAuswahl() {
               Eine zentrale Mitgliederliste für Rundenwettkampf und Kreismeisterschaft
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-                <p className="text-sm text-amber-800 dark:text-amber-200">
-                  ℹ️ Diese Liste gilt für <strong>RWK und KM</strong> gemeinsam. Mitglieder hier
-                  anlegen, bearbeiten oder entfernen – beide Bereiche greifen darauf zu.
-                </p>
+          <CardContent className="flex flex-1 flex-col">
+            <div className="flex flex-1 flex-col space-y-4">
+              <div className="bg-muted/50 border rounded-lg p-3">
+                <h4 className="font-semibold mb-2">Funktionen</h4>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div>• Gemeinsam für RWK und KM</div>
+                  <div>• Anlegen, bearbeiten, entfernen</div>
+                  <div>• Mitgliedsnummer & Altersklassen</div>
+                </div>
               </div>
-              <Link href="/mitglieder" className="block">
-                <Button className="w-full">Mitglieder verwalten</Button>
-              </Link>
+              <div className="mt-auto">
+                <Link href="/mitglieder" className="block">
+                  <Button className="w-full">Mitglieder verwalten</Button>
+                </Link>
+              </div>
             </div>
           </CardContent>
         </Card>
         )}
 
-      </div>
-      
-      {/* Weitere Funktionen - Nach unten */}
-      <div className="mt-6">
-        <h2 className="text-xl font-semibold text-center mb-4 text-muted-foreground">🎯 Schießnachweis</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          
-          {/* Schießnachweis - Links unten */}
-          <Card className="shadow-lg hover:shadow-xl transition-shadow border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
-            <CardHeader className="pb-4">
-              <div>
-                <CardTitle className="text-xl mb-2">
-                  🎯 Schießnachweis
-                </CardTitle>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="outline">Cloud-Speicherung</Badge>
-                  <Badge variant="outline">PDF-Export</Badge>
+        {/* Schießnachweis - Zusatz-Feature, aber im selben Raster */}
+        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+          <CardHeader className="pb-4">
+            <div>
+              <CardTitle className="text-xl mb-2">🎯 Schießnachweis</CardTitle>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant="outline">Extra</Badge>
+                <Badge variant="outline">PDF-Export</Badge>
+              </div>
+            </div>
+            <CardDescription>
+              Digitales Schießtagebuch für Sportschützen
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col">
+            <div className="flex flex-1 flex-col space-y-4">
+              <div className="bg-muted/50 border rounded-lg p-3">
+                <h4 className="font-semibold mb-2">Funktionen</h4>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div>• Training & Wettkampf erfassen</div>
+                  <div>• PDF-Export für Behörden</div>
+                  <div>• Cloud-Sync & Statistiken</div>
                 </div>
               </div>
-              <CardDescription>
-                Digitales Schießtagebuch für Sportschützen
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🆕 Features</h4>
-                  <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
-                    <div>• Training & Wettkampf erfassen</div>
-                    <div>• PDF-Export für Behörden</div>
-                    <div>• Cloud-Sync & Statistiken</div>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Link href="/schiessnachweis" className="flex-1">
-                    <Button className="w-full">
-                      Schießnachweis öffnen
-                    </Button>
-                  </Link>
-                </div>
+              <div className="mt-auto">
+                <Link href="/schiessnachweis" className="block">
+                  <Button className="w-full">Schießnachweis öffnen</Button>
+                </Link>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
+
       </div>
 
       {/* Support-Bereich */}
