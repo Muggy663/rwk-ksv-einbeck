@@ -81,7 +81,7 @@ export default function KMUebersicht() {
       }
       
       const [meldungenRes] = await Promise.all([
-        fetch(meldungenUrl)
+        authFetch(meldungenUrl)
       ]);
       
       // Lade Schützen direkt aus Firebase
