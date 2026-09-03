@@ -793,6 +793,7 @@ export default function KMErgebnissePage() {
                     
                     let successCount = 0;
                     let errorCount = 0;
+                    let letzterFehlerGrund = ''; // 'overload' | 'network' | ''
                     
                     try {
                       for (let i = 0; i < files.length; i++) {
@@ -836,9 +837,16 @@ export default function KMErgebnissePage() {
                               errorCount--;
                               continue;
                             }
+
+                            // Überlastung des KI-Dienstes (503) merken für Abschlussmeldung
+                            const errText = String(result.error ?? '').toLowerCase();
+                            if (errText.includes('503') || errText.includes('unavailable') || errText.includes('overloaded') || errText.includes('high demand')) {
+                              letzterFehlerGrund = 'overload';
+                            }
                           }
                         } catch (fileError) {
                           errorCount++;
+                          letzterFehlerGrund = 'network';
                         }
                         
                         // Rate Limit
@@ -853,11 +861,27 @@ export default function KMErgebnissePage() {
                       
                       setImportProgress(prev => ({ ...prev, current: 0, total: 0, show: false }));
                       
-                      toast({ 
-                        title: '✅ Import abgeschlossen', 
-                        description: `${successCount} Ergebnisse importiert, ${errorCount} Fehler`,
-                        className: 'border-green-500 bg-green-50'
-                      });
+                      if (successCount === 0 && errorCount > 0 && letzterFehlerGrund === 'overload') {
+                        // Alle Dateien scheiterten an Überlastung des KI-Dienstes
+                        toast({
+                          title: '⏳ KI-Dienst überlastet',
+                          description: 'Die Bilderkennung (Google Gemini) ist gerade stark ausgelastet. Bitte in ein bis zwei Minuten erneut versuchen – es wurde nichts importiert.',
+                          variant: 'destructive'
+                        });
+                      } else if (successCount === 0 && errorCount > 0 && letzterFehlerGrund === 'network') {
+                        toast({
+                          title: '📡 Verbindungsproblem',
+                          description: 'Die Ergebnisse konnten nicht verarbeitet werden. Bitte Internetverbindung prüfen und erneut versuchen.',
+                          variant: 'destructive'
+                        });
+                      } else {
+                        toast({
+                          title: errorCount > 0 ? '⚠️ Import teils erfolgreich' : '✅ Import abgeschlossen',
+                          description: `${successCount} Ergebnisse importiert${errorCount > 0 ? `, ${errorCount} nicht erkannt/fehlgeschlagen` : ''}.`,
+                          className: errorCount > 0 ? undefined : 'border-green-500 bg-green-50',
+                          variant: errorCount > 0 && successCount === 0 ? 'destructive' : 'default'
+                        });
+                      }
                       
                       if (successCount > 0) {
                         setTimeout(() => window.location.reload(), 2000);

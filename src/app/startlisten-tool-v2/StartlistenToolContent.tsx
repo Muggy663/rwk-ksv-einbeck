@@ -282,18 +282,33 @@ export function StartlistenToolV2Content() {
           logInfo('✅ Gemini Startliste V2 gespeichert:', { data: docRef.id });
         }
       } else {
-        if (result.error?.includes('quota') || result.error?.includes('429')) {
-          alert('⚠️ Google Gemini API Limit erreicht (20 Anfragen/Tag)\n\nBitte warte bis morgen oder verwende einen anderen API Key.');
-        } else {
-          logError('Gemini Fehler:', result.error);
-        }
+        logError('Gemini Fehler:', result.error);
+        alert(uebersetzeGeminiFehler(result.error));
       }
     } catch (error) {
-      logError('Fehler:', getErrorMessage(error));
+      const msg = getErrorMessage(error);
+      logError('Fehler:', msg);
+      alert(uebersetzeGeminiFehler(msg));
     } finally {
       setGeminiLoading(false);
     }
   };
+
+  // Übersetzt technische Gemini-/Netzwerkfehler in eine verständliche Meldung
+  // für Nutzer ohne Entwicklerkonsole.
+  function uebersetzeGeminiFehler(fehler: unknown): string {
+    const text = String(fehler ?? '').toLowerCase();
+    if (text.includes('429') || text.includes('quota') || text.includes('resource_exhausted')) {
+      return '⚠️ Tageslimit der KI erreicht\n\nDie automatische Startlisten-Erstellung (Google Gemini) ist für heute ausgeschöpft. Bitte morgen erneut versuchen.';
+    }
+    if (text.includes('503') || text.includes('unavailable') || text.includes('overloaded') || text.includes('high demand')) {
+      return '⏳ KI-Dienst gerade überlastet\n\nGoogle Gemini ist momentan stark ausgelastet. Das ist vorübergehend – bitte in ein bis zwei Minuten erneut auf "Generieren" klicken.';
+    }
+    if (text.includes('failed to fetch') || text.includes('network') || text.includes('timeout')) {
+      return '📡 Verbindungsproblem\n\nDie Anfrage an den KI-Dienst konnte nicht abgeschlossen werden. Bitte Internetverbindung prüfen und erneut versuchen.';
+    }
+    return '❌ Startliste konnte nicht automatisch erstellt werden\n\nBitte in Kürze erneut versuchen. Falls das Problem bestehen bleibt, den Support kontaktieren.';
+  }
 
   return (
     <div className="container mx-auto p-6">
