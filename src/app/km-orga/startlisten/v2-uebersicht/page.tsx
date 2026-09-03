@@ -160,17 +160,34 @@ export default function StartlistenV2Uebersicht() {
         id: doc.id,
         ...doc.data()
       })) as StartlistenDoc[];
-      
-      setStartlisten(startlistenData.sort((a, b) => {
+
+      // Saisons laden (für Jahr-Zuordnung der Startlisten)
+      let saisonsListe: Array<{ id: string; jahr?: number; name?: string; [key: string]: any }> = [];
+      if (saisonsRes.ok) {
+        const saisonsData = await saisonsRes.json();
+        saisonsListe = saisonsData.data || [];
+        setSaisons(saisonsListe);
+      }
+
+      // Nach gewählter Saison (= Jahr) filtern.
+      // Startlisten speichern im Feld `saison` eine Saison-ID; wir ermitteln
+      // die IDs, die zum gewählten Jahr gehören. Alt-Daten mit dem Jahr direkt
+      // im Feld werden ebenfalls berücksichtigt.
+      const saisonIdsFuerJahr = saisonsListe
+        .filter(s => String(s.jahr) === String(selectedSaison))
+        .map(s => s.id);
+
+      const gefilterteStartlisten = startlistenData.filter(sl => {
+        const slSaison = sl.saison ? String(sl.saison) : '';
+        if (!slSaison) return false; // ohne Saison-Zuordnung nicht anzeigen
+        return saisonIdsFuerJahr.includes(slSaison) || slSaison === String(selectedSaison);
+      });
+
+      setStartlisten(gefilterteStartlisten.sort((a, b) => {
         const dateA = new Date(a.konfiguration?.datum || a.erstellt?.toDate?.() || a.erstellt);
         const dateB = new Date(b.konfiguration?.datum || b.erstellt?.toDate?.() || b.erstellt);
         return dateB.getTime() - dateA.getTime(); // Neuestes Datum zuerst
       }));
-      
-      if (saisonsRes.ok) {
-        const saisonsData = await saisonsRes.json();
-        setSaisons(saisonsData.data || []);
-      }
       
       // Lade Meldungen direkt aus Firebase
       const { getDocs: getDocsFirebase, collection: collectionFirebase, query, orderBy } = await import('firebase/firestore');
