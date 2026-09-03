@@ -13,7 +13,7 @@ import { useKMAuth } from '@/hooks/useKMAuth';
 import { BackButton } from '@/components/ui/back-button';
 import { KMProvider, useKMContext } from '@/contexts/KMContext';
 import { KMClubSwitcher } from '@/components/ui/km-club-switcher';
-import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { getShooterClubId, ermittleEinzelklasse, type KmAltersklasse } from '@/lib/utils/altersklassen';
 import { authFetch } from '@/lib/auth/authFetch';
 
 function KMMeldungenContent() {
@@ -37,6 +37,7 @@ function KMMeldungenContent() {
   const [disziplinen, setDisziplinen] = useState<KMDisziplin[]>([]);
   const [, setMeldungen] = useState<KMMeldung[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
+  const [altersklassenListe, setAltersklassenListe] = useState<KmAltersklasse[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingMeldung, setEditingMeldung] = useState<KMMeldung | null>(null);
   
@@ -105,17 +106,20 @@ function KMMeldungenContent() {
       const { db } = await import('@/lib/firebase/config');
       
       // Lade alle Daten parallel
-      const [shootersSnapshot, disziplinenSnapshot, saisonSnapshot, clubsSnapshot] = await Promise.all([
+      const [shootersSnapshot, disziplinenSnapshot, saisonSnapshot, clubsSnapshot, altersklassenSnapshot] = await Promise.all([
         getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
         getDocs(collection(db, 'km_disziplinen')),
         getDocs(collection(db, 'km_saisons')),
-        getDocs(collection(db, 'clubs'))
+        getDocs(collection(db, 'clubs')),
+        getDocs(collection(db, 'km_altersklassen'))
       ]);
       
       const allSchuetzen = shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as Shooter[];
       const allDisziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as KMDisziplin[];
       const allSaisons = saisonSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as Array<{ id: string; jahr: number; status: string; meldeschluss?: string; disziplinTyp?: string; [key: string]: any }>;
       const allClubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as Array<{ id: string; name: string; [key: string]: any }>;
+      const allAltersklassen = altersklassenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as KmAltersklasse[];
+      setAltersklassenListe(allAltersklassen);
       
       logDebug(`DEBUG: Disziplinen aus Firebase: ${allDisziplinen.length}`);
       logDebug(`DEBUG: Vereine aus Firebase: ${allClubs.length}`);
@@ -434,77 +438,60 @@ function KMMeldungenContent() {
         warnung: 'Geburtsjahr und Geschlecht erforderlich'
       };
     }
-    
+
     const selectedSaisonData = saisons.find(s => s.id === selectedSaison);
     const sportjahr = selectedSaisonData?.jahr || new Date().getFullYear();
     const age = sportjahr - schuetze.birthYear;
     const gender = schuetze.gender;
-    
-    // Spezielle Behandlung für Lichtgewehr (11.11)
+    const altersgenehmigung = !!(schuetze as any).sondergenehmigung;
+
+    // Lichtgewehr (11.11): nur 6-11 Jahre
     if (spoNummer === '11.11') {
       if (age >= 6 && age <= 11) {
         const klasse = gender === 'male' ? 'Lichtgewehr m' : 'Lichtgewehr w';
         return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
-      } else {
-        return {
-          klasse: 'Nicht teilnahmeberechtigt',
-          kmErlaubt: false,
-          lmErlaubt: false,
-          warnung: 'Lichtgewehr (11.11) nur für Altersklasse 6-11 Jahre'
-        };
       }
+      return {
+        klasse: 'Nicht teilnahmeberechtigt',
+        kmErlaubt: false,
+        lmErlaubt: false,
+        warnung: 'Lichtgewehr (11.11) nur für Altersklasse 6-11 Jahre'
+      };
     }
-    
-    if (auflage) {
-      // Schüler (KM + LM erlaubt)
-      if (age >= 12 && age <= 14) {
-        const klasse = gender === 'male' ? 'Schüler I m' : 'Schüler I w';
-        return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
-      }
-      
-      // KM-Sonderregelung: 15-40 Jahre bei Auflage kreisintern erlaubt (KM ja, LM nein)
-      // Gilt für alle Auflage-Disziplinen im Kreisverband
-      if (age >= 15 && age <= 40) {
-        let klasse;
-        if (age <= 16) klasse = gender === 'male' ? 'Jugend m' : 'Jugend w';
-        else if (age <= 18) klasse = gender === 'male' ? 'Junioren II m' : 'Junioren II w';
-        else if (age <= 20) klasse = gender === 'male' ? 'Junioren I m' : 'Junioren I w';
-        else klasse = gender === 'male' ? 'Herren I' : 'Damen I';
-        
-        return {
-          klasse,
-          kmErlaubt: true,
-          lmErlaubt: false,
-          warnung: 'KM erlaubt, aber nicht LM-berechtigt (Sonderregelung Kreisverband Auflage)'
-        };
-      }
-      
-      // Senioren (KM + LM erlaubt)
-      let klasse;
-      if (age <= 50) klasse = 'Senioren 0';
-      else if (age <= 60) klasse = gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
-      else if (age <= 65) klasse = gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
-      else if (age <= 70) klasse = gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
-      else if (age <= 75) klasse = gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
-      else if (age <= 80) klasse = gender === 'male' ? 'Senioren V m' : 'Seniorinnen V';
-      else klasse = gender === 'male' ? 'Senioren VI m' : 'Seniorinnen VI';
-      
-      return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
-    } else {
-      // Freihand (alle Altersklassen KM + LM erlaubt)
-      let klasse;
-      if (age <= 14) klasse = gender === 'male' ? 'Schüler I m' : 'Schüler I w';
-      else if (age <= 16) klasse = gender === 'male' ? 'Jugend m' : 'Jugend w';
-      else if (age <= 18) klasse = gender === 'male' ? 'Junioren II m' : 'Junioren II w';
-      else if (age <= 20) klasse = gender === 'male' ? 'Junioren I m' : 'Junioren I w';
-      else if (age <= 40) klasse = gender === 'male' ? 'Herren I' : 'Damen I';
-      else if (age <= 50) klasse = gender === 'male' ? 'Herren II' : 'Damen II';
-      else if (age <= 60) klasse = gender === 'male' ? 'Herren III' : 'Damen III';
-      else if (age <= 70) klasse = gender === 'male' ? 'Herren IV' : 'Damen IV';
-      else klasse = gender === 'male' ? 'Herren V' : 'Damen V';
-      
-      return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
+
+    // Klassenname datengetrieben aus km_altersklassen (Single Source of Truth)
+    const klasse = ermittleEinzelklasse({
+      birthYear: schuetze.birthYear,
+      gender,
+      auflage,
+      spoNummer,
+      saisonJahr: sportjahr,
+      altersklassen: altersklassenListe,
+      altersgenehmigung
+    });
+
+    if (!klasse) {
+      // Kein startberechtigter Treffer (z. B. unter 12 ohne Genehmigung bei Freihand,
+      // oder 21-40 bei regulärer Auflage ohne kreisinterne Ausnahme).
+      const hinweis = !auflage && age < 12
+        ? 'Luftgewehr erst ab 12 Jahren (bzw. ab 10 mit Altersgenehmigung)'
+        : 'Für diese Disziplin/Altersklasse keine Startberechtigung';
+      return { klasse: 'Nicht teilnahmeberechtigt', kmErlaubt: false, lmErlaubt: false, warnung: hinweis };
     }
+
+    // LM-Berechtigung: kreisinterne Auflage-Ausnahme (1.41/1.11) für 21-40 ist KM-,
+    // aber nicht LM-berechtigt.
+    const istKreisinterneAuflage = auflage && (spoNummer === '1.41' || spoNummer === '1.11');
+    if (istKreisinterneAuflage && age >= 21 && age <= 40) {
+      return {
+        klasse,
+        kmErlaubt: true,
+        lmErlaubt: false,
+        warnung: 'KM erlaubt, aber nicht LM-berechtigt (Sonderregelung Kreisverband Auflage)'
+      };
+    }
+
+    return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
   };
 
   if (loading) {

@@ -419,6 +419,8 @@ export default function AdminShootersPage() {
         if (currentShooter.birthYear && !isNaN(parseInt(currentShooter.birthYear.toString()))) {
           shooterDataForSave.birthYear = parseInt(currentShooter.birthYear.toString());
         }
+        // Altersgenehmigung (für Luftgewehr ab 10 statt 12)
+        shooterDataForSave.sondergenehmigung = !!(currentShooter as any).sondergenehmigung;
         // Speichere in shooters Collection
         batch.set(newShooterRef, shooterDataForSave);
         
@@ -440,6 +442,8 @@ export default function AdminShootersPage() {
         if (currentShooter.birthYear && !isNaN(parseInt(currentShooter.birthYear.toString()))) {
           updateData.birthYear = parseInt(currentShooter.birthYear.toString());
         }
+        // Altersgenehmigung (für Luftgewehr ab 10 statt 12)
+        updateData.sondergenehmigung = !!(currentShooter as any).sondergenehmigung;
         
         batch.update(shooterDocRef, updateData);
         toast({ title: "Schütze aktualisiert", description: `Daten für "${combinedName}" aktualisiert.` });
@@ -937,6 +941,24 @@ export default function AdminShootersPage() {
                       <p>AK Freihand 2026: {calculateAgeClass(currentShooter.birthYear, currentShooter.gender as 'male' | 'female', 2026, 'freihand')}</p>
                     </div>
                   )}
+                </div>
+
+                <div className="flex items-start gap-2 pt-1">
+                  <Checkbox
+                    id="altersgenehmigungShooterAdmin"
+                    checked={!!(currentShooter as any).sondergenehmigung}
+                    onCheckedChange={(checked) =>
+                      setCurrentShooter(prev => prev ? ({ ...prev, sondergenehmigung: checked === true }) : prev)
+                    }
+                  />
+                  <div className="grid gap-0.5 leading-none">
+                    <Label htmlFor="altersgenehmigungShooterAdmin" className="cursor-pointer">
+                      Altersgenehmigung vorhanden
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Erlaubt 10-/11-Jährigen das Schießen mit Luftgewehr (offiziell ab 12). Wird dann als Schülerklasse 12-14 gewertet.
+                    </p>
+                  </div>
                 </div>
 
                 {formMode === 'new' && currentShooter.clubId && (
