@@ -4,12 +4,17 @@ import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { AuditTrail } from '@/components/audit/AuditTrail';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { History, BarChart3, Activity } from 'lucide-react';
+import { History, BarChart3, Activity, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { auditLogService } from '@/lib/services/audit-service';
+import { authFetch } from '@/lib/auth/authFetch';
+import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 export default function AuditPage() {
+  const { toast } = useToast();
   const [stats, setStats] = useState<{
     total: number;
     creates: number;
@@ -18,6 +23,44 @@ export default function AuditPage() {
     byEntityType: Record<string, number>;
   } | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [beforeDate, setBeforeDate] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteOld = async () => {
+    if (!beforeDate) {
+      toast({ title: 'Datum fehlt', description: 'Bitte einen Stichtag wählen.', variant: 'destructive' });
+      return;
+    }
+    const datumLesbar = new Date(beforeDate).toLocaleDateString('de-DE');
+    if (!confirm(`Alle Änderungsprotokoll-Einträge VOR dem ${datumLesbar} unwiderruflich löschen?`)) {
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      const res = await authFetch('/api/admin/audit-logs/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ beforeDate })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast({ title: 'Gelöscht', description: `${data.deleted} Einträge entfernt.` });
+        setBeforeDate('');
+        // Statistik neu laden
+        try {
+          const auditStats = await auditLogService.getAuditStats();
+          setStats(auditStats);
+        } catch { /* Anzeige nicht kritisch */ }
+      } else {
+        toast({ title: 'Fehler', description: data.error || 'Löschen fehlgeschlagen', variant: 'destructive' });
+      }
+    } catch (error) {
+      logError('Fehler beim Löschen der Audit-Logs:', error);
+      toast({ title: 'Fehler', description: 'Löschen fehlgeschlagen', variant: 'destructive' });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => {
     const loadStats = async () => {
@@ -148,6 +191,40 @@ export default function AuditPage() {
             <li>Betroffene Entität (Ergebnis, Mannschaft, Schütze, etc.)</li>
             <li>Details zur Änderung</li>
           </ul>
+        </CardContent>
+      </Card>
+
+      {/* Aufräumen: alte Einträge löschen */}
+      <Card className="border-amber-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Trash2 className="h-4 w-4 text-amber-600" />
+            Protokoll aufräumen
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-3">
+            Löscht alle Einträge, die vor dem gewählten Datum liegen (z. B. vor Saisonbeginn). Der Vorgang ist nicht umkehrbar.
+          </p>
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+            <div className="flex-1 max-w-xs">
+              <Label htmlFor="beforeDate">Einträge löschen vor</Label>
+              <Input
+                id="beforeDate"
+                type="date"
+                value={beforeDate}
+                onChange={(e) => setBeforeDate(e.target.value)}
+              />
+            </div>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteOld}
+              disabled={isDeleting || !beforeDate}
+            >
+              {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Ältere Einträge löschen
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
