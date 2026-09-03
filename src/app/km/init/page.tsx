@@ -18,6 +18,35 @@ export default function KMInit() {
     wettkampfklassen: false,
     disziplinen: false
   });
+  const [backfillLoading, setBackfillLoading] = useState(false);
+
+  const handleBackfillAltersklassen = async (overwrite: boolean) => {
+    const frage = overwrite
+      ? 'ALLE Meldungen neu berechnen und die Altersklasse überschreiben?'
+      : 'Fehlende Altersklassen in bestehenden Meldungen ergänzen?';
+    if (!confirm(frage)) return;
+    setBackfillLoading(true);
+    try {
+      const response = await authFetch('/api/km/meldungen/backfill-altersklasse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ overwrite })
+      });
+      const result = await response.json();
+      if (result.success) {
+        toast({
+          title: 'Fertig',
+          description: `${result.aktualisiert} Meldungen aktualisiert (${result.geprueft} geprüft, ${result.uebersprungen} übersprungen).`
+        });
+      } else {
+        toast({ title: 'Fehler', description: result.error || 'Migration fehlgeschlagen', variant: 'destructive' });
+      }
+    } catch (error) {
+      toast({ title: 'Fehler', description: 'Netzwerkfehler', variant: 'destructive' });
+    } finally {
+      setBackfillLoading(false);
+    }
+  };
 
   const handleInitWettkampfklassen = async () => {
     setLoading(prev => ({ ...prev, wettkampfklassen: true }));
@@ -212,6 +241,34 @@ export default function KMInit() {
           </CardContent>
         </Card>
       )}
+
+      {/* Wartung: Altersklassen in bestehende Meldungen nachtragen */}
+      <Card className="mt-6 border-blue-200">
+        <CardContent className="pt-6">
+          <h3 className="font-semibold mb-1">🎯 Altersklassen nachtragen (Migration)</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Schreibt die berechnete Altersklasse in bereits vorhandene Meldungen. „Fehlende ergänzen"
+            lässt vorhandene Klassen unangetastet; „Alle neu berechnen" überschreibt auch bestehende
+            (z. B. nach Änderungen an den Altersklassen-Grenzen). Nur für Administratoren.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              onClick={() => handleBackfillAltersklassen(false)}
+              disabled={backfillLoading}
+              variant="default"
+            >
+              {backfillLoading ? 'Läuft…' : 'Fehlende ergänzen'}
+            </Button>
+            <Button
+              onClick={() => handleBackfillAltersklassen(true)}
+              disabled={backfillLoading}
+              variant="outline"
+            >
+              {backfillLoading ? 'Läuft…' : 'Alle neu berechnen (überschreiben)'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
