@@ -44,7 +44,11 @@ export default function KMUebersicht() {
   useEffect(() => {
     if (hasKMAccess && !authLoading) {
       loadSaisons();
-      loadData();
+      // Meldungen erst laden, wenn eine Saison gewählt ist — sonst würde die
+      // API alle Meldungen des Jahres liefern (ungefilterter Zwischenstand).
+      if (selectedSaison) {
+        loadData();
+      }
     }
   }, [hasKMAccess, authLoading, selectedClubId, selectedSaison]);
 
@@ -62,6 +66,8 @@ export default function KMUebersicht() {
   };
 
   const loadData = async () => {
+    // Ohne gewählte Saison nicht laden (verhindert ungefilterten Zwischenstand)
+    if (!selectedSaison) return;
     try {
       const isAdmin = userPermission?.role === 'admin';
       
