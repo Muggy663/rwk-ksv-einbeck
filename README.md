@@ -134,9 +134,9 @@ Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
 ## 📄 Lizenz & Copyright
 
-**Copyright © 2025 KSV Einbeck. Alle Rechte vorbehalten.**
+**Copyright © 2025-2026 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 31.08.2026 - Version 3.0.0*
+*Letzte Aktualisierung: 03.09.2026 - Version 3.0.0*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 
