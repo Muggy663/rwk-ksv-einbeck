@@ -187,6 +187,7 @@ export function HandzettelOCR({
       // Versuche Gemini OCR mit Timeout
       let matches: OCRMatchResult[] = []
       let geminiSuccess = false
+      let geminiFehlerGrund = '' // 'overload' | 'limit' | 'timeout' | 'network' | ''
       
       try {
         const formData = new FormData()
@@ -238,8 +239,14 @@ export function HandzettelOCR({
             }
           }
         } else {
-          await geminiResponse.text().catch(() => 'Unbekannter Fehler')
+          const fehlerText = await geminiResponse.text().catch(() => 'Unbekannter Fehler')
           logWarn('⚠️ Gemini API Fehler:', geminiResponse.status)
+          // Überlastung (503) / Limit (429) für die Nutzer-Meldung merken
+          if (geminiResponse.status === 503 || /unavailable|overloaded|high demand/i.test(fehlerText)) {
+            geminiFehlerGrund = 'overload'
+          } else if (geminiResponse.status === 429 || /quota|resource_exhausted/i.test(fehlerText)) {
+            geminiFehlerGrund = 'limit'
+          }
           if (isMobile) {
             setCurrentStep(`📱 API Fehler: ${sanitizeText(geminiResponse.status)}`)
           }
@@ -251,8 +258,10 @@ export function HandzettelOCR({
         if (geminiError instanceof Error) {
           if (geminiError.name === 'AbortError') {
             errorMsg = 'Timeout - Verbindung zu langsam'
+            geminiFehlerGrund = 'timeout'
           } else if (geminiError.message.includes('fetch')) {
             errorMsg = 'Netzwerkfehler'
+            geminiFehlerGrund = 'network'
           } else {
             errorMsg = sanitizeText(geminiError.message)
           }
@@ -265,7 +274,18 @@ export function HandzettelOCR({
       
       // Wenn Gemini fehlschlägt, detaillierte Fehlermeldung
       if (!geminiSuccess) {
-        let errorDetails = 'Gemini OCR fehlgeschlagen.'
+        // Überlastung/Limit/Verbindung: klare Handlungsanweisung statt Foto-Tipps
+        if (geminiFehlerGrund === 'overload') {
+          throw new Error('⏳ Die automatische Bilderkennung (Google Gemini) ist gerade überlastet.\n\nDas ist vorübergehend. Bitte in ein bis zwei Minuten erneut versuchen – oder die Ergebnisse so lange von Hand eintragen.')
+        }
+        if (geminiFehlerGrund === 'limit') {
+          throw new Error('⚠️ Das Tageslimit der automatischen Bilderkennung ist erreicht.\n\nBitte morgen erneut versuchen – oder die Ergebnisse jetzt von Hand eintragen.')
+        }
+        if (geminiFehlerGrund === 'network' || geminiFehlerGrund === 'timeout') {
+          throw new Error('📡 Die Bilderkennung konnte nicht abgeschlossen werden (Verbindung zu langsam oder unterbrochen).\n\nBitte Internetverbindung prüfen und erneut versuchen. Alternativ die Ergebnisse von Hand eintragen.')
+        }
+
+        let errorDetails = 'Automatische Erkennung fehlgeschlagen.'
         
         if (isMobile) {
           const sanitizedSize = Math.max(0, Math.round(processedImage.size/1024))
